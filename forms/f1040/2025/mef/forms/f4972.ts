@@ -133,7 +133,7 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
   }
   reconcileForm4972Nua(fields, context?.pending);
   reconcileForm4972EstatePartII(fields, context?.pending);
-  reconcileForm4972FullShare(fields, context?.pending);
+  reconcileForm4972FullShare(fields, context?.pending, recipient);
   const multipleRecipients = reconcileForm4972MultipleRecipients(
     fields,
     context?.pending,

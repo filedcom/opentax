@@ -87,6 +87,17 @@ export const inputSchema = z.object({
   // ordinary amount; Part-II-only uses the recipient's own distribution.
   recipient_share_pct: z.number().positive().max(100).optional(),
   recipient: tsSchema.optional(),
+  multiple_1099r: z.object({
+    participant_name: z.string().trim().min(1),
+    participant_ssn: z.string().regex(/^\d{9}$/),
+    plan_reference: z.string().trim().min(1),
+    full_balance_statement_reference: z.string().trim().min(1),
+    all_qualified_distributions_included: z.literal(true),
+    source_document_references: z.tuple([
+      z.string().trim().min(1),
+      z.string().trim().min(1),
+    ]),
+  }).strict().optional(),
 });
 
 // The public election supplies only facts not printed in the elected 1099-R.
@@ -100,6 +111,7 @@ export const publicElectionSchema = inputSchema.omit({
   annuity_share_pct: true,
   recipient_share_pct: true,
   recipient: true,
+  multiple_1099r: true,
 }).strict();
 
 type Form4972Input = z.infer<typeof inputSchema>;
@@ -107,6 +119,26 @@ type Form4972Input = z.infer<typeof inputSchema>;
 // ─── Cross-field validation ────────────────────────────────────────────────────
 
 function validateInput(input: Form4972Input, deathBenefitMax: number): void {
+  if (input.multiple_1099r) {
+    const refs = input.multiple_1099r.source_document_references;
+    if (
+      refs[0] === refs[1] || input.recipient !== "T" ||
+      input.beneficiary_distribution !== false ||
+      input.participant_five_year_member !== true ||
+      input.elect_10yr_averaging !== true ||
+      input.elect_capital_gain === true ||
+      (input.capital_gain_amount ?? 0) !== 0 ||
+      (input.box6_nua ?? 0) !== 0 || input.elect_include_nua === true ||
+      (input.annuity_actuarial_value ?? 0) !== 0 ||
+      (input.death_benefit_exclusion ?? 0) !== 0 ||
+      (input.federal_estate_tax ?? 0) !== 0 ||
+      (input.recipient_share_pct ?? 100) !== 100
+    ) {
+      throw new Error(
+        "form4972: two Form 1099-R sources require one taxpayer participant and a full-share Part-III-only election",
+      );
+    }
+  }
   if (!input.recipient) {
     throw new Error(
       "form4972: elected distribution needs a taxpayer or spouse recipient",

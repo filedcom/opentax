@@ -44,5 +44,8 @@ dividends has source, native, PDF-projection, and tamper fixtures written but
 unrun. The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 direct qualified dividends through the AMT Part III worksheet. The 1099-DIV
 recipient and dividend holding period are not independently established by
-this source; multi-payer, pass-through, capital-gain, foreign, and election
-combinations remain open.
+this source; pass-through, capital-gain, foreign, and election combinations
+remain open. A subsequent bounded extension sums multiple ordinary domestic
+1099-DIV payers at the same native/PDF gate; see the
+[remaining-scope note](ty2025-form6251-remaining-scope.md). Its fixtures await
+the bulk validation batch.

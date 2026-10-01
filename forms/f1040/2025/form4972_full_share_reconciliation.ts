@@ -3,12 +3,18 @@ import {
   form4972,
   inputSchema as form4972Schema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
+import { reconcileForm4972Multiple1099R } from "./form4972_multiple_1099r_reconciliation.ts";
 
 /** Reconcile an ordinary full-share election without NUA or estate allocation. */
 export function reconcileForm4972FullShare(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  owner?: { name: string; ssn: string },
 ): void {
+  if (fields.multiple_1099r !== undefined) {
+    reconcileForm4972Multiple1099R(fields, pending, owner);
+    return;
+  }
   if (
     (fields.recipient_share_pct ?? 100) !== 100 ||
     fields.elect_include_nua === true ||

@@ -32,13 +32,24 @@ export function assertIsoQualifiedDividendSource(
         payer.box2d,
         payer.box2e,
         payer.box2f,
+        payer.box3,
+        payer.box4,
+        payer.box5,
+        payer.box6,
         payer.box7,
+        payer.box9,
+        payer.box10,
+        payer.box12,
+        payer.box13,
+        payer.box16,
         payer.foreign_source_dividends_usd,
         payer.foreign_source_qualified_dividends_usd,
       ].some((amount) => (amount ?? 0) !== 0) ||
       payer.nominee_distribution !== undefined ||
       payer.foreign_tax_irs_country_code !== undefined ||
-      (payer.box8?.trim().length ?? 0) > 0
+      (payer.box8?.trim().length ?? 0) > 0 ||
+      (payer.box14?.trim().length ?? 0) > 0 ||
+      (payer.box15?.trim().length ?? 0) > 0
     ) ||
     pending?.k1_partnership !== undefined ||
     pending?.k1_s_corp !== undefined ||

@@ -217,6 +217,13 @@ export const itemSchema = z.object({
   recipient_address_zip: z.string().optional(),
   account_number: z.string().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  form4972_plan: z.object({
+    participant_name: z.string().trim().min(1),
+    participant_ssn: z.string().regex(/^\d{9}$/),
+    plan_reference: z.string().trim().min(1),
+    full_balance_statement_reference: z.string().trim().min(1),
+    all_qualified_distributions_included: z.literal(true),
+  }).strict().optional(),
   ts: tsSchema.optional(),
 
   // Box 1: Gross distribution (required)
@@ -1050,9 +1057,53 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     (item) => item.exclude_4972 === true,
   );
   if (lumpItems.length > 1) {
-    throw new Error(
-      "Form 4972 needs plan-participant identity and separate forms for multiple elected Form 1099-R distributions",
-    );
+    const [first, second] = lumpItems;
+    const plan = first?.form4972_plan;
+    if (
+      lumpItems.length !== 2 || !first || !second || !plan ||
+      !first.source_document_reference || !second.source_document_reference ||
+      first.source_document_reference === second.source_document_reference ||
+      second.form4972_plan?.participant_name !== plan.participant_name ||
+      second.form4972_plan?.participant_ssn !== plan.participant_ssn ||
+      second.form4972_plan?.plan_reference !== plan.plan_reference ||
+      second.form4972_plan?.full_balance_statement_reference !==
+        plan.full_balance_statement_reference ||
+      second.form4972_plan?.all_qualified_distributions_included !== true ||
+      first.ts === undefined || second.ts !== first.ts ||
+      first.ts !== "T" || first.payer_ein !== second.payer_ein ||
+      first.payer_name !== second.payer_name ||
+      first.payer_ein.trim().length === 0 ||
+      first.payer_name.trim().length === 0 ||
+      items.some((item) =>
+        item.exclude_4972 !== true &&
+        item.form4972_plan?.plan_reference === plan.plan_reference
+      ) ||
+      lumpItems.some((item) =>
+        item.box9a_pct_total !== 100 ||
+        item.box2a_taxable_amount === undefined ||
+        item.box2a_taxable_amount <= 0 ||
+        (item.box3_capital_gain ?? 0) !== 0 ||
+        (item.box6_nua ?? 0) !== 0 ||
+        (item.box8_other ?? 0) !== 0 ||
+        item.box8_pct_total !== undefined
+      )
+    ) {
+      throw new Error(
+        "Form 4972 two-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
+      );
+    }
+    return [output(form4972, {
+      recipient: first.ts,
+      lump_sum_amount: first.box2a_taxable_amount! +
+        second.box2a_taxable_amount!,
+      multiple_1099r: {
+        ...plan,
+        source_document_references: [
+          first.source_document_reference,
+          second.source_document_reference,
+        ],
+      },
+    })];
   }
   return lumpItems.map((item) => {
     if (item.box9a_pct_total === 0) {

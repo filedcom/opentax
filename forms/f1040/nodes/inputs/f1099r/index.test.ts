@@ -349,9 +349,59 @@ Deno.test("f1099r.compute: multiple elected Form 4972 distributions need partici
           ts: secondRecipient,
         }]),
       Error,
-      "needs plan-participant identity and separate forms",
+      "needs one fully identified participant",
     );
   }
+});
+
+Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () => {
+  const form4972_plan = {
+    participant_name: "Ada Taxpayer",
+    participant_ssn: "123456789",
+    plan_reference: "Plan-2025-A",
+    full_balance_statement_reference: "Administrator final-balance statement",
+    all_qualified_distributions_included: true as const,
+  };
+  const first = minimalPensionItem({
+    box1_gross_distribution: 30_000,
+    box2a_taxable_amount: 30_000,
+    box9a_pct_total: 100,
+    exclude_4972: true,
+    source_document_reference: "1099-R-A",
+    form4972_plan,
+  });
+  const second = {
+    ...first,
+    box1_gross_distribution: 40_000,
+    box2a_taxable_amount: 40_000,
+    source_document_reference: "1099-R-B",
+  };
+  const fields = compute([first, second]).outputs.find((o) =>
+    o.nodeType === "form4972"
+  )?.fields;
+  assertEquals(fields?.lump_sum_amount, 70_000);
+  assertEquals(fields?.multiple_1099r, {
+    ...form4972_plan,
+    source_document_references: ["1099-R-A", "1099-R-B"],
+  });
+  assertThrows(
+    () => compute([first, { ...second, form4972_plan: {
+      ...form4972_plan,
+      participant_ssn: "987654321",
+    } }]),
+    Error,
+    "one fully identified participant",
+  );
+  assertThrows(
+    () => compute([first, { ...second, ts: TS.S }]),
+    Error,
+    "one fully identified participant",
+  );
+  assertThrows(
+    () => compute([first, { ...second, source_document_reference: "1099-R-A" }]),
+    Error,
+    "distinct full-share source copies",
+  );
 });
 
 Deno.test("f1099r.compute: an elected Form 4972 source cannot also deny receipt", () => {

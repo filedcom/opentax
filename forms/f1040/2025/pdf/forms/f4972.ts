@@ -104,11 +104,14 @@ function projectedFields(
     fields,
     allPending,
   );
+  const recipient = recipientIdentity(fields, allPending);
   assertElectedPdfShape(fields, allPending, multipleRecipients);
   reconcileForm4972Nua(fields, allPending);
   reconcileForm4972EstatePartII(fields, allPending);
-  reconcileForm4972FullShare(fields, allPending);
-  const recipient = recipientIdentity(fields, allPending);
+  reconcileForm4972FullShare(fields, allPending, {
+    name: recipient.recipient_name,
+    ssn: recipient.recipient_ssn,
+  });
   const printedFields = { ...fields };
   if (fields.beneficiary_distribution === true) {
     delete printedFields.prior_election_after_1986;
@@ -169,20 +172,22 @@ function assertElectedPdfShape(
       item.exclude_4972 === true && item.no_distribution_received !== true
     )
     : [];
-  const item = elected[0];
-  if (
-    elected.length !== 1 || !item || item.ts !== fields.recipient ||
-    item.box9a_pct_total !== undefined &&
-      item.box9a_pct_total !== 100 && !multipleRecipients ||
-    item.box2a_taxable_amount !== fields.lump_sum_amount ||
-    (item.box3_capital_gain ?? 0) !== (fields.capital_gain_amount ?? 0) ||
-    (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
-    (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
-    (item.box8_pct_total ?? null) !== (fields.annuity_share_pct ?? null)
-  ) {
-    throw new Error(
-      "Form 4972 PDF needs one matching Form 1099-R source and recipient share",
-    );
+  if (fields.multiple_1099r === undefined) {
+    const item = elected[0];
+    if (
+      elected.length !== 1 || !item || item.ts !== fields.recipient ||
+      item.box9a_pct_total !== undefined &&
+        item.box9a_pct_total !== 100 && !multipleRecipients ||
+      item.box2a_taxable_amount !== fields.lump_sum_amount ||
+      (item.box3_capital_gain ?? 0) !== (fields.capital_gain_amount ?? 0) ||
+      (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
+      (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
+      (item.box8_pct_total ?? null) !== (fields.annuity_share_pct ?? null)
+    ) {
+      throw new Error(
+        "Form 4972 PDF needs one matching Form 1099-R source and recipient share",
+      );
+    }
   }
   if (capital) {
     if (

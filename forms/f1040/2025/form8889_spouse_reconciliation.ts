@@ -6,6 +6,10 @@ import {
   form8889,
   inputSchema,
 } from "../nodes/intermediate/forms/form8889/index.ts";
+import {
+  Box12Code,
+  inputSchema as w2InputSchema,
+} from "../nodes/inputs/w2/index.ts";
 
 /** Bind a primary owner's dated exception to its Form 1099-SA sources. */
 export function reconcileDatedExceptionForm8889(
@@ -216,13 +220,18 @@ export function reconcileCode2Form8889(
       row && typeof row === "object" &&
       row.box3_distribution_code === "2"
     );
-  if (!rawTimely && !rawCode2) return;
+  const rawEmployerClaim =
+    "employer_excess_treatment" in sourceFields;
+  if (!rawTimely && !rawCode2 && !rawEmployerClaim) return;
   const source = inputSchema.parse(sourceFields);
   const timely = source.hsa_excluded_distributions?.timely_excess_withdrawal;
+  const employerTimely = source.employer_excess_treatment?.timely_withdrawal;
   const code2 = source.form1099_sa_distributions?.some((row) =>
     row.box3_distribution_code === "2"
   );
-  if (!timely && !code2) return;
+  if (!timely && !code2 && employerTimely?.withdrawal_tax_year !== 2025) {
+    return;
+  }
   const filed = forms[0];
   if (
     forms.length !== 1 || !filed || filed.owner !== "primary" ||
@@ -255,10 +264,68 @@ export function reconcileCode2Form8889(
       "Form 8889 code-2 printed lines differ from source calculation",
     );
   }
+  let employerReturnedPrincipal = 0;
+  let employerW2Wages: number | undefined;
+  if (employerTimely?.withdrawal_tax_year === 2025) {
+    const w2 = w2InputSchema.safeParse(allPending?.w2);
+    if (!w2.success) {
+      throw new Error(
+        "Form 8889 employer code-2 route needs one owner W-2 code W and full employer excess returned to the owner",
+      );
+    }
+    const codeW = w2.data.w2s.flatMap((item) =>
+      (item.box12_entries ?? []).filter((entry) =>
+        entry.code === Box12Code.W && entry.amount > 0
+      ).map((entry) => ({
+        employee_ssn: item.employee_ssn?.replaceAll("-", ""),
+        amount: entry.amount,
+      }))
+    );
+    const sourceCodeW = source.w2_code_w_entries ?? [];
+    if (codeW.length !== 1 || sourceCodeW.length !== 1) {
+      throw new Error(
+        "Form 8889 employer code-2 route needs one owner W-2 code W and full employer excess returned to the owner",
+      );
+    }
+    const filedCodeW = codeW[0]!;
+    const claimedCodeW = sourceCodeW[0]!;
+    if (
+      filedCodeW.employee_ssn !== filed.beneficiary_ssn ||
+      claimedCodeW.employee_ssn.replaceAll("-", "") !==
+        filed.beneficiary_ssn ||
+      claimedCodeW.amount !== filedCodeW.amount ||
+      source.employer_hsa_contributions !== undefined ||
+      source.employer_contribution_years !== undefined ||
+      (source.taxpayer_hsa_contributions ?? 0) !== 0 ||
+      source.qualified_hsa_funding_distributions !== undefined ||
+      source.prior_year_hsa_excess !== undefined ||
+      source.post_year_personal_excess_withdrawal !== undefined ||
+      source.hsa_excluded_distributions !== undefined ||
+      source.testing_period_failure !== undefined ||
+      (source.archer_msa_distributions ?? 0) !== 0 ||
+      source.employer_excess_treatment?.amount_included_in_w2_box1 !== 0 ||
+      employerTimely.principal !==
+        filedCodeW.amount - Number(filed.print_line8 ?? 0) ||
+      w2.data.w2s.some((item) =>
+        item.employee_ssn?.replaceAll("-", "") !== filed.beneficiary_ssn ||
+        item.box13_statutory_employee === true
+      )
+    ) {
+      throw new Error(
+        "Form 8889 employer code-2 route needs one owner W-2 code W and full employer excess returned to the owner",
+      );
+    }
+    employerReturnedPrincipal = employerTimely.principal;
+    employerW2Wages = w2.data.w2s.reduce(
+      (total, item) => total + item.box1_wages,
+      0,
+    );
+  }
   const schedule1 = z.object({
     line13_hsa_deduction: z.number().optional(),
     line8f_hsa_income: z.number().optional(),
     line8z_hsa_excess_earnings: z.number().optional(),
+    line8z_hsa_excess_employer: z.number().optional(),
     line10_total_additional_income: z.number(),
     line26_total_adjustments: z.number(),
   }).passthrough().parse(allPending?.schedule1);
@@ -267,6 +334,7 @@ export function reconcileCode2Form8889(
     line17d_hsa_eligibility_tax: z.number().optional(),
   }).passthrough().parse(allPending?.schedule2 ?? {});
   const return1040 = z.object({
+    line1a_wages: z.number().optional(),
     line8_additional_income: z.number().optional(),
     line10_adjustments: z.number(),
   }).passthrough().parse(allPending?.f1040);
@@ -276,7 +344,11 @@ export function reconcileCode2Form8889(
     (schedule1.line8f_hsa_income ?? 0) !==
       (filed.print_line16_taxable ?? 0) ||
     schedule1.line8z_hsa_excess_earnings !==
-      timely?.included_earnings ||
+      (timely?.included_earnings ?? employerTimely?.earnings) ||
+    (schedule1.line8z_hsa_excess_employer ?? 0) !==
+      employerReturnedPrincipal ||
+    (employerReturnedPrincipal > 0 &&
+      return1040.line1a_wages !== employerW2Wages) ||
     (schedule2.line17c_hsa_penalty ?? 0) !== 0 ||
     (schedule2.line17d_hsa_eligibility_tax ?? 0) !== 0 ||
     schedule1.line10_total_additional_income !==

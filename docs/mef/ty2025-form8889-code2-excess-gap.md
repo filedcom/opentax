@@ -20,7 +20,7 @@ from the return's additional-income total. Focused positive, changed-box,
 changed-print-line, and changed-return cases are written but **not run**.
 
 Mixed code-2 and normal distributions, a simultaneous rollover, employer excess
-return, partial personal-excess return, and
+returned to the employer, partial personal-excess return, and
 age-65/disability exception combinations remain blocked. A post-2025 withdrawal
 is not a 2025 line-14a/14b distribution. Trustee documents and the
 timely-withdrawal answer are entered source facts, not independently
@@ -36,3 +36,28 @@ Schedule 1/Form 1040. MeF and PDF recompute both owner pages and reject changed
 box 2, return totals, a second owner's distribution, or a second code-2
 withdrawal. Positive and rejection fixtures are authored but unrun. Mixed
 distributions and source-byte checks remain open.
+
+## Bounded employer excess paid to the HSA owner (written, unrun)
+
+One primary owner's full 2025 employer excess can now be paid to that owner by
+the return due date and reported on one code-2 Form 1099-SA. The existing
+calculator puts box 1 on Form 8889 lines 14a/14b, box 2 earnings on Schedule 1
+line 8z, and the excess principal omitted from W-2 box 1 on Schedule 1 line 8z;
+the timely principal does not create a Form 5329 excess. Native and PDF export
+now recompute that result and require the same owner's sole retained W-2 code W
+to equal the Form 8889 source and line 9, with full excess principal returned.
+They also require Form 1040 line 1a to match the sum of that owner's W-2 box 1
+amounts, including additional W-2s without code W, and Schedule 1
+line 10 to match Form 1040 line 8. The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+describe the employer excess and earnings treatment; the [2025 Form 1099-SA
+instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf) include
+earnings in box 1 and exclude a withdrawal returned to the employer from HSA
+distribution reporting.
+
+This route requires no personal contribution, no W-2 box 1 inclusion of the
+excess, one code-W W-2, no other HSA event, and a payment to the owner in 2025. A
+return to the employer has no code-2 Form 1099-SA and remains unsupported, as
+do partial returns, spouse and mixed distribution cases. The W-2, trustee and
+timely-withdrawal bytes are not independently authenticated. Positive and
+changed-W-2, Schedule 1, and Form 1040 fixtures are authored but unrun; the
+bulk validation and filing gates remain pending.

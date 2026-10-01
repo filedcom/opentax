@@ -150,10 +150,20 @@ including the form's multiple-recipient instructions and worksheets on pages
   separate Form 4972 for each spouse and a combined tax on Form 1040 line 16.
   The present node accepts a `T` or `S` recipient, but one pending `form4972`
   object and one `IRS4972` attachment cannot represent both simultaneously. The
-  same limitation applies to separate forms for different plan participants. The
-  Form 1099-R source now rejects more than one active elected distribution
-  before the executor can merge two scalar Form 4972 deposits; it does not
-  assume that a taxpayer/spouse pair necessarily means two participants.
+  same limitation applies to separate forms for different plan participants.
+  A bounded two-document route now combines one taxpayer participant's two
+  full-share Form 1099-R distributions from the same payer and plan into one
+  Part-III-only Form 4972. Both documents must carry distinct source references,
+  the same participant name/SSN and plan reference, a referenced administrator
+  final-balance statement, an affirmative all-distributions-included assertion,
+  box 9a at 100%, and positive box 2a amounts; boxes 3, 6, and 8 must be zero.
+  The Form 4972 node adds the taxable amounts, and native MeF and PDF both
+  recheck the two source copies, owner identity, calculated lines, and final
+  Form 1040 special tax. Focused positive and tamper fixtures are authored but
+  unrun. The administrator statement is a referenced source assertion, not an
+  independently authenticated document. A third distribution, different
+  participant, spouse pair, partial share, capital-gain/NUA/annuity adjustment,
+  and separate Form 4972 attachments remain blocked.
 - An elected Form 1099-R marked `no_distribution_received` now fails at source
   validation. Previously the active-item filter discarded it, leaving no Form
   4972 output even though the election flag remained on the document. A focused
