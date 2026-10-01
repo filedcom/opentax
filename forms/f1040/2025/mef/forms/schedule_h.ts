@@ -13,6 +13,7 @@ export interface Fields {
   medicare_wages?: number | null;
   additional_medicare_wages?: number | null;
   federal_income_tax_withheld?: number | null;
+  family_withholding_only_payroll?: unknown;
   federal_unemployment?: {
     paid_only_one_state: true;
     all_contributions_paid_on_time: true;
@@ -146,13 +147,29 @@ function buildIRS1040ScheduleH(
     source.federal_unemployment === undefined &&
     ((source.ss_wages ?? 0) > 0 || (source.medicare_wages ?? 0) > 0 ||
       (source.federal_income_tax_withheld ?? 0) > 0) &&
-    source.fica_only_payroll === undefined
+    source.fica_only_payroll === undefined &&
+    source.family_withholding_only_payroll === undefined
   ) {
     throw new Error(
       "Schedule H FICA-only export needs employee payroll source",
     );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
+  if (source.family_withholding_only_payroll) {
+    const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    if (
+      filer.primarySSN.replace(/\D/g, "") !==
+        source.family_withholding_only_payroll.employer_parent_ssn ||
+      JSON.stringify(retained.family_withholding_only_payroll) !==
+        JSON.stringify(source.family_withholding_only_payroll) ||
+      (context.pending?.schedule2 as Record<string, unknown> | undefined)
+          ?.line9_household_employment !== amounts.totalTax
+    ) {
+      throw new Error(
+        "Schedule H child withholding source must match the filer, retained payroll, and Schedule 2 line 9",
+      );
+    }
+  }
   if (
     source.federal_unemployment?.employee_wages.some((employee) =>
       employee.nonstudent_minor_fica_inclusion !== undefined

@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **204 completed bounded items** are preserved
+and the full progress summary. The **206 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -22,7 +22,8 @@ prior-year ISO basis on Form 6251, distinct section 951(a)/951A income on
 Schedule 1, a reviewed Form 6251 investment-interest AMT difference, a partnership
 K-1 Form 8582-CR PDF route, and native/PDF Form 8992 with Schedule A.
 One reviewed prior-basis IRA distribution now prints Form 8606 Part I; a
-two-payer direct loan and S corporation passive credit add bounded routes.
+two-payer direct loan, S corporation passive credit, Form 5471 Schedule I-1,
+and child-worker Schedule H withholding add bounded routes.
 The Form 5471/8992 positive export remains closed until mandatory attachments
 are built.
 
@@ -39,21 +40,21 @@ ATS acceptance result is claimed.
 
 **Remaining implementation.** Resolve the named workflow and evidence choices,
 then complete or obtain an approved, named fail-closed boundary for each
-applicable Form 1040 path. Reconcile the 128 registered MeF descriptors, 92 PDF
+applicable Form 1040 path. Reconcile the 129 registered MeF descriptors, 93 PDF
 descriptors, and 211 TY2025 IRS schema roots with public inputs, source proof,
 calculations, owner identity, Form 1040 joins, native XML, printable output,
 statements, and attachments. The open rows below identify current gaps; the
 completed ledger records the smaller routes already implemented.
 
-| Workstream | Open items | Current state |
-| --- | ---: | --- |
-| Scope and completion rules | 5 | Filing boundaries and source-to-output rule remain open. |
-| Coverage inventory and decisions | 8 | Descriptor/root applicability, ownership, and evidence choices remain open. |
-| Core return and source paths | 8 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | Bounded child routes exist; full form-family coverage remains open. |
-| Native MeF and PDF parity | 3 | Registry and filled-output parity remain open. |
-| Automated and artifact validation | 5 | Final bulk tests, XSD, PDFs, and business rules remain open. |
-| IRS ATS and delivery | 5 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
+| Workstream | Open | Completed bounded | Current state |
+| --- | ---: | ---: | --- |
+| Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
+| Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
+| Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
+| Named tax-form gaps | 20 | 194 | Bounded child routes exist; full form-family coverage remains open. |
+| Native MeF and PDF parity | 3 | 8 | Registry and filled-output parity remain open. |
+| Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
+| IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
 
 **Release sequence.** Finish implementation before the requested single full
 `deno task test` batch. Then validate every retained positive route against the
@@ -73,7 +74,7 @@ own evidence exists.
 
 ## Coverage inventory and decisions
 
-- [ ] Resolve the unsupported-path disposition in **each of the 128 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
+- [ ] Resolve the unsupported-path disposition in **each of the 129 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
 - [ ] Review the **211 TY2025 IRS schema document roots** in the [root census](docs/mef/ty2025-xsd-document-root-census.md) against actual Form 1040 applicability. Resolve every still-unregistered or source-literal-only root in the [applicability crosswalk](docs/mef/ty2025-unregistered-root-applicability.md); neither a source literal nor absence from a registry is a support/exclusion decision.
 - [ ] Reconcile the registered-document audit, root crosswalk, [conditional-schedule audit](docs/mef/ty2025-conditional-schedule-applicability.md), [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md), and actual registries after implementation so their counts, triggers, and unsupported branches agree.
 - [ ] Decide, with the user, which current-return paths are separate workflows: amended Form 1040-X; payment/account roots (1062, 965, estimated tax, Form T, payment); recipient copies of RRB-1042-S and SSA-1042-S; and optional Forms 4547 and 9000. Preserve any income, withholding, tax, election, or amendment consequences on Form 1040.

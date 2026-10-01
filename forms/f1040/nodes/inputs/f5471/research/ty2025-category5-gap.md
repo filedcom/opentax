@@ -8,9 +8,11 @@ Schedule 1 line 8n. Form 5471 Schedule I line 4 factoring income is outside this
 bounded route and must be zero. The previous asserted `subpart_f_income` and
 `gilti_inclusion` fields have been removed.
 
-The Schedule I-1 source supplies one CFC's tested income, shareholder pro rata
-tested income, QBAI, and tested interest. The wholly owned route requires the
-two tested-income amounts to match. Form 8992 Part I line 3 equals tested income
+The Schedule I-1 source supplies one CFC's functional-currency gross income,
+exclusions, deductions, tested foreign taxes, QBAI, and interest lines, plus a
+reviewed average exchange rate and U.S.-dollar amounts. The schema reconciles
+its line 6, 7, 8, 9d, and 10c conversions and requires wholly owned tested
+income to equal the shareholder pro rata amount. Form 8992 Part I line 3 equals tested income
 because tested losses are outside this route. Part II line 2 is 10% of QBAI,
 line 3c is the excess of tested interest expense over income, line 4 is net
 DTIR, and line 5 is the nonnegative GILTI inclusion. That last amount goes to
@@ -18,14 +20,15 @@ Schedule 1 line 8o. The AGI aggregator and Form 1040 income see the same 8n/8o
 amounts. The 2025 Schedule 1 MeF tags and PDF fields are mapped separately.
 
 **Filing remains closed.** Form 5471 Category 5a requires the full corporation
-identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G, G-1
-when applicable, H, I, I-1, J, P, Q, and R, with additional schedules depending
-on ownership and transactions. This source contract does not yet contain or emit
-those schedules. Form 8992 and Schedule A are calculated but are not registered
-as native MeF/PDF attachments. The Form 5471 attachment coverage gate and the
+identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
+G-1, H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
+and other attachments depending on ownership and transactions. This source contract does not yet contain or emit
+those schedules. Form 8992, Schedule A, and separate Form 5471 Schedule I-1
+now have source-reconciled native MeF/PDF descriptors, but the full Form 5471
+packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a
-reviewer locator, not authenticated filed document bytes. Shareholder TIN still
-needs comparison with the return filer when attachment export is implemented.
+reviewer locator, not authenticated filed document bytes. The Schedule I-1 and
+Form 8992 descriptors compare shareholder TIN with the return filer.
 Multi-CFC, tested losses, partial ownership, factoring income, and section 962
 elections remain open.
 

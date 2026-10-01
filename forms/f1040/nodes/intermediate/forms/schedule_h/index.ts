@@ -99,6 +99,40 @@ export const inputSchema = z.object({
     employee_wages: z.array(futaEmployeeSchema).length(1),
   }).strict().optional(),
 
+  // One parent's child, age 18–20 throughout 2025. Family wages are excluded
+  // from FICA and FUTA, but agreed Form W-4 withholding belongs on line 7.
+  family_withholding_only_payroll: z.object({
+    all_household_employees_included: z.literal(true),
+    employer_parent_ssn: z.string().regex(/^\d{9}$/),
+    employee: z.object({
+      employee_id: z.string().trim().min(1),
+      employee_ssn: z.string().regex(/^\d{9}$/),
+      relationship: z.literal("child"),
+      relationship_source_reference: z.string().trim().min(1),
+      birth_date: calendarDate,
+      birth_date_source_reference: z.string().trim().min(1),
+      payroll_source_reference: z.string().trim().min(1),
+      ordinary_cash_only: z.literal(true),
+      annual_cash_wages: z.number().positive(),
+      quarterly_cash_wages: z.tuple([
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+      ]),
+      federal_income_tax_withholding_requested_and_agreed: z.literal(true),
+      w4_source_reference: z.string().trim().min(1),
+      w2: z.object({
+        source_reference: z.string().trim().min(1),
+        employee_ssn: z.string().regex(/^\d{9}$/),
+        box1_wages: z.number().positive(),
+        box2_federal_income_tax_withheld: z.number().positive(),
+        box3_social_security_wages: z.literal(0),
+        box5_medicare_wages: z.literal(0),
+      }).strict(),
+    }).strict(),
+  }).strict().optional(),
+
   // Part II Section A/B: the payroll ledger verifies each employee's $7,000 cap.
   federal_unemployment: z.union([
     z.object({
@@ -182,6 +216,42 @@ export function computeScheduleHAmounts(
   }
   const unemployment = input.federal_unemployment;
   const ficaOnly = input.fica_only_payroll;
+  const family = input.family_withholding_only_payroll;
+  if (family) {
+    const employee = family.employee;
+    const references = [
+      employee.relationship_source_reference,
+      employee.birth_date_source_reference,
+      employee.payroll_source_reference,
+      employee.w4_source_reference,
+      employee.w2.source_reference,
+    ];
+    if (
+      taxYear !== 2025 || unemployment || ficaOnly ||
+      employee.birth_date < "2005-01-01" ||
+      employee.birth_date > "2006-12-31" ||
+      employee.employee_ssn === family.employer_parent_ssn ||
+      new Set(references).size !== references.length ||
+      employee.quarterly_cash_wages.reduce((sum, wages) => sum + wages, 0) !==
+        employee.annual_cash_wages ||
+      employee.quarterly_cash_wages.every((wages) => wages < 1_000) ||
+      employee.w2.employee_ssn !== employee.employee_ssn ||
+      employee.w2.box1_wages !== employee.annual_cash_wages ||
+      employee.w2.box2_federal_income_tax_withheld >
+        employee.annual_cash_wages ||
+      input.cash_wages_over_2025_limit !== false ||
+      input.cash_wages_over_quarter_limit !== false ||
+      (input.ss_wages ?? 0) !== 0 ||
+      (input.medicare_wages ?? 0) !== 0 ||
+      (input.additional_medicare_wages ?? 0) !== 0 ||
+      input.federal_income_tax_withheld !==
+        employee.w2.box2_federal_income_tax_withheld
+    ) {
+      throw new Error(
+        "Schedule H child withholding source must reconcile parent, age, payroll, Form W-4, Form W-2, and FICA/FUTA exclusions",
+      );
+    }
+  }
   if (ficaOnly) {
     const employee = ficaOnly.employee_wages[0]!;
     if (

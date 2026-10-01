@@ -82,3 +82,24 @@ and reviewed source assertions, not authenticated document bytes. Family
 workers, nonstudent minors without a proved principal household occupation,
 and wider worker combinations remain open. No XSD, full test, or filled-PDF
 result is claimed for this route yet.
+
+## One child age 18–20 with agreed income tax withholding
+
+The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
+exclude wages paid to an employer's child under 21 from the Social Security,
+Medicare, and FUTA tests. They permit federal income tax withholding when the
+employee requests it, supplies Form W-4, and the employer agrees. A bounded
+route accepts exactly one such child, born in 2005 or 2006, with ordinary cash
+wages and a positive Form W-2 box 2 amount. It requires separate reviewed
+relationship, birth-date, payroll, Form W-4, and Form W-2 references; the
+employer parent's SSN must match the final filer, while the child's SSN must
+match Form W-2. Four payroll quarters must sum to Form W-2 box 1 and annual
+wages. At least one quarter reaches $1,000, demonstrating that the false FUTA
+line 9 answer rests on the family exclusion. W-2 boxes 3 and 5, taxable FICA
+wages, and FUTA are zero. Schedule H line 7/8 and Schedule 2 line 9 equal
+W-2 box 2. Native MeF and PDF replay the retained source and Schedule 2 total.
+
+The synthetic $5,000 wage/$250 withholding and tamper fixtures are authored
+for the deferred test batch. Source references are reviewed assertions, not
+authenticated document bytes. Spouse/parent cases, multiple workers, mixed
+family/unrelated payroll, and other ages remain open.

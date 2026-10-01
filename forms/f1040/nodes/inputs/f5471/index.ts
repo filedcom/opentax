@@ -53,16 +53,108 @@ export const scheduleISchema = z.object({
 });
 
 export const testedIncomeSchema = z.object({
+  separate_category: z.enum(["GEN", "PAS"]),
+  average_exchange_rate: z.string().regex(/^\d{1,10}(\.\d{1,12})?$/)
+    .refine((rate) => Number(rate) > 0),
+  gross_income_functional: z.number().int(),
+  effectively_connected_income_functional: z.number().int(),
+  subpart_f_income_functional: z.number().int(),
+  high_tax_exception_income_functional: z.number().int(),
+  related_party_dividends_functional: z.number().int(),
+  foreign_oil_gas_income_functional: z.number().int(),
+  allocable_deductions_functional: z.number().int(),
+  tested_foreign_taxes_functional: dollars,
+  tested_foreign_taxes_usd: dollars,
+  qbai_functional: dollars,
+  interest_expense_functional: dollars,
+  qualified_interest_expense_functional: dollars,
+  tested_loss_qbai_functional: z.literal(0),
+  tested_interest_expense_functional: dollars,
+  interest_income_functional: dollars,
+  qualified_interest_income_functional: dollars,
+  tested_interest_income_functional: dollars,
   tested_income: dollars,
   pro_rata_tested_income: dollars,
   pro_rata_qbai: dollars,
   pro_rata_tested_interest_income: dollars,
   pro_rata_tested_interest_expense: dollars,
   schedule_i1_source_reference: sourceReference,
-}).strict().refine(
-  (v) => v.tested_income === v.pro_rata_tested_income,
-  "Wholly owned CFC tested income must equal the shareholder pro rata amount",
-);
+}).strict().superRefine((v, ctx) => {
+  const rate = Number(v.average_exchange_rate);
+  const exclusions = v.effectively_connected_income_functional +
+    v.subpart_f_income_functional +
+    v.high_tax_exception_income_functional +
+    v.related_party_dividends_functional +
+    v.foreign_oil_gas_income_functional;
+  const testedFunctional = v.gross_income_functional - exclusions -
+    v.allocable_deductions_functional;
+  const issue = (path: string, message: string) =>
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [path],
+      message,
+    });
+  if (
+    testedFunctional < 0 ||
+    Math.round(testedFunctional / rate) !== v.tested_income
+  ) {
+    issue(
+      "tested_income",
+      "Schedule I-1 line 6 USD must reconcile to functional-currency lines 1–5 and the reviewed exchange rate",
+    );
+  }
+  if (v.tested_income !== v.pro_rata_tested_income) {
+    issue(
+      "pro_rata_tested_income",
+      "Wholly owned CFC tested income must equal the shareholder pro rata amount",
+    );
+  }
+  if (
+    Math.round(v.tested_foreign_taxes_functional / rate) !==
+      v.tested_foreign_taxes_usd
+  ) {
+    issue(
+      "tested_foreign_taxes_usd",
+      "Schedule I-1 line 7 USD must reconcile to functional currency",
+    );
+  }
+  if (Math.round(v.qbai_functional / rate) !== v.pro_rata_qbai) {
+    issue(
+      "pro_rata_qbai",
+      "Schedule I-1 line 8 USD must reconcile to functional currency",
+    );
+  }
+  if (
+    v.tested_interest_expense_functional !==
+      Math.max(
+        0,
+        v.interest_expense_functional -
+          v.qualified_interest_expense_functional -
+          v.tested_loss_qbai_functional,
+      ) ||
+    Math.round(v.tested_interest_expense_functional / rate) !==
+      v.pro_rata_tested_interest_expense
+  ) {
+    issue(
+      "pro_rata_tested_interest_expense",
+      "Schedule I-1 line 9d must reconcile to lines 9a–9c and USD conversion",
+    );
+  }
+  if (
+    v.tested_interest_income_functional !==
+      Math.max(
+        0,
+        v.interest_income_functional - v.qualified_interest_income_functional,
+      ) ||
+    Math.round(v.tested_interest_income_functional / rate) !==
+      v.pro_rata_tested_interest_income
+  ) {
+    issue(
+      "pro_rata_tested_interest_income",
+      "Schedule I-1 line 10c must reconcile to lines 10a–10b and USD conversion",
+    );
+  }
+});
 
 export const itemSchema = z.object({
   foreign_corp_name: z.string().trim().min(1).max(75)
