@@ -16,15 +16,37 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
+const ficaOnlySource = {
+  employer_ein: "000000029",
+  cash_wages_over_2025_limit: true,
+  cash_wages_over_quarter_limit: false,
+  ss_wages: 3_100,
+  medicare_wages: 3_100,
+  federal_income_tax_withheld: 0,
+  fica_only_payroll: {
+    all_household_employees_included: true,
+    prior_year_payroll_source_reference: "2024-household-payroll-review",
+    prior_year_quarter_cash_wages: [0, 0, 0, 0],
+    employee_wages: [{
+      employee_id: "synthetic-worker-1",
+      payroll_source_reference: "2025-household-payroll-review",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: true,
+      ordinary_cash_only: true,
+      annual_cash_wages: 3_100,
+      quarterly_cash_wages: [775, 775, 775, 775],
+      w2: {
+        source_reference: "2025-household-w2-review",
+        box2_federal_income_tax_withheld: 0,
+        box3_social_security_wages: 3_100,
+        box5_medicare_wages: 3_100,
+      },
+    }],
+  },
+};
+
 Deno.test("Schedule H uses the form's required identity and line-level tax amounts", () => {
-  const xml = scheduleH.build({
-    employer_ein: "000000029",
-    cash_wages_over_2025_limit: true,
-    cash_wages_over_quarter_limit: false,
-    ss_wages: 3_100,
-    medicare_wages: 3_100,
-    federal_income_tax_withheld: 0,
-  }, { filer });
+  const xml = scheduleH.build(ficaOnlySource, { filer });
   assertStringIncludes(
     xml,
     "<HouseholdEmployerNm>Tara Black</HouseholdEmployerNm>",
@@ -42,25 +64,45 @@ Deno.test("Schedule H uses the form's required identity and line-level tax amoun
 });
 
 Deno.test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
-  const xml = scheduleH.build({
+  assertThrows(() => scheduleH.build({
     employer_ein: "123456789",
     cash_wages_over_2025_limit: true,
     cash_wages_over_quarter_limit: false,
     ss_wages: 176_100,
     medicare_wages: 220_000,
     additional_medicare_wages: 20_000,
-  }, { filer });
-  assertStringIncludes(
-    xml,
-    "<TotMedcrTaxCashWagesAddnlWhAmt>20000</TotMedcrTaxCashWagesAddnlWhAmt>",
+  }, { filer }), Error, "needs employee payroll source");
+});
+
+Deno.test("Schedule H FICA-only source rejects current/prior quarter and W-2 drift", () => {
+  const base = ficaOnlySource.fica_only_payroll;
+  assertThrows(
+    () => scheduleH.build({
+      ...ficaOnlySource,
+      fica_only_payroll: {
+        ...base,
+        prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
+      },
+    }, { filer }),
+    Error,
+    "below the FUTA quarter threshold",
   );
-  assertStringIncludes(
-    xml,
-    "<AddnlMedicareTaxWithholdingAmt>180</AddnlMedicareTaxWithholdingAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<TotSocSecMedcrAndFedIncmTaxAmt>28396</TotSocSecMedcrAndFedIncmTaxAmt>",
+  assertThrows(
+    () => scheduleH.build({
+      ...ficaOnlySource,
+      fica_only_payroll: {
+        ...base,
+        employee_wages: [{
+          ...base.employee_wages[0],
+          w2: {
+            ...base.employee_wages[0].w2,
+            box3_social_security_wages: 3_099,
+          },
+        }],
+      },
+    }, { filer }),
+    Error,
+    "differ from the employee Form W-2",
   );
 });
 

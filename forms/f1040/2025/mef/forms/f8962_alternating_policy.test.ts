@@ -108,6 +108,132 @@ Deno.test("Form 8962 native and PDF reconcile a full-year A-B-A policy sequence"
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
+Deno.test("Form 8962 reconciles four sequential same-state policies for one filer", () => {
+  const sequential = [0, 1, 2, 3].map((owner) =>
+    policy(
+      `TX-${owner + 1}`,
+      months.map((_, index) => Math.floor(index / 3) === owner),
+    )
+  );
+  const source = { f1095as: sequential };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(sourceFields?.monthly_premiums, Array(12).fill(500));
+  assertEquals(sourceFields?.monthly_slcsps, Array(12).fill(600));
+  assertEquals(sourceFields?.monthly_aptcs, Array(12).fill(200));
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 804);
+  assertEquals(calculated?.excess_advance_premium, 1_596);
+  const fourPending = { ...pending, f1095a: source };
+  const xml = form8962.build(fields, { filer, pending: fourPending });
+  assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 12);
+  const projected = form8962Pdf.projectFields?.(fields, fourPending) ?? {};
+  assertEquals(form8962Pdf.instances?.(projected, filer, fourPending)?.length, 1);
+  assertThrows(
+    () => form8962.build(fields, { filer, pending: { ...fourPending, f1095a: { f1095as: [sequential[0], sequential[1], sequential[2], { ...sequential[3], policy_number: "TX-1" }] } } }),
+    Error,
+  );
+});
+
+Deno.test("Form 8962 two sequential policies at 200% FPL apply the single-filer repayment cap", () => {
+  const lowerIncomePolicies = [0, 1].map((owner) => {
+    const active = months.map((_, index) => Math.floor(index / 6) === owner);
+    return {
+      ...policy(`TX-LOW-${owner + 1}`, active),
+      monthly_premiums: active.map((yes) => yes ? 800 : 0),
+      monthly_slcsps: active.map((yes) => yes ? 700 : 0),
+      monthly_aptcs: active.map((yes) => yes ? 750 : 0),
+      annual_premium: 4_800,
+      annual_slcsp: 4_200,
+      annual_aptc: 4_500,
+    };
+  });
+  const source = { f1095as: lowerIncomePolicies };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 30_120,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.applicable_figure, 0.02);
+  assertEquals(calculated?.total_premium_tax_credit, 7_800);
+  assertEquals(calculated?.excess_advance_payment, 1_200);
+  assertEquals(calculated?.excess_advance_premium, 975);
+  const lowIncomeFields = {
+    ...fields,
+    taxpayer_modified_agi: 30_120,
+    household_income: 30_120,
+    federal_poverty_pct: 200,
+    applicable_figure: 0.02,
+    annual_applicable_contribution: 602,
+    monthly_applicable_contribution: 50,
+    monthly_ptc_rows: months.map((month_code) => ({
+      month_code,
+      premium: 800,
+      slcsp: 700,
+      contribution: 50,
+      max_assistance: 650,
+      allowed_credit: 650,
+      aptc: 750,
+    })),
+    total_premium_tax_credit: 7_800,
+    total_advance_ptc: 9_000,
+    excess_advance_payment: 1_200,
+    repayment_limitation: 975,
+    excess_advance_premium: 975,
+  };
+  const lowIncomePending = {
+    ...pending,
+    general: {
+      filing_status: "single",
+      address_state: "TX",
+      taxpayer_ssn: "123456789",
+      taxpayer_can_be_claimed_as_dependent: false,
+    },
+    f1095a: source,
+    f1040: { line11_agi: 30_120, line17_additional_taxes: 975 },
+    schedule2: { line1a_excess_advance_premium: 975 },
+  };
+  const xml = form8962.build(lowIncomeFields, { filer, pending: lowIncomePending });
+  assertStringIncludes(xml, "<AdditionalTaxLimitationAmt>975</AdditionalTaxLimitationAmt>");
+  assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 12);
+  const projected = form8962Pdf.projectFields?.(lowIncomeFields, lowIncomePending) ?? {};
+  assertEquals(form8962Pdf.instances?.(projected, filer, lowIncomePending)?.length, 1);
+  assertThrows(
+    () => form8962.build({ ...lowIncomeFields, repayment_limitation: 1_625 }, { filer, pending: lowIncomePending }),
+    Error,
+    "lines 24 through 29 differ",
+  );
+  assertThrows(
+    () => form8962.build(lowIncomeFields, { filer, pending: { ...lowIncomePending, general: { ...lowIncomePending.general, taxpayer_can_be_claimed_as_dependent: true } } }),
+    Error,
+    "sourced single-filer eligibility",
+  );
+});
+
 Deno.test("Form 8962 alternating policies reject month, identity, state, and final-return drift", () => {
   const overlap = {
     ...policies[1],

@@ -3,6 +3,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as form8889SourceSchema } from "../../../nodes/intermediate/forms/form8889/index.ts";
 import {
+  reconcileDatedExceptionForm8889,
   reconcileCode2Form8889,
   reconcilePairedForm8889,
   reconcileRolloverForm8889,
@@ -173,6 +174,7 @@ function buildIRS8889(
     context?.pending,
     context?.filer,
   );
+  reconcileDatedExceptionForm8889(fields.forms, context?.pending, context?.filer);
   reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
   reconcileRolloverForm8889(fields.forms, context?.pending, context?.filer);
   reconcilePairedForm8889(

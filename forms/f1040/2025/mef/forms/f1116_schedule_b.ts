@@ -30,7 +30,7 @@ const combinedFieldsSchema = z.object({
   prior_year_review: carryoverReviewSchema,
   prior_year_carryover: z.number().int().positive(),
   used_prior_year_carryover: z.literal(0),
-  remaining_prior_year_carryover: z.number().int().positive(),
+  remaining_prior_year_carryover: z.number().int().nonnegative(),
   prior_year_carryover_source: priorYearCarryoverSchema,
 }).strict();
 
@@ -90,9 +90,6 @@ export function scheduleBPresentation(raw: unknown) {
         fields.category ||
       fields.prior_year_carryover_source
           .prior_year_schedule_b_line8_total !==
-        fields.prior_year_carryover ||
-      fields.used_prior_year_carryover +
-            fields.remaining_prior_year_carryover !==
         fields.prior_year_carryover
     ) {
       throw new Error(
@@ -106,9 +103,22 @@ export function scheduleBPresentation(raw: unknown) {
       const amount = vintage.prior_year_schedule_b_line8_vintage_amount;
       const used = Math.min(amount, capacity);
       capacity -= used;
+      const expired = vintage.vintage_tax_year === 2015
+        ? amount - used
+        : 0;
       return {
         year: vintage.vintage_tax_year,
-        tag: vintage.vintage_tax_year === 2020
+        tag: vintage.vintage_tax_year === 2015
+          ? "TenthPrecedingTYAmt"
+          : vintage.vintage_tax_year === 2016
+          ? "NinthPrecedingTYAmt"
+          : vintage.vintage_tax_year === 2017
+          ? "EighthPrecedingTYAmt"
+          : vintage.vintage_tax_year === 2018
+          ? "SeventhPrecedingTYAmt"
+          : vintage.vintage_tax_year === 2019
+          ? "SixthPrecedingTYAmt"
+          : vintage.vintage_tax_year === 2020
           ? "FifthPrecedingTYAmt"
           : vintage.vintage_tax_year === 2021
           ? "FourthPrecedingTYAmt"
@@ -119,15 +129,28 @@ export function scheduleBPresentation(raw: unknown) {
           : "FirstPrecedingTYAmt",
         amount,
         used,
-        remaining: amount - used,
+        expired,
+        remaining: amount - used - expired,
       };
     });
+    const expired = rows.reduce((sum, row) => sum + row.expired, 0);
+    if (
+      capacity !== 0 ||
+      fields.used_prior_year_carryover +
+          fields.remaining_prior_year_carryover + expired !==
+        fields.prior_year_carryover
+    ) {
+      throw new Error(
+        "Form 1116 Schedule B prior-year balance, use, and expiry do not reconcile",
+      );
+    }
     return {
       case: fields.case,
       category: fields.category,
       indicator,
       balance: fields.prior_year_carryover,
       used: fields.used_prior_year_carryover,
+      expired,
       remaining: fields.remaining_prior_year_carryover,
       rows,
       amount: fields.case === "combined_current_excess_prior_balance"
@@ -154,7 +177,7 @@ export const form1116ScheduleB: MefFormDescriptor<
     if (Array.isArray(raw) && raw.length === 0) return "";
     const presentation = scheduleBPresentation(raw);
     if (presentation.case !== "current_year_excess") {
-      const { indicator, balance, used, remaining, rows } = presentation;
+      const { indicator, balance, used, expired, remaining, rows } = presentation;
       const currentExcess = presentation.case ===
           "combined_current_excess_prior_balance"
         ? presentation.amount
@@ -175,6 +198,13 @@ export const form1116ScheduleB: MefFormDescriptor<
               element(row.tag, -row.used)
             ),
             element("TotalAmt", -used),
+          ])
+          : "",
+        expired > 0
+          ? elements("ForeignTxCyovExprUnsdCurrTYGrp", [
+            element("TenthPrecedingTYAmt", -expired),
+            element("SubtotalAmt", -expired),
+            element("TotalAmt", -expired),
           ])
           : "",
         currentExcess > 0

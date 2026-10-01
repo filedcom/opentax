@@ -7,12 +7,94 @@ import {
   inputSchema,
 } from "../nodes/intermediate/forms/form8889/index.ts";
 
+/** Bind a primary owner's dated exception to its Form 1099-SA sources. */
+export function reconcileDatedExceptionForm8889(
+  forms: readonly Readonly<Record<string, unknown>>[],
+  allPending: Readonly<Record<string, unknown>> | undefined,
+  filer: FilerIdentity | undefined,
+): void {
+  // The spouse-only and paired reconcilers independently recompute those forms.
+  if (forms.length !== 1 || forms[0]?.owner !== "primary") return;
+  const filed = forms[0];
+  const pending8889 = allPending?.form8889;
+  const raw = pending8889 && typeof pending8889 === "object" &&
+      !Array.isArray(pending8889)
+    ? pending8889 as Record<string, unknown>
+    : undefined;
+  const rawEvidence = raw?.age_65_exception_evidence ??
+    raw?.disability_exception_evidence;
+  if (!rawEvidence && filed.print_line17a_exception !== true) return;
+  if (!rawEvidence) {
+    throw new Error("Form 8889 taxable exception needs dated owner source");
+  }
+  const { forms: _printed, ...sourceFields } = raw!;
+  const source = inputSchema.parse(sourceFields);
+  if (
+    source.spouse_hsa !== undefined ||
+    source.beneficiary_identity.owner !== TS.T ||
+    source.beneficiary_identity.ssn.replaceAll("-", "") !==
+      filer?.primarySSN.replaceAll("-", "") ||
+    source.beneficiary_identity.ssn.replaceAll("-", "") !==
+      filed.beneficiary_ssn ||
+    source.beneficiary_identity.name !== filed.beneficiary_name ||
+    source.beneficiary_identity.name !== filer?.fullName
+  ) {
+    throw new Error("Form 8889 dated exception source differs from filer owner");
+  }
+  const outputs = form8889.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs;
+  const expected = (outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as readonly Record<string, unknown>[] | undefined)?.[0];
+  if (
+    !expected ||
+    Object.keys(expected).sort().join("|") !==
+      Object.keys(filed).sort().join("|") ||
+    Object.keys(expected).some((key) => expected[key] !== filed[key])
+  ) {
+    throw new Error("Form 8889 dated exception printed lines differ from source calculation");
+  }
+  const schedule1 = z.object({
+    line13_hsa_deduction: z.number().optional(),
+    line8f_hsa_income: z.number().optional(),
+    line10_total_additional_income: z.number(),
+    line26_total_adjustments: z.number(),
+  }).passthrough().parse(allPending?.schedule1);
+  const schedule2 = z.object({
+    line17c_hsa_penalty: z.number().optional(),
+    line17d_hsa_eligibility_tax: z.number().optional(),
+  }).passthrough().parse(allPending?.schedule2 ?? {});
+  const return1040 = z.object({
+    line8_additional_income: z.number(),
+    line10_adjustments: z.number(),
+  }).passthrough().parse(allPending?.f1040);
+  if (
+    (schedule1.line13_hsa_deduction ?? 0) !==
+      (filed.print_line13_deduction ?? 0) ||
+    (schedule1.line8f_hsa_income ?? 0) !==
+      (filed.print_line16_taxable ?? 0) + (filed.print_line20 ?? 0) ||
+    (schedule2.line17c_hsa_penalty ?? 0) !==
+      (filed.print_line17b_penalty ?? 0) ||
+    (schedule2.line17d_hsa_eligibility_tax ?? 0) !==
+      (filed.print_line21 ?? 0) ||
+    schedule1.line10_total_additional_income !==
+      return1040.line8_additional_income ||
+    schedule1.line26_total_adjustments !== return1040.line10_adjustments
+  ) {
+    throw new Error("Form 8889 dated exception amounts differ from filed return");
+  }
+}
+
 /** Bind a single-owner rollover to its owner source and return totals. */
 export function reconcileRolloverForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
+  // The paired-owner reconciliation below independently recomputes each
+  // owner's rollover and combined return totals.
+  if (forms.length === 2) return;
   const pending8889 = allPending?.form8889;
   if (
     !pending8889 || typeof pending8889 !== "object" ||
@@ -115,6 +197,7 @@ export function reconcileCode2Form8889(
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
+  if (forms.length === 2) return;
   const pending8889 = allPending?.form8889;
   if (
     !pending8889 || typeof pending8889 !== "object" ||
@@ -531,14 +614,35 @@ export function reconcilePairedForm8889(
       item.source_reference
     ) ?? []),
   ]);
+  const pairedRollovers = owners.filter((owner) =>
+    owner.hsa_excluded_distributions?.rollover !== undefined
+  );
+  const pairedCode2Owners = owners.filter((owner) =>
+    owner.hsa_excluded_distributions?.timely_excess_withdrawal !== undefined
+  );
+  const rolloverReferences = owners.flatMap((owner) => {
+    const rollover = owner.hsa_excluded_distributions?.rollover;
+    return rollover
+      ? [
+        rollover.distribution_source_reference,
+        rollover.contribution_source_reference,
+      ]
+      : [];
+  });
   if (
+    pairedRollovers.length > 1 || pairedCode2Owners.length > 1 ||
+    (pairedRollovers.length > 0 && pairedCode2Owners.length > 0) ||
     new Set(distributionReferences).size !== distributionReferences.length ||
     new Set(expenseReferences).size !== expenseReferences.length ||
     new Set(datedDistributionReferences).size !==
-      datedDistributionReferences.length
+      datedDistributionReferences.length ||
+    new Set(rolloverReferences).size !== rolloverReferences.length ||
+    rolloverReferences.some((reference) =>
+      datedDistributionReferences.includes(reference)
+    )
   ) {
     throw new Error(
-      "Form 8889 paired owners cannot reuse a Form 1099-SA, qualified medical expense, or dated distribution reference",
+      "Form 8889 paired owners cannot reuse a Form 1099-SA, medical expense, dated distribution, or rollover reference",
     );
   }
   if (
@@ -559,7 +663,20 @@ export function reconcilePairedForm8889(
         (owner.testing_period_failure !== undefined && !pairedPriorRecapture) ||
         owner.employer_excess_treatment !== undefined ||
         owner.post_year_personal_excess_withdrawal !== undefined ||
-        owner.hsa_excluded_distributions !== undefined
+        (owner.hsa_excluded_distributions !== undefined &&
+          !(owner.hsa_excluded_distributions.rollover !== undefined &&
+            owner.hsa_excluded_distributions.timely_excess_withdrawal ===
+              undefined &&
+            owner.age_65_exception_evidence === undefined &&
+            owner.disability_exception_evidence === undefined) &&
+          !(owner.hsa_excluded_distributions.timely_excess_withdrawal !==
+              undefined &&
+            owner.hsa_excluded_distributions.rollover === undefined &&
+            owner.age_65_exception_evidence === undefined &&
+            owner.disability_exception_evidence === undefined &&
+            owners.every((other) =>
+              other === owner || (other.hsa_distributions ?? 0) === 0
+            )))
       ))
   ) {
     throw new Error(
@@ -598,6 +715,7 @@ export function reconcilePairedForm8889(
     line8f_hsa_income: z.number().optional(),
     line8z_hsa_excess_earnings: z.number().optional(),
     line8z_hsa_excess_employer: z.number().optional(),
+    line10_total_additional_income: z.number().optional(),
     line26_total_adjustments: z.number().optional(),
   }).passthrough().parse(allPending?.schedule1 ?? {});
   const schedule2 = z.object({
@@ -605,8 +723,16 @@ export function reconcilePairedForm8889(
     line17d_hsa_eligibility_tax: z.number().optional(),
   }).passthrough().parse(allPending?.schedule2 ?? {});
   const form1040 = z.object({
+    line8_additional_income: z.number().optional(),
     line10_adjustments: z.number().optional(),
   }).passthrough().parse(allPending?.f1040);
+  const code2Earnings = owners.reduce(
+    (total, owner) =>
+      total +
+      (owner.hsa_excluded_distributions?.timely_excess_withdrawal
+        ?.included_earnings ?? 0),
+    0,
+  );
   const sum = (key: string): number =>
     forms.reduce((total, form) => {
       const value = form[key];
@@ -616,8 +742,12 @@ export function reconcilePairedForm8889(
     (schedule1.line13_hsa_deduction ?? 0) !== sum("print_line13_deduction") ||
     (schedule1.line8f_hsa_income ?? 0) !==
       sum("print_line16_taxable") + sum("print_line20") ||
-    (schedule1.line8z_hsa_excess_earnings ?? 0) !== 0 ||
+    (schedule1.line8z_hsa_excess_earnings ?? 0) !== code2Earnings ||
     (schedule1.line8z_hsa_excess_employer ?? 0) !== 0 ||
+    (pairedCode2Owners.length > 0 &&
+      (schedule1.line10_total_additional_income === undefined ||
+        schedule1.line10_total_additional_income !==
+          form1040.line8_additional_income)) ||
     (schedule1.line26_total_adjustments ?? 0) !==
       (form1040.line10_adjustments ?? 0) ||
     (schedule2.line17c_hsa_penalty ?? 0) !== sum("print_line17b_penalty") ||

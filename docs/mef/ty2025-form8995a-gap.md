@@ -128,11 +128,35 @@ coverage is claimed.
 
 One identified SSTB for a single filer inside the 2025 taxable-income phase-in
 range now produces a separate registered `IRS8995AScheduleA` native document.
+The same one-business route also accepts a married-filing-jointly return inside
+the $394,600–$494,600 phase-in range. It calculates the joint $100,000 range
+from the 2025 configuration, projects the threshold and range in the parent and
+Schedule A native/PDF documents, and requires the native parent status to match
+the final return header. Positive, boundary, and status-mismatch fixtures are
+authored but unrun. The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a)
+specify those joint thresholds and Schedule A requirement.
+One head-of-household return is also admitted under the instructions' "all other
+returns" $197,300–$247,300 phase-in range. The parent and Schedule A native
+builders both require the head-of-household return header; the same source,
+deduction, native attachment, and PDF calculations apply. Positive, boundary,
+status-mismatch, and still-unsupported qualifying-surviving-spouse fixtures
+are authored but unrun. QSS remains closed pending its return-boundary review.
+An MFS return with one taxpayer-owned SSTB now uses the same nonjoint phase-in
+only when the SSTB filing details identify the primary taxpayer by SSN, name a
+separate-return QBI/W-2/UBIA allocation workpaper, and affirm that no spouse
+share is claimed. Both native documents compare that owner and MFS status with
+the final return header; both PDF descriptors check them at rendering. Their
+projected lines still reconcile to the matching parent/companion and Form 1040
+line 13. Positive, omitted-reference, owner-tamper, and status-tamper fixtures
+are authored but unrun. The allocation workpaper and upstream business source
+bytes are not authenticated, and spouse-share or multiple-business variants
+remain unsupported. The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a)
+place MFS in the $197,300–$247,300 "all other returns" range.
 Its attested business identity and QBI, W-2 wage, and UBIA amounts must match
 the parent source. The calculated applicable percentage and phased-in wage limit
 reconcile to the parent Form 8995-A and Form 1040 line 13a. A bounded
 official-field PDF descriptor for the companion and parent is registered. This
-excludes multiple businesses, PTPs, MFJ, patron, aggregation, gain, REIT/PTP
+excludes multiple businesses, PTPs, patron, aggregation, gain, REIT/PTP
 loss, and prior-loss combinations. The asserted business source has not been
 independently authenticated. Focused cases are written but unrun; local XSD,
 filled-PDF inspection, IRS business rules, and ATS acceptance remain open.

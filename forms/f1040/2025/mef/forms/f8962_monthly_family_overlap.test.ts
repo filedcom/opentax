@@ -2,6 +2,11 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { DependentRelationship } from "../../../nodes/inputs/general/index.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
+import {
+  form8962 as form8962Calculation,
+  inputSchema as form8962InputSchema,
+} from "../../../nodes/intermediate/forms/form8962/index.ts";
+import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";
 import { form8962 } from "./f8962.ts";
 
@@ -147,6 +152,81 @@ Deno.test("Form 8962 monthly same-state family overlap combines A/C once and B o
   assertEquals(projected.pdf_month_1_premium, "1000");
   assertEquals(projected.pdf_month_1_slcsp, "1000");
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+});
+
+Deno.test("Form 8962 two-person same-state policies at 200% FPL apply the single-filer cap", () => {
+  const taxpayer = {
+    ...taxpayerPolicy,
+    monthly_slcsps: months.map((_, index) => index < 6 ? 700 : 600),
+    monthly_aptcs: Array<number>(12).fill(500),
+  };
+  const child = {
+    ...dependentPolicy,
+    monthly_slcsps: months.map((_, index) => index < 6 ? 700 : 0),
+    monthly_aptcs: months.map((_, index) => index < 6 ? 500 : 0),
+  };
+  const policySource = { f1095as: [taxpayer, child] };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    policySource,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals((sourceFields?.monthly_premiums as number[])[0], 1_000);
+  assertEquals((sourceFields?.monthly_slcsps as number[])[0], 700);
+  assertEquals((sourceFields?.monthly_aptcs as number[])[0], 1_000);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 27_580,
+      dependents_modified_agi: 13_300,
+      household_size: 2,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 6_792);
+  assertEquals(calculated?.excess_advance_payment, 2_208);
+  assertEquals(calculated?.excess_advance_premium, 975);
+  const lowIncomeFields = {
+    ...fields,
+    taxpayer_modified_agi: 27_580,
+    household_income: 40_880,
+    federal_poverty_pct: 200,
+    applicable_figure: 0.02,
+    annual_applicable_contribution: 818,
+    monthly_applicable_contribution: 68,
+    monthly_ptc_rows: months.map((month_code, index) => ({
+      month_code,
+      premium: index < 6 ? 1_000 : 500,
+      slcsp: index < 6 ? 700 : 600,
+      contribution: 68,
+      max_assistance: index < 6 ? 632 : 532,
+      allowed_credit: index < 6 ? 632 : 500,
+      aptc: index < 6 ? 1_000 : 500,
+    })),
+    total_premium_tax_credit: 6_792,
+    total_advance_ptc: 9_000,
+    excess_advance_payment: 2_208,
+    repayment_limitation: 975,
+    excess_advance_premium: 975,
+  };
+  const lowIncomePending = {
+    ...pending,
+    general: { ...pending.general, taxpayer_can_be_claimed_as_dependent: false },
+    f1095a: policySource,
+    schedule2: { line1a_excess_advance_premium: 975 },
+    f1040: { line11_agi: 27_580, line17_additional_taxes: 975 },
+  };
+  const xml = form8962.build(lowIncomeFields, { filer, pending: lowIncomePending });
+  assertStringIncludes(xml, "<AdditionalTaxLimitationAmt>975</AdditionalTaxLimitationAmt>");
+  const projected = form8962Pdf.projectFields?.(lowIncomeFields, lowIncomePending) ?? {};
+  assertEquals(form8962Pdf.instances?.(projected, filer, lowIncomePending)?.length, 1);
+  assertThrows(
+    () => form8962.build({ ...lowIncomeFields, repayment_limitation: 1_950 }, { filer, pending: lowIncomePending }),
+    Error,
+    "lines 24 through 29 differ",
+  );
 });
 
 Deno.test("Form 8962 monthly family overlap rejects missing enrollee ownership, divergent B and final return", () => {

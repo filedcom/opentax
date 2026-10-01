@@ -429,7 +429,7 @@ Deno.test("Form 8962 no-APTC at 200% FPL uses annual line 11 when SLCSP is uncha
         },
       }),
     Error,
-    "below-400%-FPL filing needs one filer and one identified policy",
+    "below-400%-FPL filing needs a verified one-person or family-policy route",
   );
 });
 

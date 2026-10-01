@@ -126,6 +126,9 @@ export const sstbFilingDetailsSchema = z.object({
   qualified_dividends_zero_confirmed: z.literal(true),
   qbi_wages_ubia_source_reference: z.string().trim().min(1),
   taxable_income_before_qbi_confirmed: z.literal(true),
+  mfs_owner_ssn: z.string().regex(/^\d{9}$/).optional(),
+  mfs_allocation_source_reference: z.string().trim().min(1).optional(),
+  mfs_no_spouse_share_confirmed: z.literal(true).optional(),
 });
 
 export const patronFilingDetailsSchema = z.object({
@@ -493,15 +496,33 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
 
 export function calculateOneSstb8995ALines(input: Form8995AInput) {
   const source = input.sstb_filing_details;
-  const threshold = CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const joint = input.filing_status === FilingStatus.MFJ;
+  const separate = input.filing_status === FilingStatus.MFS;
+  const threshold = joint
+    ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
+    : CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const phaseInRange = joint
+    ? CONFIG_BY_YEAR[2025].qbiPhaseInRange
+    : CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2;
   if (
-    !source || input.filing_status !== FilingStatus.Single ||
+    !source ||
+    (input.filing_status !== FilingStatus.Single &&
+      input.filing_status !== FilingStatus.HOH && !joint && !separate) ||
     !Number.isInteger(input.taxable_income) ||
     input.taxable_income <= threshold ||
-    input.taxable_income >= threshold + 50_000
+    input.taxable_income >= threshold + phaseInRange
   ) {
     throw new Error(
-      "Form 8995-A Schedule A needs one identified single-filer SSTB within the phase-in range",
+      "Form 8995-A Schedule A needs one identified single, head-of-household, separate, or joint-filer SSTB within the phase-in range",
+    );
+  }
+  if (
+    separate &&
+    (!source.mfs_owner_ssn || !source.mfs_allocation_source_reference ||
+      source.mfs_no_spouse_share_confirmed !== true)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A MFS needs taxpayer-owned SSTB and separate-return allocation source",
     );
   }
   if (
@@ -521,7 +542,7 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
       "Form 8995-A Schedule A source must be the only business, with no aggregation, patron, gain, REIT/PTP, or loss path",
     );
   }
-  const phaseIn = (input.taxable_income - threshold) / 50_000;
+  const phaseIn = (input.taxable_income - threshold) / phaseInRange;
   const applicable = 1 - phaseIn;
   const line2 = source.business_qbi * applicable;
   const line4 = source.business_w2_wages * applicable;
@@ -570,6 +591,8 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   }
   return {
     source,
+    threshold,
+    phaseInRange,
     phaseIn,
     applicable,
     line2,
@@ -596,6 +619,20 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
     line37: line39,
     line39,
   };
+}
+
+export function assertMfsSstbOwner(
+  input: Form8995AInput,
+  primarySSN: string,
+): void {
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    input.sstb_filing_details?.mfs_owner_ssn !== primarySSN
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A MFS SSTB owner differs from the final filer",
+    );
+  }
 }
 
 export function assertPatron1099PATRSource(

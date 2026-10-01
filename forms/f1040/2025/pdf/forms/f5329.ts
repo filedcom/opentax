@@ -162,7 +162,7 @@ export const form5329Pdf: PdfFormDescriptor = {
     if (JSON.stringify(pending.owner_forms) !== JSON.stringify(calculated.forms)) {
       throw new Error("Form 5329 PDF owner forms do not match source calculation");
     }
-    reconcileHsaOwnerForms(calculated.forms, allPending?.form8889);
+    reconcileHsaOwnerForms(calculated.forms, allPending?.form8889, filer);
     if (
       calculated.total > 0 &&
       allPending?.schedule2?.line8_form5329_tax !== calculated.total

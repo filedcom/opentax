@@ -49,3 +49,16 @@ combined exception types and other line 14b exclusion combinations remain open.
 Focused calculator, MeF, and PDF projection cases for the rollover combination
 are written but unrun. No typecheck, XSD, filled PDF, business-rule, or ATS
 result is claimed.
+
+## Single-primary export source check (written, unrun)
+
+A direct positive line-17a age-65 claim for the primary owner now requires the
+dated Form 1099-SA and birth-date source already used by the calculator. Native
+MeF and PDF parse the original owner source, recompute the printed Form 8889,
+and match the owner SSN and name to the filer. They reconcile taxable line 16
+and the remaining line-17b tax to Schedule 1, Schedule 2, and Form 1040 before
+export. A bare printed exception, changed Form 1099-SA box 1, changed filer
+identity, or changed return tax rejects. This also applies when a sourced
+rollover accompanies the exception. Positive and tamper fixtures are written
+for the deferred bulk test pass. The entered source references do not
+authenticate the underlying Form 1099-SA or birth document bytes.

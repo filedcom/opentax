@@ -113,7 +113,16 @@ function buildIRS1040ScheduleH(
       "Schedule H taxable FICA wages conflict with a false line A answer",
     );
   }
-  const amounts = computeScheduleHAmounts(inputSchema.parse(fields), 2025);
+  const source = inputSchema.parse(fields);
+  if (
+    source.federal_unemployment === undefined &&
+    ((source.ss_wages ?? 0) > 0 || (source.medicare_wages ?? 0) > 0 ||
+      (source.federal_income_tax_withheld ?? 0) > 0) &&
+    source.fica_only_payroll === undefined
+  ) {
+    throw new Error("Schedule H FICA-only export needs employee payroll source");
+  }
+  const amounts = computeScheduleHAmounts(source, 2025);
   const unemployment = fields.federal_unemployment;
   const ssTax = fields.ss_wages == null ? undefined : amounts.socialSecurityTax;
   const medicareTax = fields.medicare_wages == null

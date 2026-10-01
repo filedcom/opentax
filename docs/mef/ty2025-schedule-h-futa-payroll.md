@@ -20,8 +20,29 @@ The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
 specify the per-employee $7,000 FUTA base and the exclusions for wages paid to
 a spouse, child under 21, or parent. This bounded ledger accepts unrelated
 adults only. Family and under-18 exceptions, gross-up, noncash pay, and
-multiple employers remain outside this slice. FICA-only returns without a FUTA
-ledger, actual prior-year quarter and W-2/W-3 source copies, state wage-base
+multiple employers remain outside this slice. Wider FICA-only returns without a
+worker ledger, actual prior-year quarter and W-2/W-3 source copies, state wage-base
 differences, and payroll byte authentication remain open. The implementation
 and authored fixtures await the requested bulk test and filled-PDF review after
 the other form implementations finish.
+
+## One-worker FICA-only route (written, unrun)
+
+The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
+send line 8 to Schedule 2 line 9 without Part II when neither 2024 nor 2025
+has a $1,000 household-payroll quarter. A bounded route now accepts exactly one
+unrelated adult employee with ordinary cash wages of at least $2,800 in 2025,
+four 2025 quarters individually below $1,000, and four referenced 2024 quarters
+also below $1,000. The employee's annual wages must equal the 2025 quarters;
+W-2 boxes 3 and 5 must equal those wages, and box 2 must equal the entered
+federal withholding. Native MeF and PDF recompute Part I and reconcile the
+total to Schedule 2 line 9. A positive FICA-only export without this ledger
+rejects. Wider multiworker, family, minor, and withholding-only situations
+remain open.
+
+The synthetic source/calculation/native/PDF and altered-quarter/W-2 fixtures
+are authored but unrun. [ATS Scenario 1](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-1-12012025.pdf)
+supplies $3,100 Schedule H wage totals and a No answer on line 9, but no
+worker-level 2024/2025 quarter ledger. It remains partial evidence and cannot
+pass the FICA-only export gate without reviewed payroll facts. Entered source
+references do not authenticate payroll or W-2 bytes.

@@ -256,24 +256,28 @@ function reconcilePovertyTable(
 }
 
 // Independently check Form 8962 Table 2 and Table 5 at the filing boundary.
-// This route is limited to one filer on one nonshared Marketplace policy.
+// Below 100% remains one verified policy; 100%-399% also admits separately
+// reconciled one-person sequential and verified-family monthly policies.
 function simplePolicyIncomeAmounts(
   householdIncome: number,
   povertyLine: number,
   householdSize: number | null | undefined,
   policyCount: number,
   below100VerifiedException = false,
-  verifiedDependent = false,
+  verifiedFamilyPolicies = false,
 ): { povertyPct: number; figure: number; repaymentCap: number | undefined } {
   const actualPct = Math.floor(householdIncome / povertyLine * 100);
   if (
-    (actualPct < 100 && !below100VerifiedException) ||
+    (actualPct < 100 &&
+      (!below100VerifiedException || policyCount !== 1)) ||
     (actualPct < 400 &&
-      (policyCount !== 1 ||
-        (householdSize !== 1 && !(verifiedDependent && householdSize === 2))))
+      householdSize !== 1 &&
+      !(verifiedFamilyPolicies &&
+        ((householdSize === 2 && policyCount <= 2) ||
+          (householdSize === 3 && policyCount === 3))))
   ) {
     throw new Error(
-      "Form 8962 below-400%-FPL filing needs one filer and one identified policy",
+      "Form 8962 below-400%-FPL filing needs a verified one-person or family-policy route",
     );
   }
   const povertyPct = householdIncome > 4 * povertyLine ? 401 : actualPct;
@@ -1658,6 +1662,21 @@ function reconcileSimplePolicyMonths(
   );
   const householdIncome = form1040.data.line11_agi + dependentMagi;
   const povertyLine = reconcilePovertyTable(fields, context);
+  if (
+    policies.length > 1 &&
+    householdIncome < 4 * povertyLine &&
+    (!general.success ||
+      general.data.filing_status !== SourceFilingStatus.Single ||
+      general.data.taxpayer_ssn?.replaceAll("-", "") !==
+        context.filer.primarySSN.replaceAll("-", "") ||
+      general.data.taxpayer_can_be_claimed_as_dependent !== false ||
+      (general.data.dependents?.length ?? 0) !==
+        (fields.household_size === 1 ? 0 : fields.household_size === 2 ? 1 : 2))
+  ) {
+    throw new Error(
+      "Form 8962 below-400% multi-policy credit needs sourced single-filer eligibility",
+    );
+  }
   const incomeAmounts = simplePolicyIncomeAmounts(
     householdIncome,
     povertyLine,
@@ -1667,13 +1686,15 @@ function reconcileSimplePolicyMonths(
       general.data.ptc_below_100_fpl_status?.basis ===
         "marketplace_estimate" &&
       (fields.total_advance_ptc ?? 0) > 0,
+    twoPersonPolicies || threePersonPolicies,
   );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
     policies.length < 1 ||
-    policies.length > 3 ||
-    (policies.length === 3 && !threePersonPolicies) ||
+    policies.length > 12 ||
+    (policies.length > 2 && fields.household_size !== 1 &&
+      !threePersonPolicies) ||
     (interstateMove &&
       (fields.household_size !== 1 || policies.length !== 2)) ||
     policyNumbers.some((number) => !number) ||

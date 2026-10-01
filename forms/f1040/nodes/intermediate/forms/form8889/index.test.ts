@@ -15,6 +15,12 @@ const uniformSelfOnly = {
     made_in_2026_for_2025: 0,
   },
 };
+const priorExcessSource = {
+  tax_year: 2024 as const,
+  filed_form5329_reference: "filed-2024-5329-primary",
+  filed_return_reviewed: true as const,
+  owner_ssn: "123456789",
+};
 const uniformFamily = {
   ...uniformSelfOnly,
   eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
@@ -982,7 +988,11 @@ Deno.test("Form 8889 paired HSA excess preserves each owner's Part VII source", 
   }
   const prior = compute({
     ...primary,
-    prior_year_hsa_excess: { form5329_line48: 1_000, form5329_line49: 60 },
+    prior_year_hsa_excess: {
+      ...priorExcessSource,
+      form5329_line48: 1_000,
+      form5329_line49: 60,
+    },
     spouse_hsa: spouse,
   });
   assertEquals(
@@ -1089,6 +1099,7 @@ Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 2_000,
       form5329_line49: 120,
     },
@@ -1105,6 +1116,11 @@ Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8
   );
   assertEquals(hsaPartVII(result), {
     line42_prior_excess: 2_000,
+    prior_year_source: {
+      ...priorExcessSource,
+      form5329_line48: 2_000,
+      form5329_line49: 120,
+    },
     line43_unused_contribution_room: 500,
     line44_taxable_distributions: 0,
     line47_current_year_excess: 0,
@@ -1116,6 +1132,7 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 1_000,
       form5329_line49: 60,
     },
@@ -1135,11 +1152,29 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
   );
 });
 
+Deno.test("part1: prior excess rejects a different filed Form 5329 owner", () => {
+  assertThrows(
+    () => compute({
+      ...uniformSelfOnly,
+      prior_year_hsa_excess: {
+        ...priorExcessSource,
+        owner_ssn: "987654321",
+        form5329_line48: 1_000,
+        form5329_line49: 60,
+      },
+      hsa_december_31_value: 1_000,
+    }),
+    Error,
+    "must belong to this HSA owner",
+  );
+});
+
 Deno.test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 3_800,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 1_000,
       form5329_line49: 0,
     },

@@ -2,6 +2,11 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 } from "./f6251.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { buildIsoAmtBasisLedger } from "../../../nodes/inputs/f3921/index.ts";
+import {
+  form6251 as calculatedForm6251,
+  inputSchema as form6251InputSchema,
+} from "../../../nodes/intermediate/forms/form6251/index.ts";
+import { form6251Pdf } from "../../pdf/forms/f6251.ts";
 
 function isoContext(amount: number) {
   const f3921s = [{
@@ -54,6 +59,81 @@ function assertNotIncludes(actual: string, expected: string) {
     `Expected string NOT to include: ${expected}`,
   );
 }
+
+Deno.test("sourced retained ISO plus qualified dividends reconciles Part III in MeF and PDF", () => {
+  const result = calculatedForm6251.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form6251InputSchema.parse({
+      filing_status: "single",
+      regular_tax_income: 20_000,
+      regular_taxable_income: 20_000,
+      regular_tax: 5_000,
+      iso_adjustment: 180_000,
+      qualified_dividends: 10_000,
+    }),
+  );
+  const fields = result.outputs.find((row) => row.nodeType === "form6251")
+    ?.fields ?? {};
+  const base = isoContext(180_000);
+  const pending = {
+    ...base.pending,
+    f1099div: {
+      f1099divs: [{
+        payerName: "Dividend Payer",
+        isNominee: false,
+        box11: false,
+        box1a: 12_000,
+        box1b: 10_000,
+      }],
+    },
+    f1040: {
+      line3a_qualified_dividends: 10_000,
+      line3b_ordinary_dividends: 12_000,
+      line11_agi: 20_000,
+      line14_deductions_qbi_total: 0,
+      line15_taxable_income: 20_000,
+    },
+  };
+  assertEquals(fields.line13, 10_000);
+  assertEquals(fields.line15, 10_000);
+  assertStringIncludes(
+    form6251.build(fields, { ...base, pending }),
+    "<CapitalGainsWorksheetAmt>10000</CapitalGainsWorksheetAmt>",
+  );
+  const pdf = form6251Pdf.projectFields!(fields, pending);
+  assertEquals(pdf.line13, 10_000);
+  assertEquals(form6251Pdf.instances!(fields, base.filer, pending).length, 1);
+  const altered = {
+    ...pending,
+    f1099div: {
+      f1099divs: [{
+        ...pending.f1099div.f1099divs[0],
+        box1b: 9_999,
+      }],
+    },
+  };
+  assertThrows(
+    () => form6251.build(fields, { ...base, pending: altered }),
+    Error,
+    "reconciled 1099-DIV",
+  );
+  assertThrows(
+    () => form6251Pdf.projectFields!(fields, altered),
+    Error,
+    "reconciled 1099-DIV",
+  );
+  assertThrows(
+    () => form6251.build(fields, {
+      ...base,
+      pending: {
+        ...pending,
+        f1040: { ...pending.f1040, line15_taxable_income: 20_001 },
+      },
+    }),
+    Error,
+    "finalized Form 1040",
+  );
+});
 
 Deno.test("line 2j estate/trust adjustment serializes signed in XSD order", () => {
   const xml = filed({

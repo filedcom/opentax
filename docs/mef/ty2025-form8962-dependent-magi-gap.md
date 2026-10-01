@@ -49,10 +49,11 @@ has been run yet. Interstate moves remain unsupported.
 
 This one-policy route is deliberately bounded. Separate identified-policy routes
 now handle two sourced dependents on three same-state policies and one dependent
-on two policies; those routes have their own identity and monthly reconciliation
-checks. Form 8814 children, dependent Form 2555 or Social Security facts,
-unsupported policy configurations, and below-400%-FPL multi-person household
-income still stop. Source references identify records, not authenticate their
+on two policies, including the staged 100%-399%-FPL monthly cases with the
+single-filing-status repayment cap; those routes have their own identity and
+monthly reconciliation checks. Form 8814 children, dependent Form 2555 or
+Social Security facts, and unsupported policy configurations still stop.
+Source references identify records, not authenticate their
 contents. Other required-filing bases (wages, self-employment, mixed income,
 marital filing rules, and Pub. 501 Table 3 triggers) and other dependent
 income/deductions remain outside this route. The `not_required` classification

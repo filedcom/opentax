@@ -399,6 +399,11 @@ export const carryoverReviewSchema = z.object({
 
 const priorYearCarryoverVintageSchema = z.object({
   vintage_tax_year: z.union([
+    z.literal(2015),
+    z.literal(2016),
+    z.literal(2017),
+    z.literal(2018),
+    z.literal(2019),
     z.literal(2020),
     z.literal(2021),
     z.literal(2022),
@@ -410,14 +415,25 @@ const priorYearCarryoverVintageSchema = z.object({
 
 export const priorYearCarryoverSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
-  // Filed 2024 Schedule B line 8: reviewed 2020-2024 columns and total.
-  // In 2025 these shift to the fifth- through first-preceding columns.
-  vintages: z.array(priorYearCarryoverVintageSchema).min(1).max(5),
+  // Filed 2024 Schedule B line 8: reviewed 2015-2024 columns and total.
+  // In 2025 these shift to the tenth- through first-preceding columns.
+  vintages: z.array(priorYearCarryoverVintageSchema).min(1).max(10),
   prior_year_schedule_b_line8_total: z.number().int().positive(),
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
 }).strict().superRefine((source, ctx) => {
+  if (
+    source.income_category !== IncomeCategory.Passive &&
+    source.vintages.some((v) => v.vintage_tax_year <= 2017)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 1116 pre-2018 general-category carryover needs separate foreign-branch allocation evidence",
+      path: ["vintages"],
+    });
+  }
   if (
     new Set(source.vintages.map((v) => v.vintage_tax_year)).size !==
       source.vintages.length
@@ -1053,6 +1069,13 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });
+    const origin2015 = priorCarryovers[0]?.vintages.find((vintage) =>
+      vintage.vintage_tax_year === 2015
+    )?.prior_year_schedule_b_line8_vintage_amount ?? 0;
+    const expired2015 = Math.max(
+      0,
+      origin2015 - (categories[0]?.usedPriorYearCarryover ?? 0),
+    );
     if (carryoverReview && priorCarryovers.length === 1) {
       outputs.push({
         nodeType: "form1116_schedule_b",
@@ -1063,7 +1086,8 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
           prior_year_review: carryoverReview,
           prior_year_carryover: categories[0].priorYearCarryover,
           used_prior_year_carryover: 0,
-          remaining_prior_year_carryover: categories[0].priorYearCarryover,
+          remaining_prior_year_carryover:
+            (categories[0].priorYearCarryover ?? 0) - expired2015,
           prior_year_carryover_source: priorCarryovers[0],
         },
       });
@@ -1088,7 +1112,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
           used_prior_year_carryover: categories[0].usedPriorYearCarryover,
           remaining_prior_year_carryover:
             (categories[0].priorYearCarryover ?? 0) -
-            (categories[0].usedPriorYearCarryover ?? 0),
+            (categories[0].usedPriorYearCarryover ?? 0) - expired2015,
           prior_year_carryover_source: priorCarryovers[0],
         },
       });

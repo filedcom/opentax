@@ -17,6 +17,17 @@ property identity, add a transaction-ID source, or change any §469(g)
 disposition/prior-loss release rule. Multiple-sale positive and same-total
 mismatch cases are written but unrun.
 
+The native sale join now also compares complete canonical Schedule E and Form
+4797 disposition records as a multiset before projecting Form 8582. Sale dates,
+proceeds, basis, retained-interest status, unrelated-buyer and fully-taxable
+assertions, installment status, and closing-document reference must match even
+when the net gain is unchanged. Reordered records remain valid; missing or
+duplicated transactions reject. The PDF invokes the same native guard. An
+entire-gain closing-reference mismatch and a retained-gain unrelated-buyer
+mismatch have focused native/PDF rejection fixtures written but unrun. This
+enforces agreement between entered records; it does not authenticate the
+closing document or expand the supported sale character.
+
 Active native MeF output now also requires a pending Schedule E/Form 4835 source
 context. Direct `form8582.build` calls with active rows and no context reject
 before XML construction; the reporting-form label has no generic Schedule E
@@ -197,6 +208,23 @@ durable cross-year import/export remain open.
 ## Remaining source and persistence gates
 
 ### Active-rental current loss ledger, written but unrun
+
+The version-1 ledger now also accepts one or two identified, actively
+participated Schedule E rentals with current losses and filed-2024 Part VII
+operating PALs, provided participation is affirmed for both years and there is
+no 2025 sale or Form 4797-character prior loss. The prior source reference and $8,000 opening
+balance remain on the activity row; a $20,000 current loss at $120,000 modified
+AGI allows $15,000 and ends with $13,000 suspended. Stored-ledger read
+recomputes against the original source and accepted-return reference. Native
+MeF Part IV column (c), Part II allowance, Parts VI–VIII allocation, and the
+PDF projector use the same identified Schedule E and filed-year facts. In a
+two-rental case with $28,000 and $12,000 of current-plus-prior losses, the
+$15,000 allowance allocates $10,500 and $4,500, leaving $17,500 and $7,500
+by activity. Focused ledger, native, PDF projection, and mismatch cases are
+written but unrun. The
+[2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+require active participation in both years to place the prior loss in Part IV;
+the filed 2024 reference remains an entered fact, not an authenticated return.
 
 The storage-ready 2025 ledger first admitted one identified, actively
 participated Schedule E single-family rental with a current whole-dollar loss,

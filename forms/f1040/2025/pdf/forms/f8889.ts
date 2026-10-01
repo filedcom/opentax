@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
+  reconcileDatedExceptionForm8889,
   reconcileCode2Form8889,
   reconcilePairedForm8889,
   reconcileRolloverForm8889,
@@ -210,6 +211,7 @@ export const form8889Pdf: PdfFormDescriptor = {
       }
     }
     reconcileSpouseOnlyForm8889(forms, allPending, filer);
+    reconcileDatedExceptionForm8889(forms, allPending, filer);
     reconcileCode2Form8889(forms, allPending, filer);
     reconcileRolloverForm8889(forms, allPending, filer);
     reconcilePairedForm8889(forms, allPending, filer);

@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
+  assertMfsSstbOwner,
   assertPatron1099PATRSource,
   calculateOneSstb8995ALines,
   calculateScheduleCLossLines,
@@ -11,6 +12,8 @@ import {
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
 // Official TY2025 Form 8995-A: one identified business occupies column A.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -186,9 +189,9 @@ export function projectOneBusiness8995A(
       line17: lines.line3,
       line18: lines.line10,
       line20: lines.line33,
-      line21: 197_300,
-      line22: lines.line33 - 197_300,
-      line23: 50_000,
+      line21: lines.threshold,
+      line22: lines.line33 - lines.threshold,
+      line23: lines.phaseInRange,
       line24: lines.phaseIn * 100,
       line27: lines.line16,
     };
@@ -240,6 +243,12 @@ export const form8995aPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(raw);
+    if (input.filing_status === NodeFilingStatus.MFS) {
+      if (!filer || filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately) {
+        throw new Error("Form 8995-A PDF MFS status differs from the final filer");
+      }
+      assertMfsSstbOwner(input, filer.primarySSN);
+    }
     if (
       input.aggregation_filing_details ||
       (input.aggregation_groups ?? []).length > 0

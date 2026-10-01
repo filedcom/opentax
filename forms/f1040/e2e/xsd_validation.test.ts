@@ -266,9 +266,8 @@ Deno.test({
 
 Deno.test({
   name:
-    "XSD: ATS 1040 Scenario 1 Schedule H and Schedule 2 slice conforms to v5.4",
-  ignore: !xsdAvailable,
-}, async () => {
+    "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
+}, () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
     general: {
@@ -290,14 +289,11 @@ Deno.test({
       federal_income_tax_withheld: facts.scheduleH.federalWithholding,
     },
   });
-  const xml = buildXml(result);
-  assertEquals(xml.includes("<IRS1040ScheduleH"), true);
-  assertEquals(
-    xml.includes("<HouseholdEmploymentTaxAmt>474</HouseholdEmploymentTaxAmt>"),
-    true,
+  assertThrows(
+    () => buildXml(result),
+    Error,
+    "FICA-only export needs employee payroll source",
   );
-  const { success, stderr } = await validateXml(xml);
-  assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
 Deno.test({

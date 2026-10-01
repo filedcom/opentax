@@ -95,9 +95,13 @@ const beneficiaryInputSchema = z.object({
   // Carryover is sourced from the filed 2024 Form 5329, not inferred from
   // the 2025 HSA balance. A zero prior-year line 49 stops the carryover.
   prior_year_hsa_excess: z.object({
+    tax_year: z.literal(2024),
+    filed_form5329_reference: z.string().trim().min(1),
+    filed_return_reviewed: z.literal(true),
+    owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     form5329_line48: z.number().nonnegative(),
     form5329_line49: z.number().nonnegative(),
-  }).optional(),
+  }).strict().optional(),
   // Line 10: one direct IRA-to-HSA transfer, or a second in a later month of
   // this year after self-only coverage changes to family coverage.
   qualified_hsa_funding_distributions: z.object({
@@ -1176,6 +1180,7 @@ function excessOutput(
       owner,
       hsa_part_vii: {
         line42_prior_excess: priorExcess,
+        ...(priorExcess > 0 ? { prior_year_source: prior } : {}),
         line43_unused_contribution_room: Math.max(
           0,
           line12 - (input.taxpayer_hsa_contributions ?? 0),
@@ -1254,6 +1259,19 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     }
     verifyDistributionSources(input, ctx.taxYear);
     verifyFundingTestingPeriod(input, ctx.taxYear);
+    const priorSource = input.prior_year_hsa_excess;
+    if (
+      priorSource && (
+        priorSource.owner_ssn.replaceAll("-", "") !==
+          input.beneficiary_identity.ssn.replaceAll("-", "") ||
+        priorSource.form5329_line49 >
+          Math.round(priorSource.form5329_line48 * 0.06)
+      )
+    ) {
+      throw new Error(
+        "Form 8889 prior-year Form 5329 source must belong to this HSA owner and reconcile its excess tax",
+      );
+    }
     if (
       (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0 &&
       (input.prior_year_hsa_excess?.form5329_line48 ?? 0) === 0

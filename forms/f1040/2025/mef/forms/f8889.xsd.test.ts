@@ -56,7 +56,6 @@ Deno.test({
         print_line14c: 4_000,
         print_line15_qualified: 3_000,
         print_line16_taxable: 1_000,
-        print_line17a_exception: true,
         print_line17b_penalty: 0,
         print_line18: 300,
         print_line19: 200,

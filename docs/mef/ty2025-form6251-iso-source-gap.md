@@ -29,3 +29,20 @@ carryforward or a 2026 return import. A later-year lot disposition, regular
 and AMT basis consumption, compensation reconciliation, and any adjustment to
 Form 8949 still need their own source-backed route. Same-year dispositions
 remain excluded by the input contract.
+
+The retained-share ISO route now has a bounded preferential-rate Part III
+combination: one ordinary Form 1099-DIV payer with positive box 1b qualified
+dividends, no capital-gain distribution, foreign dividend/tax, nominee amount,
+Form 4952 election, or other dividend source. The Form 6251 calculator already
+refigures the qualified-dividend tax when the ISO adjustment raises AMT income.
+Before native MeF or PDF export, the source guard matches box 1b to the
+calculated qualified-dividend input and finalized Form 1040 line 3a, box 1a
+to line 3b, and regular taxable income to Form 1040 line 15. It also requires
+the Part III line 12/13/15 dividend amounts to match in the no-capital-gain-
+excess case. A $180,000 retained-share ISO adjustment with $10,000 qualified
+dividends has source, native, PDF-projection, and tamper fixtures written but
+unrun. The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+direct qualified dividends through the AMT Part III worksheet. The 1099-DIV
+recipient and dividend holding period are not independently established by
+this source; multi-payer, pass-through, capital-gain, foreign, and election
+combinations remain open.

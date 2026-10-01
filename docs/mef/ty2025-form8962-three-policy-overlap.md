@@ -10,7 +10,7 @@ people in contiguous states, $32,270 in Alaska, and $29,690 in Hawaii.
 The bounded monthly route now accepts exactly three identified Form 1095-A
 policies on a single-filer return with two claimed dependents. Each policy must
 name exactly one different tax-family SSN, remain in the filer's state, and
-report positive premiums, SLCSP, and APTC for all twelve months. The three
+report positive premiums, SLCSP, and APTC together in every covered month. The three
 statements must agree on each month's positive SLCSP. Annual column totals,
 when supplied, must match each statement's monthly columns. No shared-policy
 allocation, marriage, SLCSP correction/review, interstate move, or Form 2555
@@ -25,8 +25,11 @@ Each source document must name the dependent by SSN. The returns and interest
 forms reconcile each dependent's AGI, tax-exempt
 interest, and required-filing threshold, and all source document IDs must be
 distinct. The monthly MeF route checks combined dependent MAGI, household
-income, the family-size poverty line, 8.5% contribution, monthly A/B/C and
-credit amounts, totals, Schedule 2/3, and finalized Form 1040. The annual
+income, the family-size poverty line, Table 2 contribution, monthly A/B/C and
+credit amounts, totals, Schedule 2/3, and finalized Form 1040. The monthly
+route now also accepts 100%-399%-FPL income for a sourced single filer who
+cannot be claimed as a dependent, with the single-filing-status Table 5 cap;
+a 200%-FPL case is authored for the deferred batch. The annual
 route checks the same household and policy identities, line 11 amounts, and
 finalized Schedule 2/3 and Form 1040. PDF instance creation invokes the MeF
 reconciliation. Focused source, native, PDF, identity, benchmark, evidence,

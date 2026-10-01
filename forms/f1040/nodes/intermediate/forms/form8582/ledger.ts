@@ -115,7 +115,9 @@ export function buildForm8582Ledger(
       activity.reporting_form === "schedule_e" &&
       activity.property_type === 1 &&
       activity.current_net < 0 &&
-      activity.prior_unallowed_operating === 0 &&
+      (activity.prior_unallowed_operating === 0 ||
+        (sourceActivities.length <= 2 &&
+          activity.prior_active_participation === true)) &&
       activity.prior_unallowed_4797_part1 === 0 &&
       activity.prior_unallowed_4797_part2 === 0
     ) &&
@@ -155,13 +157,17 @@ export function buildForm8582Ledger(
         currentNet: activity.current_net,
         priorUnallowed: activity.prior_unallowed_operating,
         specialEligible: activity.activity_type === "A",
-        priorSpecialEligible: false,
+        priorSpecialEligible: activeRentalActivities &&
+          activity.prior_active_participation === true,
       })),
       passiveLossLimit({
         currentIncome: input.current_income ?? 0,
         currentLoss: input.current_loss ?? 0,
         priorUnallowed: input.prior_unallowed ?? 0,
-        rentalLoss: activeRentalActivities ? input.rental_current_loss ?? 0 : 0,
+        rentalLoss: activeRentalActivities
+          ? (input.rental_current_loss ?? 0) +
+            (input.rental_prior_eligible_loss ?? 0)
+          : 0,
         rentalIncome: activeRentalActivities
           ? input.rental_current_income ?? 0
           : 0,

@@ -106,6 +106,14 @@ export const ownerEntrySchema = z.object({
   // Source-linked Form 8889 amounts and filed prior-year Form 5329 carryover.
   hsa_part_vii: z.object({
     line42_prior_excess: z.number().nonnegative(),
+    prior_year_source: z.object({
+      tax_year: z.literal(2024),
+      filed_form5329_reference: z.string().trim().min(1),
+      filed_return_reviewed: z.literal(true),
+      owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      form5329_line48: z.number().nonnegative(),
+      form5329_line49: z.number().positive(),
+    }).strict().optional(),
     line43_unused_contribution_room: z.number().nonnegative(),
     line44_taxable_distributions: z.number().nonnegative(),
     line47_current_year_excess: z.number().nonnegative(),
@@ -384,6 +392,7 @@ export function calculateOwnerForms(rawInput: Form5329Collection) {
 export function reconcileHsaOwnerForms(
   forms: ReturnType<typeof calculateOwnerForms>["forms"],
   raw8889: unknown,
+  filer?: { primarySSN: string; spouse?: { ssn: string } },
 ): void {
   if (!forms.some((form) => form.hsa_part_vii !== undefined)) return;
   const hsaForms = z.object({
@@ -391,7 +400,9 @@ export function reconcileHsaOwnerForms(
       owner: z.enum(["primary", "spouse"]),
       print_line2_taxpayer_contributions: z.number().nonnegative().optional(),
       print_line12: z.number().nonnegative().optional(),
+      print_line13_deduction: z.number().nonnegative().optional(),
       print_line16_taxable: z.number().nonnegative().optional(),
+      beneficiary_ssn: z.string().optional(),
     }).passthrough()).min(1).max(2),
   }).passthrough().parse(raw8889).forms;
   for (const form of forms) {
@@ -412,6 +423,44 @@ export function reconcileHsaOwnerForms(
         (source.print_line16_taxable ?? 0)
     ) {
       throw new Error(`Form 5329 ${owner} HSA source does not reconcile to Form 8889`);
+    }
+    const prior = hsa.prior_year_source;
+    if (hsa.line42_prior_excess > 0) {
+      const line12 = source.print_line12;
+      if (typeof line12 !== "number" || !Number.isFinite(line12)) {
+        throw new Error(`Form 5329 ${owner} prior HSA excess needs Form 8889 line 12`);
+      }
+      const expectedSsn = owner === "primary"
+        ? filer?.primarySSN
+        : filer?.spouse?.ssn;
+      if (
+        !prior || !expectedSsn || !source.beneficiary_ssn ||
+        prior.form5329_line48 !== hsa.line42_prior_excess ||
+        prior.form5329_line49 <= 0 ||
+        prior.form5329_line49 >
+          Math.round(prior.form5329_line48 * 0.06) ||
+        prior.owner_ssn.replaceAll("-", "") !==
+          expectedSsn.replaceAll("-", "") ||
+        source.beneficiary_ssn.replaceAll("-", "") !==
+          expectedSsn.replaceAll("-", "") ||
+        (source.print_line13_deduction ?? 0) !==
+          Math.min(
+            source.print_line2_taxpayer_contributions ?? 0,
+            line12,
+          ) + Math.min(
+            hsa.line43_unused_contribution_room,
+            Math.max(
+              0,
+              hsa.line42_prior_excess - hsa.line44_taxable_distributions,
+            ),
+          )
+      ) {
+        throw new Error(
+          `Form 5329 ${owner} prior HSA excess needs its reviewed filed 2024 owner source`,
+        );
+      }
+    } else if (prior) {
+      throw new Error(`Form 5329 ${owner} has a prior HSA source without line 42`);
     }
   }
 }

@@ -13,6 +13,34 @@ const source = {
   additional_medicare_wages: facts.scheduleH.additionalMedicareWages,
   federal_income_tax_withheld: facts.scheduleH.federalWithholding,
 };
+const sourcedFicaOnly = {
+  employer_ein: "000000029",
+  cash_wages_over_2025_limit: true,
+  cash_wages_over_quarter_limit: false,
+  ss_wages: 3_100,
+  medicare_wages: 3_100,
+  federal_income_tax_withheld: 0,
+  fica_only_payroll: {
+    all_household_employees_included: true,
+    prior_year_payroll_source_reference: "2024-synthetic-payroll-review",
+    prior_year_quarter_cash_wages: [0, 0, 0, 0],
+    employee_wages: [{
+      employee_id: "synthetic-worker-1",
+      payroll_source_reference: "2025-synthetic-payroll-review",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: true,
+      ordinary_cash_only: true,
+      annual_cash_wages: 3_100,
+      quarterly_cash_wages: [775, 775, 775, 775],
+      w2: {
+        source_reference: "2025-synthetic-household-w2",
+        box2_federal_income_tax_withheld: 0,
+        box3_social_security_wages: 3_100,
+        box5_medicare_wages: 3_100,
+      },
+    }],
+  },
+};
 const filer: FilerIdentity = {
   primarySSN: facts.taxpayer.ssn,
   nameLine1: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
@@ -66,15 +94,46 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
     schedule_h: source,
     schedule2: { line9_household_employment: 474 },
   };
-  assertEquals(scheduleHPdf.instances?.(projected, filer, pending)?.length, 1);
+  assertThrows(
+    () => scheduleHPdf.instances?.(projected, filer, pending),
+    Error,
+    "needs employee payroll source",
+  );
   assertThrows(
     () =>
-      scheduleHPdf.instances?.(projected, filer, {
-        ...pending,
+      scheduleHPdf.instances?.(
+        scheduleHPdf.projectFields!(sourcedFicaOnly),
+        filer,
+        {
+        schedule_h: sourcedFicaOnly,
         schedule2: { line9_household_employment: 473 },
       }),
     Error,
     "reconcile to Schedule 2 line 9",
+  );
+});
+
+Deno.test("synthetic sourced FICA-only Schedule H PDF reconciles its worker and Schedule 2", () => {
+  const projected = scheduleHPdf.projectFields!(sourcedFicaOnly);
+  assertEquals(projected.line8_fica_and_withholding, 474);
+  assertEquals(projected.cash_wages_over_quarter_limit, false);
+  assertEquals(scheduleHPdf.instances?.(projected, filer, {
+    schedule_h: sourcedFicaOnly,
+    schedule2: { line9_household_employment: 474 },
+  })?.length, 1);
+  assertThrows(
+    () => scheduleHPdf.instances?.(projected, filer, {
+      schedule_h: {
+        ...sourcedFicaOnly,
+        fica_only_payroll: {
+          ...sourcedFicaOnly.fica_only_payroll,
+          prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
+        },
+      },
+      schedule2: { line9_household_employment: 474 },
+    }),
+    Error,
+    "below the FUTA quarter threshold",
   );
 });
 

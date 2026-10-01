@@ -1,5 +1,46 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## One-person sequential policies at 100%-399% FPL (staged, unrun)
+
+The below-400% income check now admits multiple identified same-state policies
+for one covered filer on the monthly route when the existing policy checks prove
+at most one active policy each month. It applies the 2025 Table 2 contribution
+and single-filer Table 5 repayment limit to the merged monthly credit and APTC,
+requires the sourced single-filer SSN and a reviewed fact that the taxpayer
+cannot be claimed as a dependent, then reconciles Schedule 2/3 and Form 1040.
+A two-policy six-month switch at
+200% FPL has $7,800 PTC, $9,000 APTC, $1,200 excess, and a $975 limited
+repayment. Source, calculation, native, PDF, and cap-tampering fixtures are
+authored but unrun. The below-100% exception remains limited to one verified
+policy; shared-policy cases retain separate boundaries.
+
+## One verified dependent on two same-state policies at 100%-399% FPL (staged, unrun)
+
+A single filer with one claimed dependent can now use the monthly two-policy
+route below 400% FPL when the existing filed dependent Form 1040 and Forms
+1099-INT establish Worksheet 1-2 MAGI and each policy names a distinct
+tax-family SSN. The poverty table uses both family members, while the 2025
+Table 5 limit remains the **single filing-status** amount. At 200% FPL, a
+source case with overlapping policies in January–June and only the taxpayer's
+policy in July–December computes $6,792 PTC, $9,000 APTC, $2,208 excess, and
+$975 repayment. Source, calculation, native, PDF, and cap-tampering fixtures
+are authored but unrun. Other dependent income sources, more than two
+policies, unmatched covered people, and corrected SLCSP remain outside this
+route.
+
+## Two verified dependents on three same-state policies at 100%-399% FPL (staged, unrun)
+
+The three-policy monthly route now also accepts a single filer and two claimed
+dependents below 400% FPL when their filed returns and interest forms establish
+Worksheet 1-2 MAGI, each policy identifies one distinct tax-family member, and
+all three policies are active together in every covered month. The 2025 Table 2
+contribution uses the three-person poverty line; Table 5 uses the single filing
+status cap. A 200%-FPL case with $13,968 PTC and $18,000 APTC limits its $4,032
+excess to $975. Source aggregation, calculation, native MeF, PDF projection,
+and cap-tampering fixtures are authored but unrun. Partial-family months and
+corrected SLCSP still require separate coverage-family evidence and remain
+closed.
+
 ## One-person below-400%-FPL filing route (build-first, unrun)
 
 The native MeF and PDF projections now accept a bounded one-person, one-policy
@@ -15,7 +56,8 @@ the same source-to-final-return reconciliation for below-400% returns before
 rendering. Source, annual, monthly, all three cap tiers, and tamper cases are
 written but not run.
 
-This does not extend the under-400% filing route to multiple people or policies,
+The one-person sequential monthly extension above covers multiple policies;
+this one-policy route still does not cover multiple people,
 below-100% exception cases, shared coverage, self-employed insurance, Form
 2555, or other eligibility exceptions. The sourced Form 1095-A, policy identity,
 and finalized-return checks still apply. External Marketplace authenticity,
@@ -161,7 +203,7 @@ compared hashes to their actual bytes; that external source review remains
 required. No-APTC policies outside the separate two-policy route, shared policies, changes in coverage family
 or state, protected partial payments outside the documented issuer-threshold
 and state emergency-order routes, nonstandard due dates,
-below-400%-FPL returns, and MEC/coverage eligibility proof remain outside this
+other below-400%-FPL multi-person returns, and MEC/coverage eligibility proof remain outside this
 bounded route. The entered evidence is not submitted as an invented IRS
 attachment.
 
@@ -294,10 +336,10 @@ mismatch cases are written but unrun. See the
 
 This is deliberately narrower than the calculation node. The descriptor does not
 yet independently reconcile annual line 11 across other multiple-policy
-configurations, other overlapping or alternating monthly policies, more than
+configurations, other overlapping monthly policies, multi-person cases beyond
 three policies, multiple policies in different states beyond the bounded
 two-state annual family and sequential move routes, SLCSP corrections,
-shared-policy Part IV, marriage Part V, QSEHRA, below-400%-FPL repayment caps,
+shared-policy Part IV, marriage Part V, QSEHRA, other below-400%-FPL multi-person repayment caps,
 wider Alaska/Hawaii moves, or self-employed insurance worksheets to raw source
 documents and the finalized return. Most dependent MAGI routes remain rejected.
 A later bounded annual-policy path now accepts one claimed dependent with a

@@ -57,7 +57,7 @@ Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field"
 });
 
 Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", () => {
-  const [owner] = form8889Pdf.instances?.({
+  const pending = {
     forms: [{
       owner: "primary",
       beneficiary_name: "Alex Taxpayer",
@@ -70,11 +70,12 @@ Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", 
       print_line17a_exception: true,
       print_line17b_penalty: 80,
     }],
-  }) ?? [];
-  assertEquals(owner?.print_line14b_excluded_distributions, 0);
-  assertEquals(owner?.print_line16_taxable, 900);
-  assertEquals(owner?.print_line17a_exception, true);
-  assertEquals(owner?.print_line17b_penalty, 80);
+  };
+  assertThrows(
+    () => form8889Pdf.instances?.(pending),
+    Error,
+    "needs dated owner source",
+  );
   for (
     const [key, expected] of [
       ["print_line14b_excluded_distributions", "f1_16[0]"],

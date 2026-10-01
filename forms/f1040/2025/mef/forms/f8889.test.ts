@@ -742,7 +742,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     print_line14c: 3_500,
     print_line15_qualified: 2_500,
     print_line16_taxable: 1_000,
-    print_line17a_exception: true,
     print_line17b_penalty: 0,
     print_line18: 300,
     print_line19: 200,
@@ -771,7 +770,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     "HSANetDistributionAmt",
     "UnreimbQualMedAndDentalExpAmt",
     "TaxableHSADistributionAmt",
-    "HSADistriAddnlPercentTaxExcInd",
     "HSADistriAddnlPercentTaxAmt",
     "HDHPCoverageFailPartialYrAmt",
     "HDHPCoverageFailFundDistriAmt",
@@ -785,10 +783,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
   assertStringIncludes(
     xml,
     "<TotalHSADeductionAmt>2000</TotalHSADeductionAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<HSADistriAddnlPercentTaxExcInd>X</HSADistriAddnlPercentTaxExcInd>",
   );
   assertStringIncludes(
     xml,

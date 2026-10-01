@@ -8892,13 +8892,10 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD: ATS Scenario 1 Schedule H source slice validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+  name: "ATS Scenario 1 Schedule H source slice needs employee payroll",
+}, () => {
   const source = SCENARIO_1040_01_FACTS.scheduleH;
-  const xml = buildMefXml(
+  assertThrows(() => buildMefXml(
     {
       schedule_h: {
         employer_ein: source.employerEin,
@@ -8915,17 +8912,7 @@ Deno.test({
       taxpayer_last_name: SCENARIO_1040_01_FACTS.taxpayer.lastName,
       taxpayer_ssn: SCENARIO_1040_01_FACTS.taxpayer.ssn,
     }),
-  );
-  assertStringIncludes(
-    xml,
-    "<HouseholdEmployerNm>Tara Black</HouseholdEmployerNm>",
-  );
-  assertStringIncludes(xml, "<EmployerEIN>000000029</EmployerEIN>");
-  assertStringIncludes(
-    xml,
-    "<TotSocSecMedcrAndFedIncmTaxAmt>474</TotSocSecMedcrAndFedIncmTaxAmt>",
-  );
-  await validateXsd(xml, "Scenario 1 Schedule H");
+  ), Error, "FICA-only export needs employee payroll source");
 });
 
 Deno.test({

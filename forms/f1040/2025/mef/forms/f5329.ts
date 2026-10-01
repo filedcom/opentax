@@ -187,7 +187,11 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): readonly string[] 
   if (JSON.stringify(raw.owner_forms) !== JSON.stringify(calculated.forms)) {
     throw new Error("Form 5329 MeF owner forms do not match source calculation");
   }
-  reconcileHsaOwnerForms(calculated.forms, context?.pending?.form8889);
+  reconcileHsaOwnerForms(
+    calculated.forms,
+    context?.pending?.form8889,
+    context?.filer,
+  );
   const schedule2 = context?.pending?.schedule2;
   const line8 = schedule2 !== null && typeof schedule2 === "object"
     ? (schedule2 as Record<string, unknown>).line8_form5329_tax

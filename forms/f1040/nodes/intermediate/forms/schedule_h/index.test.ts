@@ -127,6 +127,53 @@ Deno.test("federal income tax withheld adds to total", () => {
   assertEquals(s2?.fields.line9_household_employment, 2_530);
 });
 
+Deno.test("one-worker FICA-only payroll reaches Schedule 2 without FUTA", () => {
+  const source = {
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: false,
+    ss_wages: 3_100,
+    medicare_wages: 3_100,
+    fica_only_payroll: {
+      all_household_employees_included: true,
+      prior_year_payroll_source_reference: "2024-synthetic-payroll-review",
+      prior_year_quarter_cash_wages: [0, 0, 0, 0],
+      employee_wages: [{
+        employee_id: "synthetic-worker-1",
+        payroll_source_reference: "2025-synthetic-payroll-review",
+        relationship: "unrelated",
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        annual_cash_wages: 3_100,
+        quarterly_cash_wages: [775, 775, 775, 775],
+        w2: {
+          source_reference: "2025-synthetic-household-w2",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 3_100,
+          box5_medicare_wages: 3_100,
+        },
+      }],
+    },
+  };
+  assertEquals(
+    findOutput(compute(source), "schedule2")?.fields.line9_household_employment,
+    474,
+  );
+  assertThrows(
+    () => compute({
+      ...source,
+      fica_only_payroll: {
+        ...source.fica_only_payroll,
+        employee_wages: [{
+          ...source.fica_only_payroll.employee_wages[0],
+          quarterly_cash_wages: [1_000, 700, 700, 700],
+        }],
+      },
+    }),
+    Error,
+    "below the FUTA quarter threshold",
+  );
+});
+
 // ─── FUTA ─────────────────────────────────────────────────────────────────────
 
 Deno.test("single-state Section A FUTA is 0.6% of taxable wages", () => {

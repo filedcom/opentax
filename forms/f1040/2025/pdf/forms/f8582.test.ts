@@ -86,6 +86,25 @@ Deno.test("first-year entire-sale gain prints Part V from the same Schedule E an
   const scheduleE = scheduleEPdf.projectFields!(pending.schedule_e, pending);
   assertEquals(scheduleE.property_0_line22, 2_000);
   assertEquals(scheduleE.line26, -2_000);
+  const changedClosing = {
+    ...pending,
+    form4797: {
+      passive_property_sales: [{
+        ...sale,
+        disposition_document_reference: "Different closing statement",
+      }],
+    },
+  };
+  assertThrows(
+    () => nativeForm8582.build(fields, { pending: changedClosing }),
+    Error,
+    "disposition facts do not match",
+  );
+  assertThrows(
+    () => form8582Pdf.projectFields!(fields, changedClosing),
+    Error,
+    "disposition facts do not match",
+  );
   assertThrows(
     () =>
       nativeForm8582.build(fields, {
@@ -304,6 +323,22 @@ Deno.test("active retained-sale PAL projects Part IV and special allowance witho
   assertEquals(projected.line9, "5000");
   assertEquals(projected.line11, "8000");
   assertEquals(projected.part7_1_unallowed, "5000");
+  const changedBuyer = {
+    ...pending,
+    form4797: {
+      passive_property_sales: [{ ...sale, buyer_unrelated: false }],
+    },
+  };
+  assertThrows(
+    () => nativeForm8582.build(fields, { pending: changedBuyer }),
+    Error,
+    "disposition facts do not match",
+  );
+  assertThrows(
+    () => form8582Pdf.projectFields!(fields, changedBuyer),
+    Error,
+    "disposition facts do not match",
+  );
 });
 
 const rental = {
@@ -381,6 +416,110 @@ Deno.test("Form 8582 PDF projects rounded odd-dollar MFS Part II allowance", () 
   assertEquals(fields.part6_1_allowance, "7499");
   assertEquals(fields.part7_1_unallowed, "12501");
   assertEquals(fields.partVIII_1_allowed, "7499");
+});
+
+Deno.test("Form 8582 native and PDF retain a filed prior active-rental operating PAL", () => {
+  const prior = {
+    tax_year: 2024 as const,
+    activity_id: "rental-home",
+    filed_part_vii_column_c: 8_000,
+    source_document_reference: "Filed 2024 Form 8582 rental row",
+  };
+  const fields = {
+    ...rentalFields,
+    activities: [{
+      ...rental,
+      current_net: -20_000,
+      prior_unallowed_operating: 8_000,
+      prior_active_participation: true,
+      prior_year_8582_source: prior,
+    }],
+    filing_status: "single" as const,
+    modified_agi: 120_000,
+    prior_unallowed: 8_000,
+    rental_prior_eligible_loss: 8_000,
+  };
+  const pending = {
+    schedule_e: {
+      schedule_es: [{
+        ...rentalPending.schedule_e.schedule_es[0],
+        prior_unallowed_passive_operating: 8_000,
+        prior_passive_losses_active_when_incurred: true,
+        prior_year_8582_source: prior,
+      }],
+    },
+  };
+  const xml = nativeForm8582.build(fields, { pending });
+  assertStringIncludes(
+    xml,
+    "<PYUnallowedRentalLossAmt>8000</PYUnallowedRentalLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalLossesAllowedAmt>15000</TotalLossesAllowedAmt>",
+  );
+  const projected = form8582Pdf.projectFields!(fields, pending);
+  assertEquals(projected.line1c, "8000");
+  assertEquals(projected.line9, "15000");
+  assertEquals(projected.part4_1_prior, "8000");
+  assertEquals(projected.part7_1_unallowed, "13000");
+  assertEquals(projected.partVIII_1_allowed, "15000");
+  const secondPrior = {
+    ...prior,
+    activity_id: "rental-two",
+    filed_part_vii_column_c: 2_000,
+  };
+  const twoFields = {
+    ...fields,
+    activities: [...fields.activities, {
+      ...fields.activities[0],
+      activity_id: "rental-two",
+      name: "Second rental",
+      current_net: -10_000,
+      prior_unallowed_operating: 2_000,
+      prior_year_8582_source: secondPrior,
+    }],
+    current_loss: 30_000,
+    rental_current_loss: 30_000,
+    prior_unallowed: 10_000,
+    rental_prior_eligible_loss: 10_000,
+  };
+  const twoPending = {
+    schedule_e: {
+      schedule_es: [...pending.schedule_e.schedule_es, {
+        ...pending.schedule_e.schedule_es[0],
+        activity_id: "rental-two",
+        property_description: "Second rental",
+        expense_utilities: 10_000,
+        prior_unallowed_passive_operating: 2_000,
+        prior_year_8582_source: secondPrior,
+      }],
+    },
+  };
+  assertStringIncludes(
+    nativeForm8582.build(twoFields, { pending: twoPending }),
+    "<PYUnallowedRentalLossAmt>10000</PYUnallowedRentalLossAmt>",
+  );
+  const twoProjected = form8582Pdf.projectFields!(twoFields, twoPending);
+  assertEquals(twoProjected.part4_2_prior, "2000");
+  assertEquals(twoProjected.part6_2_allowance, "4500");
+  assertEquals(twoProjected.part7_2_unallowed, "7500");
+  assertEquals(twoProjected.partVIII_2_allowed, "4500");
+  assertThrows(
+    () =>
+      nativeForm8582.build(fields, {
+        pending: {
+          schedule_e: {
+            schedule_es: [{
+              ...pending.schedule_e.schedule_es[0],
+              prior_passive_losses_active_when_incurred: false,
+            }],
+          },
+        },
+      }),
+    Error,
+    "activities do not match",
+  );
 });
 
 Deno.test("Form 8582 PDF keeps other-passive Part V separate from rental Part IV", () => {

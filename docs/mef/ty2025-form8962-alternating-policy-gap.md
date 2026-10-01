@@ -24,8 +24,19 @@ its columns blank. Covered months still reconcile to the identified policies,
 annual Form 1095-A totals, Schedule 2, and Form 1040. This source pattern does
 not independently authenticate Marketplace coverage or cancellation records.
 
+The monthly boundary now also accepts three through twelve distinct same-state
+policies for the same one-person coverage family when each month has at most one
+active policy. Every policy identifies the filer as its sole covered person,
+supplies twelve A/B/C columns, and reconciles its annual totals when reported.
+Calculation aggregates the source once; native MeF checks each row against the
+active policy and finalized return; PDF projection invokes that native check.
+A four-policy sequential source/calculation/native/PDF fixture and a
+duplicate-identity rejection case are authored but unrun. Concurrent policies,
+another covered person, another state, and SLCSP corrections remain outside
+this extension.
+
 Focused source calculation, native XML, PDF projection, and tampering cases are
-written but unrun under the build-first instruction. Other multi-policy,
-overlapping, interstate, shared-tax-family, and
+written but unrun under the build-first instruction. Other multi-policy
+overlaps, interstate, shared-tax-family, and
 corrected-SLCSP paths are not admitted by this extension. IRS XSD, filled-PDF
 visual, business-rule, and ATS verification remain open.

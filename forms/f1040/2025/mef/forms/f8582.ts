@@ -224,6 +224,29 @@ function assertLinkedSales(
       ? form4797.passive_property_sales
       : [],
   );
+  const scheduleESales = scheduleEInputSchema.parse(
+    context.pending.schedule_e ?? {},
+  ).schedule_es.flatMap((property) => property.passive_property_sales ?? []);
+  const saleCounts = (rows: typeof sales): Map<string, number> => {
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = JSON.stringify(row);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  };
+  const scheduleECounts = saleCounts(scheduleESales);
+  const form4797Counts = saleCounts(sales);
+  if (
+    scheduleESales.length !== sales.length ||
+    [...scheduleECounts].some(([key, count]) =>
+      form4797Counts.get(key) !== count
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Schedule E and Form 4797 disposition facts do not match property-sale sources",
+    );
+  }
   const actual = input.current_4797_sale_gains ?? [];
   const key = (
     activityId: string,

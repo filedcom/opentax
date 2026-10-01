@@ -4,6 +4,7 @@ import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  assertMfsSstbOwner,
   assertPatron1099PATRSource,
   calculateOneBusiness8995ALines,
   calculateOneSstb8995ALines,
@@ -184,9 +185,27 @@ function reconcileReturn(
       "Form 8995-A MeF needs return header and pending deduction reconciliation context",
     );
   }
-  if (context.filer.filingStatus !== HeaderFilingStatus.Single) {
+  const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
+    ? HeaderFilingStatus.MarriedFilingJointly
+    : fields.filing_status === NodeFilingStatus.MFS
+    ? HeaderFilingStatus.MarriedFilingSeparately
+    : fields.filing_status === NodeFilingStatus.HOH
+    ? HeaderFilingStatus.HeadOfHousehold
+    : HeaderFilingStatus.Single;
+  if (
+    context.filer.filingStatus !== expectedStatus ||
+    (fields.filing_status !== NodeFilingStatus.Single &&
+      fields.filing_status !== NodeFilingStatus.HOH &&
+      fields.filing_status !== NodeFilingStatus.MFS &&
+      fields.filing_status !== NodeFilingStatus.MFJ) ||
+    ((fields.filing_status === NodeFilingStatus.MFJ ||
+      fields.filing_status === NodeFilingStatus.MFS ||
+      fields.filing_status === NodeFilingStatus.HOH) &&
+      !fields.sstb_filing_details)
+  ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }
+  assertMfsSstbOwner(fields, context.filer.primarySSN);
   if (context.pending.form8995 !== undefined) {
     throw new Error(
       "Form 8995-A and Form 8995 cannot both be pending for one return",
@@ -343,13 +362,13 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("TotalQBIComponentAmt", lines.line16),
       element(
         "FilingStatusThresholdCd",
-        CONFIG_BY_YEAR[2025].qbiThresholdSingle,
+        lines.threshold,
       ),
       element(
         "TXIBfrQBIDedLessThresholdAmt",
-        lines.line33 - CONFIG_BY_YEAR[2025].qbiThresholdSingle,
+        lines.line33 - lines.threshold,
       ),
-      element("FilingStatusPhaseInRangeCd", 50_000),
+      element("FilingStatusPhaseInRangeCd", lines.phaseInRange),
       element("PhaseInPct", lines.phaseIn.toFixed(5)),
       element("QlfyREITDivPTPIncomeLossAmt", 0),
       element("PYQlfyREITDivPTPLossCfwdAmt", 0),

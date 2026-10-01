@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995aPdf } from "./f8995a.ts";
 import { form8995aScheduleAPdf } from "./f8995a_schedule_a.ts";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 
 const sstb = {
   filing_status: "single",
@@ -98,5 +99,90 @@ Deno.test("Form 8995-A Schedule A PDF rejects missing companion, altered source,
       }),
     Error,
     "Form 1040 line 13",
+  );
+});
+
+Deno.test("Form 8995-A Schedule A PDF maps the joint threshold and range", () => {
+  const joint = {
+    ...sstb,
+    filing_status: "mfj",
+    taxable_income: 444_600,
+  };
+  const jointPending = {
+    form8995a: joint,
+    form8995a_schedule_a: joint,
+    f1040: { line13_qbi_deduction: 6_250 },
+  };
+  const schedule = form8995aScheduleAPdf.projectFields?.(joint, jointPending);
+  const parent = form8995aPdf.projectFields?.(joint, jointPending);
+  assertEquals(schedule?.line6, 394_600);
+  assertEquals(schedule?.line8, 100_000);
+  assertEquals(schedule?.line9, 50);
+  assertEquals(parent?.line21, 394_600);
+  assertEquals(parent?.line23, 100_000);
+  assertEquals(parent?.line39, 6_250);
+});
+
+Deno.test("Form 8995-A Schedule A PDF maps head-of-household phase-in", () => {
+  const household = { ...sstb, filing_status: "hoh" };
+  const householdPending = {
+    form8995a: household,
+    form8995a_schedule_a: household,
+    f1040: { line13_qbi_deduction: 6_250 },
+  };
+  const schedule = form8995aScheduleAPdf.projectFields?.(
+    household,
+    householdPending,
+  );
+  const parent = form8995aPdf.projectFields?.(household, householdPending);
+  assertEquals(schedule?.line6, 197_300);
+  assertEquals(schedule?.line8, 50_000);
+  assertEquals(schedule?.line9, 50);
+  assertEquals(parent?.line21, 197_300);
+  assertEquals(parent?.line23, 50_000);
+  assertEquals(parent?.line39, 6_250);
+});
+
+Deno.test("Form 8995-A Schedule A PDF MFS owner and final filer reconcile", () => {
+  const separate = {
+    ...sstb,
+    filing_status: "mfs",
+    sstb_filing_details: {
+      ...sstb.sstb_filing_details,
+      mfs_owner_ssn: "123456789",
+      mfs_allocation_source_reference: "2025 separate-return SSTB allocation workpaper",
+      mfs_no_spouse_share_confirmed: true,
+    },
+  };
+  const separatePending = {
+    form8995a: separate,
+    form8995a_schedule_a: separate,
+    f1040: { line13_qbi_deduction: 6_250 },
+  };
+  const filer = {
+    primarySSN: "123456789",
+    nameLine1: "SMITH JOHN A",
+    nameControl: "SMIT",
+    address: { line1: "1 MAIN ST", city: "AUSTIN", state: "TX", zip: "78701" },
+    filingStatus: HeaderFilingStatus.MarriedFilingSeparately,
+  };
+  assertEquals(form8995aPdf.instances?.(separate, filer, separatePending), [separate]);
+  assertEquals(form8995aScheduleAPdf.instances?.(separate, filer, separatePending), [separate]);
+  const parent = form8995aPdf.projectFields?.(separate, separatePending);
+  const schedule = form8995aScheduleAPdf.projectFields?.(separate, separatePending);
+  assertEquals(parent?.line21, 197_300);
+  assertEquals(parent?.line23, 50_000);
+  assertEquals(parent?.line39, 6_250);
+  assertEquals(schedule?.line6, 197_300);
+  assertEquals(schedule?.line8, 50_000);
+  assertThrows(
+    () => form8995aPdf.instances?.(separate, { ...filer, primarySSN: "987654321" }, separatePending),
+    Error,
+    "owner differs",
+  );
+  assertThrows(
+    () => form8995aScheduleAPdf.instances?.(separate, { ...filer, filingStatus: HeaderFilingStatus.Single }, separatePending),
+    Error,
+    "status differs",
   );
 });

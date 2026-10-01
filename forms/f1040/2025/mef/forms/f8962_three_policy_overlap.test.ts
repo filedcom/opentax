@@ -2,6 +2,11 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { DependentRelationship } from "../../../nodes/inputs/general/index.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
+import {
+  form8962 as form8962Calculation,
+  inputSchema as form8962InputSchema,
+} from "../../../nodes/intermediate/forms/form8962/index.ts";
+import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";
 import { form8962 } from "./f8962.ts";
 
@@ -139,6 +144,86 @@ Deno.test("Form 8962 three identified same-state policies combine A/C and one B 
   assertEquals(projected.pdf_month_1_premium, "1500");
   assertEquals(projected.pdf_month_1_slcsp, "1200");
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+});
+
+Deno.test("Form 8962 verified three-person policies at 200% FPL use the single-filer cap", () => {
+  const lowIncomePolicies = policies.map((policy) => ({
+    ...policy,
+    monthly_aptcs: Array<number>(12).fill(500),
+    annual_aptc: 6_000,
+  }));
+  const policySource = { f1095as: lowIncomePolicies };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    policySource,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals((sourceFields?.monthly_premiums as number[])[0], 1_500);
+  assertEquals((sourceFields?.monthly_slcsps as number[])[0], 1_200);
+  assertEquals((sourceFields?.monthly_aptcs as number[])[0], 1_500);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 23_140,
+      dependents_modified_agi: 28_500,
+      household_size: 3,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 13_968);
+  assertEquals(calculated?.excess_advance_payment, 4_032);
+  assertEquals(calculated?.excess_advance_premium, 975);
+  const lowIncomeFields = {
+    ...fields,
+    taxpayer_modified_agi: 23_140,
+    household_income: 51_640,
+    federal_poverty_pct: 200,
+    applicable_figure: 0.02,
+    annual_applicable_contribution: 1_033,
+    monthly_applicable_contribution: 86,
+    monthly_ptc_rows: months.map((month_code, month) => ({
+      month_code,
+      premium: 1_500,
+      slcsp: slcsps[month],
+      contribution: 86,
+      max_assistance: month < 6 ? 1_114 : 1_214,
+      allowed_credit: month < 6 ? 1_114 : 1_214,
+      aptc: 1_500,
+    })),
+    total_premium_tax_credit: 13_968,
+    total_advance_ptc: 18_000,
+    net_premium_tax_credit: 0,
+    excess_advance_payment: 4_032,
+    repayment_limitation: 975,
+    excess_advance_premium: 975,
+  };
+  const lowIncomePending = {
+    ...pending,
+    general: { ...pending.general, taxpayer_can_be_claimed_as_dependent: false },
+    f1095a: policySource,
+    schedule2: { line1a_excess_advance_premium: 975 },
+    schedule3: {},
+    f1040: { line11_agi: 23_140, line17_additional_taxes: 975 },
+  };
+  const xml = form8962.build(lowIncomeFields, { filer, pending: lowIncomePending });
+  assertStringIncludes(xml, "<AdditionalTaxLimitationAmt>975</AdditionalTaxLimitationAmt>");
+  const projected = form8962Pdf.projectFields?.(lowIncomeFields, lowIncomePending) ?? {};
+  assertEquals(form8962Pdf.instances?.(projected, filer, lowIncomePending)?.length, 1);
+  assertThrows(
+    () => form8962.build({ ...lowIncomeFields, repayment_limitation: 1_950 }, { filer, pending: lowIncomePending }),
+    Error,
+    "lines 24 through 29 differ",
+  );
+  assertThrows(
+    () => form8962.build(lowIncomeFields, { filer, pending: {
+      ...lowIncomePending,
+      general: { ...pending.general, taxpayer_can_be_claimed_as_dependent: true },
+    } }),
+    Error,
+    "needs sourced single-filer eligibility",
+  );
 });
 
 Deno.test("Form 8962 three-policy route rejects duplicate people, divergent SLCSP, reused evidence and final-return mismatch", () => {

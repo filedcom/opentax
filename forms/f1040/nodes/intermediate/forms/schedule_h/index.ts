@@ -71,6 +71,20 @@ export const inputSchema = z.object({
   // Must withhold only if employee requests it (Form W-4)
   federal_income_tax_withheld: z.number().nonnegative().optional(),
 
+  // One unrelated adult employee can owe FICA without reaching the FUTA
+  // quarterly threshold in either year. Both years' quarter facts are sourced.
+  fica_only_payroll: z.object({
+    all_household_employees_included: z.literal(true),
+    prior_year_payroll_source_reference: z.string().trim().min(1),
+    prior_year_quarter_cash_wages: z.tuple([
+      z.number().nonnegative(),
+      z.number().nonnegative(),
+      z.number().nonnegative(),
+      z.number().nonnegative(),
+    ]),
+    employee_wages: z.array(futaEmployeeSchema).length(1),
+  }).strict().optional(),
+
   // Part II Section A/B: the payroll ledger verifies each employee's $7,000 cap.
   federal_unemployment: z.union([
     z.object({
@@ -153,6 +167,38 @@ export function computeScheduleHAmounts(
     throw new Error("Schedule H Part II requires a true quarter-limit answer");
   }
   const unemployment = input.federal_unemployment;
+  const ficaOnly = input.fica_only_payroll;
+  if (ficaOnly) {
+    const employee = ficaOnly.employee_wages[0]!;
+    if (
+      unemployment || taxYear !== 2025 ||
+      input.cash_wages_over_2025_limit !== true ||
+      input.cash_wages_over_quarter_limit !== false ||
+      ficaOnly.prior_year_quarter_cash_wages.some((wages) => wages >= 1_000) ||
+      employee.quarterly_cash_wages.some((wages) => wages >= 1_000) ||
+      employee.quarterly_cash_wages.reduce((sum, wages) => sum + wages, 0) !==
+        employee.annual_cash_wages ||
+      employee.annual_cash_wages < TY2025_FICA_CASH_WAGE_THRESHOLD
+    ) {
+      throw new Error(
+        "Schedule H FICA-only source needs one qualifying worker and both years below the FUTA quarter threshold",
+      );
+    }
+    if (
+      !employee.w2 ||
+      employee.w2.box3_social_security_wages !== employee.annual_cash_wages ||
+      employee.w2.box5_medicare_wages !== employee.annual_cash_wages ||
+      input.ss_wages !== employee.annual_cash_wages ||
+      input.medicare_wages !== employee.annual_cash_wages ||
+      (input.additional_medicare_wages ?? 0) !== 0 ||
+      (input.federal_income_tax_withheld ?? 0) !==
+        employee.w2.box2_federal_income_tax_withheld
+    ) {
+      throw new Error(
+        "Schedule H FICA-only wages and withholding differ from the employee Form W-2",
+      );
+    }
+  }
   if (unemployment) {
     if (
       unemployment.prior_year_quarter_threshold_met !==
