@@ -76,6 +76,21 @@ now make a separate statement page for each positive Part V event, with its own
 holding period, year allocations, and spot quote when foreign currency applies.
 The packet projector and parent form remain outside the registered PDF packet.
 
+The staged section 1291 packet now requires a reviewed prior-distribution
+record for every year used in each distribution block's Form 8621 line 15b
+history, including a zero-distribution year. Typed records identify the source
+event, holding year, currency, amount, document ID, and SHA-256. The packet
+reconciles these values to the original event before projecting any parent
+pages, rejecting omitted, duplicated, wrong-year, wrong-currency, changed
+amount, and malformed-digest records. The
+[2025 instructions for lines 15b–15c](https://www.irs.gov/instructions/i8621)
+use the prior holding years to determine the 125% threshold. Positive and
+tamper fixtures are authored but unrun. These records remain evidence
+locators: neither their bytes nor the issuer's bytes are authenticated, and
+the PDF descriptor remains unregistered. Prior election status, share value,
+first PFIC year, and any foreign tax credit still need independent historical
+proof before a positive printable route can open.
+
 The issuer record is a locator and declared digest; the product does not yet
 fetch or authenticate its bytes. The current source does not prove historical
 section 1294 status, QEF Annual Information Statement amounts, marketability and

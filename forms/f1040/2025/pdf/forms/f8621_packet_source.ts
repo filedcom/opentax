@@ -3,6 +3,9 @@ import {
   type Form8621Lines,
   PficRegime,
 } from "../../../nodes/inputs/f8621/index.ts";
+import {
+  reconcileForm8621PriorDistributionRecords,
+} from "../../form8621_parent_source.ts";
 import { projectForm8621ParentPages } from "./f8621_parent_source.ts";
 
 function object(value: unknown): Record<string, unknown> | undefined {
@@ -34,6 +37,9 @@ export function projectForm8621Section1291Packet(
     lines.some((line) => line.item?.regime !== PficRegime.EXCESS_DISTRIBUTION)
   ) {
     throw new Error("Form 8621 packet has an unprojected QEF or MTM holding");
+  }
+  for (const line of lines) {
+    reconcileForm8621PriorDistributionRecords(line.item);
   }
   const forms = lines.map((line) => projectForm8621ParentPages(line, filer));
   const events = lines.flatMap((line) => line.excessEvents);

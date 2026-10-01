@@ -3,6 +3,7 @@ import {
   form8621ParentSourceSchema,
   PficRegime,
 } from "../nodes/inputs/f8621/index.ts";
+import { ExcessEventKind } from "../nodes/inputs/f8621/excess_distribution.ts";
 
 /** Source reconciliation shared by native and future printable parent forms. */
 export function projectForm8621ParentSource(item: F8621Item) {
@@ -41,4 +42,41 @@ export function projectForm8621ParentSource(item: F8621Item) {
     );
   }
   return source;
+}
+
+/** Bind each Part V line 15b history amount to a reviewed source locator. */
+export function reconcileForm8621PriorDistributionRecords(item: F8621Item) {
+  const parent = projectForm8621ParentSource(item);
+  if (item.regime !== PficRegime.EXCESS_DISTRIBUTION) {
+    throw new Error("Form 8621 prior distribution records need section 1291");
+  }
+  const expected = (item.excess_events ?? []).flatMap((event, eventIndex) =>
+    event.kind === ExcessEventKind.Distribution
+      ? event.prior_year_distributions.map((year) => ({
+        source_event_index: eventIndex,
+        tax_year: year.tax_year,
+        currency_code: "currency_code" in event ? event.currency_code : "USD",
+        amount: "amount_foreign" in year
+          ? year.amount_foreign
+          : year.amount_usd,
+      }))
+      : []
+  );
+  const records = parent.section1291_prior_distribution_records ?? [];
+  const key = (row: { source_event_index: number; tax_year: number }) =>
+    `${row.source_event_index}:${row.tax_year}`;
+  const byKey = new Map(records.map((record) => [key(record), record]));
+  if (
+    records.length !== expected.length || byKey.size !== records.length ||
+    expected.some((year) => {
+      const record = byKey.get(key(year));
+      return !record || record.currency_code !== year.currency_code ||
+        Math.abs(record.amount - year.amount) > 0.005;
+    })
+  ) {
+    throw new Error(
+      "Form 8621 Part V prior distribution records differ from each source event and holding year",
+    );
+  }
+  return records;
 }

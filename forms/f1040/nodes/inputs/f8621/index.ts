@@ -73,6 +73,19 @@ export const form8621ParentSourceSchema = z.object({
     document_id: z.string().trim().min(1),
     sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
   }).strict(),
+  // Staged PDF evidence locators for each prior holding-year distribution,
+  // including an issuer record that reports zero. Exact bytes still need an
+  // independent authentication step before a printable parent can register.
+  section1291_prior_distribution_records: z.array(
+    z.object({
+      source_event_index: z.number().int().nonnegative(),
+      tax_year: z.number().int().min(2022).max(2024),
+      currency_code: z.string().regex(/^[A-Z]{3}$/),
+      amount: z.number().nonnegative(),
+      document_id: z.string().trim().min(1),
+      sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+    }).strict(),
+  ).optional(),
 }).strict().superRefine((source, ctx) => {
   for (
     const date of [

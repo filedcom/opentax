@@ -101,6 +101,14 @@ Deno.test("Form 8621 staged parent creates a distinct Part V and statement for e
       ...parentSource,
       shares_acquired_during_2025: false,
       acquisition_date: undefined,
+      section1291_prior_distribution_records: [{
+        source_event_index: 0,
+        tax_year: 2024,
+        currency_code: "USD",
+        amount: 0,
+        document_id: "issuer-2024-zero-distribution",
+        sha256: "b".repeat(64),
+      }],
     },
     excess_events: [source],
   });
@@ -164,6 +172,60 @@ Deno.test("Form 8621 staged parent creates a distinct Part V and statement for e
   const packet = projectForm8621Section1291Packet(pending, filer);
   assertEquals(packet.forms.length, 1);
   assertEquals(packet.forms[0].partV.length, 2);
+  const prior = eventItem.parent_source!
+    .section1291_prior_distribution_records![0];
+  for (
+    const records of [
+      [],
+      [{ ...prior, amount: 1 }],
+      [{ ...prior, currency_code: "EUR" }],
+      [{ ...prior, source_event_index: 1 }],
+      [prior, prior],
+    ]
+  ) {
+    assertThrows(
+      () =>
+        projectForm8621Section1291Packet({
+          ...pending,
+          form8621: {
+            items: [{
+              item: {
+                ...eventItem,
+                parent_source: {
+                  ...eventItem.parent_source!,
+                  section1291_prior_distribution_records: records,
+                },
+              },
+              excessEvents: results,
+            }],
+          },
+        }, filer),
+      Error,
+      "prior distribution records differ",
+    );
+  }
+  assertThrows(
+    () =>
+      projectForm8621Section1291Packet({
+        ...pending,
+        form8621: {
+          items: [{
+            item: {
+              ...eventItem,
+              parent_source: {
+                ...eventItem.parent_source!,
+                section1291_prior_distribution_records: [{
+                  ...prior,
+                  sha256: "bad",
+                }],
+              },
+            },
+            excessEvents: results,
+          }],
+        },
+      }, filer),
+    Error,
+  );
   assertThrows(
     () =>
       projectForm8621Section1291Packet({
