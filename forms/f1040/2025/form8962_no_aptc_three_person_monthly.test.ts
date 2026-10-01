@@ -93,6 +93,59 @@ const secondDependent = {
   },
 };
 
+const belowThresholdWageDependent = {
+  ...dependent,
+  ptc_tax_return: {
+    filing: "not_required" as const,
+    wage_form_w2: {
+      source_document_id: "casey-below-threshold-2025-w2",
+      employer_name: "Summer Employer",
+      employer_ein: "112233445",
+      employee_ssn: "987654321",
+      box1_wages: 15_750,
+    },
+    filing_requirement_review: {
+      source_document_id: "casey-2025-filing-review",
+      dependent_ssn: "987654321",
+      tax_year: 2025 as const,
+      filing_status: "single" as const,
+      blind: false as const,
+      wage_source_document_id: "casey-below-threshold-2025-w2",
+      other_income_reviewed_absent: true as const,
+      other_filing_triggers_reviewed_absent: true as const,
+      return_filed: false as const,
+      reviewed_on: "2026-03-01",
+      reviewer_name: "Tax reviewer",
+    },
+  },
+};
+
+const belowThresholdInterestDependent = {
+  ...secondDependent,
+  ptc_tax_return: {
+    filing: "not_required" as const,
+    interest_form1099: {
+      source_document_id: "jordan-below-threshold-2025-1099int",
+      recipient_ssn: "111223333",
+      box1_taxable_interest: 1_350,
+      box8_tax_exempt_interest: 100,
+    },
+    filing_requirement_review: {
+      source_document_id: "jordan-2025-filing-review",
+      dependent_ssn: "111223333",
+      tax_year: 2025 as const,
+      filing_status: "single" as const,
+      blind: false as const,
+      interest_source_document_id: "jordan-below-threshold-2025-1099int",
+      other_income_reviewed_absent: true as const,
+      other_filing_triggers_reviewed_absent: true as const,
+      return_filed: false as const,
+      reviewed_on: "2026-03-01",
+      reviewer_name: "Tax reviewer",
+    },
+  },
+};
+
 const policy = {
   issuer_name: "Texas Marketplace",
   policy_number: "TX-THREE-FAMILY-NO-APTC-2025",
@@ -139,7 +192,7 @@ const filer = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 
-function filedReturn() {
+function filedReturn(twoNotRequired = false) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -153,7 +206,9 @@ function filedReturn() {
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
-      dependents: [dependent, secondDependent],
+      dependents: twoNotRequired
+        ? [belowThresholdWageDependent, belowThresholdInterestDependent]
+        : [dependent, secondDependent],
     },
     w2: [{
       employer_ein: "12-3456789",
@@ -163,12 +218,123 @@ function filedReturn() {
       employer_address_state: "TX",
       employer_address_zip: "78701",
       employee_ssn: "123-45-6789",
-      box1_wages: 33_640,
+      box1_wages: twoNotRequired ? 51_640 : 33_640,
       box2_fed_withheld: 3_000,
     }],
     f1095a: [policy],
   });
 }
+
+Deno.test("Form 8962 three-person monthly policy excludes two reviewed not-required dependents through native and PDF", async () => {
+  const result = filedReturn(true);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 0);
+  assertEquals(pending.form8962.household_income, 51_640);
+  assertEquals(pending.form8962.federal_poverty_pct, 200);
+  assertEquals(pending.form8962.total_premium_tax_credit, 7_968);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 7_968);
+  assertEquals(pending.f1040.line31_additional_payments, 7_968);
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(projected.dependents_modified_agi, 0);
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(prepared.bundle.xml, "<IRS8962 ");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>7968</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 two reviewed not-required dependents reject threshold, borrowed source, coverage, and final-credit tampering", async () => {
+  const result = filedReturn(true);
+  const pending = normalizeAllPending(result.pending);
+  const changed = (first: unknown, second: unknown) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...belowThresholdWageDependent,
+        ptc_tax_return: first,
+      }, {
+        ...belowThresholdInterestDependent,
+        ptc_tax_return: second,
+      }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...belowThresholdWageDependent.ptc_tax_return,
+        wage_form_w2: {
+          ...belowThresholdWageDependent.ptc_tax_return.wage_form_w2,
+          box1_wages: 15_751,
+        },
+      }, belowThresholdInterestDependent.ptc_tax_return),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed(
+        belowThresholdWageDependent.ptc_tax_return,
+        {
+          ...belowThresholdInterestDependent.ptc_tax_return,
+          interest_form1099: {
+            ...belowThresholdInterestDependent.ptc_tax_return.interest_form1099,
+            source_document_id: "casey-below-threshold-2025-w2",
+          },
+          filing_requirement_review: {
+            ...belowThresholdInterestDependent.ptc_tax_return
+              .filing_requirement_review,
+            interest_source_document_id: "casey-below-threshold-2025-w2",
+          },
+        },
+      ),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed(belowThresholdWageDependent.ptc_tax_return, {
+        ...belowThresholdWageDependent.ptc_tax_return,
+        wage_form_w2: {
+          ...belowThresholdWageDependent.ptc_tax_return.wage_form_w2,
+          source_document_id: "jordan-below-threshold-2025-w2",
+          employee_ssn: "111223333",
+        },
+        filing_requirement_review: {
+          ...belowThresholdWageDependent.ptc_tax_return
+            .filing_requirement_review,
+          source_document_id: "jordan-wage-filing-review",
+          dependent_ssn: "111223333",
+          wage_source_document_id: "jordan-below-threshold-2025-w2",
+        },
+      }),
+      filer,
+    )
+  );
+  const source = f1095aInputSchema.parse(pending.f1095a);
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      f1095a: {
+        f1095as: [{
+          ...source.f1095as[0],
+          covered_individual_ssns: ["123456789", "987654321", "999999999"],
+        }],
+      },
+    }, filer)
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      schedule3: { ...pending.schedule3, line9_premium_tax_credit: 7_967 },
+    }, filer)
+  );
+});
 
 Deno.test("Form 8962 monthly no-APTC policy with two required-filing dependents reaches final credit, native and PDF", async () => {
   const result = filedReturn();

@@ -1,5 +1,27 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Two separately reviewed dependents below the filing threshold (2026-10-01, unrun)
+
+One single filer with a three-person tax family may now combine exactly one
+under-65, nonblind dependent with a reviewed below-threshold W-2 and one with a
+reviewed below-threshold Form 1099-INT. Each has a distinct issued-document
+reference and post-year-end filing-requirement workpaper, separate SSN, and
+confirmed absence of other income, filing triggers, and a filed return. Their
+income is excluded from Form 8962 Worksheet 1-2 line 2b under the
+[2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+and [2025 Publication 501 Table 2 and Table 3](https://www.irs.gov/pub/irs-prior/p501--2025.pdf).
+
+For one fully paid, nonshared three-person Marketplace policy with no APTC,
+the existing monthly route now checks both dependent identities and document
+IDs, all covered SSNs, the three-person poverty line, each determined SLCSP,
+Form 8962 monthly credit, Schedule 3 line 9, and Form 1040 line 31 in native
+MeF and PDF projection. A $51,640 parent-income case reaches 200% FPL and
+$7,968 PTC; threshold, duplicate source, coverage identity, and final-credit
+tamper fixtures are authored for the deferred bulk gate. One required-filing
+dependent mixed with one not-required dependent, two dependents of the same
+source kind, multiple policies, shared policies, and external document-byte
+authentication remain outside this bounded route.
+
 ## Reviewed interest-only dependent below the filing threshold (2026-10-01, unrun)
 
 The `not_required` source also accepts one identified 2025 Form 1099-INT for

@@ -61,14 +61,24 @@ export function reconcileDependentMagi(
       "Form 8962 bounded dependent path does not include Form 8814",
     );
   }
+  const notRequired = claimed.filter((dependent) =>
+    dependent.ptc_tax_return?.filing === "not_required"
+  );
+  const twoReviewedSourceKinds = householdSize === 3 &&
+    notRequired.length === 2 &&
+    notRequired.filter((dependent) =>
+        dependent.ptc_tax_return?.filing === "not_required" &&
+        "wage_form_w2" in dependent.ptc_tax_return
+      ).length === 1 &&
+    notRequired.filter((dependent) =>
+        dependent.ptc_tax_return?.filing === "not_required" &&
+        "interest_form1099" in dependent.ptc_tax_return
+      ).length === 1;
   if (
-    householdSize !== 2 &&
-    claimed.some((dependent) =>
-      dependent.ptc_tax_return?.filing === "not_required"
-    )
+    householdSize !== 2 && notRequired.length > 0 && !twoReviewedSourceKinds
   ) {
     throw new Error(
-      "Form 8962 not-required dependent path supports one claimed dependent",
+      "Form 8962 three-person not-required path needs one reviewed W-2 dependent and one reviewed 1099-INT dependent",
     );
   }
   if (
