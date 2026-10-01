@@ -7,10 +7,11 @@ outputs without replaying the sink calculation.
 
 ## Bounded export replay staged in this batch
 
-`return-wide-arithmetic.ts` checks the retained Form 1040 lines 18, 21, 22, 24,
-25d, 32, and 33 against their immediate component lines whenever the subtotal is
+`return-wide-arithmetic.ts` checks the retained Form 1040 lines 11, 14, 15,
+18, 21, 22, 24, 25d, 32, and 33 against their immediate component lines whenever the subtotal is
 supplied. Both Form 1040 native and PDF descriptors call the same check before
-projection. The replay catches a changed tax, credit, withholding, or payment
+projection. The replay catches a changed AGI, deduction, taxable-income, tax,
+credit, withholding, or payment
 subtotal, including a changed Schedule 3 deposit on line 20 or line 31 when the
 final 1040 component is present. It accepts unsupplied optional line components
 as zero, matching the sink's arithmetic. Positive and per-subtotal tamper
@@ -117,7 +118,7 @@ treated as externally verified.
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 9, 11, and 15.                                                                                                                         | Recompute income, adjustments, deduction choice, and taxable income from identified source rows at export; sparse direct sink inputs currently prevent a blanket equality assertion.                                                         |
+| Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 9, 11, and 15. Final export now replays line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14 when the component lines are present. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |
 | Schedule 1 and 1-A             | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040.                                                                                        | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open.                                                                                     |
 | Schedule 2 and 3               | Schedule 2 Parts I and II and Schedule 3 nonrefundable/payment totals now reconcile to Form 1040, including the retained Form 8978 line 17z reduction; several credits are finalized in the Form 1040 sink after tax is known. | Authenticate child sources, including the Form 8978 partner audit and corrected return facts. The official 2025 Schedule 2 also has installment-sale interest on lines 14 and 15, which lack a sourced graph route and printable projection. |
 | Withholding and payments       | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines.                                                                                                    | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31.                                                                                                |
