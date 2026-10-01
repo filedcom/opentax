@@ -27,6 +27,13 @@ pages 1, 2, 4, and 5.
 
 The packet does not identify a direct trustee payment to an eligible charity,
 the QCD amount, or how the checked line 4c relates to the code-Q distribution.
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+require a QCD's total IRA distribution on line 4a and the QCD box on line 4c.
+They separately direct a code-Q Roth IRA distribution's total to line 4a, with
+zero on line 4b. Thus the printed blank line 4a conflicts with the required
+reporting of the one $35,800 code-Q distribution even if the QCD mark is an
+unrelated error. A hypothesized additional QCD would also require a line 4a
+amount and a separately identified distribution.
 The [2025 Form 1099-R instructions](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf)
 introduced code Y to identify QCDs and specify its combinations with codes 4,
 7, or K, not Q. The printed 1099-R has Q alone. The cover sheet gives no extra
@@ -38,9 +45,10 @@ mark is an error.
 
 The current calculation fixture intentionally has no QCD fields. Its numerical
 return assertions are provisional and cannot establish a complete ATS case.
-The packet also leaves Form 1040 line 4a blank despite printing the $35,800
-code-Q Roth distribution; obtain the intended line-4a treatment rather than
-forcing that gross amount or treating the blank as verified.
+Ask the IRS e-Help Desk whether the intended test return should put $35,800
+on line 4a and clear the QCD box, or whether a corrected distribution/QCD
+source and different line 4a amount will be supplied. Neither outcome can be
+inferred from the packet; the complete Scenario 8 assertion remains blocked.
 The code-G Form 1099-R and the packet's printed line 5c mark together establish
 the direct-rollover source fact. Code G alone is insufficient because the 2025
 Form 1099-R instructions also use it for designated Roth employer contributions.
