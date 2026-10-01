@@ -1,5 +1,24 @@
 # TY2025 Form 4972 remaining coverage
 
+## Two full-share same-plan 1099-R copies with elected NUA (staged, unrun)
+
+The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+direct a recipient to add same-participant qualified distributions received
+in one tax year before figuring the one Form 4972. The NUA Worksheet uses
+combined boxes 3 and 2a to allocate combined box 6 between capital and
+ordinary amounts. A bounded two-copy full-share, nonbeneficiary route now
+requires one source-matched participant/plan and administrator balance
+statement, distinct Form 1099-R references, exact whole-dollar boxes 2a/3/6,
+an affirmative NUA inclusion and capital-gain election, and no annuity or
+estate/death allocation. In the authored case, $50,000 box 2a, $5,000 box 3,
+and $10,000 box 6 produce $1,000 capital NUA, Form 4972 line 6 of $6,000,
+and line 8 of $54,000. The special tax joins Form 1040 line 16; native and
+PDF projection independently match each source and calculated line. Positive
+full-return/native/PDF and changed NUA, box 3, plan, and return-tax fixtures
+are written but unrun. Wider multi-copy NUA, recipient shares, annuities,
+beneficiary allocations, source-byte authentication, and IRS acceptance remain
+outside this bound.
+
 ## Participant-wide unequal death-benefit allocation (2026-10-01, unrun)
 
 The partial-share beneficiary death-benefit route now requires a complete

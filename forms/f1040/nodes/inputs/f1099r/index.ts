@@ -1313,7 +1313,9 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
-        (item.box6_nua ?? 0) !== 0 ||
+        ((item.box6_nua ?? 0) > 0 &&
+          (!Number.isSafeInteger(item.box6_nua ?? 0) ||
+            lumpItems.length !== 2)) ||
         (item.box8_other ?? 0) !== 0 ||
         item.box8_pct_total !== undefined
       )
@@ -1338,6 +1340,14 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
           ? {
             capital_gain_amount: lumpItems.reduce(
               (sum, item) => sum + (item.box3_capital_gain ?? 0),
+              0,
+            ),
+          }
+          : {}),
+        ...(lumpItems.some((item) => (item.box6_nua ?? 0) > 0)
+          ? {
+            box6_nua: lumpItems.reduce(
+              (sum, item) => sum + (item.box6_nua ?? 0),
               0,
             ),
           }

@@ -22,6 +22,10 @@ export function reconcileForm4972Nua(
       fields.line8_nua_included > 0)
   ) return;
 
+  // The full-share multi-copy path independently sums all three NUA worksheet
+  // boxes and replays the calculation after matching each plan source.
+  if (fields.multiple_1099r !== undefined) return;
+
   const source = f1099rSchema.safeParse(pending?.f1099r);
   if (!source.success) {
     throw new Error("Form 4972 NUA needs the source Form 1099-R");

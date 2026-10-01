@@ -146,7 +146,18 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       input.elect_10yr_averaging !== true ||
       (input.elect_capital_gain === true &&
         (input.capital_gain_amount ?? 0) <= 0) ||
-      (input.box6_nua ?? 0) !== 0 || input.elect_include_nua === true ||
+      ((input.box6_nua ?? 0) > 0 &&
+        (refs.length !== 2 || input.elect_include_nua !== true ||
+          input.elect_capital_gain !== true ||
+          !Number.isSafeInteger(input.lump_sum_amount) ||
+          !Number.isSafeInteger(input.capital_gain_amount ?? 0) ||
+          !Number.isSafeInteger(input.box6_nua ?? 0) ||
+          !Number.isSafeInteger(
+            (input.box6_nua ?? 0) * (input.capital_gain_amount ?? 0) /
+              input.lump_sum_amount,
+          ))) ||
+      ((input.box6_nua ?? 0) === 0 &&
+        input.elect_include_nua === true) ||
       (input.annuity_actuarial_value ?? 0) !== 0 ||
       (input.death_benefit_exclusion ?? 0) !== 0 ||
       (input.federal_estate_tax ?? 0) !== 0 ||

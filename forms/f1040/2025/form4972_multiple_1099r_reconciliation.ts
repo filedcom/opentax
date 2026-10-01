@@ -20,6 +20,15 @@ export function reconcileForm4972Multiple1099R(
     )
     : [];
   const refs = plan.source_document_references;
+  const nua = elected.reduce((sum, item) => sum + (item.box6_nua ?? 0), 0);
+  const gain = elected.reduce(
+    (sum, item) => sum + (item.box3_capital_gain ?? 0),
+    0,
+  );
+  const taxable = elected.reduce(
+    (sum, item) => sum + (item.box2a_taxable_amount ?? 0),
+    0,
+  );
   if (
     !owner || owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
     owner.name.trim() !== plan.participant_name ||
@@ -41,7 +50,9 @@ export function reconcileForm4972Multiple1099R(
       item.box9a_pct_total !== 100 ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
-      (item.box6_nua ?? 0) !== 0 ||
+      !Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
+      !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
+      !Number.isSafeInteger(item.box6_nua ?? 0) ||
       (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
     ) ||
     elected.some((item) =>
@@ -49,10 +60,14 @@ export function reconcileForm4972Multiple1099R(
       item.payer_name !== elected[0]?.payer_name
     ) ||
     !elected[0]?.payer_ein.trim() || !elected[0]?.payer_name.trim() ||
-    elected.reduce((sum, item) => sum + (item.box2a_taxable_amount ?? 0), 0) !==
-      form.lump_sum_amount ||
-    elected.reduce((sum, item) => sum + (item.box3_capital_gain ?? 0), 0) !==
-      (form.capital_gain_amount ?? 0) ||
+    taxable !== form.lump_sum_amount ||
+    gain !== (form.capital_gain_amount ?? 0) ||
+    nua !== (form.box6_nua ?? 0) ||
+    (nua > 0 &&
+      (refs.length !== 2 || form.elect_include_nua !== true ||
+        form.elect_capital_gain !== true || gain <= 0 ||
+        !Number.isSafeInteger(nua * gain / taxable))) ||
+    (nua === 0 && form.elect_include_nua === true) ||
     source.success &&
       source.data.f1099rs.some((item) =>
         item.exclude_4972 !== true &&
@@ -60,7 +75,7 @@ export function reconcileForm4972Multiple1099R(
       )
   ) {
     throw new Error(
-      "Form 4972 multi-source election needs matching owner, plan, complete source copies, and summed boxes 2a and 3",
+      "Form 4972 multi-source election needs matching owner, plan, complete source copies, and summed boxes 2a, 3, and 6",
     );
   }
 
@@ -78,6 +93,8 @@ export function reconcileForm4972Multiple1099R(
     !calculated ||
     Array.from({ length: 25 }, (_, index) => `line${index + 6}`)
       .some((key) => calculated[key] !== fields[key]) ||
+    calculated.line6_nua_capital_gain !== fields.line6_nua_capital_gain ||
+    calculated.line8_nua_included !== fields.line8_nua_included ||
     !returnFields || returnFields.form4972_tax !== tax
   ) {
     throw new Error(
