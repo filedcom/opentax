@@ -1603,7 +1603,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
         },
       }),
     Error,
-    "Form 3800 disabled-access K-1 source differs",
+    "Passive Form 8826 pass-through credit needs its gross source ledger",
   );
 });
 

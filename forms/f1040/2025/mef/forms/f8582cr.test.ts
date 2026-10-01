@@ -363,7 +363,7 @@ Deno.test("Form 8582-CR rejects estate K-1 code M as orphan-drug credit", () => 
   assertThrows(
     () => form8582cr.build(input, {}),
     Error,
-    "clean electricity investment credit",
+    "orphan-drug credit needs a reviewed passive source route",
   );
 });
 

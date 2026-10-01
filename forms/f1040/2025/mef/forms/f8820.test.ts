@@ -359,7 +359,7 @@ Deno.test("Form 8820 rejects estate and trust K-1 code M as orphan-drug credit",
           pending: { f8820: passThroughOnly },
         }),
       Error,
-      "clean electricity investment credit",
+      "orphan-drug credit needs a reviewed source route before Form 8820",
     );
   }
 });

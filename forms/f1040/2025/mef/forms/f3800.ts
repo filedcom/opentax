@@ -225,7 +225,14 @@ function sourceForm8826(
   const source = raw ? f8826InputSchema.parse(raw) : undefined;
   const lines = source ? calculateForm8826(source) : undefined;
   for (const declared of source?.pass_through_credits ?? []) {
-    if (declared.subject_to_passive_activity_limit) continue;
+    if (declared.subject_to_passive_activity_limit) {
+      if (!ledger) {
+        throw new Error(
+          "Passive Form 8826 pass-through credit needs its gross source ledger",
+        );
+      }
+      continue;
+    }
     const matching = directSources.filter((entry) =>
       entry.source_type === declared.entity_type &&
       entry.source_ein === declared.entity_ein &&
@@ -237,27 +244,6 @@ function sourceForm8826(
       throw new Error(
         "Form 3800 disabled-access K-1 source differs from Form 8826 line 7",
       );
-    }
-  }
-  if (source) {
-    for (const direct of directSources) {
-      if (
-        direct.source_type !== "partnership" &&
-        direct.source_type !== "s_corporation"
-      ) continue;
-      const matching = (source.pass_through_credits ?? []).filter((declared) =>
-        declared.entity_type === direct.source_type &&
-        declared.entity_ein === direct.source_ein &&
-        declared.source_document_reference ===
-          direct.source_document_reference &&
-        sameMoney(declared.credit_amount, direct.credit_amount) &&
-        !declared.subject_to_passive_activity_limit
-      );
-      if (matching.length !== 1) {
-        throw new Error(
-          "Form 3800 disabled-access K-1 source differs from Form 8826 line 7",
-        );
-      }
     }
   }
   const expected = source && lines
