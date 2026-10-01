@@ -465,6 +465,33 @@ Other non-enrolled-taxpayer combinations, multiple policies, wider tax
 families, unmatched agreement periods, corrected SLCSP, and interstate shared
 coverage remain closed pending their own source and final-return checks.
 
+## Two agreed Situation 4 periods on one policy (build-first, unrun)
+
+The [TY2025 Form 8962 Situation 4 instructions](https://www.irs.gov/instructions/i8962)
+allow two tax families to agree on a different allocation percentage for
+different months, while requiring the same percentage for premiums, SLCSP, and
+APTC within each month. A bounded full-year source case now uses one identified
+1095-A policy covering two taxpayers from separate families and reviewed
+20%-for-January-through-June and 80%-for-July-through-December agreements.
+Each source period carries its own 2025 policy, filer and other-taxpayer SSNs,
+month range, percentage, agreement reference, and SHA-256. The native filing
+boundary requires exact matches to the Part IV rows, the 1095-A recipient to
+be the filer, and distinct reviewed references and hashes when percentages
+change. Source aggregation applies each period's percentage to all three
+monthly columns; the Form 8962 calculation produces $7,200 credit and $4,800
+allocated APTC, with $2,400 reaching Schedule 3 line 9 and Form 1040 line 31.
+The PDF descriptor invokes the same native reconciliation. Full-return,
+native/PDF, changed-percentage, changed-identity, duplicate-agreement, and
+final-return-drift fixtures are authored but unrun. A higher-income, larger
+APTC source variant also exercises excess repayment through Schedule 2 line 1a
+and Form 1040 line 17. Agreement hashes are
+reviewed metadata; agreement and Marketplace bytes are not authenticated.
+
+The source gate also requires distinct agreements for any previously supported
+five-period Situation 4 allocation whose percentages change. Wider tax
+families, multiple policies, mixed allocation situations, and independent
+source-byte authentication remain open.
+
 ## One full-year MFS spouse policy
 
 The MeF descriptor now reconciles one full-year policy shared by an MFS filer

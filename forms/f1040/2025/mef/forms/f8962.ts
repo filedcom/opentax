@@ -2473,6 +2473,47 @@ function reconcileAgreedSharedPolicy(
       "Form 8962 agreed shared policy must match the source policy, covered family member, and other allocating taxpayer",
     );
   }
+  const changedSituation4Percentage = allocations.length > 1 &&
+    allocations.every((row) => row.basis === "other_agreed") &&
+    new Set(allocations.map((row) => row.premium_pct)).size > 1;
+  if (changedSituation4Percentage) {
+    const reviews = allocations.map((allocation) => {
+      const matches = sharedSourcePeriods?.filter((period) =>
+        period.basis === "other_agreed" &&
+        period.other_taxpayer_ssn.replaceAll("-", "") ===
+          allocation.other_taxpayer_ssn &&
+        period.start_month === allocation.start_month &&
+        period.end_month === allocation.end_month &&
+        period.allocation_pct === allocation.premium_pct
+      ) ?? [];
+      const matched = matches.length === 1 ? matches[0] : undefined;
+      return matched?.basis === "other_agreed"
+        ? matched.agreement_review
+        : undefined;
+    });
+    if (
+      policy.recipient_ssn?.replaceAll("-", "") !== filerSsn ||
+      reviews.some((review, index) => {
+        const allocation = allocations[index];
+        return !review ||
+          review.policy_number !== policy.policy_number ||
+          review.filer_ssn.replaceAll("-", "") !== filerSsn ||
+          review.other_taxpayer_ssn.replaceAll("-", "") !==
+            allocation.other_taxpayer_ssn ||
+          review.start_month !== allocation.start_month ||
+          review.end_month !== allocation.end_month ||
+          review.filer_allocation_pct !== allocation.premium_pct;
+      }) ||
+      new Set(reviews.map((review) => review?.agreement_reference)).size !==
+        reviews.length ||
+      new Set(reviews.map((review) => review?.agreement_sha256)).size !==
+        reviews.length
+    ) {
+      throw new Error(
+        "Form 8962 changed Situation 4 percentages need distinct source agreements for each period",
+      );
+    }
+  }
   const povertyLine = reconcilePovertyTable(fields, context);
   const derivedSource = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },

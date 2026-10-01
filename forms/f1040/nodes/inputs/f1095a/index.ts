@@ -78,6 +78,20 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
       allocation_agreement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
       filer_allocation_pct: allocationPctSchema,
     }).strict().optional(),
+    // Reviewed period-specific agreement when a policy's Situation 4
+    // percentage changes during the year.
+    agreement_review: z.object({
+      tax_year: z.literal(2025),
+      policy_number: z.string().trim().min(1),
+      filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      start_month: z.number().int().min(1).max(12),
+      end_month: z.number().int().min(1).max(12),
+      filer_allocation_pct: allocationPctSchema,
+      both_taxpayers_agreed: z.literal(true),
+      agreement_reference: z.string().trim().min(1),
+      agreement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    }).strict().optional(),
     start_month: z.number().int().min(1).max(12),
     end_month: z.number().int().min(1).max(12),
     allocation_pct: allocationPctSchema,
