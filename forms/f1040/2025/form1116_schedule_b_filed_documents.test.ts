@@ -38,7 +38,7 @@ async function scheduleBBytes(
   } = {},
 ) {
   const pdf = await PDFDocument.create();
-  pdf.addPage();
+  const firstPage = pdf.addPage();
   pdf.addPage();
   const form = pdf.getForm();
   form.createTextField(`${prefix}Pg1Header[0].f1_01[0]`).setText(
@@ -50,10 +50,10 @@ async function scheduleBBytes(
   form.createTextField(`${prefix}f1_07[0]`).setText(
     values.owner ?? "111223333",
   );
-  for (const [index, name] of categoryFields.entries()) {
-    const box = form.createCheckBox(name);
-    if (index === (values.category ?? 2)) box.check();
+  for (const name of categoryFields) {
+    form.createCheckBox(name).addToPage(firstPage);
   }
+  form.getCheckBox(categoryFields[values.category ?? 2]).check();
   for (const number of ["107", "108", "109", "110", "111"]) {
     form.createTextField(`${prefix}Table_Page1[0].Line8[0].f1_${number}[0]`);
   }
