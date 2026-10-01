@@ -270,6 +270,25 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
+Deno.test("MeF final export rejects non-withheld W-2G winnings for another winner", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            winner_name: "Another Winner",
+            box9_winner_tin: "999-88-7777",
+            winner_us_address: sampleFiler().address,
+          }],
+        },
+      }),
+    Error,
+    "W-2G winnings or withholding needs",
+  );
+});
+
 Deno.test("MeF export rejects Form 3800 credit without finalized source facts", () => {
   assertThrows(
     () => buildMefXml({ f3800: { allowed_credit: 0 } }),

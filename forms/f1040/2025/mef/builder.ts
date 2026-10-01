@@ -29,6 +29,7 @@ import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
+import { assertPositiveW2GRecipient } from "./forms/w2g.ts";
 import { reconciledForm8908Source } from "./forms/f8908_source_reconciliation.ts";
 import { assertForm8908PwaSubmittedPdfs } from "./forms/f8908_pwa.ts";
 import { assertPreparedVehicleAcknowledgments } from "./forms/f8283_vehicle_sale_evidence.ts";
@@ -242,6 +243,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assert1099RRecipientOwner(pending.f1099r, filer);
+  assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
   assert1099BRecipientOwner(pending.f1099b, filer);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);

@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
-import { w2g } from "./w2g.ts";
+import { assertPositiveW2GRecipient, w2g } from "./w2g.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -52,6 +52,27 @@ const context = {
     "PayerIssuedW2G.pdf": issued.issued_copy_pdf_sha256,
   },
 };
+
+Deno.test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", () => {
+  const noWithholding = { ...issued, box4_federal_withheld: 0 };
+  assertPositiveW2GRecipient({ w2gs: [noWithholding] }, filer);
+  assertThrows(
+    () =>
+      assertPositiveW2GRecipient({
+        w2gs: [{ ...noWithholding, box9_winner_tin: "999-88-7777" }],
+      }, filer),
+    Error,
+    "winner name, SSN, and address",
+  );
+  assertThrows(
+    () =>
+      assertPositiveW2GRecipient({
+        w2gs: [{ ...noWithholding, box9_winner_tin: undefined }],
+      }, filer),
+    Error,
+    "winner name, SSN, and address",
+  );
+});
 
 Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
   const xml = w2g.build({ w2gs: [issued, { box1_winnings: 500 }] }, context);

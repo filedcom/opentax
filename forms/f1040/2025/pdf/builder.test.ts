@@ -33,6 +33,25 @@ const mockFiler: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
+Deno.test("PDF final export rejects non-withheld W-2G winnings for another winner", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            winner_name: "Another Winner",
+            box9_winner_tin: "999-88-7777",
+            winner_us_address: mockFiler.address,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "W-2G winnings or withholding needs",
+  );
+});
+
 Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-assets answer", async () => {
   const complete = {
     f1040: {
