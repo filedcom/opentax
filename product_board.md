@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **257 completed bounded items** are preserved
+and the full progress summary. The **258 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -52,7 +52,8 @@ passive investments retain their own Form 8582-CR Worksheet 9 balances and
 Form 3800 Part V rows. A partnership and S corporation passive New Markets
 credit now share one sourced rental limit while retaining separate activity
 balances and issuer identities; the credit-only pass-through route now covers
-up to 15 separately identified K-1 issuers.
+up to 15 separately identified K-1 issuers. A self-earned Form 8874 investment
+now joins passive K-1 credits in the same sourced allocation and printed packet.
 Form 4952 now limits a partnership K-1 code H expense with sourced unadjusted
 1099-OID income, alone or alongside plain 1099-INT or sourced 1099-DIV
 investment income. A directly traced MFJ spouse-owned investment loan now
@@ -105,7 +106,7 @@ completed ledger records the smaller routes already implemented.
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
 | Named tax-form gaps | 20 | 243 | Bounded child routes exist; full form-family coverage remains open. |
-| Native MeF and PDF parity | 3 | 10 | Registry and filled-output parity remain open. |
+| Native MeF and PDF parity | 3 | 11 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
 
