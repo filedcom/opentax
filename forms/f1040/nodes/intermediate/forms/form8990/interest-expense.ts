@@ -4,6 +4,9 @@ import type { ProvisionalScheduleCInterestPass } from "./two-stage.ts";
 export const businessInterestExpenseRecordSchema = z.object({
   interest_payment_reference: z.string().trim().min(1),
   debt_proceeds_tracing_reference: z.string().trim().min(1),
+  debtor_taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  lender_ein: z.string().regex(/^\d{9}$/),
+  debt_account_reference: z.string().trim().min(1),
   business_reference: z.string().trim().min(1),
   allocation: z.literal("nonexcepted_schedule_c_business"),
   interest_paid_amount: z.number().int().finite().positive().max(
@@ -33,6 +36,7 @@ export type BusinessInterestExpenseRecord = z.infer<
  */
 export function reconcileBusinessInterestExpenseRecords(
   provisional: ProvisionalScheduleCInterestPass,
+  currentTaxpayerSsn: string,
   raw: unknown,
 ): readonly BusinessInterestExpenseRecord[] {
   const records = z.array(businessInterestExpenseRecordSchema).min(1).parse(
@@ -43,6 +47,30 @@ export function reconcileBusinessInterestExpenseRecords(
   );
   if (payments.size !== records.length) {
     throw new Error("Form 8990 interest payment references are duplicated");
+  }
+  if (
+    !/^\d{9}$/.test(currentTaxpayerSsn) ||
+    records.some((record) => record.debtor_taxpayer_ssn !== currentTaxpayerSsn)
+  ) {
+    throw new Error("Form 8990 traced debt owner differs from current return");
+  }
+  const accountByTracing = new Map<string, string>();
+  const tracingByAccount = new Map<string, string>();
+  for (const record of records) {
+    const account = `${record.lender_ein}:${record.debt_account_reference}`;
+    const tracing = record.debt_proceeds_tracing_reference;
+    if (
+      (accountByTracing.has(tracing) &&
+        accountByTracing.get(tracing) !== account) ||
+      (tracingByAccount.has(account) &&
+        tracingByAccount.get(account) !== tracing)
+    ) {
+      throw new Error(
+        "Form 8990 traced debt account and workpaper references conflict",
+      );
+    }
+    accountByTracing.set(tracing, account);
+    tracingByAccount.set(account, tracing);
   }
   if (
     records.some((record) =>

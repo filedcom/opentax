@@ -315,6 +315,19 @@ document references are review leads, not verified source documents; actual
 debt-tracing review and authenticity remain open. The related cases are written
 but unrun under the build-first hold, and filing stays blocked.
 
+Each traced payment now also requires the debtor's nine-digit SSN, lender EIN,
+and debt-account reference. The debtor must match the current taxpayer, using
+the same identity as the reviewed 2024 Form 8990. Multiple interest payments
+may share a debt, but a lender/account pair must map to one debt-proceeds
+workpaper and a workpaper may identify only one lender/account pair. The
+calculated projection retains these fields, and native/PDF replay compares the
+supplied projection with the finalized pending source so an account or lender
+change after calculation rejects even if the amount is unchanged. Positive
+two-payment, wrong-owner, and conflicting account/workpaper fixtures are
+authored but unrun. This is a source-consistency prerequisite under the
+[2025 Form 8990 interest categorization instructions](https://www.irs.gov/pub/irs-prior/i8990--2025.pdf),
+not authentication of lender statements, debt tracing, or an accepted filing.
+
 The three reviewed filed 2022–2024 Schedule C receipts records now each require
 the current taxpayer's SSN. Their identities are compared with the filed 2024
 Form 8990 taxpayer already checked against the current return, and each Schedule

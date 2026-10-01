@@ -35,6 +35,9 @@ Deno.test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced
     interestExpenseRecords: [{
       interest_payment_reference: "interest-statement-1",
       debt_proceeds_tracing_reference: "business-loan-ledger-1",
+      debtor_taxpayer_ssn: "123456789",
+      lender_ein: "987654321",
+      debt_account_reference: "BUSINESS-LOAN-1",
       business_reference: "C-1",
       allocation: "nonexcepted_schedule_c_business",
       interest_paid_amount: 100_000,

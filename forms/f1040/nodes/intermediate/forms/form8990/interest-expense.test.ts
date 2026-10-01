@@ -17,6 +17,9 @@ const provisional = stageProvisionalScheduleCInterest({
 const traced = {
   interest_payment_reference: "statement-1",
   debt_proceeds_tracing_reference: "loan-ledger-1",
+  debtor_taxpayer_ssn: "123456789",
+  lender_ein: "987654321",
+  debt_account_reference: "BUSINESS-LOAN-1",
   business_reference: "C-1",
   allocation: "nonexcepted_schedule_c_business" as const,
   interest_paid_amount: 100_000,
@@ -25,7 +28,7 @@ const traced = {
 
 Deno.test("2025 Form 8990 interest records reconcile to one nonexcepted Schedule C", () => {
   assertEquals(
-    reconcileBusinessInterestExpenseRecords(provisional, [
+    reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
       {
         ...traced,
         interest_paid_amount: 60_000,
@@ -44,11 +47,11 @@ Deno.test("2025 Form 8990 interest records reconcile to one nonexcepted Schedule
 
 Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tracing", () => {
   assertThrows(
-    () => reconcileBusinessInterestExpenseRecords(provisional, []),
+    () => reconcileBusinessInterestExpenseRecords(provisional, "123456789", []),
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         {
           ...traced,
           interest_paid_amount: 99_999,
@@ -60,7 +63,7 @@ Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tra
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         {
           ...traced,
           interest_paid_amount: 60_000,
@@ -77,7 +80,7 @@ Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tra
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         { ...traced, business_reference: "C-2" },
       ]),
     Error,
@@ -88,7 +91,7 @@ Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tra
 Deno.test("2025 Form 8990 rejects untraced or excepted interest classifications", () => {
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         { ...traced, interest_paid_amount: 110_000 },
       ]),
     Error,
@@ -96,20 +99,69 @@ Deno.test("2025 Form 8990 rejects untraced or excepted interest classifications"
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         { ...traced, debt_proceeds_tracing_reference: "" },
       ]),
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         { ...traced, allocation: "excepted_real_property_business" },
       ]),
   );
   assertThrows(
     () =>
-      reconcileBusinessInterestExpenseRecords(provisional, [
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
         { ...traced, allocation: "personal" },
       ]),
+  );
+});
+
+Deno.test("2025 Form 8990 binds traced debt to the filer and one account/workpaper pair", () => {
+  assertThrows(
+    () =>
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
+        { ...traced, debtor_taxpayer_ssn: "999999999" },
+      ]),
+    Error,
+    "debt owner differs",
+  );
+  assertThrows(
+    () =>
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
+        {
+          ...traced,
+          interest_paid_amount: 60_000,
+          line16b_business_interest_amount: 60_000,
+        },
+        {
+          ...traced,
+          interest_payment_reference: "statement-2",
+          debt_account_reference: "BUSINESS-LOAN-2",
+          interest_paid_amount: 40_000,
+          line16b_business_interest_amount: 40_000,
+        },
+      ]),
+    Error,
+    "account and workpaper references conflict",
+  );
+  assertThrows(
+    () =>
+      reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
+        {
+          ...traced,
+          interest_paid_amount: 60_000,
+          line16b_business_interest_amount: 60_000,
+        },
+        {
+          ...traced,
+          interest_payment_reference: "statement-2",
+          debt_proceeds_tracing_reference: "loan-ledger-2",
+          interest_paid_amount: 40_000,
+          line16b_business_interest_amount: 40_000,
+        },
+      ]),
+    Error,
+    "account and workpaper references conflict",
   );
 });

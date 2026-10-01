@@ -36,6 +36,9 @@ const sourceRecords = {
   interestExpenseRecords: [{
     interest_payment_reference: "interest-statement-1",
     debt_proceeds_tracing_reference: "business-loan-ledger-1",
+    debtor_taxpayer_ssn: "123456789",
+    lender_ein: "987654321",
+    debt_account_reference: "BUSINESS-LOAN-1",
     business_reference: "C-1",
     allocation: "nonexcepted_schedule_c_business",
     interest_paid_amount: 100_000,
@@ -103,6 +106,37 @@ Deno.test("2025 Form 8990 native projections reject changed lines, carryforward,
   });
   const pending = buildPending(result.pending);
   const form = pending.form8990 ?? {};
+  const pdfPending = normalizeAllPending(result.pending);
+  for (
+    const changedRecord of [
+      {
+        ...sourceRecords.interestExpenseRecords[0],
+        debtor_taxpayer_ssn: "987654321",
+      },
+      {
+        ...sourceRecords.interestExpenseRecords[0],
+        debt_account_reference: "OTHER-LOAN",
+      },
+      { ...sourceRecords.interestExpenseRecords[0], lender_ein: "111111111" },
+    ]
+  ) {
+    const changedForm = {
+      ...form,
+      sourceRecords: {
+        ...(form.sourceRecords as Record<string, unknown>),
+        form8990: {
+          ...((form.sourceRecords as Record<string, unknown>)
+            .form8990 as Record<string, unknown>),
+          interestExpenseRecords: [changedRecord],
+        },
+      },
+    };
+    assertThrows(() => form8990.build(changedForm, { pending }), Error);
+    assertThrows(
+      () => form8990Pdf.projectFields?.(changedForm, pdfPending),
+      Error,
+    );
+  }
   assertThrows(
     () => form8990.build({ ...form, line30: 1 }, { pending }),
     Error,
@@ -141,41 +175,44 @@ Deno.test("2025 Form 8990 native projections reject changed lines, carryforward,
     "does not match Schedule C line 16b",
   );
   assertThrows(
-    () => form8990.build({
-      ...form,
-      sourceRecords: {
-        ...(form.sourceRecords as Record<string, unknown>),
-        form8990: {
-          ...((form.sourceRecords as Record<string, unknown>)
-            .form8990 as Record<string, unknown>),
-          priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
-            (entry, index) => index === 1
-              ? { ...entry, filed_taxpayer_ssn: "987654321" }
-              : entry,
-          ),
+    () =>
+      form8990.build({
+        ...form,
+        sourceRecords: {
+          ...(form.sourceRecords as Record<string, unknown>),
+          form8990: {
+            ...((form.sourceRecords as Record<string, unknown>)
+              .form8990 as Record<string, unknown>),
+            priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
+              (entry, index) =>
+                index === 1
+                  ? { ...entry, filed_taxpayer_ssn: "987654321" }
+                  : entry,
+            ),
+          },
         },
-      },
-    }, { pending }),
+      }, { pending }),
     Error,
     "prior filed Schedule C taxpayer differs from current return",
   );
-  const pdfPending = normalizeAllPending(result.pending);
   assertThrows(
-    () => form8990Pdf.projectFields?.({
-      ...pdfPending.form8990,
-      sourceRecords: {
-        ...(pdfPending.form8990.sourceRecords as Record<string, unknown>),
-        form8990: {
-          ...((pdfPending.form8990.sourceRecords as Record<string, unknown>)
-            .form8990 as Record<string, unknown>),
-          priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
-            (entry, index) => index === 1
-              ? { ...entry, filed_taxpayer_ssn: "987654321" }
-              : entry,
-          ),
+    () =>
+      form8990Pdf.projectFields?.({
+        ...pdfPending.form8990,
+        sourceRecords: {
+          ...(pdfPending.form8990.sourceRecords as Record<string, unknown>),
+          form8990: {
+            ...((pdfPending.form8990.sourceRecords as Record<string, unknown>)
+              .form8990 as Record<string, unknown>),
+            priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
+              (entry, index) =>
+                index === 1
+                  ? { ...entry, filed_taxpayer_ssn: "987654321" }
+                  : entry,
+            ),
+          },
         },
-      },
-    }, pdfPending),
+      }, pdfPending),
     Error,
     "prior filed Schedule C taxpayer differs from current return",
   );
@@ -224,21 +261,24 @@ Deno.test("2025 Form 1040 rejects legacy asserted Form 8990 input without a fall
 
 Deno.test("2025 Form 8990 needs distinct filed Schedule C and Form 8990 source records", () => {
   assertThrows(
-    () => f1040_2025.executeReturn({
-      ...baseInputs,
-      form8990: {
-        ...sourceRecords,
-        priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
-          (entry, index) => index === 2
-            ? {
-              ...entry,
-              filed_schedule_c_document_reference:
-                sourceRecords.priorFiledForm8990.filed_form8990_document_reference,
-            }
-            : entry,
-        ),
-      },
-    }),
+    () =>
+      f1040_2025.executeReturn({
+        ...baseInputs,
+        form8990: {
+          ...sourceRecords,
+          priorFiledScheduleCs: sourceRecords.priorFiledScheduleCs.map(
+            (entry, index) =>
+              index === 2
+                ? {
+                  ...entry,
+                  filed_schedule_c_document_reference:
+                    sourceRecords.priorFiledForm8990
+                      .filed_form8990_document_reference,
+                }
+                : entry,
+          ),
+        },
+      }),
     Error,
     "need distinct documents",
   );

@@ -97,6 +97,14 @@ export function reconcileForm8990Projection(
       "Form 8990 projected lines or carryforward changed after finalization",
     );
   }
+  if (
+    allPending.form8990 !== undefined &&
+    !same(allPending.form8990, projected)
+  ) {
+    throw new Error(
+      "Form 8990 supplied projection differs from finalized pending source",
+    );
+  }
   const expectedPending = buildPending(
     result.internalProjectedPending,
   ) as Record<

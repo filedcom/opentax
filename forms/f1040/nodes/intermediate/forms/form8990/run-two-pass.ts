@@ -76,13 +76,14 @@ export function runBoundedForm8990TwoPass(args: {
   const provisionalSource = stageProvisionalScheduleCInterest(
     { schedule_cs: args.returnInputs.schedule_c },
   );
-  reconcileBusinessInterestExpenseRecords(
-    provisionalSource,
-    args.interestExpenseRecords,
-  );
   const reviewedPriorCarryforward = proveZeroPriorForm8990Carryforward(
     args.priorFiledForm8990,
     args.returnInputs.general,
+  );
+  reconcileBusinessInterestExpenseRecords(
+    provisionalSource,
+    reviewedPriorCarryforward.taxpayerSsn,
+    args.interestExpenseRecords,
   );
   const nonexemptPriorReceipts = proveNonexemptPriorReceipts(
     provisionalSource,
