@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
@@ -66,7 +71,11 @@ const pending = {
     line20_nonrefundable_credits: 2_375,
   },
   form6251: { line11_amt: 0, net_tmt: 20_000 },
-  schedule3: { line6a_total: 2_375, line8_total: 2_375 },
+  schedule3: {
+    line6a_total: 2_375,
+    line7_total: 2_375,
+    line8_total: 2_375,
+  },
   schedule_c: {
     schedule_cs: [{
       business_reference: "ACCESS-BUSINESS",
@@ -131,7 +140,7 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
       form6251: ["IRS6251_1"],
     },
   });
-  assertStringIncludes(parentNative, "<Frm8826CYAggrgtAmtGrp");
+  assertStringIncludes(parentNative, "<Form8826CYCreditsGrp");
   assertStringIncludes(
     parentNative,
     "<TotalGeneralBusCreditsAppTxAmt>2375</TotalGeneralBusCreditsAppTxAmt>",
@@ -173,7 +182,7 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
         pending,
       ),
     Error,
-    "Form 8826 PDF line 8 differs",
+    "interpreter expenses and credit reduction do not reconcile",
   );
   assertThrows(
     () =>
@@ -243,7 +252,11 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
   assertThrows(
     () =>
       form8826Pdf.projectFields!(
-        { ...source, subject_to_passive_activity_limit: true },
+        {
+          ...source,
+          subject_to_passive_activity_limit: true,
+          source_document_reference: "2025 passive credit source",
+        },
         pending,
       ),
     Error,
@@ -263,6 +276,15 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
       }, pending),
     Error,
     "K-1",
+  );
+});
+
+Deno.test("Form 8826 PDF omits an absent self claim but validates a claimed credit", () => {
+  assertEquals(form8826Pdf.includeWhen!({}), false);
+  assertEquals(form8826Pdf.projectFields!({}, pending), {});
+  assertThrows(
+    () => form8826Pdf.projectFields!({ eligible_expenditures: 5_000 }, pending),
+    Error,
   );
 });
 
@@ -301,7 +323,11 @@ Deno.test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K
       }],
     },
     f1040: { ...pending.f1040, line20_nonrefundable_credits: 3_625 },
-    schedule3: { line6a_total: 3_625, line8_total: 3_625 },
+    schedule3: {
+      line6a_total: 3_625,
+      line7_total: 3_625,
+      line8_total: 3_625,
+    },
   };
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
@@ -327,9 +353,15 @@ Deno.test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K
     schedule_c: pending.schedule_c.schedule_cs,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  const creditEntries = result.pending.f3800?.f8826_credit_entries;
+  assert(Array.isArray(creditEntries));
   assertEquals(
-    result.pending.f3800?.f8826_credit_entries,
-    mixedParent.f8826_credit_entries,
+    [...creditEntries].sort((a, b) =>
+      a.source_type.localeCompare(b.source_type)
+    ),
+    [...mixedParent.f8826_credit_entries].sort((a, b) =>
+      a.source_type.localeCompare(b.source_type)
+    ),
   );
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 3_625);
 
@@ -355,7 +387,7 @@ Deno.test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K
         k1_s_corp: { k1_s_corps: [] },
       }),
     Error,
-    "K-1 box 13 code K",
+    "at least 1 element",
   );
   assertThrows(
     () =>

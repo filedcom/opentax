@@ -51,6 +51,7 @@ export const form8826Pdf: PdfFormDescriptor = {
     return calculateForm8826(inputSchema.parse(raw)).line6 > 0;
   },
   projectFields(raw, allPending) {
+    if (raw.eligible_expenditures === undefined) return {};
     const source = inputSchema.parse(raw);
     const lines = calculateForm8826(source);
     if (
