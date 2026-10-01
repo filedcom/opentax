@@ -1,5 +1,22 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased long-term Section B art at least $20,000 put to unrelated use (2026-10-01, unrun)
+
+The existing reviewed seven-PDF unrelated-use route now accepts one purchased
+painting appraised from $20,000 through $500,000 with a basis-limited claim of
+at least $20,000. The typed source requires a purchase more than one year before
+the 2025 gift, the donee's actual unrelated-use statement, an appraisal, the
+completed signed Form 8283, separate signatures, and a reviewed FMV reduction
+equal to appraised appreciation. Native Form 8283 selects
+`ArtWorthAtLeast20000DollarsInd` and attaches the reviewed evidence; the PDF
+prints that art box, appraised FMV, the reduced claim, and the unrelated-use
+answer. Schedule A and itemized Form 1040 retain the basis-limited amount. A
+$40,000 FMV/$30,000 basis full-return case and changed source bytes, claim,
+donee-use assertion, and itemized-total cases are authored for the deferred
+bulk pass. Actual acquisition, appraisal, charity-use and signature documents,
+other property types, multiple gifts, filled PDF, XSD, and IRS acceptance
+remain open.
+
 ## Purchased Section B inventory and shared ordinary-income evidence (2026-10-01, unrun)
 
 The Section B source now uses one required-reason `ordinary_income_reduction`

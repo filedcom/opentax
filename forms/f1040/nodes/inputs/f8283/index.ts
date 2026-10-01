@@ -848,8 +848,14 @@ const sectionBItemSchema = z.object({
         )
         : NaN;
     if (
-      item.property_type !== SectionBPropertyType.ArtUnder20000 ||
-      item.fmv <= 5_000 || item.fmv >= 20_000 ||
+      (item.property_type !== SectionBPropertyType.ArtUnder20000 &&
+        item.property_type !== SectionBPropertyType.ArtAtLeast20000) ||
+      item.fmv <= 5_000 || item.fmv > 500_000 ||
+      (item.property_type === SectionBPropertyType.ArtUnder20000 &&
+        item.fmv >= 20_000) ||
+      (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+        item.cost_or_adjusted_basis !== undefined &&
+        item.cost_or_adjusted_basis < 20_000) ||
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
       !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
