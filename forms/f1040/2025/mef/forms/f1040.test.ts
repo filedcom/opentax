@@ -37,6 +37,20 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
   );
 });
 
+Deno.test("direct Form 1040 MeF descriptor rejects deceased source and filer facts", () => {
+  assertThrows(
+    () =>
+      irs1040.build({}, { pending: { general: { spouse_deceased: true } } }),
+    Error,
+    "deceased Form 1040",
+  );
+  assertThrows(
+    () => irs1040.build({ taxpayer_death_date: "2025-02-01" }),
+    Error,
+    "deceased Form 1040",
+  );
+});
+
 Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),

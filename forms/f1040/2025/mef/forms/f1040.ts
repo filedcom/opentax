@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -443,6 +444,11 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  assertNoUnsupportedDeceasedReturn(
+    fields,
+    context?.pending?.general as Record<string, unknown> | undefined,
+    context?.filer,
+  );
   assertPresidentialCampaignSource(fields, context?.pending);
   assertReturnWideArithmetic(fields);
   assertEstimatedPaymentLine26(fields, context?.pending);

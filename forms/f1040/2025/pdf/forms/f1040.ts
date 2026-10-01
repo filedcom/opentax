@@ -14,6 +14,7 @@ import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliat
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
 import { physicalPresenceFilingSchema } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import {
@@ -65,6 +66,11 @@ import {
 //   f2_35:        line 37 amount owed
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "print_foreign_country_name",
+    pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_25[0]",
+  },
   {
     kind: "checkbox",
     domainKey: "main_home_in_us_over_half_year",
@@ -718,6 +724,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertNoUnsupportedDeceasedReturn(
+      fields,
+      allPending?.general as Record<string, unknown> | undefined,
+    );
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
     const printLine1hType = line1hType(fields, allPending);
@@ -909,6 +919,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_foreign_country_name: typeof fields.address_foreign_country ===
+            "string" && fields.address_foreign_country.length > 0
+        ? new Intl.DisplayNames(["en"], { type: "region" }).of(
+          fields.address_foreign_country,
+        )
+        : undefined,
       print_line1h_type: printLine1hType,
       print_do_not_claim_actc: retainedActcOptOut(
         allPending.f8812,
@@ -1014,8 +1030,28 @@ export const irs1040Pdf: PdfFormDescriptor = {
     },
     {
       kind: "text",
+      domainKey: "ipPin",
+      pdfField: "topmostSubform[0].Page2[0].f2_41[0]",
+    },
+    {
+      kind: "text",
       domainKey: "spouse.occupation",
       pdfField: "topmostSubform[0].Page2[0].f2_42[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "spouse.ipPin",
+      pdfField: "topmostSubform[0].Page2[0].f2_43[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "phone",
+      pdfField: "topmostSubform[0].Page2[0].f2_44[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "email",
+      pdfField: "topmostSubform[0].Page2[0].f2_45[0]",
     },
     // ── Spouse ──────────────────────────────────────────────────────────────
     // f1_17 = "Spouse's first name and middle initial", f1_18 = "Last name", f1_19 = spouse SSN
@@ -1042,6 +1078,11 @@ export const irs1040Pdf: PdfFormDescriptor = {
     },
     {
       kind: "text",
+      domainKey: "address.line2",
+      pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_21[0]",
+    },
+    {
+      kind: "text",
       domainKey: "address.city",
       pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_22[0]",
     },
@@ -1054,6 +1095,16 @@ export const irs1040Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "address.zip",
       pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_24[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "address.foreignProvinceState",
+      pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_26[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "address.foreignPostalCode",
+      pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_27[0]",
     },
   ],
 };

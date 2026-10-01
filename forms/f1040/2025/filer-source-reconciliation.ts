@@ -1070,6 +1070,7 @@ export function assertF1040FinalHeader(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): void {
+  assertNoUnsupportedDeceasedReturn(fields, undefined, filer);
   if (fields.dual_status_return_2025 === true) {
     throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
   }
@@ -1103,12 +1104,36 @@ export function assertF1040FinalHeader(
   }
 }
 
+/** Deceased returns need signer, representative, and refund review before export. */
+export function assertNoUnsupportedDeceasedReturn(
+  fields?: Record<string, unknown>,
+  general?: Record<string, unknown>,
+  filer?: FilerIdentity,
+): void {
+  const hasDeceasedFacts = (source?: Record<string, unknown>) =>
+    source?.taxpayer_deceased === true || source?.spouse_deceased === true ||
+    (typeof source?.taxpayer_death_date === "string" &&
+      source.taxpayer_death_date.trim().length > 0) ||
+    (typeof source?.spouse_death_date === "string" &&
+      source.spouse_death_date.trim().length > 0);
+  if (
+    hasDeceasedFacts(fields) || hasDeceasedFacts(general) ||
+    filer?.deceased === true || Boolean(filer?.deathDate) ||
+    filer?.spouse?.deceased === true || Boolean(filer?.spouse?.deathDate)
+  ) {
+    throw new Error(
+      "TY2025 deceased Form 1040 needs reviewed signer, representative, and refund facts before filing",
+    );
+  }
+}
+
 /** Keep the filed header answers tied to the retained general input. */
 export function assertGeneral1040HeaderSource(
   pending: Record<string, unknown>,
 ): void {
   const general = pending.general as Record<string, unknown> | undefined;
   const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+  assertNoUnsupportedDeceasedReturn(f1040, general);
   if (!general || !f1040) return;
   if (general.filing_status !== f1040.filing_status) {
     throw new Error(

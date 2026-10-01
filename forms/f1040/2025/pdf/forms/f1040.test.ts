@@ -2,6 +2,11 @@ import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { AccountType } from "../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
+import {
+  assertF1040FinalHeader,
+  assertGeneral1040HeaderSource,
+} from "../../filer-source-reconciliation.ts";
 
 // ---------------------------------------------------------------------------
 // Descriptor structure
@@ -20,6 +25,113 @@ Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
 
 Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
+});
+
+Deno.test("Form 1040 PDF maps retained IP PIN, contact, and address source to exact widgets", () => {
+  const source = {
+    filing_status: "mfj",
+    taxpayer_ssn: "111223333",
+    taxpayer_first_name: "Ada",
+    taxpayer_last_name: "Example",
+    taxpayer_ip_pin: "123456",
+    taxpayer_daytime_phone: "5551234567",
+    taxpayer_email: "ada@example.com",
+    spouse_ssn: "444556666",
+    spouse_first_name: "Pat",
+    spouse_last_name: "Example",
+    spouse_ip_pin: "654321",
+    address_line1: "10 King Street",
+    address_line2: "Apt 2",
+    address_city: "Toronto",
+    address_foreign_country: "CA",
+    address_foreign_province_state: "Ontario",
+    address_foreign_postal_code: "M5H 1A1",
+  };
+  const filer = extractFilerIdentity(source)!;
+  const expected: Record<string, [string | undefined, string]> = {
+    ipPin: [filer.ipPin, "topmostSubform[0].Page2[0].f2_41[0]"],
+    "spouse.ipPin": [
+      filer.spouse?.ipPin,
+      "topmostSubform[0].Page2[0].f2_43[0]",
+    ],
+    phone: [filer.phone, "topmostSubform[0].Page2[0].f2_44[0]"],
+    email: [filer.email, "topmostSubform[0].Page2[0].f2_45[0]"],
+    "address.line2": [
+      filer.address.line2,
+      "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_21[0]",
+    ],
+    "address.foreignProvinceState": [
+      filer.address.foreignProvinceState,
+      "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_26[0]",
+    ],
+    "address.foreignPostalCode": [
+      filer.address.foreignPostalCode,
+      "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_27[0]",
+    ],
+  };
+  for (const [key, [value, widget]] of Object.entries(expected)) {
+    const entry = irs1040Pdf.filerFields?.find((field) =>
+      field.domainKey === key
+    );
+    assertEquals(entry?.kind, "text");
+    assertEquals(entry?.pdfField, widget);
+    assertEquals(
+      value,
+      key === "ipPin"
+        ? "123456"
+        : key === "spouse.ipPin"
+        ? "654321"
+        : key === "phone"
+        ? "5551234567"
+        : key === "email"
+        ? "ada@example.com"
+        : key === "address.line2"
+        ? "Apt 2"
+        : key === "address.foreignProvinceState"
+        ? "Ontario"
+        : "M5H 1A1",
+    );
+  }
+  const country = irs1040Pdf.fields.find((field) =>
+    field.domainKey === "print_foreign_country_name"
+  );
+  assertEquals(country?.kind, "text");
+  assertEquals(
+    country?.pdfField,
+    "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_25[0]",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({ address_foreign_country: "CA" }, {})
+      ?.print_foreign_country_name,
+    "Canada",
+  );
+});
+
+Deno.test("Form 1040 PDF and shared header preflight reject retained deceased facts", () => {
+  const fields = { filing_status: "single", digital_assets: false };
+  const general = { taxpayer_deceased: true };
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(fields, { general }),
+    Error,
+    "deceased Form 1040",
+  );
+  assertThrows(
+    () => assertGeneral1040HeaderSource({ general }),
+    Error,
+    "deceased Form 1040",
+  );
+  const filer = extractFilerIdentity({
+    filing_status: "single",
+    taxpayer_ssn: "111223333",
+    taxpayer_first_name: "Ada",
+    taxpayer_last_name: "Example",
+    taxpayer_death_date: "2025-06-01",
+  })!;
+  assertThrows(
+    () => assertF1040FinalHeader(fields, filer),
+    Error,
+    "deceased Form 1040",
+  );
 });
 
 Deno.test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", () => {
