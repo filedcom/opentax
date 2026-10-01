@@ -90,7 +90,7 @@ export function alternativeCompensationWorldwideTotal(
 ): number {
   if (items.length === 1) return source.compensation_usd;
   if (
-    items.length < 2 || items.length > 5 ||
+    items.length < 2 ||
     !source.alternative_compensation_sourcing
   ) return 0;
   const others = items.filter((item) => item !== source);

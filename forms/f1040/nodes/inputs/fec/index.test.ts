@@ -159,12 +159,14 @@ Deno.test("fec: four or five distinct owner-matched wage records prove the alter
       1,
     );
   }
+  const sixth = {
+    ...others[0],
+    compensation_source_document_reference: "sixth employer payroll",
+  };
+  const sixEmployer = compute([primary, ...others, sixth]);
+  assertEquals(sixEmployer.outputs[0].fields.line1h_other_earned, 325_000);
   assertThrows(
-    () =>
-      compute([primary, ...others, {
-        ...others[0],
-        compensation_source_document_reference: "sixth employer payroll",
-      }]),
+    () => compute([primary, ...others, others[0]]),
     Error,
     "at least $250,000 of identified employee compensation",
   );

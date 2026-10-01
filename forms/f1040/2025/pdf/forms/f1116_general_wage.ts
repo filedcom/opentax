@@ -78,9 +78,9 @@ export function projectGeneralWageForm1116Pdf(
     );
   }
   const fec = fecInputSchema.safeParse(pending.fec);
-  if (!fec.success || fec.data.fecs.length < 1 || fec.data.fecs.length > 5) {
+  if (!fec.success || fec.data.fecs.length < 1) {
     throw new Error(
-      "Form 1116 general wage PDF needs one to five identified foreign-employer sources",
+      "Form 1116 general wage PDF needs identified foreign-employer sources",
     );
   }
   assertAlternativeCompensationSources([summary], { pending });

@@ -338,12 +338,12 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
 });
 
 for (
-  const additionalWages of [[25_000, 25_000, 50_000], [
-    25_000,
-    25_000,
-    25_000,
-    25_000,
-  ]]
+  const additionalWages of [
+    [25_000, 25_000, 50_000],
+    [25_000, 25_000, 25_000, 25_000],
+    [20_000, 20_000, 20_000, 20_000, 20_000],
+    [14_000, 14_000, 14_000, 14_000, 14_000, 14_000, 16_000],
+  ]
 ) {
   Deno.test(`${additionalWages.length + 1} distinct same-owner foreign employers reconcile alternative compensation`, async () => {
     const owner = "111-22-3333";

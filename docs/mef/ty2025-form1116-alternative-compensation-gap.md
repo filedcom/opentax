@@ -203,7 +203,11 @@ checks compare the alternative item, while the PDF and Form 1040 joins use all
 wages for line 3e, the standard-deduction ratio, and line 1h/1z.
 
 Four- and five-employer $300,000 full-return cases and owner, duplicate-document,
-and changed-wage rejection cases are authored for the deferred batch. A sixth
-record still rejects. Issued wage/tax bytes, mixed W-2 or spouse compensation,
+and changed-wage rejection cases are authored for the deferred batch. The same
+source and PDF checks now admit six and eight distinct wage records. Full-return
+positive cases and owner, duplicate-document, and changed-wage rejections are
+authored for the deferred batch. The wage inventory has no arbitrary count limit
+when every record has the same owner and its own source reference. Issued
+wage/tax bytes, mixed W-2 or spouse compensation,
 multiple alternatively sourced items, other income/categories/deductions,
 IRS acceptance, and bulk XSD/PDF validation remain open.
