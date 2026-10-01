@@ -50,3 +50,17 @@ export function priorIsoSaleFixture(tin = "111-22-3333") {
     form6251_prior_iso_sale: { prior_iso_sale_review: review },
   };
 }
+
+export function priorIsoSaleLossFixture(tin = "111-22-3333") {
+  const source = priorIsoSaleFixture(tin);
+  return {
+    ...source,
+    f8949: [{ ...source.f8949[0], proceeds: 9_000 }],
+    form6251_prior_iso_sale: {
+      prior_iso_sale_review: {
+        ...source.form6251_prior_iso_sale.prior_iso_sale_review,
+        proceeds: 9_000,
+      },
+    },
+  };
+}

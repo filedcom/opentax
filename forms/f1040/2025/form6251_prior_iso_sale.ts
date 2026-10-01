@@ -83,10 +83,13 @@ export function assertPriorIsoSaleCalculation(
     row.regular_basis !== regularBasis || row.amt_basis !== amtBasis ||
     row.regular_gain !== review.proceeds - regularBasis ||
     row.amt_gain !== review.proceeds - amtBasis ||
-    row.regular_gain <= 0 || row.amt_gain <= 0
+    !(
+      (row.regular_gain > 0 && row.amt_gain > 0) ||
+      (row.regular_gain < 0 && row.amt_gain < 0)
+    )
   ) {
     throw new Error(
-      "Form 6251 prior ISO sale needs one qualifying full-lot Form 8949 gain with the exact 2024 Form 3921 and Form 6251 bases",
+      "Form 6251 prior ISO sale needs one qualifying full-lot Form 8949 gain or loss with the exact 2024 Form 3921 and Form 6251 bases",
     );
   }
 }
@@ -111,6 +114,9 @@ export function assertPriorIsoSaleExport(
   const transaction = rawSale[0];
   const regularGain = parsed.proceeds -
     parsed.exercise_price_per_share * parsed.shares_exercised_and_sold;
+  const regularScheduleD = regularGain < 0
+    ? Math.max(regularGain, -3_000)
+    : regularGain;
   if (
     !isSingle || !primaryTin ||
     parsed.prior_2024_filer_tin.replaceAll("-", "") !==
@@ -130,7 +136,7 @@ export function assertPriorIsoSaleExport(
     (transaction.adjustment_codes ?? "") !== "" ||
     (transaction.adjustment_amount ?? 0) !== 0 ||
     (pending?.f1040 as Record<string, unknown> | undefined)
-        ?.line7_capital_gain !== regularGain ||
+        ?.line7_capital_gain !== regularScheduleD ||
     (pending?.schedule2 as Record<string, unknown> | undefined)?.line2_amt !==
       rawFields.line11_amt
   ) {

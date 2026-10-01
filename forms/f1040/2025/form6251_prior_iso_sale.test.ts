@@ -6,7 +6,10 @@ import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { form6251 as mef6251 } from "./mef/forms/f6251.ts";
 import { form6251Pdf } from "./pdf/forms/f6251.ts";
-import { priorIsoSaleFixture } from "./form6251_prior_iso_sale.fixture.ts";
+import {
+  priorIsoSaleFixture,
+  priorIsoSaleLossFixture,
+} from "./form6251_prior_iso_sale.fixture.ts";
 import { assertPriorIsoSaleCalculation } from "./form6251_prior_iso_sale.ts";
 
 const general = {
@@ -133,5 +136,48 @@ Deno.test("prior ISO lot rejects a mismatched 2024 AMT spread and disqualifying 
       ),
     Error,
     "one qualifying full-lot",
+  );
+});
+
+Deno.test("prior ISO loss sale caps regular and AMT Schedule D losses separately", () => {
+  const source = priorIsoSaleLossFixture(general.taxpayer_ssn);
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    ...source,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const filed = result.pending.form6251!;
+  const filer = extractFilerIdentity(general);
+  // The $1,000 regular loss is fully deductible; the $16,000 AMT loss is
+  // limited to $3,000, leaving a $2,000 negative line 2k adjustment.
+  assertEquals(result.pending.f1040?.line7_capital_gain, -1_000);
+  assertEquals(filed.line2k_disposition, -2_000);
+  assertStringIncludes(
+    mef6251.build(filed, { pending: result.pending, filer }),
+    "<PropertyDispositionAmt>-2000</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed, result.pending)?.line2k_disposition,
+    -2_000,
+  );
+  assertEquals(
+    form6251Pdf.instances?.(filed, filer, result.pending)?.length,
+    1,
+  );
+  const changedSale = {
+    ...result.pending,
+    f8949: {
+      f8949s: [{ ...source.f8949[0], proceeds: 9_001 }],
+    },
+  };
+  assertThrows(
+    () => mef6251.build(filed, { pending: changedSale, filer }),
+    Error,
+    "raw 2025 broker/Form 8949 row",
+  );
+  assertThrows(
+    () => form6251Pdf.instances?.(filed, filer, changedSale),
+    Error,
+    "raw 2025 broker/Form 8949 row",
   );
 });
