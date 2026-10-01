@@ -3,14 +3,14 @@
 ## Full status summary (2026-10-02)
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
-TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **584 completed bounded items** and their exact limits live in the
+TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
+completed checkboxes**. The **585 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
-**Current order of work.** Complete the 34 open TODOs outside **Named tax-form
+**Current order of work.** Complete the 33 open TODOs outside **Named tax-form
 gaps** first, including scope, coverage decisions, core return paths, native/PDF
 parity, validation preparation, and delivery prerequisites. The 20 named-form
 parent gaps remain on this board for the following implementation phase. Finish
@@ -19,7 +19,7 @@ diagnostic evidence, not a release pass.
 
 | Workstream | Open TODOs | Completed bounded items | Current state |
 | --- | ---: | ---: | --- |
-| Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
+| Scope and completion rules | 4 | 2 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 38 | Return-wide joins and source classification remain incomplete. |
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | 0 | The new-batch full command reached 10,168 passes and 174 failures after type repairs; failing routes are under repair. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 584 bounded routes and
+**Implemented coverage.** The completed ledger records 585 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -85,7 +85,6 @@ These gates and a filing-ready release remain open.
 ## Scope and completion rules
 
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
-- [ ] Verify standalone 1040-NR, 1040-SS, Form 4868, and dual-status Form 1040 e-file stay outside this release gate, and attempted dual-status e-file rejects instead of becoming an ordinary Form 1040.
 - [ ] Resolve every other entered Form 1040-family filing claim with a complete route or a named, user-approved fail-closed exclusion; review registered builders, schema literals, written tests, and previews without counting them as support alone.
 - [ ] Verify every retained positive filing route has a source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain, with correct taxpayer/spouse ownership, source provenance, totals, and rejection of unsupported or inconsistent inputs.
 - [ ] Review the diff for any compatibility layer, fallback, dual API shape, migration shim, or temporary workaround, and confirm the user was told what would be added and why before it was introduced, as required by AGENTS.md.

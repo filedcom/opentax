@@ -5,6 +5,7 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 ## Scope and completion rules
 
 - [x] Require a reviewed 2025 full-year U.S. tax-residency classification for the taxpayer and each joint spouse before building the Form 1040 MeF submission ZIP; bind the review to final TIN, filing status, source reference, reviewer, and post-year date, reject dual-status/nonresident answers, and match a joint resident election to the finalized return. The A2A package rechecks the retained review; missing, wrong-owner, dual-status, spouse, and after-archive tamper fixtures are authored for deferred validation. Independent residency computation, authenticated source bytes, and earlier intake/export enforcement remain open. See the [A2A residency gap](ty2025-filing-residency-review-gap.md).
+- [x] Verify the TY2025 release catalog exposes only the Form 1040 definition, so standalone 1040-NR, 1040-SS, and Form 4868 are separate workflows. The general input, prepared-return, native MeF, and PDF gates reject an explicit dual-status Form 1040 rather than treating it as ordinary Form 1040. Those four rejection cases passed in the 2026-10-02 diagnostic full run; the complete batch still failed elsewhere, and broader filing-family acceptance remains open.
 
 ## Core return and source paths
 
