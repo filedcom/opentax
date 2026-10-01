@@ -57,6 +57,10 @@ const educationExpenseWorkpaperSchema = z.object({
   payment_record_ids: z.array(z.string().trim().min(1)).min(1),
   paid_tuition_required_fees: z.number().finite().nonnegative(),
   paid_course_materials_to_institution: z.number().finite().nonnegative(),
+  institution_materials_requirement_record_id: z.string().trim().min(1)
+    .optional(),
+  institution_materials_payment_record_id: z.string().trim().min(1)
+    .optional(),
   paid_course_materials_elsewhere: z.number().finite().nonnegative(),
   outside_materials_needed_for_course: z.boolean(),
   institution_materials_required_for_enrollment: z.boolean(),
@@ -152,6 +156,22 @@ export function validateForm8863FilingSource(
   ) {
     throw new Error(
       "Form 8863 LLC institution materials must be required for enrollment",
+    );
+  }
+  if (
+    credit === "llc" && workpaper.paid_course_materials_to_institution > 0 &&
+    (!workpaper.institution_materials_requirement_record_id ||
+      !workpaper.institution_materials_payment_record_id ||
+      !workpaper.payment_record_ids.includes(
+        workpaper.institution_materials_payment_record_id,
+      ) ||
+      workpaper.institution_materials_requirement_record_id ===
+        workpaper.form1098t_document_id ||
+      (workpaper.paid_tuition_required_fees > 0 &&
+        workpaper.payment_record_ids.length < 2))
+  ) {
+    throw new Error(
+      "Form 8863 LLC institution materials need separate enrollment requirement and identified payment records",
     );
   }
   if (

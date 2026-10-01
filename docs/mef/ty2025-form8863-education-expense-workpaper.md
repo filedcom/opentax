@@ -14,3 +14,20 @@ shared reference is a current filing boundary, not a product-scope exclusion.
 The tax node now requires this workpaper for every student contributing to a positive AOC or LLC credit; an asserted adjusted expense alone cannot create Schedule 3 or refundable Form 1040 output. Native/PDF export additionally require the final Form 1040 filing status, MAGI, line 18, refundable line 29, Schedule 3 line 3, and the Credit Limit Worksheet source lines to reconcile; direct positive native assembly without finalized return context rejects. The tax-node line 19 calculation and builder output must still be checked in the full batch. Neither payment references nor Form 1098-T numbers constitute independent verification of source documents.
 
 Open paths: no 1098-T with a permitted IRS exception; multiple or foreign institutions; scholarship allocation outside the fully tax-free case; external proof of tuition/payment, enrollment, prior AOC years, disallowance and TIN timing; PDF appearance, TY2025 XSD and IRS business-rule validation, and ATS acceptance. The focused cases are unrun under the agreed single-batch gate.
+
+## One sourced Lifetime Learning Credit with required institution materials
+
+One bounded LLC route now uses $8,000 of tuition and fees, $500 of required
+course materials paid to the institution, and a $1,000 Form 1098-T box 5
+scholarship applied entirely to qualified expenses. The resulting $7,500
+adjusted expense produces a $1,500 nonrefundable credit on Form 8863 line 19,
+Schedule 3 line 3, and the finalized Form 1040 credit calculation; line 29
+remains zero. When LLC materials are positive, the workpaper now needs a
+separate enrollment-requirement record and an identified materials payment
+from its payment inventory, with another payment reference for positive
+tuition. Native and PDF export recalculate the same source and credit-limit
+worksheet. A full-return positive, scholarship-source change, missing
+requirement reference, and changed Schedule 3 fixtures are authored for
+deferred validation. The record references and Form 1098-T amounts are
+structured assertions, not authenticated school or payment bytes. Other
+scholarship allocation and LLC material purchase paths remain open.
