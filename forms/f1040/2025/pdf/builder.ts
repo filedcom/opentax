@@ -33,6 +33,7 @@ import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box1
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
   hasForm8994Claim,
@@ -284,6 +285,7 @@ export async function buildPdfBytes(
   }
   assertExtensionPaymentSource(normalized, filer);
   assert1099RRecipientOwner(normalized.f1099r, filer);
+  assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {

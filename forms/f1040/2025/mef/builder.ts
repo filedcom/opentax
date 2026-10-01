@@ -35,6 +35,7 @@ import { assertPreparedVehicleAcknowledgments } from "./forms/f8283_vehicle_sale
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -239,6 +240,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assert1099RRecipientOwner(pending.f1099r, filer);
+  assertNecWithholdingRecipient(pending.f1099nec, filer);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);

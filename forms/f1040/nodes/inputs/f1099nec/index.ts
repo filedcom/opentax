@@ -59,6 +59,13 @@ export const itemSchema = z.object({
       message: "1099-NEC box 3 excess must be included in box 1 compensation",
     });
   }
+  if ((item.box4_federal_withheld ?? 0) > 0 && !item.recipient_ssn) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["recipient_ssn"],
+      message: "1099-NEC box 4 withholding needs the issued recipient SSN",
+    });
+  }
   if ((item.box1_nec ?? 0) <= 0) return;
   if (!item.for_routing) {
     ctx.addIssue({
