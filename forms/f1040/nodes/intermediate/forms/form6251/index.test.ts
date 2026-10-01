@@ -481,21 +481,21 @@ Deno.test("form6251: audited short- and long-term losses within both deduction l
     Error,
     "holding period",
   );
-  assertThrows(
-    () =>
-      compute({
-        ...input,
-        line2k_8949_basis_dispositions: [
-          input.line2k_8949_basis_dispositions[0],
-          {
-            ...input.line2k_8949_basis_dispositions[1],
-            amt_basis: 8_500,
-            amt_gain: -3_500,
-          },
-        ],
-      }),
-    Error,
-    "deduction limits",
+  const separatelyCapped = compute({
+    ...input,
+    line2k_8949_basis_dispositions: [
+      input.line2k_8949_basis_dispositions[0],
+      {
+        ...input.line2k_8949_basis_dispositions[1],
+        amt_basis: 8_500,
+        amt_gain: -3_500,
+      },
+    ],
+  });
+  assertEquals(
+    separatelyCapped.outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_500,
   );
 });
 
@@ -570,15 +570,16 @@ Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
       amt_gain: -3_100,
     },
   };
-  assertThrows(
-    () => compute(base),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute(base).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_000,
   );
-  assertThrows(
-    () => compute({ ...base, filing_status: "mfs" }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute({ ...base, filing_status: "mfs" }).outputs.find((row) =>
+      row.nodeType === "form6251"
+    )?.fields.line2k_disposition,
+    0,
   );
   assertThrows(
     () =>
@@ -590,54 +591,53 @@ Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
         },
       }),
     Error,
-    "within both regular and AMT Schedule D deduction limits",
+    "complete Schedule D source audit",
   );
-  assertThrows(
-    () =>
-      compute({
-        ...base,
-        line2k_8949_capital_audit: {
-          transactions: [
-            {
-              source_transaction_id: "broker-lt-loss",
-              part: "D",
-              proceeds: 5_000,
-              cost_basis: 6_000,
-              gain_loss: -1_000,
-            },
-            {
-              source_transaction_id: "broker-st-loss",
-              part: "A",
-              proceeds: 1_000,
-              cost_basis: 1_500,
-              gain_loss: -500,
-            },
-          ],
-          has_other_capital_activity: false,
-        },
-        line2k_8949_basis_dispositions: [
+  assertEquals(
+    compute({
+      ...base,
+      line2k_8949_capital_audit: {
+        transactions: [
           {
             source_transaction_id: "broker-lt-loss",
             part: "D",
             proceeds: 5_000,
-            regular_basis: 6_000,
-            amt_basis: 6_500,
-            regular_gain: -1_000,
-            amt_gain: -1_500,
+            cost_basis: 6_000,
+            gain_loss: -1_000,
           },
           {
             source_transaction_id: "broker-st-loss",
             part: "A",
             proceeds: 1_000,
-            regular_basis: 1_500,
-            amt_basis: 1_500,
-            regular_gain: -500,
-            amt_gain: -500,
+            cost_basis: 1_500,
+            gain_loss: -500,
           },
         ],
-      }),
-    Error,
-    "one term of identified losses",
+        has_other_capital_activity: false,
+      },
+      line2k_8949_basis_dispositions: [
+        {
+          source_transaction_id: "broker-lt-loss",
+          part: "D",
+          proceeds: 5_000,
+          regular_basis: 6_000,
+          amt_basis: 6_500,
+          regular_gain: -1_000,
+          amt_gain: -1_500,
+        },
+        {
+          source_transaction_id: "broker-st-loss",
+          part: "A",
+          proceeds: 1_000,
+          regular_basis: 1_500,
+          amt_basis: 1_500,
+          regular_gain: -500,
+          amt_gain: -500,
+        },
+      ],
+    }).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -500,
   );
 });
 
@@ -667,24 +667,23 @@ Deno.test("form6251: short-term AMT losses crossing either Schedule D limit stop
       amt_gain: -3_100,
     },
   };
-  assertThrows(
-    () => compute(base),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute(base).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_000,
   );
-  assertThrows(
-    () =>
-      compute({
-        ...base,
-        filing_status: "mfs",
-        line2k_8949_basis_dispositions: {
-          ...base.line2k_8949_basis_dispositions,
-          amt_basis: 7_500,
-          amt_gain: -2_500,
-        },
-      }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute({
+      ...base,
+      filing_status: "mfs",
+      line2k_8949_basis_dispositions: {
+        ...base.line2k_8949_basis_dispositions,
+        amt_basis: 7_500,
+        amt_gain: -2_500,
+      },
+    }).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    0,
   );
   assertThrows(
     () =>
@@ -1900,10 +1899,10 @@ Deno.test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", ()
   );
   assertEquals(filed?.fields.amti, 199_700);
   assertEquals(filed?.fields.line2c_investment_interest, -300);
-  assertEquals(
-    mef6251.build({ line11_amt: 1, line2c_investment_interest: -300 })
-      .includes("<InvestmentInterestAmt>-300</InvestmentInterestAmt>"),
-    true,
+  assertThrows(
+    () => mef6251.build({ line11_amt: 1, line2c_investment_interest: -300 }),
+    Error,
+    "final filer identity",
   );
   const standard = compute({
     filing_status: "single",

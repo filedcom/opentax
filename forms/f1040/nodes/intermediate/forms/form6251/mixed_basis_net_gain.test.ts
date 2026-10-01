@@ -21,7 +21,9 @@ function basisSourcePending(
         source_transaction_id: row.source_transaction_id,
         part: row.part,
         description: "Synthetic AMT basis disposition",
-        date_acquired: "2022-01-10",
+        date_acquired: ["A", "B", "C"].includes(row.part)
+          ? "2025-01-10"
+          : "2022-01-10",
         date_sold: "2025-06-20",
         proceeds: row.proceeds,
         cost_basis: row.regular_basis,

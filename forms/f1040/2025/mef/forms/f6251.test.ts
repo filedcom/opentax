@@ -479,7 +479,7 @@ Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line
         must_file_for_negative_adjustments: true,
       }),
     Error,
-    "bounded owner-owned Form 4952",
+    "final filer identity",
   );
 });
 
@@ -496,7 +496,7 @@ Deno.test("domestic preferential-income counterfactual retains a zero-AMT filing
         must_file_for_negative_adjustments: true,
       }),
     Error,
-    "bounded owner-owned Form 4952",
+    "final filer identity",
   );
 });
 
