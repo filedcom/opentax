@@ -2,6 +2,10 @@
 
 Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board shows only open tasks. A checked row records only the bounded work described in that row; it does not close its parent form or release gate. Newly completed rows should be appended under the matching section and included in the board summary count.
 
+## Scope and completion rules
+
+- [x] Require a reviewed 2025 full-year U.S. tax-residency classification for the taxpayer and each joint spouse before building the Form 1040 MeF submission ZIP; bind the review to final TIN, filing status, source reference, reviewer, and post-year date, reject dual-status/nonresident answers, and match a joint resident election to the finalized return. The A2A package rechecks the retained review; missing, wrong-owner, dual-status, spouse, and after-archive tamper fixtures are authored for deferred validation. Independent residency computation, authenticated source bytes, and earlier intake/export enforcement remain open. See the [A2A residency gap](ty2025-filing-residency-review-gap.md).
+
 ## Core return and source paths
 
 - [x] Add a reviewed 2025 employer-furnished statement route for Schedule 1-A FLSA overtime when W-2 box 14 lacks the premium, with source identities and wage inclusion, finalized Form 1040 line 13b, native/PDF source reconciliation, and authored fixtures. Payroll-method calculations without an employer accounting and authenticated statement bytes remain open.
@@ -326,6 +330,12 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 - [x] Reconcile one identified Schedule E rental's entered filed-2024 $5,000 operating PAL against $3,000 of 2025 profit: Form 8582 permits $3,000 by activity, suspends $2,000, nets Schedule E/Schedule 1 to zero, and retains sourced Form 1040 wages. Native/PDF guards and full-return, source, and return tamper fixtures are authored for deferred validation; independent filed-return authentication, other activity mixes/dispositions, durable import, and validation remain open. See the [activity-ID gap](ty2025-form8582-activity-id-gap.md).
 
 - [x] Reconcile one first-year, uncompleted non-home long-term Schedule C contract excepted from regular percentage-of-completion but refigured by AMT cost-to-cost progress: $100,000 incurred over $400,000 estimated costs recognizes $150,000 AMT profit from a $1,000,000 fixed price on Form 6251 line 2p, Schedule 2, Form 1040, native MeF, and PDF. Full-return and contract/cost/classification/regular-receipt/return tamper fixtures are authored for deferred validation; prior progress, variable price, losses, other methods, multiple contracts, source-byte authentication, and look-back interest remain open. See the [long-term-contract gap](ty2025-form6251-long-term-contract-gap.md).
+
+- [x] Combine one reviewed cash shareholder capital contribution and one new fully based formal note with a same-year sourced principal repayment on Form 7203: $500 opening stock plus $1,000 capital and $2,000 note less $400 repaid principal supports $1,500 stock and $1,600 debt loss from a $4,000 K-1 loss, leaving $900 suspended. Schedule E, Schedule 1, Form 1040, native MeF, and PDF reconcile; full-return and source/K-1/return tamper fixtures are authored for deferred validation. Multiple repayments, reduced-basis debt gain, authenticated note/bank bytes, and wider K-1 basis items remain open. See the [Form 7203 gap](ty2025-form7203-stock-loss-gap.md).
+
+- [x] Reconcile one self-earned nonpassive Form 8936 qualified commercial clean vehicle credit on the nine-page Form 3800 PDF: its vehicle basis/date calculation matches parent Part III line 1aa, Part V IRS8936 detail and document ID, Part II lines 17/38, Schedule 3, and Form 1040 line 20. Full-return/native/PDF and basis/date/prepared-row/raw-credit/return tamper fixtures are authored for deferred validation; multiple or passive vehicles, authenticated source documents, carryforwards, and final filing gates remain open. See the [Form 3800 PDF gap](ty2025-form3800-pdf-gap.md).
+
+- [x] Reconcile a reviewed filed-2024 passive Form 1116 Schedule B with $100 from 2023 and $9,000 from 2024 against one sourced 2025 Form 1099-INT foreign-tax item: apply 2025 limitation to the older vintage first and part of the newer vintage, then match Form 1116, Schedule B vintage columns, Schedule 3, Form 1040 line 20, native MeF, and both PDFs. Full-return and utilization, vintage split/sum, and return-credit tamper fixtures are authored for deferred validation. Prior-year filed bytes remain unauthenticated, and other categories and mixed sources remain open. See the [Form 1116 PDF gap](ty2025-form1116-main-pdf-gap.md).
 
 ## Native MeF and PDF parity
 

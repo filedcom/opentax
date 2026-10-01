@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **295 completed bounded items**, with
+and no completed checklist items. The **299 completed bounded items**, with
 their source and validation limits, are in the
 [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -13,10 +13,10 @@ form or a release gate.
 
 | Workstream | Open | Completed bounded | What remains |
 | --- | ---: | ---: | --- |
-| Scope and completion rules | 5 | 0 | Set filing boundaries and the source-to-output completion rule. |
+| Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
 | Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
 | Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 280 | Extend bounded routes to every retained form branch and source combination. |
+| Named tax-form gaps | 20 | 283 | Extend bounded routes to every retained form branch and source combination. |
 | Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
 | Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
 | IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
@@ -38,8 +38,12 @@ copies; Form 4952 qualified-dividend exclusion; grouped Form 8283 artwork,
 including one FMV reduction; Schedule C/F qualified-dividend Form 8995 cases;
 four/five foreign-employer Form 1116 wages and affected-year amendment review;
 and audited capital basis, mining costs, and a first-year long-term contract
-on Form 6251. Positive export remains closed where the corresponding gap note
-says so.
+on Form 6251. A partially repaid shareholder note now joins Form 7203 losses,
+and a commercial clean-vehicle credit replays through the Form 3800 PDF. A
+two-vintage passive Form 1116 Schedule B carryover now joins the parent PDF
+and Form 1040 credit. The final A2A submission ZIP requires a reviewed
+full-year residency answer for each filer. Positive export remains closed
+where the corresponding gap note says so.
 
 **Evidence and validation.** The last complete `deno task test` baseline
 passed 8,951/8,951 at `44282e25`; its
