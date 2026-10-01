@@ -23,7 +23,7 @@ Missing second-policy July payment evidence and a payment after April 15,
 The fixtures are authored but unrun. Overlapping policies continue through
 the existing same-SLCSP two-policy checks. Sequential nonoverlapping policy
 blocks now cover all possible gap counts; two-policy overlap with more than two
-gaps, more than three policies, partial payments across policies, other covered
+gaps, more than four policies, partial payments across policies, other covered
 people, and authentication of Marketplace/payment document bytes remain open.
 
 ## Three sequential no-APTC policies (staged, unrun)
@@ -120,6 +120,26 @@ with at most two gaps remain under their existing guard. Wider households,
 shared policies, other payment arrangements, and external source-byte
 authentication remain open.
 
+## Four sequential same-state no-APTC policies (staged, unrun)
+
+The one-filer Texas monthly source route now accepts four distinct policies,
+each covering one contiguous nonoverlapping block. The full-year fixture covers
+January–March, April–June, July–September, and October–December; at 200% FPL,
+the twelve credits total $8,400. A partial-year fixture covers January–February,
+April–May, July–August, and October–November, leaving March, June, September,
+and December uncovered; its eight credits total $5,600. Each covered month has
+its own original Form 1095-A policy columns, Marketplace SLCSP determination,
+and timely full-payment record. Form 8962 reconciles to Schedule 3 line 9 and
+Form 1040 line 31, with one native monthly group per covered month and blank PDF
+entries for uncovered months. The authored fixtures reject overlapping or
+returning policies, a mismatched covered SSN, missing fourth-policy payment,
+and finalized-credit drift. The
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) direct
+monthly calculation for partial-year enrollment, applicable SLCSP review when
+no APTC was paid, and combining multiple Forms 1095-A by month. More than four
+policies, shared or mixed-family policies, other payment arrangements, and
+external source-byte authentication remain open.
+
 The existing zero-APTC, one-person, one-policy route now reconciles the
 applicable figure from the TY2025 Form 8962 Table 2 at 100%-399% of the federal
 poverty line. This applies to both monthly lines 12-23 and annual line 11 when
@@ -151,7 +171,7 @@ line choice, and the premium-payment timing rule.
 
 - A zero-APTC household below 100% FPL without the reviewed lawfully present
   exception.
-- More than one covered person, more than the separately bounded three-policy
+- More than one covered person, more than the separately bounded four-policy
   single-enrollee route, shared policy allocations, married filing separately,
   or a year-of-marriage alternative calculation.
 - Changes in coverage family, interstate moves, QSEHRA, self-employed

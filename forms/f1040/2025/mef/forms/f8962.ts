@@ -1119,7 +1119,11 @@ function reconcileMultiNoAptcPolicyMonths(
   const policies = current1095AStatements(source.data.f1095as);
   const rows = fields.monthly_ptc_rows;
   const ssn = context.filer.primarySSN.replaceAll("-", "");
-  const policyLabel = policies.length === 3 ? "three-policy" : "two-policy";
+  const policyLabel = policies.length === 4
+    ? "four-policy"
+    : policies.length === 3
+    ? "three-policy"
+    : "two-policy";
   const activePolicyCounts = Array.from(
     { length: 12 },
     (_, month) =>
@@ -1130,7 +1134,7 @@ function reconcileMultiNoAptcPolicyMonths(
     .length;
   // Preserve the existing two-policy overlap route for zero, one, or two
   // uncovered months. Wider gaps use one contiguous block per policy.
-  const sequentialOnly = policies.length === 3 || uncoveredMonths > 2;
+  const sequentialOnly = policies.length >= 3 || uncoveredMonths > 2;
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
@@ -1138,7 +1142,7 @@ function reconcileMultiNoAptcPolicyMonths(
     general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
     (general.data.dependents?.length ?? 0) !== 0 ||
-    (policies.length !== 2 && policies.length !== 3) ||
+    ![2, 3, 4].includes(policies.length) ||
     new Set(policies.map((policy) => policy.policy_number)).size !==
       policies.length ||
     (sequentialOnly && activePolicyCounts.some((count) => count > 1)) ||
@@ -2937,7 +2941,7 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
         const policyCount = form1095aSchema.safeParse(context?.pending?.f1095a);
         if (
           policyCount.success &&
-          [2, 3].includes(
+          [2, 3, 4].includes(
             current1095AStatements(policyCount.data.f1095as).length,
           )
         ) {

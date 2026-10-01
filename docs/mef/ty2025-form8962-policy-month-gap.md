@@ -234,7 +234,7 @@ blank. Focused positive and tamper cases are written but unrun.
 References and hashes identify the separate source records for preparer review.
 The application has not authenticated the Marketplace or payment documents or
 compared hashes to their actual bytes; that external source review remains
-required. No-APTC policies outside the bounded three-policy route, shared
+required. No-APTC policies outside the bounded four-policy route, shared
 policies, changes in coverage family
 or state, protected partial payments outside the documented issuer-threshold
 and state emergency-order routes, nonstandard due dates,

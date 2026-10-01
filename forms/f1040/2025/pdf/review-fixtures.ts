@@ -4499,6 +4499,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-four-sequential-no-aptc-policies-full-year",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-JAN-MAR", 1, 3, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-APR-JUN", 4, 6, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-JUL-SEP", 7, 9, 800),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-OCT-DEC", 10, 12, 900),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Four separately sourced sequential policies cover all twelve months without overlap",
+      "Monthly SLCSP changes produce $8,400 PTC on Form 8962, Schedule 3 line 9, and Form 1040 line 31",
+    ],
+  },
+  {
+    id: "single-four-sequential-no-aptc-policies-four-gaps",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-JAN-FEB", 1, 2, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-APR-MAY", 4, 5, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-JUL-AUG", 7, 8, 800),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-OCT-NOV", 10, 11, 900),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "March, June, September, and December have zero policy columns, no SLCSP/payment evidence, and blank native/PDF rows",
+      "Eight covered months produce $5,600 PTC on Form 8962, Schedule 3 line 9, and Form 1040 line 31",
+    ],
+  },
+  {
     id: "single-marketplace-aptc-repayment",
     inputs: {
       general: singleGeneral,
