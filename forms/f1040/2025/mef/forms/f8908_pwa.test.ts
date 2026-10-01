@@ -1,3 +1,4 @@
+import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form8908PwaAttachmentDescription,
@@ -33,6 +34,7 @@ function home(index: number) {
       pdf_file_name: `Form7220-${index}.pdf`,
       pdf_sha256: String(index).repeat(64),
       completed_for_residence_confirmed: true,
+      reviewed_record: form7220ReviewedFixture(),
     },
     certifier: {
       kind: "business",

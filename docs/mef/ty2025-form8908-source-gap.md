@@ -51,5 +51,19 @@ snapshot, review reference, PDF filename, reviewed SHA-256, and completion
 assertion. Staged native preparation checks one unique bundled PDF, description,
 exact submitted-byte digest, and `BinaryAttachment` document ID per home;
 missing, reused, and mismatched links reject. PDF contents and Form 7220 line
-data are not independently parsed against wage records, so PWA credit export
-remains closed.
+data previously were not independently parsed against wage records. A staged
+per-residence review now records the taxpayer, construction start, Part I marks,
+each Part II employer/EIN, trade classification, labor count, hours, wages,
+fringe benefits, payroll reference, and prevailing-rate review. A staged
+AcroForm reader compares these to fields in the exact supplied PDF bytes,
+including the home address, acquisition date, Form 8908 mark, apprenticeship
+not-applicable mark, correction status, and line 10. The 2025
+[Form 7220 instructions](https://www.irs.gov/instructions/i7220) say section 45L
+has no apprenticeship requirement. Its line 10 "No" also calls for a separate
+signed no-alterations statement; the reviewed source names that statement, but
+its signature and bytes are not yet bound to an attachment. The official PDF has
+no signature field. PDF signatures, flattened appearance, XFA/AcroForm
+synchronization, and independent payroll authenticity are not verified by this
+field reader. The MeF builder currently provides attachment digests and document
+IDs, not the bytes needed to call it. The guard therefore remains closed pending
+exact-byte integration, signed-statement handling, and full-batch tests.

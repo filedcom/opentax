@@ -1,3 +1,4 @@
+import { form7220ReviewedFixture } from "./form8908_form7220_fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8908Source } from "./form8908_source.ts";
 
@@ -44,6 +45,7 @@ function fixture() {
           pdf_file_name: `Form7220-${index + 1}.pdf`,
           pdf_sha256: String(index + 1).repeat(64),
           completed_for_residence_confirmed: true as const,
+          reviewed_record: form7220ReviewedFixture(),
         }
         : undefined,
       certifier: {
@@ -68,6 +70,19 @@ Deno.test("Form 8908 source calculator retains all six printed credit classes", 
   assertEquals(lines.itemE_certifications, 6);
   assertEquals(lines.certifiers[1].modified_certifications, 1);
   assertEquals(lines.first20HomeAddresses.length, 6);
+});
+
+Deno.test("Form 8908 rejects Form 7220 taxpayer and wage review gaps", () => {
+  const wrongTaxpayer = fixture();
+  wrongTaxpayer.homes[2].form7220!.reviewed_record.taxpayer_tin = "999887777";
+  assertThrows(
+    () => calculateForm8908Source(wrongTaxpayer),
+    Error,
+    "taxpayer identity differs",
+  );
+  const missingWages = fixture();
+  missingWages.homes[2].form7220!.reviewed_record.wage_rows = [];
+  assertThrows(() => calculateForm8908Source(missingWages));
 });
 
 Deno.test("Form 8908 keeps a person and business with the same name distinct", () => {

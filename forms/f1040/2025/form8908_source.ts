@@ -16,6 +16,31 @@ const residenceSchema = z.object({
   acquired_on: date2025,
 }).strict();
 
+const form7220WageRowSchema = z.object({
+  employer_name: z.string().trim().min(1),
+  employer_ein: z.string().regex(/^\d{9}$/),
+  work_classification: z.string().trim().min(1),
+  laborers_and_mechanics: z.number().int().positive(),
+  hours_worked: z.number().positive(),
+  hourly_wages_paid: z.number().nonnegative(),
+  fringe_benefits_paid: z.number().nonnegative(),
+  prevailing_rate_compliance_verified: z.literal(true),
+  payroll_record_reference: z.string().trim().min(1),
+}).strict();
+
+export const form7220ReviewedRecordSchema = z.object({
+  taxpayer_name: z.string().trim().min(1),
+  taxpayer_tin: z.string().regex(/^\d{9}$/),
+  facility_description: z.string().trim().min(1),
+  construction_began_on: isoDate,
+  project_labor_agreement: z.boolean(),
+  no_prevailing_wage_corrections: z.literal(true),
+  apprenticeship_not_applicable: z.literal(true),
+  no_alterations_or_repairs: z.literal(true),
+  signed_no_alterations_statement_reference: z.string().trim().min(1),
+  wage_rows: z.array(form7220WageRowSchema).min(1).max(18),
+}).strict();
+
 const form7220AttachmentSchema = z.object({
   review_reference: z.string().trim().min(1),
   acquisition_record_reference: z.string().trim().min(1),
@@ -23,6 +48,7 @@ const form7220AttachmentSchema = z.object({
   pdf_file_name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*\.pdf$/).max(64),
   pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   completed_for_residence_confirmed: z.literal(true),
+  reviewed_record: form7220ReviewedRecordSchema,
 }).strict();
 
 export const form8908HomeSourceSchema = z.object({
@@ -159,6 +185,18 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
     }
     if (home.form7220) {
       const attachment = home.form7220;
+      if (attachment.reviewed_record.taxpayer_tin !== source.contractor_ssn) {
+        throw new Error(
+          "Form 8908 Form 7220 taxpayer identity differs from contractor",
+        );
+      }
+      if (
+        attachment.reviewed_record.construction_began_on >= home.acquired_on
+      ) {
+        throw new Error(
+          "Form 8908 Form 7220 construction must begin before acquisition",
+        );
+      }
       const residence = {
         street: home.street,
         unit: home.unit,

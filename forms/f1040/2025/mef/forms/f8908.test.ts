@@ -1,3 +1,4 @@
+import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8908 } from "./f8908.ts";
 import { form8908Pdf } from "../../pdf/forms/f8908.ts";
@@ -45,6 +46,7 @@ function sixClassSource() {
           pdf_file_name: `Form7220-${index + 1}.pdf`,
           pdf_sha256: String(index + 1).repeat(64),
           completed_for_residence_confirmed: true as const,
+          reviewed_record: form7220ReviewedFixture(),
         }
         : undefined,
       certifier: {

@@ -1,3 +1,4 @@
+import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { assertAttachmentCoverage } from "../../attachment-coverage.ts";
@@ -75,6 +76,7 @@ const pwaHome = {
     pdf_file_name: "Form7220-1.pdf",
     pdf_sha256: "a".repeat(64),
     completed_for_residence_confirmed: true,
+    reviewed_record: form7220ReviewedFixture(),
   },
 };
 const pwaAttachment = {
@@ -163,6 +165,7 @@ Deno.test("staged Form 8908 line 1p rejects altered source and missing attachmen
               pdf_file_name: "Form7220-1.pdf",
               pdf_sha256: "a".repeat(64),
               completed_for_residence_confirmed: true,
+              reviewed_record: form7220ReviewedFixture(),
             },
           }],
         },
