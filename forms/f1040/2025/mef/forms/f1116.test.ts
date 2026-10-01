@@ -273,6 +273,9 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
       country_code: "DE",
       compensation_amount: 300_000,
       compensation_usd: 300_000,
+      compensation_owner_ssn: "123456789",
+      compensation_source_document_reference:
+        alternative.source_document_reference,
       foreign_tax_paid_usd: 2_000,
       foreign_service_compensation_usd: 140_000,
       foreign_tax_irs_country_code: "GM",
@@ -305,7 +308,7 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   const own = calculated.outputs.find((item) => item.nodeType === "form_1116");
   const formFields = own?.fields as Parameters<typeof form1116.build>[0];
   assertAlternativeCompensationSources(formFields.category_summaries ?? [], {
-    pending: { fec: fecSource },
+    pending: { fec: fecSource, general: { taxpayer_ssn: "123456789" } },
   });
   const filer = {
     primarySSN: "123456789",

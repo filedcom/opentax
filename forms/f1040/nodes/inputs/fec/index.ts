@@ -88,19 +88,21 @@ export function alternativeCompensationWorldwideTotal(
   source: FecItem,
   taxpayerSsn?: string,
 ): number {
+  const owner = source.compensation_owner_ssn?.replace(/\D/g, "");
+  if (
+    !owner || !source.compensation_source_document_reference ||
+    source.compensation_source_document_reference !==
+      source.alternative_compensation_sourcing?.source_document_reference ||
+    (taxpayerSsn && taxpayerSsn.replace(/\D/g, "") !== owner)
+  ) return 0;
   if (items.length === 1) return source.compensation_usd;
   if (
     items.length < 2 ||
     !source.alternative_compensation_sourcing
   ) return 0;
   const others = items.filter((item) => item !== source);
-  const owner = source.compensation_owner_ssn?.replace(/\D/g, "");
   if (
-    others.length !== items.length - 1 || !owner ||
-    (taxpayerSsn && taxpayerSsn.replace(/\D/g, "") !== owner) ||
-    !source.compensation_source_document_reference ||
-    source.compensation_source_document_reference !==
-      source.alternative_compensation_sourcing.source_document_reference ||
+    others.length !== items.length - 1 ||
     others.some((other) =>
       other.compensation_owner_ssn?.replace(/\D/g, "") !== owner ||
       !other.compensation_source_document_reference ||

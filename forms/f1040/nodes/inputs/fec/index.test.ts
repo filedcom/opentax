@@ -48,6 +48,9 @@ const paidTaxCurrency = {
 Deno.test("fec: alternative employee compensation sourcing follows the general-category Form 1116 item", () => {
   const result = compute([minimalItem({
     compensation_usd: 300_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference:
+      alternativeBasis.source_document_reference,
     foreign_tax_paid_usd: 2_000,
     foreign_service_compensation_usd: 140_000,
     foreign_tax_irs_country_code: "GM",
@@ -67,6 +70,35 @@ Deno.test("fec: alternative employee compensation sourcing follows the general-c
       .foreign_tax_currency,
     paidTaxCurrency,
   );
+});
+
+Deno.test("fec: one alternative compensation item needs an identified employee and matching wage document", () => {
+  const item = minimalItem({
+    compensation_usd: 300_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference:
+      alternativeBasis.source_document_reference,
+    foreign_tax_paid_usd: 2_000,
+    foreign_service_compensation_usd: 140_000,
+    foreign_tax_irs_country_code: "GM",
+    foreign_tax_paid_or_accrued_date: "2025-12-01",
+    foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+    foreign_tax_currency: paidTaxCurrency,
+    alternative_compensation_sourcing: alternativeBasis,
+  });
+  for (
+    const altered of [
+      { ...item, compensation_owner_ssn: undefined },
+      { ...item, compensation_source_document_reference: undefined },
+      { ...item, compensation_source_document_reference: "other payroll" },
+    ]
+  ) {
+    assertThrows(
+      () => compute([altered]),
+      Error,
+      "at least $250,000 of identified employee compensation",
+    );
+  }
 });
 
 Deno.test("fec: same employee's second foreign-employer wage proves the line 1b worldwide threshold", () => {
@@ -177,6 +209,9 @@ Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or w
     () =>
       compute([minimalItem({
         compensation_usd: 300_000,
+        compensation_owner_ssn: "111-22-3333",
+        compensation_source_document_reference:
+          alternativeBasis.source_document_reference,
         foreign_service_compensation_usd: 140_000,
         alternative_compensation_sourcing: alternativeBasis,
       })]),
@@ -198,6 +233,9 @@ Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or w
     () =>
       compute([minimalItem({
         compensation_usd: 200_000,
+        compensation_owner_ssn: "111-22-3333",
+        compensation_source_document_reference:
+          alternativeBasis.source_document_reference,
         foreign_tax_paid_usd: 2_000,
         foreign_service_compensation_usd: 140_000,
         foreign_tax_paid_or_accrued_date: "2025-12-01",
@@ -217,6 +255,9 @@ Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or w
     () =>
       compute([minimalItem({
         compensation_usd: 300_000,
+        compensation_owner_ssn: "111-22-3333",
+        compensation_source_document_reference:
+          alternativeBasis.source_document_reference,
         foreign_tax_paid_usd: 2_000,
         foreign_service_compensation_usd: 140_000,
         foreign_tax_paid_or_accrued_date: "2025-12-01",

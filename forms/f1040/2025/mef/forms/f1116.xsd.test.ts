@@ -303,6 +303,9 @@ Deno.test({
             country_code: "DE",
             compensation_amount: 300_000,
             compensation_usd: 300_000,
+            compensation_owner_ssn: "123456789",
+            compensation_source_document_reference:
+              "2025 employer project ledger",
             foreign_tax_paid_usd: 2_000,
             foreign_service_compensation_usd: 140_000,
             foreign_tax_irs_country_code: "GM",

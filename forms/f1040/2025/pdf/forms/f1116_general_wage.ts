@@ -95,9 +95,13 @@ export function projectGeneralWageForm1116Pdf(
   const taxpayerSsn = typeof pending.general?.taxpayer_ssn === "string"
     ? pending.general.taxpayer_ssn
     : undefined;
+  const filedSsn = typeof pending.f1040?.taxpayer_ssn === "string"
+    ? pending.f1040.taxpayer_ssn
+    : undefined;
   if (
     !wage ||
-    (fec.data.fecs.length > 1 && !taxpayerSsn) ||
+    !taxpayerSsn || !filedSsn ||
+    taxpayerSsn.replace(/\D/g, "") !== filedSsn.replace(/\D/g, "") ||
     alternativeCompensationWorldwideTotal(
         fec.data.fecs,
         wage,

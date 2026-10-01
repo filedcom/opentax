@@ -56,6 +56,8 @@ const inputs = {
     currency: "EUR",
     compensation_amount: 240_000,
     compensation_usd: 300_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference: wageReference,
     foreign_service_compensation_usd: 140_000,
     foreign_tax_paid_usd: 2_000,
     foreign_tax_irs_country_code: "GM",
@@ -155,6 +157,31 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
     () => buildMefBundle(buildPending(changed), { filer, attachments: [] }),
     Error,
     "must match each identified foreign-employer wage item",
+  );
+  const changedOwner = structuredClone(result.pending);
+  (changedOwner.fec as {
+    fecs: Array<{ compensation_owner_ssn: string }>;
+  }).fecs[0].compensation_owner_ssn = "999-88-7777";
+  assertThrows(
+    () => form1116Pdf.projectFields?.(changedOwner.form_1116!, changedOwner),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(buildPending(changedOwner), { filer, attachments: [] }),
+    Error,
+  );
+  const changedWageDocument = structuredClone(result.pending);
+  (changedWageDocument.fec as {
+    fecs: Array<{ compensation_source_document_reference: string }>;
+  }).fecs[0].compensation_source_document_reference = "unrelated wage record";
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        changedWageDocument.form_1116!,
+        changedWageDocument,
+      ),
+    Error,
   );
 });
 

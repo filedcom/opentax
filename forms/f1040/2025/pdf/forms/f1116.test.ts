@@ -261,6 +261,7 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   const fields = result.outputs.find((item) => item.nodeType === "form_1116")
     ?.fields as Record<string, unknown>;
   const pending = {
+    general: { taxpayer_ssn: "111-22-3333" },
     fec: {
       fecs: [{
         foreign_employer_name: "Employer",
@@ -268,6 +269,9 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
         compensation_amount: 240_000,
         currency: "EUR",
         compensation_usd: 300_000,
+        compensation_owner_ssn: "111-22-3333",
+        compensation_source_document_reference:
+          alternative.source_document_reference,
         foreign_tax_paid_usd: 2_000,
         foreign_tax_irs_country_code: "GM",
         foreign_tax_paid_or_accrued_date: "2025-06-15",
@@ -278,6 +282,7 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
       }],
     },
     f1040: {
+      taxpayer_ssn: "111223333",
       line1h_other_earned: 300_000,
       line1z_total_wages: 300_000,
       line9_total_income: 300_000,
@@ -304,6 +309,14 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   assertEquals(projected.pdf_line28, 2_000);
   assertEquals(projected.pdf_line35, 2_000);
   assertEquals(form1116Pdf.includeWhen?.(projected, pending), true);
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(fields, {
+        ...pending,
+        f1040: { ...pending.f1040, taxpayer_ssn: "999887777" },
+      }),
+    Error,
+  );
   assertEquals(
     form1116Pdf.fields.find((field) => field.domainKey === "pdf_line28")
       ?.pdfField,

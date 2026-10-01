@@ -211,3 +211,22 @@ when every record has the same owner and its own source reference. Issued
 wage/tax bytes, mixed W-2 or spouse compensation,
 multiple alternatively sourced items, other income/categories/deductions,
 IRS acceptance, and bulk XSD/PDF validation remain open.
+
+## Single-employer employee and wage-document identity (staged, unrun)
+
+The same line 1b route now requires the alternative-basis foreign-employer pay
+item to identify the employee SSN and the wage-document reference even when it
+is the **only** compensation item. That reference must be the one on the
+alternative-basis statement. The source node rejects an ownerless or detached
+single item before Form 1116 is calculated; native and PDF filing checks match
+the employee SSN to the finalized Form 1040 filer while retaining the existing
+$250,000 threshold, country, paid-tax, conversion, Schedule 3, and Form 1040
+amount joins. The one-employer full-return fixture now includes the owner and
+source document, with owner and document-tamper cases; the PDF also requires
+the general source SSN to match the finalized Form 1040 SSN and rejects a
+changed return identity. Focused source, native, and PDF fixtures are updated
+for the deferred bulk pass. This follows the
+[2025 Form 1116 line 1b instructions](https://www.irs.gov/instructions/i1116),
+which require employee compensation and an attached statement identifying the
+taxpayer and the specific compensation item. Wage-document bytes and the
+substantive allocation method still need independent review.

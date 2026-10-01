@@ -49,7 +49,7 @@ export function assertAlternativeCompensationSources(
       : undefined);
   if (
     sourceItems.length !== items.length ||
-    (fec.data.fecs.length > 1 && !taxpayerSsn) ||
+    !taxpayerSsn ||
     items.some((item) => {
       const alternative = item.alternative_compensation_sourcing;
       const matching = sourceItems.filter((source) =>
