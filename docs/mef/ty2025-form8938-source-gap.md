@@ -20,15 +20,23 @@ reached on different days. A peak amount therefore remains an independently
 reviewed source value. Full tax-home/presence, trust/pension valuation and other
 joint-owner evidence must still be reviewed.
 
-**Export remains closed** for active Form 8938 inputs. The pending list blocks
-both MeF and PDF because no native Form 8938 attachment or continuation
-descriptor exists. Before opening it:
+An **unregistered staged projection** now maps the ledger to the locally cached
+TY2025 IMF v5.4 `IRS8938.xsd` names for Parts I–VI and inspected fields in the
+official Rev. 11/2021 fillable PDF. It derives Part III category totals and
+filed-line locations from detailed assets and Part IV counts from distinct
+filed-form references. The PDF stage handles one Part V account and one Part VI
+asset; it rejects additional detail until continuation pages are authored. The
+MeF stage emits repeated detail groups but lacks structured foreign addresses.
+
+**Public export remains closed** for active Form 8938 inputs. Both projections
+are absent from the shared registries and the existing MeF/PDF guard remains in
+place. Before opening export:
 
 1. Join filer identity/status and return-required determination to the actual
    TY2025 return.
-2. Build Form 8938 Parts I–VI and continuation pages from the ledger; include
-   Part IV counts only when the referenced Forms 3520/3520-A/5471/8621/8865
-   actually filed.
+2. Complete Form 8938 continuation pages, structured addresses and
+   issuer/counterparty detail; include Part IV counts only when the referenced
+   Forms 3520/3520-A/5471/8621/8865 actually filed.
 3. Reconcile Part III income, gains, deductions and credits to their filed
    form/line without computing them twice.
 4. Review issuer/bank statement and FX source bytes, foreign trust/pension and
