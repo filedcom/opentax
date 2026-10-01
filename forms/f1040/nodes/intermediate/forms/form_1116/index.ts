@@ -75,6 +75,15 @@ export const multiSourcePdfReviewSchema = singleSourcePdfReviewSchema.omit({
   payer_source_document_references: z.array(z.string().trim().min(1)).min(2),
 }).strict();
 
+export const mixedInterestDividendPdfReviewSchema = singleSourcePdfReviewSchema
+  .omit({
+    source_document_reference: true,
+    domestic_treasury_source_document_reference: true,
+  }).extend({
+    interest_source_document_reference: z.string().trim().min(1),
+    dividend_source_document_reference: z.string().trim().min(1),
+  }).strict();
+
 export const partnershipK3PassiveInterestSchema = z.object({
   partnership_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: z.string().trim().min(1),
@@ -551,6 +560,8 @@ export const inputSchema = z.object({
     singleSourceK3PdfReviewSchema,
   ]).optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
+  mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
+    .optional(),
 });
 
 type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
@@ -686,14 +697,19 @@ function categoryTotals(
         "Form 1116 needs worldwide gross income to apportion deductions",
       );
     }
-    const oneCountry1099Interest = matching.length > 1 &&
+    const oneCountry1099PassiveIncome = matching.length > 1 &&
       matching.every((item) =>
         item.tax_reported_on_1099 === true &&
-        item.tax_kind === ForeignTaxKind.Interest &&
+        (item.tax_kind === ForeignTaxKind.Interest ||
+          item.tax_kind === ForeignTaxKind.Dividends) &&
         item.irs_country_code === matching[0].irs_country_code
-      );
+      ) && (matching.every((item) =>
+        item.tax_kind === ForeignTaxKind.Interest
+      ) ||
+        (matching.length === 2 &&
+          new Set(matching.map((item) => item.tax_kind)).size === 2));
     const automaticApportioned = worldwideGrossIncome > 0
-      ? oneCountry1099Interest
+      ? oneCountry1099PassiveIncome
         ? Math.round(
           generalDeductions *
             fraction(foreignGrossIncome, worldwideGrossIncome),
@@ -1111,6 +1127,8 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         category_summaries: categories,
         single_source_pdf_review: input.single_source_pdf_review,
         multi_source_pdf_review: input.multi_source_pdf_review,
+        mixed_interest_dividend_pdf_review:
+          input.mixed_interest_dividend_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });

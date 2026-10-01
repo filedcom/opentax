@@ -1,5 +1,22 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**One foreign 1099-INT plus one ordinary foreign 1099-DIV, same country
+(written, unrun):** A distinct bank and fund statement may contribute one
+positive foreign box-1/box-6 interest item and one positive nonqualified
+foreign box-1a/box-7 dividend item to one passive country column. The new
+`mixed_interest_dividend_pdf_review` names each source separately and retains
+the Part I–IV affirmations; the existing single and all-interest multi-payer
+review meanings remain unchanged. The calculation and native country source
+round the full standard deduction once against aggregate foreign/worldwide
+income. Native and PDF export replay each source, the dividend's qualifying
+31-day holding review and absence of related payments, both tax kinds and
+their separate Part II columns, Form 1040 lines 2b/3b/9/11/12a/15/16, and
+Schedule 3 line 1. A full-return positive case and changed interest, dividend,
+holding, source-reference, review-conflict, and return fixtures are authored
+for deferred validation. More payers, mixed countries, qualified dividends,
+domestic income, source bytes, and filled-output/XSD review remain open. See
+the [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116).
+
 **One ordinary foreign 1099-DIV payer (written, unrun):** A sole issued
 Form 1099-DIV with positive box 1a ordinary dividends and box 7 foreign tax
 can feed one passive Form 1116 country column when the full box 1a amount is

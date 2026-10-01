@@ -3,6 +3,7 @@ import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
   IncomeCategory,
+  mixedInterestDividendPdfReviewSchema,
   multiSourcePdfReviewSchema,
   singleSourceK3PdfReviewSchema,
   singleSourcePdfReviewSchema,
@@ -14,6 +15,7 @@ import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
 import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
+import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -43,15 +45,23 @@ export function projectSingleSourceForm1116Pdf(
     throw new Error("Form 1116 PDF supports one reviewed passive category");
   }
   const summary = categorySummarySchema.parse(raw[0]);
+  const mixed = reconcileForm1116MixedInterestDividend(fields, pending);
   const dividend = reconcileForm1116ForeignDividend(fields, pending);
   const multi = reconcileForm1116MultiForeignInterest(fields, pending);
   if (
     summary.category !== IncomeCategory.Passive ||
-    (summary.items.length !== 1 && !multi)
+    (summary.items.length !== 1 && !multi && !mixed)
   ) {
     throw new Error("Form 1116 PDF supports one reviewed passive tax item");
   }
-  const item = multi
+  const item = mixed
+    ? {
+      ...summary.items[0],
+      tax_kind: ForeignTaxKind.Interest,
+      foreign_gross_income: mixed.foreignGross,
+      foreign_tax_paid: mixed.foreignTax,
+    }
+    : multi
     ? {
       ...summary.items[0],
       foreign_gross_income: multi.foreignGross,
@@ -62,13 +72,17 @@ export function projectSingleSourceForm1116Pdf(
   const k3 = item.partnership_k3_passive_interest;
   const sCorpK3 = item.s_corp_k3_passive_interest;
   const review =
-    (multi
+    (mixed
+      ? mixedInterestDividendPdfReviewSchema
+      : multi
       ? multiSourcePdfReviewSchema
       : k3 || sCorpK3
       ? singleSourceK3PdfReviewSchema
       : singleSourcePdfReviewSchema)
       .safeParse(
-        multi
+        mixed
+          ? fields.mixed_interest_dividend_pdf_review
+          : multi
           ? fields.multi_source_pdf_review
           : fields.single_source_pdf_review,
       );
@@ -237,7 +251,7 @@ export function projectSingleSourceForm1116Pdf(
     );
   }
   if (
-    (!multi && reviewSourceReference !==
+    (!multi && !mixed && reviewSourceReference !==
         item.foreign_income_source_document_reference) ||
     (!reportedOn1099 && reviewSourceReference !==
         currency?.source_document_reference)
@@ -255,7 +269,7 @@ export function projectSingleSourceForm1116Pdf(
       "Form 1116 PDF foreign-currency conversion differs from the U.S.-dollar tax",
     );
   }
-  if (reportedOn1099 && !multi && !dividend) {
+  if (reportedOn1099 && !multi && !mixed && !dividend) {
     const source = f1099intInputSchema.safeParse(pending.f1099int);
     const rows = source.success ? source.data.f1099ints : [];
     const foreignRow = treasury?.twoPayer
@@ -414,7 +428,14 @@ export function projectSingleSourceForm1116Pdf(
   ];
   if (
     !f1040 || !schedule3 ||
-    (dividend
+    (mixed
+      ? f1040.line2b_taxable_interest !==
+          summary.items.find((row) => row.tax_kind === ForeignTaxKind.Interest)
+            ?.foreign_gross_income ||
+        f1040.line3b_ordinary_dividends !==
+          summary.items.find((row) => row.tax_kind === ForeignTaxKind.Dividends)
+            ?.foreign_gross_income
+      : dividend
       ? !zero(f1040.line2b_taxable_interest) ||
         f1040.line3b_ordinary_dividends !== worldwideGross
       : f1040.line2b_taxable_interest !== worldwideGross) ||
@@ -430,7 +451,8 @@ export function projectSingleSourceForm1116Pdf(
     !zero(f1040.line13b_additional_deductions) ||
     pending.schedule1a?.senior_zero_exclusions_review === true ||
     otherIncomeLines.some((key) =>
-      (key !== "line3b_ordinary_dividends" || !dividend) && !zero(f1040[key])
+      (key !== "line3b_ordinary_dividends" || !(dividend || mixed)) &&
+      !zero(f1040[key])
     ) ||
     (!reportedOn1099 && pending.f1099int !== undefined) ||
     pending.f1099oid !== undefined ||
@@ -511,7 +533,11 @@ export function projectSingleSourceForm1116Pdf(
     ...fields,
     income_category: summary.category,
     pdf_country_a: item.irs_country_code,
-    pdf_income_description: dividend ? "Dividend income" : "Interest income",
+    pdf_income_description: mixed
+      ? "Interest and dividend income"
+      : dividend
+      ? "Dividend income"
+      : "Interest income",
     pdf_line1a_a: item.foreign_gross_income,
     pdf_line1a_total: item.foreign_gross_income,
     pdf_line2_a: 0,
@@ -533,8 +559,16 @@ export function projectSingleSourceForm1116Pdf(
       ? "1099 taxes"
       : `${date!.slice(5, 7)}/${date!.slice(8, 10)}/${date!.slice(0, 4)}`,
     pdf_part2_foreign_interest_a: currency?.amount,
-    pdf_part2_us_dividend_a: dividend ? item.foreign_tax_paid : undefined,
-    pdf_part2_us_interest_a: dividend ? undefined : item.foreign_tax_paid,
+    pdf_part2_us_dividend_a: mixed
+      ? mixed.dividendTax
+      : dividend
+      ? item.foreign_tax_paid
+      : undefined,
+    pdf_part2_us_interest_a: mixed
+      ? mixed.interestTax
+      : dividend
+      ? undefined
+      : item.foreign_tax_paid,
     pdf_part2_total_a: item.foreign_tax_paid,
     pdf_line8: item.foreign_tax_paid,
     pdf_line9: item.foreign_tax_paid,
