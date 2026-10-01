@@ -5,7 +5,14 @@ import {
   inputSchema,
   type PriorCreditDisallowanceReview,
 } from "../../../nodes/inputs/f8862/index.ts";
-import { inputSchema as form8863InputSchema } from "../../../nodes/inputs/f8863/index.ts";
+import {
+  calculateForm8863Lines,
+  inputSchema as form8863InputSchema,
+} from "../../../nodes/inputs/f8863/index.ts";
+import {
+  calculateSchedule8812Lines,
+  inputSchema as form8812InputSchema,
+} from "../../../nodes/inputs/f8812/index.ts";
 import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -358,6 +365,32 @@ function validateFinalizedCreditClaims(
           throw new Error(
             "Form 8862 shared ODC and AOTC student needs one matching dependent SSN",
           );
+        }
+        if (samePerson) {
+          const form8812 = form8812InputSchema.safeParse(pending?.f8812);
+          const creditLines = calculateForm8863Lines(form8863.data);
+          if (!form8812.success || !creditLines) {
+            throw new Error(
+              "Form 8862 shared ODC and AOTC amounts need Schedule 8812 and Form 8863 source",
+            );
+          }
+          const odcLines = calculateSchedule8812Lines(2025, form8812.data);
+          if (
+            !odcLines || form8812.data.form8862_filed !== true ||
+            form8863.data.form8862_filed !== true ||
+            odcLines.line4 !== (fields.ctc_children?.length ?? 0) ||
+            odcLines.line6 !== (fields.other_dependents?.length ?? 0) ||
+            (form1040.line19_child_tax_credit ?? 0) !== odcLines.line14 ||
+            (form1040.line28_actc ?? 0) !== odcLines.line27 ||
+            (form1040.line29_refundable_aoc ?? 0) !== creditLines.line8 ||
+            (schedule3?.line3_education_credit ?? 0) !== creditLines.line19 ||
+            odcLines.line14 + odcLines.line27 <= 0 ||
+            creditLines.line8 + creditLines.line19 <= 0
+          ) {
+            throw new Error(
+              "Form 8862 shared ODC and AOTC amounts differ from Schedule 8812, Form 8863, Schedule 3, or Form 1040",
+            );
+          }
         }
       }
     }

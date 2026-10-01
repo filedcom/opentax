@@ -5,6 +5,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
+import { form8862 as nativeForm8862 } from "../mef/forms/f8862.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8862Pdf } from "./forms/f8862.ts";
@@ -161,6 +162,47 @@ Deno.test("reviewed Form 8862 ODC and AOTC claims for one dependent reach the fi
   assertEquals(projected?.aotc_student_0_name, "Jamie Example");
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 8, true);
+});
+
+Deno.test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form 8862 export", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    combinedInputs(),
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = [
+    {
+      ...pending,
+      f1040: { ...pending.f1040, line19_child_tax_credit: 501 },
+    },
+    {
+      ...pending,
+      f1040: { ...pending.f1040, line29_refundable_aoc: 900 },
+    },
+    {
+      ...pending,
+      schedule3: { ...pending.schedule3, line3_education_credit: 1_400 },
+    },
+  ];
+  for (const altered of changed) {
+    assertThrows(
+      () =>
+        nativeForm8862.build(pending.f8862!, {
+          filer: base.filer,
+          pending: altered,
+        }),
+      Error,
+      "shared ODC and AOTC amounts differ",
+    );
+    assertThrows(
+      () => form8862Pdf.instances?.(pending.f8862!, base.filer, altered),
+      Error,
+      "shared ODC and AOTC amounts differ",
+    );
+  }
 });
 
 Deno.test("combined Form 8862 ODC/AOTC rejects altered notice and student source", () => {
