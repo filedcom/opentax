@@ -1042,6 +1042,15 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
     bound.verifiedSourceDocuments.getBytes(records[0].reference),
     records[0].bytes,
   );
+  const returnedCopy = bound.verifiedSourceDocuments.getBytes(
+    records[0].reference,
+  );
+  if (!returnedCopy) throw new Error("missing verified K-1 bytes");
+  returnedCopy[0] = 0;
+  assertEquals(
+    bound.verifiedSourceDocuments.getBytes(records[0].reference),
+    records[0].bytes,
+  );
   assertEquals(
     bound.diagnostics.some((entry) =>
       entry.nodeType === "k1_s_corp" &&
