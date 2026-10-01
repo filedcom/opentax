@@ -176,6 +176,11 @@ export function assert1099WithholdingSource(
       );
     }
   }
+  if (expected > 0 && !filer) {
+    throw new Error(
+      "1099-family withholding needs Form 1040 filer identity",
+    );
+  }
   const actual = (pending.f1040 as Record<string, unknown> | undefined)
     ?.line25b_withheld_1099 ?? 0;
   if (!Number.isFinite(expected) || actual !== expected) {

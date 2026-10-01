@@ -165,4 +165,13 @@ Deno.test("an unsupported bare line 25b amount cannot be filed without retained 
     Error,
     "line 25b differs",
   );
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        f1099int: { f1099ints: [{ payer_name: "Bank", box4: 10 }] },
+        f1040: { line25b_withheld_1099: 10 },
+      }, undefined),
+    Error,
+    "Form 1040 filer identity",
+  );
 });
