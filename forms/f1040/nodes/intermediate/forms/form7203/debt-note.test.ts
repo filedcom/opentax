@@ -960,20 +960,55 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
   );
 });
 
-Deno.test("Form 7203 prior reduced formal note binds nine exact source bytes and stages box F gain but remains closed for filing", async () => {
+Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remains closed for filing", async () => {
+  const submissionId = "1234567890123abcdef0";
+  const ns = 'xmlns="http://www.irs.gov/efile"';
+  const formBody =
+    `<ShareholderSSN>123456789</ShareholderSSN><SCorporationEIN>987654321</SCorporationEIN><StockBasisEndTaxYearAmt>100</StockBasisEndTaxYearAmt><ShareholderDebtBasisGrp><FormalNoteInd>X</FormalNoteInd><LoanBalanceEndTaxYrAmt>1000</LoanBalanceEndTaxYrAmt><DebtBasisEndTaxYrAmt>500</DebtBasisEndTaxYrAmt></ShareholderDebtBasisGrp><TotLoanBalanceEndTaxYrAmt>1000</TotLoanBalanceEndTaxYrAmt><TotDebtBasisEndTaxYrAmt>500</TotDebtBasisEndTaxYrAmt>`;
+  const priorReturn =
+    `<Return ${ns}><ReturnHeader><TaxYr>2024</TaxYr><TaxPeriodEndDt>2024-12-31</TaxPeriodEndDt><ReturnTypeCd>1040</ReturnTypeCd><Filer><PrimarySSN>123456789</PrimarySSN></Filer></ReturnHeader><ReturnData><IRS1040/><IRS7203>${formBody}</IRS7203></ReturnData></Return>`;
+  const priorReturnDigest = Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(priorReturn),
+      ),
+    ),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const manifest =
+    `<IRSSubmissionManifest ${ns}><SubmissionId>${submissionId}</SubmissionId><TIN>123456789</TIN><TaxYr>2024</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><SubmissionXmlSha256>${priorReturnDigest}</SubmissionXmlSha256></IRSSubmissionManifest>`;
+  const ack =
+    `<Acknowledgement ${ns}><SubmissionId>${submissionId}</SubmissionId><TIN>123456789</TIN><TaxYear>2024</TaxYear><GovernmentCode>IRS</GovernmentCode><SubmissionType>1040</SubmissionType><SubmissionCategory>IND</SubmissionCategory><TaxPeriodEndDate>2024-12-31</TaxPeriodEndDate><AcceptanceStatus>Accepted</AcceptanceStatus><CompletedValidation>true</CompletedValidation></Acknowledgement>`;
   const records = [
-    "2025 signed K-1 copy",
-    "2024 stock-basis rollforward",
-    "signed 2023 formal note",
-    "2023 original shareholder bank advance",
-    "accepted 2024 Form 1040",
-    "2024 IRS acceptance receipt",
-    "accepted 2024 Form 7203",
-    "2025 corporate note principal ledger",
-    "2025 shareholder bank deposit",
-  ].map((reference) => ({
+    { reference: "2025 signed K-1 copy", text: "synthetic K-1" },
+    {
+      reference: "2024 stock-basis rollforward",
+      text: "synthetic stock basis",
+    },
+    { reference: "signed 2023 formal note", text: "synthetic signed note" },
+    {
+      reference: "2023 original shareholder bank advance",
+      text: "synthetic bank advance",
+    },
+    { reference: "accepted 2024 Form 1040", text: priorReturn },
+    { reference: "2024 submission manifest", text: manifest },
+    { reference: "2024 IRS acceptance receipt", text: ack },
+    {
+      reference: "accepted 2024 Form 7203",
+      text: `<IRS7203 ${ns}>${formBody}</IRS7203>`,
+    },
+    {
+      reference: "2025 corporate note principal ledger",
+      text: "synthetic loan ledger",
+    },
+    {
+      reference: "2025 shareholder bank deposit",
+      text: "synthetic bank deposit",
+    },
+  ].map(({ reference, text }) => ({
     reference,
-    bytes: new TextEncoder().encode(`reviewed synthetic bytes: ${reference}`),
+    bytes: new TextEncoder().encode(text),
   }));
   const hashes = await Promise.all(records.map(async (document) =>
     Array.from(
@@ -1006,10 +1041,13 @@ Deno.test("Form 7203 prior reduced formal note binds nine exact source bytes and
     corporate_borrower_ein: "987654321",
     prior_filed_return_reference: "accepted 2024 Form 1040",
     prior_filed_return_sha256: hashes[4],
+    prior_submission_id: submissionId,
+    prior_submission_manifest_reference: "2024 submission manifest",
+    prior_submission_manifest_sha256: hashes[5],
     prior_accepted_acknowledgement_reference: "2024 IRS acceptance receipt",
-    prior_accepted_acknowledgement_sha256: hashes[5],
+    prior_accepted_acknowledgement_sha256: hashes[6],
     prior_filed_form7203_reference: "accepted 2024 Form 7203",
-    prior_filed_form7203_sha256: hashes[6],
+    prior_filed_form7203_sha256: hashes[7],
     prior_form7203_line20_ending_face: 1_000,
     prior_form7203_line31_ending_basis: 500,
     opening_note_face_amount: 1_000,
@@ -1019,9 +1057,9 @@ Deno.test("Form 7203 prior reduced formal note binds nine exact source bytes and
       date: "2025-08-15",
       amount: 400,
       corporate_loan_ledger_reference: "2025 corporate note principal ledger",
-      corporate_loan_ledger_sha256: hashes[7],
+      corporate_loan_ledger_sha256: hashes[8],
       shareholder_bank_deposit_reference: "2025 shareholder bank deposit",
-      shareholder_bank_deposit_sha256: hashes[8],
+      shareholder_bank_deposit_sha256: hashes[9],
       principal_only_confirmed: true,
     },
     no_other_shareholder_debt_confirmed: true,
@@ -1048,7 +1086,104 @@ Deno.test("Form 7203 prior reduced formal note binds nine exact source bytes and
     inputs,
     records,
   );
-  assertEquals(bound.verifiedSourceDocuments.manifest.length, 9);
+  assertEquals(bound.verifiedSourceDocuments.manifest.length, 10);
+  assertEquals(
+    bound.inspectedPriorFiling.parsedAcknowledgmentStatus,
+    "Accepted",
+  );
+  assertEquals(bound.inspectedPriorFiling.returnDigestLinkedToManifest, true);
+  assertEquals(bound.inspectedPriorFiling.issuerAuthenticated, false);
+  const rejectReadableXmlChange = async (
+    index: number,
+    altered: string,
+    digestField: string,
+  ) => {
+    const bytes = new TextEncoder().encode(altered);
+    const digest = Array.from(
+      new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+    await assertRejects(() =>
+      executePriorReduced7203WithSourceDocuments(
+        {
+          ...inputs,
+          k1_s_corp: [{
+            ...source,
+            form7203_debt_evidence: { ...prior, [digestField]: digest },
+          }],
+        },
+        records.map((document, documentIndex) =>
+          documentIndex === index ? { ...document, bytes } : document
+        ),
+      )
+    );
+  };
+  await rejectReadableXmlChange(
+    4,
+    priorReturn.replace("<PrimarySSN>123456789", "<PrimarySSN>999999999"),
+    "prior_filed_return_sha256",
+  );
+  await rejectReadableXmlChange(
+    5,
+    manifest.replace(submissionId, "another-submission-id"),
+    "prior_submission_manifest_sha256",
+  );
+  await rejectReadableXmlChange(
+    5,
+    manifest.replace(priorReturnDigest, "0".repeat(64)),
+    "prior_submission_manifest_sha256",
+  );
+  await rejectReadableXmlChange(
+    6,
+    ack.replace("<AcceptanceStatus>Accepted", "<AcceptanceStatus>Rejected"),
+    "prior_accepted_acknowledgement_sha256",
+  );
+  await rejectReadableXmlChange(
+    7,
+    `<IRS7203 ${ns}>${
+      formBody.replace(
+        "<DebtBasisEndTaxYrAmt>500",
+        "<DebtBasisEndTaxYrAmt>501",
+      )
+    }</IRS7203>`,
+    "prior_filed_form7203_sha256",
+  );
+  const manifestWithoutReturnDigest = manifest.replace(
+    `<SubmissionXmlSha256>${priorReturnDigest}</SubmissionXmlSha256>`,
+    "",
+  );
+  const manifestWithoutBytes = new TextEncoder().encode(
+    manifestWithoutReturnDigest,
+  );
+  const manifestWithoutHash = Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        manifestWithoutBytes,
+      ),
+    ),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const unlinked = await executePriorReduced7203WithSourceDocuments(
+    {
+      ...inputs,
+      k1_s_corp: [{
+        ...source,
+        form7203_debt_evidence: {
+          ...prior,
+          prior_submission_manifest_sha256: manifestWithoutHash,
+        },
+      }],
+    },
+    records.map((document, index) =>
+      index === 5 ? { ...document, bytes: manifestWithoutBytes } : document
+    ),
+  );
+  assertEquals(
+    unlinked.inspectedPriorFiling.returnDigestLinkedToManifest,
+    false,
+  );
+  assertEquals(unlinked.inspectedPriorFiling.issuerAuthenticated, false);
   assertEquals(bound.stagedPriorReducedNoteGain.form1040_line7_gain, 200);
   assertEquals(
     bound.verifiedSourceDocuments.getBytes(records[0].reference),

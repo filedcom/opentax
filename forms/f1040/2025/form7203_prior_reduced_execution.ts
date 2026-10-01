@@ -10,6 +10,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "./registry.ts";
 import { inputSchema as k1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { calculatePriorReducedNoteGainCandidate } from "../nodes/intermediate/forms/form7203/prior-reduced-note.ts";
+import { inspectPrior7203MeFXml } from "../nodes/intermediate/forms/form7203/prior-filing-xml.ts";
 
 /**
  * Bind every claimed source to bytes in the same execution. The graph's prior
@@ -24,6 +25,7 @@ export async function executePriorReduced7203WithSourceDocuments(
     readonly stagedPriorReducedNoteGain: ReturnType<
       typeof calculatePriorReducedNoteGainCandidate
     >;
+    readonly inspectedPriorFiling: ReturnType<typeof inspectPrior7203MeFXml>;
   }
 > {
   const rawK1s = inputs.k1_s_corp;
@@ -78,6 +80,10 @@ export async function executePriorReduced7203WithSourceDocuments(
       sha256: source.prior_filed_return_sha256,
     },
     {
+      reference: source.prior_submission_manifest_reference,
+      sha256: source.prior_submission_manifest_sha256,
+    },
+    {
       reference: source.prior_accepted_acknowledgement_reference,
       sha256: source.prior_accepted_acknowledgement_sha256,
     },
@@ -102,5 +108,9 @@ export async function executePriorReduced7203WithSourceDocuments(
     claims,
     documents,
   );
-  return { ...execution, stagedPriorReducedNoteGain };
+  const inspectedPriorFiling = inspectPrior7203MeFXml(
+    source,
+    execution.verifiedSourceDocuments,
+  );
+  return { ...execution, stagedPriorReducedNoteGain, inspectedPriorFiling };
 }

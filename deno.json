@@ -6,6 +6,7 @@
     "zod": "npm:zod@^3.24",
     "pdf-lib": "npm:pdf-lib@^1.17.1",
     "fflate": "npm:fflate@0.8.2",
+    "fast-xml-parser": "npm:fast-xml-parser@4.5.3",
     "@std/assert": "jsr:@std/assert",
     "@std/fs": "jsr:@std/fs",
     "@std/cli": "jsr:@std/cli",

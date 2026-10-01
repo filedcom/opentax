@@ -15,6 +15,24 @@ that advance's date, amount, reference and SHA-256; its date must match the
 signed note and its amount must match opening face. It also affirms no prior
 principal changes, no repayment Form 1099-B/1099-DA, and no other 2025 capital
 transactions.
+For the bounded readable MeF XML profile, the byte set also includes the
+2024 IRS submission manifest, taking the exact-set contract to ten documents.
+The verifier parses the uploaded 2024 return XML and separate IRS7203 XML,
+requires one Form 7203 formal-note group, matches the shareholder SSN,
+corporation EIN, ending stock basis, note face and debt basis, and compares the
+manifest's Submission ID, filer, tax year and return type to an XML
+acknowledgment with `AcceptanceStatus=Accepted` and
+`CompletedValidation=true`. Ambiguous/duplicate required elements, rejected
+status, other years and unsupported PDF/opaque formats fail. Positive and
+content-tamper fixtures change the return filer, manifest ID, acknowledgment
+status and filed Form 7203 basis while keeping SHA-256 declarations in sync;
+they are authored for the deferred batch.
+The ordinary MeF manifest does not itself contain a digest of the submitted
+Return XML. When a retained manifest includes the explicit
+`SubmissionXmlSha256` extension, the verifier compares it to the byte-bound
+return SHA-256. Otherwise it returns `returnDigestLinkedToManifest: false`;
+the manifest/acknowledgment Submission ID alone cannot prove which Return XML
+was submitted. Neither case proves the uploaded acknowledgment came from IRS.
 It also requires the same shareholder, corporation, stock ledger, and exact
 K-1 repayment/loss. Complete-byte, missing-byte, changed-byte, and altered-
 claim fixtures are authored for the deferred batch.
@@ -31,8 +49,11 @@ manifest for review; it does not deposit the row or allow native/PDF filing.
 
 This verifies that the supplied bytes match the declared digests in this
 execution. It does **not** authenticate the issuer or IRS, parse the prior
-accepted return/Form 7203 to prove line 20/31, prove the note and principal
-payment contents, or establish the gain's holding period and character. The
+accepted return/Form 7203 to prove all prior basis activity, prove the note and
+principal payment contents, or establish the gain's holding period and
+character from issuer-controlled records. The return/acknowledgment XML is
+caller supplied, and neither its matching fields nor its digest establishes
+that the bytes were retrieved from the IRS for this submission. The
 K-1 node and Form 7203 native/PDF exporters still reject the prior-reduced
 branch. The gain has a calculated downstream candidate but remains unjoined
 to the actual return pending graph.
