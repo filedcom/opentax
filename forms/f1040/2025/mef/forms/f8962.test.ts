@@ -670,6 +670,133 @@ Deno.test("Form 8962 no-APTC partial-year claim omits an uncovered month after r
   );
 });
 
+Deno.test("Form 8962 two no-APTC policies reconcile two uncovered months to source, return, MeF, and PDF", () => {
+  const gaps = new Set([3, 8]); // April and September, zero-based.
+  const covered = (index: number) => !gaps.has(index);
+  const policies = [
+    { policy_number: "TX-JAN-JUN", start: 0, end: 6 },
+    { policy_number: "TX-JUL-DEC", start: 6, end: 12 },
+  ].map(({ policy_number, start, end }) => {
+    const active = (index: number) =>
+      index >= start && index < end && covered(index);
+    return {
+      ...noAptcContext.pending.f1095a.f1095as[0],
+      policy_number,
+      monthly_premiums: monthCodes.map((_, index) => active(index) ? 800 : 0),
+      monthly_slcsps: Array<number>(12).fill(0),
+      monthly_aptcs: Array<number>(12).fill(0),
+      annual_premium: 4_000,
+      annual_slcsp: 0,
+      annual_aptc: 0,
+      slcsp_corrections: noAptcCorrections.filter((row) =>
+        active(row.month - 1)
+      ),
+      no_aptc_monthly_evidence: noAptcEvidence.filter((row) =>
+        active(row.month - 1)
+      ),
+    };
+  });
+  const credit = 2_170;
+  const fields = {
+    ...noAptcFields,
+    monthly_ptc_rows: noAptcRows.map((row, index) =>
+      covered(index) ? row : {
+        ...row,
+        premium: 0,
+        slcsp: 0,
+        max_assistance: 0,
+        allowed_credit: 0,
+      }
+    ),
+    total_premium_tax_credit: credit,
+    net_premium_tax_credit: credit,
+  };
+  const pending = {
+    ...noAptcContext.pending,
+    f1095a: { f1095as: policies },
+    schedule3: { line9_premium_tax_credit: credit },
+    f1040: { line11_agi: 75_300, line31_additional_payments: credit },
+  };
+  const source = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    pending.f1095a,
+  );
+  const routed = source.outputs.find((item) => item.nodeType === "form8962");
+  assertEquals((routed?.fields.monthly_premiums as number[])[3], 0);
+  assertEquals((routed?.fields.monthly_premiums as number[])[8], 0);
+  const xml = form8962.build(fields, { filer, pending });
+  assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 10);
+  assertEquals(xml.includes("<MonthCd>APRIL</MonthCd>"), false);
+  assertEquals(xml.includes("<MonthCd>SEPTEMBER</MonthCd>"), false);
+  assertStringIncludes(
+    xml,
+    "<ReconciledPremiumTaxCreditAmt>2170</ReconciledPremiumTaxCreditAmt>",
+  );
+  const pdf = form8962Pdf.projectFields?.(fields, pending) ?? {};
+  assertEquals(pdf.pdf_month_4_contribution, undefined);
+  assertEquals(pdf.pdf_month_9_contribution, undefined);
+  assertEquals(form8962Pdf.instances?.(pdf, filer, pending)?.length, 1);
+
+  assertThrows(
+    () =>
+      form8962.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          f1095a: {
+            f1095as: [{
+              ...policies[0],
+              no_aptc_monthly_evidence: [
+                ...policies[0].no_aptc_monthly_evidence,
+                noAptcEvidence[3],
+              ],
+            }, policies[1]],
+          },
+        },
+      }),
+    Error,
+    "determination and payment for every policy-covered month",
+  );
+  assertThrows(
+    () =>
+      form8962.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          schedule3: { line9_premium_tax_credit: credit + 1 },
+        },
+      }),
+    Error,
+    "monthly credit differs from finalized return",
+  );
+  assertThrows(
+    () =>
+      form8962.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          f1095a: {
+            f1095as: [{
+              ...policies[0],
+              monthly_premiums: policies[0].monthly_premiums.map((
+                amount,
+                index,
+              ) => index === 1 ? 0 : amount),
+              annual_premium: 3_200,
+              slcsp_corrections: policies[0].slcsp_corrections.filter((row) =>
+                row.month !== 2
+              ),
+              no_aptc_monthly_evidence: policies[0].no_aptc_monthly_evidence
+                .filter((row) => row.month !== 2),
+            }, policies[1]],
+          },
+        },
+      }),
+    Error,
+    "distinct same-state nonshared policies for one filer",
+  );
+});
+
 Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evidence", () => {
   const policy = noAptcContext.pending.f1095a.f1095as[0];
   const withPolicy = (changed: Partial<typeof policy>) => ({
