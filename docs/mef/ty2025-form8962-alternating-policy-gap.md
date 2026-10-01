@@ -123,3 +123,24 @@ month, missing hash, and changed Form 1040 tax fixtures are authored for the
 deferred batch. Overlapping coverage, four or more corrected policies,
 mixed-family ownership, authenticated Marketplace bytes, IRS acceptance, and
 bulk test/XSD/PDF review remain open.
+
+## Four sequential corrected policies (implementation staged)
+
+The one-person, same-state monthly route now accepts four distinct
+nonoverlapping Form 1095-A policies when each has its own dated
+`marketplace_error` SLCSP determination for one covered APTC month. Four
+three-month policies retain their original monthly and annual Marketplace
+columns; the corrected $650 SLCSP in January, April, July, and October is
+used only in Form 8962's corresponding monthly rows. With $500 premiums,
+$600 originally reported SLCSP, and $200 APTC each covered month, the
+corrected return has $1,004 PTC, $2,400 APTC and $1,396 excess repayment on
+Schedule 2 and Form 1040. Native MeF independently replays each policy's
+monthly source and determination reference/hash; PDF uses the same guard.
+Full-return and wrong-policy-month, missing-record, and final-tax tamper
+fixtures are authored but unrun. The
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+require monthly columns A/C from the policies and a correctly determined
+SLCSP when Marketplace column B is wrong. Concurrent coverage, other
+tax-family members, interstate policies, five or more corrected policies,
+Marketplace source-byte authentication, and bulk test/XSD/filled-PDF/ATS
+validation remain open.
