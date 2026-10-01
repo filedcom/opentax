@@ -23,6 +23,7 @@ import type {
 } from "../../core/validation/types.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -57,9 +58,10 @@ export async function validateReturnCommand(
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
   const result = def.executeReturn(engineInputs);
+  const pending = normalizeAllPending(result.pending);
 
   // Extract filer identity for header field access
-  const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
+  const f1040 = pending["f1040"] ?? {};
   const filerIdentity = extractFilerIdentity(f1040);
 
   // Build return context
@@ -72,7 +74,7 @@ export async function validateReturnCommand(
     ...filerIdentity,
   };
 
-  const ctx = createReturnContext(result.pending, filerInfo, FIELD_REGISTRY);
+  const ctx = createReturnContext(pending, filerInfo, FIELD_REGISTRY);
 
   // Run all rules
   const report = evaluateRules(ALL_RULES, ctx);
