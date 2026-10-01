@@ -1,34 +1,46 @@
 import { assertEquals } from "@std/assert";
 import { f3800 } from "../f3800/index.ts";
 import { calculateForm8874, f8874 } from "./index.ts";
+import { withReviewedForm8874A } from "./issuance_fixture.ts";
 
-const investment = {
-  cde_name: "Community Development Entity",
-  cde_ein: "123456789",
-  cde_address: {
-    line1: "10 Main Street",
-    city: "Wilmington",
-    state: "DE",
-    zip: "19801",
-  },
-  initial_investment_date: "2023-04-15",
-  credit_allowance_date: "2025-04-15",
-  qualified_equity_investment_amount: 1_000_000,
-  designation_notice_reference: "2023 QEI notice",
-  held_on_credit_allowance_date: true,
-  qualified_on_credit_allowance_date: true,
-  recapture_notice_received: false,
-  subject_to_passive_activity_limit: false,
-} as const;
+const investment = withReviewedForm8874A(
+  {
+    cde_name: "Community Development Entity",
+    cde_ein: "123456789",
+    cde_address: {
+      line1: "10 Main Street",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    initial_investment_date: "2023-04-15",
+    credit_allowance_date: "2025-04-15",
+    qualified_equity_investment_amount: 1_000_000,
+    designation_notice_reference: "2023 QEI notice",
+    held_on_credit_allowance_date: true,
+    qualified_on_credit_allowance_date: true,
+    recapture_notice_received: false,
+    subject_to_passive_activity_limit: false,
+  } as const,
+  "Alex Owner",
+  "111223333",
+);
 
 Deno.test("Form 8874 computes each identified current-year credit allowance date", () => {
   const lines = calculateForm8874({
-    investments: [investment, {
-      ...investment,
-      initial_investment_date: "2022-04-15",
-      designation_notice_reference: "2022 QEI notice",
-      qualified_equity_investment_amount: 500_000,
-    }],
+    investments: [
+      investment,
+      withReviewedForm8874A(
+        {
+          ...investment,
+          initial_investment_date: "2022-04-15",
+          designation_notice_reference: "2022 QEI notice",
+          qualified_equity_investment_amount: 500_000,
+        },
+        "Alex Owner",
+        "111223333",
+      ),
+    ],
   });
   assertEquals(lines.rows.map((row) => row.creditYear), [3, 4]);
   assertEquals(lines.rows.map((row) => row.rate), [5, 6]);
@@ -58,12 +70,52 @@ Deno.test("Form 8874 rejects duplicate direct and precomputed legacy amounts", (
   );
 });
 
+Deno.test("Form 8874 requires a matching reviewed Form 8874-A for every direct QEI", () => {
+  const { reviewed_form8874a: _removed, ...withoutNotice } = investment;
+  for (
+    const changed of [
+      withoutNotice,
+      {
+        ...investment,
+        reviewed_form8874a: {
+          ...investment.reviewed_form8874a,
+          cde_ein: "999999999",
+        },
+      },
+      {
+        ...investment,
+        reviewed_form8874a: {
+          ...investment.reviewed_form8874a,
+          annual_credit_amounts: [
+            50_000,
+            50_000,
+            50_001,
+            60_000,
+            60_000,
+            60_000,
+            60_000,
+          ],
+        },
+      },
+    ]
+  ) {
+    assertEquals(
+      f8874.inputSchema.safeParse({ investments: [changed] }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("Form 8874 CDE identity fits the native MeF name and street limits", () => {
-  const atLimit = {
-    ...investment,
-    cde_name: "N".repeat(75),
-    cde_address: { ...investment.cde_address, line1: "A".repeat(35) },
-  };
+  const atLimit = withReviewedForm8874A(
+    {
+      ...investment,
+      cde_name: "N".repeat(75),
+      cde_address: { ...investment.cde_address, line1: "A".repeat(35) },
+    },
+    "Alex Owner",
+    "111223333",
+  );
   assertEquals(
     f8874.inputSchema.safeParse({ investments: [atLimit] }).success,
     true,
@@ -120,11 +172,15 @@ Deno.test("Form 8874 splits self-earned passive and nonpassive investments", () 
     passive_activity_reference: "Community venture",
     passive_source_document_reference: "2025 community venture QEI",
   } as const;
-  const direct = {
-    ...investment,
-    initial_investment_date: "2022-04-15",
-    designation_notice_reference: "2022 QEI notice",
-  } as const;
+  const direct = withReviewedForm8874A(
+    {
+      ...investment,
+      initial_investment_date: "2022-04-15",
+      designation_notice_reference: "2022 QEI notice",
+    } as const,
+    "Alex Owner",
+    "111223333",
+  );
   const lines = calculateForm8874({ investments: [passive, direct] });
   assertEquals(lines.passiveCredit, 50_000);
   assertEquals(lines.nonpassiveCredit, 60_000);

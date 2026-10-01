@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
+import { withReviewedForm8874A } from "../../../nodes/inputs/f8874/issuance_fixture.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import {
   PassiveCreditCategory,
@@ -484,24 +485,28 @@ Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
 
 Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
   const source = {
-    investments: [{
-      cde_name: "Community Development Entity",
-      cde_ein: "123456789",
-      cde_address: {
-        line1: "10 Main Street",
-        city: "Wilmington",
-        state: "DE",
-        zip: "19801",
+    investments: [withReviewedForm8874A(
+      {
+        cde_name: "Community Development Entity",
+        cde_ein: "123456789",
+        cde_address: {
+          line1: "10 Main Street",
+          city: "Wilmington",
+          state: "DE",
+          zip: "19801",
+        },
+        initial_investment_date: "2023-04-15",
+        credit_allowance_date: "2025-04-15",
+        qualified_equity_investment_amount: 100_000,
+        designation_notice_reference: "2023 QEI notice",
+        held_on_credit_allowance_date: true,
+        qualified_on_credit_allowance_date: true,
+        recapture_notice_received: false,
+        subject_to_passive_activity_limit: false,
       },
-      initial_investment_date: "2023-04-15",
-      credit_allowance_date: "2025-04-15",
-      qualified_equity_investment_amount: 100_000,
-      designation_notice_reference: "2023 QEI notice",
-      held_on_credit_allowance_date: true,
-      qualified_on_credit_allowance_date: true,
-      recapture_notice_received: false,
-      subject_to_passive_activity_limit: false,
-    }],
+      "Alex Owner",
+      "111223333",
+    )],
   };
   const businessTax = { ...tax, standardCredit: 5_000 };
   const fields = {
@@ -565,26 +570,30 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
     pending: {
       ...filedPending(businessTax, 500),
       f8874: {
-        investments: [{
-          cde_name: "Community Development Entity",
-          cde_ein: "123456789",
-          cde_address: {
-            line1: "10 Main Street",
-            city: "Wilmington",
-            state: "DE",
-            zip: "19801",
+        investments: [withReviewedForm8874A(
+          {
+            cde_name: "Community Development Entity",
+            cde_ein: "123456789",
+            cde_address: {
+              line1: "10 Main Street",
+              city: "Wilmington",
+              state: "DE",
+              zip: "19801",
+            },
+            initial_investment_date: "2023-04-15",
+            credit_allowance_date: "2025-04-15",
+            qualified_equity_investment_amount: 10_000,
+            designation_notice_reference: "2023 QEI notice",
+            held_on_credit_allowance_date: true,
+            qualified_on_credit_allowance_date: true,
+            recapture_notice_received: false,
+            subject_to_passive_activity_limit: true,
+            passive_activity_reference: "Community venture",
+            passive_source_document_reference: "2025 community venture QEI",
           },
-          initial_investment_date: "2023-04-15",
-          credit_allowance_date: "2025-04-15",
-          qualified_equity_investment_amount: 10_000,
-          designation_notice_reference: "2023 QEI notice",
-          held_on_credit_allowance_date: true,
-          qualified_on_credit_allowance_date: true,
-          recapture_notice_received: false,
-          subject_to_passive_activity_limit: true,
-          passive_activity_reference: "Community venture",
-          passive_source_document_reference: "2025 community venture QEI",
-        }],
+          "Alex Owner",
+          "111223333",
+        )],
       },
       form8582cr: {
         credit_sources: [source],
@@ -629,15 +638,19 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
       f8874: {
         investments: [
           ...context.pending.f8874.investments,
-          {
-            ...context.pending.f8874.investments[0],
-            initial_investment_date: "2022-04-15",
-            qualified_equity_investment_amount: 6_000,
-            designation_notice_reference: "2022 QEI notice",
-            subject_to_passive_activity_limit: false,
-            passive_activity_reference: undefined,
-            passive_source_document_reference: undefined,
-          },
+          withReviewedForm8874A(
+            {
+              ...context.pending.f8874.investments[0],
+              initial_investment_date: "2022-04-15",
+              qualified_equity_investment_amount: 6_000,
+              designation_notice_reference: "2022 QEI notice",
+              subject_to_passive_activity_limit: false,
+              passive_activity_reference: undefined,
+              passive_source_document_reference: undefined,
+            },
+            "Alex Owner",
+            "111223333",
+          ),
         ],
       },
       form8582cr: context.pending.form8582cr,

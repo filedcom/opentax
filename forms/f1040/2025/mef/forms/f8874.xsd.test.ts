@@ -1,5 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { buildForm8874Document } from "./f8874.ts";
+import { withReviewedForm8874A } from "../../../nodes/inputs/f8874/issuance_fixture.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8874/IRS8874.xsd",
@@ -21,24 +22,28 @@ Deno.test({
   sanitizeResources: false,
 }, async () => {
   const xml = buildForm8874Document({
-    investments: [{
-      cde_name: "Community Development Entity",
-      cde_ein: "123456789",
-      cde_address: {
-        line1: "10 Main Street",
-        city: "Wilmington",
-        state: "DE",
-        zip: "19801",
+    investments: [withReviewedForm8874A(
+      {
+        cde_name: "Community Development Entity",
+        cde_ein: "123456789",
+        cde_address: {
+          line1: "10 Main Street",
+          city: "Wilmington",
+          state: "DE",
+          zip: "19801",
+        },
+        initial_investment_date: "2023-04-15",
+        credit_allowance_date: "2025-04-15",
+        qualified_equity_investment_amount: 100_000,
+        designation_notice_reference: "2023 QEI notice",
+        held_on_credit_allowance_date: true,
+        qualified_on_credit_allowance_date: true,
+        recapture_notice_received: false,
+        subject_to_passive_activity_limit: false,
       },
-      initial_investment_date: "2023-04-15",
-      credit_allowance_date: "2025-04-15",
-      qualified_equity_investment_amount: 100_000,
-      designation_notice_reference: "2023 QEI notice",
-      held_on_credit_allowance_date: true,
-      qualified_on_credit_allowance_date: true,
-      recapture_notice_received: false,
-      subject_to_passive_activity_limit: false,
-    }],
+      "Alex Owner",
+      "111223333",
+    )],
   }, 1_250).replace(
     "<IRS8874>",
     '<IRS8874 xmlns="http://www.irs.gov/efile" documentId="IRS88740">',

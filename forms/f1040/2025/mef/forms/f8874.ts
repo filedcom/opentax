@@ -3,6 +3,7 @@ import {
   calculateForm8874,
   inputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
+import { assertForm8874AIssuanceOwners } from "../../../nodes/inputs/f8874/issuance_evidence.ts";
 import {
   inputSchema as f8582crInputSchema,
   PassiveCreditReportingRoute,
@@ -173,7 +174,14 @@ export const form8874: MefFormDescriptor<"f8874", unknown> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8874.pdf",
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
-    const lines = calculateForm8874(inputSchema.parse(raw));
+    const source = inputSchema.parse(raw);
+    if (!context?.pending) {
+      throw new Error(
+        "Form 8874-A needs the prepared Form 1040 investor identity",
+      );
+    }
+    assertForm8874AIssuanceOwners(source, context.pending);
+    const lines = calculateForm8874(source);
     if (context?.pending) {
       const claim = context.pending.f3800;
       const direct = claim && typeof claim === "object" &&

@@ -41,10 +41,10 @@ Still unsupported or unverified:
 - Fractional-dollar investment or credit values are refused, because the current
   PDF writer rounds numeric fields to whole dollars and could make printed
   column (d) times rate (e) disagree with printed credit (f).
-- The source records a CDE designation-notice reference and
-  qualification/holding assertions, but does not contain independently verified
-  Form 8874-A or Form 8874-B documents. Eligibility and recapture evidence still
-  need human review before filing.
+- The direct-QEI source now requires reviewed Form 8874-A issuance fields and
+  reconciles them to each investment and the prepared Form 1040 owner. It does
+  not ingest independently authenticated CDE documents or Form 8874-B history.
+  Continuing eligibility and recapture evidence still need review before filing.
 - Mixed passive/nonpassive rows and broader overflow combinations still need
   filled-output or attachment review.
 
@@ -56,29 +56,28 @@ already present. The remaining external-evidence join is specific. The
 qualified CDE with an allocation and a CDE-designated qualified equity
 investment. The CDE's [Form 8874-A](https://www.irs.gov/pub/irs-pdf/f8874a.pdf)
 identifies the CDE and investor TINs, initial investment date, investment
-amount, and each of seven annual credit amounts. The return source currently
-keeps only `designation_notice_reference` plus claimed CDE identity, date,
-amount, and holding/qualification assertions; there is no prepared Form 8874-A
-record to compare those facts or its year-specific amount against. The CDE's
-[Form 8874-B](https://www.irs.gov/pub/irs-pdf/f8874b.pdf) identifies any
-recapture event, event date, reason, and annual credit decreases, but no
-prepared notice-history source establishes whether one was issued for a given
-investment. Local return arithmetic and attachment validation therefore do not
-prove the external allocation, continuing QEI status, or absence of a recapture
-event. A future source integration should join both notices by CDE EIN, investor
-TIN, original QEI date, and investment amount, then reconcile the 2025 credit
-allowance and any recapture before broadening eligibility claims.
+amount, and each of seven annual credit amounts. Each direct QEI source now
+requires a reviewed Form 8874-A field record, including CDE and investor
+identity, date, amount, signed notice, delivery date, and the full credit
+schedule. The CDE's [Form 8874-B](https://www.irs.gov/pub/irs-pdf/f8874b.pdf)
+identifies any recapture event, event date, reason, and annual credit decreases,
+but no prepared notice-history source establishes whether one was issued for a
+given investment. Local return arithmetic and attachment validation therefore do
+not prove the external allocation, continuing QEI status, or absence of a
+recapture event. A future source integration should authenticate the reviewed
+issuance notice and join Form 8874-B history by CDE EIN, investor TIN, original
+QEI date, and investment amount before broadening eligibility claims.
 
-A Form 8874-specific staged helper now parses one reviewed, signed Form 8874-A
-notice and compares its CDE name/EIN, investor name/TIN, initial investment
-date, QEI amount, seven scheduled annual amounts, and the 2025 allowance amount
-to one existing direct Form 8874 investment and the prepared Form 1040 owner. It
-also checks the CDE's 60-day delivery window. Positive and tamper fixtures are
-authored but await the requested bulk test pass. This helper is not yet invoked
-by the public return graph: there is no prepared Form 8874-A source slot or
-document-ingestion path. Even after that join is wired, the credit's continuing
-QEI status and recapture history need later CDE evidence; a 2023 issuance notice
-alone cannot prove conditions on a 2025 anniversary.
+The public direct-QEI input now parses a required reviewed Form 8874-A record.
+It checks CDE name/EIN, initial investment date, QEI amount, seven scheduled
+annual amounts, and the 2025 allowance amount against the Form 8874 investment.
+Native and PDF construction also match the notice investor name/TIN to the
+prepared Form 1040 owner. The schema checks the CDE's 60-day delivery window.
+Positive and tamper fixtures are authored but await the requested bulk test
+pass. These reviewed fields are not an authenticated document-ingestion path;
+the credit's continuing QEI status and recapture history need later CDE
+evidence. A 2023 issuance notice alone cannot prove conditions on a 2025
+anniversary.
 
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date. It

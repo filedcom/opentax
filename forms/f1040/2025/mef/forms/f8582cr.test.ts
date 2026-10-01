@@ -7,6 +7,7 @@ import {
   PassiveCreditSourceOrigin,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
+import { withReviewedForm8874A } from "../../../nodes/inputs/f8874/issuance_fixture.ts";
 
 const otherCredit = {
   activity_reference: "Clinical activity",
@@ -76,26 +77,30 @@ Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", ()
 });
 
 Deno.test("Form 8582-CR self-earned New Markets source matches attached Form 8874", () => {
-  const investment = {
-    cde_name: "Community Development Entity",
-    cde_ein: "123456789",
-    cde_address: {
-      line1: "10 Main Street",
-      city: "Wilmington",
-      state: "DE",
-      zip: "19801",
+  const investment = withReviewedForm8874A(
+    {
+      cde_name: "Community Development Entity",
+      cde_ein: "123456789",
+      cde_address: {
+        line1: "10 Main Street",
+        city: "Wilmington",
+        state: "DE",
+        zip: "19801",
+      },
+      initial_investment_date: "2023-04-15",
+      credit_allowance_date: "2025-04-15",
+      qualified_equity_investment_amount: 10_000,
+      designation_notice_reference: "2023 QEI notice",
+      held_on_credit_allowance_date: true,
+      qualified_on_credit_allowance_date: true,
+      recapture_notice_received: false,
+      subject_to_passive_activity_limit: true,
+      passive_activity_reference: "Community venture",
+      passive_source_document_reference: "2025 community venture QEI",
     },
-    initial_investment_date: "2023-04-15",
-    credit_allowance_date: "2025-04-15",
-    qualified_equity_investment_amount: 10_000,
-    designation_notice_reference: "2023 QEI notice",
-    held_on_credit_allowance_date: true,
-    qualified_on_credit_allowance_date: true,
-    recapture_notice_received: false,
-    subject_to_passive_activity_limit: true,
-    passive_activity_reference: "Community venture",
-    passive_source_document_reference: "2025 community venture QEI",
-  };
+    "Alex Owner",
+    "111223333",
+  );
   const source = {
     ...otherCredit,
     activity_reference: "Community venture",

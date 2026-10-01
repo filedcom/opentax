@@ -5,6 +5,20 @@ import {
   reconcileForm8874AIssuance,
 } from "./issuance_evidence.ts";
 
+const notice = form8874AIssuanceSchema.parse({
+  notice_document_reference: "cde-8874a-qei-one",
+  cde_name: "Low Income Community CDE",
+  cde_ein: "123456789",
+  investor_name: "Alex Owner",
+  investor_tin: "111223333",
+  initial_investment_date: "2023-04-15",
+  qualified_equity_investment_amount: 10_000,
+  total_allowable_credit: 3_900,
+  annual_credit_amounts: [500, 500, 500, 600, 600, 600, 600],
+  cde_official_signed_notice_confirmed: true,
+  cde_signature_date: "2023-04-20",
+  notice_provided_to_investor_date: "2023-05-01",
+});
 const source = inputSchema.parse({
   investments: [{
     cde_name: "Low Income Community CDE",
@@ -19,25 +33,12 @@ const source = inputSchema.parse({
     credit_allowance_date: "2025-04-15",
     qualified_equity_investment_amount: 10_000,
     designation_notice_reference: "cde-8874a-qei-one",
+    reviewed_form8874a: notice,
     held_on_credit_allowance_date: true,
     qualified_on_credit_allowance_date: true,
     recapture_notice_received: false,
     subject_to_passive_activity_limit: false,
   }],
-});
-const notice = form8874AIssuanceSchema.parse({
-  notice_document_reference: "cde-8874a-qei-one",
-  cde_name: "Low Income Community CDE",
-  cde_ein: "123456789",
-  investor_name: "Alex Owner",
-  investor_tin: "111223333",
-  initial_investment_date: "2023-04-15",
-  qualified_equity_investment_amount: 10_000,
-  total_allowable_credit: 3_900,
-  annual_credit_amounts: [500, 500, 500, 600, 600, 600, 600],
-  cde_official_signed_notice_confirmed: true,
-  cde_signature_date: "2023-04-20",
-  notice_provided_to_investor_date: "2023-05-01",
 });
 const pending = {
   f8874: source,

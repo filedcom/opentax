@@ -5,6 +5,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
+import { withReviewedForm8874A } from "../nodes/inputs/f8874/issuance_fixture.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
 import {
   calculateForm8582CR,
@@ -46,26 +47,30 @@ const worksheet = {
   tax_including_passive: taxAll,
   tax_without_passive: taxWithout,
 };
-const investment = {
-  cde_name: "Community Development Entity",
-  cde_ein: "123456789",
-  cde_address: {
-    line1: "10 Community Way",
-    city: "Wilmington",
-    state: "DE",
-    zip: "19801",
+const investment = withReviewedForm8874A(
+  {
+    cde_name: "Community Development Entity",
+    cde_ein: "123456789",
+    cde_address: {
+      line1: "10 Community Way",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    initial_investment_date: "2025-04-15",
+    credit_allowance_date: "2025-04-15",
+    qualified_equity_investment_amount: 10_000,
+    designation_notice_reference: investmentReference,
+    held_on_credit_allowance_date: true,
+    qualified_on_credit_allowance_date: true,
+    recapture_notice_received: false,
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "community-investment-1",
+    passive_source_document_reference: investmentReference,
   },
-  initial_investment_date: "2025-04-15",
-  credit_allowance_date: "2025-04-15",
-  qualified_equity_investment_amount: 10_000,
-  designation_notice_reference: investmentReference,
-  held_on_credit_allowance_date: true,
-  qualified_on_credit_allowance_date: true,
-  recapture_notice_received: false,
-  subject_to_passive_activity_limit: true,
-  passive_activity_reference: "community-investment-1",
-  passive_source_document_reference: investmentReference,
-};
+  "Alex Owner",
+  "111223333",
+);
 const source = {
   activity_reference: "community-investment-1",
   source_form: "Form 8874",
@@ -166,36 +171,50 @@ function filedReturn(
     }],
     f8874: {
       investments: [
-        {
-          ...investment,
-          qualified_equity_investment_amount: investmentAmount,
-        },
-        ...(nonpassiveInvestmentAmount > 0
-          ? [{
+        withReviewedForm8874A(
+          {
             ...investment,
-            initial_investment_date: "2022-04-15",
-            designation_notice_reference: "2022 nonpassive QEI notice",
-            qualified_equity_investment_amount: nonpassiveInvestmentAmount,
-            subject_to_passive_activity_limit: false,
-            passive_activity_reference: undefined,
-            passive_source_document_reference: undefined,
-          }]
+            qualified_equity_investment_amount: investmentAmount,
+          },
+          "Alex Owner",
+          "111223333",
+        ),
+        ...(nonpassiveInvestmentAmount > 0
+          ? [withReviewedForm8874A(
+            {
+              ...investment,
+              initial_investment_date: "2022-04-15",
+              designation_notice_reference: "2022 nonpassive QEI notice",
+              qualified_equity_investment_amount: nonpassiveInvestmentAmount,
+              subject_to_passive_activity_limit: false,
+              passive_activity_reference: undefined,
+              passive_source_document_reference: undefined,
+            },
+            "Alex Owner",
+            "111223333",
+          )]
           : []),
-        ...additionalPassiveInvestmentAmounts.map((amount, index) => ({
-          ...investment,
-          cde_name: `Community Development Entity ${index + 2}`,
-          cde_ein: String(987654321 - index),
-          initial_investment_date: "2025-06-15",
-          credit_allowance_date: "2025-06-15",
-          designation_notice_reference: `2025 community QEI notice ${
-            index + 2
-          }`,
-          qualified_equity_investment_amount: amount,
-          passive_activity_reference: `community-investment-${index + 2}`,
-          passive_source_document_reference: `2025 community QEI notice ${
-            index + 2
-          }`,
-        })),
+        ...additionalPassiveInvestmentAmounts.map((amount, index) =>
+          withReviewedForm8874A(
+            {
+              ...investment,
+              cde_name: `Community Development Entity ${index + 2}`,
+              cde_ein: String(987654321 - index),
+              initial_investment_date: "2025-06-15",
+              credit_allowance_date: "2025-06-15",
+              designation_notice_reference: `2025 community QEI notice ${
+                index + 2
+              }`,
+              qualified_equity_investment_amount: amount,
+              passive_activity_reference: `community-investment-${index + 2}`,
+              passive_source_document_reference: `2025 community QEI notice ${
+                index + 2
+              }`,
+            },
+            "Alex Owner",
+            "111223333",
+          )
+        ),
       ],
     },
     form8582cr: {
@@ -424,23 +443,35 @@ function filedSelfAndK1Return(
   additionalPartnershipCredits: number[] = [],
 ) {
   const investments = [
-    {
-      ...investment,
-      qualified_equity_investment_amount: 100_000,
-    },
-    ...additionalSelfInvestmentAmounts.map((amount, index) => ({
-      ...investment,
-      cde_name: `Additional Community Development Entity ${index + 1}`,
-      cde_ein: String(987654321 - index),
-      initial_investment_date: "2025-06-15",
-      credit_allowance_date: "2025-06-15",
-      designation_notice_reference: `2025 additional QEI notice ${index + 1}`,
-      qualified_equity_investment_amount: amount,
-      passive_activity_reference: `additional-self-investment-${index + 1}`,
-      passive_source_document_reference: `2025 additional QEI notice ${
-        index + 1
-      }`,
-    })),
+    withReviewedForm8874A(
+      {
+        ...investment,
+        qualified_equity_investment_amount: 100_000,
+      },
+      "Alex Owner",
+      "111223333",
+    ),
+    ...additionalSelfInvestmentAmounts.map((amount, index) =>
+      withReviewedForm8874A(
+        {
+          ...investment,
+          cde_name: `Additional Community Development Entity ${index + 1}`,
+          cde_ein: String(987654321 - index),
+          initial_investment_date: "2025-06-15",
+          credit_allowance_date: "2025-06-15",
+          designation_notice_reference: `2025 additional QEI notice ${
+            index + 1
+          }`,
+          qualified_equity_investment_amount: amount,
+          passive_activity_reference: `additional-self-investment-${index + 1}`,
+          passive_source_document_reference: `2025 additional QEI notice ${
+            index + 1
+          }`,
+        },
+        "Alex Owner",
+        "111223333",
+      )
+    ),
   ];
   const partnerships = [
     {

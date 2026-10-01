@@ -3,6 +3,7 @@ import {
   calculateForm8874,
   inputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
+import { assertForm8874AIssuanceOwners } from "../../../nodes/inputs/f8874/issuance_evidence.ts";
 import { form8874, reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
 import { appendForm8874InvestmentStatement } from "./f8874_overflow_statement.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -79,6 +80,7 @@ export const form8874Pdf: PdfFormDescriptor = {
     // Form 8874. An actual f8874 slot must be parsed and printed or rejected.
     if (!Object.hasOwn(allPending, "f8874")) return {};
     const input = inputSchema.parse(raw);
+    assertForm8874AIssuanceOwners(input, allPending);
     const lines = calculateForm8874(input);
     for (const row of lines.rows) {
       if (
