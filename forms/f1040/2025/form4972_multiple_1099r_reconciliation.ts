@@ -25,9 +25,8 @@ export function reconcileForm4972Multiple1099R(
     owner.name.trim() !== plan.participant_name ||
     (form.recipient !== "T" && form.recipient !== "S") ||
     form.elect_10yr_averaging !== true ||
-    (form.elect_capital_gain === true
-      ? (form.capital_gain_amount ?? 0) <= 0
-      : (form.capital_gain_amount ?? 0) !== 0) ||
+    (form.elect_capital_gain === true &&
+      (form.capital_gain_amount ?? 0) <= 0) ||
     refs[0] === refs[1] ||
     elected.length !== 2 ||
     elected.some((item, index) =>

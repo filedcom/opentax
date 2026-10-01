@@ -165,7 +165,6 @@ export function reconcileForm4972Collection(
       scoped.some(({ fields, sources }) =>
         (sources.length !== 1 && sources.length !== 2) ||
         fields.elect_10yr_averaging !== true ||
-        fields.elect_capital_gain === true ||
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
         (fields.box6_nua ?? 0) !== 0 ||

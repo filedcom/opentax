@@ -16,18 +16,28 @@ const planFacts = (owner: "T" | "S") => ({
   full_balance_statement_reference: `full-balance-${owner}`,
   all_qualified_distributions_included: true as const,
 });
-const source = (owner: "T" | "S", number: number, amount: number) => ({
+const source = (
+  owner: "T" | "S",
+  number: number,
+  amount: number,
+  capitalGain = 0,
+) => ({
   ...payer,
   source_document_reference: `1099-R-${owner}-${number}`,
   form4972_plan: planFacts(owner),
   box1_gross_distribution: amount,
   box2a_taxable_amount: amount,
+  ...(capitalGain > 0 ? { box3_capital_gain: capitalGain } : {}),
   box9a_pct_total: 100,
   box7_distribution_code: DistributionCode.CodeA,
   ts: owner,
   exclude_4972: true,
 });
-const election = (owner: "T" | "S", references: string[]) => ({
+const election = (
+  owner: "T" | "S",
+  references: string[],
+  electCapitalGain = false,
+) => ({
   source_document_references: references,
   participant_name: planFacts(owner).participant_name,
   participant_ssn: planFacts(owner).participant_ssn,
@@ -38,6 +48,7 @@ const election = (owner: "T" | "S", references: string[]) => ({
   beneficiary_distribution: false,
   participant_five_year_member: true,
   prior_election_after_1986: false,
+  elect_capital_gain: electCapitalGain,
   elect_10yr_averaging: true,
 });
 const filer = {
@@ -175,6 +186,54 @@ Deno.test("Form 4972 joint return combines two copies for each spouse", () => {
             .map((item) =>
               item.source_document_reference === "1099-R-S-2"
                 ? { ...item, form4972_plan: planFacts("T") }
+                : item
+            ),
+        },
+      },
+    })
+  );
+});
+
+Deno.test("Form 4972 joint mixed capital-gain and ten-year spouse elections", () => {
+  const result = execute(plan, registry, {
+    general,
+    f1099r: [
+      source("T", 1, 20_000, 2_000),
+      source("T", 2, 25_000, 3_000),
+      source("S", 1, 30_000),
+    ],
+    form4972: {
+      elections: [
+        election("T", ["1099-R-T-1", "1099-R-T-2"], true),
+        election("S", ["1099-R-S-1"]),
+      ],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const forms = pending.form4972?.forms as Record<string, unknown>[];
+  assertEquals(forms.map((form) => form.capital_gain_amount), [5_000, 0]);
+  assertEquals(forms[0].line6, 5_000);
+  assertEquals(forms[0].line7, 1_000);
+  assertEquals(
+    pending.f1040?.form4972_tax,
+    forms.reduce((sum, form) => sum + (form.line30 as number), 0),
+  );
+  assertEquals(mef.build(pending.form4972!, { filer, pending }).length, 2);
+  assertEquals(
+    form4972Pdf.instances?.(pending.form4972!, filer, pending)?.length,
+    2,
+  );
+  assertThrows(() =>
+    mef.build(pending.form4972!, {
+      filer,
+      pending: {
+        ...pending,
+        f1099r: {
+          f1099rs: (pending.f1099r?.f1099rs as Record<string, unknown>[])
+            .map((item) =>
+              item.source_document_reference === "1099-R-T-2"
+                ? { ...item, box3_capital_gain: 2_999 }
                 : item
             ),
         },

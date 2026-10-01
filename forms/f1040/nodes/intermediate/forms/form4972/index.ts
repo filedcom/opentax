@@ -134,9 +134,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       input.beneficiary_distribution !== false ||
       input.participant_five_year_member !== true ||
       input.elect_10yr_averaging !== true ||
-      (input.elect_capital_gain === true
-        ? (input.capital_gain_amount ?? 0) <= 0
-        : (input.capital_gain_amount ?? 0) !== 0) ||
+      (input.elect_capital_gain === true &&
+        (input.capital_gain_amount ?? 0) <= 0) ||
       (input.box6_nua ?? 0) !== 0 || input.elect_include_nua === true ||
       (input.annuity_actuarial_value ?? 0) !== 0 ||
       (input.death_benefit_exclusion ?? 0) !== 0 ||

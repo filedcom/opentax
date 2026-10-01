@@ -1068,7 +1068,8 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       item.box9a_pct_total === 100 &&
       typeof item.box2a_taxable_amount === "number" &&
       item.box2a_taxable_amount > 0 &&
-      (item.box3_capital_gain ?? 0) === 0 &&
+      (item.box3_capital_gain ?? 0) >= 0 &&
+      (item.box3_capital_gain ?? 0) <= item.box2a_taxable_amount &&
       (item.box6_nua ?? 0) === 0 && (item.box8_other ?? 0) === 0 &&
       item.box8_pct_total === undefined
     );
@@ -1118,6 +1119,10 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         recipient: group[0].ts,
         lump_sum_amount: group.reduce(
           (sum, item) => sum + item.box2a_taxable_amount!,
+          0,
+        ),
+        capital_gain_amount: group.reduce(
+          (sum, item) => sum + (item.box3_capital_gain ?? 0),
           0,
         ),
         ...(group.length === 2

@@ -6,13 +6,15 @@ The existing public `elections[]` route now combines two full-share Form 1099-R
 copies from one plan for either spouse and one or two full-share copies from a
 distinct plan for the other spouse. Same-plan copies must agree on participant,
 plan, payer, and complete-balance statement; all copies need distinct source
-references. This bounded Part-III-only route excludes NUA, annuity,
-capital-gain election, death-benefit exclusion, estate tax, and partial shares.
+references. Each spouse elects ten-year tax separately; one may also elect
+Part II for summed positive box 3 capital gains while the other uses Part III
+alone. The route excludes NUA, annuity, death-benefit exclusion, estate tax,
+and partial shares.
 Each spouse's combined source amount calculates one Form 4972. Native MeF and
 PDF replay the two source groups, match each participant to the final joint
 filer, and add the separate taxes into Form 1040 line 16 without reporting the
 elected distributions as ordinary pension income. Taxpayer-two-copy,
-spouse-two-copy, both-two-copy, and source/return-tamper fixtures are authored for the
+spouse-two-copy, both-two-copy, mixed Part-II/III, and source/return-tamper fixtures are authored for the
 deferred batch. Source and plan-statement bytes, other distribution mixes, and
 filled-output review remain open. The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 require adding distributions by participant, separate spouse forms, and a
