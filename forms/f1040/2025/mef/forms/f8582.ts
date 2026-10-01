@@ -494,8 +494,8 @@ function buildOtherPassive(
       );
     }
   }
-  // One passive Schedule E loss may use income from two separate passive
-  // rentals, while the remaining loss stays suspended under its activity ID.
+  // Three distinct passive rentals may share current profit across one or two
+  // loss activities. The remaining losses stay suspended by activity ID.
   const scheduleELoss = activities.filter((activity) =>
     activity.reporting_form === "schedule_e" && activity.current_net < 0
   );
@@ -506,8 +506,8 @@ function buildOtherPassive(
     context?.pending?.schedule_e,
   );
   if (
-    activities.length === 3 && scheduleELoss.length === 1 &&
-    scheduleEProfits.length === 2 &&
+    activities.length === 3 && scheduleELoss.length >= 1 &&
+    scheduleEProfits.length >= 1 &&
     threeRentalSource.success &&
     threeRentalSource.data.schedule_es.length === 3 &&
     context?.pending?.f4835 === undefined &&
@@ -523,7 +523,10 @@ function buildOtherPassive(
     scheduleEProfits.reduce(
         (total, activity) => total + activity.current_net,
         0,
-      ) < -scheduleELoss[0].current_net &&
+      ) < scheduleELoss.reduce(
+        (total, activity) => total - activity.current_net,
+        0,
+      ) &&
     saleGains.length === 0 &&
     input.has_current_4797_transaction !== true
   ) {

@@ -462,6 +462,18 @@ rental/return fixtures are authored for the deferred batch. This slice has no
 prior PAL, sale, grouping, or special rental allowance. Property and expense
 source bytes and the durable accepted-return ledger remain open.
 
+The same bounded three-property route now also covers one $2,000 passive
+rental profit against two separate $4,000 and $2,000 current-year losses. The
+$2,000 allowed loss offsets the profit on Schedule E and Schedule 1, while
+$4,000 remains suspended across the two loss activity IDs. The native and PDF
+Form 8582 builders require the linked Schedule E activity sources and finalized
+Schedule 1/Form 1040 totals to agree. A full-return fixture traces both
+activity balances into the 2025 ledger and two exact 2026 opening rows; missing
+or changed rows, activity source, or final return are rejection cases. The
+fixture uses a synthetic acceptance reference and does not authenticate an
+accepted return or enable a 2026 import. All cases remain unrun until the
+agreed implementation batch finishes.
+
 The earlier PDF descriptor assigned raw Schedule C/F and aggregate loss inputs
 to Part I lines 1a–1c and 2a–2c. On the
 [2025 Form 8582](https://www.irs.gov/pub/irs-prior/f8582--2025.pdf), those lines
