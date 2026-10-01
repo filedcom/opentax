@@ -59,7 +59,7 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     ) {
       reconcileForm8826SelfSource(source, context?.pending ?? {});
     }
-    if (lines.line6 > 0 && (source.pass_through_credits?.length ?? 0) > 0) {
+    if ((source.pass_through_credits?.length ?? 0) > 0) {
       if (!context?.pending) {
         throw new Error("Form 8826 K-1 source needs the filed return");
       }

@@ -1461,7 +1461,7 @@ Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
   assertThrows(
     () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
     Error,
-    "needs one identified Schedule C business and exact Schedule 1/1040 source reconciliation",
+    "REIT-only filing needs one reviewed issued 1099-DIV",
   );
 });
 

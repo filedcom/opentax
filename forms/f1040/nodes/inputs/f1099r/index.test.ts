@@ -384,7 +384,9 @@ Deno.test("f1099r.compute: multiple elected Form 4972 distributions need partici
           ts: secondRecipient,
         }]),
       Error,
-      "needs one fully identified participant",
+      secondRecipient === TS.S
+        ? "spouse pair needs distinct fully identified participants"
+        : "multi-distribution election needs one fully identified participant",
     );
   }
 });
@@ -427,12 +429,12 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
         },
       }]),
     Error,
-    "one fully identified participant",
+    "multi-distribution election needs one fully identified participant",
   );
   assertThrows(
     () => compute([first, { ...second, ts: TS.S }]),
     Error,
-    "one fully identified participant",
+    "spouse pair needs distinct fully identified participants",
   );
   assertThrows(
     () =>

@@ -119,19 +119,21 @@ Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 b
     Error,
     "expenditure and deduction source evidence",
   );
-  assertEquals(
-    form8826.build({
-      eligible_expenditures: 0,
-      subject_to_passive_activity_limit: false,
-      pass_through_credits: [{
-        entity_type: "partnership",
-        entity_ein: "123456789",
-        source_document_reference: "2025 disabled-access K-1",
-        credit_amount: 1_000,
+  assertThrows(
+    () =>
+      form8826.build({
+        eligible_expenditures: 0,
         subject_to_passive_activity_limit: false,
-      }],
-    }),
-    "",
+        pass_through_credits: [{
+          entity_type: "partnership",
+          entity_ein: "123456789",
+          source_document_reference: "2025 disabled-access K-1",
+          credit_amount: 1_000,
+          subject_to_passive_activity_limit: false,
+        }],
+      }),
+    Error,
+    "K-1 source needs the filed return",
   );
 });
 

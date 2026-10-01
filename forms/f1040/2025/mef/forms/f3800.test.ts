@@ -1745,27 +1745,27 @@ Deno.test("Form 3800 files direct partnership and S-corporation code K without F
         ? "does not reconcile to K-1 box 15 code K"
         : "does not reconcile to K-1 box 13 code K",
     );
-    assertThrows(
-      () =>
-        form3800.build(fields, {
-          ...context,
-          pending: {
-            ...context.pending,
-            f8826: {
-              eligible_expenditures: 0,
-              subject_to_passive_activity_limit: false,
-              pass_through_credits: [{
-                entity_type: source_type,
-                entity_ein: "123456789",
-                source_document_reference: entry.source_document_reference,
-                credit_amount: 1_250,
-                subject_to_passive_activity_limit: false,
-              }],
-            },
-          },
-        }),
-      Error,
-      "duplicated on Form 8826",
+    const withOptionalSource = form3800.build(fields, {
+      ...context,
+      pending: {
+        ...context.pending,
+        f8826: {
+          eligible_expenditures: 0,
+          subject_to_passive_activity_limit: false,
+          pass_through_credits: [{
+            entity_type: source_type,
+            entity_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+      },
+    });
+    assertStringIncludes(withOptionalSource, "<Form8826CYCreditsGrp>");
+    assertEquals(
+      withOptionalSource.includes('referenceDocumentName="IRS8826"'),
+      false,
     );
   }
 });
@@ -1958,11 +1958,13 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     f8826_credit_entries: [{
       source_type: "partnership" as const,
       source_ein: "111111111",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 2_000,
       subject_to_passive_activity_limit: false,
     }, {
       source_type: "s_corporation" as const,
       source_ein: "222222222",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],
@@ -1973,6 +1975,24 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     pending: {
       ...filedPending(fields.tax_context, 3_000),
       f8826: source,
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Access partnership",
+          partnership_ein: "111111111",
+          source_document_reference: "2025 disabled-access K-1",
+          box15_code_k_disabled_access_credit: 2_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      k1_s_corp: {
+        k1_s_corps: [{
+          corporation_name: "Access S corporation",
+          corporation_ein: "222222222",
+          source_document_reference: "2025 disabled-access K-1",
+          box13_code_k_disabled_access_credit: 3_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
     },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   };

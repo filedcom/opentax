@@ -396,7 +396,10 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
     filer: identity,
     submissionId,
     processingDate,
-    residencyReview,
+    residencyReview: {
+      ...residencyReview,
+      taxpayer: { ...residencyReview.taxpayer, tin: identity.primarySSN },
+    },
   });
   const xml = new TextDecoder().decode(
     unzipSync(submission.bytes)["xml/submission.xml"],
