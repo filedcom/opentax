@@ -50,24 +50,34 @@ tampering, and an over-limit rejection are authored for the deferred batch.
 Wider mixed capital activity, special-rate gain, carryovers, and authenticated
 broker-copy bytes remain open.
 
-The cross-term fully deductible-loss route now accepts multiple audited gain
-and loss lots in both short- and long-term buckets when every lot keeps its
+The cross-term fully deductible-loss route now accepts multiple audited gain and
+loss lots in both short- and long-term buckets when every lot keeps its
 gain/loss sign under regular and AMT bases, the complete Form 8949 audit has no
 other capital activity, and both independently netted losses stay within their
-respective Schedule D limits. Four identified lots net to a $1,700 regular
-loss and a $2,200 AMT loss, giving a negative $500 line-2k adjustment without
+respective Schedule D limits. Four identified lots net to a $1,700 regular loss
+and a $2,200 AMT loss, giving a negative $500 line-2k adjustment without
 preferential gain. Native and PDF source replay, a mismatched Form 1040 line 7,
 and an MFS over-limit rejection are authored for the deferred bulk run. Sign
 changes, capital-loss carryovers, special-rate gains, issuer-byte proof, and
 final XSD/filled-output/ATS validation remain open.
 
-Another bounded cross-term route covers identified, sign-stable short-term
-gains and long-term losses when regular Schedule D nets a positive ordinary-rate
-gain but AMT Schedule D nets a fully deductible loss. The retained Form 8949
-and complete Schedule D audit must contain exactly these rows; no capital-loss
+Another bounded cross-term route covers identified, sign-stable short-term gains
+and long-term losses when regular Schedule D nets a positive ordinary-rate gain
+but AMT Schedule D nets a fully deductible loss. The retained Form 8949 and
+complete Schedule D audit must contain exactly these rows; no capital-loss
 carryover, qualified dividend, Form 4952 election, or special-rate gain may be
 present. A two-lot example has a $1,000 regular gain, a $1,000 AMT loss, and a
 negative $2,000 line-2k adjustment, with no Part III preferential capital gain.
 Native/PDF source and final Form 1040/Schedule 2 tamper fixtures are authored
-for the deferred bulk validation. Broker-copy authentication, carryovers, the
-reverse long-gain/short-loss crossover, and release validation remain open.
+for the deferred bulk validation. Broker-copy authentication, carryovers, other
+crossover combinations, and release validation remain open.
+
+The reverse sign-stable crossover is now staged as well: identified short-term
+losses offset identified long-term gains so regular Schedule D reports a $1,000
+net preferential gain, while the separately refigured AMT Schedule D reports a
+fully deductible $1,000 loss. The $2,000 negative line-2k adjustment reconciles
+to retained Form 8949 rows, Form 1040 line 7, Schedule 2, and native/PDF
+Form 6251. The AMT side has no Part III preferential gain despite the regular
+side's gain. Positive and source/final-return tamper fixtures are authored for
+the deferred bulk pass. Sign-changing lots, carryovers, special rate gains,
+broker bytes, and release validation remain open.

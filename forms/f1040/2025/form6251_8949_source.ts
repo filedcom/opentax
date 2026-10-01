@@ -134,6 +134,11 @@ export function assertForm6251Form8949Source(
     shortLosses.every((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
     longRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
     regularNet > 0 && amtNet < 0;
+  const shortLossLongGainToAmtLossStable = shortLosses.length > 0 &&
+    longRows.length > 0 &&
+    shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
+    longRows.every((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
+    regularNet > 0 && amtNet < 0;
   if (
     rows.some((row) => row.regular_gain > 0 && row.amt_gain < 0) &&
     !gainToAmtLoss && !mixedTermGainToAmtLoss
@@ -144,7 +149,7 @@ export function assertForm6251Form8949Source(
   }
   if (
     gainToAmtLoss || mixedTermGainToAmtLoss ||
-    shortGainLongLossToAmtLoss
+    shortGainLongLossToAmtLoss || shortLossLongGainToAmtLossStable
   ) {
     const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
@@ -153,7 +158,7 @@ export function assertForm6251Form8949Source(
       amtNet < lossLimit ||
       fields.net_capital_gain !==
         (rows.every((row) => ["D", "E", "F"].includes(row.part)) ||
-            mixedTermGainToAmtLoss
+            mixedTermGainToAmtLoss || shortLossLongGainToAmtLossStable
           ? regularNet
           : 0) ||
       (fields.qualified_dividends ?? 0) !== 0 ||

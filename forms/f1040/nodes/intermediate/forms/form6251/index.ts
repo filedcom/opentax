@@ -657,6 +657,15 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         row.regular_gain < 0 && row.amt_gain < 0
       ) && regularBasisNet > 0 && amtBasisNet < 0 &&
       amtBasisNet >= lossLimit;
+    const shortLossLongGainToAmtLossStable = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) && regularBasisNet > 0 && amtBasisNet < 0 &&
+      amtBasisNet >= lossLimit;
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
@@ -709,7 +718,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           !mixedFullyDeductibleOffsetLoss &&
           !shortLossOffsetLongGain &&
           !longLossOffsetShortGain && !shortLossLongGainToAmtLoss &&
-          !shortGainLongLossToAmtLoss) ||
+          !shortGainLongLossToAmtLoss &&
+          !shortLossLongGainToAmtLossStable) ||
         (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
         ) && !sameTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
@@ -717,7 +727,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
           longLossOffsetShortGain || sameTermGainToAmtLoss ||
-          shortLossLongGainToAmtLoss || shortGainLongLossToAmtLoss) ||
+          shortLossLongGainToAmtLoss || shortGainLongLossToAmtLoss ||
+          shortLossLongGainToAmtLossStable) ||
         ((input.qualified_dividends ?? 0) > 0 &&
           !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||
@@ -809,7 +820,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
       if (
         regularNetCg !==
-          (shortLossOffsetLongGain || shortLossLongGainToAmtLoss
+          (shortLossOffsetLongGain || shortLossLongGainToAmtLoss ||
+              shortLossLongGainToAmtLossStable
             ? regularBasisNet
             : longLossOffsetShortGain
             ? 0
