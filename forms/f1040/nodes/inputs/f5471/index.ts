@@ -316,6 +316,26 @@ export const scheduleRSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// One foreign-source general-category CFC tested unit, with sales subpart F
+// income and tested income. All deductions and taxes have reviewed group
+// assignments; no high-tax election or residual income is asserted.
+export const scheduleQSchema = z.object({
+  sales_gross_income_functional: dollars,
+  sales_definitely_related_expenses_functional: z.literal(0),
+  sales_average_asset_value_functional: z.literal(0),
+  tested_gross_income_functional: dollars,
+  tested_other_interest_expense_functional: dollars,
+  tested_other_expenses_functional: dollars,
+  tested_other_current_year_tax_functional: dollars,
+  tested_average_asset_value_functional: dollars,
+  foreign_taxes_credit_allowed_usd: dollars,
+  residual_gross_income_functional: z.literal(0),
+  us_source_income_functional: z.literal(0),
+  foreign_oil_gas_income_functional: z.literal(0),
+  high_tax_election: z.literal(false),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -380,6 +400,7 @@ export const itemSchema = z.object({
   schedule_j: scheduleJSchema,
   schedule_p: schedulePSchema,
   schedule_r: scheduleRSchema,
+  schedule_q: scheduleQSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
@@ -411,6 +432,52 @@ export const itemSchema = z.object({
     });
   }
   const j = value.schedule_j;
+  const q = value.schedule_q;
+  if (
+    value.schedule_i.line1a !== 0 ||
+    value.schedule_i.line1b !== 0 ||
+    value.schedule_i.line1c !== 0 ||
+    value.schedule_i.line1d !== 0 ||
+    value.schedule_i.line1e !== 0 ||
+    value.schedule_i.line1g !== 0 ||
+    value.schedule_i.line1h !== 0 ||
+    value.schedule_i1.effectively_connected_income_functional !== 0 ||
+    value.schedule_i1.high_tax_exception_income_functional !== 0 ||
+    value.schedule_i1.related_party_dividends_functional !== 0 ||
+    value.schedule_i1.foreign_oil_gas_income_functional !== 0 ||
+    q.sales_gross_income_functional !==
+      value.schedule_i1.subpart_f_income_functional ||
+    value.schedule_i.line1f !==
+      Math.round(
+        q.sales_gross_income_functional /
+          Number(value.schedule_i1.average_exchange_rate),
+      ) ||
+    q.tested_gross_income_functional !==
+      value.schedule_i1.gross_income_functional -
+        value.schedule_i1.subpart_f_income_functional ||
+    q.tested_other_interest_expense_functional !==
+      value.schedule_i1.interest_expense_functional ||
+    q.tested_other_interest_expense_functional +
+          q.tested_other_expenses_functional +
+          q.tested_other_current_year_tax_functional !==
+      value.schedule_i1.allocable_deductions_functional ||
+    q.tested_other_current_year_tax_functional !==
+      value.schedule_e.tax_functional ||
+    q.foreign_taxes_credit_allowed_usd !== value.schedule_e.tax_usd ||
+    q.sales_gross_income_functional +
+          q.tested_gross_income_functional -
+          q.tested_other_interest_expense_functional -
+          q.tested_other_expenses_functional -
+          q.tested_other_current_year_tax_functional !==
+      value.schedule_h.book_net_income_functional
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_q"],
+      message:
+        "General-category Schedule Q sales and tested groups must reconcile to Schedules I, I-1, E, and H",
+    });
+  }
   const subpartF = value.schedule_i.line1a + value.schedule_i.line1b +
     value.schedule_i.line1c + value.schedule_i.line1d +
     value.schedule_i.line1e +

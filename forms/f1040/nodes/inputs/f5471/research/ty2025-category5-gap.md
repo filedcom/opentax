@@ -55,9 +55,8 @@ identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
 H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. Form 5471 page 1,
 Schedule B Part II, G, and I, plus Form 8992, its Schedule A, and separate
-Form 5471 Schedules E/E-1, H, I-1, J, P and R now have source-reconciled native MeF/PDF
-descriptors, but Schedule Q, the wider Category 4 packet, and conditional
-attachments remain.
+Form 5471 Schedules E/E-1, H, I-1, J, P, Q and R now have source-reconciled native MeF/PDF
+descriptors, but the wider Category 4 packet and conditional attachments remain.
 Schedule G-1 is required for each cost sharing arrangement in which the CFC
 was a controlled participant; this branch requires Schedule G line 7 No, so
 G-1 is not present.
@@ -70,9 +69,18 @@ line 10 reclassification of all $52,000 current section 959(c)(2) PTEP before
 the $1,000 section 956 inclusion on line 11. The other opening categories, PTEP,
 distributions, adjustments, and Part II recapture are explicitly zero. This
 bounded branch has native and PDF projections but no executed validation.
-The fixture's prior Schedule I line 1a lower-tier CFC dividend was moved to
-line 1e; this preserves the $10,000 subpart F total and aligns with Schedule G
-line 3a No and the absence of lower-tier foreign entities.
+The fixture's prior Schedule I line 1a lower-tier CFC dividend was reclassified
+to line 1f foreign base company sales income. Line 1e foreign personal holding
+company income would require a passive-category Schedule Q and would contradict
+the reviewed sole general-category Schedule J/P source. The $10,000 subpart F
+total remains, and Schedule G line 3a No still excludes a lower-tier entity.
+Schedule Q now assigns that $10,000 to general-category line 1g, and $55,000
+tested gross income to line 3. Its tested group has $3,000 other interest,
+$1,500 other expenses and $500 current-year tax, yielding $50,000 tested net;
+line 5 has $65,000 gross and $60,000 net. The corrected Schedule H book E&P is
+$60,000, so Schedule J ends with $17,000 untaxed and $53,000 PTEP, or $70,000
+total. Average asset value is separately reviewed for Q and is not inferred
+from QBAI. The native and four-page PDF fixtures are authored but unrun.
 Schedule P now reports the sole shareholder's general-category PTEP from that
 Schedule J: Part I is in functional currency and Part II tracks U.S.-dollar
 basis. Its current inclusions and section 956 reclassification close with

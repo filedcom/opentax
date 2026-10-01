@@ -24,7 +24,7 @@ Deno.test("Category 5a Schedule H prints reviewed book E&P and general allocatio
   });
   assertStringIncludes(
     xml,
-    "<ForeignCYNetIncomePerBooksAmt>50000</ForeignCYNetIncomePerBooksAmt>",
+    "<ForeignCYNetIncomePerBooksAmt>60000</ForeignCYNetIncomePerBooksAmt>",
   );
   assertStringIncludes(xml, "<TotalNetAdditionsAmt>0</TotalNetAdditionsAmt>");
   assertStringIncludes(
@@ -33,11 +33,11 @@ Deno.test("Category 5a Schedule H prints reviewed book E&P and general allocatio
   );
   assertStringIncludes(
     xml,
-    "<EPDASTMGeneralCatIncmAmt>50000</EPDASTMGeneralCatIncmAmt>",
+    "<EPDASTMGeneralCatIncmAmt>60000</EPDASTMGeneralCatIncmAmt>",
   );
   assertStringIncludes(
     xml,
-    "<CurrEarnAndPrftInUSDollarsAmt>50000</CurrEarnAndPrftInUSDollarsAmt>",
+    "<CurrEarnAndPrftInUSDollarsAmt>60000</CurrEarnAndPrftInUSDollarsAmt>",
   );
   assertEquals(xml.includes("OtherAdjustmentsNetAddnAmt"), false);
 });

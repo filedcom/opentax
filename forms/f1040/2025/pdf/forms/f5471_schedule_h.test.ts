@@ -8,10 +8,10 @@ Deno.test("Schedule H PDF maps one reviewed general-category CFC page", () => {
     form8992Filer,
     form8992Pending,
   ) ?? [];
-  assertEquals(fields?.line1, 50_000);
+  assertEquals(fields?.line1, 60_000);
   assertEquals(fields?.line3, 0);
-  assertEquals(fields?.line5c_general, 50_000);
-  assertEquals(fields?.line5d, 50_000);
+  assertEquals(fields?.line5c_general, 60_000);
+  assertEquals(fields?.line5d, 60_000);
   assertEquals(fields?.line5e_rate, "1.0000");
   assertEquals(form5471ScheduleHPdf.pageIndices?.(fields ?? {}), [0]);
   assertEquals(

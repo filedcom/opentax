@@ -4,10 +4,10 @@ import {
   form8992Filer,
   form8992Pending,
 } from "../../form8992.fixture.ts";
-import { form5471ScheduleJ } from "./f5471_schedule_j.ts";
+import { form5471ScheduleQ } from "./f5471_schedule_q.ts";
 
 const xsd = new URL(
-  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS5471ScheduleJ/IRS5471ScheduleJ.xsd",
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Shared/IRS5471ScheduleQ/IRS5471ScheduleQ.xsd",
   import.meta.url,
 ).pathname;
 let schemaAvailable = false;
@@ -17,39 +17,31 @@ try {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Schedule J reconciles E&P, section 951A and subpart F PTEP", () => {
-  const xml = form5471ScheduleJ.build({}, {
+Deno.test("Schedule Q joins reviewed sales and tested income groups", () => {
+  const xml = form5471ScheduleQ.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
   });
   assertStringIncludes(xml, "<SeparateCategoryCd>GEN</SeparateCategoryCd>");
   assertStringIncludes(
     xml,
-    "<ReclassifiedSect959c2EPAmt>-52000</ReclassifiedSect959c2EPAmt>",
+    "<ForeignSourceIncomeInd>X</ForeignSourceIncomeInd>",
   );
-  assertStringIncludes(
-    xml,
-    "<EarnInvstUSPropReclassifiedAmt>1000</EarnInvstUSPropReclassifiedAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<ReclassifiedSect959c1EPAmt>52000</ReclassifiedSect959c1EPAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<BalanceBeginningNextYearAmt>17000</BalanceBeginningNextYearAmt>",
-  );
+  assertStringIncludes(xml, "<TotFrgnBaseCoSalesIncmGrp>");
+  assertStringIncludes(xml, "<TotalGrossIncomeAmt>55000</TotalGrossIncomeAmt>");
+  assertStringIncludes(xml, "<TotalNetIncomeAmt>60000</TotalNetIncomeAmt>");
+  assertEquals(xml.includes("<TotalResidualIncomeGrp>"), false);
   assertThrows(() =>
-    form5471ScheduleJ.build({}, {
+    form5471ScheduleQ.build({}, {
       filer: form8992Filer,
       pending: {
         ...form8992Pending,
         f5471: {
           f5471s: [{
             ...form8992Cfc,
-            schedule_j: {
-              ...form8992Cfc.schedule_j,
-              section951a_inclusion_functional: 41_999,
+            schedule_q: {
+              ...form8992Cfc.schedule_q,
+              tested_other_expenses_functional: 1_499,
             },
           }],
         },
@@ -58,17 +50,17 @@ Deno.test("Schedule J reconciles E&P, section 951A and subpart F PTEP", () => {
 });
 
 Deno.test({
-  name: "Schedule J bounded native XML satisfies TY2025 v5.4 XSD",
+  name: "Schedule Q bounded native XML satisfies TY2025 v5.4 XSD",
   ignore: !schemaAvailable,
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    const xml = form5471ScheduleJ.build({}, {
+    const xml = form5471ScheduleQ.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
     }).replace(
-      /^<IRS5471ScheduleJ/,
-      '<IRS5471ScheduleJ xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleJTest1"',
+      /^<IRS5471ScheduleQ/,
+      '<IRS5471ScheduleQ xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleQTest1"',
     );
     const command = new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],

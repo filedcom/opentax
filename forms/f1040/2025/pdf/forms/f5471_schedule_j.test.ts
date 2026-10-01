@@ -9,14 +9,14 @@ Deno.test("Schedule J PDF maps general-category E&P and PTEP rows", () => {
     form8992Pending,
   ) ?? [];
   assertEquals(form5471ScheduleJPdf.pageIndices?.(fields ?? {}), [0, 1, 2]);
-  assertEquals(fields?.a14, 7_000);
+  assertEquals(fields?.a14, 17_000);
   assertEquals(fields?.eiii14, 53_000);
   assertEquals(fields?.eviii8, 42_000);
   assertEquals(fields?.eviii10, -42_000);
   assertEquals(fields?.ex10, -10_000);
   assertEquals(fields?.eviii14, 0);
   assertEquals(fields?.ex14, 0);
-  assertEquals(fields?.f14, 60_000);
+  assertEquals(fields?.f14, 70_000);
   assertEquals(
     form5471ScheduleJPdf.fields.find((entry) => entry.domainKey === "eviii14")
       ?.pdfField,

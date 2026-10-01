@@ -11,7 +11,7 @@ Deno.test("Form 5471 PDF maps page 1, B Part II, G, and I", () => {
   assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 3, 4, 5]);
   assertEquals(fields?.category5a, true);
   assertEquals(fields?.shares_end, 100);
-  assertEquals(fields?.line1e, 10_000);
+  assertEquals(fields?.line1f, 10_000);
   assertEquals(fields?.line2, 1_000);
   assertEquals(fields?.q7_cost_sharing, false);
   assertEquals(fields?.q21a_section304_ep, false);
