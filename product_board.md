@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
-completed checkboxes**. The **399 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **400 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 36 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 340 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 341 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
@@ -120,7 +120,8 @@ a one-spouse NUA Form 4972 pair, a two-farm Form 8582 passive-loss allocation,
 a two-employer dependent Form 8962 MAGI route, a three-issuer Form 8995
 REIT-only route, a two-mine Form 6251 AMT route, and two partnership
 orphan-drug credits on Form 3800, and a higher-value unrelated-use art gift on
-Form 8283 and a two-payer Form 4952 dividend election are also authored.
+Form 8283, a two-payer Form 4952 dividend election, and a Form 8835 biomass
+facility lessee are also authored.
 Positive and tamper fixtures are authored. These changes have not passed the
 agreed bulk test, XSD, or filled-PDF review, and the parent TODOs below remain
 open for their wider combinations and evidence gates.
