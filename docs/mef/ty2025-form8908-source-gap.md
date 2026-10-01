@@ -21,10 +21,17 @@ addresses. Duplicate home claims, late certifications, missing PWA evidence,
 other-year acquisitions, and the old override shape reject. Positive and
 tamper fixtures are authored but unrun.
 
+Unregistered native IRS8908 and three-page PDF projections now map the six
+credit classes, certifiers, and first twenty home addresses. Both require a
+matching proposed `f3800.f8908_credit` source record; positive and altered
+credit fixtures are authored but unrun. The projections reject more than 38
+certifiers, the space printed in Part II.
+
 **Filing remains closed.** The public node no longer deposits an estimate on
-Schedule 3. A valid source record stops until a native Form 8908, Form 3800
-line 1p source and limit, Form 7220 for applicable PWA homes, and the filled
-three-page Form 8908 PDF are implemented and reconciled to Form 1040. The
+Schedule 3. A valid source record stops until Form 3800 line 1p and its tax
+limit, Form 7220 attachment linking for applicable PWA homes, individual
+certifier identity, native/PDF registration, and return reconciliation are
+implemented. The
 source references are reviewed assertions, not authenticated certification,
 sale, basis, or PWA document bytes. Pass-through-only allocations need their
 own K-1 source route; they do not create a personal Form 8908. Full-batch
