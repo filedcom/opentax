@@ -2,6 +2,7 @@ import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { PDFDocument } from "pdf-lib";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
+import { documentId, validateDocumentReferences } from "./document-identity.ts";
 import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/schedule_e_type8_statement.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
@@ -187,43 +188,6 @@ function buildFragments(
   });
 }
 
-function documentId(tag: string, index: number): string {
-  const suffix = String(index);
-  return `${tag.slice(0, 30 - suffix.length)}${suffix}`;
-}
-
-function validateDocumentReferences(
-  fragments: ReadonlyArray<{ pendingKey: string; tag: string; xml: string }>,
-): void {
-  const ids = fragments.map((fragment, index) =>
-    documentId(fragment.tag, index)
-  );
-  const knownIds = new Set(ids);
-  const referencedIds = fragments.flatMap((fragment) =>
-    [...fragment.xml.matchAll(/\breferenceDocumentId="([^"]+)"/g)]
-      .flatMap((match) => match[1].trim().split(/\s+/))
-  );
-  for (const id of referencedIds) {
-    if (!knownIds.has(id)) {
-      throw new Error(`MeF referenceDocumentId ${id} has no document`);
-    }
-  }
-  for (const [index, fragment] of fragments.entries()) {
-    if (
-      fragment.tag === "JointOccupancyStatement" &&
-      !referencedIds.includes(ids[index])
-    ) {
-      throw new Error("MeF joint-occupancy statement is not referenced");
-    }
-    if (
-      fragment.tag === "IRADistributionStatement" &&
-      !referencedIds.includes(ids[index])
-    ) {
-      throw new Error("MeF IRA distribution statement is not referenced");
-    }
-  }
-}
-
 function buildReturnXml(
   pending: MefFormsPending,
   filer: FilerIdentity | undefined,
@@ -335,7 +299,7 @@ function buildReturnXml(
   const documentIdsByAttachmentFileName = Object.fromEntries(
     attachments.map((attachment, index) => [
       attachment.fileName,
-      `BinaryAttachment${initial.length + index}`,
+      documentId("BinaryAttachment", initial.length + index),
     ]),
   );
   let form3800Parts: Form3800DocumentParts | undefined;
