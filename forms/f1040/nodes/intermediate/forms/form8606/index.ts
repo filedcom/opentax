@@ -247,7 +247,7 @@ function reviewedDistributionPartI(input: Form8606Input) {
   const yearEndValue = input.year_end_ira_value ?? 0;
   const denominator = yearEndValue + distribution;
   if (
-    input.filing_details?.owner !== IraOwner.Taxpayer ||
+    input.filing_details?.owner === undefined ||
     input.filing_details.no_ira_distributions_or_conversions_confirmed !==
       false ||
     priorBasis <= 0 || basis <= 0 ||

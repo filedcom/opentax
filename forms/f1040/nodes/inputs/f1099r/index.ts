@@ -931,7 +931,8 @@ function routedThrough8606PartI(item: R1099Item): boolean {
 function form8606PartIInput(item: R1099Item) {
   const evidence = item.form8606_distribution_evidence;
   if (
-    !evidence || item.ts !== "T" || !item.source_document_reference ||
+    !evidence || (item.ts !== "T" && item.ts !== "S") ||
+    !item.source_document_reference ||
     evidence.form1099r_source_document_reference !==
       item.source_document_reference ||
     evidence.prior_form8606.filed_line14_basis !== item.prior_ira_basis ||
@@ -958,7 +959,7 @@ function form8606PartIInput(item: R1099Item) {
     year_end_ira_value: item.year_end_ira_value ?? 0,
     distribution_evidence: evidence,
     filing_details: {
-      owner: IraOwner.Taxpayer,
+      owner: item.ts === "S" ? IraOwner.Spouse : IraOwner.Taxpayer,
       prior_basis_documented_from_2024_form8606: true,
       no_ira_distributions_or_conversions_confirmed: false,
     },

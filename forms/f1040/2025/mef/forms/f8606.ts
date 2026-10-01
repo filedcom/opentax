@@ -26,21 +26,15 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       "Form 8606 MeF needs sourced IRA owner and no-activity confirmations",
     );
   }
-  if (details.owner !== IraOwner.Taxpayer) {
-    throw new Error(
-      "Form 8606 spouse-owned IRA needs a separate owner-specific filing route",
-    );
-  }
   const reviewedDistribution = reconcileForm8606Distribution(
     fields,
     context?.pending,
     context?.filer,
   );
   if (reviewedDistribution) {
-    const filer = context!.filer!;
     return elements("IRS8606", [
-      element("Form8606IRANamelineTxt", filer.fullName),
-      element("NondedIRATxpyrWithIRASSN", filer.primarySSN),
+      element("Form8606IRANamelineTxt", reviewedDistribution.ownerName),
+      element("NondedIRATxpyrWithIRASSN", reviewedDistribution.ownerSsn),
       element(
         "NondedIRACurrTYNondedContriAmt",
         fields.print_line1_nondeductible,
@@ -83,6 +77,11 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       element("NondedIRAQlfyDisasterDistriAmt", fields.print_line15b_disaster),
       element("NondedIRATaxableAmt", fields.print_line15c_taxable),
     ]);
+  }
+  if (details.owner !== IraOwner.Taxpayer) {
+    throw new Error(
+      "Form 8606 spouse-owned no-activity IRA needs an owner-specific source route",
+    );
   }
   if (
     details.no_ira_distributions_or_conversions_confirmed !== true ||

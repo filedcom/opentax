@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8606 } from "../../mef/forms/f8606.ts";
 import { printSchema } from "../../../nodes/intermediate/forms/form8606/index.ts";
+import { reconcileForm8606Distribution } from "../../form8606_distribution_reconciliation.ts";
 
 // IRS Form 8606 (2025) AcroForm field names.
 // Verified against the f8606--2025.pdf AcroForm field dump.
@@ -23,6 +24,16 @@ import { printSchema } from "../../../nodes/intermediate/forms/form8606/index.ts
 // explicit "0" — declared prior basis is meaningful even when zero.
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "print_owner_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_owner_ssn",
+    pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+  },
   // ── Part I: Nondeductible contributions and basis ───────────────────────────
   {
     kind: "text",
@@ -161,19 +172,12 @@ export const form8606Pdf: PdfFormDescriptor = {
       filer,
       pending: allPending,
     });
-    return [raw];
+    const reviewed = reconcileForm8606Distribution(raw, allPending, filer);
+    return [{
+      ...raw,
+      print_owner_name: reviewed?.ownerName ?? filer.fullName,
+      print_owner_ssn: reviewed?.ownerSsn ?? filer.primarySSN,
+    }];
   },
   fields,
-  filerFields: [
-    {
-      kind: "text",
-      domainKey: "fullName",
-      pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
-    },
-    {
-      kind: "text",
-      domainKey: "primarySSN",
-      pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
-    },
-  ],
 };

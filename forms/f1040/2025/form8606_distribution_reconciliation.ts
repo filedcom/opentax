@@ -22,6 +22,15 @@ export function reconcileForm8606Distribution(
   );
   const fields = printSchema.parse(rawFields);
   if (!hasSource && !fields.distribution_evidence) return undefined;
+  const spouseOwned = fields.filing_details?.owner === IraOwner.Spouse;
+  const ownerSsn = spouseOwned ? filer?.spouse?.ssn : filer?.primarySSN;
+  const ownerName = spouseOwned
+    ? [
+      filer?.spouse?.firstName,
+      filer?.spouse?.middleInitial,
+      filer?.spouse?.lastName,
+    ].filter(Boolean).join(" ")
+    : filer?.fullName;
   const evidence = distributionEvidenceSchema.parse(
     fields.distribution_evidence,
   );
@@ -62,8 +71,8 @@ export function reconcileForm8606Distribution(
     !Number.isNaN(Date.parse(`${received}T00:00:00Z`)) &&
     new Date(`${received}T00:00:00Z`).toISOString().slice(0, 10) === received &&
     receipt.contribution_amount === contribution &&
-    receipt.owner_ssn === filer?.primarySSN &&
-    form5498.owner_ssn === filer?.primarySSN &&
+    receipt.owner_ssn === ownerSsn &&
+    form5498.owner_ssn === ownerSsn &&
     receipt.custodian_ein === form5498.custodian_ein &&
     new Set([
         receipt.source_document_reference,
@@ -84,15 +93,20 @@ export function reconcileForm8606Distribution(
     worksheet.data.magi === f1040?.line11_agi &&
     w2s.data.w2s[0].box13_retirement_plan === true &&
     w2s.data.w2s[0].employee_ssn?.replace(/\D/g, "") ===
-      filer?.primarySSN &&
+      ownerSsn &&
     f1040?.line11_agi === w2s.data.w2s[0].box1_wages + taxable &&
     (schedule1?.line20_ira_deduction ?? 0) === 0
   );
   if (
-    !filer || filer.filingStatus !== FilingStatus.Single ||
-    !filer.fullName?.trim() ||
+    !filer || !ownerSsn || !ownerName?.trim() ||
+    (spouseOwned
+      ? filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+        !filer.spouse?.firstName || !filer.spouse?.lastName ||
+        contributionSource !== undefined
+      : filer.filingStatus !== FilingStatus.Single) ||
     entered.length !== 1 || !item ||
-    item.box7_ira_simple_indicator !== true || item.ts !== "T" ||
+    item.box7_ira_simple_indicator !== true ||
+    item.ts !== (spouseOwned ? "S" : "T") ||
     item.no_distribution_received === true ||
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
@@ -103,9 +117,10 @@ export function reconcileForm8606Distribution(
     evidence.no_current_nondeductible_contribution_confirmed !==
       (contributionSource === undefined) ||
     !contributionSourcesMatch ||
-    evidence.prior_form8606.owner_ssn !== filer.primarySSN ||
-    evidence.year_end_statement.owner_ssn !== filer.primarySSN ||
-    fields.filing_details?.owner !== IraOwner.Taxpayer ||
+    evidence.prior_form8606.owner_ssn !== ownerSsn ||
+    evidence.year_end_statement.owner_ssn !== ownerSsn ||
+    fields.filing_details?.owner !==
+      (spouseOwned ? IraOwner.Spouse : IraOwner.Taxpayer) ||
     fields.filing_details.no_ira_distributions_or_conversions_confirmed !==
       false ||
     fields.source_traditional_distributions !== distribution ||
@@ -144,5 +159,7 @@ export function reconcileForm8606Distribution(
     ratio,
     nontaxable,
     taxable,
+    ownerName,
+    ownerSsn,
   };
 }
