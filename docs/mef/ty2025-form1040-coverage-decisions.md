@@ -14,6 +14,11 @@ These are static source counts from `ALL_MEF_FORMS`, `ALL_PDF_FORMS`, and exact
 a staged, unregistered builder, as with `IRS9465`; these counts are not
 execution or acceptance evidence.
 
+The [external-evidence matrix](ty2025-external-evidence-standard-audit.md)
+compares reviewed facts, submitted bytes, signed documents, prior accepted
+returns, and ATS fixtures across complex routes. It records current gates and
+inconsistencies without choosing a new evidence policy or changing export.
+
 The descriptor counts in the linked inventories include each identifier entry
 in `ALL_MEF_FORMS` and `ALL_PDF_FORMS`.
 The literal count uses the 211 root names in the first table column of the
