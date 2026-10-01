@@ -30,6 +30,13 @@ export const reviewedDomestic8839SourceSchema = z.object({
     child_origin: z.literal("US"),
     taxpayer_named_as_adoptive_parent_confirmed: z.literal(true),
   }).strict(),
+  birth_record: z.object({
+    source_document_id: documentId,
+    document_sha256: sha256,
+    child_first_name: z.string().trim().min(1),
+    child_last_name: z.string().trim().min(1),
+    date_of_birth: date,
+  }).strict(),
   reviewed_facts: z.object({
     child_us_citizen_or_resident_when_effort_began_confirmed: z.literal(true),
     child_under_18_on_2025_12_31_confirmed: z.literal(true),
@@ -105,6 +112,7 @@ export function assertReviewedDomestic8839Source(
     );
   }
   const decree = review.decree;
+  const birthRecord = review.birth_record;
   if (
     decree.source_document_id !== child.final_decree.source_document_id ||
     decree.child_first_name !== child.first_name ||
@@ -116,6 +124,19 @@ export function assertReviewedDomestic8839Source(
   ) {
     throw new Error(
       "Form 8839 reviewed decree does not match the child ledger",
+    );
+  }
+  if (
+    birthRecord.source_document_id === decree.source_document_id ||
+    birthRecord.child_first_name !== child.first_name ||
+    birthRecord.child_last_name !== child.last_name ||
+    birthRecord.date_of_birth.slice(0, 4) !== String(child.birth_year) ||
+    birthRecord.date_of_birth < "2008-01-01" ||
+    birthRecord.date_of_birth > child.final_decree.finalization_date ||
+    birthRecord.date_of_birth > review.reviewed_on
+  ) {
+    throw new Error(
+      "Form 8839 reviewed birth record does not prove this child's identity and under-18 status",
     );
   }
   const sourceExpenses = new Map(child.expenses.map((expense) =>
@@ -139,11 +160,14 @@ export function assertReviewedDomestic8839Source(
     paymentProofIds.size !== review.expenses.length ||
     review.expenses.length !== child.expenses.length ||
     sourceExpenses.has(decree.source_document_id) ||
+    sourceExpenses.has(birthRecord.source_document_id) ||
     paymentProofIds.has(decree.source_document_id) ||
+    paymentProofIds.has(birthRecord.source_document_id) ||
     [...paymentProofIds].some((id) => sourceExpenses.has(id)) ||
     new Set(reimbursementIds).size !== reimbursementIds.length ||
     reimbursementIds.some((id) =>
-      id === decree.source_document_id || sourceExpenses.has(id) ||
+      id === decree.source_document_id ||
+      id === birthRecord.source_document_id || sourceExpenses.has(id) ||
       paymentProofIds.has(id)
     )
   ) {

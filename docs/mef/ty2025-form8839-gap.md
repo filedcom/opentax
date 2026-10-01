@@ -398,3 +398,24 @@ not yet own these bytes or the post-tax Form 8839 deposit, and the registered
 MeF/PDF exporters remain fail-closed. A caller invoking this preflight cannot
 activate a filing, and no taxpayer decree or expense document has been reviewed
 in this workspace.
+
+## Reviewed birth-record prerequisite (written, unrun)
+
+The one-child domestic preflight now requires a separate reviewed birth record,
+with its own unique document ID, SHA-256 digest, child's first and last name,
+and actual date of birth. The date must agree with the existing source-ledger
+birth year, precede the final decree, and establish that the child was under 18
+at the end of 2025. The document-byte binder requires this distinct file
+alongside the decree, receipt, payment proof, and any reimbursement record;
+missing, changed, or duplicate bytes reject. Synthetic positive, age/name/ID,
+and changed-byte cases are authored but unrun. This narrows the
+[2025 instructions' eligible-child rule](https://www.irs.gov/instructions/i8839)
+for the already bounded under-18 route. The IRS also permits a child who turned
+18 during 2025 or an individual unable to care for themselves; those cases
+remain outside this staged route.
+
+A matching transcription and digest establish internal source consistency, not
+authenticity of the birth record or independent reviewer approval. The executor
+still does not own the reviewed bytes or final adoption-credit deposit. Active
+Form 8839, native MeF, and PDF positive filing remain closed, pending those
+joins and the return-wide MAGI and credit-ordering evidence above.

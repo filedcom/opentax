@@ -41,6 +41,13 @@ const childReview = {
     child_origin: "US",
     taxpayer_named_as_adoptive_parent_confirmed: true,
   },
+  birth_record: {
+    source_document_id: "birth-1",
+    document_sha256: "d".repeat(64),
+    child_first_name: "Ada",
+    child_last_name: "Taxpayer",
+    date_of_birth: "2020-02-01",
+  },
   reviewed_facts: {
     child_us_citizen_or_resident_when_effort_began_confirmed: true,
     child_under_18_on_2025_12_31_confirmed: true,
@@ -213,25 +220,32 @@ Deno.test("Form 8839 staged native/PDF candidate nets a documented private reimb
     reimbursedPending,
     filer,
   );
-  assertStringIncludes(candidate.xml, "<QualifiedAdoptionExpenseAmt>10000</QualifiedAdoptionExpenseAmt>");
-  assertStringIncludes(candidate.xml, "<NonrefundableAdoptionCreditAmt>5000</NonrefundableAdoptionCreditAmt>");
+  assertStringIncludes(
+    candidate.xml,
+    "<QualifiedAdoptionExpenseAmt>10000</QualifiedAdoptionExpenseAmt>",
+  );
+  assertStringIncludes(
+    candidate.xml,
+    "<NonrefundableAdoptionCreditAmt>5000</NonrefundableAdoptionCreditAmt>",
+  );
   assertEquals(candidate.pdfFields.line5, 10_000);
   assertEquals(candidate.pdfFields.line18, 5_000);
   assertThrows(
-    () => projectStagedForm8839Documents(
-      reimbursedSource,
-      {
-        ...reimbursedReview,
-        expenses: [{
-          ...reimbursedReview.expenses[0]!,
-          reimbursement: { ...reimbursement, reimbursed_amount: 1_999 },
-        }],
-      },
-      sinkInput,
-      magiReview,
-      reimbursedPending,
-      filer,
-    ),
+    () =>
+      projectStagedForm8839Documents(
+        reimbursedSource,
+        {
+          ...reimbursedReview,
+          expenses: [{
+            ...reimbursedReview.expenses[0]!,
+            reimbursement: { ...reimbursement, reimbursed_amount: 1_999 },
+          }],
+        },
+        sinkInput,
+        magiReview,
+        reimbursedPending,
+        filer,
+      ),
     Error,
     "reviewed payment does not match",
   );

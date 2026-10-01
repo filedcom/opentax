@@ -19,9 +19,16 @@ export async function bindReviewedDomestic8839DocumentBytes(
   const review = reviewedDomestic8839SourceSchema.parse(rawReview);
   const expected = new Map<string, string>();
   expected.set(review.decree.source_document_id, review.decree.document_sha256);
+  expected.set(
+    review.birth_record.source_document_id,
+    review.birth_record.document_sha256,
+  );
   for (const expense of review.expenses) {
     expected.set(expense.source_document_id, expense.receipt_sha256);
-    expected.set(expense.payment_proof_document_id, expense.payment_proof_sha256);
+    expected.set(
+      expense.payment_proof_document_id,
+      expense.payment_proof_sha256,
+    );
     if (expense.reimbursement) {
       expected.set(
         expense.reimbursement.source_document_id,
@@ -30,8 +37,8 @@ export async function bindReviewedDomestic8839DocumentBytes(
     }
   }
   if (
-    expected.size !== 1 + review.expenses.length * 2 +
-      review.expenses.filter((expense) => expense.reimbursement).length ||
+    expected.size !== 2 + review.expenses.length * 2 +
+        review.expenses.filter((expense) => expense.reimbursement).length ||
     documents.length !== expected.size ||
     new Set(documents.map((document) => document.source_document_id)).size !==
       documents.length ||
@@ -51,8 +58,9 @@ export async function bindReviewedDomestic8839DocumentBytes(
         Uint8Array.from(document.bytes),
       ),
     );
-    const actual = Array.from(digest, (byte) =>
-      byte.toString(16).padStart(2, "0")
+    const actual = Array.from(
+      digest,
+      (byte) => byte.toString(16).padStart(2, "0"),
     ).join("");
     if (actual !== expected.get(document.source_document_id)) {
       throw new Error(
