@@ -121,10 +121,11 @@ async function reviewedPdf(
   const firstPage = pdf.addPage();
   firstPage.drawText(reference);
   if (amendment) {
-    pdf.addPage();
+    const secondPage = pdf.addPage();
     const fields: Record<string, string> = {
       "f1_01[0]": String(amendment.tax_year),
       "f1_05[0]": FILER_SSN,
+      "f2_35[0]": amendment.part_ii_explanation,
     };
     const names = {
       line6_tax: ["f1_37[0]", "f1_38[0]", "f1_39[0]"],
@@ -153,10 +154,20 @@ async function reviewedPdf(
         ...changedFields,
       })
     ) {
+      const page = name.startsWith("f2_") ? secondPage : firstPage;
+      const prefix = name.startsWith("f2_")
+        ? "topmostSubform[0].Page2[0]."
+        : "topmostSubform[0].Page1[0].";
       const field = pdf.getForm().createTextField(
-        `topmostSubform[0].Page1[0].${name}`,
+        `${prefix}${name}`,
       );
-      field.addToPage(firstPage, { x: 20, y: 20, width: 100, height: 12 });
+      if (name === "f2_35[0]") field.enableMultiline();
+      field.addToPage(
+        page,
+        name === "f2_35[0]"
+          ? { x: 20, y: 20, width: 500, height: 150 }
+          : { x: 20, y: 20, width: 100, height: 12 },
+      );
       field.setText(value);
     }
   }
@@ -183,6 +194,8 @@ async function intake(): Promise<ScheduleCDocumentIntake> {
   const prepared_amendment = {
     tax_year: 2024 as const,
     prepared_form1040x_document_reference: "prepared-1040x-2024",
+    part_ii_explanation:
+      "2024 foreign tax redetermination reduced the Form 1116 passive foreign tax credit. The amended tax and credits reflect the revised Form 1116 and Schedule 3.",
     line6_tax: amendedLine(5_000, 5_000),
     line7_nonrefundable_credits: amendedLine(100, 80),
     line8_tax_after_credits: amendedLine(4_900, 4_920),
@@ -275,6 +288,8 @@ Deno.test("Schedule C intake rejects a prepared 1040-X whose printed tax or iden
       [{ "f1_41[0]": "-19" }, "line7_nonrefundable_credits column_b"],
       [{ "f1_01[0]": "2023" }, "PDF year or taxpayer"],
       [{ "f1_05[0]": "999887777" }, "PDF year or taxpayer"],
+      [{ "f2_35[0]": "" }, "Part II explanation differs"],
+      [{ "f2_35[0]": "2024 unrelated change" }, "Part II explanation differs"],
     ] as const
   ) {
     const input = await intake();
@@ -436,6 +451,18 @@ Deno.test("Schedule C intake rejects a missing or changed prepared affected-year
     () => reviewScheduleCDocuments({ ...input, prepared_amendment: undefined }),
     Error,
     "needs a reviewed prepared Form 1040-X",
+  );
+  await assertRejects(
+    () =>
+      reviewScheduleCDocuments({
+        ...input,
+        prepared_amendment: {
+          ...input.prepared_amendment!,
+          part_ii_explanation: "2024 unrelated change",
+        },
+      }),
+    Error,
+    "Part II must explain",
   );
   await assertRejects(
     () =>

@@ -283,6 +283,14 @@ paths were inspected on the IRS PDF. Positive and changed printed tax, year,
 and SSN fixtures are authored for the deferred bulk gate. A flattened or
 scanned prepared form without readable fields stops at intake.
 
+The staged intake also requires a reviewed Part II explanation naming the
+affected year, foreign tax redetermination, and Form 1116. It reads the
+official page-2 `f2_35` AcroForm field from the same hash-bound prepared PDF
+and requires an exact text match; a blank or changed explanation rejects.
+The [December 2025 Form 1040-X](https://www.irs.gov/pub/irs-pdf/f1040x.pdf)
+requires Part II to explain the changes. Positive and blank/altered text
+fixtures are authored for the deferred bulk gate.
+
 This binds the prepared PDF bytes to the staged tax reconciliation, but it does
 not establish that the Form 1040-X and changed Forms 1116, Schedule 3, and 1040
 were submitted or accepted. An authenticated IRS receipt or filing record and

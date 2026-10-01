@@ -40,6 +40,7 @@ const amendedLineSchema = z.object({
 const preparedAmendmentSchema = z.object({
   tax_year: z.union([z.literal(2023), z.literal(2024)]),
   prepared_form1040x_document_reference: z.string().trim().min(1),
+  part_ii_explanation: z.string().trim().min(1),
   line6_tax: amendedLineSchema,
   line7_nonrefundable_credits: amendedLineSchema,
   line8_tax_after_credits: amendedLineSchema,
@@ -50,6 +51,7 @@ const preparedAmendmentSchema = z.object({
 type PreparedAmendment = z.infer<typeof preparedAmendmentSchema>;
 
 const form1040xFieldPrefix = "topmostSubform[0].Page1[0].";
+const form1040xPart2FieldPrefix = "topmostSubform[0].Page2[0].";
 const preparedAmendmentPdfFields = {
   line6_tax: ["f1_37[0]", "f1_38[0]", "f1_39[0]"],
   line7_nonrefundable_credits: ["f1_40[0]", "f1_41[0]", "f1_42[0]"],
@@ -69,9 +71,12 @@ function verifyPreparedForm1040XPdf(
     );
   }
   const form = pdf.getForm();
-  const read = (fieldName: string): string => {
+  const read = (fieldName: string, page: 1 | 2 = 1): string => {
     try {
-      return form.getTextField(`${form1040xFieldPrefix}${fieldName}`).getText()
+      const prefix = page === 1
+        ? form1040xFieldPrefix
+        : form1040xPart2FieldPrefix;
+      return form.getTextField(`${prefix}${fieldName}`).getText()
         ?.trim() ?? "";
     } catch {
       throw new Error(
@@ -85,6 +90,13 @@ function verifyPreparedForm1040XPdf(
   ) {
     throw new Error(
       "Form 1116 Schedule C prepared Form 1040-X PDF year or taxpayer differs from the reviewed amendment",
+    );
+  }
+  if (
+    read("f2_35[0]", 2) !== amendment.part_ii_explanation
+  ) {
+    throw new Error(
+      "Form 1116 Schedule C prepared Form 1040-X Part II explanation differs from the reviewed amendment",
     );
   }
   for (
@@ -240,6 +252,17 @@ function verifyPreparedAmendment(input: ScheduleCDocumentIntake): void {
   if (amendment.tax_year !== ledger.relation_back_tax_year) {
     throw new Error(
       "Form 1116 Schedule C prepared Form 1040-X tax year differs from the affected year",
+    );
+  }
+  if (
+    !amendment.part_ii_explanation.includes(String(amendment.tax_year)) ||
+    !/\bforeign tax redetermination\b/i.test(
+      amendment.part_ii_explanation,
+    ) ||
+    !/\bForm 1116\b/i.test(amendment.part_ii_explanation)
+  ) {
+    throw new Error(
+      "Form 1116 Schedule C prepared Form 1040-X Part II must explain the affected-year foreign tax redetermination",
     );
   }
   const u = evidence.filed_form1040;
