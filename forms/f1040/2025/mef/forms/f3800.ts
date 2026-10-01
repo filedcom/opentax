@@ -57,7 +57,6 @@ import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
-import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
@@ -376,7 +375,7 @@ function sourceForm8874(
   return { source, lines, credit: lines.nonpassiveCredit };
 }
 
-function sourceOrphanDrugK1Credits(
+export function sourceOrphanDrugK1Credits(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
 ) {
@@ -390,12 +389,6 @@ function sourceOrphanDrugK1Credits(
   const sCorpK1s =
     entries.some((entry) => entry.source_type === "s_corporation")
       ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
-      : [];
-  const trustK1s =
-    entries.some((entry) =>
-        entry.source_type === "estate" || entry.source_type === "trust"
-      )
-      ? trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts
       : [];
   const seen = new Set<string>();
   for (const entry of entries) {
@@ -444,21 +437,9 @@ function sourceOrphanDrugK1Credits(
         );
       }
     } else {
-      const matches = trustK1s.filter((k1) =>
-        k1.entity_type === entry.source_type &&
-        k1.estate_trust_ein === entry.source_ein &&
-        k1.source_document_reference === entry.source_document_reference
+      throw new Error(
+        "Form 3800 estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
       );
-      if (
-        matches.length !== 1 ||
-        matches[0].box13_code_m_orphan_drug_credit !== entry.credit_amount ||
-        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
-          entry.subject_to_passive_activity_limit
-      ) {
-        throw new Error(
-          "Form 3800 orphan-drug credit does not reconcile to estate/trust K-1 box 13 code M",
-        );
-      }
     }
   }
   return entries;

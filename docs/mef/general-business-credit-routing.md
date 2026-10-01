@@ -75,9 +75,12 @@ The linked IRS8820 and IRS3800 XML cases are written but unrun. The current
 build pass also has structured section 280C deduction or basis reductions,
 controlled-group allocation statements, pass-through source identities, and a
 paper Form 8820 PDF builder. Partnership K-1 box 15 code Z and S-corporation K-1
-box 13 code Z amounts, plus estate/trust K-1 box 13 code M orphan-drug amounts,
-now reconcile to the claimed pass-through credit during MeF export, with written
-but unrun cases. This compares entered source facts; actual K-1 documents,
+box 13 code Z amounts now reconcile to the claimed pass-through credit during
+MeF export, with written but unrun cases. Estate/trust K-1 box 13 code M is
+clean electricity investment credit under the
+[2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1),
+so its former orphan-drug route rejects at intake and native/PDF export pending
+a complete Form 3468 Part V path. This compares entered source facts; actual K-1 documents,
 automatically derived passive activity tax facts, filled-PDF output, and IRS
 business rules remain open.
 

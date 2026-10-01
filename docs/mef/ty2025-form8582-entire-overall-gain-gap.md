@@ -48,6 +48,20 @@ V, Schedule 1, and the PDF descriptor use the same activity and sale identifiers
 and whole-dollar amounts. Focused calculation, MeF/XSD, and PDF-projection cases
 are written but **not run**.
 
+The same first-year source contract now admits one actively participated
+type-A rental to Part IV when the owner bought and sold it in 2025. The
+identified purchase and sale dates, purchase-document reference, no-prior-
+grouping attestation, whole-dollar current Schedule E loss, and one short-held
+no-recapture Form 4797 Part II gain must match. The gain must exceed the loss;
+no prior PAL or at-risk/expense carryover can be entered. The calculated Part IV
+gain and allowed current loss flow through Schedule E, Form 4797, Schedule 1,
+and Form 1040; native MeF and PDF compare the same source activity and sale.
+A full-return positive fixture and changed-purchase-reference rejection fixture
+are authored but unrun. This applies the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) for an active rental's
+entire disposition with overall gain. Acquisition/closing document bytes,
+other sale characters, and wider activity combinations remain open.
+
 An activity acquired before 2025, grouped with an older passive activity, or
 carrying any prior unallowed loss still needs authenticated filed-return
 evidence and activity/character joins. The current 2024 Form 8582 reference

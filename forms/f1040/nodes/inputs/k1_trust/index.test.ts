@@ -212,73 +212,36 @@ Deno.test("trust K-1 uses issued portfolio income for affirmed Form 4952 source"
   ]);
 });
 
-Deno.test("estate or trust K-1 orphan-drug code M needs source identity", () => {
-  assertThrows(() =>
-    compute([minimalItem({ box13_code_m_orphan_drug_credit: 500 })])
-  );
-  compute([minimalItem({
-    entity_type: "trust",
-    estate_trust_ein: "123456789",
-    source_document_reference: "2025 Trust K-1",
-    box13_code_m_orphan_drug_credit: 500,
-    orphan_drug_credit_subject_to_passive_activity_limit: false,
-  })]);
-  assertThrows(() =>
-    compute([minimalItem({
-      entity_type: "estate",
-      estate_trust_ein: "123456789",
-      source_document_reference: "2025 Estate K-1",
-      box13_credits: 499,
-      box13_code_m_orphan_drug_credit: 500,
-      orphan_drug_credit_subject_to_passive_activity_limit: false,
-    })])
-  );
-});
-
-Deno.test("estate/trust K-1 code M reaches source-backed Form 3800", () => {
+Deno.test("estate/trust K-1 code M cannot enter an unsupported credit route", () => {
   for (const entity_type of ["estate", "trust"] as const) {
-    const item = minimalItem({
+    const identity = {
       entity_type,
       estate_trust_ein: "123456789",
       source_document_reference: `${entity_type} K-1 2025`,
-      box13_code_m_orphan_drug_credit: 1_250,
-      orphan_drug_credit_subject_to_passive_activity_limit: false,
-    });
-    assertEquals(findOutput(compute([item]), "f3800")?.fields, {
-      f8820_k1_credit_entries: [{
-        source_type: entity_type,
-        source_ein: "123456789",
-        source_document_reference: `${entity_type} K-1 2025`,
-        credit_amount: 1_250,
-        subject_to_passive_activity_limit: false,
-      }],
-    });
-    assertEquals(
-      findOutput(
-        compute([{
-          ...item,
-          orphan_drug_credit_subject_to_passive_activity_limit: true,
-        }]),
-        "f3800",
-      ),
-      undefined,
+    };
+    assertThrows(() =>
+      compute([minimalItem({
+        ...identity,
+        box13_code_m_orphan_drug_credit: 1_250,
+      })])
     );
-    assertEquals(
-      findOutput(
-        compute([{
-          ...item,
-          orphan_drug_credit_subject_to_passive_activity_limit: true,
-        }]),
-        "form8582cr",
-      )?.fields,
-      {
-        required_orphan_drug_k1_credits: [{
-          source_type: entity_type,
-          source_ein: "123456789",
-          source_document_reference: `${entity_type} K-1 2025`,
-          credit_amount: 1_250,
-        }],
-      },
+    assertThrows(() =>
+      compute([minimalItem({
+        ...identity,
+        box13_code_m_clean_electricity_investment_credit: 1_250,
+      })])
+    );
+    assertThrows(() =>
+      compute([minimalItem({
+        ...identity,
+        orphan_drug_credit_subject_to_passive_activity_limit: false,
+      })])
+    );
+    assertThrows(() =>
+      compute([minimalItem({
+        ...identity,
+        box13_credits: 1_250,
+      })])
     );
   }
 });
@@ -345,9 +308,7 @@ Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement
     entity_type: "trust",
     estate_trust_ein: "123456789",
     source_document_reference: "2025 Trust K-1",
-    box13_credits: 750.25,
-    box13_code_m_orphan_drug_credit: 250,
-    orphan_drug_credit_subject_to_passive_activity_limit: false,
+    box13_credits: 500.25,
     box13_code_zz_disabled_access_credit: 500.25,
     box13_code_zz_disabled_access_statement_reference: "Access statement",
     disabled_access_credit_subject_to_passive_activity_limit: true,

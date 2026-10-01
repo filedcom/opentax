@@ -1,8 +1,8 @@
 # TY2025 Schedule J return integration
 
-Status: build-first, unrun. Narrow Schedule F-only and one-business fishing
-Schedule C ordinary-rate routes are wired in the graph. These are not yet
-validated as filing-ready.
+Status: build-first, unrun. Narrow Schedule F-only, one-business fishing
+Schedule C, and one-farm-plus-one-fishing ordinary-rate routes are wired in the
+graph. These are not yet validated as filing-ready.
 
 The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 say the election can replace Form 1040 line 16 tax, but does not apply when
@@ -49,9 +49,22 @@ reach Form 1040 line 16, native MeF, and PDF. Positive and source-swap fixtures
 are authored for the deferred batch; no execution or filled-PDF result is
 claimed. The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 allow fishing income and require attributable income, gains, losses, and
-deductions. Mixed farm/fishing, multiple fishing activities, source-record
-authentication, loss allocation, and other income/deduction combinations
-remain open.
+deductions. Mixed farm/fishing is bounded to one positive farm and one positive
+fishing business below. Multiple activities, source-record authentication,
+loss allocation, and other income/deduction combinations remain open.
+
+The mixed route combines computed profit from exactly one Schedule F activity
+with computed, catch-evidenced profit from exactly one Schedule C fishing
+business. Both profits must be positive whole dollars. Schedule C line 3 must
+equal the classified fishing profit; no other AGI components can be present;
+the SE and QBI deductions must reconcile to AGI and the election cap. The
+calculated tax reaches Form 1040 line 16, while native MeF and PDF retain the
+finalized line 1/23 return joins. Positive and missing-evidence/unrelated-income
+fixtures are authored for the deferred batch. The [2025 Schedule J
+instructions](https://www.irs.gov/instructions/i1040sj) require combining
+attributable income, gains, losses, and deductions from both businesses.
+Multiple farm/fishing activities, source-record authentication, losses, and
+other income/deduction combinations remain open.
 
 The graph uses direct declared edges from Schedule F, the AGI aggregator,
 standard deduction, and the public election to the calculated node. There is

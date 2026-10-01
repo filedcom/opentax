@@ -39,8 +39,13 @@ export const itemSchema = z.object({
   entity_type: z.enum(["estate", "trust"]).optional(),
   estate_trust_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
-  box13_code_m_orphan_drug_credit: z.number().int().positive().optional(),
-  orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  // TY2025 box 13 code M is the clean electricity investment credit, which
+  // needs the trust's Form 3468 Part V property statement. No such path is
+  // supported here. Explicit rejection prevents the former wrong label from
+  // being silently stripped by Zod's object parser.
+  box13_code_m_clean_electricity_investment_credit: z.never().optional(),
+  box13_code_m_orphan_drug_credit: z.never().optional(),
+  orphan_drug_credit_subject_to_passive_activity_limit: z.never().optional(),
   box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
   box13_code_zz_new_markets_statement_reference: z.string().trim().min(1)
     .optional(),
@@ -309,34 +314,6 @@ export const itemSchema = z.object({
       }
     }
   }
-  if (item.box13_code_m_orphan_drug_credit !== undefined) {
-    for (
-      const key of [
-        "entity_type",
-        "estate_trust_ein",
-        "source_document_reference",
-        "orphan_drug_credit_subject_to_passive_activity_limit",
-      ] as const
-    ) {
-      if (item[key] === undefined) {
-        ctx.addIssue({
-          code: "custom",
-          path: [key],
-          message: `K-1 box 13 code M orphan-drug credit needs ${key}`,
-        });
-      }
-    }
-    if (
-      item.box13_credits !== undefined &&
-      item.box13_credits < item.box13_code_m_orphan_drug_credit
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["box13_credits"],
-        message: "K-1 orphan-drug credit exceeds box 13 total credits",
-      });
-    }
-  }
   if (item.box13_code_zz_disabled_access_credit !== undefined) {
     for (
       const key of [
@@ -378,8 +355,7 @@ export const itemSchema = z.object({
   if (
     item.box13_credits !== undefined &&
     Math.round(item.box13_credits * 100) <
-      Math.round((item.box13_code_m_orphan_drug_credit ?? 0) * 100) +
-        Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100) +
+      Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100) +
         Math.round((item.box13_code_zz_new_markets_credit ?? 0) * 100)
   ) {
     ctx.addIssue({
@@ -388,8 +364,7 @@ export const itemSchema = z.object({
       message: "K-1 named credits exceed box 13 total credits",
     });
   }
-  const namedCredits = (item.box13_code_m_orphan_drug_credit ?? 0) +
-    (item.box13_code_zz_disabled_access_credit ?? 0) +
+  const namedCredits = (item.box13_code_zz_disabled_access_credit ?? 0) +
     (item.box13_code_zz_new_markets_credit ?? 0);
   if ((item.box13_credits ?? 0) > namedCredits) {
     ctx.addIssue({
@@ -585,38 +560,6 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
   });
 }
 
-function orphanDrugCreditOutputs(items: K1TrustItems): NodeOutput[] {
-  return items.flatMap((item) => {
-    const credit = item.box13_code_m_orphan_drug_credit;
-    if (credit === undefined) return [];
-    if (
-      !item.entity_type || !item.estate_trust_ein ||
-      !item.source_document_reference
-    ) {
-      throw new Error("Estate/trust orphan-drug K-1 source is incomplete");
-    }
-    if (item.orphan_drug_credit_subject_to_passive_activity_limit) {
-      return [output(form8582cr, {
-        required_orphan_drug_k1_credits: [{
-          source_type: item.entity_type,
-          source_ein: item.estate_trust_ein,
-          source_document_reference: item.source_document_reference,
-          credit_amount: credit,
-        }],
-      })];
-    }
-    return [output(f3800, {
-      f8820_k1_credit_entries: [{
-        source_type: item.entity_type,
-        source_ein: item.estate_trust_ein,
-        source_document_reference: item.source_document_reference,
-        credit_amount: credit,
-        subject_to_passive_activity_limit: false,
-      }],
-    })];
-  });
-}
-
 function newMarketsCreditOutputs(items: K1TrustItems): NodeOutput[] {
   return items.flatMap((item) => {
     const credit = item.box13_code_zz_new_markets_credit;
@@ -703,7 +646,6 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       })(),
       ...form1116Outputs(k1_trusts),
       ...disabledAccessCreditOutputs(k1_trusts),
-      ...orphanDrugCreditOutputs(k1_trusts),
       ...newMarketsCreditOutputs(k1_trusts),
       ...k1_trusts.flatMap((item) =>
         (item.box12_code_a_amt_adjustment ?? 0) === 0 ? [] : [output(form6251, {

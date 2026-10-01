@@ -1,5 +1,27 @@
 # TY2025 paired Form 8889 boundary
 
+## Distinct rollovers for both owners (2026-10-01 build pass, unrun)
+
+The paired full-year self-only route now accepts one sourced HSA-to-HSA
+rollover for each spouse. Each owner has a distinct code-1 Form 1099-SA,
+withdrawal and redeposit references, a 2025 distribution, a redeposit within
+60 days to an HSA of the same beneficiary, and the one-rollover-in-12-months
+affirmation. The owner calculator independently determines each Form 8889 line
+14a/14b/16/17b. The paired native and PDF exporters require distinct references
+across owners, the two printed forms to equal those calculations, both line-13
+deductions and taxable amounts to aggregate once on Schedule 1, the two 20%
+taxes to aggregate once on Schedule 2, and those totals to agree with Form 1040
+lines 8, 10, and 23. A positive two-owner case and source/return tamper cases
+are authored but unrun. The [2025 Form 8889
+instructions](https://www.irs.gov/instructions/i8889) direct separate spouse
+forms and place qualified rollovers on line 14b.
+
+This two-owner extension requires positive taxable remainders on both forms and
+no other Schedule 1 income or Schedule 2 tax, age-65/disability exception,
+medical-expense claim, or testing-period event. Other paired coverage patterns
+and mixed HSA events remain closed. Trustee and Form 1099-SA bytes are not
+authenticated by the entered references.
+
 ## One owner's prior HSA excess on paired self-only returns (2026-10-01, unrun)
 
 The bounded two-HSA self-only route now accepts one owner's reviewed filed
@@ -152,9 +174,9 @@ must otherwise fit the paired self-only/family coverage and ordinary
 contribution route. The paired MeF and PDF projections recompute both owners'
 Form 8889 lines, preserve the rollover only on its owner's line 14b, and match
 combined Schedule 1 income/deduction and Schedule 2 additional tax to the
-return. A second simultaneous rollover and age-65 or disability evidence on
-the rollover owner's distributions remain closed pending a transaction
-allocation. Positive,
+return. Age-65 or disability evidence on the rollover owner's distributions
+remains closed pending a transaction allocation. A separate full-year self-only
+two-owner rollover route is documented above. Positive,
 changed-source, changed-return, and second-rollover fixtures are authored but
 unrun. Trustee and Form 1099-SA document bytes remain unauthenticated.
 

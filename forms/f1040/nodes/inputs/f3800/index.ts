@@ -157,6 +157,15 @@ const f8820K1CreditSchema = z.object({
   source_document_reference: z.string().trim().min(1),
   credit_amount: z.number().int().positive(),
   subject_to_passive_activity_limit: z.boolean(),
+}).superRefine((entry, ctx) => {
+  if (entry.source_type === "estate" || entry.source_type === "trust") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["source_type"],
+      message:
+        "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+    });
+  }
 });
 
 const f8936NewVehicleCreditSchema = z.object({

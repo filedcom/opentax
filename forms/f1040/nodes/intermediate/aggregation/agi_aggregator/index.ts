@@ -259,10 +259,30 @@ function firstNonScheduleFIncomeSource(input: AgiInput): string | undefined {
   })?.[0];
 }
 
-function firstNonFishingScheduleCIncomeSource(input: AgiInput): string | undefined {
+function firstNonFishingScheduleCIncomeSource(
+  input: AgiInput,
+): string | undefined {
   const allowed = new Set([
     "filing_status",
     "line3_schedule_c",
+    "line15_se_deduction",
+  ]);
+  return Object.entries(input).find(([key, value]) => {
+    if (allowed.has(key) || value === undefined) return false;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "boolean") return value !== false;
+    if (Array.isArray(value)) return value.some((item) => item !== 0);
+    return true;
+  })?.[0];
+}
+
+function firstNonMixedFarmFishingIncomeSource(
+  input: AgiInput,
+): string | undefined {
+  const allowed = new Set([
+    "filing_status",
+    "line3_schedule_c",
+    "line6_schedule_f",
     "line15_se_deduction",
   ]);
   return Object.entries(input).find(([key, value]) => {
@@ -744,6 +764,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           firstNonFishingScheduleCIncomeSource(input) === undefined,
         fishing_only_unsupported_source_key:
           firstNonFishingScheduleCIncomeSource(input),
+        mixed_farm_fishing_income_verified:
+          firstNonMixedFarmFishingIncomeSource(input) === undefined,
+        mixed_farm_fishing_unsupported_source_key:
+          firstNonMixedFarmFishingIncomeSource(input),
         schedule_c_net_profit: input.line3_schedule_c ?? 0,
         se_tax_deduction: input.line15_se_deduction ?? 0,
         agi,

@@ -10,11 +10,15 @@
  * All amounts here are invented round numbers.
  */
 
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { FilingStatus } from "../nodes/types.ts";
+import { form8582 as form8582Mef } from "../2025/mef/forms/f8582.ts";
+import { form8582Pdf } from "../2025/pdf/forms/f8582.ts";
+import { scheduleEPdf } from "../2025/pdf/forms/schedule_e.ts";
+import { form4797Pdf } from "../2025/pdf/forms/f4797.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 const plan = buildExecutionPlan(registry);
@@ -82,6 +86,95 @@ function rental(rentIncome: number, repairs: number) {
     expense_repairs: repairs,
   };
 }
+
+Deno.test("first-year active rental entire gain reaches Form 8582 Part IV and Form 1040", () => {
+  const sale = {
+    activity_id: "active-first-year-sale",
+    activity_name: "Active first-year rental",
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-02-01",
+    sold_on: "2025-08-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 20_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 sale closing statement",
+  };
+  const firstYear = {
+    activity_id: sale.activity_id,
+    activity_name: sale.activity_name,
+    activity_acquired_on: sale.acquired_on,
+    acquisition_document_reference: "2025 purchase closing statement",
+    not_grouped_with_prior_activity: true,
+  };
+  const property = {
+    ...rental(0, 2_000),
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    fair_rental_days: 180,
+    street_address: "12 Main Street",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+    disposed_of: true,
+    first_year_activity_source: firstYear,
+    passive_property_sales: [sale],
+  };
+  const result = runReturn({
+    general: singleGeneral(),
+    schedule_e: { schedule_es: [property] },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1?.line4_other_gains, 10_000);
+  assertEquals(result.pending.schedule1?.line5_schedule_e, -2_000);
+  assertEquals(result.pending.f1040?.line8_additional_income, 8_000);
+  assertEquals(suspendedPal(result), 0);
+  const fields = result.pending.form8582 as Record<string, unknown>;
+  assertStringIncludes(
+    form8582Mef.build(fields, { pending: result.pending }),
+    "<RentalRealtyIncomeAmt>10000</RentalRealtyIncomeAmt>",
+  );
+  assertEquals(
+    form8582Pdf.projectFields!(fields, result.pending).part4_1_gain,
+    "8000",
+  );
+  assertEquals(
+    scheduleEPdf.projectFields!(result.pending.schedule_e!, result.pending)
+      .property_0_line22,
+    2_000,
+  );
+  assertEquals(
+    form4797Pdf.projectFields!(result.pending.form4797!, result.pending)
+      .ordinary_gain,
+    10_000,
+  );
+  const changed = {
+    ...result.pending,
+    schedule_e: {
+      schedule_es: [{
+        ...property,
+        first_year_activity_source: {
+          ...firstYear,
+          acquisition_document_reference: "different purchase document",
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => form8582Mef.build(fields, { pending: changed }),
+    Error,
+    "do not match their Schedule E",
+  );
+  assertThrows(
+    () => form8582Pdf.projectFields!(fields, changed),
+    Error,
+    "do not match their Schedule E",
+  );
+});
 
 // ── MAGI $200,000: no special allowance at all ──────────────────────────────
 //

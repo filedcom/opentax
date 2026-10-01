@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
+import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
 import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
@@ -90,6 +91,64 @@ export const form3800Pdf: PdfFormDescriptor = {
       throw new Error("Form 3800 PDF needs finalized Schedule 3 line 6a");
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
+    const source = f3800InputSchema.parse(pending3800);
+    const directOrphanK1 = source.f8820_k1_credit_entries;
+    const rawOrphanK1 = raw.f8820_k1_credit_entries === undefined
+      ? undefined
+      : f3800InputSchema.parse(raw).f8820_k1_credit_entries;
+    if (
+      [...(directOrphanK1 ?? []), ...(rawOrphanK1 ?? [])].some((entry) =>
+        entry.source_type === "estate" || entry.source_type === "trust"
+      )
+    ) {
+      throw new Error(
+        "Form 3800 PDF estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+      );
+    }
+    if (
+      directOrphanK1?.length === 1 &&
+      directOrphanK1[0].source_type === "partnership" &&
+      !source.f8820_credit &&
+      !(source.passive_source_allocations ?? []).some((entry) =>
+        entry.form3800_credit_line === "1h"
+      )
+    ) {
+      const [entry] = sourceOrphanDrugK1Credits(source, { pending: all });
+      if (!entry) {
+        throw new Error(
+          "Form 3800 printable orphan-drug K-1 source is missing",
+        );
+      }
+      const rawEntries = rawOrphanK1;
+      const rawEntry = rawEntries?.[0];
+      const row = prepared.currentRows.find((item) => item.line === "1h");
+      const amount = prepared.currentAmounts.find((item) => item.line === "1h");
+      if (
+        rawEntries?.length !== 1 || !rawEntry ||
+        rawEntry.source_type !== entry.source_type ||
+        rawEntry.source_ein !== entry.source_ein ||
+        rawEntry.source_document_reference !==
+          entry.source_document_reference ||
+        rawEntry.credit_amount !== entry.credit_amount ||
+        rawEntry.subject_to_passive_activity_limit !==
+          entry.subject_to_passive_activity_limit ||
+        !row || !amount || row.metadata.sourceCount !== 1 ||
+        row.entityCredits.length !== 1 ||
+        !("ein" in row.entityCredits[0].entity) ||
+        row.entityCredits[0].entity.ein !== entry.source_ein ||
+        row.entityCredits[0].credit !== entry.credit_amount ||
+        !(row.metadata.entity && "ein" in row.metadata.entity) ||
+        row.metadata.entity.ein !== entry.source_ein ||
+        amount.nonpassiveCredit !== entry.credit_amount ||
+        amount.totalCredit !== entry.credit_amount ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0
+      ) {
+        throw new Error(
+          "Form 3800 printable orphan-drug line 1h differs from its K-1 source",
+        );
+      }
+    }
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),

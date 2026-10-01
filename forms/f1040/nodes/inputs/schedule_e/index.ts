@@ -287,7 +287,8 @@ export function qualifiedEntireDispositionGain(
     item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
     item.prior_year_8582_source.filed_part_ix_rows === undefined &&
     item.prior_year_8582_source.filed_part_viii_row === undefined;
-  const sourcedFirstYear = item.activity_type === "B" &&
+  const sourcedFirstYear = (item.activity_type === "B" ||
+    (item.activity_type === "A" && item.property_type !== 6)) &&
     firstYear !== undefined && sale !== undefined &&
     firstYear.activity_id === item.activity_id &&
     firstYear.activity_name === item.property_description &&
@@ -308,7 +309,8 @@ export function qualifiedEntireDispositionGain(
     (item.activity_type !== "B" &&
       !(item.activity_type === "A" &&
         item.property_type !== 6 &&
-        item.prior_passive_losses_active_when_incurred === true)) ||
+        (sourcedFirstYear ||
+          item.prior_passive_losses_active_when_incurred === true))) ||
     item.disposed_of !== true ||
     !item.activity_id || item.passive_property_sales?.length !== 1 ||
     !sale || sale.part !== "II" || !isQualifiedEntireSale(sale) ||

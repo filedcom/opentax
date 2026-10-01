@@ -14,6 +14,28 @@ credit fails before any page fields are projected. Positive and tamper fixtures
 are authored for the deferred bulk run; this closes the direct-projection
 amount drift, while individual credit-source authenticity remains open.
 
+The direct partnership K-1 orphan-drug route now carries one nonpassive 2025 code Z
+credit to Form 3800 Part III line 1h, Part II line 38, Schedule 3 line 6a/8,
+and Form 1040 line 20. The native preparer already matches the claimed credit
+to the exact partnership K-1 EIN, document reference, code Z amount, and passive
+status. The nine-page PDF projection now repeats that match against the
+pending K-1 and checks its prepared line 1h amount, single-source count, and
+entity EIN before printing. Positive, K-1 tamper, prepared-row tamper, and
+Form 1040 drift fixtures are authored but unrun. The 2025
+[Schedule K-1 partner instructions](https://www.irs.gov/instructions/i1065sk1)
+and [Form 3800 instructions](https://www.irs.gov/instructions/i3800) govern
+the direct credit line; the underlying issuer copy remains a reviewed source
+record rather than authenticated bytes. Other line 1h source combinations,
+passive allocations, and credit carryovers remain open. The separately modeled
+estate/trust K-1 box 13 code M orphan-drug route has been removed. The official
+[2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
+assign code M to clean electricity investment credit and require a beneficiary
+statement for Form 3468 Part V. Intake rejects both the former orphan-drug
+label and the clean-electricity amount; Form 8820, Form 3800, Form 8582-CR,
+and direct Form 3800 PDF claims also reject estate/trust orphan-drug entries.
+Rejection fixtures are authored but unrun. A positive Form 3468 Part V source,
+native, PDF, and Form 3800 line 1v path remains open.
+
 The Form 8835 source calculation now rejects electricity sold on or after the
 tenth anniversary of the facility's placed-in-service date, including a 2025
 period that crosses that boundary. The same calculation feeds Form 3800 and

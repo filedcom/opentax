@@ -118,6 +118,14 @@ export const inputSchema = z.object({
   }
   const entities = new Set<string>();
   input.pass_through_credits?.forEach((entry, index) => {
+    if (entry.source_type === "estate" || entry.source_type === "trust") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pass_through_credits", index, "source_type"],
+        message:
+          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+      });
+    }
     const id = `${entry.source_type}:${entry.entity_ein}`;
     if (entities.has(id)) {
       ctx.addIssue({

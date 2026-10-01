@@ -715,7 +715,7 @@ export function reconcilePairedForm8889(
       : [];
   });
   if (
-    pairedRollovers.length > 1 || pairedCode2Owners.length > 1 ||
+    pairedCode2Owners.length > 1 ||
     pairedPriorExcessOwners.length > 1 ||
     (pairedPriorExcessOwners.length > 0 &&
       (!selfOnly || pairedRollovers.length > 0 ||
@@ -894,6 +894,38 @@ export function reconcilePairedForm8889(
       const value = form[key];
       return total + (typeof value === "number" ? value : 0);
     }, 0);
+  const twoOwnerRollovers = pairedRollovers.length === 2;
+  if (
+    twoOwnerRollovers &&
+    (!owners.every((owner) =>
+      fullYearCoverage(
+        owner.eligible_hdhp_coverage_by_month,
+        CoverageType.SelfOnly,
+      ) &&
+      owner.age_65_exception_evidence === undefined &&
+      owner.disability_exception_evidence === undefined &&
+      owner.qualified_medical_expenses === undefined &&
+      owner.testing_period_failure === undefined
+    ) ||
+      forms.some((form) => {
+        const rolled = form.print_line14b_excluded_distributions;
+        const taxable = form.print_line16_taxable;
+        return typeof rolled !== "number" || rolled <= 0 ||
+          typeof taxable !== "number" || taxable <= 0;
+      }) ||
+      (schedule1.line10_total_additional_income ?? 0) !==
+        sum("print_line16_taxable") ||
+      form1040.line8_additional_income !==
+        schedule1.line10_total_additional_income ||
+      (schedule2.line8_form5329_tax ?? 0) !== 0 ||
+      (schedule2.line17d_hsa_eligibility_tax ?? 0) !== 0 ||
+      form1040.line23_other_taxes !==
+        (schedule2.line17c_hsa_penalty ?? 0))
+  ) {
+    throw new Error(
+      "Form 8889 two-owner rollover needs separate full-year self-only sources and matching Schedule 1/2 and Form 1040 totals",
+    );
+  }
   if (
     (schedule1.line13_hsa_deduction ?? 0) !== sum("print_line13_deduction") ||
     (schedule1.line8f_hsa_income ?? 0) !==

@@ -1,10 +1,13 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
-import { scheduleJ, type ScheduleJFields } from "../2025/mef/forms/schedule_j.ts";
+import {
+  scheduleJ,
+  type ScheduleJFields,
+} from "../2025/mef/forms/schedule_j.ts";
 import { scheduleJPdf } from "../2025/pdf/forms/schedule_j.ts";
 
 const ordinary = {
@@ -159,10 +162,15 @@ function fishingInputs() {
 }
 
 Deno.test("Schedule J one-source fishing election reaches Form 1040, native and PDF", () => {
-  const result = execute(buildExecutionPlan(registry), registry, fishingInputs(), {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fishingInputs(),
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
   assertEquals(result.diagnostics, []);
   const lines = result.pending.schedule_j as ScheduleJFields;
   assertEquals(lines.line2a, 15_000);
@@ -187,22 +195,129 @@ Deno.test("Schedule J fishing evidence cannot be swapped onto another business",
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.pending.schedule_j, undefined);
-  assertEquals(result.diagnostics.some((entry) =>
-    entry.nodeType === "schedule_c" &&
-    entry.message.includes("matching Schedule C business")
-  ), true);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_c" &&
+      entry.message.includes("matching Schedule C business")
+    ),
+    true,
+  );
 });
 
 Deno.test("Schedule J one-business fishing profit without catch evidence stays closed", () => {
   const input = fishingInputs();
-  const { schedule_j_fishing_evidence: _evidence, ...scheduleC } = input.schedule_c;
+  const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
+    input.schedule_c;
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
     schedule_c: scheduleC,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.pending.schedule_j, undefined);
-  assertEquals(result.diagnostics.some((entry) =>
-    entry.nodeType === "schedule_j_calculation" &&
-    entry.message.includes("line3_schedule_c")
-  ), true);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_j_calculation" &&
+      entry.message.includes("line3_schedule_c")
+    ),
+    true,
+  );
+});
+
+function mixedInputs() {
+  return {
+    ...inputs(),
+    schedule_c: fishingInputs().schedule_c,
+  };
+}
+
+Deno.test("Schedule J combines one farm and one sourced fishing business into Form 1040 and both filing outputs", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    mixedInputs(),
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
+  const lines = result.pending.schedule_j as ScheduleJFields;
+  assertEquals(lines.line2a, 15_000);
+  assertEquals(result.pending.f1040?.line16_income_tax, lines.line23);
+  assert(
+    scheduleJ.build(lines, { pending: result.pending }).includes(
+      "<ElectedFarmIncomeAmt>15000</ElectedFarmIncomeAmt>",
+    ),
+  );
+  assertEquals(
+    scheduleJPdf.projectFields?.(lines, result.pending)?.line23,
+    lines.line23,
+  );
+});
+
+Deno.test("Schedule J mixed election rejects an unclassified fishing source", () => {
+  const input = mixedInputs();
+  const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
+    input.schedule_c;
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...input,
+    schedule_c: scheduleC,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_j_calculation" &&
+      entry.message.includes("line3_schedule_c")
+    ),
+    true,
+  );
+});
+
+Deno.test("Schedule J mixed election rejects unrelated AGI", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...mixedInputs(),
+    f1099int: [{
+      payer_name: "Bank",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      box1: 100,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_j_calculation" &&
+      entry.message.includes("mixed election cannot include")
+    ),
+    true,
+  );
+});
+
+Deno.test("Schedule J mixed native and PDF exports reject a changed Form 1040 tax", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    mixedInputs(),
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  const lines = result.pending.schedule_j as ScheduleJFields;
+  const pending = {
+    ...result.pending,
+    f1040: {
+      ...result.pending.f1040,
+      line16_income_tax: lines.line23 + 1,
+    },
+  };
+  assertThrows(
+    () => scheduleJ.build(lines, { pending }),
+    Error,
+    "Schedule J must reconcile to Form 1040 lines 15 and 16",
+  );
+  assertThrows(
+    () => scheduleJPdf.projectFields?.(lines, pending),
+    Error,
+    "Schedule J PDF needs lines 1 and 23",
+  );
 });

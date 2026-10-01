@@ -98,6 +98,17 @@ function reconcilePassiveOrphanDrugSources(
   >["sourceAllocations"],
   context: MefBuildContext,
 ): void {
+  if (
+    sourceAllocations.some((source) =>
+      source.form3800_credit_line === "1h" &&
+      (source.source_origin.kind === PassiveCreditSourceOrigin.Estate ||
+        source.source_origin.kind === PassiveCreditSourceOrigin.Trust)
+    )
+  ) {
+    throw new Error(
+      "Form 8582-CR estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+    );
+  }
   if (!context.documentIdsByPendingKey) return;
   if (!context.pending) {
     throw new Error("Form 8582-CR source evidence needs the filed return");

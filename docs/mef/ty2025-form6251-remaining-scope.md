@@ -103,7 +103,10 @@ the complete Schedule D audit must contain exactly those unadjusted rows and
 no other capital activity. The regular net capital gain must equal the audited
 regular sum, while Part III uses the separate positive AMT sum after the
 short-term offset. The signed basis difference also reaches native line 2k and
-the PDF. Positive and mismatched-net fixtures are authored for the deferred
+the PDF. The symmetric case of identified long-term losses offset by
+short-term gains is also accepted when both complete totals stay positive;
+its audited regular and AMT preferential net capital gain is zero, so Part III
+does not print. Positive and mismatched-net fixtures are authored for the deferred
 batch. Net losses, sign-changing rows, other capital activity, special-rate
 gains, Form 4952 elections, and qualified dividends remain closed. See the
 [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)

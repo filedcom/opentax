@@ -2363,56 +2363,42 @@ Deno.test("nonpassive partnership and S-corporation code K route through a norma
   );
 });
 
-Deno.test({
-  name:
-    "XSD: direct estate orphan-drug code M files Form 3800 without Form 8820",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
-  const xml = buildMefXml(
-    {
-      f1040: { line16_income_tax: 1_000 },
-      schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
-      k1_trust: {
-        k1_trusts: [{
-          estate_trust_name: "Clinical estate",
-          entity_type: "estate",
-          estate_trust_ein: "123456789",
-          source_document_reference: "2025 Estate K-1",
-          box13_code_m_orphan_drug_credit: 500,
-          orphan_drug_credit_subject_to_passive_activity_limit: false,
-        }],
-      },
-      f3800: {
-        f8820_k1_credit_entries: [{
-          source_type: "estate",
-          source_ein: "123456789",
-          source_document_reference: "2025 Estate K-1",
-          credit_amount: 500,
-          subject_to_passive_activity_limit: false,
-        }],
-        tax_context: {
-          filingStatus: FilingStatus.Single,
-          regularTax: 1_000,
-          alternativeMinimumTax: 0,
-          foreignTaxCredit: 0,
-          priorAllowableCredits: 0,
-          tentativeMinimumTax: 0,
-          standardCredit: 500,
-          specifiedCredit: 0,
-          standardCarryforward: 0,
-          specifiedCarryforward: 0,
-        },
-        allowed_credit: 500,
-      },
-    } satisfies MefFormsPending & { k1_trust: unknown },
-    extractFilerIdentity(singleGeneral()),
+Deno.test("MeF rejects estate K-1 code M on Form 3800 orphan-drug line", () => {
+  assertThrows(
+    () =>
+      buildMefXml(
+        {
+          f1040: { line16_income_tax: 1_000 },
+          schedule3: { line6a_total: 500, line7_total: 500 },
+          form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
+          f3800: {
+            f8820_k1_credit_entries: [{
+              source_type: "estate",
+              source_ein: "123456789",
+              source_document_reference: "2025 Estate K-1",
+              credit_amount: 500,
+              subject_to_passive_activity_limit: false,
+            }],
+            tax_context: {
+              filingStatus: FilingStatus.Single,
+              regularTax: 1_000,
+              alternativeMinimumTax: 0,
+              foreignTaxCredit: 0,
+              priorAllowableCredits: 0,
+              tentativeMinimumTax: 0,
+              standardCredit: 500,
+              specifiedCredit: 0,
+              standardCarryforward: 0,
+              specifiedCarryforward: 0,
+            },
+            allowed_credit: 500,
+          },
+        } satisfies MefFormsPending,
+        extractFilerIdentity(singleGeneral()),
+      ),
+    Error,
+    "clean electricity investment credit",
   );
-  assertStringIncludes(xml, "<IRS3800 ");
-  assertEquals(xml.includes("<IRS8820 "), false);
-  await validateXsd(xml, "direct estate orphan-drug K-1 code M");
 });
 
 Deno.test({

@@ -344,7 +344,7 @@ Deno.test("Form 8582-CR passive New Markets Credit matches the K-1 code ZZ state
   );
 });
 
-Deno.test("Form 8582-CR estate orphan-drug credit matches K-1 code M", () => {
+Deno.test("Form 8582-CR rejects estate K-1 code M as orphan-drug credit", () => {
   const source = {
     ...otherCredit,
     source_origin: {
@@ -359,44 +359,11 @@ Deno.test("Form 8582-CR estate orphan-drug credit matches K-1 code M", () => {
     regular_tax_all_income: 10_000,
     regular_tax_without_passive: 9_000,
   };
-  const allocation = calculateForm8582CR(inputSchema.parse(input))
-    .sourceAllocations[0];
-  const context = {
-    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
-    pending: {
-      f3800: { passive_source_allocations: [allocation] },
-      k1_trust: {
-        k1_trusts: [{
-          estate_trust_name: "Clinical estate",
-          entity_type: "estate",
-          estate_trust_ein: "123456789",
-          source_document_reference: "2025 Estate K-1",
-          box13_code_m_orphan_drug_credit: 1_500,
-          orphan_drug_credit_subject_to_passive_activity_limit: true,
-        }],
-      },
-    },
-  };
-  assertStringIncludes(
-    form8582cr.build(input, context),
-    "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
-  );
+  assertEquals(inputSchema.safeParse(input).success, false);
   assertThrows(
-    () =>
-      form8582cr.build(input, {
-        ...context,
-        pending: {
-          ...context.pending,
-          k1_trust: {
-            k1_trusts: [{
-              ...context.pending.k1_trust.k1_trusts[0],
-              box13_code_m_orphan_drug_credit: 1_499,
-            }],
-          },
-        },
-      }),
+    () => form8582cr.build(input, {}),
     Error,
-    "does not reconcile to K-1 box 13 code M",
+    "clean electricity investment credit",
   );
 });
 

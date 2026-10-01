@@ -235,6 +235,30 @@ export const inputSchema = z.object({
   // MFS filers who lived with their spouse cannot use Parts II-IV.
   filing_status: filingStatusSchema.optional(),
 }).superRefine((input, ctx) => {
+  input.credit_sources.forEach((source, index) => {
+    if (
+      source.form3800_credit_line === "1h" &&
+      (source.source_origin.kind === PassiveCreditSourceOrigin.Estate ||
+        source.source_origin.kind === PassiveCreditSourceOrigin.Trust)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["credit_sources", index],
+        message:
+          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+      });
+    }
+  });
+  input.required_orphan_drug_k1_credits?.forEach((source, index) => {
+    if (source.source_type === "estate" || source.source_type === "trust") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_orphan_drug_k1_credits", index],
+        message:
+          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+      });
+    }
+  });
   if (input.regular_tax_without_passive > input.regular_tax_all_income) {
     ctx.addIssue({
       code: "custom",

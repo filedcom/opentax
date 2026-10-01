@@ -5,6 +5,13 @@ gap, not an approved exclusion. Do not print a partial Form 8582-CR from its
 native MeF calculation until the source, final-return and carryforward joins
 below are complete.
 
+Estate and trust K-1 box 13 code M is a clean electricity investment credit
+under the [2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1).
+The former passive orphan-drug claim through Form 8582-CR is now rejected at
+the activity and required-source input, and native export repeats the gate.
+Rejection fixtures are authored for the deferred batch. A separate Form 3468
+Part V source and Form 3800 line 1v chain is still needed for a positive claim.
+
 The [official Form 8582-CR](https://www.irs.gov/pub/irs-pdf/f8582cr.pdf) is the
 December 2024 revision used with the
 [December 2025 instructions](https://www.irs.gov/instructions/i8582cr). The
