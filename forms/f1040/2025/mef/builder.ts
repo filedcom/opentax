@@ -11,6 +11,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertEitcChildSources,
   assertF1040SourceIdentity,
+  assertGeneral1040HeaderSource,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
   assertKReportedErrorSources,
@@ -242,6 +243,7 @@ function buildReturnXml(
   if (pending.f1040) {
     assertF1040SourceIdentity(pending.f1040, filer);
   }
+  assertGeneral1040HeaderSource(pending);
   assert1099RRecipientOwner(pending.f1099r, filer);
   assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);

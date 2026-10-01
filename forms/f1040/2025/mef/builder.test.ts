@@ -773,6 +773,39 @@ Deno.test("Form 1040 MeF preserves the digital-asset answer", () => {
   );
 });
 
+Deno.test("Form 1040 MeF replays retained general status and digital-assets source", () => {
+  const source = {
+    filing_status: NodeFilingStatus.Single,
+    digital_assets: true,
+  };
+  const xml = buildMefXml({
+    general: source,
+    f1040: { filing_status: "single", digital_assets: true },
+  }, sampleFiler());
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: source,
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "digital-assets answer differs from the retained general source",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: { filing_status: NodeFilingStatus.MFJ },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "filing status differs from the retained general source",
+  );
+});
+
 Deno.test("Form 1040 MeF rejects a filing status that conflicts with the header", () => {
   assertThrows(
     () => buildMefXml({ f1040: { filing_status: "mfj" } }, sampleFiler()),

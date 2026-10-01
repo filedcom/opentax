@@ -1092,3 +1092,25 @@ export function assertF1040FinalHeader(
     throw new Error("Form 1040 export needs the digital-assets answer");
   }
 }
+
+/** Keep the filed header answers tied to the retained general input. */
+export function assertGeneral1040HeaderSource(
+  pending: Record<string, unknown>,
+): void {
+  const general = pending.general as Record<string, unknown> | undefined;
+  const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+  if (!general || !f1040) return;
+  if (general.filing_status !== f1040.filing_status) {
+    throw new Error(
+      "Form 1040 filing status differs from the retained general source",
+    );
+  }
+  if (
+    typeof general.digital_assets === "boolean" &&
+    general.digital_assets !== f1040.digital_assets
+  ) {
+    throw new Error(
+      "Form 1040 digital-assets answer differs from the retained general source",
+    );
+  }
+}

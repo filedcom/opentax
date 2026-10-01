@@ -113,6 +113,18 @@ Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async 
   );
 });
 
+Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        general: { filing_status: FilingStatus.Single, digital_assets: true },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, mockFiler),
+    Error,
+    "digital-assets answer differs from the retained general source",
+  );
+});
+
 Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
   await assertRejects(
     () =>
