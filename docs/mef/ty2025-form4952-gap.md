@@ -352,8 +352,25 @@ written but unrun. The [1099-INT instructions](https://www.irs.gov/instructions/
 place taxable U.S. Savings Bond and Treasury-obligation interest in box 3;
 the [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
 includes investment-property interest on line 4a. Adjusted bonds, foreign
-items, OID and dividends mixed with the K-1 expense, and loan tracing remain
-outside this bounded slice.
+items, dividends mixed with the K-1 expense, and loan tracing remain outside
+this bounded slice.
+
+The same K-1 code H route now also accepts affirmatively held investment
+property reported as unadjusted taxable Form 1099-OID box 1 income, alone or
+alongside unadjusted domestic Form 1099-INT boxes 1/3. Each raw payer amount
+must match one Form 4952 interest-source amount; their total must match line 4a
+and finalized Form 1040 line 2b. The K-1 code H amount remains the sole line 1
+source, and line 8 must match Schedule A line 9 and the selected itemized
+Form 1040 total. Native MeF and PDF replay the same source and final-return
+checks. The [IRS 1099-OID instructions](https://www.irs.gov/instructions/i1099int)
+identify box 1 as taxable OID, and the
+[2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf) includes
+taxable interest from property held for investment on line 4a. An authored
+full-return OID case and focused OID/INT positive, adjusted-OID,
+unclassified-property, missing-source, and changed-Form-1040 fixtures await
+the implementation batch. Treasury or tax-exempt OID, market discount,
+acquisition/bond premium, foreign items, K-1 code B, source-byte
+authentication, and wider combinations remain closed.
 
 ## Partnership K-1 expense against Form 1099-DIV income
 

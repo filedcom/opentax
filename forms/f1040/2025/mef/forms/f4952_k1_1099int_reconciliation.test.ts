@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099int } from "../../../nodes/inputs/f1099int/index.ts";
+import { f1099oid } from "../../../nodes/inputs/f1099oid/index.ts";
 import { k1Partnership } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { calculateForm4952 } from "../../../nodes/intermediate/forms/form4952/index.ts";
 import { form4952Pdf } from "../../pdf/forms/f4952.ts";
@@ -114,6 +115,85 @@ Deno.test("Form 4952 limits K-1 code H expense against plain box 3 Treasury inte
     () => form4952Pdf.projectFields?.(fields, adjustedPending),
     Error,
     "unadjusted domestic 1099-INT box 1/3",
+  );
+});
+
+Deno.test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone or with 1099-INT", () => {
+  const oidPayer = {
+    payer_name: "Taxable OID Bond",
+    box1_oid: 500,
+    investment_property_for_form4952: true,
+  };
+  const oidPending = {
+    ...pending,
+    f1099int: undefined,
+    f1099oid: { f1099oids: [oidPayer] },
+  };
+  const oidSource = f1099oid.compute(
+    { taxYear: 2025, formType: "f1040" },
+    oidPending.f1099oid,
+  );
+  assertEquals(
+    oidSource.outputs.find((entry) => entry.nodeType === "form4952")
+      ?.fields.source_1099_interest,
+    500,
+  );
+  assertStringIncludes(
+    build(fields, { pending: oidPending }),
+    "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(form4952Pdf.projectFields?.(fields, oidPending), fields);
+  const mixedInputs = {
+    ...inputs,
+    source_1099_interest: [500, 250],
+  };
+  const mixedFields = { ...mixedInputs, ...calculateForm4952(mixedInputs) };
+  const mixedPending = {
+    ...pending,
+    f1099oid: { f1099oids: [{ ...oidPayer, box1_oid: 250 }] },
+    f1040: { ...pending.f1040, line2b_taxable_interest: 750 },
+  };
+  assertStringIncludes(
+    build(mixedFields, { pending: mixedPending }),
+    "<InvestmentPropGrossIncomeAmt>750</InvestmentPropGrossIncomeAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields?.(mixedFields, mixedPending),
+    mixedFields,
+  );
+  for (
+    const changed of [
+      { ...oidPayer, box6_acquisition_premium: 1 },
+      { ...oidPayer, investment_property_for_form4952: false },
+    ]
+  ) {
+    const altered = { ...oidPending, f1099oid: { f1099oids: [changed] } };
+    assertThrows(
+      () => build(fields, { pending: altered }),
+      Error,
+      "supports only identified code H K-1 expenses",
+    );
+    assertThrows(
+      () => form4952Pdf.projectFields?.(fields, altered),
+      Error,
+      "supports only identified code H K-1 expenses",
+    );
+  }
+  assertThrows(
+    () => build(fields, { pending: { ...oidPending, f1099oid: undefined } }),
+    Error,
+    "needs its sources",
+  );
+  assertThrows(
+    () =>
+      build(fields, {
+        pending: {
+          ...oidPending,
+          f1040: { ...pending.f1040, line2b_taxable_interest: 499 },
+        },
+      }),
+    Error,
+    "differs from finalized Schedule A and Form 1040",
   );
 });
 

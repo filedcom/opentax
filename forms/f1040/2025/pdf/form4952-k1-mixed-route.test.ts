@@ -40,6 +40,18 @@ for (
       qualified: 0,
     },
     {
+      name: "1099-OID",
+      payer: {
+        f1099oid: [{
+          payer_name: "Taxable OID Bond",
+          box1_oid: 500,
+          investment_property_for_form4952: true,
+        }],
+      },
+      gross: 500,
+      qualified: 0,
+    },
+    {
       name: "1099-DIV",
       payer: {
         f1099div: [{
@@ -90,7 +102,7 @@ for (
     assertEquals(result.pending.form4952.line8, 300);
     assertEquals(result.pending.schedule_a.line_9_investment_interest, 300);
     assertEquals(result.pending.f1040.line12e_itemized_deductions, 18_300);
-    if (source.name === "1099-INT") {
+    if (source.name === "1099-INT" || source.name === "1099-OID") {
       assertEquals(result.pending.f1040.line2b_taxable_interest, 500);
     } else {
       assertEquals(result.pending.f1040.line3a_qualified_dividends, 100);
