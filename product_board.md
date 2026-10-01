@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **673 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **675 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -27,10 +27,10 @@ failed run is diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 147-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
+| Automated and artifact validation | 5 | A 148-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 673 bounded routes and
+**Implemented coverage.** The completed ledger records 675 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -82,7 +82,7 @@ property allocation.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
-now has 147 source fixtures, 67 of 112 unique registered PDF keys represented,
+now has 148 source fixtures, 67 of 112 unique registered PDF keys represented,
 and a deterministic per-page review manifest; the 45 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
@@ -148,9 +148,10 @@ benefit on line 6a and rejects a claimed prior-year election until its
 Publication 915 worksheets and line 6b/6c route can be verified.
 The core PDF audit still needs a source-reconciled line 1h income-type label
 for foreign employer and other earned-income combinations; standalone FEC
-also lacks the native wage-statement source link. It also needs a final
-projection of the retained ACTC opt-out election on line 28; those are open
-within the Form 1040 core-return and PDF parents below.
+also lacks the native wage-statement source link. The retained ACTC opt-out
+now reaches the Form 1040 line 28 native indicator and PDF checkbox, and
+conflicting Form 8812 item answers reject. The wider core-return and PDF
+parents below remain open.
 Form 8288-A withholding now deposits to Form 1040 line 25c, with a retained
 source lower-bound check at final native/PDF export.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
@@ -277,7 +278,7 @@ These gates and a filing-ready release remain open.
 - [ ] Finish the non-named implementation and coverage decisions for this phase before the agreed single full-batch gate. The 20 named-form parent gaps are deferred to the following phase; existing focused cases and historical passes are not evidence for the current worktree.
 - [ ] Run `deno task test` as the full batch for this phase after its retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until this phase passes.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the locally cached TY2025 IRS schema, recording its provenance and digest. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the 147 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the 148 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery
