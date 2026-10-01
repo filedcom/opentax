@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **667 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **668 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 146-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 667 bounded routes and
+**Implemented coverage.** The completed ledger records 668 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -96,6 +96,8 @@ Prepared bundle parity now rechecks the XML digest and every attachment's
 metadata and PDF bytes before PDF projection or submission archiving.
 Prepared MeF/A2A validation now also checks Form 1040 first, document IDs and
 references, and XML/header attachment counts against the retained inventory.
+Native MeF assembly now also rejects colliding document IDs before serialization
+and derives binary-attachment references through the same ID function.
 Reopening an archived outbound A2A submission now also replays document order,
 counts, IDs, references, and PDF attachment entries against its stored ZIP.
 Recording outbound Send evidence now rejects malformed or misidentified inner
