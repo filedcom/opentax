@@ -9,6 +9,7 @@ import {
 import { isSupportedForm2106Route } from "./form2106_staged.ts";
 import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
 import { reconcileForm8941DocumentSource } from "./mef/forms/f8941_source.ts";
+import { reconcileForm8994DocumentSource } from "./form8994_source.ts";
 import {
   calculateForm8881,
   inputSchema as f8881InputSchema,
@@ -212,12 +213,6 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     reason:
       "Form 8908 line 1p needs registered native/PDF Form 8908 and per-residence Form 7220 attachment support",
     isActive: (fields) => fields.f8908_credit !== undefined,
-  },
-  {
-    pendingKey: "f8994",
-    exportKinds: ["mef", "pdf"],
-    reason: "Form 8994 paid-leave credit needs a native attachment",
-    isActive: (fields) => nonempty(fields.employees),
   },
   {
     pendingKey: "f1310",
@@ -447,6 +442,20 @@ export function assertAttachmentCoverage(
     } catch (cause) {
       throw new Error(
         `[${exportKind.toUpperCase()}] Form 8941 needs a reconciled direct Schedule C source, Form 3800 allocation, and premium deduction; export blocked`,
+        { cause },
+      );
+    }
+  }
+  const hasForm8994Credit = form3800 !== null &&
+    typeof form3800 === "object" &&
+    ("f8994_direct_employer_credit" in form3800 ||
+      "form8994_applied_credit" in form3800);
+  if (byKey.f8994 !== undefined || hasForm8994Credit) {
+    try {
+      reconcileForm8994DocumentSource(byKey.f8994, byKey);
+    } catch (cause) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8994 needs a reconciled direct Schedule C source, Form 3800 allocation, and wage deduction; export blocked`,
         { cause },
       );
     }
