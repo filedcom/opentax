@@ -64,6 +64,14 @@ combined-income guard replays each payer against Form 1040 and Schedule A.
 A full-return positive and duplicate-reference tamper fixture are authored
 for the deferred batch. Source bytes and larger payer inventories remain open.
 
+The one-loan route also accepts one unadjusted 1099-INT box 1 payer and two
+ordinary 1099-DIV box 1a payers. The dividend sources must carry distinct
+document references and payer names. Native and PDF export compare both
+dividend amounts with the retained Form 4952 input, while the combined-income
+guard reconciles all three payers, Schedule A, and Form 1040. A full-return
+positive and duplicate-dividend-source tamper fixture are authored for the
+deferred batch. Issuer and lender source bytes remain unauthenticated.
+
 The same single loan can pair one unadjusted taxable Form 1099-OID box 1 payer
 with the ordinary Form 1099-DIV payer. The combined source guard verifies the
 OID and dividend totals against the final return before native or PDF export;
