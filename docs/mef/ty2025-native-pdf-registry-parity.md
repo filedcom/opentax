@@ -4,7 +4,7 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **138 native descriptors and 103 PDF
+exclusion. The indexes currently hold **138 native descriptors and 105 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
 
@@ -14,15 +14,13 @@ These registered native routes can emit an in-scope taxpayer form but have no
 corresponding registered PDF descriptor. The PDF preflight now stops the active
 native-only forms listed below instead of silently omitting them from a
 printable packet. That stop is a temporary safety boundary, not a completed PDF
-path or evidence that the native XML is invalid. The Form 8826 source audit
-found expenditure-level evidence and no-double-benefit checks still missing.
+path or evidence that the native XML is invalid. Form 8826 now has a bounded
+interpreter-expense and Schedule C reduction route; wider sources remain open.
 
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f965`                  | `IRS965A`                   | No Form 965-A PDF. Source includes prior-year liability/payment and transfer history that still needs independent review.                                  |
 | `form8621`              | `IRS8621`                   | No PFIC Form 8621 PDF or Part V excess-distribution statement print route.                                                                                 |
 | `f4255`                 | `IRS4255`                   | No investment-credit recapture PDF.                                                                                                                        |
-| `f8826`                 | `IRS8826`                   | No direct-claim disabled-access-credit PDF. Pass-through-only credits are a separate Form 3800 route and do **not** require the recipient's own Form 8826. |
 | `f8854`, `f8854_annual` | `IRS8854` initial or annual | Neither filed variant has a Form 8854 PDF descriptor. The native initial/annual statements do not substitute for the parent printed form.                  |
 
 Native-only supporting statements, payer-issued documents (`w2`, `f1099r`,
@@ -32,6 +30,11 @@ require their own packet/attachment decision; they are not included in the
 priority-1 count. The table is an exact list of the _parent taxpayer-form_
 parity gaps found in this comparison, not every difference between pending-key
 lists.
+
+The registered Form 8826 PDF covers one sourced self-earned nonpassive
+interpreter-service claim. Pass-through-only credits remain on Form 3800
+without a recipient Form 8826; mixed, passive, and controlled-group variants
+remain open in the [Form 8826 PDF gap](ty2025-form8826-pdf-gap.md).
 
 The later W-2G route now has a registered recipient Copy B PDF descriptor and
 an inspected five-page synthetic packet. It reproduces reviewed source facts;
@@ -43,6 +46,12 @@ that reconciles native recapture totals with Schedule 2 line 16. Positive
 printable export stays closed until the historical Forms 8586/8609/8609-A/8611
 or issuer K-1 credit and interest records can be verified. Its authored
 source/native/PDF fixtures await the implementation-first bulk gate.
+
+Form 965-A now has a registered PDF projection for one original installment
+liability, its eight historical payments, and the current Schedule 2 line 20
+amount. Positive printable export stays closed until prior filed liability and
+payment records are independently verified; transfers and adjustments remain
+open. Its source/native/PDF fixtures await the bulk gate.
 
 Form 3468's bounded trust-owned Part V route now has both registered
 descriptors. Form 8992, its Schedule A, and Form 5471 page 1/A/B/C/F/G/I plus

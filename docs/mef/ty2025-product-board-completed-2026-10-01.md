@@ -393,6 +393,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Native MeF and PDF parity
 
+- [x] Register a bounded Form 965-A PDF projection for one unadjusted original 2017–2020 installment liability: print its preprinted-year row, eight historical payments, unpaid/current totals, and reconcile native/PDF amounts to finalized Schedule 2 line 20. Positive and liability/payment/return tamper fixtures are authored for deferred validation. PDF export remains closed until the prior filed liability and actual payment records are independently verified; transfer, adjustment, and wider histories remain open. See the [PDF gap](ty2025-form965a-pdf-gap.md).
+
 - [x] Re-derive every bounded Form 8621 Part V excess-distribution event in the native holding-period statement and add a source-checked printable supporting statement with foreign-currency explanation and continuation pages. Positive and event/interest/identity tamper fixtures are authored for deferred validation. The parent Form 8621 PDF remains unregistered pending corporation, share-class, and election facts on page 1; positive packet export remains closed. See the [PDF gap](ty2025-form8621-pdf-gap.md).
 
 - [x] Register a bounded Form 8611 PDF projection with one page per identified LIHTC building, duplicate-building-ID rejection, and a native/PDF line-14 total matching Schedule 2 line 16. Source, native, PDF, and tamper fixtures are authored for deferred validation. Printable export remains closed until historical Forms 8586/8609/8609-A/8611 or issuer K-1 credit and interest records are authenticated; wider building events and ATS remain open. See the [PDF gap](ty2025-form8611-pdf-gap.md).

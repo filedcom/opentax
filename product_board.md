@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **338 completed bounded items** and their exact limits live in the
+The **339 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -16,7 +16,7 @@ coverage decision, or release gate.
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 34 | Return-wide joins and source classification remain incomplete. |
 | Named tax-form gaps | 20 | 290 | Many sourced form slices exist; the listed parent form paths remain open. |
-| Native MeF and PDF parity | 3 | 13 | Registry, attachment, and printable-output parity remain open. |
+| Native MeF and PDF parity | 3 | 14 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
 
@@ -28,15 +28,15 @@ calculations, native MeF, PDF projection, and authored positive or tamper cases
 for each completed slice. Recent work includes three-country Form 1116 income,
 two-owner Form 8889 distributions and rollovers, Form 6251 capital-basis and
 AMT adjustments, Form 3800 mixed and Form 8826 sourced credits, Form 5471
-Schedule G answers, Form 4255 and Form 8854 prior-source prerequisites, a
-Form 8621 Part V printable statement, and a Form 8962 shared policy with a
-claimed dependent and another tax family.
+Schedule G answers, Form 4255 and Form 8854 prior-source prerequisites,
+guarded Form 8611 and Form 965-A PDFs, a Form 8621 Part V printable statement,
+and a Form 8962 shared policy with a claimed dependent and another tax family.
 Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
-descriptors, 103 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
+descriptors, 104 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
 literals, 99 without) with the form audit and applicability crosswalk. Set
 the ownership and workflow boundaries for entity-associated attachments,
 amendments, payment/account forms, and optional filing forms. Resolve whether
