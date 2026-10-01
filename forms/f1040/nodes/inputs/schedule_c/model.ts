@@ -149,6 +149,18 @@ export const itemSchema = z.object({
 
   // Part V: Other Expenses detail
   part_v_other_expenses: z.array(otherExpenseSchema).optional(),
+  // One current-year mining expense deducted in Part V and amortized over
+  // ten years for AMT. Earlier vintages and property-loss limits need their
+  // own basis workpapers.
+  amt_mining_cost_workpaper: z.object({
+    property_reference: z.string().trim().min(1),
+    reviewed_workpaper_reference: z.string().trim().min(1),
+    expense_description: z.string().trim().min(1),
+    paid_or_incurred_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    mining_exploration_or_development_verified: z.literal(true),
+    regular_ten_year_writeoff_not_elected: z.literal(true),
+    no_unamortized_property_loss: z.literal(true),
+  }).strict().optional(),
 });
 
 export const inputSchema = z.object({

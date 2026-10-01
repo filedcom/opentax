@@ -6,6 +6,7 @@ import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
 import { assertPriorIsoSaleExport } from "../../form6251_prior_iso_sale.ts";
 import { assertForm6251Form4952Line2c } from "../../form6251_4952_reconciliation.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
+import { assertForm6251MiningSource } from "../../../nodes/inputs/schedule_c/mining.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
 import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
@@ -29,6 +30,7 @@ export interface Fields {
   line2j_estates_and_trusts?: number | null;
   line2k_disposition?: number | null;
   line2o_circulation_costs?: number | null;
+  line2q_mining_costs?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
   amti?: number | null;
@@ -98,6 +100,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line2k_disposition", "PropertyDispositionAmt"],
   ["depreciation_adjustment", "DepreciationAmt"],
   ["line2o_circulation_costs", "CirculationCostAmt"],
+  ["line2q_mining_costs", "MiningCostsAmt"],
   ["amti", "AlternativeMinTaxableIncomeAmt"],
   ["exemption", "AlternativeMinimumTaxExemptAmt"],
   ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
@@ -168,6 +171,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
     context?.filer?.filingStatus === FilingStatus.Single,
   );
   assertForm6251CirculationSource(fields, context?.pending);
+  assertForm6251MiningSource(fields, context?.pending);
   assertForm6251DepletionSource(fields, context?.pending);
   assertForm6251DepreciationSource(fields);
   assertForm6251TrustSource(fields, context?.pending);
