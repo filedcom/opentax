@@ -264,6 +264,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Reconcile one identified Schedule C business and one nonnominee issued Form 1099-DIV with box 1a at most $1,500 and positive box 1b: the qualified dividend feeds Form 8995 lines 12–14's income limit, Form 1040 lines 3a/3b/13, native XML, and PDF. Positive and issuer/source/return/prepared-line tamper fixtures are authored for deferred validation; multiple issuers, REIT mixes, larger Schedule B, capital gains, carryforwards, and source-byte authentication remain open.
 
+- [x] Reconcile separate full-share MFJ spouse Form 4972 elections from distinct identified 1099-Rs and plans: one Part-II-only capital-gain election places ordinary box 2a less box 3 on Form 1040 line 5b; one Part-III-only ten-year election adds no pension income; both special taxes sum to line 16 and print as separate native/PDF copies. Positive and source/return tamper fixtures are authored for deferred validation; eligibility bytes, partial shares, NUA, death/estate, other distributions, and AMT interaction remain open.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
