@@ -778,9 +778,7 @@ function reconciledForm2210FBoxB(
     );
   }
   if (
-    line23 !== 0 || (input.line23_other_taxes ?? 0) !== 0 ||
     (input.form8978_schedule2_line17z_reduction ?? 0) !== 0 ||
-    source.current_included_schedule2_taxes !== 0 ||
     line32 !== 0 ||
     source.current_line4_refundable_credits_excluding_schedule3_line11 !== 0 ||
     (input.line26_estimated_tax ?? 0) !== 0 ||
@@ -788,15 +786,16 @@ function reconciledForm2210FBoxB(
     source.current_excess_social_security_or_rrta_withholding !== 0
   ) {
     throw new Error(
-      "Form 2210-F box B public route currently needs no Schedule 2 other tax, refundable credit, estimated payment, or excess Social Security withholding",
+      "Form 2210-F box B public route currently needs no refundable credit, estimated payment, excess Social Security withholding, or section 965 reduction",
     );
   }
   if (
     source.current_line22_tax_after_credits !== Math.round(line22) ||
+    source.current_included_schedule2_taxes !== Math.round(line23) ||
     source.current_withholding !== Math.round(line25d)
   ) {
     throw new Error(
-      "Form 2210-F current tax or withholding does not match the finalized Form 1040",
+      "Form 2210-F current tax, Schedule 2 tax, or withholding does not match the finalized Form 1040",
     );
   }
   const lines = calculateForm2210FBoxB(source);
