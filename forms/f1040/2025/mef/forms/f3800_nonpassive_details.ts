@@ -17,6 +17,7 @@ export type Form3800NonpassiveDetailRow = {
     | "1ee"
     | "3"
     | "4b"
+    | "4h"
     | "4e";
   readonly credit: number;
   readonly appliedCredit: number;
@@ -41,6 +42,7 @@ const detailTag: Record<Form3800NonpassiveDetailRow["line"], string> = {
   "1ee": "Frm8881PartIIICYAggrgtAmtGrp",
   "3": "Frm8844CYAggrgtAmtGrp",
   "4b": "Frm5884CYAggrgtAmtGrp",
+  "4h": "Frm8941CYAggrgtAmtGrp",
   "4e": "Frm8835PartIICYSpcfdAmtGrp",
 };
 
@@ -60,6 +62,7 @@ const sourceDocumentName: Record<Form3800NonpassiveDetailRow["line"], string> =
     "1ee": "IRS8881",
     "3": "IRS8844",
     "4b": "IRS5884",
+    "4h": "IRS8941",
     "4e": "IRS8835 BinaryAttachment",
   };
 

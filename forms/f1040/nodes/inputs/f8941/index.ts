@@ -1,9 +1,10 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { TS } from "../../types.ts";
+import { f3800 } from "../f3800/index.ts";
 import { shopReviewSchema, verifyForm8941ShopReview } from "./shop_evidence.ts";
 
 const amount = z.number().int().finite().nonnegative();
@@ -181,13 +182,20 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
 class F8941Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8941";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8941Input): NodeResult {
-    calculateForm8941(rawInput);
-    throw new Error(
-      "Form 8941 direct employer needs registered Form 8941 and Form 3800 source reconciliation before export",
-    );
+    const lines = calculateForm8941(rawInput);
+    return {
+      outputs: [output(f3800, {
+        f8941_direct_employer_credit: {
+          credit_amount: lines.line16,
+          schedule_c_business_reference: rawInput.schedule_c_business_reference,
+          shop_plan_reference: rawInput.shop_plan_reference,
+          subject_to_passive_activity_limit: false,
+        },
+      })],
+    };
   }
 }
 

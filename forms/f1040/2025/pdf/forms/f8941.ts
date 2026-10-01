@@ -9,7 +9,7 @@ const text = (domainKey: string, number: number): PdfFieldEntry => ({
   pdfField: `${page}.f1_${number}[0]`,
 });
 
-/** Staged official PDF projection; intentionally absent from the PDF registry. */
+/** Official PDF projection for the bounded direct employer route. */
 export const form8941Pdf: PdfFormDescriptor = {
   pendingKey: "f8941",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8941--2025.pdf",

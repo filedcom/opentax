@@ -2,15 +2,18 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 
-/** Staged TY2025 IRS8941.xsd order; intentionally absent from the registry. */
+/** TY2025 IRS8941.xsd order for the bounded direct employer route. */
 export const form8941: MefFormDescriptor<"f8941", unknown> = {
   pendingKey: "f8941",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8941--2025.pdf",
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
-    if (!context?.pending) {
-      throw new Error("Form 8941 needs its filed Schedule C source");
+    if (
+      !context?.pending ||
+      context.documentIdsByPendingKey?.f3800?.length !== 1
+    ) {
+      throw new Error("Form 8941 needs one sourced Form 3800 document");
     }
     const { source, lines } = reconcileForm8941DocumentSource(
       raw,

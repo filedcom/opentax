@@ -34,18 +34,18 @@ the current staged source to Albany County, NY; other 2025 table rows need
 authenticated entries. Document references are assertions until issuer/plan
 and payment records are independently reviewed, so they do not open filing.
 
-An unregistered native IRS8941 serializer follows the locally available TY2025
-v5.4 IRS8941 schema. An unregistered official one-page PDF descriptor maps the
-same calculated lines and SHOP/credit-period marks. Both reconcile the direct
-source to one Schedule C business, its wages, employment EIN, proprietor, and
-line 14 employee benefits after a proposed credit reduction. Positive and tamper
-fixtures are authored but unrun.
+The native IRS8941 serializer follows the locally available TY2025 v5.4
+IRS8941 schema. The official one-page PDF descriptor maps the same calculated
+lines and SHOP/credit-period marks. The bounded node sends line 16 to Form 3800
+Part III line 4h, a specified credit. The Form 3800 tax-use allocation carries
+the amount allowed to Schedule 3 and Form 1040, and the source join requires
+Schedule C wages, employment EIN, proprietor, and line 14 employee benefits to
+reflect that allowed amount. The native/PDF registries include Form 8941.
+Positive and tamper fixtures are authored but unrun.
 
-**Filing remains closed.** The public node rejects the calculated positive
-credit. Form 3800 line 4h, tax-use allocation and Schedule 3 joins are not
-wired. Schedule C's final deduction reduction must be reconciled against the
-credit actually allowed; payroll and SHOP records, rating-area table values,
-prior filed returns, local XSD, rendered PDF, full-batch tests, IRS business
-rules, and ATS have not been validated. Nonemployee, seasonal, dependent/family
+**Filing remains closed by the attachment guard until the bounded route is
+reviewed.** Payroll and SHOP document references, prior filed returns, local
+XSD, rendered PDF, full-batch tests, IRS business rules, and ATS have not been
+validated. Nonemployee, seasonal, dependent/family
 coverage, multiple plans or businesses, county SHOP exception, tax-exempt, and
 pass-through routes need separate source models.

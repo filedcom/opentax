@@ -27,6 +27,7 @@ import { reconcileForm8826SelfSource } from "../../mef/forms/f8826_source.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import { reconcileForm8844DirectEmployer } from "../../mef/forms/f8844_source.ts";
 import { reconcileForm8881DirectEmployer } from "../../mef/forms/f8881.ts";
+import { reconcileForm8941ScheduleC } from "../../mef/forms/f8941_source.ts";
 import { reconcileForm8882DirectEmployer } from "../../mef/forms/f8882_source.ts";
 import { reconciledForm8908Source } from "../../mef/forms/f8908_source_reconciliation.ts";
 import {
@@ -152,6 +153,45 @@ export const form3800Pdf: PdfFormDescriptor = {
         detail.passThroughEin !== undefined
       ) {
         throw new Error("Form 3800 PDF line 1p differs from Form 8908 source");
+      }
+    }
+    if (source.f8941_direct_employer_credit) {
+      const { lines } = reconcileForm8941ScheduleC(
+        all,
+        undefined,
+        source.form8941_applied_credit,
+      );
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "4h");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "4h"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "4h"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8941_direct_employer_credit) !==
+          JSON.stringify(source.f8941_direct_employer_credit) ||
+        rawSource.form8941_applied_credit !==
+          source.form8941_applied_credit ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8941" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line16 ||
+        amount.totalCredit !== lines.line16 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== source.form8941_applied_credit ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line16 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 4h differs from Form 8941 source");
       }
     }
     if (source.f8882_direct_employer_credit) {
@@ -282,6 +322,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       !source.f8874_credit &&
       !source.f8835_credit_entries?.length &&
@@ -500,6 +541,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       !source.f8936_new_vehicle_credit &&
       !source.f8874_credit &&
@@ -592,6 +634,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       (source.f8820_k1_credit_entries?.length ?? 0) === 0 &&
       (source.f8874_k1_credit_entries?.length ?? 0) === 0 &&
@@ -665,6 +708,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       source.f8835_credit_entries?.length === 1 &&
       !source.f8874_credit && !source.f5884_credit &&
@@ -746,6 +790,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       source.passive_source_allocations?.length === 1 &&
       !source.f8820_credit && !source.f5884_credit &&
@@ -823,6 +868,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
@@ -914,6 +960,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
@@ -1007,6 +1054,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
@@ -1239,6 +1287,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       directOrphanK1[0].source_type === "partnership" &&
       !source.f8820_credit &&
@@ -1287,6 +1336,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       directOrphanK1.every((entry) => entry.source_type === "partnership") &&
       !source.f8820_credit && !source.f8874_credit &&
@@ -1358,6 +1408,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
       !source.f8882_direct_employer_credit &&
       directOrphanK1[0].source_type === "partnership" &&
       !source.f8874_credit && !source.f5884_credit &&

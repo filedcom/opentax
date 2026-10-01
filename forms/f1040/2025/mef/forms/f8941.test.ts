@@ -1,37 +1,20 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { calculateForm8941 } from "../../../nodes/inputs/f8941/index.ts";
-import { form8941DirectFixture } from "../../../nodes/inputs/f8941/fixture.ts";
+import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../nodes/inputs/f3800/calculation.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
+import { form8941FiledFixture } from "../../../nodes/inputs/f8941/fixture.ts";
 import { form8941Pdf } from "../../pdf/forms/f8941.ts";
 import { testFiler } from "../test-filer.ts";
 import { form8941 } from "./f8941.ts";
-
-function pending() {
-  const source = form8941DirectFixture();
-  const lines = calculateForm8941(source);
-  return {
-    f8941: source,
-    schedule_c: {
-      schedule_cs: [{
-        business_reference: source.schedule_c_business_reference,
-        proprietor_recipient: source.proprietor_recipient,
-        line_a_principal_business: "Retail shop",
-        line_b_business_code: "459999",
-        line_d_ein: source.employment_ein,
-        line_f_accounting_method: "cash",
-        line_g_material_participation: true,
-        line_1_gross_receipts: 250_000,
-        line_26_wages: 100_000,
-        line_14_employee_benefits: source.other_schedule_c_employee_benefits +
-          lines.line4 - lines.line12,
-      }],
-    },
-  };
-}
+import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 
 Deno.test("staged IRS8941 and official PDF project the same direct credit", () => {
-  const filed = pending();
+  const filed = form8941FiledFixture();
   const filer = { ...testFiler(), primarySSN: filed.f8941.owner_ssn };
-  const xml = form8941.build(filed.f8941, { pending: filed, filer });
+  const xml = form8941.build(filed.f8941, {
+    pending: filed,
+    filer,
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
   assertStringIncludes(xml, "<SHOPInd>true</SHOPInd>");
   assertStringIncludes(
     xml,
@@ -54,8 +37,74 @@ Deno.test("staged IRS8941 and official PDF project the same direct credit", () =
   assertEquals(pdf.prior_year_shop_no, true);
 });
 
+Deno.test("Form 8941 line 16 has one specified Form 3800 line 4h and Part V source", () => {
+  const parts = buildForm3800NonpassiveParts({
+    tax: {
+      filingStatus: FilingStatus.Single,
+      regularTax: 40_000,
+      alternativeMinimumTax: 0,
+      foreignTaxCredit: 0,
+      priorAllowableCredits: 0,
+      tentativeMinimumTax: 20_000,
+      standardCredit: 0,
+      specifiedCredit: 11_698,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
+    },
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
+    form8941: {
+      credit: 11_698,
+      appliedCredit: 11_698,
+      documentId: "IRS8941_1",
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertEquals(parts.currentRows.map((row) => row.line), ["4h"]);
+  assertEquals(parts.currentDetails.map((row) => row.line), ["4h"]);
+  assertEquals(parts.currentAmounts[0].appliedCredit, 11_698);
+  assertEquals(parts.lines.line38, 11_698);
+  assertStringIncludes(
+    parts.currentRows[0].xml,
+    'referenceDocumentId="IRS8941_1"',
+  );
+  assertThrows(
+    () =>
+      buildForm3800NonpassiveParts({
+        tax: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 40_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 20_000,
+          standardCredit: 0,
+          specifiedCredit: 11_697,
+          standardCarryforward: 0,
+          specifiedCarryforward: 0,
+        },
+        passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+        passiveApplied: { standard: 0, specified: 0 },
+        form8941: {
+          credit: 11_698,
+          appliedCredit: 11_698,
+          documentId: "IRS8941_1",
+        },
+        facilities: [],
+        form8835DocumentIds: [],
+        appliedCreditsByFacility: [],
+        transferStatementIdsByFileName: {},
+      }),
+    Error,
+    "credit amounts do not reconcile",
+  );
+});
+
 Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and source tampering", () => {
-  const filed = pending();
+  const filed = form8941FiledFixture();
   const filer = { ...testFiler(), primarySSN: filed.f8941.owner_ssn };
   assertThrows(
     () =>
@@ -70,15 +119,17 @@ Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and sou
           },
         },
         filer,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),
     Error,
-    "premium deduction differs from Schedule C",
+    "premium deduction differs from Form 3800 allowed credit",
   );
   assertThrows(
     () =>
       form8941.build(filed.f8941, {
         pending: filed,
         filer: { ...filer, primarySSN: "999887777" },
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),
     Error,
     "owner SSN differs",
@@ -88,8 +139,30 @@ Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and sou
       form8941.build({ ...filed.f8941, employment_ein: "999887777" }, {
         pending: filed,
         filer,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),
     Error,
     "source differs from filed return",
+  );
+  assertThrows(
+    () => form8941.build(filed.f8941, { pending: filed, filer }),
+    Error,
+    "one sourced Form 3800 document",
+  );
+  assertThrows(
+    () =>
+      form8941.build(filed.f8941, {
+        pending: {
+          ...filed,
+          f3800: {
+            ...filed.f3800,
+            form8941_applied_credit: 11_697,
+          },
+        },
+        filer,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "premium deduction differs from Form 3800 allowed credit",
   );
 });

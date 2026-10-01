@@ -30,7 +30,8 @@ function nontransferableCurrentRow(
     | "1aa"
     | "1dd"
     | "1ee"
-    | "4b",
+    | "4b"
+    | "4h",
   credit: number,
   appliedCredit: number,
   metadata: Form3800CurrentCreditRowMetadata,
@@ -125,6 +126,11 @@ export type Form3800NonpassiveXmlInput = {
     }[];
   };
   readonly form8908?: {
+    readonly credit: number;
+    readonly documentId: string;
+    readonly appliedCredit: number;
+  };
+  readonly form8941?: {
     readonly credit: number;
     readonly documentId: string;
     readonly appliedCredit: number;
@@ -249,6 +255,7 @@ export function buildForm3800NonpassiveParts(
   if (
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
     !input.form8844 && !input.form8881 && !input.form8908 &&
+    !input.form8941 &&
     !input.form8882 &&
     !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
@@ -263,6 +270,7 @@ export function buildForm3800NonpassiveParts(
   const form8844Credit = input.form8844?.credit ?? 0;
   const form8881Parts = input.form8881?.parts ?? [];
   const form8908Credit = input.form8908?.credit ?? 0;
+  const form8941Credit = input.form8941?.credit ?? 0;
   const form8882Credit = input.form8882?.credit ?? 0;
   if (
     input.form8882 && (
@@ -281,6 +289,15 @@ export function buildForm3800NonpassiveParts(
       input.form8908.appliedCredit > form8908Credit
     )
   ) throw new Error("Form 3800 has an invalid Form 8908 line 1p allocation");
+  if (
+    input.form8941 && (
+      !input.form8941.documentId || !Number.isInteger(form8941Credit) ||
+      form8941Credit <= 0 ||
+      !Number.isInteger(input.form8941.appliedCredit) ||
+      input.form8941.appliedCredit < 0 ||
+      input.form8941.appliedCredit > form8941Credit
+    )
+  ) throw new Error("Form 3800 has an invalid Form 8941 line 4h allocation");
   if (
     input.form8881 && (
       !input.form8881.documentId || form8881Parts.length === 0 ||
@@ -526,7 +543,8 @@ export function buildForm3800NonpassiveParts(
           form8936CommercialCredit !==
       input.tax.standardCredit ||
     (input.tax.empowermentCredit ?? 0) < form8844Credit ||
-    credits.specifiedCredit + form5884Credit !== input.tax.specifiedCredit
+    credits.specifiedCredit + form5884Credit + form8941Credit !==
+      input.tax.specifiedCredit
   ) {
     throw new Error(
       "Form 3800 Part II credit amounts do not reconcile with source documents",
@@ -670,7 +688,8 @@ export function buildForm3800NonpassiveParts(
   const specifiedApplied = input.facilities.reduce(
     (sum, facility, index) =>
       sum + (facility.form3800_line === "4e" ? appliedAt(index) : 0),
-    input.form5884?.appliedCredit ?? 0,
+    (input.form5884?.appliedCredit ?? 0) +
+      (input.form8941?.appliedCredit ?? 0),
   );
   const empowermentApplied = input.form8844?.appliedCredit ?? 0;
   if (
@@ -756,6 +775,14 @@ export function buildForm3800NonpassiveParts(
       credit: form8908Credit,
       appliedCredit: input.form8908.appliedCredit,
       sourceDocumentId: input.form8908.documentId,
+    }]
+    : [];
+  const form8941PartVGroups: Form3800NonpassiveDetailRow[] = input.form8941
+    ? [{
+      line: "4h",
+      credit: form8941Credit,
+      appliedCredit: input.form8941.appliedCredit,
+      sourceDocumentId: input.form8941.documentId,
     }]
     : [];
   const form8882PartVGroups: Form3800NonpassiveDetailRow[] = input.form8882
@@ -1064,6 +1091,19 @@ export function buildForm3800NonpassiveParts(
         ),
       ]
       : []),
+    ...(input.form8941
+      ? [nontransferableCurrentRow(
+        "4h",
+        form8941Credit,
+        input.form8941.appliedCredit,
+        {
+          sourceCount: 1,
+          referenceDocumentId: input.form8941.documentId,
+          referenceDocumentName: "IRS8941",
+        },
+        [],
+      )]
+      : []),
     ...(specifiedGroup ? [specifiedGroup] : []),
   ];
   const currentAmounts = combineForm3800CurrentCreditAmounts([
@@ -1169,6 +1209,14 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: form5884.appliedCredit,
       }]
       : []),
+    ...(input.form8941
+      ? [{
+        line: "4h" as const,
+        grossCredit: form8941Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8941.appliedCredit,
+      }]
+      : []),
   ], []);
   return {
     lines,
@@ -1203,6 +1251,7 @@ export function buildForm3800NonpassiveParts(
       ...form8844PartVGroups,
       ...form8881PartVGroups,
       ...form8908PartVGroups,
+      ...form8941PartVGroups,
       ...form8882PartVGroups,
     ],
     carryoverDetails: [],

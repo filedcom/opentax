@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8941, f8941 } from "./index.ts";
 import { form8941DirectFixture } from "./fixture.ts";
+import { f3800 } from "../f3800/index.ts";
 
 Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {
   const lines = calculateForm8941(form8941DirectFixture());
@@ -135,14 +136,24 @@ Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premi
   );
 });
 
-Deno.test("Form 8941 source remains closed to public Schedule 3 output", () => {
-  assertThrows(
-    () =>
-      f8941.compute(
-        { taxYear: 2025, formType: "f1040" },
-        form8941DirectFixture(),
-      ),
-    Error,
-    "Form 3800 source reconciliation before export",
+Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
+  const result = f8941.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8941DirectFixture(),
+  );
+  assertEquals(result.outputs[0].fields.f8941_direct_employer_credit, {
+    credit_amount: 11_698,
+    schedule_c_business_reference: "SHOP-BUSINESS-1",
+    shop_plan_reference: "SHOP-PLAN-1",
+    subject_to_passive_activity_limit: false,
+  });
+  const generalBusiness = f3800.compute(
+    { taxYear: 2025, formType: "f1040" },
+    f3800.inputSchema.parse(result.outputs[0].fields),
+  );
+  assertEquals(
+    generalBusiness.outputs[0].fields.form3800_source_credits
+      .specifiedCredit,
+    11_698,
   );
 });

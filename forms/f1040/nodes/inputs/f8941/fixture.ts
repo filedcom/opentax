@@ -1,4 +1,5 @@
 import { TS } from "../../types.ts";
+import { calculateForm8941 } from "./index.ts";
 
 /** Albany's 2025 employee-only average premium is $9,358 in IRS Table 2025. */
 export function form8941DirectFixture() {
@@ -56,6 +57,39 @@ export function form8941DirectFixture() {
           }`,
         })),
       })),
+    },
+  };
+}
+
+/** Complete positive pending graph for the bounded Albany employer. */
+export function form8941FiledFixture() {
+  const source = form8941DirectFixture();
+  const lines = calculateForm8941(source);
+  return {
+    f8941: source,
+    f3800: {
+      f8941_direct_employer_credit: {
+        credit_amount: lines.line16,
+        schedule_c_business_reference: source.schedule_c_business_reference,
+        shop_plan_reference: source.shop_plan_reference,
+        subject_to_passive_activity_limit: false as const,
+      },
+      form8941_applied_credit: lines.line16,
+    },
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: source.schedule_c_business_reference,
+        proprietor_recipient: source.proprietor_recipient,
+        line_a_principal_business: "Retail shop",
+        line_b_business_code: "459999",
+        line_d_ein: source.employment_ein,
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 250_000,
+        line_26_wages: 100_000,
+        line_14_employee_benefits: source.other_schedule_c_employee_benefits +
+          lines.line4 - lines.line16,
+      }],
     },
   };
 }

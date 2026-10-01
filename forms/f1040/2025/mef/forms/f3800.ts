@@ -66,6 +66,7 @@ import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
 import { reconcileForm8881DirectEmployer } from "./f8881.ts";
+import { reconcileForm8941ScheduleC } from "./f8941_source.ts";
 import { reconcileForm8882DirectEmployer } from "./f8882_source.ts";
 import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
 import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
@@ -729,6 +730,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     (fields.f8844_direct_employer_credit?.credit_amount ?? 0) > 0 ||
     fields.f8881_credit !== undefined ||
     fields.f8908_credit !== undefined ||
+    fields.f8941_direct_employer_credit !== undefined ||
     fields.f8882_direct_employer_credit !== undefined ||
     fields.f8874_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8820_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
@@ -802,6 +804,21 @@ export function prepareForm3800DocumentParts(
   const form8908 = parsed.f8908_credit
     ? reconciledForm8908Source(context.pending?.f8908, parsed)
     : undefined;
+  const form8941 = parsed.f8941_direct_employer_credit
+    ? reconcileForm8941ScheduleC(context.pending ?? {}, context.filer)
+    : undefined;
+  if (
+    form8941 && (
+      parsed.f8941_direct_employer_credit?.credit_amount !==
+        form8941.lines.line16 ||
+      parsed.f8941_direct_employer_credit?.schedule_c_business_reference !==
+        form8941.source.schedule_c_business_reference ||
+      parsed.f8941_direct_employer_credit?.shop_plan_reference !==
+        form8941.source.shop_plan_reference
+    )
+  ) {
+    throw new Error("Form 3800 line 4h differs from filed Form 8941 source");
+  }
   const form8882 = parsed.f8882_direct_employer_credit
     ? reconcileForm8882DirectEmployer(
       context.pending?.f8882,
@@ -967,6 +984,7 @@ export function prepareForm3800DocumentParts(
     form8881PartIICredit: form8881?.line11,
     form8881PartIIICredit: form8881?.line15,
     form8908Credit: form8908?.lines.line8,
+    form8941Credit: form8941?.lines.line16,
     form8882Credit: form8882?.lines.line7,
     form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
@@ -1045,6 +1063,23 @@ export function prepareForm3800DocumentParts(
     iii: applied("nonpassive:8881:iii"),
   };
   const form8908Applied = applied("nonpassive:8908");
+  const form8941Applied = sourceApplied(
+    Boolean(form8941),
+    "nonpassive:8941",
+    parsed.form8941_applied_credit,
+  );
+  if (form8941) {
+    if (parsed.form8941_applied_credit === undefined) {
+      throw new Error(
+        "Form 8941 needs explicit Form 3800 allowed-credit allocation",
+      );
+    }
+    reconcileForm8941ScheduleC(
+      context.pending ?? {},
+      context.filer,
+      form8941Applied,
+    );
+  }
   const form8882Applied = applied("nonpassive:8882");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
@@ -1098,6 +1133,10 @@ export function prepareForm3800DocumentParts(
   const form8908Ids = context.documentIdsByPendingKey.f8908 ?? [];
   if (form8908Ids.length !== (form8908 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8908 document count differs from source");
+  }
+  const form8941Ids = context.documentIdsByPendingKey.f8941 ?? [];
+  if (form8941Ids.length !== (form8941 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8941 document count differs from source");
   }
   const form8882Ids = context.documentIdsByPendingKey.f8882 ?? [];
   if (form8882Ids.length !== (form8882 ? 1 : 0)) {
@@ -1233,6 +1272,13 @@ export function prepareForm3800DocumentParts(
           credit: form8908.lines.line8,
           documentId: form8908Ids[0],
           appliedCredit: form8908Applied,
+        }
+        : undefined,
+      form8941: form8941
+        ? {
+          credit: form8941.lines.line16,
+          documentId: form8941Ids[0],
+          appliedCredit: form8941Applied,
         }
         : undefined,
       form8882: form8882
