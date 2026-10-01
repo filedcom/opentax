@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **463 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **464 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,12 +15,12 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 396 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 397 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 22 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 463 bounded routes and
+**Implemented coverage.** The completed ledger records 464 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
