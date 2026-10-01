@@ -98,13 +98,29 @@ function pabSourcePending(fields: Parameters<typeof form6251.build>[0]) {
         f1099div: {
           f1099divs: [{
             payerName: "Bond Fund",
+            payerTin: "123456789",
+            source_document_reference: "2025 issued Bond Fund 1099-DIV",
             isNominee: false,
             box11: false,
             box1a: 0,
             box12: total - interest,
             box13: total - interest,
+            pab_dividend_review: {
+              specified_bond_dividend_confirmed: true,
+              box13_net_of_fund_expenses_confirmed: true,
+              no_allocable_taxpayer_deduction_confirmed: true,
+              not_claimed_elsewhere_on_return_confirmed: true,
+              bond_eligibility_review_reference: "2025 bond fund review",
+              taxpayer_expense_review_reference: "2025 expense review",
+              reviewed_on: "2026-02-01",
+            },
           }],
         },
+        f1040: {
+          line2a_tax_exempt: total - interest,
+          line17_additional_taxes: fields.line11_amt ?? 1,
+        },
+        schedule2: { line2_amt: fields.line11_amt ?? 1 },
       }
       : {}),
   };

@@ -55,6 +55,7 @@ const nomineeDistributionSchema = z.object({
 
 export const itemSchema = z.object({
   payerName: z.string().optional(),
+  payerTin: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   isNominee: z.boolean(),
   nominee_distribution: nomineeDistributionSchema.optional(),
@@ -83,6 +84,15 @@ export const itemSchema = z.object({
   box10: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
   box13: z.number().nonnegative().optional(),
+  pab_dividend_review: z.object({
+    specified_bond_dividend_confirmed: z.literal(true),
+    box13_net_of_fund_expenses_confirmed: z.literal(true),
+    no_allocable_taxpayer_deduction_confirmed: z.literal(true),
+    not_claimed_elsewhere_on_return_confirmed: z.literal(true),
+    bond_eligibility_review_reference: z.string().trim().min(1),
+    taxpayer_expense_review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
   box14: z.string().optional(),
   box15: z.string().optional(),
   box16: z.number().nonnegative().optional(),
