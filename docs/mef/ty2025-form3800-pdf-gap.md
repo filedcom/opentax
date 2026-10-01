@@ -29,6 +29,17 @@ close acquisitions after September 30. Multiple vehicles, passive business
 credits, source-document authentication, carryforwards, and the deferred
 test/XSD/filled-PDF/business-rule/ATS batch remain open.
 
+The parent PDF also accepts that one vehicle alongside one self-earned,
+nonpassive Form 5884 work opportunity credit when the finalized return can use
+both credits. It separately recalculates the vehicle and certified-payroll
+sources, checks their Part III lines 1aa/4b and distinct Part V document links,
+and matches the standard and specified Part II lines 17/37 to the combined
+line 38, Schedule 3, and Form 1040 line 20. A $3,000 vehicle plus $2,400 work
+opportunity full-return case and source, prepared-row, and final-credit tamper
+fixtures are authored for deferred validation. Multiple vehicles, employees,
+passive credits, carryforwards, source-byte authentication, and the shared
+validation and ATS gates remain open.
+
 For one nonpassive, self-earned Form 5884 employer claim, the Form 3800 PDF
 now recalculates the work opportunity credit from the employee certification,
 hours, and payroll source, and matches it to the pending and raw Form 3800
