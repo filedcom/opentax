@@ -31,9 +31,10 @@ parity gaps found in this comparison, not every difference between pending-key
 lists.
 
 The registered Form 8826 PDF covers one sourced self-earned nonpassive
-interpreter-service claim. Pass-through-only credits remain on Form 3800
-without a recipient Form 8826; mixed, passive, and controlled-group variants
-remain open in the [Form 8826 PDF gap](ty2025-form8826-pdf-gap.md).
+interpreter-service claim, alone or combined with one nonpassive S-corporation
+K-1 box 13 code K credit on lines 7/8. Pass-through-only credits remain on
+Form 3800 without a recipient Form 8826. Other mixed, passive, and
+controlled-group variants remain open in the [Form 8826 PDF gap](ty2025-form8826-pdf-gap.md).
 
 The later W-2G route now has a registered recipient Copy B PDF descriptor and
 an inspected five-page synthetic packet. It reproduces reviewed source facts;
