@@ -414,6 +414,10 @@ export function assertOneScheduleC8995(
   const filerSsn = typeof general?.taxpayer_ssn === "string"
     ? general.taxpayer_ssn.replace(/\D/g, "")
     : "";
+  const ownerIsSpouse = sourceBusiness?.proprietor_recipient === "S";
+  const ownerSsn = ownerIsSpouse && typeof general?.spouse_ssn === "string"
+    ? general.spouse_ssn.replace(/\D/g, "")
+    : filerSsn;
   const sourceW2s = Array.isArray(pending.w2?.w2s) ? pending.w2.w2s : [];
   const statutoryW2s = sourceW2s.filter((w2) =>
     w2.box13_statutory_employee === true &&
@@ -448,6 +452,7 @@ export function assertOneScheduleC8995(
       (!healthPlan?.success ||
         healthPlan.data.business_reference !==
           sourceBusiness?.business_reference ||
+        healthPlan.data.recipient !== sourceBusiness?.proprietor_recipient ||
         healthPlan.data.schedule_c_line31_net_profit !== rawQbi ||
         calculateSingleScheduleCForm7206(healthPlan.data).line14 !==
           healthDeduction ||
@@ -471,9 +476,13 @@ export function assertOneScheduleC8995(
     ) ||
     fields.line1_business_name !== sourceBusiness.line_c_business_name ||
     (usesSsn
-      ? ssn.length !== 9 || ssn !== filerSsn ||
-        ssn !== fields.taxpayer_ssn?.toString().replace(/\D/g, "") ||
-        ssn !== f1040.taxpayer_ssn?.toString().replace(/\D/g, "") ||
+      ? ssn.length !== 9 || ssn !== ownerSsn ||
+        (ownerIsSpouse
+          ? general?.filing_status !== "mfj" ||
+            f1040.filing_status !== "mfj" ||
+            ssn !== f1040.spouse_ssn?.toString().replace(/\D/g, "")
+          : ssn !== fields.taxpayer_ssn?.toString().replace(/\D/g, "") ||
+            ssn !== f1040.taxpayer_ssn?.toString().replace(/\D/g, "")) ||
         ein !== "" || row.ein !== undefined
       : ein.length !== 9 || ein !== sourceEin ||
         row.ein !== ein || ssn !== "") ||

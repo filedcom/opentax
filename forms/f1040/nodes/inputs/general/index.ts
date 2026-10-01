@@ -1264,6 +1264,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.taxpayer_ssn !== undefined && {
           taxpayer_ssn: parsed.taxpayer_ssn,
         }),
+        ...(parsed.spouse_ssn !== undefined && {
+          spouse_ssn: parsed.spouse_ssn,
+        }),
         ...(parsed.qbi_no_prior_loss_or_suspended_loss_confirmed === true && {
           qbi_no_prior_loss_or_suspended_loss_confirmed: true,
         }),
