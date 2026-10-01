@@ -103,8 +103,11 @@ function fillEntry(
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
     } else if (entry.kind === "checkboxWhen") {
+      const box = form.getCheckBox(entry.pdfField);
       if (String(value) === entry.whenValue) {
-        form.getCheckBox(entry.pdfField).check();
+        box.check();
+      } else {
+        box.uncheck();
       }
     } else if (entry.kind === "radio") {
       const mapped = entry.valueMap[String(value)];

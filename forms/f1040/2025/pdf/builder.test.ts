@@ -365,6 +365,53 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
   }
 });
 
+Deno.test("fillFormPdf validates an unselected Form 1040 checkbox field", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const missingBox = "topmostSubform[0].Page1[0].c1_8[1]";
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [{
+      kind: "checkboxWhen" as const,
+      domainKey: "filing_status",
+      pdfField: missingBox,
+      whenValue: "mfj",
+    }],
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["unrelated_field"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(descriptor, { filing_status: "single" }, undefined, tmpDir),
+      Error,
+      `failed to fill field "${missingBox}"`,
+    );
+
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([612, 792]);
+    doc.getForm().createCheckBox(missingBox).addToPage(page, {
+      x: 10,
+      y: 700,
+      width: 20,
+      height: 20,
+    });
+    await seedCache(tmpDir, F1040_PDF_URL, await doc.save());
+    const filled = await fillFormPdf(
+      descriptor,
+      { filing_status: "single" },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(filled instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
