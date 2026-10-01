@@ -157,3 +157,15 @@ fixtures are authored for the deferred batch. The underlying broker-copy bytes
 and basis workpaper are not independently authenticated. See the
 [2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
 for the separate AMT Schedule D loss limitation.
+
+The same route now accepts exactly two long-term lots when one changes from
+regular gain to AMT loss and the other is a loss under both bases. The combined
+regular result must remain a gain, and the combined AMT result must be a fully
+deductible loss under the separate filing-status limit. For example, a $2,000
+regular gain becoming a $500 AMT loss plus a $500 regular/$700 AMT loss yields
+$1,500 regular net gain, $1,200 AMT net loss, and a negative $2,700 line 2k. The
+exact two broker rows, Schedule 2 tax, Form 1040 capital gain and taxable
+income, native element, and PDF line are joined. A changed second basis,
+capital-gain total, Schedule 2 tax, or AMT loss crossing the limit rejects.
+Mixed terms, a third lot, capital-loss carryovers, and adjusted transactions
+remain unsupported. The two-lot fixtures await the same final validation batch.
