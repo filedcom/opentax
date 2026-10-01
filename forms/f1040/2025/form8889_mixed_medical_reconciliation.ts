@@ -11,7 +11,6 @@ export function reconcilePrimaryMixedMedicalForm8889(
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
-  if (forms.length !== 1 || forms[0]?.owner !== "primary") return;
   const filed = forms[0];
   const pending = allPending?.form8889;
   const raw = pending && typeof pending === "object" && !Array.isArray(pending)
@@ -27,6 +26,14 @@ export function reconcilePrimaryMixedMedicalForm8889(
     (source.data.qualified_medical_expenses ?? 0) > 0 &&
     (source.data.hsa_distributions ?? 0) >
       (source.data.qualified_medical_expenses ?? 0);
+  if (forms.length !== 1 || !filed || filed.owner !== "primary") {
+    if (sourceMixed) {
+      throw new Error(
+        "Form 8889 mixed medical distribution needs one matching primary-owner form",
+      );
+    }
+    return;
+  }
   const positivePrint = (key: string) => {
     const value = filed[key];
     return typeof value === "number" && value > 0;

@@ -131,6 +131,25 @@ Deno.test("single primary mixed HSA source, printed lines, and return tamper rej
       Error,
     );
   }
+  const wrongOwner = {
+    ...pending,
+    form8889: {
+      ...pending.form8889,
+      forms: [{ ...forms[0], owner: "spouse" as const }],
+    },
+  };
+  assertThrows(
+    () =>
+      native.build({ forms: wrongOwner.form8889.forms }, {
+        filer,
+        pending: wrongOwner,
+      }),
+    Error,
+  );
+  assertThrows(
+    () => form8889Pdf.instances!(wrongOwner.form8889, filer, wrongOwner),
+    Error,
+  );
   assertThrows(
     () => native.build({ forms }, { filer }),
     Error,
