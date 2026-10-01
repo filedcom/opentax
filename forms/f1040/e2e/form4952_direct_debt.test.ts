@@ -260,6 +260,9 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
   );
   const interest = result.pending.f1099int!;
   const oid = result.pending.f1099oid!;
+  if (!Array.isArray(interest.f1099ints) || !Array.isArray(oid.f1099oids)) {
+    throw new Error("Expected synthetic investment payer rows");
+  }
   assertThrows(
     () =>
       nativeForm4952.build(fields, {
@@ -381,7 +384,7 @@ Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and 
           form4952: {
             ...fields,
             amt_refigure: {
-              ...fields.amt_refigure,
+              ...(fields.amt_refigure as Record<string, unknown>),
               other_gross_income_adjustment: 1,
             },
           },
@@ -699,7 +702,10 @@ Deno.test("Form 4952 traced loan joins two interest and two dividend payers with
     5_000,
   );
   const pending = buildPending(result.pending);
-  const bundle = await buildMefBundle(pending, { filer: testFiler() });
+  const bundle = await buildMefBundle(pending, {
+    filer: testFiler(),
+    attachments: [],
+  });
   assertStringIncludes(
     bundle.xml,
     "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
