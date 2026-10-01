@@ -21,6 +21,8 @@ MeF/PDF projection; the prior-year filed-return bytes and finalized-return
 ownership binding remain unresolved. The box-E export rejection stays active.
 Positive and tamper fixtures are authored for the deferred bulk pass.
 
+The next staged slice verifies both retained 2024 MeF `Return` XML byte streams against their SHA-256 claims and checks their full-year periods, status, taxpayer/spouse SSNs, AGI, tax, and excluded other tax/refundable credits. A one-call staging function then joins the finalized 2025 Form 1040 to Part I lines 1–9 and projects the complete box-E page 1 into native `IRS2210` XML and canonical TY2025 PDF fields. Positive and tamper fixtures are authored but unrun. The IRS origin and acceptance of the archived 2024 returns remain unauthenticated, so these projections are unregistered and the public MeF/PDF guard remains active.
+
 ## Source contract needed before activating native/PDF
 
 - Derive Part I lines 1-9 from finalized 2025 Form 1040 tax after credits, specified other taxes and refundable credits, withholding, plus a sourced 2024 return covering 12 months. Reconcile line 38 and any Form 2210 line 19 to the finalized return rather than trusting an isolated amount.
