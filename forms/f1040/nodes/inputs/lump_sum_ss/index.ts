@@ -3,16 +3,19 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Lump-Sum Social Security Benefits Worksheet
 // When a taxpayer receives a lump-sum Social Security payment covering prior years,
-// they may use the lump-sum election (IRS Pub 915 "earlier year method") to reduce
-// current-year taxable benefits by treating prior-year portions as received in those years.
-// The adjusted SS benefit flows to Form 1040 Line 6a.
+// the full reported benefit belongs on Form 1040 line 6a. IRS Pub. 915's
+// earlier-year method can lower line 6b only after its worksheets are completed.
 // IRS Pub 915; IRC §86
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -37,9 +40,9 @@ export const itemSchema = z.object({
   // IRS Pub 915 Worksheets 2 and 3 (earlier year method)
   prior_year_benefits: z.array(priorYearBenefitSchema).optional(),
 
-  // Whether the lump-sum election (earlier year method) is beneficial and should be applied
-  // If not provided, defaults to false (conservative: include all in current year)
-  // Must be explicitly set to true to trigger the election
+  // A claimed election cannot be inferred from this flag alone: Worksheet 4
+  // needs prior-year income and previously taxed benefit amounts. Retain this
+  // input so an asserted election is rejected explicitly during computation.
   is_lump_sum_election_beneficial: z.boolean().optional(),
 });
 
@@ -56,33 +59,28 @@ function validateItem(item: LumpSumSSItem): void {
   if (item.lump_sum_amount > item.total_ss_benefits_this_year) {
     throw new Error(
       `LumpSumSS validation: lump_sum_amount (${item.lump_sum_amount}) cannot exceed ` +
-      `total_ss_benefits_this_year (${item.total_ss_benefits_this_year})`,
+        `total_ss_benefits_this_year (${item.total_ss_benefits_this_year})`,
     );
   }
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Adjusted SS benefits for one item:
-// - If election is beneficial: exclude lump sum from current year (prior-year allocation)
-// - Otherwise: include full total (all treated in current year)
-function adjustedBenefits(item: LumpSumSSItem): number {
-  if (item.is_lump_sum_election_beneficial === true) {
-    // Lump sum allocated to prior years; only current-year portion taxed now
-    return item.total_ss_benefits_this_year - item.lump_sum_amount;
-  }
-  // Default: include all benefits in current year
-  return item.total_ss_benefits_this_year;
-}
-
-function totalAdjustedBenefits(items: LumpSumSSItems): number {
-  return items.reduce((sum, item) => sum + adjustedBenefits(item), 0);
+function totalReportedBenefits(items: LumpSumSSItems): number {
+  return items.reduce((sum, item) => sum + item.total_ss_benefits_this_year, 0);
 }
 
 function f1040Output(items: LumpSumSSItems): NodeOutput[] {
-  const total = totalAdjustedBenefits(items);
+  const total = totalReportedBenefits(items);
   if (total === 0) return [];
-  return [output(f1040, { line6a_ss_gross: total } as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>)];
+  return [
+    output(
+      f1040,
+      { line6a_ss_gross: total } as AtLeastOne<
+        z.infer<typeof f1040["inputSchema"]>
+      >,
+    ),
+  ];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -99,6 +97,13 @@ class LumpSumSSNode extends TaxNode<typeof inputSchema> {
     // Validate all items before computing
     for (const item of lump_sum_sss) {
       validateItem(item);
+    }
+    if (
+      lump_sum_sss.some((item) => item.is_lump_sum_election_beneficial === true)
+    ) {
+      throw new Error(
+        "Lump-sum Social Security election needs Publication 915 Worksheet 4 and prior-year tax facts before lines 6b and 6c can be filed",
+      );
     }
 
     const outputs: NodeOutput[] = f1040Output(lump_sum_sss);

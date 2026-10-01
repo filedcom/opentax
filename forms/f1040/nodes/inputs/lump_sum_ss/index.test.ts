@@ -12,7 +12,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return lump_sum_ss.compute({ taxYear: 2025, formType: "f1040" }, { lump_sum_sss: items });
+  return lump_sum_ss.compute({ taxYear: 2025, formType: "f1040" }, {
+    lump_sum_sss: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -24,7 +26,9 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // =============================================================================
 
 Deno.test("lump_sum_ss.inputSchema: valid minimal item passes", () => {
-  const parsed = lump_sum_ss.inputSchema.safeParse({ lump_sum_sss: [minimalItem()] });
+  const parsed = lump_sum_ss.inputSchema.safeParse({
+    lump_sum_sss: [minimalItem()],
+  });
   assertEquals(parsed.success, true);
 });
 
@@ -73,18 +77,20 @@ Deno.test("lump_sum_ss.compute: no lump sum → routes total_ss_benefits to f104
 });
 
 // =============================================================================
-// 4. Lump Sum Election — Beneficial (Explicit Override)
+// 4. Election Cannot Be Inferred from a Beneficial Flag
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: election beneficial → adjusted benefits = current year only", () => {
-  // total=30000, lump_sum=18000, current_year_only=12000
-  const result = compute([minimalItem({
-    total_ss_benefits_this_year: 30_000,
-    lump_sum_amount: 18_000,
-    is_lump_sum_election_beneficial: true,
-  })]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 12_000);
+Deno.test("lump_sum_ss.compute: election flag alone cannot reduce line 6a", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        total_ss_benefits_this_year: 30_000,
+        lump_sum_amount: 18_000,
+        is_lump_sum_election_beneficial: true,
+      })]),
+    Error,
+    "needs Publication 915 Worksheet 4",
+  );
 });
 
 // =============================================================================
@@ -121,10 +127,11 @@ Deno.test("lump_sum_ss.compute: lump sum present without override → total rout
 
 Deno.test("lump_sum_ss.compute: lump_sum_amount > total_ss_benefits → throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      total_ss_benefits_this_year: 10_000,
-      lump_sum_amount: 15_000,
-    })]),
+    () =>
+      compute([minimalItem({
+        total_ss_benefits_this_year: 10_000,
+        lump_sum_amount: 15_000,
+      })]),
     Error,
   );
 });
@@ -133,19 +140,21 @@ Deno.test("lump_sum_ss.compute: lump_sum_amount > total_ss_benefits → throws",
 // 8. Prior Year Benefits Array
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: prior_year_benefits provided with election beneficial", () => {
-  // total=36000, lump=24000, current=12000; prior_year_benefits provided
-  const result = compute([minimalItem({
-    total_ss_benefits_this_year: 36_000,
-    lump_sum_amount: 24_000,
-    prior_year_benefits: [
-      { year: 2022, amount: 12_000 },
-      { year: 2023, amount: 12_000 },
-    ],
-    is_lump_sum_election_beneficial: true,
-  })]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 12_000);
+Deno.test("lump_sum_ss.compute: prior-year payment splits alone cannot support election", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        total_ss_benefits_this_year: 36_000,
+        lump_sum_amount: 24_000,
+        prior_year_benefits: [
+          { year: 2022, amount: 12_000 },
+          { year: 2023, amount: 12_000 },
+        ],
+        is_lump_sum_election_beneficial: true,
+      })]),
+    Error,
+    "needs Publication 915 Worksheet 4",
+  );
 });
 
 // =============================================================================
@@ -174,7 +183,7 @@ Deno.test("lump_sum_ss.compute: does not route to any other nodeType", () => {
 // 10. Aggregation — Multiple Items
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: multiple items — adjusted benefits aggregated", () => {
+Deno.test("lump_sum_ss.compute: multiple reported items retain the full line 6a total", () => {
   const result = compute([
     minimalItem({
       total_ss_benefits_this_year: 12_000,
@@ -183,29 +192,30 @@ Deno.test("lump_sum_ss.compute: multiple items — adjusted benefits aggregated"
     minimalItem({
       total_ss_benefits_this_year: 18_000,
       lump_sum_amount: 6_000,
-      is_lump_sum_election_beneficial: true,
+      is_lump_sum_election_beneficial: false,
     }),
   ]);
-  // Item 1: 12000; Item 2 with election: 18000-6000=12000; total = 24000
   const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 24_000);
+  assertEquals(fields.line6a_ss_gross, 30_000);
 });
 
 // =============================================================================
 // 11. Smoke Test
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: smoke test — lump sum from prior 2 years, election beneficial", () => {
-  const result = compute([minimalItem({
-    total_ss_benefits_this_year: 42_000,
-    lump_sum_amount: 28_000,
-    prior_year_benefits: [
-      { year: 2023, amount: 15_000 },
-      { year: 2024, amount: 13_000 },
-    ],
-    is_lump_sum_election_beneficial: true,
-  })]);
-  // election beneficial: adjusted = 42000 - 28000 = 14000
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 14_000);
+Deno.test("lump_sum_ss.compute: two prior-year splits still need taxable-benefit worksheets", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        total_ss_benefits_this_year: 42_000,
+        lump_sum_amount: 28_000,
+        prior_year_benefits: [
+          { year: 2023, amount: 15_000 },
+          { year: 2024, amount: 13_000 },
+        ],
+        is_lump_sum_election_beneficial: true,
+      })]),
+    Error,
+    "needs Publication 915 Worksheet 4",
+  );
 });
