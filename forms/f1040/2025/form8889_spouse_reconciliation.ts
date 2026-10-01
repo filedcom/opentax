@@ -22,8 +22,16 @@ export function reconcilePrimaryLastMonthRuleForm8889(
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
-  if (forms.length !== 1 || !forms[0] || allPending === undefined) return;
+  if (forms.length !== 1 || !forms[0]) return;
   const filed = forms[0];
+  if (allPending === undefined) {
+    if (Number(filed.print_line19 ?? 0) > 0) {
+      throw new Error(
+        "Form 8889 line 19 needs retained funding-transfer source",
+      );
+    }
+    return;
+  }
   const raw = allPending.form8889;
   const rawFailure = raw && typeof raw === "object" && !Array.isArray(raw)
     ? (raw as Record<string, unknown>).testing_period_failure
@@ -66,7 +74,10 @@ export function reconcilePrimaryLastMonthRuleForm8889(
       "Form 8889 line 18 differs from prior-year source calculation",
     );
   }
-  if (Number(expected.print_line18 ?? 0) <= 0) return;
+  if (
+    Number(expected.print_line18 ?? 0) <= 0 &&
+    Number(expected.print_line19 ?? 0) <= 0
+  ) return;
   const schedule1 = z.object({
     line8f_hsa_income: z.number(),
     line10_total_additional_income: z.number(),
@@ -90,6 +101,27 @@ export function reconcilePrimaryLastMonthRuleForm8889(
     throw new Error(
       "Form 8889 line 18 income and tax differ from Schedule 1, Schedule 2, or Form 1040",
     );
+  }
+  if (prior.filed_form8889_line10 > 0) {
+    const final1040 = z.object({
+      line9_total_income: z.number(),
+      line10_adjustments: z.number(),
+      line11_agi: z.number(),
+    }).passthrough().parse(allPending.f1040);
+    if (
+      Number(filed.print_line18 ?? 0) !== 0 ||
+      Number(filed.print_line19 ?? 0) !==
+        prior.filed_form8889_line10 ||
+      allPending.form5329 !== undefined ||
+      return1040.line23_other_taxes !==
+        schedule2.line17d_hsa_eligibility_tax ||
+      final1040.line11_agi !==
+        final1040.line9_total_income - final1040.line10_adjustments
+    ) {
+      throw new Error(
+        "Form 8889 December funding recapture needs no Form 5329 excess and exact final Form 1040 totals",
+      );
+    }
   }
 }
 
