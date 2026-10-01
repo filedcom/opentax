@@ -10,10 +10,11 @@ original source copies and require each recipient to be the taxpayer or an MFJ
 spouse. Positive two-payer and missing, changed-payer, changed-total, and
 wrong-recipient fixtures are authored for the deferred implementation batch.
 Issued payer-copy bytes, payment character beyond the reported box, filled-PDF
-appearance, underlying dividend versus tax-exempt-interest classification,
-IRS business rules, and ATS acceptance remain open. The box 8 route follows the
-[2025 Form 1099-MISC instructions](https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf)
-for substitute payments.
+appearance, IRS business rules, and ATS acceptance remain open. The
+[2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
+and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
+substitute payments to Schedule 1 line 8z whether they replace dividends or
+tax-exempt interest; the underlying security type does not change this route.
 
 Build-stage audit, 2026-09-28. The checked-in TY2025 Schedule 1 schema has one
 `OtherIncomeTotalAmt` on line 8z and an optional linked
