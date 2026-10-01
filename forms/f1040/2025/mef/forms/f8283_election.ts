@@ -359,6 +359,19 @@ export function assertOrdinarySectionBReconciled(
   propertyType: SectionBPropertyType,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
+  if (propertyType === SectionBPropertyType.OtherRealEstate) {
+    const item = form8283InputSchema.parse(context?.pending?.f8283)
+      .section_b_items?.[0];
+    if (
+      item?.ordinary_income_reduction?.reason !==
+        "purchased_short_term_capital_asset" ||
+      item.investment_land_unimproved_confirmed !== true
+    ) {
+      throw new Error(
+        "Form 8283 ordinary Section B real estate needs purchased short-term unimproved investment land",
+      );
+    }
+  }
   if (
     !new Set<SectionBPropertyType>([
       SectionBPropertyType.ArtUnder20000,
@@ -367,6 +380,7 @@ export function assertOrdinarySectionBReconciled(
       SectionBPropertyType.Equipment,
       SectionBPropertyType.Collectibles,
       SectionBPropertyType.ClothingHousehold,
+      SectionBPropertyType.OtherRealEstate,
     ]).has(propertyType)
   ) {
     throw new Error(

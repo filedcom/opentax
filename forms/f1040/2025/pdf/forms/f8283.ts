@@ -353,7 +353,8 @@ function sectionBOrdinaryTangibleInstance(
     propertyType === SectionBPropertyType.ArtAtLeast20000 ||
     propertyType === SectionBPropertyType.Equipment ||
     propertyType === SectionBPropertyType.Collectibles ||
-    propertyType === SectionBPropertyType.ClothingHousehold;
+    propertyType === SectionBPropertyType.ClothingHousehold ||
+    propertyType === SectionBPropertyType.OtherRealEstate;
   const label = propertyType === SectionBPropertyType.ArtUnder20000 ||
       propertyType === SectionBPropertyType.ArtAtLeast20000
     ? "art"
@@ -361,6 +362,8 @@ function sectionBOrdinaryTangibleInstance(
     ? "equipment"
     : propertyType === SectionBPropertyType.Collectibles
     ? "collectible"
+    : propertyType === SectionBPropertyType.OtherRealEstate
+    ? "unimproved investment land"
     : "clothing or household property";
   if (
     !supportedType ||
@@ -378,12 +381,17 @@ function sectionBOrdinaryTangibleInstance(
         !appraisal.full_appraisal_source_review ||
         appraisal.attachment_file_name ===
           item.signed_form_attachment_file_name)) ||
+    (propertyType === SectionBPropertyType.OtherRealEstate &&
+      (item.investment_land_unimproved_confirmed !== true ||
+        item.ordinary_income_reduction?.reason !==
+          "purchased_short_term_capital_asset")) ||
     (item.ordinary_income_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
         propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
-        propertyType !== SectionBPropertyType.Collectibles) ||
+        propertyType !== SectionBPropertyType.Collectibles &&
+        propertyType !== SectionBPropertyType.OtherRealEstate) ||
         !appraisal?.attachment_file_name ||
         !appraisal.full_appraisal_source_review ||
         item.deduction_claimed !== item.cost_or_adjusted_basis ||
@@ -416,6 +424,8 @@ function sectionBOrdinaryTangibleInstance(
     : "";
   return {
     ...sectionBPrintedFields(item, filer),
+    section_b_other_real_estate:
+      propertyType === SectionBPropertyType.OtherRealEstate,
     section_b_art_at_least_20000:
       propertyType === SectionBPropertyType.ArtAtLeast20000,
     section_b_art_under_20000:
@@ -624,6 +634,9 @@ export const form8283Pdf: PdfFormDescriptor = {
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,
           SectionBPropertyType.ClothingHousehold,
+          ...(sectionB[0].ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.OtherRealEstate]
+            : []),
         ]).has(ordinaryType)
       ) {
         assertOrdinarySectionBReconciled(
@@ -647,7 +660,9 @@ export const form8283Pdf: PdfFormDescriptor = {
               item.property_type === SectionBPropertyType.ArtAtLeast20000 ||
               item.property_type === SectionBPropertyType.Equipment ||
               item.property_type === SectionBPropertyType.Collectibles ||
-              item.property_type === SectionBPropertyType.ClothingHousehold
+              item.property_type === SectionBPropertyType.ClothingHousehold ||
+              (item.property_type === SectionBPropertyType.OtherRealEstate &&
+                item.ordinary_income_reduction !== undefined)
           ? sectionBOrdinaryTangibleInstance(item, filer)
           : sectionBInstance(item, filer),
       ];

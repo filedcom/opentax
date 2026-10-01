@@ -810,13 +810,17 @@ const sectionBItemSchema = z.object({
       (item.property_type !== SectionBPropertyType.Equipment &&
         item.property_type !== SectionBPropertyType.ArtUnder20000 &&
         item.property_type !== SectionBPropertyType.ArtAtLeast20000 &&
-        item.property_type !== SectionBPropertyType.Collectibles) ||
+        item.property_type !== SectionBPropertyType.Collectibles &&
+        item.property_type !== SectionBPropertyType.OtherRealEstate) ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
         item.fmv >= 20_000) ||
       (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
         item.deduction_claimed < 20_000) ||
       item.capital_gain_reduction_election_confirmed === true ||
-      item.investment_land_unimproved_confirmed === true ||
+      (item.property_type === SectionBPropertyType.OtherRealEstate
+        ? item.investment_land_unimproved_confirmed !== true ||
+          ordinaryReduction.reason !== "purchased_short_term_capital_asset"
+        : item.investment_land_unimproved_confirmed === true) ||
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
       !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
       !Number.isFinite(anniversary) || contributed <= acquired ||
@@ -845,7 +849,7 @@ const sectionBItemSchema = z.object({
         code: "custom",
         path: ["ordinary_income_reduction"],
         message:
-          "Form 8283 ordinary-income equipment, art, or collectible needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase/cost record, and reduction statement",
+          "Form 8283 ordinary-income equipment, art, collectible, or short-term unimproved land needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase/cost record, and reduction statement",
       });
     }
   }

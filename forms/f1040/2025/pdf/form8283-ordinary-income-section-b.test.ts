@@ -45,6 +45,7 @@ for (
       "purchased_short_term_capital_asset",
     ],
     ["collectibles", 18_000, 12_000, "purchased_short_term_capital_asset"],
+    ["other_real_estate", 18_000, 12_000, "purchased_short_term_capital_asset"],
     ["equipment", 18_000, 12_000, "purchased_inventory"],
   ] as const
 ) {
@@ -82,9 +83,16 @@ for (
         : propertyType === "art_under_20000" ||
             propertyType === "art_at_least_20000"
         ? "Purchased framed painting, catalog ST-8283"
+        : propertyType === "other_real_estate"
+        ? "Purchased unimproved vacant investment parcel ST-8283"
         : "Purchased rare coin, catalog ST-8283",
       property_type: propertyType,
-      physical_condition: "Good used condition",
+      physical_condition: propertyType === "other_real_estate"
+        ? "Unimproved vacant land"
+        : "Good used condition",
+      ...(propertyType === "other_real_estate"
+        ? { investment_land_unimproved_confirmed: true }
+        : {}),
       date_acquired: acquiredDate,
       donor_acquisition_description: "Purchase",
       date_contributed: "2025-06-01",
@@ -244,6 +252,8 @@ for (
         ? "<ArtWorthLssThan20000DollarsInd>X</ArtWorthLssThan20000DollarsInd>"
         : propertyType === "art_at_least_20000"
         ? "<ArtWorthAtLeast20000DollarsInd>X</ArtWorthAtLeast20000DollarsInd>"
+        : propertyType === "other_real_estate"
+        ? "<OtherRealEstateInd>X</OtherRealEstateInd>"
         : "<CollectiblesInd>X</CollectiblesInd>",
     );
     const [projected] = form8283Pdf.instances!(
@@ -258,6 +268,10 @@ for (
     assertEquals(
       projected.section_b_art_at_least_20000,
       propertyType === "art_at_least_20000",
+    );
+    assertEquals(
+      projected.section_b_other_real_estate,
+      propertyType === "other_real_estate",
     );
     assertEquals(projected.section_b_claim, basis);
     const filled = await buildPdfBytes(
@@ -313,5 +327,35 @@ for (
       Error,
       "itemized total",
     );
+    if (propertyType === "other_real_estate") {
+      await assertRejects(
+        () =>
+          buildMefBundle({
+            ...pending,
+            f8283: {
+              section_b_items: [{
+                ...item,
+                investment_land_unimproved_confirmed: undefined,
+              }],
+            },
+          }, { filer: base.filer, attachments }),
+        Error,
+        "short-term unimproved land",
+      );
+      await assertRejects(
+        () =>
+          buildMefBundle({
+            ...pending,
+            f8283: {
+              section_b_items: [{
+                ...item,
+                date_acquired: "2023-01-15",
+              }],
+            },
+          }, { filer: base.filer, attachments }),
+        Error,
+        "short-term unimproved land",
+      );
+    }
   });
 }

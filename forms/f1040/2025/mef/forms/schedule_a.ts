@@ -208,6 +208,9 @@ function buildIRS1040ScheduleA(
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,
           SectionBPropertyType.ClothingHousehold,
+          ...(form.section_b_items?.[0]?.ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.OtherRealEstate]
+            : []),
         ]).has(propertyType)
       ) assertOrdinarySectionBReconciled(context, propertyType, fields);
     }

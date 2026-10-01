@@ -1035,7 +1035,8 @@ export const form8283: MefFormDescriptor<
         propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
         propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
-        propertyType !== SectionBPropertyType.Collectibles
+        propertyType !== SectionBPropertyType.Collectibles &&
+        propertyType !== SectionBPropertyType.OtherRealEstate
       ) {
         throw new Error(
           "Form 8283 ordinary-income Section B property type is unsupported",

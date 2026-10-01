@@ -479,3 +479,23 @@ A, itemized Form 1040, native attachments, PDF projection, altered
 reduction-PDF bytes, and altered Form 1040 itemization. Actual taxpayer
 documents and source assertions still need review; long-term collectibles,
 art, inventory, multiple gifts, and carryovers remain outside this slice.
+
+## Purchased short-term Section B unimproved land (2026-10-01, unrun)
+
+One purchased, unimproved vacant investment-land parcel acquired no more than
+one year before its 2025 contribution can use the ordinary-income-property
+reduction route. The claimed amount exceeds $5,000 but equals reviewed adjusted
+basis; a separate signed qualified appraisal gives the higher FMV. The purchase
+review confirms the land is a capital asset rather than inventory, has no
+depreciation or recapture, and was not donor-created. The existing six distinct
+reviewed PDFs cover purchase/basis, complete appraisal, signed Form 8283,
+reduction computation, and appraiser/donee signatures. Native Form 8283 selects
+`OtherRealEstateInd` and keeps appraised FMV separate from the basis claim;
+Schedule A and itemized Form 1040 use the claim. The PDF selects the same
+property class and prints the reduced amount. A full-return native/PDF fixture
+and altered document bytes, land-status, holding-period, and Form 1040 fixtures
+are authored for deferred validation. The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+classify a capital asset held one year or less as ordinary-income property and
+require a statement showing the FMV reduction. Long-held investment land uses
+the separate 50%-limit election route. Developed/depreciable real estate,
+inventory land, multiple gifts, and carryover combinations remain closed.
