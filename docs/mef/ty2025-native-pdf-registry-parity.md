@@ -4,7 +4,7 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **138 native descriptors and 106 PDF
+exclusion. The indexes currently hold **138 native descriptors and 107 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
 
@@ -20,7 +20,7 @@ interpreter-expense and Schedule C reduction route; wider sources remain open.
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `form8621`              | `IRS8621`                   | No PFIC parent Form 8621 PDF; a bounded Part V supporting statement can now print from checked source events.                                             |
-| `f8854`, `f8854_annual` | `IRS8854` initial or annual | Neither filed variant has a Form 8854 PDF descriptor. The native initial/annual statements do not substitute for the parent printed form.                  |
+| `f8854`                 | `IRS8854` initial           | No initial Form 8854 PDF descriptor. Its native statements do not substitute for the parent printed form.                                                   |
 
 Native-only supporting statements, payer-issued documents (`w2`, `f1099r`,
 `w2g`, K-1), and `f4835_at_risk` (which shares the `IRS6198` root with a
@@ -58,6 +58,11 @@ excessive-payment-only Part I row on line 1d and/or 2a. Its native/PDF
 reconciliation reaches Schedule 2 line 16, but both exports remain closed
 until the prior-return and IRS determination bytes are authenticated. Other
 recapture classes and Parts II/III remain open.
+
+Annual Form 8854 now has a guarded five-page PDF projection for a former-citizen
+no-event carryforward of up to seven prior deferred properties. Prior Form 8854
+bytes and acceptance remain unauthenticated, so positive print stays closed.
+The initial variant and annual dispositions/distributions remain open.
 
 Form 3468's bounded trust-owned Part V route now has both registered
 descriptors. Form 8992, its Schedule A, and Form 5471 page 1/A/B/C/F/G/I plus
