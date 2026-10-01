@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **599 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **604 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -17,18 +17,18 @@ parent gaps remain on this board for the following implementation phase. Finish
 implementation before the next agreed bulk test run; the prior failed run is
 diagnostic evidence, not a release pass.
 
-| Workstream | Open TODOs | Completed bounded items | Current state |
-| --- | ---: | ---: | --- |
-| Scope and completion rules | 4 | 2 | Filing boundaries and end-to-end acceptance rule need final review. |
-| Coverage inventory and decisions | 8 | 9 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 43 | Return-wide joins and source classification remain incomplete. |
-| Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
-| Named tax-form gaps | 20 | 492 | Many sourced form slices exist; the listed parent form paths remain open. |
-| Native MeF and PDF parity | 3 | 45 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | 2 | A deterministic 120-case filled-PDF review plan is ready; the prior full command reached 10,168 passes and 174 failures. |
-| IRS ATS and delivery | 5 | 3 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
+| Workstream | Open TODOs | Current state |
+| --- | ---: | --- |
+| Scope and completion rules | 4 | Filing boundaries and end-to-end acceptance rule need final review. |
+| Coverage inventory and decisions | 8 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
+| Core return and source paths | 8 | Return-wide joins and source classification remain incomplete. |
+| Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
+| Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
+| Automated and artifact validation | 5 | A 123-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
+| IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 599 bounded routes and
+**Implemented coverage.** The completed ledger records 604 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -76,8 +76,10 @@ owner before native/PDF export.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
-now has 120 source fixtures, 44 of 112 unique registered PDF keys represented,
-and a deterministic per-page review manifest; the 68 uncovered keys remain open.
+now has 123 source fixtures, 47 of 112 unique registered PDF keys represented,
+and a deterministic per-page review manifest; the 65 uncovered keys remain open.
+The generator now requires an explicit TY2025 XSD and checks every native XML
+before writing that case's filled PDF.
 The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
 smoke of each compiled asset before upload. The eight Form 1040 ATS scenarios
 have source-backed assertion and attachment plans; Scenario 1 and 8 source
@@ -87,6 +89,8 @@ metadata and PDF bytes before PDF projection or submission archiving.
 The native registry audit now identifies 115 bounded main/numbered rows,
 one blocked Form 8990 row, and the missing Form 8621 parent PDF; supporting
 statement packet decisions remain open.
+Identified 1099-DIV and 1099-OID payer copies now reject exact duplicate
+source records before their dividends, interest, and withholding accumulate.
 
 **Coverage and release gates.** The current static audit counts 145 registered native MeF
 descriptors, 115 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
