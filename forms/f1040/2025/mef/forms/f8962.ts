@@ -910,19 +910,28 @@ function reconcileNoAptcPolicyMonths(
     policy?.monthly_premiums?.flatMap((premium, index) =>
       premium > 0 ? [index + 1] : []
     ) ?? [];
+  const dependentMagi = reconcileDependentMagi(
+    fields.household_size,
+    fields.dependents_modified_agi,
+    pending?.general,
+  );
+  const hasVerifiedDependent = fields.household_size === 2 &&
+    (general.data.dependents?.length ?? 0) === 1;
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
     policies.length !== 1 || !policy?.policy_number ||
     policy.coverage_state !== context.filer.address.state ||
-    policy.covered_individual_ssns?.length !== 1 ||
-    (policy.covered_individual_ssns?.[0] ?? "").replaceAll("-", "") !==
-      context.filer.primarySSN.replaceAll("-", "") ||
+    (hasVerifiedDependent
+      ? policy.covered_individual_ssns?.length !== 2
+      : policy.covered_individual_ssns?.length !== 1 ||
+        (policy.covered_individual_ssns?.[0] ?? "").replaceAll("-", "") !==
+          context.filer.primarySSN.replaceAll("-", "")) ||
     general.data.taxpayer_ssn?.replaceAll("-", "") !==
       context.filer.primarySSN.replaceAll("-", "") ||
     general.data.filing_status !== SourceFilingStatus.Single ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
-    (general.data.dependents?.length ?? 0) !== 0 ||
+    (!hasVerifiedDependent && (general.data.dependents?.length ?? 0) !== 0) ||
     policy.shared_policy_periods || policy.slcsp_review_periods ||
     policy.alternative_marriage_owner ||
     source.data.alternative_marriage_month !== undefined ||
@@ -933,7 +942,8 @@ function reconcileNoAptcPolicyMonths(
       policy.monthly_premiums?.[index] === 0 && slcsp !== 0
     ) ||
     policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
-    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    (fields.household_size !== 1 && !hasVerifiedDependent) ||
+    fields.dependents_modified_agi !== dependentMagi ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
@@ -944,25 +954,43 @@ function reconcileNoAptcPolicyMonths(
     pending?.form2555 !== undefined
   ) {
     throw new Error(
-      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a one-person single return",
+      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a verified one- or two-person single return",
+    );
+  }
+  if (hasVerifiedDependent) {
+    reconcileOnePolicyDependentIdentity(
+      policies,
+      fields.household_size,
+      pending?.general,
+      context.filer.primarySSN,
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+  const taxpayerIncome = form1040.data.line11_agi + sourcedTaxExemptInterest(
     pending,
     form1040.data.line2a_tax_exempt ?? 0,
   );
+  const income = taxpayerIncome + dependentMagi;
+  if (
+    hasVerifiedDependent &&
+    (income < povertyLine || income >= 4 * povertyLine)
+  ) {
+    throw new Error(
+      "Form 8962 monthly no-APTC dependent route needs household income from 100% through 399% FPL",
+    );
+  }
   const incomeAmounts = simplePolicyIncomeAmounts(
     income,
     povertyLine,
     fields.household_size,
     policies.length,
     general.data.ptc_below_100_fpl_status?.basis === "lawfully_present",
+    hasVerifiedDependent,
   );
   if (
     (form1040.data.line6a_ss_gross ?? 0) !==
       (form1040.data.line6b_ss_taxable ?? 0) ||
-    fields.taxpayer_modified_agi !== income ||
+    fields.taxpayer_modified_agi !== taxpayerIncome ||
     fields.household_income !== income ||
     fields.federal_poverty_line !== povertyLine ||
     fields.federal_poverty_pct !== incomeAmounts.povertyPct ||

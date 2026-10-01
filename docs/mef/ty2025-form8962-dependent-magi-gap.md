@@ -1,5 +1,27 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One monthly no-APTC policy covering filer and required-filing dependent (2026-10-01, unrun)
+
+A single filer and one claimed dependent can now use monthly Form 8962 lines
+12–23 for one same-state, nonshared, no-APTC policy covering both identified
+people when household income is 100%–399% of the two-person poverty line. The
+dependent's identified 2025 filed Form 1040 and W-2 establish a required
+filing and Worksheet 1-2 line 2b MAGI; that income stays separate from the
+parent's Form 1040 AGI. All covered months retain the original Form 1095-A
+premium and zero APTC, an independent Marketplace SLCSP determination, and a
+timely premium-payment record. The native boundary replays both identities,
+household MAGI, Table 2 contribution, every monthly credit, Schedule 3 line
+9, and Form 1040 line 31. PDF projection invokes the same boundary. A
+200%-FPL, changing-SLCSP full-return example yields $8,184 PTC; changed
+covered-person, Marketplace amount, and finalized credit fixtures are authored
+but unrun. This follows the [2025 Form 8962 line 2b and monthly-line
+instructions](https://www.irs.gov/instructions/i8962).
+
+The route requires both tax-family members on the single policy. Different
+coverage families, a second policy, shared allocation, income outside the
+bounded FPL range, other dependent income sources, and authenticated issuer or
+filed-return bytes remain open.
+
 ## Two required-filing dependents on one annual policy (2026-10-01, unrun)
 
 One single-filer, three-person household may now combine a distinct dependent's
