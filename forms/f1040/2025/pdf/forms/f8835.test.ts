@@ -631,7 +631,7 @@ Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit"
   assertThrows(
     () => projected(pending({ ...facility(), domestic_content_bonus: true })),
     Error,
-    "filer-owned nonpassive wind or geothermal facilities",
+    "filer-owned nonpassive wind, geothermal",
   );
   const multiple = pending();
   multiple.f8835.f8835s = [facility(), facility()];

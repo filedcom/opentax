@@ -319,6 +319,8 @@ Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and 
   const fields = result.pending.form4952!;
   const jointFiler = {
     ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
     filingStatus: FilingStatus.MarriedFilingJointly,
     spouse: {
       ssn: "444556666",
@@ -480,7 +482,11 @@ Deno.test("Form 4952 traced loan excludes one payer's qualified dividends and ca
     bundle.xml,
     "<InvestmentPropQualDividendsAmt>15000</InvestmentPropQualDividendsAmt>",
   );
-  const pdf = await buildPdfBytes(pending, testFiler(), ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  }, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
   const source = result.pending.f1099div as {
@@ -712,7 +718,11 @@ Deno.test("Form 4952 traced loan joins two interest and two dividend payers with
     bundle.xml,
     "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
   );
-  const pdf = await buildPdfBytes(pending, testFiler(), ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  }, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
 
   const interestItems = (result.pending.f1099int as {

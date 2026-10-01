@@ -85,7 +85,7 @@ Deno.test("Schedule C staged refund joins a no-carryover 2025 Form 1116, Schedul
         { ...currentForm1116, foreign_tax_redeterminations: [ledger] },
       ),
     Error,
-    "authenticated filed-year records",
+    "authenticated affected-year filing and amendment receipts",
   );
 });
 

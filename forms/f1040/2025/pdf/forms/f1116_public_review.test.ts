@@ -342,7 +342,7 @@ Deno.test("Form 1116 public PDF route rejects unreviewed or mismatched interest 
         single_source_pdf_review: undefined,
       }, result.pending),
     Error,
-    "affirmative single-source",
+    "affirmative source inventory and Part I–IV review",
   );
   const source = result.pending.f1099int;
   assert(source);
