@@ -1119,6 +1119,12 @@ function reconcileMultiNoAptcPolicyMonths(
   const rows = fields.monthly_ptc_rows;
   const ssn = context.filer.primarySSN.replaceAll("-", "");
   const policyLabel = policies.length === 3 ? "three-policy" : "two-policy";
+  const activePolicyCounts = Array.from(
+    { length: 12 },
+    (_, month) =>
+      policies.filter((policy) => (policy.monthly_premiums?.[month] ?? 0) > 0)
+        .length,
+  );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
@@ -1129,15 +1135,8 @@ function reconcileMultiNoAptcPolicyMonths(
     (policies.length !== 2 && policies.length !== 3) ||
     new Set(policies.map((policy) => policy.policy_number)).size !==
       policies.length ||
-    (policies.length === 3 &&
-      Array.from(
-        { length: 12 },
-        (_, month) =>
-          policies.filter((policy) =>
-            (policy.monthly_premiums?.[month] ?? 0) > 0
-          )
-            .length !== 1,
-      ).some(Boolean)) ||
+    activePolicyCounts.filter((count) => count === 0).length > 1 ||
+    (policies.length === 3 && activePolicyCounts.some((count) => count > 1)) ||
     (policies.length === 3 && policies.some((policy) => {
       const coveredMonths = policy.monthly_premiums?.flatMap((premium, index) =>
         premium > 0 ? [index] : []
@@ -1259,9 +1258,18 @@ function reconcileMultiNoAptcPolicyMonths(
       policy.monthly_premiums![index] > 0 ? [policyIndex] : []
     );
     if (active.length === 0) {
-      throw new Error(
-        `Form 8962 ${policyLabel} month ${month} needs a covered policy`,
-      );
+      const row = rows[index];
+      if (
+        row.month_code !== MONTH_CODES[index] || row.premium !== 0 ||
+        row.slcsp !== 0 || row.aptc !== 0 ||
+        row.contribution !== contribution || row.max_assistance !== 0 ||
+        row.allowed_credit !== 0
+      ) {
+        throw new Error(
+          `Form 8962 ${policyLabel} uncovered month ${month} must have zero policy and credit amounts`,
+        );
+      }
+      continue;
     }
     const premium = roundForm8962Amounts(
       active.map((policyIndex) =>

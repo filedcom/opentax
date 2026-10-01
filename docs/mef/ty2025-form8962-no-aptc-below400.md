@@ -7,8 +7,8 @@ that cover successive months without overlap and pay no APTC. Each policy has
 its own Form 1095-A monthly premium and zero-APTC columns, original column B
 and annual totals, a Marketplace-determined applicable SLCSP for every month
 it covers, and a separate full-payment record dated by the unextended return
-due date. The two-policy native boundary requires every month to have coverage,
-checks each policy's evidence only against its own covered months, and compares
+due date. The full-coverage two-policy case checks each policy's evidence only
+against its own covered months and compares
 the resulting monthly premium, SLCSP, credit, Schedule 3 line 9, and Form 1040
 line 31 with the source calculation. The PDF route invokes that same guard.
 
@@ -21,21 +21,20 @@ $600/$700 determined SLCSPs produce $7,200 PTC at $30,120 household income.
 Missing second-policy July payment evidence and a payment after April 15,
 2026, reject at native filing; missing evidence also rejects PDF projection.
 The fixtures are authored but unrun. Overlapping policies continue through
-the existing same-SLCSP two-policy checks. A coverage gap, more than three
-policies, partial payments across policies, other covered people, and
+the existing same-SLCSP two-policy checks. Multiple uncovered months, more
+than three policies, partial payments across policies, other covered people, and
 authentication of Marketplace/payment document bytes remain open.
 
 ## Three sequential no-APTC policies (staged, unrun)
 
 The same reviewed monthly source path now covers three distinct same-state
-policies for one filer when exactly one policy covers each month of 2025. Each
-policy has its own original Form 1095-A column A/B/C and annual totals, and
-exactly one applicable-SLCSP determination and timely full-payment record for
-each of its covered months. The native guard checks every policy identity and
-covered-month evidence, rejects an overlap, gap, or returning policy, and
+policies for one filer when exactly one policy covers each month of 2025 in the
+full-coverage case. Each policy has its own original Form 1095-A column A/B/C
+and annual totals, plus one applicable-SLCSP determination and timely full-
+payment record for each covered month. The native guard checks every policy identity and
+covered-month evidence, rejects an overlap or returning policy, and
 reconciles all twelve Form 8962 rows with Schedule 3 line 9 and Form 1040 line
-31. PDF projection
-runs the same guard. The [2025 Form 8962
+31. PDF projection runs the same guard. The [2025 Form 8962
 instructions](https://www.irs.gov/instructions/i8962) use monthly lines for a
 changing SLCSP and combine multiple Forms 1095-A by affected month.
 
@@ -44,9 +43,33 @@ $900 paid premium and a Marketplace-determined $600, $700, or $800 SLCSP for
 its policy period. The twelve monthly credits total $7,800. Full-return,
 native/PDF, missing-third-policy-payment, overlapping-coverage, and
 returning-policy fixtures are authored but unrun. Four or more policies, other
-covered people, gaps,
-partial payments across policies, and external source-byte authentication
+covered people, multiple uncovered months, partial payments across policies,
+and external source-byte authentication
 remain open.
+
+## One uncovered month between two or three policies (staged, unrun)
+
+The same one-filer, same-state no-APTC monthly path now permits **one** genuinely
+uncovered month during a two- or three-policy year. Every original Form 1095-A
+must report zero premium, SLCSP, and APTC for that month. There is no
+Marketplace determination or payment record for it. Each active policy retains
+its own determined SLCSP and timely full-payment evidence for every month it
+does cover; three-policy coverage remains one contiguous block per policy.
+The source calculation produces zero premium, SLCSP, assistance, and credit for
+the uncovered month. Native MeF verifies that zero row and omits its monthly
+group; PDF leaves its monthly columns blank. The remaining monthly credits
+reconcile to Schedule 3 line 9 and Form 1040 line 31.
+
+At 200% FPL, Jan–Jun/Aug–Dec policies with July uncovered yield $6,550 PTC;
+Jan–Apr/May–Aug/Oct–Dec policies with September uncovered yield $7,050. Both
+full-return/native/PDF fixtures are authored but unrun, along with ghost
+Marketplace/payment evidence for the uncovered month and a second-coverage-gap
+tamper case. The [2025 Form 8962 monthly
+instructions](https://www.irs.gov/instructions/i8962) use the amounts from
+Forms 1095-A only for months with coverage and allow a zero monthly row when no
+premium is eligible. More than one uncovered month, overlapping three-policy
+coverage, wider households, partial payments across policies, and source-byte
+authentication remain open.
 
 The existing zero-APTC, one-person, one-policy route now reconciles the
 applicable figure from the TY2025 Form 8962 Table 2 at 100%-399% of the federal

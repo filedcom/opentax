@@ -175,6 +175,54 @@ function windFacility() {
   };
 }
 
+function sequentialNoAptcPolicy(
+  policyNumber: string,
+  startMonth: number,
+  endMonth: number,
+  slcsp: number,
+) {
+  const coveredMonths = Array.from(
+    { length: endMonth - startMonth + 1 },
+    (_, index) => startMonth + index,
+  );
+  return {
+    issuer_name: "Texas Marketplace",
+    policy_number: policyNumber,
+    coverage_state: "TX",
+    covered_individual_ssns: ["111223333"],
+    monthly_premiums: Array.from(
+      { length: 12 },
+      (_, index) => index + 1 >= startMonth && index + 1 <= endMonth ? 900 : 0,
+    ),
+    monthly_slcsps: Array(12).fill(0),
+    monthly_aptcs: Array(12).fill(0),
+    annual_premium: coveredMonths.length * 900,
+    annual_slcsp: 0,
+    annual_aptc: 0,
+    slcsp_corrections: coveredMonths.map((month) => ({
+      month,
+      basis: "no_aptc" as const,
+      corrected_slcsp: slcsp,
+      determination_source: "marketplace_tool" as const,
+    })),
+    no_aptc_monthly_evidence: coveredMonths.map((month) => ({
+      month,
+      marketplace_slcsp: slcsp,
+      marketplace_method: "marketplace_tool" as const,
+      marketplace_reference: `${policyNumber}-SLCSP-${month}`,
+      marketplace_determined_on: "2026-02-01",
+      marketplace_record_sha256: month.toString(16).repeat(64),
+      premium_payment: {
+        status: "paid_in_full" as const,
+        amount: 900,
+        paid_on: "2026-03-01",
+        reference: `${policyNumber}-PAID-${month}`,
+        record_sha256: (month + 1).toString(16).repeat(64),
+      },
+    })),
+  };
+}
+
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-child-unearned-income",
@@ -4210,6 +4258,162 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-sequential-no-aptc-policies-200-fpl",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-NO-APTC-JAN-JUN",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index < 6 ? 800 : 0,
+          ),
+          monthly_slcsps: Array(12).fill(0),
+          monthly_aptcs: Array(12).fill(0),
+          annual_premium: 4_800,
+          annual_slcsp: 0,
+          annual_aptc: 0,
+          slcsp_corrections: Array.from({ length: 6 }, (_, index) => ({
+            month: index + 1,
+            basis: "no_aptc" as const,
+            corrected_slcsp: 600,
+            determination_source: "marketplace_tool" as const,
+          })),
+          no_aptc_monthly_evidence: Array.from({ length: 6 }, (_, index) => ({
+            month: index + 1,
+            marketplace_slcsp: 600,
+            marketplace_method: "marketplace_tool" as const,
+            marketplace_reference: `TX-JAN-JUN-SLCSP-${index + 1}`,
+            marketplace_determined_on: "2026-02-01",
+            marketplace_record_sha256: String(index + 1).repeat(64),
+            premium_payment: {
+              status: "paid_in_full" as const,
+              amount: 800,
+              paid_on: "2026-03-01",
+              reference: `TX-JAN-JUN-PAID-${index + 1}`,
+              record_sha256: "a".repeat(64),
+            },
+          })),
+        },
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-NO-APTC-JUL-DEC",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index >= 6 ? 800 : 0,
+          ),
+          monthly_slcsps: Array(12).fill(0),
+          monthly_aptcs: Array(12).fill(0),
+          annual_premium: 4_800,
+          annual_slcsp: 0,
+          annual_aptc: 0,
+          slcsp_corrections: Array.from({ length: 6 }, (_, index) => ({
+            month: index + 7,
+            basis: "no_aptc" as const,
+            corrected_slcsp: 700,
+            determination_source: "marketplace_contact" as const,
+          })),
+          no_aptc_monthly_evidence: Array.from({ length: 6 }, (_, index) => ({
+            month: index + 7,
+            marketplace_slcsp: 700,
+            marketplace_method: "marketplace_contact" as const,
+            marketplace_reference: `TX-JUL-DEC-SLCSP-${index + 7}`,
+            marketplace_determined_on: "2026-02-02",
+            marketplace_record_sha256: String(index + 1).repeat(64),
+            premium_payment: {
+              status: "paid_in_full" as const,
+              amount: 800,
+              paid_on: "2026-03-02",
+              reference: `TX-JUL-DEC-PAID-${index + 7}`,
+              record_sha256: "b".repeat(64),
+            },
+          })),
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Two distinct nonoverlapping 1095-A policies retain original zero column B and C, with six corrected SLCSP and full-payment records each",
+      "Monthly Form 8962 rows use $600 in January–June and $700 in July–December, totaling $7,200 PTC",
+      "Schedule 3 line 9 and Form 1040 line 31 each show $7,200 once",
+    ],
+  },
+  {
+    id: "single-sequential-three-no-aptc-policies-200-fpl",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-JAN-APR", 1, 4, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-MAY-AUG", 5, 8, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-SEP-DEC", 9, 12, 800),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Three distinct 1095-A policies retain their original zero columns B and C, with four independent SLCSP and paid-premium records per policy",
+      "Monthly Form 8962 rows use $600, $700, and $800 SLCSP for successive four-month policy periods, totaling $7,800 PTC",
+      "Schedule 3 line 9 and Form 1040 line 31 each show $7,800 once",
+    ],
+  },
+  {
+    id: "single-two-no-aptc-policies-july-uncovered",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-JAN-JUN-GAP", 1, 6, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-AUG-DEC-GAP", 8, 12, 700),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "July has zero premium, SLCSP, APTC, credit, and no Marketplace determination or payment evidence on either original Form 1095-A",
+      "Eleven covered Form 8962 monthly groups total $6,550 PTC at 200% FPL, with July blank on the PDF",
+      "Schedule 3 line 9 and Form 1040 line 31 each carry $6,550 once",
+    ],
+  },
+  {
+    id: "single-three-no-aptc-policies-september-uncovered",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-JAN-APR-GAP", 1, 4, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-MAY-AUG-GAP", 5, 8, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-OCT-DEC-GAP", 10, 12, 800),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "September has zero premium, SLCSP, APTC, credit, and no Marketplace determination or payment evidence on all three original Forms 1095-A",
+      "Eleven covered Form 8962 monthly groups total $7,050 PTC at 200% FPL, with September blank on the PDF",
+      "Schedule 3 line 9 and Form 1040 line 31 each carry $7,050 once",
+    ],
+  },
+  {
     id: "single-marketplace-aptc-repayment",
     inputs: {
       general: singleGeneral,
@@ -4234,6 +4438,178 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Household income, federal-poverty percentage, applicable figure and repayment limitation agree with the source calculation",
       "Excess APTC carries once to Schedule 2 line 1a and Form 1040 line 17",
       "Both Form 8962 pages and the Schedule 2 page have legible fields and no clipped monthly amount",
+    ],
+  },
+  {
+    id: "single-alternating-policies-all-covered-slcsp-corrections",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_300, 8_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-ALTERNATE-A",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 500 : 0,
+          ),
+          monthly_slcsps: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 600 : 0,
+          ),
+          monthly_aptcs: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 200 : 0,
+          ),
+          annual_premium: 4_000,
+          annual_slcsp: 4_800,
+          annual_aptc: 1_600,
+        },
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-ALTERNATE-B",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 500 : 0,
+          ),
+          monthly_slcsps: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 600 : 0,
+          ),
+          monthly_aptcs: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 200 : 0,
+          ),
+          annual_premium: 2_000,
+          annual_slcsp: 2_400,
+          annual_aptc: 800,
+          slcsp_corrections: [
+            {
+              month: 5,
+              basis: "marketplace_error",
+              corrected_slcsp: 650,
+              determination_source: "marketplace_contact",
+              determination_reference: "TX-MKT-2025-MAY",
+              determination_record_sha256: "d".repeat(64),
+              determined_on: "2026-02-01",
+            },
+            {
+              month: 6,
+              basis: "marketplace_error",
+              corrected_slcsp: 700,
+              determination_source: "marketplace_tool",
+              determination_reference: "TX-MKT-2025-JUN",
+              determination_record_sha256: "e".repeat(64),
+              determined_on: "2026-02-02",
+            },
+            {
+              month: 7,
+              basis: "marketplace_error",
+              corrected_slcsp: 750,
+              determination_source: "marketplace_contact",
+              determination_reference: "TX-MKT-2025-JUL",
+              determination_record_sha256: "b".repeat(64),
+              determined_on: "2026-02-01",
+            },
+            {
+              month: 8,
+              basis: "marketplace_error",
+              corrected_slcsp: 800,
+              determination_source: "marketplace_tool",
+              determination_reference: "TX-MKT-2025-AUG",
+              determination_record_sha256: "c".repeat(64),
+              determined_on: "2026-02-02",
+            },
+          ],
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule2"],
+    reviewFocus: [
+      "Original Form 1095-A column B totals stay $4,800 and $2,400 while May through August use determined $650, $700, $750, and $800 SLCSP",
+      "Form 8962 monthly rows total $1,304 PTC and $1,096 excess APTC",
+      "Schedule 2 line 1a and Form 1040 line 17 carry the $1,096 repayment once",
+    ],
+  },
+  {
+    id: "single-alternating-policies-both-slcsp-corrected",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_300, 8_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-BOTH-A",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 500 : 0,
+          ),
+          monthly_slcsps: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 600 : 0,
+          ),
+          monthly_aptcs: Array.from(
+            { length: 12 },
+            (_, index) => index < 4 || index >= 8 ? 200 : 0,
+          ),
+          annual_premium: 4_000,
+          annual_slcsp: 4_800,
+          annual_aptc: 1_600,
+          slcsp_corrections: [{
+            month: 1,
+            basis: "marketplace_error",
+            corrected_slcsp: 650,
+            determination_source: "marketplace_contact",
+            determination_reference: "TX-BOTH-A-JAN",
+            determination_record_sha256: "a".repeat(64),
+            determined_on: "2026-02-01",
+          }],
+        },
+        {
+          issuer_name: "Texas Marketplace",
+          policy_number: "TX-BOTH-B",
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 500 : 0,
+          ),
+          monthly_slcsps: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 600 : 0,
+          ),
+          monthly_aptcs: Array.from(
+            { length: 12 },
+            (_, index) => index >= 4 && index < 8 ? 200 : 0,
+          ),
+          annual_premium: 2_000,
+          annual_slcsp: 2_400,
+          annual_aptc: 800,
+          slcsp_corrections: [5, 6, 7, 8].map((month) => ({
+            month,
+            basis: "marketplace_error" as const,
+            corrected_slcsp: 600 + (month - 4) * 50,
+            determination_source: "marketplace_tool" as const,
+            determination_reference: `TX-BOTH-B-${month}`,
+            determination_record_sha256: String(month).repeat(64),
+            determined_on: "2026-02-02",
+          })),
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule2"],
+    reviewFocus: [
+      "Both original Form 1095-A column B totals stay $4,800 and $2,400 while each policy's own correction feeds only its covered months",
+      "Form 8962 monthly rows total $1,354 PTC and $1,046 excess APTC",
+      "Schedule 2 line 1a and Form 1040 line 17 carry the $1,046 repayment once",
     ],
   },
   {
@@ -4393,6 +4769,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example Qualified Plan",
         payer_ein: "12-3456789",
+        source_document_reference: "review-4972-qualified-plan-1099r",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 30_000,
@@ -4401,14 +4778,17 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         exclude_4972: true,
       }],
       form4972: {
-        born_before_1936: true,
-        entire_balance_distributed: true,
-        rolled_over_any: false,
-        beneficiary_distribution: false,
-        participant_five_year_member: true,
-        prior_election_after_1986: false,
-        elect_capital_gain: true,
-        elect_10yr_averaging: false,
+        elections: [{
+          source_document_references: ["review-4972-qualified-plan-1099r"],
+          born_before_1936: true,
+          entire_balance_distributed: true,
+          rolled_over_any: false,
+          beneficiary_distribution: false,
+          participant_five_year_member: true,
+          prior_election_after_1986: false,
+          elect_capital_gain: true,
+          elect_10yr_averaging: false,
+        }],
       },
     },
     filer: singleFiler,
