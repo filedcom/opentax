@@ -64,7 +64,7 @@ export function projectReviewedStockLoss7203(
         ledger.shareholder_ssn !== note.shareholder_ssn ||
         ledger.corporation_ein !== note.corporation_ein ||
         fields.new_loans !== note.cash_advance_amount +
-          (note.second_formal_note?.cash_advance_amount ?? 0) ||
+            (note.second_formal_note?.cash_advance_amount ?? 0) ||
         JSON.stringify(fields.reviewed_one_note_debt) !== JSON.stringify(note)
       : !ledger.no_shareholder_debt_or_repayments ||
         fields.new_loans !== undefined ||
@@ -120,7 +120,8 @@ export function projectReviewedStockLoss7203(
   const firstDebtBasis = note
     ? note.cash_advance_amount - (note.principal_repayment?.amount ?? 0)
     : 0;
-  const secondDebtBasis = note?.second_formal_note?.cash_advance_amount ?? 0;
+  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ?? 0) -
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
   const allowedDebt = note
     ? Math.min(
       currentLoss - allowedStock,

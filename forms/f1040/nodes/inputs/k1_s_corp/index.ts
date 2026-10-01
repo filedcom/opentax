@@ -755,7 +755,8 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           ledger.beginning_basis_workpaper_reference !==
             note.beginning_stock_basis_workpaper_reference ||
           (item.box16_code_e_loan_repayment ?? 0) !==
-            (note.principal_repayment?.amount ?? 0)
+            ((note.principal_repayment?.amount ?? 0) +
+              (note.second_formal_note?.principal_repayment?.amount ?? 0))
         ) {
           throw new Error(
             "Form 7203 formal note and reviewed stock ledger must reconcile",

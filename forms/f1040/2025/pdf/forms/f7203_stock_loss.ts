@@ -88,7 +88,9 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     ),
     textField(
       `line${line}_debt2`,
-      `${debtB}Line${line}[0].f2_${String(Number(first) + 1).padStart(2, "0")}[0]`,
+      `${debtB}Line${line}[0].f2_${
+        String(Number(first) + 1).padStart(2, "0")
+      }[0]`,
       line === "21",
     ),
     ...(line === "25" ? [] : [
@@ -102,6 +104,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   ...[["32", "45", "48"], ["33", "49", "52"]].flatMap(
     ([line, first, total]) => [
       textField(`line${line}_debt1`, `${debtC}Line${line}[0].f2_${first}[0]`),
+      textField(
+        `line${line}_debt2`,
+        `${debtC}Line${line}[0].f2_${Number(first) + 1}[0]`,
+      ),
       textField(`line${line}_total`, `${debtC}Line${line}[0].f2_${total}[0]`),
     ],
   ),
@@ -139,8 +145,13 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
     const repayment = note?.principal_repayment?.amount ?? 0;
     const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
     const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
+    const secondRepayment =
+      note?.second_formal_note?.principal_repayment?.amount ?? 0;
+    const secondDebtAfterRepayment = secondAdvance - secondRepayment;
+    const totalRepayment = repayment + secondRepayment;
     const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance;
-    const totalDebtAfterRepayment = debtAfterRepayment + secondAdvance;
+    const totalDebtAfterRepayment = debtAfterRepayment +
+      secondDebtAfterRepayment;
     return [{
       shareholder_name: ledger.shareholder_name_as_on_k1,
       shareholder_ssn: ledger.shareholder_ssn,
@@ -170,9 +181,8 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
           line17_total: totalAdvance,
           line18_debt1: note.cash_advance_amount,
           line18_total: totalAdvance,
-          ...(repayment > 0
-            ? { line19_debt1: repayment, line19_total: repayment }
-            : {}),
+          ...(repayment > 0 ? { line19_debt1: repayment } : {}),
+          ...(totalRepayment > 0 ? { line19_total: totalRepayment } : {}),
           line20_debt1: debtAfterRepayment,
           line20_total: totalDebtAfterRepayment,
           line21_debt1: 0,
@@ -182,9 +192,8 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
           line24_debt1: note.cash_advance_amount,
           line24_total: totalAdvance,
           line25_debt1: "1.0000",
-          ...(repayment > 0
-            ? { line26_debt1: repayment, line26_total: repayment }
-            : {}),
+          ...(repayment > 0 ? { line26_debt1: repayment } : {}),
+          ...(totalRepayment > 0 ? { line26_total: totalRepayment } : {}),
           line27_debt1: debtAfterRepayment,
           line27_total: totalDebtAfterRepayment,
           line29_debt1: debtAfterRepayment,
@@ -199,23 +208,35 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
               line16_debt2: 0,
               line17_debt2: secondAdvance,
               line18_debt2: secondAdvance,
-              line20_debt2: secondAdvance,
+              ...(secondRepayment > 0 ? { line19_debt2: secondRepayment } : {}),
+              line20_debt2: secondDebtAfterRepayment,
               line21_debt2: 0,
               line22_debt2: secondAdvance,
               line24_debt2: secondAdvance,
               line25_debt2: "1.0000",
-              line27_debt2: secondAdvance,
-              line29_debt2: secondAdvance,
+              ...(secondRepayment > 0 ? { line26_debt2: secondRepayment } : {}),
+              line27_debt2: secondDebtAfterRepayment,
+              line29_debt2: secondDebtAfterRepayment,
               line30_debt2: allowedDebt2,
-              line31_debt2: secondAdvance - allowedDebt2,
+              line31_debt2: secondDebtAfterRepayment - allowedDebt2,
             }
             : {}),
           ...(repayment > 0
             ? {
               line32_debt1: repayment,
-              line32_total: repayment,
               line33_debt1: repayment,
-              line33_total: repayment,
+            }
+            : {}),
+          ...(secondRepayment > 0
+            ? {
+              line32_debt2: secondRepayment,
+              line33_debt2: secondRepayment,
+            }
+            : {}),
+          ...(totalRepayment > 0
+            ? {
+              line32_total: totalRepayment,
+              line33_total: totalRepayment,
             }
             : {}),
         }

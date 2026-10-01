@@ -27,8 +27,13 @@ export function buildReviewedStockLoss7203(
   const repayment = note?.principal_repayment?.amount ?? 0;
   const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
   const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
+  const secondRepayment =
+    note?.second_formal_note?.principal_repayment?.amount ?? 0;
+  const secondDebtAfterRepayment = secondAdvance - secondRepayment;
+  const totalRepayment = repayment + secondRepayment;
   const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance;
-  const totalDebtAfterRepayment = debtAfterRepayment + secondAdvance;
+  const totalDebtAfterRepayment = debtAfterRepayment +
+    secondDebtAfterRepayment;
   const lossGroup = (amount: number) => [
     element("OrdinaryBusinessLossAmt", amount),
     element("TotalAllowableLossAmt", amount),
@@ -80,26 +85,37 @@ export function buildReviewedStockLoss7203(
         element("LoanBalanceBeginTaxYrAmt", 0),
         element("AdditionalLoansAmt", secondAdvance),
         element("LoanedBeginningBalAmt", secondAdvance),
-        element("LoanBalanceEndTaxYrAmt", secondAdvance),
+        secondRepayment > 0
+          ? element("PrincipalDebtRepaymentAmt", secondRepayment)
+          : "",
+        element("LoanBalanceEndTaxYrAmt", secondDebtAfterRepayment),
         element("DebtBasisBeginTaxYrAmt", 0),
         element("DebtBasisBfrRepaymentAmt", secondAdvance),
         element("DebtLoanRepaymentPct", "1.0000"),
-        element("DebtBasisBfrExpnssLossAmt", secondAdvance),
-        element("DebtBasisBeforeLossDedAmt", secondAdvance),
+        secondRepayment > 0
+          ? element("NontaxableDebtRepaymentAmt", secondRepayment)
+          : "",
+        element("DebtBasisBfrExpnssLossAmt", secondDebtAfterRepayment),
+        element("DebtBasisBeforeLossDedAmt", secondDebtAfterRepayment),
         element("AllowableLossAmt", allowedDebt2),
-        element("DebtBasisEndTaxYrAmt", secondAdvance - allowedDebt2),
+        element(
+          "DebtBasisEndTaxYrAmt",
+          secondDebtAfterRepayment - allowedDebt2,
+        ),
       ])
       : "",
     note ? element("TotLoanBalanceBeginTaxYrAmt", 0) : "",
     note ? element("TotAdditionalLoansAmt", totalAdvance) : "",
     note ? element("TotLoanedBeginningBalAmt", totalAdvance) : "",
-    note && repayment > 0 ? element("TotPrincipalDebtRepaymentAmt", repayment) : "",
+    note && totalRepayment > 0
+      ? element("TotPrincipalDebtRepaymentAmt", totalRepayment)
+      : "",
     note ? element("TotLoanBalanceEndTaxYrAmt", totalDebtAfterRepayment) : "",
     note ? element("TotDebtBasisBeginTaxYrAmt", 0) : "",
-    note
-      ? element("TotDebtBasisBfrRepaymentAmt", totalAdvance)
+    note ? element("TotDebtBasisBfrRepaymentAmt", totalAdvance) : "",
+    note && totalRepayment > 0
+      ? element("TotNontaxableDebtRepaymentAmt", totalRepayment)
       : "",
-    note && repayment > 0 ? element("TotNontaxableDebtRepaymentAmt", repayment) : "",
     note
       ? element("TotDebtBasisBfrExpnssLossAmt", totalDebtAfterRepayment)
       : "",

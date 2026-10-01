@@ -121,7 +121,9 @@ function tentativeStockBasis(
 // A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
-    (input.reviewed_one_note_debt?.principal_repayment?.amount ?? 0);
+    (input.reviewed_one_note_debt?.principal_repayment?.amount ?? 0) -
+    (input.reviewed_one_note_debt?.second_formal_note?.principal_repayment
+      ?.amount ?? 0);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)
@@ -187,7 +189,8 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       const firstDebtBasis = note.cash_advance_amount -
         (note.principal_repayment?.amount ?? 0);
       const totalDebtBasis = firstDebtBasis +
-        note.second_formal_note.cash_advance_amount;
+        note.second_formal_note.cash_advance_amount -
+        (note.second_formal_note.principal_repayment?.amount ?? 0);
       const debtLoss = Math.min(
         (input.ordinary_loss ?? 0) - stock,
         totalDebtBasis,
