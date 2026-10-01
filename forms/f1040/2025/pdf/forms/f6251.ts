@@ -10,6 +10,7 @@ import {
 import { assertForm6251Form4952Line2c } from "../../form6251_4952_reconciliation.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251MiningSource } from "../../../nodes/inputs/schedule_c/mining.ts";
+import { assertForm6251LongTermContractSource } from "../../../nodes/inputs/schedule_c/long_term_contract.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
 import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
@@ -51,6 +52,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("line2k_disposition", 1, 15),
   textField("depreciation_adjustment", 1, 16),
   textField("line2o_circulation_costs", 1, 19),
+  textField("line2p_long_term_contracts", 1, 20),
   textField("line2q_mining_costs", 1, 21),
   textField("amti", 1, 26),
   textField("exemption", 1, 27),
@@ -99,6 +101,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertPriorIsoSaleRetention(fields, allPending);
     assertForm6251CirculationSource(fields, allPending);
     assertForm6251MiningSource(fields, allPending);
+    assertForm6251LongTermContractSource(fields, allPending);
     assertForm6251DepletionSource(fields, allPending);
     assertForm6251DepreciationSource(fields);
     assertForm6251TrustSource(fields, allPending);
@@ -141,6 +144,7 @@ export const form6251Pdf: PdfFormDescriptor = {
   },
   instances(fields, filer, allPending) {
     assertForm6251MiningSource(fields, allPending);
+    assertForm6251LongTermContractSource(fields, allPending);
     assertForm6251Form4952Line2c(fields, allPending, filer?.primarySSN, true);
     assertPriorIsoSaleExport(
       fields,

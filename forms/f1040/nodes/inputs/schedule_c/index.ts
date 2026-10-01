@@ -21,6 +21,7 @@ import { form7206 } from "../../intermediate/forms/form7206/index.ts";
 import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
 import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
 import { miningCostAdjustment } from "./mining.ts";
+import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
@@ -125,6 +126,12 @@ function deductionOutputs(
   if (miningAdjustment > 0) {
     outputs.push(output(form6251, {
       line2q_mining_costs: miningAdjustment,
+    }));
+  }
+  const contractAdjustment = longTermContractAdjustment(item);
+  if (contractAdjustment > 0) {
+    outputs.push(output(form6251, {
+      line2p_long_term_contracts: contractAdjustment,
     }));
   }
   if (item.line_g_material_participation === false) {

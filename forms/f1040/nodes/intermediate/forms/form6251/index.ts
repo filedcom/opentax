@@ -159,6 +159,8 @@ export const inputSchema = z.object({
   // Line 2o: current-year regular circulation-cost deduction less the AMT
   // deduction, sourced from the reviewed §59(e) expenditure record.
   line2o_circulation_costs: z.number().int().finite().optional(),
+  // First-year non-home long-term contract AMT profit less deferred regular income.
+  line2p_long_term_contracts: z.number().int().positive().optional(),
   // Schedule C current-year mining deduction less ten-year AMT amortization.
   line2q_mining_costs: z.number().int().nonnegative().optional(),
 
@@ -235,6 +237,7 @@ function knownLine2cThrough3Total(input: Form6251Input): number {
     estatesAndTrustsAdjustment(input) +
     line2kBasisDispositionAdjustment(input) +
     (input.line2o_circulation_costs ?? 0) +
+    (input.line2p_long_term_contracts ?? 0) +
     (input.line2q_mining_costs ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
@@ -251,6 +254,7 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
     line2j_estates_and_trusts: 0,
     line2k_8949_basis_dispositions: undefined,
     line2o_circulation_costs: 0,
+    line2p_long_term_contracts: 0,
     line2q_mining_costs: 0,
     depreciation_adjustment: 0,
     nol_adjustment: 0,
@@ -277,6 +281,7 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
     estatesAndTrustsAdjustment(input) +
     line2kBasisDispositionAdjustment(input) +
     (input.line2o_circulation_costs ?? 0) +
+    (input.line2p_long_term_contracts ?? 0) +
     (input.line2q_mining_costs ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
