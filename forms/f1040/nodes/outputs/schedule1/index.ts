@@ -9,6 +9,7 @@ import { box11CodeJSourceSchema } from "../../inputs/k1_partnership/box11_code_j
 import { box11CodeESourceSchema } from "../../inputs/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k.ts";
 import { rtaaSourceSchema } from "../../inputs/f1099g/rtaa-source.ts";
+import { box10CodeJSourceSchema } from "../../inputs/k1_s_corp/box10_code_j.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly
 //
@@ -102,6 +103,7 @@ const inputSchema = z.object({
   ).optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
+  k1_s_corp_box10_code_j_sources: z.array(box10CodeJSourceSchema).optional(),
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
     .optional(),
   k1_partnership_box11_code_e_sources: z.array(box11CodeESourceSchema)
@@ -422,6 +424,9 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
         k1_partnership_box11_code_j_sources:
           input.k1_partnership_box11_code_j_sources,
       }
+      : {}),
+    ...(input.k1_s_corp_box10_code_j_sources !== undefined
+      ? { k1_s_corp_box10_code_j_sources: input.k1_s_corp_box10_code_j_sources }
       : {}),
     ...(input.k1_partnership_box11_code_e_sources !== undefined
       ? {

@@ -1,5 +1,23 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 S corporation K-1 box 10 code J source rows (unrun)
+
+The existing tax-benefit recovery calculation now retains a separate row for
+each issued S corporation K-1 code J source: corporation EIN, source-document
+reference, shareholder TIN, reported recovery, reviewed taxable amount, and
+prior-year benefit workpaper reference. The taxable amount cannot exceed the
+reported recovery. Schedule 1 line 8z, AGI, and Form 1040 line 8 keep the
+sum; the native type statement prints one row per corporation. Native and PDF
+exports compare distinct source identities and complete retained rows to the
+entered K-1 copies, whole-dollar total, and taxpayer or joint-spouse owner.
+Two-corporation positive and changed-row, changed-copy, changed-total,
+wrong-owner, and missing-identity fixtures are authored for the deferred bulk
+gate. The [2025 shareholder K-1 instructions](https://www.irs.gov/pub/irs-prior/i1120ssk--2025.pdf)
+direct box 10 code J recoveries to Schedule 1 line 8z to the extent the
+earlier deduction reduced tax. The entered workpaper reference and review flag
+do not authenticate the prior filed return or issued K-1 bytes. Those checks,
+filled-PDF review, XSD validation, and IRS acceptance remain open.
+
 ## 2026-10-02 Form 1099-G box 5 RTAA source rows (unrun)
 
 The bounded RTAA route now requires payer name/TIN, recipient TIN, and an

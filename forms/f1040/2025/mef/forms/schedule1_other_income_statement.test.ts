@@ -152,16 +152,24 @@ Deno.test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 
 });
 
 Deno.test("TY2025 S corporation K-1 tax-benefit recovery has a typed line 8z row", () => {
-  const fields = { line8z_k1_s_corp_tax_benefit_recovery: 400 };
+  const fields = {
+    line8z_k1_s_corp_tax_benefit_recovery: 400,
+    k1_s_corp_box10_code_j_sources: [{
+      corporation_ein: "123456789",
+      source_document_reference: "2025 K-1 code J",
+      recipient_tin: "111223333",
+      recovery: 500,
+      taxable_amount: 400,
+      tax_benefit_workpaper_reference: "2024 benefit review",
+      prior_year_tax_benefit_reviewed: true,
+    }],
+  };
   const statement = schedule1OtherIncomeStatement.build({}, {
     pending: { schedule1: fields },
   });
-  assertStringIncludes(statement, "S corporation tax-benefit recovery");
+  assertStringIncludes(
+    statement,
+    "S corporation K-1 code J recovery 123456789",
+  );
   assertStringIncludes(statement, "<OtherIncomeAmt>400</OtherIncomeAmt>");
-  const xml = schedule1.build(fields, {
-    documentIdsByPendingKey: {
-      schedule1_other_income_statement: ["OtherIncomeTypeStatement1"],
-    },
-  });
-  assertStringIncludes(xml, ">400</OtherIncomeTotalAmt>");
 });

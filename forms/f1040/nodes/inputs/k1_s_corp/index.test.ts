@@ -725,17 +725,26 @@ Deno.test("S corporation K-1 routes a reviewed no-shares cash capital contributi
   const source = reviewedLossItem(3000, {
     box1_ordinary_business: -4000,
     form7203_stock_loss_ledger: {
-      ...stockLossLedger(3000), cash_capital_contribution: contribution,
+      ...stockLossLedger(3000),
+      cash_capital_contribution: contribution,
     },
   });
   const fields = findOutput(compute([source]), "form7203")?.fields;
   assertEquals(fields?.stock_basis_beginning, 3_000);
   assertEquals(fields?.additional_contributions, 500);
   assertEquals(fields?.ordinary_loss, 4_000);
-  assertThrows(() => compute([{ ...source, form7203_stock_loss_ledger: {
-    ...stockLossLedger(3000),
-    cash_capital_contribution: { ...contribution, corporation_ein: "999999999" },
-  } }]));
+  assertThrows(() =>
+    compute([{
+      ...source,
+      form7203_stock_loss_ledger: {
+        ...stockLossLedger(3000),
+        cash_capital_contribution: {
+          ...contribution,
+          corporation_ein: "999999999",
+        },
+      },
+    }])
+  );
 });
 
 Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {
@@ -831,6 +840,7 @@ Deno.test("untyped S-corporation box 10 is rejected, even when zero", () => {
 Deno.test("box 10 code J routes only reviewed taxable recovery to line 8z and AGI", () => {
   const result = compute([minimalItem({
     corporation_ein: "123456789",
+    recipient_tin: "111223333",
     source_document_reference:
       "2025 K-1 box 10 code J and prior-year tax workpaper",
     box10_code_j_recovery: 1000,
@@ -867,6 +877,7 @@ Deno.test("box 10 code J recovery requires source and prior-year benefit review"
         ...base,
         corporation_ein: "123456789",
         source_document_reference: "2025 K-1 box 10 code J",
+        recipient_tin: "111223333",
       })]),
     Error,
     "box10_code_j_tax_benefit_workpaper_reference",
@@ -877,6 +888,7 @@ Deno.test("box 10 code J recovery requires source and prior-year benefit review"
         ...base,
         corporation_ein: "123456789",
         source_document_reference: "2025 K-1 box 10 code J",
+        recipient_tin: "111223333",
         box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper",
       })]),
     Error,
@@ -890,6 +902,7 @@ Deno.test("box 10 code J taxable subset cannot exceed K-1 recovery", () => {
       compute([minimalItem({
         corporation_ein: "123456789",
         source_document_reference: "2025 K-1 box 10 code J",
+        recipient_tin: "111223333",
         box10_code_j_recovery: 500,
         box10_code_j_taxable_recovery: 600,
         box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper",
@@ -905,6 +918,7 @@ Deno.test("box 10 code J taxable recoveries aggregate without losing other Sched
     minimalItem({
       corporation_ein: "123456789",
       source_document_reference: "2025 K-1 A code J",
+      recipient_tin: "111223333",
       box1_ordinary_business: 800,
       box10_code_j_recovery: 400,
       box10_code_j_taxable_recovery: 250,
@@ -915,6 +929,7 @@ Deno.test("box 10 code J taxable recoveries aggregate without losing other Sched
       corporation_name: "Second S Corp",
       corporation_ein: "987654321",
       source_document_reference: "2025 K-1 B code J",
+      recipient_tin: "111223333",
       box10_code_j_recovery: 200,
       box10_code_j_taxable_recovery: 150,
       box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper B",

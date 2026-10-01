@@ -1,5 +1,6 @@
 import { box11CodeJSourceSchema } from "../../../nodes/inputs/k1_partnership/box11_code_j.ts";
 import { rtaaSourceSchema } from "../../../nodes/inputs/f1099g/rtaa-source.ts";
+import { box10CodeJSourceSchema } from "../../../nodes/inputs/k1_s_corp/box10_code_j.ts";
 
 export interface Schedule1OtherIncomeRow {
   readonly label: string;
@@ -13,10 +14,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_form8621_mtm", "Form 8621 mark-to-market gain or loss"],
   ["line8z_form8621_section1291", "Form 8621 section 1291 current-year income"],
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
-  [
-    "line8z_k1_s_corp_tax_benefit_recovery",
-    "S corporation tax-benefit recovery",
-  ],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
   ["line8z_taxable_grants", "Taxable grants"],
@@ -82,6 +79,30 @@ export function schedule1OtherIncomeRows(
       amount: row.taxable_amount,
     };
   });
+  const sCorpSources = source.k1_s_corp_box10_code_j_sources;
+  if (sCorpSources !== undefined && !Array.isArray(sCorpSources)) {
+    throw new Error("Schedule 1 S corporation K-1 code J sources must be rows");
+  }
+  const sCorpRows: Schedule1OtherIncomeRow[] =
+    ((sCorpSources ?? []) as unknown[])
+      .map((value) => {
+        const row = box10CodeJSourceSchema.parse(value);
+        return {
+          label: `S corporation K-1 code J recovery ${row.corporation_ein}`,
+          amount: row.taxable_amount,
+        };
+      });
+  const sCorpTotal = sCorpRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_k1_s_corp_tax_benefit_recovery !== sCorpTotal) {
+    if (
+      source.line8z_k1_s_corp_tax_benefit_recovery !== undefined ||
+      sCorpTotal > 0
+    ) {
+      throw new Error(
+        "Schedule 1 S corporation code J total differs from K-1 rows",
+      );
+    }
+  }
   const substituteSources = source.f1099m_box8_substitute_sources;
   if (
     substituteSources !== undefined && !Array.isArray(substituteSources)
@@ -149,6 +170,7 @@ export function schedule1OtherIncomeRows(
     return [
       ...componentRows,
       ...partnershipRows,
+      ...sCorpRows,
       ...substituteRows,
       ...rtaaRows,
     ];
@@ -178,6 +200,7 @@ export function schedule1OtherIncomeRows(
   return [
     ...componentRows,
     ...partnershipRows,
+    ...sCorpRows,
     ...substituteRows,
     ...rtaaRows,
     ...box3Rows,
