@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
-completed checkboxes**. The **364 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **367 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 308 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 311 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -41,8 +41,11 @@ authenticated.
 **Current implementation status.** The latest completed slices cover Form 6251
 mixed-term capital-loss caps, Form 8283 Section A stock carryovers above $5,000,
 and Form 8962 corrected SLCSP months across up to twelve nonoverlapping
-policies. Form 8582 activity ledgers, Form 1116 Schedule B carryover/PDF
-reconciliation, and Form 3800 mixed-credit PDF parity are in progress. Earlier
+policies, plus a Form 3800 PDF with separate self-earned Form 8820 and Form
+5884 credits. The latest Form 8582 route offsets two rental losses against a
+separate profit activity and retains each suspended balance; Form 1116 now
+reconciles each Schedule B carryover vintage across its native and PDF copies.
+Wider Form 8582 and Form 1116 paths remain in progress. Earlier
 bounded work includes Form 1116 Schedule C current-year reconciliation,
 Form 8582 prior-year rental PAL import, Form 1098 Copy B box 6 evidence,
 Form 8962 self-employed insurance/PTC ordering, Form 8283 Section B art,
