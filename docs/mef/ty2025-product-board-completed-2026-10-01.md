@@ -262,6 +262,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Carry one retained Schedule E rental's long-held, no-depreciation Form 4797 Part I disposition with a source-linked 2024 operating PAL and explicit zero section 1231 lookback: Form 8582 Part V releases the allowed loss to Schedule 1, while the sale gain joins Schedule D and Form 1040; native Forms 4797/8582 and both PDFs recheck the source. Full-return and tamper fixtures are authored for deferred validation; other gain character, dispositions, authenticated carryover, and filled-output/XSD review remain open.
 
+- [x] Reconcile one identified Schedule C business and one nonnominee issued Form 1099-DIV with box 1a at most $1,500 and positive box 1b: the qualified dividend feeds Form 8995 lines 12–14's income limit, Form 1040 lines 3a/3b/13, native XML, and PDF. Positive and issuer/source/return/prepared-line tamper fixtures are authored for deferred validation; multiple issuers, REIT mixes, larger Schedule B, capital gains, carryforwards, and source-byte authentication remain open.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
