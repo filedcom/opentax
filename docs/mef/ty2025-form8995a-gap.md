@@ -219,6 +219,24 @@ figures. This does not authenticate source bytes, durably store the loss, or
 import it in 2026. Cases are written but unrun pending the bulk validation
 gate.
 
+The two-business Schedule C filing guard now also joins both retained Schedule
+C net results to filed Schedule 1 line 3 and joins Schedule 1 line 10 to Form
+1040 line 8. Its QBI deduction also reconciles Form 1040 line 13, and line
+15 plus lines 13a and 13b must equal the sourced taxable income before QBI.
+Because this narrow QBI route sets each business's QBI equal to
+its Schedule C net profit, it requires zero filed Schedule 1 lines 15–17 for
+deductible self-employment tax, qualified retirement contributions, and
+self-employed health insurance. Those deductions would otherwise reduce QBI
+and need a separately sourced allocation. Parent and Schedule C native and
+PDF projections share the check; positive and unused-current-loss fixtures
+now include changed business income, adjustment, and Form 1040 income and
+taxable-income cases.
+The [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+direct current business losses through Schedule C (Form 8995-A), while
+[2025 Schedule 1](https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf)
+places Schedule C business income on line 3. Cases remain unrun for the bulk
+validation gate.
+
 ## Build-first Schedule D patron route (written, unrun)
 
 One non-SSTB business, one specified cooperative, and a nonzero patron reduction

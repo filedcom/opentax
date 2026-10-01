@@ -224,6 +224,38 @@ export function assertScheduleCLossSources(
       );
     }
   }
+  const schedule1 = z.object({
+    line3_schedule_c: z.number(),
+    line10_total_additional_income: z.number(),
+    line15_se_deduction: z.number().nonnegative().optional(),
+    line16_sep_simple: z.number().nonnegative().optional(),
+    line17_se_health_insurance: z.number().nonnegative().optional(),
+  }).passthrough().safeParse(pending?.schedule1);
+  const form1040 = z.object({
+    line8_additional_income: z.number(),
+    line13_qbi_deduction: z.number().nonnegative(),
+    line13b_additional_deductions: z.number().nonnegative().optional(),
+    line15_taxable_income: z.number().nonnegative(),
+  }).passthrough().safeParse(pending?.f1040);
+  if (
+    !schedule1.success || !form1040.success ||
+    schedule1.data.line3_schedule_c !==
+      lines.businesses.reduce((sum, business) => sum + business.qbi, 0) ||
+    schedule1.data.line10_total_additional_income !==
+      form1040.data.line8_additional_income ||
+    form1040.data.line13_qbi_deduction !== lines.parent.line39 ||
+    form1040.data.line15_taxable_income +
+          form1040.data.line13_qbi_deduction +
+          (form1040.data.line13b_additional_deductions ?? 0) !==
+      fields.taxable_income ||
+    (schedule1.data.line15_se_deduction ?? 0) !== 0 ||
+    (schedule1.data.line16_sep_simple ?? 0) !== 0 ||
+    (schedule1.data.line17_se_health_insurance ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule C net profit and zero QBI adjustments must match filed Schedule 1 and Form 1040",
+    );
+  }
 }
 
 function reconcileReturn(

@@ -80,6 +80,8 @@ function preparedReturn() {
 Deno.test("Form 8995-A Schedule C carries unused current QBI loss with zero deduction", () => {
   const result = preparedReturn();
   assertEquals(result.pending.f1040.line13_qbi_deduction, 0);
+  assertEquals(result.pending.schedule1.line3_schedule_c, -200);
+  assertEquals(result.pending.f1040.line8_additional_income, -200);
   assertEquals(result.carryforwards.qbi_loss_carryforward_8995a, 200);
   const pending = normalizeAllPending(result.pending);
   const parent = form8995aInputSchema.parse(pending.form8995a);
@@ -120,6 +122,21 @@ Deno.test("unused Schedule C loss packet rejects changed source, companion, and 
   }, {
     ...pending,
     f1040: { ...pending.f1040, line13_qbi_deduction: 1 },
+  }, {
+    ...pending,
+    schedule1: { ...pending.schedule1, line3_schedule_c: -199 },
+  }, {
+    ...pending,
+    schedule1: { ...pending.schedule1, line16_sep_simple: 1 },
+  }, {
+    ...pending,
+    f1040: { ...pending.f1040, line8_additional_income: -199 },
+  }, {
+    ...pending,
+    f1040: {
+      ...pending.f1040,
+      line15_taxable_income: Number(pending.f1040.line15_taxable_income) + 1,
+    },
   }];
   for (const changed of altered) {
     assertThrows(

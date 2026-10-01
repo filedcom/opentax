@@ -42,12 +42,26 @@ const lossSource = {
   qbi_no_other_adjustments_confirmed: true,
 };
 const businesses = [
-  { business_reference: "north-2025", business_name: "North Works", ein: "123456789",
-    qbi: 1_000, w2_wages: 100, ubia: 0,
-    no_other_adjustments_confirmed: true, source_schedule_c: gainSource },
-  { business_reference: "south-2025", business_name: "South Shop", ein: "987654321",
-    qbi: -800, w2_wages: 0, ubia: 0,
-    no_other_adjustments_confirmed: true, source_schedule_c: lossSource },
+  {
+    business_reference: "north-2025",
+    business_name: "North Works",
+    ein: "123456789",
+    qbi: 1_000,
+    w2_wages: 100,
+    ubia: 0,
+    no_other_adjustments_confirmed: true,
+    source_schedule_c: gainSource,
+  },
+  {
+    business_reference: "south-2025",
+    business_name: "South Shop",
+    ein: "987654321",
+    qbi: -800,
+    w2_wages: 0,
+    ubia: 0,
+    no_other_adjustments_confirmed: true,
+    source_schedule_c: lossSource,
+  },
 ];
 const input = {
   filing_status: NodeFilingStatus.Single,
@@ -70,9 +84,16 @@ const pending = {
   general: { qbi_no_prior_loss_or_suspended_loss_confirmed: true },
   form8995a: input,
   form8995a_schedule_c: input,
-  schedule_c: { schedule_cs: [gainSource, lossSource],
-    qbi_no_prior_loss_or_suspended_loss_confirmed: true },
-  f1040: { line13_qbi_deduction: 40 },
+  schedule_c: {
+    schedule_cs: [gainSource, lossSource],
+    qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+  },
+  schedule1: { line3_schedule_c: 200, line10_total_additional_income: 200 },
+  f1040: {
+    line8_additional_income: 200,
+    line13_qbi_deduction: 40,
+    line15_taxable_income: 299_960,
+  },
 };
 const context = { filer, pending };
 
@@ -85,14 +106,34 @@ Deno.test("Form 8995-A Schedule C: current gain and loss net to the sourced pare
   assertEquals(calculated.schedule.line6, 0);
   assertEquals(calculated.parent.line39, 40);
   const result = node.compute({ taxYear: 2025, formType: "f1040" }, parsed);
-  assertEquals(result.outputs.find((output) => output.nodeType === "f1040")?.fields.line13_qbi_deduction, 40);
-  assertEquals(result.outputs.find((output) => output.nodeType === "form8995a_schedule_c")?.fields, parsed);
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f1040")?.fields
+      .line13_qbi_deduction,
+    40,
+  );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "form8995a_schedule_c")
+      ?.fields,
+    parsed,
+  );
   const scheduleXml = form8995aScheduleC.build(input, context);
-  assertStringIncludes(scheduleXml, "<QlfyBusinessIncomeOrLossAmt>-800</QlfyBusinessIncomeOrLossAmt>");
-  assertStringIncludes(scheduleXml, "<LossNettedIncomeOthTradeBusAmt>800</LossNettedIncomeOthTradeBusAmt>");
+  assertStringIncludes(
+    scheduleXml,
+    "<QlfyBusinessIncomeOrLossAmt>-800</QlfyBusinessIncomeOrLossAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<LossNettedIncomeOthTradeBusAmt>800</LossNettedIncomeOthTradeBusAmt>",
+  );
   const parentXml = parent.build(input, context);
-  assertStringIncludes(parentXml, "<TradeOrBusinessName><BusinessNameLine1Txt>South Shop</BusinessNameLine1Txt></TradeOrBusinessName>");
-  assertStringIncludes(parentXml, "<QualifiedBusinessIncomeDedAmt>40</QualifiedBusinessIncomeDedAmt>");
+  assertStringIncludes(
+    parentXml,
+    "<TradeOrBusinessName><BusinessNameLine1Txt>South Shop</BusinessNameLine1Txt></TradeOrBusinessName>",
+  );
+  assertStringIncludes(
+    parentXml,
+    "<QualifiedBusinessIncomeDedAmt>40</QualifiedBusinessIncomeDedAmt>",
+  );
   const schedulePdf = form8995aScheduleCPdf.projectFields?.(input, pending);
   const parentPdf = form8995aPdf.projectFields?.(input, pending);
   assertEquals(schedulePdf?.row2_a, -800);
@@ -103,29 +144,118 @@ Deno.test("Form 8995-A Schedule C: current gain and loss net to the sourced pare
 });
 
 Deno.test("Form 8995-A Schedule C: altered source, companion, parent line, and unsupported loss reject", () => {
-  assertThrows(() => parent.build(input, {
-    filer, pending: { ...pending, form8995a_schedule_c: undefined },
-  }), Error, "companion is missing");
-  assertThrows(() => form8995aScheduleC.build(input, {
-    filer, pending: { ...pending, schedule_c: { schedule_cs: [gainSource, { ...lossSource, line_27b_other_expenses: 799 }],
-      qbi_no_prior_loss_or_suspended_loss_confirmed: true } },
-  }), Error, "differ from the retained Schedule C");
-  assertThrows(() => form8995aScheduleC.build(input, {
-    filer, pending: { ...pending, f1040: { line13_qbi_deduction: 39 } },
-  }), Error, "Form 1040 line 13");
-  assertThrows(() => node.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({
-    ...input, qbi_loss_carryforward: -100,
-  })), Error, "excludes prior loss");
-  assertThrows(() => node.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({
-    ...input, schedule_c_qbi_businesses: [{ ...businesses[0], qbi: 1_001 }, businesses[1]],
-  })), Error, "sourced net QBI");
-  assertThrows(() => node.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({
-    ...input,
-    schedule_c_qbi_businesses: [businesses[0], {
-      ...businesses[1],
-      source_schedule_c: { ...lossSource, line_32_at_risk: undefined },
-    }],
-  })), Error, "business identity, QBI adjustment");
+  assertThrows(
+    () =>
+      parent.build(input, {
+        filer,
+        pending: { ...pending, form8995a_schedule_c: undefined },
+      }),
+    Error,
+    "companion is missing",
+  );
+  assertThrows(
+    () =>
+      form8995aScheduleC.build(input, {
+        filer,
+        pending: {
+          ...pending,
+          schedule_c: {
+            schedule_cs: [gainSource, {
+              ...lossSource,
+              line_27b_other_expenses: 799,
+            }],
+            qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+          },
+        },
+      }),
+    Error,
+    "differ from the retained Schedule C",
+  );
+  assertThrows(
+    () =>
+      form8995aScheduleC.build(input, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line13_qbi_deduction: 39 },
+        },
+      }),
+    Error,
+    "Form 1040 line 13",
+  );
+  assertThrows(
+    () =>
+      node.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          ...input,
+          qbi_loss_carryforward: -100,
+        }),
+      ),
+    Error,
+    "excludes prior loss",
+  );
+  assertThrows(
+    () =>
+      node.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          ...input,
+          schedule_c_qbi_businesses: [
+            { ...businesses[0], qbi: 1_001 },
+            businesses[1],
+          ],
+        }),
+      ),
+    Error,
+    "sourced net QBI",
+  );
+  assertThrows(
+    () =>
+      node.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          ...input,
+          schedule_c_qbi_businesses: [businesses[0], {
+            ...businesses[1],
+            source_schedule_c: { ...lossSource, line_32_at_risk: undefined },
+          }],
+        }),
+      ),
+    Error,
+    "business identity, QBI adjustment",
+  );
+});
+
+Deno.test("Form 8995-A Schedule C rejects a detached Schedule 1 business total, QBI adjustment, or Form 1040 income", () => {
+  for (
+    const changed of [
+      {
+        ...pending,
+        schedule1: { ...pending.schedule1, line3_schedule_c: 201 },
+      },
+      {
+        ...pending,
+        schedule1: { ...pending.schedule1, line15_se_deduction: 1 },
+      },
+      { ...pending, f1040: { ...pending.f1040, line8_additional_income: 201 } },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line15_taxable_income: 299_961 },
+      },
+    ]
+  ) {
+    assertThrows(() => parent.build(input, { filer, pending: changed }), Error);
+    assertThrows(
+      () => form8995aScheduleC.build(input, { filer, pending: changed }),
+      Error,
+    );
+    assertThrows(() => form8995aPdf.projectFields?.(input, changed), Error);
+    assertThrows(
+      () => form8995aScheduleCPdf.projectFields?.(input, changed),
+      Error,
+    );
+  }
 });
 
 Deno.test("Form 8995-A Schedule C: offsetting businesses do not disappear at the QBI routing node", () => {
@@ -141,7 +271,9 @@ Deno.test("Form 8995-A Schedule C: offsetting businesses do not disappear at the
     ],
     qbi_no_prior_loss_or_suspended_loss_confirmed: true,
   });
-  const routed = result.outputs.find((output) => output.nodeType === "form8995a");
+  const routed = result.outputs.find((output) =>
+    output.nodeType === "form8995a"
+  );
   assertEquals(routed?.nodeType, "form8995a");
   const calculated = node.compute(
     { taxYear: 2025, formType: "f1040" },
