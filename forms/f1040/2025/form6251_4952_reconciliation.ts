@@ -5,6 +5,7 @@ import {
 } from "../nodes/intermediate/forms/form4952/index.ts";
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
 import { reconcileForm4952DirectDebtExport } from "./form4952_debt_reconciliation.ts";
+import { reconcileForm4952InterestPath } from "./form4952_interest_reconciliation.ts";
 import { reconcileForm4952PriorCarryforward } from "./form4952_prior_carryforward_reconciliation.ts";
 
 /** Replay a bounded Schedule A investment-interest AMT refigure at filing. */
@@ -37,7 +38,8 @@ export function assertForm6251Form4952Line2c(
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
   if (
     !parsed.success || !interest.success ||
-    interest.data.f1099ints.length !== 1 ||
+    (interest.data.f1099ints.length !== 1 &&
+      interest.data.f1099ints.length !== 2) ||
     !parsed.data.direct_debt_trace ||
     !parsed.data.prior_year_carryforward_source ||
     !parsed.data.amt_refigure ||
@@ -63,10 +65,14 @@ export function assertForm6251Form4952Line2c(
   }
   reconcileForm4952PriorCarryforward(retainedRaw!, pending!, finalFilerTin);
   reconcileForm4952DirectDebtExport(retainedRaw!, pending!, finalFilerTin);
+  reconcileForm4952InterestPath(retainedRaw!, pending!);
   const regular = calculateForm4952(parsed.data);
   const amt = calculateAmtForm4952(parsed.data).lines;
   const difference = regular.line8 - amt.line8;
-  const payer = interest.data.f1099ints[0];
+  const interestTotal = interest.data.f1099ints.reduce(
+    (total, payer) => total + (payer.box1 ?? 0) + (payer.box3 ?? 0),
+    0,
+  );
   if (
     difference === 0 || claimed !== difference ||
     fields.form4952_amt_line2c_difference !== difference ||
@@ -79,7 +85,7 @@ export function assertForm6251Form4952Line2c(
     scheduleA?.line_9_investment_interest !== regular.line8 ||
     form1040?.line12e_itemized_deductions === undefined ||
     Number(form1040.line12e_itemized_deductions) < regular.line8 ||
-    form1040?.line2b_taxable_interest !== payer.box1 ||
+    form1040?.line2b_taxable_interest !== interestTotal ||
     schedule2?.line2_amt !== fields.line11_amt
   ) {
     throw new Error(

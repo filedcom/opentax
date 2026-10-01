@@ -33,8 +33,25 @@ AMT-source, owner, and retained-source tamper fixtures are authored for the
 deferred batch. AMT-only imports are outside this positive-regular-carryforward
 source schema.
 The reviewed references and prior amounts do not authenticate filed-return
-bytes or IRS acceptance; wider carryover histories, differing AMT balances,
-other income sources, and lender/broker document bytes remain open.
+bytes or IRS acceptance; wider carryover histories, other income sources, and
+lender/broker document bytes remain open. A distinct-AMT-balance route is
+described below.
+
+The [2025 Form 6251 line 2c instructions](https://www.irs.gov/instructions/i6251)
+require a separate AMT Form 4952 refigure and carryforward record, with line 2c
+equal to AMT Form 4952 line 8 subtracted from regular line 8. A bounded
+primary-filer case with *different* reviewed 2024 regular and AMT line 7
+balances now accepts two distinct affirmed 1099-INT box 1 investment payers
+for the same traced 2025 taxable-securities loan. Both payer names and
+statement references must differ. Each amount must match the retained Form
+4952 source inventory; their sum must equal Form 1040 line 2b. Regular Form
+4952 line 8 joins Schedule A line 9, and the separate AMT line 8 determines
+Form 6251 line 2c and Schedule 2 line 2. Native MeF and PDF export replay
+those joins, with positive, duplicate-source, and changed-amount fixtures
+authored for the deferred batch. The prior-year reviewed references remain
+reviewer assertions, not authenticated filed-return bytes or IRS acceptance;
+private-activity-bond income, qualified dividends, and other AMT investment
+income adjustments remain closed in this route.
 
 ## Direct-use borrowing evidence prerequisite
 

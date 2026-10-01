@@ -254,6 +254,8 @@ export const form8992Cfc: F5471Item = {
     no_us_branch_or_agent: true,
     no_us_tax_return: true,
     no_joint_filing_for_other_persons: true,
+    no_stock_acquisition_disposition_or_reorganization: true,
+    no_section_338_election: true,
     stock_class_description: "Common",
     direct_shares_begin: 100,
     direct_shares_end: 100,

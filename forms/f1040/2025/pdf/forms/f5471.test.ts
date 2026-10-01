@@ -1,5 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8992Filer, form8992Pending } from "../../form8992.fixture.ts";
+import {
+  form8992Cfc,
+  form8992Filer,
+  form8992Pending,
+} from "../../form8992.fixture.ts";
 import { form5471Pdf } from "./f5471.ts";
 
 Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
@@ -30,6 +34,23 @@ Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
       ?.pdfField,
     "topmostSubform[0].Page2[0].Table_SchB_PartII[0].Row1[0].Row1d[0].f2_81[0]",
   );
+  assertThrows(() =>
+    form5471Pdf.instances?.(
+      {},
+      form8992Filer,
+      {
+        ...form8992Pending,
+        f5471: {
+          f5471s: [{
+            ...form8992Cfc,
+            form5471_identity: {
+              ...form8992Cfc.form5471_identity,
+              no_stock_acquisition_disposition_or_reorganization: false,
+            },
+          }],
+        },
+      },
+    ), Error);
   assertThrows(() =>
     form5471Pdf.instances?.(
       {},

@@ -70,6 +70,18 @@ earnings; cash movement equals book net income plus $1,500 depreciation.
 Both GAAP tables and Schedule M have native/PDF fixtures authored but unrun.
 Applicable conditional attachments and Schedule R all-zero business-rule
 treatment remain.
+The reviewed stock-event register now explicitly excludes acquisition,
+disposition, and reorganization during 2025, so this continuing 100% owner
+does not enter Category 2 or 3 and does not require Schedule O. It also excludes
+a section 338 election, so the associated Form 8883/8023 attachments do not
+arise. The strict source schema rejects either event; equal opening and closing
+share counts alone would not prove the absence of interim transfers. The
+individual filer is not a CAMT applicable corporation, so H-1 is excluded;
+Schedule G answers No for foreign branches/QBUs, cost sharing, and reportable
+transactions, excluding Form 8858/8964-TRA, G-1, and Form 8886 on this
+reviewed branch. These are narrow exclusions, not general support for those
+attachments. The MeF/PDF descriptors express the resulting Category 4/5a
+packet and No answers but have not been executed in this implementation pass.
 Schedule G-1 is required for each cost sharing arrangement in which the CFC
 was a controlled participant; this branch requires Schedule G line 7 No, so
 G-1 is not present.
@@ -108,6 +120,11 @@ MeF schema permits zero distribution groups, while the Form 5471 instructions
 say a required all-zero schedule should carry one or more zeros; the Schedule R
 group itself requires a date and description. This no-distribution packet
 therefore still needs IRS business-rule review before the export guard can open.
+The IRS December 2025 instructions also describe Schedule G questions 22a/22b,
+but the December 2025 six-page PDF and checked-in TY2025 v5.4 parent XSD stop
+at question 21. The reviewed no-distribution branch has no amount to report for
+the stated question 22b scenario. Reconcile the IRS form/instruction version
+and final MeF business rules before claiming a complete parent packet.
 The instructions also identify a sole CFC owner as both Category 4 and 5a,
 requiring additional parent pages and Category 4 schedules including M.
 The full Form 5471

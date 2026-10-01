@@ -98,3 +98,21 @@ export function form6251Form4952Fixture() {
     }],
   };
 }
+
+export function form6251Form4952TwoPayerFixture() {
+  const base = form6251Form4952Fixture();
+  return {
+    ...base,
+    f1099int: [{
+      payer_name: "Taxable bond payer A",
+      source_document_reference: "2025 taxable bond Form 1099-INT A",
+      box1: 12_000,
+      investment_property_for_form4952: true,
+    }, {
+      payer_name: "Taxable bond payer B",
+      source_document_reference: "2025 taxable bond Form 1099-INT B",
+      box1: 11_000,
+      investment_property_for_form4952: true,
+    }],
+  };
+}

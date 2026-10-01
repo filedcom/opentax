@@ -132,7 +132,8 @@ export function reconcileForm4952InterestPath(
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     ((form.data.prior_year_carryforward ?? 0) > 0 &&
-      (!form.data.direct_debt_trace || interestItems.length !== 1 ||
+      (!form.data.direct_debt_trace ||
+        (interestItems.length !== 1 && interestItems.length !== 2) ||
         oidItems.length !== 0)) ||
     (form.data.form8814_line9_qualified_dividends ?? 0) !== 0 ||
     (form.data.form8814_line10_capital_gain ?? 0) !== 0 ||

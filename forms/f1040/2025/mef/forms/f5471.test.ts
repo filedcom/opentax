@@ -68,7 +68,7 @@ Deno.test("Category 4/5a Form 5471 parent joins A, B, C, F, G, and I", () => {
   );
 });
 
-Deno.test("Form 5471 parent rejects unreviewed stock and Schedule I facts", () => {
+Deno.test("Form 5471 parent rejects unreviewed stock events and Schedule I facts", () => {
   const source = (cfc: unknown) => ({
     ...form8992Pending,
     f5471: { f5471s: [cfc] },
@@ -81,6 +81,28 @@ Deno.test("Form 5471 parent rejects unreviewed stock and Schedule I facts", () =
         form5471_identity: {
           ...form8992Cfc.form5471_identity,
           direct_shares_end: 0,
+        },
+      }),
+    }), Error);
+  assertThrows(() =>
+    form5471.build({}, {
+      filer: form8992Filer,
+      pending: source({
+        ...form8992Cfc,
+        form5471_identity: {
+          ...form8992Cfc.form5471_identity,
+          no_stock_acquisition_disposition_or_reorganization: false,
+        },
+      }),
+    }), Error);
+  assertThrows(() =>
+    form5471.build({}, {
+      filer: form8992Filer,
+      pending: source({
+        ...form8992Cfc,
+        form5471_identity: {
+          ...form8992Cfc.form5471_identity,
+          no_section_338_election: false,
         },
       }),
     }), Error);

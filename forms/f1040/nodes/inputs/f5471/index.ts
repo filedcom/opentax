@@ -413,6 +413,8 @@ export const form5471IdentitySchema = z.object({
   no_us_branch_or_agent: z.literal(true),
   no_us_tax_return: z.literal(true),
   no_joint_filing_for_other_persons: z.literal(true),
+  no_stock_acquisition_disposition_or_reorganization: z.literal(true),
+  no_section_338_election: z.literal(true),
   stock_class_description: z.string().trim().min(1).max(20),
   direct_shares_begin: z.number().int().positive(),
   direct_shares_end: z.number().int().positive(),
