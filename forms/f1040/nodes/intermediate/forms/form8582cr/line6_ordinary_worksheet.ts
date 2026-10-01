@@ -54,27 +54,60 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   if (rawForm1099Int !== undefined) {
     const interestSource = form1099IntInputSchema.parse(rawForm1099Int);
     const references = new Set<string>();
-    const payers = new Set<string>();
+    const payerCounts = new Map<string, number>();
+    const payerNames = new Map<string, string>();
+    const payerAccounts = new Map<string, Set<string>>();
+    for (const row of interestSource.f1099ints) {
+      const tin = row.payer_tin?.replace(/\D/g, "") ?? "";
+      payerCounts.set(tin, (payerCounts.get(tin) ?? 0) + 1);
+    }
     for (const row of interestSource.f1099ints) {
       const payerTin = row.payer_tin?.replace(/\D/g, "");
+      const repeatedPayer = (payerCounts.get(payerTin ?? "") ?? 0) > 1;
+      const review = row.box1_copy_review;
+      const accounts = payerAccounts.get(payerTin ?? "") ?? new Set<string>();
       if (
         !row.source_document_reference ||
         !payerTin || !/^\d{9}$/.test(payerTin) ||
         references.has(row.source_document_reference) ||
-        payers.has(payerTin) ||
         typeof row.box1 !== "number" || !Number.isSafeInteger(row.box1) ||
         row.box1 <= 0 ||
+        (repeatedPayer &&
+          (!row.account_number || accounts.has(row.account_number) ||
+            !review ||
+            review.account_number !== row.account_number ||
+            review.source_document_reference !==
+              row.source_document_reference ||
+            review.reviewed_box1_amount !== row.box1 ||
+            (payerNames.has(payerTin) &&
+              payerNames.get(payerTin) !== row.payer_name))) ||
+        (review !== undefined &&
+          (review.account_number !== row.account_number ||
+            review.source_document_reference !==
+              row.source_document_reference ||
+            review.reviewed_box1_amount !== row.box1)) ||
         Object.keys(row).some((key) =>
-          !["payer_name", "payer_tin", "source_document_reference", "box1"]
+          ![
+            "payer_name",
+            "payer_tin",
+            "source_document_reference",
+            "account_number",
+            "box1",
+            "box1_copy_review",
+          ]
             .includes(key)
         )
       ) {
         throw new Error(
-          "Form 8582-CR ordinary interest branch needs distinct retained Form 1099-INT box 1 payers and copies",
+          "Form 8582-CR ordinary interest branch needs distinct retained Form 1099-INT box 1 copies, with unique reviewed accounts and amounts for repeated payers",
         );
       }
       references.add(row.source_document_reference);
-      payers.add(payerTin);
+      payerNames.set(payerTin, row.payer_name);
+      if (row.account_number) {
+        accounts.add(row.account_number);
+        payerAccounts.set(payerTin, accounts);
+      }
       taxableInterest += row.box1;
     }
     if (!Number.isSafeInteger(taxableInterest)) {

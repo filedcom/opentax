@@ -29,6 +29,13 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
+  account_number: z.string().trim().min(1).max(40).optional(),
+  box1_copy_review: z.object({
+    source_document_reference: z.string().trim().min(1),
+    account_number: z.string().trim().min(1).max(40),
+    reviewed_box1_amount: z.number().int().positive(),
+    verified_against_issued_copy: z.literal(true),
+  }).strict().optional(),
   seller_financed: z.boolean().optional(),
   buyer_used_as_personal_residence: z.boolean().optional(),
   seller_financed_buyer: sellerFinancedBuyerSchema.optional(),

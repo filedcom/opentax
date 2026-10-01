@@ -251,8 +251,25 @@ and includes it in total income and both ordinary-tax calculations; only the
 sourced rental income is removed for line 6's without-passive calculation.
 Positive two-payer full-return/native/PDF and changed amount, duplicate copy,
 duplicate payer, missing payer, unsupported box, and filed-interest fixtures
-are authored for deferred validation. Multiple records from one payer and
-issuer-copy byte authentication remain outside this bounded branch.
+are authored for deferred validation. Issuer-copy byte authentication remains
+outside this bounded branch.
+
+### Two copies from one payer (2026-10-01, unrun)
+
+The ordinary-tax branch now also accepts two Form 1099-INT box 1 copies issued
+by the same payer for different accounts. Each row must carry a distinct
+retained-document reference and account number plus an independent review of
+that copy's document, account, and box 1 amount. The [Form 1099-INT
+instructions](https://www.irs.gov/instructions/i1099int) require account
+numbers when a payer files multiple copies for a recipient. Duplicate
+document/account identities, different payer names for one TIN, other interest
+boxes, or mismatched reviewed amounts close the route. A 2025 fixture joins
+$600 and $400 from one payer to Form 1040 line 2b and applies the same ordinary
+tax method to Form 8582-CR line 6 with and without the separately sourced
+rental income; Form 3800, Schedule 3, Form 1040, native MeF, and PDF must agree
+on the $500 allowed credit. Positive and duplicate/amount/return tamper cases
+are authored but unrun. Account and document references remain reviewed source
+assertions; retained issuer bytes are not authenticated.
 
 ## 2026 opening credit prerequisite
 

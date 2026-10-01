@@ -95,6 +95,7 @@ function filedReturn(
   interestBoxes: number[] = [],
   nonpassiveInvestmentAmount = 0,
   additionalPassiveInvestmentAmounts: number[] = [],
+  sameInterestPayer = false,
 ) {
   const interestAmount = interestBoxes.reduce((sum, amount) => sum + amount, 0);
   const taxableWithInterest = taxable + interestAmount;
@@ -112,11 +113,26 @@ function filedReturn(
     ...(interestAmount > 0
       ? {
         f1099int: interestBoxes.map((box1, index) => ({
-          payer_name: `Community Bank ${index + 1}`,
-          payer_tin: `${987654321 - index}`,
+          payer_name: sameInterestPayer
+            ? "Community Bank"
+            : `Community Bank ${index + 1}`,
+          payer_tin: sameInterestPayer ? "987654321" : `${987654321 - index}`,
           source_document_reference: `2025 Community Bank ${
             index + 1
           } 1099-INT`,
+          ...(sameInterestPayer
+            ? {
+              account_number: `SAVINGS-${index + 1}`,
+              box1_copy_review: {
+                source_document_reference: `2025 Community Bank ${
+                  index + 1
+                } 1099-INT`,
+                account_number: `SAVINGS-${index + 1}`,
+                reviewed_box1_amount: box1,
+                verified_against_issued_copy: true,
+              },
+            }
+            : {}),
           box1,
         })),
       }
@@ -1766,6 +1782,96 @@ Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return 
     );
     assertThrows(
       () => form8582crPdf.projectFields!(changed.form8582cr, changed),
+      Error,
+    );
+  }
+});
+
+Deno.test("two issued 1099-INT copies from one payer retain separate accounts through Form 8582-CR and the complete return", async () => {
+  const result = filedReturn(10_000, [600, 400], 0, [], true);
+  const pending = normalizeAllPending(result.pending);
+  const rows = pending.f1099int.f1099ints as Record<string, unknown>[];
+  const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
+  const expectedWithout = ordinaryTax2025(
+    taxable + 1_000 - passiveIncome,
+    FilingStatus.Single,
+  );
+  assertEquals(rows.length, 2);
+  assertEquals(rows[0].payer_tin, rows[1].payer_tin);
+  assertEquals(rows.map((row) => row.account_number), [
+    "SAVINGS-1",
+    "SAVINGS-2",
+  ]);
+  assertEquals(pending.f1040.line2b_taxable_interest, 1_000);
+  assertEquals(pending.f1040.line16_income_tax, expectedAllTax);
+  assertEquals(pending.f3800.allowed_credit, 500);
+  assertEquals(pending.schedule3.line6a_total, 500);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 500);
+  const native = form8582cr.build(pending.form8582cr, { pending });
+  assertStringIncludes(
+    native,
+    `<NetPassiveIncomeTaxAmt>${
+      expectedAllTax - expectedWithout
+    }</NetPassiveIncomeTaxAmt>`,
+  );
+  const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(pdf.line6, expectedAllTax - expectedWithout);
+  assertEquals(pdf.line37, 500);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
+  assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  );
+});
+
+Deno.test("same-payer 1099-INT line 6 rejects duplicate account, copy review, amount, and final return drift", () => {
+  const pending = normalizeAllPending(
+    filedReturn(10_000, [600, 400], 0, [], true).pending,
+  );
+  const [first, second] = pending.f1099int.f1099ints as Record<
+    string,
+    unknown
+  >[];
+  const secondReview = second.box1_copy_review as Record<string, unknown>;
+  const changedRows = [
+    [first, { ...second, account_number: first.account_number }],
+    [first, {
+      ...second,
+      source_document_reference: first.source_document_reference,
+    }],
+    [first, { ...second, box1_copy_review: undefined }],
+    [first, {
+      ...second,
+      box1_copy_review: {
+        ...secondReview,
+        reviewed_box1_amount: 401,
+      },
+    }],
+    [first, { ...second, box1: 401 }],
+    [first, { ...second, payer_name: "Other Bank" }],
+    [first],
+  ];
+  const changed = [
+    ...changedRows.map((f1099ints) => ({
+      ...pending,
+      f1099int: { f1099ints },
+    })),
+    { ...pending, f1040: { ...pending.f1040, line2b_taxable_interest: 999 } },
+    { ...pending, f1040: { ...pending.f1040, line16_income_tax: 1 } },
+    { ...pending, schedule3: { ...pending.schedule3, line6a_total: 499 } },
+    { ...pending, f3800: { ...pending.f3800, allowed_credit: 499 } },
+  ];
+  for (const altered of changed) {
+    assertThrows(
+      () => form8582cr.build(altered.form8582cr, { pending: altered }),
+      Error,
+    );
+    assertThrows(
+      () => form8582crPdf.projectFields!(altered.form8582cr, altered),
       Error,
     );
   }
