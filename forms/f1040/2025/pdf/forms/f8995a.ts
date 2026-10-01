@@ -125,6 +125,7 @@ export function projectOneBusiness8995A(
       JSON.stringify(companion.data) !== JSON.stringify(input) ||
       allPending.form8995 !== undefined ||
       allPending.form8995a_schedule_a !== undefined ||
+      allPending.form8995a_schedule_b !== undefined ||
       allPending.form8995a_schedule_d !== undefined
     ) {
       throw new Error(

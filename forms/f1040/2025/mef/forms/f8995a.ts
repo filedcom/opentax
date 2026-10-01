@@ -227,6 +227,7 @@ function reconcileReturn(
   }
   const companion = context.pending.form8995a_schedule_d;
   const sstbCompanion = context.pending.form8995a_schedule_a;
+  const aggregationCompanion = context.pending.form8995a_schedule_b;
   const lossCompanion = context.pending.form8995a_schedule_c;
   if (fields.sstb_filing_details) {
     const parsed = inputSchema.strict().safeParse(sstbCompanion);
@@ -241,6 +242,11 @@ function reconcileReturn(
     throw new Error("Form 8995-A Schedule A companion has no SSTB parent");
   }
   if (fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
+    if (aggregationCompanion !== undefined) {
+      throw new Error(
+        "Form 8995-A Schedule C loss cannot accompany Schedule B aggregation",
+      );
+    }
     assertScheduleCLossSources(fields, context.pending);
     const parsed = inputSchema.strict().safeParse(lossCompanion);
     if (
