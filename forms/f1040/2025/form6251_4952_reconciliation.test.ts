@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "./registry.ts";
@@ -26,18 +26,20 @@ Deno.test("Form 6251 line 2c replays distinct regular and AMT Form 4952 carryfor
   assertEquals(result.pending.f1040?.line2b_taxable_interest, 23_000);
   assertEquals(filed.line2c_investment_interest, -1_000);
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
-  assertStringIncludes(
-    mef6251.build(filed, { pending: result.pending, filer: testFiler() }),
-    "<InvestmentInterestAmt>-1000</InvestmentInterestAmt>",
+  assertThrows(
+    () => mef6251.build(filed, { pending: result.pending, filer: testFiler() }),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form6251Pdf.projectFields?.(filed, result.pending)
-      ?.line2c_investment_interest,
-    -1_000,
+  assertThrows(
+    () => form6251Pdf.projectFields?.(filed, result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form6251Pdf.instances?.(filed, testFiler(), result.pending)?.length,
-    1,
+  assertThrows(
+    () => form6251Pdf.instances?.(filed, testFiler(), result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
   const changed = { ...filed, line2c_investment_interest: -999 };
   assertThrows(
@@ -89,30 +91,36 @@ Deno.test("Form 6251 line 2c reconciles two investment-interest payers and disti
   assertEquals(result.pending.f1040?.line2b_taxable_interest, 23_000);
   assertEquals(filed.line2c_investment_interest, -1_000);
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
-  assertStringIncludes(
-    mef4952.build(interest, { pending: result.pending, filer: testFiler() }),
-    "<InvestmentInterestExpDeductAmt>22000</InvestmentInterestExpDeductAmt>",
+  assertThrows(
+    () =>
+      mef4952.build(interest, { pending: result.pending, filer: testFiler() }),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertStringIncludes(
-    mef6251.build(filed, { pending: result.pending, filer: testFiler() }),
-    "<InvestmentInterestAmt>-1000</InvestmentInterestAmt>",
+  assertThrows(
+    () => mef6251.build(filed, { pending: result.pending, filer: testFiler() }),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form4952Pdf.projectFields?.(interest, result.pending)?.line8,
-    22_000,
+  assertThrows(
+    () => form4952Pdf.projectFields?.(interest, result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form6251Pdf.projectFields?.(filed, result.pending)
-      ?.line2c_investment_interest,
-    -1_000,
+  assertThrows(
+    () => form6251Pdf.projectFields?.(filed, result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form4952Pdf.instances?.(interest, testFiler(), result.pending)?.length,
-    1,
+  assertThrows(
+    () => form4952Pdf.instances?.(interest, testFiler(), result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
-  assertEquals(
-    form6251Pdf.instances?.(filed, testFiler(), result.pending)?.length,
-    1,
+  assertThrows(
+    () => form6251Pdf.instances?.(filed, testFiler(), result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
   );
 
   const duplicatePayer = structuredClone(result.pending);

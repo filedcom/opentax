@@ -22,20 +22,26 @@ belonged on Schedule E or Form 6198. Both the 2025 regular line 2 and a
 separately reviewed 2024
 AMT Form 4952 line 7 must match the 2025 regular and AMT prior-year inputs.
 The AMT amount is required because Form 4952's AMT refigure can carry a
-different disallowed balance; the bounded positive filing case requires equal
+different disallowed balance; the bounded calculated case requires equal
 regular and AMT balances and zero other AMT adjustments. It applies to one
 primary-filer direct-use taxable-securities loan and one affirmed unadjusted
 1099-INT box 1 payer. A $4,000 prior line 7 plus $20,000 current interest and
 $22,000 sourced investment income yields 2025 line 8 of $22,000 and line 7 of
-$2,000, with Schedule A/Form 1040 itemization, native MeF, and PDF checked
-against the retained source and final filer. Positive and prior-line,
+$2,000, with Schedule A/Form 1040 itemization checked against the retained
+source and final filer. Positive calculation and prior-line,
 AMT-source, owner, and retained-source tamper fixtures are authored for the
-deferred batch. AMT-only imports are outside this positive-regular-carryforward
-source schema.
-The reviewed references and prior amounts do not authenticate filed-return
-bytes or IRS acceptance; wider carryover histories, other income sources, and
-lender/broker document bytes remain open. A distinct-AMT-balance route is
-described below.
+deferred batch. AMT-only imports are outside this regular-carryforward source
+schema. The source now requires distinct reviewed copies of the filed 2024 Form
+1040/Schedule A, Form 4952, AMT Form 4952 workpaper, and purported IRS
+acknowledgment. Their references, hashes, year, owner, and reviewed regular and
+AMT line 7 amounts join the 2025 imports. A staged byte binder checks the exact
+three PDF byte strings and acknowledgment XML hash; a staged current-return
+review checks line 2, Schedule A line 9, and Form 1040 itemization. Changed
+bytes, owner, line 7, Schedule A, and Form 1040 fixtures are authored. The
+filed PDF contents and IRS acknowledgment cannot be independently authenticated
+in the current execution, so native and PDF positive export is closed. Wider
+carryover histories, other income sources, and lender/broker document bytes
+remain open. A distinct-AMT-balance route is described below.
 
 The [2025 Form 6251 line 2c instructions](https://www.irs.gov/instructions/i6251)
 require a separate AMT Form 4952 refigure and carryforward record, with line 2c
@@ -46,12 +52,12 @@ for the same traced 2025 taxable-securities loan. Both payer names and
 statement references must differ. Each amount must match the retained Form
 4952 source inventory; their sum must equal Form 1040 line 2b. Regular Form
 4952 line 8 joins Schedule A line 9, and the separate AMT line 8 determines
-Form 6251 line 2c and Schedule 2 line 2. Native MeF and PDF export replay
-those joins, with positive, duplicate-source, and changed-amount fixtures
-authored for the deferred batch. The prior-year reviewed references remain
-reviewer assertions, not authenticated filed-return bytes or IRS acceptance;
-private-activity-bond income, qualified dividends, and other AMT investment
-income adjustments remain closed in this route.
+Form 6251 line 2c and Schedule 2 line 2. Calculation replays those joins,
+with positive, duplicate-source, and changed-amount fixtures authored for the
+deferred batch. Native MeF and PDF export of dependent Form 6251 line 2c is
+closed until accepted 2024 source content can be authenticated. Private-activity
+bond income, qualified dividends, and other AMT investment income adjustments
+remain closed in this route.
 
 ## Direct-use borrowing evidence prerequisite
 

@@ -18,6 +18,34 @@ export function form6251Form4952Fixture() {
     prior_interest_entirely_schedule_a_confirmed: true,
     prior_no_form6198_allocation_confirmed: true,
     reviewed_2024_amt_form4952_line7: 4_000,
+    accepted_2024_filing: {
+      filed_return_pdf: {
+        source_document_reference: "2024 reviewed accepted return",
+        file_name: "filed-2024-return.pdf",
+        sha256: "a".repeat(64),
+      },
+      completed_form4952_pdf: {
+        source_document_reference: "2024 filed Form 4952",
+        file_name: "filed-2024-form4952.pdf",
+        sha256: "b".repeat(64),
+      },
+      amt_form4952_workpaper_pdf: {
+        source_document_reference: "2024 AMT Form 4952 workpaper",
+        file_name: "amt-2024-form4952.pdf",
+        sha256: "c".repeat(64),
+      },
+      acknowledgment_xml: {
+        source_document_reference: "2024 IRS acceptance",
+        file_name: "accepted-2024.xml",
+        sha256: "d".repeat(64),
+      },
+      filed_tax_year: 2024 as const,
+      filed_primary_ssn: "123456789",
+      submission_id: "2024-submission-1",
+      accepted_status_reviewed: true as const,
+      regular_line7_reviewed: 2_000,
+      amt_line7_reviewed: 4_000,
+    },
   };
   return {
     general: {

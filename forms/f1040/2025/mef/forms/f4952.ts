@@ -70,6 +70,9 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
           "Form 4952 prior carryforward needs final filer identity",
         );
       }
+      throw new Error(
+        "Form 4952 prior carryforward export needs authenticated accepted 2024 filing and verified source bytes",
+      );
     }
     if (
       fields.direct_debt_trace !== undefined ||

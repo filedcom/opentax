@@ -53,6 +53,9 @@ export const form4952Pdf: PdfFormDescriptor = {
     if (Object.keys(fields).length === 0) return fields;
     if (hasForm4952PriorCarryforward(fields, allPending)) {
       reconcileForm4952PriorCarryforward(fields, allPending);
+      throw new Error(
+        "Form 4952 prior carryforward PDF needs authenticated accepted 2024 filing and verified source bytes",
+      );
     }
     if (
       fields.direct_debt_trace !== undefined ||
@@ -104,6 +107,9 @@ export const form4952Pdf: PdfFormDescriptor = {
         );
       }
       reconcileForm4952PriorCarryforward(fields, allPending, filer.primarySSN);
+      throw new Error(
+        "Form 4952 prior carryforward PDF needs authenticated accepted 2024 filing and verified source bytes",
+      );
     }
     if (
       fields.direct_debt_trace !== undefined ||

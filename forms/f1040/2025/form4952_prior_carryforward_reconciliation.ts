@@ -2,6 +2,7 @@ import {
   calculateForm4952,
   inputSchema as form4952Schema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
+import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
 
 const lineKeys = [
   "line1",
@@ -73,4 +74,24 @@ export function reconcileForm4952PriorCarryforward(
       "Form 4952 prior carryforward differs from reviewed 2024 line 7, current lines, AMT import, or final filer",
     );
   }
+}
+
+/** Staged full-return review; export remains closed without authenticated
+ * accepted prior-year documents. */
+export function reviewForm4952PriorCarryforwardReturn(
+  fields: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>>,
+  finalFilerSsn: string,
+): void {
+  reconcileForm4952PriorCarryforward(fields, pending, finalFilerSsn);
+  const scheduleA = pending.schedule_a as Record<string, unknown> | undefined;
+  if (
+    !scheduleA ||
+    scheduleA.line_9_investment_interest !== fields.line8
+  ) {
+    throw new Error(
+      "Form 4952 prior carryforward deduction differs from Schedule A line 9",
+    );
+  }
+  reconcileForm4952Itemization(pending, fields.line8 as number);
 }

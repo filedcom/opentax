@@ -92,4 +92,7 @@ export function assertForm6251Form4952Line2c(
       "Form 6251 line 2c must equal regular Form 4952 line 8 less AMT line 8 and reconcile Schedule A, Schedule 2 and Form 1040",
     );
   }
+  throw new Error(
+    "Form 6251 line 2c from Form 4952 prior carryforward needs authenticated accepted 2024 filing and verified source bytes",
+  );
 }

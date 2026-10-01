@@ -1,10 +1,13 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { form4952 as nativeForm4952 } from "../2025/mef/forms/f4952.ts";
 import { form4952Pdf } from "../2025/pdf/forms/f4952.ts";
 import { testFiler } from "../2025/mef/test-filer.ts";
+import { sha256Hex } from "../2025/prepared-source.ts";
+import { bindForm4952PriorCarryforwardBytes } from "../nodes/intermediate/forms/form4952/prior_carryforward.ts";
+import { reviewForm4952PriorCarryforwardReturn } from "../2025/form4952_prior_carryforward_reconciliation.ts";
 
 const prior = {
   tax_year: 2024 as const,
@@ -25,6 +28,34 @@ const prior = {
   prior_interest_entirely_schedule_a_confirmed: true,
   prior_no_form6198_allocation_confirmed: true,
   reviewed_2024_amt_form4952_line7: 4_000,
+  accepted_2024_filing: {
+    filed_return_pdf: {
+      source_document_reference: "2024-accepted-filing-review",
+      file_name: "filed-2024-return.pdf",
+      sha256: "a".repeat(64),
+    },
+    completed_form4952_pdf: {
+      source_document_reference: "2024-completed-form4952-review",
+      file_name: "filed-2024-form4952.pdf",
+      sha256: "b".repeat(64),
+    },
+    amt_form4952_workpaper_pdf: {
+      source_document_reference: "2024-amt-4952-workpaper",
+      file_name: "amt-2024-form4952.pdf",
+      sha256: "c".repeat(64),
+    },
+    acknowledgment_xml: {
+      source_document_reference: "2024-irs-acceptance",
+      file_name: "accepted-2024.xml",
+      sha256: "d".repeat(64),
+    },
+    filed_tax_year: 2024 as const,
+    filed_primary_ssn: "123456789",
+    submission_id: "2024-submission-1",
+    accepted_status_reviewed: true as const,
+    regular_line7_reviewed: 4_000,
+    amt_line7_reviewed: 4_000,
+  },
 };
 const trace = {
   tax_year: 2025,
@@ -94,7 +125,7 @@ function filing(source = prior) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4952 imports reviewed 2024 line 7 through the 2025 loan, Schedule A, Form 1040, MeF, and PDF", () => {
+Deno.test("Form 4952 stages reviewed 2024 line 7 through the 2025 loan, Schedule A, and Form 1040 while filing stays closed", () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line1, 20_000);
@@ -106,17 +137,149 @@ Deno.test("Form 4952 imports reviewed 2024 line 7 through the 2025 loan, Schedul
   assertEquals(result.pending.f1040?.line2b_taxable_interest, 22_000);
   assertEquals(result.pending.f1040?.line12e_itemized_deductions, 22_000);
   const fields = result.pending.form4952!;
-  assertStringIncludes(
-    nativeForm4952.build(fields, {
-      pending: result.pending,
-      filer: testFiler(),
-    }),
-    "<PriorYrDisallowInvsmtIntExpAmt>4000</PriorYrDisallowInvsmtIntExpAmt>",
+  reviewForm4952PriorCarryforwardReturn(
+    fields,
+    result.pending,
+    testFiler().primarySSN,
   );
-  assertEquals(form4952Pdf.projectFields!(fields, result.pending).line2, 4_000);
-  assertEquals(
-    form4952Pdf.instances!(fields, testFiler(), result.pending).length,
-    1,
+  assertThrows(() =>
+    reviewForm4952PriorCarryforwardReturn(
+      fields,
+      {
+        ...result.pending,
+        schedule_a: {
+          ...result.pending.schedule_a,
+          line_9_investment_interest: 21_999,
+        },
+      },
+      testFiler().primarySSN,
+    )
+  );
+  assertThrows(() =>
+    reviewForm4952PriorCarryforwardReturn(
+      fields,
+      {
+        ...result.pending,
+        f1040: {
+          ...result.pending.f1040,
+          line12e_itemized_deductions: 21_999,
+        },
+      },
+      testFiler().primarySSN,
+    )
+  );
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: result.pending,
+        filer: testFiler(),
+      }),
+    Error,
+    "authenticated accepted 2024 filing",
+  );
+  assertThrows(
+    () => form4952Pdf.projectFields!(fields, result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
+  );
+  assertThrows(
+    () => form4952Pdf.instances!(fields, testFiler(), result.pending),
+    Error,
+    "authenticated accepted 2024 filing",
+  );
+});
+
+Deno.test("Form 4952 binds exact prior filed copies and rejects changed bytes, owner, and carryforward amounts", async () => {
+  const filedReturnBytes = new TextEncoder().encode(
+    "%PDF-1.7 filed 2024 Form 1040 and Schedule A",
+  );
+  const form4952Bytes = new TextEncoder().encode(
+    "%PDF-1.7 filed 2024 Form 4952",
+  );
+  const amtBytes = new TextEncoder().encode(
+    "%PDF-1.7 2024 AMT Form 4952 workpaper",
+  );
+  const acknowledgmentBytes = new TextEncoder().encode(
+    "<Acknowledgment>Accepted 2024</Acknowledgment>",
+  );
+  const accepted = {
+    ...prior.accepted_2024_filing,
+    filed_return_pdf: {
+      ...prior.accepted_2024_filing.filed_return_pdf,
+      sha256: await sha256Hex(filedReturnBytes),
+    },
+    completed_form4952_pdf: {
+      ...prior.accepted_2024_filing.completed_form4952_pdf,
+      sha256: await sha256Hex(form4952Bytes),
+    },
+    amt_form4952_workpaper_pdf: {
+      ...prior.accepted_2024_filing.amt_form4952_workpaper_pdf,
+      sha256: await sha256Hex(amtBytes),
+    },
+    acknowledgment_xml: {
+      ...prior.accepted_2024_filing.acknowledgment_xml,
+      sha256: await sha256Hex(acknowledgmentBytes),
+    },
+  };
+  const source = { ...prior, accepted_2024_filing: accepted };
+  const bind = (
+    candidate: unknown = source,
+    one: Uint8Array = filedReturnBytes,
+    two: Uint8Array = form4952Bytes,
+    three: Uint8Array = amtBytes,
+    four: Uint8Array = acknowledgmentBytes,
+    ssn = "123456789",
+  ) =>
+    bindForm4952PriorCarryforwardBytes(candidate, one, two, three, four, ssn);
+  await bind();
+  await assertRejects(() =>
+    bind(source, new TextEncoder().encode("%PDF-1.7 changed 2024 return"))
+  );
+  await assertRejects(() =>
+    bind(
+      source,
+      filedReturnBytes,
+      new TextEncoder().encode("%PDF-1.7 changed 4952"),
+    )
+  );
+  await assertRejects(() =>
+    bind(
+      source,
+      filedReturnBytes,
+      form4952Bytes,
+      new TextEncoder().encode("%PDF-1.7 changed AMT workpaper"),
+    )
+  );
+  await assertRejects(() =>
+    bind(
+      source,
+      filedReturnBytes,
+      form4952Bytes,
+      amtBytes,
+      new TextEncoder().encode("<Acknowledgment>Rejected</Acknowledgment>"),
+    )
+  );
+  await assertRejects(() =>
+    bind(
+      source,
+      filedReturnBytes,
+      form4952Bytes,
+      amtBytes,
+      acknowledgmentBytes,
+      "987654321",
+    )
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      accepted_2024_filing: { ...accepted, regular_line7_reviewed: 3_999 },
+    })
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      accepted_2024_filing: { ...accepted, amt_line7_reviewed: 3_999 },
+    })
   );
 });
 
