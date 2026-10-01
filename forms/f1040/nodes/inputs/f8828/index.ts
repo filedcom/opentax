@@ -104,6 +104,17 @@ const reviewedMccReissueSchema = z.object({
   original_certificate_credit_rate: z.number().finite().positive().max(1),
   replacement_certificate_credit_rate: z.number().finite().positive().max(1),
 });
+const reviewedConventionalRefinanceSchema = z.object({
+  refinance_settlement_reference: sourceReference,
+  original_loan_payoff_reference: sourceReference,
+  original_issuer_notification_reference: sourceReference,
+  borrower_ssn: z.string().regex(/^\d{9}$/),
+  property_address: usAddressSchema,
+  refinance_date: dateSchema,
+  original_subsidized_loan_fully_repaid_confirmed: z.literal(true),
+  conventional_replacement_financing_confirmed: z.literal(true),
+  no_mcc_reissue_confirmed: z.literal(true),
+}).strict();
 
 function coownerShare(
   amount: number,
@@ -128,6 +139,8 @@ export const itemSchema = z.object({
   reviewed_gift: reviewedGiftSchema.optional(),
   reviewed_coownership: reviewedCoownershipSchema.optional(),
   reviewed_mcc_reissue: reviewedMccReissueSchema.optional(),
+  reviewed_conventional_refinance: reviewedConventionalRefinanceSchema
+    .optional(),
   property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
   issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination
@@ -150,6 +163,40 @@ export const itemSchema = z.object({
   issuer_federally_subsidized_amount: moneySchema, // issuer notification, line 19
   issuer_holding_period_percentage: z.number().int().min(0).max(100), // issuer table, line 20
 }).superRefine((item, ctx) => {
+  const conventional = item.reviewed_conventional_refinance;
+  const qmbPreSalePayoff = item.subsidy_type === "tax_exempt_bond_loan" &&
+    parseDate(item.full_repayment_date) < parseDate(item.disposition_date);
+  const earlyPayoff = qmbPreSalePayoff &&
+    roundedUpYears(item.original_loan_closing_date, item.full_repayment_date) <=
+      4;
+  if (earlyPayoff && !conventional) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reviewed_conventional_refinance"],
+      message:
+        "Early QMB payoff before sale needs the reviewed conventional refinance and original-loan payoff",
+    });
+  }
+  if (
+    conventional && (
+      !qmbPreSalePayoff || item.disposition_kind !== "sale" ||
+      item.reviewed_mcc_reissue !== undefined ||
+      conventional.original_issuer_notification_reference !==
+        item.reviewed_issuer.document_reference ||
+      conventional.borrower_ssn !== item.reviewed_issuer.borrower_ssn ||
+      !sameUsAddress(conventional.property_address, item.property_address) ||
+      conventional.refinance_date !== item.full_repayment_date ||
+      parseDate(conventional.refinance_date) <=
+        parseDate(item.original_loan_closing_date)
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reviewed_conventional_refinance"],
+      message:
+        "Conventional QMB refinance must match the original issuer, borrower, property, and line 8 payoff date",
+    });
+  }
   const reissue = item.reviewed_mcc_reissue;
   if (reissue) {
     if (

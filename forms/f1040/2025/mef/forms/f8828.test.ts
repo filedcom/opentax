@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8828 } from "./f8828.ts";
 import { form8828Pdf } from "../../pdf/forms/f8828.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import { inputSchema as f8828InputSchema } from "../../../nodes/inputs/f8828/index.ts";
 
 function item(overrides: Record<string, unknown> = {}) {
   const facts = {
@@ -163,6 +164,30 @@ function reissuedMccSale(overrides: Record<string, unknown> = {}) {
       replacement_certificate_mortgage_debt: 160_000,
       original_certificate_credit_rate: 0.20,
       replacement_certificate_credit_rate: 0.18,
+    },
+  };
+}
+
+function conventionalQmbRefinanceSale() {
+  const sale = item({
+    original_loan_closing_date: "2020-01-01",
+    full_repayment_date: "2022-01-01",
+    disposition_date: "2025-01-01",
+    issuer_holding_period_percentage: 24,
+  });
+  return {
+    ...sale,
+    reviewed_conventional_refinance: {
+      refinance_settlement_reference: "conventional-refi-14-main",
+      original_loan_payoff_reference: "original-qmb-payoff-14-main",
+      original_issuer_notification_reference:
+        sale.reviewed_issuer.document_reference,
+      borrower_ssn: sale.reviewed_issuer.borrower_ssn,
+      property_address: sale.property_address,
+      refinance_date: sale.full_repayment_date,
+      original_subsidized_loan_fully_repaid_confirmed: true,
+      conventional_replacement_financing_confirmed: true,
+      no_mcc_reissue_confirmed: true,
     },
   };
 }
@@ -381,6 +406,90 @@ Deno.test("staged IRS8828 reissued MCC rejects certificate and payoff tamper", (
         reviewed_mcc_reissue: {
           ...valid.reviewed_mcc_reissue,
           final_replacement_loan_payoff_date: "2022-06-01",
+        },
+      }],
+    }), Error);
+});
+
+Deno.test("staged IRS8828 QMB conventional refinance uses early payoff on native and PDF", () => {
+  const source = f8828InputSchema.parse({
+    f8828s: [conventionalQmbRefinanceSale()],
+  });
+  const finalReturn = pending(1_500);
+  finalReturn.form8949.transaction.date_acquired = "2020-01-01";
+  finalReturn.form8949.transaction.date_sold = "2025-01-01";
+  const complete = { ...finalReturn, f8828: source };
+  const filer = {
+    nameLine1: "Jane Taxpayer",
+    primarySSN: "123456789",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "14 Main St", city: "Boise", state: "ID", zip: "83702" },
+  };
+  const xml = form8828.build(source, { pending: complete, filer });
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyOrigLoanPaymentDt>2022-01-01</MortgSbsdyOrigLoanPaymentDt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyHoldingPeriodRt>0.24</MortgSbsdyHoldingPeriodRt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyRecaptureTaxAmt>1500</MortgSbsdyRecaptureTaxAmt>",
+  );
+  const [printed] = form8828Pdf.instances!(source, filer, complete);
+  assertEquals(printed?.repayment_year, "2022");
+  assertEquals(printed?.line20, 24);
+  assertEquals(printed?.line23, 1_500);
+  assertThrows(
+    () =>
+      form8828.build(source, {
+        pending: { ...complete, f8828: { f8828s: [item()] } },
+        filer,
+      }),
+    Error,
+    "differs from prepared return",
+  );
+  assertThrows(
+    () =>
+      form8828Pdf.instances!(
+        source,
+        { ...filer, primarySSN: "987654321" },
+        complete,
+      ),
+    Error,
+    "return filer",
+  );
+});
+
+Deno.test("staged IRS8828 rejects mismatched conventional refinance record", () => {
+  const sale = f8828InputSchema.parse({
+    f8828s: [conventionalQmbRefinanceSale()],
+  }).f8828s[0];
+  assertThrows(
+    () =>
+      form8828.build({
+        f8828s: [{
+          ...sale,
+          reviewed_conventional_refinance: {
+            ...sale.reviewed_conventional_refinance,
+            original_loan_payoff_reference: sale.reviewed_conventional_refinance
+              .refinance_settlement_reference,
+          },
+        }],
+      }),
+    Error,
+    "conventional refinance records",
+  );
+  assertThrows(() =>
+    form8828.build({
+      f8828s: [{
+        ...sale,
+        reviewed_conventional_refinance: {
+          ...sale.reviewed_conventional_refinance,
+          property_address: { ...sale.property_address, line1: "99 Other St" },
         },
       }],
     }), Error);

@@ -39,6 +39,17 @@ payoff of the replacement loan, not the refinancing date. The staged source
 requires original and reissued certificate, refinance settlement, issuer
 compliance, and final payoff references.
 
+The staged early conventional QMB refinancing path now requires a separate
+reviewed settlement and original-loan payoff record when the subsidized loan was
+fully repaid before sale within its first four years. The record binds the
+original issuer notification, borrower, property and refinance date to line 8.
+The existing IRS holding-period worksheet then uses the old loan's payoff date
+and the later disposition date, rather than treating the conventional
+replacement loan as an MCC extension. Native and PDF projections replay that
+source and the final Schedule 2 tax; changed payoff, borrower, property, issuer
+or prepared source rejects. A direct early payoff without this refinance record
+is still outside this bounded source shape.
+
 For taxable home gain, exactly one Form 8949 row must carry the same transaction
 ID, net proceeds, basis, disposition date and taxable gain. A partial exclusion
 requires code H. A fully excluded gain requires a reviewed exclusion record
@@ -46,16 +57,17 @@ reference and does not invent a Form 8949 row.
 
 These reference fields are provenance identifiers, **not validated document
 bytes**. The current return graph cannot independently verify the issuer
-notification or closing/basis/exclusion/gift/ownership documents. It also lacks
-a modeled source path for transfers with consideration, spouse/ex-spouse divorce
-transfers, casualty replacement, non-joint-liability co-ownership, qualified
-subordinate mortgage loans, MCCs transferred to a new borrower or repeatedly
-reissued, and amended returns. The issuer's no-annual-credit-increase
-certification is referenced but its document bytes and Form 8396 credit history
-are not independently reconciled. A Form 8949 row is required by this staged
-path for taxable home gain; the exact gain handoff for other reporting routes
-remains unsupported. Public MeF and PDF export must keep the Form 8828 guard
-closed until those filing rules and attachment validation are resolved.
+notification or closing/basis/exclusion/gift/ownership/refinance documents. It
+also lacks a modeled source path for transfers with consideration,
+spouse/ex-spouse divorce transfers, casualty replacement, non-joint-liability
+co-ownership, qualified subordinate mortgage loans, MCCs transferred to a new
+borrower or repeatedly reissued, and amended returns. The issuer's
+no-annual-credit-increase certification is referenced but its document bytes and
+Form 8396 credit history are not independently reconciled. A Form 8949 row is
+required by this staged path for taxable home gain; the exact gain handoff for
+other reporting routes remains unsupported. Public MeF and PDF export must keep
+the Form 8828 guard closed until those filing rules and attachment validation
+are resolved.
 
 An exact Form 8396 join is blocked by its prepared source model.
 `form8396SourceSchema` exposes one `certificate_number` and

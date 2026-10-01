@@ -354,17 +354,59 @@ Deno.test("f8828: half the gain caps tax and zero-gain form yields no Schedule 2
 
 Deno.test("f8828: early full repayment uses the IRS holding period worksheet", () => {
   // Repayment after 2 years: 40%; sale 3 years later: 60%; line 20 = 24%.
-  const item = transaction({
+  const sale = transaction({
     original_loan_closing_date: "2020-01-01",
     full_repayment_date: "2022-01-01",
     disposition_date: "2025-01-01",
     issuer_holding_period_percentage: 24,
   });
+  const item = {
+    ...sale,
+    reviewed_conventional_refinance: {
+      refinance_settlement_reference: "conventional-refi-14-main",
+      original_loan_payoff_reference: "original-qmb-payoff-14-main",
+      original_issuer_notification_reference:
+        sale.reviewed_issuer.document_reference,
+      borrower_ssn: sale.reviewed_issuer.borrower_ssn,
+      property_address: sale.property_address,
+      refinance_date: sale.full_repayment_date,
+      original_subsidized_loan_fully_repaid_confirmed: true,
+      conventional_replacement_financing_confirmed: true,
+      no_mcc_reissue_confirmed: true,
+    },
+  };
   const lines = computeF8828Lines(
     f8828.inputSchema.parse({ f8828s: [item] }).f8828s[0],
   );
   assertEquals(lines.line20_holding_period_percentage, 24);
   assertEquals(lines.line23_tax, 1_500);
+  assertThrows(
+    () => f8828.inputSchema.parse({ f8828s: [sale] }),
+    Error,
+    "reviewed conventional refinance",
+  );
+  for (
+    const changed of [
+      { refinance_date: "2022-01-02" },
+      { borrower_ssn: "987654321" },
+      { original_issuer_notification_reference: "other-issuer" },
+      { conventional_replacement_financing_confirmed: false },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        f8828.inputSchema.parse({
+          f8828s: [{
+            ...item,
+            reviewed_conventional_refinance: {
+              ...item.reviewed_conventional_refinance,
+              ...changed,
+            },
+          }],
+        }),
+      Error,
+    );
+  }
 });
 
 Deno.test("f8828: partial years use the issuer's year of disposition", () => {

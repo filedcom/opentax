@@ -2,6 +2,7 @@ import type { FilerIdentity } from "../../../mef/header.ts";
 import {
   computeF8828Lines,
   type F8828Item,
+  inputSchema as f8828InputSchema,
 } from "../../../nodes/inputs/f8828/index.ts";
 import {
   inputSchema as form8949InputSchema,
@@ -17,6 +18,26 @@ function sameAddress(
 
 function assertReviewedRecords(item: F8828Item): void {
   const issuer = item.reviewed_issuer;
+  const conventional = item.reviewed_conventional_refinance;
+  if (
+    conventional && (
+      conventional.refinance_settlement_reference ===
+        conventional.original_loan_payoff_reference ||
+      conventional.refinance_settlement_reference ===
+        issuer.document_reference ||
+      conventional.original_loan_payoff_reference ===
+        issuer.document_reference ||
+      conventional.original_issuer_notification_reference !==
+        issuer.document_reference ||
+      conventional.borrower_ssn !== issuer.borrower_ssn ||
+      conventional.refinance_date !== item.full_repayment_date ||
+      !sameAddress(conventional.property_address, item.property_address)
+    )
+  ) {
+    throw new Error(
+      "Form 8828 conventional refinance records differ from issuer, payoff, or property",
+    );
+  }
   const owners = item.reviewed_coownership;
   const expectedHighestLoan = owners
     ? owners.whole_highest_federally_subsidized_loan_amount
@@ -111,6 +132,12 @@ export function reconcileForm8828Sources(
     }
   }
   if (!pending) return;
+  if (pending.f8828 !== undefined) {
+    const preparedItems = f8828InputSchema.parse(pending.f8828).f8828s;
+    if (JSON.stringify(preparedItems) !== JSON.stringify(items)) {
+      throw new Error("Form 8828 reviewed source differs from prepared return");
+    }
+  }
   const f1040 = pending.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending.schedule2 as Record<string, unknown> | undefined;
   if (!f1040 || !schedule2) {

@@ -122,7 +122,10 @@ export const form8828Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8828 PDF needs filer name and identifying number");
     }
-    reconcileForm8828(f8828s, allPending ? { pending: allPending } : undefined);
+    reconcileForm8828(
+      f8828s,
+      allPending ? { pending: allPending, filer } : { filer },
+    );
     return f8828s.map(instance);
   },
 };
