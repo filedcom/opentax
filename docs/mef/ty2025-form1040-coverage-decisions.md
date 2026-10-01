@@ -130,15 +130,20 @@ The following are candidates to separate from the initial **current-year Form
 1040 return preparation** workflow. They are **not excluded now**. A decision to
 omit them must name the filing path, not merely the schema root, and must
 preserve an explicit rejection for an entered in-scope claim.
+The [separate-workflow matrix](ty2025-separate-workflow-decision-matrix.md)
+lists the current code/schema facts, current-return consequence and concrete
+choices for each root. Its schema observations use an ignored local IRS v5.4
+cache, so reproducible provenance remains open.
 
 1. Decide whether amended-return filing `IRS1040X` is a separate workflow. This
    does not remove the need to detect prior-year amendments triggered by Form
    1116 Schedule C redeterminations.
-2. Decide whether payment/account roots `IRS1062Payment`, `IRS965Payment`,
-   `IRSESPayment`, `IRSFormT`, and `IRSPayment` are transmitted with the
+2. Decide whether payment-request roots `IRS1062Payment`, `IRS965Payment`,
+   `IRSESPayment`, and `IRSPayment` are transmitted with the
    current-return package or handled by a separate payment workflow. Section 965
    liabilities still need tax and payment reconciliation regardless of that
-   channel choice.
+   channel choice. `IRSFormT` is a conditional timber filing attachment and
+   remains in the individual-versus-entity owner review, not this payment choice.
 3. Decide whether payer-issued `IRSRRB1042S` and `IRSSSA1042S` are transmitted
    documents or source-only records for an individual recipient. Income and
    withholding must still reconcile to Form 1040.
@@ -175,7 +180,8 @@ partner and owner questions that must be answered first.
 
 For every retained supported scenario: resolve source provenance and required
 attachments, run the agreed full batch once build decisions are complete, repair
-failures, validate generated XML against the checked-in TY2025 IRS schema,
+failures, validate generated XML against a reproducibly sourced TY2025 IRS schema
+(the current v5.4 copy is an ignored local research cache),
 inspect actually filled PDFs, then obtain applicable IRS business-rule and ATS
 acceptances. No ATS acceptance is recorded. Review, PR, merge and release follow
 those gates, not the static inventory.
