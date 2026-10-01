@@ -1,5 +1,23 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Two W-2 employers plus one Form 1099-INT (2026-10-01, unrun)
+
+One claimed dependent's referenced filed 2025 single return can now reconcile
+two distinct issued W-2 employers and one identified Form 1099-INT. The W-2
+box 1 amounts sum to filed wages, the 1099-INT boxes 1/8 match taxable and
+tax-exempt interest, and filed AGI equals wages plus taxable interest. The
+existing under-65, nonblind 2025 dependent earned/unearned filing-threshold
+check determines that the return is required; tax-exempt interest then joins
+Worksheet 1-2 MAGI. The one-policy annual Form 8962 route rechecks each source
+recipient and distinct document identity before native MeF or PDF projection
+and joins line 2b/household income to Schedule 2/3 and Form 1040. A $8,000
+plus $7,000 W-2 and $1,000 taxable/$100 tax-exempt interest case, in both
+credit and excess-APTC outcomes, and amount, identity, duplicate, threshold,
+MAGI, and final-return tamper fixtures are authored for the bulk validation.
+More than two employers, multiple interest forms, other dependent income or
+adjustments, issued-document authentication, monthly/overlap policy variants,
+filled-PDF/XSD review, and IRS acceptance remain open.
+
 ## One policy covering three family members for part of the year (2026-10-01, unrun)
 
 The monthly positive-APTC route now accepts one same-state Form 1095-A policy

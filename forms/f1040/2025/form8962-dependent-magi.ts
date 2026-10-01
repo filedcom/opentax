@@ -117,7 +117,7 @@ export function reconcileDependentMagi(
     );
   }
   // The required-filing source is limited to interest-only, one or two W-2s
-  // wage-only, or one W-2 plus one 1099-INT on a single return. Other income/adjustments,
+  // wage-only, or one or two W-2s plus one 1099-INT on a single return. Other income/adjustments,
   // Form 2555, and Social Security
   // cannot enter this bounded Worksheet 1-2 route by assertion.
   const magi = ptcDependentsModifiedAgi(claimed);

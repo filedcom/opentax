@@ -356,11 +356,12 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
     const interestOnly = wages === 0 && taxableInterest > 0 &&
       taxReturn.wage_forms_w2 === undefined;
     const mixedWagesAndInterest = wages > 0 && taxableInterest > 0 &&
-      taxReturn.wage_forms_w2?.length === 1 &&
+      (taxReturn.wage_forms_w2?.length === 1 ||
+        taxReturn.wage_forms_w2?.length === 2) &&
       taxReturn.interest_forms1099.length === 1;
     if (!wageOnly && !interestOnly && !mixedWagesAndInterest) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, or one W-2 plus one Form 1099-INT return",
+        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, or one or two W-2s plus one Form 1099-INT return",
       );
     }
     if (

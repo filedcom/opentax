@@ -61,17 +61,21 @@ const dependent = {
   },
 };
 
-function mixedDependentPolicy(annualAptc: 600 | 4_800) {
+function mixedDependentPolicy(
+  annualAptc: 600 | 4_800,
+  claimedDependent = dependent,
+  expectedMagi = 15_100,
+) {
   const generalSource = {
     filing_status: "single" as const,
     taxpayer_ssn: "123456789",
-    dependents: [dependent],
+    dependents: [claimedDependent],
   };
   const generalOutput = general.compute(
     { taxYear: 2025, formType: "f1040" },
     general.inputSchema.parse(generalSource),
   ).outputs.find((row) => row.nodeType === "form8962")?.fields;
-  assertEquals(generalOutput?.dependents_modified_agi, 15_100);
+  assertEquals(generalOutput?.dependents_modified_agi, expectedMagi);
   const output = form8962Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form8962Node.inputSchema.parse({
@@ -144,6 +148,130 @@ for (const aptc of [600, 4_800] as const) {
     assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
   });
 }
+
+const twoEmployerMixedDependent = {
+  ...dependent,
+  ptc_tax_return: {
+    ...dependent.ptc_tax_return,
+    filed_form1040: {
+      ...dependent.ptc_tax_return.filed_form1040,
+      line1z_wages: 15_000,
+      line11b_agi: 16_000,
+    },
+    wage_forms_w2: [
+      {
+        ...dependent.ptc_tax_return.wage_forms_w2[0],
+        source_document_id: "casey-issued-2025-w2-summer",
+        box1_wages: 8_000,
+      },
+      {
+        ...dependent.ptc_tax_return.wage_forms_w2[0],
+        source_document_id: "casey-issued-2025-w2-autumn",
+        employer_name: "Autumn Employer",
+        employer_ein: "556677889",
+        box1_wages: 7_000,
+      },
+    ],
+  },
+};
+
+for (const aptc of [600, 4_800] as const) {
+  Deno.test(`Form 8962 two-W-2 and 1099-INT dependent reaches annual native/PDF at APTC ${aptc}`, () => {
+    const { fields, pending, net, repayment } = mixedDependentPolicy(
+      aptc,
+      twoEmployerMixedDependent,
+      16_100,
+    );
+    assertEquals(fields.dependents_modified_agi, 16_100);
+    assertEquals(fields.household_income, 86_100);
+    assertEquals((net ?? 0) > 0, aptc === 600);
+    assertEquals((repayment ?? 0) > 0, aptc === 4_800);
+    const xml = form8962.build(fields, { filer, pending });
+    assertStringIncludes(
+      xml,
+      "<TotalDependentsModifiedAGIAmt>16100</TotalDependentsModifiedAGIAmt>",
+    );
+    const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
+    assertEquals(projected.dependents_modified_agi, 16_100);
+    assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  });
+}
+
+Deno.test("Form 8962 two-W-2 plus interest rejects source, threshold, MAGI and return tampering", () => {
+  const { fields, pending } = mixedDependentPolicy(
+    600,
+    twoEmployerMixedDependent,
+    16_100,
+  );
+  const sources = twoEmployerMixedDependent.ptc_tax_return.wage_forms_w2;
+  const changed = (overrides: Record<string, unknown>) => ({
+    ...pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...twoEmployerMixedDependent,
+        ptc_tax_return: {
+          ...twoEmployerMixedDependent.ptc_tax_return,
+          ...overrides,
+        },
+      }],
+    },
+  });
+  for (
+    const replay of [
+      changed({
+        wage_forms_w2: [sources[0], { ...sources[1], box1_wages: 6_999 }],
+      }),
+      changed({
+        wage_forms_w2: [sources[0], {
+          ...sources[1],
+          employee_ssn: "111223333",
+        }],
+      }),
+      changed({
+        wage_forms_w2: [sources[0], {
+          ...sources[1],
+          employer_ein: sources[0].employer_ein,
+        }],
+      }),
+      changed({
+        wage_forms_w2: [sources[0], {
+          ...sources[1],
+          source_document_id: sources[0].source_document_id,
+        }],
+      }),
+      changed({
+        interest_forms1099: [{
+          ...twoEmployerMixedDependent.ptc_tax_return.interest_forms1099[0],
+          box8_tax_exempt_interest: 99,
+        }],
+      }),
+      { ...pending, schedule3: { line9_premium_tax_credit: 0 } },
+    ]
+  ) {
+    assertThrows(() => form8962.build(fields, { filer, pending: replay }));
+    assertThrows(() => form8962Pdf.projectFields?.(fields, replay));
+  }
+  const threshold = changed({
+    filed_form1040: {
+      ...twoEmployerMixedDependent.ptc_tax_return.filed_form1040,
+      line1z_wages: 14_000,
+      line2b_taxable_interest: 450,
+      line11b_agi: 14_450,
+    },
+    wage_forms_w2: [sources[0], { ...sources[1], box1_wages: 6_000 }],
+    interest_forms1099: [{
+      ...twoEmployerMixedDependent.ptc_tax_return.interest_forms1099[0],
+      box1_taxable_interest: 450,
+    }],
+  });
+  assertThrows(() =>
+    general.compute(
+      { taxYear: 2025, formType: "f1040" },
+      general.inputSchema.parse(threshold.general),
+    )
+  );
+});
 
 Deno.test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return tampering", () => {
   const { fields, pending } = mixedDependentPolicy(600);
