@@ -9,6 +9,7 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 - [x] Register source-reconciled Form 8992 and one-CFC Schedule A native/PDF attachments for the bounded wholly owned Category 5a calculation, including distinct EIN/reference ID, shareholder/return tie-outs, document link, and deferred bulk fixtures; positive filing still waits for mandatory Form 5471 schedules and final bulk validation.
 - [x] Model and register the Category 5a CFC's complete Schedule I-1 native/PDF attachment from reviewed functional-currency lines 1–10c, exchange rate and USD tie-outs to the existing Form 8992 calculation. Unit, XSD, and PDF fixtures are authored for deferred validation; Form 5471 filing stays closed pending its other required schedules.
 - [x] Model and register one Category 5a CFC Form 5471 Schedule H native/PDF attachment from a reviewed zero-adjustment E&P source: explicitly review lines 2a–2i, no DASTM and general-category facts, the functional-currency E&P calculation and USD conversion. Unit, XSD, and PDF fixtures are authored for deferred validation; positive Form 5471 filing stays closed pending its other required schedules.
+- [x] Reconcile a standalone one-ODC Form 8862 source through Schedule 8812, Form 1040, and native/PDF identity and amount replay: verify the filed dependent and exact Schedule 8812 lines 4, 6, 7, 14, and 27 against Form 1040 lines 19/28. Full-return and tamper fixtures are authored for deferred validation; IRS notice authentication and broader claimant combinations remain open.
 
 ## Named tax-form gaps
 
