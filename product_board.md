@@ -2,138 +2,59 @@
 
 ## Full status summary (2026-10-01)
 
-Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
-TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **331 completed bounded items**, with
-their source and validation limits, are in the
-[completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
-The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
-preserves earlier evidence. A completed child route does not close its parent
-form or a release gate.
+Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
+TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
+The **333 completed bounded items** and their exact limits live in the
+[completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
+the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
+retains earlier evidence. A completed slice does not close a broader form,
+coverage decision, or release gate.
 
-| Workstream | Open | Completed bounded | What remains |
+| Workstream | Open TODOs | Completed bounded items | Current state |
 | --- | ---: | ---: | --- |
-| Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
-| Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
-| Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 315 | Extend bounded routes to every retained form branch and source combination. |
-| Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
-| Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
-| IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
+| Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
+| Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
+| Core return and source paths | 8 | 4 | Return-wide joins and source classification remain incomplete. |
+| Named tax-form gaps | 20 | 317 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Native MeF and PDF parity | 3 | 11 | Registry, attachment, and printable-output parity remain open. |
+| Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
+| IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
 
-**Implemented coverage.** Bounded routes now carry selected W-2, 1099, K-1,
-foreign-tax, mortgage, business/rental, capital-gain, IRA, HSA, Marketplace,
-education, dependent-credit, household-employment, and other sourced cases
-into Form 1040. Named form work includes Forms 1116, 3800, 4562, 4952, 4972,
-5471, 6251, 6252, 7203, 7217, 8283, 8582, 8582-CR, 8606, 8835, 8839,
-8862, 8874, 8889, 8962, 8990, 8992, 8995, and 9465, plus associated
-schedules. Many routes include owner checks, native MeF, PDF projection, and
-positive and tamper fixtures. The ledger states each exact supported slice;
-these form families remain open where listed below.
+**Implemented coverage.** Bounded routes now connect selected wage, information
+return, K-1, foreign-tax, mortgage, business, rental, investment, IRA, HSA,
+Marketplace, education, dependent-credit, household-employment, and business
+credit sources to Form 1040. The ledger details source checks, owner identity,
+calculations, native MeF, PDF projection, and authored positive or tamper cases
+for each completed slice. Recent work includes three-country Form 1116 income,
+two-owner Form 8889 distributions and rollovers, Form 6251 capital-basis and
+AMT adjustments, Form 3800 mixed and Form 8826 sourced credits, and a Form 8962
+shared policy with a claimed dependent and another tax family. Several
+candidates intentionally stop at source review because prior accepted returns,
+IRS notices, signatures, or other authoritative bytes cannot yet be
+authenticated.
 
-Recent bounded additions cover dependent MAGI and corrected multi-policy
-Form 8962 cases; Form 8582 residence proof and a prior rental-loss offset;
-paired HSA excess and Medicare-month cases; three/four same-plan Form 4972
-copies; Form 4952 qualified-dividend exclusion; grouped Form 8283 artwork,
-including one FMV reduction; Schedule C/F qualified-dividend Form 8995 cases;
-four/five foreign-employer Form 1116 wages and affected-year amendment review;
-and audited capital basis, mining costs, and a first-year long-term contract
-on Form 6251. A partially repaid shareholder note now joins Form 7203 losses,
-and a commercial clean-vehicle credit replays through the Form 3800 PDF. A
-two-vintage passive Form 1116 Schedule B carryover now joins the parent PDF
-and Form 1040 credit. The final A2A submission ZIP requires a reviewed
-full-year residency answer for each filer. Positive export remains closed
-where the corresponding gap note says so.
+**Coverage still to decide.** Reconcile the 138 registered native MeF
+descriptors, 102 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
+literals, 99 without) with the form audit and applicability crosswalk. Set
+the ownership and workflow boundaries for entity-associated attachments,
+amendments, payment/account forms, and optional filing forms. Resolve whether
+structured reviewed facts alone meet the evidence standard for complex
+source records. Every retained positive route still needs an unbroken
+source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain;
+otherwise its named fail-closed boundary needs user approval.
 
-Four sequential, separately corrected Marketplace policies now reconcile
-their monthly SLCSP values and excess APTC through Form 8962 and Form 1040.
-An audited gain and loss in opposite holding-period buckets now join the
-bounded Form 6251 AMT-basis path when both net losses are fully deductible.
-A paired HSA return now combines one owner's timely excess return with the
-other owner's partly medical distribution across Forms 8889 and 1040.
-A paired age-65/disability HSA return now includes one sourced pre-disability
-rollover for the disability owner, with both Form 8889 copies and joint totals.
-One Alaska-resident taxpayer's Marketplace policy now joins a separate Texas
-policy for a dependent, using Alaska family-size poverty figures.
-Three passive foreign-interest payers now populate all Form 1116 country
-columns and reconcile the credit through Schedule 3 and Form 1040.
-Form 8283 now stages filed-prior-return and acknowledgment bytes for one
-artwork carryover, while positive export awaits authenticated acceptance.
-Three separately sourced REIT dividend issuers now join one Schedule C
-business on Form 8995 within the no-Schedule-B dividend threshold.
-The paired age-65/disability HSA route also accepts a sourced rollover for
-the age-65 owner, with both owners' filed totals reconciled.
-Form 8862 now binds reviewed notice-copy bytes as a prerequisite and closes
-CTC/ODC and AOTC export until IRS issuance and content can be authenticated.
-Prior-year Form 4952 carryovers now require retained filed-return and
-acknowledgment bytes; dependent Form 6251 export closes pending authentication.
-A spouse-owned Form 8606 now combines a nondeductible contribution with a
-distribution across both 2025 and early-2026 receipt timing.
-A valid pre-2025 rental acquisition now has a staged Form 8582/4797 Part I
-candidate; the impossible 2025 purchase-and-sale classification is rejected.
-Form 7203 now traces two principal repayments on one shareholder note through
-the remaining debt basis, allowed loss, and joint return.
-A sourced agricultural livestock waste facility now carries its production
-credit through Form 8835, Form 3800, Schedule 3, and Form 1040.
-The Form 8862 EITC-only route also closes at native/PDF export until its
-prior-disallowance notice can be authenticated.
-Form 9465 remains closed after an IRS-source review left attached-return
-authorization for its distinct disclosure consent unresolved.
-Two Form 1099-INT copies from the same payer now join the passive-credit
-ordinary-tax calculation through distinct accounts and reviewed amounts.
-A partial-share Form 4972 death-benefit election now requires the complete
-beneficiary allocation and matches the elected 1099-R share.
-Same-term regular and AMT capital losses now take separate Schedule D limits
-before their Form 6251 line-2k adjustment.
-One partial-year Marketplace policy now covers a filer and two sourced
-required-filing dependents with monthly Form 8962 reconciliation.
-A paired HSA return now combines July Medicare onset with dated age-65
-distributions for either owner.
-Two foreign interest payers and one ordinary foreign dividend payer now
-populate three Form 1116 countries with distinct Part II tax kinds.
-A purchased short-term nonpublic stock gift now carries its basis-limited
-Form 8283 claim and reviewed issuer details through native and PDF output.
-One traced Form 4952 securities loan now reconciles four separate interest
-and dividend payer copies, including a qualified-dividend exclusion.
-A first-year rental's fully taxable overall-loss sale now joins Schedule E
-and Form 4797 without a Form 8582 activity row. A commercial vehicle and
-work opportunity credit now reconcile together on the Form 3800 PDF.
-A partial-share beneficiary's Form 4972 now combines elected NUA and a
-death-benefit exclusion through the special tax on Form 1040 line 16.
-A spouse-owned first-year Roth distribution now keeps that spouse's Form
-8606 owner identity while reconciling joint IRA income and Form 5329 tax.
-A staged Form 8839 credit candidate now applies the 2025 MAGI phaseout and
-reconciles refundable and nonrefundable portions; positive filing stays closed.
-Form 8990 debt tracing now requires dated borrowing-use records that account
-for the full proceeds and connect each payment to the same Schedule C business.
-A specified-cooperative Form 1099-PATR box 6 amount now reaches Form 8995-A
-line 38/39 and Form 1040 QBI deduction with reviewed notice and owner checks.
-
-**Evidence and validation.** The last complete `deno task test` baseline
+**Validation and delivery.** The last complete `deno task test` baseline
 passed 8,951/8,951 at `44282e25`; its
-[retained log](.state/research/ty2025-full-test-schedule1a-vehicle.log) predates
-current work. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
-checks at `9effd20b`. Current fixtures are authored but have **not** entered
-the agreed final batch. Reviewed references and hashes do not by themselves
-authenticate issuer content, filed-return acceptance, signatures, or IRS
-acknowledgments. No current complete test, filled-PDF, business-rule, or ATS
-acceptance result is claimed.
-
-**Remaining scope.** Resolve each open filing and evidence decision, then
-complete each applicable Form 1040 path or obtain a named, user-approved
-fail-closed boundary. Reconcile the 138 registered MeF descriptors, 102 PDF
-descriptors, and 211 TY2025 IRS schema roots (112 source literals, 99 without)
-with public inputs, source proof, calculations, owner identity, Form 1040 joins,
-native XML, printable output, statements, and attachments. The checklist below
-names the open work; the completed ledger records the smaller routes already
-implemented.
-
-**Release sequence.** Finish implementation before the requested single full
-`deno task test` batch. Then validate retained positive routes against the
-TY2025 XSD and source totals, generate and inspect the sixty prepared
-filled-PDF cases, check IRS business rules, complete ATS with issued
-credentials and accepted acknowledgments, review the draft PR, and release
-only after those gates pass.
+[log](.state/research/ty2025-full-test-schedule1a-vehicle.log) predates this
+work. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD checks at
+`9effd20b`. Current fixtures are authored but unrun under the requested
+implementation-first sequence. No current complete test, filled-PDF,
+business-rule, or IRS ATS acceptance is claimed. After implementation and
+scope decisions, run one full test batch, source-backed XSD/business-rule
+validation, and the [sixty prepared filled-PDF
+cases](docs/mef/ty2025-form1040-validation-batch.md); then complete IRS ATS
+with issued credentials and acknowledgments before PR review, merge, and
+release.
 
 ## Scope and completion rules
 
