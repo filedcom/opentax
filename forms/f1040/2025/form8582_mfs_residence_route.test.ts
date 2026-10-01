@@ -106,7 +106,8 @@ Deno.test("MFS rental allowance rejects a missing month of separate-residence re
   });
   assertEquals(
     result.diagnostics.some((entry) =>
-      entry.message.includes("January through December")
+      entry.message.includes("mfs_lived_apart_source") &&
+      entry.message.includes("exactly 12 element(s)")
     ),
     true,
   );

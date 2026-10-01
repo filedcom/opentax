@@ -1410,7 +1410,7 @@ Deno.test("MFS special allowance rejects incomplete or shared residence evidence
         },
       }),
     Error,
-    "January through December",
+    "exactly 12 element(s)",
   );
   assertThrows(
     () =>

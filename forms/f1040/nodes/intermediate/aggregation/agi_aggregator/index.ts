@@ -156,6 +156,7 @@ export const inputSchema = z.object({
   pal_rental_loss: z.number().nonnegative().optional(),
   // Taxpayer actively participated in the rental real estate activity
   pal_active_participation: z.boolean().optional(),
+  mfs_lived_apart_all_year: z.boolean().optional(),
   // Line 6 — Net farm profit or (loss) (Schedule F)
   line6_schedule_f: z.number().optional(),
   // Line 2a — Alimony received (divorce or separation instruments before 1/1/2019, IRC §71)
@@ -577,6 +578,7 @@ function allowedPassiveLoss(input: AgiInput): number {
     activeParticipation: input.pal_active_participation ?? false,
     modifiedAgi: modifiedAgiFor8582(input),
     filingStatus: input.filing_status as FilingStatus | undefined,
+    mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
   };
 
   return passiveLossLimit(activity).allowed;

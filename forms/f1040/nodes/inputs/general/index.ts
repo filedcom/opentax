@@ -34,6 +34,7 @@ import {
   mfsPtcStatusSchema,
 } from "../../intermediate/forms/form8962/index.ts";
 import {
+  assertMfsLivedApartSource,
   form8582,
   mfsLivedApartSourceSchema,
 } from "../../intermediate/forms/form8582/index.ts";
@@ -924,6 +925,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    const mfsLivedApartAllYear = parsed.filing_status === FilingStatus.MFS &&
+      parsed.mfs_spouse_lived_with_taxpayer === false &&
+      parsed.mfs_lived_apart_source !== undefined;
+    if (mfsLivedApartAllYear) {
+      assertMfsLivedApartSource(parsed.mfs_lived_apart_source);
+    }
     if (parsed.dual_status_return_2025 === true) {
       throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
     }
@@ -1085,6 +1092,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
       this.outputNodes.output(agi_aggregator, {
         filing_status: parsed.filing_status,
+        ...(mfsLivedApartAllYear && { mfs_lived_apart_all_year: true }),
         ...(parsed.mfs_spouse_lived_with_taxpayer !== undefined && {
           mfs_lived_with_spouse: parsed.mfs_spouse_lived_with_taxpayer,
         }),
