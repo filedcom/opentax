@@ -1,5 +1,28 @@
 # TY2025 Form 2106: employee business expenses
 
+## One fee-basis official's unreimbursed line-4 expense (written, unrun)
+
+A bounded native and PDF filing route now accepts one taxpayer job as a
+fee-basis state or local official with positive documented Form 2106 line-4
+business expense, no vehicle, travel, transportation, meals, or reimbursement.
+The employee name/SSN and employer name/EIN must match exactly one positive
+W-2. The calculated Form 2106 line 10 must equal Schedule 1 line 12 and its
+AGI contribution; Schedule 1 line 26 must equal Form 1040 line 10, and the
+one-W-2 wages and resulting AGI must match Form 1040 lines 1a, 1z, 9, and 11.
+Native MeF now emits one `IRS2106` document and the PDF descriptor fills the
+official two-page form from the same calculated lines. The attachment guard
+continues to reject all other Form 2106 shapes. A full-return positive case and
+job, W-2, Schedule 1, and Form 1040 tamper cases are authored but unrun.
+
+The appointment, fee schedule, expense ledger, and reimbursement ledger are
+entered source references; their document bytes and the W-2's authenticity are
+not independently verified. The route excludes spouse/multiple jobs,
+reservists, performing artists, impairment expenses, mileage/actual vehicle,
+meals, and excess reimbursements. Local XSD/business-rule validation, filled
+PDF review, and IRS ATS remain pending the coordinated batch. The [2025 Form
+2106 instructions](https://www.irs.gov/instructions/i2106) direct fee-basis
+official expenses from Form 2106 line 10 to Schedule 1 line 12.
+
 ## Current boundary
 
 The public `f2106s` source is now one strict record per job with employee/owner
@@ -10,8 +33,8 @@ impairment expenses. It computes standard-mileage vehicle expense where a
 complete Part II source is present. Fee-basis deductions go to Schedule 1 line
 12/AGI and impairment deductions only to Schedule A line 16. Reservist and
 performing-artist calculations reject until their cross-trip/owner-wide rules
-are implemented. Any nonempty `f2106s` still blocks both MeF and PDF export
-through `attachment-coverage.ts`.
+are implemented. The one-job fee-basis route above can now export; other
+nonempty `f2106s` remain blocked by `attachment-coverage.ts`.
 
 The [2025 Form 2106 instructions](https://www.irs.gov/instructions/i2106) direct
 impairment-related work expenses to Schedule A line 16, and the
@@ -21,9 +44,9 @@ them there. The
 separate form for the job with employee name, occupation, SSN, Part I
 expense/reimbursement columns, and potentially Part II vehicle details.
 
-## Why native MeF and PDF remain blocked
+## Remaining native MeF and PDF boundaries
 
-The unregistered `form2106_staged.ts` now projects one strict job through the
+`form2106_staged.ts` projects one strict job through the
 same calculated lines into TY2025 `IRS2106` XML and the official two-page PDF
 AcroForm. Its proposed per-job contribution records the owner, employment
 reference, line 10 amount, and exclusive destination: fee-basis official to
@@ -32,9 +55,9 @@ impairment expenses to Schedule A line 16 (then Form 1040 line 12e only when
 itemizing). The projected line 1a reimbursement contribution is exactly zero;
 any excess column A reimbursement rejects before either staged export. The
 native vehicle-use ratio is a 0–1 fraction; the PDF prints the percentage. These
-are proposed joins, not proof that finalized return amounts include the job. No
-descriptor is registered, and the nonempty-input guard still blocks both actual
-exporters. Projection tests are written but unrun.
+remain proposed joins for the other branches. The bounded fee-basis route now
+registers native and PDF descriptors and checks finalized return amounts.
+Projection tests are written but unrun.
 
 The direct Schedule 1 line 12 path now survives node finalization and maps to
 the TY2025 MeF `BusExpnsReservistsAndOthersAmt` element (with Form 2106 document
@@ -48,13 +71,14 @@ their sum to equal Schedule A line 16, the finalized itemized total to equal
 Form 1040 line 12e, and no standard deduction selection. This intentionally
 rejects another Schedule A line 16 contributor until per-source provenance is
 retained, instead of attributing an unknown share to Form 2106. Reconciliation
-tests are written but unrun, and the Form 2106 export guard remains active.
+tests are written but unrun, and the Form 2106 export guard remains active
+outside the fee-basis route.
 
 - Each job, expense, eligibility, and reimbursement record currently has a
   caller-supplied source reference, not verified document bytes. The executor
-  cannot yet bind the employee SSN/employer EIN/W-2 code L/expense log to those
-  underlying records. The staged join matches names and SSNs to Form 1040 but
-  cannot establish that a caller-supplied source fact is genuine. A
+  cannot yet authenticate W-2 and expense-log document bytes. The fee-basis
+  route joins employee SSN and employer EIN/name to one W-2 but cannot establish
+  that a caller-supplied source fact is genuine. A
   valid-looking source object is not evidence of the tax facts.
 - Reservist deductions still reject because the source lacks trip-level travel,
   federal per-diem caps, and allocation of Form 2106 line 10 to qualifying
@@ -83,11 +107,10 @@ Bind source references to reviewed W-2/employment, expense, reimbursement, and
 mileage document bytes; reconcile performing-artist AGI against the finalized
 Form 1040. Preserve per-job contribution identities
 through Schedule 1 and Schedule A; implement trip-level reservist and
-actual-vehicle branches or keep rejecting them. Then add a native `IRS2106`
-document per job and official PDF mappings from the same canonical line result,
-with exact line 10 and any excess line 1a reconciliation. Validate XSD/business
-rules and filled PDF in the agreed single batch. Do not lift the guard before
-that chain is complete.
+actual-vehicle branches or keep rejecting them. Extend the registered native
+`IRS2106` and official PDF route only as each branch gains exact line 10 and
+any excess line 1a reconciliation. Validate XSD/business rules and filled PDF
+in the agreed single batch before treating this as filing acceptance.
 
 The old loose category-only input shape was intentionally replaced, not accepted
 through a compatibility shim. Focused source, calculation, and routing tests

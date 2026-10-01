@@ -22,6 +22,7 @@ import { scheduleSePdf } from "./schedule_se.ts";
 import { form461Pdf } from "./f461.ts";
 import { form982Pdf } from "./f982.ts";
 import { form1116Pdf } from "./f1116.ts";
+import { form2106Pdf } from "./f2106.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import { form2210fPdf } from "./f2210f.ts";
 import { form2439Pdf } from "./f2439.ts";
@@ -134,6 +135,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form982Pdf,
   form1116Pdf,
   form1116ScheduleBPdf,
+  form2106Pdf,
   form2210fPdf,
   form2439Pdf,
   form2441Pdf,

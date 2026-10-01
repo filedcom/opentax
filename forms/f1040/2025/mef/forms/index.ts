@@ -7,6 +7,7 @@ import { irs1040 } from "./f1040.ts";
 import { iraDistributionStatement } from "./ira_distribution_statement.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
+import { form2106 } from "./f2106.ts";
 import { form2210f } from "./f2210f_box_b.ts";
 import { form1116ScheduleB } from "./f1116_schedule_b.ts";
 import { form2439 } from "./f2439.ts";
@@ -184,6 +185,7 @@ export const ALL_MEF_FORMS = [
   form1116,
   // Form 1116 Schedule B follows Form 1116 in ReturnData1040.xsd.
   form1116ScheduleB,
+  form2106,
   // Form 2210-F follows Form 2210 and precedes Form 2439 in ReturnData1040.xsd.
   form2210f,
   // One native document per payer-issued Form 2439 with positive box 2.

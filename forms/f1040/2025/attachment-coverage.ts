@@ -6,6 +6,7 @@ import {
   casualtyLossLines,
   inputSchema as form4684InputSchema,
 } from "../nodes/intermediate/forms/form4684/index.ts";
+import { isSupportedForm2106Route } from "./form2106_staged.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -64,8 +65,9 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f2106",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 2106 employee expenses require a native attachment",
-    isActive: (fields) => nonempty(fields.f2106s),
+    reason: "Form 2106 needs the sourced one-job fee-basis filing route",
+    isActive: (fields) =>
+      nonempty(fields.f2106s) && !isSupportedForm2106Route(fields),
   },
   {
     pendingKey: "f2210",
