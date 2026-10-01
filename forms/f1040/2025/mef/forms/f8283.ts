@@ -651,6 +651,7 @@ function requiredVehicleAttachment(
     vehicle_material_improvement_pdf_review?: { pdf_sha256: string };
   },
   context: MefBuildContext,
+  section: "A" | "B",
 ): { fileName: string; id?: string } {
   const fileName = item.vehicle_acknowledgment_attachment_file_name;
   if (!fileName) {
@@ -674,7 +675,10 @@ function requiredVehicleAttachment(
       "Form 8283 vehicle acknowledgment PDF has no linked MeF document",
     );
   }
-  if (item.vehicle_sale_acknowledgment && context.documentIdsByPendingKey) {
+  if (
+    section === "A" && item.vehicle_sale_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
     if (!item.vehicle_sale_pdf_review) {
       throw new Error(
         "Form 8283 vehicle sale needs an exact-byte donee acknowledgment review",
@@ -690,7 +694,7 @@ function requiredVehicleAttachment(
     }
   }
   if (
-    item.vehicle_needy_transfer_acknowledgment &&
+    section === "A" && item.vehicle_needy_transfer_acknowledgment &&
     context.documentIdsByPendingKey
   ) {
     if (!item.vehicle_needy_pdf_review) {
@@ -708,7 +712,7 @@ function requiredVehicleAttachment(
     }
   }
   if (
-    item.vehicle_significant_use_acknowledgment &&
+    section === "A" && item.vehicle_significant_use_acknowledgment &&
     context.documentIdsByPendingKey
   ) {
     if (!item.vehicle_significant_use_pdf_review) {
@@ -726,7 +730,7 @@ function requiredVehicleAttachment(
     }
   }
   if (
-    item.vehicle_material_improvement_acknowledgment &&
+    section === "A" && item.vehicle_material_improvement_acknowledgment &&
     context.documentIdsByPendingKey
   ) {
     if (!item.vehicle_material_improvement_pdf_review) {
@@ -1411,10 +1415,10 @@ export const form8283: MefFormDescriptor<
     }
     const similarGroupTotals = similarItemGroupTotals(parsed);
     const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
-      .map((item) => requiredVehicleAttachment(item, context));
+      .map((item) => requiredVehicleAttachment(item, context, "A"));
     const sectionBVehicleAttachments = sectionB
       .filter(needsSectionBVehicleStatement)
-      .map((item) => requiredVehicleAttachment(item, context));
+      .map((item) => requiredVehicleAttachment(item, context, "B"));
     const sectionAAttachmentIds = [
       ...new Set(
         sectionAVehicleAttachments.map((attachment) => attachment.id),

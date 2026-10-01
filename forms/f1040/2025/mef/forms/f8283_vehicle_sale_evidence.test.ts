@@ -111,9 +111,9 @@ Deno.test("vehicle sale acknowledgment review accepts Section A identifier lengt
   );
 });
 
-Deno.test("vehicle sale acknowledgment review rejects a zero-page PDF", async () => {
+Deno.test("vehicle sale acknowledgment review rejects unreadable PDF bytes", async () => {
   const { review, attachment } = await caseForReview();
-  const emptyBytes = await (await PDFDocument.create()).save();
+  const emptyBytes = new TextEncoder().encode("not a PDF");
   const digest = new Uint8Array(
     await crypto.subtle.digest("SHA-256", Uint8Array.from(emptyBytes)),
   );
@@ -130,7 +130,7 @@ Deno.test("vehicle sale acknowledgment review rejects a zero-page PDF", async ()
         "123456789",
       ),
     Error,
-    "needs a PDF page",
+    "not a readable PDF",
   );
 });
 

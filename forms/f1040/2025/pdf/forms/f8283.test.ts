@@ -1337,7 +1337,7 @@ Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statem
         schedule_a: changedSchedule,
       }),
     Error,
-    "Appreciated capital-gain property in the 50% category needs an elected or unrelated-use basis reduction",
+    "Appreciated capital-gain property in the 50% category needs a sourced basis reduction",
   );
 });
 
@@ -1688,7 +1688,7 @@ Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () =>
         pending,
       ),
     Error,
-    "continuation pages remain unsupported",
+    "Similar property claimed above $5,000 across all donees needs Section B",
   );
   assertThrows(
     () =>

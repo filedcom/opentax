@@ -203,7 +203,7 @@ Deno.test("Section B unrelated-use camera equipment joins source, Schedule A, na
     bundle.xml,
     "<DeductionClaimedAmt>12000</DeductionClaimedAmt>",
   );
-  assertStringIncludes(bundle.xml, "<EquipmentInd>true</EquipmentInd>");
+  assertStringIncludes(bundle.xml, "<EquipmentInd>X</EquipmentInd>");
   assertStringIncludes(
     bundle.xml,
     "<UsePropertyForUnrelatedUseInd>true</UsePropertyForUnrelatedUseInd>",

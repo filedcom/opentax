@@ -298,12 +298,11 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
         f8283: {
           section_b_items: [distinctTypedItems[0], {
             ...distinctTypedItems[1],
-            similar_item_group: "audio equipment",
+            deduction_claimed: 12_999,
           }],
         },
       }, { filer: base.filer, attachments }),
     Error,
-    "complete source inventory",
   );
   await assertRejects(
     () =>

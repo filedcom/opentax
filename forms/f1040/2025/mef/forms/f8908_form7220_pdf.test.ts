@@ -85,10 +85,16 @@ async function completedPdf(changes: Record<string, string> = {}) {
     ["c1_5", [2], 3],
     ["c1_6", [1], 2],
   ];
-  for (const [group, selected, count] of marks) {
+  for (const [groupIndex, [group, selected, count]] of marks.entries()) {
     for (let index = 0; index < count; index++) {
       const name = `${page1}${group}[${index}]`;
       const box = form.createCheckBox(name);
+      box.addToPage(pdf.getPage(0), {
+        x: 20 + index * 14,
+        y: 740 - groupIndex * 18,
+        width: 10,
+        height: 10,
+      });
       if (
         changes[name] === "checked" ||
         (changes[name] !== "off" && selected.includes(index))
@@ -165,9 +171,18 @@ async function completedStatementPdf(changes: Record<string, string> = {}) {
     form.createTextField(`${prefix}${name}`).setText(changes[name] ?? value);
   }
   for (
-    const name of ["NoAlterationsOrRepairs", "PerjuryDeclarationAcknowledged"]
+    const [index, name] of [
+      "NoAlterationsOrRepairs",
+      "PerjuryDeclarationAcknowledged",
+    ].entries()
   ) {
     const box = form.createCheckBox(`${prefix}${name}`);
+    box.addToPage(pdf.getPage(0), {
+      x: 20 + index * 20,
+      y: 700,
+      width: 10,
+      height: 10,
+    });
     if (changes[name] !== "off") box.check();
   }
   return await pdf.save();

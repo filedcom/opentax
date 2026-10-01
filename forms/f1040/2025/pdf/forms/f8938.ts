@@ -274,6 +274,24 @@ export const form8938Pdf: PdfFormDescriptor = {
   },
   instances(fields) {
     const projected = projectForm8938(fields);
+    const { summary } = projected;
+    const summaryValues: Record<string, unknown> = {
+      calendarYearSuffix: "25",
+      specifiedIndividual: true,
+      depositAccountCount: summary.partI.depositAccountCount,
+      depositMaximumValueUsd: summary.partI.depositMaximumValueUsd,
+      custodialAccountCount: summary.partI.custodialAccountCount,
+      custodialMaximumValueUsd: summary.partI.custodialMaximumValueUsd,
+      anyAccountClosed: summary.partI.anyAccountClosed,
+      otherAssetCount: summary.partII.otherAssetCount,
+      otherMaximumValueUsd: summary.partII.otherMaximumValueUsd,
+      anyAssetOpenedOrClosed: summary.partII.anyAssetOpenedOrClosed,
+    };
+    for (const [form, count] of Object.entries(summary.partIV)) {
+      summaryValues[`partIV_${form}`] = count;
+    }
+    putTaxRows(summaryValues, 13, projected.taxItems.account);
+    putTaxRows(summaryValues, 14, projected.taxItems.other);
     const copies = Math.max(
       projected.accounts.length,
       projected.otherAssets.length,
@@ -281,6 +299,7 @@ export const form8938Pdf: PdfFormDescriptor = {
     );
     return Array.from({ length: copies }, (_, index) => ({
       ...fields,
+      ...summaryValues,
       ...(index === 0
         ? {
           hasAdditionalStatements: copies > 1,
@@ -297,27 +316,5 @@ export const form8938Pdf: PdfFormDescriptor = {
         ? "partIVOnly"
         : "main",
     }));
-  },
-  projectFields(raw) {
-    const projected = projectForm8938(raw);
-    const { summary } = projected;
-    const fields: Record<string, unknown> = {
-      calendarYearSuffix: "25",
-      specifiedIndividual: true,
-      depositAccountCount: summary.partI.depositAccountCount,
-      depositMaximumValueUsd: summary.partI.depositMaximumValueUsd,
-      custodialAccountCount: summary.partI.custodialAccountCount,
-      custodialMaximumValueUsd: summary.partI.custodialMaximumValueUsd,
-      anyAccountClosed: summary.partI.anyAccountClosed,
-      otherAssetCount: summary.partII.otherAssetCount,
-      otherMaximumValueUsd: summary.partII.otherMaximumValueUsd,
-      anyAssetOpenedOrClosed: summary.partII.anyAssetOpenedOrClosed,
-    };
-    for (const [form, count] of Object.entries(summary.partIV)) {
-      fields[`partIV_${form}`] = count;
-    }
-    putTaxRows(fields, 13, projected.taxItems.account);
-    putTaxRows(fields, 14, projected.taxItems.other);
-    return { ...raw, ...fields };
   },
 };

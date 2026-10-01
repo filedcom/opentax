@@ -67,9 +67,15 @@ function aggregateTaxItems(assets: readonly Asset[]): TaxSummaryRow[] {
     const formLocations = new Set<string>();
     const scheduleLocations = new Set<string>();
     for (const item of matches) {
-      if (/^Schedule\s+\S.+\s+line\s+\S+/i.test(item.filed_form_and_line)) {
+      if (
+        /^Schedule\s+\S+(?:\s+\S+)*\s+line\s+\S+$/i.test(
+          item.filed_form_and_line,
+        )
+      ) {
         scheduleLocations.add(item.filed_form_and_line);
-      } else if (/^Form\s+\S.+\s+line\s+\S+/i.test(item.filed_form_and_line)) {
+      } else if (
+        /^Form\s+\S+(?:\s+\S+)*\s+line\s+\S+$/i.test(item.filed_form_and_line)
+      ) {
         formLocations.add(item.filed_form_and_line);
       } else {
         throw new Error(

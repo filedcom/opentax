@@ -172,7 +172,8 @@ function priorReturnXmlMatches(
     const xml = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     if (
       /<!DOCTYPE|<!ENTITY|<!\[CDATA\[/i.test(xml) ||
-      XMLValidator.validate(xml) !== true
+      XMLValidator.validate(xml) !== true ||
+      !/<Return\b[^>]*\bxmlns="http:\/\/www\.irs\.gov\/efile"/.test(xml)
     ) return false;
     const parsed = xmlRecord(returnParser.parse(xml));
     if (!parsed || Object.keys(parsed).length !== 1) return false;
@@ -186,8 +187,7 @@ function priorReturnXmlMatches(
     const appraiser = xmlRecord(form?.AppraiserName);
     const donee = xmlRecord(form?.DoneeName);
     const printed = source.prior_form_printed_facts;
-    return filed?.["@_xmlns"] === "http://www.irs.gov/efile" &&
-      header?.TaxYr === "2024" &&
+    return header?.TaxYr === "2024" &&
       header?.ReturnTypeCd === "1040" &&
       filer?.PrimarySSN === source.filed_taxpayer_ssn &&
       data?.IRS1040 !== undefined &&

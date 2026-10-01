@@ -3,8 +3,7 @@ import { form8938Fixture } from "../../mef/forms/f8938.fixture.ts";
 import { form8938Pdf } from "./f8938.ts";
 
 function pages(raw: Record<string, unknown>) {
-  const projected = form8938Pdf.projectFields!(raw, {});
-  return form8938Pdf.instances!(projected);
+  return form8938Pdf.instances!(raw);
 }
 
 Deno.test("staged Form 8938 PDF projects official 2021 fields for one Part V and VI asset", () => {

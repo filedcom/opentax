@@ -474,7 +474,7 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
         },
       }, { filer: base.filer, attachments: [attachment] }),
     Error,
-    "complete purchased vehicle",
+    "gift inventory",
   );
   await assertRejects(
     () =>

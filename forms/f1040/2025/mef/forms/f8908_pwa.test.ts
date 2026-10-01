@@ -157,7 +157,11 @@ Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attach
     () =>
       reconcileForm8908PwaAttachments(source(), {
         ...base,
-        binaryAttachmentFileNames: ["Form7220-1.pdf"],
+        binaryAttachmentFileNames: [
+          "Form7220-1.pdf",
+          "Form7220Statement-1.pdf",
+          "Form7220Statement-2.pdf",
+        ],
       }),
     Error,
     "reviewed completed Form 7220 PDF bytes",

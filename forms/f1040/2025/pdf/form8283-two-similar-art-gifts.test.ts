@@ -80,7 +80,8 @@ for (const reduced of [false, true]) {
         },
         {
           fileName: `Appraisal-${index}.pdf`,
-          description: `Qualified Appraisal for Section B art_at_least_20000 item ${index}`,
+          description:
+            `Qualified Appraisal for Section B art_at_least_20000 item ${index}`,
           bytes: appraisal,
         },
         {
@@ -303,7 +304,7 @@ for (const reduced of [false, true]) {
         }, { filer: base.filer, attachments }),
       Error,
       reduced
-        ? "two separately sourced similar gifts"
+        ? "two separately sourced Section B gifts"
         : "distinct signed/appraised similar-art sources and donees",
     );
     if (reduced) {
