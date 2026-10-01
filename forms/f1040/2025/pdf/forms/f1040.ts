@@ -404,15 +404,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "spouse_blind",
     pdfField: "topmostSubform[0].Page2[0].c2_8[0]",
   },
-  // Line 12a: standard deduction written first; itemized overwrites if non-zero.
+  // The selected deduction is the only amount printed on 2025 line 12e.
+  // The graph can retain a positive unselected Schedule A comparison amount.
   {
     kind: "text",
-    domainKey: "line12a_standard_deduction",
-    pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
-  },
-  {
-    kind: "text",
-    domainKey: "line12e_itemized_deductions",
+    domainKey: "line12c_deduction_total",
     pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
   },
   // f2_03 = line 13a QBI deduction
@@ -592,6 +588,21 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     assertReturnWideArithmetic(fields);
+    const standard = fields.line12a_standard_deduction;
+    const itemized = fields.line12e_itemized_deductions;
+    const selected = typeof standard === "number"
+      ? standard
+      : typeof itemized === "number"
+      ? Math.max(0, itemized)
+      : undefined;
+    if (
+      selected !== undefined &&
+      fields.line12c_deduction_total !== selected
+    ) {
+      throw new Error(
+        "Form 1040 PDF line 12e differs from the selected deduction",
+      );
+    }
     assertEstimatedPaymentLine26(fields, allPending);
     assertF8288OtherWithholding(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);

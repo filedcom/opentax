@@ -129,6 +129,50 @@ Deno.test("irs1040Pdf.fields: contains expected income line fields", () => {
   }
 });
 
+Deno.test("2025 Form 1040 PDF line 12e prints the selected deduction once", () => {
+  const entries = irs1040Pdf.fields.filter((field) =>
+    field.pdfField === "topmostSubform[0].Page2[0].f2_02[0]"
+  );
+  assertEquals(entries.map((field) => field.domainKey), [
+    "line12c_deduction_total",
+  ]);
+  const standardSelected = {
+    line12a_standard_deduction: 15_750,
+    line12e_itemized_deductions: 5_000,
+    line12c_deduction_total: 15_750,
+  };
+  assertEquals(
+    irs1040Pdf.projectFields?.(standardSelected, {})
+      ?.line12c_deduction_total,
+    15_750,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({
+      line12e_itemized_deductions: 20_000,
+      line12c_deduction_total: 20_000,
+    }, {})?.line12c_deduction_total,
+    20_000,
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({
+        ...standardSelected,
+        line12c_deduction_total: 5_000,
+      }, {}),
+    Error,
+    "line 12e differs from the selected deduction",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({
+        line12a_standard_deduction: 15_750,
+        line12e_itemized_deductions: 5_000,
+      }, {}),
+    Error,
+    "line 12e differs from the selected deduction",
+  );
+});
+
 Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "line4c_ira_rollover"
