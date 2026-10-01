@@ -496,7 +496,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## 2026-10-01 follow-up implementation batch (unrun)
 
-- [x] Form 8582 retained type-B rental activity now reconciles a $9,000 current loss with a $7,000 long-held, no-depreciation Part I property gain when the activity interest is retained, allowing $7,000 and preserving $2,000 under the activity ID. Native/PDF replay sale source, Schedule D, Schedule 1, and settled Form 1040; positive and source/final-return tamper fixtures are authored but unrun. Prior PALs, full dispositions, depreciation, authenticated sale bytes, and artifact validation remain open. See the [activity-ID gap](ty2025-form8582-activity-id-gap.md).
+- [x] Form 4972 now supports one partial-share beneficiary's Part III election with a full participant-wide death-benefit exclusion and separately percentaged box 8 annuity, without capital, NUA, or estate-tax amounts. Administrator allocation and issued-copy ownership feed printed lines 8/9/11/29 through native/PDF and Form 1040; positive and allocation/annuity/recipient/printed/final-tax fixtures are authored but unrun. Other beneficiary/election mixes, authenticated administrator bytes, and artifact validation remain open. See the [Form 4972 gap](ty2025-form4972-gap.md).
+
 
 - [x] Form 4972 now supports one partial-share beneficiary's Part III election with positive box 6 NUA, an independent box 8 annuity percentage, and sourced federal estate tax, without Part II or death exclusion. The bounded one-1099-R route replays source/printed line 8/11/18/29 arithmetic through native/PDF and Form 1040; positive and allocation/NUA/annuity/estate/final-tax fixtures are authored but unrun. Wider beneficiary mixes, authenticated administrator bytes, and artifact validation remain open. See the [Form 4972 gap](ty2025-form4972-gap.md).
 

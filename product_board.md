@@ -16,7 +16,7 @@ coverage decision, or release gate.
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
-| Named tax-form gaps | 20 | 474 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 475 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 42 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
