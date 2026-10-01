@@ -10,7 +10,7 @@ the note has its own signed instrument, note ID, and bank transfer. The two
 transfers and all other source references must be distinct. Beginning stock
 basis and its workpaper must agree across the ledger and note source. The
 current loss must exceed opening stock basis plus the contribution, so the
-bounded route actually reaches the note. It excludes a second note, repayment,
+bounded route actually reaches the note. It excludes a second note,
 prior reduced debt basis, other K-1 basis changes, and suspended losses.
 
 Form 7203 Part I line 2 increases stock basis for the cash contribution, then
@@ -24,6 +24,24 @@ reviewed references rather than authenticated bytes. This follows the
 [Form 7203 instructions](https://www.irs.gov/instructions/i7203), which assign
 capital contributions to line 2, exclude shareholder loans from that line,
 and track formal shareholder debt separately in Part II.
+
+## Cash capital plus one partially repaid new note (2026-10-01, unrun)
+
+The combined route now accepts one sourced 2025 principal repayment after the
+new note's dated direct cash advance. The repayment's loan ledger and
+shareholder bank deposit references must be distinct from the K-1, opening
+stock workpaper, capital transfer/account, and note/advance records. K-1 box 16
+code E must equal the repayment. Because the new note has full basis before the
+repayment, Form 7203 Part II records it as nontaxable on lines 19 and 26; the
+remaining note balance on line 29 supports the current loss after stock basis.
+
+An authored $500 opening stock basis, $1,000 cash contribution, $2,000 note,
+$400 repayment, and $4,000 K-1 loss yields $1,500 allowed against stock,
+$1,600 against the post-repayment note, and $900 suspended. Schedule E,
+Schedule 1 line 5, and Form 1040 line 8 carry the $3,100 allowed loss. Native
+and PDF projection and overlapping-reference, K-1 box 16, and return-tamper
+fixtures are authored for the deferred batch. Multiple payments, older
+reduced-basis debt, authenticated source bytes, and IRS acceptance remain open.
 
 ## Prior reduced formal-note basis and taxable repayment prerequisite (2026-10-01, unrun)
 

@@ -184,3 +184,102 @@ Deno.test("Form 7203 capital-and-debt route rejects overlapping source and alter
     )
   );
 });
+
+const repaidNote = {
+  ...note,
+  no_2025_repayments_confirmed: false,
+  principal_repayment: {
+    formal_note_id: note.formal_note_id,
+    date: "2025-09-15",
+    amount: 400,
+    corporate_loan_ledger_reference:
+      "corporate loan repayment ledger 2025-09-15",
+    shareholder_bank_deposit_reference:
+      "shareholder loan repayment deposit 2025-09-15",
+    principal_only_confirmed: true,
+  },
+};
+const repaidSource = {
+  ...source,
+  box16_code_e_loan_repayment: 400,
+  form7203_debt_evidence: repaidNote,
+};
+
+Deno.test("Form 7203 cash capital plus a partially repaid new note support one K-1 loss through return, native and PDF", async () => {
+  const result = filedReturn(repaidSource);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.schedule1.line5_schedule_e, -3_100);
+  assertEquals(pending.f1040.line8_additional_income, -3_100);
+  assertEquals(pending.f1040.line11_agi, 46_900);
+  assertEquals(result.carryforwards.suspended_scorp_loss_7203, 900);
+  const xml = buildReviewedStockLoss7203(pending.form7203, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<CapitalContributionBasisAmt>1000</CapitalContributionBasisAmt>",
+  );
+  assertStringIncludes(xml, "<AdditionalLoansAmt>2000</AdditionalLoansAmt>");
+  assertStringIncludes(
+    xml,
+    "<PrincipalDebtRepaymentAmt>400</PrincipalDebtRepaymentAmt>",
+  );
+  const printed = form7203StockLossPdf.instances?.(
+    pending.form7203,
+    filer,
+    pending,
+  )?.[0];
+  assertEquals(printed?.line2_cash_capital_contribution, 1_000);
+  assertEquals(printed?.line19_debt1, 400);
+  assertEquals(printed?.line26_debt1, 400);
+  assertEquals(printed?.line30_debt1, 1_600);
+  assertEquals(printed?.line47_carryover, 900);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(prepared.bundle.xml, "<IRS7203 ");
+  assertStringIncludes(prepared.bundle.xml, "<IRS1040ScheduleE ");
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 7203 combined capital, note and repayment reject cross-source or return tampering", () => {
+  const overlap = filedReturn({
+    ...repaidSource,
+    form7203_debt_evidence: {
+      ...repaidNote,
+      principal_repayment: {
+        ...repaidNote.principal_repayment,
+        shareholder_bank_deposit_reference:
+          contribution.bank_transfer_reference,
+      },
+    },
+  });
+  assertEquals(
+    overlap.diagnostics.some((item) => item.severity === "error"),
+    true,
+  );
+  const mismatchedK1 = filedReturn({
+    ...repaidSource,
+    box16_code_e_loan_repayment: 401,
+  });
+  assertEquals(
+    mismatchedK1.diagnostics.some((item) => item.severity === "error"),
+    true,
+  );
+
+  const result = filedReturn(repaidSource);
+  const pending = normalizeAllPending(result.pending);
+  assertThrows(() =>
+    buildReviewedStockLoss7203(pending.form7203, {
+      filer,
+      pending: {
+        ...pending,
+        schedule1: { ...pending.schedule1, line5_schedule_e: -3_099 },
+      },
+    })
+  );
+  assertThrows(() =>
+    form7203StockLossPdf.instances?.(
+      { ...pending.form7203, additional_contributions: 999 },
+      filer,
+      pending,
+    )
+  );
+});

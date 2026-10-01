@@ -138,9 +138,9 @@ export function reconcileCashCapitalAndNewNote(
   note: ReviewedNewFormalNotes,
 ): number {
   const contribution = ledger.cash_capital_contribution;
-  if (!contribution || note.second_formal_note || note.principal_repayment) {
+  if (!contribution || note.second_formal_note) {
     throw new Error(
-      "Form 7203 combined capital-and-debt route needs one new formal note without repayment",
+      "Form 7203 combined capital-and-debt route needs one new formal note",
     );
   }
   const references = [
@@ -151,6 +151,12 @@ export function reconcileCashCapitalAndNewNote(
     note.formal_note_id,
     note.signed_note_document_reference,
     note.bank_transfer_reference,
+    ...(note.principal_repayment
+      ? [
+        note.principal_repayment.corporate_loan_ledger_reference,
+        note.principal_repayment.shareholder_bank_deposit_reference,
+      ]
+      : []),
   ];
   if (
     ledger.shareholder_ssn !== note.shareholder_ssn ||
