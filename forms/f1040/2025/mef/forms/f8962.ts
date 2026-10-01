@@ -142,6 +142,57 @@ function reconcileSinglePersonPolicyIdentity(
   }
 }
 
+/** A single transition month shared by two otherwise consecutive policies. */
+export function onePersonTransitionOverlapMonth(
+  policies: ReturnType<typeof current1095AStatements>,
+): number | undefined {
+  if (
+    policies.length !== 2 ||
+    !policies[0]?.policy_number || !policies[1]?.policy_number ||
+    policies[0].policy_number === policies[1].policy_number ||
+    policies.some((policy) =>
+      policy.covered_individual_ssns?.length !== 1 ||
+      !policy.monthly_premiums || !policy.monthly_slcsps ||
+      !policy.monthly_aptcs || policy.shared_policy_periods !== undefined ||
+      policy.slcsp_corrections !== undefined ||
+      policy.slcsp_review_periods !== undefined
+    ) ||
+    policies[0].covered_individual_ssns?.[0]?.replaceAll("-", "") !==
+      policies[1].covered_individual_ssns?.[0]?.replaceAll("-", "") ||
+    policies[0].coverage_state !== policies[1].coverage_state
+  ) return undefined;
+  const active = policies.map((policy) =>
+    Array.from(
+      { length: 12 },
+      (_, month) =>
+        (policy.monthly_premiums?.[month] ?? 0) > 0 ||
+        (policy.monthly_slcsps?.[month] ?? 0) > 0 ||
+        (policy.monthly_aptcs?.[month] ?? 0) > 0,
+    )
+  );
+  const overlap = Array.from({ length: 12 }, (_, month) => month).filter(
+    (month) => active[0][month] && active[1][month],
+  );
+  if (overlap.length !== 1 || overlap[0] < 1 || overlap[0] > 10) {
+    return undefined;
+  }
+  const transition = overlap[0];
+  const first = active.findIndex((months) => months[0]);
+  const second = 1 - first;
+  if (
+    first < 0 || active[second][0] ||
+    Array.from(
+      { length: 12 },
+      (_, month) =>
+        month <= transition
+          ? active[first][month] &&
+            (month === transition || !active[second][month])
+          : active[second][month] && !active[first][month],
+    ).some((valid) => !valid)
+  ) return undefined;
+  return transition;
+}
+
 function reconcileOnePolicyDependentIdentity(
   policies: ReturnType<typeof current1095AStatements>,
   householdSize: number | null | undefined,
@@ -1782,6 +1833,10 @@ function reconcileSimplePolicyMonths(
     policies.length === 2;
   const threePersonPolicies = fields.household_size === 3 &&
     policies.length === 3;
+  const transitionOverlap = fields.household_size === 1 &&
+      !interstateMove
+    ? onePersonTransitionOverlapMonth(policies)
+    : undefined;
   const onePolicyThreePerson = fields.household_size === 3 &&
     policies.length === 1;
   const twoStateFamilyPolicies = twoPersonPolicies &&
@@ -2182,6 +2237,7 @@ function reconcileSimplePolicyMonths(
     }
     if (
       active.length !== 1 &&
+      !(transitionOverlap === index && active.length === 2) &&
       !(twoPersonPolicies && active.length === 2) &&
       !(threePersonPolicies && active.length === 3)
     ) {

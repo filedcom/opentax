@@ -5,7 +5,10 @@ import {
   inputSchema as form1095aSchema,
 } from "../../../nodes/inputs/f1095a/index.ts";
 import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
-import { form8962 as form8962Mef } from "../../mef/forms/f8962.ts";
+import {
+  form8962 as form8962Mef,
+  onePersonTransitionOverlapMonth,
+} from "../../mef/forms/f8962.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
 import { assertForm8962Pub974Return } from "../../form8962_pub974_return.ts";
@@ -238,7 +241,9 @@ function projectFields(
             (policy.monthly_aptcs?.[month] ?? 0) > 0
           ).length > 1,
       ).some(Boolean) && fields.household_size !== 2 &&
-      fields.household_size !== 3 && !twoNoAptcPoliciesWithEvidence
+      fields.household_size !== 3 && !twoNoAptcPoliciesWithEvidence &&
+      !(fields.household_size === 1 &&
+        onePersonTransitionOverlapMonth(policies) !== undefined)
     ) {
       throw new Error(
         "Form 8962 PDF overlapping policies need enrollee and coverage-family source reconciliation",

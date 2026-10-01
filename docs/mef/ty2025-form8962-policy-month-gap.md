@@ -1,5 +1,24 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## One-person, one-month same-state policy transition (staged, unrun)
+
+The [2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962)
+say to add columns A and C from multiple Forms 1095-A affecting a month and
+count the agreed same-state column B once. A bounded single-filer route now
+accepts two identified policies for that same covered person when the first
+covers January through one transition month, the second covers that month
+through December, and the only simultaneous month is the transition. Both
+policies must name the filer's SSN, report monthly positive premiums/APTC,
+agree on the transition-month SLCSP, and have no shared allocation or SLCSP
+correction. The native and PDF routes reconcile the $900/$600/$350 June
+premium/SLCSP/APTC row, all other months, $1,446 excess repayment, Schedule 2
+line 1a, and Form 1040 line 17. The full-return positive and two-overlap-month,
+SLCSP, APTC, and return-tamper fixtures are authored but unrun. A longer overlap,
+different covered people, corrected SLCSP, interstate transition, and external
+Marketplace-statement authentication remain outside this route. Publication
+[974](https://www.irs.gov/publications/p974) still governs special coverage
+and eligibility cases, which this narrow route does not infer.
+
 ## One-policy corrected SLCSP month (build-first, unrun)
 
 The monthly single-filer route now accepts one identified, nonshared,
