@@ -856,6 +856,19 @@ function dependentCounts(
   };
 }
 
+/** Claimable dependent rows exactly as the general node sends to Form 1040. */
+export function filedDependentsFromGeneral(
+  input: GeneralInput,
+): DependentFiling[] {
+  const filer = filerCreditEligibility(input);
+  return (input.dependents ?? [])
+    .filter((dep) => dep.dependent_on_another_return !== true)
+    .map((dep) => ({
+      ...dep,
+      credit_category: dependentCreditCategory(dep, filer),
+    }));
+}
+
 // EITC age test: under 19 at year-end, OR full-time student under 24, OR permanently disabled.
 // IRC §32(c)(3)(A); broader than CTC age test (< 17).
 function passesEitcAgeTest(dep: DependentItem): boolean {
@@ -940,12 +953,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     input.spouse_has_business_credit,
   );
   if (counts.dependent_count > 0) {
-    fields.dependent_details = deps
-      .filter((dep) => dep.dependent_on_another_return !== true)
-      .map((dep) => ({
-        ...dep,
-        credit_category: dependentCreditCategory(dep, filer),
-      }));
+    fields.dependent_details = filedDependentsFromGeneral(input);
   }
 
   // Taxpayer personal info pass-throughs

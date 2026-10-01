@@ -1,4 +1,10 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import {
+  DependentCreditCategory,
+  dependentFilingSchema,
+  filedDependentsFromGeneral,
+  inputSchema as generalInputSchema,
+} from "../nodes/inputs/general/index.ts";
 
 export function assertKIncomeClassification(
   pending: Record<string, unknown>,
@@ -1111,6 +1117,41 @@ export function assertGeneral1040HeaderSource(
   ) {
     throw new Error(
       "Form 1040 digital-assets answer differs from the retained general source",
+    );
+  }
+}
+
+/** Detect a changed or omitted dependent row after general input projection. */
+export function assertGeneral1040DependentSource(
+  pending: Record<string, unknown>,
+): void {
+  if (pending.general === undefined || pending.f1040 === undefined) return;
+  const source = generalInputSchema.parse(pending.general);
+  const filed = pending.f1040 as Record<string, unknown>;
+  const expected = filedDependentsFromGeneral(source);
+  const actual = dependentFilingSchema.array().parse(
+    filed.dependent_details ?? [],
+  );
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(
+      "Form 1040 dependent rows differ from the retained general source",
+    );
+  }
+  const ctc =
+    expected.filter((dep) =>
+      dep.credit_category === DependentCreditCategory.ChildTaxCredit
+    ).length;
+  const odc =
+    expected.filter((dep) =>
+      dep.credit_category === DependentCreditCategory.OtherDependentCredit
+    ).length;
+  if (
+    (filed.dependent_count ?? 0) !== expected.length ||
+    (filed.qualifying_child_tax_credit_count ?? 0) !== ctc ||
+    (filed.other_dependent_count ?? 0) !== odc
+  ) {
+    throw new Error(
+      "Form 1040 dependent counts differ from the retained general source",
     );
   }
 }

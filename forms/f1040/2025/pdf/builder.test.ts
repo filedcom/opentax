@@ -125,6 +125,28 @@ Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", asyn
   );
 });
 
+Deno.test("Form 1040 PDF rejects a dependent omitted after general source projection", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        general: {
+          filing_status: FilingStatus.Single,
+          dependents: [{
+            first_name: "Avery",
+            last_name: "Child",
+            ssn: "222-33-4444",
+            dob: "2015-03-12",
+            relationship: "daughter",
+            months_in_home: 12,
+          }],
+        },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, mockFiler),
+    Error,
+    "dependent rows differ from the retained general source",
+  );
+});
+
 Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
   await assertRejects(
     () =>

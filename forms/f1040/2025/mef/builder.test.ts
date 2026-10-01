@@ -23,6 +23,7 @@ import {
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
 import { buildIsoAmtBasisLedger } from "../../nodes/inputs/f3921/index.ts";
+import { DependentRelationship } from "../../nodes/inputs/general/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -803,6 +804,28 @@ Deno.test("Form 1040 MeF replays retained general status and digital-assets sour
       }, sampleFiler()),
     Error,
     "filing status differs from the retained general source",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects a dependent omitted after general source projection", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: {
+          filing_status: NodeFilingStatus.Single,
+          dependents: [{
+            first_name: "Avery",
+            last_name: "Child",
+            ssn: "222-33-4444",
+            dob: "2015-03-12",
+            relationship: DependentRelationship.Daughter,
+            months_in_home: 12,
+          }],
+        },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "dependent rows differ from the retained general source",
   );
 });
 

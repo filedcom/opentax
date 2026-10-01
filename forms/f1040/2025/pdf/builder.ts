@@ -11,6 +11,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertEitcChildSources,
   assertF1040FinalHeader,
+  assertGeneral1040DependentSource,
   assertGeneral1040HeaderSource,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
@@ -288,6 +289,7 @@ export async function buildPdfBytes(
     assertF1040FinalHeader(normalized.f1040, filer);
   }
   assertGeneral1040HeaderSource(normalized);
+  assertGeneral1040DependentSource(normalized);
   assertExtensionPaymentSource(normalized, filer);
   assert1099RRecipientOwner(normalized.f1099r, filer);
   assertPositiveW2GRecipient(normalized.w2g, filer);
