@@ -18,41 +18,41 @@ beneficiary/NUA boundaries described below are unchanged.
 
 ## Two full-share same-plan 1099-R copies with elected NUA (staged, unrun)
 
-The
-[2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
-direct a recipient to add same-participant qualified distributions received in
-one tax year before figuring the one Form 4972. The NUA Worksheet uses combined
-boxes 3 and 2a to allocate combined box 6 between capital and ordinary amounts.
-A bounded two-copy full-share, nonbeneficiary route now requires one
-source-matched participant/plan and administrator balance statement, distinct
-Form 1099-R references, exact whole-dollar boxes 2a/3/6, an affirmative NUA
-inclusion and capital-gain election, and no annuity or estate/death allocation.
-In the authored case, $50,000 box 2a, $5,000 box 3, and $10,000 box 6 produce
-$1,000 capital NUA, Form 4972 line 6 of $6,000, and line 8 of $54,000. The
-special tax joins Form 1040 line 16; native and PDF projection independently
-match each source and calculated line. Positive full-return/native/PDF and
-changed NUA, box 3, plan, and return-tax fixtures are written but unrun. Wider
-multi-copy NUA, recipient shares, annuities, beneficiary allocations,
-source-byte authentication, and IRS acceptance remain outside this bound.
+The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+direct a recipient to add same-participant qualified distributions received
+in one tax year before figuring the one Form 4972. The NUA Worksheet uses
+combined boxes 3 and 2a to allocate combined box 6 between capital and
+ordinary amounts. A bounded two-copy full-share, nonbeneficiary route now
+requires one source-matched participant/plan and administrator balance
+statement, distinct Form 1099-R references, exact whole-dollar boxes 2a/3/6,
+an affirmative NUA inclusion and capital-gain election, and no annuity or
+estate/death allocation. In the authored case, $50,000 box 2a, $5,000 box 3,
+and $10,000 box 6 produce $1,000 capital NUA, Form 4972 line 6 of $6,000,
+and line 8 of $54,000. The special tax joins Form 1040 line 16; native and
+PDF projection independently match each source and calculated line. Positive
+full-return/native/PDF and changed NUA, box 3, plan, and return-tax fixtures
+are written but unrun. Wider multi-copy NUA, recipient shares, annuities,
+beneficiary allocations, source-byte authentication, and IRS acceptance remain
+outside this bound.
 
 ## Participant-wide unequal death-benefit allocation (2026-10-01, unrun)
 
 The partial-share beneficiary death-benefit route now requires a complete
 administrator allocation schedule. It identifies the plan participant and
-elected recipient by SSN, lists every recipient's percentage and exclusion, and
-totals to 100% and the full allowable exclusion. Each allocation must be an
-exact whole-dollar product of the full exclusion and recipient percentage. The
-elected row must match its own amount and the source Form 1099-R box 9a; native
-and PDF export also join recipient SSN, participant SSN, issued-copy reference,
-plan identity, boxes 2a/3/6/8/9a, computed lines, and finalized Form 1040
-special tax. A 25%/75% case uses a $5,000 participant-wide eligible exclusion,
-with $1,250 for the elected recipient. With the recipient's boxes 2a/3 of
-$10,000/$2,000 and both elections, lines 6/7/8/9 are $1,750/$350/$32,000/$4,000;
-line 30 enters Form 1040 line 16. Positive and allocation, box, identity, and
-return-tamper fixtures are authored but unrun. The administrator reference and
-schedule remain preparer supplied; source bytes and external authentication,
-filled PDF, XSD/business rules, and ATS acceptance remain open. The
-[2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+elected recipient by SSN, lists every recipient's percentage and exclusion,
+and totals to 100% and the full allowable exclusion. Each allocation must be
+an exact whole-dollar product of the full exclusion and recipient percentage.
+The elected row must match its own amount and the source Form 1099-R box 9a;
+native and PDF export also join recipient SSN, participant SSN, issued-copy
+reference, plan identity, boxes 2a/3/6/8/9a, computed lines, and finalized
+Form 1040 special tax. A 25%/75% case uses a $5,000 participant-wide eligible
+exclusion, with $1,250 for the elected recipient. With the recipient's boxes
+2a/3 of $10,000/$2,000 and both elections, lines 6/7/8/9 are
+$1,750/$350/$32,000/$4,000; line 30 enters Form 1040 line 16. Positive and
+allocation, box, identity, and return-tamper fixtures are authored but unrun.
+The administrator reference and schedule remain preparer supplied; source
+bytes and external authentication, filled PDF, XSD/business rules, and ATS
+acceptance remain open. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 specify the full-exclusion line 9 and box 9a line 29 treatment for multiple
 recipients.
 
@@ -61,70 +61,68 @@ recipients.
 One sourced Form 1099-R with box 9a below 100% can now combine elected box 6
 NUA, a pre-August-21-1996 death-benefit exclusion, and Parts II and III. The
 beneficiary must provide the plan administrator's exclusion-allocation
-reference, the full allowable exclusion, and this recipient's exact share. The
-route requires whole-dollar NUA and death-benefit capital allocations, a wholly
-taxable distribution including elected NUA, no annuity, and no federal
-estate-tax adjustment. The
-[2025 Form 4972 NUA and Death Benefit
+reference, the full allowable exclusion, and this recipient's exact share.
+The route requires whole-dollar NUA and death-benefit capital allocations,
+a wholly taxable distribution including elected NUA, no annuity, and no
+federal estate-tax adjustment. The [2025 Form 4972 NUA and Death Benefit
 Worksheets](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) put the
 recipient's NUA capital portion on the line 6 worksheet, then allocate this
 recipient's death benefit across capital and ordinary portions. Its
-multiple-recipient instructions put the full ordinary death-benefit remainder on
-line 9 and prorate the Part III tax by box 9a on line 29. For the authored 50%
-case, boxes 2a/3/6 are $20,000/$4,000/$4,000 and the full death benefit is
-$5,000: lines 6/7/8/9/10 are $4,300/$860/$38,400/$4,000/$34,400. The resulting
-special tax flows to Form 1040 line 16, where the 2025 form directs it, without
-a Schedule 2 amount. Native and PDF projections replay the elected 1099-R,
-calculated lines, and final Form 1040 special tax; positive and
-source/allocation/line/tax tamper fixtures are authored but unrun. The
-administrator reference does not authenticate statement bytes. Other
+multiple-recipient instructions put the full ordinary death-benefit remainder
+on line 9 and prorate the Part III tax by box 9a on line 29. For the authored
+50% case, boxes 2a/3/6 are $20,000/$4,000/$4,000 and the full death benefit
+is $5,000: lines 6/7/8/9/10 are $4,300/$860/$38,400/$4,000/$34,400.
+The resulting special tax flows to Form 1040 line 16, where the 2025 form
+directs it, without a Schedule 2 amount. Native and PDF projections replay
+the elected 1099-R, calculated lines, and final Form 1040 special tax;
+positive and source/allocation/line/tax tamper fixtures are authored but unrun.
+The administrator reference does not authenticate statement bytes. Other
 partial-share NUA/death combinations with annuity or estate tax, multiple
-elected distributions, filled-PDF appearance, XSD/business-rule checks, and ATS
-acceptance remain open.
+elected distributions, filled-PDF appearance, XSD/business-rule checks, and
+ATS acceptance remain open.
 
 ## Four full-share copies from one participant's plan (2026-10-01, unrun)
 
 The shared native/PDF collection validator now accepts the fourth exact
-issued-copy reference from that one participant. It previously stopped at three
-before the four-copy source and tax reconciliation could run. The existing
-four-copy positive and missing, changed-box, changed-plan, and final-tax tamper
-fixtures now reach the intended collection route. A fifth same-plan copy remains
-outside this reviewed export bound and has a rejection fixture; the IRS rule is
-to combine **all** qualified 2025 distributions for one participant, so an
-actual five-copy return needs a later complete-source extension rather than
-dropping the fifth copy. This change is unrun.
+issued-copy reference from that one participant. It previously stopped at
+three before the four-copy source and tax reconciliation could run. The
+existing four-copy positive and missing, changed-box, changed-plan, and
+final-tax tamper fixtures now reach the intended collection route. A fifth
+same-plan copy remains outside this reviewed export bound and has a rejection
+fixture; the IRS rule is to combine **all** qualified 2025 distributions for
+one participant, so an actual five-copy return needs a later complete-source
+extension rather than dropping the fifth copy. This change is unrun.
 
 The same-plan source collection no longer imposes a three-copy limit: each
-additional full-share Form 1099-R must have a distinct issued-copy reference and
-the same participant, payer, plan, and complete-balance statement. The election
-must name every copy exactly once. Source calculation sums boxes 2a and 3 into
-one Form 4972, while native MeF and PDF independently replay every copy against
-the final Form 1040 special tax. An authored four-copy case totals $110,000
-taxable distribution and $14,000 capital gain; missing, extra, changed-gain,
-changed-plan, and final-tax tamper cases are authored for the deferred
-validation batch. The
-[2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+additional full-share Form 1099-R must have a distinct issued-copy reference
+and the same participant, payer, plan, and complete-balance statement. The
+election must name every copy exactly once. Source calculation sums boxes 2a
+and 3 into one Form 4972, while native MeF and PDF independently replay every
+copy against the final Form 1040 special tax. An authored four-copy case totals
+$110,000 taxable distribution and $14,000 capital gain; missing, extra,
+changed-gain, changed-plan, and final-tax tamper cases are authored for the
+deferred validation batch. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 require one-year complete-balance distributions to be treated together.
-Administrator and issued-copy bytes, partial shares, NUA, annuity, estate/death
-combinations, and final XSD/PDF/business-rule review remain open.
+Administrator and issued-copy bytes, partial shares, NUA, annuity,
+estate/death combinations, and final XSD/PDF/business-rule review remain open.
 
 ## Three full-share copies from one participant's plan (2026-10-01, unrun)
 
 The bounded same-plan Form 1099-R collection now accepts three distinct
 full-share copies for one taxpayer participant, with the same payer, plan,
 participant, complete-balance statement, and Part III election. Optional
-positive box 3 amounts across all three may also elect Part II. The source node
-sums boxes 2a and 3 once, calculates one Form 4972, and routes its separate tax
-to Form 1040 line 16; native MeF and PDF replay all three copies and the
-finalized tax. A $20,000/$25,000/$30,000 distribution with $2,000/$3,000/$4,000
-capital portions gives line 6 $9,000, line 7 $1,800, and line 8 $66,000.
-Missing/changed third copy, different plan, and changed Form 1040 tax have
-authored rejection fixtures. The
-[2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) require
-all qualified distributions for the same participant in the year to be combined
-on one Form 4972. These fixtures are unrun; administrator/source bytes, partial
-shares, NUA, annuity, estate/death combinations across copies, filled PDF,
-XSD/business rules, and ATS remain open.
+positive box 3 amounts across all three may also elect Part II. The source
+node sums boxes 2a and 3 once, calculates one Form 4972, and routes its
+separate tax to Form 1040 line 16; native MeF and PDF replay all three
+copies and the finalized tax. A $20,000/$25,000/$30,000 distribution with
+$2,000/$3,000/$4,000 capital portions gives line 6 $9,000, line 7 $1,800,
+and line 8 $66,000. Missing/changed third copy, different plan, and changed
+Form 1040 tax have authored rejection fixtures. The
+[2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require all qualified distributions for the same participant in the year to
+be combined on one Form 4972. These fixtures are unrun; administrator/source
+bytes, partial shares, NUA, annuity, estate/death combinations across copies,
+filled PDF, XSD/business rules, and ATS remain open.
 
 ## Three or four source copies across two spouses (2026-10-01, unrun)
 
@@ -132,32 +130,31 @@ The existing public `elections[]` route now combines two full-share Form 1099-R
 copies from one plan for either spouse and one or two full-share copies from a
 distinct plan for the other spouse. Same-plan copies must agree on participant,
 plan, payer, and complete-balance statement; all copies need distinct source
-references. Each spouse elects ten-year tax separately; one may also elect Part
-II for summed positive box 3 capital gains while the other uses Part III alone.
-The route excludes NUA, annuity, death-benefit exclusion, estate tax, and
-partial shares. Each spouse's combined source amount calculates one Form 4972.
-Native MeF and PDF replay the two source groups, match each participant to the
-final joint filer, and add the separate taxes into Form 1040 line 16 without
-reporting the elected distributions as ordinary pension income.
-Taxpayer-two-copy, spouse-two-copy, both-two-copy, mixed Part-II/III, and
-source/return-tamper fixtures are authored for the deferred batch. Source and
-plan-statement bytes, other distribution mixes, and filled-output review remain
-open. The
-[2025 IRS instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+references. Each spouse elects ten-year tax separately; one may also elect
+Part II for summed positive box 3 capital gains while the other uses Part III
+alone. The route excludes NUA, annuity, death-benefit exclusion, estate tax,
+and partial shares.
+Each spouse's combined source amount calculates one Form 4972. Native MeF and
+PDF replay the two source groups, match each participant to the final joint
+filer, and add the separate taxes into Form 1040 line 16 without reporting the
+elected distributions as ordinary pension income. Taxpayer-two-copy,
+spouse-two-copy, both-two-copy, mixed Part-II/III, and source/return-tamper fixtures are authored for the
+deferred batch. Source and plan-statement bytes, other distribution mixes, and
+filled-output review remain open. The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 require adding distributions by participant, separate spouse forms, and a
 combined tax on Form 1040.
 
 ## Separate spouse elections on one joint return (2026-10-01, unrun)
 
 The public Form 4972 input is now one `elections[]` collection. Each election
-names its exact Form 1099-R source reference; the bounded spouse pair also names
-the participant and plan in each election. The matching source copies must
-identify different taxpayer/spouse recipients, distinct participants and plans,
-one full-share distribution for each, and affirmative complete-balance plan
-statements. The route accepts Part-III-only ten-year elections without NUA,
-annuity, death benefit, estate tax, or partial-share allocation. Each election
-is calculated separately; only the two special taxes are added for Form 1040
-line 16. Neither distribution enters ordinary pension income.
+names its exact Form 1099-R source reference; the bounded spouse pair also
+names the participant and plan in each election. The matching source copies
+must identify different taxpayer/spouse recipients, distinct participants and
+plans, one full-share distribution for each, and affirmative complete-balance
+plan statements. The route accepts Part-III-only ten-year elections without
+NUA, annuity, death benefit, estate tax, or partial-share allocation. Each
+election is calculated separately; only the two special taxes are added for
+Form 1040 line 16. Neither distribution enters ordinary pension income.
 
 The pending result carries `forms[]` with one computed Form 4972 per spouse.
 Native MeF emits two `IRS4972` documents referenced by Form 1040; PDF renders
@@ -167,8 +164,7 @@ compare the sum with finalized Form 1040 tax. Joint positive and source/plan/
 return-tamper fixtures are authored but unrun. Other multi-participant pairs,
 multiple distributions for each spouse, mixed Part II elections, authenticated
 plan records and bulk validation remain open. The separate-form and combined-
-tax rule is in the
-[2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
+tax rule is in the [2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
 
 ## Partial-share NUA, estate tax, and both elections (2026-10-01, unrun)
 
@@ -177,67 +173,65 @@ elect both the 20% capital-gain treatment and ten-year tax option when box 3
 capital gain, elected box 6 NUA, and federal estate tax are all positive. The
 administrator's full-distribution/tax statement and the filed-estate-return
 workpaper must have distinct references and allocate the same estate tax to the
-recipient at the exact box 9a percentage. The
-[2025 NUA and multiple-recipient
+recipient at the exact box 9a percentage. The [2025 NUA and multiple-recipient
 worksheets](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) put the
 recipient's NUA capital share on Part II line 6, then gross up the ordinary
-share for Part III line 8. The recipient's estate-tax capital share reduces line
-6; the **full-distribution** ordinary estate-tax remainder reduces Part III line
-18 before line 29 prorates ten-year tax back to this recipient.
+share for Part III line 8. The recipient's estate-tax capital share reduces
+line 6; the **full-distribution** ordinary estate-tax remainder reduces Part III
+line 18 before line 29 prorates ten-year tax back to this recipient.
 
-For a 50% recipient with boxes 2a/3/6 of $20,000/$4,000/$4,000 and $2,000 full
-attributable estate tax, $1,000 belongs to this recipient. Capital NUA is $800;
-$200 of the recipient's estate tax reduces line 6 to $4,600 and line 7 to $920.
-The full capital estate-tax portion is $400, leaving $1,600 on line 18. Native
-and PDF recompute both elected parts, compare the one source 1099-R and
-allocation, and join line 30 to the Form 1040 special-tax source. Positive and
-tamper fixtures are authored but unrun. Statement/return bytes, annuity,
+For a 50% recipient with boxes 2a/3/6 of $20,000/$4,000/$4,000 and $2,000
+full attributable estate tax, $1,000 belongs to this recipient. Capital NUA is
+$800; $200 of the recipient's estate tax reduces line 6 to $4,600 and line 7
+to $920. The full capital estate-tax portion is $400, leaving $1,600 on line
+18. Native and PDF recompute both elected parts, compare the one source 1099-R
+and allocation, and join line 30 to the Form 1040 special-tax source. Positive
+and tamper fixtures are authored but unrun. Statement/return bytes, annuity,
 death-benefit, and multiple elected-distribution combinations remain open.
 
 ## Partial-share Part-II-only estate-tax allocation (2026-10-01, unrun)
 
 A bounded beneficiary with one wholly taxable Form 1099-R, positive box 3
 capital gain, a box 9a share below 100%, and a Part-II-only election now uses
-the existing administrator and filed-estate-return allocation source. The source
-must reconcile full distribution, full attributable federal estate tax, and the
-recipient's exact whole-dollar share. The recipient's allocated estate tax is
-split by their box 3 / box 2a capital-gain fraction, following the
+the existing administrator and filed-estate-return allocation source. The
+source must reconcile full distribution, full attributable federal estate tax,
+and the recipient's exact whole-dollar share. The recipient's allocated estate
+tax is split by their box 3 / box 2a capital-gain fraction, following the
 [2025 Form 4972 line 6 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
 The capital portion reduces line 6 and its 20% line 7 tax; the ordinary estate
 tax portion goes to Schedule A line 16 while the recipient's ordinary pension
 amount reaches Form 1040 line 5b. The Form 4972 tax joins the finalized Form
-1040. Native MeF and PDF recheck the elected Form 1099-R boxes 2a/3/8/9a, wholly
-taxable status, allocation source, calculated Part II lines and return amounts.
-There is no Part III or `MRD` line 29 in this election.
+1040. Native MeF and PDF recheck the elected Form 1099-R boxes 2a/3/8/9a,
+wholly taxable status, allocation source, calculated Part II lines and return
+amounts. There is no Part III or `MRD` line 29 in this election.
 
 For a 50% beneficiary with box 2a $20,000, box 3 $4,000, and $2,000 full
 attributable estate tax, the recipient's $1,000 estate-tax share divides into
-$200 capital and $800 ordinary. Form 4972 lines 6/7 are $3,800/$760, Form 1040
-line 5b includes $16,000 ordinary pension income, and Schedule A receives the
-$800 IRD deduction. Positive and source/return-tamper fixtures are authored but
-unrun. Administrator and estate-return references do not authenticate the
+$200 capital and $800 ordinary. Form 4972 lines 6/7 are $3,800/$760, Form
+1040 line 5b includes $16,000 ordinary pension income, and Schedule A receives
+the $800 IRD deduction. Positive and source/return-tamper fixtures are authored
+but unrun. Administrator and estate-return references do not authenticate the
 underlying bytes; partial combined Part II/III estate elections, NUA, annuity,
 death-benefit combinations, separate spouse forms, and wider filing review
 remain open.
 
 ## Partial-share Part-II-only death benefit (staged, unrun)
 
-The
-[2025 Death Benefit Worksheet](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+The [2025 Death Benefit Worksheet](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 allocates the full allowable exclusion to each recipient in proportion to the
 box 9a distribution share, then allocates that recipient amount between capital
 gain and ordinary income. A bounded beneficiary now may elect Part II alone for
 one 1099-R with a partial box 9a share, positive box 3 capital gain, and a
-pre-August-21-1996 death. The administrator allocation reference, full allowable
-exclusion, and exact recipient allocation remain required. NUA, annuity, federal
-estate tax, and other elected distributions remain excluded. For a 50%
-beneficiary with box 2a $20,000, box 3 $4,000, and a $5,000 full exclusion, the
-recipient exclusion is $2,500: $500 reduces line 6 to $3,500, line 7 is $700,
-and the remaining $2,000 reduces the $16,000 ordinary share to $14,000 on Form
-1040 line 5b. Native and PDF reconcile those amounts to the one elected 1099-R
-and finalized Form 1040. Source, calculation, native, PDF, and tampering
-fixtures are authored but unrun; the administrator statement bytes, filled PDF,
-XSD, business rules, and ATS remain unverified.
+pre-August-21-1996 death. The administrator allocation reference, full
+allowable exclusion, and exact recipient allocation remain required. NUA,
+annuity, federal estate tax, and other elected distributions remain excluded.
+For a 50% beneficiary with box 2a $20,000, box 3 $4,000, and a $5,000 full
+exclusion, the recipient exclusion is $2,500: $500 reduces line 6 to $3,500,
+line 7 is $700, and the remaining $2,000 reduces the $16,000 ordinary share to
+$14,000 on Form 1040 line 5b. Native and PDF reconcile those amounts to the
+one elected 1099-R and finalized Form 1040. Source, calculation, native, PDF,
+and tampering fixtures are authored but unrun; the administrator statement
+bytes, filled PDF, XSD, business rules, and ATS remain unverified.
 
 Source: [IRS 2025 Form 4972](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf),
 including the form's multiple-recipient instructions and worksheets on pages
@@ -247,16 +241,15 @@ including the form's multiple-recipient instructions and worksheets on pages
 ## Current coded boundary
 
 - The public `form4972.elections[]` input contains strict election/eligibility
-  objects keyed by source-document references. It cannot carry recipient
-  identity, 1099-R boxes 2a/3/6/8/9a, or a substitute distribution amount. Those
-  fields must arrive from the matched Form 1099-R copies marked `exclude_4972`,
-  with a `T` or `S` recipient and explicit box 2a. The election and source meet
-  at the Form 4972 collection node, which calculates each special tax into the
-  finalized Form 1040. Existing full-return cases and new
-  source-missing/public-contract cases are written but unrun. This intake does
-  not authenticate participant birth date, prior elections, or plan-wide
-  distribution completeness; they remain preparer attestation/evidence
-  requirements; other multiple-participant combinations remain closed.
+  objects keyed by source-document references. It cannot carry recipient identity, 1099-R boxes
+  2a/3/6/8/9a, or a substitute distribution amount. Those fields must arrive
+  from the matched Form 1099-R copies marked `exclude_4972`, with a `T` or `S`
+  recipient and explicit box 2a. The election and source meet at the Form 4972
+  collection node, which calculates each special tax into the finalized Form 1040. Existing
+  full-return cases and new source-missing/public-contract cases are written but
+  unrun. This intake does not authenticate participant birth date, prior
+  elections, or plan-wide distribution completeness; they remain preparer
+  attestation/evidence requirements; other multiple-participant combinations remain closed.
 
 - The full-share, non-NUA, no-estate branch now requires one elected Form 1099-R
   with the same recipient and boxes 2a, 3, 6, 8 and 9a before native XML or PDF
@@ -339,19 +332,19 @@ including the form's multiple-recipient instructions and worksheets on pages
   the filled PDF annotations have not been visually inspected.
 - A bounded partial-share beneficiary route now permits one Part-III-only
   election with no NUA, annuity, death-benefit exclusion, or Part II election
-  and a referenced full attributable federal estate-tax amount. The recipient's
-  box 9a percentage grosses up line 8, the full estate-tax amount reduces line
-  18, and line 29 prorates the resulting Part III tax. This follows the
+  and a referenced full attributable federal estate-tax amount. The
+  recipient's box 9a percentage grosses up line 8, the full estate-tax amount
+  reduces line 18, and line 29 prorates the resulting Part III tax. This follows
+  the
   [2025 Form 4972 multiple-recipient steps and line 18 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
   The partial-share source now requires distinct administrator-allocation and
   estate-return references, a wholly taxable source Form 1099-R, a full taxable
-  distribution matching box 2a divided by box 9a, and a full/recipient
-  estate-tax allocation at whole-dollar precision. Calculation, native MeF, and
-  PDF reject a changed allocation while matching the one elected Form 1099-R and
-  final Form 1040 special tax. Focused positive and tamper fixtures are authored
-  but unrun. The estate administrator's statement bytes and tax-return contents,
-  other partial-share estate combinations, filled PDF, XSD/business-rule checks,
-  and ATS acceptance remain open.
+  distribution matching box 2a divided by box 9a, and a full/recipient estate-tax allocation at whole-dollar
+  precision. Calculation, native MeF, and PDF reject a changed allocation while
+  matching the one elected Form 1099-R and final Form 1040 special tax. Focused
+  positive and tamper fixtures are authored but unrun. The estate
+  administrator's statement bytes and tax-return contents, other partial-share estate combinations, filled
+  PDF, XSD/business-rule checks, and ATS acceptance remain open.
 - A separate bounded partial-share beneficiary route now permits a Part-III-only
   death-benefit exclusion with no Part II, NUA, annuity, or estate-tax
   adjustment. The
@@ -374,8 +367,8 @@ including the form's multiple-recipient instructions and worksheets on pages
 - A joint return with qualified distributions for both spouses requires a
   separate Form 4972 for each spouse and a combined tax on Form 1040 line 16.
   The new collection route supports the bounded two-spouse Part-III-only case
-  described above. Wider separate-participant combinations remain closed. A
-  bounded two-document route now combines one taxpayer participant's two
+  described above. Wider separate-participant combinations remain closed.
+  A bounded two-document route now combines one taxpayer participant's two
   full-share Form 1099-R distributions from the same payer and plan into one
   Part-III-only Form 4972. Both documents must carry distinct source references,
   the same participant name/SSN and plan reference, a referenced administrator
@@ -386,21 +379,21 @@ including the form's multiple-recipient instructions and worksheets on pages
   Form 1040 special tax. Focused positive and tamper fixtures are authored but
   unrun. The administrator statement is a referenced source assertion, not an
   independently authenticated document. A third distribution, different
-  participant, partial share, capital-gain/NUA/annuity adjustment, and separate
-  Form 4972 attachments remain blocked.
+  participant, partial share, capital-gain/NUA/annuity adjustment,
+  and separate Form 4972 attachments remain blocked.
 
-  The same two-source, full-share, same-plan taxpayer route now also supports a
-  combined Part II capital-gain and Part III ten-year election when the two
-  elected Forms 1099-R report positive box 3 amounts. The source node sums boxes
-  2a and 3 once, and the Form 4972 calculation uses the summed box 3 on lines
-  6/7 and subtracts it from summed box 2a on line 8. Native and PDF source
-  checks require the same participant, plan, distinct 1099-R references, exact
-  box totals, numbered lines, and finalized Form 1040 special tax. The
+  The same two-source, full-share, same-plan taxpayer route now also supports
+  a combined Part II capital-gain and Part III ten-year election when the two
+  elected Forms 1099-R report positive box 3 amounts. The source node sums
+  boxes 2a and 3 once, and the Form 4972 calculation uses the summed box 3 on
+  lines 6/7 and subtracts it from summed box 2a on line 8. Native and PDF
+  source checks require the same participant, plan, distinct 1099-R references,
+  exact box totals, numbered lines, and finalized Form 1040 special tax. The
   [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
   direct all qualified distributions for one participant in one tax year to a
-  single Form 4972. NUA, annuity, beneficiary, partial-share, multiple-plan, and
-  separate-spouse combinations remain closed for this two-source route; focused
-  fixtures are authored but unrun.
+  single Form 4972. NUA, annuity, beneficiary, partial-share, multiple-plan,
+  and separate-spouse combinations remain closed for this two-source route;
+  focused fixtures are authored but unrun.
 - An elected Form 1099-R marked `no_distribution_received` now fails at source
   validation. Previously the active-item filter discarded it, leaving no Form
   4972 output even though the election flag remained on the document. A focused
@@ -511,8 +504,8 @@ elected 1099-R, recompute all elected form lines and NUA notes, and check the
 Form 1040 special tax. Focused positive and tamper cases are written but unrun.
 The estate administrator's attributable-tax statement and any death-benefit
 entitlement evidence are still preparer-supplied facts, not verified from Form
-1099-R. Other partial-share allocations, filled-PDF visual review,
-XSD/business-rule checks, and ATS acceptance remain open.
+1099-R. Other partial-share allocations, filled-PDF visual review, XSD/business-rule
+checks, and ATS acceptance remain open.
 
 ## Partial-share beneficiary NUA with Part-II-only estate allocation (written, unrun)
 
@@ -522,15 +515,15 @@ and Part II without Part III. The source must be wholly taxable apart from NUA:
 box 1 equals box 2a plus box 6. The estate administrator statement and estate
 return workpaper must have distinct references and agree on the full taxable
 distribution **including elected NUA**, total federal estate tax, and the
-recipient's box 9a allocation. The 2025 NUA Worksheet adds box 3 to the capital
-portion of box 6; the Death Benefit Worksheet's capital fraction uses box 2a
-plus box 6. Only the recipient's estate-tax share reduces line 6. The ordinary
-estate-tax share reaches Schedule A line 16, while the recipient's ordinary
-distribution reaches Form 1040 line 5b and Part II tax reaches line 16. Native
-MeF and PDF replay source boxes, calculated lines, and Form 1040 tax. Positive
-and tamper fixtures are authored for the deferred validation batch. Estate
-statement and filed Form 706 bytes are still unauthenticated; partial death
-benefit, annuity, and mixed Part-II/III estate combinations remain closed.
+recipient's box 9a allocation. The 2025 NUA Worksheet adds box 3 to the
+capital portion of box 6; the Death Benefit Worksheet's capital fraction uses
+box 2a plus box 6. Only the recipient's estate-tax share reduces line 6. The
+ordinary estate-tax share reaches Schedule A line 16, while the recipient's ordinary
+distribution reaches Form 1040 line 5b and Part II tax reaches line 16.
+Native MeF and PDF replay source boxes, calculated lines, and Form 1040 tax.
+Positive and tamper fixtures are authored for the deferred validation batch.
+Estate statement and filed Form 706 bytes are still unauthenticated; partial
+death benefit, annuity, and mixed Part-II/III estate combinations remain closed.
 
 ## Partial-share beneficiary NUA with Part-III-only estate allocation (written, unrun)
 
@@ -538,15 +531,15 @@ The one-1099-R beneficiary route also admits a Part-III-only ten-year election
 with box 6 NUA and federal estate tax, without Part II, a death-benefit
 exclusion, or an annuity. Box 1 must equal box 2a plus box 6. The distinct
 administrator and estate-return references must reconcile the full taxable
-distribution including elected NUA, full attributable tax, and box 9a recipient
-tax share. The multiple-recipient worksheet grosses up box 2a plus box 6 and the
-`NUA` note by box 9a for line 8, uses the full estate tax on line 18, and
-allocates line 29 tax back to the recipient by box 9a. Form 1040 line 16 carries
-that special tax; no pension amount is added to line 5b. Native MeF and PDF
-replay the elected 1099-R, all calculated lines, and finalized Form 1040 special
-tax. Positive and source/estate/tax tamper fixtures are authored for deferred
-validation. Estate-statement and filed Form 706 bytes, mixed Part II/III estate
-elections, death benefits, and annuities remain open.
+distribution including elected NUA, full attributable tax, and box 9a
+recipient tax share. The multiple-recipient worksheet grosses up box 2a plus
+box 6 and the `NUA` note by box 9a for line 8, uses the full estate tax on line
+18, and allocates line 29 tax back to the recipient by box 9a. Form 1040 line
+16 carries that special tax; no pension amount is added to line 5b. Native MeF
+and PDF replay the elected 1099-R, all calculated lines, and finalized Form
+1040 special tax. Positive and source/estate/tax tamper fixtures are authored
+for deferred validation. Estate-statement and filed Form 706 bytes, mixed
+Part II/III estate elections, death benefits, and annuities remain open.
 
 ## Full-share beneficiary NUA, annuity, and allocation (written, unrun)
 
@@ -575,8 +568,9 @@ They require all of these steps:
    9a.
 2. The no-NUA capital-election and bounded NUA line 8 routes with or without
    Part II are implemented and reconciled. The full-share, no-annuity
-   beneficiary allocation, bounded partial-share NUA/estate Part II and Part III
-   routes, and the partial-share NUA/death-benefit allocation above are written.
+   beneficiary allocation, bounded partial-share NUA/estate Part II and Part
+   III routes, and the partial-share NUA/death-benefit allocation above are
+   written.
 3. The full-share line 11 annuity/death/estate combination is bounded above. A
    Part-III-only partial-share estate-tax route without other allocations is now
    bounded above. Other partial-share allocations remain open: the full
@@ -590,8 +584,8 @@ They require all of these steps:
    annuity whose box 8 percentage differs from box 9a, plus NUA with or without
    Part II and no other allocation, including an annuity. The single-copy
    partial-share NUA/death-benefit route is also authored. Add remaining NUA
-   combinations and invalid/missing percentages. Verify native XML against v5.4
-   XSD and visually inspect filled page 1, including `NUA` and `MRD` notes.
+   combinations and invalid/missing percentages. Verify native XML against v5.4 XSD and visually
+   inspect filled page 1, including `NUA` and `MRD` notes.
 
 ## Other unsupported paths and validation gates
 
@@ -602,9 +596,8 @@ They require all of these steps:
 - Part-II-only estate-tax/IRD arithmetic and Form 1040/Schedule A routing have
   source-backed unrun cases for a single full-share beneficiary, including a
   concurrent death-benefit exclusion. Other beneficiary, recipient-share, and
-  NUA combinations outside the bounded partial-share estate routes still need
-  source reconciliation; Schedule A's deduction applies only if itemized
-  deductions are selected.
+  NUA combinations outside the bounded partial-share estate routes still need source reconciliation; Schedule A's deduction
+  applies only if itemized deductions are selected.
 - Wider multiple-participant cases need a reviewed participant key and
   full-balance evidence for each source group. A payer EIN, recipient or account
   number alone does not prove plan-participant identity. The bounded spouse pair
@@ -632,19 +625,17 @@ Unsupported box 9a combinations continue to stop the election.
 ## Separate spouse Part II and Part III elections (written, unrun)
 
 A joint return with one full-share, single-1099-R taxpayer plan and one
-full-share, single-1099-R spouse plan can now elect different parts. The
-taxpayer in the authored case elects Part II only on positive box 3 capital
-gain: line 7 is 20% of that gain, and box 2a less box 3 reaches Form 1040 line
-5b. The spouse elects Part III only: the separate ten-year tax reaches the
-second Form 4972 and none of that distribution enters line 5b. The two special
-taxes add once to Form 1040 line 16. The distinct participant/plan identities
-and 1099-R references are retained per attachment; native and PDF collection
-projections replay each elected source and reject mismatched capital gain,
-ordinary pension amount, or combined tax. Positive and tamper fixtures are
-authored but unrun.
+full-share, single-1099-R spouse plan can now elect different parts. The taxpayer
+in the authored case elects Part II only on positive box 3 capital gain: line 7
+is 20% of that gain, and box 2a less box 3 reaches Form 1040 line 5b. The
+spouse elects Part III only: the separate ten-year tax reaches the second Form
+4972 and none of that distribution enters line 5b. The two special taxes add
+once to Form 1040 line 16. The distinct participant/plan identities and 1099-R
+references are retained per attachment; native and PDF collection projections
+replay each elected source and reject mismatched capital gain, ordinary pension
+amount, or combined tax. Positive and tamper fixtures are authored but unrun.
 
-The
-[2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
 require spouses filing jointly to attach separate forms and combine tax on line
 16; their reporting directions place the Part-II-only ordinary share on Form
 1040 lines 5a/5b and exclude a Part III distribution from those lines. This
@@ -655,33 +646,33 @@ business-rule, and ATS verification.
 
 ## One spouse's NUA alongside the other's Part III election (2026-10-01, unrun)
 
-A joint return can now carry two separate full-share Part III elections when one
-spouse's single 1099-R reports box 6 employer-security NUA and the other
+A joint return can now carry two separate full-share Part III elections when
+one spouse's single 1099-R reports box 6 employer-security NUA and the other
 spouse's distinct plan has an ordinary lump sum. The NUA spouse must elect
-current NUA inclusion; box 2a and box 6 reach that spouse's Form 4972 line 8 and
-the NUA dotted-line amount, while the other spouse's line 8 remains separate.
-The two line 30 taxes add once on Form 1040 line 16, and neither Part III
-distribution reaches line 5b. The source groups retain distinct participant and
-plan identities. Native MeF and PDF replay each scoped source, calculated line,
-and combined tax. A positive fixture plus altered box 6, printed line, and Form
-1040 tax fixtures are authored but unrun. Capital-gain elections with NUA,
-shared annuities, beneficiaries, partial shares, and multiple copies for either
-NUA plan remain outside this path. The underlying source documents,
-prior-election history, filled PDF, local XSD, business rules, and ATS
-acceptance still need verification.
+current NUA inclusion; box 2a and box 6 reach that spouse's Form 4972 line 8
+and the NUA dotted-line amount, while the other spouse's line 8 remains
+separate. The two line 30 taxes add once on Form 1040 line 16, and neither
+Part III distribution reaches line 5b. The source groups retain distinct
+participant and plan identities. Native MeF and PDF replay each scoped source,
+calculated line, and combined tax. A positive fixture plus altered box 6,
+printed line, and Form 1040 tax fixtures are authored but unrun. Capital-gain
+elections with NUA, shared annuities, beneficiaries, partial
+shares, and multiple copies for either NUA plan remain outside this path.
+The underlying source documents, prior-election history, filled PDF, local
+XSD, business rules, and ATS acceptance still need verification.
 
 ## Separate NUA elections for both spouses (2026-10-01, unrun)
 
 One joint return can now carry a full-share Part-III-only NUA election for each
 spouse when each has exactly one elected Form 1099-R from a distinct, identified
-plan. Each source's box 2a and box 6 determine only its own Form 4972 line 8 and
-dotted-line NUA amount. The separate line 30 taxes add once to Form 1040 line
-16, with no Form 4972 pension amount on line 5b. Native MeF emits two
+plan. Each source's box 2a and box 6 determine only its own Form 4972 line 8
+and dotted-line NUA amount. The separate line 30 taxes add once to Form 1040
+line 16, with no Form 4972 pension amount on line 5b. Native MeF emits two
 owner-matched `IRS4972` documents; PDF projects the same separate forms. The
 authored positive and source/plan/printed-line/combined-tax tamper fixtures are
-reserved for the bulk validation pass. This follows the
-[2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf),
-which direct joint-filing spouses to attach separate forms and add their tax to
-Form 1040. Part II, annuities, beneficiaries, partial shares, multiple copies
-per plan, administrator source bytes, filled PDF, XSD, business rules, and ATS
-acceptance remain open for this pair.
+reserved for the bulk validation pass. This follows the [2025 Form 4972
+instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf), which direct
+joint-filing spouses to attach separate forms and add their tax to Form 1040.
+Part II, annuities, beneficiaries, partial shares, multiple copies per plan,
+administrator source bytes, filled PDF, XSD, business rules, and ATS acceptance
+remain open for this pair.
