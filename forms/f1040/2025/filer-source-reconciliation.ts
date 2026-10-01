@@ -849,6 +849,80 @@ export function assertSchedule1Box3SourceIdentity(
   }
 }
 
+export function assertSchedule1Box8SourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const raw = (pending.f1099m as
+    | { f1099ms?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ms ?? [];
+  if (
+    raw.some((item) =>
+      item.box8_substitute_payments !== undefined &&
+      (typeof item.box8_substitute_payments !== "number" ||
+        !Number.isSafeInteger(item.box8_substitute_payments) ||
+        item.box8_substitute_payments < 0)
+    )
+  ) {
+    throw new Error("1099-MISC box 8 needs a nonnegative whole-dollar amount");
+  }
+  const sourceRows = raw.filter((item) =>
+    typeof item.box8_substitute_payments === "number" &&
+    item.box8_substitute_payments > 0
+  );
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const filedRows = schedule1?.f1099m_box8_substitute_sources;
+  const filedTotal = schedule1?.line8z_substitute_payments;
+  if (
+    sourceRows.length === 0 && filedRows === undefined &&
+    filedTotal === undefined
+  ) return;
+  if (!Array.isArray(filedRows) || filedRows.length !== sourceRows.length) {
+    throw new Error(
+      "Schedule 1 substitute payments need one row per 1099-MISC box 8 source",
+    );
+  }
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  const unmatched = [...filedRows] as Record<string, unknown>[];
+  let expectedTotal = 0;
+  for (const item of sourceRows) {
+    const amount = item.box8_substitute_payments;
+    if (
+      typeof amount !== "number" || !Number.isSafeInteger(amount) ||
+      amount <= 0 || typeof item.payer_name !== "string" ||
+      !item.payer_name.trim() || !tin(item.payer_tin, "1099-MISC payer") ||
+      !tin(item.recipient_tin, "1099-MISC recipient") ||
+      !recipients.includes(tin(item.recipient_tin, "1099-MISC recipient"))
+    ) {
+      throw new Error("1099-MISC box 8 source identity or amount is invalid");
+    }
+    const index = unmatched.findIndex((row) =>
+      row && typeof row === "object" &&
+      row.payer_name === item.payer_name &&
+      tin(row.payer_tin, "1099-MISC payer") ===
+        tin(item.payer_tin, "1099-MISC payer") &&
+      tin(row.recipient_tin, "1099-MISC recipient") ===
+        tin(item.recipient_tin, "1099-MISC recipient") &&
+      row.amount === amount
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule 1 substitute payment row differs from its 1099-MISC source",
+      );
+    }
+    unmatched.splice(index, 1);
+    expectedTotal += amount;
+  }
+  if (unmatched.length !== 0 || filedTotal !== expectedTotal) {
+    throw new Error(
+      "Schedule 1 substitute payments differ from 1099-MISC box 8 sources",
+    );
+  }
+}
+
 export function assertSchedule1NecSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,

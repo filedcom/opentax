@@ -90,6 +90,14 @@ const inputSchema = z.object({
       amount: z.number().positive(),
     }).strict(),
   ).optional(),
+  f1099m_box8_substitute_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().int().positive(),
+    }).strict(),
+  ).optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
@@ -397,6 +405,11 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
       ? {
         f1099m_box3_other_income_sources:
           input.f1099m_box3_other_income_sources,
+      }
+      : {}),
+    ...(input.f1099m_box8_substitute_sources !== undefined
+      ? {
+        f1099m_box8_substitute_sources: input.f1099m_box8_substitute_sources,
       }
       : {}),
     ...(input.k1_partnership_box11_code_j_sources !== undefined

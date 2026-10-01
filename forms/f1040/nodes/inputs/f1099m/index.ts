@@ -96,7 +96,7 @@ export const itemSchema = z.object({
   // Box 7 — Direct sales indicator (checkbox — informational only)
   box7_direct_sales: z.boolean().optional(),
   // Box 8 — Substitute payments → Schedule 1 Line 8z
-  box8_substitute_payments: z.number().nonnegative().optional(),
+  box8_substitute_payments: z.number().int().nonnegative().optional(),
   // Box 9 — Crop insurance → Schedule F (unless deferred under IRC §451(d))
   box9_crop_insurance: z.number().nonnegative().optional(),
   box9_crop_insurance_deferred: z.boolean().optional(),
@@ -346,7 +346,19 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
         : []
     );
   }
-  if (substitute > 0) s1Input.line8z_substitute_payments = substitute;
+  if (substitute > 0) {
+    s1Input.line8z_substitute_payments = substitute;
+    s1Input.f1099m_box8_substitute_sources = items.flatMap((item) =>
+      (item.box8_substitute_payments ?? 0) > 0
+        ? [{
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          amount: item.box8_substitute_payments!,
+        }]
+        : []
+    );
+  }
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
   return output(

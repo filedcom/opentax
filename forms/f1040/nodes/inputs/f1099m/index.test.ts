@@ -547,6 +547,33 @@ Deno.test("f1099m.compute: box8_substitute_payments routes to schedule1 line8z_s
     fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
     300,
   );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.f1099m_box8_substitute_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      amount: 300,
+    }],
+  );
+});
+
+Deno.test("f1099m.compute: two box 8 payers retain separate source rows", () => {
+  const result = compute([
+    minimalItem({ box8_substitute_payments: 300 }),
+    minimalItem({
+      payer_name: "Second Broker",
+      payer_tin: "234567890",
+      box8_substitute_payments: 450,
+    }),
+  ]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_substitute_payments, 750);
+  assertEquals(fields.f1099m_box8_substitute_sources?.length, 2);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
+    750,
+  );
 });
 
 // Box 8 — zero value produces no schedule1 substitute_payments output

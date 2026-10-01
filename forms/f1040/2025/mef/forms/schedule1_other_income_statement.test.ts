@@ -55,6 +55,50 @@ Deno.test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
   assertEquals(schedule1OtherIncomeStatement.build({}, { pending: {} }), "");
 });
 
+Deno.test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", () => {
+  const fields = {
+    line8z_substitute_payments: 750,
+    f1099m_box8_substitute_sources: [
+      {
+        payer_name: "Broker One",
+        payer_tin: "123456789",
+        recipient_tin: "987654321",
+        amount: 300,
+      },
+      {
+        payer_name: "Broker Two",
+        payer_tin: "234567890",
+        recipient_tin: "987654321",
+        amount: 450,
+      },
+    ],
+  };
+  const statement = schedule1OtherIncomeStatement.build({}, {
+    pending: { schedule1: fields },
+  });
+  assertEquals((statement.match(/<OtherIncomeAmt>/g) ?? []).length, 2);
+  assertStringIncludes(statement, "Substitute payments 123456789");
+  assertStringIncludes(statement, "Substitute payments 234567890");
+  assertStringIncludes(statement, "<OtherIncomeAmt>300</OtherIncomeAmt>");
+  assertStringIncludes(statement, "<OtherIncomeAmt>450</OtherIncomeAmt>");
+  assertThrows(
+    () =>
+      schedule1OtherIncomeStatement.build({}, {
+        pending: { schedule1: { ...fields, line8z_substitute_payments: 749 } },
+      }),
+    Error,
+    "differ from 1099-MISC box 8 sources",
+  );
+  assertThrows(
+    () =>
+      schedule1OtherIncomeStatement.build({}, {
+        pending: { schedule1: { line8z_substitute_payments: 750 } },
+      }),
+    Error,
+    "differ from 1099-MISC box 8 sources",
+  );
+});
+
 Deno.test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z", () => {
   const fields = {
     line8z_form8621_qef: 2_000,

@@ -15,6 +15,7 @@ import {
   assertKReportedErrorSources,
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
+  assertSchedule1Box8SourceIdentity,
   assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
@@ -277,6 +278,7 @@ export async function buildPdfBytes(
     assertKWithholdingSourceIdentity(normalized, filer);
     assertKPersonalSaleSources(pending, filer);
     assertSchedule1Box3SourceIdentity(normalized, filer);
+    assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);

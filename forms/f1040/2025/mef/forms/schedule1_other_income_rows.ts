@@ -20,7 +20,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
   ["line8z_rtaa", "Trade adjustment assistance"],
   ["line8z_taxable_grants", "Taxable grants"],
-  ["line8z_substitute_payments", "Substitute payments"],
   ["line8z_golden_parachute", "Excess golden parachute"],
   ["at_risk_disallowed_add_back", "At-risk loss add-back"],
   ["at_risk_recapture", "At-risk recapture"],
@@ -83,8 +82,51 @@ export function schedule1OtherIncomeRows(
       amount: row.taxable_amount,
     };
   });
+  const substituteSources = source.f1099m_box8_substitute_sources;
+  if (
+    substituteSources !== undefined && !Array.isArray(substituteSources)
+  ) {
+    throw new Error("Schedule 1 1099-MISC box 8 sources must be rows");
+  }
+  const substituteRows: Schedule1OtherIncomeRow[] = (
+    (substituteSources ?? []) as unknown[]
+  ).map((value) => {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule 1 1099-MISC box 8 source is invalid");
+    }
+    const row = value as Record<string, unknown>;
+    if (
+      typeof row.payer_name !== "string" || !row.payer_name.trim() ||
+      typeof row.payer_tin !== "string" || !/^\d{9}$/.test(row.payer_tin) ||
+      typeof row.recipient_tin !== "string" ||
+      !/^\d{9}$/.test(row.recipient_tin) ||
+      typeof row.amount !== "number" ||
+      !Number.isSafeInteger(row.amount) || row.amount <= 0
+    ) {
+      throw new Error("Schedule 1 1099-MISC box 8 source is invalid");
+    }
+    return {
+      label: `Substitute payments ${row.payer_tin}`,
+      amount: row.amount as number,
+    };
+  });
+  const substituteTotal = substituteRows.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  if (source.line8z_substitute_payments !== substituteTotal) {
+    if (
+      source.line8z_substitute_payments !== undefined || substituteTotal > 0
+    ) {
+      throw new Error(
+        "Schedule 1 substitute payments differ from 1099-MISC box 8 sources",
+      );
+    }
+  }
   const rows = source.f1099m_box3_other_income_sources;
-  if (rows === undefined) return [...componentRows, ...partnershipRows];
+  if (rows === undefined) {
+    return [...componentRows, ...partnershipRows, ...substituteRows];
+  }
   if (!Array.isArray(rows)) {
     throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
   }
@@ -107,7 +149,7 @@ export function schedule1OtherIncomeRows(
     }
     return { label: row.description, amount: row.amount };
   });
-  return [...componentRows, ...partnershipRows, ...box3Rows];
+  return [...componentRows, ...partnershipRows, ...substituteRows, ...box3Rows];
 }
 
 export function schedule1OtherIncomeTotal(
