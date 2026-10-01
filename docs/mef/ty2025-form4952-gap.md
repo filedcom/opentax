@@ -6,6 +6,36 @@ especially line 4a (royalties from property held for investment, outside the
 ordinary course of business) and line 8 (royalty-attributable interest goes to
 Schedule E), plus checked-in v5.4 `Common/IRS4952/IRS4952.xsd`.
 
+## Reviewed 2024 disallowed-interest import
+
+The [2024 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2024.pdf)
+explicitly labels line 7 as disallowed investment interest carried forward to
+2025; 2025 Form 4952 line 2 imports that amount. One bounded positive regular
+carryforward route now
+requires a reviewed filed-2024 Form 4952 source when the existing prior-year
+carryforward scalar is positive. It records the distinct filed-return and
+completed-form references, primary SSN, reviewer/date, 2024 lines 1/2/3/6/7/8,
+and Schedule A line 9. The prior lines must satisfy line 3 = lines 1 + 2,
+line 7 = max(0, line 3 − line 6), line 8 = min(line 3, line 6), and Schedule A
+line 9 = line 8, with reviewed confirmation that none of the prior interest
+belonged on Schedule E or Form 6198. Both the 2025 regular line 2 and a
+separately reviewed 2024
+AMT Form 4952 line 7 must match the 2025 regular and AMT prior-year inputs.
+The AMT amount is required because Form 4952's AMT refigure can carry a
+different disallowed balance; the bounded positive filing case requires equal
+regular and AMT balances and zero other AMT adjustments. It applies to one
+primary-filer direct-use taxable-securities loan and one affirmed unadjusted
+1099-INT box 1 payer. A $4,000 prior line 7 plus $20,000 current interest and
+$22,000 sourced investment income yields 2025 line 8 of $22,000 and line 7 of
+$2,000, with Schedule A/Form 1040 itemization, native MeF, and PDF checked
+against the retained source and final filer. Positive and prior-line,
+AMT-source, owner, and retained-source tamper fixtures are authored for the
+deferred batch. AMT-only imports are outside this positive-regular-carryforward
+source schema.
+The reviewed references and prior amounts do not authenticate filed-return
+bytes or IRS acceptance; wider carryover histories, differing AMT balances,
+other income sources, and lender/broker document bytes remain open.
+
 ## Direct-use borrowing evidence prerequisite
 
 [2025 Publication 550](https://www.irs.gov/publications/p550) allocates interest

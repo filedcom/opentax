@@ -8,6 +8,10 @@ import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
 import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
 import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
+import {
+  hasForm4952PriorCarryforward,
+  reconcileForm4952PriorCarryforward,
+} from "../../form4952_prior_carryforward_reconciliation.ts";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -46,6 +50,9 @@ export const form4952Pdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
+    if (hasForm4952PriorCarryforward(fields, allPending)) {
+      reconcileForm4952PriorCarryforward(fields, allPending);
+    }
     if (
       fields.direct_debt_trace !== undefined ||
       (allPending.form4952 as Record<string, unknown> | undefined)
@@ -89,6 +96,14 @@ export const form4952Pdf: PdfFormDescriptor = {
     return fields;
   },
   instances(fields, filer, allPending) {
+    if (hasForm4952PriorCarryforward(fields, allPending ?? {})) {
+      if (!filer || !allPending) {
+        throw new Error(
+          "Form 4952 PDF prior carryforward needs final filer identity",
+        );
+      }
+      reconcileForm4952PriorCarryforward(fields, allPending, filer.primarySSN);
+    }
     if (
       fields.direct_debt_trace !== undefined ||
       (allPending?.form4952 as Record<string, unknown> | undefined)
