@@ -393,6 +393,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Native MeF and PDF parity
 
+- [x] Re-derive every bounded Form 8621 Part V excess-distribution event in the native holding-period statement and add a source-checked printable supporting statement with foreign-currency explanation and continuation pages. Positive and event/interest/identity tamper fixtures are authored for deferred validation. The parent Form 8621 PDF remains unregistered pending corporation, share-class, and election facts on page 1; positive packet export remains closed. See the [PDF gap](ty2025-form8621-pdf-gap.md).
+
 - [x] Register a bounded Form 8611 PDF projection with one page per identified LIHTC building, duplicate-building-ID rejection, and a native/PDF line-14 total matching Schedule 2 line 16. Source, native, PDF, and tamper fixtures are authored for deferred validation. Printable export remains closed until historical Forms 8586/8609/8609-A/8611 or issuer K-1 credit and interest records are authenticated; wider building events and ATS remain open. See the [PDF gap](ty2025-form8611-pdf-gap.md).
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
