@@ -1,0 +1,190 @@
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { form8908 } from "./f8908.ts";
+import { form8908Pdf } from "../../pdf/forms/f8908.ts";
+
+function sixClassSource() {
+  const classes = [
+    ["residential", false, undefined],
+    ["manufactured", true, undefined],
+    ["multifamily", false, true],
+    ["multifamily", true, true],
+    ["multifamily", false, false],
+    ["multifamily", true, false],
+  ] as const;
+  return {
+    f8908s: classes.map((
+      [program, zero_energy_ready, prevailing_wage_met],
+      index,
+    ) => ({
+      contractor_ssn: "111223333",
+      eligible_contractor_and_program_participation_verified: true,
+      basis_during_construction_verified: true,
+      no_duplicate_rehabilitation_or_energy_credit_verified: true,
+      street: `${index + 1} Main Street`,
+      city: "Albany",
+      state: "NY",
+      zip: "12207",
+      acquired_on: "2025-06-01",
+      acquired_by_other_person_for_residence_verified: true,
+      acquisition_record_reference: `sale-${index + 1}`,
+      contractor_basis_record_reference: `basis-${index + 1}`,
+      program,
+      zero_energy_ready,
+      prevailing_wage_met,
+      form7220_review_reference: prevailing_wage_met
+        ? `Form7220-review-${index + 1}`
+        : undefined,
+      certifier_name: index < 3
+        ? "North Certification LLC"
+        : "South Certification LLC",
+      certifier_state: "NY",
+      certification_reference: `certificate-${index + 1}`,
+      certified_on: "2025-05-01",
+      certification_modified: index === 5,
+    })),
+  };
+}
+
+const credit = {
+  f8908_credit: {
+    credit_amount: 16_500,
+    subject_to_passive_activity_limit: false,
+  },
+};
+
+Deno.test("staged IRS8908 and official PDF project all six classes, certifiers, and addresses", () => {
+  const source = sixClassSource();
+  const xml = form8908.build(source, {
+    pending: { f8908: source, f3800: credit },
+  });
+  assertStringIncludes(
+    xml,
+    "<EligibleContractorInd>true</EligibleContractorInd>",
+  );
+  assertStringIncludes(xml, "<TotCertifierCnt>2</TotCertifierCnt>");
+  assertStringIncludes(xml, "<TotHomesCertifiedCnt>6</TotHomesCertifiedCnt>");
+  assertStringIncludes(
+    xml,
+    "<TotQlfyEgyStarProgCertAmt>5000</TotQlfyEgyStarProgCertAmt>",
+  );
+  assertStringIncludes(xml, "<TotalCreditAmt>16500</TotalCreditAmt>");
+  assertEquals((xml.match(/<CertifierInformationGrp>/g) ?? []).length, 2);
+  assertEquals((xml.match(/<QualifiedHomesAddresses>/g) ?? []).length, 6);
+
+  const printed = form8908Pdf.projectFields!(source, {
+    f8908: source,
+    f3800: credit,
+  });
+  assertEquals(printed.itemD, 2);
+  assertEquals(printed.itemE, 6);
+  assertEquals(printed.line4b, 5_000);
+  assertEquals(printed.line6b, 1_000);
+  assertEquals(printed.line8, 16_500);
+  assertEquals(printed.certifier_2_modified, 1);
+  assertEquals(printed.home_6_street, "6 Main Street");
+  assertEquals(form8908Pdf.pageIndices!(printed), [0, 1, 2]);
+  assertEquals(
+    form8908Pdf.fields.find((field) => field.domainKey === "home_20_zip")
+      ?.pdfField,
+    "topmostSubform[0].Page3[0].Table_PartIII[0].Row20[0].f3_80[0]",
+  );
+});
+
+Deno.test("staged Form 8908 projections reject missing or altered Form 3800 credit", () => {
+  const source = sixClassSource();
+  assertThrows(
+    () => form8908.build(source, { pending: { f8908: source } }),
+    Error,
+    "needs a Form 3800 line 1p source",
+  );
+  const changedCredit = {
+    f8908_credit: { ...credit.f8908_credit, credit_amount: 16_501 },
+  };
+  assertThrows(
+    () =>
+      form8908.build(source, {
+        pending: { f8908: source, f3800: changedCredit },
+      }),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form8908Pdf.projectFields!(source, {
+        f8908: source,
+        f3800: changedCredit,
+      }),
+    Error,
+    "does not reconcile",
+  );
+  const changedHome = sixClassSource();
+  changedHome.f8908s[0].street = changedHome.f8908s[1].street;
+  assertThrows(
+    () =>
+      form8908Pdf.projectFields!(changedHome, {
+        f8908: changedHome,
+        f3800: credit,
+      }),
+    Error,
+    "same home",
+  );
+});
+
+Deno.test("staged Form 8908 rejects certifiers beyond the 38-row paper inventory", () => {
+  const base = sixClassSource().f8908s[0];
+  const many = {
+    f8908s: Array.from({ length: 39 }, (_, index) => ({
+      ...base,
+      street: `${index + 1} Main Street`,
+      acquisition_record_reference: `sale-${index + 1}`,
+      contractor_basis_record_reference: `basis-${index + 1}`,
+      certification_reference: `certificate-${index + 1}`,
+      certifier_name: `Certification Company ${index + 1}`,
+    })),
+  };
+  assertThrows(
+    () =>
+      form8908Pdf.projectFields!(many, {
+        f8908: many,
+        f3800: {
+          f8908_credit: {
+            credit_amount: 97_500,
+            subject_to_passive_activity_limit: false,
+          },
+        },
+      }),
+    Error,
+    "38 certifier rows",
+  );
+});
+
+Deno.test("staged Form 8908 lists only the first twenty qualified-home addresses", () => {
+  const base = sixClassSource().f8908s[0];
+  const many = {
+    f8908s: Array.from({ length: 21 }, (_, index) => ({
+      ...base,
+      street: `${index + 1} Main Street`,
+      acquisition_record_reference: `sale-${index + 1}`,
+      contractor_basis_record_reference: `basis-${index + 1}`,
+      certification_reference: `certificate-${index + 1}`,
+    })),
+  };
+  const claim = {
+    f8908_credit: {
+      credit_amount: 52_500,
+      subject_to_passive_activity_limit: false,
+    },
+  };
+  const xml = form8908.build(many, {
+    pending: { f8908: many, f3800: claim },
+  });
+  assertEquals((xml.match(/<QualifiedHomesAddresses>/g) ?? []).length, 20);
+  assertStringIncludes(xml, "<TotHomesCertifiedCnt>21</TotHomesCertifiedCnt>");
+  const printed = form8908Pdf.projectFields!(many, {
+    f8908: many,
+    f3800: claim,
+  });
+  assertEquals(printed.home_20_street, "20 Main Street");
+  assertEquals(printed.home_21_street, undefined);
+  assertEquals(printed.line8, 52_500);
+});
