@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **675 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **676 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 148-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 675 bounded routes and
+**Implemented coverage.** The completed ledger records 676 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -70,6 +70,10 @@ and reported **10,168 passed, 174 failed** in 28m54s. Failing routes are under
 repair and the command must be rerun to a passing result. Individual XSD tests
 ran within the suite; complete route coverage and filled-PDF visual review
 remain pending.
+The saved failure log was re-triaged without rerunning it: identifiable
+non-named PDF builder, CLI 1099-MISC fixture, and extension fixture failures
+have later fixes; most other recorded failures concern the deferred named
+forms. That historical classification does not establish a current pass.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
@@ -147,8 +151,10 @@ The source-only Social Security lump-sum node now retains the full reported
 benefit on line 6a and rejects a claimed prior-year election until its
 Publication 915 worksheets and line 6b/6c route can be verified.
 The core PDF audit still needs a source-reconciled line 1h income-type label
-for foreign employer and other earned-income combinations; standalone FEC
-also lacks the native wage-statement source link. The retained ACTC opt-out
+for foreign employer and other earned-income combinations. Source-complete
+standalone FEC wages now build one native record per employer and one aggregate
+wage statement with owner and line 1h/AGI checks; the PDF type remains open.
+The retained ACTC opt-out
 now reaches the Form 1040 line 28 native indicator and PDF checkbox, and
 conflicting Form 8812 item answers reject. The wider core-return and PDF
 parents below remain open.
