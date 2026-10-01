@@ -379,7 +379,8 @@ function sectionBOrdinaryTangibleInstance(
     (propertyType === SectionBPropertyType.ClothingHousehold &&
       item.good_used_condition_confirmed !== true) ||
     item.capital_gain_reduction_election_confirmed === true ||
-    item.is_capital_gain_property !== false ||
+    item.is_capital_gain_property !==
+      (item.unrelated_use_capital_gain_reduction !== undefined) ||
     item.charitable_limit_category !== "noncash_50" ||
     item.fmv <= 5_000 || item.fmv > 500_000 ||
     (propertyType === SectionBPropertyType.ArtUnder20000 &&
@@ -396,7 +397,8 @@ function sectionBOrdinaryTangibleInstance(
           "purchased_short_term_capital_asset")) ||
     (propertyType === SectionBPropertyType.Securities &&
       item.ordinary_income_reduction === undefined) ||
-    (item.ordinary_income_reduction === undefined
+    (item.ordinary_income_reduction === undefined &&
+        item.unrelated_use_capital_gain_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
@@ -410,6 +412,7 @@ function sectionBOrdinaryTangibleInstance(
         item.fmv <= item.deduction_claimed) ||
     item.cost_or_adjusted_basis === undefined ||
     (item.ordinary_income_reduction === undefined &&
+      item.unrelated_use_capital_gain_reduction === undefined &&
       item.cost_or_adjusted_basis < item.fmv) ||
     !item.property_description?.trim() ||
     (propertyType !== SectionBPropertyType.Securities &&
@@ -427,6 +430,7 @@ function sectionBOrdinaryTangibleInstance(
     );
   }
   const ordinary = item.ordinary_income_reduction;
+  const unrelated = item.unrelated_use_capital_gain_reduction;
   const securityReference = item.nonpublic_security
     ? `Nonpublic C corporation issuer EIN ${item.nonpublic_security.issuer_ein}; ${item.nonpublic_security.shares_contributed} ${item.nonpublic_security.share_class} shares. `
     : "";
@@ -438,6 +442,11 @@ function sectionBOrdinaryTangibleInstance(
     ? `The purchased short-term capital asset's FMV sale gain $${
       ordinary.gain_removed.toFixed(2)
     } is removed under section 170(e)(1)(A); purchase record ${ordinary.purchase_record_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement ${ordinary.reduction_statement_attachment_file_name} have separate source reviews. `
+    : "";
+  const unrelatedExplanation = unrelated
+    ? `Purchased long-term art was put to unrelated use by the donee. The section 170(e)(1)(B)(i) appreciation reduction is $` +
+      unrelated.appreciation_removed.toFixed(2) +
+      `; purchase record ${unrelated.purchase_record_attachment_file_name}, donee-use statement ${unrelated.donee_use_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement ${unrelated.reduction_statement_attachment_file_name} have separate source reviews. `
     : "";
   return {
     ...sectionBPrintedFields(item, filer),
@@ -460,6 +469,7 @@ function sectionBOrdinaryTangibleInstance(
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
       securityReference +
       ordinaryExplanation +
+      unrelatedExplanation +
       `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
       (propertyType === SectionBPropertyType.ArtAtLeast20000

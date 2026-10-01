@@ -404,6 +404,31 @@ validation, or filled-PDF rendering was run.
 
 ## Section B source contract needed for the next reduction route
 
+### Landed bounded unrelated-use art route
+
+Purchased long-term art with appraised FMV above $5,000 and below $20,000 now
+has a separate Section B `unrelated_use_capital_gain_reduction` source. The
+source requires a basis-limited claim, a 50% limit donee, explicit capital-gain
+classification, and the donee's unrelated-use indication. The purchase/basis
+record, donee's actual-use statement, reduction computation, full qualified
+appraisal, completed signed Form 8283, appraiser signature, and donee signature
+are seven distinct named PDFs. Three source reviews and the appraisal/signed
+form reviews bind their respective PDF bytes by SHA-256; native MeF links the
+seven separate document IDs. The same claim reaches Schedule A, itemized Form
+1040, native Form 8283, and the unsigned PDF projection. A synthetic full-return
+fixture checks the positive route and rejects changed donee-use bytes, a false
+unrelated-use indication, an unreduced claim, and a changed Form 1040 itemized
+total. This route does not assert that the generated PDF contains signatures.
+
+The current route excludes other tangible property, same-year disposition,
+recapture/depreciation, appraised art at $20,000 or more, and prior-year Section
+B carryovers. Those still need their own typed evidence and acceptance boundary.
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+require a reduction statement when the claimed amount is below FMV and state
+that unrelated-use tangible property loses its appreciation.
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) explains the
+unrelated-use test and the basis limit.
+
 The current `sectionBItemSchema` distinguishes appraised FMV from the claimed
 deduction, but only its purchased, unimproved investment-land election has a
 typed reduction reason and a reviewed statement attachment. Its

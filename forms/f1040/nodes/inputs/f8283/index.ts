@@ -711,6 +711,36 @@ const sectionBItemSchema = z.object({
   // investment land. Developed real estate can involve recapture.
   investment_land_unimproved_confirmed: z.literal(true).optional(),
   ordinary_income_reduction: ordinaryIncomeReductionSchema.optional(),
+  unrelated_use_capital_gain_reduction: z.object({
+    appreciation_removed: z.number().positive(),
+    purchase_record_attachment_file_name: z.string().trim().min(1),
+    purchase_record_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      property_dates_basis_match_confirmed: z.literal(true),
+      capital_asset_not_inventory_confirmed: z.literal(true),
+      no_depreciation_or_recapture_confirmed: z.literal(true),
+    }).strict(),
+    donee_use_attachment_file_name: z.string().trim().min(1),
+    donee_use_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      same_property_and_donee_confirmed: z.literal(true),
+      actual_use_unrelated_to_exempt_purpose_confirmed: z.literal(true),
+      no_disposition_in_contribution_year_confirmed: z.literal(true),
+    }).strict(),
+    reduction_statement_attachment_file_name: z.string().trim().min(1),
+    reduction_statement_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      property_and_fmv_match_confirmed: z.literal(true),
+      basis_and_appreciation_match_confirmed: z.literal(true),
+      reduced_claim_matches_confirmed: z.literal(true),
+    }).strict(),
+  }).strict().optional(),
   nonpublic_security: z.object({
     issuer_name: z.string().trim().min(1),
     issuer_ein: z.string().regex(/^\d{9}$/),
@@ -799,6 +829,58 @@ const sectionBItemSchema = z.object({
 }).superRefine((item, ctx) => {
   validateCharitableLimitCategory(item, ctx);
   const ordinaryReduction = item.ordinary_income_reduction;
+  const unrelatedReduction = item.unrelated_use_capital_gain_reduction;
+  if (unrelatedReduction) {
+    const acquired =
+      item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+    const contributed =
+      item.date_contributed && /^\d{4}-\d{2}-\d{2}$/.test(item.date_contributed)
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+    const anniversary =
+      item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+        ? Date.parse(
+          `${Number(item.date_acquired.slice(0, 4)) + 1}${
+            item.date_acquired.slice(4)
+          }T00:00:00Z`,
+        )
+        : NaN;
+    if (
+      item.property_type !== SectionBPropertyType.ArtUnder20000 ||
+      item.fmv <= 5_000 || item.fmv >= 20_000 ||
+      item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+      !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
+      new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
+      new Date(contributed).toISOString().slice(0, 10) !==
+        item.date_contributed ||
+      contributed <= anniversary ||
+      !item.date_contributed?.startsWith("2025-") ||
+      item.is_capital_gain_property !== true ||
+      item.charitable_limit_category !== "noncash_50" ||
+      item.donee_acknowledgment?.unrelated_use !== true ||
+      item.capital_gain_reduction_election_confirmed === true ||
+      ordinaryReduction !== undefined ||
+      item.cost_or_adjusted_basis === undefined ||
+      item.cost_or_adjusted_basis <= 5_000 ||
+      item.cost_or_adjusted_basis >= item.fmv ||
+      Math.round(item.deduction_claimed * 100) !==
+        Math.round(item.cost_or_adjusted_basis * 100) ||
+      Math.round(unrelatedReduction.appreciation_removed * 100) !==
+        Math.round((item.fmv - item.cost_or_adjusted_basis) * 100) ||
+      !item.qualified_appraisal?.attachment_file_name ||
+      !item.qualified_appraisal.full_appraisal_source_review ||
+      !item.signed_form_attachment_file_name || !item.signed_form_source_review
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["unrelated_use_capital_gain_reduction"],
+        message:
+          "Form 8283 Section B unrelated-use art needs purchased long-term capital property, donee-use evidence, reviewed basis/appraisal/signed-form/reduction PDFs, and a basis-limited claim",
+      });
+    }
+  }
   if (ordinaryReduction) {
     const acquired =
       item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
