@@ -614,6 +614,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length;
       const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
         regularBasisNet >= lossLimit && amtBasisNet >= lossLimit;
+      const mixedFullyDeductibleLoss = !oneTermOnly &&
+        fullyDeductibleNetLoss &&
+        basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0);
       // A positive net of short-term rows changes ordinary AMTI, not the
       // preferential Schedule D net capital gain or Form 6251 Part III.
       const positiveShortTermNet =
@@ -625,7 +628,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length &&
         regularBasisNet > 0 && amtBasisNet > 0;
       if (
-        (!oneTermOnly && !shortLossOffsetLongGain &&
+        (!oneTermOnly && !mixedFullyDeductibleLoss &&
+          !shortLossOffsetLongGain &&
           !longLossOffsetShortGain) ||
         lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
@@ -633,6 +637,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
           longLossOffsetShortGain) ||
+        ((input.qualified_dividends ?? 0) > 0 &&
+          !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||
         (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
         (input.form4952_amt_election ?? 0) !== 0 ||

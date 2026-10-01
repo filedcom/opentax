@@ -132,6 +132,13 @@ function basisDividendPending(
   qualified: number,
   ordinary: number,
 ) {
+  const rows = Array.isArray(fields.line2k_8949_basis_dispositions)
+    ? fields.line2k_8949_basis_dispositions
+    : [fields.line2k_8949_basis_dispositions];
+  const regularCapitalGain = rows.reduce(
+    (sum: number, row: { regular_gain: number }) => sum + row.regular_gain,
+    0,
+  );
   return {
     ...basisSourcePending(fields),
     f1099div: {
@@ -147,6 +154,7 @@ function basisDividendPending(
     f1040: {
       line3a_qualified_dividends: qualified,
       line3b_ordinary_dividends: ordinary,
+      line7_capital_gain: regularCapitalGain,
       line11_agi: 200_000,
       line14_deductions_qbi_total: 0,
       line15_taxable_income: fields.regular_taxable_income,
@@ -344,6 +352,88 @@ Deno.test("form6251: audited short-term basis loss below both deduction limits r
       },
     })?.line2k_disposition,
     -500,
+  );
+});
+
+Deno.test("form6251: audited short- and long-term losses within both deduction limits reach line 2k", () => {
+  const input = {
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 0,
+    net_capital_gain: 0,
+    line2k_8949_capital_audit: {
+      transactions: [
+        {
+          source_transaction_id: "broker-st-mixed-loss",
+          part: "A",
+          proceeds: 5_000,
+          cost_basis: 5_500,
+          gain_loss: -500,
+        },
+        {
+          source_transaction_id: "broker-lt-mixed-loss",
+          part: "D",
+          proceeds: 5_000,
+          cost_basis: 6_000,
+          gain_loss: -1_000,
+        },
+      ],
+      has_other_capital_activity: false,
+    },
+    line2k_8949_basis_dispositions: [
+      {
+        source_transaction_id: "broker-st-mixed-loss",
+        part: "A",
+        proceeds: 5_000,
+        regular_basis: 5_500,
+        amt_basis: 5_700,
+        regular_gain: -500,
+        amt_gain: -700,
+      },
+      {
+        source_transaction_id: "broker-lt-mixed-loss",
+        part: "D",
+        proceeds: 5_000,
+        regular_basis: 6_000,
+        amt_basis: 5_900,
+        regular_gain: -1_000,
+        amt_gain: -900,
+      },
+    ],
+  };
+  const result = compute(input);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -100);
+  assertEquals(filed?.fields.amti, 199_900);
+  assertEquals(filed?.fields.line13, undefined);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
+    "<PropertyDispositionAmt>-100</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
+      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+    })?.line2k_disposition,
+    -100,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...input,
+        line2k_8949_basis_dispositions: [
+          input.line2k_8949_basis_dispositions[0],
+          {
+            ...input.line2k_8949_basis_dispositions[1],
+            amt_basis: 8_500,
+            amt_gain: -3_500,
+          },
+        ],
+      }),
+    Error,
+    "deduction limits",
   );
 });
 
@@ -794,6 +884,18 @@ Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part
       }),
     Error,
     "reconciled 1099-DIV",
+  );
+  const sourced = basisDividendPending(filed!.fields, 10_000, 12_000);
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: {
+          ...sourced,
+          f1040: { ...sourced.f1040, line7_capital_gain: 40_001 },
+        },
+      }),
+    Error,
+    "finalized Form 1040",
   );
   assertThrows(
     () => compute({ ...input, net_capital_gain: 50_000 }),

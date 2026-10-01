@@ -7,6 +7,7 @@ import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_10
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
 import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
+import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -46,6 +47,13 @@ export const form4952Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
     if (
+      fields.direct_debt_trace !== undefined ||
+      (allPending.form4952 as Record<string, unknown> | undefined)
+          ?.direct_debt_trace !== undefined
+    ) {
+      reconcileForm4952DirectDebtExport(fields, allPending);
+    }
+    if (
       fields.source_1099_royalties !== undefined
     ) {
       reconcileForm4952MiscRoyaltyPath(fields, allPending);
@@ -81,6 +89,20 @@ export const form4952Pdf: PdfFormDescriptor = {
     return fields;
   },
   instances(fields, filer, allPending) {
+    if (
+      fields.direct_debt_trace !== undefined ||
+      (allPending?.form4952 as Record<string, unknown> | undefined)
+          ?.direct_debt_trace !== undefined
+    ) {
+      if (!filer || !allPending) {
+        throw new Error("Form 4952 PDF direct debt needs final filer identity");
+      }
+      reconcileForm4952DirectDebtExport(
+        fields,
+        allPending,
+        filer.primarySSN,
+      );
+    }
     if (fields.source_k1_investment_interest !== undefined) {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF K-1 source needs final filer identity");

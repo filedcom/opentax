@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { inputSchema } from "./index.ts";
 
 const wholeDollars = z.number().int().positive().refine(Number.isSafeInteger);
 const date2025 = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
-  (date) => !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
+  (date) =>
+    !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
     new Date(`${date}T00:00:00Z`).toISOString().startsWith(date),
 );
 
@@ -23,14 +23,25 @@ export const form4952DirectDebtTraceSchema = z.object({
   asset_id: z.string().trim().min(1),
   no_other_loan_proceeds_use: z.literal(true),
   no_tax_exempt_or_passive_activity_asset: z.literal(true),
+  investment_use_maintained_through_2025: z.literal(true),
   lender_2025_interest_total: wholeDollars,
-  interest_payments: z.array(z.object({
-    payment_id: z.string().trim().min(1),
-    payment_date: date2025,
-    payment_record_reference: z.string().trim().min(1),
-    interest_amount: wholeDollars,
-  }).strict()).min(1),
+  interest_payments: z.array(
+    z.object({
+      payment_id: z.string().trim().min(1),
+      payment_date: date2025,
+      payment_record_reference: z.string().trim().min(1),
+      interest_amount: wholeDollars,
+    }).strict(),
+  ).min(1),
 }).strict();
+
+const claimedInterestSchema = z.object({
+  investment_interest_expense: z.number().nonnegative().optional(),
+  source_k1_investment_interest: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).optional(),
+}).passthrough();
 
 export type Form4952DirectDebtTrace = z.infer<
   typeof form4952DirectDebtTraceSchema
@@ -43,7 +54,7 @@ export function reconcileForm4952DirectDebtTrace(
   finalFilerTin: string,
 ): Form4952DirectDebtTrace {
   const trace = form4952DirectDebtTraceSchema.parse(rawTrace);
-  const form = inputSchema.parse(rawForm4952Input);
+  const form = claimedInterestSchema.parse(rawForm4952Input);
   const paymentTotal = trace.interest_payments.reduce(
     (total, payment) => total + payment.interest_amount,
     0,

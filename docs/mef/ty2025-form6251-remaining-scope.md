@@ -112,7 +112,7 @@ gains and Form 4952 elections remain closed. A bounded ordinary 1099-DIV
 qualified-dividend combination now joins the audited short-term-basis gain and
 short-term-loss/long-term-gain paths to Part III when the combined preferential
 amount fits both regular and AMT taxable income. Native and PDF export require
-the retained 1099-DIV payer, finalized Form 1040 dividends and taxable income,
+the retained 1099-DIV payer, finalized Form 1040 dividends, capital gain, and taxable income,
 and the separate AMT net capital gain. The positive and tamper fixtures await
 the requested final bulk pass; other dividend classes, capital-gain-excess
 worksheets, and issued-copy bytes remain open. See the

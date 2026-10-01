@@ -8,6 +8,10 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  form4952DirectDebtTraceSchema,
+  reconcileForm4952DirectDebtTrace,
+} from "./debt_trace.ts";
 
 // The manual line 4 source facts exclude 1099s explicitly marked as investment
 // property and amounts routed by Form 8814. Each source has its own field so
@@ -36,6 +40,7 @@ function sum(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   investment_interest_expense: z.number().nonnegative().optional(),
+  direct_debt_trace: form4952DirectDebtTraceSchema.optional(),
   investment_interest_expense_excludes_sourced_k1: z.literal(true).optional(),
   investment_interest_expense_excludes_royalty_attributable_interest: z.literal(
     true,
@@ -271,6 +276,13 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form4952Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.direct_debt_trace) {
+      reconcileForm4952DirectDebtTrace(
+        input.direct_debt_trace,
+        input,
+        input.direct_debt_trace.owner_tin,
+      );
+    }
     const lines = calculateForm4952(input);
     if (lines.line3 === 0 && lines.line4g > 0) {
       throw new Error(

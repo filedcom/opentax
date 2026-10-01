@@ -20,11 +20,20 @@ those two fully deductible net amounts, without creating Part III preferential
 gain. A positive Form 6251 computation emits that exact line through the
 existing MeF and PDF fields.
 
-It still rejects a net total outside either limit, mixed short/long-term rows,
-additional Schedule D activity, qualified dividends, Form 4952 election, Form
+It still rejects a net total outside either limit, additional Schedule D
+activity, qualified dividends, Form 4952 election, Form
 2555, and special-rate gains. This does not determine regular or AMT
 capital-loss carryovers, transactions whose gain/loss sign changes between
 bases, or a net gain under one tax and net loss under the other. The focused
 source, calculation, MeF, PDF, and rejection run on 2026-09-30 passed 156/156
 cases across the Form 6251, Form 59E, native, and PDF suites. Full-return XSD,
 filled-PDF, IRS-rule, and ATS gates remain open.
+
+An additional mixed-term route now accepts identified short- and long-term
+loss rows together when every row remains a loss under both bases and each
+combined net stays within its separate $3,000/$1,500 deduction limit. The
+complete Schedule D audit and retained Form 8949 replay still have to contain
+exactly those rows. Line 2k carries the signed difference; neither basis has
+preferential net capital gain, so Part III is absent. Positive native/PDF and
+over-limit fixtures are authored for the requested later bulk pass; this
+extension has not entered the earlier 156-case validation count.

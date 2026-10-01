@@ -19,13 +19,24 @@ the lender's 2025 interest total, and exact equality to the manually entered
 Form 4952 line 1 interest. Mixed use, tax-exempt assets, and a simultaneous
 positive K-1 code H source are outside this one-loan workpaper.
 
-The workpaper is a source-evidence prerequisite, not a filing authorization.
-Its references and affirmations are typed input, not authenticated bank or
-broker bytes. It has no loan-balance history after the purchase, no later
-refinance or reassignment, and no trust or partnership asset look-through.
-Native and PDF export still use their existing guards; they do not consume
-this workpaper yet. Focused positive and tamper fixtures are authored for the
-deferred validation batch.
+The workpaper's references and affirmations are typed input, not authenticated
+bank or broker bytes. It has no later refinance or reassignment, and no trust
+or partnership asset look-through. Focused source-contract fixtures are
+authored for the deferred validation batch.
+
+The direct workpaper is now a live, bounded source route when exactly one
+affirmed taxable 1099-INT investment payer supplies line 4a. Form 4952 input
+retains the one-loan trace, checks that the full principal directly bought the
+identified taxable securities, that investment use continued through 2025,
+and that distinct payment records sum to the lender's annual interest and line
+1. Native and PDF export replay the exact loan and payment fields against the
+retained input, recompute every Form 4952 line, join line 8 to Schedule A and
+selected Form 1040 itemization, and require the final primary filer SSN to
+own the loan. A full-return positive and payment/owner-tamper fixture are
+authored for the deferred batch. This route does not authenticate lender,
+payment, or brokerage bytes, and does not cover mixed-use or later-year debt.
+These source references remain reviewer assertions until document
+authentication is implemented.
 
 An affirmatively classified Form 1099-MISC box 2 portfolio royalty sends the
 same amount to Schedule E income and Form 4952 line 4a. A bounded filing route

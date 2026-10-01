@@ -29,6 +29,7 @@ export function assertForm6251QualifiedDividendSource(
       ? fields.line2k_8949_basis_dispositions
       : [fields.line2k_8949_basis_dispositions]) as Array<{
         part: string;
+        regular_gain: number;
         amt_gain: number;
       }>
     : [];
@@ -40,6 +41,10 @@ export function assertForm6251QualifiedDividendSource(
     ? Math.max(0, longNet + Math.min(0, shortNet))
     : 0;
   const expectedPartThreeGain = qualified + amtNetCapitalGain;
+  const regularCapitalGain = basisRows.reduce(
+    (sum, row) => sum + row.regular_gain,
+    0,
+  );
   if (
     payers.length === 0 || !form1040 ||
     (payers.length > 1 &&
@@ -95,6 +100,7 @@ export function assertForm6251QualifiedDividendSource(
     (fields.foreign_earned_income_exclusion ?? 0) !== 0 ||
     form1040.line3a_qualified_dividends !== qualified ||
     form1040.line3b_ordinary_dividends !== ordinaryTotal ||
+    basis && form1040.line7_capital_gain !== regularCapitalGain ||
     form1040.line15_taxable_income !== fields.regular_taxable_income ||
     typeof fields.taxable_excess !== "number" ||
     fields.taxable_excess < expectedPartThreeGain ||

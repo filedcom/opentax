@@ -16,6 +16,7 @@ const trace = {
   asset_id: "taxable-security-lot-1",
   no_other_loan_proceeds_use: true,
   no_tax_exempt_or_passive_activity_asset: true,
+  investment_use_maintained_through_2025: true,
   lender_2025_interest_total: 400,
   interest_payments: [{
     payment_id: "payment-1",
@@ -31,9 +32,14 @@ const trace = {
 } as const;
 
 Deno.test("Form 4952 direct debt trace matches one taxable purchase and paid interest", () => {
-  assertEquals(reconcileForm4952DirectDebtTrace(
-    trace, { investment_interest_expense: 400 }, "123456789",
-  ), trace);
+  assertEquals(
+    reconcileForm4952DirectDebtTrace(
+      trace,
+      { investment_interest_expense: 400 },
+      "123456789",
+    ),
+    trace,
+  );
 });
 
 Deno.test("Form 4952 direct debt trace rejects other uses, source drift, and duplicate payments", () => {
@@ -46,10 +52,15 @@ Deno.test("Form 4952 direct debt trace rejects other uses, source drift, and dup
   reject({ ...trace, direct_taxable_securities_purchase: 9_000 });
   reject({ ...trace, no_other_loan_proceeds_use: false });
   reject({ ...trace, no_tax_exempt_or_passive_activity_asset: false });
+  reject({ ...trace, investment_use_maintained_through_2025: false });
   reject({ ...trace, lender_2025_interest_total: 350 });
-  reject({ ...trace, interest_payments: [
-    trace.interest_payments[0], trace.interest_payments[0],
-  ] });
+  reject({
+    ...trace,
+    interest_payments: [
+      trace.interest_payments[0],
+      trace.interest_payments[0],
+    ],
+  });
   reject({ ...trace, direct_purchase_date: "2025-01-31" });
   reject(trace, { investment_interest_expense: 399 });
   reject(trace, {
