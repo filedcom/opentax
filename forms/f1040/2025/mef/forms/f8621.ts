@@ -4,6 +4,7 @@ import { PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { explainForm8621ExcessStatement } from "./f8621_excess_statement.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
@@ -91,6 +92,11 @@ function buildItem(
   if (currencies.size > 1) {
     throw new Error("Form 8621 Part V needs one line 15 currency per filing");
   }
+  explainForm8621ExcessStatement(line);
+  const section1291Amount = line.excessEvents.reduce(
+    (sum, event) => sum + event.amount_usd,
+    0,
+  );
   const children = [
     filer
       ? element("ShareholderPersonNm", filer.fullName ?? filer.nameLine1)
@@ -146,7 +152,13 @@ function buildItem(
       : "",
     shareValue(item),
     item.regime === PficRegime.EXCESS_DISTRIBUTION
-      ? element("Section1291Ind", "X")
+      ? element(
+        "Section1291Ind",
+        "X",
+        section1291Amount > 0
+          ? { section1291Amt: String(Math.round(section1291Amount)) }
+          : undefined,
+      )
       : "",
     item.regime === PficRegime.QEF ? element("Section1293Ind", "X") : "",
     item.regime === PficRegime.MTM ? element("Section1296Ind", "X") : "",

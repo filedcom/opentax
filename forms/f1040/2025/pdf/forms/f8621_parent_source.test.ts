@@ -1,8 +1,16 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
+import {
+  calculateExcessEvents,
+  ExcessEventKind,
+} from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
 import { form8621 } from "../../mef/forms/f8621.ts";
-import { projectForm8621Page1 } from "./f8621_parent_source.ts";
+import {
+  projectForm8621Page1,
+  projectForm8621ParentPages,
+} from "./f8621_parent_source.ts";
 
 const parentSource = {
   corporation_address: {
@@ -37,6 +45,18 @@ const item = itemSchema.parse({
   fmv_at_year_end: 20_000,
   parent_source: parentSource,
 });
+const filer = {
+  primarySSN: "123456789",
+  nameLine1: "Alex Taxpayer",
+  nameControl: "TAXP",
+  address: {
+    line1: "1 Test Way",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  },
+  filingStatus: FilingStatus.Single,
+};
 
 Deno.test("Form 8621 parent facts reconcile across source, native, and staged page 1", () => {
   const source = projectForm8621ParentSource(item);
@@ -51,10 +71,69 @@ Deno.test("Form 8621 parent facts reconcile across source, native, and staged pa
     native,
     "<SharesAcquiredDt>2025-03-17</SharesAcquiredDt>",
   );
-  const page = projectForm8621Page1(item);
+  const page = projectForm8621Page1({ item, excessEvents: [] }, filer);
   assertEquals(page["topmostSubform[0].Page1[0].f1_23[0]"], "Class A ordinary");
   assertEquals(page["topmostSubform[0].Page1[0].f1_25[0]"], "100");
   assertEquals(page["topmostSubform[0].Page1[0].c1_9[0]"], false);
+  assertEquals(page["topmostSubform[0].Page1[0].f1_8[0]"], "123456789");
+  assertEquals(page["topmostSubform[0].Page1[0].f1_27[0]"], undefined);
+});
+
+Deno.test("Form 8621 staged parent creates a distinct Part V for each source event", () => {
+  const source = {
+    kind: ExcessEventKind.Distribution as const,
+    holding_period_start: "2024-01-01",
+    first_pfic_tax_year: 2024,
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2024, amount_usd: 0 }],
+    current_year_distributions: [
+      { date: "2025-06-30", amount_usd: 4_000, year_charges: [] },
+      { date: "2025-12-31", amount_usd: 6_000, year_charges: [] },
+    ],
+    taxable_nonexcess_dividend_usd: 0,
+  };
+  const eventItem = itemSchema.parse({
+    ...item,
+    parent_source: {
+      ...parentSource,
+      shares_acquired_during_2025: false,
+      acquisition_date: undefined,
+    },
+    excess_events: [source],
+  });
+  const results = calculateExcessEvents(source);
+  const pages = projectForm8621ParentPages(
+    { item: eventItem, excessEvents: results },
+    filer,
+  );
+  const [native] = form8621.build({
+    items: [{ item: eventItem, excessEvents: results }],
+  });
+  assertStringIncludes(
+    native,
+    '<Section1291Ind section1291Amt="10000">X</Section1291Ind>',
+  );
+  assertEquals(pages.page1["topmostSubform[0].Page1[0].f1_27[0]"], "10000");
+  assertEquals(pages.partV.length, 2);
+  assertEquals(pages.partV[0]["topmostSubform[0].Page3[0].f3_7[0]"], "4000");
+  assertEquals(pages.partV[1]["topmostSubform[0].Page3[0].f3_7[0]"], "6000");
+  assertEquals(pages.partVI, {});
+  assertStringIncludes(
+    pages.holdingPeriodStatement ?? "",
+    "Holding-period allocation",
+  );
+  assertThrows(
+    () =>
+      projectForm8621ParentPages({
+        item: eventItem,
+        excessEvents: [{
+          ...results[0],
+          line16f_interest: results[0].line16f_interest + 1,
+        }, results[1]],
+      }, filer),
+    Error,
+    "differs from source events",
+  );
 });
 
 Deno.test("Form 8621 parent source rejects changed shares, election, and acquisition facts", () => {

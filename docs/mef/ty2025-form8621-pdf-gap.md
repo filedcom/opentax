@@ -58,23 +58,29 @@ boxes. A separate unregistered page-1 widget projection stages the same facts.
 Its source/native/widget positive and changed-share/election/date fixtures are
 written but unrun.
 
+The staged section 1291 parent projection now takes the final filer identity and
+address, recomputes page 1 line 5 from source-checked excess events for both
+native and PDF fields, and produces a distinct Part V field set for each
+positive distribution or disposition event. It includes the same rederived
+holding-period explanation used by the native and printable statements. A
+zero/nonexcess distribution is explicitly outside that bounded Part V path. Part
+VI fields are empty only when the typed source declares that no prior section
+1294 election is outstanding. Positive two-event and calculated-value-tamper
+fixtures are written but unrun.
+
 The issuer record is a locator and declared digest; the product does not yet
 fetch or authenticate its bytes. The current source does not prove historical
 section 1294 status, QEF Annual Information Statement amounts, marketability and
 adjusted basis for section 1296, or prior distribution and tax records for
-section 1291. Page 1 also needs the final filer identity/address and calculated
-line 5 amounts, while Part V needs one separately printed page per excess event
-and Part VI needs a proven ledger or absence. The parent PDF descriptor remains
-unregistered and its export gate stays active. Before positive PDF export, bind
-and verify the source document bytes, reconcile the conditional pages and
-statements, then verify the completed filing against the final return.
+section 1291. The parent PDF descriptor remains unregistered and its export gate
+stays active. Before positive PDF export, bind and verify the source document
+bytes and historical records, reconcile the conditional pages and statements,
+and verify the completed filing against the final return.
 
-**Decision for this build slice:** no positive PDF projection is reliable even
-for one QEF or MTM item without inventing or leaving blank material page-1 facts
-and potentially mislabeling a Part II election. Keep the print route open. To
-unblock a narrow path, add typed foreign-corporation/address/year and
-share-class records, dated acquisition/joint-ownership answers, explicit
-current-versus-prior election status and supporting QEF/MTM evidence, then
-reconcile each calculated line and required Part V/VI attachment to the native
-document and finalized return before mapping widgets. Absence of current income
-does not by itself establish that an annual Form 8621 is not required.
+**Decision for this build slice:** the staged projection covers only source
+records under section 1291 with positive Part V events or no events. It does not
+authenticate the underlying issuer/prior-year records and does not print a
+complete return packet. QEF and MTM need their distinct income, basis, and
+election evidence before either has a positive parent PDF route. Absence of
+current income does not by itself establish that an annual Form 8621 is not
+required.
