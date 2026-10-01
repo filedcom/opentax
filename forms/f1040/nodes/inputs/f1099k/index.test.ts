@@ -706,6 +706,33 @@ Deno.test("1099-K business route allocates box 1a and retains reviewed tip evide
   );
 });
 
+Deno.test("1099-K rejects an exact duplicate source row before doubling income or withholding", () => {
+  const issued = businessItem(10_000, {
+    account_number: "merchant-1",
+    box4_federal_withheld: 480,
+  });
+  assertThrows(
+    () => compute([issued, structuredClone(issued)]),
+    Error,
+    "same Form 1099-K source row cannot be entered twice",
+  );
+  assertThrows(
+    () =>
+      compute([issued, Object.fromEntries(Object.entries(issued).reverse())]),
+    Error,
+    "same Form 1099-K source row cannot be entered twice",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1099ks: [issued, {
+        ...issued,
+        account_number: "merchant-2",
+      }],
+    }).success,
+    true,
+  );
+});
+
 Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
   const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");

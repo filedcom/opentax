@@ -366,6 +366,29 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1099ks: z.array(itemSchema).min(1),
+}).superRefine(({ f1099ks }, ctx) => {
+  const seen = new Set<string>();
+  f1099ks.forEach((item, index) => {
+    const key = JSON.stringify(
+      item,
+      (_key, value) =>
+        value && typeof value === "object" && !Array.isArray(value)
+          ? Object.fromEntries(
+            Object.entries(value).sort(([left], [right]) =>
+              left.localeCompare(right)
+            ),
+          )
+          : value,
+    );
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1099ks", index],
+        message: "The same Form 1099-K source row cannot be entered twice",
+      });
+    }
+    seen.add(key);
+  });
 });
 
 type K99Item = z.infer<typeof itemSchema>;
