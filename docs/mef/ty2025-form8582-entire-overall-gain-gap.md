@@ -1,5 +1,38 @@
 # TY2025 Form 8582 entire disposition with overall gain
 
+## Direct Part I section 1231 sale prerequisite (2026-10-01, unrun)
+
+The requested first-year activity bought and sold in 2025 cannot have a
+direct Form 4797 Part I section 1231 real-property gain: the [2025 Form 4797
+instructions](https://www.irs.gov/instructions/i4797) require the property
+to be held **more than one year**. The passive sale source now rejects this
+classification explicitly. This does not rule out a separately evidenced
+tacked holding period; that would require a different source contract.
+
+For a genuine long-held rental acquired before 2025, the Schedule E source can
+now retain the purchase date/document, same durable activity ID and name,
+filed 2024 Schedule E reference, zero prior PAL assertion, and no-grouping
+assertion. A character-specific reviewer checks that these match a single
+fully taxable unrelated-party entire-interest closing, Form 4797 Part I sale
+gain, zero five-year section 1231 loss lookback, and a whole-dollar current
+Schedule E operating loss smaller than the gain. It yields a proposed Part IV
+or V row: sale gain in column (a), current operating loss in (b), and zero
+prior loss in (c). The gain retains Form 4797 Part I character and would flow
+to Schedule D if its section 1231 lookback is truly zero; the operating loss
+would remain on Schedule E and Schedule 1. The [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) require the entire
+activity's overall gain in Part IV or V while gains and losses stay on their
+normal reporting forms.
+
+This is a prerequisite, not a positive filing route. A reviewer-entered 2024
+Schedule E reference and zero-PAL assertion do not authenticate that return's
+acceptance or its activity and loss balance. Schedule E calculation and native
+Form 8582/Form 4797 and their PDFs reject the candidate until an executor-owned
+accepted-return source can prove those facts. Purchase, activity identity,
+closing, lookback, and prior-loss tamper fixtures are authored but unrun. The
+Form 1040/Schedule D and native/PDF positive joins remain open pending that
+source.
+
 ## First-year entire disposition with overall loss (written, unrun)
 
 A bounded type-B rental acquired and sold in 2025 can now release its current

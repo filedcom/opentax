@@ -332,6 +332,15 @@ export const form4797Pdf: PdfFormDescriptor = {
       fields.passive_property_sales ?? [],
     );
     if (
+      passiveSales.some((sale) =>
+        sale.part === "I" && sale.entire_activity_interest_disposed === true
+      )
+    ) {
+      throw new Error(
+        "Form 4797 PDF Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+      );
+    }
+    if (
       passiveSales.length === 1 &&
       passiveSales[0].entire_activity_interest_disposed === true
     ) {

@@ -111,6 +111,17 @@ export const itemSchema = z.object({
   // A property acquired in 2025 alone does not prove it was not grouped with
   // an older passive activity.
   first_year_activity_source: firstYearActivitySourceSchema.optional(),
+  // Pre-2025 rental history for a long-held direct Part I entire sale.
+  // References identify the evidence but do not authenticate the filed return.
+  pre2025_part1_entire_disposition_source: z.object({
+    activity_id: z.string().trim().min(1).max(64),
+    activity_name: z.string().trim().min(1),
+    activity_acquired_on: z.string().date(),
+    acquisition_document_reference: z.string().trim().min(1),
+    prior_year_schedule_e_document_reference: z.string().trim().min(1),
+    prior_year_unallowed_passive_loss: z.literal(0),
+    not_grouped_with_other_activity: z.literal(true),
+  }).strict().optional(),
   carry_to_8960: z.boolean().optional(),
   main_home_or_second_home: z.boolean().optional(),
   occupancy_percent: z.number().min(0).max(100).optional(),
@@ -393,9 +404,68 @@ export function qualifiedRetainedPropertySale(item: EItem): boolean {
         (item.prior_unallowed_passive_operating ?? 0);
 }
 
+/** Review a direct Part I entire-gain candidate without authorizing filing.
+ * Accepted prior-year activity and zero-PAL evidence is not yet authenticated. */
+export function reviewPre2025PartIEntireGainCandidate(item: EItem): {
+  activity_id: string;
+  part: "I";
+  sale_gain: number;
+  current_schedule_e_loss: number;
+  overall_gain: number;
+} | undefined {
+  const sale = item.passive_property_sales?.[0];
+  if (
+    !sale || sale.part !== "I" ||
+    sale.entire_activity_interest_disposed !== true
+  ) return undefined;
+  const source = item.pre2025_part1_entire_disposition_source;
+  const currentNet = computePropertyNet(item);
+  const saleGain = passiveSaleGain(sale);
+  if (
+    !source || item.passive_property_sales?.length !== 1 ||
+    (item.activity_type !== "A" && item.activity_type !== "B") ||
+    item.disposed_of !== true || !item.activity_id ||
+    item.activity_id !== source.activity_id ||
+    item.property_description !== source.activity_name ||
+    source.activity_acquired_on !== sale.acquired_on ||
+    source.activity_acquired_on >= "2025-01-01" ||
+    sale.activity_id !== item.activity_id ||
+    sale.activity_name !== item.property_description ||
+    !isQualifiedEntireSale(sale) ||
+    item.section_1231_lookback_source?.nonrecaptured_loss !== 0 ||
+    !Number.isSafeInteger(currentNet) || currentNet >= 0 ||
+    !Number.isSafeInteger(saleGain) || saleGain <= -currentNet ||
+    item.first_year_activity_source !== undefined ||
+    item.prior_unallowed_passive_operating !== undefined ||
+    item.prior_unallowed_passive_4797_part1 !== undefined ||
+    item.prior_unallowed_passive_4797_part2 !== undefined ||
+    item.prior_unallowed_at_risk !== undefined ||
+    item.operating_expenses_carryover !== undefined ||
+    item.prior_year_8582_source !== undefined ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    (item.section_1231_gain_loss ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Schedule E long-held Part I entire gain needs matching purchase, closing, filed prior activity, zero-PAL, section 1231 lookback, and loss-character sources",
+    );
+  }
+  return {
+    activity_id: item.activity_id,
+    part: "I",
+    sale_gain: saleGain,
+    current_schedule_e_loss: -currentNet,
+    overall_gain: saleGain + currentNet,
+  };
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 function validateItem(item: EItem): void {
+  if (reviewPre2025PartIEntireGainCandidate(item)) {
+    throw new Error(
+      "Schedule E long-held Part I entire disposition needs executor-owned authentication of the accepted prior-year activity and zero passive-loss balance",
+    );
+  }
   const k1Royalty = item.k1_royalty_source;
   const miscRoyalty = item.f1099m_royalty_source;
   if (

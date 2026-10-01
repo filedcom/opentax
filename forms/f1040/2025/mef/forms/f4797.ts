@@ -225,6 +225,14 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       const activity = matches[0];
+      if (
+        sale.part === "I" &&
+        sale.entire_activity_interest_disposed === true
+      ) {
+        throw new Error(
+          "Form 4797 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+        );
+      }
       const retainedPartI = passiveSales.length === 1 &&
         sale.part === "I" &&
         sale.entire_activity_interest_disposed === false &&

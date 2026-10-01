@@ -65,6 +65,17 @@ export const passivePropertySaleSchema = z.object({
   ));
   const sold = new Date(`${sale.sold_on}T00:00:00Z`);
   if (
+    sale.part === "I" && sale.acquired_on >= "2025-01-01" &&
+    sale.sold_on <= "2025-12-31"
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 4797 Part I section 1231 sale acquired and sold in 2025 cannot meet the more-than-one-year holding period",
+    });
+    return;
+  }
+  if (
     sale.sold_on < "2025-01-01" || sale.sold_on > "2025-12-31" ||
     sold <= acquired ||
     (sale.part === "I" && sold <= anniversary) ||

@@ -86,6 +86,17 @@ function linkedActivities(context: MefBuildContext): Array<{
   );
   if (
     scheduleE.schedule_es.some((item) =>
+      item.passive_property_sales?.some((sale) =>
+        sale.part === "I" && sale.entire_activity_interest_disposed === true
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+    );
+  }
+  if (
+    scheduleE.schedule_es.some((item) =>
       ((item.prior_unallowed_passive_operating ?? 0) > 0 ||
         (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
         (item.prior_unallowed_passive_4797_part2 ?? 0) > 0) &&
