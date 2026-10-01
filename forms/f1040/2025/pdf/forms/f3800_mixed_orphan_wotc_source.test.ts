@@ -59,7 +59,50 @@ const workOpportunity = {
   }],
 };
 
-function mixedReturn() {
+const commercialVehicle = {
+  vin: "1HGCM82633A004352",
+  vehicle_year: 2025,
+  vehicle_make: "Example",
+  vehicle_model: "Electric Van",
+  acquisition_date: "2025-09-30",
+  placed_in_service_date: "2025-09-30",
+  transferred_to_dealer: false,
+  resold_within_30_days: false,
+  acquired_for_use_not_resale: true,
+  credit_kind: "qualified_commercial_clean_vehicle" as const,
+  business_credit_subject_to_passive_activity_limit: false,
+  commercial: {
+    owned_by_taxpayer: true,
+    qualified_manufacturer: true,
+    original_use_begins_with_taxpayer: true,
+    claimed_new_clean_credit_for_vin: false,
+    primarily_used_in_us: true,
+    subject_to_depreciation: true,
+    vehicle_design: "street_vehicle" as const,
+    powered_partly_by_gas_or_diesel: false,
+    gvwr_pounds: 10_000,
+    cost_or_other_basis: 10_000,
+    section179_expense_deduction: 0,
+    incremental_cost: {
+      kind: "2025_light_street_safe_harbor" as const,
+      is_compact_car_phev: false,
+    },
+    propulsion: {
+      kind: "plug_in_electric" as const,
+      battery_capacity_kwh: 80,
+      externally_rechargeable: true,
+    },
+  },
+};
+const commercialSource = {
+  current_year_magi: { adjusted_gross_income: 300_000 },
+  prior_year_magi: { adjusted_gross_income: 100_000 },
+  filing_status: FilingStatus.Single,
+  prior_year_filing_status: FilingStatus.Single,
+  f8936s: [commercialVehicle],
+};
+
+function mixedReturn(includeCommercial = false) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: FilingStatus.Single,
@@ -90,6 +133,7 @@ function mixedReturn() {
     }],
     f8820: orphan,
     f5884: workOpportunity,
+    ...(includeCommercial ? { f8936: commercialSource } : {}),
   });
 }
 
@@ -181,6 +225,102 @@ Deno.test("mixed orphan-drug and work-opportunity Form 3800 PDF rejects source, 
                 ...row.metadata,
                 referenceDocumentId: parts.currentRows[0].metadata
                   .referenceDocumentId,
+              },
+            }
+            : row
+        ),
+      }),
+    Error,
+    "one filed self-earned Form 8820 source",
+  );
+});
+
+Deno.test("three distinct self-earned credits reconcile to Form 3800, Form 1040, native XML, and PDF", async () => {
+  const result = mixedReturn(true);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.f3800.f8820_credit.credit_amount, 1_975);
+  assertEquals(
+    pending.f3800.f8936_commercial_vehicle_credit.credit_amount,
+    3_000,
+  );
+  assertEquals(pending.f3800.f5884_credit.credit_amount, 2_400);
+  assertEquals(pending.f3800.allowed_credit, 7_375);
+  assertEquals(pending.schedule3.line6a_total, 7_375);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 7_375);
+  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line17, 4_975);
+  assertEquals(parts.lines.line37, 2_400);
+  assertEquals(parts.lines.line38, 7_375);
+  assertEquals(parts.currentRows.map((row) => row.line), ["1h", "1aa", "4b"]);
+  assertEquals(
+    new Set(parts.currentRows.map((row) => row.metadata.referenceDocumentId))
+      .size,
+    3,
+  );
+  for (const form of ["IRS8820", "IRS8936", "IRS5884", "IRS3800"]) {
+    assertStringIncludes(prepared.bundle.xml, `<${form} `);
+  }
+  const [printed] = form3800Pdf.instances!(
+    pending.f3800,
+    testFiler(),
+    pending,
+    parts,
+  );
+  assertEquals(printed[form3800PartIIIFields("1h").e], 1_975);
+  assertEquals(printed[form3800PartIIIFields("1aa").e], 3_000);
+  assertEquals(printed[form3800PartIIIFields("4b").e], 2_400);
+  assertEquals(printed[form3800PartIAndIIFields.line38], 7_375);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() >= 9,
+    true,
+  );
+});
+
+Deno.test("three-source Form 3800 PDF rejects vehicle, document, and final-tax drift", async () => {
+  const result = mixedReturn(true);
+  const pending = normalizeAllPending(result.pending);
+  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const parts = prepared.bundle.form3800Parts!;
+  for (
+    const drift of [
+      {
+        ...pending,
+        f8936: {
+          ...commercialSource,
+          f8936s: [{
+            ...commercialVehicle,
+            commercial: {
+              ...commercialVehicle.commercial,
+              cost_or_other_basis: 9_000,
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line20_nonrefundable_credits: 7_374 },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => form3800Pdf.instances!(pending.f3800, testFiler(), drift, parts),
+      Error,
+    );
+  }
+  assertThrows(
+    () =>
+      form3800Pdf.instances!(pending.f3800, testFiler(), pending, {
+        ...parts,
+        currentRows: parts.currentRows.map((row) =>
+          row.line === "1aa"
+            ? {
+              ...row,
+              metadata: {
+                ...row.metadata,
+                referenceDocumentId:
+                  parts.currentRows[0].metadata.referenceDocumentId,
               },
             }
             : row

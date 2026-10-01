@@ -125,7 +125,6 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8826_credit_entries?.length &&
       !source.f3468_trust_part_v_credit_entries?.length &&
       !source.f8936_new_vehicle_credit &&
-      !source.f8936_commercial_vehicle_credit &&
       !source.f8820_k1_credit_entries?.length &&
       !source.f8874_k1_credit_entries?.length &&
       !source.passive_source_allocations?.length &&
@@ -142,7 +141,16 @@ export const form3800Pdf: PdfFormDescriptor = {
       const wotcDetail = prepared.currentDetails.find((item) =>
         item.line === "4b"
       );
-      const expectedRows = wotcCredit > 0 ? 2 : 1;
+      const commercialCredit =
+        source.f8936_commercial_vehicle_credit?.credit_amount ?? 0;
+      const commercialRow = prepared.currentRows.find((item) =>
+        item.line === "1aa"
+      );
+      const commercialDetail = prepared.currentDetails.find((item) =>
+        item.line === "1aa"
+      );
+      const expectedRows = 1 + Number(wotcCredit > 0) +
+        Number(commercialCredit > 0);
       if (
         filed.subject_to_passive_activity_limit ||
         (filed.pass_through_credits?.length ?? 0) !== 0 ||
@@ -155,10 +163,10 @@ export const form3800Pdf: PdfFormDescriptor = {
         prepared.currentAmounts.length !== expectedRows ||
         prepared.currentDetails.length !== expectedRows ||
         prepared.currentRows.some((item) =>
-          item.line !== "1h" && item.line !== "4b"
+          item.line !== "1h" && item.line !== "1aa" && item.line !== "4b"
         ) ||
         prepared.currentDetails.some((item) =>
-          item.line !== "1h" && item.line !== "4b"
+          item.line !== "1h" && item.line !== "1aa" && item.line !== "4b"
         ) ||
         prepared.carryoverRows.length !== 0 ||
         row?.line !== "1h" || row.metadata.sourceCount !== 1 ||
@@ -181,11 +189,19 @@ export const form3800Pdf: PdfFormDescriptor = {
               row.metadata.referenceDocumentId ||
             wotcDetail?.sourceDocumentId !==
               wotcRow.metadata.referenceDocumentId)) ||
-        prepared.lines.line1 !== credit ||
-        prepared.lines.line6 !== credit ||
-        prepared.lines.line17 !== credit ||
+        (commercialCredit > 0 &&
+          (!commercialRow?.metadata.referenceDocumentId ||
+            commercialRow.metadata.referenceDocumentId ===
+              row.metadata.referenceDocumentId ||
+            commercialRow.metadata.referenceDocumentId ===
+              wotcRow?.metadata.referenceDocumentId ||
+            commercialDetail?.sourceDocumentId !==
+              commercialRow.metadata.referenceDocumentId)) ||
+        prepared.lines.line1 !== credit + commercialCredit ||
+        prepared.lines.line6 !== credit + commercialCredit ||
+        prepared.lines.line17 !== credit + commercialCredit ||
         (prepared.lines.line37 ?? 0) !== wotcCredit ||
-        prepared.lines.line38 !== credit + wotcCredit
+        prepared.lines.line38 !== credit + commercialCredit + wotcCredit
       ) {
         throw new Error(
           "Form 3800 PDF line 1h differs from one filed self-earned Form 8820 source",
@@ -319,7 +335,7 @@ export const form3800Pdf: PdfFormDescriptor = {
     if (
       source.f8936_commercial_vehicle_credit &&
       !source.f8936_new_vehicle_credit &&
-      !source.f8820_credit && !source.f8874_credit &&
+      !source.f8874_credit &&
       !source.f8835_credit_entries?.length &&
       !source.f8826_credit_entries?.length &&
       !source.f3468_trust_part_v_credit_entries?.length &&
@@ -344,7 +360,13 @@ export const form3800Pdf: PdfFormDescriptor = {
       );
       const wotcCredit = source.f5884_credit?.credit_amount ?? 0;
       const wotcRow = prepared.currentRows.find((row) => row.line === "4b");
-      const expectedRows = wotcCredit > 0 ? 2 : 1;
+      const orphanCredit = source.f8820_credit?.credit_amount ?? 0;
+      const orphanRow = prepared.currentRows.find((row) => row.line === "1h");
+      const orphanDetail = prepared.currentDetails.find((row) =>
+        row.line === "1h"
+      );
+      const expectedRows = 1 + Number(wotcCredit > 0) +
+        Number(orphanCredit > 0);
       if (
         filed.f8936s.length !== 1 || credit <= 0 ||
         vehicle?.business_credit_subject_to_passive_activity_limit !== false ||
@@ -355,12 +377,13 @@ export const form3800Pdf: PdfFormDescriptor = {
           JSON.stringify(source.f8936_commercial_vehicle_credit) ||
         rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
         prepared.currentRows.length !== expectedRows ||
+        prepared.currentAmounts.length !== expectedRows ||
         prepared.currentDetails.length !== expectedRows ||
         prepared.currentRows.some((row) =>
-          row.line !== "1aa" && row.line !== "4b"
+          row.line !== "1aa" && row.line !== "1h" && row.line !== "4b"
         ) ||
         prepared.currentDetails.some((row) =>
-          row.line !== "1aa" && row.line !== "4b"
+          row.line !== "1aa" && row.line !== "1h" && row.line !== "4b"
         ) ||
         rows[0].metadata.sourceCount !== 1 ||
         rows[0].metadata.referenceDocumentName !== "IRS8936" ||
@@ -368,6 +391,14 @@ export const form3800Pdf: PdfFormDescriptor = {
         (wotcCredit > 0 &&
           rows[0].metadata.referenceDocumentId ===
             wotcRow?.metadata.referenceDocumentId) ||
+        (orphanCredit > 0 &&
+          (!orphanRow?.metadata.referenceDocumentId ||
+            orphanRow.metadata.referenceDocumentId ===
+              rows[0].metadata.referenceDocumentId ||
+            orphanRow.metadata.referenceDocumentId ===
+              wotcRow?.metadata.referenceDocumentId ||
+            orphanDetail?.sourceDocumentId !==
+              orphanRow.metadata.referenceDocumentId)) ||
         details[0].sourceDocumentId !==
           rows[0].metadata.referenceDocumentId ||
         details[0].passThroughEin !== undefined ||
@@ -378,9 +409,11 @@ export const form3800Pdf: PdfFormDescriptor = {
         amounts[0].passiveBeforeLimit !== 0 ||
         amounts[0].passiveAfterLimit !== 0 ||
         amounts[0].transferOutCredit !== 0 ||
-        prepared.lines.line17 !== amounts[0].appliedCredit ||
+        prepared.lines.line17 !==
+          amounts[0].appliedCredit + orphanCredit ||
         (prepared.lines.line37 ?? 0) !== wotcCredit ||
-        prepared.lines.line38 !== amounts[0].appliedCredit + wotcCredit
+        prepared.lines.line38 !==
+          amounts[0].appliedCredit + orphanCredit + wotcCredit
       ) {
         throw new Error(
           "Form 3800 PDF line 1aa differs from one self-earned commercial Form 8936 source",

@@ -580,3 +580,19 @@ clinical expenses, employee hours, source-document linkage, and final tax
 amounts are rejected. These positive/tamper fixtures await the shared bulk
 run. This route does not claim transferred, passive, or carryforward credits;
 their evidence gates and Part V/VI overflow remain open.
+
+The bounded mixed route now also permits one separately filed self-earned
+Form 8936 Part V commercial-vehicle credit with those Form 8820 and Form 5884
+sources. The three credits occupy Form 3800 Part III lines 1h, 1aa, and 4b;
+the [official 2025 form](https://www.irs.gov/pub/irs-prior/f3800--2025.pdf)
+prints those distinct lines, and the
+[2025 instructions](https://www.irs.gov/instructions/i3800) require their
+current-year tax use to reconcile through Part II. Both direct PDF source
+guards now require three distinct filed source-document IDs, the source
+credits and native rows, standard-credit line 17, specified-credit line 37,
+line 38, Schedule 3, and Form 1040 line 20. The authored $1,975 + $3,000 +
+$2,400 example reaches $7,375; vehicle basis, document linkage, and final
+credit tampering are rejected. Source/native/PDF and filled-packet fixtures
+remain unrun until the shared implementation batch ends. This combination
+adds no Part V rows because each Part III line has one source; Part V/VI
+overflow and transfer/carryforward evidence remain open.
