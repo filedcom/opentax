@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **314 completed bounded items**, with
+and no completed checklist items. The **315 completed bounded items**, with
 their source and validation limits, are in the
 [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -16,7 +16,7 @@ form or a release gate.
 | Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
 | Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
 | Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 298 | Extend bounded routes to every retained form branch and source combination. |
+| Named tax-form gaps | 20 | 299 | Extend bounded routes to every retained form branch and source combination. |
 | Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
 | Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
 | IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
@@ -57,6 +57,8 @@ One Alaska-resident taxpayer's Marketplace policy now joins a separate Texas
 policy for a dependent, using Alaska family-size poverty figures.
 Three passive foreign-interest payers now populate all Form 1116 country
 columns and reconcile the credit through Schedule 3 and Form 1040.
+Form 8283 now stages filed-prior-return and acknowledgment bytes for one
+artwork carryover, while positive export awaits authenticated acceptance.
 A purchased short-term nonpublic stock gift now carries its basis-limited
 Form 8283 claim and reviewed issuer details through native and PDF output.
 One traced Form 4952 securities loan now reconciles four separate interest
