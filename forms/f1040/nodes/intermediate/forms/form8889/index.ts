@@ -985,7 +985,6 @@ function nonQualifiedPenalty(
       Number(age.date_of_birth.slice(5, 7)) - 1,
       Number(age.date_of_birth.slice(8, 10)) - 1,
     )).toISOString().slice(0, 10);
-    const disabilityBeforeAge65 = disability.disability_date < age65;
     const grossByForm = new Map<string, number>();
     for (const row of rows) {
       grossByForm.set(
@@ -1015,12 +1014,11 @@ function nonQualifiedPenalty(
       (row.rollover_excluded_amount ?? 0) > 0
     );
     if (
-      !validDate(age65) ||
+      !validDate(age65) || age65 === disability.disability_date ||
       (exclusions !== undefined &&
         (!rollover || exclusions.timely_excess_withdrawal !== undefined)) ||
       (rollover !== undefined &&
-        (disabilityBeforeAge65 ||
-          rows.some((row) => row.rollover_excluded_amount === undefined) ||
+        (rows.some((row) => row.rollover_excluded_amount === undefined) ||
           rolloverRows.length !== 1 ||
           !ageRows.some((row) => row === rolloverRows[0]) ||
           rolloverRows[0]?.rollover_excluded_amount !== rollover.amount ||
@@ -1048,18 +1046,11 @@ function nonQualifiedPenalty(
         (rollover === undefined && row.rollover_excluded_amount !== undefined)
       ) ||
       ageRows.some((row) =>
-        disabilityBeforeAge65
-          ? row.distribution_date >= disability.disability_date &&
-            row.distribution_date < age65
-          : row.distribution_date >= disability.disability_date
+        row.distribution_date >= disability.disability_date
       ) ||
       disabilityRows.some((row) =>
-        row.distribution_date < disability.disability_date ||
-        (disabilityBeforeAge65 && row.distribution_date >= age65)
+        row.distribution_date < disability.disability_date
       ) ||
-      (disabilityBeforeAge65 &&
-        (!ageRows.some((row) => row.distribution_date >= age65) ||
-          !disabilityRows.some((row) => row.distribution_date < age65))) ||
       forms.some((form) =>
         grossByForm.get(form.source_reference) !==
           form.box1_gross_distribution ||

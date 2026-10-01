@@ -51,19 +51,21 @@ Form 1040 line 8, and native/PDF Form 8889. Changed disability date, Form
 cannot span the two dated ledgers.
 
 The complementary dated route covers disability before age 65. The code-3 Form
-1099-SA transactions fall after disability and before the 65th birthday; code-1
-transactions may fall before disability or after age 65. Each source belongs to
-exactly one ledger, and the taxable portions after the applicable event reach
-line 17a while earlier taxable withdrawals retain the 20% tax. The positive
+1099-SA transactions fall after disability, including after the 65th birthday;
+code-1 transactions must precede disability. This follows the
+[2025 Form 1099-SA code instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf):
+code 1 applies if no other code applies, while code 3 applies after disability.
+Each source belongs to exactly one ledger, and the taxable portions after
+disability reach line 17a while earlier taxable withdrawals retain the 20% tax.
+Age 65 does not add a further penalty exception after disability. The positive
 fixture joins Schedule 1/2 and Form 1040 to native/PDF lines; changed disability
 date, distribution code, and filed tax are rejected.
 
-For the age-65-before-disability order, one owner may also allocate a single
-HSA-to-HSA rollover on line 14b. The excluded amount must belong to exactly one
-code-1, dated age-ledger transaction and match the rollover's distribution
-source, Form 1099-SA, date, and amount. Every dated transaction marks its
-rollover amount, including zero. The deposit source is distinct, and the
-existing
+For either event order, one owner may also allocate a single HSA-to-HSA rollover
+on line 14b. The excluded amount must belong to exactly one code-1, dated
+age-ledger transaction and match the rollover's distribution source, Form
+1099-SA, date, and amount. Every dated transaction marks its rollover amount,
+including zero. The deposit source is distinct, and the existing
 [60-day redeposit and same-beneficiary rules](https://www.irs.gov/instructions/i8889)
 apply. Line 16 subtracts the rollover and qualified medical expense amounts
 before line 17a/17b allocation. The positive native/PDF fixture and altered
@@ -72,10 +74,15 @@ validation. For these same-owner combined exceptions, native/PDF export also
 checks Form 1040 line 23 against the Form 8889 Part II penalty plus any Part III
 tax; other sources of line 23 tax remain outside this bounded route.
 
-Same-day event ordering, code-3 distributions after age 65 in the
-disability-first route, its rollover combination, timely excess withdrawal,
-multiple paired rollovers, death, and nonspouse beneficiary rules remain open.
-Source references and disability confirmation are entered evidence, not
-independently authenticated medical or trustee records. Focused calculator, MeF,
-and PDF cases are written but intentionally unrun pending the agreed full test
-batch; XSD, visual PDF, and ATS gates also remain open.
+When disability comes first, the rollover transaction must precede disability.
+The authored fixture uses a January code-1 rollover and later code-3
+distributions on both sides of the 65th birthday. Only the remaining taxable
+January dollars incur the 20% charge. Changed rollover date, transaction
+allocation, and Form 1040 line 23 are rejected.
+
+Same-day event ordering, rollovers after disability in that order, timely excess
+withdrawal, multiple paired rollovers, death, and nonspouse beneficiary rules
+remain open. Source references and disability confirmation are entered evidence,
+not independently authenticated medical or trustee records. Focused calculator,
+MeF, and PDF cases are written but intentionally unrun pending the agreed full
+test batch; XSD, visual PDF, and ATS gates also remain open.
