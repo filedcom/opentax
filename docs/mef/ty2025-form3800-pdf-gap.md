@@ -346,6 +346,19 @@ instructions](https://www.irs.gov/instructions/i3800) govern the bounded
 current-year claim. Additional passive activities, source kinds, unallowed
 prior-year imports, and issuer-byte authentication remain open.
 
+The same two-investment Form 8874 route now also covers one partially allowed
+passive current-year credit. A $5,000 passive QEI credit is limited to $4,412
+by the source-replayed Form 8582-CR ordinary line-6 worksheet, while a
+separate $300 nonpassive investment is fully used. The 2025 Worksheet 9
+ledger retains the $588 passive remainder by activity and origin year. Form
+3800 Part III line 1i
+retains the full passive amount before the limit, only its allowed amount
+after the limit, and the separate nonpassive amount; Parts I/II, Schedule 3,
+Form 1040, native XML, and the nine-page PDF use the $4,712 allowed sum. Positive,
+changed passive QEI amount, and prepared-row tamper fixtures are authored
+for the deferred bulk run. Accepted prior-year import and future use of this
+unallowed balance remain closed.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional

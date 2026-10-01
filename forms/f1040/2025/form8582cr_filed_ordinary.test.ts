@@ -495,6 +495,105 @@ Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 li
   );
 });
 
+Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive investment and retains the 2025 remainder", async () => {
+  const result = filedReturn(100_000, [], 5_000);
+  const pending = normalizeAllPending(result.pending);
+  const lines = calculateForm8582CR(pending.form8582cr);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  const allowedPassive = lines.line37;
+  const allowedReturn = allowedPassive + 300;
+  assertEquals(taxAll, 17_867);
+  assertEquals(taxWithout, 13_455);
+  assertEquals(allowedPassive, 4_412);
+  assertEquals(allowedReturn, 4_712);
+  assert(allowedPassive > 0 && allowedPassive < 5_000);
+  assertEquals(ledger.allowed_credit, allowedPassive);
+  assertEquals(ledger.unallowed_credit, 5_000 - allowedPassive);
+  assertEquals(ledger.rows[0].originating_tax_year, 2025);
+  assertEquals(
+    ledger.rows[0].source.activity_reference,
+    "community-investment-1",
+  );
+  assertEquals(pending.schedule3.line6a_total, allowedReturn);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, allowedReturn);
+  const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(passivePdf.line4a, 5_000);
+  assertEquals(passivePdf.line7, 5_000 - allowedPassive);
+  assertEquals(passivePdf.line37, allowedPassive);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line1, 300);
+  assertEquals(parts.lines.line2, 5_000);
+  assertEquals(parts.lines.line3, allowedPassive);
+  assertEquals(parts.lines.line6, allowedReturn);
+  assertEquals(parts.lines.line17, allowedReturn);
+  assertEquals(parts.lines.line38, allowedReturn);
+  assertEquals(parts.currentRows.length, 1);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
+  assertEquals(parts.currentAmounts[0].nonpassiveCredit, 300);
+  assertEquals(parts.currentAmounts[0].passiveBeforeLimit, 5_000);
+  assertEquals(parts.currentAmounts[0].passiveAfterLimit, allowedPassive);
+  assertEquals(parts.currentAmounts[0].appliedCredit, allowedReturn);
+  assertEquals(parts.passiveCurrentDetails[0].source.beforePassiveLimit, 5_000);
+  assertEquals(
+    parts.passiveCurrentDetails[0].source.afterPassiveLimit,
+    allowedPassive,
+  );
+  assertEquals(parts.passiveCurrentDetails[0].source.unusedAfterTaxLimit, 0);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    2,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1i").g], allowedReturn);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], allowedReturn);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const investments = pending.f8874.investments as Record<string, unknown>[];
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(pending.form8582cr, {
+        ...pending,
+        f8874: {
+          investments: [{
+            ...investments[0],
+            qualified_equity_investment_amount: 99_000,
+          }, investments[1]],
+        },
+      }),
+    Error,
+    "credit differs from the filed passive Form 8874 investment",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        filed.f3800,
+        extractFilerIdentity(general),
+        filed,
+        {
+          ...parts,
+          currentAmounts: [{
+            ...parts.currentAmounts[0],
+            passiveAfterLimit: allowedPassive + 1,
+          }],
+        },
+      ),
+    Error,
+    "mixed passive/nonpassive Form 8874 row",
+  );
+});
+
 Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Form 1040, native and PDF", async () => {
   const result = filedReturn(10_000, [1_000]);
   const pending = normalizeAllPending(result.pending);

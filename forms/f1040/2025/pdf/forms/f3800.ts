@@ -284,7 +284,7 @@ export const form3800Pdf: PdfFormDescriptor = {
           ).length !== 1 ||
         nonpassiveForm8874Credit <= 0 ||
         credits.nonpassiveCredit !== nonpassiveForm8874Credit ||
-        credits.passiveCredit !== passive.line37 ||
+        credits.passiveCredit !== passive.partI.line5 ||
         JSON.stringify(rawSource.f8874_credit) !==
           JSON.stringify(source.f8874_credit) ||
         JSON.stringify(rawSource.passive_source_allocations) !==

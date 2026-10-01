@@ -40,6 +40,11 @@ with the allowed passive credit plus any one bounded nonpassive Form 8874
 investment. The PDF prints Parts I and V: line 4a/4c, lines 5-7,
 and line 37; unused special-allowance fields stay blank. Its AcroForm mappings
 follow the official two-page blank, including page 2 `f2_21` for line 37.
+The two-investment route also admits a partially allowed current-year passive
+credit: its Worksheet 9 row retains the 2025 unallowed balance, Form 3800
+line 1i uses the allowed passive amount beside the fully used ordinary amount,
+and the final-return join uses their sum. This does not open a prior-year
+carryover import or establish accepted-return evidence for future use.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
 The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
