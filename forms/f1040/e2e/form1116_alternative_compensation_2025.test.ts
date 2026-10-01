@@ -27,6 +27,13 @@ const alternative = {
   alternative_foreign_source_usd: 140_000,
   ordinary_us_source_usd: 180_000,
   ordinary_foreign_source_usd: 120_000,
+  ordinary_time_basis: {
+    us_service_days: 60,
+    foreign_service_days: 40,
+    workday_ledger_document_reference: "2025 employee workday ledger",
+    salary_only_no_fringe_benefits_confirmed: true,
+    single_2025_compensation_period_confirmed: true,
+  },
   source_document_reference: wageReference,
 };
 const currency = {
@@ -183,6 +190,33 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
       ),
     Error,
   );
+  const changedWorkdays = structuredClone(result.pending);
+  (changedWorkdays.fec as {
+    fecs: Array<{
+      alternative_compensation_sourcing: {
+        ordinary_time_basis: { foreign_service_days: number };
+      };
+    }>;
+  }).fecs[0].alternative_compensation_sourcing.ordinary_time_basis
+    .foreign_service_days = 50;
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        changedWorkdays.form_1116!,
+        changedWorkdays,
+      ),
+    Error,
+    "needs the foreign-employer compensation source",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(buildPending(changedWorkdays), {
+        filer,
+        attachments: [],
+      }),
+    Error,
+    "needs the foreign-employer compensation source",
+  );
 });
 
 Deno.test("two owner-matched foreign employers establish worldwide compensation for one alternative wage item", async () => {
@@ -200,6 +234,11 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
         compensation_item_total_usd: 200_000,
         alternative_us_source_usd: 60_000,
         ordinary_us_source_usd: 80_000,
+        ordinary_time_basis: {
+          ...alternative.ordinary_time_basis,
+          us_service_days: 40,
+          foreign_service_days: 60,
+        },
         alternative_allocation_computation:
           "140000 of 200000 salary sourced to Germany",
       },
@@ -272,6 +311,11 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
         compensation_item_total_usd: 200_000,
         alternative_us_source_usd: 60_000,
         ordinary_us_source_usd: 80_000,
+        ordinary_time_basis: {
+          ...alternative.ordinary_time_basis,
+          us_service_days: 40,
+          foreign_service_days: 60,
+        },
         alternative_allocation_computation:
           "140000 of 200000 salary sourced to Germany",
       },
@@ -388,6 +432,11 @@ for (
             compensation_item_total_usd: 200_000,
             alternative_us_source_usd: 60_000,
             ordinary_us_source_usd: 80_000,
+            ordinary_time_basis: {
+              ...alternative.ordinary_time_basis,
+              us_service_days: 40,
+              foreign_service_days: 60,
+            },
             alternative_allocation_computation:
               "140000 of 200000 salary sourced to Germany",
           },

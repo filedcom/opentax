@@ -33,6 +33,13 @@ const alternativeBasis = {
   alternative_foreign_source_usd: 140_000,
   ordinary_us_source_usd: 180_000,
   ordinary_foreign_source_usd: 120_000,
+  ordinary_time_basis: {
+    us_service_days: 60,
+    foreign_service_days: 40,
+    workday_ledger_document_reference: "2025 employee workday ledger",
+    salary_only_no_fringe_benefits_confirmed: true,
+    single_2025_compensation_period_confirmed: true,
+  },
   source_document_reference: "2025 employer project ledger",
 };
 const paidTaxCurrency = {
@@ -69,6 +76,63 @@ Deno.test("fec: alternative employee compensation sourcing follows the general-c
     (form?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
       .foreign_tax_currency,
     paidTaxCurrency,
+  );
+});
+
+Deno.test("fec: ordinary salary comparison requires a matching workday ledger", () => {
+  const item = minimalItem({
+    compensation_usd: 300_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference:
+      alternativeBasis.source_document_reference,
+    foreign_tax_paid_usd: 2_000,
+    foreign_service_compensation_usd: 140_000,
+    foreign_tax_irs_country_code: "GM",
+    foreign_tax_paid_or_accrued_date: "2025-12-01",
+    foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+    foreign_tax_currency: paidTaxCurrency,
+    alternative_compensation_sourcing: alternativeBasis,
+  });
+  assertEquals(compute([item]).outputs.length > 0, true);
+  const wrongDays = {
+    ...alternativeBasis,
+    ordinary_time_basis: {
+      ...alternativeBasis.ordinary_time_basis,
+      foreign_service_days: 50,
+    },
+  };
+  assertThrows(
+    () => compute([{ ...item, alternative_compensation_sourcing: wrongDays }]),
+    Error,
+    "ordinary U.S./foreign salary comparison must match",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        alternative_compensation_sourcing: {
+          ...alternativeBasis,
+          ordinary_time_basis: {
+            ...alternativeBasis.ordinary_time_basis,
+            workday_ledger_document_reference: "",
+          },
+        },
+      }]),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        alternative_compensation_sourcing: {
+          ...alternativeBasis,
+          ordinary_time_basis: {
+            ...alternativeBasis.ordinary_time_basis,
+            salary_only_no_fringe_benefits_confirmed: false,
+          },
+        },
+      }]),
+    Error,
   );
 });
 
@@ -118,6 +182,11 @@ Deno.test("fec: same employee's second foreign-employer wage proves the line 1b 
       compensation_item_total_usd: 200_000,
       alternative_us_source_usd: 60_000,
       ordinary_us_source_usd: 80_000,
+      ordinary_time_basis: {
+        ...alternativeBasis.ordinary_time_basis,
+        us_service_days: 40,
+        foreign_service_days: 60,
+      },
     },
   });
   const second = minimalItem({
@@ -166,6 +235,11 @@ Deno.test("fec: four or five distinct owner-matched wage records prove the alter
       compensation_item_total_usd: 200_000,
       alternative_us_source_usd: 60_000,
       ordinary_us_source_usd: 80_000,
+      ordinary_time_basis: {
+        ...alternativeBasis.ordinary_time_basis,
+        us_service_days: 40,
+        foreign_service_days: 60,
+      },
     },
   });
   const others = Array.from({ length: 4 }, (_, index) =>
@@ -246,6 +320,11 @@ Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or w
           compensation_item_total_usd: 200_000,
           alternative_us_source_usd: 60_000,
           ordinary_us_source_usd: 80_000,
+          ordinary_time_basis: {
+            ...alternativeBasis.ordinary_time_basis,
+            us_service_days: 40,
+            foreign_service_days: 60,
+          },
         },
       })]),
     Error,

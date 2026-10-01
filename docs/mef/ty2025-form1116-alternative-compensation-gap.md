@@ -1,5 +1,28 @@
 # TY2025 Form 1116 line 1b alternative compensation source
 
+## Ordinary time-basis workday reconciliation (staged, unrun)
+
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+require the line 1b statement to compare the U.S. and foreign amounts under the
+alternative basis with the ordinary time or geographical basis. [Publication
+514 (2025)](https://www.irs.gov/publications/p514) ordinarily sources employee
+salary, other than fringe benefits, by foreign service days divided by total
+service days. The source contract now admits only one 2025 salary compensation
+period with whole service days and an identified workday ledger. It recomputes
+the ordinary foreign amount from those days at cent precision and requires the
+ordinary U.S. amount to be the complement. Zero or more than 365 service days,
+missing ledger identity, fringe benefits, and a mismatched ordinary comparison
+fail before the Form 1116 credit is calculated. The existing native line 1b
+statement and PDF project the checked comparison, and both reject an altered
+foreign-employer source at filing time. Positive full-return and source/native/
+PDF tamper fixtures are authored for the deferred bulk gate.
+
+The workday ledger reference is a reviewed assertion, not authenticated
+document bytes. This does not prove that the alternative project-location basis
+is more accurate, or cover fractional service days, separate service periods,
+multi-year pay, fringe benefits, W-2 wages, and spouse compensation. Those
+cases remain outside the bounded route.
+
 Original build-pass checkpoint (2026-09-28; test status superseded below). The
 [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
 line 1b when an employee has at least $250,000 of worldwide compensation and

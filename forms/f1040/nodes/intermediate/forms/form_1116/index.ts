@@ -170,6 +170,13 @@ export const alternativeCompensationSourcingSchema = z.object({
   alternative_foreign_source_usd: z.number().finite().nonnegative(),
   ordinary_us_source_usd: z.number().finite().nonnegative(),
   ordinary_foreign_source_usd: z.number().finite().nonnegative(),
+  ordinary_time_basis: z.object({
+    us_service_days: z.number().int().nonnegative(),
+    foreign_service_days: z.number().int().nonnegative(),
+    workday_ledger_document_reference: z.string().trim().min(1),
+    salary_only_no_fringe_benefits_confirmed: z.literal(true),
+    single_2025_compensation_period_confirmed: z.literal(true),
+  }).strict(),
   source_document_reference: z.string().trim().min(1),
 }).strict().superRefine((item, ctx) => {
   const cents = (amount: number) => Math.round(amount * 100);
@@ -185,6 +192,31 @@ export const alternativeCompensationSourcingSchema = z.object({
       path: ["compensation_item_total_usd"],
       message:
         "Form 1116 line 1b ordinary and alternative U.S./foreign amounts must each equal the specific compensation total",
+    });
+  }
+  const { us_service_days, foreign_service_days } = item.ordinary_time_basis;
+  const serviceDays = us_service_days + foreign_service_days;
+  if (serviceDays === 0 || serviceDays > 365) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ordinary_time_basis"],
+      message:
+        "Form 1116 ordinary time basis needs 1 to 365 service days in 2025",
+    });
+    return;
+  }
+  const ordinaryForeignCents = Math.round(
+    total * foreign_service_days / serviceDays,
+  );
+  if (
+    cents(item.ordinary_foreign_source_usd) !== ordinaryForeignCents ||
+    cents(item.ordinary_us_source_usd) !== total - ordinaryForeignCents
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ordinary_time_basis"],
+      message:
+        "Form 1116 ordinary U.S./foreign salary comparison must match the documented service-day allocation",
     });
   }
 });

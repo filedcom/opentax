@@ -285,6 +285,13 @@ Deno.test({
           alternative_foreign_source_usd: 140_000,
           ordinary_us_source_usd: 180_000,
           ordinary_foreign_source_usd: 120_000,
+          ordinary_time_basis: {
+            us_service_days: 60,
+            foreign_service_days: 40,
+            workday_ledger_document_reference: "2025 employee workday ledger",
+            salary_only_no_fringe_benefits_confirmed: true,
+            single_2025_compensation_period_confirmed: true,
+          },
           source_document_reference: "2025 employer project ledger",
         },
       }],
@@ -324,6 +331,14 @@ Deno.test({
               alternative_foreign_source_usd: 140_000,
               ordinary_us_source_usd: 180_000,
               ordinary_foreign_source_usd: 120_000,
+              ordinary_time_basis: {
+                us_service_days: 60,
+                foreign_service_days: 40,
+                workday_ledger_document_reference:
+                  "2025 employee workday ledger",
+                salary_only_no_fringe_benefits_confirmed: true,
+                single_2025_compensation_period_confirmed: true,
+              },
               source_document_reference: "2025 employer project ledger",
             },
           }],
