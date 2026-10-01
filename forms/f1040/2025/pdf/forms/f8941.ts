@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
 
 // Inspected on the IRS September 2025 fillable one-page Form 8941.
@@ -41,5 +42,42 @@ export const form8941Pdf: PdfFormDescriptor = {
       shop_marketplace_identifier: source.shop_marketplace_identifier,
       employment_ein: source.employment_ein,
     };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error("Form 8941 PDF needs the prepared Form 3800 document");
+    }
+    const { lines } = reconcileForm8941DocumentSource(
+      allPending.f8941,
+      allPending,
+    );
+    const rows = prepared.currentRows.filter((row) => row.line === "4h");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "4h");
+    const details = prepared.currentDetails.filter((row) => row.line === "4h");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      fields.line16 !== lines.line16 ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8941" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      detail.credit !== lines.line16 ||
+      amount.nonpassiveCredit !== lines.line16 ||
+      amount.totalCredit !== lines.line16 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit ||
+      amount.appliedCredit !== allPending.f3800.form8941_applied_credit
+    ) {
+      throw new Error("Form 8941 PDF differs from filed Form 3800 line 4h");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
 };

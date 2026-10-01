@@ -103,6 +103,70 @@ Deno.test("Form 8941 line 16 has one specified Form 3800 line 4h and Part V sour
   );
 });
 
+Deno.test("Form 8941 printable copy binds Form 3800 line 4h document and final credit", () => {
+  const filed = form8941FiledFixture();
+  const pending = {
+    ...filed,
+    schedule3: { line6a_total: 11_698, line8_total: 11_698 },
+    f1040: { line20_nonrefundable_credits: 11_698 },
+  };
+  const prepared = buildForm3800NonpassiveParts({
+    tax: {
+      filingStatus: FilingStatus.Single,
+      regularTax: 40_000,
+      alternativeMinimumTax: 0,
+      foreignTaxCredit: 0,
+      priorAllowableCredits: 0,
+      tentativeMinimumTax: 20_000,
+      standardCredit: 0,
+      specifiedCredit: 11_698,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
+    },
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
+    form8941: {
+      credit: 11_698,
+      appliedCredit: 11_698,
+      documentId: "IRS8941_1",
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  const fields = form8941Pdf.projectFields!(filed.f8941, pending);
+  assertEquals(
+    form8941Pdf.instances!(fields, undefined, pending, prepared),
+    [fields],
+  );
+  assertThrows(() => form8941Pdf.instances!(fields, undefined, pending));
+  assertThrows(() =>
+    form8941Pdf.instances!(fields, undefined, pending, {
+      ...prepared,
+      currentRows: prepared.currentRows.map((row) => ({
+        ...row,
+        metadata: { ...row.metadata, referenceDocumentId: "IRS8941_OTHER" },
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8941Pdf.instances!(fields, undefined, pending, {
+      ...prepared,
+      currentAmounts: prepared.currentAmounts.map((row) => ({
+        ...row,
+        appliedCredit: 11_697,
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8941Pdf.instances!(fields, undefined, {
+      ...pending,
+      f1040: { line20_nonrefundable_credits: 11_697 },
+    }, prepared)
+  );
+});
+
 Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and source tampering", () => {
   const filed = form8941FiledFixture();
   const filer = { ...testFiler(), primarySSN: filed.f8941.owner_ssn };

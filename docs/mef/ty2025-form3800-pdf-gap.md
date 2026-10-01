@@ -648,3 +648,12 @@ and finalized Form 1040 line 20. Authored fixtures alter the document ID,
 credit, and final return; they await the bulk run. The current
 [IRS Form 8844](https://www.irs.gov/pub/irs-pdf/f8844.pdf) directs its line 4
 to Form 3800 Part III line 3. This adds no new eligibility or payroll proof.
+
+The Form 8941 printable copy now checks the prepared Form 3800 Part III line
+4h row, current amount, and detail against its filed IRS8941 document ID,
+Form 8941 line 16 credit, and applied credit. It also follows Form 3800 line
+38 through Schedule 3 to finalized Form 1040 line 20. Positive and changed
+document-ID, applied-credit, and final-return fixtures await the bulk run.
+The [official 2025 Form 8941](https://www.irs.gov/pub/irs-prior/f8941--2025.pdf)
+directs its line 16 to Form 3800 Part III line 4h. This does not authenticate
+SHOP issuer records or widen the bounded direct-employer claim.
