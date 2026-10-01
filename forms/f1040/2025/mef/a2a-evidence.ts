@@ -68,6 +68,48 @@ export interface A2aInboundEvidenceInput {
 
 const encoder = new TextEncoder();
 
+function oneXmlValue(source: string, tag: string): string | undefined {
+  const matches = [
+    ...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g")),
+  ];
+  return matches.length === 1 ? matches[0][1] : undefined;
+}
+
+function assertSendSubmissionArchive(
+  submissionId: string,
+  bytes: Uint8Array,
+): void {
+  let archive: Record<string, Uint8Array>;
+  try {
+    archive = unzipSync(bytes);
+  } catch {
+    throw new Error(`A2A Send submission ZIP is unreadable: ${submissionId}`);
+  }
+  const manifestBytes = archive["manifest/manifest.xml"];
+  const xmlBytes = archive["xml/submission.xml"];
+  if (!manifestBytes || !xmlBytes) {
+    throw new Error(
+      `A2A Send submission lacks manifest or return XML: ${submissionId}`,
+    );
+  }
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const manifest = decoder.decode(manifestBytes);
+  const xml = decoder.decode(xmlBytes);
+  const tin = oneXmlValue(manifest, "TIN");
+  if (
+    oneXmlValue(manifest, "SubmissionId") !== submissionId ||
+    oneXmlValue(manifest, "TaxYr") !== "2025" ||
+    oneXmlValue(manifest, "GovernmentCd") !== "IRS" ||
+    oneXmlValue(manifest, "FederalSubmissionTypeCd") !== "1040" ||
+    !tin || !/^\d{9}$/.test(tin) ||
+    oneXmlValue(xml, "PrimarySSN") !== tin
+  ) {
+    throw new Error(
+      `A2A Send submission manifest or taxpayer differs: ${submissionId}`,
+    );
+  }
+}
+
 function assertArchivedDocumentInventory(
   xml: string,
   archive: Readonly<Record<string, Uint8Array>>,
@@ -191,7 +233,8 @@ export async function recordA2aSendPackage(
   const bodyIds = [...input.package.sendSubmissionsRequestXml.matchAll(
     /<SubmissionId>([^<]+)<\/SubmissionId>/g,
   )].map((match) => match[1]);
-  const archiveNames = Object.keys(unzipSync(input.package.containerZipBytes));
+  const container = unzipSync(input.package.containerZipBytes);
+  const archiveNames = Object.keys(container);
   if (
     bodyIds.length !== record.submissionIds.length ||
     archiveNames.length !== record.submissionIds.length ||
@@ -202,6 +245,9 @@ export async function recordA2aSendPackage(
     throw new Error(
       "A2A Send package body and container Submission IDs differ",
     );
+  }
+  for (const id of record.submissionIds) {
+    assertSendSubmissionArchive(id, container[`${id}.zip`]);
   }
   const key = await sha256(encoder.encode(record.messageId));
   await writeRecord(root, "requests", key, record, {
@@ -313,20 +359,14 @@ export async function readA2aArchivedSubmission(
   );
   const xml = new TextDecoder("utf-8", { fatal: true }).decode(xmlBytes);
   assertArchivedDocumentInventory(xml, archive);
-  const one = (source: string, tag: string): string | undefined => {
-    const matches = [
-      ...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g")),
-    ];
-    return matches.length === 1 ? matches[0][1] : undefined;
-  };
   const xmlSha256 = await sha256(xmlBytes);
   if (
-    one(manifest, "SubmissionId") !== identity.submissionId ||
-    one(manifest, "TIN") !== identity.taxpayerSsn ||
-    one(manifest, "TaxYr") !== "2025" ||
-    one(manifest, "GovernmentCd") !== "IRS" ||
-    one(manifest, "FederalSubmissionTypeCd") !== "1040" ||
-    one(xml, "PrimarySSN") !== identity.taxpayerSsn ||
+    oneXmlValue(manifest, "SubmissionId") !== identity.submissionId ||
+    oneXmlValue(manifest, "TIN") !== identity.taxpayerSsn ||
+    oneXmlValue(manifest, "TaxYr") !== "2025" ||
+    oneXmlValue(manifest, "GovernmentCd") !== "IRS" ||
+    oneXmlValue(manifest, "FederalSubmissionTypeCd") !== "1040" ||
+    oneXmlValue(xml, "PrimarySSN") !== identity.taxpayerSsn ||
     xmlSha256 !== identity.submissionXmlSha256
   ) {
     throw new Error(

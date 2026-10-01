@@ -25,10 +25,18 @@ async function digest(bytes: Uint8Array): Promise<string> {
 }
 
 function packageFor(id = submissionId) {
+  const archive = zipSync({
+    "manifest/manifest.xml": encoder.encode(
+      `<IRSSubmissionManifest><SubmissionId>${id}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+    ),
+    "xml/submission.xml": encoder.encode(
+      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040></ReturnData></Return>`,
+    ),
+  });
   return {
     sendSubmissionsRequestXml:
       `<SendSubmissionsRequest><SubmissionData><SubmissionId>${id}</SubmissionId></SubmissionData></SendSubmissionsRequest>`,
-    containerZipBytes: zipSync({ [`${id}.zip`]: encoder.encode("archive") }),
+    containerZipBytes: zipSync({ [`${id}.zip`]: archive }),
   };
 }
 
@@ -257,6 +265,48 @@ Deno.test("A2A evidence rejects mismatched package, RelatesTo, and Submission ID
       Error,
       "Submission ID is not unique in the Send package",
     );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("A2A Send evidence refuses corrupt or misidentified inner submission ZIPs", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const request = packageFor();
+    for (
+      const [index, inner] of [
+        encoder.encode("not a ZIP"),
+        zipSync({ "xml/submission.xml": encoder.encode("<Return/>") }),
+        zipSync({
+          "manifest/manifest.xml": encoder.encode(
+            `<IRSSubmissionManifest><SubmissionId>1234562026269xxxxxxx</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+          ),
+          "xml/submission.xml": encoder.encode(
+            `<Return><PrimarySSN>111223333</PrimarySSN></Return>`,
+          ),
+        }),
+      ].entries()
+    ) {
+      await assertRejects(
+        () =>
+          recordA2aSendPackage(root, {
+            messageId: `${messageId}-${index}`,
+            submissionIds: [submissionId],
+            package: {
+              ...request,
+              containerZipBytes: zipSync({ [`${submissionId}.zip`]: inner }),
+            },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
+          }),
+        Error,
+        index === 0
+          ? "submission ZIP is unreadable"
+          : index === 1
+          ? "lacks manifest or return XML"
+          : "manifest or taxpayer differs",
+      );
+    }
   } finally {
     await Deno.remove(root, { recursive: true });
   }
