@@ -87,8 +87,21 @@ January dollars incur the 20% charge. Changed rollover date, transaction
 allocation, and Form 1040 line 23 are rejected.
 
 Same-day event ordering, rollovers after disability in that order, timely excess
-withdrawal, multiple paired rollovers, death, and nonspouse beneficiary rules
+withdrawal, more than one rollover per owner, death, and nonspouse beneficiary rules
 remain open. Source references and disability confirmation are entered evidence,
 not independently authenticated medical or trustee records. Focused calculator,
 MeF, and PDF cases are written but intentionally unrun pending the agreed full
 test batch; XSD, visual PDF, and ATS gates also remain open.
+
+## Separate paired owner rollovers (written, unrun)
+
+The paired age-65 and disability route now accepts one sourced rollover for each
+owner. Each owner has a distinct Form 1099-SA distribution reference, dated
+withdrawal, contribution reference, and transaction-level excluded allocation;
+the age-65 owner's rollover precedes age attainment and the disability owner's
+precedes disability. Owner Form 8889 lines 14b, 16, and 17b reconcile to the
+combined Schedule 1 income and Schedule 2 penalty, and native/PDF export checks
+Form 1040 lines 8 and 23. Reused owner references and changed final tax reject.
+Positive and tamper fixtures are authored for deferred bulk validation. This
+route does not cover multiple rollovers for one owner, a post-disability rollover,
+or source-byte authentication.

@@ -946,7 +946,6 @@ export function reconcilePairedForm8889(
       ageOwner.age_65_exception_evidence!.birth_date_source_reference ===
         disabilityOwner.disability_exception_evidence!
           .disability_source_reference ||
-      pairedRollovers.length > 1 ||
       owners.some((owner) =>
         (owner.hsa_excluded_distributions !== undefined &&
           (owner.hsa_excluded_distributions.rollover === undefined ||
@@ -1293,9 +1292,10 @@ export function reconcilePairedForm8889(
         owner.eligible_hdhp_coverage_by_month,
         CoverageType.SelfOnly,
       ) &&
-      owner.age_65_exception_evidence === undefined &&
-      owner.disability_exception_evidence === undefined &&
-      owner.qualified_medical_expenses === undefined &&
+      (pairedAgeAndDisability ||
+        (owner.age_65_exception_evidence === undefined &&
+          owner.disability_exception_evidence === undefined &&
+          owner.qualified_medical_expenses === undefined)) &&
       owner.testing_period_failure === undefined
     ) ||
       forms.some((form) => {
