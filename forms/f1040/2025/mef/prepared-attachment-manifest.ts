@@ -2,6 +2,41 @@ import { element } from "../../mef/xml.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import type { MefBundle } from "./builder.ts";
 
+/** Replay the prepared return's document and reference inventory. */
+export function assertPreparedDocumentInventory(
+  bundle: MefBundle,
+): void {
+  const returnData = [...bundle.xml.matchAll(
+    /<ReturnData documentCnt="(\d+)">([\s\S]*?)<\/ReturnData>/g,
+  )];
+  const headerCounts = [...bundle.xml.matchAll(
+    /<ReturnHeader\b[^>]*\bbinaryAttachmentCnt="(\d+)"/g,
+  )];
+  const documents = returnData.length === 1
+    ? [...returnData[0][2].matchAll(
+      /<([A-Za-z0-9]+)\b[^>]*\bdocumentId="([^"]+)"[^>]*>/g,
+    )]
+    : [];
+  const documentIds = documents.map((match) => match[2]);
+  const referencedIds = [...bundle.xml.matchAll(
+    /\breferenceDocumentId="([^"]+)"/g,
+  )].flatMap((match) => match[1].trim().split(/\s+/));
+  if (
+    returnData.length !== 1 || headerCounts.length !== 1 ||
+    Number(returnData[0][1]) !== documents.length ||
+    documents[0]?.[1] !== "IRS1040" ||
+    new Set(documentIds).size !== documentIds.length ||
+    referencedIds.some((id) => !documentIds.includes(id)) ||
+    documents.filter((match) => match[1] === "BinaryAttachment").length !==
+      bundle.attachments.length ||
+    Number(headerCounts[0][1]) !== bundle.attachments.length
+  ) {
+    throw new Error(
+      "Prepared MeF document count, order, IDs, references, or attachment count differs from its return",
+    );
+  }
+}
+
 /** Bind the retained PDF bytes and metadata to the prepared XML manifest. */
 export async function assertPreparedAttachmentManifest(
   bundle: MefBundle,
@@ -12,6 +47,7 @@ export async function assertPreparedAttachmentManifest(
   ) {
     throw new Error("Prepared MeF XML differs from its digest");
   }
+  assertPreparedDocumentInventory(bundle);
   const names = bundle.attachments.map((item) => item.fileName);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (

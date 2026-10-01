@@ -320,6 +320,42 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   );
 });
 
+Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  buildMefTransmissionPackage([{
+    archive: submission,
+    electronicPostmark: processingDate,
+  }]);
+  const changedXml = submission.bundle.xml.replace(
+    'documentCnt="1"',
+    'documentCnt="2"',
+  );
+  const entries = unzipSync(submission.bytes);
+  entries["xml/submission.xml"] = new TextEncoder().encode(
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + changedXml,
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bytes: zipSync(entries),
+          bundle: { ...submission.bundle, xml: changedXml },
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "document count",
+  );
+});
+
 Deno.test("MeF submission rejects changes after bundle preparation", async () => {
   const identity = filer();
   const pdf = await PDFDocument.create();

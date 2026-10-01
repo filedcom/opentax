@@ -12,6 +12,11 @@ not changed. This also prevents the PDF route from relying on altered
 validated bytes for a source-specific evidence check. Positive and tamper
 fixtures are authored for the final bulk gate.
 
+The same check now replays the `ReturnData` document count, requires Form 1040
+first, checks unique document IDs and resolved `referenceDocumentId` values,
+and matches the return-header binary attachment count to the prepared PDF
+inventory. It rejects conflicting XML even when its digest is recomputed.
+
 The check establishes parity with the retained prepared bundle. It does not
 authenticate the outside issuer of a PDF, prove a recipient owns its source,
 or prove that every distinct child form copy has a printable PDF instance.

@@ -11,6 +11,7 @@ import { registry } from "../registry.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
 import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
+import { sha256Hex } from "../prepared-source.ts";
 import { buildPdfBytes } from "../pdf/builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
@@ -398,6 +399,58 @@ Deno.test("prepared PDF and submission manifest reject changed attachment bytes 
     Error,
     "PDF bytes differ from digest",
   );
+});
+
+Deno.test("prepared manifest replays document inventory and references after XML digest changes", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "ReviewedStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const changedXml = async (xml: string) => ({
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+  });
+  for (
+    const [xml, reason] of [
+      [
+        bundle.xml.replace('documentCnt="2"', 'documentCnt="3"'),
+        "document count",
+      ],
+      [
+        bundle.xml.replace(
+          'binaryAttachmentCnt="1"',
+          'binaryAttachmentCnt="0"',
+        ),
+        "attachment count",
+      ],
+      [
+        bundle.xml.replace(
+          'documentId="BinaryAttachment1"',
+          'documentId="IRS10400"',
+        ),
+        "IDs",
+      ],
+      [
+        bundle.xml.replace(
+          "<IRS1040 documentId=",
+          '<IRS1040 referenceDocumentId="missing" documentId=',
+        ),
+        "references",
+      ],
+    ] as const
+  ) {
+    await assertRejects(
+      () => changedXml(xml).then(assertPreparedAttachmentManifest),
+      Error,
+      reason,
+    );
+  }
 });
 
 Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => {

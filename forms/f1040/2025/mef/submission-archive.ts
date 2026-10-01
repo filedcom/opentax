@@ -3,7 +3,10 @@ import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
-import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
+import {
+  assertPreparedAttachmentManifest,
+  assertPreparedDocumentInventory,
+} from "./prepared-attachment-manifest.ts";
 import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
 import {
   assertFilingResidencyReview,
@@ -49,6 +52,7 @@ function sameBytes(
 }
 
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+  assertPreparedDocumentInventory(archive.bundle);
   let entries: Record<string, Uint8Array>;
   try {
     entries = unzipSync(archive.bytes);
