@@ -95,8 +95,11 @@ Deno.test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8
   assertEquals(result.outputs[0].nodeType, "form8949");
   assertEquals(result.outputs[0].fields.transaction, {
     part: "F",
-    description: `Section 731 distribution from ${capitalGainItem.partnership_name}`,
-    source_transaction_id: `f7217:${capitalGainItem.partnership_ein.replaceAll("-", "")}:${capitalGainItem.distribution_date}`,
+    description:
+      `Section 731 distribution from ${capitalGainItem.partnership_name}`,
+    source_transaction_id: `f7217:${
+      capitalGainItem.partnership_ein.replaceAll("-", "")
+    }:${capitalGainItem.distribution_date}`,
     date_acquired: "2020-01-01",
     date_sold: capitalGainItem.distribution_date,
     proceeds: 15_000,
@@ -105,15 +108,18 @@ Deno.test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8
     is_long_term: true,
   });
   const shortTerm = f7217.compute({ taxYear: 2025, formType: "f1040" }, {
-    form7217s: [{ ...capitalGainItem, section_731_capital_gain_source: {
-      ...capitalGainItem.section_731_capital_gain_source,
-      partnership_interest_acquired_date: "2025-01-01",
-    } }],
+    form7217s: [{
+      ...capitalGainItem,
+      section_731_capital_gain_source: {
+        ...capitalGainItem.section_731_capital_gain_source,
+        partnership_interest_acquired_date: "2025-01-01",
+      },
+    }],
   });
   const shortTermTransaction = shortTerm.outputs[0].fields.transaction;
   assertEquals(
     typeof shortTermTransaction === "object" &&
-        shortTermTransaction !== null && "part" in shortTermTransaction
+      shortTermTransaction !== null && "part" in shortTermTransaction
       ? shortTermTransaction.part
       : undefined,
     "C",
@@ -121,47 +127,89 @@ Deno.test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8
 });
 
 Deno.test("Form 7217 section 731 gain rejects K-1 and outside-basis mismatches", () => {
-  for (const section_731_capital_gain_source of [
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_code_a_cash: 13_999 },
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_code_c_property_basis: 32_506 },
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_code_c_property_fmv: 8_999 },
-    { ...capitalGainItem.section_731_capital_gain_source, opening_outside_basis: 7_999 },
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_statement_distribution_date: "2025-04-01" },
-    { ...capitalGainItem.section_731_capital_gain_source, outside_basis_workpaper_as_of_date: "2025-04-01" },
-  ]) {
+  for (
+    const section_731_capital_gain_source of [
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_code_a_cash: 13_999,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_code_c_property_basis: 32_506,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_code_c_property_fmv: 8_999,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        opening_outside_basis: 7_999,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_statement_distribution_date: "2025-04-01",
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        outside_basis_workpaper_as_of_date: "2025-04-01",
+      },
+    ]
+  ) {
     assertThrows(
-      () => f7217.compute({ taxYear: 2025, formType: "f1040" }, {
-        form7217s: [{ ...capitalGainItem, section_731_capital_gain_source }],
-      }),
+      () =>
+        f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+          form7217s: [{ ...capitalGainItem, section_731_capital_gain_source }],
+        }),
       Error,
       "exact K-1 box 19 cash/property, outside basis",
     );
   }
   assertThrows(
-    () => f7217.compute({ taxYear: 2025, formType: "f1040" }, {
-      form7217s: [{ ...capitalGainItem, section_731_capital_gain_source: undefined }],
-    }),
+    () =>
+      f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+        form7217s: [{
+          ...capitalGainItem,
+          section_731_capital_gain_source: undefined,
+        }],
+      }),
     Error,
     "needs K-1, outside-basis",
   );
   assertThrows(
-    () => f7217.compute({ taxYear: 2025, formType: "f1040" }, {
-      form7217s: [{ ...capitalGainItem, section_751b_sale_or_exchange: true }],
-    }),
+    () =>
+      f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+        form7217s: [{
+          ...capitalGainItem,
+          section_751b_sale_or_exchange: true,
+        }],
+      }),
     Error,
     "section 751(b)",
   );
-  for (const section_731_capital_gain_source of [
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_code_b_section737_property: 1 },
-    { ...capitalGainItem.section_731_capital_gain_source, k1_box19_code_f_service_cash: 1 },
-    { ...capitalGainItem.section_731_capital_gain_source, not_section707_disguised_sale: false },
-  ]) {
-    assertThrows(() => f7217.compute(
-      { taxYear: 2025, formType: "f1040" },
-      inputSchema.parse({
-        form7217s: [{ ...capitalGainItem, section_731_capital_gain_source }],
-      }),
-    ));
+  for (
+    const section_731_capital_gain_source of [
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_code_b_section737_property: 1,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        k1_box19_code_f_service_cash: 1,
+      },
+      {
+        ...capitalGainItem.section_731_capital_gain_source,
+        not_section707_disguised_sale: false,
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      f7217.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          form7217s: [{ ...capitalGainItem, section_731_capital_gain_source }],
+        }),
+      )
+    );
   }
 });
 
@@ -171,6 +219,87 @@ Deno.test("Form 7217 accepts a complete one-date Part I/II basis reconciliation"
       form7217s: [fileableItem],
     }).outputs,
     [],
+  );
+});
+
+const liquidatingAllocation = {
+  partnership_name: "PRS Partnership",
+  partnership_ein: "12-3456789",
+  distribution_date: "2025-08-01",
+  complete_liquidation: true,
+  section_751b_sale_or_exchange: false,
+  partner_adjusted_basis_before_distribution: 750,
+  cash_received: 100,
+  section_732c_allocation_workpaper_reference:
+    "2025 PRS section 732(c) allocation",
+  distributed_properties: [
+    {
+      description: "Inventory",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "inventory_or_receivable" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 200,
+      partner_basis_after_section_732: 100,
+    },
+    {
+      description: "Asset X",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 50,
+      fair_market_value: 400,
+      partner_basis_after_section_732: 440,
+    },
+    {
+      description: "Asset Y",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 100,
+      partner_basis_after_section_732: 110,
+    },
+  ],
+};
+
+Deno.test("Form 7217 section 732(c) liquidating basis increase follows class, appreciation, and FMV", () => {
+  const result = f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+    form7217s: [liquidatingAllocation],
+  });
+  assertEquals(result.outputs, []);
+  assertEquals(
+    computeForm7217Amounts(liquidatingAllocation).basisAllocatedToProperty,
+    650,
+  );
+  assertThrows(
+    () =>
+      f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+        form7217s: [{
+          ...liquidatingAllocation,
+          distributed_properties: [
+            liquidatingAllocation.distributed_properties[0],
+            {
+              ...liquidatingAllocation.distributed_properties[1],
+              partner_basis_after_section_732: 439,
+            },
+            {
+              ...liquidatingAllocation.distributed_properties[2],
+              partner_basis_after_section_732: 111,
+            },
+          ],
+        }],
+      }),
+    Error,
+    "property basis conflicts with section 732(c)",
+  );
+  assertThrows(
+    () =>
+      f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+        form7217s: [{
+          ...liquidatingAllocation,
+          section_732c_allocation_workpaper_reference: undefined,
+        }],
+      }),
+    Error,
+    "basis-increase workpaper",
   );
 });
 
@@ -303,7 +432,7 @@ Deno.test("Form 7217 refuses to drop recognized gain without a tax route", () =>
           ...fileableItem,
           cash_received: 15_000,
         }],
-    }),
+      }),
     Error,
     "needs K-1, outside-basis",
   );

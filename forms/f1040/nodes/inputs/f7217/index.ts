@@ -4,8 +4,8 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import {
-  Form8949Part,
   form8949,
+  Form8949Part,
   transactionSchema as form8949TransactionSchema,
 } from "../../intermediate/forms/form8949/index.ts";
 
@@ -17,6 +17,8 @@ export enum Form7217PropertyTreatment {
 
 const propertySchema = z.object({
   description: z.string().min(1),
+  section_732c_class: z.enum(["inventory_or_receivable", "other_property"])
+    .optional(),
   // Cash is excluded from Part II; section 731(c) securities treated as money
   // still enter its property-basis rows and separately appear on line 5b.
   property_treatment: z.nativeEnum(Form7217PropertyTreatment).optional(),
@@ -63,6 +65,8 @@ const itemSchema = z.object({
   cash_received: z.number().nonnegative().optional(),
   marketable_securities_fmv: z.number().nonnegative().optional(),
   us_tax_required_on_gain: z.boolean().optional(),
+  section_732c_allocation_workpaper_reference: z.string().trim().min(1)
+    .optional(),
   section_731_capital_gain_source: section731GainSourceSchema.optional(),
   distributed_properties: z.array(propertySchema).min(1),
 });
@@ -134,6 +138,104 @@ export function computeForm7217Amounts(item: Form7217Item): Form7217Amounts {
   };
 }
 
+function allocateWholeDollars(
+  total: number,
+  weights: readonly number[],
+): number[] {
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  if (!Number.isSafeInteger(total) || total < 0 || weightTotal <= 0) {
+    throw new Error(
+      "Form 7217 section 732(c) allocation needs whole-dollar basis and positive FMV",
+    );
+  }
+  const shares = weights.map((weight, index) => ({
+    index,
+    exact: total * weight / weightTotal,
+  }));
+  const allocated = shares.map(({ exact }) => Math.floor(exact));
+  let remainder = total - allocated.reduce((sum, value) => sum + value, 0);
+  shares.sort((a, b) =>
+    (b.exact - Math.floor(b.exact)) -
+      (a.exact - Math.floor(a.exact)) || a.index - b.index
+  );
+  for (const share of shares) {
+    if (remainder-- <= 0) break;
+    allocated[share.index]++;
+  }
+  return allocated;
+}
+
+/** Bounded section 732(c) increase: class basis, appreciation, then FMV. */
+function assertLiquidatingBasisIncreaseAllocation(
+  item: Form7217Item,
+  amounts: Form7217Amounts,
+): void {
+  if (!item.complete_liquidation || item.distributed_properties.length < 2) {
+    return;
+  }
+  if (
+    !item.section_732c_allocation_workpaper_reference ||
+    item.distributed_properties.some((property) =>
+      property.section_732c_class === undefined ||
+      property.property_treatment !==
+        Form7217PropertyTreatment.Section732Property ||
+      !Number.isSafeInteger(property.partnership_basis_before_distribution) ||
+      !Number.isSafeInteger(property.fair_market_value) ||
+      !Number.isSafeInteger(property.partner_basis_after_section_732)
+    ) ||
+    !Number.isSafeInteger(amounts.basisAllocatedToProperty) ||
+    amounts.basisAllocatedToProperty < amounts.totalPartnershipBasis
+  ) {
+    throw new Error(
+      "Form 7217 multi-property liquidation needs a classified section 732(c) basis-increase workpaper",
+    );
+  }
+  const properties = item.distributed_properties;
+  const other = properties.map((property, index) => ({ property, index }))
+    .filter(({ property }) => property.section_732c_class === "other_property");
+  const extra = amounts.basisAllocatedToProperty -
+    amounts.totalPartnershipBasis;
+  if (extra > 0 && other.length === 0) {
+    throw new Error(
+      "Form 7217 section 732(c) basis increase needs other property",
+    );
+  }
+  const appreciation = other.map(({ property }) =>
+    Math.max(
+      0,
+      property.fair_market_value! -
+        property.partnership_basis_before_distribution!,
+    )
+  );
+  const totalAppreciation = appreciation.reduce((sum, value) => sum + value, 0);
+  const appreciationExtra = Math.min(extra, totalAppreciation);
+  const appreciatedShares = appreciationExtra > 0
+    ? allocateWholeDollars(appreciationExtra, appreciation)
+    : other.map(() => 0);
+  const remaining = extra - appreciationExtra;
+  const fmvShares = remaining > 0
+    ? allocateWholeDollars(
+      remaining,
+      other.map(({ property }) => property.fair_market_value!),
+    )
+    : other.map(() => 0);
+  const expected = properties.map((property) =>
+    property.partnership_basis_before_distribution!
+  );
+  other.forEach(({ index }, position) => {
+    expected[index] += appreciatedShares[position] + fmvShares[position];
+  });
+  if (
+    properties.some((property, index) =>
+      property.partner_basis_after_section_732 !== expected[index]
+    )
+  ) {
+    throw new Error(
+      "Form 7217 Part II property basis conflicts with section 732(c) allocation",
+    );
+  }
+}
+
 function actualDate(date: string): Date | undefined {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   return Number.isNaN(parsed.getTime()) ||
@@ -149,7 +251,9 @@ export function section731Form8949Transaction(
   const source = item.section_731_capital_gain_source;
   if (amounts.recognizedGain === 0) {
     if (source) {
-      throw new Error("Form 7217 section 731 gain source has no recognized gain");
+      throw new Error(
+        "Form 7217 section 731 gain source has no recognized gain",
+      );
     }
     return undefined;
   }
@@ -175,7 +279,7 @@ export function section731Form8949Transaction(
     source.k1_box19_code_c_property_fmv !==
       amounts.totalDistributedPropertyFMV ||
     source.opening_outside_basis + source.increases_before_distribution -
-      source.decreases_before_distribution !==
+          source.decreases_before_distribution !==
       item.partner_adjusted_basis_before_distribution
   ) {
     throw new Error(
@@ -188,7 +292,9 @@ export function section731Form8949Transaction(
   return {
     part: longTerm ? Form8949Part.F : Form8949Part.C,
     description: `Section 731 distribution from ${item.partnership_name}`,
-    source_transaction_id: `f7217:${item.partnership_ein.replaceAll("-", "")}:${item.distribution_date}`,
+    source_transaction_id: `f7217:${
+      item.partnership_ein.replaceAll("-", "")
+    }:${item.distribution_date}`,
     date_acquired: source.partnership_interest_acquired_date,
     date_sold: item.distribution_date,
     proceeds: item.cash_received ?? 0,
@@ -221,10 +327,13 @@ export function assertForm7217FilingSource(input: Form7217Input): void {
       );
     }
     dates.add(key);
-    const statement = item.section_731_capital_gain_source?.k1_box19_statement_reference;
+    const statement = item.section_731_capital_gain_source
+      ?.k1_box19_statement_reference;
     if (statement) {
       if (gainStatementReferences.has(statement)) {
-        throw new Error("Form 7217 section 731 gain needs a distinct dated K-1 statement per distribution");
+        throw new Error(
+          "Form 7217 section 731 gain needs a distinct dated K-1 statement per distribution",
+        );
       }
       gainStatementReferences.add(statement);
     }
@@ -300,6 +409,7 @@ export function assertForm7217FilingSource(input: Form7217Input): void {
     }
     section731Form8949Transaction(item);
     const amounts = computeForm7217Amounts(item);
+    assertLiquidatingBasisIncreaseAllocation(item, amounts);
     if (
       Math.round(amounts.totalPartnerBasisAfterSection732 ?? -1) !==
         Math.round(amounts.basisAllocatedToProperty)
