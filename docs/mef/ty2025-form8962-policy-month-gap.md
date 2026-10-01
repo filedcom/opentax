@@ -538,3 +538,25 @@ values are `52ace6d59ea348495a71c3b55134b3400382b22758481e0d836206ebf71fecd2`
 (repayment) and `bfaa9881069286e5143caedc813050dcbf441f0e8d87ecb621dfa52b72b1b845`
 (exception). These focused artifacts do not establish other MFS scenarios or
 the release PDF gate.
+
+## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (2026-10-01, unrun)
+
+The bounded two-person monthly family-policy route now accepts one full-year
+taxpayer policy in Alaska or Hawaii and a simultaneous policy in a contiguous
+state covering the filer's one claimed dependent. The single filer must have
+an explicit one-state residence record for all twelve months in the filing
+state; this is not an interstate move. Each policy names only its own covered
+SSN, and the dependent's required 2025 return and Forms 1099-INT source its
+modified AGI. The [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+add the monthly column B benchmarks from policies in different states, while
+line 4 uses the Alaska/Hawaii poverty table for the filer's verified residence.
+For the authored Alaska/Texas case, the $25,540 two-person Alaska poverty line,
+$150,000 household income, and two $500 monthly premiums produce $1,900 or
+$2,000 combined monthly SLCSP, $10,644 annual PTC, and $8,244 net PTC after
+$2,400 APTC. That amount reconciles through Schedule 3 line 9 and Form 1040
+line 31, native Form 8962, and the PDF projection. Residence, covered-person,
+SLCSP, and final-return tamper fixtures are authored but unrun. The path still
+rejects a second Alaska/Hawaii policy, a shared policy, taxpayer moves,
+unsupported dependent-income sources, and Marketplace corrections. Source-byte
+authentication, XSD/business-rule checks, filled-PDF review, and ATS remain
+open.

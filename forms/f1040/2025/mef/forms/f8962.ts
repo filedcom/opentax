@@ -1870,15 +1870,32 @@ function reconcileSimplePolicyMonths(
     const taxpayerPolicy = policies.find((policy) =>
       policy.covered_individual_ssns?.[0]?.replaceAll("-", "") === taxpayerSsn
     );
+    const taxpayerState = context.filer.address.state;
+    const taxpayerInAlaskaOrHawaii = taxpayerState === "AK" ||
+      taxpayerState === "HI";
+    const verifiedSingleStateResidence = general.success &&
+      general.data.ptc_residence_states_2025?.length === 1 &&
+      general.data.ptc_residence_states_2025[0] === taxpayerState &&
+      general.data.ptc_residence_months_2025?.length === 12 &&
+      general.data.ptc_residence_months_2025.every((state) =>
+        state === taxpayerState
+      );
+    const supportedFamilyStates = taxpayerInAlaskaOrHawaii
+      ? verifiedSingleStateResidence &&
+        policies.every((policy) =>
+          policy === taxpayerPolicy ||
+          CONTIGUOUS_STATES.has(policy.coverage_state ?? "")
+        )
+      : fields.fpl_region === "contiguous" &&
+        policies.every((policy) =>
+          CONTIGUOUS_STATES.has(policy.coverage_state ?? "")
+        );
     if (
-      taxpayerPolicy?.coverage_state !== context.filer.address.state ||
-      (twoStateFamilyPolicies &&
-        (policies.some((policy) =>
-          !CONTIGUOUS_STATES.has(policy.coverage_state ?? "")
-        ) || fields.fpl_region !== "contiguous"))
+      taxpayerPolicy?.coverage_state !== taxpayerState ||
+      (twoStateFamilyPolicies && !supportedFamilyStates)
     ) {
       throw new Error(
-        "Form 8962 different-state family policies need the taxpayer policy in the filing state and both states on the contiguous poverty table",
+        "Form 8962 different-state family policies need the taxpayer policy in the verified filing state and a supported poverty region",
       );
     }
   }
