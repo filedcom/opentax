@@ -1,7 +1,8 @@
 # TY2025 Schedule J return integration
 
-Status: build-first, unrun. A narrow Schedule F-only ordinary-rate route is
-wired in the graph. This is not yet validated as filing-ready.
+Status: build-first, unrun. Narrow Schedule F-only and one-business fishing
+Schedule C ordinary-rate routes are wired in the graph. These are not yet
+validated as filing-ready.
 
 The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 say the election can replace Form 1040 line 16 tax, but does not apply when
@@ -37,15 +38,20 @@ Remaining work before broader Schedule J support:
    Form 8615 combinations must not be opened until their worksheets and
    provenance are complete.
 
-The current graph now identifies the first non-Schedule-F AGI source when a
-Schedule J election would otherwise fail the farm-only attribution guard.
-For example, a fishing Schedule C activity reaches `line3_schedule_c` and is
-rejected with that source key; its separately computed activity net is not
-silently treated as elected income. A focused source-to-graph rejection case
-is authored for the deferred batch. [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
-expressly allow fishing Schedule C income, but its attributable SE deduction,
-QBI, losses, and combination with Schedule F still need a full ledger before
-that route can be filed.
+The graph now accepts one positive fishing Schedule C activity only when a
+business-matched catch-sales record reference, harvested-fish commerce
+attestation, and non-research-vessel attestation classify the computed at-risk
+profit. It requires that profit to equal the sole Schedule C line 3 source,
+rejects Schedule F and every other AGI component, reconciles the attributable
+Schedule SE deduction to AGI, and caps the election after the calculated QBI
+deduction and final Form 1040 line 15. The same finalized Schedule J lines
+reach Form 1040 line 16, native MeF, and PDF. Positive and source-swap fixtures
+are authored for the deferred batch; no execution or filled-PDF result is
+claimed. The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
+allow fishing income and require attributable income, gains, losses, and
+deductions. Mixed farm/fishing, multiple fishing activities, source-record
+authentication, loss allocation, and other income/deduction combinations
+remain open.
 
 The graph uses direct declared edges from Schedule F, the AGI aggregator,
 standard deduction, and the public election to the calculated node. There is

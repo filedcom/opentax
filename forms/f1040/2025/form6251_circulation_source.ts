@@ -9,7 +9,6 @@ export function assertForm6251CirculationSource(
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
   const amount = fields.line2o_circulation_costs;
-  if (amount === undefined || amount === null || amount === 0) return;
   const parsed = form59eSourceSchema.safeParse(pending?.f59e);
   const items = parsed.success ? parsed.data.f59es : [];
   const circulation = items.filter((item) =>
@@ -20,6 +19,10 @@ export function assertForm6251CirculationSource(
       sum + (item.regular_tax_deduction ?? 0) - (item.amt_deduction ?? 0),
     0,
   );
+  if (
+    (amount === undefined || amount === null || amount === 0) &&
+    difference === 0
+  ) return;
   if (
     !parsed.success || circulation.length === 0 ||
     circulation.length !== items.length ||

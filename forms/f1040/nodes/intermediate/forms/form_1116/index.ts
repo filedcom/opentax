@@ -55,7 +55,7 @@ export const singleSourcePdfReviewSchema = z.object({
   no_foreign_income_adjustment_confirmed: z.literal(true),
   no_section_960c_increase_confirmed: z.literal(true),
   no_international_boycott_confirmed: z.literal(true),
-  no_prior_year_carryover_or_carryback_confirmed: z.literal(true),
+  no_prior_year_carryover_or_carryback_confirmed: z.boolean(),
   no_preferential_rate_income_confirmed: z.literal(true),
   no_other_category_credit_confirmed: z.literal(true),
 }).strict();

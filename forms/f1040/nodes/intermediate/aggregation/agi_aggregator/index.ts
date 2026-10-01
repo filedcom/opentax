@@ -259,6 +259,21 @@ function firstNonScheduleFIncomeSource(input: AgiInput): string | undefined {
   })?.[0];
 }
 
+function firstNonFishingScheduleCIncomeSource(input: AgiInput): string | undefined {
+  const allowed = new Set([
+    "filing_status",
+    "line3_schedule_c",
+    "line15_se_deduction",
+  ]);
+  return Object.entries(input).find(([key, value]) => {
+    if (allowed.has(key) || value === undefined) return false;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "boolean") return value !== false;
+    if (Array.isArray(value)) return value.some((item) => item !== 0);
+    return true;
+  })?.[0];
+}
+
 // ─── SSA Taxability Worksheet (IRC §86) ───────────────────────────────────────
 // Computes the taxable portion of Social Security benefits.
 // IRS Publication 915; Form 1040 instructions for Line 6b.
@@ -725,6 +740,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule_j_calculation, {
         farm_only_income_verified: unsupportedFarmIncome === undefined,
         farm_only_unsupported_source_key: unsupportedFarmIncome,
+        fishing_only_income_verified:
+          firstNonFishingScheduleCIncomeSource(input) === undefined,
+        fishing_only_unsupported_source_key:
+          firstNonFishingScheduleCIncomeSource(input),
+        schedule_c_net_profit: input.line3_schedule_c ?? 0,
         se_tax_deduction: input.line15_se_deduction ?? 0,
         agi,
       }),

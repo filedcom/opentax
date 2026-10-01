@@ -47,9 +47,37 @@ function isoContext(amount: number) {
 
 function filed(fields: Parameters<typeof form6251.build>[0]): string {
   return form6251.build(
-    { line11_amt: 1, ...fields },
+    {
+      line11_amt: 1,
+      ...fields,
+      ...(typeof fields.depreciation_adjustment === "number" &&
+          fields.depreciation_adjustment !== 0
+        ? {
+          line2l_depreciation_workpaper: depreciationWorkpaper(
+            fields.depreciation_adjustment,
+          ),
+        }
+        : {}),
+    },
     isoContext(fields.iso_adjustment ?? 0),
   );
+}
+
+function depreciationWorkpaper(amount: number) {
+  return {
+    properties: [{
+      property_id: "synthetic-machine",
+      placed_in_service_year: 2021,
+      regular_200_percent_declining_balance: true,
+      non_section1250_property: true,
+      no_special_allowance_or_section179_component: true,
+      not_passive_at_risk_limited_or_tax_shelter_farm: true,
+      no_inventory_capitalization_difference: true,
+      regular_tax_depreciation: Math.max(amount, 0),
+      amt_depreciation: Math.max(-amount, 0),
+      reviewed_workpaper_reference: "Synthetic 2025 depreciation review",
+    }],
+  };
 }
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -253,6 +281,7 @@ Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order
       amt_gain: 40_000,
     },
     depreciation_adjustment: 200,
+    line2l_depreciation_workpaper: depreciationWorkpaper(200),
   }, {
     pending: {
       f8949: {
@@ -353,6 +382,7 @@ Deno.test("line 2o circulation cost serializes signed after depreciation", () =>
   const xml = form6251.build({
     line11_amt: 1,
     depreciation_adjustment: 100,
+    line2l_depreciation_workpaper: depreciationWorkpaper(100),
     line2o_circulation_costs: -250,
     amti: 1_000,
   }, {
@@ -620,6 +650,7 @@ const allFields = {
   regular_tax: 12000,
   iso_adjustment: 5000,
   depreciation_adjustment: 3000,
+  line2l_depreciation_workpaper: depreciationWorkpaper(3000),
   private_activity_bond_interest: 800,
   qsbs_adjustment: 10000,
   line2a_taxes_paid: 15000,

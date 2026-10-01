@@ -19,9 +19,13 @@ const completeInputSchema = z.object({
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
   tax_treatment: scheduleJOrdinaryIncomeInputSchema.shape.tax_treatment,
-  farm_net_profit: finiteAmount,
+  farm_net_profit: finiteAmount.optional(),
   farm_only_income_verified: z.boolean(),
   farm_only_unsupported_source_key: z.string().optional(),
+  fishing_net_profit: finiteAmount.optional(),
+  fishing_only_income_verified: z.boolean().optional(),
+  fishing_only_unsupported_source_key: z.string().optional(),
+  schedule_c_net_profit: finiteAmount.optional(),
   se_tax_deduction: finiteAmount,
   agi: finiteAmount,
   taxable_income_2025: finiteAmount,
@@ -49,17 +53,44 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
       "Schedule J current-year deductions and taxable income cannot be negative",
     );
   }
-  if (!source.farm_only_income_verified) {
+  const fishing = source.fishing_net_profit !== undefined;
+  if (fishing && (!source.fishing_only_income_verified ||
+    source.fishing_only_unsupported_source_key !== undefined)) {
+    throw new Error(
+      source.fishing_only_unsupported_source_key
+        ? `Schedule J fishing-only election cannot include ${source.fishing_only_unsupported_source_key}`
+        : "Schedule J fishing-only election needs a single sourced Schedule C activity",
+    );
+  }
+  if (!fishing && !source.farm_only_income_verified) {
     throw new Error(
       source.farm_only_unsupported_source_key
         ? `Schedule J Schedule F-only election cannot include ${source.farm_only_unsupported_source_key} until attributable farming or fishing income is reconciled`
         : "Schedule J requires a positive, independently computed Schedule F-only income source",
     );
   }
-  if (source.farm_net_profit <= 0) {
+  const activityProfit = fishing
+    ? source.fishing_net_profit!
+    : source.farm_net_profit;
+  if (
+    activityProfit === undefined || activityProfit <= 0 ||
+    !Number.isSafeInteger(activityProfit)
+  ) {
     throw new Error(
-      "Schedule J requires a positive, independently computed Schedule F-only income source",
+      "Schedule J requires a positive, independently computed farm or fishing income source",
     );
+  }
+  if (fishing && (
+    source.farm_net_profit !== undefined ||
+    source.schedule_c_net_profit !== activityProfit
+  )) {
+    throw new Error(
+      "Schedule J fishing activity must equal the sole Schedule C profit without Schedule F",
+    );
+  }
+  if (!fishing && source.schedule_c_net_profit !== undefined &&
+    source.schedule_c_net_profit !== 0) {
+    throw new Error("Schedule J Schedule C profit lacks fishing attribution");
   }
   if (
     !source.taking_standard_deduction ||
@@ -71,14 +102,14 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   }
   if (
     Math.abs(
-      source.agi - (source.farm_net_profit - source.se_tax_deduction),
+      source.agi - (activityProfit - source.se_tax_deduction),
     ) > 0.01
   ) {
     throw new Error(
-      "Schedule J farm profit and SE deduction do not reconcile to AGI",
+      "Schedule J qualifying profit and SE deduction do not reconcile to AGI",
     );
   }
-  const taxableFarmIncome = source.farm_net_profit -
+  const taxableFarmIncome = activityProfit -
     source.se_tax_deduction - source.qbi_deduction;
   if (
     taxableFarmIncome <= 0 ||

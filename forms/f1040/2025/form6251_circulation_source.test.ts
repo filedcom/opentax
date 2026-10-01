@@ -37,4 +37,9 @@ Deno.test("Form 6251 line 2o replays reviewed §59(e) deductions at export", () 
     Error,
     "matching retained, reviewed circulation-cost deductions",
   );
+  assertThrows(
+    () => assertForm6251CirculationSource({}, { f59e: { f59es: [item] } }),
+    Error,
+    "matching retained, reviewed circulation-cost deductions",
+  );
 });

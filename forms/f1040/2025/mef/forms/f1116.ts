@@ -650,6 +650,9 @@ function buildIRS1116(
     const companion = scheduleBFieldsSchema.safeParse(
       context?.pending?.form1116_schedule_b,
     );
+    const presentation = companion.success
+      ? scheduleBPresentation(companion.data)
+      : undefined;
     if (
       !companion.success ||
       (companion.data.case !== "prior_year_use" &&
@@ -666,8 +669,10 @@ function buildIRS1116(
           .prior_year_schedule_b_line8_total !==
         priorUse[0].priorYearCarryover ||
       companion.data.used_prior_year_carryover +
-            companion.data.remaining_prior_year_carryover !==
-        priorUse[0].priorYearCarryover
+            companion.data.remaining_prior_year_carryover +
+            (presentation && presentation.case !== "current_year_excess"
+              ? presentation.expired
+              : 0) !== priorUse[0].priorYearCarryover
     ) {
       throw new Error(
         "Form 1116 prior-year credit needs a matching sourced Schedule B reconciliation",

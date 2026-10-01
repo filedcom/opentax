@@ -69,6 +69,11 @@ Deno.test("Form 6251 line 2k replays exact Form 8949 source rows", () => {
     "needs retained Form 8949",
   );
   assertThrows(
+    () => assertForm6251Form8949Source({}, pending),
+    Error,
+    "needs retained Form 8949",
+  );
+  assertThrows(
     () =>
       assertForm6251Form8949Source({
         ...fields,

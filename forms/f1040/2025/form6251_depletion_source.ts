@@ -6,7 +6,6 @@ export function assertForm6251DepletionSource(
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
   const amount = fields.line2d_depletion;
-  if (amount === undefined || amount === null || amount === 0) return;
   const source = scheduleCSourceSchema.safeParse(pending?.schedule_c);
   const businesses = source.success ? source.data.schedule_cs : [];
   const worksheets = businesses.filter((business) =>
@@ -33,12 +32,17 @@ export function assertForm6251DepletionSource(
       property.property_reference
     )
   );
+  const unreviewedDepletion = businesses.some((business) =>
+    (business.line_12_depletion ?? 0) > 0 &&
+    business.amt_depletion_worksheet === undefined
+  );
+  if (
+    (amount === undefined || amount === null || amount === 0) &&
+    regular - amt === 0 && !unreviewedDepletion
+  ) return;
   if (
     !source.success || worksheets.length === 0 ||
-    businesses.some((business) =>
-      (business.line_12_depletion ?? 0) > 0 &&
-      business.amt_depletion_worksheet === undefined
-    ) ||
+    unreviewedDepletion ||
     worksheets.some((business) =>
       business.line_g_material_participation !== true ||
       business.line_32_at_risk === "b" ||

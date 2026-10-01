@@ -1,5 +1,26 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Reviewed prior-year passive use (staged, unrun):** The one-source 1099-INT
+standard-deduction PDF route now accepts one reviewed Schedule B prior-year
+balance when current-year tax is below the category limit. The public PDF
+review explicitly states that the zero-carryover assertion is false. The
+parent PDF reconciles line 10 to the reviewed balance, line 11 to current tax
+plus that balance, lines 14 and 24 to the allowed credit, and line 35 to
+Schedule 3. Its companion Schedule B must be the same passive category and
+show the exact balance and oldest-first amount used. Native Form 1116 now
+reconciles the companion's 2015 expiration on Schedule B line 5 before checking
+the following-year balance; the earlier equality incorrectly rejected an
+otherwise valid expiring vintage. A 2015-origin passive credit that is only
+partly used therefore reaches the parent native/PDF, Schedule B native/PDF,
+and Schedule 3 without carrying the expired dollars forward. Focused public
+graph, projection, native, and tamper cases are authored for the deferred batch.
+The filed 2024 Schedule B source remains a reviewed transcription; issued
+return bytes are not authenticated. Current-year excess combined with a prior
+balance, other baskets, mixed income, and multiple parent PDF items remain
+closed in this slice. [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
+govern oldest-first use and expiration.
+
 Build-first public intake and standard-deduction route (2026-09-29):
 `form1116_review` now carries the typed affirmative single-source PDF review
 directly into the Form 1116 calculation. One documented Form 1099-INT can be the

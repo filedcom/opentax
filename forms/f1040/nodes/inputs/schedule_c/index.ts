@@ -18,6 +18,8 @@ import { form461 } from "../../intermediate/forms/form461/index.ts";
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
+import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
+import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
@@ -141,6 +143,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     eitc,
     f8812,
     form7206,
+    schedule_j_calculation,
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -278,6 +281,31 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       )
     );
     const netProfits = atRisk.map((result) => result.atRiskNet);
+    if (input.schedule_j_fishing_evidence) {
+      const evidence = input.schedule_j_fishing_evidence;
+      if (
+        items.length !== 1 ||
+        items[0].business_reference !== evidence.business_reference
+      ) {
+        throw new Error(
+          "Schedule J fishing evidence needs exactly one matching Schedule C business",
+        );
+      }
+      const source = scheduleJFishingScheduleCSource(items[0], {
+        catch_sales_record_reference: evidence.catch_sales_record_reference,
+        harvested_fish_entered_commerce_verified:
+          evidence.harvested_fish_entered_commerce_verified,
+        scientific_research_vessel: evidence.scientific_research_vessel,
+      });
+      if (source.at_risk_net !== netProfits[0]) {
+        throw new Error(
+          "Schedule J fishing profit needs reconciled employment-credit reductions",
+        );
+      }
+      outputs.push(this.outputNodes.output(schedule_j_calculation, {
+        fishing_net_profit: source.at_risk_net,
+      }));
+    }
     outputs.push(this.outputNodes.output(schedule1a, {
       qualified_tips_schedule_c_businesses: items.map((item, index) => ({
         business_reference: item.business_reference,

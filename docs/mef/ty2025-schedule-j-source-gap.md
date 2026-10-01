@@ -1,8 +1,8 @@
 # TY2025 Schedule J elected-income source boundary
 
-Status: build-first, unrun. A bounded Schedule F-only positive election is
-now wired through the graph. No MeF/XSD, filled-PDF, IRS-rule, or ATS
-acceptance is claimed.
+Status: build-first, unrun. Bounded Schedule F-only and one-business fishing
+Schedule C positive elections are wired through the graph. No MeF/XSD,
+filled-PDF, IRS-rule, or ATS acceptance is claimed.
 
 The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 say line 2a is elected taxable income attributable to farming or fishing,
@@ -27,5 +27,10 @@ and finalized AGI/taxable income through declared graph edges. It rejects
 other AGI components and caps the election after attributable QBI. This does
 not establish a broader source ledger or authenticate the underlying farm
 records. Wages, fishing, dispositions, share-rent, pass-throughs and mixed
-returns still need source work. The deferred full validation batch, XSD,
+returns still need source work. A fishing-only positive route now requires one
+business code 114110 Schedule C, matched catch-sales source reference and
+commerce/research classification, computed at-risk profit equal to Schedule 1
+line 3, and no other AGI activity. It joins the Schedule SE and QBI deductions
+to Form 1040 taxable income before permitting native/PDF export. The catch
+ledger is referenced, not byte-authenticated. The deferred full validation batch, XSD,
 filled-PDF review, IRS business rules, and ATS acceptance remain open.

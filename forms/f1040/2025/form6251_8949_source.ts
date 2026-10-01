@@ -17,7 +17,13 @@ export function assertForm6251Form8949Source(
 ): void {
   const raw = fields.line2k_8949_basis_dispositions;
   if (raw === undefined) {
-    if ((fields.line2k_disposition ?? 0) !== 0) {
+    const source = form8949SourceSchema.safeParse(pending?.f8949);
+    const hasBasisDifference = source.success && source.data.f8949s.some(
+      (transaction) =>
+        transaction.amt_cost_basis !== undefined &&
+        transaction.amt_cost_basis !== transaction.cost_basis,
+    );
+    if ((fields.line2k_disposition ?? 0) !== 0 || hasBasisDifference) {
       throw new Error(
         "Form 6251 line 2k needs retained Form 8949 AMT basis dispositions",
       );

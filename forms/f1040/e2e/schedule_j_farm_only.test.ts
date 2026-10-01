@@ -4,6 +4,8 @@ import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
+import { scheduleJ, type ScheduleJFields } from "../2025/mef/forms/schedule_j.ts";
+import { scheduleJPdf } from "../2025/pdf/forms/schedule_j.ts";
 
 const ordinary = {
   has_qualified_dividends: false,
@@ -130,4 +132,77 @@ Deno.test("Schedule J names fishing Schedule C as a blocked attribution source",
     ),
     true,
   );
+});
+
+function fishingInputs() {
+  const { schedule_f: _scheduleF, ...rest } = inputs();
+  return {
+    ...rest,
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "fishing-a",
+        line_a_principal_business: "Commercial fishing",
+        line_b_business_code: "114110",
+        line_f_accounting_method: "cash" as const,
+        line_g_material_participation: true,
+        line_1_gross_receipts: 80_000,
+        line_22_supplies: 20_000,
+      }],
+      schedule_j_fishing_evidence: {
+        business_reference: "fishing-a",
+        catch_sales_record_reference: "catch-ledger-2025",
+        harvested_fish_entered_commerce_verified: true as const,
+        scientific_research_vessel: false as const,
+      },
+    },
+  };
+}
+
+Deno.test("Schedule J one-source fishing election reaches Form 1040, native and PDF", () => {
+  const result = execute(buildExecutionPlan(registry), registry, fishingInputs(), {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const lines = result.pending.schedule_j as ScheduleJFields;
+  assertEquals(lines.line2a, 15_000);
+  assertEquals(result.pending.f1040?.line16_income_tax, lines.line23);
+  const xml = scheduleJ.build(lines, { pending: result.pending });
+  assert(xml.includes("<ElectedFarmIncomeAmt>15000</ElectedFarmIncomeAmt>"));
+  const projected = scheduleJPdf.projectFields?.(lines, result.pending);
+  assertEquals(projected?.line2a, 15_000);
+  assertEquals(projected?.line23, lines.line23);
+});
+
+Deno.test("Schedule J fishing evidence cannot be swapped onto another business", () => {
+  const input = fishingInputs();
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...input,
+    schedule_c: {
+      ...input.schedule_c,
+      schedule_j_fishing_evidence: {
+        ...input.schedule_c.schedule_j_fishing_evidence,
+        business_reference: "other-business",
+      },
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.diagnostics.some((entry) =>
+    entry.nodeType === "schedule_c" &&
+    entry.message.includes("matching Schedule C business")
+  ), true);
+});
+
+Deno.test("Schedule J one-business fishing profit without catch evidence stays closed", () => {
+  const input = fishingInputs();
+  const { schedule_j_fishing_evidence: _evidence, ...scheduleC } = input.schedule_c;
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...input,
+    schedule_c: scheduleC,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.diagnostics.some((entry) =>
+    entry.nodeType === "schedule_j_calculation" &&
+    entry.message.includes("line3_schedule_c")
+  ), true);
 });

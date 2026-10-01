@@ -54,4 +54,9 @@ Deno.test("Form 6251 line 2d replays retained Schedule C property depletion", ()
     Error,
     "matching retained Schedule C property-level AMT depletion",
   );
+  assertThrows(
+    () => assertForm6251DepletionSource({}, pending),
+    Error,
+    "matching retained Schedule C property-level AMT depletion",
+  );
 });

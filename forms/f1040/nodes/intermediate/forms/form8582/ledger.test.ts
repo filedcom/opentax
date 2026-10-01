@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildForm8582Ledger, readForm8582Ledger } from "./ledger.ts";
+import { reconcileForm8582NextYearOpening } from "./next_year_import.ts";
 import { FilingStatus } from "../../../types.ts";
 
 const source = {
@@ -112,6 +113,51 @@ Deno.test("Form 8582 ledger records sourced single active rental special allowan
     ),
     ledger,
   );
+});
+
+Deno.test("Form 8582 2026 opening matches the 2025 accepted-reference ledger by activity and form", () => {
+  const accepted = "Accepted 2025 active-rental return";
+  const ledger = buildForm8582Ledger(activeRentalSource, accepted);
+  const opening = {
+    tax_year: 2026,
+    prior_accepted_return_reference: accepted,
+    rows: [{
+      activity_id: "active-rental-2025",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 25_000,
+    }],
+  };
+  assertEquals(
+    reconcileForm8582NextYearOpening(
+      opening, ledger, activeRentalSource, accepted,
+    ),
+    opening,
+  );
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...opening,
+    rows: [{ ...opening.rows[0], activity_id: "another-rental" }],
+  }, ledger, activeRentalSource, accepted), Error, "activity, character, and loss ledger");
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...opening,
+    rows: [{ ...opening.rows[0], reporting_form: "form4835" }],
+  }, ledger, activeRentalSource, accepted), Error, "activity, character, and loss ledger");
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...opening,
+    prior_accepted_return_reference: "different return",
+  }, ledger, activeRentalSource, accepted), Error, "activity, character, and loss ledger");
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...opening,
+    rows: [{ ...opening.rows[0], prior_unallowed_loss: 24_999 }],
+  }, ledger, activeRentalSource, accepted), Error, "activity, character, and loss ledger");
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...opening,
+    rows: [opening.rows[0], opening.rows[0]],
+  }, ledger, activeRentalSource, accepted), Error, "activity, character, and loss ledger");
+  assertThrows(() => reconcileForm8582NextYearOpening(opening, ledger, {
+    ...activeRentalSource,
+    modified_agi: 121_000,
+  }, accepted), Error, "stored ledger does not match");
 });
 
 Deno.test("Form 8582 ledger retains filed active-rental opening loss and 2025 suspension", () => {
@@ -231,6 +277,29 @@ Deno.test("Form 8582 ledger allocates two filed active-rental PALs by activity",
     readForm8582Ledger(ledger, source, "Accepted 2025 two-rental return"),
     ledger,
   );
+  const reversedOpening = {
+    tax_year: 2026,
+    prior_accepted_return_reference: "Accepted 2025 two-rental return",
+    rows: [{
+      activity_id: "active-rental-2",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 7_500,
+    }, {
+      activity_id: "active-rental-2025",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 17_500,
+    }],
+  };
+  assertEquals(reconcileForm8582NextYearOpening(
+    reversedOpening, ledger, source, "Accepted 2025 two-rental return",
+  ), reversedOpening);
+  assertThrows(() => reconcileForm8582NextYearOpening({
+    ...reversedOpening,
+    rows: reversedOpening.rows.slice(0, 1),
+  }, ledger, source, "Accepted 2025 two-rental return"), Error,
+  "activity, character, and loss ledger");
 });
 
 Deno.test("Form 8582 ledger apportions one special allowance across two active rentals", () => {

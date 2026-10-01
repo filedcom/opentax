@@ -68,3 +68,11 @@ duplicate property references and passive or at-risk-limited activities, and
 matches the signed regular-minus-AMT total to line 2d. The source, native, and
 PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound
 to workpaper bytes; other depletion sources and activity refigures remain open.
+
+# Property depreciation replay (staged, unrun)
+
+The bounded post-1998, nonpassive 200% declining-balance line 2l path now
+rechecks distinct property IDs and the regular-minus-AMT depreciation total at
+native and PDF export. A direct amount without its reviewed workpaper rejects.
+The source and tamper fixtures await the combined pass; the underlying asset
+records and other AMT depreciation methods remain open.

@@ -370,6 +370,16 @@ durably retain the reviewed source reference, activity ID, reporting form/part,
 original and used amounts, and resulting balance, then verify the next-year
 import against those records before a prior loss is used.
 
+A strict 2026 opening-balance contract is now modeled as that next import
+prerequisite. `reconcileForm8582NextYearOpening` first re-derives the 2025
+ledger from its original source and accepted-return reference, then requires
+the 2026 opening rows to match every positive ending loss by durable activity
+ID, Part VIII/IX, reporting form, and whole-dollar amount. It rejects missing,
+extra, duplicate, or changed rows and a changed 2025 source. Focused fixtures
+are authored but unrun. The accepted reference remains an externally supplied
+identifier; no IRS acknowledgment, durable store, or 2026 engine import is
+implemented, so this contract cannot by itself authorize a prior loss.
+
 ## MFS lived-apart calculation parity, written but unverified
 
 The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582) set

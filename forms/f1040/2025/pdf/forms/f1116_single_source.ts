@@ -290,8 +290,6 @@ export function projectSingleSourceForm1116Pdf(
     (item.excluded_income ?? 0) !== 0 ||
     fields.general_deductions !== standardDeduction ||
     (fields.other_deductions ?? 0) !== 0 ||
-    (summary.priorYearCarryover ?? 0) !== 0 ||
-    (summary.usedPriorYearCarryover ?? 0) !== 0 ||
     item.alternative_compensation_sourcing !== undefined
   ) {
     throw new Error(
@@ -390,13 +388,38 @@ export function projectSingleSourceForm1116Pdf(
   const reduction = k3?.part_iii_section_4_line_2_tax_reduction ??
     sCorpK3?.part_iii_section_3_line_2_tax_reduction ?? 0;
   const netTax = item.foreign_tax_paid - reduction;
-  const line24 = Math.min(Math.round(netTax), line21);
+  const priorCarryover = summary.priorYearCarryover ?? 0;
+  const currentCredit = Math.min(Math.round(netTax), line21);
+  const usedPriorCarryover = Math.min(
+    priorCarryover,
+    Math.max(0, line21 - currentCredit),
+  );
+  const line24 = currentCredit + usedPriorCarryover;
   const line33 = Math.min(line20, line24);
-  const currentExcess = Math.max(0, netTax - line24);
-  if (summary.currentYearExcessTax !== currentExcess) {
+  const currentExcess = Math.max(0, Math.round(netTax) - currentCredit);
+  if (
+    summary.currentYearExcessTax !== currentExcess ||
+    (summary.usedPriorYearCarryover ?? 0) !== usedPriorCarryover ||
+    review.data.no_prior_year_carryover_or_carryback_confirmed !==
+      (priorCarryover === 0)
+  ) {
     throw new Error(
-      "Form 1116 PDF current-year excess differs from the category calculation",
+      "Form 1116 PDF carryover review or current-year excess differs from the category calculation",
     );
+  }
+  if (priorCarryover > 0) {
+    const scheduleB = scheduleBPresentation(pending.form1116_schedule_b);
+    if (
+      currentExcess > 0 ||
+      scheduleB.case !== "prior_year_use" ||
+      scheduleB.category !== summary.category ||
+      scheduleB.balance !== priorCarryover ||
+      scheduleB.used !== usedPriorCarryover
+    ) {
+      throw new Error(
+        "Form 1116 PDF prior-year credit needs the matching sourced Schedule B",
+      );
+    }
   }
   if (currentExcess > 0) {
     if (!pending.form1116_schedule_b) {
@@ -457,11 +480,11 @@ export function projectSingleSourceForm1116Pdf(
     pdf_part2_total_a: item.foreign_tax_paid,
     pdf_line8: item.foreign_tax_paid,
     pdf_line9: item.foreign_tax_paid,
-    pdf_line10: 0,
-    pdf_line11: item.foreign_tax_paid,
+    pdf_line10: priorCarryover,
+    pdf_line11: item.foreign_tax_paid + priorCarryover,
     pdf_line12: reduction,
     pdf_line13: 0,
-    pdf_line14: netTax,
+    pdf_line14: netTax + priorCarryover,
     pdf_line15: foreignTaxableIncome,
     pdf_line16: 0,
     pdf_line17: foreignTaxableIncome,

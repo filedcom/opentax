@@ -4,6 +4,11 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { form1116Pdf } from "./f1116.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
+import { form1116 } from "../../mef/forms/f1116.ts";
+import {
+  form1116ScheduleB,
+  scheduleBFieldsSchema,
+} from "../../mef/forms/f1116_schedule_b.ts";
 
 const bankReference = "2025 Canadian bank Form 1099-INT and source review";
 
@@ -188,4 +193,83 @@ Deno.test("Form 1116 public PDF route rejects unreviewed or mismatched interest 
     Error,
     "must match the identified source",
   );
+});
+
+Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: {
+      carryovers: [{
+        income_category: "passive",
+        vintages: [{
+          vintage_tax_year: 2015,
+          prior_year_schedule_b_line8_vintage_amount: 9_000,
+        }],
+        prior_year_schedule_b_line8_total: 9_000,
+        prior_year_schedule_b_line8_other_vintages_total: 0,
+        no_intervening_adjustments: true,
+        source_document_references: [
+          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+        ],
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent);
+  assert(scheduleB);
+  const summary = (parent.category_summaries as Array<Record<string, number>>)
+    [0];
+  assert(summary);
+  const projected = form1116Pdf.projectFields?.(parent, result.pending) ?? {};
+  const scheduleProjection = form1116ScheduleBPdf.projectFields?.(
+    scheduleB,
+    result.pending,
+  ) ?? {};
+  assertEquals(projected.pdf_line10, 9_000);
+  assertEquals(projected.pdf_line24, summary.allowedCredit);
+  assertEquals(
+    projected.pdf_line35,
+    result.pending.schedule3?.line1_foreign_tax_credit,
+  );
+  assertEquals(
+    scheduleProjection.line5_2015,
+    -9_000 + summary.usedPriorYearCarryover,
+  );
+  assertEquals(scheduleProjection.line8_2015, 0);
+  const [xml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  assert(
+    xml.includes(
+      "<ForeignTaxCrCarrybackOrOverAmt>9000</ForeignTaxCrCarrybackOrOverAmt>",
+    ),
+  );
+  const scheduleXml = form1116ScheduleB.build(
+    scheduleBFieldsSchema.parse(scheduleB),
+  );
+  assert(scheduleXml.includes("ForeignTxCyovExprUnsdCurrTYGrp"));
+
+  assertThrows(() => form1116Pdf.projectFields?.(parent, {
+    ...result.pending,
+    form1116_schedule_b: {
+      ...scheduleB,
+      remaining_prior_year_carryover: 1,
+    },
+  }), Error);
+  assertThrows(() => form1116Pdf.projectFields?.({
+    ...parent,
+    single_source_pdf_review: singleSourceReview,
+  }, result.pending), Error, "carryover review");
 });
