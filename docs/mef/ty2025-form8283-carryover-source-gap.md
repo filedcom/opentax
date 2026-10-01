@@ -9,9 +9,17 @@ amounts and gift IDs, not those completed prior documents.
 
 `forms/f1040/2025/mef/forms/f8283_carryover_evidence.ts` enforces one narrow
 proof contract for a publicly traded securities gift whose previous-year copy
-was completed in Section A, whose similar-item total and FMV were no more than
-$5,000, and for which no appraisal was required with the 2024 return. It
-matches the donation year, gift ID, FMV, basis, prior deductions and taxpayer
+was completed in Section A and for which no appraisal was required with the
+2024 return. For a gift or similar-item total above $5,000, a separate reviewed
+exchange quotation now identifies the ticker, exchange, shares, per-share FMV,
+donation-day quote, and source record; its multiplication must equal the prior
+form's FMV, and the ticker must appear in the prior property description. This
+extends the exact prior-PDF-to-Schedule-A-to-native/PDF path to exchange-listed
+stock above $5,000. The [2024 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2024.pdf)
+and [2025 instructions](https://www.irs.gov/instructions/i8283) both place
+publicly traded securities of any amount in Section A. The quote review is a
+source assertion; quote bytes and exchange authenticity are not independently
+verified. The binding matches the donation year, gift ID, FMV, basis, prior deductions and taxpayer
 against the Schedule A carryover ledger, then requires the exact reviewed PDF
 SHA-256, binary-attachment description and MeF document ID. It also records
 the reviewer's name/date and the referenced filed 2024 return/workpaper. The

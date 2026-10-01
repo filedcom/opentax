@@ -376,3 +376,131 @@ Deno.test("Form 8283 and Schedule A PDF descriptors project the same carried gif
   assertEquals(schedule?.line_13_contribution_carryover, 1_500);
   assertEquals(scheduleAPdf.includeWhen?.(schedule!, pending), true);
 });
+
+Deno.test("exchange-listed stock above $5,000 retains Section A prior PDF and current carryover", async () => {
+  const { pending: base, attachment } = await reviewedSource();
+  const evidence = {
+    ...base.f8283.carryover_evidence[0],
+    original_section_a_similar_items_total: 12_000,
+    public_trading_review: {
+      ticker: "ACME",
+      listed_exchange_name: "New York Stock Exchange",
+      shares_contributed: 100,
+      fmv_price_per_share: 120,
+      quotation_date: "2023-11-15",
+      daily_published_exchange_quotation_verified: true as const,
+      quotation_record_reference: "2023-11-15 ACME exchange quote",
+      reviewed_by: "Reviewer One",
+      reviewed_on: "2025-03-01",
+    },
+    prior_form_8283: {
+      ...base.f8283.carryover_evidence[0].prior_form_8283,
+      property_description: "100 shares of ACME publicly traded common stock",
+      original_fmv: 12_000,
+      adjusted_basis: 9_000,
+    },
+    prior_deduction_workpaper: {
+      ...base.f8283.carryover_evidence[0].prior_deduction_workpaper,
+      total_previously_deducted_through_2024: 3_000,
+    },
+  };
+  const sourceSchedule = {
+    agi: 100_000,
+    capital_gain_50_percent_election_confirmed: true as const,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [{
+      contribution_id: evidence.contribution_id,
+      contribution_year: evidence.contribution_year,
+      original_category: "capital_gain_30" as const,
+      original_fmv: 12_000,
+      adjusted_basis: 9_000,
+      previously_deducted: 3_000,
+      ordinary_carryover_rules_confirmed: true as const,
+    }],
+    noncash_contribution_items: [],
+  };
+  const result = scheduleANode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(sourceSchedule),
+  );
+  const high = {
+    f8283: { carryover_evidence: [evidence] },
+    schedule_a: { ...sourceSchedule, ...result.finalizations![0].fields },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 6_000 },
+  };
+  const bundle = await buildMefBundle(high, {
+    filer: testFiler(),
+    attachments: [attachment],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<CarryoverFromPriorYearAmt>6000</CarryoverFromPriorYearAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<DonatedPropertyDesc>100 shares of ACME publicly traded common stock</DonatedPropertyDesc>",
+  );
+  assertStringIncludes(bundle.xml, "<FairMarketValueAmt referenceDocumentId=");
+  assertEquals((bundle.xml.match(/<IRS8283 documentId=/g) ?? []).length, 1);
+  assertEquals(bundle.attachments.length, 1);
+  const [printed] = form8283Pdf.instances!(high.f8283, testFiler(), high);
+  assertEquals(printed.row1_claim, 9_000);
+  const [schedulePrinted] = scheduleAPdf.instances!(
+    high.schedule_a,
+    testFiler(),
+    high,
+  );
+  assertEquals(schedulePrinted.line_13_contribution_carryover, 6_000);
+  await assertCarryoverBundleXsd(bundle.xml);
+  for (
+    const changed of [
+      {
+        ...evidence,
+        public_trading_review: {
+          ...evidence.public_trading_review,
+          fmv_price_per_share: 119,
+        },
+      },
+      {
+        ...evidence,
+        public_trading_review: {
+          ...evidence.public_trading_review,
+          quotation_date: "2023-11-14",
+        },
+      },
+      { ...evidence, public_trading_review: undefined },
+    ]
+  ) {
+    await assertRejects(() =>
+      buildMefBundle({
+        ...high,
+        f8283: { carryover_evidence: [changed] },
+      }, { filer: testFiler(), attachments: [attachment] })
+    );
+  }
+  await assertRejects(() =>
+    buildMefBundle({
+      ...high,
+      schedule_a: {
+        ...high.schedule_a,
+        capital_gain_property_carryovers: [{
+          ...sourceSchedule.capital_gain_property_carryovers[0],
+          adjusted_basis: 8_000,
+        }],
+      },
+    }, { filer: testFiler(), attachments: [attachment] })
+  );
+  await assertRejects(() =>
+    buildMefBundle({
+      ...high,
+      f1040: { ...high.f1040, line12e_itemized_deductions: 5_999 },
+    }, { filer: testFiler(), attachments: [attachment] })
+  );
+  await assertRejects(() =>
+    buildMefBundle(high, {
+      filer: testFiler(),
+      attachments: [{ ...attachment, description: "Unrelated prior copy" }],
+    })
+  );
+});

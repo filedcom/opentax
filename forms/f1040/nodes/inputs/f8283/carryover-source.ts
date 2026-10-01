@@ -74,7 +74,18 @@ export const form8283CarryoverEvidenceBaseSchema = z.object({
   contribution_id: z.string().trim().min(1),
   contribution_year: z.number().int().min(2000).max(2024),
   property_kind: z.literal("publicly_traded_securities"),
-  original_section_a_similar_items_total: amount.max(5_000),
+  original_section_a_similar_items_total: amount,
+  public_trading_review: z.object({
+    ticker: z.string().regex(/^[A-Z][A-Z0-9.\-]{0,9}$/),
+    listed_exchange_name: z.string().trim().min(1),
+    shares_contributed: z.number().int().positive(),
+    fmv_price_per_share: z.number().positive(),
+    quotation_date: isoDate,
+    daily_published_exchange_quotation_verified: z.literal(true),
+    quotation_record_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: isoDate,
+  }).strict().optional(),
   prior_form_8283: priorFormReviewSchema,
   prior_deduction_workpaper: z.object({
     reviewed_source_reference: z.string().trim().min(1),
@@ -90,7 +101,22 @@ export const form8283CarryoverEvidenceSchema =
         evidence.contribution_year ||
       !validIsoDate(evidence.prior_form_8283.original_donation_date) ||
       !validIsoDate(evidence.prior_form_8283.reviewed_on) ||
-      evidence.prior_form_8283.original_fmv > 5_000 ||
+      (evidence.prior_form_8283.original_fmv > 5_000 ||
+          evidence.original_section_a_similar_items_total > 5_000) &&
+        (
+          !evidence.public_trading_review ||
+          !validIsoDate(evidence.public_trading_review.quotation_date) ||
+          !validIsoDate(evidence.public_trading_review.reviewed_on) ||
+          evidence.public_trading_review.quotation_date !==
+            evidence.prior_form_8283.original_donation_date ||
+          !evidence.prior_form_8283.property_description.includes(
+            evidence.public_trading_review.ticker,
+          ) ||
+          Math.round(
+              evidence.public_trading_review.shares_contributed *
+                evidence.public_trading_review.fmv_price_per_share * 100,
+            ) !== Math.round(evidence.prior_form_8283.original_fmv * 100)
+        ) ||
       evidence.original_section_a_similar_items_total <
         evidence.prior_form_8283.original_fmv ||
       evidence.prior_form_8283.adjusted_basis >
