@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import { inputSchema as f3468InputSchema } from "../../../nodes/inputs/f3468/index.ts";
+import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 
 const p1 = "topmostSubform[0].Page1[0]";
 const p3 = "topmostSubform[0].Page3[0]";
@@ -69,13 +70,65 @@ export const form3468Pdf: PdfFormDescriptor = {
     if (claims.length === 0) {
       throw new Error("Form 3468 PDF has no supported trust Part V claim");
     }
-    const amount = prepared.currentAmounts.find((row) => row.line === "1v");
+    const entries = f3800InputSchema.parse(all.f3800)
+      .f3468_trust_part_v_credit_entries ?? [];
+    const claimKey = (claim: typeof claims[number]) =>
+      JSON.stringify([
+        claim.source_type,
+        claim.source_ein,
+        claim.source_document_reference,
+        claim.source_statement_reference,
+        claim.credit_amount,
+        claim.subject_to_passive_activity_limit,
+      ]);
+    const entryKey = (entry: typeof entries[number]) =>
+      JSON.stringify([
+        entry.source_type,
+        entry.source_ein,
+        entry.source_document_reference,
+        entry.source_statement_reference,
+        entry.credit_amount,
+        entry.subject_to_passive_activity_limit,
+      ]);
+    const claimKeys = claims.map(claimKey);
+    const entryKeys = entries.map(entryKey);
+    const rows = prepared.currentRows.filter((row) => row.line === "1v");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1v");
     const details = prepared.currentDetails.filter((row) => row.line === "1v");
+    const documentIds = prepared.form3468DocumentIds;
+    const credit = claims.reduce((sum, claim) => sum + claim.credit_amount, 0);
+    const [row] = rows;
+    const [amount] = amounts;
     if (
-      !amount ||
-      Math.round(amount.nonpassiveCredit) !==
-        claims.reduce((sum, claim) => sum + claim.credit_amount, 0) ||
-      details.length !== claims.length
+      claimKeys.length !== entryKeys.length ||
+      new Set(claimKeys).size !== claimKeys.length ||
+      claimKeys.some((key) => !entryKeys.includes(key)) ||
+      rows.length !== 1 || amounts.length !== 1 ||
+      !row || !amount ||
+      details.length !== claims.length ||
+      documentIds?.length !== claims.length ||
+      new Set(documentIds).size !== claims.length ||
+      row.metadata.sourceCount !== claims.length ||
+      row.metadata.referenceDocumentName !== "IRS3468" ||
+      row.metadata.referenceDocumentId !== documentIds?.join(" ") ||
+      row.entityCredits.length !== claims.length ||
+      row.entityCredits.some((entity, index) =>
+        !("ein" in entity.entity) ||
+        entity.entity.ein !== claims[index].source_ein ||
+        entity.credit !== claims[index].credit_amount
+      ) ||
+      amount.nonpassiveCredit !== credit || amount.totalCredit !== credit ||
+      amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !==
+        details.reduce((sum, detail) => sum + detail.appliedCredit, 0) ||
+      details.some((detail, index) =>
+        detail.sourceDocumentId !== documentIds?.[index] ||
+        detail.passThroughEin !== claims[index].source_ein ||
+        detail.credit !== claims[index].credit_amount ||
+        detail.appliedCredit < 0 ||
+        detail.appliedCredit > claims[index].credit_amount
+      )
     ) {
       throw new Error(
         "Form 3468 PDF credit differs from prepared Form 3800 line 1v",
@@ -86,8 +139,7 @@ export const form3468Pdf: PdfFormDescriptor = {
       const detail = details[index];
       if (
         s.beneficiary_ssn !== filer.primarySSN ||
-        detail.passThroughEin !== claim.source_ein ||
-        detail.credit !== claim.credit_amount ||
+        !detail.sourceDocumentId ||
         claim.source_name.length > 70
       ) {
         throw new Error(

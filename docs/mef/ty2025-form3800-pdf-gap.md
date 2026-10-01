@@ -129,6 +129,17 @@ and final tax; it must not consume a box-13 code M amount. Rejection and
 positive fixtures are authored for the deferred batch, with the full chain
 still under integration.
 
+The registered trust Form 3468 PDF now also checks its exact reviewed box-14
+source records against Form 3800 line 1v, the reserved `IRS3468` document IDs
+in property order, Part III source count and EINs, Part V credit and applied
+tax use, and the existing Form 3800 → Schedule 3 → Form 1040 final-credit join.
+A $3,000 trust-property full-return positive and changed source reference,
+counterfeit document ID, applied-credit, and final-tax fixtures await the bulk
+run. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+place Form 3468 Part V on line 1v and require Part V breakdowns for aggregate
+sources. Reviewed statement bytes, wider trust-property combinations, passive
+allocations, transfers, and carryovers retain their existing boundaries.
+
 The Form 8835 source calculation now rejects electricity sold on or after the
 tenth anniversary of the facility's placed-in-service date, including a 2025
 period that crosses that boundary. The same calculation feeds Form 3800 and
