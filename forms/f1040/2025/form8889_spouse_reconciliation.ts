@@ -802,11 +802,9 @@ export function reconcilePairedForm8889(
       ageOwner.age_65_exception_evidence!.birth_date_source_reference ===
         disabilityOwner.disability_exception_evidence!
           .disability_source_reference ||
+      pairedRollovers.length > 1 ||
       owners.some((owner) =>
-        (owner === ageOwner &&
-          owner.hsa_excluded_distributions !== undefined) ||
-        (owner === disabilityOwner &&
-          owner.hsa_excluded_distributions !== undefined &&
+        (owner.hsa_excluded_distributions !== undefined &&
           (owner.hsa_excluded_distributions.rollover === undefined ||
             owner.hsa_excluded_distributions.timely_excess_withdrawal !==
               undefined)) ||
@@ -970,7 +968,8 @@ export function reconcilePairedForm8889(
           !(owner.hsa_excluded_distributions.rollover !== undefined &&
             owner.hsa_excluded_distributions.timely_excess_withdrawal ===
               undefined &&
-            owner.age_65_exception_evidence === undefined) &&
+            (owner.age_65_exception_evidence === undefined ||
+              pairedAgeAndDisability)) &&
           !(owner.hsa_excluded_distributions.timely_excess_withdrawal !==
               undefined &&
             owner.hsa_excluded_distributions.rollover === undefined &&

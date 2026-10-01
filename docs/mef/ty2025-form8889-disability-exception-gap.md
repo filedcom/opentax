@@ -36,13 +36,14 @@ the withdrawal after disability. Native and PDF export recompute both Forms 8889
 and match their taxable distributions and 20% charges to Schedule 1, Schedule 2,
 and Form 1040 lines 8 and 23. A positive paired-owner fixture and changed
 disability-source and Form 1040 tax fixtures are authored for deferred
-validation. The disability owner can also allocate one sourced, code-1
-pre-disability rollover on line 14b while the other owner uses the age-65
-exception. A dated deposit within 60 days, distinct source references, and
-transaction-level rollover allocations reconcile the two Forms 8889 with
-Schedule 1, Schedule 2, and Form 1040. Native/PDF fixtures also reject a late
-deposit and altered Form 1040 tax. This bounded combination excludes a rollover
-for the age-65 owner, prior excess, and Part III testing-period events.
+validation. Either owner can also allocate one sourced, code-1 rollover on
+line 14b: a pre-disability withdrawal for the disability owner, or a dated
+pre-age-65 withdrawal for the age-exception owner. A dated deposit within 60
+days, distinct source references, and transaction-level rollover allocations
+reconcile the two Forms 8889 with Schedule 1, Schedule 2, and Form 1040.
+Native/PDF fixtures for each owner reject a late deposit and altered Form 1040
+tax. This bounded combination excludes two simultaneous rollovers, prior
+excess, and Part III testing-period events.
 
 One primary HSA owner can also combine age-65 and disability exceptions in 2025.
 This bounded allocation accepts distinct code-1 Form 1099-SA sources before
