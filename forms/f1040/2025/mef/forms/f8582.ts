@@ -535,6 +535,58 @@ function buildOtherPassive(
       );
     }
   }
+  // A current Form 4835 passive profit may release the same amount of an
+  // unrelated Schedule E rental's current loss. Keep the remainder under the
+  // rental activity ID and reconcile the net zero Schedule 1/1040 result.
+  const farmProfit = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net > 0
+  );
+  const rentalLoss = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  if (
+    activities.length === 2 && farmProfit && rentalLoss &&
+    farmProfit.current_net < -rentalLoss.current_net &&
+    activities.every((activity) =>
+      activity.activity_type === "B" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const farmSource = form4835InputSchema.safeParse(pending?.f4835);
+    const rentalSource = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !farmSource.success || farmSource.data.f4835s.length !== 1 ||
+      farmSource.data.f4835s[0].some_investment_not_at_risk !== false ||
+      !rentalSource.success || rentalSource.data.schedule_es.length !== 1 ||
+      rentalSource.data.schedule_es[0].some_investment_not_at_risk !== false ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      wages === undefined || !Number.isSafeInteger(wages) ||
+      !f1040 || !schedule1 ||
+      limit.allowed !== farmProfit.current_net ||
+      limit.suspended !== -rentalLoss.current_net - farmProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-profit/rental-loss offset must reconcile both source activities, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   // Two separate share-rent farms can use one other-passive rental's current
   // profit. Reconcile the combined limit here; Part VII and each Form 4835
   // retain their own activity-ID allocation below.
