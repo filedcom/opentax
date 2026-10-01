@@ -491,9 +491,14 @@ function buildOtherPassive(
       (f1040.line8_additional_income ?? 0) !==
         (schedule1.line10_total_additional_income ?? 0) ||
       typeof f1040.line9_total_income !== "number" ||
+      (f1040.line10_adjustments !== undefined &&
+        typeof f1040.line10_adjustments !== "number") ||
       typeof f1040.line11_agi !== "number" ||
       f1040.line11_agi !==
-        f1040.line9_total_income - (f1040.line10_adjustments ?? 0)
+        f1040.line9_total_income -
+          (typeof f1040.line10_adjustments === "number"
+            ? f1040.line10_adjustments
+            : 0)
     ) {
       throw new Error(
         "Form 8582 three-rental passive offset must reconcile Schedule E, Schedule 1 and final Form 1040",
