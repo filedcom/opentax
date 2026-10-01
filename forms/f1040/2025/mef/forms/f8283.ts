@@ -975,6 +975,15 @@ export const form8283: MefFormDescriptor<
   build(fields, context = {}) {
     const parsed = inputSchema.parse(fields);
     if (parsed.carryover_evidence !== undefined) {
+      if (
+        parsed.carryover_evidence.some((row) =>
+          row.property_kind === "purchased_artwork"
+        )
+      ) {
+        throw new Error(
+          "Form 8283 Section B artwork carryover needs printed prior-form facts and authenticated filing before native export",
+        );
+      }
       return buildCarryoverDocuments(parsed, context);
     }
     if (

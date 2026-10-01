@@ -568,6 +568,15 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     const source = inputSchema.parse(raw);
     if (source.carryover_evidence !== undefined) {
+      if (
+        source.carryover_evidence.some((row) =>
+          row.property_kind === "purchased_artwork"
+        )
+      ) {
+        throw new Error(
+          "Form 8283 Section B artwork carryover needs printed prior-form facts and authenticated filing before PDF export",
+        );
+      }
       const reconciled = reconcileForm8283Carryover(
         source,
         { pending: allPending, filer },

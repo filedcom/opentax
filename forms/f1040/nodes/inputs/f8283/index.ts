@@ -10,7 +10,11 @@ import {
   scheduleA as schedule_a,
 } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { form8283CarryoverEvidenceSchema } from "./carryover-source.ts";
+import {
+  form8283CarryoverEvidenceBaseSchema,
+  form8283CarryoverEvidenceSchema,
+} from "./carryover-source.ts";
+import { form8283SectionBCarryoverSourceSchema } from "./section_b_carryover_source.ts";
 import { FMVMethod } from "./fmv-method.ts";
 export { FMVMethod } from "./fmv-method.ts";
 
@@ -1028,9 +1032,24 @@ const sectionBItemSchema = z.object({
 export const inputSchema = z.object({
   section_a_items: z.array(sectionAItemSchema).optional(),
   section_b_items: z.array(sectionBItemSchema).optional(),
-  carryover_evidence: z.array(form8283CarryoverEvidenceSchema).min(1)
+  carryover_evidence: z.array(z.discriminatedUnion("property_kind", [
+    form8283CarryoverEvidenceBaseSchema,
+    form8283SectionBCarryoverSourceSchema,
+  ])).min(1)
     .optional(),
 }).superRefine((input, ctx) => {
+  for (const [index, evidence] of (input.carryover_evidence ?? []).entries()) {
+    if (evidence.property_kind !== "publicly_traded_securities") continue;
+    const reviewed = form8283CarryoverEvidenceSchema.safeParse(evidence);
+    if (reviewed.success) continue;
+    for (const issue of reviewed.error.issues) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carryover_evidence", index, ...issue.path],
+        message: issue.message,
+      });
+    }
+  }
   const sectionA = input.section_a_items ?? [];
   const sectionB = input.section_b_items ?? [];
   const hasCapitalGainElection = [...sectionA, ...sectionB].some((item) =>

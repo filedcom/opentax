@@ -70,7 +70,7 @@ const priorFormReviewSchema = z.object({
   }
 });
 
-export const form8283CarryoverEvidenceSchema = z.object({
+export const form8283CarryoverEvidenceBaseSchema = z.object({
   contribution_id: z.string().trim().min(1),
   contribution_year: z.number().int().min(2000).max(2024),
   property_kind: z.literal("publicly_traded_securities"),
@@ -81,27 +81,31 @@ export const form8283CarryoverEvidenceSchema = z.object({
     total_previously_deducted_through_2024: amount,
   }).strict(),
   appraisal_required_with_2024_return: z.literal(false),
-}).strict().superRefine((evidence, context) => {
-  if (
-    Number(evidence.prior_form_8283.original_donation_date.slice(0, 4)) !==
-      evidence.contribution_year ||
-    !validIsoDate(evidence.prior_form_8283.original_donation_date) ||
-    !validIsoDate(evidence.prior_form_8283.reviewed_on) ||
-    evidence.prior_form_8283.original_fmv > 5_000 ||
-    evidence.original_section_a_similar_items_total <
-      evidence.prior_form_8283.original_fmv ||
-    evidence.prior_form_8283.adjusted_basis >
-      evidence.prior_form_8283.original_fmv ||
-    evidence.prior_deduction_workpaper.total_previously_deducted_through_2024 >
-      evidence.prior_form_8283.original_fmv
-  ) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message:
-        "Form 8283 carryover source year, Section A value, basis, or prior deductions do not reconcile",
-    });
-  }
-});
+}).strict();
+
+export const form8283CarryoverEvidenceSchema =
+  form8283CarryoverEvidenceBaseSchema.superRefine((evidence, context) => {
+    if (
+      Number(evidence.prior_form_8283.original_donation_date.slice(0, 4)) !==
+        evidence.contribution_year ||
+      !validIsoDate(evidence.prior_form_8283.original_donation_date) ||
+      !validIsoDate(evidence.prior_form_8283.reviewed_on) ||
+      evidence.prior_form_8283.original_fmv > 5_000 ||
+      evidence.original_section_a_similar_items_total <
+        evidence.prior_form_8283.original_fmv ||
+      evidence.prior_form_8283.adjusted_basis >
+        evidence.prior_form_8283.original_fmv ||
+      evidence.prior_deduction_workpaper
+          .total_previously_deducted_through_2024 >
+        evidence.prior_form_8283.original_fmv
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Form 8283 carryover source year, Section A value, basis, or prior deductions do not reconcile",
+      });
+    }
+  });
 
 export type Form8283CarryoverEvidence = z.infer<
   typeof form8283CarryoverEvidenceSchema

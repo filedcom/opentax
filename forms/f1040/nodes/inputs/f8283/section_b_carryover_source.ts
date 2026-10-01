@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
+import type { MefBuildContext } from "../../../2025/mef/form-descriptor.ts";
 
 const amount = z.number().int().nonnegative().refine(Number.isSafeInteger);
 const pdfReview = z.object({
@@ -28,6 +29,15 @@ export const form8283SectionBCarryoverSourceSchema = z.object({
   section_b_appraiser_and_donee_signatures_reviewed: z.literal(true),
   appraisal_was_attached_to_2024_return_reviewed: z.literal(true),
 }).strict();
+
+export function sectionBCarryoverAttachmentDescription(
+  kind: "completed_prior_form" | "required_qualified_appraisal",
+  fileName: string,
+): string {
+  return kind === "completed_prior_form"
+    ? `Completed prior-year Form 8283 Section B: ${fileName}`
+    : `Qualified Appraisal for prior-year Form 8283 Section B: ${fileName}`;
+}
 
 const carryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),
@@ -104,4 +114,58 @@ export async function bindForm8283SectionBCarryoverSource(
       );
     }
   }
+}
+
+/** Join the two byte-reviewed copies to distinct submitted MeF attachments. */
+export async function reviewForm8283SectionBCarryoverBundle(
+  rawSource: unknown,
+  rawCarryover: unknown,
+  currentTaxpayerSsn: string,
+  completedPriorFormBytes: Uint8Array,
+  appraisalBytes: Uint8Array,
+  context: MefBuildContext,
+): Promise<
+  Readonly<{
+    contributionId: string;
+    priorFormDocumentId: string;
+    appraisalDocumentId: string;
+  }>
+> {
+  await bindForm8283SectionBCarryoverSource(
+    rawSource,
+    rawCarryover,
+    currentTaxpayerSsn,
+    completedPriorFormBytes,
+    appraisalBytes,
+  );
+  const source = form8283SectionBCarryoverSourceSchema.parse(rawSource);
+  const entries = [
+    ["completed_prior_form", source.completed_prior_form],
+    ["required_qualified_appraisal", source.required_qualified_appraisal],
+  ] as const;
+  const documentIds = entries.map(([kind, review]) => {
+    const fileName = review.file_name;
+    const id = context.documentIdsByAttachmentFileName?.[fileName];
+    if (
+      !id || !id.trim() ||
+      context.attachmentSha256ByFileName?.[fileName] !== review.sha256 ||
+      context.attachmentDescriptionsByFileName?.[fileName] !==
+        sectionBCarryoverAttachmentDescription(kind, fileName)
+    ) {
+      throw new Error(
+        `Form 8283 Section B ${kind} must match reviewed bytes, description, and MeF document`,
+      );
+    }
+    return id;
+  });
+  if (documentIds[0] === documentIds[1]) {
+    throw new Error(
+      "Form 8283 Section B prior form and appraisal need distinct MeF documents",
+    );
+  }
+  return {
+    contributionId: source.contribution_id,
+    priorFormDocumentId: documentIds[0],
+    appraisalDocumentId: documentIds[1],
+  };
 }

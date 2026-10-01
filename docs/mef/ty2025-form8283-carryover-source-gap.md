@@ -80,3 +80,15 @@ route. The reviewed fields and purported 2024 attachment are assertions; the
 PDF contents, appraiser qualification, 2024 filing, and amount previously
 deducted are not independently authenticated. Native Form 8283 and PDF export
 remain limited to the bounded Section A securities carryover route above.
+
+The public `f8283.carryover_evidence` input now accepts a tagged
+`purchased_artwork` Section B source alongside the existing
+`publicly_traded_securities` Section A source. A dedicated Section B review
+joins both exact prior PDF byte hashes to the submitted MeF attachment
+descriptions and distinct binary document IDs, after matching the gift,
+taxpayer, appraisal review, and Schedule A carryover row. Positive and changed
+description/document-ID fixtures are authored for the deferred batch. Section
+B native and PDF export explicitly reject this source until the prior form's
+complete printable property, appraiser, and donee facts and accepted 2024
+filing proof are available. No current-year Section B filing is claimed by
+accepting the source contract.

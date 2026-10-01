@@ -1,6 +1,13 @@
-import { assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
-import { bindForm8283SectionBCarryoverSource } from "./section_b_carryover_source.ts";
+import {
+  bindForm8283SectionBCarryoverSource,
+  reviewForm8283SectionBCarryoverBundle,
+  sectionBCarryoverAttachmentDescription,
+} from "./section_b_carryover_source.ts";
+import { inputSchema as form8283InputSchema } from "./index.ts";
+import { form8283 } from "../../../2025/mef/forms/f8283.ts";
+import { form8283Pdf } from "../../../2025/pdf/forms/f8283.ts";
 
 const priorFormBytes = new TextEncoder().encode(
   "%PDF-1.7 reviewed prior Section B fixture",
@@ -87,5 +94,81 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
   );
   await assertRejects(() =>
     bind({ ...source, appraisal_was_attached_to_2024_return_reviewed: false })
+  );
+  const context = {
+    attachmentSha256ByFileName: {
+      "prior-8283.pdf": source.completed_prior_form.sha256,
+      "art-appraisal.pdf": source.required_qualified_appraisal.sha256,
+    },
+    attachmentDescriptionsByFileName: {
+      "prior-8283.pdf": sectionBCarryoverAttachmentDescription(
+        "completed_prior_form",
+        "prior-8283.pdf",
+      ),
+      "art-appraisal.pdf": sectionBCarryoverAttachmentDescription(
+        "required_qualified_appraisal",
+        "art-appraisal.pdf",
+      ),
+    },
+    documentIdsByAttachmentFileName: {
+      "prior-8283.pdf": "BinaryAttachment0001",
+      "art-appraisal.pdf": "BinaryAttachment0002",
+    },
+  };
+  const reviewed = await reviewForm8283SectionBCarryoverBundle(
+    source,
+    carryover,
+    "123456789",
+    priorFormBytes,
+    appraisalBytes,
+    context,
+  );
+  assertEquals(reviewed.contributionId, "artwork-2024-1");
+  assertEquals(reviewed.priorFormDocumentId, "BinaryAttachment0001");
+  assertEquals(reviewed.appraisalDocumentId, "BinaryAttachment0002");
+  await assertRejects(() =>
+    reviewForm8283SectionBCarryoverBundle(
+      source,
+      carryover,
+      "123456789",
+      priorFormBytes,
+      appraisalBytes,
+      {
+        ...context,
+        documentIdsByAttachmentFileName: {
+          "prior-8283.pdf": "BinaryAttachment0001",
+          "art-appraisal.pdf": "BinaryAttachment0001",
+        },
+      },
+    )
+  );
+  await assertRejects(() =>
+    reviewForm8283SectionBCarryoverBundle(
+      source,
+      carryover,
+      "123456789",
+      priorFormBytes,
+      appraisalBytes,
+      {
+        ...context,
+        attachmentDescriptionsByFileName: {
+          ...context.attachmentDescriptionsByFileName,
+          "art-appraisal.pdf": "Wrong appraisal description",
+        },
+      },
+    )
+  );
+  const filedSource = form8283InputSchema.parse({
+    carryover_evidence: [source],
+  });
+  assertThrows(
+    () => form8283.build(filedSource, {}),
+    Error,
+    "Section B artwork carryover needs printed prior-form facts",
+  );
+  assertThrows(
+    () => form8283Pdf.instances!(filedSource, undefined, {}),
+    Error,
+    "Section B artwork carryover needs printed prior-form facts",
   );
 });
