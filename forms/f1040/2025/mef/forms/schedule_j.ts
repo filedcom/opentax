@@ -11,17 +11,54 @@ type Line = keyof ScheduleJFields;
 type Input = ScheduleJFields | readonly [];
 
 const ALL_LINES: readonly Line[] = [
-  "line1", "line2a", "line2b", "line2c", "line3", "line4", "line5",
-  "line6", "line7", "line8", "line9", "line10", "line11", "line12",
-  "line13", "line14", "line15", "line16", "line17", "line18",
-  "line19", "line20", "line21", "line22", "line23",
+  "line1",
+  "line2a",
+  "line2b",
+  "line2c",
+  "line3",
+  "line4",
+  "line5",
+  "line6",
+  "line7",
+  "line8",
+  "line9",
+  "line10",
+  "line11",
+  "line12",
+  "line13",
+  "line14",
+  "line15",
+  "line16",
+  "line17",
+  "line18",
+  "line19",
+  "line20",
+  "line21",
+  "line22",
+  "line23",
 ];
 
 const NONNEGATIVE_LINES: readonly Line[] = [
-  "line1", "line2a", "line2b", "line2c", "line3", "line4", "line6", "line7",
-  "line8", "line10", "line12", "line14", "line16", "line17",
-  "line18", "line19", "line20", "line21",
-  "line22", "line23",
+  "line1",
+  "line2a",
+  "line2b",
+  "line2c",
+  "line3",
+  "line4",
+  "line6",
+  "line7",
+  "line8",
+  "line10",
+  "line12",
+  "line14",
+  "line16",
+  "line17",
+  "line18",
+  "line19",
+  "line20",
+  "line21",
+  "line22",
+  "line23",
 ];
 
 // Exact element sequence in TY2025 v5.4 IRS1040ScheduleJ.xsd.
@@ -83,7 +120,7 @@ export function buildScheduleJ(
     fields.line10 !== fields.line6 || fields.line14 !== fields.line6 ||
     fields.line18 !== fields.line17 ||
     fields.line17 !== fields.line4 + fields.line8 + fields.line12 +
-      fields.line16 ||
+        fields.line16 ||
     fields.line22 !== fields.line19 + fields.line20 + fields.line21 ||
     fields.line23 !== fields.line18 - fields.line22
   ) {
@@ -94,9 +131,18 @@ export function buildScheduleJ(
     throw new Error("Schedule J needs finalized Form 1040");
   }
   const f1040 = returnFields as Record<string, unknown>;
+  const specialTax = f1040.form4972_tax === undefined
+    ? 0
+    : numberFromReturn(f1040, "form4972_tax");
+  if (
+    specialTax < 0 ||
+    (specialTax > 0 && context.pending?.form4972 === undefined)
+  ) {
+    throw new Error("Schedule J needs sourced Form 4972 special tax");
+  }
   if (
     fields.line1 !== numberFromReturn(f1040, "line15_taxable_income") ||
-    fields.line23 !== numberFromReturn(f1040, "line16_income_tax")
+    fields.line23 !== numberFromReturn(f1040, "line16_income_tax") - specialTax
   ) {
     throw new Error("Schedule J must reconcile to Form 1040 lines 15 and 16");
   }

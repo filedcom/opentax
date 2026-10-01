@@ -1,3 +1,7 @@
+import { scheduleJLinesSchema } from "../nodes/intermediate/forms/schedule_j/calculation.ts";
+import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
+import { filingStatusSchema } from "../nodes/types.ts";
+
 function record(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`Form 4972 AMT join needs ${label}`);
@@ -18,9 +22,8 @@ function optionalDollars(value: unknown, label: string): number {
 
 /**
  * Form 6251 (2025) line 10 removes the Form 4972 special tax from Form 1040
- * line 16. Schedule J has its own tax-refiguring rule, so its line 10 must be
- * checked against that separate source; the exact special-tax identity still
- * applies here.
+ * line 16. With Schedule J, line 10 uses tax refigured without that election;
+ * the Form 4972 special tax is excluded from that refigured tax too.
  */
 export function assertForm4972AmtJoin(
   specialTax: number,
@@ -42,10 +45,30 @@ export function assertForm4972AmtJoin(
   if (form6251.form4972_tax !== specialTax) {
     throw new Error("Form 6251 omits the Form 4972 special tax source");
   }
-  if (pending.schedule_j !== undefined) return;
+  let baseTax = line16 - specialTax;
+  if (pending.schedule_j !== undefined) {
+    const scheduleJ = scheduleJLinesSchema.parse(pending.schedule_j);
+    const taxableIncome = dollars(
+      form1040.line15_taxable_income,
+      "Form 1040 line 15",
+    );
+    if (
+      !Number.isSafeInteger(Math.round(taxableIncome)) ||
+      scheduleJ.line1 !== Math.round(taxableIncome) ||
+      scheduleJ.line23 !== line16 - specialTax
+    ) {
+      throw new Error(
+        "Schedule J and Form 4972 differ from finalized Form 1040",
+      );
+    }
+    baseTax = ordinaryTax2025(
+      taxableIncome,
+      filingStatusSchema.parse(form1040.filing_status),
+    );
+  }
   const expected = Math.max(
     0,
-    line16 - specialTax +
+    baseTax +
       optionalDollars(form6251.schedule2_line1z_tax, "Schedule 2 line 1z") -
       optionalDollars(
         form6251.schedule3_line1_foreign_tax_credit,

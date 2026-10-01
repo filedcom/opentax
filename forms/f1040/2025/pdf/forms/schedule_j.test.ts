@@ -11,13 +11,31 @@ const pending = {
 
 Deno.test("2025 Schedule J PDF maps every numbered line to its IRS widget", () => {
   assertEquals(scheduleJPdf.fields.length, 25);
-  assertEquals(scheduleJPdf.fields[0].pdfField, "topmostSubform[0].Page1[0].f1_3[0]");
-  assertEquals(scheduleJPdf.fields[3].pdfField, "topmostSubform[0].Page1[0].f1_6[0]");
-  assertEquals(scheduleJPdf.fields[18].pdfField, "topmostSubform[0].Page1[0].f1_21[0]");
-  assertEquals(scheduleJPdf.fields[19].pdfField, "topmostSubform[0].Page2[0].f2_1[0]");
-  assertEquals(scheduleJPdf.fields[24].pdfField, "topmostSubform[0].Page2[0].f2_6[0]");
+  assertEquals(
+    scheduleJPdf.fields[0].pdfField,
+    "topmostSubform[0].Page1[0].f1_3[0]",
+  );
+  assertEquals(
+    scheduleJPdf.fields[3].pdfField,
+    "topmostSubform[0].Page1[0].f1_6[0]",
+  );
+  assertEquals(
+    scheduleJPdf.fields[18].pdfField,
+    "topmostSubform[0].Page1[0].f1_21[0]",
+  );
+  assertEquals(
+    scheduleJPdf.fields[19].pdfField,
+    "topmostSubform[0].Page2[0].f2_1[0]",
+  );
+  assertEquals(
+    scheduleJPdf.fields[24].pdfField,
+    "topmostSubform[0].Page2[0].f2_6[0]",
+  );
   assertEquals(scheduleJPdf.presenceKey, "line23");
-  assertEquals(ALL_PDF_FORMS.filter(({ pendingKey }) => pendingKey === "schedule_j"), [scheduleJPdf]);
+  assertEquals(
+    ALL_PDF_FORMS.filter(({ pendingKey }) => pendingKey === "schedule_j"),
+    [scheduleJPdf],
+  );
 });
 
 Deno.test("2025 Schedule J PDF only projects the complete calculated lines", () => {
@@ -37,15 +55,46 @@ Deno.test("2025 Schedule J PDF only projects the complete calculated lines", () 
     "calculated line1",
   );
   assertThrows(
-    () => scheduleJPdf.projectFields?.({ ...calculated, line2b: Number.NaN }, pending),
+    () =>
+      scheduleJPdf.projectFields?.(
+        { ...calculated, line2b: Number.NaN },
+        pending,
+      ),
     Error,
     "calculated line2b",
   );
   assertThrows(
-    () => scheduleJPdf.projectFields?.(calculated, {
-      f1040: { ...pending.f1040, line16_income_tax: 26 },
-    }),
+    () =>
+      scheduleJPdf.projectFields?.(calculated, {
+        f1040: { ...pending.f1040, line16_income_tax: 26 },
+      }),
     Error,
     "match finalized Form 1040",
+  );
+});
+
+Deno.test("2025 Schedule J PDF joins its line 23 to Form 1040 with Form 4972 tax", () => {
+  const joint = {
+    f1040: { ...pending.f1040, line16_income_tax: 525, form4972_tax: 500 },
+    form4972: { elections: [{}] },
+  };
+  assertEquals(scheduleJPdf.projectFields?.(calculated, joint), calculated);
+  assertThrows(
+    () =>
+      scheduleJPdf.projectFields?.(calculated, {
+        ...joint,
+        f1040: { ...joint.f1040, form4972_tax: 499 },
+      }),
+    Error,
+    "match finalized Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleJPdf.projectFields?.(calculated, {
+        ...joint,
+        form4972: undefined,
+      }),
+    Error,
+    "sourced Form 4972",
   );
 });

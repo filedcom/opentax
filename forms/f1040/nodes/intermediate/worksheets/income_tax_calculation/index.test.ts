@@ -84,6 +84,31 @@ Deno.test("Schedule J changes Form 1040 tax while Form 6251 receives the no-elec
   );
 });
 
+Deno.test("Schedule J and Form 4972 keep separate line 16 and AMT refigure taxes", () => {
+  const ordinary = compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+  });
+  const elected = compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+    schedule_j_election_requested: true,
+    schedule_j_calculated_tax: 5_708,
+    form4972_tax: 500,
+  });
+  assertEquals(f1040Fields(elected)?.line16_income_tax, 6_208);
+  assertEquals(f1040Fields(elected)?.form4972_tax, 500);
+  assertEquals(
+    f6251Fields(elected)?.regular_tax,
+    ordinaryTax2025(50_000, FilingStatus.Single) + 500,
+  );
+  assertEquals(f6251Fields(elected)?.form4972_tax, 500);
+  assertEquals(
+    f6251Fields(ordinary)?.regular_tax,
+    ordinaryTax2025(50_000, FilingStatus.Single),
+  );
+});
+
 Deno.test("Schedule J election cannot silently become ordinary tax or include line-16 add-ons", () => {
   assertThrows(
     () =>

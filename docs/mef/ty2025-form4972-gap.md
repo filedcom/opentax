@@ -1,6 +1,6 @@
 # TY2025 Form 4972 remaining coverage
 
-## Form 6251 line 10 and final Form 1040 tax join (2026-10-01, unrun)
+## Form 6251 line 10 and Schedule J tax refigure (2026-10-01, unrun)
 
 The direct Form 4972 collection already sends its summed special tax to Form
 1040 line 16 and to the Form 6251 calculation. The native and PDF collection
@@ -9,12 +9,20 @@ source when Form 6251 is calculated. For returns without Schedule J, they
 independently recompute Form 6251 line 10 from finalized Form 1040 line 16,
 minus the Form 4972 tax, plus Schedule 2 line 1z, minus Schedule 3 line 1 and
 the Form 8978 negative-line-14 adjustment. This follows the printed
-[2025 Form 6251 line 10](https://www.irs.gov/pub/irs-pdf/f6251.pdf). Schedule J
-has a separate tax-refiguring rule, so this join checks its exact Form 4972 tax
-identity while the Schedule J line 10 amount remains dependent on that separate
-source. Positive and altered tax, return, and credit fixtures are authored for
-the combined validation pass. The underlying Form 1099-R source and
-beneficiary/NUA boundaries described below are unchanged.
+[2025 Form 6251 line 10](https://www.irs.gov/pub/irs-pdf/f6251.pdf). The
+[2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251) require
+Schedule J tax to be refigured without the income-averaging election for line
+10. The bounded ordinary-rate Schedule J route now retains its own line 23,
+adds the computed Form 4972 special tax only on Form 1040 line 16, and uses
+ordinary 2025 tax on finalized line 15 for Form 6251 line 10 before subtracting
+the Form 4972 amount. Native and PDF Schedule J projections require line 23
+plus that sourced special tax to equal Form 1040 line 16. The Form 4972 native
+and PDF AMT join independently recomputes the refigured line 10 with the
+Schedule 2, Schedule 3, and Form 8978 adjustments. Positive and tampered
+Schedule J, Form 4972, filing-status, return, and Form 6251 fixtures are
+authored but unrun. Preferential income, Form 2555, Form 8814, Form 8978,
+Form 8621, and Form 8615 combinations with Schedule J remain guarded; so do
+the underlying Form 1099-R and beneficiary/NUA boundaries below.
 
 ## Two full-share same-plan 1099-R copies with elected NUA (staged, unrun)
 
