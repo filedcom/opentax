@@ -58,6 +58,15 @@ early refinance with a qualifying reissue does not trigger the early-repayment
 worksheet. Transferred or repeatedly reissued MCCs and byte-level
 certificate/Form 8396 credit-history reconciliation remain unsupported.
 
+The prepared Form 8396 source currently has one certificate number and issue
+date and requires `certificate_is_reissued === false` for a current-year claim.
+Its carryforward history gives unused-credit amounts, not original/reissued
+certificate lineage, refinance terms, or an annual allowable-credit comparison.
+Consequently no exact Form 8396 join can be made for this reissue branch from
+the current graph. The issuer compliance reference remains a reviewed claim, and
+public Form 8828 export stays guarded until a direct source model can validate
+it.
+
 ## Calculation
 
 | Line       | Derivation                                                                                                                                                                                                                                            |

@@ -57,6 +57,20 @@ path for taxable home gain; the exact gain handoff for other reporting routes
 remains unsupported. Public MeF and PDF export must keep the Form 8828 guard
 closed until those filing rules and attachment validation are resolved.
 
+An exact Form 8396 join is blocked by its prepared source model.
+`form8396SourceSchema` exposes one `certificate_number` and
+`certificate_issue_date`; a current-year credit claim requires
+`certificate_is_reissued === false`. Its prior-year source carries only 2022,
+2023 and 2024 unused-credit amounts. The prepared graph has no original and
+replacement MCC identity pair, refinancing date, old/new mortgage debt and
+credit-rate terms, or year-by-year allowable-credit comparison. A current-year
+reissued MCC cannot be represented there, and a carryforward-only Form 8396
+cannot prove the IRS no-increased-credit condition. The Form 8828 reissue branch
+therefore uses the reviewed issuer certification as a source claim while public
+export stays closed; no Form 8396 match or credit history is inferred. An exact
+join requires a direct Form 8396 source expansion for certificate lineage and
+the applicable annual credit limits.
+
 Foreclosure remains closed:
 [Form 8828 line 9](https://www.irs.gov/pub/irs-pdf/i8828.pdf) directs fair
 market value for a non-sale disposition, while
