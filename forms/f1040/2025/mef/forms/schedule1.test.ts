@@ -251,7 +251,14 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
       },
       filingStatus: FilingStatus.Single,
     },
-    pending: { f1099g: { f1099gs: [{ box_6_taxable_grants: 1_500 }] } },
+    pending: {
+      f1099g: {
+        f1099gs: [{
+          box_6_taxable_grants: 1_500,
+          recipient_tin: "111223333",
+        }],
+      },
+    },
     documentIdsByPendingKey: {
       schedule1_other_income_statement: ["OtherIncomeTypeStatement-1"],
     },
@@ -306,7 +313,10 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
     filingStatus: FilingStatus.Single,
   };
   const copies = {
-    f1099gs: [{ box_6_taxable_grants: 400 }, { box_6_taxable_grants: 600 }],
+    f1099gs: [{ box_6_taxable_grants: 400, recipient_tin: "111223333" }, {
+      box_6_taxable_grants: 600,
+      recipient_tin: "111223333",
+    }],
   };
   const xml = schedule1.build({ line8z_taxable_grants: 1_000 }, {
     filer,
@@ -327,6 +337,29 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
     Error,
     "taxable-grant total differs from retained Form 1099-G box 6 copies",
   );
+  assertThrows(
+    () => schedule1.build({ line8z_taxable_grants: -1 }, { filer }),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
+  for (const recipient of [undefined, "999887777"]) {
+    assertThrows(
+      () =>
+        schedule1.build({ line8z_taxable_grants: 1_000 }, {
+          filer,
+          pending: {
+            f1099g: {
+              f1099gs: [copies.f1099gs[0], {
+                ...copies.f1099gs[1],
+                recipient_tin: recipient,
+              }],
+            },
+          },
+        }),
+      Error,
+      "box 6 recipients matching the filer or joint spouse",
+    );
+  }
 });
 
 Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {

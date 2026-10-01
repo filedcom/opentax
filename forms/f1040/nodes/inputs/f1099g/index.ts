@@ -236,6 +236,7 @@ function totalTaxableGrants(g99s: G99Items): number {
 export function assertForm1099gTaxableGrantTotal(
   raw: unknown,
   expectedAmount: number,
+  recipientSsns: readonly string[],
 ): void {
   const issued = raw === undefined ? [] : inputSchema.parse(raw).f1099gs;
   if (
@@ -244,6 +245,17 @@ export function assertForm1099gTaxableGrantTotal(
   ) {
     throw new Error(
       "Schedule 1 taxable-grant total differs from retained Form 1099-G box 6 copies",
+    );
+  }
+  const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
+  if (
+    issued.some((item) =>
+      (item.box_6_taxable_grants ?? 0) > 0 &&
+      (!item.recipient_tin || !owners.has(item.recipient_tin))
+    )
+  ) {
+    throw new Error(
+      "Schedule 1 taxable grants need Form 1099-G box 6 recipients matching the filer or joint spouse",
     );
   }
 }

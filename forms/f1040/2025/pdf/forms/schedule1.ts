@@ -335,7 +335,7 @@ export const schedule1Pdf: PdfFormDescriptor = {
       all?.f1099g !== undefined ||
       Number(fields.line8z_rtaa ?? 0) > 0 ||
       fields.f1099g_rtaa_sources !== undefined ||
-      Number(fields.line8z_taxable_grants ?? 0) > 0
+      Number(fields.line8z_taxable_grants ?? 0) !== 0
     ) {
       if (!filer) throw new Error("Schedule 1 PDF RTAA needs filer identity");
       const recipients = [filer.primarySSN];
@@ -352,6 +352,7 @@ export const schedule1Pdf: PdfFormDescriptor = {
       assertForm1099gTaxableGrantTotal(
         all?.f1099g,
         Number(fields.line8z_taxable_grants ?? 0),
+        recipients,
       );
     }
     if (

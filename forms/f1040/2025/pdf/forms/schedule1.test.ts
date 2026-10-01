@@ -251,7 +251,9 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
     primarySSN: "111223333",
     filingStatus: FilingStatus.Single,
   } as never, {
-    f1099g: { f1099gs: [{ box_6_taxable_grants: 300 }] },
+    f1099g: {
+      f1099gs: [{ box_6_taxable_grants: 300, recipient_tin: "111223333" }],
+    },
   })?.[0];
   assertEquals(projected?.line8z_other, 600);
   assertEquals(
@@ -267,7 +269,13 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
   } as never;
   const all = {
     f1099g: {
-      f1099gs: [{ box_6_taxable_grants: 400 }, { box_6_taxable_grants: 600 }],
+      f1099gs: [{
+        box_6_taxable_grants: 400,
+        recipient_tin: "111223333",
+      }, {
+        box_6_taxable_grants: 600,
+        recipient_tin: "111223333",
+      }],
     },
   };
   const projected = schedule1Pdf.instances?.(
@@ -296,6 +304,51 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
       ),
     Error,
     "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
+  assertThrows(
+    () => schedule1Pdf.instances?.({ line8z_taxable_grants: -1 }, filer, {}),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
+  for (const recipient of [undefined, "999887777"]) {
+    assertThrows(
+      () =>
+        schedule1Pdf.instances?.(
+          { line8z_taxable_grants: 1_000 },
+          filer,
+          {
+            f1099g: {
+              f1099gs: [all.f1099g.f1099gs[0], {
+                ...all.f1099g.f1099gs[1],
+                recipient_tin: recipient,
+              }],
+            },
+          },
+        ),
+      Error,
+      "box 6 recipients matching the filer or joint spouse",
+    );
+  }
+  const joint = {
+    primarySSN: "111223333",
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: { ssn: "444556666" },
+  } as never;
+  const spouseSource = {
+    f1099g: {
+      f1099gs: [all.f1099g.f1099gs[0], {
+        ...all.f1099g.f1099gs[1],
+        recipient_tin: "444556666",
+      }],
+    },
+  };
+  assertEquals(
+    schedule1Pdf.instances?.(
+      { line8z_taxable_grants: 1_000 },
+      joint,
+      spouseSource,
+    )?.[0].line8z_other,
+    1_000,
   );
 });
 
