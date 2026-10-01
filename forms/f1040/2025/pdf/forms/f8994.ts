@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { reconcileForm8994DocumentSource } from "../../form8994_source.ts";
 
 // The January 2021 one-page IRS AcroForm is the filing revision for TY2025.
@@ -45,5 +46,42 @@ export const form8994Pdf: PdfFormDescriptor = {
       line2: undefined,
       line3: lines.line3,
     };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error("Form 8994 PDF needs the prepared Form 3800 document");
+    }
+    const { lines } = reconcileForm8994DocumentSource(
+      allPending.f8994,
+      allPending,
+    );
+    const rows = prepared.currentRows.filter((row) => row.line === "4j");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "4j");
+    const details = prepared.currentDetails.filter((row) => row.line === "4j");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      fields.line3 !== lines.line3 ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8994" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      detail.credit !== lines.line3 ||
+      amount.nonpassiveCredit !== lines.line3 ||
+      amount.totalCredit !== lines.line3 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit ||
+      amount.appliedCredit !== allPending.f3800.form8994_applied_credit
+    ) {
+      throw new Error("Form 8994 PDF differs from filed Form 3800 line 4j");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
 };

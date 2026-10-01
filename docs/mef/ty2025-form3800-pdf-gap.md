@@ -657,3 +657,11 @@ document-ID, applied-credit, and final-return fixtures await the bulk run.
 The [official 2025 Form 8941](https://www.irs.gov/pub/irs-prior/f8941--2025.pdf)
 directs its line 16 to Form 3800 Part III line 4h. This does not authenticate
 SHOP issuer records or widen the bounded direct-employer claim.
+
+The Form 8994 printable copy now checks the prepared Form 3800 Part III line
+4j source row, current amount, and detail against one IRS8994 document ID,
+Form 8994 line 3, and the applied credit. Its Form 3800 line 38 must reach
+Schedule 3 and finalized Form 1040 line 20. Positive and changed document-ID,
+applied-credit, and final-return fixtures await the bulk run. The current
+[IRS Form 8994](https://www.irs.gov/pub/irs-pdf/f8994.pdf) directs line 3 to
+Form 3800 Part III line 4j. This adds no payroll evidence or wider eligibility.
