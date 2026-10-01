@@ -6,8 +6,11 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/form4972/index.ts";
 import { TS } from "../../../nodes/types.ts";
-import { form4972NuaAnnotations, form4972Pdf } from "../../pdf/forms/f4972.ts";
-import { form4972 as mef } from "./f4972.ts";
+import {
+  form4972NuaAnnotations,
+  projectedFields,
+} from "../../pdf/forms/f4972.ts";
+import { buildIRS4972 } from "./f4972.ts";
 
 const eligibility = {
   born_before_1936: true,
@@ -78,14 +81,14 @@ Deno.test("Form 4972 full-share NUA plus annuity reconciles source, native XML, 
   assertEquals(fields.line8_nua_included, 4_000);
   assertEquals(fields.line11, 5_000);
   const allPending = pending(fields.line30 as number);
-  const xml = mef.build(fields, { filer, pending: allPending });
+  const xml = buildIRS4972(fields, { filer, pending: allPending });
   assertStringIncludes(
     xml,
     "<AnnuityActuarialValueAmt>5000</AnnuityActuarialValueAmt>",
   );
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="2000"');
   assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="4000"');
-  const projected = form4972Pdf.projectFields?.(fields, allPending);
+  const projected = projectedFields(fields, allPending);
   assertEquals(projected?.line11, 5_000);
   assertEquals(form4972NuaAnnotations(projected ?? {}), [
     { amount: 2_000, y: 485 },
@@ -110,7 +113,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   assertEquals(fields.line11, 5_000);
   assertEquals(fields.line18, 667);
   const allPending = pending(fields.line30 as number);
-  const xml = mef.build(fields, { filer, pending: allPending });
+  const xml = buildIRS4972(fields, { filer, pending: allPending });
   assertStringIncludes(
     xml,
     "<AnnuityActuarialValueAmt>5000</AnnuityActuarialValueAmt>",
@@ -119,7 +122,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
     xml,
     "<LumpSumDistriDeathBnftExclAmt>1333</LumpSumDistriDeathBnftExclAmt>",
   );
-  const projected = form4972Pdf.projectFields?.(fields, allPending);
+  const projected = projectedFields(fields, allPending);
   assertEquals(projected?.line11, 5_000);
   assertEquals(projected?.line18, 667);
   assertEquals(form4972NuaAnnotations(projected ?? {}), [
@@ -127,18 +130,19 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
     { amount: 4_000, y: 390 },
   ]);
   assertThrows(
-    () => mef.build({ ...fields, line18: 666 }, { filer, pending: allPending }),
+    () =>
+      buildIRS4972({ ...fields, line18: 666 }, { filer, pending: allPending }),
     Error,
     "NUA death/estate allocation differs",
   );
   assertThrows(
-    () => form4972Pdf.projectFields?.({ ...fields, line11: 4_999 }, allPending),
+    () => projectedFields({ ...fields, line11: 4_999 }, allPending),
     Error,
     "Part III lines do not reconcile",
   );
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: pending(fields.line30 as number, 4_999),
       }),
@@ -147,7 +151,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   );
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...allPending,
@@ -159,10 +163,13 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   );
   assertThrows(
     () =>
-      mef.build(calculated({ ...beneficiary, elect_10yr_averaging: false }), {
-        filer,
-        pending: allPending,
-      }),
+      buildIRS4972(
+        calculated({ ...beneficiary, elect_10yr_averaging: false }),
+        {
+          filer,
+          pending: allPending,
+        },
+      ),
     Error,
     "Part III when an annuity is present",
   );
@@ -170,7 +177,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   const fractionalPending = pending(fractional.line30 as number);
   assertThrows(
     () =>
-      mef.build(fractional, {
+      buildIRS4972(fractional, {
         filer,
         pending: {
           ...fractionalPending,
@@ -192,7 +199,7 @@ Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or pa
   const allPending = pending(fields.line30 as number);
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: pending(fields.line30 as number, 4_999),
       }),
@@ -201,13 +208,16 @@ Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or pa
   );
   assertThrows(
     () =>
-      mef.build({ ...fields, line11: 4_999 }, { filer, pending: allPending }),
+      buildIRS4972({ ...fields, line11: 4_999 }, {
+        filer,
+        pending: allPending,
+      }),
     Error,
     "annuity lines differ",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(fields, {
+      projectedFields(fields, {
         ...allPending,
         f1040: { form4972_tax: (fields.line30 as number) - 1 },
       }),
@@ -227,7 +237,7 @@ Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or pa
   const roundedPending = pending(roundedFields.line30 as number);
   assertThrows(
     () =>
-      mef.build(roundedFields, {
+      buildIRS4972(roundedFields, {
         filer,
         pending: {
           ...roundedPending,
@@ -249,7 +259,7 @@ Deno.test("Form 4972 Part-III-only full-share NUA plus annuity omits Part II", (
   assertEquals(fields.line6, undefined);
   assertEquals(fields.line8, 36_000);
   assertEquals(fields.line8_nua_included, 6_000);
-  const xml = mef.build(fields, {
+  const xml = buildIRS4972(fields, {
     filer,
     pending: pending(fields.line30 as number),
   });
@@ -284,7 +294,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
       ((fields.line25 as number) - (fields.line28 as number)) * 0.5,
     ),
   );
-  const xml = mef.build(fields, { filer, pending: sourced });
+  const xml = buildIRS4972(fields, { filer, pending: sourced });
   assertStringIncludes(
     xml,
     "<AnnuityActuarialValueAmt>8000</AnnuityActuarialValueAmt>",
@@ -294,7 +304,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
     xml,
     "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
-  const projected = form4972Pdf.projectFields?.(fields, sourced);
+  const projected = projectedFields(fields, sourced);
   assertEquals(projected?.line11, 8_000);
   assertEquals(form4972NuaAnnotations(projected ?? {}), [
     { amount: 2_000, y: 485 },
@@ -302,7 +312,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
   ]);
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...sourced,
@@ -316,7 +326,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
   );
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...sourced,
@@ -328,7 +338,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(fields, {
+      projectedFields(fields, {
         ...sourced,
         f1099r: {
           f1099rs: [{ ...item, box8_pct_total: 25, box9a_pct_total: 40 }],
@@ -338,13 +348,14 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
     "9a",
   );
   assertThrows(
-    () => mef.build({ ...fields, line11: 2_000 }, { filer, pending: sourced }),
+    () =>
+      buildIRS4972({ ...fields, line11: 2_000 }, { filer, pending: sourced }),
     Error,
     "lines",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({
+      projectedFields({
         ...fields,
         line8_nua_included: 6_000,
       }, sourced),
@@ -353,7 +364,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
   );
   assertThrows(
     () =>
-      mef.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...sourced,
@@ -384,8 +395,8 @@ Deno.test("Form 4972 Part-III-only partial NUA and annuity omits Part II", () =>
   assertEquals(fields.line8, 72_000);
   assertEquals(fields.line8_nua_included, 12_000);
   assertEquals(fields.line11, 8_000);
-  const xml = mef.build(fields, { filer, pending: sourced });
+  const xml = buildIRS4972(fields, { filer, pending: sourced });
   assertEquals(xml.includes("CapitalGainElectionAmt"), false);
   assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="12000"');
-  assertEquals(form4972Pdf.projectFields?.(fields, sourced)?.line11, 8_000);
+  assertEquals(projectedFields(fields, sourced)?.line11, 8_000);
 });

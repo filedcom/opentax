@@ -218,6 +218,7 @@ const qualifiedForm4972Source = {
     f1099rs: [{
       payer_name: "Qualified Plan",
       payer_ein: "123456789",
+      source_document_reference: "qualified-4972-source",
       box1_gross_distribution: 30_000,
       box2a_taxable_amount: 30_000,
       box3_capital_gain: 5_000,
@@ -1257,7 +1258,29 @@ Deno.test("IRS8919 absent when form8919 missing from pending", () => {
 Deno.test("IRS4972 present when form4972 has data", () => {
   const xml = buildMefXml({
     ...qualifiedForm4972Source,
-    form4972: qualifiedForm4972,
+    form4972: {
+      forms: [{
+        ...qualifiedForm4972,
+        source_document_references: ["qualified-4972-source"],
+      }],
+      elections: [{
+        source_document_references: ["qualified-4972-source"],
+        born_before_1936: true,
+        beneficiary_distribution: false,
+        entire_balance_distributed: true,
+        rolled_over_any: false,
+        participant_five_year_member: true,
+        prior_election_after_1986: false,
+        elect_capital_gain: true,
+        elect_10yr_averaging: true,
+      }],
+      source_forms: [{
+        source_document_references: ["qualified-4972-source"],
+        recipient: TS.T,
+        lump_sum_amount: 30_000,
+        capital_gain_amount: 5_000,
+      }],
+    },
   });
   assertStringIncludes(xml, "<IRS4972 ");
 });

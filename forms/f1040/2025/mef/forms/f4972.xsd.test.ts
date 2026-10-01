@@ -28,6 +28,41 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
+function collection(form: Record<string, unknown>) {
+  const refs = ["form4972-source"];
+  const electionKeys = [
+    "born_before_1936",
+    "entire_balance_distributed",
+    "rolled_over_any",
+    "beneficiary_distribution",
+    "participant_five_year_member",
+    "prior_election_after_1986",
+    "elect_capital_gain",
+    "elect_10yr_averaging",
+    "elect_include_nua",
+  ];
+  const sourceKeys = [
+    "recipient",
+    "lump_sum_amount",
+    "capital_gain_amount",
+    "box6_nua",
+    "annuity_actuarial_value",
+    "annuity_share_pct",
+    "recipient_share_pct",
+  ];
+  const pick = (keys: string[]) =>
+    Object.fromEntries(
+      keys.filter((key) => form[key] !== undefined).map((
+        key,
+      ) => [key, form[key]]),
+    );
+  return {
+    forms: [{ ...form, source_document_references: refs }],
+    elections: [{ ...pick(electionKeys), source_document_references: refs }],
+    source_forms: [{ ...pick(sourceKeys), source_document_references: refs }],
+  };
+}
+
 Deno.test({
   name: "XSD: 2025 Form 4972 tax links to Form 1040 line 16",
   ignore: !xsdAvailable,
@@ -39,6 +74,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 10_000,
@@ -52,7 +88,7 @@ Deno.test({
       line16_income_tax: 14_710,
       form4972_tax: 14_710,
     },
-    form4972: {
+    form4972: collection({
       recipient: TS.T,
       lump_sum_amount: 100_000,
       capital_gain_amount: 10_000,
@@ -79,7 +115,7 @@ Deno.test({
       line25: 12_710,
       line29: 12_710,
       line30: 14_710,
-    },
+    }),
   }, filer);
   assertStringIncludes(xml, "<Form4972Ind referenceDocumentId=");
   assertStringIncludes(
@@ -112,6 +148,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 30_000,
@@ -126,7 +163,7 @@ Deno.test({
       line16_income_tax: 18_950,
       form4972_tax: 18_950,
     },
-    form4972: {
+    form4972: collection({
       recipient: TS.T,
       lump_sum_amount: 100_000,
       capital_gain_amount: 30_000,
@@ -152,7 +189,7 @@ Deno.test({
       line25: 11_750,
       line29: 11_750,
       line30: 18_950,
-    },
+    }),
   }, filer);
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
   assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="14000"');
@@ -181,6 +218,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 30_000,
@@ -196,7 +234,7 @@ Deno.test({
       line16_income_tax: 7_200,
       form4972_tax: 7_200,
     },
-    form4972: {
+    form4972: collection({
       recipient: TS.T,
       lump_sum_amount: 100_000,
       capital_gain_amount: 30_000,
@@ -212,7 +250,7 @@ Deno.test({
       line6: 36_000,
       line6_nua_capital_gain: 6_000,
       line7: 7_200,
-    },
+    }),
   }, filer);
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
   assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt"), false);

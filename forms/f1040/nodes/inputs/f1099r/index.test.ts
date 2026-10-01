@@ -32,12 +32,20 @@ function minimalPensionItem(overrides: Partial<Item> = {}): Item {
   return {
     payer_name: "Test Pension",
     payer_ein: "98-7654321",
+    source_document_reference: "default-pension-source",
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: false,
     ts: TS.T,
     ...overrides,
   };
+}
+
+function firstForm4972Source(
+  result: ReturnType<typeof compute>,
+): Record<string, unknown> | undefined {
+  return (result.outputs.find((o) => o.nodeType === "form4972")?.fields
+    .source_forms as Record<string, unknown>[] | undefined)?.[0];
 }
 
 function compute(items: Item[]) {
@@ -285,7 +293,7 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  const fields = form4972Out!.fields as Record<string, unknown>;
+  const fields = firstForm4972Source(result)!;
   assertEquals(fields.lump_sum_amount, 80_000);
   assertEquals(fields.capital_gain_amount, 10_000);
   assertEquals(fields.box6_nua, 4_000);
@@ -301,7 +309,7 @@ Deno.test("f1099r.compute: Form 4972 retains a partial box 9a share", () => {
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  assertEquals(form4972Out?.fields.recipient_share_pct, 50);
+  assertEquals(firstForm4972Source(result)?.recipient_share_pct, 50);
 });
 
 Deno.test("f1099r.compute: Form 4972 retains the separate box 8 percentage", () => {
@@ -314,7 +322,7 @@ Deno.test("f1099r.compute: Form 4972 retains the separate box 8 percentage", () 
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const fields = result.outputs.find((o) => o.nodeType === "form4972")?.fields;
+  const fields = firstForm4972Source(result);
   assertEquals(fields?.annuity_actuarial_value, 2_000);
   assertEquals(fields?.annuity_share_pct, 25);
   assertEquals(fields?.recipient_share_pct, 50);
@@ -329,7 +337,7 @@ Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  assertEquals(form4972Out?.fields.lump_sum_amount, 80_000);
+  assertEquals(firstForm4972Source(result)?.lump_sum_amount, 80_000);
 });
 
 Deno.test("f1099r.compute: multiple elected Form 4972 distributions need participant identity", () => {
@@ -376,19 +384,21 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
     box2a_taxable_amount: 40_000,
     source_document_reference: "1099-R-B",
   };
-  const fields = compute([first, second]).outputs.find((o) =>
-    o.nodeType === "form4972"
-  )?.fields;
+  const fields = firstForm4972Source(compute([first, second]));
   assertEquals(fields?.lump_sum_amount, 70_000);
   assertEquals(fields?.multiple_1099r, {
     ...form4972_plan,
     source_document_references: ["1099-R-A", "1099-R-B"],
   });
   assertThrows(
-    () => compute([first, { ...second, form4972_plan: {
-      ...form4972_plan,
-      participant_ssn: "987654321",
-    } }]),
+    () =>
+      compute([first, {
+        ...second,
+        form4972_plan: {
+          ...form4972_plan,
+          participant_ssn: "987654321",
+        },
+      }]),
     Error,
     "one fully identified participant",
   );
@@ -398,7 +408,8 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
     "one fully identified participant",
   );
   assertThrows(
-    () => compute([first, { ...second, source_document_reference: "1099-R-A" }]),
+    () =>
+      compute([first, { ...second, source_document_reference: "1099-R-A" }]),
     Error,
     "distinct full-share source copies",
   );
@@ -428,9 +439,7 @@ Deno.test("f1099r.compute: two same-plan box 3 gains combine for one Form 4972",
     box3_capital_gain: 7_000,
     source_document_reference: "1099-R-capital-B",
   };
-  const fields = compute([first, second]).outputs.find((output) =>
-    output.nodeType === "form4972"
-  )?.fields;
+  const fields = firstForm4972Source(compute([first, second]));
   assertEquals(fields?.lump_sum_amount, 70_000);
   assertEquals(fields?.capital_gain_amount, 12_000);
 });

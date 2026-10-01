@@ -158,7 +158,7 @@ import { form4952 } from "../nodes/intermediate/forms/form4952/index.ts";
 import { form4684 } from "../nodes/intermediate/forms/form4684/index.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
 import { form8824 } from "../nodes/intermediate/forms/form8824/index.ts";
-import { form4972 } from "../nodes/intermediate/forms/form4972/index.ts";
+import { form4972Elections } from "../nodes/intermediate/forms/form4972/elections.ts";
 import { form5329 } from "../nodes/intermediate/forms/form5329/index.ts";
 import { form5695 } from "../nodes/intermediate/forms/form5695/index.ts";
 import { jointOccupancyStatementNode } from "../nodes/intermediate/forms/joint_occupancy_statement/index.ts";
@@ -382,7 +382,7 @@ export const registry: NodeRegistry = {
   form4952,
   form4797,
   form8824,
-  form4972,
+  form4972Elections,
   form5329,
   form5695,
   jointOccupancyStatementNode,

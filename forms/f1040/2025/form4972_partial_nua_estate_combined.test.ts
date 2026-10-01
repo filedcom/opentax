@@ -2,7 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { DistributionCode } from "../nodes/inputs/f1099r/index.ts";
 import {
-  form4972 as form4972Node,
+  form4972 as calculator,
   inputSchema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
 import { buildIRS4972 } from "./mef/forms/f4972.ts";
@@ -17,7 +17,7 @@ const filer: FilerIdentity = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 
-function partialEstatePartIICase() {
+function combinedCase() {
   const election = inputSchema.parse({
     recipient: "T",
     born_before_1936: true,
@@ -28,23 +28,28 @@ function partialEstatePartIICase() {
     prior_beneficiary_election_after_1986: false,
     lump_sum_amount: 20_000,
     capital_gain_amount: 4_000,
+    box6_nua: 4_000,
+    elect_include_nua: true,
     recipient_share_pct: 50,
     federal_estate_tax: 2_000,
     partial_estate_tax_source: {
-      administrator_statement_reference: "estate administrator allocation 2025",
+      administrator_statement_reference: "estate administrator NUA allocation",
       estate_tax_return_reference: "filed estate Form 706 tax workpaper",
-      full_distribution_taxable_amount: 40_000,
+      full_distribution_taxable_amount: 48_000,
       full_distribution_federal_estate_tax: 2_000,
       recipient_allocated_federal_estate_tax: 1_000,
     },
     elect_capital_gain: true,
-    elect_10yr_averaging: false,
+    elect_10yr_averaging: true,
   });
-  const outputs = form4972Node.compute(
+  const outputs = calculator.compute(
     { taxYear: 2025, formType: "f1040" },
     election,
   ).outputs;
   const fields = outputs.find((row) => row.nodeType === "form4972")!.fields;
+  const specialTax = outputs.find((row) =>
+    row.nodeType === "income_tax_calculation"
+  )?.fields.form4972_tax;
   const pending = {
     general: {
       taxpayer_first_name: "Alex",
@@ -53,84 +58,84 @@ function partialEstatePartIICase() {
     },
     f1099r: {
       f1099rs: [{
-        payer_name: "Qualified Plan",
+        payer_name: "Qualified Stock Bonus Plan",
         payer_ein: "123456789",
-        box1_gross_distribution: 20_000,
+        box1_gross_distribution: 24_000,
         box2a_taxable_amount: 20_000,
         box3_capital_gain: 4_000,
+        box6_nua: 4_000,
         box7_distribution_code: DistributionCode.CodeA,
         box9a_pct_total: 50,
         ts: "T" as const,
         exclude_4972: true,
       }],
     },
-    f1040: {
-      form4972_tax: 760,
-      line5b_pension_taxable: 16_000,
-    },
+    f1040: { form4972_tax: specialTax },
   };
   return { election, outputs, fields, pending };
 }
 
-Deno.test("Form 4972 partial beneficiary Part II allocates estate tax to capital and ordinary shares", () => {
-  const { outputs, fields, pending } = partialEstatePartIICase();
-  assertEquals(fields.line6, 3_800);
-  assertEquals(fields.line7, 760);
-  assertEquals(fields.line8, undefined);
+Deno.test("partial beneficiary NUA and estate tax use recipient capital tax and full Part III estate tax", () => {
+  const { outputs, fields, pending } = combinedCase();
+  assertEquals(fields.line6_nua_capital_gain, 800);
+  assertEquals(fields.line6, 4_600);
+  assertEquals(fields.line7, 920);
+  assertEquals(fields.line8, 38_400);
+  assertEquals(fields.line8_nua_included, 6_400);
+  assertEquals(fields.line18, 1_600);
+  assertEquals(fields.line30, Number(fields.line7) + Number(fields.line29));
   assertEquals(
-    outputs.find((row) => row.nodeType === "schedule_a")?.fields
-      .line_16_other_deductions,
-    800,
-  );
-  assertEquals(
-    outputs.find((row) => row.nodeType === "f1040")?.fields
-      .line5b_form4972_ordinary,
-    16_000,
+    outputs.find((row) => row.nodeType === "income_tax_calculation")?.fields
+      .form4972_tax,
+    fields.line30,
   );
   const xml = buildIRS4972(fields, { filer, pending });
+  assertStringIncludes(xml, "<CapitalGainElectionAmt");
+  assertStringIncludes(xml, ">4600</CapitalGainElectionAmt>");
   assertStringIncludes(
     xml,
-    "<CapitalGainElectionAmt>3800</CapitalGainElectionAmt>",
+    "<LumpDistribFederalEstateTaxAmt>1600</LumpDistribFederalEstateTaxAmt>",
   );
   assertStringIncludes(
     xml,
-    "<CapitalGainTimesElectionPctAmt>760</CapitalGainTimesElectionPctAmt>",
+    "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
-  assertEquals(xml.includes("LumpSumDistriMultRecipientsCd"), false);
-  const pdf = projectedFields(fields, pending);
-  assertEquals(pdf?.line6, 3_800);
-  assertEquals(pdf?.line7, 760);
+  const printed = projectedFields(fields, pending);
+  assertEquals(printed?.line6, 4_600);
+  assertEquals(printed?.line18, 1_600);
+  assertEquals(printed?.line30, fields.line30);
 });
 
-Deno.test("Form 4972 partial estate Part II rejects changed allocation, source share and return tax", () => {
-  const { election, fields, pending } = partialEstatePartIICase();
+Deno.test("partial beneficiary combined NUA/estate election rejects changed allocation, source, or tax", () => {
+  const { election, fields, pending } = combinedCase();
   assertThrows(() =>
-    form4972Node.compute(
+    calculator.compute(
       { taxYear: 2025, formType: "f1040" },
       inputSchema.parse({
         ...election,
         partial_estate_tax_source: {
           ...election.partial_estate_tax_source!,
-          recipient_allocated_federal_estate_tax: 999,
+          recipient_allocated_federal_estate_tax: 900,
         },
       }),
     )
   );
-  assertThrows(() =>
-    buildIRS4972(fields, {
-      filer,
-      pending: {
+  for (
+    const changed of [
+      {
         ...pending,
         f1099r: {
-          f1099rs: [{ ...pending.f1099r.f1099rs[0], box9a_pct_total: 40 }],
+          f1099rs: [{ ...pending.f1099r.f1099rs[0], box6_nua: 3_000 }],
         },
       },
-    })
-  );
+      { ...pending, f1040: { form4972_tax: Number(fields.line30) + 1 } },
+    ]
+  ) {
+    assertThrows(() => buildIRS4972(fields, { filer, pending: changed }));
+    assertThrows(() => projectedFields(fields, changed));
+  }
   assertThrows(() =>
-    projectedFields(fields, {
-      ...pending,
-      f1040: { ...pending.f1040, form4972_tax: 761 },
-    })
+    buildIRS4972({ ...fields, line6: 4_400 }, { filer, pending })
   );
+  assertThrows(() => projectedFields({ ...fields, line18: 1_700 }, pending));
 });

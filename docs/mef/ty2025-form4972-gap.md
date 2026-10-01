@@ -1,5 +1,50 @@
 # TY2025 Form 4972 remaining coverage
 
+## Separate spouse elections on one joint return (2026-10-01, unrun)
+
+The public Form 4972 input is now one `elections[]` collection. Each election
+names its exact Form 1099-R source reference; the bounded spouse pair also
+names the participant and plan in each election. The matching source copies
+must identify different taxpayer/spouse recipients, distinct participants and
+plans, one full-share distribution for each, and affirmative complete-balance
+plan statements. The route accepts Part-III-only ten-year elections without
+NUA, annuity, death benefit, estate tax, or partial-share allocation. Each
+election is calculated separately; only the two special taxes are added for
+Form 1040 line 16. Neither distribution enters ordinary pension income.
+
+The pending result carries `forms[]` with one computed Form 4972 per spouse.
+Native MeF emits two `IRS4972` documents referenced by Form 1040; PDF renders
+two identified pages. Both exports replay each source group against its own
+form, require the participant SSN to match the final joint filer/spouse, and
+compare the sum with finalized Form 1040 tax. Joint positive and source/plan/
+return-tamper fixtures are authored but unrun. Other multi-participant pairs,
+multiple distributions for each spouse, mixed Part II elections, authenticated
+plan records and bulk validation remain open. The separate-form and combined-
+tax rule is in the [2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
+
+## Partial-share NUA, estate tax, and both elections (2026-10-01, unrun)
+
+One beneficiary with a 50% share and one wholly taxable Form 1099-R can now
+elect both the 20% capital-gain treatment and ten-year tax option when box 3
+capital gain, elected box 6 NUA, and federal estate tax are all positive. The
+administrator's full-distribution/tax statement and the filed-estate-return
+workpaper must have distinct references and allocate the same estate tax to the
+recipient at the exact box 9a percentage. The [2025 NUA and multiple-recipient
+worksheets](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) put the
+recipient's NUA capital share on Part II line 6, then gross up the ordinary
+share for Part III line 8. The recipient's estate-tax capital share reduces
+line 6; the **full-distribution** ordinary estate-tax remainder reduces Part III
+line 18 before line 29 prorates ten-year tax back to this recipient.
+
+For a 50% recipient with boxes 2a/3/6 of $20,000/$4,000/$4,000 and $2,000
+full attributable estate tax, $1,000 belongs to this recipient. Capital NUA is
+$800; $200 of the recipient's estate tax reduces line 6 to $4,600 and line 7
+to $920. The full capital estate-tax portion is $400, leaving $1,600 on line
+18. Native and PDF recompute both elected parts, compare the one source 1099-R
+and allocation, and join line 30 to the Form 1040 special-tax source. Positive
+and tamper fixtures are authored but unrun. Statement/return bytes, annuity,
+death-benefit, and multiple elected-distribution combinations remain open.
+
 ## Partial-share Part-II-only estate-tax allocation (2026-10-01, unrun)
 
 A bounded beneficiary with one wholly taxable Form 1099-R, positive box 3
@@ -51,16 +96,16 @@ including the form's multiple-recipient instructions and worksheets on pages
 
 ## Current coded boundary
 
-- The public `form4972` input is now one strict election/eligibility object for
-  one elected distribution. It cannot carry recipient identity, 1099-R boxes
+- The public `form4972.elections[]` input contains strict election/eligibility
+  objects keyed by source-document references. It cannot carry recipient identity, 1099-R boxes
   2a/3/6/8/9a, or a substitute distribution amount. Those fields must arrive
-  from exactly one Form 1099-R marked `exclude_4972`, with a `T` or `S`
+  from the matched Form 1099-R copies marked `exclude_4972`, with a `T` or `S`
   recipient and explicit box 2a. The election and source meet at the Form 4972
-  node, which calculates the special tax into the finalized Form 1040. Existing
+  collection node, which calculates each special tax into the finalized Form 1040. Existing
   full-return cases and new source-missing/public-contract cases are written but
   unrun. This intake does not authenticate participant birth date, prior
   elections, or plan-wide distribution completeness; they remain preparer
-  attestation/evidence requirements, and multiple participants remain closed.
+  attestation/evidence requirements; other multiple-participant combinations remain closed.
 
 - The full-share, non-NUA, no-estate branch now requires one elected Form 1099-R
   with the same recipient and boxes 2a, 3, 6, 8 and 9a before native XML or PDF
@@ -177,9 +222,8 @@ including the form's multiple-recipient instructions and worksheets on pages
   appearance, XSD, business-rule, and ATS checks remain open.
 - A joint return with qualified distributions for both spouses requires a
   separate Form 4972 for each spouse and a combined tax on Form 1040 line 16.
-  The present node accepts a `T` or `S` recipient, but one pending `form4972`
-  object and one `IRS4972` attachment cannot represent both simultaneously. The
-  same limitation applies to separate forms for different plan participants.
+  The new collection route supports the bounded two-spouse Part-III-only case
+  described above. Wider separate-participant combinations remain closed.
   A bounded two-document route now combines one taxpayer participant's two
   full-share Form 1099-R distributions from the same payer and plan into one
   Part-III-only Form 4972. Both documents must carry distinct source references,
@@ -191,7 +235,7 @@ including the form's multiple-recipient instructions and worksheets on pages
   Form 1040 special tax. Focused positive and tamper fixtures are authored but
   unrun. The administrator statement is a referenced source assertion, not an
   independently authenticated document. A third distribution, different
-  participant, spouse pair, partial share, capital-gain/NUA/annuity adjustment,
+  participant, partial share, capital-gain/NUA/annuity adjustment,
   and separate Form 4972 attachments remain blocked.
 
   The same two-source, full-share, same-plan taxpayer route now also supports
@@ -409,38 +453,11 @@ They require all of these steps:
   concurrent death-benefit exclusion. Other beneficiary, recipient-share, and
   NUA combinations outside the bounded partial-share estate routes still need source reconciliation; Schedule A's deduction
   applies only if itemized deductions are selected.
-- Resolve the repeatable collection shape before enabling multiple participants
-  or spouses. Preserve one Form 4972 per participant, keep the individual
-  recipient identity on each PDF/XML, and sum each form's tax into Form 1040
-  line 16 without overwriting another pending form.
-- The present Form 1099-R source carries a taxpayer/spouse **recipient** but no
-  plan-participant key. The
-  [2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) require
-  combining multiple qualified distributions for the **same** participant on one
-  form and filing a separate form for **each different** participant, including
-  separate spouse forms on a joint return. The executor promotes duplicate
-  scalar deposits to arrays, while today's Form 4972 input has scalar
-  box/election fields; export normalization later takes the last numeric array
-  member. The new source-local guard prevents that silent last-value export, but
-  it is not repeatable filing support. A direct replacement needs a participant
-  identifier and source-document key on each elected Form 1099-R, a grouped
-  per-participant election/eligibility ledger, and a single canonical `forms`
-  collection through the Form 4972 node and pending export. The node must total
-  each participant's boxes before its own calculation, then sum per-form tax for
-  income-tax calculation and any Part-II-only ordinary pension amount for
-  AGI/Form 1040. Native MeF must return one `IRS4972` fragment per participant,
-  and PDF must render one identified instance per participant, each reconciled
-  to its own Form 1099-R group. The Form 1040 MeF indicator already supports
-  multiple referenced document IDs, but no collection or per-participant source
-  reconciliation exists yet. No scalar/collection dual API or compatibility
-  alias is proposed. Focused same-recipient and taxpayer/spouse rejection cases
-  are written but unrun.
-- This participant-keyed replacement also needs a decision for source evidence:
-  the present 1099-R model identifies the payee (`T`/`S`) and payer, not the
-  plan participant. Payer EIN, recipient, or account number alone cannot prove
-  that two distributions belong to the same participant or different ones. Until
-  a verified participant identity and election ledger are part of the input
-  contract, retaining the one-active-election limit is intentional.
+- Wider multiple-participant cases need a reviewed participant key and
+  full-balance evidence for each source group. A payer EIN, recipient or account
+  number alone does not prove plan-participant identity. The bounded spouse pair
+  requires source and election participant/plan keys and final-filer ownership;
+  other groups remain fail-closed.
 - Other NUA shapes with death-benefit/estate-tax allocation, multiple elected
   Form 1099-Rs, and partial box 9a shares outside the bounded routes still lack
   this source-reconciled PDF/MeF path. The node has some corresponding

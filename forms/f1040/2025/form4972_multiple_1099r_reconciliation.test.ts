@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { form4972 as nativeForm4972 } from "./mef/forms/f4972.ts";
-import { form4972Pdf } from "./pdf/forms/f4972.ts";
+import { buildIRS4972 } from "./mef/forms/f4972.ts";
+import { projectedFields } from "./pdf/forms/f4972.ts";
 import { type FilerIdentity, FilingStatus } from "./mef/types.ts";
 import { DistributionCode } from "../nodes/inputs/f1099r/index.ts";
 import { form4972 } from "../nodes/intermediate/forms/form4972/index.ts";
@@ -50,9 +50,9 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
   ).outputs;
   const fields = outputs.find((output) => output.nodeType === "form4972")!
     .fields;
-  const tax = outputs.find((output) =>
-    output.nodeType === "income_tax_calculation"
-  )!.fields.form4972_tax;
+  const tax =
+    outputs.find((output) => output.nodeType === "income_tax_calculation")!
+      .fields.form4972_tax;
   const pending = {
     f1099r: { f1099rs: sources },
     f1040: { form4972_tax: tax },
@@ -67,9 +67,9 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
     filingStatus: FilingStatus.Single,
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
   };
-  const xml = nativeForm4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(xml, "<SSN>123456789</SSN>");
-  const projected = form4972Pdf.projectFields?.({ ...fields }, {
+  const projected = projectedFields({ ...fields }, {
     ...pending,
     general: {
       taxpayer_first_name: "Ada",
@@ -79,10 +79,16 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
   });
   assertEquals(projected?.line30, fields.line30);
   assertThrows(
-    () => reconcileForm4972FullShare(fields, {
-      ...pending,
-      f1099r: { f1099rs: [sources[0], { ...sources[1], box2a_taxable_amount: 39_999 }] },
-    }, owner),
+    () =>
+      reconcileForm4972FullShare(fields, {
+        ...pending,
+        f1099r: {
+          f1099rs: [sources[0], {
+            ...sources[1],
+            box2a_taxable_amount: 39_999,
+          }],
+        },
+      }, owner),
     Error,
     "summed boxes 2a",
   );
@@ -92,10 +98,11 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
     "calculated lines",
   );
   assertThrows(
-    () => reconcileForm4972FullShare(fields, pending, {
-      ...owner,
-      ssn: "987654321",
-    }),
+    () =>
+      reconcileForm4972FullShare(fields, pending, {
+        ...owner,
+        ssn: "987654321",
+      }),
     Error,
     "matching owner",
   );
@@ -112,13 +119,14 @@ Deno.test("Form 4972 combines two box 3 gains under Part II and Part III", () =>
     capital_gain_amount: 12_000,
   };
   const outputs = form4972.compute(
-    { taxYear: 2025, formType: "f1040" }, capitalElection,
+    { taxYear: 2025, formType: "f1040" },
+    capitalElection,
   ).outputs;
   const fields = outputs.find((output) => output.nodeType === "form4972")!
     .fields;
-  const tax = outputs.find((output) =>
-    output.nodeType === "income_tax_calculation"
-  )!.fields.form4972_tax;
+  const tax =
+    outputs.find((output) => output.nodeType === "income_tax_calculation")!
+      .fields.form4972_tax;
   const pending = {
     f1099r: { f1099rs: capitalSources },
     f1040: { form4972_tax: tax },
@@ -129,28 +137,45 @@ Deno.test("Form 4972 combines two box 3 gains under Part II and Part III", () =>
   assertEquals(fields.line7, 2_400);
   assertEquals(fields.line8, 58_000);
   const filer: FilerIdentity = {
-    primarySSN: "123456789", fullName: "Ada Taxpayer",
-    nameLine1: "TAXPAYER ADA", nameControl: "TAXP",
+    primarySSN: "123456789",
+    fullName: "Ada Taxpayer",
+    nameLine1: "TAXPAYER ADA",
+    nameControl: "TAXP",
     filingStatus: FilingStatus.Single,
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
   };
-  const xml = nativeForm4972.build(fields, { filer, pending });
-  assertStringIncludes(xml, "<CapitalGainElectionAmt>12000</CapitalGainElectionAmt>");
-  const projected = form4972Pdf.projectFields?.({ ...fields }, {
+  const xml = buildIRS4972(fields, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<CapitalGainElectionAmt>12000</CapitalGainElectionAmt>",
+  );
+  const projected = projectedFields({ ...fields }, {
     ...pending,
     general: {
-      taxpayer_first_name: "Ada", taxpayer_last_name: "Taxpayer",
+      taxpayer_first_name: "Ada",
+      taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",
     },
   });
   assertEquals(projected?.line6, 12_000);
   assertEquals(projected?.line30, fields.line30);
-  assertThrows(() => reconcileForm4972FullShare(fields, {
-    ...pending,
-    f1099r: { f1099rs: [capitalSources[0], {
-      ...capitalSources[1], box3_capital_gain: 6_999,
-    }] },
-  }, owner), Error, "summed boxes 2a and 3");
-  assertThrows(() => reconcileForm4972FullShare({ ...fields, line7: 1 },
-    pending, owner), Error, "calculated lines");
+  assertThrows(
+    () =>
+      reconcileForm4972FullShare(fields, {
+        ...pending,
+        f1099r: {
+          f1099rs: [capitalSources[0], {
+            ...capitalSources[1],
+            box3_capital_gain: 6_999,
+          }],
+        },
+      }, owner),
+    Error,
+    "summed boxes 2a and 3",
+  );
+  assertThrows(
+    () => reconcileForm4972FullShare({ ...fields, line7: 1 }, pending, owner),
+    Error,
+    "calculated lines",
+  );
 });

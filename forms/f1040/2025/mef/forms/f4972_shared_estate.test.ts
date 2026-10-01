@@ -6,8 +6,8 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/form4972/index.ts";
 import { TS } from "../../../nodes/types.ts";
-import { form4972Pdf } from "../../pdf/forms/f4972.ts";
-import { form4972 as mef } from "./f4972.ts";
+import { projectedFields } from "../../pdf/forms/f4972.ts";
+import { buildIRS4972 } from "./f4972.ts";
 
 const filer = {
   primarySSN: "123456789",
@@ -72,7 +72,7 @@ function pending(tax: number) {
 Deno.test("Form 4972 shared-beneficiary estate tax reaches native line 18 and PDF", () => {
   const fields = calculated();
   const allPending = pending(fields.line30 as number);
-  const xml = mef.build(fields, { filer, pending: allPending });
+  const xml = buildIRS4972(fields, { filer, pending: allPending });
   assertStringIncludes(
     xml,
     "<LumpDistribFederalEstateTaxAmt>2000</LumpDistribFederalEstateTaxAmt>",
@@ -81,7 +81,7 @@ Deno.test("Form 4972 shared-beneficiary estate tax reaches native line 18 and PD
     xml,
     "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
-  const pdf = form4972Pdf.projectFields?.(fields, allPending);
+  const pdf = projectedFields(fields, allPending);
   assertEquals(pdf?.line18, 2_000);
   assertEquals(pdf?.line29, 1_955);
 });
@@ -91,17 +91,20 @@ Deno.test("Form 4972 shared-beneficiary estate tax rejects altered lines and fin
   const allPending = pending(fields.line30 as number);
   assertThrows(
     () =>
-      mef.build({ ...fields, line18: 1_000 }, { filer, pending: allPending }),
+      buildIRS4972({ ...fields, line18: 1_000 }, {
+        filer,
+        pending: allPending,
+      }),
     Error,
     "partial-share lines differ",
   );
   assertThrows(
-    () => form4972Pdf.projectFields?.({ ...fields, line29: 1_000 }, allPending),
+    () => projectedFields({ ...fields, line29: 1_000 }, allPending),
     Error,
     "partial-share lines differ",
   );
   assertThrows(
-    () => mef.build(fields, { filer, pending: pending(1_954) }),
+    () => buildIRS4972(fields, { filer, pending: pending(1_954) }),
     Error,
     "partial-share tax differs",
   );

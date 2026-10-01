@@ -624,9 +624,9 @@ import {
   inputSchema as form4952InputSchema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
 import {
-  form4972,
-  publicElectionSchema as form4972PublicElectionSchema,
-} from "../nodes/intermediate/forms/form4972/index.ts";
+  form4972Elections,
+  publicElectionCollectionSchema as form4972PublicElectionSchema,
+} from "../nodes/intermediate/forms/form4972/elections.ts";
 import {
   form8815,
   inputSchema as form8815InputSchema,
@@ -767,7 +767,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form6781, inputSchema: form6781InputSchema, isArray: false },
   { node: form5329, inputSchema: form5329InputSchema, isArray: false },
   {
-    node: form4972,
+    node: form4972Elections,
     inputSchema: form4972PublicElectionSchema,
     isArray: false,
   },

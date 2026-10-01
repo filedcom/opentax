@@ -5,8 +5,8 @@ import {
   form4972 as form4972Node,
   inputSchema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
-import { form4972 } from "./mef/forms/f4972.ts";
-import { form4972Pdf } from "./pdf/forms/f4972.ts";
+import { buildIRS4972 } from "./mef/forms/f4972.ts";
+import { projectedFields } from "./pdf/forms/f4972.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
@@ -32,7 +32,8 @@ function partialNuaEstatePartIIICase() {
     recipient_share_pct: 50,
     federal_estate_tax: 2_000,
     partial_estate_tax_source: {
-      administrator_statement_reference: "estate administrator NUA allocation 2025",
+      administrator_statement_reference:
+        "estate administrator NUA allocation 2025",
       estate_tax_return_reference: "filed estate Form 706 NUA tax workpaper",
       full_distribution_taxable_amount: 48_000,
       full_distribution_federal_estate_tax: 2_000,
@@ -77,11 +78,17 @@ Deno.test("Form 4972 partial NUA/estate Part III grosses up NUA and prorates fin
   assertEquals(fields.line8_nua_included, 8_000);
   assertEquals(fields.line18, 2_000);
   assertEquals(fields.line30, fields.line29);
-  const xml = form4972.build(fields, { filer, pending });
-  assertStringIncludes(xml, "netUnrealizedAppreciationAmt=\"8000\"");
-  assertStringIncludes(xml, "<LumpDistribFederalEstateTaxAmt>2000</LumpDistribFederalEstateTaxAmt>");
-  assertStringIncludes(xml, "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>");
-  const pdf = form4972Pdf.projectFields?.(fields, pending);
+  const xml = buildIRS4972(fields, { filer, pending });
+  assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="8000"');
+  assertStringIncludes(
+    xml,
+    "<LumpDistribFederalEstateTaxAmt>2000</LumpDistribFederalEstateTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
+  );
+  const pdf = projectedFields(fields, pending);
   assertEquals(pdf?.line8, 48_000);
   assertEquals(pdf?.line18, 2_000);
   assertEquals(pdf?.line29, fields.line29);
@@ -89,27 +96,33 @@ Deno.test("Form 4972 partial NUA/estate Part III grosses up NUA and prorates fin
 
 Deno.test("Form 4972 partial NUA/estate Part III rejects source and final tax changes", () => {
   const { election, fields, pending } = partialNuaEstatePartIIICase();
-  assertThrows(() => form4972Node.compute(
-    { taxYear: 2025, formType: "f1040" },
-    inputSchema.parse({
-      ...election,
-      partial_estate_tax_source: {
-        ...election.partial_estate_tax_source!,
-        recipient_allocated_federal_estate_tax: 900,
+  assertThrows(() =>
+    form4972Node.compute(
+      { taxYear: 2025, formType: "f1040" },
+      inputSchema.parse({
+        ...election,
+        partial_estate_tax_source: {
+          ...election.partial_estate_tax_source!,
+          recipient_allocated_federal_estate_tax: 900,
+        },
+      }),
+    )
+  );
+  assertThrows(() =>
+    buildIRS4972(fields, {
+      filer,
+      pending: {
+        ...pending,
+        f1099r: {
+          f1099rs: [{ ...pending.f1099r.f1099rs[0], box6_nua: 3_000 }],
+        },
       },
-    }),
-  ));
-  assertThrows(() => form4972.build(fields, {
-    filer,
-    pending: {
+    })
+  );
+  assertThrows(() =>
+    projectedFields(fields, {
       ...pending,
-      f1099r: {
-        f1099rs: [{ ...pending.f1099r.f1099rs[0], box6_nua: 3_000 }],
-      },
-    },
-  }));
-  assertThrows(() => form4972Pdf.projectFields?.(fields, {
-    ...pending,
-    f1040: { form4972_tax: (fields.line30 as number) + 1 },
-  }));
+      f1040: { form4972_tax: (fields.line30 as number) + 1 },
+    })
+  );
 });

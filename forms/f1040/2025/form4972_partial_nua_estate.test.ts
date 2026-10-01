@@ -5,8 +5,8 @@ import {
   form4972 as form4972Node,
   inputSchema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
-import { form4972 } from "./mef/forms/f4972.ts";
-import { form4972Pdf } from "./pdf/forms/f4972.ts";
+import { buildIRS4972 } from "./mef/forms/f4972.ts";
+import { projectedFields } from "./pdf/forms/f4972.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
@@ -33,7 +33,8 @@ function partialNuaEstateCase() {
     recipient_share_pct: 50,
     federal_estate_tax: 2_000,
     partial_estate_tax_source: {
-      administrator_statement_reference: "estate administrator NUA allocation 2025",
+      administrator_statement_reference:
+        "estate administrator NUA allocation 2025",
       estate_tax_return_reference: "filed estate Form 706 NUA tax workpaper",
       full_distribution_taxable_amount: 48_000,
       full_distribution_federal_estate_tax: 2_000,
@@ -88,38 +89,47 @@ Deno.test("Form 4972 partial NUA and estate election reaches Form 1040, native a
       .line5b_form4972_ordinary,
     19_200,
   );
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(xml, "<CapitalGainElectionAmt");
   assertStringIncludes(xml, ">4600</CapitalGainElectionAmt>");
-  assertStringIncludes(xml, "<CapitalGainTimesElectionPctAmt>920</CapitalGainTimesElectionPctAmt>");
-  const pdf = form4972Pdf.projectFields?.(fields, pending);
+  assertStringIncludes(
+    xml,
+    "<CapitalGainTimesElectionPctAmt>920</CapitalGainTimesElectionPctAmt>",
+  );
+  const pdf = projectedFields(fields, pending);
   assertEquals(pdf?.line6, 4_600);
   assertEquals(pdf?.line7, 920);
 });
 
 Deno.test("Form 4972 partial NUA estate election rejects source and final-tax tampering", () => {
   const { election, fields, pending } = partialNuaEstateCase();
-  assertThrows(() => form4972Node.compute(
-    { taxYear: 2025, formType: "f1040" },
-    inputSchema.parse({
-      ...election,
-      partial_estate_tax_source: {
-        ...election.partial_estate_tax_source!,
-        full_distribution_taxable_amount: 40_000,
+  assertThrows(() =>
+    form4972Node.compute(
+      { taxYear: 2025, formType: "f1040" },
+      inputSchema.parse({
+        ...election,
+        partial_estate_tax_source: {
+          ...election.partial_estate_tax_source!,
+          full_distribution_taxable_amount: 40_000,
+        },
+      }),
+    )
+  );
+  assertThrows(() =>
+    buildIRS4972(fields, {
+      filer,
+      pending: {
+        ...pending,
+        f1099r: {
+          f1099rs: [{ ...pending.f1099r.f1099rs[0], box6_nua: 3_000 }],
+        },
       },
-    }),
-  ));
-  assertThrows(() => form4972.build(fields, {
-    filer,
-    pending: {
+    })
+  );
+  assertThrows(() =>
+    projectedFields(fields, {
       ...pending,
-      f1099r: {
-        f1099rs: [{ ...pending.f1099r.f1099rs[0], box6_nua: 3_000 }],
-      },
-    },
-  }));
-  assertThrows(() => form4972Pdf.projectFields?.(fields, {
-    ...pending,
-    f1040: { ...pending.f1040, form4972_tax: 921 },
-  }));
+      f1040: { ...pending.f1040, form4972_tax: 921 },
+    })
+  );
 });

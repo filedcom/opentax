@@ -195,7 +195,10 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         ((input.elect_10yr_averaging !== true &&
           input.elect_capital_gain !== true) ||
           (input.elect_10yr_averaging === true &&
-            input.elect_capital_gain === true) ||
+            input.elect_capital_gain === true &&
+            !(input.elect_include_nua === true &&
+              (input.box6_nua ?? 0) > 0 &&
+              (input.capital_gain_amount ?? 0) > 0)) ||
           (input.annuity_actuarial_value ?? 0) > 0 ||
           deathBenefit > 0)))
   ) {
@@ -211,7 +214,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         estateSource.estate_tax_return_reference ||
       estateSource.full_distribution_taxable_amount !==
         (input.lump_sum_amount +
-          (input.elect_include_nua === true ? (input.box6_nua ?? 0) : 0)) /
+            (input.elect_include_nua === true ? (input.box6_nua ?? 0) : 0)) /
           recipientShare ||
       estateSource.full_distribution_federal_estate_tax !==
         input.federal_estate_tax ||
@@ -227,6 +230,35 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     throw new Error(
       "form4972: partial-share estate source requires a positive shared estate-tax adjustment",
     );
+  }
+  if (
+    partialShare && (input.federal_estate_tax ?? 0) > 0 &&
+    input.elect_capital_gain === true &&
+    input.elect_10yr_averaging === true
+  ) {
+    const taxable = input.lump_sum_amount;
+    const gain = input.capital_gain_amount ?? 0;
+    const nua = input.box6_nua ?? 0;
+    const recipientTaxable = taxable + nua;
+    const capital = gain + nua * gain / taxable;
+    if (
+      !Number.isSafeInteger(taxable) || !Number.isSafeInteger(gain) ||
+      !Number.isSafeInteger(nua) ||
+      !Number.isSafeInteger(input.federal_estate_tax!) ||
+      !Number.isSafeInteger(nua * gain / taxable) ||
+      !Number.isSafeInteger(capital) ||
+      !Number.isSafeInteger(
+        estateSource!.recipient_allocated_federal_estate_tax * capital /
+          recipientTaxable,
+      ) ||
+      !Number.isSafeInteger(
+        input.federal_estate_tax! * capital / recipientTaxable,
+      )
+    ) {
+      throw new Error(
+        "form4972: combined partial-share NUA and estate elections need exact whole-dollar capital allocations",
+      );
+    }
   }
   if (input.alternate_payee_distribution === true) {
     throw new Error(
@@ -431,22 +463,32 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       : deathBenefitCapitalShare;
     const ordinaryDeathBenefit = deathBenefit - fullDeathBenefitCapitalShare;
     const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);
-    const partialPartIIEstate = partialShare && electCapGain && !elect10yr &&
+    const partialCapitalEstate = partialShare && electCapGain &&
       federalEstateTax > 0;
-    const estateTaxForRecipient = partialPartIIEstate
+    const estateTaxForCapital = partialCapitalEstate
       ? input.partial_estate_tax_source!.recipient_allocated_federal_estate_tax
       : federalEstateTax;
     const estateTaxCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(
-        estateTaxForRecipient * capitalGain /
-          (partialPartIIEstate ? box2aTaxable + includedNua : taxableAmount),
+        estateTaxForCapital * capitalGain /
+          (partialCapitalEstate ? box2aTaxable + includedNua : taxableAmount),
       )
       : 0;
-    const ordinaryEstateTax = estateTaxForRecipient - estateTaxCapitalShare;
+    const fullEstateCapitalShare = partialCapitalEstate && elect10yr
+      ? Math.round(
+        federalEstateTax * capitalGain / (box2aTaxable + includedNua),
+      )
+      : estateTaxCapitalShare;
+    const ordinaryEstateTax =
+      (partialCapitalEstate && !elect10yr
+        ? estateTaxForCapital
+        : federalEstateTax) - fullEstateCapitalShare;
     if (
       deathBenefitCapitalShare + estateTaxCapitalShare > capitalGain ||
       ordinaryDeathBenefit + ordinaryEstateTax >
-        (partialPartIIEstate ? box2aTaxable + includedNua : taxableAmount) -
+        (partialCapitalEstate && !elect10yr
+            ? box2aTaxable + includedNua
+            : taxableAmount) -
           (electCapGain ? capitalGain : 0)
     ) {
       throw new Error(

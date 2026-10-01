@@ -5,6 +5,7 @@ import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
 import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_recipient_reconciliation.ts";
 import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
 import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
+import { reconcileForm4972Collection } from "../../form4972_collection_reconciliation.ts";
 
 export interface Fields {
   recipient?: TS;
@@ -97,7 +98,7 @@ function recipientIdentity(fields: Input, context?: MefBuildContext) {
   return { name, ssn: filer.primarySSN };
 }
 
-function buildIRS4972(fields: Input, context?: MefBuildContext): string {
+export function buildIRS4972(fields: Input, context?: MefBuildContext): string {
   if (!FIELD_MAP.some(([key]) => typeof fields[key] === "number")) {
     if (Object.keys(fields).length === 0) return "";
     throw new Error("Form 4972 has source facts but no calculated form lines");
@@ -191,11 +192,21 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form4972: MefFormDescriptor<"form4972", Input> = {
+export const form4972: MefFormDescriptor<
+  "form4972",
+  Record<string, unknown>,
+  readonly string[]
+> = {
   pendingKey: "form4972",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4972--2025.pdf",
   build(fields, context) {
-    return buildIRS4972(fields, context);
+    if (!context?.pending) {
+      throw new Error("Form 4972 collection needs the final pending return");
+    }
+    return reconcileForm4972Collection(fields, context.pending, context.filer)
+      .map(({ fields: form, pending }) =>
+        buildIRS4972(form, { ...context, pending })
+      );
   },
 };

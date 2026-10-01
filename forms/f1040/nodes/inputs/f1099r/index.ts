@@ -12,7 +12,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form5329 } from "../../intermediate/forms/form5329/index.ts";
-import { form4972 } from "../../intermediate/forms/form4972/index.ts";
+import { form4972Elections } from "../../intermediate/forms/form4972/elections.ts";
 import {
   form8606,
   type Form8606Input,
@@ -1056,6 +1056,45 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
+  if (lumpItems.length === 2 && lumpItems[0].ts !== lumpItems[1].ts) {
+    if (
+      !lumpItems[0].source_document_reference ||
+      !lumpItems[1].source_document_reference ||
+      lumpItems[0].source_document_reference ===
+        lumpItems[1].source_document_reference ||
+      !lumpItems[0].form4972_plan || !lumpItems[1].form4972_plan ||
+      lumpItems[0].form4972_plan.participant_ssn ===
+        lumpItems[1].form4972_plan.participant_ssn ||
+      lumpItems[0].form4972_plan.plan_reference ===
+        lumpItems[1].form4972_plan.plan_reference
+    ) {
+      throw new Error(
+        "Form 4972 spouse pair needs distinct fully identified participants, plans, and source copies",
+      );
+    }
+    const sourceForms = lumpItems.map((item) => {
+      if (
+        !item.source_document_reference || !item.form4972_plan ||
+        item.ts === undefined || item.box2a_taxable_amount === undefined ||
+        item.box2a_taxable_amount <= 0 ||
+        item.box9a_pct_total !== undefined && item.box9a_pct_total !== 100
+      ) {
+        throw new Error(
+          "Form 4972 spouse pair needs identified full-share plan and source copies",
+        );
+      }
+      return {
+        source_document_references: [item.source_document_reference],
+        form4972_plan: item.form4972_plan,
+        recipient: item.ts,
+        lump_sum_amount: item.box2a_taxable_amount,
+        capital_gain_amount: item.box3_capital_gain ?? 0,
+        box6_nua: item.box6_nua ?? 0,
+        annuity_actuarial_value: item.box8_other ?? 0,
+      };
+    });
+    return [output(form4972Elections, { source_forms: sourceForms })];
+  }
   if (lumpItems.length > 1) {
     const [first, second] = lumpItems;
     const plan = first?.form4972_plan;
@@ -1091,27 +1130,34 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         "Form 4972 two-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
       );
     }
-    return [output(form4972, {
-      recipient: first.ts,
-      lump_sum_amount: first.box2a_taxable_amount! +
-        second.box2a_taxable_amount!,
-      ...((first.box3_capital_gain ?? 0) +
-          (second.box3_capital_gain ?? 0) > 0
-        ? {
-          capital_gain_amount: (first.box3_capital_gain ?? 0) +
-            (second.box3_capital_gain ?? 0),
-        }
-        : {}),
-      multiple_1099r: {
-        ...plan,
+    return [output(form4972Elections, {
+      source_forms: [{
         source_document_references: [
           first.source_document_reference,
           second.source_document_reference,
         ],
-      },
+        form4972_plan: plan,
+        recipient: first.ts,
+        lump_sum_amount: first.box2a_taxable_amount! +
+          second.box2a_taxable_amount!,
+        ...((first.box3_capital_gain ?? 0) +
+              (second.box3_capital_gain ?? 0) > 0
+          ? {
+            capital_gain_amount: (first.box3_capital_gain ?? 0) +
+              (second.box3_capital_gain ?? 0),
+          }
+          : {}),
+        multiple_1099r: {
+          ...plan,
+          source_document_references: [
+            first.source_document_reference,
+            second.source_document_reference,
+          ],
+        },
+      }],
     })];
   }
-  return lumpItems.map((item) => {
+  const sourceForms = lumpItems.map((item) => {
     if (item.box9a_pct_total === 0) {
       throw new Error("Form 4972 box 9a recipient share must be positive");
     }
@@ -1120,7 +1166,14 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         "Form 4972 election requires the taxable amount from Form 1099-R box 2a or a separately calculated taxable amount",
       );
     }
-    return output(form4972, {
+    if (!item.source_document_reference) {
+      throw new Error(
+        "Form 4972 elected Form 1099-R needs a source-document reference",
+      );
+    }
+    return {
+      source_document_references: [item.source_document_reference],
+      ...(item.form4972_plan ? { form4972_plan: item.form4972_plan } : {}),
       lump_sum_amount: item.box2a_taxable_amount,
       ...(item.box9a_pct_total !== undefined && item.box9a_pct_total < 100
         ? { recipient_share_pct: item.box9a_pct_total }
@@ -1136,8 +1189,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       ...(item.box8_pct_total !== undefined
         ? { annuity_share_pct: item.box8_pct_total }
         : {}),
-    });
+    };
   });
+  return sourceForms.length > 0
+    ? [output(form4972Elections, { source_forms: sourceForms })]
+    : [];
 }
 
 // Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.
@@ -1168,7 +1224,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     f1040,
     agi_aggregator,
     form5329,
-    form4972,
+    form4972Elections,
     form8606,
   ]);
 

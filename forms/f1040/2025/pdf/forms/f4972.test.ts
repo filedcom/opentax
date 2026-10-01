@@ -5,7 +5,11 @@ import {
   PDFDocument,
   PDFRawStream,
 } from "pdf-lib";
-import { form4972NuaAnnotations, form4972Pdf } from "./f4972.ts";
+import {
+  form4972NuaAnnotations,
+  form4972Pdf,
+  projectedFields,
+} from "./f4972.ts";
 import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
 import {
   form4972 as form4972Node,
@@ -32,12 +36,11 @@ Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", 
     },
     f1040: { form4972_tax: 2_095 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line8, 40_000);
   assertEquals(projected?.line29, 2_095);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line29: 2_094 }, allPending),
+    () => projectedFields({ ...calculated, line29: 2_094 }, allPending),
     Error,
     "sourced 2025 calculation",
   );
@@ -90,12 +93,12 @@ Deno.test("2025 Form 4972 PDF binds partial beneficiary estate allocation", () =
     },
     f1040: { form4972_tax: 1_955 },
   };
-  const projected = form4972Pdf.projectFields?.(calculated, allPending);
+  const projected = projectedFields(calculated, allPending);
   assertEquals(projected?.line18, 2_000);
   assertEquals(projected?.line29, 1_955);
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({
+      projectedFields({
         ...calculated,
         partial_estate_tax_source: {
           ...source.partial_estate_tax_source,
@@ -135,15 +138,14 @@ Deno.test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit o
     },
     f1040: { form4972_tax: 1_675 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line8, 40_000);
   assertEquals(projected?.line9, 5_000);
   assertEquals(projected?.line10, 35_000);
   assertEquals(projected?.line29, 1_675);
   assertEquals(projected?.line30, 1_675);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line9: 2_500 }, allPending),
+    () => projectedFields({ ...calculated, line9: 2_500 }, allPending),
     Error,
     "sourced 2025 calculation",
   );
@@ -178,13 +180,12 @@ Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-bene
     },
     f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
   };
-  const projected = form4972Pdf.projectFields?.(calculated, allPending);
+  const projected = projectedFields(calculated, allPending);
   assertEquals(projected?.line6, 3_500);
   assertEquals(projected?.line7, 700);
   assertEquals(projected?.line8, undefined);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line6: 4_000 }, allPending),
+    () => projectedFields({ ...calculated, line6: 4_000 }, allPending),
     Error,
     "partial-share lines differ",
   );
@@ -224,20 +225,19 @@ Deno.test("2025 Form 4972 PDF separates partial beneficiary capital and ordinary
     },
     f1040: { form4972_tax: 1_815 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line6, 3_500);
   assertEquals(projected?.line9, 4_000);
   assertEquals(projected?.line29, 1_115);
   assertEquals(projected?.line30, 1_815);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line6: 3_000 }, allPending),
+    () => projectedFields({ ...calculated, line6: 3_000 }, allPending),
     Error,
     "sourced 2025 calculation",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({ ...calculated }, {
+      projectedFields({ ...calculated }, {
         ...allPending,
         f1040: { form4972_tax: 1_814 },
       }),
@@ -268,15 +268,14 @@ Deno.test("2025 Form 4972 PDF reconciles partial-share capital and ordinary line
     },
     f1040: { form4972_tax: 2_220 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line6, 4_000);
   assertEquals(projected?.line7, 800);
   assertEquals(projected?.line8, 32_000);
   assertEquals(projected?.line29, 1_420);
   assertEquals(projected?.line30, 2_220);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line8: 36_000 }, allPending),
+    () => projectedFields({ ...calculated, line8: 36_000 }, allPending),
     Error,
     "sourced 2025 calculation",
   );
@@ -308,12 +307,12 @@ Deno.test("2025 Form 4972 PDF projects a shared annuity from box 8 percentage", 
     },
     f1040: { form4972_tax: calculated.line30 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line11, 8_000);
   assertEquals(projected?.line29, 2_365);
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({ ...calculated }, {
+      projectedFields({ ...calculated }, {
         ...allPending,
         f1099r: {
           f1099rs: [{
@@ -352,15 +351,14 @@ Deno.test("2025 Form 4972 PDF reconciles partial-share NUA, MRD, and the grossed
     },
     f1040: { form4972_tax: calculated.line30 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line6, 36_000);
   assertEquals(projected?.line6_nua_capital_gain, 6_000);
   assertEquals(projected?.line8, 168_000);
   assertEquals(projected?.line8_nua_included, 28_000);
   assertEquals(projected?.recipient_share_pct, 50);
   assertThrows(
-    () =>
-      form4972Pdf.projectFields?.({ ...calculated, line8: 84_000 }, allPending),
+    () => projectedFields({ ...calculated, line8: 84_000 }, allPending),
     Error,
     "sourced 2025 calculation",
   );
@@ -407,14 +405,14 @@ Deno.test("2025 Form 4972 PDF projects Part-III-only partial-share NUA without l
     },
     f1040: { form4972_tax: calculated.line30 },
   };
-  const projected = form4972Pdf.projectFields?.({ ...calculated }, allPending);
+  const projected = projectedFields({ ...calculated }, allPending);
   assertEquals(projected?.line6, undefined);
   assertEquals(projected?.line8, 240_000);
   assertEquals(projected?.line8_nua_included, 40_000);
   assertEquals(projected?.recipient_share_pct, 50);
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(
+      projectedFields(
         { ...calculated, line8: 200_000 },
         allPending,
       ),
@@ -545,7 +543,7 @@ Deno.test("2025 Form 4972 PDF uses calculated line fields instead of 1099-R sour
 });
 
 Deno.test("2025 Form 4972 PDF splits line 20 at its printed decimal point", () => {
-  const projected = form4972Pdf.projectFields?.(
+  const projected = projectedFields(
     {
       ...partIII,
       line11: 1_000,
@@ -579,7 +577,7 @@ Deno.test("2025 Form 4972 PDF splits line 20 at its printed decimal point", () =
 });
 
 Deno.test("2025 Form 4972 PDF selects the spouse recipient without using taxpayer identity", () => {
-  const projected = form4972Pdf.projectFields?.(
+  const projected = projectedFields(
     { ...partII, recipient: "S" },
     {
       ...pending("S", 100_000, 30_000),
@@ -613,17 +611,17 @@ Deno.test("2025 Form 4972 PDF full-share ordinary path rejects missing final tax
     f1040: { form4972_tax: calculated.line30 },
   };
   assertEquals(
-    form4972Pdf.projectFields?.(calculated, allPending)?.line30,
+    projectedFields(calculated, allPending)?.line30,
     calculated.line30,
   );
   assertThrows(
-    () => form4972Pdf.projectFields?.(calculated, pending("T", 30_000, 5_000)),
+    () => projectedFields(calculated, pending("T", 30_000, 5_000)),
     Error,
     "special tax differs from the finalized Form 1040",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({
+      projectedFields({
         ...calculated,
         line24: (calculated.line24 as number) + 1,
         line25: (calculated.line25 as number) + 10,
@@ -643,7 +641,7 @@ Deno.test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints quest
     ...pending("T", 100_000, 30_000),
     f1040: { form4972_tax: 5_460 },
   };
-  const projected = form4972Pdf.projectFields?.(estatePartII, allPending);
+  const projected = projectedFields(estatePartII, allPending);
   assertEquals(projected?.line6, 27_300);
   assertEquals(projected?.line7, 5_460);
   assertEquals(projected?.prior_election_after_1986, undefined);
@@ -651,7 +649,7 @@ Deno.test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints quest
   assertEquals(projected?.line18, undefined);
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(
+      projectedFields(
         { ...estatePartII, line6: 28_500, line7: 5_700 },
         allPending,
       ),
@@ -663,7 +661,7 @@ Deno.test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints quest
 Deno.test("2025 Form 4972 PDF refuses a calculated form without selected recipient identity", () => {
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.({ ...partII, recipient: "S" }, {
+      projectedFields({ ...partII, recipient: "S" }, {
         ...pending("S", 100_000, 30_000),
         general: {},
         f1040: { form4972_tax: 6_000, line5b_pension_taxable: 70_000 },
@@ -675,13 +673,13 @@ Deno.test("2025 Form 4972 PDF refuses a calculated form without selected recipie
 
 Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", () => {
   assertThrows(
-    () => form4972Pdf.projectFields?.({ lump_sum_amount: 10_000 }, {}),
+    () => projectedFields({ lump_sum_amount: 10_000 }, {}),
     Error,
     "source facts but no elected printed part",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(
+      projectedFields(
         { ...partII, line7: undefined },
         pending("T", 100_000, 30_000),
       ),
@@ -689,18 +687,18 @@ Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", ()
     "needs line7",
   );
   assertThrows(
-    () => form4972Pdf.projectFields?.(partII, {}),
+    () => projectedFields(partII, {}),
     Error,
     "one matching Form 1099-R source and recipient share",
   );
   assertThrows(
-    () => form4972Pdf.projectFields?.(partII, pending("T", 100_000, 31_000)),
+    () => projectedFields(partII, pending("T", 100_000, 31_000)),
     Error,
     "one matching Form 1099-R source and recipient share",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(
+      projectedFields(
         { ...partIII, line30: 551 },
         pending("T", 10_000),
       ),
@@ -708,7 +706,7 @@ Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", ()
     "Part III lines do not reconcile",
   );
   assertEquals(
-    form4972Pdf.projectFields?.(partIII, {
+    projectedFields(partIII, {
       ...pending("T", 10_000),
       f1040: { form4972_tax: 550 },
     })?.line30,
@@ -746,12 +744,12 @@ Deno.test("2025 Form 4972 PDF reconciles NUA notes to the elected 1099-R", () =>
   };
   const source = pending("T", 100_000, 30_000, 20_000);
   assertEquals(
-    form4972Pdf.projectFields?.(fields, source)?.recipient_name,
+    projectedFields(fields, source)?.recipient_name,
     "Alex Taxpayer",
   );
   assertThrows(
     () =>
-      form4972Pdf.projectFields?.(
+      projectedFields(
         { ...fields, line6_nua_capital_gain: 5_000 },
         source,
       ),
@@ -778,7 +776,7 @@ Deno.test("2025 Form 4972 PDF projects sourced Part-II-only NUA without Part III
     ...pending("T", 100_000, 30_000, 20_000),
     f1040: { form4972_tax: 7_200, line5b_pension_taxable: 84_000 },
   };
-  const projected = form4972Pdf.projectFields?.(fields, allPending);
+  const projected = projectedFields(fields, allPending);
   assertEquals(projected?.line6, 36_000);
   assertEquals(projected?.line7, 7_200);
   assertEquals(projected?.line8, undefined);
@@ -813,7 +811,7 @@ Deno.test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocati
     ...pending("T", 100_000, 30_000, 20_000),
     f1040: { form4972_tax: fields.line30 },
   };
-  const projected = form4972Pdf.projectFields?.(fields, allPending);
+  const projected = projectedFields(fields, allPending);
   assertEquals(projected?.line6, 33_300);
   assertEquals(projected?.line9, 3_500);
   assertEquals(projected?.line18, 2_800);
@@ -822,7 +820,7 @@ Deno.test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocati
     { amount: 14_000, y: 390 },
   ]);
   assertThrows(
-    () => form4972Pdf.projectFields?.({ ...fields, line18: 2_799 }, allPending),
+    () => projectedFields({ ...fields, line18: 2_799 }, allPending),
     Error,
     "PDF elected Part III lines do not reconcile",
   );
@@ -851,7 +849,7 @@ Deno.test("2025 Form 4972 PDF keeps partial-share Part-II-only NUA but omits MRD
     },
     f1040: { form4972_tax: 7_200, line5b_pension_taxable: 84_000 },
   };
-  const projected = form4972Pdf.projectFields?.(fields, allPending);
+  const projected = projectedFields(fields, allPending);
   assertEquals(projected?.line6, 36_000);
   assertEquals(projected?.line7, 7_200);
   assertEquals(projected?.line29, undefined);

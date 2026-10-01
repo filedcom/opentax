@@ -9,7 +9,7 @@ import {
 // allocations are supported for a full-share beneficiary, including a
 // Part III annuity. A sourced partial-share Part-II-only estate allocation
 // and Part-III-only estate allocations are also supported without a death
-// benefit or annuity.
+// benefit or annuity. Their combined election uses the same reviewed allocation.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -54,11 +54,12 @@ export function reconcileForm4972Nua(
     (hasAllocation &&
       (fields.beneficiary_distribution !== true ||
         (sharePct !== 100 &&
-          ((fields.elect_capital_gain === true) ===
-              (fields.elect_10yr_averaging === true) ||
-            (fields.federal_estate_tax ?? 0) <= 0 ||
+          ((fields.federal_estate_tax ?? 0) <= 0 ||
             (fields.death_benefit_exclusion ?? 0) > 0 ||
             (item.box8_other ?? 0) > 0 ||
+            (fields.elect_capital_gain === true &&
+              fields.elect_10yr_averaging === true &&
+              (fields.capital_gain_amount ?? 0) <= 0) ||
             item.box1_gross_distribution !==
               (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0))) ||
         ((item.box8_other ?? 0) > 0 &&
@@ -68,7 +69,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; partial-share estate allocation needs a beneficiary Part-II-only or Part-III-only distribution without a death benefit or annuity",
+      "Form 4972 NUA requires a sourced Part II or III; partial-share estate allocation needs a beneficiary election without a death benefit or annuity",
     );
   }
   if (

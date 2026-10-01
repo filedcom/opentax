@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { TS } from "../../../nodes/types.ts";
-import { form4972 } from "./f4972.ts";
+import { buildIRS4972 } from "./f4972.ts";
 import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
 import {
   form4972 as form4972Node,
@@ -44,7 +44,7 @@ function partialRecipientCase(capitalGain = 0) {
 
 Deno.test("Form 4972 MeF links partial-recipient line 29 to MRD", () => {
   const { fields, pending } = partialRecipientCase();
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<LumpSumDistriOrdinaryIncmAmt>40000</LumpSumDistriOrdinaryIncmAmt>",
@@ -97,7 +97,7 @@ Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18"
     },
     f1040: { form4972_tax: 1_955 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<LumpDistribFederalEstateTaxAmt>2000</LumpDistribFederalEstateTaxAmt>",
@@ -108,7 +108,7 @@ Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18"
   );
   assertThrows(
     () =>
-      form4972.build({
+      buildIRS4972({
         ...fields,
         partial_estate_tax_source: {
           ...source.partial_estate_tax_source,
@@ -120,7 +120,7 @@ Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18"
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -172,7 +172,7 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
     },
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<LumpSumDistriOrdinaryIncmAmt>40000</LumpSumDistriOrdinaryIncmAmt>",
@@ -190,13 +190,13 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
     "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
   assertThrows(
-    () => form4972.build({ ...fields, line9: 2_500 }, { filer, pending }),
+    () => buildIRS4972({ ...fields, line9: 2_500 }, { filer, pending }),
     Error,
     "sourced 2025 calculation",
   );
   assertThrows(
     () =>
-      form4972.build({
+      buildIRS4972({
         ...fields,
         death_benefit_recipient_allocated_amount: 2_000,
       }, { filer, pending }),
@@ -205,7 +205,7 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -260,7 +260,7 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
     },
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<CapitalGainElectionAmt>3500</CapitalGainElectionAmt>",
@@ -282,13 +282,13 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
     "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
   assertThrows(
-    () => form4972.build({ ...fields, line9: 2_000 }, { filer, pending }),
+    () => buildIRS4972({ ...fields, line9: 2_000 }, { filer, pending }),
     Error,
     "sourced 2025 calculation",
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -339,7 +339,7 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
     },
     f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<CapitalGainElectionAmt>3500</CapitalGainElectionAmt>",
@@ -351,7 +351,7 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
   assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt>"), false);
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -365,7 +365,7 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
 
 Deno.test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => {
   const { fields, pending } = partialRecipientCase(4_000);
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<CapitalGainElectionAmt>4000</CapitalGainElectionAmt>",
@@ -391,7 +391,7 @@ Deno.test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => 
     "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
   );
   assertThrows(
-    () => form4972.build({ ...fields, line8: 36_000 }, { filer, pending }),
+    () => buildIRS4972({ ...fields, line8: 36_000 }, { filer, pending }),
     Error,
     "sourced 2025 calculation",
   );
@@ -426,7 +426,7 @@ Deno.test("Form 4972 MeF keeps a partial-share Part-II-only election on the reci
     },
     f1040: { form4972_tax: 800, line5b_pension_taxable: 16_000 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<CapitalGainElectionAmt>4000</CapitalGainElectionAmt>",
@@ -439,7 +439,7 @@ Deno.test("Form 4972 MeF keeps a partial-share Part-II-only election on the reci
   assertEquals(xml.includes("<LumpSumDistriMultRecipientsCd>"), false);
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -470,7 +470,7 @@ Deno.test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => 
     },
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending: sourcedPending });
+  const xml = buildIRS4972(fields, { filer, pending: sourcedPending });
   assertStringIncludes(
     xml,
     "<AnnuityActuarialValueAmt>8000</AnnuityActuarialValueAmt>",
@@ -481,7 +481,7 @@ Deno.test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => 
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...sourcedPending,
@@ -499,7 +499,7 @@ Deno.test("Form 4972 MeF rejects a mismatched box 9a share or return tax", () =>
   const { fields, pending } = partialRecipientCase();
   assertThrows(
     () =>
-      form4972.build({ ...fields, recipient_share_pct: 40 }, {
+      buildIRS4972({ ...fields, recipient_share_pct: 40 }, {
         filer,
         pending,
       }),
@@ -508,7 +508,7 @@ Deno.test("Form 4972 MeF rejects a mismatched box 9a share or return tax", () =>
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: { ...pending, f1040: { form4972_tax: 2_094 } },
       }),
@@ -623,16 +623,16 @@ const electedNuaFields = {
 
 Deno.test("Form 4972 rejects source facts without calculated form lines", () => {
   assertThrows(
-    () => form4972.build({ lump_sum_amount: 100_000 }),
+    () => buildIRS4972({ lump_sum_amount: 100_000 }),
     Error,
     "source facts but no calculated form lines",
   );
-  assertEquals(form4972.build({}), "");
+  assertEquals(buildIRS4972({}), "");
 });
 
 Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names", () => {
   const { fields, pending } = fullShareCase(TS.T, 100_000, 10_000, false);
-  const xml = form4972.build(
+  const xml = buildIRS4972(
     fields,
     { filer, pending },
   );
@@ -651,7 +651,7 @@ Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names
 
 Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
   const { fields, pending } = fullShareCase(TS.S, 90_000, 0, true);
-  const xml = form4972.build(
+  const xml = buildIRS4972(
     fields,
     { filer, pending },
   );
@@ -669,7 +669,7 @@ Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
 
 Deno.test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate", () => {
   const { fields, pending } = fullShareCase(TS.T, 10_000, 0, true, true);
-  const xml = form4972.build(
+  const xml = buildIRS4972(
     fields,
     { filer, pending },
   );
@@ -683,17 +683,17 @@ Deno.test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate
 Deno.test("Form 4972 full-share ordinary election needs elected source, computed lines, and Form 1040 tax", () => {
   const { fields, pending } = fullShareCase(TS.T, 30_000, 5_000, true);
   assertStringIncludes(
-    form4972.build(fields, { filer, pending }),
+    buildIRS4972(fields, { filer, pending }),
     `<LumpSumDistributionTaxAmt>${fields.line30}</LumpSumDistributionTaxAmt>`,
   );
   assertThrows(
-    () => form4972.build(fields, { filer }),
+    () => buildIRS4972(fields, { filer }),
     Error,
     "one matching elected Form 1099-R",
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, line24: (fields.line24 as number) + 1 }, {
+      buildIRS4972({ ...fields, line24: (fields.line24 as number) + 1 }, {
         filer,
         pending,
       }),
@@ -702,7 +702,7 @@ Deno.test("Form 4972 full-share ordinary election needs elected source, computed
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -715,7 +715,7 @@ Deno.test("Form 4972 full-share ordinary election needs elected source, computed
   const partII = fullShareCase(TS.T, 100_000, 10_000, false);
   assertThrows(
     () =>
-      form4972.build(partII.fields, {
+      buildIRS4972(partII.fields, {
         filer,
         pending: {
           ...partII.pending,
@@ -761,7 +761,7 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
     },
     f1040: { form4972_tax: 5_460 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     "<CapitalGainElectionAmt>27300</CapitalGainElectionAmt>",
@@ -778,7 +778,7 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
   assertEquals(xml.includes("<LumpDistribFederalEstateTaxAmt>"), false);
   assertThrows(
     () =>
-      form4972.build({ ...fields, line6: 28_500, line7: 5_700 }, {
+      buildIRS4972({ ...fields, line6: 28_500, line7: 5_700 }, {
         filer,
         pending,
       }),
@@ -787,7 +787,7 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: { ...pending, f1040: { form4972_tax: 5_700 } },
       }),
@@ -797,7 +797,7 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
 });
 
 Deno.test("Form 4972 writes elected NUA amounts on lines 6 and 8", () => {
-  const xml = form4972.build(
+  const xml = buildIRS4972(
     electedNuaFields,
     { filer, pending: { f1099r: electedNua1099r } },
   );
@@ -836,19 +836,19 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
     f1099r: electedNua1099r,
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
   assertStringIncludes(xml, ">33300</CapitalGainElectionAmt>");
   assertStringIncludes(xml, ">3500</LumpSumDistriDeathBnftExclAmt>");
   assertStringIncludes(xml, ">2800</LumpDistribFederalEstateTaxAmt>");
   assertThrows(
-    () => form4972.build({ ...fields, line6: 33_301 }, { filer, pending }),
+    () => buildIRS4972({ ...fields, line6: 33_301 }, { filer, pending }),
     Error,
     "NUA death/estate allocation differs",
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, line6_nua_capital_gain: 5_999 }, {
+      buildIRS4972({ ...fields, line6_nua_capital_gain: 5_999 }, {
         filer,
         pending,
       }),
@@ -857,7 +857,7 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: { ...pending, f1040: { form4972_tax: 1 } },
       }),
@@ -866,7 +866,7 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, recipient_share_pct: 50 }, {
+      buildIRS4972({ ...fields, recipient_share_pct: 50 }, {
         filer,
         pending,
       }),
@@ -875,7 +875,7 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, recipient_share_pct: 50 }, {
+      buildIRS4972({ ...fields, recipient_share_pct: 50 }, {
         filer,
         pending: {
           ...pending,
@@ -911,12 +911,12 @@ Deno.test("Form 4972 MeF keeps full-share Part-II NUA estate deduction off Form 
     f1099r: electedNua1099r,
     f1040: { form4972_tax: fields.line7, line5b_pension_taxable: 84_000 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(xml, ">34800</CapitalGainElectionAmt>");
   assertEquals(xml.includes("<LumpDistribFederalEstateTaxAmt>"), false);
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -943,7 +943,7 @@ Deno.test("Form 4972 Part-II-only NUA links its capital note and ordinary pensio
       line5b_pension_taxable: 84_000,
     },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     '<CapitalGainElectionAmt capitalGainElectionNUAAmt="6000" capitalGainElectionNUACd="NUA">36000</CapitalGainElectionAmt>',
@@ -951,7 +951,7 @@ Deno.test("Form 4972 Part-II-only NUA links its capital note and ordinary pensio
   assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt"), false);
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -963,7 +963,7 @@ Deno.test("Form 4972 Part-II-only NUA links its capital note and ordinary pensio
   );
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -1001,7 +1001,7 @@ Deno.test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () =
     },
     f1040: { form4972_tax: 7_200, line5b_pension_taxable: 84_000 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     '<CapitalGainElectionAmt capitalGainElectionNUAAmt="6000" capitalGainElectionNUACd="NUA">36000</CapitalGainElectionAmt>',
@@ -1010,7 +1010,7 @@ Deno.test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () =
   assertEquals(xml.includes("<LumpSumDistriMultRecipientsCd>"), false);
   assertThrows(
     () =>
-      form4972.build(fields, {
+      buildIRS4972(fields, {
         filer,
         pending: {
           ...pending,
@@ -1022,7 +1022,7 @@ Deno.test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () =
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, line6: 36_001 }, {
+      buildIRS4972({ ...fields, line6: 36_001 }, {
         filer,
         pending,
       }),
@@ -1055,7 +1055,7 @@ Deno.test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
     f1099r: { f1099rs: [item] },
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     '<CapitalGainElectionAmt capitalGainElectionNUAAmt="6000" capitalGainElectionNUACd="NUA">36000</CapitalGainElectionAmt>',
@@ -1070,7 +1070,7 @@ Deno.test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, line8_nua_included: 14_000 }, {
+      buildIRS4972({ ...fields, line8_nua_included: 14_000 }, {
         filer,
         pending,
       }),
@@ -1100,7 +1100,7 @@ Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () =
     },
     f1040: { form4972_tax: fields.line30 },
   };
-  const xml = form4972.build(fields, { filer, pending });
+  const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
     xml,
     '<LumpSumDistriOrdinaryIncmAmt netUnrealizedAppreciationAmt="40000" netUnrealizedAppreciationCd="NUA">240000</LumpSumDistriOrdinaryIncmAmt>',
@@ -1112,7 +1112,7 @@ Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () =
   );
   assertThrows(
     () =>
-      form4972.build({ ...fields, line8_nua_included: 20_000 }, {
+      buildIRS4972({ ...fields, line8_nua_included: 20_000 }, {
         filer,
         pending,
       }),
@@ -1123,13 +1123,13 @@ Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () =
 
 Deno.test("Form 4972 refuses NUA without a matching source Form 1099-R", () => {
   assertThrows(
-    () => form4972.build(electedNuaFields, { filer }),
+    () => buildIRS4972(electedNuaFields, { filer }),
     Error,
     "needs the source Form 1099-R",
   );
   assertThrows(
     () =>
-      form4972.build(electedNuaFields, {
+      buildIRS4972(electedNuaFields, {
         filer,
         pending: {
           f1099r: {
@@ -1145,7 +1145,7 @@ Deno.test("Form 4972 refuses NUA without a matching source Form 1099-R", () => {
 Deno.test("Form 4972 refuses a mismatched NUA worksheet or partial recipient share", () => {
   assertThrows(
     () =>
-      form4972.build({ ...electedNuaFields, line8_nua_included: 13_000 }, {
+      buildIRS4972({ ...electedNuaFields, line8_nua_included: 13_000 }, {
         filer,
         pending: { f1099r: electedNua1099r },
       }),
@@ -1154,7 +1154,7 @@ Deno.test("Form 4972 refuses a mismatched NUA worksheet or partial recipient sha
   );
   assertThrows(
     () =>
-      form4972.build(electedNuaFields, {
+      buildIRS4972(electedNuaFields, {
         filer,
         pending: {
           f1099r: {
@@ -1170,7 +1170,7 @@ Deno.test("Form 4972 refuses a mismatched NUA worksheet or partial recipient sha
 Deno.test("Form 4972 rejects NUA attributes without their form lines", () => {
   assertThrows(
     () =>
-      form4972.build(
+      buildIRS4972(
         { ...qualified, recipient: TS.T, line7: 1, line6_nua_capital_gain: 1 },
         { filer },
       ),
@@ -1181,7 +1181,7 @@ Deno.test("Form 4972 rejects NUA attributes without their form lines", () => {
 
 Deno.test("Form 4972 refuses to guess which recipient owns the distribution", () => {
   assertThrows(
-    () => form4972.build({ ...qualified, line7: 2_000 }, { filer }),
+    () => buildIRS4972({ ...qualified, line7: 2_000 }, { filer }),
     Error,
     "requires the recipient",
   );
