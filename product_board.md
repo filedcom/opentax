@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **474 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **475 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,12 +15,12 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 406 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 407 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 23 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 474 bounded routes and
+**Implemented coverage.** The completed ledger records 475 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -46,7 +46,8 @@ require reviewed source evidence and final-return reconciliation. The
 unregistered-root review has source calculations for Forms 8828, 8908, 8844,
 8881, and 8938, plus staged Form 8828, 8908, and 8938 native/PDF projections.
 The bounded direct Schedule C Forms 8844, 8881, 8882, and 8941 reach Form 3800,
-Form 1040, native MeF, and PDF. Form 8994 reaches the same graph and descriptors
+Form 1040, native MeF, and PDF. A post-June Form 8864 direct producer route also
+reaches Form 3800, Form 6251, native MeF, and PDF. Form 8994 reaches the graph and descriptors
 but remains export-guarded pending byte-bound policy/payroll evidence; the other
 positive routes remain closed.
 The new positive and tamper fixtures are authored but the agreed full-batch test,
