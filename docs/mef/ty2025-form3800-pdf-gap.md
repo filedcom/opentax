@@ -693,12 +693,12 @@ pass-through credit, and line 38 fixtures await the bulk run. The current
 [IRS Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) directs line 8 to
 Form 3800 Part III line 1e. Wider business and K-1 cases remain guarded.
 
-The commercial Form 8936 printable copy now binds Part V line 21 to the
-prepared Form 3800 Part III line 1aa IRS8936 document ID and credit amount,
-then checks the prepared line 38 against Schedule 3 and finalized Form 1040.
-One direct commercial vehicle fixture and altered document-ID, amount, and
-final-return cases await the bulk run. Personal-use Form 8936 remains on its
-separate Schedule 3 route. The
+The Form 8936 printable copy now binds Part II line 8 and Part V line 21,
+when claimed, to the prepared Form 3800 Part III lines 1y and 1aa IRS8936
+document ID and credit amounts. It also checks prepared line 38 against
+Schedule 3 and finalized Form 1040. Direct commercial and mixed-use new-vehicle
+fixtures, with altered source, document-ID, amount, and final-return cases,
+await the bulk run. Personal-use Form 8936 remains on its separate Schedule 3
+route. The
 [official 2025 Form 8936](https://www.irs.gov/pub/irs-prior/f8936--2025.pdf)
-directs line 21 to Form 3800 Part III line 1aa. New-vehicle business line 1y
-needs its own child-PDF prepared-document review.
+directs line 8 to Form 3800 Part III line 1y and line 21 to line 1aa.

@@ -133,39 +133,69 @@ export const form8936Pdf: PdfFormDescriptor = {
       inputSchema.parse(allPending.f8936),
       allPending,
     );
-    if (!lines || lines.line19Commercial === 0) return [fields];
+    if (!lines || (lines.line8Business === 0 && lines.line19Commercial === 0)) {
+      return [fields];
+    }
     if (!prepared || !allPending.f3800) {
       throw new Error(
-        "Commercial Form 8936 PDF needs the prepared Form 3800 document",
+        "Business Form 8936 PDF needs the prepared Form 3800 document",
       );
     }
-    const rows = prepared.currentRows.filter((row) => row.line === "1aa");
-    const amounts = prepared.currentAmounts.filter((row) => row.line === "1aa");
-    const details = prepared.currentDetails.filter((row) => row.line === "1aa");
-    const [row] = rows;
-    const [amount] = amounts;
-    const [detail] = details;
+    const businessRows = [
+      {
+        line: "1y",
+        credit: lines.line8Business,
+        first: fields.line6,
+        final: fields.line8,
+      },
+      {
+        line: "1aa",
+        credit: lines.line19Commercial,
+        first: fields.line19,
+        final: fields.line21,
+      },
+    ].filter((entry) => entry.credit > 0);
+    const documentIds = new Set<string>();
+    for (const entry of businessRows) {
+      const rows = prepared.currentRows.filter((row) =>
+        row.line === entry.line
+      );
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === entry.line
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === entry.line
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        entry.first !== entry.credit || entry.final !== entry.credit ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8936" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined ||
+        detail.credit !== entry.credit ||
+        amount.nonpassiveCredit !== entry.credit ||
+        amount.totalCredit !== entry.credit ||
+        amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== detail.appliedCredit
+      ) {
+        throw new Error(
+          `Business Form 8936 PDF differs from filed Form 3800 line ${entry.line}`,
+        );
+      }
+      documentIds.add(row.metadata.referenceDocumentId);
+    }
     if (
-      fields.line19 !== lines.line19Commercial ||
-      fields.line21 !== lines.line19Commercial ||
-      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
-      row.metadata.sourceCount !== 1 ||
-      row.metadata.referenceDocumentName !== "IRS8936" ||
-      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
-      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
-      detail.passThroughEin !== undefined ||
-      detail.credit !== lines.line19Commercial ||
-      amount.nonpassiveCredit !== lines.line19Commercial ||
-      amount.totalCredit !== lines.line19Commercial ||
-      amount.transferOutCredit !== 0 ||
-      amount.passiveBeforeLimit !== 0 ||
-      amount.passiveAfterLimit !== 0 ||
-      amount.appliedCredit !== detail.appliedCredit ||
+      documentIds.size !== 1 ||
       prepared.lines.line38 !== allPending.f3800.allowed_credit
     ) {
-      throw new Error(
-        "Commercial Form 8936 PDF differs from filed Form 3800 line 1aa",
-      );
+      throw new Error("Business Form 8936 PDF differs from prepared Form 3800");
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
     return [fields];
