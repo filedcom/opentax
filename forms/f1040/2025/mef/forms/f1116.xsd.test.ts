@@ -29,6 +29,8 @@ try {
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
+  firstName: "Test",
+  lastName: "Taxpayer",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
@@ -599,6 +601,25 @@ Deno.test({
     fec: [{
       foreign_employer_name: "German Employer GmbH",
       country_code: "DE",
+      compensation_owner_ssn: "123456789",
+      compensation_source_document_reference: "2025 German employer payroll",
+      service_residence: {
+        kind: "foreign",
+        address: {
+          line1: "10 Hauptstrasse",
+          city: "Berlin",
+          country_code: "GM",
+          postal_code: "10115",
+        },
+      },
+      employer_foreign_address: {
+        line1: "20 Berliner Strasse",
+        city: "Berlin",
+        country_code: "GM",
+        postal_code: "10115",
+      },
+      employer_has_us_ein: false,
+      employer_issued_w2: false,
       foreign_tax_irs_country_code: "GM",
       compensation_amount: 60_000,
       compensation_usd: 60_000,

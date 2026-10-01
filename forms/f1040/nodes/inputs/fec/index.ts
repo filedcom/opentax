@@ -33,6 +33,30 @@ const paidForeignTaxCurrencySchema = foreignTaxCurrencySchema.extend({
   conversion_rate_explanation: z.string().trim().min(1),
 });
 
+const fecForeignAddressSchema = z.object({
+  line1: z.string().trim().min(1),
+  line2: z.string().trim().min(1).optional(),
+  city: z.string().trim().min(1),
+  province_or_state: z.string().trim().min(1).optional(),
+  country_code: z.string().regex(/^[A-Z]{2}$/),
+  postal_code: z.string().trim().min(1).optional(),
+}).strict();
+
+const fecServiceResidenceSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("us"),
+    line1: z.string().trim().min(1),
+    line2: z.string().trim().min(1).optional(),
+    city: z.string().trim().min(1),
+    state: z.string().regex(/^[A-Z]{2}$/),
+    zip: z.string().regex(/^\d{5}$/),
+  }).strict(),
+  z.object({
+    kind: z.literal("foreign"),
+    address: fecForeignAddressSchema,
+  }).strict(),
+]);
+
 // Per-employer schema — one entry per foreign employer
 export const itemSchema = z.object({
   // Name of the foreign employer
@@ -49,6 +73,11 @@ export const itemSchema = z.object({
   // employee's $250,000 worldwide compensation threshold for line 1b.
   compensation_owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   compensation_source_document_reference: z.string().trim().min(1).optional(),
+  // Service-time residence cannot be inferred from the current return header.
+  service_residence: fecServiceResidenceSchema.optional(),
+  employer_foreign_address: fecForeignAddressSchema.optional(),
+  employer_has_us_ein: z.literal(false).optional(),
+  employer_issued_w2: z.literal(false).optional(),
   // Optional description of the position/employment
   description: z.string().optional(),
   // Foreign income tax paid or accrued on this compensation, converted to USD.
@@ -74,6 +103,22 @@ export const itemSchema = z.object({
   // and a sourced statement explaining the alternative geographical basis.
   alternative_compensation_sourcing: alternativeCompensationSourcingSchema
     .optional(),
+});
+
+/** Standalone FEC records need the complete facts required by Pub. 4164. */
+export const nativeFecItemSchema = itemSchema.extend({
+  foreign_employer_name: z.string().trim().min(1),
+  compensation_usd: z.number().int().positive(),
+  compensation_owner_ssn: z.string().regex(/^(?:\d{9}|\d{3}-\d{2}-\d{4})$/),
+  compensation_source_document_reference: z.string().trim().min(1),
+  service_residence: fecServiceResidenceSchema,
+  employer_foreign_address: fecForeignAddressSchema,
+  employer_has_us_ein: z.literal(false),
+  employer_issued_w2: z.literal(false),
+});
+
+export const nativeFecInputSchema = z.object({
+  fecs: z.array(nativeFecItemSchema).min(1).max(10),
 });
 
 export const inputSchema = z.object({
