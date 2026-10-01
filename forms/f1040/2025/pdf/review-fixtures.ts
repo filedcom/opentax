@@ -1789,6 +1789,24 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-presidential-campaign-both",
+    inputs: {
+      general: {
+        ...jointGeneral,
+        presidential_campaign_fund_taxpayer: true,
+        presidential_campaign_fund_spouse: true,
+      },
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Both Form 1040 page 1 presidential campaign fund boxes are checked for the taxpayer and spouse",
+      "Native IRS1040 contains both PECFPrimaryInd and PECFSpouseInd before the filing status",
+      "The $3 designations leave tax, withholding, and refund amounts unchanged",
+    ],
+  },
+  {
     id: "joint-two-w2s",
     inputs: {
       general: jointGeneral,
