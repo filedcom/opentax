@@ -186,9 +186,23 @@ match its Schedule C source item. The route excludes prior or suspended losses,
 SSTB, aggregation, patron, net capital gain, REIT/PTP, other business and
 negative-business wage/UBIA variants. The native companion and bounded PDF map
 reconcile their rows and final deduction with parent Form 8995-A and Form 1040
-line 13. No current net-zero/negative result or prior-year loss carryforward is
-supported. Focused cases are written but unrun, and source authentication, full
+line 13. That initial slice has no unused current loss or prior-year loss
+carryforward. Focused cases are written but unrun, and source authentication, full
 XSD, filled-PDF, IRS-rule and ATS gates remain open.
+
+The same two identified Schedule C business route now also retains a current
+$200 net QBI loss: $1,000 of positive QBI is fully absorbed by a $1,200
+qualified loss. Schedule C (Form 8995-A) line 5 uses $1,000 and line 6 records
+the remaining $200 as a positive loss magnitude for next year's carryforward.
+The parent's adjusted QBI, W-2 wages, UBIA, and line 39 deduction are zero, as
+the [2025 instructions](https://www.irs.gov/instructions/i8995a) direct when
+loss netting leaves no positive QBI for that business. The graph retains the
+$200 in its in-memory carryforwards while Form 1040 line 13 is zero. A
+full-return fixture links two source Schedule C items to parent and companion
+native/PDF documents and rejects changed business, companion, or final-return
+figures. This does not authenticate source bytes, durably store the loss, or
+import it in 2026. Cases are written but unrun pending the bulk validation
+gate.
 
 ## Build-first Schedule D patron route (written, unrun)
 

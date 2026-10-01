@@ -420,28 +420,30 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
-    adjustedQbi <= 0 || adjustedQbi >= 400 ||
+    adjustedQbi >= 400 ||
     (input.qbi ?? 0) !== positive.qbi + negative.qbi ||
     (input.w2_wages ?? 0) !== positive.w2_wages + negative.w2_wages ||
     (input.unadjusted_basis ?? 0) !== positive.ubia + negative.ubia ||
     positive.w2_wages < 0 || negative.w2_wages !== 0 ||
-    negative.ubia !== 0 || line6 !== 0
+    negative.ubia !== 0
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs positive net QBI below the Schedule SE threshold and no unused loss or negative-business limitation amount",
+      "Form 8995-A Schedule C bounded route needs sourced net QBI below the Schedule SE threshold and no negative-business limitation amount",
     );
   }
   const line2 = adjustedQbi;
   const line3Parent = line2 * QBI_RATE;
-  const line4Parent = positive.w2_wages;
+  // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
+  // amounts on the parent; those limits cannot create a deduction by themselves.
+  const line4Parent = adjustedQbi > 0 ? positive.w2_wages : 0;
   const line5Parent = line4Parent * W2_LIMIT_A_RATE;
   const line6Parent = line4Parent * W2_LIMIT_B_WAGE_RATE;
-  const line7Parent = positive.ubia;
+  const line7Parent = adjustedQbi > 0 ? positive.ubia : 0;
   const line8Parent = line7Parent * UBIA_RATE;
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);
   const line11Parent = Math.min(line3Parent, line10Parent);
-  const line36 = input.taxable_income * QBI_RATE;
+  const line36 = Math.round(input.taxable_income * QBI_RATE);
   const line39 = Math.min(line11Parent, line36);
   if (
     ![
@@ -454,10 +456,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line11Parent,
       line36,
       line39,
-    ].every(Number.isInteger) || line39 <= 0
+    ].every(Number.isInteger) || (adjustedQbi > 0 && line39 <= 0)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs a positive whole-dollar deduction",
+      "Form 8995-A Schedule C bounded route needs a whole-dollar deduction or sourced unused loss",
     );
   }
   return {
@@ -1115,6 +1117,13 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
           { nodeType: this.nodeType, fields: input },
           this.outputNodes.output(form8995aScheduleC, input),
         ],
+        ...(lines.schedule.line6 > 0
+          ? {
+            carryforwards: {
+              qbi_loss_carryforward_8995a: lines.schedule.line6,
+            },
+          }
+          : {}),
       };
     }
 
