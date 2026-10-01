@@ -113,6 +113,29 @@ export const itemSchema = z.object({
     invoiced_kwh_sold: z.number().int().nonnegative(),
     unrelated_buyer_verified: z.literal(true),
   }).strict().optional(),
+  trash_combustion_source: z.object({
+    facility_description: z.string().trim().min(1),
+    facility_address_line1: z.string().trim().min(1),
+    facility_latitude: z.number().min(-90).max(90),
+    facility_longitude: z.number().min(-180).max(180),
+    municipal_waste_record_reference: z.string().trim().min(1),
+    municipal_solid_waste_excluding_segregated_recyclable_paper_verified: z
+      .literal(true),
+    original_trash_combustion_facility_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    election_grant_nonclaim_record_reference: z.string().trim().min(1),
+    no_section48_election_or_section1603_grant_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
   facility_description: z.string().min(1).max(50).optional(),
   facility_us_address: z.object({
     line1: z.string().min(1),
@@ -439,6 +462,51 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
   } else if (item.landfill_gas_source !== undefined) {
     throw new Error(
       "Form 8835 landfill gas source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.Trash) {
+    const source = item.trash_combustion_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit || item.is_fiscal_year ||
+      item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined || !source ||
+      source.facility_description !== item.facility_description ||
+      source.facility_address_line1 !== item.facility_us_address?.line1 ||
+      source.facility_latitude !== item.facility_latitude ||
+      source.facility_longitude !== item.facility_longitude ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.municipal_waste_record_reference,
+          source.election_grant_nonclaim_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 5
+    ) {
+      throw new Error(
+        "Form 8835 trash combustion needs a matching filer-owned facility identity, construction, 2025 meter and unrelated sale, five distinct source records, and no investment-credit election or grant",
+      );
+    }
+  } else if (item.trash_combustion_source !== undefined) {
+    throw new Error(
+      "Form 8835 trash-combustion source cannot classify another energy type",
     );
   }
   if (item.energy_type === EnergyType.BiomassClosed) {
