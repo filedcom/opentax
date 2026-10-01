@@ -66,6 +66,31 @@ function lines(changes: Record<string, unknown> = {}) {
   };
 }
 
+function finalizedPending(exclusion: number) {
+  const grossInterest = source.line9_worksheet.schedule_b_line2_interest;
+  const taxableInterest = grossInterest - exclusion;
+  const otherIncome = source.line9_worksheet.other_1040_and_schedule1_income;
+  return {
+    f1099int: {
+      f1099ints: [{
+        payer_name: "Treasury Savings Bonds",
+        source_document_reference: "reviewed 2025 redeemed bond 1099-INT",
+        box3: 2_000,
+      }],
+    },
+    schedule_b: {
+      ee_bond_exclusion: exclusion,
+      print_line2_total: grossInterest,
+      print_line4_total: taxableInterest,
+    },
+    f1040: {
+      line2b_taxable_interest: taxableInterest,
+      line9_total_income: otherIncome + taxableInterest,
+      line11_agi: otherIncome + taxableInterest,
+    },
+  };
+}
+
 for (
   const filingStatus of [
     FilingStatus.Single,
@@ -230,12 +255,7 @@ Deno.test("native MeF lines and Schedule B line 3 reconcile", () => {
     ...result.form,
   };
   const xml = mef8815.build(fields, {
-    pending: {
-      schedule_b: {
-        ee_bond_exclusion: result.scheduleB?.ee_bond_exclusion,
-        print_line2_total: 2_000,
-      },
-    },
+    pending: finalizedPending(result.form!.line14 as number),
   });
   assertEquals(
     xml.includes("<EligiblePersonNm>Alex Example</EligiblePersonNm>"),
@@ -263,7 +283,7 @@ Deno.test("native MeF lines and Schedule B line 3 reconcile", () => {
   assertEquals(xml.includes("SavingsBondInterestAmt"), false);
   assertThrows(() => mef8815.build({ ...fields, line14: 1 }), Error, "line14");
   assertThrows(() => mef8815.build(source), Error, "computed 2025 lines");
-  assertThrows(() => mef8815.build(fields), Error, "Schedule B pending");
+  assertThrows(() => mef8815.build(fields), Error, "finalized return");
   assertThrows(
     () =>
       mef8815.build(fields, {
@@ -279,12 +299,7 @@ Deno.test("native MeF lines and Schedule B line 3 reconcile", () => {
           },
           filingStatus: MefFilingStatus.MarriedFilingJointly,
         },
-        pending: {
-          schedule_b: {
-            ee_bond_exclusion: result.scheduleB?.ee_bond_exclusion,
-            print_line2_total: 2_000,
-          },
-        },
+        pending: finalizedPending(result.form!.line14 as number),
       }),
     Error,
     "filing status differs",
@@ -322,12 +337,7 @@ Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as
     },
     filingStatus: MefFilingStatus.Single,
   };
-  const pending = {
-    schedule_b: {
-      ee_bond_exclusion: result.form?.line14,
-      print_line2_total: source.line9_worksheet.schedule_b_line2_interest,
-    },
-  };
+  const pending = finalizedPending(result.form!.line14 as number);
   assertEquals(
     form8815Pdf.instances?.(projected ?? {}, filer, pending)?.length,
     1,
@@ -352,6 +362,41 @@ Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as
         schedule_b: { ...pending.schedule_b, ee_bond_exclusion: 1 },
       }),
     Error,
-    "differs from the final return",
+    "differs from the finalized",
   );
+});
+
+Deno.test("Form 8815 native and PDF reject return-wide MAGI tampering", () => {
+  const result = lines();
+  const fields = { ...source, ...result.form };
+  const filer = {
+    primarySSN: "123456789",
+    nameLine1: "ALEX EXAMPLE",
+    nameControl: "EXAM",
+    address: { line1: "1 Main St", city: "Boston", state: "MA", zip: "02108" },
+    filingStatus: MefFilingStatus.Single,
+  };
+  const projected = form8815Pdf.projectFields!(fields, {});
+  const good = finalizedPending(result.form!.line14 as number);
+  assertEquals(
+    mef8815.build(fields, { filer, pending: good }).includes("<IRS8815>"),
+    true,
+  );
+  assertEquals(form8815Pdf.instances!(projected, filer, good).length, 1);
+  for (
+    const changed of [
+      { ...good, f1040: { ...good.f1040, line9_total_income: 70_100 } },
+      { ...good, f1040: { ...good.f1040, line11_agi: 70_100 } },
+      { ...good, f1040: { ...good.f1040, line10_adjustments: 100 } },
+      { ...good, schedule_b: { ...good.schedule_b, print_line4_total: 100 } },
+      {
+        ...good,
+        f1099int: { f1099ints: [{ ...good.f1099int.f1099ints[0], box3: 100 }] },
+      },
+      { ...good, form2555: { line45: 100 } },
+    ]
+  ) {
+    assertThrows(() => mef8815.build(fields, { filer, pending: changed }));
+    assertThrows(() => form8815Pdf.instances!(projected, filer, changed));
+  }
 });
