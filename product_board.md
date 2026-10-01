@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **671 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **672 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 146-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 671 bounded routes and
+**Implemented coverage.** The completed ledger records 672 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -139,14 +139,16 @@ and any reported estimated-tax penalty before native/PDF projection.
 Filed wage total and total income now replay retained Form 1040 component rows
 at native/PDF export when those rows are present.
 Final native/PDF export now matches filing status and an explicitly supplied
-digital-assets answer to the retained general source record. Claimed dependent
+digital-assets answer and presidential campaign choices to the retained
+general source record. Claimed dependent
 rows and CTC/ODC counts now replay that same source, excluding children the
 general record marks as claimed on another return.
 The source-only Social Security lump-sum node now retains the full reported
 benefit on line 6a and rejects a claimed prior-year election until its
 Publication 915 worksheets and line 6b/6c route can be verified.
 The core PDF audit still needs a source-reconciled line 1h income-type label
-for foreign employer and other earned-income combinations, plus a final
+for foreign employer and other earned-income combinations; standalone FEC
+also lacks the native wage-statement source link. It also needs a final
 projection of the retained ACTC opt-out election on line 28; those are open
 within the Form 1040 core-return and PDF parents below.
 Form 8288-A withholding now deposits to Form 1040 line 25c, with a retained
