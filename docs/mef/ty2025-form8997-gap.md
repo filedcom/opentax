@@ -40,9 +40,11 @@ acquisition date, description, short/long deferred gain, filed-form reference,
 and annual workpaper to the unchanged opening and closing ledger. Current-year
 additions, sales, inclusion events, EIN changes and multiple funds reject.
 Positive and tampered-source cases are written for the deferred test batch. A
-digest and PDF header bind the review to bytes, but cannot authenticate IRS
-filing, issuer origin, or the printed PDF fields. The verifier is not connected
-to the public exporters, which remain guarded.
+digest and parsed PDF structure bind the review to bytes: the prior Form 8997
+copy must have at least two pages and the issuer statement at least one. This
+rejects forged PDF headers and incomplete prior form copies, but cannot
+authenticate IRS filing, issuer origin, or the printed PDF fields. The verifier
+is not connected to the public exporters, which remain guarded.
 
 ## Remaining activation blockers
 

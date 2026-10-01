@@ -1,11 +1,21 @@
 import { assertEquals, assertRejects } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
 import { reviewForm8997HoldingOnlySource } from "./holding_only_source.ts";
 
-const priorBytes = new TextEncoder().encode("%PDF-1.7 reviewed 2024 Form 8997");
-const issuerBytes = new TextEncoder().encode(
-  "%PDF-1.7 reviewed 2025 QOF issuer statement",
-);
+async function reviewedPdf(
+  pageCount: number,
+  label: string,
+): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  for (let index = 0; index < pageCount; index++) {
+    pdf.addPage([200, 200]).drawText(`${label} ${index + 1}`);
+  }
+  return pdf.save();
+}
+
+const priorBytes = await reviewedPdf(2, "2024 Form 8997");
+const issuerBytes = await reviewedPdf(1, "2025 QOF issuer statement");
 const input = {
   tax_year: 2025,
   complete_annual_ledger_confirmed: true,
@@ -107,6 +117,38 @@ Deno.test("Form 8997 staged holding-only review binds one lot to distinct prior 
       input,
       review,
       issuerBytes,
+      issuerBytes,
+    )
+  );
+  const fakePdf = new TextEncoder().encode("%PDF-1.7 header only");
+  const fakeDigest = await sha256Hex(fakePdf);
+  await assertRejects(() =>
+    reviewForm8997HoldingOnlySource(
+      input,
+      {
+        ...review,
+        prior_form8997_pdf: {
+          ...review.prior_form8997_pdf,
+          sha256: fakeDigest,
+        },
+      },
+      fakePdf,
+      issuerBytes,
+    )
+  );
+  const onePagePrior = await reviewedPdf(1, "incomplete 2024 Form 8997");
+  const onePageDigest = await sha256Hex(onePagePrior);
+  await assertRejects(() =>
+    reviewForm8997HoldingOnlySource(
+      input,
+      {
+        ...review,
+        prior_form8997_pdf: {
+          ...review.prior_form8997_pdf,
+          sha256: onePageDigest,
+        },
+      },
+      onePagePrior,
       issuerBytes,
     )
   );

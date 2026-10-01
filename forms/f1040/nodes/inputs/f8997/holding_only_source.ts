@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PDFDocument } from "pdf-lib";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
 import {
   calculateForm8997Statement,
@@ -40,10 +41,20 @@ function validDate(value: string): boolean {
 async function exactPdf(
   bytes: Uint8Array,
   sha256: string,
+  minimumPages: number,
 ): Promise<boolean> {
-  return bytes instanceof Uint8Array && bytes.length >= 8 &&
-    new TextDecoder().decode(bytes.subarray(0, 5)) === "%PDF-" &&
-    await sha256Hex(bytes) === sha256;
+  if (
+    !(bytes instanceof Uint8Array) || bytes.length < 8 ||
+    bytes.length > 60_000_000 ||
+    new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-" ||
+    await sha256Hex(bytes) !== sha256
+  ) return false;
+  try {
+    const pdf = await PDFDocument.load(bytes);
+    return pdf.getPageCount() >= minimumPages;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -102,10 +113,11 @@ export async function reviewForm8997HoldingOnlySource(
     !validDate(review.prior_form8997_pdf.reviewed_on) ||
     !validDate(review.qof_issuer_statement_pdf.reviewed_on) ||
     !validDate(review.acquired_date) ||
-    !await exactPdf(priorFormBytes, review.prior_form8997_pdf.sha256) ||
+    !await exactPdf(priorFormBytes, review.prior_form8997_pdf.sha256, 2) ||
     !await exactPdf(
       issuerStatementBytes,
       review.qof_issuer_statement_pdf.sha256,
+      1,
     )
   ) {
     throw new Error(
