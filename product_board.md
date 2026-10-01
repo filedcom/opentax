@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **360 completed bounded items** and their exact limits live in the
+The **361 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 304 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 305 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -45,9 +45,8 @@ positive box 6 and Form 8962 self-employed health-insurance deduction/PTC
 ordering and a further Form 8283 Section B art slice are also recorded.
 The bounded Form 3800/Form 8820 PDF credit reconciliation is also recorded.
 The sourced Form 8835 landfill-gas facility and Form 4952 Treasury-interest
-plus OID pair, an age-55 Form 8889 recapture route, and a four-copy Form 4972
-collection fix are also recorded. A further Form 8995/8995-A slice is in
-progress and is not counted as complete.
+plus OID pair, an age-55 Form 8889 recapture route, a four-copy Form 4972
+collection fix, and a Form 8995 REIT-only route are also recorded.
 The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
