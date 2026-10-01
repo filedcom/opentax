@@ -220,6 +220,8 @@ const beneficiaryInputSchema = z.object({
         distribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         gross_amount: z.number().positive(),
         qualified_medical_amount: z.number().nonnegative(),
+        // Required on every dated row when a line-14b rollover coexists.
+        rollover_excluded_amount: z.number().nonnegative().optional(),
         source_reference: z.string().trim().min(1),
         form1099_sa_source_reference: z.string().trim().min(1),
       }).strict(),
@@ -1071,9 +1073,16 @@ function nonQualifiedPenalty(
     }
   }
   if (disability) {
-    if (input.hsa_excluded_distributions) {
+    const exclusions = input.hsa_excluded_distributions;
+    const rollover = exclusions?.rollover;
+    if (
+      (exclusions && !rollover) ||
+      exclusions?.timely_excess_withdrawal ||
+      input.employer_excess_treatment?.timely_withdrawal
+          ?.withdrawal_tax_year === 2025
+    ) {
       throw new Error(
-        "Form 8889 disability exception with line 14b exclusions needs transaction allocation",
+        "Form 8889 disability exception supports line 14b only for a sourced rollover allocation",
       );
     }
     const validDate = (value: string): boolean => {
@@ -1082,6 +1091,29 @@ function nonQualifiedPenalty(
         date.toISOString().slice(0, 10) === value;
     };
     const records = disability.distributions;
+    if (rollover) {
+      const allocated = records.filter((row) =>
+        (row.rollover_excluded_amount ?? 0) > 0
+      );
+      if (
+        records.some((row) => row.rollover_excluded_amount === undefined) ||
+        allocated.length !== 1 ||
+        allocated[0]?.source_reference !==
+          rollover.distribution_source_reference ||
+        allocated[0]?.distribution_date !== rollover.distribution_date ||
+        allocated[0]?.rollover_excluded_amount !== rollover.amount
+      ) {
+        throw new Error(
+          "Form 8889 disability rollover needs one dated transaction matching the excluded amount, date, and source",
+        );
+      }
+    } else if (
+      records.some((row) => row.rollover_excluded_amount !== undefined)
+    ) {
+      throw new Error(
+        "Form 8889 disability transaction cannot claim rollover exclusion without line 14b rollover source",
+      );
+    }
     const forms = input.form1099_sa_distributions ?? [];
     const grossByForm = new Map<string, number>();
     for (const row of records) {
@@ -1099,7 +1131,8 @@ function nonQualifiedPenalty(
       records.some((row) =>
         !validDate(row.distribution_date) ||
         row.distribution_date.slice(0, 4) !== String(taxYear) ||
-        row.qualified_medical_amount > row.gross_amount
+        row.qualified_medical_amount +
+          (row.rollover_excluded_amount ?? 0) > row.gross_amount
       ) ||
       forms.some((form) =>
         grossByForm.get(form.source_reference) !==
@@ -1117,7 +1150,8 @@ function nonQualifiedPenalty(
           (sum, row) =>
             sum +
             (row.distribution_date >= disability.disability_date
-              ? row.gross_amount - row.qualified_medical_amount
+              ? row.gross_amount - row.qualified_medical_amount -
+                (row.rollover_excluded_amount ?? 0)
               : 0),
           0,
         ) !== excepted

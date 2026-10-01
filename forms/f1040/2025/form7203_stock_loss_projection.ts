@@ -30,7 +30,8 @@ export function projectReviewedStockLoss7203(
     source.form7203_stock_loss_ledger,
   );
   if (Object.keys(rawFields).some((key) =>
-    key !== "stock_basis_beginning" && key !== "ordinary_loss"
+    key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
+    key !== "additional_contributions"
   )) {
     throw new Error(
       "Form 7203 stock-loss projection does not accept unreviewed basis fields",
@@ -39,6 +40,8 @@ export function projectReviewedStockLoss7203(
   const fields = form7203InputSchema.parse(rawFields);
   const currentLoss = -(source.box1_ordinary_business ?? 0);
   const basis = ledger.beginning_stock_basis;
+  const contribution = ledger.cash_capital_contribution?.amount ?? 0;
+  const availableBasis = basis + contribution;
   const normalizedName = (value: string) =>
     value.trim().toUpperCase().replace(/\s+/g, " ");
   const validBusinessName = /^([A-Za-z0-9#\-()&'] ?)*[A-Za-z0-9#\-()&']$/;
@@ -54,6 +57,7 @@ export function projectReviewedStockLoss7203(
     normalizedName(ledger.shareholder_name_as_on_k1) !==
       normalizedName(filer.fullName ?? filer.nameLine1) ||
     fields.stock_basis_beginning !== basis ||
+    (fields.additional_contributions ?? 0) !== contribution ||
     fields.ordinary_loss !== currentLoss ||
     [
       source.box2_rental_re,
@@ -79,7 +83,7 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  const allowed = Math.min(currentLoss, basis);
+  const allowed = Math.min(currentLoss, availableBasis);
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
@@ -96,5 +100,5 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  return { source, ledger, basis, currentLoss, allowed, carryover };
+  return { source, ledger, basis, contribution, availableBasis, currentLoss, allowed, carryover };
 }

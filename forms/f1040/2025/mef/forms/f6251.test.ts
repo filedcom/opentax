@@ -310,10 +310,34 @@ Deno.test("an adjustment without AMT does not attach Form 6251", () => {
 });
 
 Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
-  const xml = filed({
+  const xml = form6251.build({
+    line11_amt: 1,
     line2c_investment_interest: 100,
     line2d_depletion: -250,
     private_activity_bond_interest: 500,
+  }, {
+    pending: {
+      schedule_c: {
+        schedule_cs: [{
+          line_a_principal_business: "Synthetic mining",
+          line_b_business_code: "212000",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: 50_000,
+          line_12_depletion: 0,
+          amt_depletion_worksheet: {
+            source_reference: "synthetic depletion review",
+            all_property_income_and_basis_limits_applied_verified: true,
+            no_at_risk_or_basis_limitation_verified: true,
+            properties: [{
+              property_reference: "mine-1",
+              regular_allowed_depletion: 0,
+              amt_allowed_depletion: 250,
+            }],
+          },
+        }],
+      },
+    },
   });
   const line2c = xml.indexOf(
     "<InvestmentInterestAmt>100</InvestmentInterestAmt>",

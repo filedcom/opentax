@@ -710,6 +710,34 @@ Deno.test("ordinary-loss ledger EIN must match the issued K-1", () => {
   );
 });
 
+Deno.test("S corporation K-1 routes a reviewed no-shares cash capital contribution to Form 7203", () => {
+  const contribution = {
+    amount: 500,
+    contributed_date: "2025-06-01",
+    shareholder_ssn: "123456789",
+    corporation_ein: "123456789",
+    bank_transfer_reference: "Bank transfer TX-2025-500",
+    corporate_capital_account_reference: "Corporate capital ledger-500",
+    cash_received_by_corporation_confirmed: true,
+    no_shares_issued_confirmed: true,
+    not_a_shareholder_loan_confirmed: true,
+  };
+  const source = reviewedLossItem(3000, {
+    box1_ordinary_business: -4000,
+    form7203_stock_loss_ledger: {
+      ...stockLossLedger(3000), cash_capital_contribution: contribution,
+    },
+  });
+  const fields = findOutput(compute([source]), "form7203")?.fields;
+  assertEquals(fields?.stock_basis_beginning, 3_000);
+  assertEquals(fields?.additional_contributions, 500);
+  assertEquals(fields?.ordinary_loss, 4_000);
+  assertThrows(() => compute([{ ...source, form7203_stock_loss_ledger: {
+    ...stockLossLedger(3000),
+    cash_capital_contribution: { ...contribution, corporation_ein: "999999999" },
+  } }]));
+});
+
 Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {
   const item = reviewedLossItem(3000, { box1_ordinary_business: -4000 });
   assertThrows(() =>

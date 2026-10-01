@@ -171,3 +171,98 @@ Deno.test("disability exception rejects unsourced code 3 and misallocated transa
     "disability exception does not reconcile",
   );
 });
+
+Deno.test("paired disability exception allocates a code-1 rollover before disability", () => {
+  const { source } = pairedDisabilityCase();
+  const allocated = inputSchema.parse({
+    ...source,
+    exception_qualified_taxable_amount: 400,
+    hsa_excluded_distributions: {
+      rollover: {
+        amount: 200,
+        distribution_date: "2025-05-01",
+        contribution_date: "2025-05-30",
+        distribution_source_reference: "hsa-transaction-before",
+        form1099_sa_source_reference: "1099-sa-before-disability",
+        contribution_source_reference: "receiving-hsa-deposit",
+        same_beneficiary: true,
+        receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+        not_direct_trustee_transfer: true,
+      },
+    },
+    disability_exception_evidence: {
+      ...source.disability_exception_evidence,
+      distributions: source.disability_exception_evidence!.distributions.map(
+        (row) => ({
+          ...row,
+          rollover_excluded_amount: row.source_reference ===
+              "hsa-transaction-before"
+            ? 200
+            : 0,
+        }),
+      ),
+    },
+  });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    allocated,
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  assertEquals(forms[0]?.print_line14b_excluded_distributions, 200);
+  assertEquals(forms[0]?.print_line16_taxable, 500);
+  assertEquals(forms[0]?.print_line17a_exception, true);
+  assertEquals(forms[0]?.print_line17b_penalty, 20);
+  const pending = {
+    form8889: { ...allocated, forms },
+    schedule1: {
+      line13_hsa_deduction: 4_000,
+      line8f_hsa_income: 500,
+      line26_total_adjustments: 4_000,
+    },
+    schedule2: { line17c_hsa_penalty: 20 },
+    f1040: { line10_adjustments: 4_000 },
+  };
+  const xml = form8889.build({ forms }, { filer, pending });
+  assertStringIncludes(xml[0], "<HSADistributionRolloverAmt>200</HSADistributionRolloverAmt>");
+  assertStringIncludes(xml[0], "<HSADistriAddnlPercentTaxAmt>20</HSADistriAddnlPercentTaxAmt>");
+  const pdf = form8889Pdf.instances?.({ forms }, filer, pending);
+  assertEquals(pdf?.[0]?.print_line14b_excluded_distributions, 200);
+  assertEquals(pdf?.[0]?.print_line16_taxable, 500);
+  assertEquals(pdf?.[0]?.print_line17b_penalty, 20);
+
+  const mismatched = {
+    ...allocated,
+    disability_exception_evidence: {
+      ...allocated.disability_exception_evidence!,
+      distributions: allocated.disability_exception_evidence!.distributions.map(
+        (row) => ({
+          ...row,
+          rollover_excluded_amount: row.source_reference ===
+              "hsa-transaction-before"
+            ? 199
+            : 1,
+        }),
+      ),
+    },
+  };
+  assertThrows(
+    () => form8889Node.compute({ taxYear: 2025, formType: "f1040" }, mismatched),
+    Error,
+    "disability rollover needs one dated transaction",
+  );
+  assertThrows(
+    () => form8889.build({ forms }, {
+      filer,
+      pending: { ...pending, form8889: { ...mismatched, forms } },
+    }),
+    Error,
+  );
+  assertThrows(
+    () => form8889Pdf.instances?.({ forms }, filer, {
+      ...pending,
+      form8889: { ...mismatched, forms },
+    }),
+    Error,
+  );
+});

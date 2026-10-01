@@ -353,3 +353,12 @@ all applicable credit combinations; external credit attachments and
 cross-route archive checks; source-backed IRS business-rule checks; and ATS
 acceptance. Passing these one- and two-facility packets does not establish those
 branches.
+
+The native Form 3800 builder and the nine-page PDF descriptor now share one
+final-credit join: calculated line 38 must equal Schedule 3 line 6a, Schedule 3
+line 8 must include at least that amount, and finalized Form 1040 line 20 must
+equal Schedule 3 line 8. This permits other Schedule 3 credits without counting
+the business credit twice. It follows the [2025 Form 1040 line 20](https://www.irs.gov/pub/irs-prior/f1040--2025.pdf)
+and [2025 Schedule 3 line 8](https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf)
+printed destinations. Focused positive and changed-line fixtures are authored
+for the deferred batch; the join does not authenticate each underlying credit.

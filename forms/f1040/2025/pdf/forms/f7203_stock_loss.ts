@@ -27,6 +27,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}c1_1[0]`,
   },
   textField("line1_beginning_basis", `${page1}f1_07[0]`, true),
+  textField("line2_cash_capital_contribution", `${page1}f1_08[0]`),
   textField("line5_basis_before_distributions", `${page1}f1_23[0]`, true),
   textField("line7_basis_after_distributions", `${page1}f1_25[0]`, true),
   textField("line10_basis_before_loss", `${page1}f1_30[0]`),
@@ -48,7 +49,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const { source, ledger, basis, currentLoss, allowed, carryover } =
+    const { source, ledger, basis, contribution, availableBasis, currentLoss, allowed, carryover } =
       projectReviewedStockLoss7203(raw, allPending ?? {}, filer);
     return [{
       shareholder_name: ledger.shareholder_name_as_on_k1,
@@ -57,21 +58,22 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       corporation_ein: ledger.corporation_ein,
       original_shareholder: true,
       line1_beginning_basis: basis,
-      line5_basis_before_distributions: basis,
-      line7_basis_after_distributions: basis,
-      ...(basis > 0
+      ...(contribution > 0 ? { line2_cash_capital_contribution: contribution } : {}),
+      line5_basis_before_distributions: availableBasis,
+      line7_basis_after_distributions: availableBasis,
+      ...(availableBasis > 0
         ? {
-          line10_basis_before_loss: basis,
+          line10_basis_before_loss: availableBasis,
           line11_allowable_stock_loss: allowed,
           line14_basis_decrease: allowed,
         }
         : {}),
-      line15_ending_basis: basis - allowed,
+      line15_ending_basis: availableBasis - allowed,
       line35_current_loss: currentLoss,
-      ...(basis > 0 ? { line35_allowed_stock: allowed } : {}),
+      ...(availableBasis > 0 ? { line35_allowed_stock: allowed } : {}),
       ...(carryover > 0 ? { line35_carryover: carryover } : {}),
       line47_current_loss: currentLoss,
-      ...(basis > 0 ? { line47_allowed_stock: allowed } : {}),
+      ...(availableBasis > 0 ? { line47_allowed_stock: allowed } : {}),
       ...(carryover > 0 ? { line47_carryover: carryover } : {}),
     }];
   },

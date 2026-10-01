@@ -126,6 +126,16 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
   assertEquals(instance?.[form3800PartIIIFields("4e").i], 600);
   assertThrows(
     () => form3800Pdf.instances?.(
+      source.f3800,
+      filer,
+      { ...source, f1040: { ...source.f1040, line20_nonrefundable_credits: 599 } },
+      bundle.form3800Parts,
+    ),
+    Error,
+    "Form 1040 line 20 do not reconcile",
+  );
+  assertThrows(
+    () => form3800Pdf.instances?.(
       { ...source.f3800, allowed_credit: 601 },
       filer,
       source,

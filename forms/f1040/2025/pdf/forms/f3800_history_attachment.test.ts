@@ -82,7 +82,8 @@ const parts: Form3800DocumentParts = {
 };
 const all = {
   f3800: { carryforward_vintages: entries, allowed_credit: 1_000 },
-  schedule3: { line6a_total: 1_000 },
+  schedule3: { line6a_total: 1_000, line8_total: 1_000 },
+  f1040: { line20_nonrefundable_credits: 1_000 },
 };
 
 Deno.test("Form 3800 PDF hook appends source-linked history after its nine pages", async () => {

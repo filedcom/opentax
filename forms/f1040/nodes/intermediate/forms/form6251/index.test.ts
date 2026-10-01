@@ -5,6 +5,31 @@ import { form6251, inputSchema } from "./index.ts";
 function basisSourcePending(fields: Record<string, unknown>) {
   const raw = fields.line2k_8949_basis_dispositions;
   const circulation = fields.line2o_circulation_costs;
+  const depletion = fields.line2d_depletion;
+  const scheduleC = typeof depletion === "number" && depletion !== 0
+    ? {
+      schedule_c: {
+        schedule_cs: [{
+          line_a_principal_business: "Synthetic mining",
+          line_b_business_code: "212000",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: 50_000,
+          line_12_depletion: Math.max(depletion, 0),
+          amt_depletion_worksheet: {
+            source_reference: "synthetic depletion review",
+            all_property_income_and_basis_limits_applied_verified: true,
+            no_at_risk_or_basis_limitation_verified: true,
+            properties: [{
+              property_reference: "mine-1",
+              regular_allowed_depletion: Math.max(depletion, 0),
+              amt_allowed_depletion: Math.max(-depletion, 0),
+            }],
+          },
+        }],
+      },
+    }
+    : {};
   const f59e = typeof circulation === "number" && circulation !== 0
     ? {
       f59e: {
@@ -23,10 +48,11 @@ function basisSourcePending(fields: Record<string, unknown>) {
       },
     }
     : {};
-  if (raw === undefined) return f59e;
+  if (raw === undefined) return { ...f59e, ...scheduleC };
   const rows = Array.isArray(raw) ? raw : [raw];
   return {
     ...f59e,
+    ...scheduleC,
     f8949: {
       f8949s: rows.map((row: {
         source_transaction_id: string;

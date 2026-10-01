@@ -80,8 +80,26 @@ source bytes, IRS business-rule validation, and ATS acceptance remain open.
 The MeF/PDF preflight
 still blocks other Form 7203 shapes. Actual box-16 code-D/E transactions,
 multiple corporations,
-stock blocks or shareholders, purchased/inherited/gift shares, contributions,
+stock blocks or shareholders, purchased/inherited/gift shares, contributions
+outside the bounded cash-capital route,
 tax-exempt/nondeductible or other K-1 basis items, debt, prior suspended losses,
 and stock dispositions remain unsupported. The previously misidentified
 box-17 distribution field and the direct node's excess-distribution route stop
 instead of creating an unrelated Form 2439 Schedule D gain.
+
+## One reviewed cash capital contribution (2026-10-01)
+
+The single original-shareholder, one K-1 ordinary-loss route now accepts one
+2025 cash contribution to the corporation without issuing additional shares.
+The strict stock ledger identifies the shareholder SSN and corporation EIN,
+contribution date and whole-dollar amount, bank transfer, and distinct corporate
+capital-account record; it affirms cash receipt, no share issuance, and no
+shareholder loan. The K-1 source sends the amount to Form 7203 Part I line 2.
+The calculation increases stock loss capacity by that amount; native XML prints
+`CapitalContributionBasisAmt`, and the two-page PDF prints line 2. Both replay
+the same reviewed ledger and require the allowed loss to match Schedule 1 line
+5 and Form 1040 line 8. Focused K-1, calculation, native, PDF, and tamper cases
+are authored but unrun. Actual bank/corporate records and K-1 bytes are still
+referenced rather than independently authenticated. New share purchases,
+property contributions, debt basis, other K-1 basis changes, and prior losses
+remain closed. This follows [Form 7203 line 2 instructions](https://www.irs.gov/instructions/i7203).

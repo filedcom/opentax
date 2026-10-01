@@ -6,7 +6,7 @@ export function buildReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
   context?: MefBuildContext,
 ): string {
-  const { source, ledger, basis, currentLoss, allowed, carryover } =
+  const { source, ledger, basis, contribution, availableBasis, currentLoss, allowed, carryover } =
     projectReviewedStockLoss7203(
       rawFields,
       context?.pending ?? {},
@@ -29,13 +29,14 @@ export function buildReviewedStockLoss7203(
     element("SCorporationEIN", ledger.corporation_ein),
     element("OriginalShareholderInd", "X"),
     element("StockBasisBeginTaxYearAmt", basis),
-    element("StockBasisBfrDistributionsAmt", basis),
-    element("StockBasisAftrDistributionsAmt", basis),
-    basis > 0 ? element("StockBasisBeforeLossDedAmt", basis) : "",
-    basis > 0 ? element("TotalDecreaseStockBasisAmt", allowed) : "",
-    element("StockBasisEndTaxYearAmt", basis - allowed),
+    contribution > 0 ? element("CapitalContributionBasisAmt", contribution) : "",
+    element("StockBasisBfrDistributionsAmt", availableBasis),
+    element("StockBasisAftrDistributionsAmt", availableBasis),
+    availableBasis > 0 ? element("StockBasisBeforeLossDedAmt", availableBasis) : "",
+    availableBasis > 0 ? element("TotalDecreaseStockBasisAmt", allowed) : "",
+    element("StockBasisEndTaxYearAmt", availableBasis - allowed),
     elements("ShrCurrentYrLossDeductionsGrp", lossGroup(currentLoss)),
-    basis > 0
+    availableBasis > 0
       ? elements("ShrAllwblLossFromStockBasisGrp", lossGroup(allowed))
       : "",
     carryover > 0

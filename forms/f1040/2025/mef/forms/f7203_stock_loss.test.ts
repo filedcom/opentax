@@ -169,6 +169,44 @@ Deno.test("staged Form 7203 rejects a pending amount or shareholder mismatch", (
   );
 });
 
+Deno.test("Form 7203 cash capital contribution raises stock basis and limits the sourced loss", () => {
+  const contribution = {
+    amount: 500,
+    contributed_date: "2025-06-01",
+    shareholder_ssn: "123456789",
+    corporation_ein: "987654321",
+    bank_transfer_reference: "Bank transfer TX-2025-500",
+    corporate_capital_account_reference: "Corporate ledger capital-500",
+    cash_received_by_corporation_confirmed: true,
+    no_shares_issued_confirmed: true,
+    not_a_shareholder_loan_confirmed: true,
+  };
+  const contributed = { ...source, form7203_stock_loss_ledger: {
+    ...ledger,
+    cash_capital_contribution: contribution,
+  } };
+  const fields = {
+    stock_basis_beginning: 3_000,
+    additional_contributions: 500,
+    ordinary_loss: 4_000,
+  };
+  const xml = buildReviewedStockLoss7203(fields, context(contributed, 3_500));
+  assertStringIncludes(xml, "<CapitalContributionBasisAmt>500</CapitalContributionBasisAmt>");
+  assertStringIncludes(xml, "<StockBasisBeforeLossDedAmt>3500</StockBasisBeforeLossDedAmt>");
+  assertStringIncludes(xml, "<TotalAllowableLossAmt>3500</TotalAllowableLossAmt>");
+  assertThrows(() => buildReviewedStockLoss7203(
+    { ...fields, additional_contributions: 501 },
+    context(contributed, 3_500),
+  ), Error, "same single-source stock-only loss");
+  assertThrows(() => buildReviewedStockLoss7203(fields, context({
+    ...contributed,
+    form7203_stock_loss_ledger: {
+      ...ledger,
+      cash_capital_contribution: { ...contribution, shareholder_ssn: "999999999" },
+    },
+  }, 3_500)), Error);
+});
+
 Deno.test("staged Form 7203 rejects mixed K-1 basis items", () => {
   assertThrows(
     () =>

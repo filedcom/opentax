@@ -29,6 +29,16 @@ Deno.test("form7203 — rejects negative additional_contributions", () => {
   assertThrows(() => compute({ additional_contributions: -100 }));
 });
 
+Deno.test("form7203 — a $500 cash contribution increases stock loss capacity", () => {
+  const result = compute({
+    stock_basis_beginning: 3_000,
+    additional_contributions: 500,
+    ordinary_loss: 4_000,
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.basis_disallowed_add_back, 500);
+  assertEquals(result.carryforwards?.suspended_scorp_loss_7203, 500);
+});
+
 Deno.test("form7203 — rejects negative ordinary_income", () => {
   assertThrows(() => compute({ ordinary_income: -500 }));
 });

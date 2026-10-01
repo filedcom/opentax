@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
@@ -88,6 +89,7 @@ export const form3800Pdf: PdfFormDescriptor = {
     if (typeof line6a !== "number") {
       throw new Error("Form 3800 PDF needs finalized Schedule 3 line 6a");
     }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),

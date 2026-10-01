@@ -58,3 +58,13 @@ pass; issued 1099-DIV bytes, broader capital-gain activity, filled PDF, XSD, and
 ATS remain open. See
 [2025 Form 6251](https://www.irs.gov/pub/irs-prior/f6251--2025.pdf) and
 [2025 Publication 550](https://www.irs.gov/publications/p550).
+
+# Schedule C depletion replay (staged, unrun)
+
+A nonzero Form 6251 line 2d now replays the retained Schedule C property-level
+AMT depletion workpapers at native and PDF export. It requires each business's
+regular Schedule C line 12 to equal its property regular allowances, rejects
+duplicate property references and passive or at-risk-limited activities, and
+matches the signed regular-minus-AMT total to line 2d. The source, native, and
+PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound
+to workpaper bytes; other depletion sources and activity refigures remain open.

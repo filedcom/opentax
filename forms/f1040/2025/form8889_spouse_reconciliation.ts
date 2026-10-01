@@ -709,9 +709,22 @@ export function reconcilePairedForm8889(
     new Set(datedDistributionReferences).size !==
       datedDistributionReferences.length ||
     new Set(rolloverReferences).size !== rolloverReferences.length ||
-    rolloverReferences.some((reference) =>
-      datedDistributionReferences.includes(reference)
-    )
+    owners.some((owner) => {
+      const rollover = owner.hsa_excluded_distributions?.rollover;
+      if (!rollover) return false;
+      const ownDated = [
+        ...(owner.age_65_exception_evidence?.distributions ?? []),
+        ...(owner.disability_exception_evidence?.distributions ?? []),
+      ];
+      return datedDistributionReferences.includes(
+          rollover.contribution_source_reference,
+        ) ||
+        (datedDistributionReferences.includes(
+          rollover.distribution_source_reference,
+        ) && !ownDated.some((row) =>
+          row.source_reference === rollover.distribution_source_reference
+        ));
+    })
   ) {
     throw new Error(
       "Form 8889 paired owners cannot reuse a Form 1099-SA, medical expense, dated distribution, or rollover reference",
@@ -739,8 +752,7 @@ export function reconcilePairedForm8889(
           !(owner.hsa_excluded_distributions.rollover !== undefined &&
             owner.hsa_excluded_distributions.timely_excess_withdrawal ===
               undefined &&
-            owner.age_65_exception_evidence === undefined &&
-            owner.disability_exception_evidence === undefined) &&
+            owner.age_65_exception_evidence === undefined) &&
           !(owner.hsa_excluded_distributions.timely_excess_withdrawal !==
               undefined &&
             owner.hsa_excluded_distributions.rollover === undefined &&

@@ -555,6 +555,10 @@ function buildForm7203Fields(
     ...(beginningBasis !== undefined
       ? { stock_basis_beginning: beginningBasis }
       : {}),
+    ...(loss > 0 && item.form7203_stock_loss_ledger?.cash_capital_contribution
+      ? { additional_contributions:
+        item.form7203_stock_loss_ledger.cash_capital_contribution.amount }
+      : {}),
     ...(item.debt_basis_beginning !== undefined
       ? { debt_basis_beginning: item.debt_basis_beginning }
       : {}),

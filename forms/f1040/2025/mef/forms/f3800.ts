@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
   allocateForm3800SourceTaxUse,
   calculateForm3800Nonpassive,
@@ -190,6 +191,7 @@ function reconcileFiledTaxContext(
       "Form 3800 allowed credit does not reconcile to Schedule 3 line 6a",
     );
   }
+  assertForm3800FinalCreditJoin(allowedCredit, context.pending ?? {});
 }
 
 function sourceForm8826(

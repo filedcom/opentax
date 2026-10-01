@@ -55,8 +55,8 @@ Deno.test("Form 3800 rejects carryforward export until source rows and history e
           CarryforwardGeneralBusinessCr: ["CarryforwardGeneralBusinessCr1"],
         },
         pending: {
-          f1040: { line16_income_tax: 40_000 },
-          schedule3: { line6a_total: 600, line7_total: 600 },
+          f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 600 },
+          schedule3: { line6a_total: 600, line7_total: 600, line8_total: 600 },
           form6251: { line11_amt: 0, net_tmt: 20_000 },
         },
       }),
@@ -246,6 +246,7 @@ function filedPending(
     f1040: {
       line16_income_tax: context.regularTax,
       line17_additional_taxes: context.alternativeMinimumTax,
+      line20_nonrefundable_credits: allowedCredit + context.priorAllowableCredits,
     },
     form6251: {
       line11_amt: context.alternativeMinimumTax,
@@ -254,6 +255,7 @@ function filedPending(
     schedule3: {
       line6a_total: allowedCredit,
       line7_total: allowedCredit + context.priorAllowableCredits,
+      line8_total: allowedCredit + context.priorAllowableCredits,
     },
   };
 }
