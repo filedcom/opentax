@@ -74,11 +74,24 @@ export function reconcileDependentMagi(
         dependent.ptc_tax_return?.filing === "not_required" &&
         "interest_form1099" in dependent.ptc_tax_return
       ).length === 1;
+  const requiredWageWithReviewedInterest = householdSize === 3 &&
+    notRequired.length === 1 &&
+    notRequired.some((dependent) =>
+      dependent.ptc_tax_return?.filing === "not_required" &&
+      "interest_form1099" in dependent.ptc_tax_return
+    ) &&
+    claimed.some((dependent) =>
+      dependent.ptc_tax_return?.filing === "required" &&
+      dependent.ptc_tax_return.wage_forms_w2?.length === 1 &&
+      dependent.ptc_tax_return.interest_forms1099.length === 0 &&
+      dependent.ptc_tax_return.dividend_form1099 === undefined
+    );
   if (
-    householdSize !== 2 && notRequired.length > 0 && !twoReviewedSourceKinds
+    householdSize !== 2 && notRequired.length > 0 && !twoReviewedSourceKinds &&
+    !requiredWageWithReviewedInterest
   ) {
     throw new Error(
-      "Form 8962 three-person not-required path needs one reviewed W-2 dependent and one reviewed 1099-INT dependent",
+      "Form 8962 three-person not-required path needs two reviewed sources or a required-filing W-2 with one reviewed 1099-INT dependent",
     );
   }
   if (

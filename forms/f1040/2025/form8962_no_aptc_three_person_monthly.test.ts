@@ -192,7 +192,9 @@ const filer = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 
-function filedReturn(twoNotRequired = false) {
+function filedReturn(
+  route: "both_required" | "both_not_required" | "mixed" = "both_required",
+) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -206,8 +208,10 @@ function filedReturn(twoNotRequired = false) {
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
-      dependents: twoNotRequired
+      dependents: route === "both_not_required"
         ? [belowThresholdWageDependent, belowThresholdInterestDependent]
+        : route === "mixed"
+        ? [dependent, belowThresholdInterestDependent]
         : [dependent, secondDependent],
     },
     w2: [{
@@ -218,15 +222,100 @@ function filedReturn(twoNotRequired = false) {
       employer_address_state: "TX",
       employer_address_zip: "78701",
       employee_ssn: "123-45-6789",
-      box1_wages: twoNotRequired ? 51_640 : 33_640,
+      box1_wages: route === "both_not_required"
+        ? 51_640
+        : route === "mixed"
+        ? 35_640
+        : 33_640,
       box2_fed_withheld: 3_000,
     }],
     f1095a: [policy],
   });
 }
 
+Deno.test("Form 8962 three-person monthly policy combines one required-filing W-2 and one excluded reviewed interest dependent", async () => {
+  const result = filedReturn("mixed");
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 16_000);
+  assertEquals(pending.form8962.household_income, 51_640);
+  assertEquals(pending.form8962.federal_poverty_pct, 200);
+  assertEquals(pending.form8962.total_premium_tax_credit, 7_968);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 7_968);
+  assertEquals(pending.f1040.line31_additional_payments, 7_968);
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(projected.dependents_modified_agi, 16_000);
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(prepared.bundle.xml, "<IRS8962 ");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>7968</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 required-W-2 and excluded-interest dependent rejects source and final-return tampering", async () => {
+  const result = filedReturn("mixed");
+  const pending = normalizeAllPending(result.pending);
+  const changed = (first: unknown, second: unknown) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{ ...dependent, ptc_tax_return: first }, {
+        ...belowThresholdInterestDependent,
+        ptc_tax_return: second,
+      }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...dependent.ptc_tax_return,
+        wage_forms_w2: [{
+          ...dependent.ptc_tax_return.wage_forms_w2[0],
+          box1_wages: 16_001,
+        }],
+      }, belowThresholdInterestDependent.ptc_tax_return),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed(dependent.ptc_tax_return, {
+        ...belowThresholdInterestDependent.ptc_tax_return,
+        interest_form1099: {
+          ...belowThresholdInterestDependent.ptc_tax_return.interest_form1099,
+          box1_taxable_interest: 1_351,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed(dependent.ptc_tax_return, {
+        ...belowThresholdInterestDependent.ptc_tax_return,
+        filing_requirement_review: {
+          ...belowThresholdInterestDependent.ptc_tax_return
+            .filing_requirement_review,
+          interest_source_document_id: "casey-issued-2025-w2",
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      schedule3: { ...pending.schedule3, line9_premium_tax_credit: 7_967 },
+    }, filer)
+  );
+});
+
 Deno.test("Form 8962 three-person monthly policy excludes two reviewed not-required dependents through native and PDF", async () => {
-  const result = filedReturn(true);
+  const result = filedReturn("both_not_required");
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
   assertEquals(pending.form8962.dependents_modified_agi, 0);
@@ -249,7 +338,7 @@ Deno.test("Form 8962 three-person monthly policy excludes two reviewed not-requi
 });
 
 Deno.test("Form 8962 two reviewed not-required dependents reject threshold, borrowed source, coverage, and final-credit tampering", async () => {
-  const result = filedReturn(true);
+  const result = filedReturn("both_not_required");
   const pending = normalizeAllPending(result.pending);
   const changed = (first: unknown, second: unknown) => ({
     ...result.pending,

@@ -1,5 +1,28 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One required-filing wage dependent and one reviewed nonfiling interest dependent (2026-10-01, unrun)
+
+A three-person single-filer household may now combine one dependent whose
+identified W-2 wages exceed the 2025 filing threshold and reconcile to that
+dependent's filed Form 1040, with one under-65, nonblind dependent whose sole
+identified Form 1099-INT taxable interest is at most $1,350 and whose distinct
+filing-requirement workpaper confirms no return or other filing trigger. The
+first dependent's AGI enters Form 8962 Worksheet 1-2 line 2b; the second
+dependent's taxable and tax-exempt interest does not. This follows the
+[2025 Form 8962 dependent-income instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+and [2025 Publication 501 filing thresholds](https://www.irs.gov/pub/irs-prior/p501--2025.pdf).
+
+The existing single, paid, no-APTC three-person monthly policy route rechecks
+both source identities and document IDs, covered persons, the three-person
+poverty line, monthly SLCSP/credit, Schedule 3 line 9, and Form 1040 line 31
+for native MeF and PDF. The authored $35,640 parent wages, $16,000 dependent
+filed wages, and $1,350 excluded dependent interest give $51,640 household
+income, 200% FPL, and $7,968 PTC. W-2 amount, 1099-INT threshold, workpaper
+identity, and final-credit tamper fixtures are deferred to the bulk gate.
+Other required-filing income kinds mixed with a reviewed nonfiling dependent,
+two policies, shared allocation, and source-byte authenticity remain outside
+this bounded route.
+
 ## Two separately reviewed dependents below the filing threshold (2026-10-01, unrun)
 
 One single filer with a three-person tax family may now combine exactly one
