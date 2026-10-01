@@ -18,6 +18,8 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 
 type ItemOverrides = Partial<{
   payerName: string;
+  payerTin: string;
+  source_document_reference: string;
   isNominee: boolean;
   nominee_distribution: {
     box1a: number;
@@ -129,6 +131,40 @@ function compute(
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("1099-DIV exact issued-copy repetition cannot double dividends or withholding", () => {
+  const issued = minimalItem({
+    payerName: "Test Payer",
+    payerTin: "123456789",
+    source_document_reference: "issued-dividend-copy-1",
+    box1a: 200,
+    box4: 15,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued }]),
+    Error,
+    "repeats the same identified payer-issued copy",
+  );
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        isNominee: true,
+        nominee_distribution: { box1a: 100, box4: 5 },
+      }]),
+    Error,
+    "repeats the same identified payer-issued copy",
+  );
+  const twoCopies = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-dividend-copy-2" },
+  ]);
+  assertEquals(
+    fieldsOf(twoCopies.outputs, f1040)?.line3b_ordinary_dividends,
+    400,
+  );
+  assertEquals(fieldsOf(twoCopies.outputs, f1040)?.line25b_withheld_1099, 30);
+});
 
 Deno.test("f1099div: sourced foreign qualified dividends contradict a zero-preference review", () => {
   const result = compute([minimalItem({

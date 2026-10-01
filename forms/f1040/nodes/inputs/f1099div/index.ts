@@ -148,6 +148,49 @@ const nomineeFields = [
   "foreign_source_qualified_dividends_usd",
 ] as const;
 
+const issuedCopyFields = [
+  "box11",
+  "box1a",
+  "box1b",
+  "box2a",
+  "box2b",
+  "box2c",
+  "box2d",
+  "box2e",
+  "box2f",
+  "box3",
+  "box4",
+  "box5",
+  "box6",
+  "box7",
+  "box8",
+  "box9",
+  "box10",
+  "box12",
+  "box13",
+  "box14",
+  "box15",
+  "box16",
+] as const satisfies readonly (keyof DIVItem)[];
+
+function assertDistinctIssuedCopies(items: readonly DIVItem[]): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.source_document_reference || !item.payerTin) continue;
+    const key = JSON.stringify([
+      item.source_document_reference,
+      item.payerTin,
+      ...issuedCopyFields.map((field) => item[field] ?? null),
+    ]);
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-DIV repeats the same identified payer-issued copy and box amounts",
+      );
+    }
+    seen.add(key);
+  }
+}
+
 function taxpayerShare(item: DIVItem): DIVItem {
   if (!item.isNominee) {
     if (item.nominee_distribution) {
@@ -316,6 +359,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
+    assertDistinctIssuedCopies(parsed.f1099divs);
     const { taxableIncome, filingStatus } = parsed;
     // Normalize items first (clamp sub-box values that payers occasionally report
     // over their parent box due to data entry errors), then validate the rest.
