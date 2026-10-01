@@ -5,7 +5,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { extractFilerIdentity } from "../mef/filer.ts";
-import { FilingStatus } from "../mef/header.ts";
+import { FilingStatus } from "../nodes/types.ts";
 import { f1040_2025 } from "./index.ts";
 import { assertExtensionPaymentSource } from "./extension-payment-reconciliation.ts";
 import { normalizeAllPending } from "./pending.ts";
