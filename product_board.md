@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
-completed checkboxes**. The **372 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **373 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 315 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 316 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -51,8 +51,10 @@ carryover with no current income, a two-country Form 1116 Schedule B carryover,
 and Form 6251 regular capital gain crossing to a deductible AMT loss. The staged
 Form 8621 section 1291 packet now reconciles prior-distribution record locators,
 while parent PDF registration remains gated on authenticated historical bytes.
-Earlier
-bounded work includes Form 1116 Schedule C current-year reconciliation,
+Form 6251 also now carries audited short-term losses against a long-term gain
+when the regular return has a preferential gain and the AMT return has a
+deductible loss. Earlier bounded work includes Form 1116 Schedule C
+current-year reconciliation,
 Form 8582 prior-year rental PAL import, Form 1098 Copy B box 6 evidence,
 Form 8962 self-employed insurance/PTC ordering, Form 8283 Section B art,
 Form 3800/Form 8820 credit PDF parity, Form 8835 landfill gas, Form 4952
