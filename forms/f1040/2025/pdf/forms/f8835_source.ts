@@ -73,7 +73,7 @@ export function form8835PdfSources(
       lines.form3800Line !== "4e"
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced closed-loop or open-loop cellulosic biomass, or sourced solar facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced closed-loop or open-loop cellulosic/livestock biomass, or sourced solar facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
       );
     }
     if (

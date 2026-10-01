@@ -127,6 +127,34 @@ function openLoopCellulosicFacility(): F8835Item {
   };
 }
 
+function openLoopLivestockFacility(): F8835Item {
+  return {
+    ...facility(),
+    energy_type: EnergyType.BiomassOpen,
+    facility_description: "Livestock nutrient biomass facility",
+    open_loop_livestock_source: {
+      facility_description: "Livestock nutrient biomass facility",
+      feedstock_record_reference: "2025 manure nutrient intake ledger",
+      agricultural_livestock_waste_nutrients_verified: true,
+      original_facility_not_expanded_verified: true,
+      filer_produced_electricity_verified: true,
+      construction_record_reference: "2023 livestock plant construction file",
+      construction_began_on: "2023-06-01",
+      nameplate_capacity_record_reference:
+        "2024 signed 1500 kW nameplate record",
+      nameplate_capacity_kw: 1_500,
+      production_meter_record_reference: "2025 livestock generation meter",
+      meter_period_start_date: "2025-01-01",
+      meter_period_end_date: "2025-12-31",
+      metered_kwh_produced: 100_000,
+      unrelated_sale_invoice_reference: "2025 livestock utility invoice",
+      unrelated_sale_invoice_date: "2025-12-31",
+      invoiced_kwh_sold: 100_000,
+      unrelated_buyer_verified: true,
+    },
+  };
+}
+
 Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, return, native and PDF", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-geothermal-general-business-credit"
@@ -218,6 +246,85 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
     Error,
     "distinct feedstock",
   );
+});
+
+Deno.test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and the finalized return", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-geothermal-general-business-credit"
+  )!;
+  const source = openLoopLivestockFacility();
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8835: [source],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(result.pending.schedule3.line6a_total, 300);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].line, "4e");
+  assertEquals(parts.currentAmounts[0].appliedCredit, 300);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdSoldOpenLopBmssCrAmt>300</KwHrsPrdcdSoldOpenLopBmssCrAmt>",
+  );
+  const projected = form8835Pdf.instances?.(
+    {},
+    base.filer,
+    result.pending as Record<string, Record<string, unknown>>,
+    parts,
+  )?.[0];
+  assertEquals(projected?.facility_type, "Open-loop biomass (livestock waste)");
+  assertEquals(projected?.line1f_quantity, 100_000);
+  assertEquals(projected?.line1f_credit, 300);
+  assertEquals(projected?.line15, 300);
+  const pending = result.pending as Record<string, Record<string, unknown>>;
+  for (
+    const changed of [
+      { nameplate_capacity_kw: 149 },
+      { nameplate_capacity_kw: 1_499 },
+      { metered_kwh_produced: 99_999 },
+      { invoiced_kwh_sold: 99_999 },
+      { construction_began_on: "2024-01-01" },
+      { feedstock_record_reference: "2025 livestock generation meter" },
+    ]
+  ) {
+    const altered = {
+      ...pending,
+      f8835: {
+        f8835s: [{
+          ...source,
+          open_loop_livestock_source: {
+            ...source.open_loop_livestock_source!,
+            ...changed,
+          },
+        }],
+      },
+    };
+    assertThrows(
+      () => form8835Pdf.instances?.({}, base.filer, altered, parts),
+      Error,
+    );
+  }
+  const changedCredit = {
+    ...pending,
+    f3800: {
+      ...pending.f3800,
+      f8835_credit_entries: [{
+        form3800_line: "4e",
+        credit_amount: 299,
+        transfer_out_amount: 0,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  assertThrows(
+    () => form8835Pdf.instances?.({}, base.filer, changedCredit, parts),
+    Error,
+    "disagrees with native Form 3800",
+  );
+  assert((await prepared.renderPdf()).length > 0);
 });
 
 Deno.test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 3800", () => {

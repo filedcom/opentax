@@ -60,9 +60,28 @@ and Form 1040 line 20. Native XML uses the line 1f production tags; the PDF
 prints line 1f and the same final amounts. Full-return, altered feedstock,
 meter, and Form 3800 fixtures are authored for deferred validation. Source
 references are entered evidence rather than authenticated feedstock, meter, or
-invoice bytes. Agricultural livestock waste, new-unit/expanded facilities,
+invoice bytes. New-unit/expanded facilities,
 non-owner producers, passive, bonus, transfer, and later-year Form 3800 line 1f
 paths remain closed.
+
+The filer-owned original open-loop route now also covers a distinct agricultural
+livestock waste nutrient facility. The [2025 Form 8835
+instructions](https://www.irs.gov/instructions/i8835) require original service
+after October 22, 2004, construction before 2025, and a nameplate rating of at
+least 150 kW for this feedstock. The bounded post-2021 facility uses a 2024
+service date, 2023 construction start, 1,500 kW AC nameplate, and production
+within the first four years. A separate strict source record identifies the
+nutrient feedstock, construction, signed capacity, 2025 meter, and unrelated
+buyer invoice; five distinct references, matching facility/dates/kWh, and the
+150 kW threshold are required. The 100,000-kWh example uses the 0.3-cent rate
+to place $300 on Form 8835 line 1f/15, Form 3800 line 4e, Schedule 3 line 6a,
+and Form 1040 line 20. Native MeF uses the existing open-loop line 1f tags and
+the PDF labels the livestock resource while projecting the same line and
+amount. Positive full-return and feedstock, capacity, construction, meter,
+invoice, and Form 3800 tamper fixtures are authored but unrun. Record references
+are reviewed source assertions; retained bytes and issuer authenticity are
+not established. New-unit/expanded, non-owner production, passive, bonus,
+transfer, and later-year branches remain closed.
 
 Local source-to-XML-to-PDF cases cover one geothermal facility, two distinct
 geothermal facilities, and one wind plus one geothermal facility. The mixed

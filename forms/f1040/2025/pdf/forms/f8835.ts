@@ -136,7 +136,9 @@ export const form8835Pdf: PdfFormDescriptor = {
             : closedLoopBiomass
             ? "Closed-loop biomass"
             : openLoopBiomass
-            ? "Open-loop biomass (cellulosic waste)"
+            ? item.open_loop_livestock_source
+              ? "Open-loop biomass (livestock waste)"
+              : "Open-loop biomass (cellulosic waste)"
             : solar
             ? "Solar"
             : "Geothermal",

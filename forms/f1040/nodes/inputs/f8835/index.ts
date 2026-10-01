@@ -55,6 +55,25 @@ export const itemSchema = z.object({
     invoiced_kwh_sold: z.number().int().nonnegative(),
     unrelated_buyer_verified: z.literal(true),
   }).strict().optional(),
+  open_loop_livestock_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    agricultural_livestock_waste_nutrients_verified: z.literal(true),
+    original_facility_not_expanded_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    nameplate_capacity_record_reference: z.string().trim().min(1),
+    nameplate_capacity_kw: z.number().int().min(150),
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
   solar_production_source: z.object({
     facility_description: z.string().trim().min(1),
     construction_record_reference: z.string().trim().min(1),
@@ -381,7 +400,18 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       "Form 8835 closed-loop biomass source cannot classify another energy type",
     );
   }
-  if (item.energy_type === EnergyType.BiomassOpen) {
+  if (
+    item.open_loop_cellulosic_source !== undefined &&
+    item.open_loop_livestock_source !== undefined
+  ) {
+    throw new Error(
+      "Form 8835 open-loop biomass needs exactly one qualifying feedstock source",
+    );
+  }
+  if (
+    item.energy_type === EnergyType.BiomassOpen &&
+    item.open_loop_cellulosic_source !== undefined
+  ) {
     const source = item.open_loop_cellulosic_source;
     if (
       item.facility_construction_start_date >= "2025-01-01" ||
@@ -416,9 +446,55 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
         "Form 8835 open-loop cellulosic facility needs original filer-owned production, qualifying feedstock, and distinct feedstock, construction, meter, and unrelated-sale sources matching dates and kWh",
       );
     }
-  } else if (item.open_loop_cellulosic_source !== undefined) {
+  } else if (
+    item.energy_type === EnergyType.BiomassOpen &&
+    item.open_loop_livestock_source !== undefined
+  ) {
+    const source = item.open_loop_livestock_source;
+    if (
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.nameplate_capacity_kw !== item.ac_nameplate_kw ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.construction_record_reference,
+          source.nameplate_capacity_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 5
+    ) {
+      throw new Error(
+        "Form 8835 livestock-waste facility needs at least 150 kW and distinct nutrient feedstock, construction, capacity, meter, and unrelated-sale sources matching dates and kWh",
+      );
+    }
+  } else if (item.energy_type === EnergyType.BiomassOpen) {
     throw new Error(
-      "Form 8835 open-loop cellulosic source cannot classify another energy type",
+      "Form 8835 open-loop biomass needs a qualifying cellulosic or livestock-waste source",
+    );
+  } else if (
+    item.open_loop_cellulosic_source !== undefined ||
+    item.open_loop_livestock_source !== undefined
+  ) {
+    throw new Error(
+      "Form 8835 open-loop source cannot classify another energy type",
     );
   }
   if (
