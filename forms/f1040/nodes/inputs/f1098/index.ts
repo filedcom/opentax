@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // FOR dropdown: destination schedule/form
@@ -103,6 +104,16 @@ export const itemSchema = z.object({
   // Reviewed Pub. 936 amount before any separate Form 8396 credit reduction.
   box1_current_year_deductible_interest: z.number().nonnegative().optional(),
   box1_deduction_workpaper_reference: z.string().trim().min(1).optional(),
+  // A regular-tax second-home houseboat deduction is added back on AMT line 3.
+  amt_houseboat_second_home_review: z.object({
+    vessel_id: z.string().trim().min(1),
+    property_review_reference: z.string().trim().min(1),
+    publication936_deduction_workpaper_reference: z.string().trim().min(1),
+    second_home_not_principal_residence_verified: z.literal(true),
+    sleeping_cooking_toilet_facilities_verified: z.literal(true),
+    personal_use_only_verified: z.literal(true),
+    secured_acquisition_debt_and_loan_limit_verified: z.literal(true),
+  }).strict().optional(),
   box4_refund_overpaid: z.number().nonnegative().optional(),
   // Form 1098 box 4 is a recovery of earlier-year interest, not a reduction
   // of the current-year box 1 deduction. A Pub. 525 tax-benefit workpaper
@@ -742,10 +753,12 @@ class F1098Node extends TaxNode<typeof inputSchema> {
     schedule_a,
     schedule1,
     agi_aggregator,
+    form6251,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const { f1098s } = inputSchema.parse(input);
+    const parsed = inputSchema.parse(input);
+    const { f1098s } = parsed;
     if (f1098s.some((item) => item.for_routing === ForRouting.F8829)) {
       throw new Error(
         "Form 1098 mortgage interest routed to Form 8829 needs homeowner interest and Schedule A allocation facts",
@@ -756,6 +769,32 @@ class F1098Node extends TaxNode<typeof inputSchema> {
       ...scheduleAOutput(f1098s),
       ...schedule1Output(f1098s),
     ];
+    const houseboatRows = f1098s.filter((item) =>
+      item.amt_houseboat_second_home_review !== undefined
+    );
+    if (houseboatRows.length > 0) {
+      const item = houseboatRows[0];
+      if (
+        houseboatRows.length !== 1 || f1098s.length !== 1 ||
+        (item.for_routing ?? ForRouting.A) !== ForRouting.A ||
+        !item.source_document_reference || !item.lender_name ||
+        !item.recipient_tin || !item.box1_deduction_workpaper_reference ||
+        item.box1_mortgage_interest <= 0 ||
+        item.box1_current_year_deductible_interest !==
+          item.box1_mortgage_interest ||
+        (item.box6_points_paid ?? 0) !== 0 ||
+        (item.box6_current_year_deductible_points ?? 0) !== 0 ||
+        parsed.mortgage_limit_review !== undefined ||
+        parsed.purchase_points_cross_loan_review !== undefined
+      ) {
+        throw new Error(
+          "AMT houseboat interest needs one fully deductible, identified Schedule A Form 1098 with no other mortgage source",
+        );
+      }
+      outputs.push(output(form6251, {
+        line3_houseboat_interest_addback: item.box1_mortgage_interest,
+      }));
+    }
 
     const taxableRecovery = aggregatePriorYearRefundIncome(f1098s);
     if (taxableRecovery > 0) {

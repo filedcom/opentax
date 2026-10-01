@@ -14,6 +14,7 @@ import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
 import { assertForm6251PrivateActivityBondSource } from "../../form6251_pab_source.ts";
 import { assertForm6251RefundSource } from "../../form6251_refund_source.ts";
 import { assertForm6251Form8864Source } from "../../form6251_form8864_source.ts";
+import { assertForm6251HouseboatInterestSource } from "../../form6251_houseboat_source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -35,6 +36,7 @@ export interface Fields {
   line2p_long_term_contracts?: number | null;
   line2q_mining_costs?: number | null;
   line3_form8864_income_exclusion?: number | null;
+  line3_houseboat_interest_addback?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
   amti?: number | null;
@@ -107,6 +109,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line2p_long_term_contracts", "LongTermContractAmt"],
   ["line2q_mining_costs", "MiningCostsAmt"],
   ["line3_form8864_income_exclusion", "RelatedAdjustmentAmt"],
+  ["line3_houseboat_interest_addback", "RelatedAdjustmentAmt"],
   ["amti", "AlternativeMinTaxableIncomeAmt"],
   ["exemption", "AlternativeMinimumTaxExemptAmt"],
   ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
@@ -179,6 +182,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   assertForm6251CirculationSource(fields, context?.pending);
   assertForm6251MiningSource(fields, context?.pending);
   assertForm6251Form8864Source(fields, context?.pending);
+  assertForm6251HouseboatInterestSource(fields, context?.pending);
   assertForm6251LongTermContractSource(fields, context?.pending);
   assertForm6251DepletionSource(fields, context?.pending);
   assertForm6251DepreciationSource(fields);

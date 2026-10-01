@@ -17,6 +17,7 @@ import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
 import { assertForm6251PrivateActivityBondSource } from "../../form6251_pab_source.ts";
 import { assertForm6251RefundSource } from "../../form6251_refund_source.ts";
 import { assertForm6251Form8864Source } from "../../form6251_form8864_source.ts";
+import { assertForm6251HouseboatInterestSource } from "../../form6251_houseboat_source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
@@ -56,6 +57,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("line2p_long_term_contracts", 1, 20),
   textField("line2q_mining_costs", 1, 21),
   textField("line3_form8864_income_exclusion", 1, 25),
+  textField("line3_houseboat_interest_addback", 1, 25),
   textField("amti", 1, 26),
   textField("exemption", 1, 27),
   textField("taxable_excess", 1, 28, true),
@@ -104,6 +106,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertForm6251CirculationSource(fields, allPending);
     assertForm6251MiningSource(fields, allPending);
     assertForm6251Form8864Source(fields, allPending);
+    assertForm6251HouseboatInterestSource(fields, allPending);
     assertForm6251LongTermContractSource(fields, allPending);
     assertForm6251DepletionSource(fields, allPending);
     assertForm6251DepreciationSource(fields);
