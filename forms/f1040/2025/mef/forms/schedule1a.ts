@@ -422,6 +422,53 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       { taxYear: 2025, formType: "f1040" },
       input,
     );
+    const statementEntries = input.qualified_w2_overtime!.filter((entry) =>
+      entry.employer_statement_reference !== undefined
+    );
+    if (statementEntries.length > 0) {
+      const sourceW2s = context?.pending?.w2
+        ? w2InputSchema.parse(context.pending.w2).w2s
+        : [];
+      const sourceStatementW2s = sourceW2s.filter((w2) =>
+        w2.flsa_overtime_review?.employer_statement !== undefined
+      );
+      const normalize = (value: string) => value.replaceAll("-", "");
+      if (
+        sourceStatementW2s.length !== statementEntries.length ||
+        !statementEntries.every((entry) =>
+          sourceStatementW2s.some((w2) => {
+            const review = w2.flsa_overtime_review;
+            const statement = review?.employer_statement;
+            return statement !== undefined &&
+              normalize(w2.employee_ssn ?? "") ===
+                normalize(entry.employee_ssn) &&
+              normalize(w2.employer_ein ?? "") ===
+                normalize(entry.employer_ein) &&
+              normalize(statement.employee_ssn) ===
+                normalize(entry.employee_ssn) &&
+              normalize(statement.employer_ein) ===
+                normalize(entry.employer_ein) &&
+              statement.tax_year === 2025 &&
+              statement.furnished_to_employee === true &&
+              statement.qualified_overtime_premium === entry.amount &&
+              statement.statement_reference ===
+                entry.employer_statement_reference &&
+              w2.box1_wages === entry.box1_wages &&
+              review?.source_reference === entry.source_reference &&
+              review?.covered_nonexempt_employee === true &&
+              review?.premium_included_in_box1 === true &&
+              !(w2.box14_entries ?? []).some((box14) =>
+                box14.description.trim().toLowerCase() ===
+                  "flsa overtime premium"
+              );
+          })
+        )
+      ) {
+        throw new Error(
+          "Schedule 1-A employer-statement overtime does not match the filed W-2 and furnished statement source",
+        );
+      }
+    }
     const matchesRecipient = (
       sourceSsn: string,
       inputSsn: string | undefined,

@@ -408,6 +408,62 @@ Deno.test("unreviewed W-2 box 14 overtime premium does not claim Schedule 1-A", 
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
 });
 
+Deno.test("furnished 2025 employer statement supplies FLSA overtime without box 14", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "FLSA coverage and wage inclusion review",
+      employer_statement: {
+        tax_year: 2025,
+        employee_ssn: "111-22-3333",
+        employer_ein: "12-3456789",
+        qualified_overtime_premium: 4_000,
+        statement_reference: "Employer furnished 2025 premium statement",
+        furnished_to_employee: true,
+      },
+    },
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_w2_overtime, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    amount: 4_000,
+    box1_wages: 80_000,
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and wage inclusion review",
+    employer_statement_reference: "Employer furnished 2025 premium statement",
+  }]);
+});
+
+Deno.test("employer statement overtime rejects a different employee or duplicate box 14 premium", () => {
+  const reviewed = {
+    covered_nonexempt_employee: true as const,
+    premium_included_in_box1: true as const,
+    source_reference: "FLSA coverage and wage inclusion review",
+    employer_statement: {
+      tax_year: 2025 as const,
+      employee_ssn: "999887777",
+      employer_ein: "123456789",
+      qualified_overtime_premium: 4_000,
+      statement_reference: "Employer furnished 2025 premium statement",
+      furnished_to_employee: true as const,
+    },
+  };
+  assertThrows(() => compute([minimalItem({
+    employee_ssn: "111223333", employer_ein: "123456789",
+    box1_wages: 80_000, flsa_overtime_review: reviewed,
+  })]), Error, "matching source identities");
+  assertThrows(() => compute([minimalItem({
+    employee_ssn: "999887777", employer_ein: "123456789",
+    box1_wages: 80_000, flsa_overtime_review: reviewed,
+    box14_entries: [{ description: "FLSA Overtime Premium", amount: 4_000 }],
+  })]), Error, "one positive box 14 or employer-statement premium");
+});
+
 Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
   assertThrows(
     () =>

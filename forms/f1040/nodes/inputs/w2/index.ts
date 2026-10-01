@@ -167,8 +167,16 @@ export const w2ItemSchema = z.object({
     covered_nonexempt_employee: z.literal(true),
     premium_included_in_box1: z.literal(true),
     source_reference: z.string().trim().min(1),
+    employer_statement: z.object({
+      tax_year: z.literal(2025),
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      qualified_overtime_premium: z.number().int().positive(),
+      statement_reference: z.string().trim().min(1),
+      furnished_to_employee: z.literal(true),
+    }).strict().optional(),
   }).strict().optional().describe(
-    "Source review for an employer-identified FLSA overtime premium in box 14",
+    "Source review for an employer-identified FLSA overtime premium in box 14 or a 2025 employer statement",
   ),
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
@@ -231,19 +239,27 @@ function validateItem(
   retirementLimits: Record<string, Record<number, number>>,
 ): void {
   if (item.flsa_overtime_review !== undefined) {
+    const statement = item.flsa_overtime_review.employer_statement;
     const premiums = (item.box14_entries ?? []).filter((entry) =>
       entry.description.trim().toLowerCase() === "flsa overtime premium"
     );
     if (
-      premiums.length !== 1 || premiums[0].amount <= 0 ||
-      premiums[0].amount > item.box1_wages ||
-      premiums[0].is_state_sdi_pfml ||
+      (statement === undefined
+        ? premiums.length !== 1 || premiums[0].amount <= 0 ||
+          premiums[0].amount > item.box1_wages ||
+          premiums[0].is_state_sdi_pfml
+        : premiums.length !== 0 ||
+          statement.qualified_overtime_premium > item.box1_wages ||
+          statement.employee_ssn.replaceAll("-", "") !==
+            item.employee_ssn?.replaceAll("-", "") ||
+          statement.employer_ein.replaceAll("-", "") !==
+            item.employer_ein?.replaceAll("-", "")) ||
       item.box13_statutory_employee === true ||
       !/^\d{3}-?\d{2}-?\d{4}$/.test(item.employee_ssn ?? "") ||
       !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "")
     ) {
       throw new Error(
-        "W-2 FLSA overtime review needs one positive box 14 premium included in box 1 and source employer/employee identities",
+        "W-2 FLSA overtime review needs one positive box 14 or employer-statement premium included in box 1 and matching source identities",
       );
     }
   }
@@ -675,14 +691,20 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
     .map((item) => ({
       employee_ssn: item.employee_ssn!,
       employer_ein: item.employer_ein!,
-      amount:
-        item.box14_entries!.find((entry) =>
+      amount: item.flsa_overtime_review!.employer_statement
+        ?.qualified_overtime_premium ?? item.box14_entries!.find((entry) =>
           entry.description.trim().toLowerCase() === "flsa overtime premium"
         )!.amount,
       box1_wages: item.box1_wages,
       covered_nonexempt_employee: true as const,
       premium_included_in_box1: true as const,
       source_reference: item.flsa_overtime_review!.source_reference,
+      ...(item.flsa_overtime_review!.employer_statement
+        ? {
+          employer_statement_reference:
+            item.flsa_overtime_review!.employer_statement!.statement_reference,
+        }
+        : {}),
     }));
   return premiums.length > 0
     ? [output(schedule1a, { qualified_w2_overtime: premiums })]

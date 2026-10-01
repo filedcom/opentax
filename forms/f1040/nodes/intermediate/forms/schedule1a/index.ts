@@ -104,6 +104,7 @@ export const inputSchema = claimInputSchema.extend({
       covered_nonexempt_employee: z.literal(true),
       premium_included_in_box1: z.literal(true),
       source_reference: z.string().trim().min(1),
+      employer_statement_reference: z.string().trim().min(1).optional(),
     }).strict(),
   ).optional(),
   qualified_employee_tips: z.array(z.object({
@@ -798,7 +799,7 @@ export function calculateQualifiedTipsSchedule1A(
   });
 }
 
-/** Reviewed FLSA premiums in W-2 box 14 that are included in box 1 wages. */
+/** Reviewed FLSA premiums in W-2 box 14 or a furnished employer statement, included in box 1 wages. */
 export function calculateW2OvertimeSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,

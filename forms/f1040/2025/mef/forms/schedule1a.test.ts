@@ -137,6 +137,80 @@ const singleOvertime1040 = {
   taxpayer_tin_issued_by_due_date: true,
 };
 
+Deno.test("Schedule 1-A employer statement overtime reconciles to W-2 and finalized Form 1040", () => {
+  const statement = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    qualified_overtime_premium: 4_000,
+    statement_reference: "Furnished 2025 FLSA premium statement",
+    furnished_to_employee: true as const,
+  };
+  const w2 = {
+    w2s: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true as const,
+        premium_included_in_box1: true as const,
+        source_reference: "2025 FLSA coverage review",
+        employer_statement: statement,
+      },
+    }],
+  };
+  const claim = {
+    ...singleOvertime,
+    qualified_w2_overtime: [{
+      ...overtimeEntry,
+      source_reference: "2025 FLSA coverage review",
+      employer_statement_reference: statement.statement_reference,
+    }],
+  };
+  const pending = { f1040: singleOvertime1040, w2 };
+  const xml = schedule1a.build(claim, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeWagesAmt>4000</QualifiedOvertimeWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalAdditionalDeductionsAmt>4000</TotalAdditionalDeductionsAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(claim, {
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [{
+              ...w2.w2s[0],
+              flsa_overtime_review: {
+                ...w2.w2s[0].flsa_overtime_review,
+                employer_statement: {
+                  ...statement,
+                  qualified_overtime_premium: 3_000,
+                },
+              },
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not match the filed W-2",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(claim, {
+        pending: { ...pending, w2: { w2s: [w2.w2s[0], w2.w2s[0]] } },
+      }),
+    Error,
+    "does not match the filed W-2",
+  );
+});
+
 const vehicleLoan = {
   vin: "1HGCM82633A004352",
   borrower_ssn: "111223333",

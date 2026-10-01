@@ -2195,6 +2195,51 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-employer-statement-flsa-overtime-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(80_000, 8_000, "Statement Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        flsa_overtime_review: {
+          covered_nonexempt_employee: true,
+          premium_included_in_box1: true,
+          source_reference: "Synthetic 2025 FLSA coverage and box 1 review",
+          employer_statement: {
+            tax_year: 2025,
+            employee_ssn: "111-22-3333",
+            employer_ein: "12-3456789",
+            qualified_overtime_premium: 4_000,
+            statement_reference: "Synthetic furnished 2025 employer premium statement",
+            furnished_to_employee: true,
+          },
+        },
+      }],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference: "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference: "Synthetic 2025 Samoa-source income review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "The furnished employer statement's $4,000 FLSA premium is absent from W-2 box 14 and included in box 1",
+      "Schedule 1-A lines 14a/14c/15/21/38 each show $4,000",
+      "Form 1040 line 13b matches $4,000 and native/PDF source reconciliation rejects a changed statement",
+    ],
+  },
+  {
     id: "single-w2-qualified-tips-schedule1a",
     inputs: {
       general: {

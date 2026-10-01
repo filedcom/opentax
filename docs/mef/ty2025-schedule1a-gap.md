@@ -46,10 +46,19 @@ two-page PDF field map and inspected synthetic full-return packets.
   reference into Schedule 1-A. Multiple employers and both spouses can be
   summed, with duplicate employee/employer pairs rejected. Native and PDF
   outputs fill lines 14a–21 as applicable and line 38; the filer, AGI, and
-  deduction reconcile to Form 1040. Raw taxpayer-entered overtime totals are
-  rejected at the public input schema. Payroll-method calculations when box 14
-  lacks the premium, deferred W-2 amounts, Forms 1099-NEC/MISC, full combined
-  packets, and authenticated employer evidence remain open.
+  deduction reconcile to Form 1040. A separate employer-furnished 2025
+  statement may now supply the premium when box 14 does not show it. The W-2
+  source records the statement's tax year, employee SSN, employer EIN, premium,
+  furnished status, and reference, plus an independent FLSA coverage and box 1
+  inclusion review. It rejects mismatched identities, a premium greater than
+  box 1 wages, or a simultaneous box 14 premium. Native export rechecks the
+  statement against the filed W-2 source, and PDF uses that authorization.
+  [Notice 2025-69, section II.B.2](https://www.irs.gov/pub/irs-drop/n-25-69.pdf)
+  and the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+  permit a separately furnished employer accounting for 2025. Raw
+  taxpayer-entered overtime totals remain rejected. Payroll-method calculations
+  without an employer accounting, deferred W-2 amounts, Forms 1099-NEC/MISC,
+  full combined packets, and authenticated employer statement bytes remain open.
 - Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower
   SSN, VIN, 2025 origination/purchase dates, lender and document references,
