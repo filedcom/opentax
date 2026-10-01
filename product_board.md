@@ -3,7 +3,7 @@
 ## Full status summary (2026-10-01)
 
 Open [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
-TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
+TY2025 Form 1040 filing family. This board contains **49 open TODOs and no
 completed checkboxes**. The **383 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -14,8 +14,8 @@ coverage decision, or release gate.
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 326 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Core return and source paths | 5 | 35 | Return-wide joins and source classification remain incomplete. |
+| Named tax-form gaps | 18 | 326 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The rebased code checkpoint passes 10,006/10,006 local tests; the manual artifact and IRS gates remain open. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
