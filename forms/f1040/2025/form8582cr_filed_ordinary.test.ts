@@ -79,7 +79,8 @@ const general = {
   address_zip: "78701",
 };
 
-function filedReturn(investmentAmount = 10_000, interestAmount = 0) {
+function filedReturn(investmentAmount = 10_000, interestBoxes: number[] = []) {
+  const interestAmount = interestBoxes.reduce((sum, amount) => sum + amount, 0);
   const taxableWithInterest = taxable + interestAmount;
   const taxAllWithInterest = ordinaryTax2025(
     taxableWithInterest,
@@ -94,12 +95,14 @@ function filedReturn(investmentAmount = 10_000, interestAmount = 0) {
     w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
     ...(interestAmount > 0
       ? {
-        f1099int: [{
-          payer_name: "Community Bank",
-          payer_tin: "987654321",
-          source_document_reference: "2025 Community Bank 1099-INT",
-          box1: interestAmount,
-        }],
+        f1099int: interestBoxes.map((box1, index) => ({
+          payer_name: `Community Bank ${index + 1}`,
+          payer_tin: `${987654321 - index}`,
+          source_document_reference: `2025 Community Bank ${
+            index + 1
+          } 1099-INT`,
+          box1,
+        })),
       }
       : {}),
     schedule_e: [{
@@ -360,7 +363,7 @@ Deno.test("current-year passive New Markets credit and rental income reconcile F
 });
 
 Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Form 1040, native and PDF", async () => {
-  const result = filedReturn(10_000, 1_000);
+  const result = filedReturn(10_000, [1_000]);
   const pending = normalizeAllPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
   const expectedWithout = ordinaryTax2025(
@@ -395,8 +398,8 @@ Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Fo
 });
 
 Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed interest, and tax", () => {
-  const pending = normalizeAllPending(filedReturn(10_000, 1_000).pending);
-  const row = pending.f1099int.f1099ints[0];
+  const pending = normalizeAllPending(filedReturn(10_000, [1_000]).pending);
+  const row = (pending.f1099int.f1099ints as Record<string, unknown>[])[0];
   const cases = [
     {
       ...pending,
@@ -413,6 +416,78 @@ Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed intere
     {
       ...pending,
       f1040: { ...pending.f1040, line16_income_tax: 1 },
+    },
+  ];
+  for (const changed of cases) {
+    assertThrows(
+      () => form8582cr.build(changed.form8582cr, { pending: changed }),
+      Error,
+    );
+    assertThrows(
+      () => form8582crPdf.projectFields!(changed.form8582cr, changed),
+      Error,
+    );
+  }
+});
+
+Deno.test("two distinct 1099-INT payers sum into passive rental line 6 and the complete native/PDF return", async () => {
+  const result = filedReturn(10_000, [600, 400]);
+  const pending = normalizeAllPending(result.pending);
+  const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
+  const expectedWithout = ordinaryTax2025(
+    taxable + 1_000 - passiveIncome,
+    FilingStatus.Single,
+  );
+  assertEquals((pending.f1099int.f1099ints as unknown[]).length, 2);
+  assertEquals(pending.f1040.line2b_taxable_interest, 1_000);
+  assertEquals(pending.f1040.line9_total_income, 121_000);
+  assertEquals(pending.f1040.line16_income_tax, expectedAllTax);
+  assertEquals(pending.schedule3.line6a_total, 500);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 500);
+  assertStringIncludes(
+    form8582cr.build(pending.form8582cr, { pending }),
+    `<NetPassiveIncomeTaxAmt>${
+      expectedAllTax - expectedWithout
+    }</NetPassiveIncomeTaxAmt>`,
+  );
+  const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(pdf.line6, expectedAllTax - expectedWithout);
+  assertEquals(pdf.line37, 500);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
+  assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  );
+});
+
+Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return drift", () => {
+  const pending = normalizeAllPending(filedReturn(10_000, [600, 400]).pending);
+  const [first, second] = pending.f1099int.f1099ints as Record<
+    string,
+    unknown
+  >[];
+  const changedRows = [
+    [first, { ...second, box1: 401 }],
+    [first, {
+      ...second,
+      source_document_reference: first.source_document_reference,
+    }],
+    [first, { ...second, payer_tin: first.payer_tin }],
+    [first],
+    [first, { ...second, box11: 10 }],
+  ];
+  const cases = [
+    ...changedRows.map((f1099ints) => ({
+      ...pending,
+      f1099int: { f1099ints },
+    })),
+    {
+      ...pending,
+      f1040: { ...pending.f1040, line2b_taxable_interest: 999 },
     },
   ];
   for (const changed of cases) {

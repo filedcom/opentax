@@ -53,22 +53,33 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   let taxableInterest = 0;
   if (rawForm1099Int !== undefined) {
     const interestSource = form1099IntInputSchema.parse(rawForm1099Int);
-    const row = interestSource.f1099ints[0];
-    if (
-      interestSource.f1099ints.length !== 1 || !row ||
-      !row.source_document_reference ||
-      typeof row.box1 !== "number" || !Number.isSafeInteger(row.box1) ||
-      row.box1 <= 0 ||
-      Object.keys(row).some((key) =>
-        !["payer_name", "payer_tin", "source_document_reference", "box1"]
-          .includes(key)
-      )
-    ) {
-      throw new Error(
-        "Form 8582-CR ordinary interest branch needs one retained Form 1099-INT box 1 source",
-      );
+    const references = new Set<string>();
+    const payers = new Set<string>();
+    for (const row of interestSource.f1099ints) {
+      const payerTin = row.payer_tin?.replace(/\D/g, "");
+      if (
+        !row.source_document_reference ||
+        !payerTin || !/^\d{9}$/.test(payerTin) ||
+        references.has(row.source_document_reference) ||
+        payers.has(payerTin) ||
+        typeof row.box1 !== "number" || !Number.isSafeInteger(row.box1) ||
+        row.box1 <= 0 ||
+        Object.keys(row).some((key) =>
+          !["payer_name", "payer_tin", "source_document_reference", "box1"]
+            .includes(key)
+        )
+      ) {
+        throw new Error(
+          "Form 8582-CR ordinary interest branch needs distinct retained Form 1099-INT box 1 payers and copies",
+        );
+      }
+      references.add(row.source_document_reference);
+      payers.add(payerTin);
+      taxableInterest += row.box1;
     }
-    taxableInterest = row.box1!;
+    if (!Number.isSafeInteger(taxableInterest)) {
+      throw new Error("Form 8582-CR Form 1099-INT interest total is invalid");
+    }
   }
   const otherIncome = [
     form1040.line3a_qualified_dividends,

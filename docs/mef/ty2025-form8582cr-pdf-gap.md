@@ -181,8 +181,21 @@ without-passive side, following the
 The resulting credit still joins Form 3800, Schedule 3, Form 1040, native MeF,
 and the two-page PDF. A positive full-return fixture and altered box 1,
 unsupported box 3, filed interest, and final-tax fixtures are authored but
-unrun. Additional interest payers, OID, bond premium, foreign interest, other
+unrun. OID, bond premium, foreign interest, other
 income types, and issuer-copy authentication remain outside this bounded branch.
+
+### Distinct box 1 interest payers (2026-10-01, unrun)
+
+The same Form 8582-CR line 6 route now sums any number of retained Form
+1099-INT box 1 records with distinct payer TINs and source-document references.
+Each record must have positive whole-dollar box 1 interest and no other boxes
+or adjustments. The exporter compares the sum to finalized Form 1040 line 2b
+and includes it in total income and both ordinary-tax calculations; only the
+sourced rental income is removed for line 6's without-passive calculation.
+Positive two-payer full-return/native/PDF and changed amount, duplicate copy,
+duplicate payer, missing payer, unsupported box, and filed-interest fixtures
+are authored for deferred validation. Multiple records from one payer and
+issuer-copy byte authentication remain outside this bounded branch.
 
 ## 2026 opening credit prerequisite
 
