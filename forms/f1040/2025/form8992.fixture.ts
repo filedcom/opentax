@@ -134,6 +134,8 @@ export const form8992Cfc: F5471Item = {
     q19a_covered_debt: false,
     q20a_top_up_tax: false,
     q21a_section304_ep: false,
+    q22a_section951a2b_distributions: false,
+    q22b_transition_rule_dividends: false,
     source_workpaper_reference: "Reviewed Schedule G questions",
   },
   schedule_j: {

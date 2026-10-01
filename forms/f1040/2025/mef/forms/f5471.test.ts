@@ -66,6 +66,9 @@ Deno.test("Category 4/5a Form 5471 parent joins A, B, C, F, G, and I", () => {
     xml,
     "<PayOrAccrueTopUpTaxInd>false</PayOrAccrueTopUpTaxInd>",
   );
+  // The reviewed 2025 question 22 facts are required by source validation;
+  // the available v5.4 parent schema stops at question 21.
+  assertEquals(xml.includes("TransitionRuleDividend"), false);
 });
 
 Deno.test("Form 5471 parent rejects unreviewed stock events and Schedule I facts", () => {
@@ -122,6 +125,21 @@ Deno.test("Form 5471 parent rejects unreviewed stock events and Schedule I facts
         schedule_g: { ...form8992Cfc.schedule_g, q7_cost_sharing: true },
       }),
     }), Error);
+  for (
+    const key of [
+      "q22a_section951a2b_distributions",
+      "q22b_transition_rule_dividends",
+    ] as const
+  ) {
+    assertThrows(() =>
+      form5471.build({}, {
+        filer: form8992Filer,
+        pending: source({
+          ...form8992Cfc,
+          schedule_g: { ...form8992Cfc.schedule_g, [key]: true },
+        }),
+      }), Error);
+  }
   assertThrows(() =>
     form5471.build({}, {
       filer: form8992Filer,

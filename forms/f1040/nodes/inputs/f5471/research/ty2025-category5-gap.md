@@ -123,8 +123,15 @@ therefore still needs IRS business-rule review before the export guard can open.
 The IRS December 2025 instructions also describe Schedule G questions 22a/22b,
 but the December 2025 six-page PDF and checked-in TY2025 v5.4 parent XSD stop
 at question 21. The reviewed no-distribution branch has no amount to report for
-the stated question 22b scenario. Reconcile the IRS form/instruction version
-and final MeF business rules before claiming a complete parent packet.
+the stated question 22b scenario. The source now requires explicit reviewed No
+answers for 22a (section 951(a)(2)(B) distributions) and 22b (transition-rule
+dividends), in addition to its empty Schedule R ledger, zero Schedule J/P
+distribution movements, and Schedule I Worksheet A reference. A Yes or omitted
+answer rejects at calculation and both document projections; the authored
+source/native/PDF cases remain unrun. No 22a/22b field is invented in the
+December 2025 PDF or checked-in v5.4 parent XSD. Reconcile the IRS
+form/instruction version and final MeF business rules before claiming a
+complete parent packet.
 The instructions also identify a sole CFC owner as both Category 4 and 5a,
 requiring additional parent pages and Category 4 schedules including M.
 The full Form 5471

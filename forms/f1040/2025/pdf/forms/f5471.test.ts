@@ -25,6 +25,13 @@ Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
   assertEquals(fields?.q7_cost_sharing, false);
   assertEquals(fields?.q21a_section304_ep, false);
   assertEquals(
+    form5471Pdf.fields.some((entry) =>
+      entry.domainKey === "q22a_section951a2b_distributions" ||
+      entry.domainKey === "q22b_transition_rule_dividends"
+    ),
+    false,
+  );
+  assertEquals(
     form5471Pdf.fields.find((entry) => entry.domainKey === "q7_cost_sharing")
       ?.pdfField,
     "topmostSubform[0].Page5[0].c5_3[1]",
@@ -46,6 +53,23 @@ Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
             form5471_identity: {
               ...form8992Cfc.form5471_identity,
               no_stock_acquisition_disposition_or_reorganization: false,
+            },
+          }],
+        },
+      },
+    ), Error);
+  assertThrows(() =>
+    form5471Pdf.instances?.(
+      {},
+      form8992Filer,
+      {
+        ...form8992Pending,
+        f5471: {
+          f5471s: [{
+            ...form8992Cfc,
+            schedule_g: {
+              ...form8992Cfc.schedule_g,
+              q22b_transition_rule_dividends: true,
             },
           }],
         },

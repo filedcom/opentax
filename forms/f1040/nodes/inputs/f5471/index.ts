@@ -259,6 +259,10 @@ export const scheduleGSchema = z.object({
   q19a_covered_debt: z.literal(false),
   q20a_top_up_tax: z.literal(false),
   q21a_section304_ep: z.literal(false),
+  // The 2025 instructions add these pro-rata-share transition questions.
+  // They have no field in the December 2025 parent PDF or v5.4 MeF schema.
+  q22a_section951a2b_distributions: z.literal(false),
+  q22b_transition_rule_dividends: z.literal(false),
   source_workpaper_reference: sourceReference,
 }).strict();
 

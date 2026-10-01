@@ -139,6 +139,8 @@ const item: F5471Item = {
     q19a_covered_debt: false,
     q20a_top_up_tax: false,
     q21a_section304_ep: false,
+    q22a_section951a2b_distributions: false,
+    q22b_transition_rule_dividends: false,
     source_workpaper_reference: "2025 Schedule G question workpaper",
   },
   schedule_j: {
@@ -285,6 +287,29 @@ Deno.test("Category 5a source calculates distinct Schedule 1 lines and Form 8992
   assertEquals(outputs[0].fields.line8o_section951aa_inclusion, 42_000);
   assertEquals(outputs[0].fields.line8z_other, undefined);
   assertEquals(outputs[1].nodeType, "agi_aggregator");
+});
+
+Deno.test("Category 4/5a source requires reviewed absence of 2025 pro rata share transition dividends", () => {
+  for (
+    const key of [
+      "q22a_section951a2b_distributions",
+      "q22b_transition_rule_dividends",
+    ] as const
+  ) {
+    assertThrows(() =>
+      f5471.compute(ctx, {
+        f5471s: [{
+          ...item,
+          schedule_g: { ...item.schedule_g, [key]: true },
+        }],
+      }), Error);
+    const omitted = { ...item.schedule_g } as Record<string, unknown>;
+    delete omitted[key];
+    assertThrows(() =>
+      f5471.compute(ctx, {
+        f5471s: [{ ...item, schedule_g: omitted }],
+      }), Error);
+  }
 });
 
 Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and asserted GILTI", () => {
