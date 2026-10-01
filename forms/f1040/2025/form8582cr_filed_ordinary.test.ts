@@ -558,6 +558,40 @@ Deno.test("Form 8582-CR native and PDF reject changed rental, credit, tax and fi
   );
 });
 
+Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinary route", () => {
+  const pending = normalizeAllPending(filedReturn().pending);
+  const source = (pending.form8582cr.credit_sources as Record<
+    string,
+    unknown
+  >[])[0];
+  const priorOnly = {
+    ...source,
+    current_year_credit: 0,
+    prior_unallowed_credits: [{
+      originating_tax_year: 2024,
+      credit_amount: 200,
+      source_document_reference: source.source_document_reference,
+    }],
+  };
+  const changed = {
+    ...pending,
+    form8582cr: {
+      ...pending.form8582cr,
+      credit_sources: [priorOnly],
+    },
+  };
+  assertThrows(
+    () => form8582cr.build(changed.form8582cr, { pending: changed }),
+    Error,
+    "one current-year Form 8874 or credit-only K-1 code AD credit",
+  );
+  assertThrows(
+    () => form8582crPdf.projectFields!(changed.form8582cr, changed),
+    Error,
+    "one current-year Form 8874 or credit-only K-1 code AD credit",
+  );
+});
+
 Deno.test("current-year excess credit retains an activity/year Worksheet 9 balance while native and PDF print the limited amount", () => {
   const pending = normalizeAllPending(filedReturn(100_000).pending);
   const lines = calculateForm8582CR(pending.form8582cr);

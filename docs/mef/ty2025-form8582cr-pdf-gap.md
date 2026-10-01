@@ -211,3 +211,25 @@ The accepted-return reference is still a supplied identifier, not verified IRS
 acknowledgment evidence. There is no durable store or 2026 engine importer;
 prior-year Worksheet 9 credits that originated before 2025 remain closed.
 The bounded 2025 PDF route does not create an authenticated 2026 opening.
+
+## Reviewed 2024 single-activity opening candidate (2026-10-01, unrun)
+
+The [2024 Form 8582-CR instructions](https://www.irs.gov/pub/irs-prior/i8582cr--2024.pdf)
+allow a single credit type from one passive activity to derive its unallowed
+credit by subtracting prior Form 8582-CR line 37 from line 5; other mixes use
+Worksheet 9 column (b). A new standalone candidate reconciles reviewed 2024
+Form 1040/Form 8582-CR copy references and their taxpayer TIN, one self-earned
+Form 8874 New Markets credit, prior lines 5/37, and the same activity, source,
+route, document reference, origin year, and dollar amount in the 2025 Form
+8582-CR input. It also previews 2025 Part I lines 4b/5/37 and that source's
+Form 3800 passive allocation. The candidate requires an explicit review that
+no recapture or bankruptcy transfer changed the credit. Positive and
+taxpayer, amount, activity, year, and source-copy tamper fixtures are authored.
+
+These copy references and review assertions do not prove that the IRS accepted
+the 2024 return or that the copies match accepted bytes. No authenticated
+acknowledgment/status parser or accepted prior-return import exists, so the
+candidate is not passed to the 2025 native or PDF exporter and does not open a
+Form 3800, Schedule 3, or Form 1040 carryforward claim. The existing PDF
+ordinary route still rejects prior credits; its general native-only shape
+remains an audit gap rather than evidence of complete filing support.
