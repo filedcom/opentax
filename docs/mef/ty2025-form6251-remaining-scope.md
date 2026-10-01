@@ -4,6 +4,23 @@ Status: coverage disposition only. This document does not turn an unsupported
 AMT situation into a supported return. The agreed full test batch, IRS XSD
 validation, filled-PDF review, and ATS acceptances have not run.
 
+## Two reviewed state-income-tax refunds on line 2b (2026-10-01, unrun)
+
+The bounded 2025 Form 1099-G route now accepts two taxable 2024 state-income-tax
+refund copies from distinct payers. Each copy names the filer (or a spouse on a
+joint return), identifies a separate source document and payer TIN, has a
+reviewed taxable box 2 recovery, and names the same combined prior-year recovery
+workpaper. Other Form 1099-G boxes and a third copy remain outside this branch.
+The input node sums the two taxable recoveries to Schedule 1 line 1 and Form
+6251 line 2b. Native and PDF export replay both copies, compare the exact sum,
+and reconcile Schedule 1, Schedule 2 AMT, and finalized Form 1040 income and tax
+totals. Positive and duplicate-copy, changed-payer, workpaper, amount, and
+return-tamper fixtures are authored for the deferred batch. The issued 1099-G
+and workpaper bytes remain unauthenticated. The
+[2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251) require
+the state-income-tax refund included on Schedule 1 line 1 to be reversed on line
+2b.
+
 The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require line-specific AMT refigures. In particular, adjustments for passive
 activities, basis or at-risk limitations, and tax-shelter farms must not also be
@@ -12,15 +29,15 @@ those refigures. The current Form 6251 node rejects nonzero `other_adjustments`
 and direct nonzero `nol_adjustment`, but the absence of an input field does
 **not** prove that a taxpayer has no such transaction.
 
-| IRS area                                      | Current bounded route                                                                                                                                                                                                                                                                                              | Remaining source and calculation needed                                                                                                                                                                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Line 2f, alternative tax NOL                  | Nonzero direct amount is rejected.                                                                                                                                                                                                                                                                                 | Filed regular NOL, separate AMT NOL basis and carryovers, AMT deduction limits, and the Form 6251 signed line.                                                                                                                                       |
-| Line 2k, dispositions                         | Identified unadjusted Form 8949 basis rows with a complete Schedule D audit cover positive gains, bounded mixed-term offsets, and all-negative short/long-term rows when both regular and AMT totals remain within the separate $3,000/$1,500 deduction limits. Source rows must have TY2025 sale dates and matching holding periods. Cases are unrun. | Losses crossing either deduction limit, sign-changing rows, adjusted or digital-asset rows, other capital activity, AMT capital-loss carryovers, Form 4684/4797 gains, and their AMT Schedule D and Part III worksheets.                  |
-| Lines 2l-2n, depreciation and activity limits | Reviewed, nonpassive post-1998 200%-declining-balance property can feed 2l.                                                                                                                                                                                                                                        | Other property/depreciation classes; activity-level AMT Form 8582 and prior suspended losses for 2m; AMT at-risk, partnership, and S corporation basis refigures for 2n. Amounts assigned to 2m/2n must be removed from any 2l or other source feed. |
-| Lines 2o-2t                                   | Reviewed Form 59E circulation-cost deduction difference can feed 2o.                                                                                                                                                                                                                                               | Other circulation-cost cases; contract percentage-of-completion, mining, research, installment-sale, and intangible-drilling-cost source workpapers for 2p-2t.                                                                                       |
-| Line 3                                        | Mixed `other_adjustments` is rejected, not printed as line 3.                                                                                                                                                                                                                                                      | Separate pre-1987 depreciation, pollution-control, tax-shelter-farm, charitable-contribution, business-interest, mortgage-interest, disaster-loss, and related-adjustment workpapers with anti-duplication checks.                                   |
-| Trust K-1 box 12 codes B-F                    | Only code A is routed to line 2j, with an affirmative absence requirement for B-I.                                                                                                                                                                                                                                 | Code-specific AMT qualified-dividend, Schedule D, unrecaptured-1250, and 28%-rate worksheets. The [IRS instructions](https://www.irs.gov/instructions/i6251) assign codes B-F to different worksheet lines, not to line 2j.                          |
-| Form 6251 line 10 with Schedule J             | Already implemented: the tax calculation keeps elected Schedule J tax on Form 1040 line 16 and sends the no-election refigure to Form 6251 line 10.                                                                                                                                                                | The existing bounded Schedule J source excludes preferential income, Form 2555, Form 8814, and other line-16 add-ons; those combinations require distinct reconciled worksheets.                                                                     |
+| IRS area                                      | Current bounded route                                                                                                                                                                                                                                                                                                                                  | Remaining source and calculation needed                                                                                                                                                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line 2f, alternative tax NOL                  | Nonzero direct amount is rejected.                                                                                                                                                                                                                                                                                                                     | Filed regular NOL, separate AMT NOL basis and carryovers, AMT deduction limits, and the Form 6251 signed line.                                                                                                                                       |
+| Line 2k, dispositions                         | Identified unadjusted Form 8949 basis rows with a complete Schedule D audit cover positive gains, bounded mixed-term offsets, and all-negative short/long-term rows when both regular and AMT totals remain within the separate $3,000/$1,500 deduction limits. Source rows must have TY2025 sale dates and matching holding periods. Cases are unrun. | Losses crossing either deduction limit, sign-changing rows, adjusted or digital-asset rows, other capital activity, AMT capital-loss carryovers, Form 4684/4797 gains, and their AMT Schedule D and Part III worksheets.                             |
+| Lines 2l-2n, depreciation and activity limits | Reviewed, nonpassive post-1998 200%-declining-balance property can feed 2l.                                                                                                                                                                                                                                                                            | Other property/depreciation classes; activity-level AMT Form 8582 and prior suspended losses for 2m; AMT at-risk, partnership, and S corporation basis refigures for 2n. Amounts assigned to 2m/2n must be removed from any 2l or other source feed. |
+| Lines 2o-2t                                   | Reviewed Form 59E circulation-cost deduction difference can feed 2o.                                                                                                                                                                                                                                                                                   | Other circulation-cost cases; contract percentage-of-completion, mining, research, installment-sale, and intangible-drilling-cost source workpapers for 2p-2t.                                                                                       |
+| Line 3                                        | Mixed `other_adjustments` is rejected, not printed as line 3.                                                                                                                                                                                                                                                                                          | Separate pre-1987 depreciation, pollution-control, tax-shelter-farm, charitable-contribution, business-interest, mortgage-interest, disaster-loss, and related-adjustment workpapers with anti-duplication checks.                                   |
+| Trust K-1 box 12 codes B-F                    | Only code A is routed to line 2j, with an affirmative absence requirement for B-I.                                                                                                                                                                                                                                                                     | Code-specific AMT qualified-dividend, Schedule D, unrecaptured-1250, and 28%-rate worksheets. The [IRS instructions](https://www.irs.gov/instructions/i6251) assign codes B-F to different worksheet lines, not to line 2j.                          |
+| Form 6251 line 10 with Schedule J             | Already implemented: the tax calculation keeps elected Schedule J tax on Form 1040 line 16 and sends the no-election refigure to Form 6251 line 10.                                                                                                                                                                                                    | The existing bounded Schedule J source excludes preferential income, Form 2555, Form 8814, and other line-16 add-ons; those combinations require distinct reconciled worksheets.                                                                     |
 
 Before calling Form 6251 coverage complete, choose one of two explicit outcomes
 for each remaining row: implement its source-to-calculation-to-MeF/PDF path with
@@ -66,8 +83,8 @@ AMT depletion workpapers at native and PDF export. It requires each business's
 regular Schedule C line 12 to equal its property regular allowances, rejects
 duplicate property references and passive or at-risk-limited activities, and
 matches the signed regular-minus-AMT total to line 2d. The source, native, and
-PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound
-to workpaper bytes; other depletion sources and activity refigures remain open.
+PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound to
+workpaper bytes; other depletion sources and activity refigures remain open.
 
 # Property depreciation replay (staged, unrun)
 
@@ -87,40 +104,40 @@ bulk pass. This does not authenticate issued K-1 bytes or model codes B–I.
 
 # Private-activity-bond replay (staged, unrun)
 
-Native and PDF Form 6251 line 2g now sums retained Form 1099-INT box 9,
-Form 1099-OID specified private-activity-bond box 11, Form 1099-DIV box 13,
-and elected Form 8814 child private-activity-bond interest. It compares the
+Native and PDF Form 6251 line 2g now sums retained Form 1099-INT box 9, Form
+1099-OID specified private-activity-bond box 11, Form 1099-DIV box 13, and
+elected Form 8814 child private-activity-bond interest. It compares the
 nondividend and complete totals to the computed form and rejects missing or
-out-of-range source boxes. The replay fixture awaits the combined pass;
-issued payer/child source bytes and wider bond adjustments remain open.
+out-of-range source boxes. The replay fixture awaits the combined pass; issued
+payer/child source bytes and wider bond adjustments remain open.
 
 The Form 8949 AMT-basis replay now also verifies a valid 2025 sale date and
-short- or long-term holding period against each source row's Part I/II box.
-The date-mismatch fixture awaits the final batch; issued broker-copy bytes
-remain open.
+short- or long-term holding period against each source row's Part I/II box. The
+date-mismatch fixture awaits the final batch; issued broker-copy bytes remain
+open.
 
 # Mixed-term Form 8949 basis offset (staged, unrun)
 
 The audited line-2k path now accepts identified short-term loss rows offset by
 identified long-term gain rows when the complete regular and AMT Schedule D
 totals are both positive. Every row must keep the same sign under both bases;
-the complete Schedule D audit must contain exactly those unadjusted rows and
-no other capital activity. The regular net capital gain must equal the audited
+the complete Schedule D audit must contain exactly those unadjusted rows and no
+other capital activity. The regular net capital gain must equal the audited
 regular sum, while Part III uses the separate positive AMT sum after the
 short-term offset. The signed basis difference also reaches native line 2k and
-the PDF. The symmetric case of identified long-term losses offset by
-short-term gains is also accepted when both complete totals stay positive;
-its audited regular and AMT preferential net capital gain is zero, so Part III
-does not print. Positive and mismatched-net fixtures are authored for the deferred
-batch. Net losses, sign-changing rows, other capital activity, special-rate
-gains and Form 4952 elections remain closed. A bounded ordinary 1099-DIV
+the PDF. The symmetric case of identified long-term losses offset by short-term
+gains is also accepted when both complete totals stay positive; its audited
+regular and AMT preferential net capital gain is zero, so Part III does not
+print. Positive and mismatched-net fixtures are authored for the deferred batch.
+Net losses, sign-changing rows, other capital activity, special-rate gains and
+Form 4952 elections remain closed. A bounded ordinary 1099-DIV
 qualified-dividend combination now joins the audited short-term-basis gain,
 long-term-basis gain, and short-term-loss/long-term-gain paths to Part III when
 the combined preferential amount fits both regular and AMT taxable income.
 Native and PDF export require the retained 1099-DIV payer, finalized Form 1040
-dividends, capital gain, and taxable income,
-and the separate AMT net capital gain. The positive and tamper fixtures await
-the requested final bulk pass; other dividend classes, capital-gain-excess
-worksheets, and issued-copy bytes remain open. See the
+dividends, capital gain, and taxable income, and the separate AMT net capital
+gain. The positive and tamper fixtures await the requested final bulk pass;
+other dividend classes, capital-gain-excess worksheets, and issued-copy bytes
+remain open. See the
 [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
 and [2025 Schedule D instructions](https://www.irs.gov/instructions/i1040sd).

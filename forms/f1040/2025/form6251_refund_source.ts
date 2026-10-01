@@ -1,6 +1,6 @@
 import { inputSchema as form1099GSourceSchema } from "../nodes/inputs/f1099g/index.ts";
 
-/** Bind line 2b to one reviewed state-income-tax refund and the final return. */
+/** Bind line 2b to one or two reviewed state-income-tax refunds and the final return. */
 export function assertForm6251RefundSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -17,7 +17,10 @@ export function assertForm6251RefundSource(
     refunds.length === 0
   ) return;
 
-  const refund = refunds[0];
+  const totalRefund = refunds.reduce(
+    (sum, refund) => sum + (refund.box_2_taxable_recovery_verified_amount ?? 0),
+    0,
+  );
   const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
@@ -32,28 +35,37 @@ export function assertForm6251RefundSource(
   const line16 = form1040?.line16_income_tax;
   const line17 = form1040?.line17_additional_taxes;
   if (
-    !parsed.success || refunds.length !== 1 ||
-    parsed.data.f1099gs.length !== 1 ||
-    !refund ||
-    !refund.payer_name?.trim() || !refund.payer_tin?.trim() ||
-    !refund.recipient_tin ||
-    (refund.recipient_tin !== form1040?.taxpayer_ssn &&
-      !(form1040?.filing_status === "mfj" &&
-        refund.recipient_tin === form1040?.spouse_ssn)) ||
-    !refund.box_2_recovery_workpaper_reference ||
-    refund.box_2_prior_year_itemized !== true ||
-    (refund.box_3_tax_year !== undefined && refund.box_3_tax_year !== 2024) ||
-    refund.box_8_trade_or_business === true ||
-    (refund.box_1_unemployment ?? 0) !== 0 ||
-    (refund.box_1_repaid ?? 0) !== 0 ||
-    (refund.box_4_federal_withheld ?? 0) !== 0 ||
-    (refund.box_5_rtaa ?? 0) !== 0 ||
-    (refund.box_6_taxable_grants ?? 0) !== 0 ||
-    (refund.box_7_agriculture ?? 0) !== 0 ||
-    (refund.box_9_market_gain ?? 0) !== 0 ||
-    (refund.box_11_state_withheld ?? 0) !== 0 ||
+    !parsed.success || refunds.length < 1 || refunds.length > 2 ||
+    parsed.data.f1099gs.length !== refunds.length ||
+    refunds.some((refund) =>
+      !refund.payer_name?.trim() || !refund.payer_tin?.trim() ||
+      !refund.recipient_tin ||
+      (refund.recipient_tin !== form1040?.taxpayer_ssn &&
+        !(form1040?.filing_status === "mfj" &&
+          refund.recipient_tin === form1040?.spouse_ssn)) ||
+      !refund.box_2_recovery_workpaper_reference ||
+      refund.box_2_prior_year_itemized !== true ||
+      (refund.box_3_tax_year !== undefined && refund.box_3_tax_year !== 2024) ||
+      refund.box_8_trade_or_business === true ||
+      (refund.box_1_unemployment ?? 0) !== 0 ||
+      (refund.box_1_repaid ?? 0) !== 0 ||
+      (refund.box_4_federal_withheld ?? 0) !== 0 ||
+      (refund.box_5_rtaa ?? 0) !== 0 ||
+      (refund.box_6_taxable_grants ?? 0) !== 0 ||
+      (refund.box_7_agriculture ?? 0) !== 0 ||
+      (refund.box_9_market_gain ?? 0) !== 0 ||
+      (refund.box_11_state_withheld ?? 0) !== 0
+    ) ||
+    (refunds.length === 2 &&
+      (!refunds[0].source_document_reference ||
+        !refunds[1].source_document_reference ||
+        refunds[0].source_document_reference ===
+          refunds[1].source_document_reference ||
+        refunds[0].payer_tin === refunds[1].payer_tin ||
+        refunds[0].box_2_recovery_workpaper_reference !==
+          refunds[1].box_2_recovery_workpaper_reference)) ||
     typeof claimed !== "number" || !Number.isInteger(claimed) || claimed <= 0 ||
-    claimed !== refund.box_2_taxable_recovery_verified_amount ||
+    claimed !== totalRefund ||
     schedule1?.line1_state_refund !== claimed ||
     typeof additionalIncome !== "number" ||
     form1040?.line8_additional_income !== additionalIncome ||
@@ -71,7 +83,7 @@ export function assertForm6251RefundSource(
     form1040?.line18_total_tax_before_credits !== line16 + line17
   ) {
     throw new Error(
-      "Form 6251 line 2b needs one reviewed 1099-G state-income-tax refund matching Schedule 1 and finalized Form 1040",
+      "Form 6251 line 2b needs one or two reviewed 1099-G state-income-tax refunds matching Schedule 1 and finalized Form 1040",
     );
   }
 }

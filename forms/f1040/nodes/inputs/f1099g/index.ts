@@ -41,6 +41,7 @@ export const itemSchema = z.object({
   box_11_state_withheld: z.number().nonnegative().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
