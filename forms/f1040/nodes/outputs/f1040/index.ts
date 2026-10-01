@@ -83,7 +83,8 @@ const inputSchema = z.object({
   // Line 1z — Total wages (sum of 1a–1h)
   line1z_total_wages: z.number().optional(),
   // Line 2a — Tax-exempt interest
-  line2a_tax_exempt: z.number().nonnegative().optional(),
+  line2a_tax_exempt: accumulable(z.number().nonnegative()).transform(sumField)
+    .optional(),
   // Line 2b — Taxable interest
   line2b_taxable_interest: z.number().optional(),
   // Line 3a — Qualified dividends (accumulable: k1_partnership + f1099div both route here)

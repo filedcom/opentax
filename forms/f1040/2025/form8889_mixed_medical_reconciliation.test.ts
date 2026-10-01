@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { type FilerIdentity, FilingStatus } from "./mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
   form8889 as calculator,
   inputSchema,

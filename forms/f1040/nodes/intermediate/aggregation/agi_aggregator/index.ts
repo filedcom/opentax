@@ -96,7 +96,8 @@ export const inputSchema = z.object({
   filing_status: z.string().optional(),
   // Tax-exempt interest (Schedule B, Form 1099-INT box 8) — included in provisional income
   // for Social Security taxability per IRC §86(b)(1) even though excluded from AGI
-  tax_exempt_interest: z.number().nonnegative().optional(),
+  tax_exempt_interest: accumulable(z.number().nonnegative()).transform(sumField)
+    .optional(),
   // MFS filer who lived with spouse at any time during the year (IRC §86(c)(2))
   // When true: 85% of SS benefits are always taxable, no threshold applies
   mfs_lived_with_spouse: z.boolean().optional(),

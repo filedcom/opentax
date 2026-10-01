@@ -56,6 +56,9 @@ export const form8582crPdf: PdfFormDescriptor = {
   includeWhen: (raw) =>
     Array.isArray(raw.credit_sources) && raw.credit_sources.length > 0,
   projectFields(raw, allPending) {
+    if (!Array.isArray(raw.credit_sources) || raw.credit_sources.length === 0) {
+      return {};
+    }
     const { lines, ledger, tax } = reconcileFiledForm8582CROrdinary(
       raw,
       allPending,

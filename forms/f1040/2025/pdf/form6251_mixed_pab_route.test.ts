@@ -68,13 +68,14 @@ Deno.test("distinct issued INT and OID private-activity-bond sources reconcile F
   assertEquals(result.pending.f1040.line2a_tax_exempt, 200_000);
   const form = result.pending.form6251;
   assert(form);
-  assertEquals(form.line2g_pab_interest, 200_000);
+  assertEquals(form.line2g_pab_interest, [100_000, 100_000]);
   assertEquals(form.private_activity_bond_interest, 200_000);
   assert(typeof form.line11_amt === "number" && form.line11_amt > 0);
   const amt = form.line11_amt as number;
   assertEquals(result.pending.schedule2.line2_amt, amt);
   assertEquals(result.pending.f1040.line17_additional_taxes, amt);
   const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line2a_tax_exempt, 200_000);
   assertEquals(
     form6251Pdf.projectFields?.(form, result.pending)
       ?.private_activity_bond_interest,
@@ -182,12 +183,13 @@ Deno.test("same-issuer INT stated interest and OID with reviewed allocable deduc
   assertEquals(result.pending.f1040.line2a_tax_exempt, 200_000);
   const form = result.pending.form6251;
   assert(form);
-  assertEquals(form.line2g_pab_interest, 185_000);
+  assertEquals(form.line2g_pab_interest, [90_000, 95_000]);
   assertEquals(form.private_activity_bond_interest, 185_000);
   assert(typeof form.line11_amt === "number" && form.line11_amt > 0);
   assertEquals(result.pending.schedule2.line2_amt, form.line11_amt);
   assertEquals(result.pending.f1040.line17_additional_taxes, form.line11_amt);
   const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line2a_tax_exempt, 200_000);
   assertEquals(
     form6251Pdf.projectFields?.(form, result.pending)
       ?.private_activity_bond_interest,

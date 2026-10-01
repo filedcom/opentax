@@ -108,6 +108,7 @@ export const form8815Pdf: PdfFormDescriptor = {
     };
   },
   instances(projected, filer, allPending) {
+    if (Object.keys(projected).length === 0) return [];
     if (!filer || !allPending) {
       throw new Error("Form 8815 PDF needs the final filer and Schedule B");
     }

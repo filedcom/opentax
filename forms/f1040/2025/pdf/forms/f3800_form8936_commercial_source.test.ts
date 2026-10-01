@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { normalizeAllPending } from "../pending.ts";
+import { normalizeAllPending } from "../../pending.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import {
   form3800PartIAndIIFields,
@@ -80,8 +80,11 @@ Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
+  const commercialCredit = pending.f3800.f8936_commercial_vehicle_credit as {
+    credit_amount: number;
+  };
   assertEquals(
-    pending.f3800.f8936_commercial_vehicle_credit.credit_amount,
+    commercialCredit.credit_amount,
     3_000,
   );
   assertEquals(pending.f3800.allowed_credit, 3_000);

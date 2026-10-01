@@ -7,6 +7,7 @@
  * recently computed value). Independent Schedule E sources are additive.
  */
 const additiveNumericKeys = new Set([
+  "line2g_pab_interest",
   "line5_schedule_e",
   "eic_passive_k1_income",
 ]);
