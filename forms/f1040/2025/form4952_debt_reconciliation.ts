@@ -136,6 +136,32 @@ export function reconcileForm4952DirectDebtExport(
     !!oid.data.f1099oids[0].payer_name?.trim() &&
     interest.data.f1099ints[0].payer_name !==
       oid.data.f1099oids[0].payer_name;
+  const treasuryOidAndDividend = interest.success && oid.success &&
+    dividend.success && interest.data.f1099ints.length === 1 &&
+    oid.data.f1099oids.length === 1 && dividend.data.f1099divs.length === 1 &&
+    (interest.data.f1099ints[0].box1 ?? 0) === 0 &&
+    (interest.data.f1099ints[0].box3 ?? 0) > 0 &&
+    (dividend.data.f1099divs[0].box1b ?? 0) === 0 &&
+    [
+      interest.data.f1099ints[0].source_document_reference,
+      oid.data.f1099oids[0].source_document_reference,
+      dividend.data.f1099divs[0].source_document_reference,
+    ].every((reference) => !!reference?.trim()) &&
+    new Set([
+        interest.data.f1099ints[0].source_document_reference,
+        oid.data.f1099oids[0].source_document_reference,
+        dividend.data.f1099divs[0].source_document_reference,
+      ]).size === 3 &&
+    [
+      interest.data.f1099ints[0].payer_name,
+      oid.data.f1099oids[0].payer_name,
+      dividend.data.f1099divs[0].payerName,
+    ].every((name) => !!name?.trim()) &&
+    new Set([
+        interest.data.f1099ints[0].payer_name,
+        oid.data.f1099oids[0].payer_name,
+        dividend.data.f1099divs[0].payerName,
+      ]).size === 3;
   const oneInterestAndDividend = interest.success && dividend.success &&
     interest.data.f1099ints.length === 1 &&
     dividend.data.f1099divs.length === 1 &&
@@ -203,6 +229,7 @@ export function reconcileForm4952DirectDebtExport(
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
     (!oneInterest && !twoInterest && !oneDividend && !twoDividends && !oneOid &&
       !oneTreasuryInterestAndOid &&
+      !treasuryOidAndDividend &&
       !oneInterestAndDividend && !oneOidAndDividend &&
       !twoInterestAndDividend && !interestAndTwoDividends &&
       !twoInterestTwoDividends && !oneRoyalty) ||
@@ -312,7 +339,8 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_qualified_dividends !== "number" ||
         printed.data.source_1099_qualified_dividends !==
           retained.data.source_1099_qualified_dividends
-      : twoInterest || oneTreasuryInterestAndOid || twoInterestAndDividend
+      : twoInterest || oneTreasuryInterestAndOid ||
+          treasuryOidAndDividend || twoInterestAndDividend
       ? !Array.isArray(printed.data.source_1099_interest) ||
         !Array.isArray(retained.data.source_1099_interest) ||
         printed.data.source_1099_interest.length !== 2 ||
