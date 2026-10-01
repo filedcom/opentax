@@ -252,6 +252,27 @@ export function qualifiedEntireDispositionLoss(
   item: EItem,
 ): number | undefined {
   const sale = item.passive_property_sales?.[0];
+  const priorOperating = item.prior_unallowed_passive_operating ?? 0;
+  const firstYear = item.first_year_activity_source;
+  const sourcedPriorLoss = firstYear === undefined && priorOperating > 0 &&
+    item.prior_year_8582_source?.activity_id === item.activity_id &&
+    item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
+    item.prior_year_8582_source.filed_part_ix_rows === undefined &&
+    item.prior_year_8582_source.filed_part_viii_row === undefined;
+  const sourcedFirstYear = firstYear !== undefined && sale !== undefined &&
+    firstYear.activity_id === item.activity_id &&
+    firstYear.activity_name === item.property_description &&
+    firstYear.activity_acquired_on === sale.acquired_on &&
+    firstYear.activity_acquired_on >= "2025-01-01" &&
+    firstYear.activity_acquired_on <= "2025-12-31" &&
+    item.prior_unallowed_passive_operating === undefined &&
+    item.prior_year_8582_source === undefined &&
+    item.prior_unallowed_passive_4797_part1 === undefined &&
+    item.prior_unallowed_passive_4797_part2 === undefined &&
+    item.prior_unallowed_at_risk === undefined &&
+    item.operating_expenses_carryover === undefined &&
+    item.disallowed_mortgage_interest_8990 === undefined &&
+    item.disallowed_other_interest_8990 === undefined;
   if (
     item.activity_type !== "B" || item.disposed_of !== true ||
     !item.activity_id || item.passive_property_sales?.length !== 1 ||
@@ -260,19 +281,14 @@ export function qualifiedEntireDispositionLoss(
     sale.activity_name !== item.property_description ||
     (item.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
     (item.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
-    (item.prior_unallowed_passive_operating ?? 0) <= 0 ||
-    item.prior_year_8582_source?.activity_id !== item.activity_id ||
-    item.prior_year_8582_source.filed_part_vii_column_c !==
-      item.prior_unallowed_passive_operating ||
-    item.prior_year_8582_source.filed_part_ix_rows !== undefined ||
-    item.prior_year_8582_source.filed_part_viii_row !== undefined ||
+    (!sourcedPriorLoss && !sourcedFirstYear) ||
     (item.ownership_percent ?? 100) !== 100 ||
     (item.section_1231_gain_loss ?? 0) !== 0
   ) return undefined;
   const currentNet = computePropertyNet(item);
   if (!Number.isSafeInteger(currentNet)) return undefined;
   const currentLoss = Math.max(0, -currentNet);
-  const totalLoss = currentLoss + item.prior_unallowed_passive_operating;
+  const totalLoss = currentLoss + priorOperating;
   return currentLoss > 0 && totalLoss > passiveSaleGain(sale)
     ? totalLoss
     : undefined;

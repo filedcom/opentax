@@ -1,5 +1,27 @@
 # TY2025 Form 8582 entire disposition with overall gain
 
+## First-year entire disposition with overall loss (written, unrun)
+
+A bounded type-B rental acquired and sold in 2025 can now release its current
+operating loss in full when its one short-held, no-recapture Form 4797 Part II
+sale gain is smaller. The source must identify the acquisition document, match
+the activity ID/name and acquisition date to the sale, affirm no grouping with a
+prior activity, and identify an unrelated buyer and fully taxable noninstallment
+entire-interest closing. Entered prior PALs, at-risk or expense carryovers, and
+Form 4797-character losses close this route. The complete disposition bypasses
+Form 8582, with the operating loss on Schedule E, the ordinary sale gain on Form
+4797, their net on Schedule 1 and Form 1040, and matching native and PDF forms.
+Full-return positive and acquisition/closing tamper fixtures are authored for
+the deferred batch.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+direct an entire activity with overall loss to its normal reporting forms and
+no Form 8582 activity entry. The [2025 Form 4797 instructions](https://www.irs.gov/instructions/i4797)
+put a short-held property's ordinary gain in Part II. The acquisition and
+closing references are entered evidence, not authenticated document bytes.
+Long-held sales, recapture, multiple activities, prior loss release, and
+filled-output/XSD/IRS acceptance remain open.
+
 The [2025 Form 8582 instructions](https://www.irs.gov/pub/irs-pdf/i8582.pdf),
 "Reporting an Entire Disposition on Form 4797 or Form 8949," require an entire
 passive-activity disposition with an **overall gain** to include the current
