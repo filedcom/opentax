@@ -917,20 +917,45 @@ export function reconcilePairedForm8889(
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
   );
-  const medicareOwnerLimit = firstIneligible === undefined ? 0 : Math.round(
-    (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
-      (firstIneligible - 1) / 12,
-  );
+  const medicareSelfOnlyOwnerLimit = firstIneligible === undefined
+    ? 0
+    : Math.round(
+      (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
+        (firstIneligible - 1) / 12,
+    );
+  const medicareJanuaryFamilyExcess = medicareMixedMonths &&
+    firstIneligible === 1 &&
+    medicareOwner?.allocated_family_limit === 0 &&
+    continuingOwner?.allocated_family_limit === 0 &&
+    owners.every((owner) =>
+      owner.age_55_or_older === false &&
+      owner.employer_hsa_contributions === undefined &&
+      owner.employer_contribution_years === undefined &&
+      owner.employer_excess_treatment === undefined &&
+      owner.prior_year_hsa_excess === undefined &&
+      owner.post_year_personal_excess_withdrawal === undefined &&
+      owner.qualified_hsa_funding_distributions === undefined &&
+      owner.hsa_excluded_distributions === undefined &&
+      owner.testing_period_failure === undefined &&
+      (owner.hsa_distributions ?? 0) === 0
+    ) &&
+    !source.w2_code_w_entries?.length &&
+    (continuingOwner?.taxpayer_hsa_contributions ?? 0) > 0 &&
+    (continuingOwner?.taxpayer_hsa_contributions ?? 0) <= 8_550;
+  const medicareOwnerLimit = medicareJanuaryFamilyExcess
+    ? 0
+    : medicareSelfOnlyOwnerLimit;
   // A current personal excess belongs only to the Medicare owner whose
   // monthly limit ended. Its Form 5329 tax uses that owner's HSA year-end value.
-  const medicareCurrentExcessOwner = medicareSelfOnlyMonths &&
+  const medicareCurrentExcessOwner =
+    (medicareSelfOnlyMonths || medicareJanuaryFamilyExcess) &&
       medicareOwner &&
       (medicareOwner.taxpayer_hsa_contributions ?? 0) > medicareOwnerLimit &&
       medicareOwner.hsa_december_31_value !== undefined &&
       medicareOwner.prior_year_hsa_excess === undefined &&
       !medicareAge65Distribution
-    ? medicareOwner
-    : undefined;
+      ? medicareOwner
+      : undefined;
   const otherCoverageOwnerLimit = otherCoverageOwner
     ?.allocated_family_limit ?? 0;
   const otherCoverageContinuingLimit = 8_550 -
