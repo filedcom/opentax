@@ -990,6 +990,33 @@ export function reconcilePairedForm8889(
     owner === medicareCurrentExcessOwner ||
     owner === otherCoverageCurrentExcessOwner
   );
+  const priorExcessAndOtherCode2 = selfOnly &&
+    pairedPriorExcessOwners.length === 1 && pairedCode2Owners.length === 1 &&
+    pairedPriorExcessOwners[0] !== pairedCode2Owners[0] &&
+    pairedRollovers.length === 0 &&
+    !source.w2_code_w_entries?.length &&
+    owners.every((owner) =>
+      fullYearCoverage(
+        owner.eligible_hdhp_coverage_by_month,
+        CoverageType.SelfOnly,
+      ) &&
+      owner.age_55_or_older === false &&
+      owner.employer_hsa_contributions === undefined &&
+      owner.employer_contribution_years === undefined &&
+      owner.employer_excess_treatment === undefined &&
+      owner.post_year_personal_excess_withdrawal === undefined &&
+      owner.qualified_hsa_funding_distributions === undefined &&
+      owner.testing_period_failure === undefined &&
+      owner.other_disqualifying_coverage === undefined &&
+      owner.age_65_exception_evidence === undefined &&
+      owner.disability_exception_evidence === undefined &&
+      (owner.qualified_medical_expenses ?? 0) === 0 &&
+      (owner.exception_qualified_taxable_amount ?? 0) === 0 &&
+      (owner.taxpayer_hsa_contributions ?? 0) > 0 &&
+      (owner === pairedCode2Owners[0] ||
+        ((owner.hsa_distributions ?? 0) === 0 &&
+          owner.form1099_sa_distributions === undefined))
+    );
   const priorExcessReferences = pairedPriorExcessOwners.map((owner) =>
     owner.prior_year_hsa_excess!.filed_form5329_reference
   );
@@ -1040,9 +1067,10 @@ export function reconcilePairedForm8889(
               owner === medicareCurrentExcessOwner
             )) ||
         pairedRollovers.length > 0 ||
-        pairedCode2Owners.length > 0 ||
+        (pairedCode2Owners.length > 0 && !priorExcessAndOtherCode2) ||
         owners.some((owner) =>
-          (owner.hsa_distributions ?? 0) > 0 ||
+          ((owner.hsa_distributions ?? 0) > 0 &&
+            !(priorExcessAndOtherCode2 && owner === pairedCode2Owners[0])) ||
           owner.testing_period_failure !== undefined
         ))) ||
     (pairedRollovers.length > 0 && pairedCode2Owners.length > 0) ||
