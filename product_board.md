@@ -97,11 +97,11 @@ own evidence exists.
 
 ## Scope and completion rules
 
-- [ ] Keep this release limited to the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
-- [ ] Keep standalone 1040-NR, 1040-SS, Form 4868, and dual-status Form 1040 e-file outside this release gate. Reject an attempted dual-status e-file instead of treating it as an ordinary Form 1040.
-- [ ] Treat every other entered Form 1040-family filing claim as in scope until its route is completed or the user explicitly approves a named, fail-closed exclusion. A registered builder, schema literal, written test, or computed preview alone does not establish support.
-- [ ] Complete the source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain for every retained positive filing route. Preserve taxpayer/spouse ownership, source provenance, calculated totals, and rejection of unsupported or inconsistent inputs.
-- [ ] Do not add a compatibility layer, fallback, dual API shape, migration shim, or temporary workaround without first telling the user what will be added and why, as required by AGENTS.md.
+- [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
+- [ ] Verify standalone 1040-NR, 1040-SS, Form 4868, and dual-status Form 1040 e-file stay outside this release gate, and attempted dual-status e-file rejects instead of becoming an ordinary Form 1040.
+- [ ] Resolve every other entered Form 1040-family filing claim with a complete route or a named, user-approved fail-closed exclusion; review registered builders, schema literals, written tests, and previews without counting them as support alone.
+- [ ] Verify every retained positive filing route has a source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain, with correct taxpayer/spouse ownership, source provenance, totals, and rejection of unsupported or inconsistent inputs.
+- [ ] Review the diff for any compatibility layer, fallback, dual API shape, migration shim, or temporary workaround, and confirm the user was told what would be added and why before it was introduced, as required by AGENTS.md.
 
 ## Coverage inventory and decisions
 
