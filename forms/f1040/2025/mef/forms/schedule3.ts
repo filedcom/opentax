@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as f2439InputSchema } from "../../../nodes/inputs/f2439/index.ts";
+import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 
 export interface Fields {
   line1_total?: number | null;
@@ -76,6 +77,7 @@ function buildIRS1040Schedule3(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertSchedule3Line8Join(fields, context?.pending);
   const children: string[] = [];
 
   // Direct mappings
@@ -168,7 +170,9 @@ function buildIRS1040Schedule3(
         );
       }
       const allIds = context?.documentIdsByPendingKey?.f2439;
-      if (context?.documentIdsByPendingKey && allIds?.length !== reportable.length) {
+      if (
+        context?.documentIdsByPendingKey && allIds?.length !== reportable.length
+      ) {
         throw new Error(
           "Schedule 3 line 13a needs each linked IRS2439 document",
         );

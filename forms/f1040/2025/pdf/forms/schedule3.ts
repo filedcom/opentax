@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleR } from "../../mef/forms/schedule_r.ts";
+import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -165,6 +166,7 @@ export const schedule3Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
   fields,
   projectFields(fields, allPending) {
+    assertSchedule3Line8Join(fields, allPending);
     if (
       typeof fields.line6d_elderly_disabled_credit === "number" &&
       fields.line6d_elderly_disabled_credit > 0

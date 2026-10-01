@@ -19,7 +19,11 @@ const pending = {
     line18_total_tax_before_credits: 900,
     line20_nonrefundable_credits: 750,
   },
-  schedule3: { line6d_elderly_disabled_credit: 750 },
+  schedule3: {
+    line6d_elderly_disabled_credit: 750,
+    line7_total: 750,
+    line8_total: 750,
+  },
 };
 
 Deno.test("Schedule R PDF maps the sourced single age-65 credit to 2025 widgets", () => {
