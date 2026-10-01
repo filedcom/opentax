@@ -195,6 +195,24 @@ native and PDF export. A direct amount without its reviewed workpaper rejects.
 The source and tamper fixtures await the combined pass; the underlying asset
 records and other AMT depreciation methods remain open.
 
+# Two current-year mining businesses on line 2q (written, unrun)
+
+The [2025 Form 6251 line 2q instructions](https://www.irs.gov/instructions/i6251)
+require mining exploration and development costs deducted in full for regular
+tax to be amortized over ten years for AMT. The bounded current-year Schedule C
+route now accepts two distinct, materially participating mine businesses with
+one separately named Part V expense and reviewed workpaper per mine. Intake
+requires distinct business references, property references, and workpaper
+references. The calculator sums each regular expense less its first ten-year
+AMT deduction into Form 6251 line 2q. Native MeF and PDF replay both source
+rows, compare the combined line 2q amount and Schedule 1 line 3 business
+income, and retain the Schedule 2/Form 1040 AMT join. Positive and expense,
+property-identity, and return-tamper fixtures are authored but unrun.
+
+Earlier-year amortization, multiple claims per business, other Schedule C
+businesses in the same return, property losses, source-document authentication,
+and full XSD/PDF/IRS filing gates remain open.
+
 # Trust K-1 code A replay (staged, unrun)
 
 Native and PDF Form 6251 line 2j now replays the signed total from distinct

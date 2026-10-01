@@ -20,7 +20,7 @@ import { f8812 } from "../f8812/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
 import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
 import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
-import { miningCostAdjustment } from "./mining.ts";
+import { assertDistinctMiningSources, miningCostAdjustment } from "./mining.ts";
 import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -165,6 +165,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+    assertDistinctMiningSources(input.schedule_cs);
     if ((input.line1_gross_receipts ?? 0) > 0) {
       throw new Error(
         "Schedule C top-level gross receipts need business-linked source rows",
