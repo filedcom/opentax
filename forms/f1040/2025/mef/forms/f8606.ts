@@ -114,9 +114,16 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       element("NondedIRATaxableAmt", fields.print_line15c_taxable),
     ]);
   }
-  if (details.owner !== IraOwner.Taxpayer) {
+  const spouseOwned = details.owner === IraOwner.Spouse;
+  const filer = context?.filer;
+  if (
+    spouseOwned &&
+    (filer?.filingStatus !== FilingStatus.MarriedFilingJointly ||
+      !filer.spouse?.firstName || !filer.spouse?.lastName ||
+      details.other_spouse_form8606_not_required_confirmed !== true)
+  ) {
     throw new Error(
-      "Form 8606 spouse-owned no-activity IRA needs an owner-specific source route",
+      "Form 8606 spouse-owned no-activity IRA needs a joint return, spouse identity, and separate-form review",
     );
   }
   if (
@@ -151,17 +158,30 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       "Form 8606 MeF needs whole-dollar line 1, nonnegative documented prior basis, and line 3 = line 14 = lines 1 + 2",
     );
   }
-  const filer = context?.filer;
-  if (!filer?.fullName?.trim() || !/^\d{9}$/.test(filer.primarySSN)) {
+  const ownerName = spouseOwned
+    ? [
+      filer?.spouse?.firstName,
+      filer?.spouse?.middleInitial,
+      filer?.spouse?.lastName,
+    ].filter(Boolean).join(" ")
+    : filer?.fullName;
+  const ownerSsn = spouseOwned ? filer?.spouse?.ssn : filer?.primarySSN;
+  if (!ownerName?.trim() || !ownerSsn || !/^\d{9}$/.test(ownerSsn)) {
     throw new Error(
-      "Form 8606 MeF needs taxpayer name and SSN from the return header",
+      "Form 8606 MeF needs IRA owner name and SSN from the return header",
     );
   }
   if (
-    filer.spouse || filer.filingStatus === FilingStatus.MarriedFilingJointly
+    !spouseOwned &&
+    (filer?.spouse || filer?.filingStatus === FilingStatus.MarriedFilingJointly)
   ) {
     throw new Error(
       "Form 8606 MeF does not yet support joint returns with spouse IRA filing ambiguity",
+    );
+  }
+  if (spouseOwned && line2 !== 0) {
+    throw new Error(
+      "Form 8606 spouse-owned no-activity IRA currently needs zero opening basis",
     );
   }
   if (line2 === 0) {
@@ -179,8 +199,8 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     if (
       !evidence || !worksheet.success || !w2s.success ||
       w2s.data.w2s.length !== 1 || !f1040 ||
-      evidence.form5498.owner_ssn !== filer.primarySSN ||
-      evidence.prior_form8606.owner_ssn !== filer.primarySSN ||
+      evidence.form5498.owner_ssn !== ownerSsn ||
+      evidence.prior_form8606.owner_ssn !== ownerSsn ||
       evidence.form5498.source_document_reference ===
         evidence.prior_form8606.source_document_reference ||
       evidence.form5498.box1_ira_contributions !== line1 ||
@@ -189,8 +209,10 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       worksheet.data.magi !== f1040.line11_agi ||
       f1040.line11_agi !== w2s.data.w2s[0].box1_wages ||
       w2s.data.w2s[0].box13_retirement_plan !== true ||
-      w2s.data.w2s[0].employee_ssn?.replace(/\D/g, "") !== filer.primarySSN ||
-      worksheet.data.form8606_filing_details?.owner !== IraOwner.Taxpayer ||
+      w2s.data.w2s[0].employee_ssn?.replace(/\D/g, "") !== ownerSsn ||
+      worksheet.data.form8606_filing_details?.owner !== details.owner ||
+      (spouseOwned && worksheet.data.form8606_filing_details
+            ?.other_spouse_form8606_not_required_confirmed !== true) ||
       JSON.stringify(worksheet.data.form8606_zero_basis_source) !==
         JSON.stringify(evidence) ||
       (schedule1?.line20_ira_deduction ?? 0) !== 0 ||
@@ -203,8 +225,8 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     }
   }
   return elements("IRS8606", [
-    element("Form8606IRANamelineTxt", filer.fullName),
-    element("NondedIRATxpyrWithIRASSN", filer.primarySSN),
+    element("Form8606IRANamelineTxt", ownerName),
+    element("NondedIRATxpyrWithIRASSN", ownerSsn),
     element("NondedIRACurrTYNondedContriAmt", line1),
     element("NondedIRABasisForPYAmt", line2),
     element("NondedIRATotalIRAValueAmt", line3),

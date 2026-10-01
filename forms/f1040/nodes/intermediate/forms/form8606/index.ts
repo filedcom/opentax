@@ -20,6 +20,7 @@ export const filingDetailsSchema = z.object({
   owner: z.nativeEnum(IraOwner),
   prior_basis_documented_from_2024_form8606: z.literal(true),
   no_ira_distributions_or_conversions_confirmed: z.boolean(),
+  other_spouse_form8606_not_required_confirmed: z.literal(true).optional(),
 });
 
 export const distributionEvidenceSchema = z.object({
