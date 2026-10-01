@@ -133,3 +133,13 @@ Schedule 3 line 8 in a finalized return. Positive full-return, both-direction
 vintage-tamper, and return-total fixtures
 are authored for the deferred batch. This checks the structured transcription;
 it does not authenticate the filed 2024 Schedule B or establish IRS acceptance.
+
+For the one-category current-year excess route, the Schedule B PDF now also
+requires Schedule 3 line 1 to equal that category's allowed Form 1116 credit,
+while retaining its Schedule 3 line 8 to Form 1040 line 20 check. The native
+Schedule B already enforced this parent-credit join. An authored full-return
+foreign-interest positive case and a Schedule 3 credit tamper case await the
+bulk pass. The [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
+derive current-year excess and its carryover from the same Form 1116 category;
+this check does not establish foreign-source document authenticity or extend
+the one-category PDF route.

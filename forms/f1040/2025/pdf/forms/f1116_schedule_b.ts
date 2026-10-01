@@ -159,6 +159,8 @@ export const form1116ScheduleBPdf: PdfFormDescriptor = {
       const form1040 = allPending.f1040;
       if (
         typeof schedule3?.line1_foreign_tax_credit !== "number" ||
+        (summaries.length === 1 &&
+          schedule3.line1_foreign_tax_credit !== summary.allowedCredit) ||
         typeof schedule3.line8_total !== "number" ||
         form1040?.line20_nonrefundable_credits !== schedule3.line8_total
       ) {
