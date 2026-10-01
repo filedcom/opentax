@@ -520,6 +520,13 @@ export const priorYearCarryoverSchema = z.object({
     line8_2015_ninth_preceding_amount: z.number().int().positive().optional(),
     line8_2016_eighth_preceding_amount: z.number().int().positive().optional(),
     line8_2017_seventh_preceding_amount: z.number().int().positive().optional(),
+    line8_2018_sixth_preceding_amount: z.number().int().positive().optional(),
+    line8_2019_fifth_preceding_amount: z.number().int().positive().optional(),
+    line8_2020_fourth_preceding_amount: z.number().int().positive().optional(),
+    line8_2021_third_preceding_amount: z.number().int().positive().optional(),
+    line8_2022_second_preceding_amount: z.number().int().positive().optional(),
+    line8_2023_first_preceding_amount: z.number().int().positive().optional(),
+    line8_2024_current_year_amount: z.number().int().positive().optional(),
     line8_total: z.number().int().positive(),
   }).strict().optional(),
 }).strict().superRefine((source, ctx) => {

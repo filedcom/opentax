@@ -16,6 +16,8 @@ instructions](https://www.irs.gov/instructions/i1116sb) and the
 [2025 Form 1116 line 10 instructions](https://www.irs.gov/instructions/i1116).
 Positive filed 2024 joins and altered owner or vintage amount fixtures are
 authored for the deferred bulk validation. The entered document references are
-not authenticated against filed return bytes. Other vintage sources retain their
-current bounded ledger checks; carryback adjustments, mixed baskets, K-3
-carryovers, and foreign-tax redeterminations remain guarded.
+not authenticated against filed return bytes. The same structured filed-source
+join now covers the
+[remaining supported vintages](ty2025-form1116-schedule-b-all-vintages-filed-source-gap.md);
+carryback adjustments, mixed baskets, K-3 carryovers, and foreign-tax
+redeterminations remain guarded.

@@ -22,8 +22,9 @@ both PDFs. Changed filed amount, owner, document identity, and missing filed
 source are rejection fixtures for the deferred bulk gate.
 
 The source references are reviewed transcriptions, not authenticated filed
-return bytes. Earlier or later vintages without this structured join retain
-their existing boundaries. Carrybacks, foreign-tax redeterminations, mixed
-categories, and pre-2018 general-category allocations remain guarded. XSD,
+return bytes. The
+[other supported vintages](ty2025-form1116-schedule-b-all-vintages-filed-source-gap.md)
+now use the same structured join. Carrybacks, foreign-tax redeterminations,
+mixed categories, and pre-2018 general-category allocations remain guarded. XSD,
 filled-PDF appearance, full tests, and IRS acceptance are pending the shared
 bulk validation pass.

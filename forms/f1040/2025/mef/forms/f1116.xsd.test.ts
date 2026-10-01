@@ -404,6 +404,8 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const filedForm1040Id = "filed-2024-form1040-123456789";
+  const filedScheduleBId = "filed-2024-passive-schedule-b-123456789";
   const carryover = {
     income_category: IncomeCategory.Passive,
     vintages: [
@@ -427,9 +429,19 @@ Deno.test({
     prior_year_schedule_b_line8_total: 800,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
-    source_document_references: [
-      "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
-    ],
+    source_document_references: [filedForm1040Id, filedScheduleBId],
+    filed_2024_schedule_b: {
+      taxpayer_ssn: "123456789",
+      tax_year: 2024 as const,
+      income_category: IncomeCategory.Passive,
+      form1040_source_document_id: filedForm1040Id,
+      schedule_b_source_document_id: filedScheduleBId,
+      line8_2021_third_preceding_amount: 100,
+      line8_2022_second_preceding_amount: 100,
+      line8_2023_first_preceding_amount: 100,
+      line8_2024_current_year_amount: 500,
+      line8_total: 800,
+    },
   };
   const result = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -456,6 +468,10 @@ Deno.test({
   )?.fields;
   assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
   const xml = buildMefXml({
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: "123456789",
+    },
     form1116_prior_carryover: { carryovers: [carryover] },
     form_1116: formFields as Parameters<typeof form1116.build>[0],
     form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),

@@ -215,6 +215,8 @@ Deno.test("two-country passive interest rejects changed payer, country, review, 
 });
 
 Deno.test("two-country passive interest uses a filed 2024 vintage through both Form 1116 attachments", async () => {
+  const filedForm1040Id = "filed-2024-form1040-111223333";
+  const filedScheduleBId = "filed-2024-passive-schedule-b-111223333";
   const carryoverSource = {
     income_category: "passive",
     vintages: [{
@@ -224,9 +226,16 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
     prior_year_schedule_b_line8_total: 500,
     prior_year_schedule_b_line8_other_vintages_total: 0,
     no_intervening_adjustments: true,
-    source_document_references: [
-      "Filed 2024 passive Schedule B line 8, 2024-origin column",
-    ],
+    source_document_references: [filedForm1040Id, filedScheduleBId],
+    filed_2024_schedule_b: {
+      taxpayer_ssn: "111223333",
+      tax_year: 2024 as const,
+      income_category: "passive" as const,
+      form1040_source_document_id: filedForm1040Id,
+      schedule_b_source_document_id: filedScheduleBId,
+      line8_2024_current_year_amount: 500,
+      line8_total: 500,
+    },
   };
   const result = f1040_2025.executeReturn({
     general: {
