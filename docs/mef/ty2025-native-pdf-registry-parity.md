@@ -4,9 +4,14 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **138 native descriptors and 108 PDF
+exclusion. The indexes currently hold **139 native descriptors and 109 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
+
+Form 2106 now has one bounded registered native/PDF pair for a sourced
+taxpayer fee-basis state/local official job. Other Form 2106 shapes remain
+blocked by attachment coverage; this registration has authored but unrun
+source and tamper fixtures.
 
 ## Priority 1: native taxpayer forms with no PDF descriptor
 
