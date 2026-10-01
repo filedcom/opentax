@@ -123,15 +123,88 @@ Deno.test("sourced retained ISO plus qualified dividends reconciles Part III in 
     "reconciled 1099-DIV",
   );
   assertThrows(
-    () => form6251.build(fields, {
-      ...base,
-      pending: {
-        ...pending,
-        f1040: { ...pending.f1040, line15_taxable_income: 20_001 },
-      },
-    }),
+    () =>
+      form6251.build(fields, {
+        ...base,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line15_taxable_income: 20_001 },
+        },
+      }),
     Error,
     "finalized Form 1040",
+  );
+});
+
+Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => {
+  const result = calculatedForm6251.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form6251InputSchema.parse({
+      filing_status: "single",
+      regular_tax_income: 20_000,
+      regular_taxable_income: 20_000,
+      regular_tax: 5_000,
+      iso_adjustment: 180_000,
+      qualified_dividends: 10_000,
+    }),
+  );
+  const fields = result.outputs.find((row) => row.nodeType === "form6251")
+    ?.fields ?? {};
+  const base = isoContext(180_000);
+  const first = {
+    payerName: "First Dividend Payer",
+    isNominee: false,
+    box11: false,
+    box1a: 7_000,
+    box1b: 6_000,
+  };
+  const second = {
+    payerName: "Second Dividend Payer",
+    isNominee: false,
+    box11: false,
+    box1a: 5_000,
+    box1b: 4_000,
+  };
+  const pending = {
+    ...base.pending,
+    f1099div: { f1099divs: [first, second] },
+    f1040: {
+      line3a_qualified_dividends: 10_000,
+      line3b_ordinary_dividends: 12_000,
+      line11_agi: 20_000,
+      line14_deductions_qbi_total: 0,
+      line15_taxable_income: 20_000,
+    },
+  };
+  assertStringIncludes(
+    form6251.build(fields, { ...base, pending }),
+    "<CapitalGainsWorksheetAmt>10000</CapitalGainsWorksheetAmt>",
+  );
+  assertEquals(form6251Pdf.projectFields!(fields, pending).line13, 10_000);
+  const changedPayer = {
+    ...pending,
+    f1099div: {
+      f1099divs: [first, { ...second, box1b: 3_999 }],
+    },
+  };
+  assertThrows(
+    () => form6251.build(fields, { ...base, pending: changedPayer }),
+    Error,
+    "reconciled 1099-DIV payers",
+  );
+  assertThrows(
+    () => form6251Pdf.projectFields!(fields, changedPayer),
+    Error,
+    "reconciled 1099-DIV payers",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields!(fields, {
+        ...pending,
+        f1099div: { f1099divs: [first, { ...second, box7: 1 }] },
+      }),
+    Error,
+    "reconciled 1099-DIV payers",
   );
 });
 

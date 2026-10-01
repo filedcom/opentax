@@ -48,7 +48,7 @@ const childReview = {
     no_other_nonspouse_taxpayer_claim_confirmed: true,
     no_prior_form8839_claim_for_child_confirmed: true,
     no_employer_adoption_benefits_confirmed: true,
-    no_government_or_other_reimbursement_confirmed: true,
+    all_reimbursements_disclosed_confirmed: true,
     no_other_federal_credit_or_deduction_for_expenses_confirmed: true,
     no_surrogacy_or_illegal_expenses_confirmed: true,
   },
@@ -167,6 +167,74 @@ Deno.test("Form 8839 staged native and PDF values use one reconciled credit", ()
   assertEquals(result.pdfFields.line18, 7_000);
   assertEquals(result.pdfFields.noPriorForm, true);
   assertEquals(result.pdfFields.noPhaseout, true);
+});
+
+Deno.test("Form 8839 staged native/PDF candidate nets a documented private reimbursement", () => {
+  const reimbursement = {
+    source_document_id: "private-reimbursement-1",
+    document_sha256: "d".repeat(64),
+    reimbursed_amount: 2_000,
+    payer_name: "Family Adoption Fund",
+    paid_date: "2025-06-01",
+    not_employer_or_public_funds_confirmed: true,
+  };
+  const reimbursedSource = {
+    ...source,
+    children: [{
+      ...source.children[0]!,
+      expenses: [{
+        ...source.children[0]!.expenses[0]!,
+        reimbursed_amount: 2_000,
+        reimbursement_source_document_id: reimbursement.source_document_id,
+      }],
+    }],
+  };
+  const reimbursedReview = {
+    ...childReview,
+    expenses: [{ ...childReview.expenses[0]!, reimbursement }],
+  };
+  const reimbursedPending = {
+    form8839: reimbursedSource,
+    f1040: {
+      ...finalPending.f1040,
+      line20_nonrefundable_credits: 6_000,
+    },
+    schedule3: {
+      line6c_adoption_credit: 5_000,
+      line7_total: 5_000,
+      line8_total: 6_000,
+    },
+  };
+  const candidate = projectStagedForm8839Documents(
+    reimbursedSource,
+    reimbursedReview,
+    sinkInput,
+    magiReview,
+    reimbursedPending,
+    filer,
+  );
+  assertStringIncludes(candidate.xml, "<QualifiedAdoptionExpenseAmt>10000</QualifiedAdoptionExpenseAmt>");
+  assertStringIncludes(candidate.xml, "<NonrefundableAdoptionCreditAmt>5000</NonrefundableAdoptionCreditAmt>");
+  assertEquals(candidate.pdfFields.line5, 10_000);
+  assertEquals(candidate.pdfFields.line18, 5_000);
+  assertThrows(
+    () => projectStagedForm8839Documents(
+      reimbursedSource,
+      {
+        ...reimbursedReview,
+        expenses: [{
+          ...reimbursedReview.expenses[0]!,
+          reimbursement: { ...reimbursement, reimbursed_amount: 1_999 },
+        }],
+      },
+      sinkInput,
+      magiReview,
+      reimbursedPending,
+      filer,
+    ),
+    Error,
+    "reviewed payment does not match",
+  );
 });
 
 Deno.test("Form 8839 staged projection rejects altered final return, source or missing pending", () => {

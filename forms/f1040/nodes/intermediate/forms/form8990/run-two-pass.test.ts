@@ -44,6 +44,7 @@ Deno.test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced
       tax_year: taxYear as 2022 | 2023 | 2024,
       business_reference: "C-1",
       filed_schedule_c_document_reference: `filed-${taxYear}`,
+      filed_taxpayer_ssn: "123456789",
       filed_tax_period_start: `${taxYear}-01-01`,
       filed_tax_period_end: `${taxYear}-12-31`,
       filed_line1_gross_receipts: 33_000_000,

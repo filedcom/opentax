@@ -53,6 +53,21 @@ does not persist the activity, source document, original credit year, reporting
 route or per-source suspended amount needed to use that credit in a later
 return. A PDF-only success would mask that missing carryforward contract.
 
+A versioned, storage-ready TY2025 Worksheet 9 result now exists for the
+current-year-only subset. It preserves every activity's complete credit source,
+Form 3800/8834 route, allowed and unallowed dollars, and 2025 origin year;
+its schema reconciles all rows to line 5, line 37, and the suspended total.
+It deliberately rejects any prior-year unallowed credit because the filed
+prior Worksheet 9 and an ordering rule are still needed to assign allowed
+amounts to vintages. This helper is not yet a persisted accepted-return record
+or a next-year importer. Authored positive and tamper fixtures remain unrun.
+The line 6 tax-without-passive-income source and registered PDF still block
+source-to-return parity.
+The current source schema now requires whole-dollar tax values and rejects a
+tax-without-passive amount above the all-income amount before the line 6
+subtraction. This prevents an inverted input from being silently clamped to
+zero; it does not establish either tax amount from the finalized return method.
+
 To open a bounded PDF route, first provide a reviewed, source-linked
 tax-without-passive-income worksheet whose inputs reconcile to final Form 1040
 taxable income and each passive activity. Preserve per-activity and origin-year

@@ -41,3 +41,18 @@ and files only the AMT-minus-regular difference. Mixed terms, zero or negative
 nets, dividends, elections and unaudited capital activity still stop; this does
 not resolve the remaining line-2k rows above. See the
 [AMT-basis gap](ty2025-form6251-8949-basis-gap.md).
+
+# Multiple ordinary-dividend payers with retained ISO (staged, unrun)
+
+The bounded retained-share Form 3921 ISO and qualified-dividend Part III route
+now sums one or more ordinary Form 1099-DIV payers. Each payer must have only
+domestic box 1a/1b income, with its qualified amount no greater than its
+ordinary amount. The aggregate box 1b must equal Form 6251's qualified dividends
+and finalized Form 1040 line 3a; aggregate box 1a must equal Form 1040 line 3b.
+MeF and PDF use the same source gate, including rejection when one payer has an
+unsupported box or the aggregate changes. The Part III arithmetic remains the
+existing bounded no-capital-gain route. Focused positive and tamper fixtures are
+authored for the deferred bulk pass; issued 1099-DIV bytes, broader capital-gain
+activity, filled PDF, XSD, and ATS remain open. See
+[2025 Form 6251](https://www.irs.gov/pub/irs-prior/f6251--2025.pdf) and
+[2025 Publication 550](https://www.irs.gov/publications/p550).

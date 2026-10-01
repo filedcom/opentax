@@ -48,7 +48,7 @@ const childReview = {
     no_other_nonspouse_taxpayer_claim_confirmed: true,
     no_prior_form8839_claim_for_child_confirmed: true,
     no_employer_adoption_benefits_confirmed: true,
-    no_government_or_other_reimbursement_confirmed: true,
+    all_reimbursements_disclosed_confirmed: true,
     no_other_federal_credit_or_deduction_for_expenses_confirmed: true,
     no_surrogacy_or_illegal_expenses_confirmed: true,
   },

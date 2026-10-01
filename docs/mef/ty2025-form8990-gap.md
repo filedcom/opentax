@@ -315,6 +315,15 @@ document references are review leads, not verified source documents; actual
 debt-tracing review and authenticity remain open. The related cases are written
 but unrun under the build-first hold, and filing stays blocked.
 
+The three reviewed filed 2022–2024 Schedule C receipts records now each require
+the current taxpayer's SSN. Their identities are compared with the filed 2024
+Form 8990 taxpayer already checked against the current return, and each Schedule
+C document reference must differ from that Form 8990 reference. The two-pass
+calculation and native/PDF source replay reject a swapped taxpayer or reused
+record. This ties the gross-receipts lower bound to the same taxpayer; the
+references still do not authenticate actual filed documents. Focused positive
+and owner-tampering fixtures are authored but unrun.
+
 The CLI return store now has an explicit `persistCalculatedForm8990Workpaper`
 operation. It writes a typed `calculated-unfiled` record inside that return's
 existing `return.json`, not as a side effect of a preview or export. The record
@@ -341,3 +350,14 @@ accepted ledger entry before putting 2025 line 31 on 2026 line 2. Until those
 direct joins exist, the calculated record stays `unfiled`, the executor error
 continues to block finalized TY2025 export, and no 2026 carryforward is treated
 as filed. A reference string or locally written XML cannot clear this gate.
+
+The accepted-year ledger must be an immutable entry written only after reading
+the archived outbound Submission ZIP and a parsed IRS **accepted**
+acknowledgment for its unique Submission ID. Its key must include return ID,
+TY2025, taxpayer SSN, and business reference; its payload must bind the source
+record digest, exact submitted Form 8990 XML digest, Submission ID and archive
+digest, acknowledgment record ID and payload digest, and line 31. A TY2026
+line-2 importer must re-read that accepted entry, verify those digests and
+identities, and consume exactly its line-31 amount once. The current A2A archive
+stores acknowledgment bytes as opaque payloads and has no trusted accepted
+status parser, so it cannot create this entry or clear the TY2025 export gate.

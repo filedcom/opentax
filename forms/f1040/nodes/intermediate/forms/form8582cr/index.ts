@@ -204,11 +204,11 @@ export const inputSchema = z.object({
 
   // Regular tax computed on all income including passive net income
   // Part I, Line 6 (full tax side)
-  regular_tax_all_income: z.number().nonnegative(),
+  regular_tax_all_income: z.number().int().nonnegative(),
 
   // Regular tax computed on income excluding net passive income
   // Part I, Line 6 (ex-passive side)
-  regular_tax_without_passive: z.number().nonnegative(),
+  regular_tax_without_passive: z.number().int().nonnegative(),
 
   // MAGI for Part II rental real estate phase-out calculation
   // IRC §469(i)(3)
@@ -235,6 +235,14 @@ export const inputSchema = z.object({
   // MFS filers who lived with their spouse cannot use Parts II-IV.
   filing_status: filingStatusSchema.optional(),
 }).superRefine((input, ctx) => {
+  if (input.regular_tax_without_passive > input.regular_tax_all_income) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["regular_tax_without_passive"],
+      message:
+        "Form 8582-CR line 6 tax without passive income cannot exceed tax on all income",
+    });
+  }
   const k1Keys = new Set<string>();
   input.required_orphan_drug_k1_credits?.forEach((evidence, index) => {
     const key = [

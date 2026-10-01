@@ -53,6 +53,7 @@ async function makeBoundedReturn(baseDir: string) {
       tax_year: taxYear,
       business_reference: "C-1",
       filed_schedule_c_document_reference: `filed-${taxYear}-schedule-c`,
+      filed_taxpayer_ssn: "123456789",
       filed_tax_period_start: `${taxYear}-01-01`,
       filed_tax_period_end: `${taxYear}-12-31`,
       filed_line1_gross_receipts: 33_000_000,

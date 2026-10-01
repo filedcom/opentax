@@ -40,10 +40,10 @@ prior-year claim, and no employer benefits, it cross-checks the child's name,
 SSN, decree date/jurisdiction/document ID, and every receipt's document ID,
 payment date, category, payee and whole-dollar amount against a structured
 review record. Each expense needs a distinct payment-proof document, and
-duplicate/missing/mismatched records, reimbursements, and unsupported facts
+duplicate/missing/mismatched records, undocumented reimbursements, and unsupported facts
 reject. Review facts explicitly cover U.S. status when adoption efforts began,
 under-18 status, adoptive-parent identity, spouse-child/other-claimant
-exclusions, government/employer/other reimbursement, duplicate federal tax
+exclusions, full reimbursement disclosure, duplicate federal tax
 benefits, and surrogacy/illegal expenses. This narrows the
 [2025 qualified-expense and eligible-child rules](https://www.irs.gov/instructions/i8839)
 to a deliberately smaller path. Focused preflight, arithmetic, and rejection
@@ -54,6 +54,20 @@ underlying document bytes**. No document ingestion or independent reviewer
 workflow is connected, so the gate is not invoked by the active node; node, MeF,
 and PDF positive claims still fail closed. The preflight does not supply MAGI or
 prove tax capacity.
+
+The staged preflight now also accepts one or more explicitly documented
+nonemployer, nonpublic reimbursements. Each reimbursement has a distinct
+document ID and SHA-256-shaped value, payer, date, and whole-dollar amount;
+the expense ledger must identify the same document and amount. Reimbursement
+dates must be in 2025, follow payment, and precede review. The review now asserts that all
+reimbursements were disclosed, while the source calculation subtracts the
+documented amount from qualified expenses. A staged one-child positive fixture
+carries a $12,000 attorney invoice, $2,000 private reimbursement, $10,000
+qualified expense, $5,000 refundable credit, and $5,000 nonrefundable credit
+through the pre-adoption return, final Schedule 3/Form 1040 comparison, and
+candidate native XML/PDF values. Altered reimbursement amounts reject. These
+fixtures are written but unrun; none authenticates the document bytes or opens
+the active filing route.
 
 `nodes/intermediate/forms/form8839/pre_adoption_reconciliation.ts` now stages a
 separate **pure, unrun** final-return arithmetic join for this same narrow

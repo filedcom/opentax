@@ -18,6 +18,7 @@ const filed = [2022, 2023, 2024].map((taxYear) => ({
   tax_year: taxYear,
   business_reference: "C-1",
   filed_schedule_c_document_reference: `filed-${taxYear}`,
+  filed_taxpayer_ssn: "123456789",
   filed_tax_period_start: `${taxYear}-01-01`,
   filed_tax_period_end: `${taxYear}-12-31`,
   filed_line1_gross_receipts: 33_000_000,
@@ -26,7 +27,7 @@ const filed = [2022, 2023, 2024].map((taxYear) => ({
 }));
 
 Deno.test("2025 Form 8990 prior filed Schedule C receipts establish a lower bound above threshold", () => {
-  const proof = proveNonexemptPriorReceipts(provisional, filed);
+  const proof = proveNonexemptPriorReceipts(provisional, filed, "123456789");
   assertEquals(
     proof.averagePriorThreeYearScheduleCNetReceiptsLowerBound,
     32_000_000,
@@ -39,7 +40,7 @@ Deno.test("2025 Form 8990 prior filed Schedule C receipts establish a lower boun
 
 Deno.test("2025 Form 8990 prior receipts reject incomplete or below-threshold sources", () => {
   assertThrows(
-    () => proveNonexemptPriorReceipts(provisional, filed.slice(0, 2)),
+    () => proveNonexemptPriorReceipts(provisional, filed.slice(0, 2), "123456789"),
     Error,
   );
   assertThrows(
@@ -51,6 +52,7 @@ Deno.test("2025 Form 8990 prior receipts reject incomplete or below-threshold so
           filed_line2_returns_and_allowances: 2_000_000,
           filed_line3_net_receipts: 31_000_000,
         })),
+        "123456789",
       ),
     Error,
     "do not establish nonexempt status",
@@ -63,6 +65,7 @@ Deno.test("2025 Form 8990 prior receipts reject incomplete or below-threshold so
           ...entry,
           business_reference: "C-2",
         })),
+        "123456789",
       ),
     Error,
     "not for the identified business",
@@ -80,6 +83,7 @@ Deno.test("2025 Form 8990 rejects gross line 1 above threshold when line 2 lower
           filed_line2_returns_and_allowances: 4_000_000,
           filed_line3_net_receipts: 30_000_000,
         })),
+        "123456789",
       ),
     Error,
     "do not establish nonexempt status",
@@ -95,6 +99,7 @@ Deno.test("2025 Form 8990 requires reconciled filed lines and full prior tax yea
           ...entry,
           filed_line3_net_receipts: 33_000_000,
         })),
+        "123456789",
       ),
     Error,
     "line 3 must equal line 1 less line 2",
@@ -107,8 +112,24 @@ Deno.test("2025 Form 8990 requires reconciled filed lines and full prior tax yea
           ...entry,
           filed_tax_period_start: `${entry.tax_year}-07-01`,
         })),
+        "123456789",
       ),
     Error,
     "full calendar-year filed Schedule C",
+  );
+});
+
+Deno.test("2025 Form 8990 prior filed Schedule C source must name the current taxpayer", () => {
+  assertThrows(
+    () => proveNonexemptPriorReceipts(provisional, filed, "987654321"),
+    Error,
+    "taxpayer differs from current return",
+  );
+  assertThrows(
+    () => proveNonexemptPriorReceipts(provisional, filed.map((entry, index) =>
+      index === 1 ? { ...entry, filed_taxpayer_ssn: "987654321" } : entry
+    ), "123456789"),
+    Error,
+    "taxpayer differs from current return",
   );
 });

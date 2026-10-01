@@ -49,7 +49,7 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
         nodeType: "form8990",
         nodeId: "form8990",
         message:
-          "Calculated Form 8990 remains unfileable until its carryforward workpaper is durably persisted",
+          "Calculated Form 8990 remains unfileable until source evidence and an accepted-filing carryforward ledger are durably persisted",
       },
     ],
     carryforwards: {
