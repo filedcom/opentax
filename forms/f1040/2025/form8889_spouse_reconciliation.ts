@@ -81,6 +81,7 @@ export function reconcileDatedExceptionForm8889(
   const return1040 = z.object({
     line8_additional_income: z.number(),
     line10_adjustments: z.number(),
+    line23_other_taxes: z.number().optional(),
   }).passthrough().parse(allPending?.f1040);
   if (
     (schedule1.line13_hsa_deduction ?? 0) !==
@@ -93,7 +94,11 @@ export function reconcileDatedExceptionForm8889(
       (filed.print_line21 ?? 0) ||
     schedule1.line10_total_additional_income !==
       return1040.line8_additional_income ||
-    schedule1.line26_total_adjustments !== return1040.line10_adjustments
+    schedule1.line26_total_adjustments !== return1040.line10_adjustments ||
+    (source.age_65_exception_evidence !== undefined &&
+      source.disability_exception_evidence !== undefined &&
+      return1040.line23_other_taxes !==
+        (filed.print_line17b_penalty ?? 0) + (filed.print_line21 ?? 0))
   ) {
     throw new Error(
       "Form 8889 dated exception amounts differ from filed return",

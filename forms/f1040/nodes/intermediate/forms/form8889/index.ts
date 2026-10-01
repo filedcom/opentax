@@ -967,6 +967,8 @@ function nonQualifiedPenalty(
     const ageRows = age.distributions;
     const disabilityRows = disability.distributions;
     const rows = [...ageRows, ...disabilityRows];
+    const exclusions = input.hsa_excluded_distributions;
+    const rollover = exclusions?.rollover;
     const forms = input.form1099_sa_distributions ?? [];
     const validDate = (value: string): boolean => {
       const date = new Date(`${value}T00:00:00.000Z`);
@@ -996,20 +998,43 @@ function nonQualifiedPenalty(
       (sum, row) =>
         sum +
         (row.distribution_date >= age65
-          ? row.gross_amount - row.qualified_medical_amount
+          ? row.gross_amount - row.qualified_medical_amount -
+            (row.rollover_excluded_amount ?? 0)
           : 0),
       0,
     ) + disabilityRows.reduce(
       (sum, row) =>
         sum +
         (row.distribution_date >= disability.disability_date
-          ? row.gross_amount - row.qualified_medical_amount
+          ? row.gross_amount - row.qualified_medical_amount -
+            (row.rollover_excluded_amount ?? 0)
           : 0),
       0,
     );
+    const rolloverRows = rows.filter((row) =>
+      (row.rollover_excluded_amount ?? 0) > 0
+    );
     if (
       !validDate(age65) ||
-      input.hsa_excluded_distributions !== undefined ||
+      (exclusions !== undefined &&
+        (!rollover || exclusions.timely_excess_withdrawal !== undefined)) ||
+      (rollover !== undefined &&
+        (disabilityBeforeAge65 ||
+          rows.some((row) => row.rollover_excluded_amount === undefined) ||
+          rolloverRows.length !== 1 ||
+          !ageRows.some((row) => row === rolloverRows[0]) ||
+          rolloverRows[0]?.rollover_excluded_amount !== rollover.amount ||
+          rolloverRows[0]?.distribution_date !==
+            rollover.distribution_date ||
+          rolloverRows[0]?.source_reference !==
+            rollover.distribution_source_reference ||
+          rolloverRows[0]?.form1099_sa_source_reference !==
+            rollover.form1099_sa_source_reference ||
+          rows.some((row) =>
+            row.source_reference === rollover.contribution_source_reference ||
+            row.form1099_sa_source_reference ===
+              rollover.contribution_source_reference
+          ))) ||
       input.employer_excess_treatment?.timely_withdrawal !== undefined ||
       age.birth_date_source_reference ===
         disability.disability_source_reference ||
@@ -1018,8 +1043,9 @@ function nonQualifiedPenalty(
       rows.some((row) =>
         !validDate(row.distribution_date) ||
         row.distribution_date.slice(0, 4) !== String(taxYear) ||
-        row.qualified_medical_amount > row.gross_amount ||
-        row.rollover_excluded_amount !== undefined
+        row.qualified_medical_amount +
+              (row.rollover_excluded_amount ?? 0) > row.gross_amount ||
+        (rollover === undefined && row.rollover_excluded_amount !== undefined)
       ) ||
       ageRows.some((row) =>
         disabilityBeforeAge65

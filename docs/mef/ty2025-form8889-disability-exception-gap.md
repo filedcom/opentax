@@ -47,9 +47,8 @@ together to lines 14a and 15. The exception on line 17a covers the taxable
 withdrawals after age 65; line 17b retains 20% of the taxable amount before
 age 65. The positive fixture checks Schedule 1 line 8f, Schedule 2 line 17c,
 Form 1040 line 8, and native/PDF Form 8889. Changed disability date, Form
-1099-SA code, and filed Schedule 2 tax are rejected. This route does not combine
-a rollover or timely excess withdrawal, or allow a single 1099-SA source to span
-the two dated ledgers.
+1099-SA code, and filed Schedule 2 tax are rejected. A single 1099-SA source
+cannot span the two dated ledgers.
 
 The complementary dated route covers disability before age 65. The code-3 Form
 1099-SA transactions fall after disability and before the 65th birthday; code-1
@@ -59,10 +58,24 @@ line 17a while earlier taxable withdrawals retain the 20% tax. The positive
 fixture joins Schedule 1/2 and Form 1040 to native/PDF lines; changed disability
 date, distribution code, and filed tax are rejected.
 
+For the age-65-before-disability order, one owner may also allocate a single
+HSA-to-HSA rollover on line 14b. The excluded amount must belong to exactly one
+code-1, dated age-ledger transaction and match the rollover's distribution
+source, Form 1099-SA, date, and amount. Every dated transaction marks its
+rollover amount, including zero. The deposit source is distinct, and the
+existing
+[60-day redeposit and same-beneficiary rules](https://www.irs.gov/instructions/i8889)
+apply. Line 16 subtracts the rollover and qualified medical expense amounts
+before line 17a/17b allocation. The positive native/PDF fixture and altered
+rollover source, allocation, and Schedule 1 fixtures are authored for deferred
+validation. For these same-owner combined exceptions, native/PDF export also
+checks Form 1040 line 23 against the Form 8889 Part II penalty plus any Part III
+tax; other sources of line 23 tax remain outside this bounded route.
+
 Same-day event ordering, code-3 distributions after age 65 in the
-disability-first route, timely excess withdrawal, multiple paired rollovers,
-death, and nonspouse beneficiary rules remain open. Source references and
-disability confirmation are entered evidence, not independently authenticated
-medical or trustee records. Focused calculator, MeF, and PDF cases are written
-but intentionally unrun pending the agreed full test batch; XSD, visual PDF, and
-ATS gates also remain open.
+disability-first route, its rollover combination, timely excess withdrawal,
+multiple paired rollovers, death, and nonspouse beneficiary rules remain open.
+Source references and disability confirmation are entered evidence, not
+independently authenticated medical or trustee records. Focused calculator, MeF,
+and PDF cases are written but intentionally unrun pending the agreed full test
+batch; XSD, visual PDF, and ATS gates also remain open.

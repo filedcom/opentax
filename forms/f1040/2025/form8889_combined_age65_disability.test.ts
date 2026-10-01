@@ -115,7 +115,50 @@ function disabilityFirstCase() {
   return filingCase(source);
 }
 
-function filingCase(source: ReturnType<typeof inputSchema.parse>) {
+function combinedRolloverCase() {
+  const original = combinedCase().source;
+  const source = inputSchema.parse({
+    ...original,
+    exception_qualified_taxable_amount: 550,
+    hsa_excluded_distributions: {
+      rollover: {
+        amount: 150,
+        distribution_date: "2025-05-10",
+        contribution_date: "2025-06-01",
+        distribution_source_reference: "may-transaction",
+        form1099_sa_source_reference: "may-1099-sa",
+        contribution_source_reference: "receiving-hsa-deposit",
+        same_beneficiary: true,
+        receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+        not_direct_trustee_transfer: true,
+      },
+    },
+    age_65_exception_evidence: {
+      ...original.age_65_exception_evidence!,
+      distributions: original.age_65_exception_evidence!.distributions.map((
+        row,
+      ) => ({
+        ...row,
+        rollover_excluded_amount: row.source_reference === "may-transaction"
+          ? 150
+          : 0,
+      })),
+    },
+    disability_exception_evidence: {
+      ...original.disability_exception_evidence!,
+      distributions: original.disability_exception_evidence!.distributions.map(
+        (row) => ({ ...row, rollover_excluded_amount: 0 }),
+      ),
+    },
+  });
+  return filingCase(source, 850, 60);
+}
+
+function filingCase(
+  source: ReturnType<typeof inputSchema.parse>,
+  income = 1000,
+  penalty = 60,
+) {
   const outputs = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     source,
@@ -128,12 +171,16 @@ function filingCase(source: ReturnType<typeof inputSchema.parse>) {
   const pending = {
     form8889: { ...source, forms },
     schedule1: {
-      line8f_hsa_income: 1000,
-      line10_total_additional_income: 1000,
+      line8f_hsa_income: income,
+      line10_total_additional_income: income,
       line26_total_adjustments: 0,
     },
-    schedule2: { line17c_hsa_penalty: 60 },
-    f1040: { line8_additional_income: 1000, line10_adjustments: 0 },
+    schedule2: { line17c_hsa_penalty: penalty },
+    f1040: {
+      line8_additional_income: income,
+      line10_adjustments: 0,
+      line23_other_taxes: penalty,
+    },
   };
   return { source, forms, pending };
 }
@@ -220,6 +267,18 @@ Deno.test("combined HSA exception rejects changed owner source, dates, 1099-SA a
     Error,
     "amounts differ from filed return",
   );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line23_other_taxes: 59 },
+        },
+      }),
+    Error,
+    "amounts differ from filed return",
+  );
 });
 
 Deno.test("one HSA owner has disability before age 65 with separate code-3 and later code-1 sources", () => {
@@ -285,6 +344,92 @@ Deno.test("disability-before-age-65 allocation rejects interval and return tampe
       form8889.build({ forms }, {
         filer,
         pending: { ...pending, schedule2: { line17c_hsa_penalty: 0 } },
+      }),
+    Error,
+    "amounts differ from filed return",
+  );
+});
+
+Deno.test("combined age-65 and disability exception allocates one dated HSA rollover", () => {
+  const { forms, pending } = combinedRolloverCase();
+  assertEquals(forms[0]?.print_line14b_excluded_distributions, 150);
+  assertEquals(forms[0]?.print_line16_taxable, 850);
+  assertEquals(forms[0]?.print_line17b_penalty, 60);
+  const xml = form8889.build({ forms }, { filer, pending }).join("");
+  assertStringIncludes(
+    xml,
+    "<HSADistributionRolloverAmt>150</HSADistributionRolloverAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableHSADistributionAmt>850</TaxableHSADistributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxAmt>60</HSADistriAddnlPercentTaxAmt>",
+  );
+  const [pdf] = form8889Pdf.instances!(pending.form8889, filer, pending);
+  assertEquals(pdf?.print_line14b_excluded_distributions, 150);
+  assertEquals(pdf?.print_line16_taxable, 850);
+  assertEquals(pdf?.print_line17b_penalty, 60);
+});
+
+Deno.test("combined exception rollover rejects changed source, allocation and return", () => {
+  const { source, forms, pending } = combinedRolloverCase();
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          form8889: {
+            ...source,
+            hsa_excluded_distributions: {
+              rollover: {
+                ...source.hsa_excluded_distributions!.rollover!,
+                distribution_source_reference: "other-transaction",
+              },
+            },
+            forms,
+          },
+        },
+      }),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form8889Pdf.instances!(pending.form8889, filer, {
+        ...pending,
+        form8889: {
+          ...source,
+          age_65_exception_evidence: {
+            ...source.age_65_exception_evidence!,
+            distributions: source.age_65_exception_evidence!.distributions.map((
+              row,
+            ) =>
+              row.source_reference === "may-transaction"
+                ? { ...row, rollover_excluded_amount: 149 }
+                : row
+            ),
+          },
+          forms,
+        },
+      }),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          schedule1: {
+            ...pending.schedule1,
+            line8f_hsa_income: 1000,
+          },
+        },
       }),
     Error,
     "amounts differ from filed return",
