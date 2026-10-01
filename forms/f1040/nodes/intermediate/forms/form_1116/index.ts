@@ -607,6 +607,8 @@ export const inputSchema = z.object({
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
+  two_country_dividend_pdf_review: twoCountryInterestPdfReviewSchema
+    .optional(),
   three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
   two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
@@ -1181,11 +1183,14 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         mixed_interest_dividend_pdf_review:
           input.mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review: input.two_country_interest_pdf_review,
+        two_country_dividend_pdf_review: input.two_country_dividend_pdf_review,
         three_country_interest_pdf_review:
           input.three_country_interest_pdf_review,
         two_country_mixed_pdf_review: input.two_country_mixed_pdf_review,
         three_country_mixed_pdf_review: input.three_country_mixed_pdf_review,
         two_country_treasury_pdf_review: input.two_country_treasury_pdf_review,
+        foreign_preferential_income_review:
+          input.foreign_preferential_income_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });

@@ -27,6 +27,7 @@ import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasu
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
 import { reconcileForm1116TwoForeignDividends } from "../../form1116_two_foreign_dividends.ts";
+import { reconcileForm1116TwoCountryDividends } from "../../form1116_two_country_dividends.ts";
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
@@ -446,7 +447,11 @@ function buildIRS1116(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
-  if (!twoDividend) {
+  const twoCountryDividend = reconcileForm1116TwoCountryDividends(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  if (!twoDividend && !twoCountryDividend) {
     reconcileForm1116ForeignDividend(
       fields as unknown as Readonly<Record<string, unknown>>,
       (context?.pending ?? {}) as Record<string, Record<string, unknown>>,

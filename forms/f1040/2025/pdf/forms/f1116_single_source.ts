@@ -22,6 +22,7 @@ import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasu
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
 import { reconcileForm1116TwoForeignDividends } from "../../form1116_two_foreign_dividends.ts";
+import { reconcileForm1116TwoCountryDividends } from "../../form1116_two_country_dividends.ts";
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
@@ -61,16 +62,21 @@ export function projectSingleSourceForm1116Pdf(
     fields,
     pending,
   );
+  const twoCountryDividend = reconcileForm1116TwoCountryDividends(
+    fields,
+    pending,
+  );
   const twoCountryMixed = reconcileForm1116TwoCountryMixed(fields, pending);
   const threeCountryMixed = reconcileForm1116ThreeCountryMixed(fields, pending);
   const threeCountry = reconcileForm1116ThreeCountryInterest(fields, pending) ??
     threeCountryMixed;
   const twoCountry = threeCountry ??
     reconcileForm1116TwoCountryInterest(fields, pending) ??
+    twoCountryDividend ??
     twoCountryTreasury ?? twoCountryMixed;
   const mixed = reconcileForm1116MixedInterestDividend(fields, pending);
   const twoDividend = reconcileForm1116TwoForeignDividends(fields, pending);
-  const dividend = twoDividend
+  const dividend = twoDividend || twoCountryDividend
     ? false
     : reconcileForm1116ForeignDividend(fields, pending);
   const multi = reconcileForm1116MultiForeignInterest(fields, pending);
@@ -123,6 +129,8 @@ export function projectSingleSourceForm1116Pdf(
           : threeCountryInterestPdfReviewSchema
         : twoCountryTreasury
         ? twoCountryTreasuryPdfReviewSchema
+        : twoCountryDividend
+        ? twoCountryInterestPdfReviewSchema
         : twoCountryMixed
         ? twoCountryMixedPdfReviewSchema
         : twoCountryInterestPdfReviewSchema
@@ -143,6 +151,8 @@ export function projectSingleSourceForm1116Pdf(
               : fields.three_country_interest_pdf_review
             : twoCountryTreasury
             ? fields.two_country_treasury_pdf_review
+            : twoCountryDividend
+            ? fields.two_country_dividend_pdf_review
             : twoCountryMixed
             ? fields.two_country_mixed_pdf_review
             : fields.two_country_interest_pdf_review
@@ -299,7 +309,8 @@ export function projectSingleSourceForm1116Pdf(
   const currency = item.foreign_tax_currency;
   const reportedOn1099 = item.tax_reported_on_1099 === true;
   if (
-    (item.tax_kind !== ForeignTaxKind.Interest && !dividend && !twoDividend) ||
+    (item.tax_kind !== ForeignTaxKind.Interest && !dividend && !twoDividend &&
+      !twoCountryDividend) ||
     item.tax_credit_method !== ForeignTaxCreditMethod.Paid ||
     !item.irs_country_code ||
     (reportedOn1099
@@ -509,11 +520,14 @@ export function projectSingleSourceForm1116Pdf(
           threeCountryMixed.a.gross + threeCountryMixed.c.gross ||
         f1040.line3b_ordinary_dividends !== threeCountryMixed.b.gross
       : twoCountry
-      ? f1040.line2b_taxable_interest !==
-          (twoCountryMixed?.a.gross ??
-            twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) ||
-        (twoCountryMixed !== undefined &&
-          f1040.line3b_ordinary_dividends !== twoCountryMixed.b.gross)
+      ? twoCountryDividend
+        ? !zero(f1040.line2b_taxable_interest) ||
+          f1040.line3b_ordinary_dividends !== twoCountryDividend.foreignGross
+        : f1040.line2b_taxable_interest !==
+            (twoCountryMixed?.a.gross ??
+              twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) ||
+          (twoCountryMixed !== undefined &&
+            f1040.line3b_ordinary_dividends !== twoCountryMixed.b.gross)
       : mixed
       ? f1040.line2b_taxable_interest !==
           summary.items.find((row) => row.tax_kind === ForeignTaxKind.Interest)
@@ -538,7 +552,8 @@ export function projectSingleSourceForm1116Pdf(
     pending.schedule1a?.senior_zero_exclusions_review === true ||
     otherIncomeLines.some((key) =>
       (key !== "line3b_ordinary_dividends" ||
-        !(dividend || twoDividend || mixed || twoCountryMixed ||
+        !(dividend || twoDividend || twoCountryDividend || mixed ||
+          twoCountryMixed ||
           threeCountryMixed)) &&
       !zero(f1040[key])
     ) ||
@@ -638,7 +653,7 @@ export function projectSingleSourceForm1116Pdf(
     pdf_country_c: threeCountry?.c.country,
     pdf_income_description: mixed || twoCountryMixed || threeCountryMixed
       ? "Interest and dividend income"
-      : dividend || twoDividend
+      : dividend || twoDividend || twoCountryDividend
       ? "Dividend income"
       : "Interest income",
     pdf_line1a_a: twoCountry?.a.gross ?? item.foreign_gross_income,
@@ -696,12 +711,16 @@ export function projectSingleSourceForm1116Pdf(
     pdf_part2_foreign_interest_a: currency?.amount,
     pdf_part2_date_b: twoCountry ? "1099 taxes" : undefined,
     pdf_part2_date_c: threeCountry ? "1099 taxes" : undefined,
-    pdf_part2_us_dividend_a: mixed
+    pdf_part2_us_dividend_a: twoCountryDividend
+      ? twoCountryDividend.a.tax
+      : mixed
       ? mixed.dividendTax
       : dividend || twoDividend
       ? item.foreign_tax_paid
       : undefined,
-    pdf_part2_us_interest_a: twoCountry
+    pdf_part2_us_interest_a: twoCountryDividend
+      ? undefined
+      : twoCountry
       ? twoCountry.a.tax
       : mixed
       ? mixed.interestTax
@@ -709,10 +728,12 @@ export function projectSingleSourceForm1116Pdf(
       ? undefined
       : item.foreign_tax_paid,
     pdf_part2_total_a: twoCountry?.a.tax ?? item.foreign_tax_paid,
-    pdf_part2_us_interest_b: twoCountryMixed || threeCountryMixed
-      ? undefined
-      : twoCountry?.b.tax,
-    pdf_part2_us_dividend_b: twoCountryMixed?.b.tax ??
+    pdf_part2_us_interest_b:
+      twoCountryDividend || twoCountryMixed || threeCountryMixed
+        ? undefined
+        : twoCountry?.b.tax,
+    pdf_part2_us_dividend_b: twoCountryDividend?.b.tax ??
+      twoCountryMixed?.b.tax ??
       threeCountryMixed?.b.tax,
     pdf_part2_total_b: twoCountry?.b.tax,
     pdf_part2_us_interest_c: threeCountry?.c.tax,

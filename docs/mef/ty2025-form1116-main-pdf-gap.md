@@ -1,5 +1,21 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Two ordinary foreign dividend payers in separate countries (implementation authored; bulk validation pending)
+
+Two separately identified Forms 1099-DIV with ordinary, entirely foreign-source
+box 1a dividends and box 7 paid tax now occupy passive Form 1116 country
+columns A and B when their reviewed IRS country codes differ. A distinct
+`two_country_dividend_pdf_review` binds each payer's source reference and
+country. The source guard checks distinct payer and document identities,
+holding-period reviews, no qualified dividends or unrelated boxes, each
+Form 1116 item's income/tax/country, pro rata standard-deduction columns,
+Schedule 3, and Form 1040. Native MeF prints separate country source groups;
+the PDF prints the two dividend tax rows and their respective income and
+deductions. Positive and tax/country/payer/holding/return tamper fixtures are
+authored but unrun. Other income or deductions, preferential dividends,
+more payers, underlying issued-document authentication, filled-PDF/XSD review,
+and IRS acceptance remain open.
+
 ## Two ordinary foreign dividends from one country (implementation authored; bulk validation pending)
 
 Two distinct identified Forms 1099-DIV may now supply ordinary, entirely
