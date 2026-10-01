@@ -1,6 +1,6 @@
 # TY2025 Form 1040 product board
 
-## Full status summary (2026-10-01)
+## Full status summary (2026-10-02)
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
@@ -18,7 +18,7 @@ coverage decision, or release gate.
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | 492 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 42 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | 0 | The merged checkpoint passed 10,006/10,006 tests; the first new-batch command stopped at typecheck with 185 errors, under repair. |
+| Automated and artifact validation | 5 | 0 | The new-batch full command reached 10,168 passes and 174 failures after type repairs; failing routes are under repair. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** The completed ledger records 582 bounded routes and
@@ -56,8 +56,11 @@ prepared MeF bundle and PDF; direct XML and standalone PDF claims stay closed. T
 positive routes remain closed.
 The new positive and tamper fixtures are authored. The first agreed full-batch
 `deno task test` at `1c1cc6dc` on 2026-10-01 stopped before test execution with
-185 TypeScript errors. Repairs are in progress; the command must be rerun to a
-passing result. XSD checks and filled-PDF visual review remain pending.
+185 TypeScript errors. After repairs, the same full command ran on `bd4280b9`
+and reported **10,168 passed, 174 failed** in 28m54s. Failing routes are under
+repair and the command must be rerun to a passing result. Individual XSD tests
+ran within the suite; complete route coverage and filled-PDF visual review
+remain pending.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 
