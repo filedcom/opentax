@@ -67,6 +67,7 @@ import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
 import { reconcileForm8881DirectEmployer } from "./f8881.ts";
 import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
+import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -799,16 +800,14 @@ export function prepareForm3800DocumentParts(
   const form8908 = parsed.f8908_credit
     ? reconciledForm8908Source(context.pending?.f8908, parsed)
     : undefined;
+  if (form8908) reconcileForm8908PwaAttachments(form8908.source, context);
   if (
-    form8908 && (
-      form8908.source.homes.some((home) => home.prevailing_wage_met) ||
-      (context.filer &&
-        form8908.source.contractor_ssn !== context.filer.primarySSN &&
-        form8908.source.contractor_ssn !== context.filer.spouse?.ssn)
-    )
+    form8908 && context.filer &&
+    form8908.source.contractor_ssn !== context.filer.primarySSN &&
+    form8908.source.contractor_ssn !== context.filer.spouse?.ssn
   ) {
     throw new Error(
-      "Form 8908 line 1p needs supported contractor and Form 7220 linkage",
+      "Form 8908 line 1p contractor differs from filed taxpayer or spouse",
     );
   }
   if (

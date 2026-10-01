@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
+import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
 
 const countTags = [
   "TotalHomesMeetingStandardQty",
@@ -36,6 +37,7 @@ export const form8908: MefFormDescriptor<"f8908", unknown> = {
       raw,
       context?.pending?.f3800,
     );
+    reconcileForm8908PwaAttachments(source, context);
     if (
       context?.filer &&
       source.contractor_ssn !== context.filer.primarySSN &&

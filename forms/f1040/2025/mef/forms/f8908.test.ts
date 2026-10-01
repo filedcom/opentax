@@ -31,8 +31,21 @@ function sixClassSource() {
       program,
       zero_energy_ready,
       prevailing_wage_met,
-      form7220_review_reference: prevailing_wage_met
-        ? `Form7220-review-${index + 1}`
+      form7220: prevailing_wage_met
+        ? {
+          review_reference: `Form7220-review-${index + 1}`,
+          acquisition_record_reference: `sale-${index + 1}`,
+          residence: {
+            street: `${index + 1} Main Street`,
+            city: "Albany",
+            state: "NY",
+            zip: "12207",
+            acquired_on: "2025-06-01",
+          },
+          pdf_file_name: `Form7220-${index + 1}.pdf`,
+          pdf_sha256: String(index + 1).repeat(64),
+          completed_for_residence_confirmed: true as const,
+        }
         : undefined,
       certifier: {
         kind: "business" as const,
@@ -53,10 +66,45 @@ const credit = {
   },
 };
 
+function pwaContext(source: {
+  f8908s: readonly {
+    acquisition_record_reference: string;
+    form7220?: {
+      pdf_file_name: string;
+      pdf_sha256: string;
+      review_reference: string;
+    };
+  }[];
+}) {
+  const homes = source.f8908s.filter((home) => home.form7220 !== undefined);
+  return {
+    binaryAttachmentFileNames: homes.map((home) =>
+      home.form7220!.pdf_file_name
+    ),
+    attachmentDescriptionsByFileName: Object.fromEntries(homes.map((home) => [
+      home.form7220!.pdf_file_name,
+      `Form 7220 ${
+        home.form7220!.review_reference
+      } for Form 8908 home ${home.acquisition_record_reference}`,
+    ])),
+    attachmentSha256ByFileName: Object.fromEntries(homes.map((home) => [
+      home.form7220!.pdf_file_name,
+      home.form7220!.pdf_sha256,
+    ])),
+    documentIdsByAttachmentFileName: Object.fromEntries(
+      homes.map((home, index) => [
+        home.form7220!.pdf_file_name,
+        `BinaryAttachment${index + 1}`,
+      ]),
+    ),
+  };
+}
+
 Deno.test("staged IRS8908 and official PDF project all six classes, certifiers, and addresses", () => {
   const source = sixClassSource();
   const xml = form8908.build(source, {
     pending: { f8908: source, f3800: credit },
+    ...pwaContext(source),
   });
   assertStringIncludes(
     xml,
@@ -108,7 +156,7 @@ Deno.test("staged IRS8908 preserves an individual certifier in native and PDF ou
     ),
   };
   const pending = { f8908: source, f3800: credit };
-  const xml = form8908.build(source, { pending });
+  const xml = form8908.build(source, { pending, ...pwaContext(original) });
   assertStringIncludes(xml, "<PersonNm>Jane Certifier</PersonNm>");
   assertStringIncludes(
     xml,

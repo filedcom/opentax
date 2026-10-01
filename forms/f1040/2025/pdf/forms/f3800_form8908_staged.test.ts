@@ -5,6 +5,7 @@ import {
   form3800,
   prepareForm3800DocumentParts,
 } from "../../mef/forms/f3800.ts";
+import { form8908 } from "../../mef/forms/f8908.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import { form3800PartIIIFields } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
@@ -57,6 +58,33 @@ const pending = {
   schedule3: { line6a_total: 2_500, line7_total: 2_500, line8_total: 2_500 },
 };
 const ids = { f8908: ["IRS8908_1"], form6251: ["IRS6251_1"], f8835: [] };
+const pwaHome = {
+  ...home,
+  program: "multifamily",
+  prevailing_wage_met: true,
+  form7220: {
+    review_reference: "PWA-1",
+    acquisition_record_reference: "SALE-1",
+    residence: {
+      street: "1 Main Street",
+      city: "Albany",
+      state: "NY",
+      zip: "12207",
+      acquired_on: "2025-06-01",
+    },
+    pdf_file_name: "Form7220-1.pdf",
+    pdf_sha256: "a".repeat(64),
+    completed_for_residence_confirmed: true,
+  },
+};
+const pwaAttachment = {
+  binaryAttachmentFileNames: ["Form7220-1.pdf"],
+  attachmentDescriptionsByFileName: {
+    "Form7220-1.pdf": "Form 7220 PWA-1 for Form 8908 home SALE-1",
+  },
+  attachmentSha256ByFileName: { "Form7220-1.pdf": "a".repeat(64) },
+  documentIdsByAttachmentFileName: { "Form7220-1.pdf": "BinaryAttachment1" },
+};
 
 Deno.test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
@@ -70,6 +98,25 @@ Deno.test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () 
   const [pdf] = form3800Pdf.instances!(f3800, testFiler(), pending, prepared);
   assertEquals(pdf[form3800PartIIIFields("1p").e], 2_500);
   assertEquals(pdf[form3800PartIIIFields("1p").i], 2_500);
+});
+
+Deno.test("staged Form 8908 PWA home binds a completed Form 7220 binary document", () => {
+  const filed = { ...pending, f8908: { f8908s: [pwaHome] } };
+  const context = {
+    pending: filed,
+    documentIdsByPendingKey: ids,
+    ...pwaAttachment,
+  };
+  const prepared = prepareForm3800DocumentParts(f3800, context);
+  if (!prepared) throw new Error("Expected sourced Form 3800");
+  assertStringIncludes(form3800.build(f3800, context), "<Form8908CYCreditsGrp");
+  assertStringIncludes(
+    form8908.build(filed.f8908, {
+      ...context,
+      documentIdsByPendingKey: { ...ids, f3800: ["IRS3800_1"] },
+    }),
+    "<TotalCreditAmt>2500</TotalCreditAmt>",
+  );
 });
 
 Deno.test("staged Form 8908 line 1p rejects altered source and missing attachment", () => {
@@ -103,7 +150,20 @@ Deno.test("staged Form 8908 line 1p rejects altered source and missing attachmen
             ...home,
             program: "multifamily",
             prevailing_wage_met: true,
-            form7220_review_reference: "PWA-1",
+            form7220: {
+              review_reference: "PWA-1",
+              acquisition_record_reference: "SALE-1",
+              residence: {
+                street: "1 Main Street",
+                city: "Albany",
+                state: "NY",
+                zip: "12207",
+                acquired_on: "2025-06-01",
+              },
+              pdf_file_name: "Form7220-1.pdf",
+              pdf_sha256: "a".repeat(64),
+              completed_for_residence_confirmed: true,
+            },
           }],
         },
       },

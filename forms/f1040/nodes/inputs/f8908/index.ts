@@ -53,7 +53,7 @@ class F8908Node extends TaxNode<typeof inputSchema> {
         program: home.program,
         zero_energy_ready: home.zero_energy_ready,
         prevailing_wage_met: home.prevailing_wage_met,
-        form7220_review_reference: home.form7220_review_reference,
+        form7220: home.form7220,
         certifier: home.certifier,
         certification_reference: home.certification_reference,
         certified_on: home.certified_on,

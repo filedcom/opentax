@@ -33,19 +33,23 @@ same Part II name field.
 Schedule 3. Form 3800 now has staged line 1p source and standard-limit
 calculation, plus source-linked native/PDF row projection for a directly claimed
 home. Public export still rejects both the Form 8908 source and a Form 8908
-credit in Form 3800. Form 7220 attachment linking for applicable PWA homes,
-native/PDF Form 8908 registration, and complete return reconciliation remain
-open. The source references are reviewed assertions, not authenticated
-certification, sale, basis, or PWA document bytes. Pass-through-only allocations
-need their own K-1 source route; they do not create a personal Form 8908.
-Full-batch tests, XSD, filled-PDF review, IRS business rules, and ATS remain
-open.
+credit in Form 3800. Native/PDF Form 8908 registration and complete return
+reconciliation remain open. The source references are reviewed assertions, not
+authenticated certification, sale, basis, or PWA document bytes.
+Pass-through-only allocations need their own K-1 source route; they do not
+create a personal Form 8908. Full-batch tests, XSD, filled-PDF review, IRS
+business rules, and ATS remain open.
 
 The TY2025 individual MeF schema has no standalone `IRS7220` element. It accepts
 `BinaryAttachment`, which other credit routes use for a completed Form 7220 PDF.
 [Form 8908 instructions](https://www.irs.gov/instructions/i8908) require Form
 7220 for lines 3b and 4b, and the
 [Form 7220 instructions](https://www.irs.gov/instructions/i7220) call for a
-separate form per residence. The current `form7220_review_reference` is an
-evidence reference; it does not supply the per-residence PDF, validated Form
-7220 fields, or attachment ID linkage. PWA credit export remains closed.
+separate form per residence. Each increased-credit home now carries a direct
+Form 7220 review and completed-PDF contract: a home address and acquisition
+snapshot, review reference, PDF filename, reviewed SHA-256, and completion
+assertion. Staged native preparation checks one unique bundled PDF, description,
+exact submitted-byte digest, and `BinaryAttachment` document ID per home;
+missing, reused, and mismatched links reject. PDF contents and Form 7220 line
+data are not independently parsed against wage records, so PWA credit export
+remains closed.

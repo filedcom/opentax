@@ -30,8 +30,21 @@ function fixture() {
       program,
       zero_energy_ready,
       prevailing_wage_met,
-      form7220_review_reference: prevailing_wage_met
-        ? `7220-${index + 1}`
+      form7220: prevailing_wage_met
+        ? {
+          review_reference: `7220-${index + 1}`,
+          acquisition_record_reference: `sale-${index + 1}`,
+          residence: {
+            street: `${index + 1} Main Street`,
+            city: "Albany",
+            state: "NY",
+            zip: "12207",
+            acquired_on: "2025-06-01",
+          },
+          pdf_file_name: `Form7220-${index + 1}.pdf`,
+          pdf_sha256: String(index + 1).repeat(64),
+          completed_for_residence_confirmed: true as const,
+        }
         : undefined,
       certifier: {
         kind: "business" as const,
@@ -93,7 +106,7 @@ Deno.test("Form 8908 rejects duplicate, late-certified, and unsupported PWA fact
   );
 
   const missing7220 = fixture();
-  missing7220.homes[2].form7220_review_reference = undefined;
+  missing7220.homes[2].form7220 = undefined;
   assertThrows(() => calculateForm8908Source(missing7220), Error, "Form 7220");
 
   const wrongYear = fixture();
