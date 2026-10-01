@@ -141,6 +141,36 @@ Deno.test("Form 8881 Part I and II bind separate native and printable Form 3800 
   assertEquals(form8881Pdf.projectFields!(source, pending).line11, 500);
 });
 
+Deno.test("Form 3800 PDF rejects a second Form 8881 part claiming another document ID", () => {
+  const prepared = prepareForm3800DocumentParts(f3800, {
+    pending,
+    documentIdsByPendingKey: ids,
+  });
+  if (!prepared) throw new Error("Expected sourced Form 3800");
+  const altered = {
+    ...prepared,
+    currentRows: prepared.currentRows.map((row) =>
+      row.line === "1dd"
+        ? {
+          ...row,
+          metadata: {
+            ...row.metadata,
+            referenceDocumentId: "IRS8881_2",
+          },
+        }
+        : row
+    ),
+    currentDetails: prepared.currentDetails.map((row) =>
+      row.line === "1dd" ? { ...row, sourceDocumentId: "IRS8881_2" } : row
+    ),
+  };
+  assertThrows(
+    () => form3800Pdf.instances!(f3800, testFiler(), pending, altered),
+    Error,
+    "must reference one filed IRS8881 document",
+  );
+});
+
 Deno.test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
   const military = {
     ...source,

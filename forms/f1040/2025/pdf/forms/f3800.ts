@@ -356,6 +356,18 @@ export const form3800Pdf: PdfFormDescriptor = {
           );
         }
       }
+      const partDocumentIds = expected.map((part) =>
+        prepared.currentRows.find((row) => row.line === part.line)!
+          .metadata.referenceDocumentId
+      );
+      if (
+        expected.length === 0 ||
+        new Set(partDocumentIds).size !== 1
+      ) {
+        throw new Error(
+          "Form 3800 PDF Form 8881 parts must reference one filed IRS8881 document",
+        );
+      }
     }
     if (source.f8844_direct_employer_credit) {
       const { lines } = reconcileForm8844DirectEmployer(all);

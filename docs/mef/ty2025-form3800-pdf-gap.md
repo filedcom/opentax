@@ -7,6 +7,15 @@ geothermal and mixed wind/geothermal credit returns have local XSD and
 filled-PDF evidence. Other credit sources, transfers, carryovers, row
 combinations, and ATS acceptance remain open.
 
+The Form 8881 credit can occupy up to three Form 3800 Part III lines (1j,
+1dd, and 1ee), all sourced from one filed IRS8881 document. The native
+preparer reserves one document ID for those rows. The nine-page PDF preflight
+now requires every positive Form 8881 part to retain that same ID after its
+individual row/detail checks, while the existing line 38 to Schedule 3 and
+Form 1040 join checks the allowed total. A second-part document-ID tamper
+fixture is authored for the deferred bulk pass. The check binds in-memory
+document references; it does not authenticate the underlying plan records.
+
 The direct PDF descriptor now requires the pending Form 3800 allowed-credit
 amount to match both its return-wide pending source and the prepared native
 line 38 at cent precision. A changed raw descriptor argument or changed pending
