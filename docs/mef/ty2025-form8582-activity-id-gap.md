@@ -409,6 +409,20 @@ unrun.
 
 ## PDF projection boundary
 
+### Three current-year Schedule E rental activities (2026-10-01, unrun)
+
+One bounded no-sale Part V route now offsets a $5,000 current loss from one
+type-B rental with $2,000 and $1,000 of profit from two distinct type-B
+rentals. Their durable activity IDs and individual Schedule E income/expense
+rows flow through Form 8582; $3,000 of loss is allowed against passive profit
+and $2,000 remains suspended under the loss activity ID. Native Form 8582 and
+Schedule E, the PDF Part V/Part VII rows and three Schedule E properties, and
+Schedule 1/Form 1040 zero net income are reconciled. A full-return positive
+and changed rental/return fixtures are authored for the deferred batch. This
+slice has no prior PAL, sale, grouping, or special rental allowance. Property
+and expense source bytes and the durable accepted-return ledger remain open.
+
+
 The earlier PDF descriptor assigned raw Schedule C/F and aggregate loss inputs
 to Part I lines 1a–1c and 2a–2c. On the
 [2025 Form 8582](https://www.irs.gov/pub/irs-prior/f8582--2025.pdf), those lines

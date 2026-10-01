@@ -444,6 +444,62 @@ function buildOtherPassive(
       );
     }
   }
+  // One passive Schedule E loss may use income from two separate passive
+  // rentals, while the remaining loss stays suspended under its activity ID.
+  const scheduleELoss = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  const scheduleEProfits = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  const threeRentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && scheduleELoss.length === 1 &&
+    scheduleEProfits.length === 2 &&
+    threeRentalSource.success &&
+    threeRentalSource.data.schedule_es.length === 3 &&
+    context?.pending?.f4835 === undefined &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined &&
+    activities.every((activity) =>
+      activity.reporting_form === "schedule_e" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) &&
+    scheduleEProfits.reduce(
+        (total, activity) => total + activity.current_net,
+        0,
+      ) < -scheduleELoss[0].current_net &&
+    saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const profits = scheduleEProfits.reduce(
+      (total, activity) => total + activity.current_net,
+      0,
+    );
+    if (
+      !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !==
+        (schedule1.line10_total_additional_income ?? 0) ||
+      typeof f1040.line9_total_income !== "number" ||
+      typeof f1040.line11_agi !== "number" ||
+      f1040.line11_agi !==
+        f1040.line9_total_income - (f1040.line10_adjustments ?? 0)
+    ) {
+      throw new Error(
+        "Form 8582 three-rental passive offset must reconcile Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   const losses = activities.map((activity) =>
     Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
     activity.prior_unallowed_4797_part1 +
