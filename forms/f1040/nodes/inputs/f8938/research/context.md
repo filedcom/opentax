@@ -1,101 +1,53 @@
-# Form 8938 — Statement of Specified Foreign Financial Assets
+# Form 8938 — TY2025 specified foreign financial assets
 
-## Overview
-Disclosure-only form. Reports specified foreign financial assets when aggregate value exceeds filing thresholds under IRC §6038D (FATCA). No tax computation — produces zero outputs. The node validates and stores the foreign asset information.
+Authority:
+[continuous-use Form 8938 (Rev. November 2021)](https://www.irs.gov/pub/irs-pdf/f8938.pdf)
+and [IRS instructions](https://www.irs.gov/instructions/i8938). A specified
+individual attaches Form 8938 to a required annual return when the value of
+specified foreign financial assets exceeds a threshold. FinCEN Form 114 is a
+separate filing.
 
-**IRS Form:** 8938
-**Drake Screen:** 8938
-**Node Type:** input
-**Tax Year:** 2025
-**Drake Reference:** https://kb.drakesoftware.com/Site/Browse/14055
+## Public source contract
 
----
+`f8938` now requires a specified-individual class, whether an annual tax return
+is required, filing status, U.S. or qualifying-abroad residence, both
+asset-value aggregates, and an asset ledger. Qualifying-abroad residence
+requires a foreign tax home and either a bona fide residence period covering all
+of TY2025 or at least 330 full foreign days in an identified 12-month period
+ending in TY2025; a bare `lives_abroad` flag is insufficient.
 
-## Input Fields
+Each ledger row identifies the account/asset and taxpayer/spouse/joint
+ownership; institution or issuer and country; year-end and maximum values in
+original currency and USD; the December 31 exchange rate and its source; a Part
+IV exception with an actual filed-form reference, if applicable; and tax items
+with their filed form and line. The source contract rejects valuation
+mismatches, duplicate identities, missing MFS spouse status for joint assets,
+and an aggregate outside the possible peak range. The maximum contemporaneous
+aggregate remains sourced separately because summing the maximum values of
+several assets can overstate the value held at any one time.
 
-| Field | Type | Required | Source / Label | Description | IRS Reference | URL |
-| ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| lives_abroad | boolean | No | Lives abroad | True if taxpayer qualifies as living abroad (higher thresholds) | Form 8938 instructions; IRC §6038D(a)(2) | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| filing_status | string | No | Filing status | "single", "mfj", "mfs", etc. for threshold determination | Form 8938 | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| max_value_all_assets | number (≥0) | No | Maximum aggregate value | Highest aggregate value of all specified assets during year | Form 8938 Part I | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| year_end_value_all_assets | number (≥0) | No | Year-end aggregate value | Aggregate value at year-end | Form 8938 Part I | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| assets | AssetSchema[] | No | Individual assets | Per-asset detail entries | Form 8938 Parts II–V | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| has_pfic | boolean | No | PFIC assets | True if any assets are Passive Foreign Investment Companies | Form 8938 Part II | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-| foreign_tax_credit_claimed | boolean | No | Foreign tax credit | True if FTC claimed for income from these assets | Form 8938 | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
+For the **threshold**, an MFS asset jointly owned by two specified spouses is
+counted at half value, whereas its complete value remains in the asset ledger
+for Form 8938 detail. Other joint assets count in full. Assets reported on Forms
+3520, 3520-A, 5471, 8621 or 8865 still count toward a specified individual's
+threshold even where they are identified only in Form 8938 Part IV.
 
-**Asset fields:**
-| asset_type | ForeignAssetType enum | No | Asset type | bank_account, brokerage_account, foreign_stock, foreign_bond, foreign_partnership_interest, foreign_trust_interest, foreign_pension_plan, other | Form 8938 Parts II–V |
-| description | string | No | Description | Asset description | Form 8938 |
-| country | string | No | Country | ISO 2-letter country code | Form 8938 |
-| max_value_during_year | number (≥0) | No | Max value | Maximum value during year | Form 8938 |
-| year_end_value | number (≥0) | No | Year-end value | Value at December 31 | Form 8938 |
-| income_reported | boolean | No | Income reported | Whether income was reported on return | Form 8938 |
-| income_reported_on | string | No | Reported on | Location of income on return (e.g. "Schedule B") | Form 8938 |
+| Individual return                      |      U.S. year end / any time | Qualifying abroad year end / any time |
+| -------------------------------------- | ----------------------------: | ------------------------------------: |
+| Single, MFS, HOH, qualifying widow(er) |   More than $50,000 / $75,000 |         More than $200,000 / $300,000 |
+| MFJ                                    | More than $100,000 / $150,000 |         More than $400,000 / $600,000 |
 
----
+`form8938ThresholdDecision` evaluates the strict OR test and the
+no-required-return exception. The node remains disclosure-only and emits no tax
+output.
 
-## Calculation Logic
+## Filing boundary
 
-### Step 1 — Validate and store
-`inputSchema.parse(rawInput)` — no computation performed.
-Returns `{ outputs: [] }`.
-
----
-
-## Output Routing
-
-| Output Field | Destination Node | Condition | IRS Reference | URL |
-| ------------ | ---------------- | --------- | ------------- | --- |
-| (none) | — | Disclosure only; no tax-computation outputs | IRC §6038D; Form 8938 | https://www.irs.gov/pub/irs-pdf/i8938.pdf |
-
----
-
-## Constants & Thresholds (Tax Year 2025)
-
-| Constant | Value | Source | URL |
-| -------- | ----- | ------ | --- |
-| Single/MFS in US — year-end threshold | >$50,000 | IRC §6038D; Reg §1.6038D-2 | https://www.law.cornell.edu/uscode/text/26/6038D |
-| Single/MFS in US — max value threshold | >$75,000 | IRC §6038D; Reg §1.6038D-2 | https://www.law.cornell.edu/uscode/text/26/6038D |
-| MFJ in US — year-end threshold | >$100,000 | IRC §6038D; Reg §1.6038D-2 | https://www.law.cornell.edu/uscode/text/26/6038D |
-| MFJ in US — max value threshold | >$150,000 | IRC §6038D; Reg §1.6038D-2 | https://www.law.cornell.edu/uscode/text/26/6038D |
-| Single living abroad — year-end threshold | >$200,000 | Reg §1.6038D-2(a)(2)(i) | https://www.law.cornell.edu/cfr/text/26/1.6038D-2 |
-| Single living abroad — max value threshold | >$300,000 | Reg §1.6038D-2(a)(2)(i) | https://www.law.cornell.edu/cfr/text/26/1.6038D-2 |
-| MFJ living abroad — year-end threshold | >$400,000 | Reg §1.6038D-2(a)(2)(ii) | https://www.law.cornell.edu/cfr/text/26/1.6038D-2 |
-| MFJ living abroad — max value threshold | >$600,000 | Reg §1.6038D-2(a)(2)(ii) | https://www.law.cornell.edu/cfr/text/26/1.6038D-2 |
-| Failure-to-file penalty | $10,000 | IRC §6038D(d)(1) | https://www.law.cornell.edu/uscode/text/26/6038D |
-| Continued failure penalty | Up to $50,000 | IRC §6038D(d)(2) | https://www.law.cornell.edu/uscode/text/26/6038D |
-
----
-
-## Data Flow Diagram
-
-flowchart LR
-  subgraph inputs["Data Entry"]
-    thresh["lives_abroad + filing_status"]
-    vals["max_value_all_assets\nyear_end_value_all_assets"]
-    assets["assets[]\nper-asset detail"]
-  end
-  subgraph node["f8938 (FATCA Disclosure)"]
-    val["validate only\noutputs: []"]
-  end
-  thresh & vals & assets --> val
-
----
-
-## Edge Cases & Special Rules
-
-1. **FBAR is separate**: Form 8938 (FATCA) and FBAR (FinCEN 114) are different requirements. Some assets require both; some only one.
-2. **PFIC reporting**: If `has_pfic = true`, additional Form 8621 reporting may be required.
-3. **Threshold OR test**: Filing required if EITHER the year-end value OR the maximum-during-year value exceeds the threshold.
-4. **No computation**: The node stores data only. Tax preparation software uses this for form generation; no credits or deductions flow from this node.
-5. **Duplicate asset reporting**: Assets reported on Form 8938 may also appear on other forms (Schedule B, Schedule E). The `income_reported_on` field documents this.
-
----
-
-## Sources
-
-| Document | Year | Section | URL | Saved as |
-| -------- | ---- | ------- | --- | -------- |
-| Form 8938 Instructions | 2024 | All | https://www.irs.gov/pub/irs-pdf/i8938.pdf | .research/docs/i8938.pdf |
-| IRC §6038D — FATCA | current | §6038D(a–d) | https://www.law.cornell.edu/uscode/text/26/6038D | N/A |
-| Reg §1.6038D-2 (thresholds) | current | §1.6038D-2 | https://www.law.cornell.edu/cfr/text/26/1.6038D-2 | N/A |
+**MeF and PDF export remain guarded** for nonempty asset lists or positive
+aggregate values. The new source contract does not produce a native Form 8938.
+Before opening export, build Parts I–VI and continuation pages, join return
+identity/status and tax-item lines, reconcile Part IV forms to actually filed
+attachments, and verify statement/FX source bytes and selected MeF/XSD/business
+rules. Asset inclusion, exceptions, foreign trusts/pensions, possession
+residents and partial-year dual-resident scenarios need full rules. A positive
+threshold decision alone is not a filed Form 8938.
