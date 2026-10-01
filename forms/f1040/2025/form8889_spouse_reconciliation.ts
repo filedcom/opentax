@@ -888,9 +888,39 @@ export function reconcilePairedForm8889(
       !medicareAge65Distribution
     ? medicareOwner
     : undefined;
+  const otherCoverageOwnerLimit = otherCoverageOwner
+    ?.allocated_family_limit ?? 0;
+  const otherCoverageContinuingLimit = 8_550 -
+    Math.round(8_550 * ((otherCoverageMonth ?? 1) - 1) / 12) +
+    (otherCoverageContinuingOwner?.allocated_family_limit ?? 0);
+  // A retained personal excess after nonpermitted other coverage ends one
+  // spouse's eligibility belongs only to that owner's Form 5329 Part VII.
+  const otherCoverageCurrentExcessOwner = otherCoverageMixedMonths &&
+      otherCoverageOwner && otherCoverageContinuingOwner &&
+      owners.every((owner) =>
+        owner.age_55_or_older === false &&
+        owner.employer_hsa_contributions === undefined &&
+        owner.employer_contribution_years === undefined &&
+        owner.employer_excess_treatment === undefined &&
+        owner.prior_year_hsa_excess === undefined &&
+        owner.post_year_personal_excess_withdrawal === undefined &&
+        owner.qualified_hsa_funding_distributions === undefined &&
+        owner.hsa_excluded_distributions === undefined &&
+        owner.testing_period_failure === undefined &&
+        (owner.hsa_distributions ?? 0) === 0
+      ) &&
+      !source.w2_code_w_entries?.length &&
+      (otherCoverageOwner.taxpayer_hsa_contributions ?? 0) >
+        otherCoverageOwnerLimit &&
+      (otherCoverageContinuingOwner.taxpayer_hsa_contributions ?? 0) <=
+        otherCoverageContinuingLimit &&
+      otherCoverageOwner.hsa_december_31_value !== undefined
+    ? otherCoverageOwner
+    : undefined;
   const pairedExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined ||
-    owner === medicareCurrentExcessOwner
+    owner === medicareCurrentExcessOwner ||
+    owner === otherCoverageCurrentExcessOwner
   );
   const priorExcessReferences = pairedPriorExcessOwners.map((owner) =>
     owner.prior_year_hsa_excess!.filed_form5329_reference
@@ -1140,7 +1170,7 @@ export function reconcilePairedForm8889(
       expectedExcess.length !== pairedExcessOwners.length
     ) {
       throw new Error(
-        "Form 8889 paired excess needs an owner-specific current Medicare or reviewed prior-year Form 5329 source",
+        "Form 8889 paired excess needs an owner-specific current eligibility or reviewed prior-year Form 5329 source",
       );
     }
     const pending5329 = z.object({
@@ -1178,6 +1208,11 @@ export function reconcilePairedForm8889(
           ? form.hsa_part_vii?.line42_prior_excess !== 0 ||
             form.hsa_part_vii?.line47_current_year_excess !==
               (owner.taxpayer_hsa_contributions ?? 0) - medicareOwnerLimit
+          : owner === otherCoverageCurrentExcessOwner
+          ? form.hsa_part_vii?.line42_prior_excess !== 0 ||
+            form.hsa_part_vii?.line47_current_year_excess !==
+              (owner.taxpayer_hsa_contributions ?? 0) -
+                otherCoverageOwnerLimit
           : form.hsa_part_vii?.line47_current_year_excess !== 0;
       }) ||
       calculated5329.total <= 0

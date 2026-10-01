@@ -1,5 +1,38 @@
 # TY2025 paired Form 8889 boundary
 
+## One spouse's other coverage leaves a current personal excess (written, unrun)
+
+The paired family-HDHP route now carries a retained current-year personal HSA
+excess through the other-coverage eligibility boundary. One spouse must have
+family eligibility until a sourced nonpermitted plan begins, then be ineligible
+for the remaining months; the other spouse must retain family eligibility for
+all twelve months and affirm they are not covered by that plan. Both owners
+must supply the same referenced agreement allocating the prorated family limit
+for their shared eligible months. The disqualified owner's contribution may
+exceed that owner's allocation, while the continuing owner's contribution must
+stay within their allocation plus the remaining family months. Both owners
+must be under 55 and have no employer funding, distributions, prior excess,
+timely withdrawal, IRA funding, or testing-period event. The excess owner must
+supply a December 31 HSA value.
+
+The calculator deducts only each owner's allowed contribution on separate
+Forms 8889 and emits one owner Form 5329 Part VII for the retained excess. The
+paired native and PDF exporters recompute both Forms 8889 from the entered
+monthly facts, compare the owner Form 5329 lines 42 and 47 to the sourced
+excess, and reconcile the combined deductions and 6% tax through Schedules 1
+and 2 to Form 1040. A full-return positive case and onset, owner-form, and tax
+tamper cases are authored for the deferred validation batch. The coverage
+notice, allocation agreement, contribution amount, and year-end balance are
+entered evidence; source document bytes are not authenticated. Wider mixed
+coverage and HSA-event combinations remain closed.
+
+The [2025 Publication 969](https://www.irs.gov/publications/p969) explains
+that non-HDHP coverage disqualifies the covered spouse but does not disqualify
+the spouse who remains covered only by an HDHP. The [2025 Form 5329
+instructions](https://www.irs.gov/instructions/i5329) place a current-year HSA
+excess on Part VII line 47 and apply the 6% tax to the lower of excess and the
+December 31 HSA value.
+
 ## One code-2 return plus the other owner's medical distribution (written, unrun)
 
 The paired full-year self-only route now accepts one owner's full timely
