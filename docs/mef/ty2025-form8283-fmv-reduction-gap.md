@@ -1,5 +1,23 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Donor-prepared Section A manuscript reduction (2026-10-01, unrun)
+
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) explicitly
+identifies manuscripts prepared by the donor as ordinary-income property.
+The bounded Section A route now takes one donor-prepared manuscript with a
+2025 contribution, original FMV no more than $5,000, substantial-completion
+date, preparation record, capitalized-cost record, and confirmation that those
+basis costs were not previously deducted. It requires a 50%-limit donee,
+no vehicle or competing reduction reason, and a claim equal to adjusted basis
+below FMV. Native Form 8283 links the reduced column (h) amount to a separate
+statement showing the original FMV, hypothetical ordinary gain removed under
+section 170(e)(1)(A), both record references, and basis claim. The PDF prints
+the same reason. Complete current-gift Schedule A and Form 1040 itemized
+deduction reconciliation is required. Positive and source-tamper native/PDF
+fixtures are authored but unrun. The preparation and cost references are
+reviewed structured facts, not authenticated record bytes; Section B manuscripts
+and later-year carryovers remain closed.
+
 ## Section A unrelated-use tangible property (implementation staged 2026-10-01)
 
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)

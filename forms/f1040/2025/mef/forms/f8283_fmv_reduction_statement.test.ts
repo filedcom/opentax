@@ -388,6 +388,24 @@ const creatorGift = {
   },
 };
 
+const manuscriptGift = {
+  ...creatorGift,
+  property_description: "Donor-prepared historical manuscript",
+  date_acquired: "2025-02-01",
+  deduction_claimed: 300,
+  cost_or_adjusted_basis: 300,
+  creator_ordinary_income_reduction: undefined,
+  manuscript_ordinary_income_reduction: {
+    manuscript_preparation_record_reference: "Draft ledger MS-17",
+    capitalized_cost_record_reference: "Undeducted research ledger MS-17",
+    taxpayer_prepared_manuscript_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
 const unrelatedUseGift = {
   ...electedCapitalGift,
   capital_gain_reduction_election_confirmed: undefined,
@@ -488,6 +506,50 @@ Deno.test("Form 8283 donor-created art links ordinary-gain statement and basis c
       }),
     Error,
     "donor-created Section A art",
+  );
+});
+
+Deno.test("Form 8283 donor-prepared manuscript links ordinary-gain statement and Schedule A claim", () => {
+  const form = { section_a_items: [manuscriptGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(
+    statement,
+    "Donor-prepared manuscript substantially completed",
+  );
+  assertStringIncludes(statement, "hypothetical sale gain of $700.00");
+  assertStringIncludes(statement, "Undeducted research ledger MS-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["manuscript-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="manuscript-reduction"');
+  assertStringIncludes(xml, ">300</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 300);
+  assertEquals(pending.f1040.line12e_itemized_deductions, 300);
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...manuscriptGift,
+          manuscript_ordinary_income_reduction: {
+            ...manuscriptGift.manuscript_ordinary_income_reduction,
+            basis_costs_not_previously_deducted_verified: false,
+          },
+        }],
+      }),
+  );
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...manuscriptGift,
+          creator_ordinary_income_reduction:
+            creatorGift.creator_ordinary_income_reduction,
+        }],
+      }),
   );
 });
 

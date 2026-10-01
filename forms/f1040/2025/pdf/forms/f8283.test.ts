@@ -107,6 +107,24 @@ const creatorGift = {
   },
 };
 
+const manuscriptGift = {
+  ...creatorGift,
+  property_description: "Donor-prepared historical manuscript",
+  date_acquired: "2025-02-01",
+  deduction_claimed: 300,
+  cost_or_adjusted_basis: 300,
+  creator_ordinary_income_reduction: undefined,
+  manuscript_ordinary_income_reduction: {
+    manuscript_preparation_record_reference: "Draft ledger MS-17",
+    capitalized_cost_record_reference: "Undeducted research ledger MS-17",
+    taxpayer_prepared_manuscript_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
 const unrelatedUseGift = {
   ...shortTermGift,
   property_description: "Purchased collectible coin sold by museum",
@@ -849,6 +867,25 @@ Deno.test("Form 8283 PDF prints donor-created art basis claim and reason", () =>
   assertStringIncludes(
     (instance?.reduction_statements as string[])[0],
     "hypothetical sale gain of $750.00",
+  );
+});
+
+Deno.test("Form 8283 PDF prints donor-prepared manuscript basis claim and FMV reason", () => {
+  const form = { section_a_items: [manuscriptGift] };
+  const [instance] = form8283Pdf.instances?.(
+    form,
+    filer,
+    currentSectionAPending(form),
+  ) ?? [];
+  assertEquals(instance?.row1_basis, 300);
+  assertEquals(instance?.row1_claim, 300);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "Donor-prepared manuscript substantially completed",
+  );
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "hypothetical sale gain of $700.00",
   );
 });
 

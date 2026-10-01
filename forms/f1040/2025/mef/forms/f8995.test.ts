@@ -87,6 +87,14 @@ Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and
     box1a: 1_000,
     box5: 1_000,
     holdingPeriodDays: 60,
+    section199a_holding_review: {
+      ex_dividend_date: "2025-07-01",
+      qualified_held_days_in_91_day_window: 50,
+      diminished_risk_days_excluded: 10,
+      no_related_payment_obligation_confirmed: true,
+      review_reference: "2025 REIT holding and obligation review",
+      reviewed_on: "2026-03-01",
+    },
   };
   const result = execute(buildExecutionPlan(registry), registry, {
     ...fixture.inputs,
@@ -122,6 +130,24 @@ Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and
       { holdingPeriodDays: 44 },
       { source_document_reference: undefined },
       { box1b: 100 },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          qualified_held_days_in_91_day_window: 45,
+        },
+      },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          no_related_payment_obligation_confirmed: false,
+        },
+      },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          diminished_risk_days_excluded: 42,
+        },
+      },
     ]
   ) {
     assertThrows(

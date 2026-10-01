@@ -150,6 +150,15 @@ const sectionAItemSchema = z.object({
     fmv_sale_gain_entirely_ordinary_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  manuscript_ordinary_income_reduction: z.object({
+    manuscript_preparation_record_reference: z.string().trim().min(1),
+    capitalized_cost_record_reference: z.string().trim().min(1),
+    taxpayer_prepared_manuscript_verified: z.literal(true),
+    date_acquired_is_substantial_completion_verified: z.literal(true),
+    basis_costs_not_previously_deducted_verified: z.literal(true),
+    fmv_sale_gain_entirely_ordinary_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   unrelated_use_capital_gain_reduction: z.object({
     purchase_record_reference: z.string().trim().min(1),
     donee_unrelated_use_statement_reference: z.string().trim().min(1),
@@ -264,11 +273,15 @@ const sectionAItemSchema = z.object({
       true;
     const inventory = item.inventory_ordinary_income_reduction !== undefined;
     const creator = item.creator_ordinary_income_reduction !== undefined;
+    const manuscript = item.manuscript_ordinary_income_reduction !== undefined;
     const unrelatedUse =
       item.unrelated_use_capital_gain_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
-    if ((inventory || creator || unrelatedUse) && reductionCents <= 0) {
+    if (
+      (inventory || creator || manuscript || unrelatedUse) &&
+      reductionCents <= 0
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["deduction_claimed"],
@@ -277,7 +290,8 @@ const sectionAItemSchema = z.object({
     }
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
-      !inventory && !creator && !unrelatedUse && !capitalGainElection
+      !inventory && !creator && !manuscript && !unrelatedUse &&
+      !capitalGainElection
     ) {
       ctx.addIssue({
         code: "custom",
@@ -321,7 +335,7 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        shortTerm || inventory || creator || unrelatedUse ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -365,7 +379,8 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        inventory || creator || unrelatedUse || certifiedSaleReduction
+        inventory || creator || manuscript || unrelatedUse ||
+        certifiedSaleReduction
       ) {
         ctx.addIssue({
           code: "custom",
@@ -396,7 +411,8 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        shortTerm || creator || unrelatedUse || capitalGainElection ||
+        shortTerm || creator || manuscript || unrelatedUse ||
+        capitalGainElection ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -429,7 +445,8 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        shortTerm || inventory || unrelatedUse || capitalGainElection ||
+        shortTerm || inventory || manuscript || unrelatedUse ||
+        capitalGainElection ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -437,6 +454,39 @@ const sectionAItemSchema = z.object({
           path: ["creator_ordinary_income_reduction"],
           message:
             "Form 8283 creator reduction needs donor-created Section A art, substantial-completion date, capitalized undeducted basis equal to claim, and ordinary appreciation below $5,000 FMV",
+        });
+      }
+    }
+    if (manuscript) {
+      const completed = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      if (
+        !Number.isFinite(completed) || !Number.isFinite(contributed) ||
+        new Date(completed).toISOString().slice(0, 10) !== item.date_acquired ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        !item.date_contributed?.startsWith("2025-") ||
+        completed > contributed ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "created" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== false ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || inventory || creator || unrelatedUse ||
+        capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["manuscript_ordinary_income_reduction"],
+          message:
+            "Form 8283 manuscript reduction needs donor-prepared Section A property, substantial-completion date, capitalized undeducted basis equal to claim, and ordinary appreciation below $5,000 FMV",
         });
       }
     }
@@ -472,7 +522,8 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        shortTerm || inventory || creator || capitalGainElection ||
+        shortTerm || inventory || creator || manuscript ||
+        capitalGainElection ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -487,6 +538,7 @@ const sectionAItemSchema = z.object({
   if (
     (item.inventory_ordinary_income_reduction !== undefined ||
       item.creator_ordinary_income_reduction !== undefined ||
+      item.manuscript_ordinary_income_reduction !== undefined ||
       item.unrelated_use_capital_gain_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
@@ -711,15 +763,22 @@ const sectionBItemSchema = z.object({
 }).superRefine((item, ctx) => {
   validateCharitableLimitCategory(item, ctx);
   if (item.short_term_tangible_reduction) {
-    const acquired = item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
-      ? Date.parse(`${item.date_acquired}T00:00:00Z`)
-      : NaN;
-    const contributed = item.date_contributed && /^\d{4}-\d{2}-\d{2}$/.test(item.date_contributed)
-      ? Date.parse(`${item.date_contributed}T00:00:00Z`)
-      : NaN;
-    const anniversary = item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
-      ? Date.parse(`${Number(item.date_acquired.slice(0, 4)) + 1}${item.date_acquired.slice(4)}T00:00:00Z`)
-      : NaN;
+    const acquired =
+      item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+    const contributed =
+      item.date_contributed && /^\d{4}-\d{2}-\d{2}$/.test(item.date_contributed)
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+    const anniversary =
+      item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+        ? Date.parse(
+          `${Number(item.date_acquired.slice(0, 4)) + 1}${
+            item.date_acquired.slice(4)
+          }T00:00:00Z`,
+        )
+        : NaN;
     if (
       (item.property_type !== SectionBPropertyType.Equipment &&
         item.property_type !== SectionBPropertyType.ArtUnder20000) ||
@@ -730,15 +789,19 @@ const sectionBItemSchema = z.object({
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
       !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
       !Number.isFinite(anniversary) || contributed <= acquired ||
-      contributed > anniversary || !item.date_contributed?.startsWith("2025-") ||
+      contributed > anniversary ||
+      !item.date_contributed?.startsWith("2025-") ||
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
-      new Date(contributed).toISOString().slice(0, 10) !== item.date_contributed ||
+      new Date(contributed).toISOString().slice(0, 10) !==
+        item.date_contributed ||
       item.is_capital_gain_property !== false ||
       item.charitable_limit_category !== "noncash_50" ||
       item.cost_or_adjusted_basis === undefined ||
       item.cost_or_adjusted_basis <= 5_000 ||
       item.cost_or_adjusted_basis >= item.fmv ||
-      Math.round(item.short_term_tangible_reduction.short_term_gain_removed * 100) !==
+      Math.round(
+          item.short_term_tangible_reduction.short_term_gain_removed * 100,
+        ) !==
         Math.round((item.fmv - item.cost_or_adjusted_basis) * 100) ||
       Math.round(item.deduction_claimed * 100) !==
         Math.round(item.cost_or_adjusted_basis * 100) ||
@@ -749,7 +812,8 @@ const sectionBItemSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["short_term_tangible_reduction"],
-        message: "Form 8283 purchased short-term equipment or art below $20,000 needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase record, and reduction statement",
+        message:
+          "Form 8283 purchased short-term equipment or art below $20,000 needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase record, and reduction statement",
       });
     }
   }

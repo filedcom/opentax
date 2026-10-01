@@ -14,8 +14,8 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertNeedyVehicleUnreducedSource,
-  assertOrdinarySectionBReconciled,
   assertOrdinarySectionAReconciled,
+  assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
@@ -144,6 +144,27 @@ export function assertCreatorReductionSource(item: SectionAItem): void {
   }
 }
 
+export function assertManuscriptReductionSource(item: SectionAItem): void {
+  const review = item.manuscript_ordinary_income_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "created" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.manuscript_preparation_record_reference.trim() ||
+    !review.capitalized_cost_record_reference.trim()
+  ) {
+    throw new Error(
+      "Form 8283 manuscript reduction needs complete donee, property, completion date, basis, valuation method, and preparation/cost records",
+    );
+  }
+}
+
 export function assertUnrelatedUseReductionSource(item: SectionAItem): void {
   const review = item.unrelated_use_capital_gain_reduction;
   if (!review) return;
@@ -241,6 +262,13 @@ export function fmvReductionExplanation(
     } would be ordinary income under section 170(e)(1)(A). Creation record ${item.creator_ordinary_income_reduction.creation_record_reference} and capitalized undeducted cost record ${item.creator_ordinary_income_reduction.capitalized_cost_record_reference} support adjusted basis ${
       usd(item.cost_or_adjusted_basis)
     }.`
+    : item.manuscript_ordinary_income_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Donor-prepared manuscript substantially completed on ${item.date_acquired}: hypothetical sale gain of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } would be ordinary income under section 170(e)(1)(A). Preparation record ${item.manuscript_ordinary_income_reduction.manuscript_preparation_record_reference} and capitalized undeducted cost record ${item.manuscript_ordinary_income_reduction.capitalized_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
     : item.unrelated_use_capital_gain_reduction !== undefined &&
         item.cost_or_adjusted_basis !== undefined
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
@@ -276,6 +304,7 @@ export function buildFmvReductionStatement(
   assertShortTermReductionSource(item);
   assertInventoryReductionSource(item);
   assertCreatorReductionSource(item);
+  assertManuscriptReductionSource(item);
   assertUnrelatedUseReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
@@ -644,10 +673,14 @@ function requiredShortTermAttachments(
 ): string[] {
   const evidence = item.short_term_tangible_reduction;
   const appraisal = item.qualified_appraisal;
-  if (!evidence || !appraisal?.attachment_file_name ||
+  if (
+    !evidence || !appraisal?.attachment_file_name ||
     !appraisal.full_appraisal_source_review ||
-    !item.signed_form_attachment_file_name || !item.signed_form_source_review) {
-    throw new Error("Form 8283 short-term Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs");
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review
+  ) {
+    throw new Error(
+      "Form 8283 short-term Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs",
+    );
   }
   const names = [
     evidence.purchase_record_attachment_file_name,
@@ -658,27 +691,41 @@ function requiredShortTermAttachments(
     item.donee_acknowledgment?.signature_attachment_file_name,
   ];
   if (names.some((name) => !name) || new Set(names).size !== names.length) {
-    throw new Error("Form 8283 short-term Section B gift evidence must use six distinct PDFs");
+    throw new Error(
+      "Form 8283 short-term Section B gift evidence must use six distinct PDFs",
+    );
   }
   const reviewed = [
-    [evidence.purchase_record_attachment_file_name,
+    [
+      evidence.purchase_record_attachment_file_name,
       "Form 8283 Section B purchase and basis record",
-      evidence.purchase_record_review.pdf_sha256],
-    [evidence.reduction_statement_attachment_file_name,
+      evidence.purchase_record_review.pdf_sha256,
+    ],
+    [
+      evidence.reduction_statement_attachment_file_name,
       "Form 8283 Section B FMV reduction statement",
-      evidence.reduction_statement_review.pdf_sha256],
+      evidence.reduction_statement_review.pdf_sha256,
+    ],
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
     if (context.attachmentDescriptionsByFileName?.[name] !== description) {
-      throw new Error(`Form 8283 short-term Section B gift needs ${description}`);
+      throw new Error(
+        `Form 8283 short-term Section B gift needs ${description}`,
+      );
     }
     if (context.documentIdsByPendingKey) {
       if (context.attachmentSha256ByFileName?.[name] !== digest) {
-        throw new Error(`Form 8283 short-term Section B gift ${description} bytes differ from reviewed SHA-256`);
+        throw new Error(
+          `Form 8283 short-term Section B gift ${description} bytes differ from reviewed SHA-256`,
+        );
       }
       const id = context.documentIdsByAttachmentFileName?.[name];
-      if (!id) throw new Error(`Form 8283 short-term Section B gift ${description} has no linked MeF document`);
+      if (!id) {
+        throw new Error(
+          `Form 8283 short-term Section B gift ${description} has no linked MeF document`,
+        );
+      }
       ids.push(id);
     }
   }
@@ -689,7 +736,9 @@ function requiredShortTermAttachments(
   );
   if (appraisalId) ids.push(appraisalId);
   if (new Set(ids).size !== ids.length) {
-    throw new Error("Form 8283 short-term Section B gift PDFs need distinct MeF document IDs");
+    throw new Error(
+      "Form 8283 short-term Section B gift PDFs need distinct MeF document IDs",
+    );
   }
   return ids;
 }
@@ -833,14 +882,15 @@ function buildSectionBItem(
       "Form 8283 art needs its complete signed appraisal PDF separate from the completed signed Form 8283",
     );
   }
-  const qualifiedAppraisalId = (similarGroupTotal > 500_000 || artAtLeast20000) &&
+  const qualifiedAppraisalId =
+    (similarGroupTotal > 500_000 || artAtLeast20000) &&
       item.short_term_tangible_reduction === undefined
-    ? requiredQualifiedAppraisalAttachment(
-      appraisal.attachment_file_name,
-      context,
-      artAtLeast20000 ? appraisal.full_appraisal_source_review : undefined,
-    )
-    : undefined;
+      ? requiredQualifiedAppraisalAttachment(
+        appraisal.attachment_file_name,
+        context,
+        artAtLeast20000 ? appraisal.full_appraisal_source_review : undefined,
+      )
+      : undefined;
   const binaryIds = [
     vehicleAttachmentId,
     qualifiedAppraisalId,
@@ -856,7 +906,9 @@ function buildSectionBItem(
     item.short_term_tangible_reduction && context.documentIdsByPendingKey &&
     (binaryIds.length !== 6 || new Set(binaryIds).size !== 6)
   ) {
-    throw new Error("Form 8283 short-term Section B gift needs six distinct linked MeF document IDs");
+    throw new Error(
+      "Form 8283 short-term Section B gift needs six distinct linked MeF document IDs",
+    );
   }
   return elements(
     "IRS8283",
@@ -942,6 +994,7 @@ export const form8283: MefFormDescriptor<
       assertShortTermReductionSource(item);
       assertInventoryReductionSource(item);
       assertCreatorReductionSource(item);
+      assertManuscriptReductionSource(item);
       assertUnrelatedUseReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
@@ -973,7 +1026,9 @@ export const form8283: MefFormDescriptor<
         propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000
       ) {
-        throw new Error("Form 8283 short-term Section B property type is unsupported");
+        throw new Error(
+          "Form 8283 short-term Section B property type is unsupported",
+        );
       }
       assertOrdinarySectionBReconciled(context, propertyType);
     }

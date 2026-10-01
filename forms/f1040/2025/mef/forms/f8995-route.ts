@@ -131,12 +131,23 @@ function oneQualifiedReitDividend(source: unknown): number {
   const item = parsed.success && parsed.data.f1099divs.length === 1
     ? parsed.data.f1099divs[0]
     : undefined;
+  const review = item?.section199a_holding_review;
+  const validDate = (date: string | undefined) =>
+    !!date && !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
+    new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
   if (
     !item || !item.source_document_reference || !item.payerName ||
     item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
     !Number.isSafeInteger(item.box5) || (item.box5 ?? 0) <= 0 ||
     (item.box5 ?? 0) > 1_500 || item.box1a !== item.box5 ||
-    (item.holdingPeriodDays ?? 0) < 45 ||
+    !review || !validDate(review.ex_dividend_date) ||
+    !validDate(review.reviewed_on) ||
+    review.qualified_held_days_in_91_day_window <= 45 ||
+    review.qualified_held_days_in_91_day_window +
+          review.diminished_risk_days_excluded > 91 ||
+    (item.holdingPeriodDays ?? 0) <
+      review.qualified_held_days_in_91_day_window +
+        review.diminished_risk_days_excluded ||
     [
       item.box1b,
       item.box2a,
@@ -162,7 +173,7 @@ function oneQualifiedReitDividend(source: unknown): number {
     item.foreign_source_qualified_dividends_usd !== undefined
   ) {
     throw new Error(
-      "Form 8995 REIT component needs one identified held Form 1099-DIV with only box 5 dividends",
+      "Form 8995 REIT component needs one identified box 5 Form 1099-DIV with reviewed 91-day qualified holding and no related-payment obligation",
     );
   }
   return item.box5!;

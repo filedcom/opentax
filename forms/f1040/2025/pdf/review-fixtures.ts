@@ -1027,6 +1027,58 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-section-a-donor-prepared-manuscript-reduction",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
+      schedule_a: {
+        line_5a_state_income_tax: 24_000,
+        line_8a_mortgage_interest_1098: 12_000,
+        current_noncash_gift_inventory_complete_confirmed: true,
+        other_prior_charitable_carryovers_absent_confirmed: true,
+        capital_gain_property_carryovers: [],
+      },
+      f8283: {
+        section_a_items: [{
+          property_description: "Donor-prepared historical manuscript",
+          donee_organization_name: "Community Library",
+          donee_organization_us_address: {
+            line1: "7 Library Lane",
+            city: "Albany",
+            state: "NY",
+            zip: "12201",
+          },
+          date_acquired: "2025-02-01",
+          date_contributed: "2025-06-01",
+          donor_acquisition_description: "Created",
+          fmv: 1_000,
+          deduction_claimed: 300,
+          cost_or_adjusted_basis: 300,
+          fmv_method: "comparable_sales",
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: false,
+          manuscript_ordinary_income_reduction: {
+            manuscript_preparation_record_reference: "Draft ledger MS-17",
+            capitalized_cost_record_reference:
+              "Undeducted research ledger MS-17",
+            taxpayer_prepared_manuscript_verified: true,
+            date_acquired_is_substantial_completion_verified: true,
+            basis_costs_not_previously_deducted_verified: true,
+            fmv_sale_gain_entirely_ordinary_verified: true,
+            no_other_reduction_reason_verified: true,
+          },
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    reviewFocus: [
+      "Form 8283 Section A column (h) prints the $300 basis claim below $1,000 FMV",
+      "The linked FMV statement and PDF explanation remove $700 hypothetical ordinary gain from the donor-prepared manuscript",
+      "Schedule A line 12 and Form 1040 line 12e include the reduced contribution once",
+    ],
+  },
+  {
     id: "single-two-short-term-reduced-gifts",
     inputs: {
       general: singleGeneral,

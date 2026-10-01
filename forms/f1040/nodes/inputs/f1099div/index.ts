@@ -87,6 +87,14 @@ export const itemSchema = z.object({
   box15: z.string().optional(),
   box16: z.number().nonnegative().optional(),
   holdingPeriodDays: z.number().nonnegative().optional(),
+  section199a_holding_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    qualified_held_days_in_91_day_window: z.number().int().min(0).max(91),
+    diminished_risk_days_excluded: z.number().int().nonnegative(),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
 });
 
 export const inputSchema = z.object({

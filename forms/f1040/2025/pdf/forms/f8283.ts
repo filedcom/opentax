@@ -9,6 +9,7 @@ import {
 import {
   assertCreatorReductionSource,
   assertInventoryReductionSource,
+  assertManuscriptReductionSource,
   assertShortTermReductionSource,
   assertUnrelatedUseReductionSource,
   assertVehicleSaleReductionSource,
@@ -380,7 +381,7 @@ function sectionBOrdinaryTangibleInstance(
     (item.short_term_tangible_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
-          propertyType !== SectionBPropertyType.ArtUnder20000) ||
+        propertyType !== SectionBPropertyType.ArtUnder20000) ||
         !appraisal?.attachment_file_name ||
         !appraisal.full_appraisal_source_review ||
         item.deduction_claimed !== item.cost_or_adjusted_basis ||
@@ -415,18 +416,12 @@ function sectionBOrdinaryTangibleInstance(
       `Section B item A: purchased ${label} ${item.property_description} ` +
       `appraised at $${item.fmv.toFixed(2)} and claimed at $${
         item.deduction_claimed.toFixed(2)
-      }, with adjusted basis $${
-        item.cost_or_adjusted_basis.toFixed(2)
-      }. ` +
+      }, with adjusted basis $${item.cost_or_adjusted_basis.toFixed(2)}. ` +
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
       (item.short_term_tangible_reduction
         ? `The purchased short-term capital asset's FMV sale gain $${
           item.short_term_tangible_reduction.short_term_gain_removed.toFixed(2)
-        } is removed under section 170(e)(1)(A); purchase record $${
-          item.short_term_tangible_reduction.purchase_record_attachment_file_name
-        }, full appraisal ${appraisal.attachment_file_name}, and reduction statement $${
-          item.short_term_tangible_reduction.reduction_statement_attachment_file_name
-        } have separate source reviews. `
+        } is removed under section 170(e)(1)(A); purchase record $${item.short_term_tangible_reduction.purchase_record_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement $${item.short_term_tangible_reduction.reduction_statement_attachment_file_name} have separate source reviews. `
         : "") +
       `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
@@ -666,6 +661,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.creator_ordinary_income_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const manuscriptReduction = sectionA.some((item) =>
+      item.manuscript_ordinary_income_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     const unrelatedUseReduction = sectionA.some((item) =>
       item.unrelated_use_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
@@ -673,6 +672,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (
       !elected &&
       !shortTermReduction && !inventoryReduction && !creatorReduction &&
+      !manuscriptReduction &&
       !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
       sectionA.length !== 1
     ) {
@@ -683,7 +683,8 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
-      !creatorReduction && !unrelatedUseReduction && !soldVehicle &&
+      !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
+      !soldVehicle &&
       !needyVehicle
     ) {
       assertUnreducedSectionACompanion(sectionA[0]);
@@ -700,6 +701,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertShortTermReductionSource(item);
         assertInventoryReductionSource(item);
         assertCreatorReductionSource(item);
+        assertManuscriptReductionSource(item);
         assertUnrelatedUseReductionSource(item);
       }
     }
