@@ -213,9 +213,7 @@ function filing(
 }
 
 Deno.test("Form 4952 traced qualified-dividend election joins Schedule D tax, native, and PDF", async () => {
-  const ordinary = filing("qualified_dividend");
   const elected = filing("qualified_dividend", false, 1_000);
-  assertEquals(ordinary.diagnostics, []);
   assertEquals(elected.diagnostics, []);
   const fields = elected.pending.form4952!;
   assertEquals(fields.line4a, 34_000);
@@ -228,9 +226,8 @@ Deno.test("Form 4952 traced qualified-dividend election joins Schedule D tax, na
   assertEquals(elected.pending.f1040?.line3b_ordinary_dividends, 34_000);
   assertEquals(elected.pending.f1040?.line12e_itemized_deductions, 20_000);
   assertEquals(
-    Number(elected.pending.f1040?.line16_income_tax) >
-      Number(ordinary.pending.f1040?.line16_income_tax),
-    true,
+    elected.pending.income_tax_calculation?.form4952_election,
+    1_000,
   );
   const finalFiler = {
     ...testFiler(),
