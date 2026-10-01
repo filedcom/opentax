@@ -8,7 +8,7 @@ outputs without replaying the sink calculation.
 ## Bounded export replay staged in this batch
 
 `return-wide-arithmetic.ts` checks the retained Form 1040 lines 11, 14, 15,
-18, 21, 22, 24, 25d, 32, and 33 against their immediate component lines whenever the subtotal is
+18, 21, 22, 24, 25d, 32, 33, 34, and 37 against their immediate component lines whenever the subtotal is
 supplied. Both Form 1040 native and PDF descriptors call the same check before
 projection. The replay catches a changed AGI, deduction, taxable-income, tax,
 credit, withholding, or payment
@@ -16,6 +16,10 @@ subtotal, including a changed Schedule 3 deposit on line 20 or line 31 when the
 final 1040 component is present. It accepts unsupplied optional line components
 as zero, matching the sink's arithmetic. Positive and per-subtotal tamper
 fixtures are authored for the bulk test gate.
+Lines 34 and 37 use the filed whole-dollar difference of lines 33 and 24;
+line 37 includes a reported line 38 penalty, including when that penalty
+exceeds an overpayment. This does not establish a 2026 application election
+or refund-account allocation.
 
 The next bounded pass checks attached Schedule 1 line 10/26 against Form 1040
 lines 8/10; Schedule 1-A line 38 against line 13b; Schedule 2 Part I against

@@ -57,6 +57,59 @@ Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => 
   });
 });
 
+Deno.test("Form 1040 export replays overpayment and amount owed", () => {
+  const refund = {
+    line24_total_tax: 1_000,
+    line33_total_payments: 1_200,
+    line34_overpayment: 200,
+    line38_underpayment_penalty: 50,
+  };
+  assertReturnWideArithmetic(refund);
+  assertStringIncludes(
+    irs1040.build(refund, { pending: {} }),
+    "<OverpaidAmt>200</OverpaidAmt>",
+  );
+  irs1040Pdf.projectFields?.(refund, {});
+  assertThrows(
+    () => assertReturnWideArithmetic({ ...refund, line34_overpayment: 199 }),
+    Error,
+    "line 34",
+  );
+  assertThrows(
+    () =>
+      irs1040.build({ ...refund, line34_overpayment: 199 }, {
+        pending: {},
+      }),
+    Error,
+    "line 34",
+  );
+
+  const owe = {
+    line24_total_tax: 1_000,
+    line33_total_payments: 800,
+    line38_underpayment_penalty: 25,
+    line37_amount_owed: 225,
+  };
+  assertReturnWideArithmetic(owe);
+  irs1040Pdf.projectFields?.(owe, {});
+  assertThrows(
+    () => assertReturnWideArithmetic({ ...owe, line37_amount_owed: 224 }),
+    Error,
+    "line 37",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ ...owe, line37_amount_owed: 224 }, {}),
+    Error,
+    "line 37",
+  );
+
+  assertReturnWideArithmetic({
+    ...refund,
+    line38_underpayment_penalty: 250,
+    line37_amount_owed: 50,
+  });
+});
+
 const filed = {
   filing_status: "single",
   line16_income_tax: 1_000,

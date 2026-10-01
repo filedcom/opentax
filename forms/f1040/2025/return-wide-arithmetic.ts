@@ -112,6 +112,27 @@ export function assertReturnWideArithmetic(
   ) {
     throw new Error("Form 1040 line 33 differs from withholding and payments");
   }
+
+  if (line24 !== undefined && line33 !== undefined) {
+    const balance = Math.round(line33) - Math.round(line24);
+    const overpayment = amount("line34_overpayment");
+    if (
+      overpayment !== undefined &&
+      !matches(overpayment, Math.max(0, balance))
+    ) {
+      throw new Error("Form 1040 line 34 differs from tax and payments");
+    }
+    const owed = amount("line37_amount_owed");
+    if (
+      owed !== undefined &&
+      !matches(
+        owed,
+        Math.max(0, -balance + (amount("line38_underpayment_penalty") ?? 0)),
+      )
+    ) {
+      throw new Error("Form 1040 line 37 differs from balance and penalty");
+    }
+  }
 }
 
 /** Match attached Schedule totals to the final return after graph execution. */
