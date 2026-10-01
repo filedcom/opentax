@@ -48,8 +48,16 @@ Deno.test("zodToLines: ZodEnum lists all values", () => {
 
 Deno.test("zodToLines: ZodNativeEnum with many values truncates after 8", () => {
   enum BigEnum {
-    A = "A", B = "B", C = "C", D = "D", E = "E",
-    F = "F", G = "G", H = "H", I = "I", J = "J",
+    A = "A",
+    B = "B",
+    C = "C",
+    D = "D",
+    E = "E",
+    F = "F",
+    G = "G",
+    H = "H",
+    I = "I",
+    J = "J",
   }
   const lines = zodToLines(z.nativeEnum(BigEnum), "code", 0);
   assertEquals(lines.length, 1);
@@ -57,7 +65,10 @@ Deno.test("zodToLines: ZodNativeEnum with many values truncates after 8", () => 
 });
 
 Deno.test("zodToLines: ZodNativeEnum with few values shows all", () => {
-  enum Small { X = "X", Y = "Y" }
+  enum Small {
+    X = "X",
+    Y = "Y",
+  }
   const lines = zodToLines(z.nativeEnum(Small), "code", 0);
   assertStringIncludes(lines[0], "X | Y");
   assertEquals(lines[0].includes("..."), false);
@@ -167,6 +178,21 @@ Deno.test("zodToLines: array of objects indents item fields under 'items:'", () 
   const itemsIndent = lines[itemsIdx].match(/^(\s*)/)?.[1].length ?? 0;
   const xIndent = lines[xIdx].match(/^(\s*)/)?.[1].length ?? 0;
   assertEquals(xIndent > itemsIndent, true);
+});
+
+Deno.test("zodToLines: array items refined at multiple levels retain their fields", () => {
+  const item = z.object({
+    for_routing: z.enum(["schedule_c", "schedule_f"]).optional(),
+    schedule_c_business_reference: z.string().optional(),
+  }).superRefine(() => {}).refine(() => true);
+  const schema = z.object({
+    f1099necs: z.array(item).min(1).superRefine(() => {}),
+  });
+  const lines = zodToLines(schema, undefined, 0).join("\n");
+  assertStringIncludes(lines, "f1099necs  array (min 1)");
+  assertStringIncludes(lines, "items:");
+  assertStringIncludes(lines, "for_routing  enum  schedule_c | schedule_f");
+  assertStringIncludes(lines, "schedule_c_business_reference  string");
 });
 
 // ---------------------------------------------------------------------------

@@ -62,30 +62,65 @@ Deno.test("nodeInspectCommand: unknown nodeType throws with message", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("nodeInspectCommand: prints node name header", () => {
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "w2", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "w2", json: false })
+  );
   assertStringIncludes(out, "Node: w2");
 });
 
 Deno.test("nodeInspectCommand: prints Input Schema section", () => {
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "w2", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "w2", json: false })
+  );
   assertStringIncludes(out, "Input Schema:");
 });
 
 Deno.test("nodeInspectCommand: prints schema fields from w2 inputSchema", () => {
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "w2", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "w2", json: false })
+  );
   // w2 has a top-level array field 'w2s'
   assertStringIncludes(out, "w2s");
   assertStringIncludes(out, "box1_wages");
 });
 
+Deno.test("nodeInspectCommand: expands refined array item fields for 1099-NEC and K-1 nodes", () => {
+  for (
+    const [nodeType, arrayName, fields] of [
+      ["f1099nec", "f1099necs", [
+        "for_routing",
+        "schedule_c_business_reference",
+      ]],
+      ["k1_s_corp", "k1_s_corps", [
+        "corporation_name",
+        "box1_ordinary_business",
+      ]],
+      ["k1_partnership", "k1_partnerships", [
+        "partnership_name",
+        "recipient_tin",
+      ]],
+      ["f8835", "f8835s", ["kwh_produced", "kwh_sold"]],
+    ] as const
+  ) {
+    const out = captureLog(() => nodeInspectCommand({ nodeType, json: false }));
+    assertStringIncludes(out, `${arrayName}  array`);
+    assertStringIncludes(out, "items:");
+    for (const field of fields) assertStringIncludes(out, field);
+  }
+});
+
 Deno.test("nodeInspectCommand: prints Output Nodes section", () => {
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "w2", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "w2", json: false })
+  );
   assertStringIncludes(out, "Output Nodes");
   assertStringIncludes(out, "f1040");
 });
 
 Deno.test("nodeInspectCommand: output node count matches node.outputNodeTypes", () => {
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "w2", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "w2", json: false })
+  );
   const count = registry["w2"].outputNodeTypes.length;
   assertStringIncludes(out, `Output Nodes (${count})`);
 });
@@ -98,7 +133,9 @@ Deno.test("nodeInspectCommand: leaf output node shows (none) for outputs", () =>
   // f1040 is an output node with no downstream outputs
   const f1040 = registry["f1040"];
   if (f1040.outputNodeTypes.length > 0) return; // skip if it gains outputs
-  const out = captureLog(() => nodeInspectCommand({ nodeType: "f1040", json: false }));
+  const out = captureLog(() =>
+    nodeInspectCommand({ nodeType: "f1040", json: false })
+  );
   assertStringIncludes(out, "(none)");
 });
 
@@ -148,6 +185,15 @@ Deno.test("nodeInspectCommand: json=true includes implemented flag", () => {
   assertEquals(typeof parsed.implemented, "boolean");
 });
 
+Deno.test("nodeInspectCommand: JSON schema includes 1099-NEC item routing fields", () => {
+  const parsed = JSON.parse(
+    captureLog(() => nodeInspectCommand({ nodeType: "f1099nec", json: true })),
+  );
+  const schema = (parsed.schema as string[]).join("\n");
+  assertStringIncludes(schema, "for_routing");
+  assertStringIncludes(schema, "schedule_c_business_reference");
+});
+
 // ---------------------------------------------------------------------------
 // node graph — formatMermaid
 // ---------------------------------------------------------------------------
@@ -182,7 +228,12 @@ Deno.test("formatMermaid: renders flat tree with --> edges", () => {
 });
 
 Deno.test("formatMermaid: deduplicates edges for diamond patterns", () => {
-  const shared: GraphNode = { nodeType: "shared", depth: 2, registered: true, children: [] };
+  const shared: GraphNode = {
+    nodeType: "shared",
+    depth: 2,
+    registered: true,
+    children: [],
+  };
   const tree: GraphNode = {
     nodeType: "root",
     depth: 0,
