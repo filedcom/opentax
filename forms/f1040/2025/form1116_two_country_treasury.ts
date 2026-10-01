@@ -83,12 +83,18 @@ export function reconcileForm1116TwoCountryTreasury(
   const rows = source.success ? source.data.f1099ints : [];
   const foreignRows = rows.filter((row) => (row.box6 ?? 0) > 0);
   const treasuryRows = rows.filter((row) => (row.box3 ?? 0) > 0);
-  const hasThreeSources = rows.length === 3 && foreignRows.length === 2 &&
-    treasuryRows.length === 1 &&
+  const distinctCountries =
     new Set(foreignRows.map((row) => row.foreign_tax_irs_country_code)).size ===
       2;
+  const separateTreasury = rows.length === 3 && foreignRows.length === 2 &&
+    treasuryRows.length === 1 &&
+    !foreignRows.includes(treasuryRows[0]) && distinctCountries;
+  const sameStatementTreasury = rows.length === 2 &&
+    foreignRows.length === 2 && treasuryRows.length === 1 &&
+    foreignRows.includes(treasuryRows[0]) && distinctCountries;
   if (
-    !hasThreeSources && fields.two_country_treasury_pdf_review === undefined
+    !separateTreasury && !sameStatementTreasury &&
+    fields.two_country_treasury_pdf_review === undefined
   ) {
     return undefined;
   }
@@ -159,8 +165,8 @@ export function reconcileForm1116TwoCountryTreasury(
     fields.multi_source_pdf_review !== undefined ||
     fields.mixed_interest_dividend_pdf_review !== undefined ||
     fields.two_country_interest_pdf_review !== undefined ||
-    rows.length !== 3 || foreignRows.length !== 2 ||
-    treasuryRows.length !== 1 || !a || !b || a === b || !treasury ||
+    (!separateTreasury && !sameStatementTreasury) || !a || !b || a === b ||
+    !treasury ||
     review.data.column_a_irs_country_code !== a.foreign_tax_irs_country_code ||
     review.data.column_b_irs_country_code !== b.foreign_tax_irs_country_code ||
     !a.foreign_tax_irs_country_code || !b.foreign_tax_irs_country_code ||
@@ -170,18 +176,19 @@ export function reconcileForm1116TwoCountryTreasury(
     !treasury.source_document_reference ||
     review.data.domestic_treasury_source_document_reference !==
       treasury.source_document_reference ||
-    new Set(rows.map((row) => row.payer_name)).size !== 3 ||
+    new Set(rows.map((row) => row.payer_name)).size !== rows.length ||
     rows.some((row) => !row.payer_name) ||
-    !Array.isArray(reviewedRefs) || reviewedRefs.length !== 3 ||
+    !Array.isArray(reviewedRefs) || reviewedRefs.length !== rows.length ||
     JSON.stringify([...reviewedRefs].sort()) !== JSON.stringify([
         a.foreign_tax_source_document_reference,
         b.foreign_tax_source_document_reference,
-        treasury.source_document_reference,
+        ...(separateTreasury ? [treasury.source_document_reference] : []),
       ].sort()) ||
     foreignRows.some((row) =>
       !Number.isSafeInteger(row.box1) || (row.box1 ?? 0) <= 0 ||
       !Number.isSafeInteger(row.box6) || (row.box6 ?? 0) <= 0 ||
-      (row.box3 ?? 0) !== 0 ||
+      ((row.box3 ?? 0) !== 0 &&
+        !(sameStatementTreasury && row === treasury)) ||
       row.foreign_source_interest_usd !== row.box1 ||
       unrelatedBoxes.some((key) => (row[key] ?? 0) !== 0) ||
       row.seller_financed === true ||
@@ -189,15 +196,18 @@ export function reconcileForm1116TwoCountryTreasury(
       !itemMatches(row)
     ) ||
     !Number.isSafeInteger(treasury.box3) || (treasury.box3 ?? 0) <= 0 ||
-    (treasury.box1 ?? 0) !== 0 || (treasury.box6 ?? 0) !== 0 ||
-    treasury.box7 !== undefined || treasury.box14 !== undefined ||
-    treasury.box15 !== undefined || treasury.box16 !== undefined ||
-    treasury.foreign_source_interest_usd !== undefined ||
-    treasury.foreign_tax_irs_country_code !== undefined ||
-    treasury.foreign_tax_source_document_reference !== undefined ||
-    unrelatedBoxes.some((key) => (treasury[key] ?? 0) !== 0) ||
-    treasury.seller_financed === true ||
-    treasury.elect_bond_premium_amortization === true ||
+    (sameStatementTreasury
+      ? treasury.source_document_reference !==
+        treasury.foreign_tax_source_document_reference
+      : (treasury.box1 ?? 0) !== 0 || (treasury.box6 ?? 0) !== 0 ||
+        treasury.box7 !== undefined || treasury.box14 !== undefined ||
+        treasury.box15 !== undefined || treasury.box16 !== undefined ||
+        treasury.foreign_source_interest_usd !== undefined ||
+        treasury.foreign_tax_irs_country_code !== undefined ||
+        treasury.foreign_tax_source_document_reference !== undefined ||
+        unrelatedBoxes.some((key) => (treasury[key] ?? 0) !== 0) ||
+        treasury.seller_financed === true ||
+        treasury.elect_bond_premium_amortization === true) ||
     typeof deduction !== "number" || !Number.isSafeInteger(deduction) ||
     deduction < 0 || foreignGross <= allocatedDeduction ||
     !Number.isSafeInteger(allocatedA) || !Number.isSafeInteger(allocatedB) ||
@@ -230,7 +240,7 @@ export function reconcileForm1116TwoCountryTreasury(
     pending.schedule1a?.senior_zero_exclusions_review === true
   ) {
     throw new Error(
-      "Form 1116 two-country Treasury route needs two foreign 1099-INT payers, one domestic box-3 payer, and the finalized return",
+      "Form 1116 two-country Treasury route needs two foreign 1099-INT payers, one sourced box-3 Treasury amount, and the finalized return",
     );
   }
   return {

@@ -1,5 +1,22 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Two foreign countries with same-issuer Treasury box 3 (written, unrun):**
+One Canadian Form 1099-INT now supplies foreign box 1/box 6 and domestic
+U.S. Treasury box 3 on the same issued statement; a separate French Form
+1099-INT supplies the second foreign box 1/box 6 country. The existing
+two-country Treasury review binds the domestic source reference to the
+Canadian foreign-tax source reference, with exactly two reviewed issued
+statements. Native and parent PDF replay both foreign country columns,
+Form 1116 Part I's $60,000 worldwide-gross denominator and per-country
+standard-deduction apportionment, Part II interest taxes, Schedule 3 line 1,
+and Form 1040 taxable interest. Positive full-return and box-3, document,
+tax, country, review, and return tamper cases are authored but unrun. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
+both U.S. and foreign income on line 3e; the
+[Form 1099-INT instructions](https://www.irs.gov/instructions/i1099int)
+identify box 3 as U.S. Treasury interest separate from box 1. Other mixed
+boxes, more payers, source bytes, and filled-output/XSD review remain open.
+
 **Two foreign countries plus a distinct domestic Treasury payer (written,
 unrun):** One foreign box-1/box-6 Form 1099-INT payer in each of two countries
 and one Treasury-only box-3 payer can share a passive Form 1116. The explicit
