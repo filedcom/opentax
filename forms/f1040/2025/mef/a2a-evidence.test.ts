@@ -39,7 +39,7 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
       `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
     );
     const xml = encoder.encode(
-      `<Return><PrimarySSN>111223333</PrimarySSN><IRS8990><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><IRS8990 documentId="IRS89901"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
     );
     const archive = zipSync({
       "manifest/manifest.xml": manifest,
@@ -93,6 +93,92 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
       Error,
       "Send evidence integrity",
     );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP parity", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const manifest = encoder.encode(
+      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+    );
+    const variants = [
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
+        attachments: {},
+      },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+        attachments: {},
+      },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040></ReturnData></Return>`,
+        attachments: {
+          "attachment/unlisted.pdf": encoder.encode("%PDF-unlisted"),
+        },
+      },
+    ];
+    for (const [index, variant] of variants.entries()) {
+      const xml = encoder.encode(variant.xml);
+      const archived = zipSync({
+        "manifest/manifest.xml": manifest,
+        "xml/submission.xml": xml,
+        ...variant.attachments,
+      });
+      const sendId = `${messageId}-${index}`;
+      await recordA2aSendPackage(root, {
+        messageId: sendId,
+        submissionIds: [submissionId],
+        package: {
+          sendSubmissionsRequestXml:
+            `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+          containerZipBytes: zipSync({ [`${submissionId}.zip`]: archived }),
+        },
+        recordedAt: new Date("2026-09-26T10:00:00Z"),
+      });
+      const xmlDigest = await digest(xml);
+      await assertRejects(
+        () =>
+          readA2aArchivedSubmission(root, sendId, {
+            submissionId,
+            taxpayerSsn: "111223333",
+            submissionXmlSha256: xmlDigest,
+          }),
+        Error,
+        "document inventory, references, or PDF attachments",
+      );
+    }
+    const validXml = encoder.encode(
+      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+    );
+    const validSendId = `${messageId}-valid`;
+    await recordA2aSendPackage(root, {
+      messageId: validSendId,
+      submissionIds: [submissionId],
+      package: {
+        sendSubmissionsRequestXml:
+          `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+        containerZipBytes: zipSync({
+          [`${submissionId}.zip`]: zipSync({
+            "manifest/manifest.xml": manifest,
+            "xml/submission.xml": validXml,
+            "attachment/evidence.pdf": encoder.encode("%PDF-test"),
+          }),
+        }),
+      },
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const valid = await readA2aArchivedSubmission(root, validSendId, {
+      submissionId,
+      taxpayerSsn: "111223333",
+      submissionXmlSha256: await digest(validXml),
+    });
+    assertEquals(valid.submissionId, submissionId);
   } finally {
     await Deno.remove(root, { recursive: true });
   }

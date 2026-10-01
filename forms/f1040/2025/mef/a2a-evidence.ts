@@ -40,7 +40,8 @@ export interface A2aArchivedSubmissionIdentity {
   readonly submissionXmlSha256: string;
 }
 
-export interface A2aArchivedSubmissionEvidence extends A2aArchivedSubmissionIdentity {
+export interface A2aArchivedSubmissionEvidence
+  extends A2aArchivedSubmissionIdentity {
   readonly sendMessageId: string;
   readonly containerSha256: string;
   readonly submissionArchiveSha256: string;
@@ -66,6 +67,59 @@ export interface A2aInboundEvidenceInput {
 }
 
 const encoder = new TextEncoder();
+
+function assertArchivedDocumentInventory(
+  xml: string,
+  archive: Readonly<Record<string, Uint8Array>>,
+): void {
+  const returnData = [...xml.matchAll(
+    /<ReturnData documentCnt="(\d+)">([\s\S]*?)<\/ReturnData>/g,
+  )];
+  const headerCounts = [...xml.matchAll(
+    /<ReturnHeader\b[^>]*\bbinaryAttachmentCnt="(\d+)"/g,
+  )];
+  const documents = returnData.length === 1
+    ? [...returnData[0][2].matchAll(
+      /<([A-Za-z0-9]+)\b[^>]*\bdocumentId="([^"]+)"[^>]*>/g,
+    )]
+    : [];
+  const ids = documents.map((match) => match[2]);
+  const references = [...xml.matchAll(/\breferenceDocumentId="([^"]+)"/g)]
+    .flatMap((match) => match[1].trim().split(/\s+/));
+  const binaries = [...xml.matchAll(
+    /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
+  )];
+  const fileNames = binaries.map((match) =>
+    /<AttachmentLocationTxt>([^<]+)<\/AttachmentLocationTxt>/
+      .exec(match[1])?.[1]
+  );
+  const archivedAttachments = Object.keys(archive).filter((name) =>
+    name.startsWith("attachment/")
+  );
+  if (
+    returnData.length !== 1 || headerCounts.length !== 1 ||
+    Number(returnData[0][1]) !== documents.length ||
+    documents[0]?.[1] !== "IRS1040" ||
+    new Set(ids).size !== ids.length ||
+    references.some((id) => !ids.includes(id)) ||
+    binaries.length !==
+      documents.filter((match) => match[1] === "BinaryAttachment").length ||
+    Number(headerCounts[0][1]) !== binaries.length ||
+    new Set(fileNames).size !== fileNames.length ||
+    fileNames.some((name) =>
+      !name || !Object.hasOwn(archive, `attachment/${name}`)
+    ) ||
+    archivedAttachments.length !== fileNames.length ||
+    binaries.some((match) =>
+      !/<DocumentTypeCd>PDF<\/DocumentTypeCd>/.test(match[1]) ||
+      !/<Desc>[^<]+<\/Desc>/.test(match[1])
+    )
+  ) {
+    throw new Error(
+      "A2A outbound document inventory, references, or PDF attachments differ from its archived return",
+    );
+  }
+}
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes));
@@ -190,20 +244,32 @@ export async function readA2aArchivedSubmission(
     submissionXmlSha256: z.string().regex(/^[0-9a-f]{64}$/),
   }).strict().parse(expected);
   const send = await readA2aSendRecord(root, sendMessageId);
-  if (send.submissionIds.filter((id) => id === identity.submissionId).length !== 1) {
-    throw new Error("A2A outbound Submission ID is not unique in its Send record");
+  if (
+    send.submissionIds.filter((id) => id === identity.submissionId).length !== 1
+  ) {
+    throw new Error(
+      "A2A outbound Submission ID is not unique in its Send record",
+    );
   }
   const key = await sha256(encoder.encode(sendMessageId));
-  const requestBytes = await Deno.readFile(join(root, "requests", key, "request.xml"));
-  const containerBytes = await Deno.readFile(join(root, "requests", key, "container.zip"));
+  const requestBytes = await Deno.readFile(
+    join(root, "requests", key, "request.xml"),
+  );
+  const containerBytes = await Deno.readFile(
+    join(root, "requests", key, "container.zip"),
+  );
   if (
     await sha256(requestBytes) !== send.requestBodySha256 ||
     await sha256(containerBytes) !== send.containerSha256
   ) {
     throw new Error("A2A outbound Send bytes changed during evidence read");
   }
-  const requestBody = new TextDecoder("utf-8", { fatal: true }).decode(requestBytes);
-  const bodyIds = [...requestBody.matchAll(/<SubmissionId>([^<]+)<\/SubmissionId>/g)]
+  const requestBody = new TextDecoder("utf-8", { fatal: true }).decode(
+    requestBytes,
+  );
+  const bodyIds = [
+    ...requestBody.matchAll(/<SubmissionId>([^<]+)<\/SubmissionId>/g),
+  ]
     .map((match) => match[1]);
   if (
     bodyIds.length !== send.submissionIds.length ||
@@ -238,12 +304,19 @@ export async function readA2aArchivedSubmission(
       !name.startsWith("attachment/")
     )
   ) {
-    throw new Error("A2A outbound archive lacks its exact manifest or return XML");
+    throw new Error(
+      "A2A outbound archive lacks its exact manifest or return XML",
+    );
   }
-  const manifest = new TextDecoder("utf-8", { fatal: true }).decode(manifestBytes);
+  const manifest = new TextDecoder("utf-8", { fatal: true }).decode(
+    manifestBytes,
+  );
   const xml = new TextDecoder("utf-8", { fatal: true }).decode(xmlBytes);
+  assertArchivedDocumentInventory(xml, archive);
   const one = (source: string, tag: string): string | undefined => {
-    const matches = [...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g"))];
+    const matches = [
+      ...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g")),
+    ];
     return matches.length === 1 ? matches[0][1] : undefined;
   };
   const xmlSha256 = await sha256(xmlBytes);
@@ -256,13 +329,17 @@ export async function readA2aArchivedSubmission(
     one(xml, "PrimarySSN") !== identity.taxpayerSsn ||
     xmlSha256 !== identity.submissionXmlSha256
   ) {
-    throw new Error("A2A outbound manifest, taxpayer, or XML digest differs from expected return");
+    throw new Error(
+      "A2A outbound manifest, taxpayer, or XML digest differs from expected return",
+    );
   }
   return {
     ...identity,
     sendMessageId,
     containerSha256: send.containerSha256,
-    submissionArchiveSha256: await sha256(container[`${identity.submissionId}.zip`]),
+    submissionArchiveSha256: await sha256(
+      container[`${identity.submissionId}.zip`],
+    ),
     manifestSha256: await sha256(manifestBytes),
   };
 }
