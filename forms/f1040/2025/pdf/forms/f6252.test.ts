@@ -34,6 +34,20 @@ const sale = {
   is_long_term: true,
 };
 
+const filed2024 = {
+  filed_form_reference: "2024 Form 6252 review record, vacant land",
+  property_description: "Vacant land",
+  date_acquired: "2020-01-01",
+  date_sold: "2024-06-01",
+  line16_gross_profit: 60_000,
+  line18_contract_price: 100_000,
+  line19_gross_profit_ratio: 0.6,
+  line20_year_of_sale_payment: 0,
+  line22_total_payments: 10_000,
+  line23_prior_payments: 0,
+  line26_gain: 6_000,
+};
+
 function mapped(key: string): string | undefined {
   return form6252Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
 }
@@ -127,6 +141,7 @@ Deno.test("2025 Form 6252 PDF retains later-year zero and business-property dest
         ...sale,
         date_sold: "2024-06-01",
         payments_received_prior_years: 10_000,
+        prior_year_form6252_source: filed2024,
       }],
     },
     filer,
@@ -143,6 +158,11 @@ Deno.test("2025 Form 6252 PDF retains later-year zero and business-property dest
         date_sold: "2024-06-01",
         payments_received_prior_years: 80_000,
         payments_received: 20_000,
+        prior_year_form6252_source: {
+          ...filed2024,
+          line22_total_payments: 80_000,
+          line26_gain: 48_000,
+        },
       }],
     },
     filer,

@@ -1,0 +1,7 @@
+# TY2025 Form 6252 later-year source reconciliation
+
+The [2025 Form 6252 instructions](https://www.irs.gov/pub/irs-prior/f6252--2025.pdf) require Form 6252 in the sale year and each later payment year. Part II line 19 retains the gross profit percentage determined in the sale year. Line 23 includes all earlier money, fair market value, and deemed payments; interest or original issue discount belongs on a separate return line.
+
+The bounded 2024-sale/2025-payment path now requires a reviewed 2024 Form 6252 line record, alongside the 2025 sale facts. The record identifies the property and dates and gives filed lines 16, 18, 19, 20, 22, 23, and 26. Calculation and native/PDF export reject mismatched identity, gross profit, contract, five-decimal ratio, deemed year-of-sale payment, prior-payment total, or prior recognized gain. A 2024 sale with no prior form record, and sales before 2024 without a longer filed history, reject. The 2025 final-payment fixture carries $20,000 of 2024 payments, $80,000 of 2025 payments, a 0.60000 ratio, and $48,000 to Schedule D and Form 1040; tampered ratio and prior-payment fixtures reject.
+
+This record is a transcribed source reference, not authenticated accepted-return bytes. The full-return native/PDF fixture and tamper fixtures are authored but have **not yet been executed** in the implementation pass. Current-year principal-versus-interest evidence, filed-source authenticity, related-party transfers, recapture, older sale years, IRS business rules, and ATS acceptance remain open.
