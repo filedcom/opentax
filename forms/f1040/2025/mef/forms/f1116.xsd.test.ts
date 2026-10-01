@@ -405,25 +405,25 @@ Deno.test({
     income_category: IncomeCategory.Passive,
     vintages: [
       {
-        vintage_tax_year: 2021,
+        vintage_tax_year: 2021 as const,
         prior_year_schedule_b_line8_vintage_amount: 100,
       },
       {
-        vintage_tax_year: 2022,
+        vintage_tax_year: 2022 as const,
         prior_year_schedule_b_line8_vintage_amount: 100,
       },
       {
-        vintage_tax_year: 2023,
+        vintage_tax_year: 2023 as const,
         prior_year_schedule_b_line8_vintage_amount: 100,
       },
       {
-        vintage_tax_year: 2024,
+        vintage_tax_year: 2024 as const,
         prior_year_schedule_b_line8_vintage_amount: 500,
       },
     ],
     prior_year_schedule_b_line8_total: 800,
-    prior_year_schedule_b_line8_other_vintages_total: 0,
-    no_intervening_adjustments: true,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
     source_document_references: [
       "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
     ],

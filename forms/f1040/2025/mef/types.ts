@@ -34,6 +34,7 @@ import type { inputSchema as refinancePointsInputSchema } from "../../nodes/inpu
 import type { inputSchema as form3921InputSchema } from "../../nodes/inputs/f3921/index.ts";
 import type { inputSchema as form8949SourceInputSchema } from "../../nodes/inputs/f8949/index.ts";
 import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs/f59e/index.ts";
+import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/form1116_prior_carryover/index.ts";
 import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
@@ -80,4 +81,8 @@ export type MefFormsPending =
     f8949?: z.infer<typeof form8949SourceInputSchema>;
     // Current-year §59(e) records support Form 6251 line 2o replay.
     f59e?: z.infer<typeof form59eSourceInputSchema>;
+    // Accepted prior Form 1116 Schedule B rows remain available for carryover replay.
+    form1116_prior_carryover?: z.infer<
+      typeof form1116PriorCarryoverInputSchema
+    >;
   };
