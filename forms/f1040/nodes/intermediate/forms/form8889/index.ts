@@ -187,7 +187,16 @@ const beneficiaryInputSchema = z.object({
       incurred_after_hsa_established: z.literal(true),
       not_reimbursed_by_other_coverage: z.literal(true),
       eligible_person: z.enum(["owner", "spouse", "dependent"]),
-    }).strict(),
+      patient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+    }).strict().superRefine((receipt, ctx) => {
+      if (receipt.eligible_person === "dependent" && !receipt.patient_ssn) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["patient_ssn"],
+          message: "Form 8889 dependent medical receipt needs patient SSN",
+        });
+      }
+    }),
   ).min(1).optional(),
   // Portion of line 16 distributed after death, disability, or age 65.
   // Must be answered explicitly when line 16 is positive, including zero.

@@ -12,6 +12,7 @@ import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8889Pdf } from "./forms/f8889.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
+import { DependentRelationship } from "../../nodes/inputs/general/index.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const hsa = {
@@ -176,4 +177,101 @@ Deno.test("two distinct 1099-SA copies and medical receipts reconcile Form 8889 
     );
     await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
   }
+});
+
+Deno.test("primary HSA owner pays one claimed dependent's medical receipt through native and PDF", async () => {
+  const child = {
+    first_name: "Avery",
+    last_name: "Example",
+    name_control: "EXAM",
+    ssn: "777889999",
+    dob: "2012-06-15",
+    relationship: DependentRelationship.Daughter,
+    months_in_home: 12,
+    lived_in_us_over_half_year: true,
+    us_citizen_national_or_resident: true,
+    provided_over_half_own_support: false,
+    filed_joint_return_except_refund_only: false,
+  };
+  const dependentHsa = {
+    ...hsa,
+    qualified_medical_expense_evidence: [{
+      ...hsa.qualified_medical_expense_evidence[0],
+      eligible_person: "dependent",
+      patient_ssn: child.ssn,
+    }, hsa.qualified_medical_expense_evidence[1]],
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      ...base.inputs,
+      general: {
+        ...(base.inputs.general as Record<string, unknown>),
+        dependents: [child],
+      },
+      form8889: dependentHsa,
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule1?.line13_hsa_deduction, 2_000);
+  assertEquals(pending.schedule1?.line8f_hsa_income, 700);
+  assertEquals(pending.schedule2?.line17c_hsa_penalty, 140);
+  assertEquals(pending.f1040?.line23_other_taxes, 140);
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<TaxableHSADistributionAmt>700</TaxableHSADistributionAmt>",
+  );
+  const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
+  assert(pdf.length > 0);
+
+  const source = pending.form8889 as unknown as Record<string, unknown>;
+  for (
+    const changedReceipt of [
+      {
+        ...dependentHsa.qualified_medical_expense_evidence[0],
+        patient_ssn: "999887777",
+      },
+      {
+        ...dependentHsa.qualified_medical_expense_evidence[0],
+        patient_ssn: undefined,
+      },
+    ]
+  ) {
+    const altered = {
+      ...pending,
+      form8889: {
+        ...source,
+        qualified_medical_expense_evidence: [
+          changedReceipt,
+          dependentHsa.qualified_medical_expense_evidence[1],
+        ],
+      },
+    };
+    await assertRejects(() =>
+      buildMefBundle(altered as typeof pending, {
+        filer: base.filer,
+        attachments: [],
+      })
+    );
+    await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
+  }
+  await assertRejects(() =>
+    buildMefBundle(
+      {
+        ...pending,
+        general: {
+          ...(pending.general as Record<string, unknown>),
+          dependents: [{ ...child, ssn: "999887777" }],
+        },
+      } as typeof pending,
+      { filer: base.filer, attachments: [] },
+    )
+  );
 });

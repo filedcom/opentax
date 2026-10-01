@@ -66,3 +66,20 @@ instructions](https://www.irs.gov/instructions/i8889) use total Form 1099-SA
 box 1 on line 14a and unreimbursed qualified medical expenses on line 15.
 Account identity, trustee and receipt bytes remain unauthenticated; code-2/3,
 exception, rollover, and paired-owner mixes remain closed in this source route.
+
+## One claimed dependent's reviewed medical receipt (2026-10-01, unrun)
+
+The single-primary, full-year self-only route can now count one receipt for a
+claimed dependent within its two-receipt limit. A dependent receipt must name
+the patient's SSN; native MeF and PDF projection require exactly one claimed
+dependent on the source Form 1040 and match that SSN before accepting Form
+8889 line 15. The other receipt may belong to the HSA owner. The existing
+1099-SA owner checks, distinct receipt references, line-15 total, taxable
+line 16, 20% tax, Schedule 1/2, and Form 1040 reconciliation all remain in
+force. The [2025 Form 8889 line-15 instructions](https://www.irs.gov/instructions/i8889)
+allow HSA funds for an account beneficiary's dependent's unreimbursed qualified
+medical expenses incurred after the HSA was established. A positive full-return
+native/PDF case and changed, missing, and unclaimed-patient SSN cases are
+authored but unrun. This is a claimed-dependent subset; special deemed-dependent
+exceptions, more patients, medical receipt bytes, and trustee authenticity
+remain outside it.
