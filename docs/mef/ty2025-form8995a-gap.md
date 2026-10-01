@@ -1,9 +1,24 @@
 # TY2025 Form 8995-A coverage gap
 
-Status: bounded one-business parent, one-SSTB Schedule A, two-business
+Status: bounded one-business parent with one sourced REIT dividend, one-SSTB Schedule A, two-business
 aggregation Schedule B, two-business current-loss Schedule C, and
 one-cooperative Schedule D native/PDF routes written but unrun. Local tests, XSD
 validation, filled-PDF rendering, and IRS ATS remain outstanding.
+
+## One above-phase-in business plus one REIT dividend (2026-10-01, unrun)
+
+One single filer fully above the phase-in range can combine one identified
+positive non-SSTB business with exactly one directly issued, reviewed Form
+1099-DIV box 5 REIT dividend of at most $1,500. The payer, document reference,
+and 91-day holding review remain attached to the source. Calculation now
+reconciles Form 8995-A lines 28-32 and line 39; native and PDF export compare
+the issued copy with Form 1040 lines 3b and 13. A full-return positive case and
+source/return tamper fixtures are authored for the deferred bulk run. The
+one-business attestation is now `no_ptp_or_loss_carryforward_confirmed` so a
+source with a REIT dividend does not also assert no REIT amount. This is a
+direct schema change, without a second accepted field shape. Multiple REIT
+copies, PTP income, capital-gain and qualified-dividend mixes, source-byte
+authentication, filled output, XSD, business rules, and ATS remain open.
 
 Unsupported broader Schedule A/B/C and broader Schedule D triggers reject at the
 Form 8995-A node **before** any Form 1040/standard-deduction output is produced.
