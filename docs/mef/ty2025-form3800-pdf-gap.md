@@ -14,6 +14,18 @@ credit fails before any page fields are projected. Positive and tamper fixtures
 are authored for the deferred bulk run; this closes the direct-projection
 amount drift, while individual credit-source authenticity remains open.
 
+One self-earned, nonpassive orphan-drug credit now has a bounded direct PDF
+source check. The Form 3800 projector recalculates filed Form 8820 line 4,
+matches the pending and raw credit, one Part III line 1h and Part V detail,
+the linked IRS8820 document ID, ordinary Part II tax use and line 38, and the
+final Schedule 3/Form 1040 credit. A $1,975 single-drug return plus source,
+raw-credit, and prepared-detail tamper fixtures are authored for the deferred
+bulk run. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+assign Form 8820 to Part III line 1h; the [official Form 8820](https://www.irs.gov/pub/irs-pdf/f8820.pdf)
+figures that source credit. The drug designation and clinical-testing records
+remain unauthenticated, and passive, pass-through, mixed-source, and unused
+credit carryover routes need separate evidence.
+
 One self-earned, nonpassive qualified commercial clean vehicle now has an
 additional direct Form 3800 PDF source check. The Form 8936 Part V and Schedule
 A source facts calculate a $3,000 credit for a $10,000 electric van acquired

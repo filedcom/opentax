@@ -119,6 +119,61 @@ export const form3800Pdf: PdfFormDescriptor = {
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
     if (
+      source.f8820_credit &&
+      !source.f8874_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const filed = f8820InputSchema.parse(all.f8820);
+      const credit = calculateForm8820(filed).line4;
+      const rawSource = f3800InputSchema.parse(raw);
+      const row = prepared.currentRows[0];
+      const amount = prepared.currentAmounts[0];
+      const detail = prepared.currentDetails[0];
+      if (
+        filed.subject_to_passive_activity_limit ||
+        (filed.pass_through_credits?.length ?? 0) !== 0 ||
+        credit <= 0 ||
+        source.f8820_credit.subject_to_passive_activity_limit ||
+        source.f8820_credit.credit_amount !== credit ||
+        JSON.stringify(rawSource.f8820_credit) !==
+          JSON.stringify(source.f8820_credit) ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentAmounts.length !== 1 ||
+        prepared.currentDetails.length !== 1 ||
+        prepared.carryoverRows.length !== 0 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8820" ||
+        !row.metadata.referenceDocumentId ||
+        amount?.line !== "1h" ||
+        amount.nonpassiveCredit !== credit ||
+        amount.totalCredit !== credit ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.transferOutCredit !== 0 ||
+        amount.appliedCredit !== credit ||
+        detail?.line !== "1h" || detail.credit !== credit ||
+        detail.appliedCredit !== credit ||
+        detail.passThroughEin !== undefined ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        prepared.lines.line1 !== credit ||
+        prepared.lines.line6 !== credit ||
+        prepared.lines.line17 !== credit ||
+        prepared.lines.line38 !== credit
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 1h differs from one filed self-earned Form 8820 source",
+        );
+      }
+    }
+    if (
       source.f8826_credit_entries?.length === 2 &&
       source.f8826_credit_entries.some((entry) => entry.source_type === "self")
     ) {

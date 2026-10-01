@@ -751,6 +751,108 @@ Deno.test("orphan-drug and New Markets credits retain distinct current-year sour
   );
 });
 
+Deno.test("one self-earned orphan-drug credit reconciles Form 3800 native and PDF", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-geothermal-and-new-markets-credits"
+  )!;
+  const { f8835: _facility, f8874: _investment, ...otherInputs } =
+    fixture.inputs;
+  const orphanSource = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-2025-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 10_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const result = f1040_2025.executeReturn({
+    ...otherInputs,
+    f8820: orphanSource,
+  });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const pending3800 = f3800InputSchema.parse(allPending.f3800);
+  assertEquals(parts.lines.line38, 1_975);
+  assertEquals(allPending.schedule3?.line6a_total, 1_975);
+  assertEquals(allPending.f1040?.line20_nonrefundable_credits, 1_975);
+  assertStringIncludes(prepared.bundle.xml, "<Form8820CYCreditsGrp");
+  const printed = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed?.[form3800PartVFields(1).c1], undefined);
+  assertEquals(printed?.[form3800PartVFields(1).e], 1_975);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 1_975);
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        {
+          ...allPending,
+          f8820: {
+            ...orphanSource,
+            f8820s: [{
+              ...orphanSource.f8820s[0],
+              qualified_clinical_testing_expenses: 9_000,
+            }],
+          },
+        },
+        parts,
+      ),
+    Error,
+    "one filed self-earned Form 8820 source",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        {
+          ...pending3800,
+          f8820_credit: {
+            ...pending3800.f8820_credit,
+            credit_amount: 1_974,
+          },
+        },
+        fixture.filer,
+        allPending,
+        parts,
+      ),
+    Error,
+    "one filed self-earned Form 8820 source",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        allPending,
+        {
+          ...parts,
+          currentDetails: parts.currentDetails.map((detail) => ({
+            ...detail,
+            credit: detail.credit - 1,
+          })),
+        },
+      ),
+    Error,
+    "one filed self-earned Form 8820 source",
+  );
+});
+
 Deno.test("orphan-drug ordinary and geothermal specified credits keep separate Form 3800 limits", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-and-new-markets-credits"
