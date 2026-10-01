@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **363 completed bounded items** and their exact limits live in the
+The **364 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 307 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 308 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -49,7 +49,8 @@ plus OID pair, an age-55 Form 8889 recapture route, a four-copy Form 4972
 collection fix, and a Form 8995 REIT-only route are also recorded.
 The latest Form 6251 slice covers mixed-term gains offsetting losses across
 the separate regular and AMT deduction caps. Form 8283 Section A stock
-carryovers above $5,000 are now recorded. Form 8962 corrected policy months
+carryovers above $5,000 and Form 8962 corrected policy months across up to
+twelve nonoverlapping policies are now recorded. Form 8582 activity ledgers
 and Form 1116 carryover/PDF paths are in progress.
 The agreed full test batch remains deferred until implementation is finished.
 
