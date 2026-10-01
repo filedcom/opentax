@@ -3,6 +3,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { itemSchema } from "../../../nodes/inputs/f1099r/index.ts";
 import { TS } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { assert1099RRecipientOwner } from "../../f1099r-recipient-owner.ts";
 
 type Item = z.infer<typeof itemSchema>;
 
@@ -160,6 +161,7 @@ export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1099r.pdf",
   build(fields, context) {
+    assert1099RRecipientOwner(fields, context?.filer);
     return (fields.f1099rs ?? []).map((item, index) =>
       build1099R(item, context ?? {}, index)
     );

@@ -20,6 +20,12 @@ document supplied it.
   accounts remain distinct even when the payer and packet reference match.
   Rows without all three source identifiers are still ambiguous; the node
   does not infer identity from amount or payer name alone.
+- Form 1099-R now replays an explicit issued recipient SSN against the selected
+  taxpayer or joint spouse at native and full-return PDF preflight. A
+  spouse-designated 1099-R on a separate return rejects. This prevents an IRA,
+  pension, or withholding amount from being filed under another owner's name
+  when the source includes its recipient. Missing issued recipient SSNs still
+  rely on the `ts` classification and remain an authentication gap.
 
 ## Source inventory and remaining joins
 
@@ -27,7 +33,7 @@ document supplied it.
 | --- | --- | --- |
 | W-2, W-2G | W-2 employee SSN is optional; W-2G has payer-copy and winner identity checks. | Require an explicit issued W-2 recipient and reconcile all wage/withholding rows to the same final owner. Duplicate W-2 copies need employer control/correction identity. |
 | 1099-INT/DIV/OID/B | INT/OID have optional payer and source references; DIV has optional source reference; B capital dispositions use transaction facts. | Individual recipient TIN is absent from these base contracts. Prove taxpayer/spouse ownership and de-duplicate corrected or repeated payer/account/transaction reports across Schedule B/D and Form 1040. The new INT guard covers only an exact identified copy. |
-| 1099-R/G | R has optional recipient SSN and source reference; G has optional recipient TIN and source reference. | Require issued recipient identity for each positive return route and reconcile multiple corrected copies, withholding, and final income once. |
+| 1099-R/G | R has optional recipient SSN and source reference; G has optional recipient TIN and source reference. Explicit 1099-R recipient SSNs now reconcile at native/PDF export. | Require issued recipient identity for each positive return route and reconcile multiple corrected copies, withholding, and final income once. The 1099-R check cannot authenticate a missing recipient SSN. |
 | 1099-NEC/K/MISC/PATR | NEC and K/MISC have recipient and business-source fields for bounded routes; PATR does not expose a universal recipient identity. | Confirm recipient against each Schedule C/F/property owner and reject overlap when one payment appears on more than one payer form or gross-receipts source. Cash/accrual timing and corrected payer copies remain open. |
 | 1099-SA, 1098, 1095-A, 3921 | HSA owner/medical-use paths, 1098 recipient/source facts, 1095-A policy recipient, and 3921 document references exist in bounded paths. | Reconcile every owner and correction/vintage across the final 1040 and any paired forms. 3921's unique reference is local to its input collection; it does not prove option-event ownership across W-2 and 1099-B. |
 | Partnership, S corporation, and trust K-1 | Recipient TIN or beneficiary SSN and issuer/source identifiers exist for selected code-specific routes. | Apply owner and duplicate checks across all retained K-1 codes, revisions, and passive/portfolio destinations, including spouse attribution on joint returns. |
