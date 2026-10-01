@@ -45,8 +45,8 @@ positive box 6 and Form 8962 self-employed health-insurance deduction/PTC
 ordering and a further Form 8283 Section B art slice are also recorded.
 The bounded Form 3800/Form 8820 PDF credit reconciliation is also recorded.
 The sourced Form 8835 landfill-gas facility and Form 4952 Treasury-interest
-plus OID pair are also recorded. Further Form 8889/5329 and Form 8995/8995-A
-slices are in progress and are not counted as complete.
+plus OID pair are also recorded. Further Form 8889/5329, Form 8995/8995-A,
+and Form 4972 slices are in progress and are not counted as complete.
 The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
