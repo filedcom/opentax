@@ -161,6 +161,103 @@ function filedPartnershipReturn() {
   return result;
 }
 
+function filedSCorpReturn() {
+  const result = f1040_2025.executeReturn({
+    general,
+    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: "rental-1",
+      passive_income_source_document_reference: incomeReference,
+      property_description: "Rental property",
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 365,
+      personal_use_days: 0,
+      rent_income: passiveIncome,
+      form_1099_payments_made: false,
+    }],
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Community S corporation",
+        corporation_ein: "234567891",
+        source_document_reference: "2025 S corporation K-1 code AD",
+        recipient_tin: "111223333",
+        box13_code_ad_new_markets_credit: 500,
+        new_markets_credit_subject_to_passive_activity_limit: true,
+      }],
+    },
+    form8582cr: {
+      credit_sources: [{
+        ...source,
+        activity_reference: "2025 S corporation K-1 code AD",
+        source_document_reference: "2025 S corporation K-1 code AD",
+        source_origin: {
+          kind: "s_corporation" as const,
+          entity_reference: "Community S corporation",
+          ein: "234567891",
+        },
+      }],
+      regular_tax_all_income: taxAll,
+      regular_tax_without_passive: taxWithout,
+      line6_ordinary_worksheet: worksheet,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  return result;
+}
+
+Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
+  const result = filedSCorpReturn();
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.schedule3.line6a_total, 500);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 500);
+  const xml = form8582cr.build(pending.form8582cr, { pending });
+  assertStringIncludes(xml, "<AllowedCreditsAmt>500</AllowedCreditsAmt>");
+  const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(pdf.line4a, 500);
+  assertEquals(pdf.line37, 500);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
+  assert(!prepared.bundle.xml.includes("<IRS8874 "));
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<PassThroughEntityEIN>234567891</PassThroughEntityEIN>",
+  );
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  );
+});
+
+Deno.test("S corporation K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
+  const pending = normalizeAllPending(filedSCorpReturn().pending);
+  const row = (pending.k1_s_corp.k1_s_corps as Record<string, unknown>[])[0];
+  for (
+    const changedRow of [
+      { ...row, corporation_ein: "987654321" },
+      { ...row, box13_code_ad_new_markets_credit: 501 },
+      { ...row, box1_ordinary_business: 10 },
+      { ...row, recipient_tin: "999887777" },
+    ]
+  ) {
+    const changed = {
+      ...pending,
+      k1_s_corp: { k1_s_corps: [changedRow] },
+    };
+    assertThrows(
+      () => form8582cr.build(changed.form8582cr, { pending: changed }),
+      Error,
+    );
+    assertThrows(
+      () => form8582crPdf.projectFields!(changed.form8582cr, changed),
+      Error,
+    );
+  }
+});
+
 Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedPartnershipReturn();
   const pending = normalizeAllPending(result.pending);

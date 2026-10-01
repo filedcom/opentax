@@ -43,6 +43,7 @@ function filing(
     | "oid"
     | "interest_dividend"
     | "oid_dividend"
+    | "two_interest"
     | "two_interest_dividend"
     | "interest_two_dividends" = "interest",
 ) {
@@ -54,7 +55,7 @@ function filing(
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
     },
-    ...(source === "two_interest_dividend"
+    ...(source === "two_interest" || source === "two_interest_dividend"
       ? {
         f1099int: [{
           payer_name: "First taxable bond payer",
@@ -346,6 +347,54 @@ Deno.test("Form 4952 traced loan with two interest payers and one dividend payer
       filer: testFiler(),
     }), Error);
   assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
+});
+
+Deno.test("Form 4952 traced loan with two distinct interest payers reaches native and PDF", () => {
+  const result = filing("two_interest");
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line4a, 60_000);
+  assertEquals(result.pending.form4952?.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 60_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  const fields = result.pending.form4952!;
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentPropGrossIncomeAmt>60000</InvestmentPropGrossIncomeAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  assertEquals(
+    form4952Pdf.instances!(fields, testFiler(), result.pending).length,
+    1,
+  );
+  const original = (result.pending.f1099int as {
+    f1099ints: Record<string, unknown>[];
+  }).f1099ints;
+  for (
+    const changedPayers of [
+      [{ ...original[0] }, {
+        ...original[1],
+        source_document_reference: original[0].source_document_reference,
+      }],
+      [{ ...original[0] }, { ...original[1], box1: 29_999 }],
+    ]
+  ) {
+    const changed = {
+      ...result.pending,
+      f1099int: { f1099ints: changedPayers },
+    };
+    assertThrows(
+      () =>
+        nativeForm4952.build(fields, { pending: changed, filer: testFiler() }),
+      Error,
+    );
+    assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
+  }
 });
 
 Deno.test("Form 4952 traced loan with one interest payer and two dividend payers reaches filing outputs", () => {

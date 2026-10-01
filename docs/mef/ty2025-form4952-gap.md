@@ -77,6 +77,14 @@ deferred batch. Qualified dividends, foreign tax, capital-gain distributions,
 and unauthenticated lender or broker bytes remain outside this direct-loan
 route.
 
+The same direct-use loan now accepts two distinct affirmed, unadjusted taxable
+Form 1099-INT box 1 payers without a dividend payer. Both issued statement
+references and payer names must differ; their two amounts must match the
+retained Form 4952 source list, Form 1040 interest, Schedule A line 9, native
+MeF, and PDF. A full-return calculation and duplicate-reference/amount tamper
+fixtures are authored for the deferred batch. Source bytes and mixed loan use
+remain open.
+
 The direct loan also accepts one affirmed unadjusted box 1 Form 1099-INT payer
 alongside one ordinary box 1a Form 1099-DIV payer. The combined source guard
 replays both payers and the final Form 1040 interest/dividend amounts; the loan

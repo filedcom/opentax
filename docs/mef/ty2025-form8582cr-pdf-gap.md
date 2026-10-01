@@ -1,8 +1,9 @@
 # TY2025 Form 8582-CR PDF boundary
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
-one current-year passive New Markets credit from either a self-earned Form 8874
-investment or a credit-only partnership K-1 box 15 code AD, plus one
+one current-year passive New Markets credit from a self-earned Form 8874
+investment, a credit-only partnership K-1 box 15 code AD, or a credit-only
+S corporation K-1 box 13 code AD, plus one
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
 
@@ -15,14 +16,17 @@ method, Schedule E rental ledger, Schedule 1, and filer status. The credit
 activity may be distinct from the rental income activity: one issued Form 8874
 investment must exactly match the Form 8582-CR source's activity, source
 document, and current-year amount. Alternatively, one partnership K-1 box 15
-code AD must match the pass-through EIN/name, K-1 reference, recipient TIN,
-passive classification, and current-year amount. That K-1 has no other income,
+code AD or S corporation K-1 box 13 code AD must match the pass-through
+EIN/name, K-1 reference, recipient TIN, passive classification, and
+current-year amount. That K-1 has no other income,
 deduction, or credit boxes in this bounded route, so the Schedule E rental is
 the complete positive passive-income inventory. No prior credit, PTP, special allowance,
 additional passive income source, or Part VI election enters this route.
 The [2025 partnership K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
 identify box 15 code AD as the New Markets credit, direct it to Form 8874 or
 Form 3800 Part III line 1i, and require Form 8582-CR for passive credits. The
+[2025 S corporation K-1 instructions](https://www.irs.gov/instructions/i1120ssk)
+give the same filing directions for box 13 code AD. The
 bounded pass-through route uses the direct Form 3800 path and does not attach
 an unsourced individual Form 8874.
 
@@ -32,7 +36,7 @@ Form 3800 line 38, Schedule 3 line 6a/8, and Form 1040 line 20 must agree
 with the allowed credit. The PDF prints Parts I and V: line 4a/4c, lines 5-7,
 and line 37; unused special-allowance fields stay blank. Its AcroForm mappings
 follow the official two-page blank, including page 2 `f2_21` for line 37.
-Full-return/native/PDF fixtures for both source kinds and source, credit, tax,
+Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
 The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
 the same Form 1040 tax method for both line 6 worksheet tax calculations and
@@ -50,7 +54,7 @@ their line 6 source, final-return tax method, or carryforward join:
 
 | Native calculation branch | Printable gap |
 | --- | --- |
-| Other-category current-year credits from S corporation, estate, trust, or cooperative K-1 sources; partnership K-1s with other income, deduction, or credit boxes; or self-earned sources other than the one Form 8874 investment | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
+| Other-category current-year credits from estate, trust, or cooperative K-1 sources; partnership or S corporation K-1s with other income, deduction, or credit boxes; or self-earned sources other than the one Form 8874 investment | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
 | Multiple current-year credit activities or mixed Form 3800 reporting lines 3, 24, and 33 | Per-activity allocation and Form 3800/Form 1040 tax-use proof for every source. |
 | Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
 | Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
@@ -93,9 +97,10 @@ line order and page 2 line 37 field.
 The native `IRS8582CR` builder recalculates Parts I-IV and line 37 from
 `form8582cr.credit_sources`, `regular_tax_all_income`, and
 `regular_tax_without_passive`. The bounded current-year sources are one passive,
-self-earned Form 8874 investment or one credit-only partnership K-1 box 15
-code AD. The native builder can join the first to its attached Form 8874 and
-the second to its issuer, recipient, reference, and reported credit. Both join
+self-earned Form 8874 investment, one credit-only partnership K-1 box 15
+code AD, or one credit-only S corporation K-1 box 13 code AD. The native builder
+can join the first to its attached Form 8874 and each pass-through source to
+its issuer, recipient, reference, and reported credit. All three join
 their allowed allocations to Form 3800. Form 3800 separately requires finalized Part II tax
 context and a matching passive allocation. These joins do not prove the Form
 8582-CR tax attributable to passive income on line 6:

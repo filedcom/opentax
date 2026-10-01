@@ -13,6 +13,7 @@ import {
 } from "../nodes/inputs/f8874/index.ts";
 import { inputSchema as form3800InputSchema } from "../nodes/inputs/f3800/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { sameForm3800PassiveAllocations } from "./mef/forms/f3800_passive_link.ts";
 import { assertForm3800FinalCreditJoin } from "./form3800_final_credit_join.ts";
 
@@ -30,6 +31,14 @@ const creditOnlyPartnershipFields = new Set([
   "box15_code_ad_new_markets_credit",
   "new_markets_credit_subject_to_passive_activity_limit",
 ]);
+const creditOnlySCorpFields = new Set([
+  "corporation_name",
+  "corporation_ein",
+  "source_document_reference",
+  "recipient_tin",
+  "box13_code_ad_new_markets_credit",
+  "new_markets_credit_subject_to_passive_activity_limit",
+]);
 
 /** Replays the one-activity, current-year-only line 6 and credit source against the filed return. */
 export function reconcileFiledForm8582CROrdinary(
@@ -42,10 +51,12 @@ export function reconcileFiledForm8582CROrdinary(
     source?.source_origin.kind === PassiveCreditSourceOrigin.Self;
   const partnershipCredit = source?.source_origin.kind ===
     PassiveCreditSourceOrigin.Partnership;
+  const sCorpCredit = source?.source_origin.kind ===
+    PassiveCreditSourceOrigin.SCorporation;
   if (
     !input.line6_ordinary_worksheet || input.credit_sources.length !== 1 ||
     !source || source.source_form !== "Form 8874" ||
-    (!selfCredit && !partnershipCredit) ||
+    (!selfCredit && !partnershipCredit && !sCorpCredit) ||
     source.category !== PassiveCreditCategory.Other ||
     source.reporting_route !== PassiveCreditReportingRoute.Form3800Line3 ||
     source.form3800_credit_line !== "1i" ||
@@ -59,7 +70,6 @@ export function reconcileFiledForm8582CROrdinary(
     input.part_iii_tax_on_income_less_line26 !== undefined ||
     input.part_iv_tax_on_income_less_remaining_allowance !== undefined ||
     [
-      "k1_s_corp",
       "k1_trust",
       "f4835",
       "schedule_f",
@@ -67,7 +77,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs one current-year Form 8874 or partnership code AD credit and one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs one current-year Form 8874 or credit-only K-1 code AD credit and one sourced passive rental income activity",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -79,7 +89,10 @@ export function reconcileFiledForm8582CROrdinary(
     pending.general,
   );
   if (selfCredit) {
-    if (nonemptySource(pending.k1_partnership)) {
+    if (
+      nonemptySource(pending.k1_partnership) ||
+      nonemptySource(pending.k1_s_corp)
+    ) {
       throw new Error("Form 8582-CR self-earned route has another K-1 source");
     }
     const creditForm = form8874InputSchema.parse(pending.f8874);
@@ -98,11 +111,14 @@ export function reconcileFiledForm8582CROrdinary(
         "Form 8582-CR credit differs from the filed passive Form 8874 investment",
       );
     }
-  } else {
+  } else if (partnershipCredit) {
     if (nonemptySource(pending.f8874)) {
       throw new Error(
         "Form 8582-CR partnership route has another Form 8874 source",
       );
+    }
+    if (nonemptySource(pending.k1_s_corp)) {
+      throw new Error("Form 8582-CR partnership route has another K-1 source");
     }
     const k1s = partnershipK1InputSchema.parse(pending.k1_partnership)
       .k1_partnerships;
@@ -125,6 +141,37 @@ export function reconcileFiledForm8582CROrdinary(
     ) {
       throw new Error(
         "Form 8582-CR partnership code AD credit differs from the filed credit-only K-1",
+      );
+    }
+  } else {
+    if (
+      nonemptySource(pending.f8874) ||
+      nonemptySource(pending.k1_partnership)
+    ) {
+      throw new Error(
+        "Form 8582-CR S corporation route has another credit source",
+      );
+    }
+    const k1s = sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+    const k1 = k1s[0];
+    const origin = source.source_origin;
+    const general = pending.general as { taxpayer_ssn?: string } | undefined;
+    if (
+      k1s.length !== 1 || !k1 ||
+      Object.keys(k1).some((key) => !creditOnlySCorpFields.has(key)) ||
+      origin.kind !== PassiveCreditSourceOrigin.SCorporation ||
+      origin.ein !== k1.corporation_ein ||
+      origin.entity_reference !== k1.corporation_name ||
+      source.activity_reference !== k1.source_document_reference ||
+      source.source_document_reference !== k1.source_document_reference ||
+      source.source_statement_reference !== undefined ||
+      k1.box13_code_ad_new_markets_credit !== source.current_year_credit ||
+      k1.new_markets_credit_subject_to_passive_activity_limit !== true ||
+      !k1.recipient_tin ||
+      k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8582-CR S corporation code AD credit differs from the filed credit-only K-1",
       );
     }
   }
