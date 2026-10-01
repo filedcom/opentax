@@ -145,7 +145,7 @@ Deno.test("schedule_se: rejects missing or conflicting filer identity", () => {
   assertThrows(
     () => rawScheduleSE.build({ net_profit_schedule_c: 30000 }),
     Error,
-    "needs the filer's nine-digit SSN",
+    "needs the proprietor's nine-digit SSN",
   );
   assertThrows(
     () =>

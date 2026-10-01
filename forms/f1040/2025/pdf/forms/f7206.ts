@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 import { form7206 as nativeForm7206 } from "../../mef/forms/f7206.ts";
 import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
+import { TS } from "../../../nodes/types.ts";
 
 // TY2025 AcroForm has two identity fields followed by printed lines 1-14.
 // Line 11 is blank for this Schedule C route, and line 6 prints a percentage.
@@ -68,12 +69,15 @@ function projectFields(
   }
   const source = singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
   assertForm7206SpouseCoverage(source, allPending);
+  const recipient = source.recipient === TS.S
+    ? source.spouse_identity!
+    : source.taxpayer_identity;
   const lines = form7206LinesSchema.parse(fields);
   const expected = calculateSingleScheduleCForm7206(source);
   if (
     Object.entries(expected).some(([key, amount]) => fields[key] !== amount) ||
-    fields.recipient_name !== source.taxpayer_identity.name ||
-    fields.recipient_ssn !== source.taxpayer_identity.ssn.replaceAll("-", "")
+    fields.recipient_name !== recipient.name ||
+    fields.recipient_ssn !== recipient.ssn.replaceAll("-", "")
   ) {
     throw new Error("Form 7206 PDF fields differ from the identified plan");
   }

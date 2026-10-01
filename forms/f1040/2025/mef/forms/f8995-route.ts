@@ -415,8 +415,10 @@ export function assertOneScheduleC8995(
     ? general.taxpayer_ssn.replace(/\D/g, "")
     : "";
   const ownerIsSpouse = sourceBusiness?.proprietor_recipient === "S";
-  const ownerSsn = ownerIsSpouse && typeof general?.spouse_ssn === "string"
-    ? general.spouse_ssn.replace(/\D/g, "")
+  const ownerSsn = ownerIsSpouse
+    ? typeof general?.spouse_ssn === "string"
+      ? general.spouse_ssn.replace(/\D/g, "")
+      : ""
     : filerSsn;
   const sourceW2s = Array.isArray(pending.w2?.w2s) ? pending.w2.w2s : [];
   const statutoryW2s = sourceW2s.filter((w2) =>

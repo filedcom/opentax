@@ -28,16 +28,29 @@ Deno.test("2025 Schedule SE PDF uses printed AcroForm line positions", () => {
   assertEquals(byKey.get("line15"), "topmostSubform[0].Page2[0].f2_2[0]");
   assertEquals(byKey.get("line12"), "topmostSubform[0].Page1[0].f1_21[0]");
   assertEquals(byKey.get("line13"), "topmostSubform[0].Page1[0].f1_22[0]");
-  assertEquals(scheduleSePdf.filerFields?.map((field) => field.pdfField), [
-    "topmostSubform[0].Page1[0].f1_1[0]",
-    "topmostSubform[0].Page1[0].f1_2[0]",
-  ]);
+  assertEquals(byKey.get("owner_name"), "topmostSubform[0].Page1[0].f1_1[0]");
+  assertEquals(byKey.get("owner_ssn"), "topmostSubform[0].Page1[0].f1_2[0]");
 });
+
+const taxpayerIdentity = {
+  general: {
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Filer",
+    taxpayer_ssn: "123456789",
+  },
+  f1040: {
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Filer",
+    taxpayer_ssn: "123456789",
+  },
+};
 
 Deno.test("2025 Schedule SE PDF projects regular tax and deduction", () => {
   const projected = scheduleSePdf.projectFields?.({
     net_profit_schedule_c: 50_000,
-  }, {});
+  }, taxpayerIdentity);
+  assertEquals(projected?.owner_name, "Test Filer");
+  assertEquals(projected?.owner_ssn, "123456789");
   assertEquals(projected?.line3, 50_000);
   assertEquals(projected?.line4a, 46_175);
   assertEquals(projected?.line12, 7_064.775);
@@ -50,7 +63,7 @@ Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line
     gross_farm_income: 9_000,
     net_profit_schedule_f: -2_000,
     net_profit_schedule_c: 1_000,
-  }, {});
+  }, taxpayerIdentity);
   assertEquals(projected?.net_profit_schedule_f, undefined);
   assertEquals(projected?.line3, 1_000);
   assertEquals(projected?.line4a, 923.5);
@@ -67,7 +80,7 @@ Deno.test("2025 Schedule SE PDF refuses an unsupported farm election", () => {
         farm_optional_method_elected: true,
         gross_farm_income: 12_000,
         net_profit_schedule_f: 8_000,
-      }, {}),
+      }, taxpayerIdentity),
     Error,
     "unavailable",
   );

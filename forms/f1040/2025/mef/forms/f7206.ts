@@ -18,6 +18,7 @@ import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
+import { TS } from "../../../nodes/types.ts";
 
 type Input = Partial<
   Form7206Lines & {
@@ -79,16 +80,25 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
   ) {
     throw new Error("Form 7206 printed lines differ from the source plan");
   }
-  const ssn = source.taxpayer_identity.ssn.replaceAll("-", "");
+  const recipient = source.recipient === TS.S
+    ? source.spouse_identity!
+    : source.taxpayer_identity;
+  const ssn = recipient.ssn.replaceAll("-", "");
   const filer = context?.filer;
   if (
-    !filer?.primarySSN || ssn !== filer.primarySSN.replaceAll("-", "") ||
-    source.taxpayer_identity.name.trim().toUpperCase() !==
-      (filer.fullName ?? filer.nameLine1).trim().toUpperCase() ||
-    fields.recipient_name !== source.taxpayer_identity.name ||
+    !filer?.primarySSN ||
+    ssn !==
+      (source.recipient === TS.S
+        ? filer.spouse?.ssn?.replaceAll("-", "")
+        : filer.primarySSN.replaceAll("-", "")) ||
+    recipient.name.trim().toUpperCase() !==
+      (source.recipient === TS.S
+        ? [filer.spouse?.firstName, filer.spouse?.lastName].join(" ")
+        : (filer.fullName ?? filer.nameLine1)).trim().toUpperCase() ||
+    fields.recipient_name !== recipient.name ||
     fields.recipient_ssn !== ssn
   ) {
-    throw new Error("Form 7206 recipient must match the taxpayer");
+    throw new Error("Form 7206 recipient must match the business owner");
   }
   const pending = context?.pending;
   assertForm7206SpouseCoverage(
@@ -179,7 +189,7 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     );
   }
   return elements("IRS7206", [
-    element("NameLine1Txt", source.taxpayer_identity.name),
+    element("NameLine1Txt", recipient.name),
     element("SSN", ssn),
     ...FIELD_MAP.map(([key, tag]) => element(tag, lines[key])),
   ]);

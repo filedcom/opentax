@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
+import { FilingStatus, TS } from "../../../nodes/types.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
@@ -12,6 +13,8 @@ const page1 = "topmostSubform[0].Page1[0].";
 const page2 = "topmostSubform[0].Page2[0].";
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "owner_name", pdfField: `${page1}f1_1[0]` },
+  { kind: "text", domainKey: "owner_ssn", pdfField: `${page1}f1_2[0]` },
   {
     kind: "text",
     domainKey: "net_profit_schedule_f",
@@ -51,14 +54,43 @@ export const scheduleSePdf: PdfFormDescriptor = {
   pendingKey: "schedule_se",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
   fields,
-  filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: `${page1}f1_1[0]` },
-    { kind: "text", domainKey: "primarySSN", pdfField: `${page1}f1_2[0]` },
-  ],
-  projectFields(fields) {
+  projectFields(fields, allPending) {
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
+    const businesses = (allPending?.schedule_c as {
+      schedule_cs?: Array<{ proprietor_recipient?: TS }>;
+    } | undefined)?.schedule_cs;
+    const spouseOwned = businesses?.length === 1 &&
+      businesses[0].proprietor_recipient === TS.S;
+    const general = allPending?.general;
+    const return1040 = allPending?.f1040;
+    const prefix = spouseOwned ? "spouse" : "taxpayer";
+    const first = general?.[`${prefix}_first_name`];
+    const middle = general?.[`${prefix}_middle_initial`];
+    const last = general?.[`${prefix}_last_name`];
+    const sourceSsn = general?.[`${prefix}_ssn`];
+    const returnSsn = return1040?.[`${prefix}_ssn`];
+    if (
+      typeof first !== "string" || typeof last !== "string" ||
+      typeof sourceSsn !== "string" ||
+      return1040?.[`${prefix}_first_name`] !== first ||
+      return1040?.[`${prefix}_last_name`] !== last ||
+      typeof returnSsn !== "string" ||
+      returnSsn.replaceAll("-", "") !==
+        sourceSsn.replaceAll("-", "") ||
+      (spouseOwned && (
+        general?.filing_status !== FilingStatus.MFJ ||
+        return1040.filing_status !== FilingStatus.MFJ ||
+        fields.net_profit_schedule_f !== undefined &&
+          fields.net_profit_schedule_f !== 0
+      ))
+    ) {
+      throw new Error("Schedule SE PDF proprietor must match the return");
+    }
     return {
       ...fields,
+      owner_name: [first, typeof middle === "string" ? middle : "", last]
+        .filter(Boolean).join(" "),
+      owner_ssn: sourceSsn.replaceAll("-", ""),
       ...(fields.farm_optional_method_elected === true
         ? { net_profit_schedule_f: undefined }
         : {}),
