@@ -20,6 +20,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
+import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -431,6 +432,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertReturnWideArithmetic(fields);
   assertReturnScheduleJoins(fields, context?.pending);
+  assertSchedule2Line23(fields, context?.pending);
   const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
   if (

@@ -31,13 +31,25 @@ say 2024 was the final repayment filing year. The guarded source cannot
 silently increase Form 1040 line 23 without a printable 2025 line. Positive
 and direct-export rejection fixtures are authored but unrun.
 
+Schedule 2 Part II now replays its retained source rows into Form 1040 line
+23 at both final native and PDF entry points. The replay subtracts the
+retained Form 8978 Schedule 2 line 17z reduction, checks the worksheet's
+adjusted line 21 when present, and matches the filed line 23. It excludes
+Schedule 2 line 20, as directed by line 21 on the
+[official 2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf).
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+place the bounded negative Form 8978 adjustment on Schedule 2 line 17z.
+Fixtures cover a positive reduced total and tampering with the Schedule 2
+source, adjusted worksheet, or Form 1040 amount. This proves the retained
+arithmetic; it does not authenticate the partner audit source for Form 8978.
+
 ## Remaining return-wide work
 
 | Area | Current graph observation | Unresolved join |
 | --- | --- | --- |
 | Income/AGI | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 9, 11, and 15. | Recompute income, adjustments, deduction choice, and taxable income from identified source rows at export; sparse direct sink inputs currently prevent a blanket equality assertion. |
 | Schedule 1 and 1-A | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040. | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open. |
-| Schedule 2 and 3 | Schedule 2 Part I and Schedule 3 payment total now reconcile to Form 1040; several credits are finalized in the Form 1040 sink after tax is known. | Replay Schedule 2 Part II and Schedule 3 nonrefundable credits against final tax after Form 8978 reductions and late credit ordering. The staged check proves totals, not child authenticity. |
+| Schedule 2 and 3 | Schedule 2 Parts I and II and Schedule 3 payment total now reconcile to Form 1040, including the retained Form 8978 line 17z reduction; several credits are finalized in the Form 1040 sink after tax is known. | Replay Schedule 3 nonrefundable credits against final tax after late credit ordering and authenticate child sources, including the Form 8978 partner audit and corrected return facts. |
 | Withholding and payments | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines. | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31. |
 | Multiple copies and carryovers | Several child descriptors create multiple owner/source-specific native and PDF copies; credit and loss carryovers have route-specific ledgers. | Require a complete per-copy source inventory and origin-year/earlier-use ledger across the final return. One arithmetic total cannot establish that all copies belong to the taxpayer or that a carryover is available. |
 

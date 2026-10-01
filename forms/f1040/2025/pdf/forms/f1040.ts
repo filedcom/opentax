@@ -7,6 +7,7 @@ import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
+import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -575,6 +576,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     assertReturnWideArithmetic(fields);
     assertReturnScheduleJoins(fields, allPending);
+    assertSchedule2Line23(fields, allPending);
     const residentElection = residentElectionName(fields, allPending);
     assertMfsEitcSource(
       fields.filing_status,

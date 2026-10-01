@@ -161,6 +161,11 @@ export function schedule2Part1Total(raw: unknown): number {
   return part1Total(input);
 }
 
+/** 2025 line 21 before the separately calculated Form 8978 line 17z offset. */
+export function schedule2Part2Total(raw: unknown): number {
+  return part2Total(inputSchema.parse(raw));
+}
+
 export function assertNo2025Schedule2Line10(
   fields: Readonly<Record<string, unknown>>,
 ): void {
