@@ -109,4 +109,50 @@ export const form8826Pdf: PdfFormDescriptor = {
       ...moneyFields(8, lines.line8),
     };
   },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error("Form 8826 PDF needs the prepared Form 3800 document");
+    }
+    const source = inputSchema.parse(allPending.f8826);
+    const lines = calculateForm8826(source);
+    const k1 = source.pass_through_credits?.[0];
+    const rows = prepared.currentRows.filter((row) => row.line === "1e");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1e");
+    const details = prepared.currentDetails.filter((row) => row.line === "1e");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [self] = details;
+    const passThrough = details[1];
+    const expectedLine8 = moneyFields(8, lines.line8);
+    if (
+      fields.line8_dollars !== expectedLine8.line8_dollars ||
+      fields.line8_cents !== expectedLine8.line8_cents ||
+      rows.length !== 1 || amounts.length !== 1 ||
+      details.length !== (k1 ? 2 : 1) ||
+      row.metadata.sourceCount !== details.length ||
+      row.metadata.referenceDocumentName !== "IRS8826" ||
+      !row.metadata.referenceDocumentId ||
+      self.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      self.passThroughEin !== undefined ||
+      self.credit !== lines.selfCreditAfterCap ||
+      (k1 && (
+        passThrough.sourceDocumentId !== undefined ||
+        passThrough.passThroughEin !== k1.entity_ein ||
+        passThrough.credit !== lines.passThroughCreditsAfterCap[0]
+      )) ||
+      amount.nonpassiveCredit !== lines.line8 ||
+      amount.totalCredit !== lines.line8 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !==
+        details.reduce((sum, detail) => sum + detail.appliedCredit, 0) ||
+      prepared.lines.line38 !== allPending.f3800.allowed_credit
+    ) {
+      throw new Error("Form 8826 PDF differs from filed Form 3800 line 1e");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
+  },
 };

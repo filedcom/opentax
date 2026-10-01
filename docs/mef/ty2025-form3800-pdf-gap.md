@@ -683,3 +683,12 @@ fixtures await the bulk run. The current
 [IRS Form 5884](https://www.irs.gov/pub/irs-pdf/f5884.pdf) directs line 4 to
 Form 3800 Part III line 4b. Pass-through and controlled-group source evidence
 continues under their existing guards.
+
+The Form 8826 printable copy already reconciled its direct and optional one
+S-corporation source to Form 3800 and finalized tax. It now also requires the
+prepared Form 3800 Part III line 1e source row to carry one IRS8826 document
+ID, with matching self and optional K-1 Part V amounts and the same line 38
+total. Self-only and mixed positive fixtures plus altered document-ID,
+pass-through credit, and line 38 fixtures await the bulk run. The current
+[IRS Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) directs line 8 to
+Form 3800 Part III line 1e. Wider business and K-1 cases remain guarded.
