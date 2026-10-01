@@ -138,6 +138,7 @@ for (const fixture of pdfReviewFixtures) {
     pages: Array.from({ length: pageCount }, (_, index) => ({
       pageNumber: index + 1,
       observedForm: null,
+      observedFormCopy: null,
       observedOwner: null,
       formAndYearChecked: false,
       ownerChecked: false,

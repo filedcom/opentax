@@ -364,6 +364,25 @@ marking the slots complete. Any guarded or otherwise failing fixture stops the
 run without a completion manifest; the known `single-8862-ctc-reinstatement`
 case currently expects a native export guard. Resolve such cases by a supported
 route or an explicit validation-scope decision, not by dropping them silently.
+For each page, the reviewer fills `observedForm` with the exact registered PDF
+key, `observedFormCopy` with its 1-based copy number for that case (the same
+number on all pages of that copy), and `observedOwner` with `primary` or
+`spouse`. The reviewer sets all six page checklist booleans to `true` only
+after inspecting that page; `reviewerNotes` may remain empty. The read-only
+completion checker requires every expected key and repeated copy to appear on
+at least one reviewed page, and rejects extra form keys or pages without an
+owner. Run it only after human review:
+
+```sh
+deno run --allow-read --allow-run=xmllint scripts/check-ty2025-pdf-review.ts /absolute/review-directory /absolute/path/Return1040.xsd
+```
+
+The checker compares the manifest against the checked-in fixture list and
+source records, recomputes PDF/XML/source hashes, checks PDF page counts, and
+reruns the XML schema validation against the recorded XSD digest. It does not
+inspect visual correctness or set any review flag itself. A successful command
+means the recorded human checklist is complete and the named artifacts have
+not changed; the visual observations remain the reviewer's responsibility.
 The table below records the earlier starting subset; the plan script enumerates
 all current fixtures. This subset is not coverage of all registered PDF
 descriptors:
