@@ -290,3 +290,99 @@ Deno.test("two-lot gain-to-AMT-loss route rejects changed second lot and return"
     "within both regular and AMT Schedule D deduction limits",
   );
 });
+
+const thirdLoss = {
+  source_transaction_id: "2025-broker-third-loss-lot",
+  part: "F" as const,
+  proceeds: 1_000,
+  regular_basis: 1_400,
+  amt_basis: 1_600,
+  regular_gain: -400,
+  amt_gain: -600,
+};
+
+Deno.test("three audited long-term lots reconcile regular gain and deductible AMT loss", () => {
+  const lots = [...twoLots, thirdLoss];
+  const result = form6251.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({
+      ...twoLotInput,
+      net_capital_gain: 1_100,
+      line2k_8949_basis_dispositions: lots,
+      line2k_8949_capital_audit: {
+        transactions: lots.map((row) => ({
+          source_transaction_id: row.source_transaction_id,
+          part: row.part,
+          proceeds: row.proceeds,
+          cost_basis: row.regular_basis,
+          gain_loss: row.regular_gain,
+        })),
+        has_other_capital_activity: false,
+      },
+    }),
+  );
+  const filed = result.outputs.find((row) => row.nodeType === "form6251")!
+    .fields;
+  const schedule2Amount = result.outputs.find((row) =>
+    row.nodeType === "schedule2"
+  )?.fields.line2_amt;
+  const pending = {
+    f8949: {
+      f8949s: lots.map((row) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        description: "Audited long-term capital lot",
+        date_acquired: "2022-01-10",
+        date_sold: "2025-06-20",
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        amt_cost_basis: row.amt_basis,
+      })),
+    },
+    schedule2: { line2_amt: schedule2Amount },
+    f1040: {
+      line7_capital_gain: 1_100,
+      line11_agi: 200_000,
+      line14_deductions_qbi_total: 0,
+      line15_taxable_income: 200_000,
+      line17_additional_taxes: filed.line11_amt,
+    },
+  };
+  assertEquals(filed.line2k_disposition, -2_900);
+  assertEquals(filed.amti, 197_100);
+  assertEquals(filed.line13, undefined);
+  assertEquals(filed.line15, undefined);
+  assertEquals(schedule2Amount, filed.line11_amt);
+  assertStringIncludes(
+    mef6251.build(filed, { pending }),
+    "<PropertyDispositionAmt>-2900</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed, pending)?.line2k_disposition,
+    -2_900,
+  );
+  assertThrows(
+    () =>
+      mef6251.build(filed, {
+        pending: {
+          ...pending,
+          f8949: {
+            f8949s: pending.f8949.f8949s.map((row, index) =>
+              index === 2 ? { ...row, amt_cost_basis: 1_601 } : row
+            ),
+          },
+        },
+      }),
+    Error,
+    "retained, unadjusted Form 8949 source",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(filed, {
+        ...pending,
+        f1040: { ...pending.f1040, line7_capital_gain: 1_500 },
+      }),
+    Error,
+    "matching Schedule 2 and Form 1040",
+  );
+});

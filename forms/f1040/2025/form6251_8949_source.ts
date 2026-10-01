@@ -96,7 +96,7 @@ export function assertForm6251Form8949Source(
   }
   const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
-  const gainToAmtLoss = rows.length >= 1 && rows.length <= 2 &&
+  const gainToAmtLoss = rows.length >= 1 && rows.length <= 3 &&
     rows.every((row) => ["D", "E", "F"].includes(row.part)) &&
     rows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
         .length === 1 &&

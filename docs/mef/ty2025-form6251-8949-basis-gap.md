@@ -167,8 +167,21 @@ $1,500 regular net gain, $1,200 AMT net loss, and a negative $2,700 line 2k. The
 exact two broker rows, Schedule 2 tax, Form 1040 capital gain and taxable
 income, native element, and PDF line are joined. A changed second basis,
 capital-gain total, Schedule 2 tax, or AMT loss crossing the limit rejects.
-Mixed terms, a third lot, capital-loss carryovers, and adjusted transactions
-remain unsupported. The two-lot fixtures await the same final validation batch.
+Mixed terms, capital-loss carryovers, and adjusted transactions remain
+unsupported in that same-term route. The two-lot fixtures await the same final
+validation batch.
+
+The same audited long-term route now accepts one gain changing to an AMT loss
+and two additional losses under both bases. Three identified unadjusted Form
+8949 rows must be the complete Schedule D activity; the combined regular net
+must remain positive and the AMT net loss must fit the separate $3,000/$1,500
+deduction limit. A $2,000 regular gain changing to a $500 AMT loss, plus
+$500/$700 and $400/$600 regular/AMT losses, gives $1,100 regular gain,
+$1,800 deductible AMT loss, and negative $2,900 on Form 6251 line 2k. The
+authored native/PDF case replays all three dated rows and Schedule 2/Form 1040
+totals; a changed third AMT basis or return gain rejects. These fixtures are
+unrun pending the final bulk batch. Four or more lots, carryovers, source-byte
+authentication, IRS business rules, and ATS remain open.
 
 A separate two-lot mixed-term route accepts one short-term loss under both bases
 and one long-term regular gain that becomes an AMT loss. The short loss offsets
