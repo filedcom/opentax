@@ -10,6 +10,13 @@ the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-3
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
+**Current order of work.** Complete the 34 open TODOs outside **Named tax-form
+gaps** first, including scope, coverage decisions, core return paths, native/PDF
+parity, validation preparation, and delivery prerequisites. The 20 named-form
+parent gaps remain on this board for the following implementation phase. Finish
+implementation before the next agreed bulk test run; the prior failed run is
+diagnostic evidence, not a release pass.
+
 | Workstream | Open TODOs | Completed bounded items | Current state |
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
