@@ -567,6 +567,20 @@ claimed.
 
 ## Remaining multiple-recipient implementation
 
+A further bounded Part-III-only partial-share beneficiary case now combines a
+box 8 annuity and estate tax without capital gain, NUA, or a death-benefit
+exclusion. The recipient's box 2a and box 9a yield the full line 8 amount;
+box 8's independent percentage yields line 11. A distinct reviewed estate
+administrator statement and estate-return reference provide full-distribution
+tax, recipient share, and attributable tax for line 18. The computed line 29
+is then prorated by box 9a and joins Form 1040 line 16. Native MeF and PDF
+replay the elected 1099-R and the calculated lines; source percentage, estate
+allocation, line 18, and return-tax tamper cases are authored but unrun. This
+follows the [2025 Form 4972 multiple-recipient and line 18 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
+Part II, NUA, death benefits, and multiple elected copies remain closed in this
+combination. Administrator and estate-return source bytes, filled PDF, XSD,
+business rules, and ATS acceptance remain to be verified.
+
 The IRS instructions do not permit simply multiplying the current tax by box 9a.
 They require all of these steps:
 

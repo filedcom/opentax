@@ -185,6 +185,15 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     input.elect_include_nua !== true &&
     (input.box6_nua ?? 0) === 0 &&
     (input.annuity_actuarial_value ?? 0) === 0;
+  const partialAnnuityAndEstatePartIII = partialShare &&
+    (input.annuity_actuarial_value ?? 0) > 0 &&
+    (input.federal_estate_tax ?? 0) > 0 &&
+    input.elect_10yr_averaging === true &&
+    input.elect_capital_gain !== true &&
+    (input.capital_gain_amount ?? 0) === 0 &&
+    input.elect_include_nua !== true &&
+    (input.box6_nua ?? 0) === 0 &&
+    deathBenefit === 0;
   if (
     !partialDeathBenefit &&
     (input.death_benefit_exclusion_source_reference !== undefined ||
@@ -255,7 +264,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
             !(input.elect_include_nua === true &&
               (input.box6_nua ?? 0) > 0 &&
               (input.capital_gain_amount ?? 0) > 0)) ||
-          (input.annuity_actuarial_value ?? 0) > 0 ||
+          ((input.annuity_actuarial_value ?? 0) > 0 &&
+            !partialAnnuityAndEstatePartIII) ||
           (deathBenefit > 0 && !partialDeathAndEstatePartIII))))
   ) {
     throw new Error(
