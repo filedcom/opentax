@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-134 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+138 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -284,8 +284,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **59 distinct
-registered PDF keys out of 112**; **53 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **62 distinct
+registered PDF keys out of 112**; **50 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -342,7 +342,15 @@ completion checker. The second reconciles the allowed K-1 loss to Schedule E,
 Schedule 1, and Form 1040. Neither new fixture has been rendered in this held
 batch.
 
-Uncovered registered PDF keys at this checkpoint (53):
+Three more cases reuse source-to-return paths already covered by the native
+and XML route tests: a 2025 principal-residence debt discharge through Form 982
+and Schedule 1, Form 1099-NEC wages classified under Form 8919 with linked
+Schedule 2 and Form 8959 taxes, and Section A door plus Section B air-conditioner
+credits on Form 5695. They add exact registered PDF keys to the review queue.
+Their expected pages and cross-form amounts still await the held bulk run and
+visual review.
+
+Uncovered registered PDF keys at this checkpoint (50):
 
 ```text
 f2106 f2210f f2439 f4136 f4255 f4835
@@ -352,11 +360,11 @@ f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
 f8859 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
 form461 form4684
-form5695 form8396 form8582cr
-form8839 form8853 form8919
+form8396 form8582cr
+form8839 form8853
 form8978_schedule_a form8990 form8992 form8992_schedule_a
 form8995a_schedule_a form8995a_schedule_b
-form8995a_schedule_d form982 schedule_j schedule_r
+form8995a_schedule_d schedule_j schedule_r
 ```
 
 ```sh

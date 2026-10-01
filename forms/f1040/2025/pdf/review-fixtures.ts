@@ -9,6 +9,7 @@ import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { trustPartVStatementFixture } from "../../nodes/inputs/f3468/trust-part-v.fixture.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
 import { IraOwner } from "../../nodes/intermediate/forms/form8606/index.ts";
+import { ExclusionType } from "../../nodes/intermediate/forms/form982/index.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
 import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
@@ -6557,6 +6558,123 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 7203 traces 500 beginning stock basis, 1,000 capital, and a separately funded 2,000 note",
       "A 3,500 allowed K-1 loss reaches Schedule E, Schedule 1, and Form 1040 AGI",
       "The remaining 500 suspended loss and owner/corporation identities agree with native Form 7203",
+    ],
+  },
+  {
+    id: "single-form982-qpri-exclusion",
+    inputs: {
+      general: singleGeneral,
+      f1099c: [{
+        creditor_name: "Mortgage Lender",
+        box1_date: "2025-06-15",
+        box2_cod_amount: 900_000,
+        routing: "excluded",
+        exclusion_type: ExclusionType.Qpri,
+        qpri_mfs: false,
+        qpri_actual_discharge_date: "2025-06-15",
+        qpri_discharged_principal_amount: 900_000,
+        qpri_total_loan_balance_before_discharge: 900_000,
+        qpri_qualified_loan_balance_before_discharge: 900_000,
+        qpri_main_home_security_confirmed: true,
+        qpri_discharge_reason: "financial_condition",
+        qpri_discharge_reason_source: "Synthetic lender workout letter",
+        principal_residence_retained: false,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form982", "schedule1"],
+    reviewFocus: [
+      "Form 982 excludes 750,000 of the 900,000 discharged principal-residence debt",
+      "The 150,000 amount above the exclusion cap reaches Schedule 1 and Form 1040 AGI",
+      "The discharge date, lender source, and single filing status agree with the source return",
+    ],
+  },
+  {
+    id: "single-form8919-nec-wages-and-additional-medicare",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(150_000, 20_000, "Other Employer", "22-2222222"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f1099nec: [{
+        payer_name: "Employer Inc",
+        payer_tin: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
+        box1_nec: 210_000,
+        for_routing: "form_8919",
+      }],
+      form8919: {
+        taxpayer_ssn: singleGeneral.taxpayer_ssn,
+        forms: [{
+          recipient: "taxpayer",
+          employers: [{
+            name: "Employer Inc",
+            tin_type: "ein",
+            tin: "12-3456789",
+            reason_code: "G",
+            ss8_filed_date: "2025-04-01",
+            ss8_filing_reference: "Synthetic SS-8 delivery receipt",
+            form1099_received: true,
+            wages: 210_000,
+            form1099_payer_tin: "12-3456789",
+          }],
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "form8919",
+      "schedule2",
+      "schedule_se",
+      "form8959",
+    ],
+    reviewFocus: [
+      "Form 8919 identifies the 210,000 Form 1099-NEC wages and reason G employer",
+      "Form 1040 line 1g and Schedule 2 uncollected tax agree with Form 8919",
+      "Schedule SE wage-base coordination and Form 8959 additional Medicare wages match the source W-2 and Form 1099-NEC",
+    ],
+  },
+  {
+    id: "single-form5695-door-and-air-conditioner",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f5695: {
+        part_ii_section_a: {
+          main_home_in_us: true,
+          original_user: true,
+          five_year_use: true,
+          home_address: {
+            line1: "1 Test Way",
+            city: "Austin",
+            state: "TX",
+            zip: "78701",
+          },
+          related_to_new_home: false,
+          exterior_doors: [{ cost: 500, qmid: "A1B2" }],
+        },
+        part_ii_section_b: {
+          home_in_us: true,
+          originally_placed_in_service: true,
+          home_addresses: [{
+            line1: "1 Test Way",
+            city: "Austin",
+            state: "TX",
+            zip: "78701",
+          }],
+          central_air_conditioner: { cost: 2_000, qmid: "C3D4" },
+        },
+        part_ii_tax_limit: 1_000,
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form5695", "schedule3"],
+    reviewFocus: [
+      "Form 5695 shows a 150 door credit and 600 central-air-conditioner credit with both QMIDs",
+      "The 750 home-improvement credit joins Schedule 3 and Form 1040",
+      "The Section A and B home addresses and owner identity agree with the source return",
     ],
   },
 ];
