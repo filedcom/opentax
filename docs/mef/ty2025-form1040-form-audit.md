@@ -389,6 +389,58 @@ The exact registration order remains in `ALL_MEF_FORMS`. A row can move beyond
 `P` only after its named source, calculation, XML root, linkage, and required
 binary attachment are reconciled in the deferred batch and IRS business rules.
 
+#### Supporting-descriptor case and packet disposition
+
+This is a static inventory, not a passing-test claim. A **native copy** below
+means a separate XML document in `ReturnData1040`; it does not mean that the
+underlying payer-issued paper/PDF was authenticated. A **native statement** is
+structured XML rather than a PDF attachment. The only dedicated PDF descriptor
+among these 29 is W-2G Copy B. “No direct case located” means an exact pending
+key or descriptor reference was not found in the Form 1040 test sources; it
+does not prove that no parent-level test reaches the route. Parent guards still
+apply to every row.
+
+| Pending key | Trigger and parent route | Written case located | Packet / unresolved decision |
+| --- | --- | --- | --- |
+| `w2` | Issued wage source → W-2, 1040 wage/withholding lines. | `w2.test.ts`, builder/XSD cases. | Native payer copy; no registered taxpayer-created W-2 PDF. Issued-copy authenticity and all employer copies remain source decisions. |
+| `w2g` | Issued gambling source → W-2G, 1040 winnings/withholding. | `w2g-payer-copy.test.ts`, `w2g.test.ts`, XSD cases. | Native payer copy plus registered printed Copy B; positive withholding also requires a separately submitted payer-issued PDF BinaryAttachment. Exact PDF contents/authenticity remains open. |
+| `fec_record` | Foreign-employer wage input → FEC record and 1040 wages. | No direct case located. | Native source record; no dedicated PDF descriptor. Employer/source identity and withholding evidence remain open. |
+| `ira_distribution_statement` | Qualifying Form 1099-R rollover → 1040 line 4c explanation. | `f1040.test.ts`. | Native explanatory statement; no dedicated PDF. Issued 1099-R bytes and rollover evidence remain open. |
+| `any_other_taxes_statement` | Form 8978 adjustment → Schedule 2 line 17z. | No direct case located. | Native statement; Form 8978 separately generates a tax-computation PDF BinaryAttachment. Verify statement, Schedule 2 and attachment IDs together. |
+| `schedule1_other_income_statement` | Named other-income components → Schedule 1 line 8z. | `schedule1_other_income_statement.test.ts`. | Native statement; no dedicated PDF. Source character and rendered packet appearance remain open. |
+| `wages_not_shown_schedule` | FEC wages without W-2 → 1040 line 1h. | No direct case located. | Native supporting schedule; no dedicated PDF. Tie it to the same FEC employer and amount. |
+| `ccc_loan_accrual_statement` | Accrual CCC loan source → Schedule F Part III. | No direct case located. | Native statement; no dedicated PDF. Loan/election source and repetition remain open. |
+| `ccc_loan_statement` | Cash CCC loan source → Schedule F line 5. | No direct case located. | Native statement; no dedicated PDF. Loan/election source and parent amount remain open. |
+| `crop_insurance_deferral_statement` | Crop-loss payment/deferral source → Schedule F. | No direct case located. | Native statement; no dedicated PDF. Damage, payment and election-year evidence remain open. |
+| `f965_net_adjustment_transfer_statement` | Form 965-A transfer source → Form 965-A. | `f965a.test.ts`. | Native statement; Form 965-A also links separate source PDFs by BinaryAttachment IDs. Positive parent export remains guarded pending history and evidence. |
+| `f965_multiple_transferee_statement` | Form 965-A multiple-transferee source → Form 965-A. | `f965a.test.ts`. | Native statement with separate linked transfer PDFs; positive parent export remains guarded. |
+| `form1116_direct_expense_statement` | Categorized direct expense → Form 1116 Part I line 2. | No direct case located. | Native statement; no dedicated PDF. Basket, foreign-source amount and parent reference need a direct case. |
+| `form1116_other_deductions_statement` | Allocated deduction → Form 1116 Part I line 3b. | `f1116.test.ts`. | Native statement; no dedicated PDF. Source apportionment and parent reference remain open. |
+| `form1116_alternative_compensation_statement` | Reviewed alternative foreign-service allocation → Form 1116 line 1b. | `f1116_alternative_compensation_source.test.ts`, `f1116.test.ts`. | Native statement; no dedicated PDF. Worldwide wage threshold and issuer wage sources remain unresolved. |
+| `f3800_carryforward_statement` | Origin-year credit history → Form 3800 carryforward computation. | `f3800_carryforward_statement.test.ts`. | Native statement; positive parent route is guarded pending authenticated prior returns, Part VI and history attachment. |
+| `f4136_emulsion_blending_statement` | Emulsion claim rows → Form 4136. | `f4136.test.ts`. | Native statement; no dedicated PDF. Qualifying blend/use source remains open. |
+| `f4136_credit_card_users_statement` | Credit-card purchaser rows → Form 4136. | `f4136.test.ts`. | Native statement; no dedicated PDF. Purchaser/use evidence remains open. |
+| `f4136_diesel_government_sales_statement` | Diesel government-sale rows → Form 4136. | `f4136.test.ts`. | Native statement; no dedicated PDF. Buyer and qualifying-use evidence remains open. |
+| `f4136_kerosene_government_sales_statement` | Kerosene government-sale rows → Form 4136. | `f4136.test.ts`. | Native statement; no dedicated PDF. Buyer and qualifying-use evidence remains open. |
+| `joint_occupancy_statement` | Jointly occupied property allocation → Form 5695. | `joint_occupancy_statement.test.ts`. | Native statement; no dedicated PDF. Co-occupant/property evidence and credit split remain open. |
+| `f5884_controlled_group_statement` | Controlled-employer allocation → Form 5884. | `f5884.test.ts`. | Native statement; no dedicated PDF. Group and employee certificates remain open. |
+| `f5884_deduction_differentiation_stmt` | Wage deduction reduction → Form 5884 and business deduction. | `f5884.test.ts`. | Native statement; no dedicated PDF. Actual deduction and credit join remains open. |
+| `form8283_vehicle_statement` | Certified vehicle donation → Form 8283. | No direct case located; vehicle parent cases exist. | Native statement; donee acknowledgment PDF is a distinct required source/attachment decision. VIN, dates and parent claim need a direct case. |
+| `form8283_fmv_reduction_statement` | Section A column (h) reduction → Form 8283. | `f8283_fmv_reduction_statement.test.ts`. | Native statement; no dedicated PDF. Basis/FMV and election source remain open. |
+| `form8621_excess_statement` | PFIC holding-period computation → Form 8621 Part V. | `f8621_excess_statement.test.ts`. | Native statement; no dedicated PDF. Underlying gain/tax/interest source and parent route remain open. |
+| `child_taxable_interest_statement` | Parent election for child interest → Form 8814 and Schedule B. | No direct case located; Form 8814 parent cases exist. | Native statement; no dedicated PDF. Child-issued interest source and parent election join need a direct case. |
+| `f8820_controlled_group_statement` | Controlled-group credit allocation → Form 8820. | `f8820.test.ts`, `f8820.xsd.test.ts`. | Native statement; no dedicated PDF. Group and expenditure source remain open. |
+| `f8854_native_statements` | Initial/annual expatriation facts → Form 8854. | `f8854.xsd.test.ts` covers native roots; no exact descriptor-reference case located. | Native statement roots; positive Form 8854 export remains guarded pending election, property and payment source/attachment review. |
+
+The nine rows without a direct named case are FEC record, Schedule 2 other
+taxes, wages not shown, the three Schedule F statements, Form 1116 direct
+expenses, Form 8283 vehicle statement, and child taxable interest. They are
+the immediate written-case queue. For every row, the current-run XSD,
+business-rule, ATS and complete packet review remains open; the separate
+BinaryAttachment manifest must be reviewed where the parent form requires
+source PDFs. Registration and a unit fixture alone do not establish that a
+supporting document will be accepted in an actual filing.
+
 ### Known in-scope paths needing completion
 
 | Path                                      | Input status                                                                                                                                                                   | MeF/PDF status                                                                                                                                                                  | Disposition                                                                                                                                                                                                                                                                             |
