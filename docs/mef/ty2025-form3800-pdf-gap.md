@@ -297,6 +297,22 @@ packet's source forms and Part III pages were visually inspected, and local
 TY2025 v5.4 XSD passes. The review set has 24 PDFs (218 pages) and 24 XML
 files under `.state/research/ty2025-filled-pdf-review/2026-09-29-v26/`.
 
+A separate authored full-return case combines self-earned, nonpassive Form
+8820 orphan-drug credit ($1,975 after the section 280C reduced-credit election)
+with one Form 8874 New Markets investment ($500). Form 3800 Part III lines 1h
+and 1i retain distinct IRS8820/IRS8874 document references and source amounts;
+Part II line 38, Schedule 3 line 6a, and Form 1040 line 20 carry the $2,475
+allowed credit once. The printable Form 3800 now replays both filed source
+calculations and rejects changed pending or prepared current rows in this
+bounded direct-source combination. Positive, source-tamper, and raw-descriptor
+tamper cases are authored for the deferred bulk pass; no test, XSD, or PDF
+generation was run for this addition. The [Form 3800 instructions](https://www.irs.gov/instructions/i3800),
+[Form 8820 instructions](https://www.irs.gov/instructions/i8820), and
+[Form 8874 instructions](https://www.irs.gov/instructions/i8874) identify the
+current-year credit lines and source-form relationship. Clinical-testing and
+investment evidence in this synthetic case is source metadata; issuer-copy
+byte authentication and prior-year carryforward export remain open.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional

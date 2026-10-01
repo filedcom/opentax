@@ -16,6 +16,8 @@ import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../pending.ts";
+import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import { inputSchema as f8874InputSchema } from "../../../nodes/inputs/f8874/index.ts";
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
@@ -125,35 +127,41 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
   assertEquals(instance?.[form3800PartIIIFields("4e").g], 600);
   assertEquals(instance?.[form3800PartIIIFields("4e").i], 600);
   assertThrows(
-    () => form3800Pdf.instances?.(
-      source.f3800,
-      filer,
-      { ...source, f1040: { ...source.f1040, line20_nonrefundable_credits: 599 } },
-      bundle.form3800Parts,
-    ),
+    () =>
+      form3800Pdf.instances?.(
+        source.f3800,
+        filer,
+        {
+          ...source,
+          f1040: { ...source.f1040, line20_nonrefundable_credits: 599 },
+        },
+        bundle.form3800Parts,
+      ),
     Error,
     "Form 1040 line 20 do not reconcile",
   );
   assertThrows(
-    () => form3800Pdf.instances?.(
-      { ...source.f3800, allowed_credit: 601 },
-      filer,
-      source,
-      bundle.form3800Parts,
-    ),
+    () =>
+      form3800Pdf.instances?.(
+        { ...source.f3800, allowed_credit: 601 },
+        filer,
+        source,
+        bundle.form3800Parts,
+      ),
     Error,
     "pending allowed credit differs from prepared MeF line 38",
   );
   assertThrows(
-    () => form3800Pdf.instances?.(
-      source.f3800,
-      filer,
-      {
-        ...source,
-        f3800: { ...source.f3800, allowed_credit: 601 },
-      },
-      bundle.form3800Parts,
-    ),
+    () =>
+      form3800Pdf.instances?.(
+        source.f3800,
+        filer,
+        {
+          ...source,
+          f3800: { ...source.f3800, allowed_credit: 601 },
+        },
+        bundle.form3800Parts,
+      ),
     Error,
     "pending allowed credit differs from prepared MeF line 38",
   );
@@ -599,5 +607,145 @@ Deno.test("geothermal and New Markets credits retain separate Form 3800 lines an
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
     18,
+  );
+});
+
+Deno.test("orphan-drug and New Markets credits retain distinct current-year source rows", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-geothermal-and-new-markets-credits"
+  )!;
+  const { f8835: _facility, ...otherInputs } = fixture.inputs;
+  const orphanSource = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-2025-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 10_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const result = f1040_2025.executeReturn({
+    ...otherInputs,
+    f8820: orphanSource,
+  });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line1, 2_475);
+  assertEquals(parts.lines.line6, 2_475);
+  assertEquals(parts.lines.line17, 2_475);
+  assertEquals(parts.lines.line38, 2_475);
+  assertEquals(
+    Object.fromEntries(parts.currentRows.map((row) => [
+      row.line,
+      row.metadata.sourceCount,
+    ])),
+    { "1h": 1, "1i": 1 },
+  );
+  assertEquals(
+    Object.fromEntries(parts.currentDetails.map((row) => [
+      row.line,
+      row.credit,
+    ])),
+    { "1h": 1_975, "1i": 500 },
+  );
+  assertEquals(
+    parts.currentRows.map((row) => row.metadata.referenceDocumentName)
+      .sort(),
+    ["IRS8820", "IRS8874"],
+  );
+  assertEquals(
+    new Set(parts.currentRows.map((row) => row.metadata.referenceDocumentId))
+      .size,
+    2,
+  );
+  assertEquals((prepared.bundle.xml.match(/<IRS8820\b/g) ?? []).length, 1);
+  assertEquals((prepared.bundle.xml.match(/<IRS8874\b/g) ?? []).length, 1);
+  assertStringIncludes(prepared.bundle.xml, "<Form8820CYCreditsGrp");
+  assertStringIncludes(prepared.bundle.xml, "<Form8874CYCreditsGrp");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalGeneralBusCreditsAppTxAmt>2475</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const pending3800 = f3800InputSchema.parse(allPending.f3800);
+  const pending8874 = f8874InputSchema.parse(allPending.f8874);
+  assertEquals(allPending.schedule3?.line6a_total, 2_475);
+  assertEquals(allPending.f1040?.line20_nonrefundable_credits, 2_475);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 500);
+  assertEquals(printed3800?.[form3800PartIAndIIFields.line38], 2_475);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+    true,
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        {
+          ...pending3800,
+          f8820_credit: {
+            ...pending3800.f8820_credit,
+            credit_amount: 1_974,
+          },
+        },
+        fixture.filer,
+        allPending,
+        parts,
+      ),
+    Error,
+    "mixed orphan-drug/New Markets rows",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        {
+          ...allPending,
+          f8874: {
+            ...pending8874,
+            investments: [{
+              ...pending8874.investments[0],
+              qualified_equity_investment_amount: 9_000,
+            }],
+          },
+        },
+        parts,
+      ),
+    Error,
+    "mixed orphan-drug/New Markets rows",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        allPending,
+        {
+          ...parts,
+          currentAmounts: parts.currentAmounts.map((row) =>
+            row.line === "1i"
+              ? { ...row, nonpassiveCredit: row.nonpassiveCredit - 1 }
+              : row
+          ),
+        },
+      ),
+    Error,
+    "mixed orphan-drug/New Markets rows",
   );
 });

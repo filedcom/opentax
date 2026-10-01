@@ -1,5 +1,13 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
+import {
+  calculateForm8820,
+  inputSchema as f8820InputSchema,
+} from "../../../nodes/inputs/f8820/index.ts";
+import {
+  calculateForm8874,
+  inputSchema as f8874InputSchema,
+} from "../../../nodes/inputs/f8874/index.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import {
@@ -93,6 +101,75 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    if (
+      source.f8820_credit && source.f8874_credit &&
+      (source.f8820_k1_credit_entries?.length ?? 0) === 0 &&
+      (source.f8874_k1_credit_entries?.length ?? 0) === 0 &&
+      !(source.passive_source_allocations ?? []).some((entry) =>
+        entry.form3800_credit_line === "1h" ||
+        entry.form3800_credit_line === "1i"
+      )
+    ) {
+      const orphanSource = f8820InputSchema.parse(all.f8820);
+      const newMarketsSource = f8874InputSchema.parse(all.f8874);
+      const orphanCredit = calculateForm8820(orphanSource).line4;
+      const newMarketsCredit = calculateForm8874(newMarketsSource)
+        .nonpassiveCredit;
+      const rawSource = f3800InputSchema.parse(raw);
+      const orphanRow = prepared.currentRows.filter((row) => row.line === "1h");
+      const newMarketsRow = prepared.currentRows.filter((row) =>
+        row.line === "1i"
+      );
+      const orphanAmount = prepared.currentAmounts.filter((row) =>
+        row.line === "1h"
+      );
+      const newMarketsAmount = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const orphanDetail = prepared.currentDetails.filter((row) =>
+        row.line === "1h"
+      );
+      const newMarketsDetail = prepared.currentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      if (
+        (orphanSource.pass_through_credits?.length ?? 0) !== 0 ||
+        orphanSource.subject_to_passive_activity_limit ||
+        newMarketsSource.investments.some((investment) =>
+          investment.subject_to_passive_activity_limit
+        ) ||
+        orphanCredit <= 0 || newMarketsCredit <= 0 ||
+        source.f8820_credit.credit_amount !== orphanCredit ||
+        source.f8874_credit.credit_amount !== newMarketsCredit ||
+        rawSource.f8820_credit?.credit_amount !== orphanCredit ||
+        rawSource.f8874_credit?.credit_amount !== newMarketsCredit ||
+        orphanRow.length !== 1 || newMarketsRow.length !== 1 ||
+        orphanAmount.length !== 1 || newMarketsAmount.length !== 1 ||
+        orphanDetail.length !== 1 || newMarketsDetail.length !== 1 ||
+        orphanRow[0].metadata.sourceCount !== 1 ||
+        newMarketsRow[0].metadata.sourceCount !== 1 ||
+        orphanRow[0].metadata.referenceDocumentName !== "IRS8820" ||
+        newMarketsRow[0].metadata.referenceDocumentName !== "IRS8874" ||
+        !orphanRow[0].metadata.referenceDocumentId ||
+        !newMarketsRow[0].metadata.referenceDocumentId ||
+        orphanRow[0].metadata.referenceDocumentId ===
+          newMarketsRow[0].metadata.referenceDocumentId ||
+        orphanDetail[0].credit !== orphanCredit ||
+        newMarketsDetail[0].credit !== newMarketsCredit ||
+        orphanDetail[0].sourceDocumentId !==
+          orphanRow[0].metadata.referenceDocumentId ||
+        newMarketsDetail[0].sourceDocumentId !==
+          newMarketsRow[0].metadata.referenceDocumentId ||
+        orphanAmount[0].nonpassiveCredit !== orphanCredit ||
+        newMarketsAmount[0].nonpassiveCredit !== newMarketsCredit ||
+        orphanAmount[0].totalCredit !== orphanCredit ||
+        newMarketsAmount[0].totalCredit !== newMarketsCredit
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed orphan-drug/New Markets rows differ from filed sources",
+        );
+      }
+    }
     const directOrphanK1 = source.f8820_k1_credit_entries;
     const rawOrphanK1 = raw.f8820_k1_credit_entries === undefined
       ? undefined
