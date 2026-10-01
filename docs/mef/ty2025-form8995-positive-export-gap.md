@@ -27,6 +27,22 @@ positive filing route remains subject to the source and export gates below.
 
 ## Implemented one-business route
 
+One bounded extension combines that single sourced Schedule C business with
+one identified Form 1099-DIV whose whole box 1a ordinary-dividend amount is
+box 5 section 199A dividends. The record must establish at least 45 holding
+days, no nominee status, no qualified dividend, capital-gain distribution,
+foreign amount or other dividend box, and no separate Schedule B trigger.
+Form 8995 lines 6/8 carry the box 5 amount, line 9 its rounded 20% component,
+and line 10 includes the business and REIT components. The exporter compares
+that record with Form 1040 line 3b, the final line 13 deduction, and every
+printed Form 8995 line; the PDF invokes the same source check. An executor
+positive case and amount, holding-period, source-reference, qualified-dividend,
+return and prepared-line tamper fixtures are authored but unrun. Multiple
+dividend issuers, qualified dividends, capital gains, prior REIT/PTP losses,
+PTP income, and issued-document byte authentication remain open. This follows
+the [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+for the separate qualified-REIT component and taxable-income limit.
+
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the
 record only when the business has a name, EIN, reference, positive integer net

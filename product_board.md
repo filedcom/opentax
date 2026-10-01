@@ -73,11 +73,13 @@ The detailed route boundaries remain in the linked gap notes and audits.
   routes should be implemented before testing resumes. Earlier focused checks
   are recorded in their gap notes; no new per-form checks or bulk run should
   be treated as the current acceptance gate.
-- **Current implementation checkpoint:** draft PR #56 through `b40beb51`
+- **Current implementation checkpoint:** draft PR #56 through `62b02b46`
   includes the trust Form 3468 to Form 3800 route, two-note Form 7203 loss
   allocation, both-spouse HSA prior excess, two-dependent Marketplace income,
   partial-share Form 4972 estate/NUA elections, and the zero-current Form 8582
-  entire-sale PAL route. Their checked rows below state the exact boundaries;
+  entire-sale PAL route. It also has sourced Form 4952 ordinary dividends,
+  prior-year refinance points, and foreign/Treasury Form 1116 interest. Their
+  checked rows below state the exact boundaries;
   the authored fixtures have not entered the agreed final batch.
 
 A checked item records its bounded evidence only. An unchecked item
@@ -287,6 +289,7 @@ filled-PDF review, IRS business rules, and ATS gates remain open below.
   - [x] Reject a facility's 2025 production period when its final sale date reaches the tenth anniversary of placement in service; the shared calculation gates Form 3800, native Form 8835, and PDF projection. Boundary cases are authored for the deferred batch; metering and sale source bytes remain open.
   - [x] Reject a Form 8835 facility whose construction-start date follows its placed-in-service date; the shared calculation feeds Form 3800 and both filing outputs. A contradiction case is authored for the deferred batch; construction-record authentication remains open.
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
+  - [x] Combine one identified Schedule C business with one held, issued Form 1099-DIV whose ordinary dividends are entirely box 5 section 199A dividends. Reconcile Form 8995 lines 6–10, the final deduction, Form 1040 lines 3b/13, native MeF and PDF; an executor positive case and source/return tamper fixtures are authored for deferred validation. Multiple issuers, qualified dividends and source-byte authentication remain open.
   - [x] Carry one qualifying-surviving-spouse SSTB through the 2025 nonjoint Schedule A phase-in, parent Form 8995-A, Form 1040 line 13, native MeF header-status checks, and both PDF projections with final-filer status checks. Positive and wrong-status fixtures are authored for deferred validation; underlying QSS and business-document evidence remain open.
   - [x] Carry a taxpayer-owned MFS SSTB through the 2025 nonjoint Schedule A phase-in, requiring a separate-return allocation reference and no-spouse-share attestation. Native parent/Schedule A and PDF rendering bind owner SSN and MFS status to the final filer; positive and tamper fixtures are authored for the deferred batch. Allocation-workpaper bytes and broader spouse/owner cases remain open.
   - [x] Carry one head-of-household SSTB through the 2025 nonjoint Schedule A phase-in, parent Form 8995-A, Form 1040 line 13, native MeF with return-header status checks, and both PDF projections. Positive, boundary, mismatch, and unsupported-status fixtures are authored for the deferred batch; source authentication and wider nonjoint statuses remain open.

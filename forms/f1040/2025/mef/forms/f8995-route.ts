@@ -17,6 +17,7 @@ import {
   reconcileFarmSources,
   wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
+import { inputSchema as form1099DivInputSchema } from "../../../nodes/inputs/f1099div/index.ts";
 
 const lineNumbers = [
   2,
@@ -81,26 +82,28 @@ export type OneBusiness8995 = {
 function assertFiledLines(
   fields: Record<string, unknown>,
   f1040: Record<string, unknown>,
+  reit: number = 0,
 ): OneBusiness8995["lines"] {
   const qbi = fields.line1_qbi as number;
   const line11 = fields.line11 as number;
   const line5 = Math.round(qbi * 0.2);
+  const line9 = Math.round(reit * 0.2);
   const line14 = Math.round(line11 * 0.2);
   const expected = {
     2: qbi,
     3: 0,
     4: qbi,
     5: line5,
-    6: 0,
+    6: reit,
     7: 0,
-    8: 0,
-    9: 0,
-    10: line5,
+    8: reit,
+    9: line9,
+    10: line5 + line9,
     11: line11,
     12: 0,
     13: line11,
     14: line14,
-    15: Math.min(line5, line14),
+    15: Math.min(line5 + line9, line14),
     16: 0,
     17: 0,
   } as const;
@@ -120,6 +123,49 @@ function assertFiledLines(
 
 function zeroOrAbsent(value: unknown): boolean {
   return value === undefined || value === 0;
+}
+
+function oneQualifiedReitDividend(source: unknown): number {
+  if (source === undefined) return 0;
+  const parsed = form1099DivInputSchema.safeParse(source);
+  const item = parsed.success && parsed.data.f1099divs.length === 1
+    ? parsed.data.f1099divs[0]
+    : undefined;
+  if (
+    !item || !item.source_document_reference || !item.payerName ||
+    item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
+    !Number.isSafeInteger(item.box5) || (item.box5 ?? 0) <= 0 ||
+    (item.box5 ?? 0) > 1_500 || item.box1a !== item.box5 ||
+    (item.holdingPeriodDays ?? 0) < 45 ||
+    [
+      item.box1b,
+      item.box2a,
+      item.box2b,
+      item.box2c,
+      item.box2d,
+      item.box2e,
+      item.box2f,
+      item.box3,
+      item.box4,
+      item.box6,
+      item.box7,
+      item.box9,
+      item.box10,
+      item.box12,
+      item.box13,
+      item.box16,
+    ].some((amount) => !zeroOrAbsent(amount)) ||
+    item.investment_property_for_form4952 === true ||
+    item.box8 !== undefined || item.box14 !== undefined ||
+    item.box15 !== undefined ||
+    item.foreign_source_dividends_usd !== undefined ||
+    item.foreign_source_qualified_dividends_usd !== undefined
+  ) {
+    throw new Error(
+      "Form 8995 REIT component needs one identified held Form 1099-DIV with only box 5 dividends",
+    );
+  }
+  return item.box5!;
 }
 
 /** Only the fully reconciled, one-business positive route can leave the guard. */
@@ -151,13 +197,13 @@ export function assertOneScheduleC8995(
     "schedule_e",
     "k1_partnership",
     "k1_s_corp",
-    "f1099div",
     "f1099patr",
     "schedule_d",
     "f1099b",
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
+  const reit = oneQualifiedReitDividend(pending.f1099div);
   const seDeduction = fields.se_tax_deduction ?? 0;
   const healthField = fields.se_health_insurance_deduction;
   const healthDeduction = typeof healthField === "number" ? healthField : 0;
@@ -273,7 +319,7 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(fields.qbi_from_schedule_f) ||
     !zeroOrAbsent(fields.qbi) ||
     !zeroOrAbsent(fields.sstb_qbi) ||
-    !zeroOrAbsent(fields.line6_sec199a_dividends) ||
+    (fields.line6_sec199a_dividends ?? 0) !== reit ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
     (hasHealthDeduction
@@ -283,6 +329,7 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
     schedule1.line3_schedule_c !== rawQbi ||
     !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    (f1040.line3b_ordinary_dividends ?? 0) !== reit ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
     !zeroOrAbsent(fields.net_capital_gain) ||
@@ -297,7 +344,7 @@ export function assertOneScheduleC8995(
     );
   }
   const qbi = fields.line1_qbi as number;
-  const expected = assertFiledLines(fields, f1040);
+  const expected = assertFiledLines(fields, f1040, reit);
   return {
     businessName: sourceBusiness.line_c_business_name,
     tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },

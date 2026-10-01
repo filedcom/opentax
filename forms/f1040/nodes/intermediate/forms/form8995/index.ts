@@ -333,7 +333,7 @@ function oneScheduleCLines(
     sumField(input.sstb_qbi) !== 0 ||
     typeof seDeduction !== "number" || seDeduction < 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
-    sumField(input.line6_sec199a_dividends) !== 0 ||
+    !Number.isSafeInteger(sumField(input.line6_sec199a_dividends)) ||
     sumField(input.net_capital_gain) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -349,6 +349,8 @@ function oneScheduleCLines(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
   );
   const line5 = Math.round(qbi * QBI_RATE);
+  const reit = sumField(input.line6_sec199a_dividends);
+  const line9 = Math.round(reit * QBI_RATE);
   const line14 = Math.round(line11 * QBI_RATE);
   return {
     line1_business_reference: business.business_reference,
@@ -361,16 +363,16 @@ function oneScheduleCLines(
     line3: 0,
     line4: qbi,
     line5,
-    line6: 0,
+    line6: reit,
     line7: 0,
-    line8: 0,
-    line9: 0,
-    line10: line5,
+    line8: reit,
+    line9,
+    line10: line5 + line9,
     line11,
     line12: 0,
     line13: line11,
     line14,
-    line15: Math.min(line5, line14),
+    line15: Math.min(line5 + line9, line14),
     line16: 0,
     line17: 0,
   };

@@ -74,6 +74,79 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
   );
 });
 
+Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const dividend = {
+    payerName: "Example REIT",
+    source_document_reference: "2025 issued Example REIT Form 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 1_000,
+    box5: 1_000,
+    holdingPeriodDays: 60,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [dividend],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(fields?.line6, 1_000);
+  assertEquals(fields?.line8, 1_000);
+  assertEquals(fields?.line9, 200);
+  assertEquals(fields?.line10, (fields?.line5 as number) + 200);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(
+    xml,
+    "<QlfyREITDivPTPIncomeLossAmt>1000</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  assertStringIncludes(xml, "<REITPTPComponentAmt>200</REITPTPComponentAmt>");
+  const projected = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(projected?.line6, 1_000);
+  assertEquals(projected?.line9, 200);
+  assertEquals(projected?.line15, fields?.line15);
+
+  const changedDividend = (change: Record<string, unknown>) => ({
+    ...pending,
+    f1099div: { f1099divs: [{ ...dividend, ...change }] },
+  });
+  for (
+    const change of [
+      { box5: 999 },
+      { holdingPeriodDays: 44 },
+      { source_document_reference: undefined },
+      { box1b: 100 },
+    ]
+  ) {
+    assertThrows(
+      () => form8995.build(fields, { pending: changedDividend(change) }),
+      Error,
+    );
+    assertThrows(
+      () => form8995Pdf.projectFields?.(fields, changedDividend(change)),
+      Error,
+    );
+  }
+  assertThrows(() =>
+    form8995.build(fields, {
+      pending: {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 999 },
+      },
+    }), Error);
+  assertThrows(
+    () =>
+      form8995.build({ ...fields, line6_sec199a_dividends: 999 }, { pending }),
+    Error,
+  );
+});
+
 Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
