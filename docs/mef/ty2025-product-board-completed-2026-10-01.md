@@ -496,6 +496,9 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## 2026-10-01 follow-up implementation batch (unrun)
 
+- [x] Form 4972 now supports one partial-share beneficiary's Part III election combining a full participant-wide death-benefit exclusion, independently percentaged box 8 annuity, and reviewed estate tax, without Part II or NUA. Distinct administrator death/estate references and one issued 1099-R feed printed lines 8/9/11/18/29 through native/PDF and Form 1040; positive and allocation/source/line/final-tax fixtures are authored but unrun. Other election mixes, authenticated administrator bytes, and artifact validation remain open. See the [Form 4972 gap](ty2025-form4972-gap.md).
+- [x] Form 8962 Situation 4 now supports one full-year two-person shared Marketplace policy when the families cannot agree on allocation: a reviewed claim/enrollment/no-agreement record fixes the filer's one-of-two share at 50% of monthly premiums, benchmark, and APTC. Native/PDF replay policy ownership, other taxpayer's covered-person claim, Part IV, months, and final Schedule 3/Form 1040; positive and source/count/final-credit fixtures are authored but unrun. Other counts, periods, policies, allocations, authenticated review bytes, and artifact validation remain open. See the [policy-month gap](ty2025-form8962-policy-month-gap.md).
+
 - [x] Form 4972 now supports one partial-share beneficiary's Part III election with a full participant-wide death-benefit exclusion and separately percentaged box 8 annuity, without capital, NUA, or estate-tax amounts. Administrator allocation and issued-copy ownership feed printed lines 8/9/11/29 through native/PDF and Form 1040; positive and allocation/annuity/recipient/printed/final-tax fixtures are authored but unrun. Other beneficiary/election mixes, authenticated administrator bytes, and artifact validation remain open. See the [Form 4972 gap](ty2025-form4972-gap.md).
 
 
