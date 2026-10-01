@@ -594,6 +594,16 @@ export function reconcilePairedForm8889(
   const continuingOwner = owners.find((owner) => owner !== medicareOwner);
   const firstIneligible = medicareOwner?.medicare_enrollment
     ?.first_ineligible_month;
+  const medicareAge65Distribution = medicareOwner?.age_55_or_older === true &&
+    medicareOwner.age_65_exception_evidence !== undefined &&
+    (medicareOwner.hsa_distributions ?? 0) > 0 &&
+    medicareOwner.form1099_sa_distributions?.length === 1 &&
+    medicareOwner.form1099_sa_distributions[0]
+        ?.box3_distribution_code === "1" &&
+    (medicareOwner.qualified_medical_expenses ?? 0) > 0 &&
+    medicareOwner.qualified_medical_expense_evidence?.length === 1 &&
+    (medicareOwner.exception_qualified_taxable_amount ?? 0) > 0 &&
+    continuingOwner?.age_55_or_older === false;
   const medicareMixedMonths = firstIneligible !== undefined &&
     owners.filter((owner) => owner.medicare_enrollment).length === 1 &&
     medicareOwner?.eligible_hdhp_coverage_by_month?.every((month, index) =>
@@ -629,7 +639,8 @@ export function reconcilePairedForm8889(
       owner.married_at_year_end === true &&
       owner.spouse_has_separate_hsa === true &&
       owner.last_month_rule_elected === false &&
-      owner.age_55_or_older === false &&
+      (owner.age_55_or_older === false ||
+        (owner === medicareOwner && medicareAge65Distribution)) &&
       owner.allocated_family_limit === undefined &&
       owner.family_allocation_source_reference === undefined &&
       (owner.archer_msa_distributions ?? 0) === 0 &&
@@ -642,12 +653,17 @@ export function reconcilePairedForm8889(
       owner.qualified_hsa_funding_distributions === undefined &&
       owner.hsa_excluded_distributions === undefined &&
       owner.testing_period_failure === undefined &&
-      (owner.hsa_distributions ?? 0) === 0 &&
-      owner.age_65_exception_evidence === undefined &&
+      ((owner.hsa_distributions ?? 0) === 0 ||
+        (owner === medicareOwner && medicareAge65Distribution)) &&
+      (owner.age_65_exception_evidence === undefined ||
+        (owner === medicareOwner && medicareAge65Distribution)) &&
       owner.disability_exception_evidence === undefined
     ) &&
     (medicareOwner?.taxpayer_hsa_contributions ?? 0) <=
-      Math.round(4_300 * (firstIneligible - 1) / 12) &&
+      Math.round(
+        (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
+          (firstIneligible - 1) / 12,
+      ) &&
     (continuingOwner?.taxpayer_hsa_contributions ?? 0) <= 4_300 &&
     !source.w2_code_w_entries?.length;
   const otherCoverageOwner = owners.find((owner) =>
@@ -1108,6 +1124,19 @@ export function reconcilePairedForm8889(
   ) {
     throw new Error(
       "Form 8889 paired age-65 and disability totals differ from Form 1040",
+    );
+  }
+  if (
+    medicareSelfOnlyMonths && medicareAge65Distribution &&
+    ((schedule1.line10_total_additional_income ?? 0) !==
+        sum("print_line16_taxable") ||
+      form1040.line8_additional_income !==
+        schedule1.line10_total_additional_income ||
+      (form1040.line23_other_taxes ?? 0) !==
+        sum("print_line17b_penalty"))
+  ) {
+    throw new Error(
+      "Form 8889 paired Medicare and age-65 distribution totals differ from Form 1040",
     );
   }
   if (
