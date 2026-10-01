@@ -4,6 +4,7 @@ import {
   IncomeCategory,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
+import { assertForm1116CarryoverSource } from "../../form1116_carryover_source.ts";
 
 // Official f1116sb.pdf (Rev. 12-2022), still current for TY2025. Both pages
 // were inspected in the canonical AcroForm tree. Page 2 columns are viii
@@ -55,7 +56,9 @@ const fields: readonly PdfFieldEntry[] = [
     text(
       `line${line}_page1_subtotal`,
       `${p1}.Table_Page1[0].Line${line}[0].f1_${
-        ({ 1: "16", 3: "77", 4: "84", 5: "91", 6: "98", 8: "112" } as const)[line]
+        ({ 1: "16", 3: "77", 4: "84", 5: "91", 6: "98", 8: "112" } as const)[
+          line
+        ]
       }[0]`,
       true,
     ),
@@ -63,7 +66,9 @@ const fields: readonly PdfFieldEntry[] = [
       line,
       `line${line}_page2_subtotal`,
       `f2_${
-        ({ 1: "01", 3: "62", 4: "69", 5: "76", 6: "83", 8: "97" } as const)[line]
+        ({ 1: "01", 3: "62", 4: "69", 5: "76", 6: "83", 8: "97" } as const)[
+          line
+        ]
       }[0]`,
       true,
     ),
@@ -138,6 +143,29 @@ export const form1116ScheduleBPdf: PdfFormDescriptor = {
       throw new Error(
         "Form 1116 Schedule B PDF differs from the matching Form 1116 category summary",
       );
+    }
+    if (
+      presentation.case !== "current_year_excess" &&
+      (allPending.f1040 !== undefined ||
+        allPending.form1116_prior_carryover !== undefined)
+    ) {
+      assertForm1116CarryoverSource(
+        allPending,
+        raw.prior_year_carryover_source,
+      );
+    }
+    if (allPending.f1040 !== undefined) {
+      const schedule3 = allPending.schedule3;
+      const form1040 = allPending.f1040;
+      if (
+        typeof schedule3?.line1_foreign_tax_credit !== "number" ||
+        typeof schedule3.line8_total !== "number" ||
+        form1040?.line20_nonrefundable_credits !== schedule3.line8_total
+      ) {
+        throw new Error(
+          "Form 1116 Schedule B PDF credit differs from Schedule 3 and Form 1040",
+        );
+      }
     }
     if (presentation.case === "current_year_excess") {
       return {

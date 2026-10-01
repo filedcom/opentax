@@ -575,6 +575,76 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
   );
 
+  // A changed vintage split preserves the $9,100 total and the same parent
+  // credit, but must not replace the reviewed filed 2024 Schedule B columns.
+  const changedSplit = {
+    ...pending,
+    form1116_schedule_b: {
+      ...pending.form1116_schedule_b,
+      prior_year_carryover_source: {
+        ...filedScheduleB,
+        vintages: [
+          {
+            vintage_tax_year: 2023,
+            prior_year_schedule_b_line8_vintage_amount: 200,
+          },
+          {
+            vintage_tax_year: 2024,
+            prior_year_schedule_b_line8_vintage_amount: 8_900,
+          },
+        ],
+      },
+    },
+  };
+  assertThrows(
+    () =>
+      form1116.build(parent as Parameters<typeof form1116.build>[0], {
+        pending: changedSplit,
+      }),
+    Error,
+    "filed source",
+  );
+  assertThrows(
+    () =>
+      form1116ScheduleBPdf.projectFields?.(
+        changedSplit.form1116_schedule_b,
+        changedSplit,
+      ),
+    Error,
+    "filed source",
+  );
+  await assertRejects(() =>
+    buildMefBundle(changedSplit, { filer, attachments: [] })
+  );
+  await assertRejects(() =>
+    buildPdfBytes(changedSplit, filer, ".pdf-cache", bundle)
+  );
+  const changedIntake = {
+    ...pending,
+    form1116_prior_carryover: {
+      carryovers: [
+        changedSplit.form1116_schedule_b.prior_year_carryover_source,
+      ],
+    },
+  };
+  assertThrows(
+    () =>
+      form1116.build(parent as Parameters<typeof form1116.build>[0], {
+        pending: changedIntake,
+      }),
+    Error,
+    "filed source",
+  );
+  assertThrows(
+    () =>
+      form1116ScheduleBPdf.projectFields?.(
+        scheduleB,
+        changedIntake,
+      ),
+    Error,
+    "filed source",
+  );
+
   for (
     const altered of [
       {
@@ -644,5 +714,25 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
       }),
     Error,
     "Form 1040",
+  );
+  const changedReturn = {
+    ...pending,
+    f1040: {
+      ...pending.f1040,
+      line20_nonrefundable_credits: summary.allowedCredit - 1,
+    },
+  };
+  assertThrows(
+    () =>
+      form1116.build(parent as Parameters<typeof form1116.build>[0], {
+        pending: changedReturn,
+      }),
+    Error,
+    "Schedule 3 and Form 1040",
+  );
+  assertThrows(
+    () => form1116ScheduleBPdf.projectFields?.(scheduleB, changedReturn),
+    Error,
+    "Schedule 3 and Form 1040",
   );
 });

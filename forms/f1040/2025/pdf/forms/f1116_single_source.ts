@@ -14,7 +14,7 @@ import {
   twoCountryTreasuryPdfReviewSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { inputSchema as f1099intInputSchema } from "../../../nodes/inputs/f1099int/index.ts";
-import { inputSchema as priorCarryoverInputSchema } from "../../../nodes/inputs/form1116_prior_carryover/index.ts";
+import { assertForm1116CarryoverSource } from "../../form1116_carryover_source.ts";
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
@@ -552,16 +552,10 @@ export function projectSingleSourceForm1116Pdf(
   }
   if (priorCarryover > 0) {
     const scheduleB = scheduleBPresentation(pending.form1116_schedule_b);
-    const filedCarryover = priorCarryoverInputSchema.safeParse(
-      pending.form1116_prior_carryover,
-    );
     const scheduleBSource = pending.form1116_schedule_b
       ?.prior_year_carryover_source;
+    assertForm1116CarryoverSource(pending, scheduleBSource);
     if (
-      !filedCarryover.success ||
-      filedCarryover.data.carryovers.length !== 1 ||
-      JSON.stringify(filedCarryover.data.carryovers[0]) !==
-        JSON.stringify(scheduleBSource) ||
       scheduleB.case !==
         (currentExcess > 0
           ? "combined_current_excess_prior_balance"

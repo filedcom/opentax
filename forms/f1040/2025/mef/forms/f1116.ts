@@ -32,6 +32,7 @@ import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_coun
 import { reconcileForm1116ThreeCountryMixed } from "../../form1116_three_country_mixed.ts";
 import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
 import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
+import { assertForm1116CarryoverSource } from "../../form1116_carryover_source.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
@@ -738,6 +739,21 @@ function buildIRS1116(
     ) {
       throw new Error(
         "Form 1116 prior-year credit needs a matching sourced Schedule B reconciliation",
+      );
+    }
+    assertForm1116CarryoverSource(
+      context?.pending,
+      companion.data.prior_year_carryover_source,
+    );
+    const schedule3 = context?.pending?.schedule3;
+    const return1040 = context?.pending?.f1040;
+    if (
+      return1040 &&
+      (typeof schedule3?.line8_total !== "number" ||
+        return1040.line20_nonrefundable_credits !== schedule3.line8_total)
+    ) {
+      throw new Error(
+        "Form 1116 prior-year credit differs from Schedule 3 and Form 1040",
       );
     }
     scheduleBPresentation(companion.data);

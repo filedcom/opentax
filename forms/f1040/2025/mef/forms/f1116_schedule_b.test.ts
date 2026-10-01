@@ -118,6 +118,7 @@ Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 exces
   const [formXml] = form1116.build(formFields, {
     pending: {
       form1116_schedule_b: scheduleB,
+      form1116_prior_carryover: { carryovers: [priorSource] },
       schedule3: { line1_foreign_tax_credit: 450 },
     },
   });
@@ -321,6 +322,7 @@ Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1
   const [formXml] = form1116.build(formFields, {
     pending: {
       form1116_schedule_b: fields,
+      form1116_prior_carryover: { carryovers: [source] },
       schedule3: { line1_foreign_tax_credit: 500 },
     },
   });

@@ -110,3 +110,14 @@ remain outside this narrow source model; they must not be inferred from these
 fields. Focused field-path, projection, reconciliation, and preflight cases are
 written but intentionally unrun. PDF appearance, typecheck, XSD, full tests, and
 IRS acceptance remain pending the shared validation batch.
+
+The native parent Form 1116 and full-return Schedule B PDF now also compare
+each embedded vintage and the filed-source references with the retained 2024
+Schedule B intake. A changed 2023/2024 split that preserves the $9,100 total
+and the same 2025 credit must reject at both export paths, as must a changed
+retained intake under an unchanged attachment. The parent PDF uses the same
+comparison. Native and Schedule B PDF also compare Form 1040 line 20 with
+Schedule 3 line 8 in a finalized return. Positive full-return, both-direction
+vintage-tamper, and return-total fixtures
+are authored for the deferred batch. This checks the structured transcription;
+it does not authenticate the filed 2024 Schedule B or establish IRS acceptance.
