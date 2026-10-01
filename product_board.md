@@ -1,149 +1,51 @@
 # TY2025 Form 1040 product board
 
-## Current state (2026-10-01)
+## Full status summary (2026-10-01)
 
-This board shows **completed checkpoints and open work**. A checked checkpoint
-records only the work named in that row; it does not close a broader form or
-release gate. Older test logs, source references, PDF reviews, and decisions
-remain in the [2026-09-30 checkpoint archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
-The detailed route boundaries remain in the linked gap notes and audits.
+Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
+TY2025 Form 1040 filing family. The checklist below is the source of truth for
+task status: a checked row records only its stated, bounded implementation or
+historical verification; its unchecked parent and release gates remain open.
+After consolidating duplicate checkpoints, the checklist has **194 checked
+items and 54 open items**.
+The earlier detailed checkpoint record is in the
+[2026-09-30 archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
 
-- **Implemented slices:** reviewed source routes now cover selected W-2, 1099,
-  K-1, rental, farm, sale, rollover, disaster, Marketplace, and health-plan
-  cases. They are bounded routes, not blanket support for those form families.
-- **Filing output:** selected full returns pass the local TY2025 v5.4 XSD and
-  have inspected filled PDFs. The recent one-business Form 7206 route also
-  reconciles Schedule SE, Schedule 1, QBI, and Form 1040.
-- **Latest completed bulk baseline:** `deno task test` passed 8,951/8,951 on
-  commit `44282e25`; see the [retained log](.state/research/ty2025-full-test-schedule1a-vehicle.log).
-  Later implementation has focused checks, but the final fixed-source bulk run
-  has not happened. Run it after implementation is finished, as requested.
-- **Prior focused checkpoint:** after the top-level input guard and Form 4797
-  PDF changes on `9effd20b`, the 88 prepared source-to-native-MeF fixtures
-  passed local TY2025 v5.4 XSD (`deno test --allow-read --allow-write
-  --allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov
-  forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`, 88/88). This does not
-  replace the final bulk, filled-PDF, business-rule, or ATS gates. A later
-  [Form 4797 K-1 line 2 review](docs/mef/ty2025-form4797-k1-line2-filled-review.md)
-  records two local-XSD-valid full returns, inspected parent and continuation
-  pages, a mixed K-1/installment return, and a separate negative-loss route
-  check. Its broader source and
-  release gates remain open. The bounded [investment section 1245
-  review](docs/mef/ty2025-form4797-investment-1245.md) also has one- and
-  four-property XSD-valid, inspected nine-page packets; source-byte proof and
-  other property classes remain open.
-- **Latest implementation checkpoint:** PR #56 now includes final-filer K-1
-  ownership checks for bounded Form 4952 paths, a public Form 8863 credit-limit
-  worksheet route, and the reviewed Form 8862 CTC case. Form 8862 CTC/ODC and
-  AOTC claims now require a prior-disallowance year and IRS notice reference,
-  like the EITC route. Extra CTC/ODC people and AOTC students now get a numbered
-  PDF continuation. Form 8862 Part II child names and count now reconcile to
-  finalized Schedule EIC and its Form 1040 credit. Parts III/IV require every
-  filed CTC/ODC dependent and AOTC student once; these changes have not entered
-  the final test batch. The current implementation also requires a separate
-  reviewed prior-notice record for each CTC/ODC and AOTC claim and binds its
-  year, reference, and taxpayer to Form 8862; retained notice-copy bytes are
-  not yet authenticated. Full-return ODC and AOTC cases are written for the
-  deferred batch.
-- **Form 1098 points checkpoint:** ordinary refinancing points are not reported
-  in box 6 under the 2025 payer instructions. The construction-debt exception
-  calculates current-year amortization into Schedule A line 8a. A separate
-  linked Form 1098 and closing-disclosure route now calculates ordinary
-  unreported refinance points into line 8c. Both routes have focused cases and
-  full-return XSD/PDF fixtures written but unrun. Payer-byte proof, mixed-debt
-  allocation, and a later-year ledger remain open. See the
-  [points route](docs/mef/ty2025-form1098-box6-points.md).
-  The preexisting focused
-  XSD/PDF evidence for these slices is recorded in their gap notes. All wider
-  form variants, source proof, the final bulk run, business rules, and ATS
-  remain open.
-- **Form 8814 notation checkpoint:** the parent Form 1040 PDF now marks a
-  child's capital-gain distribution on line 7b only when the child's amount
-  actually uses direct line 7a reporting. A Schedule D return instead carries
-  the child's amount to Schedule D line 13, and a missing or understated route
-  rejects. Both routes have focused cases and a mixed parent-sale/child-gain
-  filled-PDF fixture written but unrun. The wider source and release gates
-  remain open.
-- **Open release gates:** settle the named coverage and evidence decisions;
-  complete or explicitly reject each retained positive filing route; reconcile
-  the 126 MeF descriptors, 89 PDF descriptors, and 211 IRS schema roots; then
-  run full source, XSD, PDF, business-rule, and ATS validation. Keep this draft
-  [PR #56](https://github.com/filedcom/opentax/pull/56) updated as work lands.
-- **Implementation-first checkpoint:** the user reaffirmed that the remaining
-  routes should be implemented before testing resumes. Earlier focused checks
-  are recorded in their gap notes; no new per-form checks or bulk run should
-  be treated as the current acceptance gate.
-- **Current implementation checkpoint:** draft PR #56 through `2e9570f6`
-  includes the trust Form 3468 to Form 3800 route, two-note Form 7203 loss
-  allocation, both-spouse HSA prior excess, two-dependent Marketplace income,
-  partial-share Form 4972 estate/NUA elections, and the zero-current Form 8582
-  entire-sale PAL route. It also has sourced Form 4952 ordinary dividends,
-  prior-year refinance points, foreign/Treasury Form 1116 interest, held REIT
-  dividends on Form 8995, a donor manuscript on Form 8283, a reviewed AMT
-  state-tax refund, first-year IRA basis, combined ODC/AOTC reinstatement,
-  one partly medical HSA distribution, mixed/two-country Form 1116 income,
-  separate spouse Form 4972 elections, and two-note Form 7203 repayments. Their
-  checked rows below state the exact boundaries;
-  the authored fixtures have not entered the agreed final batch.
+**Implemented so far.** Bounded source-to-return routes cover selected W-2,
+1099, K-1, foreign tax, mortgage interest and points, investment interest,
+noncash gifts, rental and business income, capital and property sales, IRA and
+HSA events, Marketplace coverage, education and dependent credits, household
+employment, and other named form cases. Many include Form 1040 joins, native
+MeF, PDF projection, and positive/tamper fixtures. Each route's exact source,
+owner, calculation, and output boundary appears in its checked checklist row
+and linked gap note. This does not establish full support for its form family.
 
-A checked item records its bounded evidence only. An unchecked item
-below remains open even when one of its examples already passes. A source
-literal, registered descriptor, local XSD pass, or focused test alone does not
-establish full filing support.
+**Evidence and validation state.** The last complete `deno task test` baseline
+passed 8,951/8,951 on `44282e25`; its
+[retained log](.state/research/ty2025-full-test-schedule1a-vehicle.log) predates
+current work. An earlier prepared source-to-MeF set passed 88/88 local TY2025
+v5.4 XSD checks on `9effd20b`; selected filled PDFs were inspected in earlier
+checkpoints. Newly authored fixtures in PR #56 have **not** entered the agreed
+final batch. Reviewed references and retained hashes for many external records
+do not yet authenticate issuer content, filed-return acceptance, signatures,
+or IRS acknowledgments. No current bulk, complete filled-PDF, business-rule, or
+ATS acceptance result is claimed.
 
-## Completed checkpoints
+**Remaining implementation.** Resolve the named workflow and evidence choices,
+then complete or obtain an approved, named fail-closed boundary for each
+applicable Form 1040 path. Reconcile the 126 registered MeF descriptors, 89 PDF
+descriptors, and 211 TY2025 IRS schema roots with public inputs, source proof,
+calculations, owner identity, Form 1040 joins, native XML, printable output,
+statements, and attachments. The form-specific open rows below identify current
+gaps; checked child rows show exactly which smaller routes have landed.
 
-### Verified on earlier commits
-
-- [x] The fixed-source `deno task test` baseline passed 8,951/8,951 with zero
-  failures on `44282e25`; [log](.state/research/ty2025-full-test-schedule1a-vehicle.log).
-  This predates the current implementation and is not the final bulk gate.
-- [x] The prepared source-to-native-MeF review fixture set passed 88/88 local
-  TY2025 v5.4 XSD checks on `9effd20b`. The current fixture set has grown and
-  awaits the final batch.
-- [x] The earlier PDF descriptor check found all mapped field names in the
-  referenced IRS PDFs (then 87 descriptors); see the
-  [checkpoint archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
-  This was a field-name check, not filled-output review.
-
-### Implemented in draft PR #56; current batch pending
-
-- [x] Form 4952's bounded partnership K-1 paths check final-filer ownership
-  and reconcile their mixed K-1/1099 Form 1040 joins (`59bc67de`, `0ed3df33`).
-- [x] Form 8863 accepts a public credit-limit worksheet input for the
-  reviewed AOC route (`ad1def92`).
-- [x] Form 8862 CTC/ODC and AOTC paths require prior-disallowance year and
-  IRS-notice references; multi-person PDF continuations and finalized
-  EITC/CTC/ODC/AOTC claimant joins are written (`6704de8f` through
-  `906b7d01`).
-- [x] Form 8862 CTC/ODC and AOTC claims match separate reviewed prior-notice
-  records by year, reference, and taxpayer; ODC and AOTC full-return routes
-  are authored for the deferred XSD/PDF batch.
-- [x] Form 1098 construction-debt refinance points calculate a TY2025
-  Schedule A line 8a amount from the loan term and payment records
-  (`796df406`).
-- [x] Ordinary unreported refinance points have a linked Form 1098,
-  closing-disclosure, payment-record, and Schedule A line 8c source route
-  (`6b86815f`).
-- [x] Form 8814 child-gain PDF notation follows direct Form 1040 line 7a or
-  Schedule D line 13, with a mixed-return fixture written (`7f8dd8b6`).
-- [x] Schedule R's age-only single, HOH, QSS, MFJ, and all-year-apart MFS
-  calculations and native/PDF branches are written; focused cases await the
-  current batch. See the [age-only route](docs/mef/ty2025-schedule-r-age-only.md).
-
-The items in this second group have authored cases but have **not** entered
-the requested final bulk test. Their source authentication, broader variants,
-filled-PDF review, IRS business rules, and ATS gates remain open below.
-
-## Work order
-
-1. Resolve the named workflow and evidence decisions in the
-   [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md).
-2. Finish every retained source-to-calculation-to-Form-1040-to-MeF-to-PDF and
-   attachment route, or record an approved fail-closed boundary.
-3. Run the full fixed-source batch once implementation is finished, then
-   complete filled-PDF, IRS business-rule, and ATS acceptance gates.
-4. Review the draft PR and release only after those gates pass.
+**Release sequence.** Finish implementation before the requested single full
+`deno task test` batch. Then validate every retained positive route against the
+checked-in TY2025 XSD and source totals, generate and inspect the sixty prepared
+filled-PDF cases, check IRS business rules, complete ATS scenarios with issued
+credentials and accepted acknowledgments, review the draft PR, and release only
+after those gates pass. The checklist keeps these gates unchecked until their
+own evidence exists.
 
 ## Scope and completion rules
 
@@ -190,6 +92,7 @@ filled-PDF review, IRS business rules, and ATS gates remain open below.
   - [x] Stage a distinct donor-created Section A artwork ordinary-gain reduction: require substantial-completion and undeducted capitalized-cost records, basis claim below FMV, a linked native statement, PDF reason, and Schedule A/Form 1040 reconciliation. Fixtures are authored for deferred bulk verification; source bytes and other creator or Section B reasons remain open.
   - [x] Stage a distinct Section A unrelated-use tangible-property reduction for a purchased long-term capital item with a donee-use statement and a claim equal to basis below $5,000 FMV. Its native statement, PDF reason, and Schedule A/Form 1040 route are authored for the deferred batch; donee and purchase bytes and Section B variants remain open.
 - [ ] **Form 1116:** complete source-reconciled passive/general baskets, mixed income and countries, deductions, foreign-employer alternative compensation, K-3 combinations, Schedule B carryover vintages, and Schedule C redetermination with affected-year filed returns and amendments. Finish parent/Schedule B PDFs and register a valid Schedule C route or retain an approved rejection. See [Schedule C](docs/mef/ty2025-form1116-schedule-c-gap.md), [main PDF](docs/mef/ty2025-form1116-main-pdf-gap.md), [Schedule B PDF](docs/mef/ty2025-form1116-schedule-b-pdf.md), and [alternative compensation](docs/mef/ty2025-form1116-alternative-compensation-gap.md).
+  - [x] Reconcile one Canadian foreign-interest Form 1099-INT and one French ordinary-dividend Form 1099-DIV as two passive Form 1116 country columns, with source/holding review, distinct Part II tax kinds, per-country standard-deduction allocation, Schedule 3/Form 1040 joins, native MeF, and parent PDF. Full-return and source/country/holding/return tamper fixtures are authored for deferred validation; RIC/qualified dividends, extra income, source bytes and filled-output/XSD review remain open.
   - [x] Reconcile two distinct-country foreign 1099-INT box-1/box-6 payers when one of those same issued statements also reports domestic Treasury box 3. Bind its foreign and domestic reviewed references to that one issuer, use both countries' foreign income against the two-source worldwide denominator, and carry Form 1116 native/PDF columns, Schedule 3, and Form 1040 interest together. Full-return and box-3/source/tax/country/return tamper fixtures are authored for deferred validation; wider mixed boxes, source bytes, and filled-output/XSD review remain open.
   - [x] Combine two distinct-country foreign 1099-INT box-1/box-6 payers with a separately reviewed domestic Treasury box-3 payer, including the three-source worldwide denominator, per-country standard-deduction allocation, Form 1116 native and PDF columns A/B, Schedule 3, and Form 1040. Full-return/tamper fixtures are authored for deferred validation; wider payer combinations, source bytes and filled-output/XSD review remain open.
   - [x] Reconcile one foreign 1099-INT payer in each of two distinct countries through passive Form 1116 native country sources, parent PDF Part I columns A/B and Part II tax rows A/B, aggregate limitation, Schedule 3, and Form 1040; require one reviewed source/country pair per column. Full-return and tamper fixtures are authored for deferred validation; wider payer mixes, source bytes, and filled-output/XSD review remain open.
@@ -294,6 +197,7 @@ filled-PDF review, IRS business rules, and ATS gates remain open below.
   - [x] Reconcile complete Schedule E and Form 4797 sale records for bounded entire-gain and retained-gain Form 8582 native/PDF routes, so changed closing or buyer facts reject even when gain matches; closing-document authentication remains open.
   - [x] Carry one first-year actively participated rental's sourced entire-interest overall gain through Form 8582 Part IV, Schedule E, Form 4797 Part II, Schedule 1, Form 1040, native MeF and PDF; reject a changed purchase reference. Full-return fixtures are authored for the deferred batch; document bytes and wider dispositions remain open.
 - [ ] **Form 4952:** finish debt/expense tracing, K-1 box 20 code B's permitted deduction destination, royalty and Schedule E ownership beyond the bounded [1099-MISC portfolio case](docs/mef/ty2025-form4952-gap.md), investment-income elections, carryover ledger, and Form 6251 interaction. The bounded box 5/code H partnership K-1 route now checks final filer ownership; it and its mixed 1099-INT and 1099-DIV variants pass full-return local XSD and filled-PDF reviews. Extend full-return source validation to every other retained K-1 combination. Ensure calculation, native document, PDF projectors, and final filer identity use one consistent validated source path. See [main gap](docs/mef/ty2025-form4952-gap.md), [K-1 code B](docs/mef/ty2025-form4952-k1-code-b-gap.md), and [Treasury dividend](docs/mef/ty2025-form4952-treasury-dividend-slice.md).
+  - [x] Import one primary filer's positive regular reviewed filed-2024 Form 4952 line 7 into 2025 line 2 for one direct-use taxable-securities loan and one ordinary 1099-INT payer: cross-check prior lines 1/2/3/6/7/8, 2024 Schedule A line 9, separate AMT carryforward, current line 3/7/8, Schedule A, Form 1040, native MeF, PDF, and final filer. Positive and prior-line/AMT-source/owner/retained-source tamper fixtures are authored for deferred validation; AMT-only imports, filed-return acceptance, and document bytes remain open.
   - [x] Reconcile one reviewed direct-use securities loan against one ordinary 1099-INT box-1 payer and two distinctly referenced ordinary 1099-DIV box-1a payers; match both dividend source amounts, the interest payer, loan ledger, Form 4952, Schedule A, Form 1040, native MeF, and PDF. A full-return positive and duplicate-dividend-source tamper fixture are authored for deferred validation; issuer/lender bytes and wider payer mixes remain open.
   - [x] Reconcile one reviewed direct-use securities loan against two distinctly referenced ordinary 1099-INT box-1 payers and one ordinary 1099-DIV box-1a payer; match all three income amounts, the loan payment ledger, Form 4952, Schedule A, Form 1040, native MeF, and PDF. A full-return positive and duplicate-source tamper fixture are authored for deferred validation; source bytes and wider payer mixes remain open.
   - [x] Reconcile one reviewed direct-use securities loan with one affirmed unadjusted Form 1099-INT box 1 payer and one ordinary Form 1099-DIV box 1a payer: replay the loan and both source totals through Form 4952, Schedule A, Form 1040, native MeF, and PDF. A full-return positive and source-tamper fixture are authored for deferred validation; source bytes and wider payer mixes remain open.
@@ -383,6 +287,7 @@ filled-PDF review, IRS business rules, and ATS gates remain open below.
   - [x] Add a bounded 2024-origin ordinary refinance ledger for 2025 Schedule A line 8c amortization, with referenced filed return/workpaper, prior and current payment records, and remaining-balance checks; historical bytes, wider vintages, and current batch remain open.
   - [x] Extend ordinary refinance points to a bounded 2023-origin loan with independently reviewed 2023 and 2024 filed return/workpaper references and distinct consecutive payment histories; recompute both prior deductions and the 2025 Schedule A line 8c claim through Form 1040, native MeF, and PDF. Positive/tamper and full-return fixtures are authored for deferred validation; historical bytes, mixed debt, and wider vintages remain open.
   - [x] Add a bounded two-loan Pub. 936 Table 1 interest allocation for a single filer with two full-year post-2017 acquisition loans and twelve sourced balances each; wider debt categories, points, source bytes, and current batch remain open.
+  - [x] Add a bounded single-filer 2025 purchase mortgage with reported box 6 points plus one existing post-2017 acquisition mortgage: source both payer copies, closing/points workpaper, twelve monthly balances and daily lender maxima under $750,000; reconcile Schedule A line 8a, Form 1040, native MeF, and PDF with authored positive/tamper fixtures. Source bytes, additional loans, excess debt, and other points cases remain open.
   - [x] Correct the bounded Form 8814 direct Form 1040 versus Schedule D child-gain PDF mark and add a mixed-return fixture; current batch and filled-PDF review remain open.
   - [x] Require the child-dividend amount behind Form 1040 line 3c's two Form 8814 PDF marks to appear on both finalized lines 3a and 3b; add an understated-line rejection case. Issuer/source authentication and filled-PDF review remain open.
   - [x] Require each Form 8814 native/PDF filing copy to match a 2025 reviewed child-income packet by child SSN, electing parent SSN, eligibility review, and all used income/adjustment amounts; update source fixtures. This [structured review](docs/mef/ty2025-form8814-source-review.md) is not issuer-byte authentication, and the current batch and mixed filled-PDF review remain open.
