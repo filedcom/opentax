@@ -217,6 +217,29 @@ export function assertPrivateFoundationReductionSource(
   }
 }
 
+export function assertTaxidermyReductionSource(item: SectionAItem): void {
+  const review = item.taxidermy_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "created" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.preparation_cost_record_reference.trim() ||
+    !review.taxidermy_property_description_record_reference.trim() ||
+    Math.round(review.eligible_preparation_stuffing_mounting_costs * 100) !==
+      Math.round(item.cost_or_adjusted_basis * 100)
+  ) {
+    throw new Error(
+      "Form 8283 taxidermy reduction needs donee, mounted animal, completion, valuation, and preparation-only cost records",
+    );
+  }
+}
+
 export function assertVehicleSaleReductionSource(item: SectionAItem): void {
   if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
     return;
@@ -310,6 +333,13 @@ export function fmvReductionExplanation(
     ? `Purchased long-term capital property contributed outright to private nonoperating foundation ${item.private_foundation_capital_gain_reduction.foundation_name} (EIN ${item.private_foundation_capital_gain_reduction.foundation_ein}). Foundation status record ${item.private_foundation_capital_gain_reduction.foundation_status_record_reference} and purchase record ${item.private_foundation_capital_gain_reduction.purchase_record_reference} support the section 170(e)(1)(B)(ii) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.taxidermy_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Donor-prepared taxidermy containing an animal body part is limited under section 170(e)(1)(B)(iv) to eligible preparation, stuffing, and mounting costs. Preparation record ${item.taxidermy_capital_gain_reduction.preparation_cost_record_reference} and property description record ${item.taxidermy_capital_gain_reduction.taxidermy_property_description_record_reference} support eligible costs ${
+      usd(item.cost_or_adjusted_basis)
+    }; hunting, travel, equipment, and labor value are excluded. FMV appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } is removed.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -343,6 +373,7 @@ export function buildFmvReductionStatement(
   assertManuscriptReductionSource(item);
   assertUnrelatedUseReductionSource(item);
   assertPrivateFoundationReductionSource(item);
+  assertTaxidermyReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -1164,6 +1195,7 @@ export const form8283: MefFormDescriptor<
       assertManuscriptReductionSource(item);
       assertUnrelatedUseReductionSource(item);
       assertPrivateFoundationReductionSource(item);
+      assertTaxidermyReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -1246,7 +1278,8 @@ export const form8283: MefFormDescriptor<
       isSingleSectionANeedyVehicleUnreduced(parsed) ||
       sectionA.some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
-        item.private_foundation_capital_gain_reduction !== undefined
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);

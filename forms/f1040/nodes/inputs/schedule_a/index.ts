@@ -36,6 +36,7 @@ const noncashContributionItemSchema = z.object({
   unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
   private_foundation_capital_gain_reduction_confirmed: z.literal(true)
     .optional(),
+  taxidermy_capital_gain_reduction_confirmed: z.literal(true).optional(),
 });
 const capitalGainCarryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),
@@ -113,13 +114,14 @@ export const inputSchema = z.object({
       item.is_capital_gain_property === true &&
       item.category === "noncash_50" && !noAppreciation &&
       item.capital_gain_reduction_election_confirmed !== true &&
-      item.unrelated_use_capital_gain_reduction_confirmed !== true
+      item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+      item.taxidermy_capital_gain_reduction_confirmed !== true
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["noncash_contribution_items", index],
         message:
-          "Appreciated capital-gain property in the 50% category needs an elected or unrelated-use basis reduction",
+          "Appreciated capital-gain property in the 50% category needs a sourced basis reduction",
       });
     }
   }
@@ -190,6 +192,7 @@ export const inputSchema = z.object({
         if (
           (item.capital_gain_reduction_election_confirmed !== true &&
             item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+            item.taxidermy_capital_gain_reduction_confirmed !== true &&
             !noAppreciation) ||
           item.category !== "noncash_50" ||
           item.original_fmv === undefined ||

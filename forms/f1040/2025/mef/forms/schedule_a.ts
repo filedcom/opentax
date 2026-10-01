@@ -160,7 +160,9 @@ function buildIRS1040ScheduleA(
       ((item as Record<string, unknown>)
             .unrelated_use_capital_gain_reduction_confirmed === true ||
         (item as Record<string, unknown>)
-            .private_foundation_capital_gain_reduction_confirmed === true)
+            .private_foundation_capital_gain_reduction_confirmed === true ||
+        (item as Record<string, unknown>)
+            .taxidermy_capital_gain_reduction_confirmed === true)
     );
   if (
     linkedCapitalGainReductionGift &&
@@ -195,7 +197,8 @@ function buildIRS1040ScheduleA(
       isSingleSectionANeedyVehicleUnreduced(form) ||
       (form.section_a_items ?? []).some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
-        item.private_foundation_capital_gain_reduction !== undefined
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context, fields);

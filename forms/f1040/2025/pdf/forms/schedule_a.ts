@@ -324,7 +324,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
         ((item as Record<string, unknown>)
               .unrelated_use_capital_gain_reduction_confirmed === true ||
           (item as Record<string, unknown>)
-              .private_foundation_capital_gain_reduction_confirmed === true)
+              .private_foundation_capital_gain_reduction_confirmed === true ||
+          (item as Record<string, unknown>)
+              .taxidermy_capital_gain_reduction_confirmed === true)
       );
     if (hasLinkedCapitalGainReductionGift && !all?.f8283) {
       throw new Error(
@@ -337,7 +339,8 @@ export const scheduleAPdf: PdfFormDescriptor = {
     if (
       (form8283Source?.section_a_items ?? []).some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
-        item.private_foundation_capital_gain_reduction !== undefined
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled({ pending: all }, input);

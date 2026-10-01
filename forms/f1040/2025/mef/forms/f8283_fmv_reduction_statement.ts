@@ -5,6 +5,7 @@ import {
   assertInventoryReductionSource,
   assertPrivateFoundationReductionSource,
   assertShortTermReductionSource,
+  assertTaxidermyReductionSource,
   assertUnrelatedUseReductionSource,
   buildFmvReductionStatement,
   needsFmvReductionStatement,
@@ -63,7 +64,8 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
     } else if (
       (parsed.section_a_items ?? []).some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
-        item.private_foundation_capital_gain_reduction !== undefined
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);
@@ -77,6 +79,7 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       assertCreatorReductionSource(item);
       assertUnrelatedUseReductionSource(item);
       assertPrivateFoundationReductionSource(item);
+      assertTaxidermyReductionSource(item);
     }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey

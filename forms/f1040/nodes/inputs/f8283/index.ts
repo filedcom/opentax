@@ -185,6 +185,17 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  taxidermy_capital_gain_reduction: z.object({
+    preparation_cost_record_reference: z.string().trim().min(1),
+    taxidermy_property_description_record_reference: z.string().trim().min(1),
+    eligible_preparation_stuffing_mounting_costs: z.number().positive(),
+    animal_body_part_present_verified: z.literal(true),
+    prepared_stuffed_or_mounted_verified: z.literal(true),
+    basis_only_preparation_stuffing_mounting_costs_verified: z.literal(true),
+    hunting_travel_equipment_and_labor_value_excluded_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -296,11 +307,13 @@ const sectionAItemSchema = z.object({
       item.unrelated_use_capital_gain_reduction !== undefined;
     const privateFoundation =
       item.private_foundation_capital_gain_reduction !== undefined;
+    const taxidermy = item.taxidermy_capital_gain_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
     if (
       privateFoundation &&
       (shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        taxidermy ||
         capitalGainElection || certifiedSaleReduction)
     ) {
       ctx.addIssue({
@@ -312,7 +325,7 @@ const sectionAItemSchema = z.object({
     }
     if (
       (inventory || creator || manuscript || unrelatedUse ||
-        privateFoundation) &&
+        privateFoundation || taxidermy) &&
       reductionCents <= 0
     ) {
       ctx.addIssue({
@@ -324,7 +337,7 @@ const sectionAItemSchema = z.object({
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
-      !privateFoundation &&
+      !privateFoundation && !taxidermy &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -370,6 +383,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -414,6 +428,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -446,6 +461,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -480,6 +496,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -514,6 +531,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || unrelatedUse ||
+        privateFoundation || taxidermy ||
         capitalGainElection || certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -557,6 +575,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript ||
+        privateFoundation || taxidermy ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -618,6 +637,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        taxidermy ||
         capitalGainElection || certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -628,13 +648,61 @@ const sectionAItemSchema = z.object({
         });
       }
     }
+    if (taxidermy) {
+      const completed = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const completedDate = Number.isFinite(completed)
+        ? new Date(completed)
+        : undefined;
+      const anniversary = completedDate
+        ? Date.UTC(
+          completedDate.getUTCFullYear() + 1,
+          completedDate.getUTCMonth(),
+          completedDate.getUTCDate(),
+        )
+        : NaN;
+      const costs = item.taxidermy_capital_gain_reduction!
+        .eligible_preparation_stuffing_mounting_costs;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        completedDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "created" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(costs * 100) !==
+          Math.round(item.cost_or_adjusted_basis * 100) ||
+        Math.round(costs * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        costs >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["taxidermy_capital_gain_reduction"],
+          message:
+            "Form 8283 taxidermy reduction needs one long-term donor-prepared Section A mount, eligible preparation-only basis below FMV, and a 50% limit donee",
+        });
+      }
+    }
   }
   if (
     (item.inventory_ordinary_income_reduction !== undefined ||
       item.creator_ordinary_income_reduction !== undefined ||
       item.manuscript_ordinary_income_reduction !== undefined ||
       item.unrelated_use_capital_gain_reduction !== undefined ||
-      item.private_foundation_capital_gain_reduction !== undefined) &&
+      item.private_foundation_capital_gain_reduction !== undefined ||
+      item.taxidermy_capital_gain_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
     ctx.addIssue({
@@ -1326,7 +1394,8 @@ export const inputSchema = z.object({
   ].filter(({ item }) => (item.deduction_claimed ?? item.fmv ?? 0) > 0);
   if (
     sectionA.some((item) =>
-      item.private_foundation_capital_gain_reduction !== undefined
+      item.private_foundation_capital_gain_reduction !== undefined ||
+      item.taxidermy_capital_gain_reduction !== undefined
     ) &&
     (positive.length !== 1 || sectionB.length > 0 ||
       input.carryover_evidence !== undefined)
@@ -1335,7 +1404,7 @@ export const inputSchema = z.object({
       code: "custom",
       path: ["section_a_items"],
       message:
-        "Form 8283 private-foundation reduction supports one current Section A gift without a Section B item",
+        "Form 8283 special capital-gain reduction supports one current Section A gift without a Section B item",
     });
   }
   if (positive.length > 1) {
@@ -1553,7 +1622,8 @@ function validateCharitableLimitCategory(
       item.cost_or_adjusted_basis === item.fmv && claimed === item.fmv;
     if (
       (!item.capital_gain_reduction_election_confirmed &&
-        !item.unrelated_use_capital_gain_reduction && !noAppreciation) ||
+        !item.unrelated_use_capital_gain_reduction &&
+        !item.taxidermy_capital_gain_reduction && !noAppreciation) ||
       item.cost_or_adjusted_basis === undefined ||
       claimed > item.cost_or_adjusted_basis
     ) {
@@ -1595,6 +1665,10 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
           : true as const,
       private_foundation_capital_gain_reduction_confirmed:
         item.private_foundation_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      taxidermy_capital_gain_reduction_confirmed:
+        item.taxidermy_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];

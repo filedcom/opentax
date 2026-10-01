@@ -611,3 +611,20 @@ and $19,000/$13,000 pair produces a $25,000 Schedule A deduction, with
 changed reduction-PDF bytes, repeated donee EIN, and changed itemized-total
 fixtures for deferred bulk validation. Other combinations, carryovers, and
 actual taxpayer document review remain open.
+
+## Donor-prepared Section A taxidermy (implementation staged 2026-10-01)
+
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) limits a
+qualifying taxidermy gift to the lesser of FMV and basis consisting only of
+preparing, stuffing, and mounting costs. Hunting, travel, equipment, and the
+donor's labor value are excluded. The new one-gift Section A route requires a
+donor-prepared mount containing an animal body part, completion more than one
+year before a 2025 gift, a 50%-limit donee, original FMV no more than $5,000,
+reviewed preparation and property-description records, and eligible costs
+equal to the lower claimed deduction. It excludes other reduction reasons,
+vehicles, Section B, mixed gifts, and carryovers. The same basis claim flows to
+Schedule A and itemized Form 1040; native Form 8283 links a separate FMV
+statement and the official PDF preview explains the special cost limit.
+Positive and tampered source, Schedule A, native, and PDF fixtures are authored
+for the deferred bulk pass. The structured review references do not
+authenticate underlying preparation invoices or property photographs.
