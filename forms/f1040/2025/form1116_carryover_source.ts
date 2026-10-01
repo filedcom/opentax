@@ -54,7 +54,7 @@ export function assertForm1116CarryoverSource(
     );
   }
   const oldestFiledVintages = retained.vintages.filter((vintage) =>
-    vintage.vintage_tax_year === 2015 || vintage.vintage_tax_year === 2016
+    vintage.vintage_tax_year >= 2015 && vintage.vintage_tax_year <= 2017
   );
   if (oldestFiledVintages.length > 0) {
     const filed = retained.filed_2024_schedule_b;
@@ -77,11 +77,18 @@ export function assertForm1116CarryoverSource(
         !oldestFiledVintages.some((vintage) =>
           vintage.vintage_tax_year === 2016
         )) ||
+      (filed.line8_2017_seventh_preceding_amount !== undefined &&
+        !oldestFiledVintages.some((vintage) =>
+          vintage.vintage_tax_year === 2017
+        )) ||
       oldestFiledVintages.some((vintage) =>
         vintage.vintage_tax_year === 2015
           ? filed.line8_2015_ninth_preceding_amount !==
             vintage.prior_year_schedule_b_line8_vintage_amount
-          : filed.line8_2016_eighth_preceding_amount !==
+          : vintage.vintage_tax_year === 2016
+          ? filed.line8_2016_eighth_preceding_amount !==
+            vintage.prior_year_schedule_b_line8_vintage_amount
+          : filed.line8_2017_seventh_preceding_amount !==
             vintage.prior_year_schedule_b_line8_vintage_amount
       ) ||
       filed.line8_total !== retained.prior_year_schedule_b_line8_total ||
@@ -96,7 +103,7 @@ export function assertForm1116CarryoverSource(
       JSON.stringify(filed) !== JSON.stringify(printedFiled)
     ) {
       throw new Error(
-        "Form 1116 Schedule B 2015/2016 vintage needs the filed 2024 return and same-category Schedule B line 8 identity and amounts",
+        "Form 1116 Schedule B 2015-2017 vintage needs the filed 2024 return and same-category Schedule B line 8 identity and amounts",
       );
     }
   }

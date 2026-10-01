@@ -653,6 +653,116 @@ Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding id
   );
 });
 
+Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column through native and PDF", async () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const filed2024 = {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2017_seventh_preceding_amount: 900,
+    line8_total: 900,
+  };
+  const carryover = {
+    income_category: "passive" as const,
+    vintages: [{
+      vintage_tax_year: 2017 as const,
+      prior_year_schedule_b_line8_vintage_amount: 900,
+    }],
+    prior_year_schedule_b_line8_total: 900,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      filed2024Form1040Id,
+      filed2024PassiveScheduleBId,
+    ],
+    filed_2024_schedule_b: filed2024,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: { carryovers: [carryover] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent && scheduleB);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assert(summary.usedPriorYearCarryover > 0);
+  assertEquals(
+    result.pending.schedule3.line1_foreign_tax_credit,
+    summary.allowedCredit,
+  );
+  assertEquals(
+    result.pending.f1040.line20_nonrefundable_credits,
+    result.pending.schedule3.line8_total,
+  );
+  const parentPdf = form1116Pdf.projectFields!(parent, result.pending);
+  const schedulePdf = form1116ScheduleBPdf.projectFields!(
+    scheduleB,
+    result.pending,
+  );
+  assertEquals(parentPdf.pdf_line10, 900);
+  assertEquals(schedulePdf.line1_2017, 900);
+  assertEquals(schedulePdf.line4_2017, -summary.usedPriorYearCarryover);
+  assertEquals(schedulePdf.line8_2017, 900 - summary.usedPriorYearCarryover);
+  const [parentXml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  const scheduleXml = form1116ScheduleB.build(
+    scheduleBFieldsSchema.parse(scheduleB),
+    { pending: result.pending },
+  );
+  assertStringIncludes(
+    parentXml,
+    "<ForeignTaxCrCarrybackOrOverAmt>900</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<EighthPrecedingTYAmt>900</EighthPrecedingTYAmt>",
+  );
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<IRS1116ScheduleB ");
+  assert(
+    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
+  );
+
+  for (
+    const changed of [
+      { ...filed2024, line8_2017_seventh_preceding_amount: 899 },
+      { ...filed2024, taxpayer_ssn: "999999999" },
+      { ...filed2024, schedule_b_source_document_id: filed2024Form1040Id },
+    ]
+  ) {
+    const altered = {
+      ...pending,
+      form1116_prior_carryover: {
+        carryovers: [{ ...carryover, filed_2024_schedule_b: changed }],
+      },
+    };
+    await assertRejects(() =>
+      buildMefBundle(buildPending(altered), { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
+    );
+  }
+});
+
 Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filedScheduleB = {
