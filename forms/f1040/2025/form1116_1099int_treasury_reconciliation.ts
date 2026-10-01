@@ -30,6 +30,13 @@ export function reconcileForm1116TreasuryInterest(
   | { worldwideGross: number; allocatedDeduction: number; twoPayer: boolean }
   | undefined {
   if (fields.two_country_treasury_pdf_review !== undefined) return undefined;
+  const sourceReview = singleSourcePdfReviewSchema.safeParse(
+    fields.single_source_pdf_review,
+  );
+  if (
+    sourceReview.success &&
+    sourceReview.data.domestic_interest_source_document_reference !== undefined
+  ) return undefined;
   const parsedSource = f1099intInputSchema.safeParse(pending.f1099int);
   const rows = parsedSource.success ? parsedSource.data.f1099ints : [];
   const rawSummaries = fields.category_summaries;

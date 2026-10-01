@@ -47,6 +47,8 @@ export const singleSourcePdfReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
   domestic_treasury_source_document_reference: z.string().trim().min(1)
     .optional(),
+  domestic_interest_source_document_reference: z.string().trim().min(1)
+    .optional(),
   all_foreign_tax_items_identified_confirmed: z.literal(true),
   all_worldwide_income_sources_identified_confirmed: z.literal(true),
   all_part_i_deductions_and_losses_except_standard_zero_confirmed: z.literal(
@@ -64,6 +66,7 @@ export const singleSourcePdfReviewSchema = z.object({
 
 export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
   no_foreign_tax_reduction_confirmed: true,
+  domestic_interest_source_document_reference: true,
 }).extend({
   only_identified_k3_line12_reduction_confirmed: z.literal(true),
 }).strict();
@@ -71,6 +74,7 @@ export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
 export const multiSourcePdfReviewSchema = singleSourcePdfReviewSchema.omit({
   source_document_reference: true,
   domestic_treasury_source_document_reference: true,
+  domestic_interest_source_document_reference: true,
 }).extend({
   payer_source_document_references: z.array(z.string().trim().min(1)).min(2),
 }).strict();
@@ -79,6 +83,7 @@ export const mixedInterestDividendPdfReviewSchema = singleSourcePdfReviewSchema
   .omit({
     source_document_reference: true,
     domestic_treasury_source_document_reference: true,
+    domestic_interest_source_document_reference: true,
   }).extend({
     interest_source_document_reference: z.string().trim().min(1),
     dividend_source_document_reference: z.string().trim().min(1),
@@ -88,6 +93,7 @@ export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
   .omit({
     source_document_reference: true,
     domestic_treasury_source_document_reference: true,
+    domestic_interest_source_document_reference: true,
   }).extend({
     column_a_source_document_reference: z.string().trim().min(1),
     column_a_irs_country_code: z.string().length(2),

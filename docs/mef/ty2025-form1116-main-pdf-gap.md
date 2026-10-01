@@ -473,3 +473,18 @@ mismatch, missing preference/review, inactive-page and missing-Schedule-3-credit
 cases are written. The full tests, typecheck, local XSD, filled-PDF inspection,
 end-to-end return, IRS business rules and ATS acceptance are still pending. The
 shared PDF builder's older sparse-copy assertion must be migrated in that batch.
+
+**One foreign-interest payer plus a U.S. bank-interest payer (implementation
+staged, unrun):** A reviewed Form 1099-INT with entirely foreign-source box 1
+interest and positive box 6 tax can share the return with a distinct domestic
+bank Form 1099-INT whose only positive box is U.S.-source box 1 interest. The
+single-source review identifies both issued statement references separately.
+The native and parent PDF preflights replay the two statements, foreign Part I
+line 1a, worldwide Part I line 3e, five-decimal standard-deduction allocation,
+Schedule 3 line 1, and Form 1040 interest, income, taxable-income and tax lines.
+Positive and altered domestic amount, document reference, foreign tax, and
+final-return fixtures are authored for the deferred batch. The
+[2025 Form 1116 line 3e instructions](https://www.irs.gov/instructions/i1116)
+require gross income from both U.S. and foreign sources in the worldwide
+denominator. Other 1099 boxes, more payers, mixed income, source-byte
+authentication, filled-output/XSD review, and IRS acceptance remain open.

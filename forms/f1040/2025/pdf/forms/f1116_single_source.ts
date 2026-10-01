@@ -19,6 +19,7 @@ import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
 import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
+import { reconcileForm1116DomesticInterest } from "../../form1116_domestic_interest.ts";
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
 import { reconcileForm1116TwoForeignDividends } from "../../form1116_two_foreign_dividends.ts";
@@ -119,6 +120,8 @@ export function projectSingleSourceForm1116Pdf(
     }
     : summary.items[0];
   const treasury = reconcileForm1116TreasuryInterest(fields, pending);
+  const domesticBank = reconcileForm1116DomesticInterest(fields, pending);
+  const domesticInterest = treasury ?? domesticBank;
   const k3 = item.partnership_k3_passive_interest;
   const sCorpK3 = item.s_corp_k3_passive_interest;
   const review =
@@ -355,7 +358,7 @@ export function projectSingleSourceForm1116Pdf(
   ) {
     const source = f1099intInputSchema.safeParse(pending.f1099int);
     const rows = source.success ? source.data.f1099ints : [];
-    const foreignRow = treasury?.twoPayer
+    const foreignRow = domesticInterest?.twoPayer
       ? rows.find((row) => (row.box6 ?? 0) > 0)
       : rows[0];
     // Box 3 is permitted only under the shared Treasury-interest source and
@@ -377,7 +380,7 @@ export function projectSingleSourceForm1116Pdf(
       "non_taxable_oid_adjustment",
     ] as const;
     if (
-      rows.length !== (treasury?.twoPayer ? 2 : 1) || !foreignRow ||
+      rows.length !== (domesticInterest?.twoPayer ? 2 : 1) || !foreignRow ||
       otherMonetaryBoxes.some((key) =>
         (key !== "box3" || !treasury || treasury.twoPayer) &&
         (foreignRow[key] ?? 0) !== 0
@@ -407,7 +410,7 @@ export function projectSingleSourceForm1116Pdf(
   const line18 = number(fields.total_income, "Part III line 18");
   const line20 = number(fields.us_tax_before_credits, "Part III line 20");
   const allocatedDeduction = twoCountry?.allocatedDeduction ??
-    treasury?.allocatedDeduction ?? standardDeduction;
+    domesticInterest?.allocatedDeduction ?? standardDeduction;
   const foreignTaxableIncome = item.foreign_gross_income - allocatedDeduction;
   if (
     worldwideGross <= 0 || line18 <= 0 || line20 <= 0 ||
@@ -422,8 +425,8 @@ export function projectSingleSourceForm1116Pdf(
     (twoCountry
       ? (twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) !==
         worldwideGross
-      : treasury
-      ? treasury.worldwideGross !== worldwideGross
+      : domesticInterest
+      ? domesticInterest.worldwideGross !== worldwideGross
       : item.foreign_gross_income !== worldwideGross) ||
     worldwideGross - standardDeduction !== line18 ||
     item.foreign_tax_paid <= 0 ||
