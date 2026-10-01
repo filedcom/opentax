@@ -1,5 +1,31 @@
 # TY2025 Form 4972 remaining coverage
 
+## Partial-share Part-II-only estate-tax allocation (2026-10-01, unrun)
+
+A bounded beneficiary with one wholly taxable Form 1099-R, positive box 3
+capital gain, a box 9a share below 100%, and a Part-II-only election now uses
+the existing administrator and filed-estate-return allocation source. The
+source must reconcile full distribution, full attributable federal estate tax,
+and the recipient's exact whole-dollar share. The recipient's allocated estate
+tax is split by their box 3 / box 2a capital-gain fraction, following the
+[2025 Form 4972 line 6 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
+The capital portion reduces line 6 and its 20% line 7 tax; the ordinary estate
+tax portion goes to Schedule A line 16 while the recipient's ordinary pension
+amount reaches Form 1040 line 5b. The Form 4972 tax joins the finalized Form
+1040. Native MeF and PDF recheck the elected Form 1099-R boxes 2a/3/8/9a,
+wholly taxable status, allocation source, calculated Part II lines and return
+amounts. There is no Part III or `MRD` line 29 in this election.
+
+For a 50% beneficiary with box 2a $20,000, box 3 $4,000, and $2,000 full
+attributable estate tax, the recipient's $1,000 estate-tax share divides into
+$200 capital and $800 ordinary. Form 4972 lines 6/7 are $3,800/$760, Form
+1040 line 5b includes $16,000 ordinary pension income, and Schedule A receives
+the $800 IRD deduction. Positive and source/return-tamper fixtures are authored
+but unrun. Administrator and estate-return references do not authenticate the
+underlying bytes; partial combined Part II/III estate elections, NUA, annuity,
+death-benefit combinations, separate spouse forms, and wider filing review
+remain open.
+
 ## Partial-share Part-II-only death benefit (staged, unrun)
 
 The [2025 Death Benefit Worksheet](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)

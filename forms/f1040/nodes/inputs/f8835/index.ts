@@ -38,6 +38,20 @@ export const itemSchema = z.object({
     no_investment_credit_election_verified: z.literal(true),
     no_section1603_grant_verified: z.literal(true),
   }).strict().optional(),
+  solar_production_source: z.object({
+    facility_description: z.string().trim().min(1),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+    section48_energy_credit_not_claimed_verified: z.literal(true),
+  }).strict().optional(),
   facility_description: z.string().min(1).max(50).optional(),
   facility_us_address: z.object({
     line1: z.string().min(1),
@@ -279,6 +293,49 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
   item = itemSchema.parse(item);
+  if (item.energy_type === EnergyType.Solar) {
+    const source = item.solar_production_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      !source ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 3 ||
+      (item.solar_dc_nameplate_kw ?? 0) <= 0 ||
+      (item.ac_nameplate_kw ?? 0) <= 0
+    ) {
+      throw new Error(
+        "Form 8835 solar facility needs pre-2025 construction, positive DC capacity, and distinct construction, meter, and unrelated-sale sources matching kWh",
+      );
+    }
+  } else if (item.solar_production_source !== undefined) {
+    throw new Error(
+      "Form 8835 solar source cannot classify another energy type",
+    );
+  }
   if (item.energy_type === EnergyType.BiomassClosed) {
     const source = item.closed_loop_biomass_source;
     if (item.facility_construction_start_date >= "2025-01-01") {
@@ -291,9 +348,12 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       source.facility_description !== item.facility_description ||
       source.metered_kwh_produced !== item.kwh_produced ||
       source.invoiced_kwh_sold !== item.kwh_sold ||
-      source.planting_record_reference === source.production_meter_record_reference ||
-      source.planting_record_reference === source.unrelated_sale_invoice_reference ||
-      source.production_meter_record_reference === source.unrelated_sale_invoice_reference
+      source.planting_record_reference ===
+        source.production_meter_record_reference ||
+      source.planting_record_reference ===
+        source.unrelated_sale_invoice_reference ||
+      source.production_meter_record_reference ===
+        source.unrelated_sale_invoice_reference
     ) {
       throw new Error(
         "Form 8835 closed-loop biomass needs facility-matched planting, meter, and unrelated-sale sources matching kWh",

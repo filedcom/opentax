@@ -24,14 +24,16 @@ export function reconcileForm4972EstatePartII(
     )
     : [];
   const item = elected[0];
+  const share = fields.recipient_share_pct ?? 100;
+  const partial = typeof share === "number" && share < 100;
   if (
     elected.length !== 1 || !item ||
     fields.beneficiary_distribution !== true ||
     fields.prior_beneficiary_election_after_1986 !== false ||
     fields.alternate_payee_distribution === true ||
-    (fields.recipient_share_pct ?? 100) !== 100 ||
-    (item.box9a_pct_total ?? 100) !== 100 ||
+    (item.box9a_pct_total ?? 100) !== share ||
     item.ts !== fields.recipient ||
+    (partial && item.box1_gross_distribution !== item.box2a_taxable_amount) ||
     item.box2a_taxable_amount !== fields.lump_sum_amount ||
     (item.box3_capital_gain ?? 0) !== fields.capital_gain_amount ||
     (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
@@ -40,7 +42,7 @@ export function reconcileForm4972EstatePartII(
     (fields.annuity_actuarial_value ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 4972 Part-II-only estate election needs one matching full-share beneficiary Form 1099-R without NUA or annuity allocation",
+      "Form 4972 Part-II-only estate election needs one matching beneficiary Form 1099-R without NUA or annuity allocation",
     );
   }
 

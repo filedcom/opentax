@@ -688,6 +688,78 @@ Deno.test("form6251: audited mixed Form 8949 basis gains keep short-term gain ou
   );
 });
 
+Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part III", () => {
+  const input = {
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 0,
+    net_capital_gain: 40_000,
+    line2k_8949_capital_audit: {
+      transactions: [
+        {
+          source_transaction_id: "broker-st-offset",
+          part: "A",
+          proceeds: 20_000,
+          cost_basis: 30_000,
+          gain_loss: -10_000,
+        },
+        {
+          source_transaction_id: "broker-lt-offset",
+          part: "D",
+          proceeds: 80_000,
+          cost_basis: 30_000,
+          gain_loss: 50_000,
+        },
+      ],
+      has_other_capital_activity: false,
+    },
+    line2k_8949_basis_dispositions: [
+      {
+        source_transaction_id: "broker-st-offset",
+        part: "A",
+        proceeds: 20_000,
+        regular_basis: 30_000,
+        amt_basis: 28_000,
+        regular_gain: -10_000,
+        amt_gain: -8_000,
+      },
+      {
+        source_transaction_id: "broker-lt-offset",
+        part: "D",
+        proceeds: 80_000,
+        regular_basis: 30_000,
+        amt_basis: 40_000,
+        regular_gain: 50_000,
+        amt_gain: 40_000,
+      },
+    ],
+  };
+  const result = compute(input);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -8_000);
+  assertEquals(filed?.fields.amti, 192_000);
+  assertEquals(filed?.fields.line13, 32_000);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
+    "<PropertyDispositionAmt>-8000</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
+      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+    })?.line13,
+    32_000,
+  );
+  assertThrows(
+    () => compute({ ...input, net_capital_gain: 50_000 }),
+    Error,
+    "reconcile with regular Schedule D net capital gain",
+  );
+});
+
 Deno.test("form6251: short-term AMT basis rejects unaudited capital activity and Form 4952", () => {
   const base = {
     filing_status: "single",

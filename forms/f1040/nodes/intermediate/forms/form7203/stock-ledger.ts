@@ -33,24 +33,28 @@ export const reviewedStockLossLedgerSchema = z.object({
   no_other_schedule_e_activity: z.literal(true),
   materially_participated_in_s_corporation: z.literal(true),
   material_participation_workpaper_reference: z.string().trim().min(1),
-  no_shareholder_debt_or_repayments: z.literal(true),
+  no_shareholder_debt_or_repayments: z.boolean(),
   no_prior_year_suspended_losses: z.literal(true),
   no_at_risk_or_passive_limitation: z.literal(true),
 }).strict().superRefine((ledger, ctx) => {
   const contribution = ledger.cash_capital_contribution;
-  if (contribution && (
-    contribution.shareholder_ssn !== ledger.shareholder_ssn ||
-    contribution.corporation_ein !== ledger.corporation_ein ||
-    contribution.bank_transfer_reference ===
-      contribution.corporate_capital_account_reference ||
-    contribution.bank_transfer_reference === ledger.beginning_basis_workpaper_reference ||
-    contribution.corporate_capital_account_reference ===
-      ledger.beginning_basis_workpaper_reference
-  )) {
+  if (
+    contribution && (
+      contribution.shareholder_ssn !== ledger.shareholder_ssn ||
+      contribution.corporation_ein !== ledger.corporation_ein ||
+      contribution.bank_transfer_reference ===
+        contribution.corporate_capital_account_reference ||
+      contribution.bank_transfer_reference ===
+        ledger.beginning_basis_workpaper_reference ||
+      contribution.corporate_capital_account_reference ===
+        ledger.beginning_basis_workpaper_reference
+    )
+  ) {
     ctx.addIssue({
       code: "custom",
       path: ["cash_capital_contribution"],
-      message: "Form 7203 cash capital contribution needs matching shareholder/corporation and distinct transfer, capital-account, and beginning-basis records",
+      message:
+        "Form 7203 cash capital contribution needs matching shareholder/corporation and distinct transfer, capital-account, and beginning-basis records",
     });
   }
 });

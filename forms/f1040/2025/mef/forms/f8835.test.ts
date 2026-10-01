@@ -48,17 +48,82 @@ const closedLoop = {
   },
 };
 
+const solar = {
+  ...facility,
+  energy_type: EnergyType.Solar,
+  facility_description: "Solar production facility",
+  solar_dc_nameplate_kw: 1_800,
+  solar_production_source: {
+    facility_description: "Solar production facility",
+    construction_record_reference: "solar-construction-2023",
+    construction_began_on: "2023-06-01",
+    production_meter_record_reference: "solar-meter-2025",
+    meter_period_start_date: "2025-01-01",
+    meter_period_end_date: "2025-12-31",
+    metered_kwh_produced: 1_000_000,
+    unrelated_sale_invoice_reference: "solar-utility-invoice-2025",
+    unrelated_sale_invoice_date: "2025-12-31",
+    invoiced_kwh_sold: 1_000_000,
+    unrelated_buyer_verified: true as const,
+    section48_energy_credit_not_claimed_verified: true as const,
+  },
+};
+
+Deno.test("Form 8835: sourced solar maps to native line 1d and DC capacity", () => {
+  const xml = form8835.build({ f8835s: [solar] })[0];
+  assertStringIncludes(
+    xml,
+    "<KwHrsPrdcdAndSoldSolarQty>1000000</KwHrsPrdcdAndSoldSolarQty>",
+  );
+  assertStringIncludes(
+    xml,
+    "<KwHrsPrdcdAndSoldSolarCrAmt>6000</KwHrsPrdcdAndSoldSolarCrAmt>",
+  );
+  assertStringIncludes(xml, 'dCSolarEnergyPropCapKWQty="1800"');
+  assertStringIncludes(
+    xml,
+    "<TotalAllowedTaxCreditAmt>6000</TotalAllowedTaxCreditAmt>",
+  );
+  assertThrows(
+    () =>
+      form8835.build({
+        f8835s: [{
+          ...solar,
+          solar_production_source: {
+            ...solar.solar_production_source,
+            invoiced_kwh_sold: 999_999,
+          },
+        }],
+      }),
+    Error,
+    "matching kWh",
+  );
+});
+
 Deno.test("Form 8835: sourced closed-loop biomass maps to native line 1b", () => {
   const xml = form8835.build({ f8835s: [closedLoop] })[0];
-  assertStringIncludes(xml, "<KwHrsPrdcdSoldClsLoopBmssQty>1000000</KwHrsPrdcdSoldClsLoopBmssQty>");
-  assertStringIncludes(xml, "<KwHrsPrdcdSoldClsLoopBmssCrAmt>6000</KwHrsPrdcdSoldClsLoopBmssCrAmt>");
-  assertThrows(() => form8835.build({ f8835s: [{
-    ...closedLoop,
-    closed_loop_biomass_source: {
-      ...closedLoop.closed_loop_biomass_source,
-      metered_kwh_produced: 999_999,
-    },
-  }] }), Error, "matching kWh");
+  assertStringIncludes(
+    xml,
+    "<KwHrsPrdcdSoldClsLoopBmssQty>1000000</KwHrsPrdcdSoldClsLoopBmssQty>",
+  );
+  assertStringIncludes(
+    xml,
+    "<KwHrsPrdcdSoldClsLoopBmssCrAmt>6000</KwHrsPrdcdSoldClsLoopBmssCrAmt>",
+  );
+  assertThrows(
+    () =>
+      form8835.build({
+        f8835s: [{
+          ...closedLoop,
+          closed_loop_biomass_source: {
+            ...closedLoop.closed_loop_biomass_source,
+            metered_kwh_produced: 999_999,
+          },
+        }],
+      }),
+    Error,
+    "matching kWh",
+  );
 });
 
 Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields", () => {

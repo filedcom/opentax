@@ -132,9 +132,9 @@ export const dependentSchema = z.object({
         tax_year: z.literal(2025),
         filing_status: z.literal("single"),
         blind: z.boolean(),
-        line1z_wages: z.literal(0),
+        line1z_wages: z.number().nonnegative(),
         line2a_tax_exempt_interest: z.number().nonnegative(),
-        line2b_taxable_interest: z.number().positive(),
+        line2b_taxable_interest: z.number().nonnegative(),
         line3b_dividends: z.literal(0),
         line4b_ira: z.literal(0),
         line5b_pensions: z.literal(0),
@@ -151,7 +151,16 @@ export const dependentSchema = z.object({
           box1_taxable_interest: z.number().nonnegative(),
           box8_tax_exempt_interest: z.number().nonnegative(),
         }).strict(),
-      ).min(1),
+      ),
+      wage_forms_w2: z.array(
+        z.object({
+          source_document_id: z.string().min(1),
+          employer_name: z.string().trim().min(1),
+          employer_ein: z.string().regex(/^\d{9}$/),
+          employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+          box1_wages: z.number().positive(),
+        }).strict(),
+      ).length(1).optional(),
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
@@ -179,7 +188,8 @@ export const inputSchema = z.object({
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
   prior_ctc_disallowance_review: priorCreditDisallowanceReviewSchema.optional(),
-  prior_aotc_disallowance_review: priorCreditDisallowanceReviewSchema.optional(),
+  prior_aotc_disallowance_review: priorCreditDisallowanceReviewSchema
+    .optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
@@ -321,13 +331,27 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box8_tax_exempt_interest,
       0,
     );
+    const wages = taxReturn.wage_forms_w2?.reduce(
+      (sum, source) => sum + source.box1_wages,
+      0,
+    ) ?? 0;
+    const wageOnly = wages > 0 && taxableInterest === 0 &&
+      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
+    const interestOnly = wages === 0 && taxableInterest > 0 &&
+      taxReturn.wage_forms_w2 === undefined;
+    if (!wageOnly && !interestOnly) {
+      throw new Error(
+        "Form 8962 dependent required-filing source supports one W-2 wage-only or Form 1099-INT interest-only return",
+      );
+    }
     if (
+      filed.line1z_wages !== wages ||
       filed.line2a_tax_exempt_interest !== exemptInterest ||
       filed.line2b_taxable_interest !== taxableInterest ||
-      filed.line11b_agi !== taxableInterest
+      filed.line11b_agi !== wages + taxableInterest
     ) {
       throw new Error(
-        "Form 8962 dependent filed Form 1040 interest and AGI must reconcile to Forms 1099-INT",
+        "Form 8962 dependent filed Form 1040 wages, interest, and AGI must reconcile to W-2 or Forms 1099-INT",
       );
     }
     const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
@@ -340,6 +364,14 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
     const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
+    if (wageOnly) {
+      if (age65 || filed.blind || wages <= 15_750) {
+        throw new Error(
+          "Form 8962 dependent W-2 wages do not establish the 2025 single-dependent filing requirement",
+        );
+      }
+      return total + filed.line11b_agi;
+    }
     const unearnedThreshold = 1_350 +
       (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
     if (taxableInterest <= unearnedThreshold) {

@@ -31,22 +31,20 @@ export function projectReviewedStockLoss7203(
     );
   }
   const source = k1Sources[0];
-  if (source.form7203_one_note_debt_candidate) {
-    reconcileOneNoteDebtCandidate(
+  const note = source.form7203_one_note_debt_candidate
+    ? reconcileOneNoteDebtCandidate(
       source.form7203_one_note_debt_candidate,
       source,
-    );
-    throw new Error(
-      "Form 7203 one-note debt source reconciles, but Part II and Part III debt columns are not registered for native or PDF filing",
-    );
-  }
+    ).note
+    : undefined;
   const ledger = reviewedStockLossLedgerSchema.parse(
     source.form7203_stock_loss_ledger,
   );
   if (
     Object.keys(rawFields).some((key) =>
       key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
-      key !== "additional_contributions"
+      key !== "additional_contributions" &&
+      !(note && (key === "new_loans" || key === "reviewed_one_note_debt"))
     )
   ) {
     throw new Error(
@@ -57,6 +55,24 @@ export function projectReviewedStockLoss7203(
   const currentLoss = -(source.box1_ordinary_business ?? 0);
   const basis = ledger.beginning_stock_basis;
   const contribution = ledger.cash_capital_contribution?.amount ?? 0;
+  if (
+    note
+      ? ledger.no_shareholder_debt_or_repayments || contribution !== 0 ||
+        ledger.beginning_stock_basis !== note.beginning_stock_basis ||
+        ledger.beginning_basis_workpaper_reference !==
+          note.beginning_stock_basis_workpaper_reference ||
+        ledger.shareholder_ssn !== note.shareholder_ssn ||
+        ledger.corporation_ein !== note.corporation_ein ||
+        fields.new_loans !== note.cash_advance_amount ||
+        JSON.stringify(fields.reviewed_one_note_debt) !== JSON.stringify(note)
+      : !ledger.no_shareholder_debt_or_repayments ||
+        fields.new_loans !== undefined ||
+        fields.reviewed_one_note_debt !== undefined
+  ) {
+    throw new Error(
+      "Form 7203 formal-note and stock basis source must reconcile",
+    );
+  }
   const availableBasis = basis + contribution;
   const normalizedName = (value: string) =>
     value.trim().toUpperCase().replace(/\s+/g, " ");
@@ -99,7 +115,11 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  const allowed = Math.min(currentLoss, availableBasis);
+  const allowedStock = Math.min(currentLoss, availableBasis);
+  const allowedDebt = note
+    ? Math.min(currentLoss - allowedStock, note.cash_advance_amount)
+    : 0;
+  const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
@@ -122,7 +142,10 @@ export function projectReviewedStockLoss7203(
     basis,
     contribution,
     availableBasis,
+    note,
     currentLoss,
+    allowedStock,
+    allowedDebt,
     allowed,
     carryover,
   };

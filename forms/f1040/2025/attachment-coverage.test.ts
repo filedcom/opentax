@@ -105,12 +105,14 @@ Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in
     adjustment_amount: 1_500_000,
   };
   for (const kind of ["mef", "pdf"] as const) {
-    for (const pending of [
-      { f8949: { f8949s: [row] } },
-      { f1099b: { f1099bs: [row] } },
-      { form8949: [row] },
-      { form8949: { transaction: row } },
-    ]) {
+    for (
+      const pending of [
+        { f8949: { f8949s: [row] } },
+        { f1099b: { f1099bs: [row] } },
+        { form8949: [row] },
+        { form8949: { transaction: row } },
+      ]
+    ) {
       assertThrows(
         () => assertAttachmentCoverage(pending, kind),
         Error,
@@ -185,7 +187,7 @@ Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
           kind,
         ),
       Error,
-      "outside the reviewed stock-only ordinary loss",
+      "outside the reviewed stock loss or one new formal note",
     );
   }
   assertAttachmentCoverage(

@@ -93,3 +93,18 @@ and elected Form 8814 child private-activity-bond interest. It compares the
 nondividend and complete totals to the computed form and rejects missing or
 out-of-range source boxes. The replay fixture awaits the combined pass;
 issued payer/child source bytes and wider bond adjustments remain open.
+
+# Mixed-term Form 8949 basis offset (staged, unrun)
+
+The audited line-2k path now accepts identified short-term loss rows offset by
+identified long-term gain rows when the complete regular and AMT Schedule D
+totals are both positive. Every row must keep the same sign under both bases;
+the complete Schedule D audit must contain exactly those unadjusted rows and
+no other capital activity. The regular net capital gain must equal the audited
+regular sum, while Part III uses the separate positive AMT sum after the
+short-term offset. The signed basis difference also reaches native line 2k and
+the PDF. Positive and mismatched-net fixtures are authored for the deferred
+batch. Net losses, sign-changing rows, other capital activity, special-rate
+gains, Form 4952 elections, and qualified dividends remain closed. See the
+[2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
+and [2025 Schedule D instructions](https://www.irs.gov/instructions/i1040sd).

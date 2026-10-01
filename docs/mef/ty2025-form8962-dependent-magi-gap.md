@@ -1,5 +1,30 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One wage-only required-filing dependent (2026-10-01, unrun)
+
+The existing required-filing dependent record now accepts exactly one
+identified 2025 W-2 as an alternative income **source case** within the same
+filed-return contract. Its employer name/EIN, box 1 wages, employee SSN and distinct document ID
+must match the dependent's filed single Form 1040 lines 1z and 11b, with zero
+interest and every other taxable/adjustment line still zero. The dependent must
+be under 65, not blind, and have wages **above** the $15,750 earned-income
+filing threshold in [2025 Pub. 501 Table 2](https://www.irs.gov/publications/p501).
+A W-2 at exactly $15,750, a refund-only return, mixed wage/interest income,
+or a borrowed W-2/return reference fails. The general node adds this filed AGI
+to Form 8962 Worksheet 1-2 line 2b; it does not add the dependent's wages to
+the parent's Form 1040.
+
+For one unchanged full-year, same-state Form 1095-A policy and a single filer
+with one claimed dependent, the existing annual source-to-filing path now
+rechecks that wage record, the two-person poverty line, household income,
+annual credit/repayment, Schedule 3 line 9 or Schedule 2 line 1a, and Form
+1040 line 31 or 17 before native MeF and PDF export. Positive net-credit and
+excess-APTC fixtures plus W-2, threshold and return-tamper cases are authored
+but unrun. This supports entered document references, not authenticated W-2 or
+filed-return bytes. Mixed wages and interest, self-employment, dependent
+deductions, other filing triggers, multiple dependent wage cases, policy
+allocations, and Marketplace source authentication remain open.
+
 The
 [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
 put the combined modified AGI of dependents who **must** file because income

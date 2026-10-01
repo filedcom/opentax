@@ -40,6 +40,14 @@ const futaEmployeeSchema = z.object({
     student_enrollment_source_reference: z.string().trim().min(1),
     student_during_2025_verified: z.literal(true),
   }).strict().optional(),
+  nonstudent_minor_fica_inclusion: z.object({
+    birth_date: calendarDate,
+    birth_date_source_reference: z.string().trim().min(1),
+    education_status_source_reference: z.string().trim().min(1),
+    principal_occupation_source_reference: z.string().trim().min(1),
+    not_a_student_during_2025_verified: z.literal(true),
+    household_services_principal_occupation_verified: z.literal(true),
+  }).strict().optional(),
   ordinary_cash_only: z.literal(true),
   annual_cash_wages: z.number().positive(),
   quarterly_cash_wages: z.tuple([
@@ -237,25 +245,40 @@ export function computeScheduleHAmounts(
     let sourcedAdditionalMedicareWages = 0;
     for (const employee of unemployment.employee_wages) {
       const minor = employee.student_minor_fica_exclusion;
+      const workingMinor = employee.nonstudent_minor_fica_inclusion;
       if (employee.age_18_or_older_for_fica) {
-        if (minor !== undefined) {
+        if (minor !== undefined || workingMinor !== undefined) {
           throw new Error(
-            "Schedule H adult worker cannot claim a student-minor FICA exclusion",
+            "Schedule H adult worker cannot claim a minor FICA classification",
           );
         }
-      } else if (
-        !minor || minor.birth_date < "2007-01-02" ||
-        minor.birth_date > "2024-12-31" ||
-        minor.birth_date_source_reference ===
-          employee.payroll_source_reference ||
-        minor.student_enrollment_source_reference ===
-          employee.payroll_source_reference ||
-        minor.birth_date_source_reference ===
-          minor.student_enrollment_source_reference
-      ) {
-        throw new Error(
-          "Schedule H student minor needs distinct age, school, and payroll sources proving under 18 in 2025",
-        );
+      } else {
+        if ((minor === undefined) === (workingMinor === undefined)) {
+          throw new Error(
+            "Schedule H minor needs exactly one student or principal-occupation source classification",
+          );
+        }
+        const birthDate = minor?.birth_date ?? workingMinor!.birth_date;
+        const references = minor
+          ? [
+            minor.birth_date_source_reference,
+            minor.student_enrollment_source_reference,
+            employee.payroll_source_reference,
+          ]
+          : [
+            workingMinor!.birth_date_source_reference,
+            workingMinor!.education_status_source_reference,
+            workingMinor!.principal_occupation_source_reference,
+            employee.payroll_source_reference,
+          ];
+        if (
+          birthDate < "2007-01-02" || birthDate > "2024-12-31" ||
+          new Set(references).size !== references.length
+        ) {
+          throw new Error(
+            "Schedule H minor needs distinct age, education, occupation, and payroll sources proving under 18 in 2025",
+          );
+        }
       }
       if (
         employee.quarterly_cash_wages.reduce(
@@ -271,7 +294,8 @@ export function computeScheduleHAmounts(
       employee.quarterly_cash_wages.forEach((wages, index) => {
         quarterlyWages[index] += wages;
       });
-      const ficaWages = employee.age_18_or_older_for_fica &&
+      const ficaWages = (employee.age_18_or_older_for_fica ||
+          workingMinor !== undefined) &&
           employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD
         ? employee.annual_cash_wages
         : 0;
@@ -303,7 +327,8 @@ export function computeScheduleHAmounts(
       input.cash_wages_over_2025_limit !== undefined &&
       input.cash_wages_over_2025_limit !== unemployment.employee_wages.some(
           (employee) =>
-            employee.age_18_or_older_for_fica &&
+            (employee.age_18_or_older_for_fica ||
+              employee.nonstudent_minor_fica_inclusion !== undefined) &&
             employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD,
         )
     ) {

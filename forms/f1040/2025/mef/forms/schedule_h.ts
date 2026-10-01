@@ -35,6 +35,14 @@ export interface Fields {
         student_enrollment_source_reference: string;
         student_during_2025_verified: true;
       };
+      nonstudent_minor_fica_inclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        education_status_source_reference: string;
+        principal_occupation_source_reference: string;
+        not_a_student_during_2025_verified: true;
+        household_services_principal_occupation_verified: true;
+      };
       ordinary_cash_only: true;
       annual_cash_wages: number;
       quarterly_cash_wages: [number, number, number, number];
@@ -63,6 +71,14 @@ export interface Fields {
         birth_date_source_reference: string;
         student_enrollment_source_reference: string;
         student_during_2025_verified: true;
+      };
+      nonstudent_minor_fica_inclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        education_status_source_reference: string;
+        principal_occupation_source_reference: string;
+        not_a_student_during_2025_verified: true;
+        household_services_principal_occupation_verified: true;
       };
       ordinary_cash_only: true;
       annual_cash_wages: number;
@@ -137,6 +153,17 @@ function buildIRS1040ScheduleH(
     );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
+  if (
+    source.federal_unemployment?.employee_wages.some((employee) =>
+      employee.nonstudent_minor_fica_inclusion !== undefined
+    ) &&
+    (context.pending?.schedule2 as Record<string, unknown> | undefined)
+        ?.line9_household_employment !== amounts.totalTax
+  ) {
+    throw new Error(
+      "Schedule H nonstudent minor tax must reconcile to Schedule 2 line 9",
+    );
+  }
   const unemployment = fields.federal_unemployment;
   const ssTax = fields.ss_wages == null ? undefined : amounts.socialSecurityTax;
   const medicareTax = fields.medicare_wages == null

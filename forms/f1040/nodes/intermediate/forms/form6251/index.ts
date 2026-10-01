@@ -586,6 +586,16 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       (sum, row) => sum + row.amt_gain,
       0,
     );
+    // An audited short-term loss offsets long-term gain before either
+    // Schedule D net capital gain enters the preferential-rate worksheet.
+    const mixedTermOffset = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) && regularBasisNet > 0 && amtBasisNet > 0;
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
@@ -607,12 +617,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length &&
         regularBasisNet > 0 && amtBasisNet > 0;
       if (
-        !oneTermOnly ||
+        (!oneTermOnly && !mixedTermOffset) ||
         lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
         ) ||
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
-          positiveLongTermNet) ||
+          positiveLongTermNet || mixedTermOffset) ||
         (input.qualified_dividends ?? 0) !== 0 ||
         (input.form4952_regular_election ?? 0) !== 0 ||
         (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
@@ -624,7 +634,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         (input.foreign_earned_income_exclusion ?? 0) !== 0
       ) {
         throw new Error(
-          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits, net positive short-term gains, or net positive long-term gains, with no preferential-rate extras or other capital activity",
+          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits, net positive same-term gains, or audited short-term losses offset by long-term gains under both bases, with no preferential-rate extras or other capital activity",
         );
       }
     }
@@ -703,7 +713,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
       if (
         regularNetCg !==
-          (lossBasisRows.length > 0
+          (mixedTermOffset
+            ? regularBasisNet
+            : lossBasisRows.length > 0
             ? longTermBasisRows.length === basisRows.length &&
                 regularBasisNet > 0
               ? regularBasisNet
@@ -740,7 +752,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     // Positive short-term gains enter taxable income and line 2k, but never
     // become preferential net capital gain on the AMT Schedule D.
     const netCg = basisRows.length > 0
-      ? lossBasisRows.length > 0
+      ? mixedTermOffset
+        ? amtBasisNet
+        : lossBasisRows.length > 0
         ? longTermBasisRows.length === basisRows.length && amtBasisNet > 0
           ? amtBasisNet
           : 0

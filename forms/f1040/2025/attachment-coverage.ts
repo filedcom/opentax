@@ -220,13 +220,35 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "form7203",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 7203 basis paths outside the reviewed stock-only ordinary loss require further filing work",
+      "Form 7203 basis paths outside the reviewed stock loss or one new formal note require further filing work",
     isActive: (fields) => {
       const keys = Object.keys(fields);
+      const allowedKeys = new Set([
+        "stock_basis_beginning",
+        "ordinary_loss",
+        "additional_contributions",
+        "new_loans",
+        "reviewed_one_note_debt",
+      ]);
       return keys.length > 0 && (
-        keys.length !== 2 ||
+        keys.some((key) => !allowedKeys.has(key)) ||
         !keys.includes("stock_basis_beginning") ||
         !keys.includes("ordinary_loss") ||
+        (keys.includes("new_loans") !==
+          keys.includes("reviewed_one_note_debt")) ||
+        (keys.includes("new_loans") &&
+          keys.includes("additional_contributions")) ||
+        (keys.includes("new_loans") && (
+          typeof fields.new_loans !== "number" ||
+          !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
+          !fields.reviewed_one_note_debt ||
+          typeof fields.reviewed_one_note_debt !== "object"
+        )) ||
+        (keys.includes("additional_contributions") && (
+          typeof fields.additional_contributions !== "number" ||
+          !Number.isSafeInteger(fields.additional_contributions) ||
+          fields.additional_contributions <= 0
+        )) ||
         typeof fields.stock_basis_beginning !== "number" ||
         !Number.isSafeInteger(fields.stock_basis_beginning) ||
         fields.stock_basis_beginning < 0 ||
@@ -383,15 +405,17 @@ export function assertAttachmentCoverage(
     ...((byKey.f1099b as { f1099bs?: unknown[] } | undefined)?.f1099bs ?? []),
     ...qofRows,
   ];
-  if (dispositionRows.some((raw) => {
-    if (raw === null || typeof raw !== "object") return false;
-    const row = raw as Record<string, unknown>;
-    return typeof row.cost_basis === "number" &&
-      Number.isFinite(row.cost_basis) &&
-      typeof row.proceeds === "number" &&
-      Number.isFinite(row.proceeds) &&
-      row.cost_basis - row.proceeds >= 2_000_000;
-  })) {
+  if (
+    dispositionRows.some((raw) => {
+      if (raw === null || typeof raw !== "object") return false;
+      const row = raw as Record<string, unknown>;
+      return typeof row.cost_basis === "number" &&
+        Number.isFinite(row.cost_basis) &&
+        typeof row.proceeds === "number" &&
+        Number.isFinite(row.proceeds) &&
+        row.cost_basis - row.proceeds >= 2_000_000;
+    })
+  ) {
     throw new Error(
       `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; no disclosure route is registered; export blocked`,
     );

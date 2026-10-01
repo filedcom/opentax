@@ -1,43 +1,46 @@
-# TY2025 Form 7203 stock-only ordinary-loss slice (focused check)
+# TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
-## One new formal-note debt source prerequisite (2026-10-01, unrun)
+## One new formal-note debt loss route (2026-10-01, unrun)
 
-The public S-corporation K-1 input now accepts a strict, **nonfiling**
+The public S-corporation K-1 input accepts a strict
 `form7203_one_note_debt_candidate` for a single new 2025 formal shareholder
 note. It ties the shareholder/borrower identifiers, exact K-1 source and box-1
 loss, opening stock-basis workpaper, signed note, separate note ID, and bank
 transfer to one direct cash advance. It requires zero beginning note balance
 and debt basis, no other notes, repayments, prior reduced debt basis, other
 basis changes, or suspended losses. Distinct references and the K-1 amount
-are reconciled before estimating how much current loss exceeds stock basis and
-could be supported by the note. The estimate is only a review value; it never
-posts Schedule 1 or Form 1040 income. A guarantee or cosign cannot satisfy the
-source contract.
+are reconciled with the stock ledger before current loss is allocated to stock,
+then to the new note. A guarantee or cosign cannot satisfy the source contract.
 
-The K-1 calculation and shared native/PDF Form 7203 preflight now reject a
-matched candidate with an explicit Part II/Part III debt-column filing reason.
-This keeps a direct descriptor call from printing the stock-only form for a
-known note. Positive, source-swap, duplicate-reference, calculation-gate, and
-native/PDF-gate fixtures are authored and unrun. The records are references
-and affirmations, not authenticated note/bank bytes. Filing still needs
-executor-owned evidence, per-note Part II lines 16–34, debt reduction and
-restoration ordering, Part III debt-allowed columns, repayments and gain when
-applicable, and final Schedule E/Schedule 1/Form 1040 reconciliation.
+For this one-note case, the K-1 node sends the advance and reviewed note to
+Form 7203. Part I applies current loss to stock first. Part II debt 1 shows
+the formal-note indicator, zero opening face/basis, lines 17/22 advance,
+lines 18/20/24/27/29 totals, line 25 ratio 1.0000, line 30 allowable debt
+loss, and line 31 remaining basis. Part III lines 35/47 split current loss
+between stock column (c), debt column (d), and carryover column (e). The
+shared native/PDF projection requires the source, pending Form 7203 amounts,
+Schedule E allowed loss, Schedule 1 line 5, and Form 1040 line 8 to agree.
+The official [Form 7203](https://www.irs.gov/pub/irs-pdf/f7203.pdf),
+[instructions](https://www.irs.gov/instructions/i7203), and local TY2025v5.4
+`IRS7203.xsd` support this line mapping. Positive and mismatch fixtures are
+authored but unrun. Note and bank evidence remains reviewed references and
+affirmations rather than authenticated bytes. Older debt, repayments,
+restoration, multiple notes, open-account debt, other K-1 items, and later
+at-risk/passive limits remain closed.
 
 ## Debt-supported loss boundary (staged, unrun)
 
 The 2022 [Form 7203 instructions](https://www.irs.gov/instructions/i7203)
 require each formal shareholder note to be tracked separately in Part II and
-distinguish open-account debt; a guarantee alone is not debt basis. The public
-K-1 stock-loss route and registered native/PDF projection already reject debt,
-but the direct Form 7203 calculation node previously let a positive beginning
+distinguish open-account debt; a guarantee alone is not debt basis. The direct
+Form 7203 calculation node previously let a positive beginning
 debt balance or new loan reduce the Schedule 1 loss add-back without an
 identified note, open-account history, or printable Part II. A current
-ordinary loss with either positive debt amount now stops at calculation before
-posting a tax amount. Source, node, native, and PDF rejection fixtures are
-authored for the deferred bulk pass. Positive debt-basis filing still requires
-the loan records, basis-restoration and repayment history, per-note Part II,
-and a complete source-to-return review.
+ordinary loss with an unsourced positive debt amount still stops at
+calculation before posting a tax amount. Source, node, native, and PDF
+rejection fixtures are authored for the deferred bulk pass. Other debt-basis
+filing still requires loan records, basis-restoration and repayment history,
+and per-note Part II review.
 
 The [IRS Form 7203 instructions](https://www.irs.gov/instructions/i7203)
 (latest published revision: December 2022) require a form for a shareholder

@@ -43,6 +43,76 @@ const studentMinorFuta = {
   },
 };
 
+const nonstudentMinorFuta = {
+  ...studentMinorFuta,
+  cash_wages_over_2025_limit: true,
+  ss_wages: 4_000,
+  medicare_wages: 4_000,
+  federal_unemployment: {
+    ...studentMinorFuta.federal_unemployment,
+    employee_wages: [{
+      employee_id: "working-minor",
+      payroll_source_reference: "2025-working-minor-payroll",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: false,
+      nonstudent_minor_fica_inclusion: {
+        birth_date: "2008-05-10",
+        birth_date_source_reference: "working-minor-age-record",
+        education_status_source_reference: "2025-nonenrollment-record",
+        principal_occupation_source_reference: "2025-household-work-record",
+        not_a_student_during_2025_verified: true,
+        household_services_principal_occupation_verified: true,
+      },
+      ordinary_cash_only: true,
+      annual_cash_wages: 4_000,
+      quarterly_cash_wages: [1_000, 1_000, 1_000, 1_000],
+      w2: {
+        source_reference: "2025-working-minor-w2",
+        box2_federal_income_tax_withheld: 0,
+        box3_social_security_wages: 4_000,
+        box5_medicare_wages: 4_000,
+      },
+    }],
+  },
+};
+
+Deno.test("Schedule H unrelated nonstudent minor's principal household work owes FICA and FUTA", () => {
+  assertEquals(
+    findOutput(compute(nonstudentMinorFuta), "schedule2")?.fields
+      .line9_household_employment,
+    636,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...nonstudentMinorFuta,
+        federal_unemployment: {
+          ...nonstudentMinorFuta.federal_unemployment,
+          employee_wages: [{
+            ...nonstudentMinorFuta.federal_unemployment.employee_wages[0],
+            nonstudent_minor_fica_inclusion: {
+              ...nonstudentMinorFuta.federal_unemployment.employee_wages[0]
+                .nonstudent_minor_fica_inclusion,
+              principal_occupation_source_reference:
+                "2025-working-minor-payroll",
+            },
+          }],
+        },
+      }),
+    Error,
+    "distinct age, education, occupation, and payroll",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...nonstudentMinorFuta,
+        cash_wages_over_2025_limit: false,
+      }),
+    Error,
+    "line A differs",
+  );
+});
+
 Deno.test("Schedule H unrelated student minor owes FUTA without FICA", () => {
   assertEquals(
     findOutput(compute(studentMinorFuta), "schedule2")?.fields

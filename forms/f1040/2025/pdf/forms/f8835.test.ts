@@ -72,6 +72,65 @@ function closedLoopFacility(): F8835Item {
   };
 }
 
+function solarFacility(): F8835Item {
+  return {
+    ...facility(),
+    energy_type: EnergyType.Solar,
+    facility_description: "Solar production facility",
+    solar_dc_nameplate_kw: 1_800,
+    solar_production_source: {
+      facility_description: "Solar production facility",
+      construction_record_reference: "solar-construction-2023",
+      construction_began_on: "2023-06-01",
+      production_meter_record_reference: "solar-meter-2025",
+      meter_period_start_date: "2025-01-01",
+      meter_period_end_date: "2025-12-31",
+      metered_kwh_produced: 100_000,
+      unrelated_sale_invoice_reference: "solar-utility-invoice-2025",
+      unrelated_sale_invoice_date: "2025-12-31",
+      invoiced_kwh_sold: 100_000,
+      unrelated_buyer_verified: true,
+      section48_energy_credit_not_claimed_verified: true,
+    },
+  };
+}
+
+Deno.test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 3800", () => {
+  const source = pending(solarFacility());
+  const fields = projected(source);
+  assertEquals(fields?.facility_type, "Solar");
+  assertEquals(fields?.dc_solar, true);
+  assertEquals(fields?.dc_not_applicable, false);
+  assertEquals(fields?.dc_solar_nameplate_kw, 1_800);
+  assertEquals(fields?.line1d_quantity, 100_000);
+  assertEquals(fields?.line1d_credit, 600);
+  assertEquals(fields?.line1c_credit, undefined);
+  assertEquals(fields?.line15, 600);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "line1d_credit")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].Table_PartII_Lines1a-j[0].Line1d[0].f2_12[0]",
+  );
+  const altered = pending(solarFacility());
+  (altered.f3800.f8835_credit_entries as Array<Record<string, unknown>>)[0]
+    .credit_amount = 599;
+  assertThrows(
+    () => projected(altered),
+    Error,
+    "disagrees with native Form 3800",
+  );
+  const mismatchedSource = pending(solarFacility());
+  const sourceRows = mismatchedSource.f8835.f8835s as F8835Item[];
+  sourceRows[0] = {
+    ...sourceRows[0],
+    solar_production_source: {
+      ...sourceRows[0].solar_production_source!,
+      metered_kwh_produced: 99_999,
+    },
+  };
+  assertThrows(() => projected(mismatchedSource), Error, "matching kWh");
+});
+
 Deno.test("Form 8835 PDF prints sourced closed-loop biomass on line 1b", () => {
   const fields = projected(pending(closedLoopFacility()));
   assertEquals(fields?.facility_type, "Closed-loop biomass");
@@ -82,13 +141,18 @@ Deno.test("Form 8835 PDF prints sourced closed-loop biomass on line 1b", () => {
   assertEquals(fields?.line1c_quantity, undefined);
   assertEquals(fields?.line15, 600);
   assertEquals(
-    form8835Pdf.fields.find((field) => field.domainKey === "line1b_credit")?.pdfField,
+    form8835Pdf.fields.find((field) => field.domainKey === "line1b_credit")
+      ?.pdfField,
     "topmostSubform[0].Page2[0].Table_PartII_Lines1a-j[0].Line1b[0].f2_6[0]",
   );
   const altered = pending(closedLoopFacility());
   (altered.f3800.f8835_credit_entries as Array<Record<string, unknown>>)[0]
     .credit_amount = 599;
-  assertThrows(() => projected(altered), Error, "disagrees with native Form 3800");
+  assertThrows(
+    () => projected(altered),
+    Error,
+    "disagrees with native Form 3800",
+  );
 });
 
 function pending(

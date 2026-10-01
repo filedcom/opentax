@@ -7,17 +7,32 @@ separate form for each qualified facility and carry the applicable line 15
 credit to Form 3800 line 4e for production during the first four years after the
 facility entered service.
 
-The current PDF route covers filer-owned, nonpassive wind, geothermal, and
-closed-loop biomass facilities placed in service after 2021, with 2025 production during the first
+The current PDF route covers filer-owned, nonpassive wind, geothermal,
+closed-loop biomass, and solar facilities placed in service after 2021, with 2025 production during the first
 four years. It prints a separate three-page copy for each facility, including
 source-backed identity, address, coordinates, dates, and AC capacity. Wind
 production and credit use line 1a; closed-loop biomass uses line 1b; geothermal
-uses line 1c. All carry their calculated amount through lines 2, 4, 6, 8, 9,
+uses line 1c; solar uses line 1d. All carry their calculated amount through lines 2, 4, 6, 8, 9,
 12, 13, and 15. The printed rate cells are read-only and left untouched. The source gate matches each
 indexed Form 3800 line 4e entry and the prepared native Part III source rows,
 requires the facility credit to be fully used on line 4e, and checks the
 return-wide Form 3800 total against Schedule 3 and Form 1040. Repeated
 physical-facility identities reject at input validation.
+
+The solar route requires construction before 2025, post-2021 placement in
+service, positive DC capacity, a construction record, a 2025 production meter,
+and an unrelated-buyer sale invoice. Their dates, facility description, and kWh
+must agree with the claimed period and amounts, and all three record references
+must be distinct. The source affirms that the same property basis was not used
+for a section 48 energy credit. The [2025 Form 8835
+instructions](https://www.irs.gov/instructions/i8835) assign post-2021 solar
+electricity the 0.6-cent rate and require construction before 2025. Native line
+1d, PDF line 1d and DC capacity, Form 3800 line 4e, Schedule 3, and Form 1040
+now use the same calculated credit and existing finalized-return guard. Positive
+and source/Form-3800 tamper fixtures are authored for deferred validation.
+Meter, invoice, construction, and section 48 claim bytes are not authenticated;
+expanded, transferred, passive, bonus, and increased-credit solar facilities
+remain closed.
 
 The closed-loop biomass route requires a planting record for material planted
 exclusively for that facility, an original facility without co-firing, metered
@@ -72,7 +87,7 @@ The fixed-source `deno task test` run on `08786417` passed 8,860/8,860,
 zero failed, with no ignored tests reported in 15m48s; its log is
 `.state/research/ty2025-full-test-08786417.log`.
 
-Other energy types beyond wind, geothermal, and closed-loop biomass,
+Other energy types beyond wind, geothermal, closed-loop biomass, and solar,
 pre-2022 rates and wind phaseout, production after the
 first four years, passive credits, transfers, increased credit, domestic
 content or energy-community bonuses, bond reduction, fiscal-year phaseout,

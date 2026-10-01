@@ -59,6 +59,26 @@ A synthetic one-worker $4,000 case therefore reports line A No, zero Social
 Security/Medicare wages, $4,000 Section A wages, $24 FUTA, and $24 on
 Schedule 2 line 9. Calculation, native XML, PDF, age tamper, line A drift, and
 Schedule 2 mismatch fixtures are authored for the deferred batch. Age,
-enrollment, payroll, and state source bytes are not authenticated. Employees
-under 18 who are not students, family workers, and wider combinations remain
-open.
+enrollment, payroll, and state source bytes are not authenticated. Other
+under-18 cases, family workers, and wider combinations remain open.
+
+## Unrelated nonstudent minor whose household work is principal occupation
+
+The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
+include an under-18 worker's wages in Social Security and Medicare when
+household services are the worker's principal occupation; student household
+work does not meet that exception. A bounded active route now requires a
+distinct birth-date record, education-status record, principal-occupation
+record, payroll source, and Form W-2 for one unrelated minor. It excludes
+simultaneous student-minor classification, reconciles four payroll quarters
+and W-2 boxes 2/3/5, and applies the $2,800 FICA threshold and $7,000 FUTA
+base. A synthetic $4,000 one-worker case calculates $612 FICA plus $24 FUTA,
+prints both parts of Schedule H, and joins $636 to Schedule 2 line 9 at node,
+native MeF, and PDF projection. Positive and altered-source/line-A/Schedule 2
+fixtures are authored for the deferred batch.
+
+The age, education, occupation, payroll, W-2 and state records are identified
+and reviewed source assertions, not authenticated document bytes. Family
+workers, nonstudent minors without a proved principal household occupation,
+and wider worker combinations remain open. No XSD, full test, or filled-PDF
+result is claimed for this route yet.

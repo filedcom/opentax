@@ -3,7 +3,7 @@ import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 
 // Original TY2025 IRS Form 8835 AcroForm. The source-gated wind and geothermal
-// paths use lines 1a, 1b, and 1c; the printed rate cells are read-only in the PDF.
+// paths use lines 1a through 1d; the printed rate cells are read-only in the PDF.
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
 const page3 = "topmostSubform[0].Page3[0]";
@@ -55,6 +55,8 @@ export const form8835Pdf: PdfFormDescriptor = {
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
     checked("no_energy_community_bonus", `${page1}.c1_5[1]`),
     checked("dc_not_applicable", `${page1}.c1_6[1]`),
+    checked("dc_solar", `${page1}.c1_6[0]`),
+    text("dc_solar_nameplate_kw", `${page1}.f1_18[0]`),
     checked("ac_wind", `${page1}.c1_8[0]`),
     text("ac_wind_nameplate_kw", `${page1}.f1_20[0]`),
     checked("ac_other", `${page1}.c1_9[0]`),
@@ -83,6 +85,14 @@ export const form8835Pdf: PdfFormDescriptor = {
       "line1c_credit",
       `${page2}.Table_PartII_Lines1a-j[0].Line1c[0].f2_9[0]`,
     ),
+    text(
+      "line1d_quantity",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1d[0].f2_10[0]`,
+    ),
+    text(
+      "line1d_credit",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1d[0].f2_12[0]`,
+    ),
     text("line2", `${page2}.f2_31[0]`),
     text("line4", `${page2}.f2_35[0]`),
     text("line6", `${page2}.f2_40[0]`),
@@ -106,12 +116,19 @@ export const form8835Pdf: PdfFormDescriptor = {
         const { item, lines, filerName, filerTin } = source;
         const wind = item.energy_type === EnergyType.Wind;
         const closedLoopBiomass = item.energy_type === EnergyType.BiomassClosed;
+        const solar = item.energy_type === EnergyType.Solar;
         const lat = parts(item.facility_latitude!, 2);
         const long = parts(item.facility_longitude!, 3);
         return {
           filer_name: filerName,
           filer_tin: filerTin,
-          facility_type: wind ? "Wind" : closedLoopBiomass ? "Closed-loop biomass" : "Geothermal",
+          facility_type: wind
+            ? "Wind"
+            : closedLoopBiomass
+            ? "Closed-loop biomass"
+            : solar
+            ? "Solar"
+            : "Geothermal",
           facility_description: item.facility_description,
           address_line1: source.addressLine1,
           address_line2: source.addressLine2,
@@ -126,7 +143,9 @@ export const form8835Pdf: PdfFormDescriptor = {
           no_increased_credit: true,
           no_domestic_bonus: true,
           no_energy_community_bonus: true,
-          dc_not_applicable: true,
+          dc_not_applicable: !solar,
+          dc_solar: solar,
+          dc_solar_nameplate_kw: solar ? item.solar_dc_nameplate_kw : undefined,
           ac_wind: wind,
           ac_wind_nameplate_kw: wind ? item.ac_nameplate_kw : undefined,
           ac_other: !wind,
@@ -135,8 +154,14 @@ export const form8835Pdf: PdfFormDescriptor = {
           line1a_credit: wind ? lines.line1 : undefined,
           line1b_quantity: closedLoopBiomass ? item.kwh_sold : undefined,
           line1b_credit: closedLoopBiomass ? lines.line1 : undefined,
-          line1c_quantity: !wind && !closedLoopBiomass ? item.kwh_sold : undefined,
-          line1c_credit: !wind && !closedLoopBiomass ? lines.line1 : undefined,
+          line1c_quantity: !wind && !closedLoopBiomass && !solar
+            ? item.kwh_sold
+            : undefined,
+          line1c_credit: !wind && !closedLoopBiomass && !solar
+            ? lines.line1
+            : undefined,
+          line1d_quantity: solar ? item.kwh_sold : undefined,
+          line1d_credit: solar ? lines.line1 : undefined,
           line2: lines.line2,
           line4: lines.line4,
           line6: lines.line6,

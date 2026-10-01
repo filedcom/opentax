@@ -42,6 +42,73 @@ const closedLoopSource = {
   no_section1603_grant_verified: true as const,
 };
 
+const solarSource = {
+  facility_description: "Solar production facility",
+  construction_record_reference: "solar-construction-2023",
+  construction_began_on: "2023-06-01",
+  production_meter_record_reference: "solar-meter-2025",
+  meter_period_start_date: "2025-01-01",
+  meter_period_end_date: "2025-12-31",
+  metered_kwh_produced: 1_000_000,
+  unrelated_sale_invoice_reference: "solar-utility-invoice-2025",
+  unrelated_sale_invoice_date: "2025-12-31",
+  invoiced_kwh_sold: 1_000_000,
+  unrelated_buyer_verified: true as const,
+  section48_energy_credit_not_claimed_verified: true as const,
+};
+
+Deno.test("f8835: sourced solar production reaches Form 3800 line 4e", () => {
+  const solar = item({
+    energy_type: EnergyType.Solar,
+    facility_description: "Solar production facility",
+    facility_owned_by_filer: true,
+    ac_nameplate_kw: 1_500,
+    solar_dc_nameplate_kw: 1_800,
+    solar_production_source: solarSource,
+  });
+  const parsed = f8835.inputSchema.parse({ f8835s: [solar] });
+  const row = calculateForm8835(parsed.f8835s[0]);
+  assertEquals(row.line1, 6_000);
+  assertEquals(row.line15, 6_000);
+  assertEquals(row.form3800Line, "4e");
+  const output = f8835.compute({ taxYear: 2025, formType: "f1040" }, parsed);
+  const credit = fieldsOf(output.outputs, f3800)?.f8835_credit_entries;
+  assertEquals(credit?.[0].credit_amount, 6_000);
+  assertThrows(
+    () =>
+      lines({
+        ...solar,
+        solar_production_source: {
+          ...solarSource,
+          metered_kwh_produced: 999_999,
+        },
+      }),
+    Error,
+    "matching kWh",
+  );
+  assertThrows(
+    () =>
+      lines({
+        ...solar,
+        solar_production_source: {
+          ...solarSource,
+          unrelated_sale_invoice_date: "2026-01-01",
+        },
+      }),
+    Error,
+    "distinct construction, meter, and unrelated-sale sources",
+  );
+  assertThrows(() =>
+    lines({
+      ...solar,
+      solar_production_source: {
+        ...solarSource,
+        section48_energy_credit_not_claimed_verified: false,
+      },
+    })
+  );
+});
+
 Deno.test("f8835: sourced closed-loop biomass reaches the first-four-year Form 3800 row", () => {
   const row = lines({
     energy_type: EnergyType.BiomassClosed,
@@ -51,27 +118,45 @@ Deno.test("f8835: sourced closed-loop biomass reaches the first-four-year Form 3
   assertEquals(row.line1, 6_000);
   assertEquals(row.line15, 6_000);
   assertEquals(row.form3800Line, "4e");
-  assertThrows(() => lines({ energy_type: EnergyType.BiomassClosed }), Error,
-    "planting, meter, and unrelated-sale sources");
-  assertThrows(() => lines({
-    energy_type: EnergyType.BiomassClosed,
-    facility_description: "Closed-loop biomass facility",
-    closed_loop_biomass_source: {
-      ...closedLoopSource,
-      invoiced_kwh_sold: 999_999,
-    },
-  }), Error, "matching kWh");
-  assertThrows(() => lines({
-    energy_type: EnergyType.BiomassClosed,
-    facility_description: "Another biomass facility",
-    closed_loop_biomass_source: closedLoopSource,
-  }), Error, "facility-matched");
-  assertThrows(() => lines({
-    energy_type: EnergyType.BiomassClosed,
-    facility_description: "Closed-loop biomass facility",
-    facility_construction_start_date: "2025-01-01",
-    closed_loop_biomass_source: closedLoopSource,
-  }), Error, "construction must begin before 2025");
+  assertThrows(
+    () => lines({ energy_type: EnergyType.BiomassClosed }),
+    Error,
+    "planting, meter, and unrelated-sale sources",
+  );
+  assertThrows(
+    () =>
+      lines({
+        energy_type: EnergyType.BiomassClosed,
+        facility_description: "Closed-loop biomass facility",
+        closed_loop_biomass_source: {
+          ...closedLoopSource,
+          invoiced_kwh_sold: 999_999,
+        },
+      }),
+    Error,
+    "matching kWh",
+  );
+  assertThrows(
+    () =>
+      lines({
+        energy_type: EnergyType.BiomassClosed,
+        facility_description: "Another biomass facility",
+        closed_loop_biomass_source: closedLoopSource,
+      }),
+    Error,
+    "facility-matched",
+  );
+  assertThrows(
+    () =>
+      lines({
+        energy_type: EnergyType.BiomassClosed,
+        facility_description: "Closed-loop biomass facility",
+        facility_construction_start_date: "2025-01-01",
+        closed_loop_biomass_source: closedLoopSource,
+      }),
+    Error,
+    "construction must begin before 2025",
+  );
 });
 
 Deno.test("f8835: 2025 base rate and fivefold increase are separate lines", () => {

@@ -6,20 +6,28 @@ export function buildReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
   context?: MefBuildContext,
 ): string {
-  const { source, ledger, basis, contribution, availableBasis, currentLoss, allowed, carryover } =
-    projectReviewedStockLoss7203(
-      rawFields,
-      context?.pending ?? {},
-      context?.filer,
-    );
-  const lossGroup = (amount: number) =>
-    [
-      element("OrdinaryBusinessLossAmt", amount),
-      element("TotalAllowableLossAmt", amount),
-    ];
+  const {
+    source,
+    ledger,
+    basis,
+    contribution,
+    availableBasis,
+    note,
+    currentLoss,
+    allowedStock,
+    allowedDebt,
+    carryover,
+  } = projectReviewedStockLoss7203(
+    rawFields,
+    context?.pending ?? {},
+    context?.filer,
+  );
+  const lossGroup = (amount: number) => [
+    element("OrdinaryBusinessLossAmt", amount),
+    element("TotalAllowableLossAmt", amount),
+  ];
 
-  // Element sequence and Part III group structure match local TY2025v5.4
-  // Shared/IRS7203/IRS7203.xsd. No debt group or prior-year column is emitted.
+  // Element sequence follows local TY2025v5.4 Shared/IRS7203/IRS7203.xsd.
   return elements("IRS7203", [
     element("ShareholderPersonNm", ledger.shareholder_name_as_on_k1),
     element("ShareholderSSN", ledger.shareholder_ssn),
@@ -29,15 +37,60 @@ export function buildReviewedStockLoss7203(
     element("SCorporationEIN", ledger.corporation_ein),
     element("OriginalShareholderInd", "X"),
     element("StockBasisBeginTaxYearAmt", basis),
-    contribution > 0 ? element("CapitalContributionBasisAmt", contribution) : "",
+    contribution > 0
+      ? element("CapitalContributionBasisAmt", contribution)
+      : "",
     element("StockBasisBfrDistributionsAmt", availableBasis),
     element("StockBasisAftrDistributionsAmt", availableBasis),
-    availableBasis > 0 ? element("StockBasisBeforeLossDedAmt", availableBasis) : "",
-    availableBasis > 0 ? element("TotalDecreaseStockBasisAmt", allowed) : "",
-    element("StockBasisEndTaxYearAmt", availableBasis - allowed),
+    availableBasis > 0
+      ? element("StockBasisBeforeLossDedAmt", availableBasis)
+      : "",
+    availableBasis > 0
+      ? element("TotalDecreaseStockBasisAmt", allowedStock)
+      : "",
+    element("StockBasisEndTaxYearAmt", availableBasis - allowedStock),
+    note
+      ? elements("ShareholderDebtBasisGrp", [
+        element("FormalNoteInd", "X"),
+        element("LoanBalanceBeginTaxYrAmt", 0),
+        element("AdditionalLoansAmt", note.cash_advance_amount),
+        element("LoanedBeginningBalAmt", note.cash_advance_amount),
+        element("LoanBalanceEndTaxYrAmt", note.cash_advance_amount),
+        element("DebtBasisBeginTaxYrAmt", 0),
+        element("DebtBasisBfrRepaymentAmt", note.cash_advance_amount),
+        element("DebtLoanRepaymentPct", "1.0000"),
+        element("DebtBasisBfrExpnssLossAmt", note.cash_advance_amount),
+        element("DebtBasisBeforeLossDedAmt", note.cash_advance_amount),
+        element("AllowableLossAmt", allowedDebt),
+        element("DebtBasisEndTaxYrAmt", note.cash_advance_amount - allowedDebt),
+      ])
+      : "",
+    note ? element("TotLoanBalanceBeginTaxYrAmt", 0) : "",
+    note ? element("TotAdditionalLoansAmt", note.cash_advance_amount) : "",
+    note ? element("TotLoanedBeginningBalAmt", note.cash_advance_amount) : "",
+    note ? element("TotLoanBalanceEndTaxYrAmt", note.cash_advance_amount) : "",
+    note ? element("TotDebtBasisBeginTaxYrAmt", 0) : "",
+    note
+      ? element("TotDebtBasisBfrRepaymentAmt", note.cash_advance_amount)
+      : "",
+    note
+      ? element("TotDebtBasisBfrExpnssLossAmt", note.cash_advance_amount)
+      : "",
+    note
+      ? element("TotDebtBasisBeforeLossDedAmt", note.cash_advance_amount)
+      : "",
+    note
+      ? element(
+        "TotDebtBasisEndTaxYrAmt",
+        note.cash_advance_amount - allowedDebt,
+      )
+      : "",
     elements("ShrCurrentYrLossDeductionsGrp", lossGroup(currentLoss)),
     availableBasis > 0
-      ? elements("ShrAllwblLossFromStockBasisGrp", lossGroup(allowed))
+      ? elements("ShrAllwblLossFromStockBasisGrp", lossGroup(allowedStock))
+      : "",
+    note
+      ? elements("ShrAllwblLossFromDebtBasisGrp", lossGroup(allowedDebt))
       : "",
     carryover > 0
       ? elements("ShrCarryoverAmountsGrp", lossGroup(carryover))

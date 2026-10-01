@@ -192,13 +192,16 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         (input.elect_10yr_averaging !== true ||
           input.annuity_share_pct === undefined)) ||
       ((input.federal_estate_tax ?? 0) > 0 &&
-        (input.elect_10yr_averaging !== true ||
-          input.elect_capital_gain === true ||
+        ((input.elect_10yr_averaging !== true &&
+          input.elect_capital_gain !== true) ||
+          (input.elect_10yr_averaging === true &&
+            input.elect_capital_gain === true) ||
           (input.box6_nua ?? 0) > 0 ||
-          (input.annuity_actuarial_value ?? 0) > 0)))
+          (input.annuity_actuarial_value ?? 0) > 0 ||
+          deathBenefit > 0)))
   ) {
     throw new Error(
-      "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced Part-III-only death benefit or estate tax; other combinations remain unsupported",
+      "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced beneficiary death benefit or estate tax in the bounded election; other combinations remain unsupported",
     );
   }
   const estateSource = input.partial_estate_tax_source;
@@ -427,14 +430,23 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       : deathBenefitCapitalShare;
     const ordinaryDeathBenefit = deathBenefit - fullDeathBenefitCapitalShare;
     const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);
+    const partialPartIIEstate = partialShare && electCapGain && !elect10yr &&
+      federalEstateTax > 0;
+    const estateTaxForRecipient = partialPartIIEstate
+      ? input.partial_estate_tax_source!.recipient_allocated_federal_estate_tax
+      : federalEstateTax;
     const estateTaxCapitalShare = electCapGain && taxableAmount > 0
-      ? Math.round(federalEstateTax * capitalGain / taxableAmount)
+      ? Math.round(
+        estateTaxForRecipient * capitalGain /
+          (partialPartIIEstate ? box2aTaxable : taxableAmount),
+      )
       : 0;
-    const ordinaryEstateTax = federalEstateTax - estateTaxCapitalShare;
+    const ordinaryEstateTax = estateTaxForRecipient - estateTaxCapitalShare;
     if (
       deathBenefitCapitalShare + estateTaxCapitalShare > capitalGain ||
       ordinaryDeathBenefit + ordinaryEstateTax >
-        taxableAmount - (electCapGain ? capitalGain : 0)
+        (partialPartIIEstate ? box2aTaxable : taxableAmount) -
+          (electCapGain ? capitalGain : 0)
     ) {
       throw new Error(
         "form4972: death benefit and estate tax exceed their allocated distribution portions",

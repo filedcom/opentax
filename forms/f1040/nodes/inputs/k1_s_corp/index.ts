@@ -542,7 +542,8 @@ function hasBasisData(item: K1SCorpItem): boolean {
   return (
     item.stock_basis_beginning !== undefined ||
     item.debt_basis_beginning !== undefined ||
-    item.form7203_stock_loss_ledger !== undefined
+    item.form7203_stock_loss_ledger !== undefined ||
+    item.form7203_one_note_debt_candidate !== undefined
   );
 }
 
@@ -570,6 +571,12 @@ function buildForm7203Fields(
       : {}),
     ...(item.debt_basis_beginning !== undefined
       ? { debt_basis_beginning: item.debt_basis_beginning }
+      : {}),
+    ...(item.form7203_one_note_debt_candidate
+      ? {
+        new_loans: item.form7203_one_note_debt_candidate.cash_advance_amount,
+        reviewed_one_note_debt: item.form7203_one_note_debt_candidate,
+      }
       : {}),
     ...(loss > 0 ? { ordinary_loss: loss } : {}),
   } as Parameters<typeof output<typeof form7203>>[1];
@@ -731,12 +738,30 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
 
     for (const item of k1_s_corps) {
       if (item.form7203_one_note_debt_candidate) {
-        reconcileOneNoteDebtCandidate(
+        const { note } = reconcileOneNoteDebtCandidate(
           item.form7203_one_note_debt_candidate,
           item,
         );
+        const ledger = item.form7203_stock_loss_ledger;
+        if (
+          !ledger || ledger.no_shareholder_debt_or_repayments ||
+          ledger.cash_capital_contribution ||
+          ledger.shareholder_ssn !== note.shareholder_ssn ||
+          ledger.corporation_ein !== note.corporation_ein ||
+          ledger.beginning_stock_basis !== note.beginning_stock_basis ||
+          ledger.beginning_basis_workpaper_reference !==
+            note.beginning_stock_basis_workpaper_reference
+        ) {
+          throw new Error(
+            "Form 7203 formal note and reviewed stock ledger must reconcile",
+          );
+        }
+      } else if (
+        item.form7203_stock_loss_ledger &&
+        !item.form7203_stock_loss_ledger.no_shareholder_debt_or_repayments
+      ) {
         throw new Error(
-          "Form 7203 one-note debt source reconciles, but Part II and Part III debt columns are not registered for filing",
+          "Form 7203 stock-only ledger cannot report shareholder debt",
         );
       }
     }
