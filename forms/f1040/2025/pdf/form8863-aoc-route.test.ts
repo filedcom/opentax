@@ -1,19 +1,21 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
+import { form8862 as nativeForm8862 } from "../mef/forms/f8862.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
+import { form8862Pdf } from "./forms/f8862.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
 
-Deno.test("reviewed Form 8862 AOTC reinstatement reaches Form 8863 and Form 1040", async () => {
+function standaloneAotcPending() {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -102,7 +104,17 @@ Deno.test("reviewed Form 8862 AOTC reinstatement reaches Form 8863 and Form 1040
   assertEquals(result.pending.f1040.line18_total_tax_before_credits, 7_955);
   assertEquals(result.pending.f1040.line29_refundable_aoc, 1_000);
   assertEquals(result.pending.schedule3.line3_education_credit, 1_500);
-  const pending = buildPending(result.pending);
+  return buildPending(result.pending);
+}
+
+Deno.test("reviewed Form 8862 AOTC reinstatement reaches Form 8863 and Form 1040", async () => {
+  const pending = standaloneAotcPending();
+  const [projected] = form8862Pdf.instances?.(
+    pending.f8862!,
+    base.filer,
+    pending,
+  ) ?? [];
+  assertEquals(projected?.aotc_student_0_name, "Student Test");
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
     attachments: [],
@@ -135,5 +147,59 @@ Deno.test("reviewed Form 8862 AOTC reinstatement reaches Form 8863 and Form 1040
     ).pathname;
     await Deno.mkdir(directory, { recursive: true });
     await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+  }
+});
+
+Deno.test("standalone AOTC rejects altered student identity and exact credit amounts in both exports", () => {
+  const pending = standaloneAotcPending();
+  const form8863 = pending.f8863!;
+  const student = form8863.f8863s[0];
+  const changed = [
+    {
+      ...pending,
+      f1040: { ...pending.f1040, line29_refundable_aoc: 999 },
+    },
+    {
+      ...pending,
+      schedule3: { ...pending.schedule3, line3_education_credit: 1_499 },
+    },
+    {
+      ...pending,
+      f8863: { ...form8863, form8862_filed: false },
+    },
+    {
+      ...pending,
+      f8863: {
+        ...form8863,
+        f8863s: [{ ...student, student_name: "Different Student" }],
+      },
+    },
+    {
+      ...pending,
+      f8863: {
+        ...form8863,
+        f8863s: [{
+          ...student,
+          filing_details: {
+            ...student.filing_details!,
+            first_name: "Different",
+          },
+        }],
+      },
+    },
+  ];
+  for (const altered of changed) {
+    assertThrows(
+      () =>
+        nativeForm8862.build(pending.f8862!, {
+          filer: base.filer,
+          pending: altered,
+        }),
+      Error,
+    );
+    assertThrows(
+      () => form8862Pdf.instances?.(pending.f8862!, base.filer, altered),
+      Error,
+    );
   }
 });

@@ -398,6 +398,29 @@ function validateFinalizedCreditClaims(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
     }
+    if (
+      !fields.claim_ctc && !fields.claim_eitc &&
+      form8863.data.f8863s.length === 1 && aocStudents.length === 1
+    ) {
+      const student = aocStudents[0];
+      const details = student.filing_details;
+      const filedName = details
+        ? `${details.first_name} ${details.last_name}`.trim().toUpperCase()
+        : undefined;
+      const creditLines = calculateForm8863Lines(form8863.data);
+      if (
+        !details || filedName !== filedStudents[0] ||
+        !student.student_ssn || !creditLines ||
+        form8863.data.form8862_filed !== true ||
+        creditLines.line8 + creditLines.line19 <= 0 ||
+        (form1040.line29_refundable_aoc ?? 0) !== creditLines.line8 ||
+        (schedule3?.line3_education_credit ?? 0) !== creditLines.line19
+      ) {
+        throw new Error(
+          "Form 8862 standalone AOTC source, Form 8863, Schedule 3, and Form 1040 amounts do not reconcile",
+        );
+      }
+    }
     if (fields.claim_ctc && Array.isArray(form1040.dependent_details)) {
       const odcDependents = form1040.dependent_details.filter((row) =>
         row !== null && typeof row === "object" &&

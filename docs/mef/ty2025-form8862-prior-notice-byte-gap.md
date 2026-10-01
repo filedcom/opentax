@@ -64,3 +64,18 @@ A full-return fixture and altered schedule, credit, source TIN, and filed TIN
 fixtures are authored for the deferred bulk pass. Other claimant combinations
 retain their separate guards; this does not authenticate the prior IRS notice or
 expand the claim to unsourced dependents.
+
+## Standalone one-student AOTC amount and identity replay (2026-10-01, unrun)
+
+The [2025 Form 8863 instructions](https://www.irs.gov/instructions/i8863) send
+its refundable line 8 to Form 1040 line 29 and its allowed nonrefundable line 19
+to Schedule 3 line 3. For a Form 8862 claim with one AOTC student and no CTC/ODC
+or EITC claim, native and PDF export now replay Form 8863 from its retained
+tuition, eligibility, identity, and credit-limit sources. The student's Part III
+filing name must match both the Form 8863 source name and Form 8862 Part IV,
+with a retained student SSN. The Form 8862 filed marker and both exact credit
+amounts must match the finalized Schedule 3 and Form 1040. The existing
+full-return route now has positive PDF projection and altered name, filed name,
+marker, Schedule 3, and Form 1040 fixtures for the deferred bulk pass. Other
+student combinations and IRS notice issuance or contents remain outside this
+bounded replay.
