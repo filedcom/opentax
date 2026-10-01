@@ -16,6 +16,108 @@ const fixture = pdfReviewFixtures.find((item) =>
 const threePolicyFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-sequential-three-no-aptc-policies-200-fpl"
 )!;
+const threeGapFixture = pdfReviewFixtures.find((item) =>
+  item.id === "single-three-no-aptc-policies-three-uncovered-months"
+)!;
+
+Deno.test("three sequential no-APTC policies leave three sourced months uncovered at 200% FPL", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    threeGapFixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962.total_premium_tax_credit, 5_850);
+  assertEquals(result.pending.schedule3.line9_premium_tax_credit, 5_850);
+  assertEquals(result.pending.f1040.line31_additional_payments, 5_850);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: threeGapFixture.filer,
+    attachments: [],
+  });
+  assertEquals(
+    (bundle.xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length,
+    9,
+  );
+  for (const month of ["APRIL", "AUGUST", "DECEMBER"]) {
+    assertEquals(bundle.xml.includes(`<MonthCd>${month}</MonthCd>`), false);
+  }
+  assertStringIncludes(
+    bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>5850</ReconciledPremiumTaxCreditAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, threeGapFixture.filer, pending)?.length,
+    1,
+  );
+  for (const month of [4, 8, 12]) {
+    assertEquals(
+      (projected as Record<string, unknown>)[`pdf_month_${month}_premium`],
+      undefined,
+    );
+  }
+  const pdf = await buildPdfBytes(
+    pending,
+    threeGapFixture.filer,
+    ".pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+  const source = form1095aSchema.parse(pending.f1095a);
+  const third = source.f1095as[2];
+  const fourthGap = {
+    ...pending,
+    f1095a: {
+      f1095as: [...source.f1095as.slice(0, 2), {
+        ...third,
+        monthly_premiums: third.monthly_premiums!.map((amount, index) =>
+          index === 10 ? 0 : amount
+        ),
+        annual_premium: 1_800,
+        slcsp_corrections: third.slcsp_corrections!.filter((item) =>
+          item.month !== 11
+        ),
+        no_aptc_monthly_evidence: third.no_aptc_monthly_evidence!.filter((
+          item,
+        ) => item.month !== 11),
+      }],
+    },
+  };
+  await assertRejects(
+    () =>
+      buildMefBundle(fourthGap, {
+        filer: threeGapFixture.filer,
+        attachments: [],
+      }),
+    Error,
+    "monthly PTC needs distinct same-state nonshared policies",
+  );
+  await assertRejects(
+    async () => {
+      form8962Pdf.instances?.(projected, threeGapFixture.filer, fourthGap);
+    },
+    Error,
+    "monthly PTC needs distinct same-state nonshared policies",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        schedule3: {
+          ...pending.schedule3,
+          line9_premium_tax_credit: 5_849,
+        },
+      }, {
+        filer: threeGapFixture.filer,
+        attachments: [],
+      }),
+    Error,
+    "monthly credit differs from finalized return",
+  );
+});
 
 for (
   const variant of [

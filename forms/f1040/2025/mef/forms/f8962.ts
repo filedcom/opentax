@@ -1136,7 +1136,8 @@ function reconcileMultiNoAptcPolicyMonths(
     (policies.length !== 2 && policies.length !== 3) ||
     new Set(policies.map((policy) => policy.policy_number)).size !==
       policies.length ||
-    activePolicyCounts.filter((count) => count === 0).length > 2 ||
+    activePolicyCounts.filter((count) => count === 0).length >
+      (policies.length === 3 ? 3 : 2) ||
     (policies.length === 3 && activePolicyCounts.some((count) => count > 1)) ||
     (policies.length === 3 && policies.some((policy) => {
       const coveredMonths = policy.monthly_premiums?.flatMap((premium, index) =>
