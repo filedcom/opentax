@@ -336,3 +336,123 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
     "sourced foreign-employer compensation item",
   );
 });
+
+for (
+  const additionalWages of [[25_000, 25_000, 50_000], [
+    25_000,
+    25_000,
+    25_000,
+    25_000,
+  ]]
+) {
+  Deno.test(`${additionalWages.length + 1} distinct same-owner foreign employers reconcile alternative compensation`, async () => {
+    const owner = "111-22-3333";
+    const employerInputs = {
+      ...inputs,
+      fec: [
+        {
+          ...inputs.fec[0],
+          compensation_amount: 160_000,
+          compensation_usd: 200_000,
+          compensation_owner_ssn: owner,
+          compensation_source_document_reference: wageReference,
+          alternative_compensation_sourcing: {
+            ...alternative,
+            compensation_item_total_usd: 200_000,
+            alternative_us_source_usd: 60_000,
+            ordinary_us_source_usd: 80_000,
+            alternative_allocation_computation:
+              "140000 of 200000 salary sourced to Germany",
+          },
+        },
+        ...additionalWages.map((amount, index) => ({
+          foreign_employer_name: `Additional Foreign Employer ${index + 1}`,
+          country_code: "FR",
+          compensation_amount: amount,
+          compensation_usd: amount,
+          compensation_owner_ssn: owner,
+          compensation_source_document_reference: `2025 additional employer ${
+            index + 1
+          } wage ledger`,
+          foreign_service_compensation_usd: 0,
+          foreign_tax_paid_usd: 0,
+        })),
+      ],
+    };
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      employerInputs,
+      { taxYear: 2025, formType: "f1040" },
+    );
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
+    assertEquals(result.pending.f1040?.line1z_total_wages, 300_000);
+    assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
+    const projected = form1116Pdf.projectFields?.(
+      result.pending.form_1116!,
+      result.pending,
+    ) ?? {};
+    assertEquals(projected.pdf_line1a_a, 140_000);
+    assertEquals(projected.pdf_line3e_a, 300_000);
+    assertEquals(projected.pdf_line3g_a, 7_350);
+    assertEquals(projected.pdf_line7, 132_650);
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const bundle = await buildMefBundle(buildPending(result.pending), {
+      filer,
+      attachments: [],
+    });
+    assertStringIncludes(
+      bundle.xml,
+      "<AltBasisCompensationSourceStmt documentId=",
+    );
+    assertEquals(bundle.attachments.length, 1);
+    assertEquals(
+      (await PDFDocument.load(await buildPdfBytes(result.pending, filer)))
+        .getPageCount() >= 4,
+      true,
+    );
+
+    const wrongOwner = structuredClone(result.pending);
+    (wrongOwner.fec as { fecs: Array<{ compensation_owner_ssn: string }> })
+      .fecs.at(-1)!.compensation_owner_ssn = "999-88-7777";
+    assertThrows(
+      () => form1116Pdf.projectFields?.(wrongOwner.form_1116!, wrongOwner),
+      Error,
+      "sourced foreign-employer compensation item",
+    );
+    await assertRejects(() =>
+      buildMefBundle(buildPending(wrongOwner), { filer, attachments: [] })
+    );
+
+    const duplicateDocument = structuredClone(result.pending);
+    (duplicateDocument.fec as {
+      fecs: Array<{ compensation_source_document_reference: string }>;
+    }).fecs.at(-1)!.compensation_source_document_reference =
+      "2025 additional employer 1 wage ledger";
+    assertThrows(
+      () =>
+        form1116Pdf.projectFields?.(
+          duplicateDocument.form_1116!,
+          duplicateDocument,
+        ),
+      Error,
+      "sourced foreign-employer compensation item",
+    );
+    await assertRejects(() =>
+      buildMefBundle(buildPending(duplicateDocument), {
+        filer,
+        attachments: [],
+      })
+    );
+
+    const changedWage = structuredClone(result.pending);
+    (changedWage.fec as { fecs: Array<{ compensation_usd: number }> })
+      .fecs.at(-1)!.compensation_usd += 1;
+    assertThrows(
+      () => form1116Pdf.projectFields?.(changedWage.form_1116!, changedWage),
+      Error,
+      "standard-deduction, zero-carryover calculation",
+    );
+  });
+}

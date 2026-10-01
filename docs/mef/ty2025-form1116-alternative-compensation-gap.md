@@ -187,5 +187,23 @@ compensation, $7,350 allocated standard deduction, and a $2,000 Form 1116
 credit on Schedule 3 and Form 1040. Native statement and currency attachment,
 parent PDF, wrong-owner and duplicate-document fixtures are written for the
 deferred batch. Issued wage and tax records remain unverified bytes; W-2
-compensation, four or more employer records, spouse wages, another foreign-tax
-item, and mixed income/deduction categories remain closed.
+compensation, spouse wages, another foreign-tax item, and mixed
+income/deduction categories remain closed.
+
+## Same-employee four and five employer wage inventories (implementation staged)
+
+The [2025 Form 1116 line 1b instructions](https://www.irs.gov/instructions/i1116)
+measure the employee's **total** U.S. and foreign compensation and impose no
+three-employer limit. The bounded source inventory and Form 1116 PDF guard now
+accept four or five distinct foreign-employer wage records for the same employee.
+The single alternative-basis pay item still carries all foreign-service income
+and foreign tax; each added record has only U.S.-service wages, its own document
+reference, and the same employee SSN. The existing native statement and source
+checks compare the alternative item, while the PDF and Form 1040 joins use all
+wages for line 3e, the standard-deduction ratio, and line 1h/1z.
+
+Four- and five-employer $300,000 full-return cases and owner, duplicate-document,
+and changed-wage rejection cases are authored for the deferred batch. A sixth
+record still rejects. Issued wage/tax bytes, mixed W-2 or spouse compensation,
+multiple alternatively sourced items, other income/categories/deductions,
+IRS acceptance, and bulk XSD/PDF validation remain open.
