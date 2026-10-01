@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **661 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **662 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 144-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 661 bounded routes and
+**Implemented coverage.** The completed ledger records 662 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -162,7 +162,8 @@ line 7 net. A fully repaid 2025 benefit now retains a zero-valued Schedule 1
 so its repayment annotation can print. A same-year repayment exceeding
 retained 2025 benefits now rejects instead of silently flooring the net.
 Form 1040 PDF now marks line 6d for a retained
-MFS lived-apart-all-year fact. Final native/PDF Form 1040 line 25b now replays
+MFS lived-apart-all-year fact and line 16 box 2 when the retained tax includes
+a positive Form 4972 amount. Final native/PDF Form 1040 line 25b now replays
 withholding from fourteen retained 1099-family source routes, rejects identified
 broker duplicates and unsupported owner claims, and requires filer identity
 for positive withholding. Sources without recipient identity still need
