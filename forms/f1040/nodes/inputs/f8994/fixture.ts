@@ -72,6 +72,7 @@ export const form8994MatchedPending = {
       line_d_ein: "825555123",
       line_f_accounting_method: "cash",
       line_g_material_participation: true,
+      line_1_gross_receipts: 100_000,
       line_26_wages: 50_000,
       line_26_other_employment_credits: 1_250,
     }],
