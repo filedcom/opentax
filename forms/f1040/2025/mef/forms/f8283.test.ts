@@ -1431,11 +1431,35 @@ Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native b
 });
 
 Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a and 5c", async () => {
+  const bytes = await acknowledgmentPdf();
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
   const item = {
     ...needyTransferVehicle(),
+    donee_organization_name: "Meals Charity",
     deduction_claimed: 4_800,
     cost_or_adjusted_basis: 4_800,
     vehicle_needy_transfer_acknowledgment: undefined,
+    vehicle_significant_use_pdf_review: {
+      reviewed_by: "Pat Preparer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: testFiler().primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "Meals Charity",
+      donee_ein: "987654321",
+      vehicle_vin: "1HGBH41JXMN109186",
+      contribution_date: "2025-06-01",
+      acknowledgment_furnished_date: "2025-06-20",
+      intended_use_description: "Deliver meals daily to needy residents",
+      intended_use_duration: "one year",
+      copy_b_or_equivalent_confirmed: true,
+      no_transfer_before_use_box5a_confirmed: true,
+      significant_use_box5c_confirmed: true,
+      no_goods_or_services_confirmed: true,
+      reviewed_pdf_matches_source_confirmed: true,
+    },
     vehicle_significant_use_acknowledgment: {
       copy_received_from_donee: true as const,
       donee_certified: true as const,
@@ -1468,7 +1492,7 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
     attachments: [{
       fileName: "Form1098C-Civic.pdf",
       description: "Form1098C Civic significant use certification",
-      bytes: await acknowledgmentPdf(),
+      bytes,
     }],
   });
   assertStringIncludes(

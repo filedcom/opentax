@@ -1,5 +1,22 @@
 # TY2025 Form 8283 vehicle acknowledgment byte prerequisites
 
+## Section A significant charitable use, boxes 5a and 5c (2026-10-01, unrun)
+
+The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)
+uses box 5a for the donee's promise not to transfer a vehicle before significant
+intervening use and box 5c for the intended use and duration. Its
+[instructions](https://www.irs.gov/instructions/i1098c) require the donor
+acknowledgment within 30 days of the contribution. The bounded Section A
+significant-use route now requires a reviewed exact-PDF-byte record matching
+the donor, donee, VIN, contribution/furnishing dates, intended use and
+duration, no-transfer certification, and no goods or services. Native MeF and
+PDF preparation check the same prepared attachment link, SHA-256 and readable
+PDF page. A $4,000 full-return case reaches Schedule A and Form 1040; changed
+bytes and use duration reject in authored fixtures for the deferred batch.
+The review facts are human assertions; code does not parse the printed
+certification or authenticate the donee signature. Material improvement under
+box 5a remains a separate evidence case.
+
 ## Section A needy-transfer certification (2026-10-01, unrun)
 
 The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)

@@ -645,6 +645,8 @@ function requiredVehicleAttachment(
     vehicle_sale_pdf_review?: { pdf_sha256: string };
     vehicle_needy_transfer_acknowledgment?: unknown;
     vehicle_needy_pdf_review?: { pdf_sha256: string };
+    vehicle_significant_use_acknowledgment?: unknown;
+    vehicle_significant_use_pdf_review?: { pdf_sha256: string };
   },
   context: MefBuildContext,
 ): { fileName: string; id?: string } {
@@ -700,6 +702,24 @@ function requiredVehicleAttachment(
     ) {
       throw new Error(
         "Form 8283 needy-transfer acknowledgment bytes differ from the reviewed PDF",
+      );
+    }
+  }
+  if (
+    item.vehicle_significant_use_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
+    if (!item.vehicle_significant_use_pdf_review) {
+      throw new Error(
+        "Form 8283 significant-use vehicle needs an exact-byte donee acknowledgment review",
+      );
+    }
+    if (
+      context.attachmentSha256ByFileName?.[fileName] !==
+        item.vehicle_significant_use_pdf_review.pdf_sha256
+    ) {
+      throw new Error(
+        "Form 8283 significant-use acknowledgment bytes differ from the reviewed PDF",
       );
     }
   }
