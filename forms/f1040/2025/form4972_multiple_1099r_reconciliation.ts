@@ -4,7 +4,7 @@ import {
   inputSchema as form4972Schema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
 
-/** One taxpayer's two full-share distributions from the same qualified plan. */
+/** One participant's two or three full-share distributions from one plan. */
 export function reconcileForm4972Multiple1099R(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -12,7 +12,7 @@ export function reconcileForm4972Multiple1099R(
 ): void {
   const form = form4972Schema.parse(fields);
   const plan = form.multiple_1099r;
-  if (!plan) throw new Error("Form 4972 two-source plan evidence is missing");
+  if (!plan) throw new Error("Form 4972 multi-source plan evidence is missing");
   const source = f1099rSchema.safeParse(pending?.f1099r);
   const elected = source.success
     ? source.data.f1099rs.filter((item) =>
@@ -27,8 +27,8 @@ export function reconcileForm4972Multiple1099R(
     form.elect_10yr_averaging !== true ||
     (form.elect_capital_gain === true &&
       (form.capital_gain_amount ?? 0) <= 0) ||
-    refs[0] === refs[1] ||
-    elected.length !== 2 ||
+    new Set(refs).size !== refs.length ||
+    elected.length !== refs.length ||
     elected.some((item, index) =>
       item.ts !== form.recipient ||
       item.source_document_reference !== refs[index] ||
@@ -44,8 +44,10 @@ export function reconcileForm4972Multiple1099R(
       (item.box6_nua ?? 0) !== 0 ||
       (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
     ) ||
-    elected[0]?.payer_ein !== elected[1]?.payer_ein ||
-    elected[0]?.payer_name !== elected[1]?.payer_name ||
+    elected.some((item) =>
+      item.payer_ein !== elected[0]?.payer_ein ||
+      item.payer_name !== elected[0]?.payer_name
+    ) ||
     !elected[0]?.payer_ein.trim() || !elected[0]?.payer_name.trim() ||
     elected.reduce((sum, item) => sum + (item.box2a_taxable_amount ?? 0), 0) !==
       form.lump_sum_amount ||
@@ -58,7 +60,7 @@ export function reconcileForm4972Multiple1099R(
       )
   ) {
     throw new Error(
-      "Form 4972 two-source election needs matching owner, plan, complete source copies, and summed boxes 2a and 3",
+      "Form 4972 multi-source election needs matching owner, plan, complete source copies, and summed boxes 2a and 3",
     );
   }
 
@@ -79,7 +81,7 @@ export function reconcileForm4972Multiple1099R(
     !returnFields || returnFields.form4972_tax !== tax
   ) {
     throw new Error(
-      "Form 4972 two-source calculated lines and special tax must match the finalized Form 1040",
+      "Form 4972 multi-source calculated lines and special tax must match the finalized Form 1040",
     );
   }
 }

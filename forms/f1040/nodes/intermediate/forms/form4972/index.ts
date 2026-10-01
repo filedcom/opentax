@@ -100,10 +100,7 @@ export const inputSchema = z.object({
     plan_reference: z.string().trim().min(1),
     full_balance_statement_reference: z.string().trim().min(1),
     all_qualified_distributions_included: z.literal(true),
-    source_document_references: z.tuple([
-      z.string().trim().min(1),
-      z.string().trim().min(1),
-    ]),
+    source_document_references: z.array(z.string().trim().min(1)).min(2).max(3),
   }).strict().optional(),
 });
 
@@ -129,7 +126,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (input.multiple_1099r) {
     const refs = input.multiple_1099r.source_document_references;
     if (
-      refs[0] === refs[1] ||
+      new Set(refs).size !== refs.length ||
       (input.recipient !== "T" && input.recipient !== "S") ||
       input.beneficiary_distribution !== false ||
       input.participant_five_year_member !== true ||

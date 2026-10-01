@@ -16,7 +16,7 @@ import {
   publicElectionSchema as singleElectionSchema,
 } from "./index.ts";
 
-const sourceReferences = z.array(z.string().trim().min(1)).min(1).max(2)
+const sourceReferences = z.array(z.string().trim().min(1)).min(1).max(3)
   .refine((refs) => new Set(refs).size === refs.length);
 const sameReferences = (left: unknown, right: readonly string[]) =>
   Array.isArray(left) && left.length === right.length &&

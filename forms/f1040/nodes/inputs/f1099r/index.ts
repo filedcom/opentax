@@ -1157,7 +1157,10 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
-  if (lumpItems.length === 3 || lumpItems.length === 4) {
+  if (
+    (lumpItems.length === 3 || lumpItems.length === 4) &&
+    new Set(lumpItems.map((item) => item.ts)).size === 2
+  ) {
     const taxpayer = lumpItems.filter((item) => item.ts === "T");
     const spouse = lumpItems.filter((item) => item.ts === "S");
     const groups = [taxpayer, spouse];
@@ -1283,19 +1286,21 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   if (lumpItems.length > 1) {
     const [first, second] = lumpItems;
     const plan = first?.form4972_plan;
+    const refs = lumpItems.map((item) => item.source_document_reference);
     if (
-      lumpItems.length !== 2 || !first || !second || !plan ||
-      !first.source_document_reference || !second.source_document_reference ||
-      first.source_document_reference === second.source_document_reference ||
-      second.form4972_plan?.participant_name !== plan.participant_name ||
-      second.form4972_plan?.participant_ssn !== plan.participant_ssn ||
-      second.form4972_plan?.plan_reference !== plan.plan_reference ||
-      second.form4972_plan?.full_balance_statement_reference !==
-        plan.full_balance_statement_reference ||
-      second.form4972_plan?.all_qualified_distributions_included !== true ||
-      first.ts === undefined || second.ts !== first.ts ||
-      first.ts !== "T" || first.payer_ein !== second.payer_ein ||
-      first.payer_name !== second.payer_name ||
+      lumpItems.length > 3 || !first || !second || !plan ||
+      refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
+      lumpItems.some((item) =>
+        item.form4972_plan?.participant_name !== plan.participant_name ||
+        item.form4972_plan?.participant_ssn !== plan.participant_ssn ||
+        item.form4972_plan?.plan_reference !== plan.plan_reference ||
+        item.form4972_plan?.full_balance_statement_reference !==
+          plan.full_balance_statement_reference ||
+        item.form4972_plan?.all_qualified_distributions_included !== true ||
+        item.ts !== first.ts || item.payer_ein !== first.payer_ein ||
+        item.payer_name !== first.payer_name
+      ) ||
+      first.ts !== "T" ||
       first.payer_ein.trim().length === 0 ||
       first.payer_name.trim().length === 0 ||
       items.some((item) =>
@@ -1306,38 +1311,39 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.box9a_pct_total !== 100 ||
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
+        (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
         (item.box6_nua ?? 0) !== 0 ||
         (item.box8_other ?? 0) !== 0 ||
         item.box8_pct_total !== undefined
       )
     ) {
       throw new Error(
-        "Form 4972 two-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
+        "Form 4972 multi-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
       );
     }
     return [output(form4972Elections, {
       source_forms: [{
-        source_document_references: [
-          first.source_document_reference,
-          second.source_document_reference,
-        ],
+        source_document_references: refs,
         form4972_plan: plan,
         recipient: first.ts,
-        lump_sum_amount: first.box2a_taxable_amount! +
-          second.box2a_taxable_amount!,
-        ...((first.box3_capital_gain ?? 0) +
-              (second.box3_capital_gain ?? 0) > 0
+        lump_sum_amount: lumpItems.reduce(
+          (sum, item) => sum + item.box2a_taxable_amount!,
+          0,
+        ),
+        ...(lumpItems.reduce(
+            (sum, item) => sum + (item.box3_capital_gain ?? 0),
+            0,
+          ) > 0
           ? {
-            capital_gain_amount: (first.box3_capital_gain ?? 0) +
-              (second.box3_capital_gain ?? 0),
+            capital_gain_amount: lumpItems.reduce(
+              (sum, item) => sum + (item.box3_capital_gain ?? 0),
+              0,
+            ),
           }
           : {}),
         multiple_1099r: {
           ...plan,
-          source_document_references: [
-            first.source_document_reference,
-            second.source_document_reference,
-          ],
+          source_document_references: refs,
         },
       }],
     })];

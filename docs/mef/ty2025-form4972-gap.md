@@ -1,5 +1,23 @@
 # TY2025 Form 4972 remaining coverage
 
+## Three full-share copies from one participant's plan (2026-10-01, unrun)
+
+The bounded same-plan Form 1099-R collection now accepts three distinct
+full-share copies for one taxpayer participant, with the same payer, plan,
+participant, complete-balance statement, and Part III election. Optional
+positive box 3 amounts across all three may also elect Part II. The source
+node sums boxes 2a and 3 once, calculates one Form 4972, and routes its
+separate tax to Form 1040 line 16; native MeF and PDF replay all three
+copies and the finalized tax. A $20,000/$25,000/$30,000 distribution with
+$2,000/$3,000/$4,000 capital portions gives line 6 $9,000, line 7 $1,800,
+and line 8 $66,000. Missing/changed third copy, different plan, and changed
+Form 1040 tax have authored rejection fixtures. The
+[2025 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require all qualified distributions for the same participant in the year to
+be combined on one Form 4972. These fixtures are unrun; administrator/source
+bytes, partial shares, NUA, annuity, estate/death combinations across copies,
+filled PDF, XSD/business rules, and ATS remain open.
+
 ## Three or four source copies across two spouses (2026-10-01, unrun)
 
 The existing public `elections[]` route now combines two full-share Form 1099-R
