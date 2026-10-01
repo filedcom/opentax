@@ -423,6 +423,34 @@ export const inputSchema = z.object({
 type R1099Item = z.infer<typeof itemSchema>;
 type R1099Items = R1099Item[];
 
+/** Reject an exact repeated identified payer copy before its amounts accumulate. */
+export function assertDistinct1099RCopies(
+  items: readonly R1099Item[],
+): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    const reference = item.source_document_reference?.trim();
+    const payer = item.payer_ein.replace(/\D/g, "");
+    const recipient = item.recipient_ssn?.replace(/\D/g, "");
+    const account = item.account_number?.trim();
+    if (!reference || !payer || !recipient || !account) continue;
+    // Only issued 1099-R boxes distinguish copies here. Taxpayer-entered
+    // routing, basis, and review flags cannot turn one payer copy into two.
+    const boxes = Object.entries(item)
+      .filter(([field, value]) =>
+        field.startsWith("box") && value !== undefined
+      )
+      .sort(([left], [right]) => left.localeCompare(right));
+    const key = JSON.stringify([reference, payer, recipient, account, boxes]);
+    if (seen.has(key)) {
+      throw new Error(
+        "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+      );
+    }
+    seen.add(key);
+  }
+}
+
 // Form 1040 line 5c(1) follows a payer-reported pension/plan direct rollover,
 // not an IRA distribution, an excluded Form 4972 distribution, or a disability
 // payment reported as wages. Code G can have a taxable Roth portion in box 2a.
@@ -1476,6 +1504,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
+    assertDistinct1099RCopies(r1099s);
     if (
       ctx.taxYear === 2025 &&
       r1099s.some((item) =>

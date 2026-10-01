@@ -103,6 +103,27 @@ Deno.test("1099-R box 9a percentage is exported as the XSD ratio", () => {
   );
 });
 
+Deno.test("1099-R native export rejects an exact repeated identified source copy", () => {
+  const [source] = items();
+  const copy = {
+    ...source,
+    source_document_reference: "2025 issued pension 1099-R",
+    recipient_ssn: filer.primarySSN,
+    account_number: "PENSION-1",
+  };
+  assertThrows(
+    () => f1099r.build({ f1099rs: [copy, { ...copy }] }, { filer }),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+  assertEquals(
+    f1099r.build({
+      f1099rs: [copy, { ...copy, account_number: "PENSION-2" }],
+    }, { filer }).length,
+    2,
+  );
+});
+
 Deno.test("1099-R for a spouse does not use the taxpayer's SSN", () => {
   const [first] = items();
   assertThrows(

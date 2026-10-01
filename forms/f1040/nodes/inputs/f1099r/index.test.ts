@@ -142,6 +142,46 @@ Deno.test("f1099r.compute: pension distribution routes to f1040 lines 5a/5b", ()
   assertEquals(input.line5b_pension_taxable, 20000);
 });
 
+Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income or withholding", () => {
+  const copy = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: "PENSION-1",
+    box4_federal_withheld: 500,
+  });
+  assertThrows(
+    () => compute([copy, { ...copy, simplified_method_flag: true }]),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+  const iraCopy = minimalIraItem({
+    recipient_ssn: "111223333",
+    source_document_reference: "2025 IRA 1099-R",
+    account_number: "IRA-1",
+    box4_federal_withheld: 200,
+  });
+  assertThrows(
+    () => compute([iraCopy, iraCopy]),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+});
+
+Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amounts", () => {
+  const first = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: "PENSION-1",
+    box2a_taxable_amount: 1_000,
+    box4_federal_withheld: 100,
+  });
+  const result = compute([first, {
+    ...first,
+    account_number: "PENSION-2",
+  }]);
+  const fields = f1040Input(result);
+  assertEquals(fields.line5b_pension_taxable, 2_000);
+  assertEquals(fields.line25b_withheld_1099, 200);
+});
+
 Deno.test("f1099r.compute: positive TY2025 code P cannot enter ordinary retirement lines", () => {
   for (
     const item of [
