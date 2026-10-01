@@ -168,7 +168,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         note) &&
       (!note || input.debt_basis_beginning !== undefined ||
         input.new_loans !== note.cash_advance_amount +
-          (note.second_formal_note?.cash_advance_amount ?? 0) ||
+            (note.second_formal_note?.cash_advance_amount ?? 0) ||
         input.stock_basis_beginning !== note.beginning_stock_basis ||
         input.ordinary_loss !== note.current_box1_ordinary_loss ||
         (input.additional_contributions ?? 0) !== 0 ||
@@ -184,13 +184,17 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     }
     if (note?.second_formal_note) {
       const stock = input.stock_basis_beginning ?? 0;
+      const firstDebtBasis = note.cash_advance_amount -
+        (note.principal_repayment?.amount ?? 0);
+      const totalDebtBasis = firstDebtBasis +
+        note.second_formal_note.cash_advance_amount;
       const debtLoss = Math.min(
         (input.ordinary_loss ?? 0) - stock,
-        input.new_loans ?? 0,
+        totalDebtBasis,
       );
       if (
         debtLoss <= 0 || !Number.isSafeInteger(
-          debtLoss * note.cash_advance_amount / (input.new_loans ?? 0),
+          debtLoss * firstDebtBasis / totalDebtBasis,
         )
       ) {
         throw new Error(

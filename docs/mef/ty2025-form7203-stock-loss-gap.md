@@ -1,5 +1,28 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## Two formal notes with one identified principal repayment (2026-10-01, unrun)
+
+The two-note source now permits one 2025 principal repayment on the first
+formal note when the payment names that exact note ID, follows its dated cash
+advance, matches K-1 box 16 code E, and has distinct corporate-loan-ledger and
+shareholder-bank-deposit references. The second note must affirm no repayment.
+Both notes still start with zero face amount and debt basis, have no prior
+basis reduction, and comprise the complete shareholder-debt inventory. The
+payment is less than the first note's advance, so its fully based repayment
+creates no line 34 gain.
+
+Form 7203 Part II reports the repayment only in debt column 1 on lines 19,
+26, 32 and 33. Debt column 2 has no repayment. The current loss first uses
+stock basis, then reduces the two remaining debt bases pro rata using each
+note's **post-repayment** line 29 basis, with exact whole-dollar allocation.
+The shared native/PDF projection replays the K-1, stock ledger, both note
+sources, repayment, Schedule E loss, Schedule 1 line 5, and Form 1040 line 8.
+Positive and note-ID, K-1, and return-tamper fixtures are authored but unrun.
+Authenticated loan/bank bytes, repayments on the second note or both notes,
+reduced-basis repayment gain, and nonintegral allocations remain closed. This
+follows the [Form 7203 instructions](https://www.irs.gov/instructions/i7203)
+for separate formal-note repayments and pro rata loss reduction.
+
 ## Two new formal shareholder notes (2026-10-01, unrun)
 
 The reviewed formal-note source can identify a second signed 2025 note and

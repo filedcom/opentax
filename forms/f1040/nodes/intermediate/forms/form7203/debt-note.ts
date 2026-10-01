@@ -46,6 +46,7 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
   no_other_shareholder_debt_confirmed: z.literal(true),
   no_2025_repayments_confirmed: z.boolean(),
   principal_repayment: z.object({
+    formal_note_id: sourceReference,
     date: ty2025Date,
     amount: z.number().int().positive(),
     corporate_loan_ledger_reference: sourceReference,
@@ -63,28 +64,34 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
     note.signed_note_document_reference,
     note.bank_transfer_reference,
     ...(note.second_formal_note
-      ? [note.second_formal_note.formal_note_id,
+      ? [
+        note.second_formal_note.formal_note_id,
         note.second_formal_note.signed_note_document_reference,
-        note.second_formal_note.bank_transfer_reference]
+        note.second_formal_note.bank_transfer_reference,
+      ]
       : []),
     ...(note.principal_repayment
-      ? [note.principal_repayment.corporate_loan_ledger_reference,
-        note.principal_repayment.shareholder_bank_deposit_reference]
+      ? [
+        note.principal_repayment.corporate_loan_ledger_reference,
+        note.principal_repayment.shareholder_bank_deposit_reference,
+      ]
       : []),
   ];
   if (
     note.shareholder_ssn !== note.shareholder_lender_ssn ||
     note.corporation_ein !== note.corporate_borrower_ein ||
     (note.second_formal_note !== undefined &&
-      (note.second_formal_note.shareholder_lender_ssn !== note.shareholder_ssn ||
-        note.second_formal_note.corporate_borrower_ein !== note.corporation_ein ||
-        note.no_2025_repayments_confirmed !== true ||
-        note.principal_repayment !== undefined)) ||
+      (note.second_formal_note.shareholder_lender_ssn !==
+          note.shareholder_ssn ||
+        note.second_formal_note.corporate_borrower_ein !==
+          note.corporation_ein ||
+        note.second_formal_note.no_2025_repayments_confirmed !== true)) ||
     new Set(references).size !== references.length ||
     note.no_2025_repayments_confirmed ===
       (note.principal_repayment !== undefined) ||
     (note.principal_repayment !== undefined &&
-      (note.principal_repayment.date <= note.note_execution_date ||
+      (note.principal_repayment.formal_note_id !== note.formal_note_id ||
+        note.principal_repayment.date <= note.note_execution_date ||
         note.principal_repayment.amount >= note.cash_advance_amount))
   ) {
     ctx.addIssue({
@@ -134,8 +141,9 @@ export function reconcileOneNoteDebtCandidate(
   if (
     note.second_formal_note &&
     !Number.isSafeInteger(
-      debtSupportedLossCandidate * note.cash_advance_amount /
-        (note.cash_advance_amount +
+      debtSupportedLossCandidate *
+        (note.cash_advance_amount - (note.principal_repayment?.amount ?? 0)) /
+        (note.cash_advance_amount - (note.principal_repayment?.amount ?? 0) +
           note.second_formal_note.cash_advance_amount),
     )
   ) {
