@@ -1,5 +1,26 @@
 # TY2025 Form 8582 durable activity identity
 
+## One farm profit allocated across two rental losses (written, unrun)
+
+One type-B Form 4835 farm's $3,000 current profit may offset two distinct
+type-B Schedule E rental losses of $2,000 and $4,000. Form 8582 Part V totals
+$3,000 income and $6,000 loss; Part VII allocates its $3,000 suspended balance
+in the rental losses' 1:2 ratio, leaving $1,000 and $2,000 under their own
+durable activity IDs. Parts VIII, Schedule E, Schedule 1 and Form 1040 retain
+the corresponding allowed amounts and net zero additional income. Native
+export now requires the one farm and two rental sources, no prior PAL or sale,
+explicit at-risk answers, one W-2 and exact settled-return amounts. The PDF
+replays that source check and projects both Part VII rows. A full-return
+positive fixture plus amount, duplicate-ID and return-tamper fixtures are
+authored but unrun. The [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) require Part VII ratios
+based on each activity's share of total overall losses and carry the unallowed
+amount into Part VIII.
+
+Document-byte authentication, prior losses, active-rental allowances, sales,
+and wider activity mixes remain outside this bound. XSD, filled PDF, business
+rules and filing acceptance are pending.
+
 ## One current farm profit against one passive rental loss (written, unrun)
 
 One type-B Form 4835 share-rent farm's $3,000 current at-risk profit may
