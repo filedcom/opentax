@@ -44,8 +44,8 @@ ledger as bounded and export-gated. Form 1098 Copy B evidence binding for
 positive box 6 and Form 8962 self-employed health-insurance deduction/PTC
 ordering and a further Form 8283 Section B art slice are also recorded.
 The bounded Form 3800/Form 8820 PDF credit reconciliation is also recorded.
-Further Form 8889/5329 and Form 8835 slices are in progress and are not counted
-as complete.
+Further Form 8889/5329, Form 8835, and Form 4952 slices are in progress and
+are not counted as complete.
 The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
