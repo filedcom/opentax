@@ -19,6 +19,23 @@ Marketplace-statement authentication remain outside this route. Publication
 [974](https://www.irs.gov/publications/p974) still governs special coverage
 and eligibility cases, which this narrow route does not infer.
 
+## Corrected SLCSP in the one-month transition (staged, unrun)
+
+The same one-person transition now admits a corrected overlap-month column B
+only when **both** identified policies carry distinct dated Marketplace-error
+determinations for that month, each with its own reference and SHA-256, and
+both agree on the corrected benchmark. Their reported column B and annual
+statement totals remain intact. The source graph counts the corrected $650
+benchmark once while adding both $900 in premiums and $350 in APTC; native
+MeF and PDF independently check the source against Form 8962 monthly rows,
+Schedule 2 line 1a, and Form 1040 line 17. The positive fixture expects
+$854 PTC and $1,396 excess APTC; mismatched correction, reused evidence, and
+return-tamper fixtures are authored but unrun. More than one overlap month,
+one-sided corrections, mixed coverage families, allocation, move, and external
+authentication of the Marketplace records remain closed. This follows the
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) for
+multiple same-state policies and an incorrect applicable SLCSP.
+
 ## One-policy corrected SLCSP month (build-first, unrun)
 
 The monthly single-filer route now accepts one identified, nonshared,

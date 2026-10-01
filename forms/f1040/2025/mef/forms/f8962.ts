@@ -154,7 +154,6 @@ export function onePersonTransitionOverlapMonth(
       policy.covered_individual_ssns?.length !== 1 ||
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || policy.shared_policy_periods !== undefined ||
-      policy.slcsp_corrections !== undefined ||
       policy.slcsp_review_periods !== undefined
     ) ||
     policies[0].covered_individual_ssns?.[0]?.replaceAll("-", "") !==
@@ -190,6 +189,29 @@ export function onePersonTransitionOverlapMonth(
           : active[second][month] && !active[first][month],
     ).some((valid) => !valid)
   ) return undefined;
+  const corrections = policies.map((policy) => policy.slcsp_corrections);
+  if (corrections.some((items) => items !== undefined)) {
+    const firstCorrection = corrections[0]?.[0];
+    const secondCorrection = corrections[1]?.[0];
+    if (
+      corrections.some((items) => items?.length !== 1) ||
+      !firstCorrection || !secondCorrection ||
+      firstCorrection.month !== transition + 1 ||
+      secondCorrection.month !== transition + 1 ||
+      firstCorrection.basis !== "marketplace_error" ||
+      secondCorrection.basis !== "marketplace_error" ||
+      firstCorrection.corrected_slcsp !==
+        secondCorrection.corrected_slcsp ||
+      !firstCorrection.determination_reference ||
+      !secondCorrection.determination_reference ||
+      !firstCorrection.determination_record_sha256 ||
+      !secondCorrection.determination_record_sha256 ||
+      firstCorrection.determination_reference ===
+        secondCorrection.determination_reference ||
+      firstCorrection.determination_record_sha256 ===
+        secondCorrection.determination_record_sha256
+    ) return undefined;
+  }
   return transition;
 }
 
@@ -2304,7 +2326,10 @@ function reconcileSimplePolicyMonths(
       active.some((activePolicy) =>
         (twoStateFamilyPolicies
           ? (activePolicy.monthly_slcsps?.[index] ?? 0) <= 0
-          : activePolicy.monthly_slcsps?.[index] !== slcsp) ||
+          : (activePolicy.slcsp_corrections?.find((correction) =>
+            correction.month === index + 1
+          )?.corrected_slcsp ?? activePolicy.monthly_slcsps?.[index]) !==
+            slcsp) ||
         (activePolicy.monthly_premiums?.[index] ?? 0) <= 0 ||
         (activePolicy.monthly_aptcs?.[index] ?? 0) <= 0
       )
