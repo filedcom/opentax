@@ -1,5 +1,20 @@
 # TY2025 Form 4972 remaining coverage
 
+## Four full-share copies from one participant's plan (2026-10-01, unrun)
+
+The same-plan source collection no longer imposes a three-copy limit: each
+additional full-share Form 1099-R must have a distinct issued-copy reference
+and the same participant, payer, plan, and complete-balance statement. The
+election must name every copy exactly once. Source calculation sums boxes 2a
+and 3 into one Form 4972, while native MeF and PDF independently replay every
+copy against the final Form 1040 special tax. An authored four-copy case totals
+$110,000 taxable distribution and $14,000 capital gain; missing, extra,
+changed-gain, changed-plan, and final-tax tamper cases are authored for the
+deferred validation batch. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require one-year complete-balance distributions to be treated together.
+Administrator and issued-copy bytes, partial shares, NUA, annuity,
+estate/death combinations, and final XSD/PDF/business-rule review remain open.
+
 ## Three full-share copies from one participant's plan (2026-10-01, unrun)
 
 The bounded same-plan Form 1099-R collection now accepts three distinct

@@ -1288,7 +1288,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     const plan = first?.form4972_plan;
     const refs = lumpItems.map((item) => item.source_document_reference);
     if (
-      lumpItems.length > 3 || !first || !second || !plan ||
+      !first || !second || !plan ||
       refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
       lumpItems.some((item) =>
         item.form4972_plan?.participant_name !== plan.participant_name ||

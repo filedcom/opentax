@@ -4,7 +4,7 @@ import {
   inputSchema as form4972Schema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
 
-/** One participant's two or three full-share distributions from one plan. */
+/** One participant's full-share distributions from one plan. */
 export function reconcileForm4972Multiple1099R(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,

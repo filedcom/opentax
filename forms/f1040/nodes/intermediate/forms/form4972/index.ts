@@ -100,7 +100,7 @@ export const inputSchema = z.object({
     plan_reference: z.string().trim().min(1),
     full_balance_statement_reference: z.string().trim().min(1),
     all_qualified_distributions_included: z.literal(true),
-    source_document_references: z.array(z.string().trim().min(1)).min(2).max(3),
+    source_document_references: z.array(z.string().trim().min(1)).min(2),
   }).strict().optional(),
 });
 
@@ -140,7 +140,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       (input.recipient_share_pct ?? 100) !== 100
     ) {
       throw new Error(
-        "form4972: two Form 1099-R sources require one identified participant and a full-share Part-III election, with matching Part II capital gain if elected",
+        "form4972: multiple Form 1099-R sources require one identified participant and a full-share Part-III election, with matching Part II capital gain if elected",
       );
     }
   }
