@@ -340,6 +340,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           relationship: "daughter",
           irs_relationship_code: "DAUGHTER",
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -396,6 +397,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           relationship: "daughter",
           irs_relationship_code: "DAUGHTER",
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -455,6 +457,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           relationship: "daughter",
           irs_relationship_code: "DAUGHTER",
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -731,6 +734,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           relationship: "daughter",
           irs_relationship_code: "DAUGHTER",
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -798,6 +802,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             relationship: "daughter",
             irs_relationship_code: "DAUGHTER",
             months_in_home: 12,
+            months_lived_with_you_in_us: 12,
             lived_in_us_over_half_year: true,
             us_citizen_national_or_resident: true,
             provided_over_half_own_support: false,
@@ -2889,6 +2894,75 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Schedule 1-A lines 4a/4b show $5,000/$6,500 and line 4c takes $6,500 once",
       "Form 1040 line 1c includes $1,500 while line 13b deducts $6,500",
       "Form 4137 tip tax joins Schedule 2 and Form 1040",
+    ],
+  },
+  {
+    id: "single-two-employer-form4137-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [
+        {
+          ...wage(30_000, 2_500, "Example Restaurant", "12-3456789"),
+          employee_ssn: "111-22-3333",
+          box3_ss_wages: 25_000,
+          box4_ss_withheld: 1_550,
+          box7_ss_tips: 5_000,
+          box14b_tipped_code: "102",
+        },
+        {
+          ...wage(20_000, 1_500, "Second Restaurant", "98-7654321"),
+          employee_ssn: "111-22-3333",
+          box3_ss_wages: 18_000,
+          box4_ss_withheld: 1_116,
+          box7_ss_tips: 2_000,
+          box14b_tipped_code: "103",
+        },
+      ],
+      form4137: {
+        forms: [{
+          recipient: "taxpayer",
+          employers: [
+            {
+              name: "Example Restaurant",
+              ein: "12-3456789",
+              tips_received: 6_500,
+              tips_reported: 5_000,
+            },
+            {
+              name: "Second Restaurant",
+              ein: "98-7654321",
+              tips_received: 3_000,
+              tips_reported: 2_000,
+            },
+          ],
+        }],
+      },
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a", "schedule2", "form4137"],
+    reviewFocus: [
+      "Both issued W-2 employers and Form 4137 rows appear with matching owner, EIN, occupation, and tips",
+      "Schedule 1-A prints zero on lines 4a/4b and $9,500 on line 4c with a two-employer worksheet",
+      "Form 1040 line 1c includes $2,500 unreported tips and line 13b deducts $9,500",
+      "Form 4137 tax reaches Schedule 2 and Form 1040 line 23",
     ],
   },
   {
@@ -5654,6 +5728,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           relationship: "daughter",
           irs_relationship_code: "DAUGHTER",
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,

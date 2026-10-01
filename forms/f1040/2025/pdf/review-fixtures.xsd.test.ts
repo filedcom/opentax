@@ -981,6 +981,29 @@ for (const fixture of pdfReviewFixtures) {
         );
         assertStringIncludes(xml, "<IRS4137 ");
       }
+      if (fixture.id === "single-two-employer-form4137-tips-schedule1a") {
+        assertEquals(result.pending.f1040.line1c_unreported_tips, 2_500);
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          9_500,
+        );
+        assertEquals(
+          (xml.match(/<UnreportedTipIncomePerEmployer>/g) ?? []).length,
+          2,
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsWagesAmt>0</QualifiedTipsWagesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsForm4137Amt>0</QualifiedTipsForm4137Amt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsEmployeeAmt>9500</QualifiedTipsEmployeeAmt>",
+        );
+      }
       if (fixture.id === "single-two-partnership-code-s-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 400);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 600);

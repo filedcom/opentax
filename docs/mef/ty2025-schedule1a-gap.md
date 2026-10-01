@@ -39,8 +39,8 @@ two-page PDF field map and inspected synthetic full-return packets.
   for the W-2 box 7-only route, and an
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
-  multiple Schedule C businesses, multiple Form 4137 employers in a
-  full packet, and underlying record authentication remain open. Native and PDF
+  multiple Schedule C businesses, multi-employer full-packet validation, and
+  underlying record authentication remain open. Native and PDF
   export also require every qualifying Form 4137 employer with a matching W-2
   to appear in the Schedule 1-A claim. The two-employer positive and
   omission-tamper fixtures await the bulk test gate; they do not authenticate
@@ -207,8 +207,19 @@ in the [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md).
 This route requires a matching employer, W-2 occupation code, recipient
 SSN, and Form 4137 amount at export. Multiple-employer greater-of
 arithmetic and the worksheet pass focused tests. Form 4070 employer-report bytes,
-multiple Form 4137 employers in a full packet, source-byte authentication,
+multi-employer full-packet validation, source-byte authentication,
 IRS rules, and ATS remain open.
+
+The `single-two-employer-form4137-tips-schedule1a` fixture now stages a full
+two-employer packet with distinct issued W-2 sources and Form 4137 line 1
+rows. Under the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),
+the employer worksheet selects the greater of W-2/4070 and Form 4137 tips
+per employer. The staged native and PDF assertions expect $6,500 and $3,000
+in its two rows, zero on lines 4a/4b, $9,500 on line 4c and Form 1040 line
+13b, and $2,500 of unreported tips on Form 1040 line 1c. They also reject
+an omitted Schedule 1-A employer or changed Form 4137 amount. A prepared
+MeF/PDF bundle assertion is authored but awaits the bulk test gate and
+visual PDF review; no acceptance or source-byte authentication is claimed.
 
 The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
 monthly employer reports totaling $20,000, matched by recipient, employer,

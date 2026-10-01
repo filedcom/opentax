@@ -1,7 +1,11 @@
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { buildMefBundle } from "../../mef/builder.ts";
+import { buildPending } from "../../mef/pending.ts";
+import { buildPdfBytes } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { irs1040Pdf } from "./f1040.ts";
+import { form4137Pdf } from "./f4137.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -32,6 +36,111 @@ Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero empl
     )?.pdfField,
     "form1[0].Page1[0].f1_13[0]",
   );
+});
+
+Deno.test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and Form 1040", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-employer-form4137-tips-schedule1a"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const projected = schedule1aPdf.projectFields?.(
+    pending.schedule1a,
+    pending,
+  );
+  assertEquals(projected?.line4a_w2_tips, 0);
+  assertEquals(projected?.line4b_form4137_tips, 0);
+  assertEquals(projected?.line4c_employee_tips, 9_500);
+  assertEquals(projected?.line38_total, 9_500);
+  assertEquals(
+    (projected?.pdf_tip_sources as Array<{
+      reported_amount: number;
+      form4137_amount: number;
+      amount: number;
+    }>).map((row) => [
+      row.reported_amount,
+      row.form4137_amount,
+      row.amount,
+    ]),
+    [[5_000, 6_500, 6_500], [2_000, 3_000, 3_000]],
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(pending.f1040, pending)
+      ?.line13b_additional_deductions,
+    9_500,
+  );
+  const [form4137] = form4137Pdf.instances?.(
+    pending.form4137,
+    fixture.filer,
+    pending,
+  ) ?? [];
+  assertEquals(form4137?.employer_1_received, 6_500);
+  assertEquals(form4137?.employer_2_received, 3_000);
+
+  const sourceRows = pending.schedule1a.qualified_form4137_tips as Array<
+    Record<string, unknown>
+  >;
+  const omitted = {
+    ...pending,
+    schedule1a: {
+      ...pending.schedule1a,
+      qualified_form4137_tips: sourceRows.slice(0, 1),
+    },
+    f1040: { ...pending.f1040, line13b_additional_deductions: 8_500 },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(omitted.schedule1a, omitted),
+    Error,
+    "do not match the filed employer",
+  );
+  const sourceForms = pending.form4137.forms as Array<{
+    recipient: string;
+    employers: Array<Record<string, unknown>>;
+  }>;
+  const changedEmployer = {
+    ...pending,
+    form4137: {
+      ...pending.form4137,
+      forms: [{
+        ...sourceForms[0],
+        employers: [
+          sourceForms[0].employers[0],
+          {
+            ...sourceForms[0].employers[1],
+            tips_received: 2_999,
+          },
+        ],
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(pending.schedule1a, changedEmployer),
+    Error,
+    "do not match the filed employer",
+  );
+});
+
+Deno.test("2025 two-employer Form 4137 tips build one prepared filled return PDF", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-employer-form4137-tips-schedule1a"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer: fixture.filer });
+  const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
+  assert((await PDFDocument.load(pdf)).getPageCount() >= 7);
 });
 
 const source = {
