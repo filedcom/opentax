@@ -178,6 +178,7 @@ const inputSchema = z.object({
   form8396_source: form8396SourceSchema.optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
+    empowermentCredit: z.number().finite().nonnegative().optional(),
     specifiedCredit: z.number().finite().nonnegative(),
     standardCarryforward: z.number().finite().nonnegative(),
     specifiedCarryforward: z.number().finite().nonnegative(),
@@ -606,7 +607,8 @@ function businessCreditAllowance(
   const credits = input.form3800_source_credits;
   if (!credits) return undefined;
   if (
-    credits.standardCredit + credits.specifiedCredit +
+    credits.standardCredit + (credits.empowermentCredit ?? 0) +
+          credits.specifiedCredit +
           credits.passiveLines.line2 + credits.passiveLines.line23 +
           credits.passiveLines.line32 <= 0 ||
     input.filing_status === undefined ||

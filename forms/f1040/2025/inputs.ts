@@ -460,7 +460,7 @@ import {
 } from "../nodes/inputs/f8835/index.ts";
 import {
   f8844,
-  itemSchema as f8844ItemSchema,
+  inputSchema as f8844InputSchema,
 } from "../nodes/inputs/f8844/index.ts";
 import {
   f8864,
@@ -898,7 +898,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f5471, itemSchema: f5471ItemSchema, isArray: true },
   { node: f8828, itemSchema: f8828ItemSchema, isArray: true },
   { node: f8835, itemSchema: f8835ItemSchema, isArray: true },
-  { node: f8844, itemSchema: f8844ItemSchema, isArray: true },
+  { node: f8844, inputSchema: f8844InputSchema, isArray: false },
   { node: f8864, inputSchema: f8864InputSchema, isArray: false },
   { node: fec, itemSchema: fecItemSchema, isArray: true },
   { node: qsehra, inputSchema: qsehraInputSchema, isArray: false },

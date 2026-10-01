@@ -7,7 +7,10 @@ import {
   form3800NonpassiveCreditUseRows,
   type Form8835CreditEntry,
 } from "../../../nodes/inputs/f3800/calculation.ts";
-import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import {
+  inputSchema as f3800InputSchema,
+  reconcileForm3800NonpassiveCarryforwards,
+} from "../../../nodes/inputs/f3800/index.ts";
 import { allocateDisabledAccessLine1eCredits } from "../../../nodes/inputs/f3800/disabled-access.ts";
 import {
   calculateForm8582CR,
@@ -61,6 +64,7 @@ import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
+import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -70,6 +74,7 @@ const taxBase = z.object({
   priorAllowableCredits: amount,
   tentativeMinimumTax: amount,
   standardCredit: amount,
+  empowermentCredit: amount.optional(),
   specifiedCredit: amount,
   standardCarryforward: amount,
   specifiedCarryforward: amount,
@@ -717,6 +722,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
+    (fields.f8844_direct_employer_credit?.credit_amount ?? 0) > 0 ||
     fields.f8874_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8820_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
@@ -763,10 +769,16 @@ export function prepareForm3800DocumentParts(
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
   const carryforwardEntries = parsed.carryforward_vintages ?? [];
+  const empowermentCarryforward = reconcileForm3800NonpassiveCarryforwards(
+    carryforwardEntries,
+  ).filter((entry) => entry.form3800CreditLine === "3").reduce(
+    (sum, entry) => sum + entry.availableAfterAdjustment,
+    0,
+  );
   reconcileFiledTaxContext(tax, allowedCredit, context);
   reconcilePassiveSources(parsed, context);
   if (
-    lines.line6 > 0 &&
+    (lines.line6 > 0 || lines.line22 > 0) &&
     context.documentIdsByPendingKey.form6251?.length !== 1
   ) {
     throw new Error("Form 3800 ordinary credit needs attached Form 6251");
@@ -774,6 +786,17 @@ export function prepareForm3800DocumentParts(
   const form8826 = sourceForm8826(parsed, context);
   const form8820 = sourceForm8820(parsed, context);
   const form8874 = sourceForm8874(parsed, context);
+  const form8844 = parsed.f8844_direct_employer_credit
+    ? reconcileForm8844DirectEmployer(context.pending ?? {})
+    : undefined;
+  if (
+    (tax.empowermentCredit ?? 0) !==
+      (form8844?.lines.line2 ?? 0) + empowermentCarryforward
+  ) {
+    throw new Error(
+      "Form 3800 line 22 differs from sourced empowerment-zone credits",
+    );
+  }
   const newMarketsK1Credits = parsed.f8874_k1_credit_entries ?? [];
   reconcileNewMarketsK1Credits(newMarketsK1Credits, context.pending ?? {});
   const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
@@ -894,6 +917,7 @@ export function prepareForm3800DocumentParts(
     form8826Credit,
     form8820Credit,
     form8874Credit,
+    form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
     form5884Credit: form5884?.credit,
     form8936NewVehicleCredit: form8936?.credit,
@@ -924,10 +948,12 @@ export function prepareForm3800DocumentParts(
             !row.form3800CreditLine.startsWith("4")
           ? row.appliedAgainstTax
           : 0),
+      empowerment: sum.empowerment +
+        (row.form3800CreditLine === "3" ? row.appliedAgainstTax : 0),
       specified: sum.specified +
         (row.form3800CreditLine.startsWith("4") ? row.appliedAgainstTax : 0),
     }),
-    { standard: 0, specified: 0 },
+    { standard: 0, empowerment: 0, specified: 0 },
   );
   const sourceApplied = (
     exists: boolean,
@@ -961,6 +987,7 @@ export function prepareForm3800DocumentParts(
     parsed.form8820_applied_credit,
   );
   const form8874Applied = applied("nonpassive:8874");
+  const form8844Applied = applied("nonpassive:8844");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
     "nonpassive:3468-part-v",
@@ -1001,6 +1028,10 @@ export function prepareForm3800DocumentParts(
     : f8874InputSchema.parse(context.pending.f8874);
   if (form8874Ids.length !== (filedForm8874 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8874 document count differs from source");
+  }
+  const form8844Ids = context.documentIdsByPendingKey.f8844 ?? [];
+  if (form8844Ids.length !== (form8844 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8844 document count differs from source");
   }
   const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
   if (form8835Ids.length !== facilities.length) {
@@ -1096,6 +1127,13 @@ export function prepareForm3800DocumentParts(
             form8874Applied,
             parsed.form8874_applied_credits_by_source,
           ),
+        }
+        : undefined,
+      form8844: form8844
+        ? {
+          credit: form8844.lines.line2,
+          documentId: form8844Ids[0],
+          appliedCredit: form8844Applied,
         }
         : undefined,
       form3468PartV: form3468PartVCredit > 0

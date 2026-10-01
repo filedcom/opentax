@@ -52,3 +52,16 @@ export function reconcileForm8844DirectEmployer(
   }
   return { source, lines };
 }
+
+/** Only this reviewed direct Schedule C input is eligible for native export. */
+export function isSupportedForm8844DirectEmployerInput(
+  fields: unknown,
+): boolean {
+  const parsed = f8844InputSchema.safeParse(fields);
+  if (!parsed.success) return false;
+  try {
+    return calculateForm8844(parsed.data).line2 > 0;
+  } catch {
+    return false;
+  }
+}

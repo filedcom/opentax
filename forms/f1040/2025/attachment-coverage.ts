@@ -7,6 +7,7 @@ import {
   inputSchema as form4684InputSchema,
 } from "../nodes/intermediate/forms/form4684/index.ts";
 import { isSupportedForm2106Route } from "./form2106_staged.ts";
+import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -153,8 +154,10 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8844",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 8844 direct employer wage credit needs a native attachment",
-    isActive: (fields) => nonempty(fields.f8844s),
+    reason: "Form 8844 needs a sourced direct Schedule C employer route",
+    isActive: (fields) =>
+      nonempty(fields.f8844s) &&
+      !isSupportedForm8844DirectEmployerInput(fields),
   },
   {
     pendingKey: "f8881",

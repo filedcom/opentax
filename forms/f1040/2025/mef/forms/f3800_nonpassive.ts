@@ -52,6 +52,7 @@ export type Form3800NonpassiveXmlInput = {
   readonly passiveActivity: Form3800PassiveActivityLines;
   readonly passiveApplied: {
     readonly standard: number;
+    readonly empowerment?: number;
     readonly specified: number;
   };
   readonly form5884?: {
@@ -97,6 +98,11 @@ export type Form3800NonpassiveXmlInput = {
       readonly ein?: string;
     }[];
     readonly appliedCreditsBySource?: readonly number[];
+  };
+  readonly form8844?: {
+    readonly credit: number;
+    readonly documentId: string;
+    readonly appliedCredit: number;
   };
   readonly form3468PartV?: {
     readonly credit: number;
@@ -212,6 +218,7 @@ export function buildForm3800NonpassiveParts(
   const credits = classifyForm8835Credits(input.facilities);
   if (
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
+    !input.form8844 &&
     !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
     !input.form8936Commercial &&
@@ -222,6 +229,18 @@ export function buildForm3800NonpassiveParts(
   const form8826Credit = input.disabledAccess?.credit ?? 0;
   const form8820Credit = input.form8820?.credit ?? 0;
   const form8874Credit = input.form8874?.credit ?? 0;
+  const form8844Credit = input.form8844?.credit ?? 0;
+  if (
+    input.form8844 && (
+      !input.form8844.documentId ||
+      !Number.isInteger(form8844Credit) || form8844Credit <= 0 ||
+      !Number.isInteger(input.form8844.appliedCredit) ||
+      input.form8844.appliedCredit < 0 ||
+      input.form8844.appliedCredit > form8844Credit
+    )
+  ) {
+    throw new Error("Form 3800 has an invalid Form 8844 line 3 allocation");
+  }
   const form3468PartVCredit = input.form3468PartV?.credit ?? 0;
   const form5884Credit = input.form5884?.credit ?? 0;
   const form8936Credit = input.form8936?.credit ?? 0;
@@ -441,6 +460,7 @@ export function buildForm3800NonpassiveParts(
           form8874Credit + form3468PartVCredit + form8936Credit +
           form8936CommercialCredit !==
       input.tax.standardCredit ||
+    (input.tax.empowermentCredit ?? 0) < form8844Credit ||
     credits.specifiedCredit + form5884Credit !== input.tax.specifiedCredit
   ) {
     throw new Error(
@@ -584,12 +604,19 @@ export function buildForm3800NonpassiveParts(
       sum + (facility.form3800_line === "4e" ? appliedAt(index) : 0),
     input.form5884?.appliedCredit ?? 0,
   );
+  const empowermentApplied = input.form8844?.appliedCredit ?? 0;
   if (
     cents(standardApplied, "Form 3800 standard source use") !==
       cents(lines.line17, "Form 3800 line 17") -
         cents(
           input.passiveApplied.standard,
           "Form 3800 passive standard use",
+        ) ||
+    cents(empowermentApplied, "Form 3800 empowerment source use") !==
+      cents(lines.line26, "Form 3800 line 26") -
+        cents(
+          input.passiveApplied.empowerment ?? 0,
+          "Form 3800 passive empowerment use",
         ) ||
     cents(specifiedApplied, "Form 3800 specified source use") !==
       cents(lines.line37, "Form 3800 line 37") -
@@ -638,6 +665,14 @@ export function buildForm3800NonpassiveParts(
         sourceDocumentId: source.ein ? undefined : input.form8874!.documentId,
       };
     })
+    : [];
+  const form8844PartVGroups: Form3800NonpassiveDetailRow[] = input.form8844
+    ? [{
+      line: "3",
+      credit: form8844Credit,
+      appliedCredit: input.form8844.appliedCredit,
+      sourceDocumentId: input.form8844.documentId,
+    }]
     : [];
   const form3468PartVGroups: Form3800NonpassiveDetailRow[] =
     input.form3468PartV?.sources.map((source, index) => ({
@@ -866,6 +901,19 @@ export function buildForm3800NonpassiveParts(
         ),
       ]
       : []),
+    ...(input.form8844
+      ? [nontransferableCurrentRow(
+        "3",
+        form8844Credit,
+        input.form8844.appliedCredit,
+        {
+          sourceCount: 1,
+          referenceDocumentId: input.form8844.documentId,
+          referenceDocumentName: "IRS8844",
+        },
+        [],
+      )]
+      : []),
     ...(form5884
       ? [
         nontransferableCurrentRow(
@@ -943,6 +991,14 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: input.form8936Commercial.appliedCredit,
       }]
       : []),
+    ...(input.form8844
+      ? [{
+        line: "3" as const,
+        grossCredit: form8844Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8844.appliedCredit,
+      }]
+      : []),
     ...(form5884
       ? [{
         line: "4b" as const,
@@ -982,6 +1038,7 @@ export function buildForm3800NonpassiveParts(
           sourceDocumentId: input.form8936Commercial.documentId,
         }]
         : []),
+      ...form8844PartVGroups,
     ],
     carryoverDetails: [],
     passiveCurrentDetails: [],

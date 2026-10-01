@@ -52,6 +52,7 @@ import { form5471ScheduleQPdf } from "./f5471_schedule_q.ts";
 import { form5471ScheduleRPdf } from "./f5471_schedule_r.ts";
 import { form5695Pdf } from "./f5695.ts";
 import { form5884Pdf } from "./f5884.ts";
+import { form8844Pdf } from "./f8844.ts";
 import { form6198Pdf } from "./f6198.ts";
 import { form6251Pdf } from "./f6251.ts";
 import { form6252Pdf } from "./f6252.ts";
@@ -186,6 +187,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8834Pdf,
   form8835Pdf,
   form8839Pdf,
+  form8844Pdf,
   form8854InitialPdf,
   form8854AnnualPdf,
   form8853Pdf,
