@@ -264,7 +264,7 @@ function reconcilePovertyTable(
       month > 0 && monthState !== months[month - 1]
     ).length;
     if (
-      (residenceStates.length !== 2 && residenceStates.length !== 3) ||
+      (residenceStates.length < 2 || residenceStates.length > 4) ||
       residenceMonths === undefined ||
       residenceMonths[11] !== state ||
       new Set(residenceMonths).size !== residenceStates.length ||
@@ -274,7 +274,7 @@ function reconcilePovertyTable(
       switches !== residenceStates.length - 1
     ) {
       throw new Error(
-        "Form 8962 interstate move needs twelve residence months with one state switch for two states or two state switches for three states ending in the filing state",
+        "Form 8962 interstate move needs twelve residence months with one chronological state switch per move, ending in the filing state",
       );
     }
   } else if (
@@ -1825,7 +1825,8 @@ function reconcileSimplePolicyMonths(
     ? general.data.ptc_residence_states_2025
     : undefined;
   const residenceMonths = (residenceStates?.length === 2 ||
-      residenceStates?.length === 3) && general.success
+      residenceStates?.length === 3 || residenceStates?.length === 4) &&
+      general.success
     ? general.data.ptc_residence_months_2025
     : undefined;
   const interstateMove = residenceMonths !== undefined;
@@ -2031,14 +2032,14 @@ function reconcileSimplePolicyMonths(
     );
   }
   if (interstateMove) {
-    if (residenceStates?.length === 3) {
+    if (residenceStates !== undefined && residenceStates.length >= 3) {
       const moveIndexes = residenceMonths.flatMap((state, index) =>
         index > 0 && state !== residenceMonths[index - 1] ? [index] : []
       );
       const policyStates = policies.map((policy) => policy.coverage_state);
       if (
-        moveIndexes.length !== 2 ||
-        new Set(policyStates).size !== 3 ||
+        moveIndexes.length !== residenceStates.length - 1 ||
+        new Set(policyStates).size !== residenceStates.length ||
         residenceStates.some((state) => !policyStates.includes(state)) ||
         policies.some((policy) => policy.slcsp_corrections !== undefined) ||
         policies.some((policy) => {
@@ -2058,7 +2059,7 @@ function reconcileSimplePolicyMonths(
         })
       ) {
         throw new Error(
-          "Form 8962 three-state move needs one reported Marketplace review on each distinct arrival policy and no corrected SLCSP",
+          "Form 8962 three-or-four-state move needs one reported Marketplace review on each distinct arrival policy and no corrected SLCSP",
         );
       }
     } else {

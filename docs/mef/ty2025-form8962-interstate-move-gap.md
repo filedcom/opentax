@@ -8,9 +8,9 @@ Marketplace policy.
 
 The bounded route takes distinct `general.ptc_residence_states_2025` and
 twelve `general.ptc_residence_months_2025`, January through December. It
-requires two states with one chronological residence switch or three states
-with two chronological switches, each state occupying one contiguous period,
-and a year-end state matching the Form 1040 filing address. General derives the
+requires two through four states with one chronological residence switch per
+move, each state occupying one contiguous period, and a year-end state matching
+the Form 1040 filing address. General derives the
 highest poverty region, prioritizing Alaska over Hawaii over the contiguous
 states. MeF independently checks that region, the TY2025 poverty dollar amount,
 the 401% indicator, and the full PTC/repayment arithmetic.
@@ -29,6 +29,16 @@ authored for the deferred batch. The [2025 Form 8962 line 4
 instructions](https://www.irs.gov/instructions/i8962) select the higher
 Alaska/Hawaii poverty table for a mover. The existing two-state reported and
 unreported routes remain separately scoped.
+
+The same reported-move route now accepts four distinct residence states and
+four sequential Form 1095-A policies, each of the three arrival policies with
+its own exact-period Marketplace move review. A January-March Alaska,
+April-June Hawaii, July-September California, October-December Texas case
+retains Alaska's $18,810 poverty line and reconciles twelve $500 premium,
+$600 SLCSP, and $200 APTC months to $804 credit and $1,596 repayment. Native
+and PDF paths reject a missing arrival review, duplicate policy state,
+unreported move, or final-return tax drift. Source calculation, native/PDF,
+and tamper fixtures are authored for the deferred test batch.
 
 For monthly credit, the route requires a single filer and one-person tax family,
 one identified Form 1095-A policy for each residence state, distinct policy
@@ -70,9 +80,9 @@ or Marketplace contact as determination channels.
 This does not authorize an annual line 11 for a move, multiple household
 members, shared policies, corrections on the departure policy, partially
 determined arrival months, overlapping policies, or
-switching back to a prior state. The three-state route also excludes any
-unreported move or corrected SLCSP; more than three states remain outside the
-bounded routes. The residence and determination metadata
+switching back to a prior state. The three- and four-state routes also
+exclude any unreported move or corrected SLCSP; more than four states remain
+outside the bounded routes. The residence and determination metadata
 identify the intended calculation but their underlying record bytes remain
 subject to external review. The full test batch, XSD validation, filled-page
 review, IRS business rules, and ATS acknowledgments remain pending.
