@@ -14,8 +14,8 @@ coverage decision, or release gate.
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 4 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 318 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Core return and source paths | 8 | 34 | Return-wide joins and source classification remain incomplete. |
+| Named tax-form gaps | 20 | 288 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 11 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
