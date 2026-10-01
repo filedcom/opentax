@@ -248,25 +248,18 @@ function draftXmlNotice(entries: readonly ExecutorDiagnosticEntry[]): string {
 async function addDraftWatermark(pdfBytes: Uint8Array): Promise<Uint8Array> {
   const doc = await PDFDocument.load(pdfBytes);
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  const label = "DRAFT / INCOMPLETE";
   for (const page of doc.getPages()) {
-    const { height } = page.getSize();
-    page.drawText("DRAFT / INCOMPLETE", {
-      x: 36,
-      y: height - 36,
-      size: 18,
+    const { width, height } = page.getSize();
+    const size = Math.min(36, width / 16);
+    page.drawText(label, {
+      x: (width - font.widthOfTextAtSize(label, size)) / 2,
+      y: height / 2,
+      size,
       font,
-      color: rgb(0.85, 0, 0),
+      color: rgb(0.4, 0.4, 0.4),
+      opacity: 0.14,
     });
-    page.drawText(
-      "Diagnostic review only. Not finalized or filing-ready.",
-      {
-        x: 36,
-        y: height - 58,
-        size: 9,
-        font,
-        color: rgb(0.85, 0, 0),
-      },
-    );
   }
   return doc.save();
 }
