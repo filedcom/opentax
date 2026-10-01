@@ -4436,6 +4436,28 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-three-no-aptc-policies-four-uncovered-months",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-JAN-MAR", 1, 3, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-MAY-JUN", 5, 6, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-FOUR-GAPS-SEP-NOV", 9, 11, 800),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "April, July, August, and December have no covered policy or Marketplace/payment evidence, no native monthly group, and blank PDF entries",
+      "Eight paid months at 200% FPL produce $5,200 PTC across three nonoverlapping policies",
+      "Schedule 3 line 9 and Form 1040 line 31 each carry $5,200 once",
+    ],
+  },
+  {
     id: "single-marketplace-aptc-repayment",
     inputs: {
       general: singleGeneral,

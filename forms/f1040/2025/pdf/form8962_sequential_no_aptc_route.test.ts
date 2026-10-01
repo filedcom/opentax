@@ -19,6 +19,109 @@ const threePolicyFixture = pdfReviewFixtures.find((item) =>
 const threeGapFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-three-no-aptc-policies-three-uncovered-months"
 )!;
+const fourGapFixture = pdfReviewFixtures.find((item) =>
+  item.id === "single-three-no-aptc-policies-four-uncovered-months"
+)!;
+
+Deno.test("three sequential no-APTC policies leave four sourced months uncovered at 200% FPL", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fourGapFixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962.total_premium_tax_credit, 5_200);
+  assertEquals(result.pending.schedule3.line9_premium_tax_credit, 5_200);
+  assertEquals(result.pending.f1040.line31_additional_payments, 5_200);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: fourGapFixture.filer,
+    attachments: [],
+  });
+  assertEquals(
+    (bundle.xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length,
+    8,
+  );
+  for (const month of ["APRIL", "JULY", "AUGUST", "DECEMBER"]) {
+    assertEquals(bundle.xml.includes(`<MonthCd>${month}</MonthCd>`), false);
+  }
+  assertStringIncludes(
+    bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>5200</ReconciledPremiumTaxCreditAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, fourGapFixture.filer, pending)?.length,
+    1,
+  );
+  for (const month of [4, 7, 8, 12]) {
+    assertEquals(
+      (projected as Record<string, unknown>)[`pdf_month_${month}_premium`],
+      undefined,
+    );
+  }
+  const pdf = await buildPdfBytes(
+    pending,
+    fourGapFixture.filer,
+    ".pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+
+  const source = form1095aSchema.parse(pending.f1095a);
+  const third = source.f1095as[2];
+  const fifthGap = {
+    ...pending,
+    f1095a: {
+      f1095as: [...source.f1095as.slice(0, 2), {
+        ...third,
+        monthly_premiums: third.monthly_premiums!.map((amount, index) =>
+          index === 10 ? 0 : amount
+        ),
+        annual_premium: 1_800,
+        slcsp_corrections: third.slcsp_corrections!.filter((item) =>
+          item.month !== 11
+        ),
+        no_aptc_monthly_evidence: third.no_aptc_monthly_evidence!.filter((
+          item,
+        ) => item.month !== 11),
+      }],
+    },
+  };
+  await assertRejects(
+    () =>
+      buildMefBundle(fifthGap, {
+        filer: fourGapFixture.filer,
+        attachments: [],
+      }),
+    Error,
+    "monthly PTC needs distinct same-state nonshared policies",
+  );
+  await assertRejects(
+    async () => {
+      form8962Pdf.instances?.(projected, fourGapFixture.filer, fifthGap);
+    },
+    Error,
+    "monthly PTC needs distinct same-state nonshared policies",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        schedule3: {
+          ...pending.schedule3,
+          line9_premium_tax_credit: 5_199,
+        },
+      }, {
+        filer: fourGapFixture.filer,
+        attachments: [],
+      }),
+    Error,
+    "monthly credit differs from finalized return",
+  );
+});
 
 Deno.test("three sequential no-APTC policies leave three sourced months uncovered at 200% FPL", async () => {
   const result = execute(
@@ -67,11 +170,24 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
   );
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
   const source = form1095aSchema.parse(pending.f1095a);
+  const second = source.f1095as[1];
   const third = source.f1095as[2];
-  const fourthGap = {
+  const fifthGap = {
     ...pending,
     f1095a: {
-      f1095as: [...source.f1095as.slice(0, 2), {
+      f1095as: [source.f1095as[0], {
+        ...second,
+        monthly_premiums: second.monthly_premiums!.map((amount, index) =>
+          index === 6 ? 0 : amount
+        ),
+        annual_premium: 1_800,
+        slcsp_corrections: second.slcsp_corrections!.filter((item) =>
+          item.month !== 7
+        ),
+        no_aptc_monthly_evidence: second.no_aptc_monthly_evidence!.filter((
+          item,
+        ) => item.month !== 7),
+      }, {
         ...third,
         monthly_premiums: third.monthly_premiums!.map((amount, index) =>
           index === 10 ? 0 : amount
@@ -88,7 +204,7 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
   };
   await assertRejects(
     () =>
-      buildMefBundle(fourthGap, {
+      buildMefBundle(fifthGap, {
         filer: threeGapFixture.filer,
         attachments: [],
       }),
@@ -97,7 +213,7 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
   );
   await assertRejects(
     async () => {
-      form8962Pdf.instances?.(projected, threeGapFixture.filer, fourthGap);
+      form8962Pdf.instances?.(projected, threeGapFixture.filer, fifthGap);
     },
     Error,
     "monthly PTC needs distinct same-state nonshared policies",
