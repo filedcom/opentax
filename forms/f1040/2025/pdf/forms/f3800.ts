@@ -1087,6 +1087,78 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
     }
+    if (
+      source.f8820_credit && directOrphanK1?.length === 1 &&
+      directOrphanK1[0].source_type === "partnership" &&
+      !source.f8874_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const filed = f8820InputSchema.parse(all.f8820);
+      const selfCredit = calculateForm8820(filed).line2c;
+      const [k1Credit] = sourceOrphanDrugK1Credits(source, {
+        pending: all,
+      });
+      const rawSource = f3800InputSchema.parse(raw);
+      const row = prepared.currentRows[0];
+      const amount = prepared.currentAmounts[0];
+      const [selfDetail, k1Detail] = prepared.currentDetails;
+      const total = selfCredit + k1Credit.credit_amount;
+      if (
+        filed.subject_to_passive_activity_limit ||
+        (filed.pass_through_credits?.length ?? 0) !== 0 ||
+        selfCredit <= 0 || k1Credit.credit_amount <= 0 ||
+        source.f8820_credit.subject_to_passive_activity_limit ||
+        source.f8820_credit.credit_amount !== selfCredit ||
+        JSON.stringify(rawSource.f8820_credit) !==
+          JSON.stringify(source.f8820_credit) ||
+        JSON.stringify(rawSource.f8820_k1_credit_entries) !==
+          JSON.stringify(directOrphanK1) ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentAmounts.length !== 1 ||
+        prepared.currentDetails.length !== 2 ||
+        prepared.carryoverRows.length !== 0 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
+        row.metadata.referenceDocumentName !== "IRS8820" ||
+        !row.metadata.referenceDocumentId ||
+        row.entityCredits.length !== 1 ||
+        !("ein" in row.entityCredits[0].entity) ||
+        row.entityCredits[0].entity.ein !== k1Credit.source_ein ||
+        row.entityCredits[0].credit !== k1Credit.credit_amount ||
+        amount?.line !== "1h" ||
+        amount.nonpassiveCredit !== total ||
+        amount.totalCredit !== total ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.transferOutCredit !== 0 ||
+        amount.appliedCredit !== total ||
+        selfDetail?.line !== "1h" ||
+        selfDetail.credit !== selfCredit ||
+        selfDetail.appliedCredit !== selfCredit ||
+        selfDetail.passThroughEin !== undefined ||
+        selfDetail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        k1Detail?.line !== "1h" ||
+        k1Detail.credit !== k1Credit.credit_amount ||
+        k1Detail.appliedCredit !== k1Credit.credit_amount ||
+        k1Detail.passThroughEin !== k1Credit.source_ein ||
+        k1Detail.sourceDocumentId !== undefined ||
+        prepared.lines.line1 !== total ||
+        prepared.lines.line6 !== total ||
+        prepared.lines.line17 !== total ||
+        (prepared.lines.line37 ?? 0) !== 0 ||
+        prepared.lines.line38 !== total
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed self-earned and partnership orphan-drug line 1h differs from filed sources",
+        );
+      }
+    }
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),

@@ -5,6 +5,7 @@ import { testFiler } from "../../mef/test-filer.ts";
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
+  form3800PartVFields,
 } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
 
@@ -143,5 +144,105 @@ Deno.test("Form 3800 nine-page PDF binds a direct partnership code Z credit to p
       ),
     Error,
     "qualified clinical-testing and passive-activity source evidence",
+  );
+});
+
+Deno.test("Form 3800 prints separate self-earned and partnership orphan-drug sources on Part V", () => {
+  const filedForm8820 = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-2025-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 10_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const mixed3800 = {
+    ...f3800,
+    f8820_credit: {
+      credit_amount: 1_975,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: {
+      ...f3800.tax_context,
+      standardCredit: 3_225,
+    },
+    allowed_credit: 3_225,
+  };
+  const mixedPending = {
+    ...pending,
+    f3800: mixed3800,
+    f8820: filedForm8820,
+    f1040: { ...pending.f1040, line20_nonrefundable_credits: 3_225 },
+    schedule3: {
+      ...pending.schedule3,
+      line6a_total: 3_225,
+      line7_total: 3_225,
+      line8_total: 3_225,
+    },
+  };
+  const parts = prepareForm3800DocumentParts(mixed3800, {
+    pending: mixedPending,
+    documentIdsByPendingKey: {
+      form6251: ["IRS6251_1"],
+      f8820: ["IRS8820_1"],
+    },
+  });
+  if (!parts) throw new Error("Expected two orphan-drug sources");
+  assertEquals(parts.currentRows.map((row) => row.line), ["1h"]);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentDetails.map((row) => row.credit), [1_975, 1_250]);
+  const [fields] = form3800Pdf.instances!(
+    mixed3800,
+    testFiler(),
+    mixedPending,
+    parts,
+  );
+  assertEquals(fields[form3800PartIIIFields("1h").e], 3_225);
+  assertEquals(fields[form3800PartVFields(1).e], 1_975);
+  assertEquals(fields[form3800PartVFields(2).c1], "123456789");
+  assertEquals(fields[form3800PartVFields(2).e], 1_250);
+  assertEquals(fields[form3800PartIAndIIFields.line38], 3_225);
+
+  for (
+    const tampered of [
+      {
+        ...mixedPending,
+        k1_partnership: {
+          k1_partnerships: [{ ...k1, box15_code_z_orphan_drug_credit: 1_249 }],
+        },
+      },
+      {
+        ...mixedPending,
+        f8820: {
+          ...filedForm8820,
+          f8820s: [{
+            ...filedForm8820.f8820s[0],
+            qualified_clinical_testing_expenses: 9_000,
+          }],
+        },
+      },
+      {
+        ...mixedPending,
+        f1040: { ...mixedPending.f1040, line20_nonrefundable_credits: 3_224 },
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      form3800Pdf.instances!(mixed3800, testFiler(), tampered, parts)
+    );
+  }
+  assertThrows(() =>
+    form3800Pdf.instances!(mixed3800, testFiler(), mixedPending, {
+      ...parts,
+      currentDetails: parts.currentDetails.map((row, index) =>
+        index === 1 ? { ...row, passThroughEin: "999999999" } : row
+      ),
+    })
   );
 });

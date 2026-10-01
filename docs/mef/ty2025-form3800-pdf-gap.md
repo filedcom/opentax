@@ -596,3 +596,17 @@ credit tampering are rejected. Source/native/PDF and filled-packet fixtures
 remain unrun until the shared implementation batch ends. This combination
 adds no Part V rows because each Part III line has one source; Part V/VI
 overflow and transfer/carryforward evidence remain open.
+
+A separate line 1h route now covers one self-earned Form 8820 credit and one
+nonpassive partnership Schedule K-1 box 15 code Z credit reported directly on
+Form 3800. The [2025 partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+allow the orphan-drug credit on Form 8820 or Form 3800 Part III line 1h; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) require
+Part V source detail when a credit has more than one source. The parent PDF
+recalculates the filed Form 8820, reconciles the K-1 EIN/reference and credit,
+checks the two distinct native Part V details and line 1h total, then joins
+line 38 to Schedule 3 and Form 1040. An authored $1,975 self-earned plus
+$1,250 partnership example prints $3,225 on line 1h/38 and two Part V rows;
+source, native EIN, and final-tax tampering is rejected. These fixtures await
+the shared bulk run. This route does not cover multiple K-1s, passive orphan
+credits, partial tax use, or Part V overflow.
