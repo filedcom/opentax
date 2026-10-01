@@ -261,6 +261,24 @@ includes only dependents required to file because income meets the threshold.
 The authored twelve-month no-APTC fixture keeps household income at $40,880
 and joins Form 8962's $8,184 credit to Schedule 3 line 9, Form 1040 line 31,
 native MeF, and the PDF. Recipient, filed line, document identity, and
-at-threshold tamper fixtures are authored but unrun. Mixed dividend income,
-other 1099-DIV boxes, issuer-byte authentication, and IRS acceptance remain
-outside this route.
+at-threshold tamper fixtures are authored but unrun. Mixed dividend income
+beyond the one-W-2 case below, other 1099-DIV boxes, issuer-byte
+authentication, and IRS acceptance remain outside this route.
+
+## One W-2 plus one ordinary-dividend 1099-DIV (2026-10-01, unrun)
+
+The same required-filing dependent source now supports one W-2 and one
+ordinary-dividend-only Form 1099-DIV on a single filed 2025 return. It rejects
+any Form 1099-INT, second W-2, other Form 1099-DIV box amount, or nonzero other
+filed-return income or adjustment. Both recipient SSNs and distinct source
+document IDs must match the dependent, and filed Form 1040 lines 1z, 3b, and
+11b must equal the two source amounts and their sum. For an under-65, nonblind
+single dependent, it applies all three [2025 Publication 501 filing tests](https://www.irs.gov/publications/p501):
+unearned income over $1,350, earned income over $15,750, or gross income over
+the larger of $1,350 and min(earned income, $15,300) plus $450. The
+[Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962) then includes
+the dependent's filed AGI in line 2b. An authored $15,000 W-2 plus $1,000
+dividend case yields the same $16,000 dependent MAGI and $8,184 monthly PTC
+through Schedule 3, Form 1040, native MeF, and PDF. At-threshold, owner, filed
+line, and duplicate-document rejection fixtures are written but unrun. Other
+dividend combinations and source-byte authentication remain open.

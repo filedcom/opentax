@@ -231,7 +231,9 @@ const dividendDependent = {
   },
 };
 
-function dividendReturn() {
+function dividendReturn(
+  sourceDependent: Record<string, unknown> = dividendDependent,
+) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -245,7 +247,7 @@ function dividendReturn() {
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
-      dependents: [dividendDependent],
+      dependents: [sourceDependent],
     },
     w2: [{
       employer_ein: "12-3456789",
@@ -261,6 +263,29 @@ function dividendReturn() {
     f1095a: [policy],
   });
 }
+
+const mixedDividendDependent = {
+  ...dividendDependent,
+  ptc_tax_return: {
+    ...dividendDependent.ptc_tax_return,
+    filed_form1040: {
+      ...dividendDependent.ptc_tax_return.filed_form1040,
+      line1z_wages: 15_000,
+      line3b_dividends: 1_000,
+    },
+    wage_forms_w2: [{
+      source_document_id: "casey-issued-2025-w2",
+      employer_name: "Summer Employer",
+      employer_ein: "112233445",
+      employee_ssn: "987654321",
+      box1_wages: 15_000,
+    }],
+    dividend_form1099: {
+      ...dividendDependent.ptc_tax_return.dividend_form1099,
+      box1a_ordinary_dividends: 1_000,
+    },
+  },
+};
 
 Deno.test("Form 8962 ordinary-dividend dependent joins monthly policy, final credit, native and PDF", async () => {
   const result = dividendReturn();
@@ -336,6 +361,92 @@ Deno.test("Form 8962 ordinary-dividend dependent rejects threshold, owner, filed
         dividend_form1099: {
           ...dividendDependent.ptc_tax_return.dividend_form1099,
           box1a_ordinary_dividends: 1_350,
+        },
+      }),
+      filer,
+    )
+  );
+});
+
+Deno.test("Form 8962 W-2 plus ordinary-dividend dependent reaches monthly native and PDF credit", async () => {
+  const result = dividendReturn(mixedDividendDependent);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 16_000);
+  assertEquals(pending.form8962.household_income, 40_880);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 8_184);
+  assertEquals(pending.f1040.line31_additional_payments, 8_184);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>8184</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 mixed W-2 and dividend dependent rejects threshold, owner and filed return drift", async () => {
+  const result = dividendReturn(mixedDividendDependent);
+  const pending = normalizeAllPending(result.pending);
+  const changed = (
+    ptcTaxReturn: typeof mixedDividendDependent.ptc_tax_return,
+  ) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...mixedDividendDependent,
+        ptc_tax_return: ptcTaxReturn,
+      }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...mixedDividendDependent.ptc_tax_return,
+        dividend_form1099: {
+          ...mixedDividendDependent.ptc_tax_return.dividend_form1099,
+          box1a_ordinary_dividends: 450,
+        },
+        filed_form1040: {
+          ...mixedDividendDependent.ptc_tax_return.filed_form1040,
+          line3b_dividends: 450,
+          line11b_agi: 15_450,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...mixedDividendDependent.ptc_tax_return,
+        wage_forms_w2: [{
+          ...mixedDividendDependent.ptc_tax_return.wage_forms_w2[0],
+          employee_ssn: "111223333",
+        }],
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...mixedDividendDependent.ptc_tax_return,
+        filed_form1040: {
+          ...mixedDividendDependent.ptc_tax_return.filed_form1040,
+          line1z_wages: 14_999,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...mixedDividendDependent.ptc_tax_return,
+        dividend_form1099: {
+          ...mixedDividendDependent.ptc_tax_return.dividend_form1099,
+          source_document_id: "casey-issued-2025-w2",
         },
       }),
       filer,

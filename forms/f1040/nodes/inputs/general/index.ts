@@ -433,12 +433,16 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (taxReturn.wage_forms_w2?.length === 1 ||
         taxReturn.wage_forms_w2?.length === 2) &&
       taxReturn.interest_forms1099.length === 1;
+    const mixedWagesAndDividends = wages > 0 && dividends > 0 &&
+      taxReturn.wage_forms_w2?.length === 1 &&
+      taxableInterest === 0 && exemptInterest === 0 &&
+      taxReturn.interest_forms1099.length === 0;
     if (
       !wageOnly && !interestOnly && !mixedWagesAndInterest &&
-      !dividendOnly
+      !dividendOnly && !mixedWagesAndDividends
     ) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, one ordinary-dividend-only Form 1099-DIV, or one or two W-2s plus one Form 1099-INT return",
+        "Form 8962 dependent required-filing source supports bounded W-2, Form 1099-INT, and ordinary-only Form 1099-DIV combinations",
       );
     }
     if (
@@ -476,6 +480,26 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       if (age65 || filed.blind || wages <= 15_750) {
         throw new Error(
           "Form 8962 dependent W-2 wages do not establish the 2025 single-dependent filing requirement",
+        );
+      }
+      return total + filed.line11b_agi;
+    }
+    if (mixedWagesAndDividends) {
+      if (age65 || filed.blind) {
+        throw new Error(
+          "Form 8962 dependent mixed W-2 and 1099-DIV filing requirement needs under-65, nonblind evidence",
+        );
+      }
+      const combinedThreshold = Math.max(
+        1_350,
+        Math.min(wages, 15_300) + 450,
+      );
+      if (
+        dividends <= 1_350 && wages <= 15_750 &&
+        wages + dividends <= combinedThreshold
+      ) {
+        throw new Error(
+          "Form 8962 dependent mixed W-2 and 1099-DIV income does not establish the 2025 filing requirement",
         );
       }
       return total + filed.line11b_agi;
