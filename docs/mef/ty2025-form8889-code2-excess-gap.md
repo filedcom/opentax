@@ -1,5 +1,27 @@
 # TY2025 Form 8889 code-2 excess return
 
+## Two owners' timely personal excess returns (written, unrun)
+
+The paired self-only route now permits each spouse to return their entire 2025
+personal excess, with earnings, by the return due date. Each owner supplies a
+separate code-2 Form 1099-SA whose recipient SSN, box 1, box 2, and source
+reference reconcile to that owner's timely withdrawal. Their Form 8889 copies
+separately print the distribution on lines 14a and 14b, deduct only their
+permitted contributions on line 13, and create no current excess on Form 5329.
+The two earnings amounts are added once on Schedule 1 line 8z and Form 1040
+line 8; the line 13 deductions are added on Schedule 1 and Form 1040 line 10.
+Native and PDF export recalculate both owners, preserve the distinct SSNs and
+sources, and compare the filed return totals. A full-return positive fixture and
+box-2, reference, and return-total tamper fixtures are authored for deferred
+validation. The [2025 Form 8889 instructions](https://www.irs.gov/pub/irs-prior/i8889--2025.pdf)
+direct timely excess plus earnings to line 14b and earnings to other income;
+the [2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+require code 2 and box 2 earnings included in box 1. Medical or rollover
+distributions alongside these two returned excesses, employer-returned excess,
+and accepted prior-year excess import remain outside this bounded route.
+The trustee references are entered source metadata; issuer-copy bytes are not
+independently authenticated.
+
 The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) put a
 timely returned HSA excess contribution **and its earnings** on line 14b when
 both were included in line 14a. The

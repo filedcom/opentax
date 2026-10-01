@@ -755,7 +755,6 @@ export function reconcilePairedForm8889(
     }
   }
   if (
-    pairedCode2Owners.length > 1 ||
     new Set(priorExcessReferences).size !== priorExcessReferences.length ||
     (pairedPriorExcessOwners.length > 0 &&
       (!selfOnly || pairedRollovers.length > 0 ||
@@ -824,8 +823,12 @@ export function reconcilePairedForm8889(
             owner.hsa_excluded_distributions.rollover === undefined &&
             owner.age_65_exception_evidence === undefined &&
             owner.disability_exception_evidence === undefined &&
+            (owner.qualified_medical_expenses ?? 0) === 0 &&
             owners.every((other) =>
-              other === owner || (other.hsa_distributions ?? 0) === 0
+              other === owner || (other.hsa_distributions ?? 0) === 0 ||
+              (other.hsa_excluded_distributions
+                    ?.timely_excess_withdrawal !== undefined &&
+                (other.qualified_medical_expenses ?? 0) === 0)
             )))
       ))
   ) {
