@@ -646,6 +646,11 @@ export function reconcilePairedForm8889(
       Math.round(8_550 * (otherCoverageMonth - 1) / 12);
   const pairedPriorRecapture =
     source.prior_year_paired_family_allocation !== undefined;
+  const pairedAgeAndDisability =
+    owners.filter((owner) => owner.age_65_exception_evidence !== undefined)
+        .length === 1 &&
+    owners.filter((owner) => owner.disability_exception_evidence !== undefined)
+        .length === 1;
   if (
     !selfOnly && !family && !deemed && !medicareMixedMonths &&
     !otherCoverageMixedMonths &&
@@ -717,6 +722,33 @@ export function reconcilePairedForm8889(
       ]
       : [];
   });
+  if (pairedAgeAndDisability) {
+    const ageOwner = owners.find((owner) =>
+      owner.age_65_exception_evidence !== undefined
+    )!;
+    const disabilityOwner = owners.find((owner) =>
+      owner.disability_exception_evidence !== undefined
+    )!;
+    if (
+      ageOwner === disabilityOwner ||
+      ageOwner.age_65_exception_evidence!.birth_date_source_reference ===
+        disabilityOwner.disability_exception_evidence!
+          .disability_source_reference ||
+      owners.some((owner) =>
+        owner.hsa_excluded_distributions !== undefined ||
+        owner.prior_year_hsa_excess !== undefined ||
+        owner.testing_period_failure !== undefined ||
+        (owner.form1099_sa_distributions?.length ?? 0) === 0
+      ) ||
+      !disabilityOwner.form1099_sa_distributions?.some((item) =>
+        item.box3_distribution_code === "3"
+      )
+    ) {
+      throw new Error(
+        "Form 8889 paired age-65 and disability exceptions need separate owner evidence and code-3 disability distribution",
+      );
+    }
+  }
   if (
     pairedCode2Owners.length > 1 ||
     new Set(priorExcessReferences).size !== priorExcessReferences.length ||
@@ -899,6 +931,19 @@ export function reconcilePairedForm8889(
       return total + (typeof value === "number" ? value : 0);
     }, 0);
   const twoOwnerRollovers = pairedRollovers.length === 2;
+  if (
+    pairedAgeAndDisability &&
+    ((schedule1.line10_total_additional_income ?? 0) !==
+        sum("print_line16_taxable") ||
+      form1040.line8_additional_income !==
+        schedule1.line10_total_additional_income ||
+      (form1040.line23_other_taxes ?? 0) !==
+        sum("print_line17b_penalty"))
+  ) {
+    throw new Error(
+      "Form 8889 paired age-65 and disability totals differ from Form 1040",
+    );
+  }
   if (
     twoOwnerRollovers &&
     (!owners.every((owner) =>

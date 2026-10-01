@@ -28,7 +28,17 @@ before disability retain the 20% charge. Both owners' printed Forms 8889,
 combined Schedule 1/2 and Form 1040 totals, native MeF, and PDF are
 recomputed from the owner source before export.
 
-Disability plus age-65, timely excess withdrawal, multiple paired rollovers,
+The paired route also accepts one spouse's dated age-65 exception and the
+other spouse's dated disability exception in the same return. Both owners
+need separate source references; the disability owner needs a code-3 Form
+1099-SA for the withdrawal after disability. Native and PDF export recompute
+both Forms 8889 and match their taxable distributions and 20% charges to
+Schedule 1, Schedule 2, and Form 1040 lines 8 and 23. A positive paired-owner
+fixture and changed disability-source and Form 1040 tax fixtures are authored
+for deferred validation. This bounded combination excludes rollovers, prior
+excess, and Part III testing-period events.
+
+Disability plus age-65 for the same owner, timely excess withdrawal, multiple paired rollovers,
 death, and nonspouse beneficiary rules remain open. Source references and
 disability confirmation are entered evidence, not independently authenticated
 medical or trustee records. Focused calculator, MeF, and PDF cases are written
