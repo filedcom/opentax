@@ -55,6 +55,7 @@ function filing(
     | "interest_two_dividends"
     | "treasury_oid" = "interest",
   spouseOwned = false,
+  qualifiedDividendElection = 0,
 ) {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
@@ -192,6 +193,9 @@ function filing(
     },
     form4952: {
       investment_interest_expense: 20_000,
+      ...(qualifiedDividendElection > 0
+        ? { investment_income_election: qualifiedDividendElection }
+        : {}),
       direct_debt_trace: spouseOwned
         ? { ...trace, owner_tin: "444556666" }
         : trace,
@@ -207,6 +211,110 @@ function filing(
     },
   }, { taxYear: 2025, formType: "f1040" });
 }
+
+Deno.test("Form 4952 traced qualified-dividend election joins Schedule D tax, native, and PDF", async () => {
+  const ordinary = filing("qualified_dividend");
+  const elected = filing("qualified_dividend", false, 1_000);
+  assertEquals(ordinary.diagnostics, []);
+  assertEquals(elected.diagnostics, []);
+  const fields = elected.pending.form4952!;
+  assertEquals(fields.line4a, 34_000);
+  assertEquals(fields.line4b, 15_000);
+  assertEquals(fields.line4g, 1_000);
+  assertEquals(fields.line8, 20_000);
+  assertEquals(fields.line7, 0);
+  assertEquals(elected.pending.schedule_a?.line_9_investment_interest, 20_000);
+  assertEquals(elected.pending.f1040?.line3a_qualified_dividends, 15_000);
+  assertEquals(elected.pending.f1040?.line3b_ordinary_dividends, 34_000);
+  assertEquals(elected.pending.f1040?.line12e_itemized_deductions, 20_000);
+  assertEquals(
+    Number(elected.pending.f1040?.line16_income_tax) >
+      Number(ordinary.pending.f1040?.line16_income_tax),
+    true,
+  );
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: elected.pending,
+      filer: finalFiler,
+    }),
+    "<InvestmentIncomeElectionAmt>1000</InvestmentIncomeElectionAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, elected.pending).line4g,
+    1_000,
+  );
+  assertEquals(
+    form4952Pdf.instances!(fields, finalFiler, elected.pending).length,
+    1,
+  );
+  const bundle = await buildMefBundle(buildPending(elected.pending), {
+    filer: finalFiler,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<InvestmentIncomeElectionAmt>1000</InvestmentIncomeElectionAmt>",
+  );
+  const pdf = await buildPdfBytes(
+    buildPending(elected.pending),
+    finalFiler,
+    ".pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: {
+          ...elected.pending,
+          f1040: {
+            ...elected.pending.f1040,
+            line16_income_tax:
+              Number(elected.pending.f1040?.line16_income_tax ?? 0) + 1,
+          },
+        },
+        filer: finalFiler,
+      }),
+    Error,
+    "Schedule D Tax Worksheet",
+  );
+  assertThrows(
+    () =>
+      form4952Pdf.projectFields!(fields, {
+        ...elected.pending,
+        income_tax_calculation: {
+          ...elected.pending.income_tax_calculation,
+          form4952_election: 999,
+        },
+      }),
+    Error,
+    "Schedule D Tax Worksheet",
+  );
+  const dividendSource = elected.pending.f1099div as {
+    f1099divs: Record<string, unknown>[];
+  };
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: {
+          ...elected.pending,
+          f1099div: {
+            f1099divs: [{
+              ...dividendSource.f1099divs[0],
+              box1b: 14_999,
+            }],
+          },
+        },
+        filer: finalFiler,
+      }),
+    Error,
+  );
+});
 
 Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF", () => {
   const result = filing();

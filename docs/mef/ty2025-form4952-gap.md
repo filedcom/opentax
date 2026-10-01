@@ -631,3 +631,28 @@ identify Treasury interest in Form 1099-INT box 3 and taxable OID in Form
 dividends, prior carryover, mixed-use or second debt, and line 4g elections
 remain outside this pair. Issuer, lender, payment, and broker bytes have not
 been authenticated.
+
+## Traced qualified-dividend election (2026-10-01, unrun)
+
+One direct-use taxable-securities loan and one affirmed Form 1099-DIV box 1a/1b
+investment payer now support a positive line 4g election of up to the payer's
+qualified-dividend amount. The existing loan owner, lender total, payments,
+issued payer amount, Form 4952 lines 1–8, Schedule A line 9, and Form 1040
+lines 3a/3b/12e still reconcile. Native and PDF export additionally replay the
+election into the income-tax calculation and check finalized Form 1040 lines
+15/16 against the TY2025 Schedule D Tax Worksheet. The election does not
+reduce the reported Form 1040 line 3a amount. A sourced $34,000 ordinary /
+$15,000 qualified dividend case elects $1,000, increasing Form 4952 line 8
+from $19,000 to $20,000 and reducing line 7 from $1,000 to zero. A full-return
+native/PDF fixture and changed payer, election, and line-16 fixtures are
+authored for the deferred validation batch.
+
+The [2025 Form 4952 line 4g instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+permit including qualified dividends in investment income, require the
+Schedule D Tax Worksheet for Form 1040 line 16, keep Form 1040 line 3a intact,
+and say the election can be revoked only with IRS consent. This bounded route
+requires one traced loan, one qualified-dividend payer, no capital gain or
+foreign-income/tax source, and no other line-16 add-on or special worksheet.
+The source and loan references are reviewer-supplied, not authenticated issued
+bytes. Elections with capital gains, multiple dividend payers, carryovers, AMT
+differences, or other tax worksheets remain closed.
