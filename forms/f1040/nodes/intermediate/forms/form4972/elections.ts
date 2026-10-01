@@ -143,7 +143,6 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           (form.federal_estate_tax ?? 0) !== 0 ||
           (form.death_benefit_exclusion ?? 0) !== 0
         ) ||
-        forms.filter((form) => (form.box6_nua ?? 0) > 0).length > 1 ||
         forms.some((form, index) =>
           (form.box6_nua ?? 0) > 0 &&
           (sourceByElection[index].box6_nua !== form.box6_nua ||
