@@ -35,6 +35,7 @@ import { assertExtensionPaymentSource } from "../extension-payment-reconciliatio
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
+import { assertPatrWithholdingRecipient } from "../f1099patr-withholding-owner.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
   hasForm8994Claim,
@@ -288,6 +289,7 @@ export async function buildPdfBytes(
   assert1099RRecipientOwner(normalized.f1099r, filer);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer);
+  assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
