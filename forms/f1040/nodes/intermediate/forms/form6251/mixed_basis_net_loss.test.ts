@@ -19,7 +19,9 @@ function basisSourcePending(fields: Record<string, unknown>) {
         source_transaction_id: row.source_transaction_id,
         part: row.part,
         description: "Synthetic AMT basis disposition",
-        date_acquired: "2022-01-10",
+        date_acquired: ["A", "B", "C"].includes(row.part)
+          ? "2025-01-10"
+          : "2022-01-10",
         date_sold: "2025-06-20",
         proceeds: row.proceeds,
         cost_basis: row.regular_basis,
@@ -124,7 +126,7 @@ Deno.test("Form 6251 rejects mixed-sign rows when either tax exceeds its loss li
   );
 });
 
-Deno.test("Form 6251 rejects mixed-sign rows with other Schedule D activity or mixed terms", () => {
+Deno.test("Form 6251 rejects mixed-sign rows with other activity or a basis sign change", () => {
   assertThrows(
     () =>
       compute({
@@ -141,13 +143,110 @@ Deno.test("Form 6251 rejects mixed-sign rows with other Schedule D activity or m
     () =>
       compute({
         ...input,
-        line2k_8949_basis_dispositions: [gain, { ...loss, part: "D" }],
+        line2k_8949_basis_dispositions: [gain, {
+          ...loss,
+          part: "D",
+          amt_basis: 3_000,
+          amt_gain: 1_000,
+        }],
         line2k_8949_capital_audit: {
           ...input.line2k_8949_capital_audit,
           transactions: [input.line2k_8949_capital_audit.transactions[0], {
             ...input.line2k_8949_capital_audit.transactions[1],
             part: "D",
           }],
+        },
+      }),
+    Error,
+    "one term of identified losses",
+  );
+});
+
+Deno.test("Form 6251 replays a cross-term offset with fully deductible regular and AMT losses", () => {
+  for (
+    const [shortPart, longPart] of [
+      [loss, { ...gain, part: "D" as const }],
+      [gain, { ...loss, part: "D" as const }],
+    ]
+  ) {
+    const rows = [shortPart, longPart];
+    const caseInput = {
+      ...input,
+      line2k_8949_basis_dispositions: rows,
+      line2k_8949_capital_audit: {
+        transactions: rows.map((row) => ({
+          source_transaction_id: row.source_transaction_id,
+          part: row.part,
+          proceeds: row.proceeds,
+          cost_basis: row.regular_basis,
+          gain_loss: row.regular_gain,
+        })),
+        has_other_capital_activity: false,
+      },
+    };
+    const result = compute(caseInput);
+    const filed = result.outputs.find((row) => row.nodeType === "form6251");
+    const regularLoss = rows.reduce((sum, row) => sum + row.regular_gain, 0);
+    const amtLoss = rows.reduce((sum, row) => sum + row.amt_gain, 0);
+    assertEquals(regularLoss, -1_500);
+    assertEquals(amtLoss, -1_800);
+    assertEquals(filed?.fields.line2k_disposition, -300);
+    assertEquals(filed?.fields.line13, undefined);
+    const pending = {
+      ...basisSourcePending(filed!.fields),
+      schedule2: { line2_amt: filed!.fields.line11_amt },
+      f1040: {
+        line2a_tax_exempt: 0,
+        line7_capital_gain: regularLoss,
+        line11_agi: 200_000,
+        line14_deductions_qbi_total: 0,
+        line17_additional_taxes: filed!.fields.line11_amt,
+      },
+    };
+    assertStringIncludes(
+      mef6251.build(filed!.fields, { pending }),
+      "<PropertyDispositionAmt>-300</PropertyDispositionAmt>",
+    );
+    assertEquals(
+      form6251Pdf.projectFields?.(filed!.fields, pending)
+        ?.line2k_disposition,
+      -300,
+    );
+    assertThrows(
+      () =>
+        mef6251.build(filed!.fields, {
+          pending: {
+            ...pending,
+            f1040: { ...pending.f1040, line7_capital_gain: -1_400 },
+          },
+        }),
+      Error,
+      "cross-term basis loss",
+    );
+  }
+});
+
+Deno.test("Form 6251 rejects a cross-term offset once the AMT loss exceeds the current limit", () => {
+  const longGain = { ...gain, part: "D" as const };
+  const deepAmtLoss = {
+    ...loss,
+    amt_basis: 8_000,
+    amt_gain: -4_000,
+  };
+  assertThrows(
+    () =>
+      compute({
+        ...input,
+        line2k_8949_basis_dispositions: [deepAmtLoss, longGain],
+        line2k_8949_capital_audit: {
+          transactions: [deepAmtLoss, longGain].map((row) => ({
+            source_transaction_id: row.source_transaction_id,
+            part: row.part,
+            proceeds: row.proceeds,
+            cost_basis: row.regular_basis,
+            gain_loss: row.regular_gain,
+          })),
+          has_other_capital_activity: false,
         },
       }),
     Error,

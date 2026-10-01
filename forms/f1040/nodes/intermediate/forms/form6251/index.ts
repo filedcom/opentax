@@ -646,6 +646,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       const mixedFullyDeductibleLoss = !oneTermOnly &&
         fullyDeductibleNetLoss &&
         basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0);
+      const mixedFullyDeductibleOffsetLoss = !oneTermOnly &&
+        basisRows.length === 2 && fullyDeductibleNetLoss &&
+        basisRows.filter((row) => row.regular_gain > 0 && row.amt_gain > 0)
+            .length === 1 &&
+        basisRows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
+            .length === 1;
       // One same-term lot can change from regular gain to AMT loss while
       // other audited lots remain losses under both bases, provided the
       // separate AMT net loss is fully deductible.
@@ -668,6 +674,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         regularBasisNet > 0 && amtBasisNet > 0;
       if (
         (!oneTermOnly && !mixedFullyDeductibleLoss &&
+          !mixedFullyDeductibleOffsetLoss &&
           !shortLossOffsetLongGain &&
           !longLossOffsetShortGain && !shortLossLongGainToAmtLoss) ||
         (lossBasisRows.some((row) =>

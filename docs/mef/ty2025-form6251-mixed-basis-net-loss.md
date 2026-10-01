@@ -21,19 +21,31 @@ gain. A positive Form 6251 computation emits that exact line through the
 existing MeF and PDF fields.
 
 It still rejects a net total outside either limit, additional Schedule D
-activity, qualified dividends, Form 4952 election, Form
-2555, and special-rate gains. This does not determine regular or AMT
-capital-loss carryovers, transactions whose gain/loss sign changes between
-bases, or a net gain under one tax and net loss under the other. The focused
-source, calculation, MeF, PDF, and rejection run on 2026-09-30 passed 156/156
-cases across the Form 6251, Form 59E, native, and PDF suites. Full-return XSD,
-filled-PDF, IRS-rule, and ATS gates remain open.
+activity, qualified dividends, Form 4952 election, Form 2555, and special-rate
+gains. This does not determine regular or AMT capital-loss carryovers,
+transactions whose gain/loss sign changes between bases, or a net gain under one
+tax and net loss under the other. The focused source, calculation, MeF, PDF, and
+rejection run on 2026-09-30 passed 156/156 cases across the Form 6251, Form 59E,
+native, and PDF suites. Full-return XSD, filled-PDF, IRS-rule, and ATS gates
+remain open.
 
-An additional mixed-term route now accepts identified short- and long-term
-loss rows together when every row remains a loss under both bases and each
-combined net stays within its separate $3,000/$1,500 deduction limit. The
-complete Schedule D audit and retained Form 8949 replay still have to contain
-exactly those rows. Line 2k carries the signed difference; neither basis has
+An additional mixed-term route now accepts identified short- and long-term loss
+rows together when every row remains a loss under both bases and each combined
+net stays within its separate $3,000/$1,500 deduction limit. The complete
+Schedule D audit and retained Form 8949 replay still have to contain exactly
+those rows. Line 2k carries the signed difference; neither basis has
 preferential net capital gain, so Part III is absent. Positive native/PDF and
 over-limit fixtures are authored for the requested later bulk pass; this
 extension has not entered the earlier 156-case validation count.
+
+The next bounded mixed-term route accepts exactly one identified gain and one
+identified loss in opposite holding-period buckets when each row keeps its sign
+under regular and AMT bases, and both combined losses are fully deductible
+within the separate current-year limits. The complete Schedule D audit must
+contain those two rows and no other capital activity. Native MeF and PDF replay
+the retained Form 8949 rows and line 2k; export also checks the regular loss on
+Form 1040 line 7 and the positive AMT through Schedule 2 and Form 1040 line 17.
+Short-loss/long-gain and long-loss/short-gain positive fixtures, return
+tampering, and an over-limit rejection are authored for the deferred batch.
+Wider mixed capital activity, special-rate gain, carryovers, and authenticated
+broker-copy bytes remain open.

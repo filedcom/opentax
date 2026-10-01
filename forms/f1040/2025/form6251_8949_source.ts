@@ -106,6 +106,15 @@ export function assertForm6251Form8949Source(
     regularNet > 0 && amtNet < 0;
   const shortLosses = rows.filter((row) => ["A", "B", "C"].includes(row.part));
   const longRows = rows.filter((row) => ["D", "E", "F"].includes(row.part));
+  const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
+  const crossTermDeductibleLoss = rows.length === 2 &&
+    shortLosses.length === 1 && longRows.length === 1 &&
+    regularNet < 0 && regularNet >= lossLimit &&
+    amtNet < 0 && amtNet >= lossLimit &&
+    rows.filter((row) => row.regular_gain > 0 && row.amt_gain > 0)
+        .length === 1 &&
+    rows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
+        .length === 1;
   const mixedTermGainToAmtLoss = shortLosses.length > 0 &&
     longRows.length === 1 &&
     shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
@@ -120,7 +129,6 @@ export function assertForm6251Form8949Source(
     );
   }
   if (gainToAmtLoss || mixedTermGainToAmtLoss) {
-    const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
     const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
     const amt = fields.line11_amt;
@@ -147,6 +155,24 @@ export function assertForm6251Form8949Source(
     ) {
       throw new Error(
         "Form 6251 gain-to-AMT-loss basis sale needs a deductible AMT loss and matching Schedule 2 and Form 1040 capital gain and tax",
+      );
+    }
+  }
+  if (crossTermDeductibleLoss) {
+    const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+    const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const amt = fields.line11_amt;
+    if (
+      fields.net_capital_gain !== 0 ||
+      (fields.qualified_dividends ?? 0) !== 0 ||
+      form1040?.line7_capital_gain !== regularNet ||
+      typeof amt !== "number" || amt <= 0 ||
+      schedule2?.line2_amt !== amt ||
+      typeof form1040?.line17_additional_taxes !== "number" ||
+      form1040.line17_additional_taxes < amt
+    ) {
+      throw new Error(
+        "Form 6251 cross-term basis loss needs its fully deductible Schedule D loss and matching Form 1040 and Schedule 2 tax",
       );
     }
   }
