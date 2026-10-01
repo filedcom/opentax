@@ -4,7 +4,8 @@ import {
   type Form8908Source,
   form8908SourceSchema,
 } from "../../form8908_source.ts";
-import type { MefBuildContext } from "../form-descriptor.ts";
+import type { MefBuildContext, MefPdfAttachment } from "../form-descriptor.ts";
+import { assertForm8908Form7220PdfContents } from "./f8908_form7220_pdf.ts";
 
 export type Form8908PwaAttachmentLink = {
   readonly acquisitionRecordReference: string;
@@ -14,6 +15,44 @@ export type Form8908PwaAttachmentLink = {
   readonly description: string;
   readonly documentId: string;
 };
+
+/** Read the exact PDFs accepted into the MeF bundle before XML preparation. */
+export async function assertForm8908PwaSubmittedPdfs(
+  raw: Form8908Source,
+  attachments: ReadonlyArray<MefPdfAttachment>,
+): Promise<void> {
+  const source = form8908SourceSchema.parse(raw);
+  calculateForm8908Source(source);
+  let needsSignedStatement = false;
+  for (const home of source.homes) {
+    const document = home.form7220;
+    if (!document) continue;
+    const matching = attachments.filter((attachment) =>
+      attachment.fileName === document.pdf_file_name
+    );
+    if (
+      matching.length !== 1 ||
+      matching[0].description !== form8908PwaAttachmentDescription(home)
+    ) {
+      throw new Error(
+        `Form 8908 residence ${home.acquisition_record_reference} needs one reviewed Form 7220 binary attachment`,
+      );
+    }
+    await assertForm8908Form7220PdfContents(
+      source,
+      home.acquisition_record_reference,
+      matching[0].bytes,
+    );
+    needsSignedStatement = true;
+  }
+  // Form 7220 line 10 No requires a separate signed statement. A source
+  // reference alone does not establish the submitted bytes or signature.
+  if (needsSignedStatement) {
+    throw new Error(
+      "Form 8908 needs a byte-bound signed no-alterations statement per PWA residence",
+    );
+  }
+}
 
 /** Bind each increased-credit residence to its own validated Form 7220 PDF. */
 export function reconcileForm8908PwaAttachments(

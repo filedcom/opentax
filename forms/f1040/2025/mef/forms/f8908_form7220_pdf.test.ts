@@ -1,7 +1,9 @@
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
+import { form8908PwaAttachmentDescription } from "../../form8908_source.ts";
 import { assertForm8908Form7220PdfContents } from "./f8908_form7220_pdf.ts";
+import { assertForm8908PwaSubmittedPdfs } from "./f8908_pwa.ts";
 
 function source() {
   return {
@@ -163,5 +165,38 @@ Deno.test("Form 8908 Form 7220 PDF rejects bytes outside the reviewed digest", a
     () => assertForm8908Form7220PdfContents(source(), "SALE-1", bytes),
     Error,
     "differs from reviewed exact bytes",
+  );
+});
+
+Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an unbound signed statement", async () => {
+  const bytes = await completedPdf();
+  const reviewed = await reviewedSource(bytes);
+  const attachment = {
+    fileName: "Form7220-1.pdf",
+    description: form8908PwaAttachmentDescription(reviewed.homes[0]),
+    bytes,
+  };
+  const alteredBytes = await completedPdf({
+    "topmostSubform[0].Page2[0].Table_PartII[0].Line1[0].f2_1[0]":
+      "Other Employer",
+  });
+  await assertRejects(
+    () => assertForm8908PwaSubmittedPdfs(reviewed, []),
+    Error,
+    "needs one reviewed Form 7220 binary attachment",
+  );
+  await assertRejects(
+    () =>
+      assertForm8908PwaSubmittedPdfs(reviewed, [{
+        ...attachment,
+        bytes: alteredBytes,
+      }]),
+    Error,
+    "differs from reviewed exact bytes",
+  );
+  await assertRejects(
+    () => assertForm8908PwaSubmittedPdfs(reviewed, [attachment]),
+    Error,
+    "byte-bound signed no-alterations statement",
   );
 });

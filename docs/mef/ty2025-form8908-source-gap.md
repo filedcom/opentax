@@ -64,6 +64,11 @@ signed no-alterations statement; the reviewed source names that statement, but
 its signature and bytes are not yet bound to an attachment. The official PDF has
 no signature field. PDF signatures, flattened appearance, XFA/AcroForm
 synchronization, and independent payroll authenticity are not verified by this
-field reader. The MeF builder currently provides attachment digests and document
-IDs, not the bytes needed to call it. The guard therefore remains closed pending
-exact-byte integration, signed-statement handling, and full-batch tests.
+field reader. The MeF bundle preparation now passes its already validated
+BinaryAttachment bytes to this verifier before XML preparation. Missing or
+altered Form 7220 bytes reject. The existing native link still requires a unique
+document ID per home. After the PDF check, preparation explicitly rejects the
+line-10 "No" branch because the required signed statement is only named by a
+source reference; its bytes and signature have not been bound. The public guard
+remains closed pending signed-statement handling, XFA/appearance review,
+independent provenance, and full-batch tests.

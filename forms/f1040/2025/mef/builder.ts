@@ -29,6 +29,8 @@ import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
+import { reconciledForm8908Source } from "./forms/f8908_source_reconciliation.ts";
+import { assertForm8908PwaSubmittedPdfs } from "./forms/f8908_pwa.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 
@@ -393,6 +395,10 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  if (pending.f8908) {
+    const { source } = reconciledForm8908Source(pending.f8908, pending.f3800);
+    await assertForm8908PwaSubmittedPdfs(source, attachments);
+  }
   await assertW2GPayerCopyContents(pending, options.filer, attachments);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
