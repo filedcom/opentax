@@ -169,6 +169,44 @@ Deno.test("Form 8844 source binds native Form 3800 line 3 and filled PDF fields"
   assertEquals(form8844Pdf.projectFields!(empowerment, pending).line2, 2_000);
 });
 
+Deno.test("Form 8844 printable copy binds Form 3800 line 3 document and final credit", () => {
+  const prepared = prepareForm3800DocumentParts(f3800, {
+    pending,
+    documentIdsByPendingKey: ids,
+  });
+  if (!prepared) throw new Error("Expected sourced Form 3800");
+  const fields = form8844Pdf.projectFields!(empowerment, pending);
+  assertEquals(
+    form8844Pdf.instances!(fields, testFiler(), pending, prepared),
+    [fields],
+  );
+  assertThrows(() => form8844Pdf.instances!(fields, testFiler(), pending));
+  assertThrows(() =>
+    form8844Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentRows: prepared.currentRows.map((row) => ({
+        ...row,
+        metadata: { ...row.metadata, referenceDocumentId: "IRS8844_OTHER" },
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8844Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentAmounts: prepared.currentAmounts.map((row) => ({
+        ...row,
+        nonpassiveCredit: 1_999,
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8844Pdf.instances!(fields, testFiler(), {
+      ...pending,
+      f1040: { ...pending.f1040, line20_nonrefundable_credits: 1_999 },
+    }, prepared)
+  );
+});
+
 Deno.test("Form 8844 export rejects changed payroll, tax use and final return", () => {
   assertThrows(
     () =>

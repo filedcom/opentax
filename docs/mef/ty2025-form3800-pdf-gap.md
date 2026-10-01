@@ -640,3 +640,11 @@ Form 3800 line 38 to reconcile through Schedule 3 line 6a/8 to finalized Form
 1040 line 20. Authored fixtures change the document ID, amount, and final tax
 credit; they await the shared bulk run. This check does not authenticate the
 underlying child-care invoices or widen the supported Form 8882 claim.
+
+The Form 8844 printable copy likewise requires the prepared Form 3800 Part III
+line 3 row, current amount, and detail to retain one IRS8844 document ID and
+the exact Form 8844 line 4 credit. Its Form 3800 line 38 must reach Schedule 3
+and finalized Form 1040 line 20. Authored fixtures alter the document ID,
+credit, and final return; they await the bulk run. The current
+[IRS Form 8844](https://www.irs.gov/pub/irs-pdf/f8844.pdf) directs its line 4
+to Form 3800 Part III line 3. This adds no new eligibility or payroll proof.
