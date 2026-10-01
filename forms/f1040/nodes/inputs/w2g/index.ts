@@ -58,6 +58,7 @@ export const inputSchema = z.object({
 }).superRefine(({ w2gs }, ctx) => {
   const references = new Set<string>();
   const copyFiles = new Set<string>();
+  const copyHashes = new Set<string>();
   w2gs.forEach((item, index) => {
     const reference = item.source_document_reference?.trim();
     if (reference && references.has(reference)) {
@@ -78,6 +79,16 @@ export const inputSchema = z.object({
       });
     }
     if (file) copyFiles.add(file);
+    const hash = item.issued_copy_pdf_sha256;
+    if (hash && copyHashes.has(hash)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["w2gs", index, "issued_copy_pdf_sha256"],
+        message:
+          "The same payer-issued W-2G PDF cannot be attached twice under different file names",
+      });
+    }
+    if (hash) copyHashes.add(hash);
   });
 });
 
