@@ -21,6 +21,21 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line1_qbi",
     pdfField: `${page1}Table[0].Row1i[0].f1_05[0]`,
   },
+  {
+    kind: "text",
+    domainKey: "line1ii_business_name",
+    pdfField: `${page1}Table[0].Row1ii[0].f1_06[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line1ii_ein",
+    pdfField: `${page1}Table[0].Row1ii[0].f1_07[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line1ii_qbi",
+    pdfField: `${page1}Table[0].Row1ii[0].f1_08[0]`,
+  },
   ...Array.from({ length: 16 }, (_, index): PdfFieldEntry => {
     const line = index + 2;
     const field = `f1_${String(index + 18).padStart(2, "0")}[0]`;
@@ -58,16 +73,23 @@ export const form8995Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8995 PDF needs a valid nonnegative QBI deduction");
     }
-    const { businessName, tin, qbi, lines } = assertPositive8995(
+    const { businesses, lines } = assertPositive8995(
       fields,
       allPending,
     );
     return {
-      ...(businessName && tin
+      ...(businesses[0]
         ? {
-          line1_business_name: businessName,
-          line1_ein: tin.value,
-          line1_qbi: qbi,
+          line1_business_name: businesses[0].businessName,
+          line1_ein: businesses[0].tin.value,
+          line1_qbi: businesses[0].qbi,
+        }
+        : {}),
+      ...(businesses[1]
+        ? {
+          line1ii_business_name: businesses[1].businessName,
+          line1ii_ein: businesses[1].tin.value,
+          line1ii_qbi: businesses[1].qbi,
         }
         : {}),
       ...Object.fromEntries(

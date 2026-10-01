@@ -403,6 +403,75 @@ function oneScheduleCLines(
   };
 }
 
+// Two small, independently identified Schedule C businesses can use the two
+// printed rows without an attributable SE-tax deduction when their combined
+// profit is below the Schedule SE filing threshold.
+function twoSmallScheduleCLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, string | number> & { line15: number }) | undefined {
+  const businesses = input.schedule_c_qbi_businesses;
+  if (businesses?.length !== 2) return undefined;
+  const [first, second] = businesses;
+  const qbi = first.qbi + second.qbi;
+  if (
+    input.filing_status !== FilingStatus.Single ||
+    !first.business_reference || !second.business_reference ||
+    first.business_reference === second.business_reference ||
+    !first.business_name || !second.business_name ||
+    first.business_name === second.business_name ||
+    !first.ein || !second.ein || first.ein === second.ein ||
+    !Number.isSafeInteger(first.qbi) || first.qbi <= 0 ||
+    !Number.isSafeInteger(second.qbi) || second.qbi <= 0 || qbi >= 400 ||
+    first.no_other_adjustments_confirmed !== true ||
+    second.no_other_adjustments_confirmed !== true ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    sumField(input.qbi_from_schedule_c) !== qbi ||
+    sumField(input.qbi_from_schedule_f) !== 0 ||
+    sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
+    sumField(input.se_tax_deduction) !== 0 ||
+    sumField(input.se_health_insurance_deduction) !== 0 ||
+    sumField(input.retirement_plan_deduction) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    sumField(input.net_capital_gain) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.agi === undefined || !Number.isFinite(input.agi)
+  ) return undefined;
+  const line11 = Math.round(
+    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+  );
+  const line5 = Math.round(qbi * QBI_RATE);
+  const line14 = Math.round(line11 * QBI_RATE);
+  return {
+    line1_business_reference: first.business_reference,
+    line1_business_name: first.business_name,
+    line1_ein: first.ein,
+    line1_qbi: first.qbi,
+    line1ii_business_reference: second.business_reference,
+    line1ii_business_name: second.business_name,
+    line1ii_ein: second.ein,
+    line1ii_qbi: second.qbi,
+    line2: qbi,
+    line3: 0,
+    line4: qbi,
+    line5,
+    line6: 0,
+    line7: 0,
+    line8: 0,
+    line9: 0,
+    line10: line5,
+    line11,
+    line12: 0,
+    line13: line11,
+    line14,
+    line15: Math.min(line5, line14),
+    line16: 0,
+    line17: 0,
+  };
+}
+
 function oneScheduleFLines(
   input: Form8995Input,
   cfg: F1040Config,
@@ -563,9 +632,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const simplifiedLines = input.schedule_f_qbi_businesses !== undefined
       ? oneScheduleFLines(input, cfg)
       : input.schedule_c_qbi_businesses !== undefined
-      ? oneScheduleCLines(input, cfg)
+      ? twoSmallScheduleCLines(input, cfg) ?? oneScheduleCLines(input, cfg)
       : reitOnlyLines(input, cfg);
-    // The bounded one-business filed routes carry whole-dollar line 15 exactly
+    // The bounded filed routes carry whole-dollar line 15 exactly
     // into Form 1040. Other QBI routes retain their existing calculation.
     const deduction = simplifiedLines === undefined
       ? qbiDeduction(input, cfg)

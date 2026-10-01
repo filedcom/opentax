@@ -18,6 +18,7 @@ import {
   wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import { inputSchema as form1099DivInputSchema } from "../../../nodes/inputs/f1099div/index.ts";
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 
 const lineNumbers = [
   2,
@@ -72,18 +73,13 @@ export function assertNoUnfiled8995Loss(
   }
 }
 
-export type OneBusiness8995 = {
-  readonly businessName: string;
-  readonly tin: { readonly kind: "ein" | "ssn"; readonly value: string };
-  readonly qbi: number;
+export type Filed8995 = {
+  readonly businesses: ReadonlyArray<{
+    readonly businessName: string;
+    readonly tin: { readonly kind: "ein" | "ssn"; readonly value: string };
+    readonly qbi: number;
+  }>;
   readonly lines: Readonly<Record<(typeof lineNumbers)[number], number>>;
-};
-
-export type Filed8995 = OneBusiness8995 | {
-  readonly businessName: undefined;
-  readonly tin: undefined;
-  readonly qbi: 0;
-  readonly lines: OneBusiness8995["lines"];
 };
 
 function assertFiledLines(
@@ -91,8 +87,8 @@ function assertFiledLines(
   f1040: Record<string, unknown>,
   reit: number = 0,
   qualifiedDividends: number = 0,
-): OneBusiness8995["lines"] {
-  const qbi = fields.line1_qbi as number;
+  qbi: number = fields.line1_qbi as number,
+): Filed8995["lines"] {
   const line11 = fields.line11 as number;
   const line5 = Math.round(qbi * 0.2);
   const line9 = Math.round(reit * 0.2);
@@ -331,7 +327,7 @@ export function qualifiedReitDividends(
 export function assertOneScheduleC8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
-): OneBusiness8995 {
+): Filed8995 {
   if (!rawPending) {
     throw new Error(
       "Form 8995 needs its complete source and final return pending graph",
@@ -545,10 +541,199 @@ export function assertOneScheduleC8995(
     qualifiedDividends.qualified,
   );
   return {
-    businessName: sourceBusiness.line_c_business_name,
-    tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
-    qbi,
+    businesses: [{
+      businessName: sourceBusiness.line_c_business_name,
+      tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
+      qbi,
+    }],
     lines: expected,
+  };
+}
+
+/** Two small Schedule C businesses with no Schedule SE tax or other QBI source. */
+export function assertTwoSmallScheduleC8995(
+  fields: Record<string, unknown>,
+  rawPending: Readonly<Record<string, unknown>> | undefined,
+): Filed8995 {
+  if (!rawPending) {
+    throw new Error("Form 8995 two-business filing needs its complete return");
+  }
+  const pending = normalizeAllPending(rawPending as Record<string, unknown>);
+  const parsed = scheduleCInputSchema.safeParse(pending.schedule_c);
+  const items = parsed.success ? projectScheduleCItems(parsed.data) : [];
+  const sourceW2 = w2InputSchema.safeParse(pending.w2);
+  const wage = sourceW2.success && sourceW2.data.w2s.length === 1
+    ? sourceW2.data.w2s[0]
+    : undefined;
+  const rows = Array.isArray(fields.schedule_c_qbi_businesses)
+    ? fields.schedule_c_qbi_businesses as Array<Record<string, unknown>>
+    : [];
+  const f1040 = pending.f1040;
+  const general = pending.general;
+  const schedule1 = pending.schedule1;
+  const scheduleSe = pending.schedule_se;
+  const form7206 = pending.form7206;
+  const profits = items.map((item) => computeNetProfit(item));
+  const total = profits.reduce((sum, amount) => sum + amount, 0);
+  const scheduleCSource = form7206?.schedule_c_source as
+    | Record<string, unknown>
+    | undefined;
+  const sourceBusinesses = Array.isArray(scheduleCSource?.businesses)
+    ? scheduleCSource.businesses as Array<Record<string, unknown>>
+    : [];
+  const scheduleSeSource = form7206?.schedule_se_source as
+    | Record<string, unknown>
+    | undefined;
+  const ownerSsn = String(general?.taxpayer_ssn ?? "").replace(/\D/g, "");
+  const otherSources = [
+    "schedule_f",
+    "schedule_e",
+    "k1_partnership",
+    "k1_s_corp",
+    "f1099patr",
+    "f1099div",
+    "f1099int",
+    "schedule_d",
+    "f1099b",
+    "sep_retirement",
+    "form8995a",
+  ] as const;
+  if (
+    !parsed.success || items.length !== 2 || rows.length !== 2 ||
+    !wage || !f1040 || !general || !schedule1 ||
+    general.filing_status !== "single" ||
+    f1040.filing_status !== "single" ||
+    ownerSsn.length !== 9 ||
+    String(f1040.taxpayer_ssn ?? "").replace(/\D/g, "") !== ownerSsn ||
+    !Number.isSafeInteger(wage.box1_wages) || wage.box1_wages <= 0 ||
+    wage.box13_statutory_employee === true ||
+    String(wage.employee_ssn ?? "").replace(/\D/g, "") !== ownerSsn ||
+    (wage.box12_entries?.length ?? 0) !== 0 ||
+    (wage.box14_entries?.length ?? 0) !== 0 ||
+    wage.flsa_overtime_review !== undefined ||
+    wage.qualified_tips_box14_review !== undefined ||
+    otherSources.some((key) => pending[key] !== undefined) ||
+    (parsed.data.wotc_wage_reductions?.length ?? 0) !== 0 ||
+    parsed.data.form8829_line30 !== undefined ||
+    parsed.data.line_30_home_office !== undefined ||
+    parsed.data.section481a_adjustments !== undefined ||
+    !Number.isSafeInteger(total) || total <= 0 || total >= 400 ||
+    scheduleCSource?.unadjusted_source !== true ||
+    sourceBusinesses.length !== 2 ||
+    sourceBusinesses.some((business, index) =>
+      business.business_reference !== items[index]?.business_reference ||
+      business.proprietor_recipient !== items[index]?.proprietor_recipient ||
+      business.line31_net_profit !== profits[index]
+    ) ||
+    (scheduleSe !== undefined &&
+      (Object.keys(scheduleSe).some((key) => key !== "w2_ss_wages") ||
+        scheduleSe.w2_ss_wages !== wage.box3_ss_wages)) ||
+    (scheduleSe !== undefined && scheduleSeSource === undefined) ||
+    (scheduleSeSource !== undefined &&
+      (scheduleSeSource.net_profit_schedule_c !== 0 ||
+        scheduleSeSource.net_profit_schedule_f !== 0 ||
+        scheduleSeSource.farm_optional_method_elected !== false ||
+        scheduleSeSource.line13_deduction !== 0)) ||
+    items.some((item, index) => {
+      const row = rows[index];
+      if (!row) return true;
+      const rowSource = scheduleCItemSchema.safeParse(row.source_schedule_c);
+      return !item.business_reference || !item.line_c_business_name ||
+        !/^[A-Za-z0-9#()&'-]+(?: [A-Za-z0-9#()&'-]+)*$/.test(
+          item.line_c_business_name,
+        ) ||
+        item.line_c_business_name.length > 75 ||
+        !item.line_d_ein ||
+        item.line_d_ein.replace(/\D/g, "").length !== 9 ||
+        (item.proprietor_recipient !== undefined &&
+          item.proprietor_recipient !== "T") ||
+        item.line_g_material_participation !== true ||
+        item.qbi_no_other_adjustments_confirmed !== true ||
+        item.qbi_specified_service === true ||
+        item.at_risk_simplified !== undefined ||
+        (item.qbi_w2_wages ?? 0) !== 0 ||
+        (item.qbi_unadjusted_basis ?? 0) !== 0 ||
+        !Number.isSafeInteger(profits[index]) || profits[index] <= 0 ||
+        !rowSource.success ||
+        JSON.stringify(rowSource.data) !== JSON.stringify(item) ||
+        row.business_reference !== item.business_reference ||
+        row.business_name !== item.line_c_business_name ||
+        row.ein !== item.line_d_ein.replace(/\D/g, "") ||
+        row.qbi !== profits[index] ||
+        row.no_other_adjustments_confirmed !== true;
+    }) ||
+    items[0].business_reference === items[1].business_reference ||
+    items[0].line_c_business_name === items[1].line_c_business_name ||
+    items[0].line_d_ein?.replace(/\D/g, "") ===
+      items[1].line_d_ein?.replace(/\D/g, "") ||
+    fields.line1_business_reference !== items[0].business_reference ||
+    fields.line1_business_name !== items[0].line_c_business_name ||
+    fields.line1_ein !== items[0].line_d_ein?.replace(/\D/g, "") ||
+    fields.line1_ssn !== undefined || fields.line1_qbi !== profits[0] ||
+    fields.line1ii_business_reference !== items[1].business_reference ||
+    fields.line1ii_business_name !== items[1].line_c_business_name ||
+    fields.line1ii_ein !== items[1].line_d_ein?.replace(/\D/g, "") ||
+    fields.line1ii_qbi !== profits[1] ||
+    fields.qbi_from_schedule_c !== total ||
+    fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    !zeroOrAbsent(fields.qbi_from_schedule_f) ||
+    !zeroOrAbsent(fields.qbi) || !zeroOrAbsent(fields.sstb_qbi) ||
+    !zeroOrAbsent(fields.se_tax_deduction) ||
+    !zeroOrAbsent(fields.se_health_insurance_deduction) ||
+    !zeroOrAbsent(fields.retirement_plan_deduction) ||
+    !zeroOrAbsent(fields.line6_sec199a_dividends) ||
+    fields.reit_dividend_sources !== undefined ||
+    !zeroOrAbsent(fields.net_capital_gain) ||
+    !zeroOrAbsent(fields.qbi_loss_carryforward) ||
+    !zeroOrAbsent(fields.reit_loss_carryforward) ||
+    form7206 &&
+      Object.keys(form7206).some((key) =>
+        key !== "schedule_c_source" && key !== "schedule_se_source"
+      ) ||
+    !zeroOrAbsent(schedule1.line15_se_deduction) ||
+    !zeroOrAbsent(schedule1.line16_sep_simple) ||
+    !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
+    schedule1.line3_schedule_c !== total ||
+    f1040.line1a_wages !== wage.box1_wages ||
+    f1040.line1z_total_wages !== wage.box1_wages ||
+    f1040.line8_additional_income !== total ||
+    f1040.line9_total_income !== wage.box1_wages + total ||
+    !zeroOrAbsent(f1040.line10_adjustments) ||
+    f1040.line11_agi !== wage.box1_wages + total ||
+    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    !zeroOrAbsent(f1040.line3b_ordinary_dividends) ||
+    !zeroOrAbsent(f1040.line7_capital_gain) ||
+    !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
+    !zeroOrAbsent(f1040.line13b_additional_deductions) ||
+    typeof f1040.line12c_deduction_total !== "number" ||
+    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+      fields.line11
+  ) {
+    throw new Error(
+      "Form 8995 two-business filing needs two distinct small Schedule C sources, one wage source, and exact final-return reconciliation",
+    );
+  }
+  const lines = assertFiledLines(fields, f1040, 0, 0, total);
+  if (
+    f1040.line14_deductions_qbi_total !==
+      f1040.line12c_deduction_total + lines[15] ||
+    f1040.line15_taxable_income !==
+      Math.max(0, f1040.line11_agi - f1040.line14_deductions_qbi_total)
+  ) {
+    throw new Error(
+      "Form 8995 two-business deduction differs from Form 1040 taxable income",
+    );
+  }
+  return {
+    businesses: items.map((item, index) => ({
+      businessName: item.line_c_business_name!,
+      tin: { kind: "ein" as const, value: item.line_d_ein!.replace(/\D/g, "") },
+      qbi: profits[index],
+    })),
+    lines,
   };
 }
 
@@ -556,7 +741,7 @@ export function assertOneScheduleC8995(
 export function assertOneScheduleF8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
-): OneBusiness8995 {
+): Filed8995 {
   if (!rawPending) {
     throw new Error(
       "Form 8995 needs its complete source and final return pending graph",
@@ -688,9 +873,11 @@ export function assertOneScheduleF8995(
     );
   }
   return {
-    businessName: farm.line_c_farm_name,
-    tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
-    qbi: fields.line1_qbi as number,
+    businesses: [{
+      businessName: farm.line_c_farm_name,
+      tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
+      qbi: fields.line1_qbi as number,
+    }],
     lines: assertFiledLines(fields, f1040, 0, qualifiedDividends.qualified),
   };
 }
@@ -792,9 +979,7 @@ function assertReitOnly8995(
     );
   }
   return {
-    businessName: undefined,
-    tin: undefined,
-    qbi: 0,
+    businesses: [],
     lines: assertFiledLines(fields, f1040, reit, 0),
   };
 }
@@ -807,6 +992,10 @@ export function assertPositive8995(
     return assertOneScheduleF8995(fields, pending);
   }
   if (fields.schedule_c_qbi_businesses !== undefined) {
+    if (
+      Array.isArray(fields.schedule_c_qbi_businesses) &&
+      fields.schedule_c_qbi_businesses.length === 2
+    ) return assertTwoSmallScheduleC8995(fields, pending);
     return assertOneScheduleC8995(fields, pending);
   }
   return assertReitOnly8995(fields, pending);

@@ -191,6 +191,30 @@ zeros: export checks the final Schedule 1 and Form 1040 before producing a
 document. The synthetic profitable Schedule C fixture exercises the ordinary
 half-SE-tax route through calculation, native XML, and PDF projection.
 
+## Two small Schedule C businesses (authored, unrun)
+
+The bounded two-business route puts separately identified Schedule C profits
+on Form 8995 rows 1i and 1ii, combines them on line 2, and carries the
+computed line 15 deduction to Form 1040 line 13. It requires distinct
+business references, names, and EINs; positive whole-dollar profit for each;
+and combined profit below $400. The narrow bound avoids an attributable
+Schedule SE deduction. One identified ordinary W-2 source provides taxable
+income for the line 14 limit. Native XML emits two business groups, while the
+PDF maps both printed rows. The exporter replays both Schedule C items, the
+Schedule 1 and Form 7206 source records, the W-2, Form 8995 lines, and the
+settled Form 1040. A full-return positive fixture and source, row, return,
+and $400-boundary rejection fixtures are written but await the bulk test pass.
+The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+require separate business rows and their line 2 total; the
+[2025 Schedule SE instructions](https://www.irs.gov/instructions/i1040sse)
+describe combined business earnings for the $400 filing test.
+
+This route leaves larger or fractional two-business profits, owner splits,
+other QBI sources, attributable health or retirement deductions, and
+Form 8995-A combinations outside the supported boundary. The source and
+calculated return are checked locally; external source authenticity remains
+outside this route.
+
 ## Implemented one-farm route
 
 One sourced Schedule F farm may now combine with one separately identified,

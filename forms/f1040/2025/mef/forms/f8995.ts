@@ -23,20 +23,20 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     ) {
       throw new Error("Form 8995 needs a valid nonnegative QBI deduction");
     }
-    const { businessName, tin, qbi, lines } = assertPositive8995(
+    const { businesses, lines } = assertPositive8995(
       fields as Record<string, unknown>,
       context?.pending,
     );
     return elements("IRS8995", [
-      ...(businessName && tin
-        ? [elements("QualifiedBusinessIncomeDedGrp", [
+      ...businesses.map(({ businessName, tin, qbi }) =>
+        elements("QualifiedBusinessIncomeDedGrp", [
           elements("TradeOrBusinessName", [
             element("BusinessNameLine1Txt", businessName),
           ]),
           element(tin.kind === "ein" ? "EIN" : "SSN", tin.value),
           element("QlfyBusinessIncomeOrLossAmt", qbi),
-        ])]
-        : []),
+        ])
+      ),
       element("TotQlfyBusinessIncomeOrLossAmt", lines[2]),
       element("PYQlfyBusinessNetLossCfwdAmt", lines[3]),
       element("TotQualifiedBusinessIncomeAmt", lines[4]),
