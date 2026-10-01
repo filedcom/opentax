@@ -1,6 +1,7 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { prepareForm3800DocumentParts } from "../../mef/forms/f3800.ts";
+import { buildIRS3800Document } from "../../mef/forms/f3800_document.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import {
   form3800PartIAndIIFields,
@@ -244,5 +245,104 @@ Deno.test("Form 3800 prints separate self-earned and partnership orphan-drug sou
         index === 1 ? { ...row, passThroughEin: "999999999" } : row
       ),
     })
+  );
+});
+
+Deno.test("Form 3800 prints two distinct partnership orphan-drug credits in line 1h and Part V", () => {
+  const second = {
+    ...entry,
+    source_ein: "987654321",
+    source_document_reference: "2025 second partnership K-1",
+    credit_amount: 800,
+  };
+  const both = {
+    ...f3800,
+    f8820_k1_credit_entries: [entry, second],
+    tax_context: { ...f3800.tax_context, standardCredit: 2_050 },
+    allowed_credit: 2_050,
+  };
+  const filing = {
+    ...pending,
+    f3800: both,
+    k1_partnership: {
+      k1_partnerships: [k1, {
+        ...k1,
+        partnership_name: "Second clinical partnership",
+        partnership_ein: second.source_ein,
+        source_document_reference: second.source_document_reference,
+        box15_code_z_orphan_drug_credit: second.credit_amount,
+      }],
+    },
+    f1040: { ...pending.f1040, line20_nonrefundable_credits: 2_050 },
+    schedule3: {
+      line6a_total: 2_050,
+      line7_total: 2_050,
+      line8_total: 2_050,
+    },
+  };
+  const parts = prepareForm3800DocumentParts(both, {
+    pending: filing,
+    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+  });
+  if (!parts) throw new Error("Expected two K-1 credit sources");
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentDetails.map((detail) => detail.credit), [
+    1_250,
+    800,
+  ]);
+  const native = buildIRS3800Document(parts);
+  assertEquals(
+    [...native.matchAll(/<Frm8820CYAggrgtAmtGrp/g)].length,
+    2,
+  );
+  assertStringIncludes(
+    native,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    native,
+    "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
+  );
+  const [fields] = form3800Pdf.instances!(
+    both,
+    testFiler(),
+    filing,
+    parts,
+  );
+  assertEquals(fields[form3800PartIIIFields("1h").c], entry.source_ein);
+  assertEquals(fields[form3800PartIIIFields("1h").e], 2_050);
+  assertEquals(fields[form3800PartVFields(1).c1], entry.source_ein);
+  assertEquals(fields[form3800PartVFields(1).e], 1_250);
+  assertEquals(fields[form3800PartVFields(2).c1], second.source_ein);
+  assertEquals(fields[form3800PartVFields(2).e], 800);
+  assertEquals(fields[form3800PartIAndIIFields.line38], 2_050);
+  assertThrows(() =>
+    form3800Pdf.instances!(both, testFiler(), {
+      ...filing,
+      k1_partnership: {
+        k1_partnerships: [k1, {
+          ...filing.k1_partnership.k1_partnerships[1],
+          box15_code_z_orphan_drug_credit: 799,
+        }],
+      },
+    }, parts)
+  );
+  assertThrows(() =>
+    form3800Pdf.instances!(both, testFiler(), filing, {
+      ...parts,
+      currentRows: [{
+        ...parts.currentRows[0],
+        metadata: {
+          ...parts.currentRows[0].metadata,
+          entity: { ein: second.source_ein },
+        },
+      }],
+    })
+  );
+  assertThrows(() =>
+    form3800Pdf.instances!(both, testFiler(), {
+      ...filing,
+      f1040: { ...filing.f1040, line20_nonrefundable_credits: 2_049 },
+    }, parts)
   );
 });

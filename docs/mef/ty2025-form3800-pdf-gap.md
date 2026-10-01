@@ -610,3 +610,16 @@ $1,250 partnership example prints $3,225 on line 1h/38 and two Part V rows;
 source, native EIN, and final-tax tampering is rejected. These fixtures await
 the shared bulk run. This route does not cover multiple K-1s, passive orphan
 credits, partial tax use, or Part V overflow.
+
+A bounded Part III line 1h path now accepts two separately sourced nonpassive
+partnership Schedule K-1 box 15 code Z orphan-drug credits without a self-earned
+Form 8820. The two partnership EINs and document references are distinct; the
+native current-year source rows and two Part V details retain each credit while
+line 1h sums them once. The parent PDF requires exact source/raw agreement, both
+EIN and credit details, the largest-credit EIN in Part III column (c), full
+current-year tax use on Parts I/II, Schedule 3 line 6a, and finalized Form 1040
+line 20. An authored $1,250 plus $800 example reaches $2,050; changed K-1 box
+15, Part III EIN, and Form 1040 tax fixtures are written but unrun. This route
+does not cover the self-earned-plus-K-1 combination above, passive allocations,
+more than two partnership sources, S corporation/estate/trust sources, partial
+tax use, or source-byte authentication.

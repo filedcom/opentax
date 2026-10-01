@@ -1088,6 +1088,73 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     if (
+      directOrphanK1?.length === 2 &&
+      directOrphanK1.every((entry) => entry.source_type === "partnership") &&
+      !source.f8820_credit && !source.f8874_credit &&
+      !source.f5884_credit && !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const entries = sourceOrphanDrugK1Credits(source, { pending: all });
+      const rawSource = f3800InputSchema.parse(raw);
+      const [row] = prepared.currentRows;
+      const [amount] = prepared.currentAmounts;
+      const details = prepared.currentDetails.filter((detail) =>
+        detail.line === "1h"
+      );
+      const total = entries.reduce(
+        (sum, entry) => sum + entry.credit_amount,
+        0,
+      );
+      const largest = entries[0].credit_amount >= entries[1].credit_amount
+        ? entries[0]
+        : entries[1];
+      if (
+        entries[0].source_ein === entries[1].source_ein ||
+        entries.some((entry) =>
+          entry.credit_amount <= 0 || entry.subject_to_passive_activity_limit
+        ) ||
+        JSON.stringify(rawSource.f8820_k1_credit_entries) !==
+          JSON.stringify(directOrphanK1) ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentAmounts.length !== 1 ||
+        prepared.currentDetails.length !== 2 ||
+        prepared.carryoverRows.length !== 0 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
+        row.entityCredits.length !== 2 ||
+        !(row.metadata.entity && "ein" in row.metadata.entity) ||
+        row.metadata.entity.ein !== largest.source_ein ||
+        row.entityCredits.some((entity, index) =>
+          !("ein" in entity.entity) ||
+          entity.entity.ein !== entries[index].source_ein ||
+          entity.credit !== entries[index].credit_amount
+        ) ||
+        details.length !== 2 ||
+        details.some((detail, index) =>
+          detail.credit !== entries[index].credit_amount ||
+          detail.appliedCredit !== entries[index].credit_amount ||
+          detail.passThroughEin !== entries[index].source_ein
+        ) ||
+        amount?.line !== "1h" ||
+        amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
+        amount.appliedCredit !== total || amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
+        prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
+        prepared.lines.line17 !== total ||
+        (prepared.lines.line37 ?? 0) !== 0 ||
+        prepared.lines.line38 !== total
+      ) {
+        throw new Error(
+          "Form 3800 PDF two partnership orphan-drug sources differ from Part V and filed K-1s",
+        );
+      }
+    }
+    if (
       source.f8820_credit && directOrphanK1?.length === 1 &&
       directOrphanK1[0].source_type === "partnership" &&
       !source.f8874_credit && !source.f5884_credit &&
