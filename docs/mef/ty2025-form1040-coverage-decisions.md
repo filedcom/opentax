@@ -38,6 +38,16 @@ statuses have since been reconciled with the current tree.
 | Conditional companion incomplete            | Form 8995-A Schedules A, B, C and D have bounded registered native routes. Schedule B's route covers only one group of two sourced Schedule C businesses. Form 1116 Schedule C retains a positive trigger without a registered filing route; it has a staged source/XML projection only.                                                                        | The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names trigger and guard status. Complete the remaining attachments or explicitly approve fail-closed unsupported scenarios. |
 | Source-only or separate workflow candidate  | Some K-1, payment, entity and information roots may belong to another filer or workflow.                                                                                                                                                                                                                                                                        | The current return's attachment rule must be confirmed individually. Neither schema presence nor nonregistration proves an exclusion.                                                                      |
 
+Static boundary review on 2026-10-01 found that the public `general` input
+rejects an explicit `dual_status_return_2025` before calculation, the TY2025
+MeF builder rejects a return type other than `1040` or a year other than 2025,
+and both MeF and PDF export run the final-header dual-status guard. Existing
+focused rejection fixtures cover the public input, prepared return, MeF, and
+PDF paths. The separate 1040-NR, 1040-SS, and 4868 ATS scenario facts are
+research records; they do not register those filing routes. This static review
+does not replace the deferred bulk execution, so the board's release-boundary
+verification remains open.
+
 The eight headline gaps in the user-facing board are not one status. Forms 1116,
 6251, 8283, 8889, 8582, 4952, 4972 and 8962 each have newly written bounded
 slices, recorded in the [form audit](ty2025-form1040-form-audit.md) and their
