@@ -712,6 +712,10 @@ export function reconcilePairedForm8889(
   const pairedCode2Owners = owners.filter((owner) =>
     owner.hsa_excluded_distributions?.timely_excess_withdrawal !== undefined
   );
+  const pairedEmployerCode2Owners = owners.filter((owner) =>
+    owner.employer_excess_treatment?.timely_withdrawal
+      ?.withdrawal_tax_year === 2025
+  );
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
   );
@@ -790,8 +794,92 @@ export function reconcilePairedForm8889(
       "Form 8889 paired owners cannot reuse a Form 1099-SA, medical expense, dated distribution, or rollover reference",
     );
   }
+  let pairedEmployerReturnedPrincipal = 0;
+  let pairedEmployerW2Wages: number | undefined;
+  if (pairedEmployerCode2Owners.length > 0) {
+    const employerOwner = pairedEmployerCode2Owners[0]!;
+    const employerIndex = owners.indexOf(employerOwner);
+    const employerForm = forms[employerIndex];
+    const withdrawal = employerOwner.employer_excess_treatment!
+      .timely_withdrawal!;
+    const w2 = w2InputSchema.safeParse(allPending?.w2);
+    const codeW = w2.success
+      ? w2.data.w2s.flatMap((item) =>
+        (item.box12_entries ?? []).filter((entry) =>
+          entry.code === Box12Code.W && entry.amount > 0
+        ).map((entry) => ({
+          employee_ssn: item.employee_ssn?.replaceAll("-", ""),
+          amount: entry.amount,
+        }))
+      )
+      : [];
+    const sourceCodeW = source.w2_code_w_entries ?? [];
+    if (
+      !selfOnly || !owners.every((owner) =>
+        fullYearCoverage(
+          owner.eligible_hdhp_coverage_by_month,
+          CoverageType.SelfOnly,
+        )
+      ) || pairedEmployerCode2Owners.length !== 1 ||
+      pairedCode2Owners.length !== 0 || pairedRollovers.length !== 0 ||
+      pairedPriorExcessOwners.length !== 0 ||
+      !w2.success || codeW.length !== 1 || sourceCodeW.length !== 1 ||
+      !employerForm ||
+      codeW[0]!.employee_ssn !== employerForm.beneficiary_ssn ||
+      sourceCodeW[0]!.employee_ssn.replaceAll("-", "") !==
+        employerForm.beneficiary_ssn ||
+      sourceCodeW[0]!.amount !== codeW[0]!.amount ||
+      withdrawal.principal !==
+        codeW[0]!.amount - Number(employerForm.print_line8 ?? 0) ||
+      employerOwner.employer_hsa_contributions !== undefined ||
+      employerOwner.employer_contribution_years !== undefined ||
+      (employerOwner.taxpayer_hsa_contributions ?? 0) !== 0 ||
+      employerOwner.employer_excess_treatment
+          ?.amount_included_in_w2_box1 !== 0 ||
+      employerOwner.hsa_excluded_distributions !== undefined ||
+      employerOwner.qualified_hsa_funding_distributions !== undefined ||
+      employerOwner.testing_period_failure !== undefined ||
+      employerOwner.post_year_personal_excess_withdrawal !== undefined ||
+      employerOwner.age_65_exception_evidence !== undefined ||
+      employerOwner.disability_exception_evidence !== undefined ||
+      employerOwner.qualified_medical_expenses !== undefined ||
+      employerOwner.exception_qualified_taxable_amount !== undefined ||
+      (employerOwner.archer_msa_distributions ?? 0) !== 0 ||
+      owners.some((owner) =>
+        owner !== employerOwner &&
+        ((owner.taxpayer_hsa_contributions ?? 0) <= 0 ||
+          (owner.hsa_distributions ?? 0) !== 0 ||
+          owner.employer_hsa_contributions !== undefined ||
+          owner.employer_contribution_years !== undefined ||
+          owner.employer_excess_treatment !== undefined ||
+          owner.hsa_excluded_distributions !== undefined ||
+          owner.qualified_hsa_funding_distributions !== undefined ||
+          owner.post_year_personal_excess_withdrawal !== undefined ||
+          owner.qualified_medical_expenses !== undefined ||
+          owner.age_65_exception_evidence !== undefined ||
+          owner.disability_exception_evidence !== undefined ||
+          owner.testing_period_failure !== undefined)
+      ) ||
+      w2.data.w2s.some((item) =>
+        item.box13_statutory_employee === true ||
+        (item.employee_ssn?.replaceAll("-", "") !==
+            employerForm.beneficiary_ssn &&
+          item.employee_ssn?.replaceAll("-", "") !==
+            forms[1 - employerIndex]?.beneficiary_ssn)
+      )
+    ) {
+      throw new Error(
+        "Form 8889 paired employer code-2 needs one owner W-2 code W and full excess paid to that HSA owner",
+      );
+    }
+    pairedEmployerReturnedPrincipal = withdrawal.principal;
+    pairedEmployerW2Wages = w2.data.w2s.reduce(
+      (total, item) => total + item.box1_wages,
+      0,
+    );
+  }
   if (
-    !employerOnly &&
+    !employerOnly && pairedEmployerCode2Owners.length === 0 &&
     (source.w2_code_w_entries?.length ||
       owners.some((owner) =>
         !owner || (owner.taxpayer_hsa_contributions ?? 0) <= 0 ||
@@ -922,6 +1010,7 @@ export function reconcilePairedForm8889(
     line17d_hsa_eligibility_tax: z.number().optional(),
   }).passthrough().parse(allPending?.schedule2 ?? {});
   const form1040 = z.object({
+    line1a_wages: z.number().optional(),
     line8_additional_income: z.number().optional(),
     line10_adjustments: z.number().optional(),
     line23_other_taxes: z.number().optional(),
@@ -930,7 +1019,11 @@ export function reconcilePairedForm8889(
     (total, owner) =>
       total +
       (owner.hsa_excluded_distributions?.timely_excess_withdrawal
-        ?.included_earnings ?? 0),
+        ?.included_earnings ??
+        (owner.employer_excess_treatment?.timely_withdrawal
+            ?.withdrawal_tax_year === 2025
+          ? owner.employer_excess_treatment.timely_withdrawal.earnings
+          : 0)),
     0,
   );
   const sum = (key: string): number =>
@@ -988,8 +1081,16 @@ export function reconcilePairedForm8889(
     (schedule1.line8f_hsa_income ?? 0) !==
       sum("print_line16_taxable") + sum("print_line20") ||
     (schedule1.line8z_hsa_excess_earnings ?? 0) !== code2Earnings ||
-    (schedule1.line8z_hsa_excess_employer ?? 0) !== 0 ||
-    (pairedCode2Owners.length > 0 &&
+    (schedule1.line8z_hsa_excess_employer ?? 0) !==
+      pairedEmployerReturnedPrincipal ||
+    (pairedEmployerCode2Owners.length > 0 &&
+      (form1040.line1a_wages !== pairedEmployerW2Wages ||
+        (schedule1.line10_total_additional_income ?? 0) !==
+          code2Earnings + pairedEmployerReturnedPrincipal ||
+        (schedule2.line8_form5329_tax ?? 0) !== 0 ||
+        (form1040.line23_other_taxes ?? 0) !== 0)) ||
+    ((pairedCode2Owners.length > 0 ||
+      pairedEmployerCode2Owners.length > 0) &&
       (schedule1.line10_total_additional_income === undefined ||
         schedule1.line10_total_additional_income !==
           form1040.line8_additional_income)) ||

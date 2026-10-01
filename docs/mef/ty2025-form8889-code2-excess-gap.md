@@ -1,5 +1,28 @@
 # TY2025 Form 8889 code-2 excess return
 
+## One spouse's employer excess paid to that HSA owner (2026-10-01 build pass, unrun)
+
+The paired full-year self-only route now accepts one owner's full employer
+excess paid to that owner during 2025, with earnings, while the other spouse
+has ordinary personal contributions. The affected owner supplies one W-2 code
+W and one recipient-matched code-2 Form 1099-SA. The HSA calculation puts
+the code-2 box 1 total on that owner's Form 8889 lines 14a/14b, includes box
+2 earnings and the principal omitted from W-2 box 1 on Schedule 1 line 8z,
+and leaves no current Form 5329 excess. Both Form 8889 copies and their
+Schedule 1/Form 1040 totals are recomputed for native and PDF export. The
+export also ties code W to the affected owner, line 1a to the W-2 wage total,
+and line 8 to Schedule 1 additional income. Positive primary/spouse and
+W-2, box-2, Schedule 1, and Form 1040 tamper fixtures are authored but unrun.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+describe the excess-employer income and timely withdrawal rules. The
+[2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+say code 2 applies to an excess distribution **to the account holder** and
+expressly exclude an employer excess and earnings returned to the employer
+from box 1. That employer-returned transaction therefore remains a separate
+gap; it cannot be represented as this code-2 route. Mixed HSA events, partial
+returns, and independent issuer-byte authentication remain open.
+
 ## Two owners' timely personal excess returns (written, unrun)
 
 The paired self-only route now permits each spouse to return their entire 2025
