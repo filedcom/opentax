@@ -361,11 +361,25 @@ const rentalFields = {
   active_participation: true,
   filing_status: "mfs" as const,
   mfs_lived_apart_all_year: true,
+  mfs_lived_apart_source: {
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      taxpayer_residence: "1 Taxpayer Street",
+      spouse_residence: "2 Spouse Avenue",
+      taxpayer_residence_record_reference: `Taxpayer month ${index + 1}`,
+      spouse_residence_record_reference: `Spouse month ${index + 1}`,
+      no_shared_residence_any_day: true as const,
+    })),
+  },
   modified_agi: 60_000,
 };
 
 const rentalPending = {
-  general: { filing_status: "mfs", mfs_spouse_lived_with_taxpayer: false },
+  general: {
+    filing_status: "mfs",
+    mfs_spouse_lived_with_taxpayer: false,
+    mfs_lived_apart_source: rentalFields.mfs_lived_apart_source,
+  },
   schedule_e: {
     schedule_es: [{
       tsj: "T",

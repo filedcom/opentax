@@ -33,6 +33,20 @@ The Form 8582 PDF descriptor projects those same native lines and Parts VI–VII
 allocations. Focused source/calculation, MeF, and PDF projection cases are
 written but unrun.
 
+The positive Part II MFS branch now requires twelve ordered monthly residence
+records with separate taxpayer and spouse addresses, a reference for each
+residence, and confirmation that no residence was shared on any day of the
+month. General intake passes that record to Form 8582; the calculation rejects
+missing months or matching addresses, and native/PDF projection requires the
+same record in the filed general source. A $20,000 active-rental loss at $60,000
+MAGI has an authored full-return fixture for the $7,500 allowance, Schedule 1,
+Form 1040, native XML, and PDF projection. A changed residence and an omitted
+month have authored rejection fixtures. These fixtures are unrun. The
+[2025 instructions](https://www.irs.gov/instructions/i8582) require spouses
+filing separately to have lived apart at all times during the year for this
+special allowance. References and monthly assertions are not authenticated
+residence-document bytes.
+
 This does not complete GAP-8582. Per-activity source allocation, prior passive
 loss character, dispositions, complex Part IX rows, filled PDF inspection, local
 XSD, and IRS ATS acceptance remain their separate gates.

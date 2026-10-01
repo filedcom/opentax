@@ -33,7 +33,10 @@ import {
   form8962,
   mfsPtcStatusSchema,
 } from "../../intermediate/forms/form8962/index.ts";
-import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  form8582,
+  mfsLivedApartSourceSchema,
+} from "../../intermediate/forms/form8582/index.ts";
 import {
   form461,
   form461ScopeReviewSchema,
@@ -296,6 +299,7 @@ export const inputSchema = z.object({
   // MFS-specific
   mfs_spouse_itemizing: z.boolean().optional(), // MFS: spouse is itemizing
   mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
+  mfs_lived_apart_source: mfsLivedApartSourceSchema.optional(),
   ptc_below_100_fpl_status: below100FplStatusSchema.optional(),
   ptc_mfs_status: mfsPtcStatusSchema.optional(),
   // HOH-specific
@@ -1151,6 +1155,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           ? {
             mfs_lived_apart_all_year:
               parsed.mfs_spouse_lived_with_taxpayer === false,
+            ...(parsed.mfs_lived_apart_source && {
+              mfs_lived_apart_source: parsed.mfs_lived_apart_source,
+            }),
           }
           : {}),
       }),

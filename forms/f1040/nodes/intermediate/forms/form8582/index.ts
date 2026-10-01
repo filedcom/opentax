@@ -59,6 +59,38 @@ export const firstYearActivitySourceSchema = z.object({
   not_grouped_with_prior_activity: z.literal(true),
 }).strict();
 
+export const mfsLivedApartSourceSchema = z.object({
+  months: z.array(
+    z.object({
+      month: z.number().int().min(1).max(12),
+      taxpayer_residence: z.string().trim().min(1),
+      spouse_residence: z.string().trim().min(1),
+      taxpayer_residence_record_reference: z.string().trim().min(1),
+      spouse_residence_record_reference: z.string().trim().min(1),
+      no_shared_residence_any_day: z.literal(true),
+    }).strict(),
+  ).length(12).refine(
+    (months) => months.every((row, index) => row.month === index + 1),
+    "Form 8582 MFS separation needs January through December residence records",
+  ),
+}).strict();
+
+export function assertMfsLivedApartSource(
+  source: z.infer<typeof mfsLivedApartSourceSchema> | undefined,
+): void {
+  if (
+    !source ||
+    source.months.some((row) =>
+      row.taxpayer_residence.trim().toUpperCase() ===
+        row.spouse_residence.trim().toUpperCase()
+    )
+  ) {
+    throw new Error(
+      "Form 8582 MFS allowance needs distinct full-year residence source records",
+    );
+  }
+}
+
 export const inputSchema = z.object({
   // Activity rows retained for Part IV/V and loss-allocation worksheets in MeF.
   activities: z.array(z.object({
@@ -132,6 +164,7 @@ export const inputSchema = z.object({
   // IRC §469(i)(5)(B): MFS special allowance applies only when spouses lived
   // apart at all times during the tax year. Missing proof stays ineligible.
   mfs_lived_apart_all_year: z.boolean().optional(),
+  mfs_lived_apart_source: mfsLivedApartSourceSchema.optional(),
 });
 
 type Form8582Input = z.infer<typeof inputSchema>;
@@ -956,6 +989,17 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    if (
+      input.filing_status === FilingStatus.MFS &&
+      input.mfs_lived_apart_all_year === true &&
+      input.has_active_rental === true &&
+      input.active_participation === true &&
+      (input.rental_current_loss ?? 0) +
+            (input.rental_prior_eligible_loss ?? 0) > 0
+    ) {
+      assertMfsLivedApartSource(input.mfs_lived_apart_source);
+    }
 
     assertPriorYear8582Evidence(input);
     assertActivityTotals(input);

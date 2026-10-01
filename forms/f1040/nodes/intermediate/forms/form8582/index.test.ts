@@ -1309,10 +1309,22 @@ Deno.test("mfs_gets_zero_allowance: MFS, active rental, MAGI=40000, loss=20000 �
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
+const mfsSeparationSource = {
+  months: Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    taxpayer_residence: "1 Taxpayer Street",
+    spouse_residence: "2 Spouse Avenue",
+    taxpayer_residence_record_reference: `Taxpayer residence ${index + 1}`,
+    spouse_residence_record_reference: `Spouse residence ${index + 1}`,
+    no_shared_residence_any_day: true as const,
+  })),
+};
+
 Deno.test("MFS lived apart all year uses the $12,500 rental allowance", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
+    mfs_lived_apart_source: mfsSeparationSource,
     has_active_rental: true,
     active_participation: true,
     modified_agi: 40_000,
@@ -1332,6 +1344,7 @@ Deno.test("MFS lived-apart allowance phases out between $50,000 and $75,000", ()
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
+    mfs_lived_apart_source: mfsSeparationSource,
     has_active_rental: true,
     active_participation: true,
     modified_agi: 60_000,
@@ -1362,6 +1375,7 @@ Deno.test("MFS odd-dollar MAGI rounds the half-dollar Part II allowance once", (
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
+    mfs_lived_apart_source: mfsSeparationSource,
     has_active_rental: true,
     active_participation: true,
     modified_agi: 60_003,
@@ -1375,6 +1389,46 @@ Deno.test("MFS odd-dollar MAGI rounds the half-dollar Part II allowance once", (
     -7_499,
   );
   assertEquals(result.carryforwards?.suspended_pal_8582, 12_501);
+});
+
+Deno.test("MFS special allowance rejects incomplete or shared residence evidence", () => {
+  const base = {
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: true,
+    has_active_rental: true,
+    active_participation: true,
+    modified_agi: 60_000,
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+  };
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        mfs_lived_apart_source: {
+          months: mfsSeparationSource.months.slice(0, 11),
+        },
+      }),
+    Error,
+    "January through December",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        mfs_lived_apart_source: {
+          months: [
+            {
+              ...mfsSeparationSource.months[0],
+              spouse_residence: "1 Taxpayer Street",
+            },
+            ...mfsSeparationSource.months.slice(1),
+          ],
+        },
+      }),
+    Error,
+    "distinct full-year residence",
+  );
 });
 
 // ─── 4. Hard Validation Rules ─────────────────────────────────────────────────

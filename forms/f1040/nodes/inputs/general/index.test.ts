@@ -149,13 +149,28 @@ Deno.test("general passes Form 461 filing status and documented C/F scope review
 });
 
 Deno.test("general passes MFS lived-apart proof to Form 8582", () => {
+  const residenceSource = {
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      taxpayer_residence: "1 Taxpayer Street",
+      spouse_residence: "2 Spouse Avenue",
+      taxpayer_residence_record_reference: `Taxpayer month ${index + 1}`,
+      spouse_residence_record_reference: `Spouse month ${index + 1}`,
+      no_shared_residence_any_day: true as const,
+    })),
+  };
   const apart = compute({
     filing_status: FilingStatus.MFS,
     mfs_spouse_lived_with_taxpayer: false,
+    mfs_lived_apart_source: residenceSource,
   });
   assertEquals(
     findOutput(apart, "form8582")?.fields.mfs_lived_apart_all_year,
     true,
+  );
+  assertEquals(
+    findOutput(apart, "form8582")?.fields.mfs_lived_apart_source,
+    residenceSource,
   );
   const together = compute({
     filing_status: FilingStatus.MFS,

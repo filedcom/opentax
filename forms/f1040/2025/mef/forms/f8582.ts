@@ -2,8 +2,10 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   allocateOtherPassivePrior4797,
   allocatePassiveActivityLosses,
+  assertMfsLivedApartSource,
   assertPriorYear8582Evidence,
   inputSchema,
+  mfsLivedApartSourceSchema,
   passiveLossLimit,
   priorYear8582SourceSchema,
 } from "../../../nodes/intermediate/forms/form8582/index.ts";
@@ -870,10 +872,20 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
           "Form 8582 MFS allowance needs general lived-apart source",
         );
       }
-      z.object({
+      const general = z.object({
         filing_status: z.literal("mfs"),
         mfs_spouse_lived_with_taxpayer: z.literal(false),
+        mfs_lived_apart_source: mfsLivedApartSourceSchema,
       }).parse(context.pending.general);
+      assertMfsLivedApartSource(input.mfs_lived_apart_source);
+      if (
+        JSON.stringify(general.mfs_lived_apart_source) !==
+          JSON.stringify(input.mfs_lived_apart_source)
+      ) {
+        throw new Error(
+          "Form 8582 MFS residence source differs from the filed general input",
+        );
+      }
     }
     const prior4797Allocation =
       activities.some((activity) =>
