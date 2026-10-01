@@ -1,5 +1,35 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## Prior reduced formal-note basis and taxable repayment prerequisite (2026-10-01, unrun)
+
+The public K-1 source now uses the strict tagged `form7203_debt_evidence`
+contract. Its `new_2025_formal_notes` branch retains the active new-note routes
+below. The `prior_reduced_formal_note_repayment` branch records a signed older
+note, its original date and shareholder/corporation identities, the accepted
+prior return and Form 7203 references and SHA-256 digests, exact prior Form 7203
+closing face and basis carried into 2025, and a dated principal payment with
+separate corporation-ledger and shareholder-bank references and digests.
+Distinct source references, no other shareholder debt, no current advances or
+restoration, and an exact K-1 code E amount are required.
+
+A bounded workpaper calculates Form 7203 lines 16–34 for an exact four-decimal
+opening-basis-to-face ratio and whole-dollar nontaxable payment. For example, a
+$1,000 opening face with $500 basis and a $400 repayment leaves $600 face, $300
+basis before current loss, and $200 line 34 gain. Current loss is allocated to
+opening stock basis and then the remaining debt basis. The
+[Form 7203 instructions](https://www.irs.gov/instructions/i7203) require
+formal-note gain on Form 8949 and Schedule D.
+
+This workpaper is **not a filing route**. The executor currently retains only
+the K-1 JSON and document references, not the prior accepted-return/Form 7203
+bytes or current note and payment bytes. Declarative digests cannot prove those
+records or authorize a positive Form 8949/Schedule D/1040 line 7 join. K-1
+posting, direct Form 7203 calculation, native MeF, and PDF fail closed for this
+branch. Positive arithmetic and source/return/export rejection fixtures are
+authored for the deferred batch. Executor-owned byte binding, prior-return
+acceptance review, gain character/holding-period proof, and the final Form
+8949/Schedule D/Form 1040 join remain open.
+
 ## Two formal notes with one principal repayment each (2026-10-01, unrun)
 
 The reviewed source permits a separately dated and evidenced 2025 principal
@@ -113,8 +143,8 @@ and corporate-record bytes. See the
 
 ## One new formal-note debt loss route (2026-10-01, unrun)
 
-The public S-corporation K-1 input accepts a strict
-`form7203_one_note_debt_candidate` for a single new 2025 formal shareholder
+The public S-corporation K-1 input accepts a strict `form7203_debt_evidence`
+with `kind: "new_2025_formal_notes"` for a single new 2025 formal shareholder
 note. It ties the shareholder/borrower identifiers, exact K-1 source and box-1
 loss, opening stock-basis workpaper, signed note, separate note ID, and bank
 transfer to one direct cash advance. It requires zero beginning note balance and

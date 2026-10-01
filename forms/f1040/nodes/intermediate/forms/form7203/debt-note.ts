@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reviewedPriorReducedNoteSchema } from "./prior-reduced-note.ts";
 
 const sourceReference = z.string().trim().min(1);
 const ty2025Date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
@@ -17,7 +18,8 @@ const principalRepaymentSchema = z.object({
 
 // Source contract for one or two new formal shareholder notes. Each listed
 // note may have one sourced principal repayment assigned to its own note ID.
-export const reviewedOneNoteDebtCandidateSchema = z.object({
+export const reviewedNewFormalNotesSchema = z.object({
+  kind: z.literal("new_2025_formal_notes"),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: sourceReference,
@@ -121,11 +123,16 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
   }
 });
 
-export type ReviewedOneNoteDebtCandidate = z.infer<
-  typeof reviewedOneNoteDebtCandidateSchema
+export const reviewedForm7203DebtEvidenceSchema = z.union([
+  reviewedNewFormalNotesSchema,
+  reviewedPriorReducedNoteSchema,
+]);
+
+export type ReviewedNewFormalNotes = z.infer<
+  typeof reviewedNewFormalNotesSchema
 >;
 
-export function reconcileOneNoteDebtCandidate(
+export function reconcileNewFormalNotes(
   raw: unknown,
   k1: {
     corporation_ein?: string;
@@ -135,7 +142,7 @@ export function reconcileOneNoteDebtCandidate(
     box16_code_e_loan_repayment?: number;
   },
 ) {
-  const note = reviewedOneNoteDebtCandidateSchema.parse(raw);
+  const note = reviewedNewFormalNotesSchema.parse(raw);
   const loss = -(k1.box1_ordinary_business ?? 0);
   if (
     !k1.corporation_ein || !k1.source_document_reference ||

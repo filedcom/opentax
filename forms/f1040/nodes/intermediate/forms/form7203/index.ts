@@ -5,7 +5,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { reviewedOneNoteDebtCandidateSchema } from "./debt-note.ts";
+import { reviewedForm7203DebtEvidenceSchema } from "./debt-note.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ export const inputSchema = z.object({
 
   // Line 22 — New loans from shareholder to S-corp during the year
   new_loans: z.number().nonnegative().optional(),
-  reviewed_one_note_debt: reviewedOneNoteDebtCandidateSchema.optional(),
+  reviewed_debt_evidence: reviewedForm7203DebtEvidenceSchema.optional(),
 
   // ── Part III: Loss Items ──────────────────────────────────────────────────
   // Column (a) — Current year ordinary business loss from K-1 (positive amount)
@@ -120,10 +120,12 @@ function tentativeStockBasis(
 // Step 4: Tentative debt basis for loss allocation (Part II line 29).
 // A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
+  const note = input.reviewed_debt_evidence?.kind === "new_2025_formal_notes"
+    ? input.reviewed_debt_evidence
+    : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
-    (input.reviewed_one_note_debt?.principal_repayment?.amount ?? 0) -
-    (input.reviewed_one_note_debt?.second_formal_note?.principal_repayment
-      ?.amount ?? 0);
+    (note?.principal_repayment?.amount ?? 0) -
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)
@@ -158,13 +160,22 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    if (
+      input.reviewed_debt_evidence?.kind ===
+        "prior_reduced_formal_note_repayment"
+    ) {
+      throw new Error(
+        "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+      );
+    }
+
     if ((input.prior_year_unallowed_loss ?? 0) > 0) {
       throw new Error(
         "Form 7203 prior-year basis carryover needs a source-linked current/prior loss allocation before Schedule 1 adjustment",
       );
     }
 
-    const note = input.reviewed_one_note_debt;
+    const note = input.reviewed_debt_evidence;
     if (
       ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
         note) &&

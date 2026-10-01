@@ -228,21 +228,21 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
         "ordinary_loss",
         "additional_contributions",
         "new_loans",
-        "reviewed_one_note_debt",
+        "reviewed_debt_evidence",
       ]);
       return keys.length > 0 && (
         keys.some((key) => !allowedKeys.has(key)) ||
         !keys.includes("stock_basis_beginning") ||
         !keys.includes("ordinary_loss") ||
         (keys.includes("new_loans") !==
-          keys.includes("reviewed_one_note_debt")) ||
+          keys.includes("reviewed_debt_evidence")) ||
         (keys.includes("new_loans") &&
           keys.includes("additional_contributions")) ||
         (keys.includes("new_loans") && (
           typeof fields.new_loans !== "number" ||
           !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
-          !fields.reviewed_one_note_debt ||
-          typeof fields.reviewed_one_note_debt !== "object"
+          !fields.reviewed_debt_evidence ||
+          typeof fields.reviewed_debt_evidence !== "object"
         )) ||
         (keys.includes("additional_contributions") && (
           typeof fields.additional_contributions !== "number" ||

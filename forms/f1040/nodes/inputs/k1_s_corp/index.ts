@@ -25,8 +25,8 @@ import {
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
 import {
-  reconcileOneNoteDebtCandidate,
-  reviewedOneNoteDebtCandidateSchema,
+  reconcileNewFormalNotes,
+  reviewedForm7203DebtEvidenceSchema,
 } from "../../intermediate/forms/form7203/debt-note.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
@@ -194,8 +194,9 @@ export const itemSchema = z.object({
   stock_basis_beginning: z.number().nonnegative().optional(),
   // Direct reviewed per-corporation source for the bounded current box-1 loss.
   form7203_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
-  // Reviewed one-note candidate is deliberately blocked before tax posting.
-  form7203_one_note_debt_candidate: reviewedOneNoteDebtCandidateSchema
+  // The prior reduced-basis branch is a staged workpaper until bytes can be
+  // retained and bound to the filed return in this execution.
+  form7203_debt_evidence: reviewedForm7203DebtEvidenceSchema
     .optional(),
   // Shareholder's debt basis at beginning of the tax year
   debt_basis_beginning: z.number().nonnegative().optional(),
@@ -544,13 +545,21 @@ function hasBasisData(item: K1SCorpItem): boolean {
     item.stock_basis_beginning !== undefined ||
     item.debt_basis_beginning !== undefined ||
     item.form7203_stock_loss_ledger !== undefined ||
-    item.form7203_one_note_debt_candidate !== undefined
+    item.form7203_debt_evidence !== undefined
   );
 }
 
 function buildForm7203Fields(
   item: K1SCorpItem,
 ): Parameters<typeof output<typeof form7203>>[1] {
+  if (
+    item.form7203_debt_evidence?.kind ===
+      "prior_reduced_formal_note_repayment"
+  ) {
+    throw new Error(
+      "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+    );
+  }
   const loss = Math.max(0, -(item.box1_ordinary_business ?? 0));
   const beginningBasis = loss > 0
     ? item.form7203_stock_loss_ledger?.beginning_stock_basis
@@ -573,12 +582,12 @@ function buildForm7203Fields(
     ...(item.debt_basis_beginning !== undefined
       ? { debt_basis_beginning: item.debt_basis_beginning }
       : {}),
-    ...(item.form7203_one_note_debt_candidate
+    ...(item.form7203_debt_evidence
       ? {
-        new_loans: item.form7203_one_note_debt_candidate.cash_advance_amount +
-          (item.form7203_one_note_debt_candidate.second_formal_note
+        new_loans: item.form7203_debt_evidence.cash_advance_amount +
+          (item.form7203_debt_evidence.second_formal_note
             ?.cash_advance_amount ?? 0),
-        reviewed_one_note_debt: item.form7203_one_note_debt_candidate,
+        reviewed_debt_evidence: item.form7203_debt_evidence,
       }
       : {}),
     ...(loss > 0 ? { ordinary_loss: loss } : {}),
@@ -740,9 +749,17 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     const { k1_s_corps } = inputSchema.parse(input);
 
     for (const item of k1_s_corps) {
-      if (item.form7203_one_note_debt_candidate) {
-        const { note } = reconcileOneNoteDebtCandidate(
-          item.form7203_one_note_debt_candidate,
+      if (item.form7203_debt_evidence) {
+        if (
+          item.form7203_debt_evidence.kind ===
+            "prior_reduced_formal_note_repayment"
+        ) {
+          throw new Error(
+            "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+          );
+        }
+        const { note } = reconcileNewFormalNotes(
+          item.form7203_debt_evidence,
           item,
         );
         const ledger = item.form7203_stock_loss_ledger;

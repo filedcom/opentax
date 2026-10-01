@@ -3,7 +3,7 @@ import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { inputSchema as form7203InputSchema } from "../nodes/intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../nodes/intermediate/forms/form7203/stock-ledger.ts";
-import { reconcileOneNoteDebtCandidate } from "../nodes/intermediate/forms/form7203/debt-note.ts";
+import { reconcileNewFormalNotes } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 
@@ -31,9 +31,17 @@ export function projectReviewedStockLoss7203(
     );
   }
   const source = k1Sources[0];
-  const note = source.form7203_one_note_debt_candidate
-    ? reconcileOneNoteDebtCandidate(
-      source.form7203_one_note_debt_candidate,
+  if (
+    source.form7203_debt_evidence?.kind ===
+      "prior_reduced_formal_note_repayment"
+  ) {
+    throw new Error(
+      "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before native or PDF export",
+    );
+  }
+  const note = source.form7203_debt_evidence
+    ? reconcileNewFormalNotes(
+      source.form7203_debt_evidence,
       source,
     ).note
     : undefined;
@@ -44,7 +52,7 @@ export function projectReviewedStockLoss7203(
     Object.keys(rawFields).some((key) =>
       key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
       key !== "additional_contributions" &&
-      !(note && (key === "new_loans" || key === "reviewed_one_note_debt"))
+      !(note && (key === "new_loans" || key === "reviewed_debt_evidence"))
     )
   ) {
     throw new Error(
@@ -65,10 +73,10 @@ export function projectReviewedStockLoss7203(
         ledger.corporation_ein !== note.corporation_ein ||
         fields.new_loans !== note.cash_advance_amount +
             (note.second_formal_note?.cash_advance_amount ?? 0) ||
-        JSON.stringify(fields.reviewed_one_note_debt) !== JSON.stringify(note)
+        JSON.stringify(fields.reviewed_debt_evidence) !== JSON.stringify(note)
       : !ledger.no_shareholder_debt_or_repayments ||
         fields.new_loans !== undefined ||
-        fields.reviewed_one_note_debt !== undefined
+        fields.reviewed_debt_evidence !== undefined
   ) {
     throw new Error(
       "Form 7203 formal-note and stock basis source must reconcile",
