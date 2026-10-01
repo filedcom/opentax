@@ -5,6 +5,7 @@ import {
   inputSchema,
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
+  qualifiedFirstYearRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
   scheduleE,
@@ -398,7 +399,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
       if (
         (item.disposed_of === true ||
           (item.passive_property_sales?.length ?? 0) > 0) &&
-        entireLoss === undefined && entireGain === undefined
+        entireLoss === undefined && entireGain === undefined &&
+        !qualifiedFirstYearRetainedPropertySale(item)
       ) {
         throw new Error(
           "Schedule E PDF disposition needs the sourced entire-interest overall-loss route",

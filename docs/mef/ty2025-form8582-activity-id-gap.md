@@ -1,5 +1,26 @@
 # TY2025 Form 8582 durable activity identity
 
+## First-year retained Part II property sale (written, unrun)
+
+One first-year type-B rental retains its activity after a short-held,
+no-depreciation property sale. A $2,000 ordinary Form 4797 Part II gain offsets
+$2,000 of its $5,000 current Schedule E loss; Form 8582 Part V carries the
+remaining $3,000 under the same activity ID. The direct source binds a 2025
+acquisition record to the sale, states that the activity interest was retained,
+and excludes prior losses, recapture, installment treatment, and grouping. The
+Form 8582 native builder reconciles Form 4797, Schedule E, Schedule 1, and the
+settled Form 1040. The three PDF projections replay the same source and final
+return checks. A full-return positive and acquisition, sale, and return-tamper
+fixture are authored but unrun.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+treat a less-than-entire disposition as current activity income. The [2025
+Form 4797 instructions](https://www.irs.gov/instructions/i4797) put a
+short-held ordinary property gain in Part II. Acquisition and closing
+references are reviewed text, not authenticated documents. Other dispositions,
+prior PALs, multiple activities, XSD, filled-PDF, business-rule, and filing
+acceptance checks remain open.
+
 ## One farm profit allocated across two rental losses (written, unrun)
 
 One type-B Form 4835 farm's $3,000 current profit may offset two distinct

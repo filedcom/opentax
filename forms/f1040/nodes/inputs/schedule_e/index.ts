@@ -418,6 +418,44 @@ export function qualifiedRetainedPropertySale(item: EItem): boolean {
         (item.prior_unallowed_passive_operating ?? 0);
 }
 
+/** One first-year activity can retain its rental business after selling a
+ * short-held property. The acquisition record establishes the activity ID;
+ * there can be no prior-year passive loss in this bounded route. */
+export function qualifiedFirstYearRetainedPropertySale(item: EItem): boolean {
+  const sale = item.passive_property_sales?.[0];
+  const source = item.first_year_activity_source;
+  return item.activity_type === "B" && item.property_type !== 6 &&
+    item.disposed_of === true &&
+    item.passive_property_sales?.length === 1 && !!sale &&
+    sale.part === "II" && sale.depreciation_allowed === 0 &&
+    sale.entire_activity_interest_disposed === false &&
+    sale.buyer_unrelated === true && sale.fully_taxable === true &&
+    sale.installment_method === false &&
+    !!sale.disposition_document_reference &&
+    !!source && source.activity_id === item.activity_id &&
+    source.activity_name === item.property_description &&
+    source.activity_acquired_on === sale.acquired_on &&
+    source.activity_acquired_on >= "2025-01-01" &&
+    source.activity_acquired_on <= "2025-12-31" &&
+    sale.sold_on > sale.acquired_on && sale.sold_on <= "2025-12-31" &&
+    sale.activity_id === item.activity_id &&
+    sale.activity_name === item.property_description &&
+    item.prior_unallowed_passive_operating === undefined &&
+    item.prior_year_8582_source === undefined &&
+    item.prior_unallowed_passive_4797_part1 === undefined &&
+    item.prior_unallowed_passive_4797_part2 === undefined &&
+    item.prior_passive_losses_active_when_incurred === undefined &&
+    item.prior_unallowed_at_risk === undefined &&
+    item.operating_expenses_carryover === undefined &&
+    item.disallowed_mortgage_interest_8990 === undefined &&
+    item.disallowed_other_interest_8990 === undefined &&
+    (item.ownership_percent ?? 100) === 100 &&
+    (item.section_1231_gain_loss ?? 0) === 0 &&
+    Number.isSafeInteger(computePropertyNet(item)) &&
+    passiveSaleGain(sale) > 0 &&
+    computePropertyNet(item) < -passiveSaleGain(sale);
+}
+
 /** Review a direct Part I entire-gain candidate without authorizing filing.
  * Accepted prior-year activity and zero-PAL evidence is not yet authenticated. */
 export function reviewPre2025PartIEntireGainCandidate(item: EItem): {

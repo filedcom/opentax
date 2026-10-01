@@ -13,6 +13,7 @@ import {
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
+  qualifiedFirstYearRetainedPropertySale,
   qualifiedRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import { z } from "zod";
@@ -394,6 +395,63 @@ export const form4797Pdf: PdfFormDescriptor = {
         );
       }
       const sale = passiveSales[0];
+      const date = (iso: string) => {
+        const [year, month, day] = iso.split("-");
+        return `${month}/${day}/${year}`;
+      };
+      const gain = passiveSaleGain(sale);
+      return {
+        pdf_sale_description: sale.property_description,
+        pdf_sale_acquired: date(sale.acquired_on),
+        pdf_sale_sold: date(sale.sold_on),
+        pdf_sale_price: sale.gross_sales_price,
+        pdf_sale_depreciation: sale.depreciation_allowed,
+        pdf_sale_basis: sale.cost_or_other_basis,
+        pdf_sale_gain: gain,
+        pdf_line17: gain,
+        ordinary_gain: gain,
+      };
+    }
+    const firstYearRetainedPartII = scheduleEInputSchema.safeParse(
+      allPending.schedule_e ?? {},
+    );
+    if (
+      passiveSales.length === 1 && passiveSales[0].part === "II" &&
+      passiveSales[0].entire_activity_interest_disposed === false &&
+      firstYearRetainedPartII.success &&
+      firstYearRetainedPartII.data.schedule_es.some((item) =>
+        item.first_year_activity_source !== undefined
+      )
+    ) {
+      const scheduleE = firstYearRetainedPartII.data;
+      const activity = scheduleE.schedule_es[0];
+      const ledger = form8582InputSchema.safeParse(allPending.form8582);
+      const sale = passiveSales[0];
+      if (
+        scheduleE.schedule_es.length !== 1 || !activity ||
+        !qualifiedFirstYearRetainedPropertySale(activity) ||
+        !activity.passive_property_sales?.[0] ||
+        !samePassiveSale(activity.passive_property_sales[0], sale) ||
+        !ledger.success || ledger.data.activities?.length !== 1 ||
+        ledger.data.activities[0].activity_id !== sale.activity_id ||
+        ledger.data.current_4797_sale_gains?.length !== 1 ||
+        ledger.data.current_4797_sale_gains[0].part !== "II" ||
+        ledger.data.current_4797_sale_gains[0].gain !==
+          passiveSaleGain(sale) ||
+        Object.keys(fields).some((key) =>
+          ![
+            "passive_property_sales",
+            "disposed_properties",
+            "passive_disposed_activity_ids",
+            "passive_activity_sources",
+          ].includes(key)
+        )
+      ) {
+        throw new Error(
+          "Form 4797 PDF retained first-year Part II sale needs its Schedule E and Form 8582 source",
+        );
+      }
+      nativeForm8582.build(allPending.form8582!, { pending: allPending });
       const date = (iso: string) => {
         const [year, month, day] = iso.split("-");
         return `${month}/${day}/${year}`;
