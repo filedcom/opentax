@@ -280,6 +280,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Tighten the staged attached TY2025 Form 9465 request to require a ten-digit home phone and bounded call-time source, then project both into schema-ordered native fields and inspected page-one PDF fields. Positive and missing/malformed/overlong/changed-pending fixtures are authored for deferred validation; attached electronic authorization and linked filing/ATS review remain unresolved, so positive native/PDF export stays closed.
 
+- [x] Require the Publication 974 single-business Marketplace Form 7206 self-employed health-insurance/PTC Worksheet W to identify its Schedule C business and reconcile earnings, total profitable business income, Schedule 1 line 15 self-employment deduction, and line 16 retirement deduction to Schedule C/SE and retirement graph sources before iteration. Positive and source/amount tamper fixtures are authored for deferred validation; Worksheet X, source bytes, full-return native/PDF proof, and multi-business/policy cases remain open.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
