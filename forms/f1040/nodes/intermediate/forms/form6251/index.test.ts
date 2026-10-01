@@ -2,7 +2,9 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
 
-function basisSourcePending(fields: Record<string, unknown>) {
+function basisSourcePending(
+  fields: Record<string, unknown>,
+): Record<string, Record<string, unknown>> {
   const total = typeof fields.private_activity_bond_interest === "number"
     ? fields.private_activity_bond_interest
     : 0;
@@ -99,41 +101,38 @@ function basisSourcePending(fields: Record<string, unknown>) {
       },
     }
     : {};
-  if (raw === undefined) return { ...f59e, ...scheduleC, ...trust, ...pab };
+  const pending: Record<string, Record<string, unknown>> = {};
+  Object.assign(pending, f59e, scheduleC, trust, pab);
+  if (raw === undefined) return pending;
   const rows = Array.isArray(raw) ? raw : [raw];
-  return {
-    ...f59e,
-    ...scheduleC,
-    ...trust,
-    ...pab,
-    f8949: {
-      f8949s: rows.map((row: {
-        source_transaction_id: string;
-        part: string;
-        proceeds: number;
-        regular_basis: number;
-        amt_basis: number;
-      }) => ({
-        source_transaction_id: row.source_transaction_id,
-        part: row.part,
-        description: "Synthetic AMT basis disposition",
-        date_acquired: ["A", "B", "C"].includes(row.part)
-          ? "2025-01-10"
-          : "2022-01-10",
-        date_sold: "2025-06-20",
-        proceeds: row.proceeds,
-        cost_basis: row.regular_basis,
-        amt_cost_basis: row.amt_basis,
-      })),
-    },
+  pending.f8949 = {
+    f8949s: rows.map((row: {
+      source_transaction_id: string;
+      part: string;
+      proceeds: number;
+      regular_basis: number;
+      amt_basis: number;
+    }) => ({
+      source_transaction_id: row.source_transaction_id,
+      part: row.part,
+      description: "Synthetic AMT basis disposition",
+      date_acquired: ["A", "B", "C"].includes(row.part)
+        ? "2025-01-10"
+        : "2022-01-10",
+      date_sold: "2025-06-20",
+      proceeds: row.proceeds,
+      cost_basis: row.regular_basis,
+      amt_cost_basis: row.amt_basis,
+    })),
   };
+  return pending;
 }
 
 function basisDividendPending(
   fields: Record<string, unknown>,
   qualified: number,
   ordinary: number,
-) {
+): Record<string, Record<string, unknown>> {
   const rows = Array.isArray(fields.line2k_8949_basis_dispositions)
     ? fields.line2k_8949_basis_dispositions
     : [fields.line2k_8949_basis_dispositions];
@@ -464,6 +463,8 @@ Deno.test("form6251: audited short- and long-term losses within both deduction l
   );
   const source = basisSourcePending(filed!.fields);
   if (!("f8949" in source)) throw new Error("Missing Form 8949 fixture");
+  const sourceRows = source.f8949.f8949s;
+  if (!Array.isArray(sourceRows)) throw new Error("Missing Form 8949 rows");
   assertThrows(
     () =>
       mef6251.build(filed!.fields, {
@@ -471,9 +472,9 @@ Deno.test("form6251: audited short- and long-term losses within both deduction l
           ...source,
           f8949: {
             f8949s: [{
-              ...source.f8949.f8949s[0],
+              ...sourceRows[0],
               date_acquired: "2022-01-10",
-            }, ...source.f8949.f8949s.slice(1)],
+            }, ...sourceRows.slice(1)],
           },
         },
       }),

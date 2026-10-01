@@ -51,6 +51,9 @@ Deno.test("Form 6251 caps a same-term AMT basis loss separately from regular Sch
   // -$3,000, with the other $2,000 carried to the separate AMT ledger.
   assertEquals(result.pending.f1040?.line7_capital_gain, -2_000);
   assertEquals(filed.line2k_disposition, -1_000);
+  if (typeof filed.regular_tax_income !== "number") {
+    throw new Error("Expected numeric regular taxable income");
+  }
   assertEquals(filed.amti, filed.regular_tax_income + 239_000);
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
   assertEquals(

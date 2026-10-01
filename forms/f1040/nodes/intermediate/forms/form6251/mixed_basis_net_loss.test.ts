@@ -3,7 +3,9 @@ import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
 import { form6251Pdf } from "../../../../2025/pdf/forms/f6251.ts";
 import { form6251, inputSchema } from "./index.ts";
 
-function basisSourcePending(fields: Record<string, unknown>) {
+function basisSourcePending(
+  fields: Record<string, unknown>,
+): Record<string, Record<string, unknown>> {
   const raw = fields.line2k_8949_basis_dispositions;
   if (raw === undefined) return {};
   const rows = Array.isArray(raw) ? raw : [raw];
