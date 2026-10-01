@@ -9,6 +9,7 @@ import type { z } from "zod";
 import { inputSchema as iraWorksheetSchema } from "../../../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { inputSchema as w2Schema } from "../../../nodes/inputs/w2/index.ts";
 import { reconcileForm8606Distribution } from "../../form8606_distribution_reconciliation.ts";
+import { reconcileForm8606Roth } from "../../form8606_roth_reconciliation.ts";
 
 type Input = z.infer<typeof printSchema> | readonly [];
 
@@ -20,6 +21,42 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8606 MeF cannot file an empty pending record");
   }
   const fields = printSchema.parse(rawFields);
+  const reviewedRoth = reconcileForm8606Roth(
+    fields,
+    context?.pending,
+    context?.filer,
+  );
+  if (reviewedRoth) {
+    const filer = context!.filer!;
+    return elements("IRS8606", [
+      element("Form8606IRANamelineTxt", filer.fullName),
+      element("NondedIRATxpyrWithIRASSN", filer.primarySSN),
+      element(
+        "TotNonQlfyDistriFromRothIRAAmt",
+        fields.print_roth_line19_distributions,
+      ),
+      element("QlfyFirstTimeHmByrExpensesAmt", 0),
+      element(
+        "NetQlfyFirstTimeHmByrExpnssAmt",
+        fields.print_roth_line21_after_homebuyer,
+      ),
+      element(
+        "ROTHIRAContributionBasisAmt",
+        fields.print_roth_line22_contribution_basis,
+      ),
+      element(
+        "NetBasisInRothIRAContriAmt",
+        fields.print_roth_line23_after_contribution_basis,
+      ),
+      element("BasisInCnvrtQlfyRtrPlanAmt", 0),
+      element(
+        "DistriRothIRALessBasisCnvrtAmt",
+        fields.print_roth_line25a_earnings,
+      ),
+      element("RothIRAQlfyDisasterDistriAmt", 0),
+      element("TaxableIRADistributionAmt", fields.print_roth_line25c_taxable),
+    ]);
+  }
   const details = fields.filing_details;
   if (!details) {
     throw new Error(

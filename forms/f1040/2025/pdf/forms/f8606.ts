@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8606 } from "../../mef/forms/f8606.ts";
 import { printSchema } from "../../../nodes/intermediate/forms/form8606/index.ts";
 import { reconcileForm8606Distribution } from "../../form8606_distribution_reconciliation.ts";
+import { reconcileForm8606Roth } from "../../form8606_roth_reconciliation.ts";
 
 // IRS Form 8606 (2025) AcroForm field names.
 // Verified against the f8606--2025.pdf AcroForm field dump.
@@ -143,6 +144,54 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_line18_taxable_conversion",
     pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
   },
+  {
+    kind: "text",
+    domainKey: "print_roth_line19_distributions",
+    pdfField: "topmostSubform[0].Page2[0].f2_07[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line20_homebuyer",
+    pdfField: "topmostSubform[0].Page2[0].f2_08[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line21_after_homebuyer",
+    pdfField: "topmostSubform[0].Page2[0].f2_09[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line22_contribution_basis",
+    pdfField: "topmostSubform[0].Page2[0].f2_10[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line23_after_contribution_basis",
+    pdfField: "topmostSubform[0].Page2[0].f2_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line24_conversion_basis",
+    pdfField: "topmostSubform[0].Page2[0].f2_12[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line25a_earnings",
+    pdfField: "topmostSubform[0].Page2[0].f2_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line25b_disaster",
+    pdfField: "topmostSubform[0].Page2[0].f2_14[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_roth_line25c_taxable",
+    pdfField: "topmostSubform[0].Page2[0].f2_15[0]",
+  },
 ];
 
 export const form8606Pdf: PdfFormDescriptor = {
@@ -172,6 +221,18 @@ export const form8606Pdf: PdfFormDescriptor = {
       filer,
       pending: allPending,
     });
+    const roth = reconcileForm8606Roth(raw, allPending, filer);
+    if (roth) {
+      return [{
+        ...raw,
+        print_line1_nondeductible: undefined,
+        print_line2_prior_basis: undefined,
+        print_line3_total_basis: undefined,
+        print_line14_remaining_basis: undefined,
+        print_owner_name: filer.fullName,
+        print_owner_ssn: filer.primarySSN,
+      }];
+    }
     const reviewed = reconcileForm8606Distribution(raw, allPending, filer);
     return [{
       ...raw,

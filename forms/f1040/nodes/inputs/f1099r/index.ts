@@ -17,6 +17,8 @@ import {
   distributionEvidenceSchema,
   form8606,
   IraOwner,
+  rothDistributionEvidenceSchema,
+  taxableRothDistribution,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
@@ -400,6 +402,7 @@ export const itemSchema = z.object({
   // the correct taxable amount (box2a is suppressed from line4b; form8606 emits taxable instead).
   prior_ira_basis: z.number().nonnegative().optional(),
   form8606_distribution_evidence: distributionEvidenceSchema.optional(),
+  roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -831,6 +834,41 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 function validateItem(item: R1099Item): void {
   validateIraRolloverEvidence(item);
   if (
+    item.exclude_8606_roth === true ||
+    item.roth_distribution_evidence !== undefined
+  ) {
+    const evidence = item.roth_distribution_evidence;
+    if (
+      item.exclude_8606_roth !== true || !evidence ||
+      item.ts !== "T" ||
+      item.box7_distribution_code !== DistributionCode.CodeJ ||
+      item.box7_ira_simple_indicator !== true ||
+      item.box2a_taxable_amount !== undefined ||
+      item.box2b_not_determined !== true ||
+      !item.box13_date_of_payment ||
+      !/^2025-\d{2}-\d{2}$/.test(item.box13_date_of_payment) ||
+      Number.isNaN(Date.parse(`${item.box13_date_of_payment}T00:00:00Z`)) ||
+      new Date(`${item.box13_date_of_payment}T00:00:00Z`).toISOString()
+          .slice(0, 10) !== item.box13_date_of_payment ||
+      item.box13_date_of_payment <=
+        evidence.contribution_receipt.received_on ||
+      !item.box13_date_of_payment.startsWith("2025-") ||
+      item.source_document_reference !==
+        evidence.form1099r_source_document_reference ||
+      item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
+      item.rollover_code !== undefined ||
+      item.prior_ira_basis !== undefined ||
+      item.form8606_distribution_evidence !== undefined ||
+      item.qcd_full === true || (item.qcd_partial_amount ?? 0) > 0 ||
+      item.form8915f_treatment !== undefined ||
+      item.no_distribution_received === true
+    ) {
+      throw new Error(
+        "Form 8606 Roth Part III needs one taxpayer code J Form 1099-R matched to first-year contribution records",
+      );
+    }
+  }
+  if (
     item.form8915f_repayment_amount !== undefined &&
     (item.form8915f_treatment === undefined ||
       item.form8915f_repayment_amount >
@@ -980,13 +1018,19 @@ function iraF1040Fields(
     0,
   );
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
-  const nonBasisItems = active.filter((item) => !routedThrough8606PartI(item));
+  const nonBasisItems = active.filter((item) =>
+    !routedThrough8606PartI(item) &&
+    item.roth_distribution_evidence === undefined
+  );
   const taxable = nonBasisItems.reduce(
     (sum, item) =>
       sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
-  const has8606Items = active.some((item) => routedThrough8606PartI(item));
+  const has8606Items = active.some((item) =>
+    routedThrough8606PartI(item) ||
+    item.roth_distribution_evidence !== undefined
+  );
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
   // Emit line4b when taxable > 0, or when there are non-basis IRA items with zero taxable
@@ -1053,6 +1097,19 @@ function withholdingF1040Fields(items: R1099Items): Record<string, number> {
   return { line25b_withheld_1099: total };
 }
 
+function form8606RothInput(item: R1099Item) {
+  const evidence = rothDistributionEvidenceSchema.parse(
+    item.roth_distribution_evidence,
+  );
+  return {
+    nondeductible_contributions: 0,
+    roth_distribution: item.box1_gross_distribution,
+    roth_basis_contributions: evidence.form5498.box10_roth_ira_contributions,
+    roth_basis_conversions: 0,
+    roth_distribution_evidence: evidence,
+  };
+}
+
 // Form 5329 outputs: code 1 ordinarily routes early distributions here.
 // A reviewed, source-matched Form 8915-F qualified disaster distribution is
 // exempt and the exporter requires its actual Form 8915-F document.
@@ -1073,7 +1130,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     }
     // Form 5329 line 1 takes the early distribution "includible in income". With
     // nondeductible basis that is the Form 8606 line 15c taxable amount, not box 2a.
-    const taxable = routedThrough8606PartI(item)
+    const taxable = item.roth_distribution_evidence
+      ? taxableRothDistribution(form8606RothInput(item))
+      : routedThrough8606PartI(item)
       ? taxableTraditionalDistribution({
         ...form8606PartIInput(item),
         nondeductible_contributions: 0,
@@ -1327,9 +1386,7 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   for (const item of activeItems(items)) {
     if (item.exclude_8606_roth === true) {
-      outputs.push(output(form8606, {
-        roth_distribution: item.box1_gross_distribution,
-      }));
+      outputs.push(output(form8606, form8606RothInput(item)));
     } else if (item.rollover_code === "C") {
       outputs.push(output(form8606, {
         roth_conversion: item.box2a_taxable_amount ??

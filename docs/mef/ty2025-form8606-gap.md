@@ -3,9 +3,10 @@
 Status: bounded taxpayer-owned no-activity and prior-basis distribution Part I
 native MeF/PDF routes, plus one spouse-owned prior-basis distribution on a joint
 return without a current contribution, written but unrun. One sourced 2025
-nondeductible contribution with the taxpayer distribution is also written.
-Tests, local XSD validation, filled PDF rendering, and IRS ATS remain
-outstanding.
+nondeductible contribution with the taxpayer distribution is also written. One
+first-year taxpayer Roth IRA code J distribution now has a sourced Part III
+native/PDF route. Tests, local XSD validation, filled PDF rendering, and IRS ATS
+remain outstanding.
 
 ## Structural mismatch
 
@@ -73,11 +74,21 @@ taxpayer and spouse Form 8606 claims remain closed.
    but unrun. Current-year rollover/repayment, qualified-disaster,
    first-time-homebuyer, other contribution or distribution sources, and
    mixed/multiple IRA sources remain open.
-3. The Part III calculation subtracts combined contribution and conversion bases
-   from gross Roth distribution in one step. The form orders those amounts
-   through lines 19-25 and has distinct qualifying-distribution,
-   first-time-homebuyer, contribution-basis, conversion-basis, and taxable
-   rules. Its current single amount cannot be mapped into those lines.
+3. One first-year taxpayer Roth IRA route requires an opening statement
+   confirming all Roth IRAs and no prior Roth activity, an issued 2025 Form 5498
+   with positive box 10 and zero boxes 2/3, a separate dated contribution
+   receipt, and one later code J Form 1099-R with taxable amount undetermined.
+   The contribution precedes the distribution. Conversion, plan rollover,
+   homebuyer, disaster, repayment, QCD, HSA transfer, and other Roth
+   distribution cases are excluded. Form 8606 Part III prints lines 19–25c,
+   deducting contribution basis before calculating taxable earnings. The taxable
+   earnings reach Form 1040 line 4b and Form 5329's early distribution line;
+   gross reaches Form 1040 line 4a. Native and PDF export replay the source,
+   owner, printed lines, Form 1040, and Form 5329. Positive and tamper fixtures
+   are authored but unrun. The generic Part III calculation remains unsupported
+   for export because it does not model qualifying distributions,
+   first-time-homebuyer expense, prior contribution or conversion basis, and
+   taxable earnings ordering.
 4. Focused node and serializer tests now cover source-to-print routing, native
    owner and line tags, and unsupported shapes, but were not run. The shared
    `builder.test.ts` still has three legacy Form 8606 fixtures for the owner of
@@ -89,10 +100,10 @@ taxpayer and spouse Form 8606 claims remain closed.
 The bounded routes above are written, not yet verified. The IRS form explicitly
 says that with no traditional IRA distribution or Roth conversion, line 3
 carries to line 14 and the intervening Part I lines are skipped. Broader
-distribution, conversion, Roth, other zero-prior-basis fact patterns, and other
-married/spouse paths must wait for source-specific rules and owner-separated
-documents. Reconcile the shared builder fixtures, then run the agreed full
-batch, TY2025 XSD check, PDF inspection, and IRS business-rule/ATS gates. The
-current Form 5498 and prior-return facts are reviewed fields, not authenticated
-source bytes; copy authentication and additional custodians/contributions remain
-open.
+distribution, conversion, other Roth, other zero-prior-basis fact patterns, and
+other married/spouse paths must wait for source-specific rules and
+owner-separated documents. Reconcile the shared builder fixtures, then run the
+agreed full batch, TY2025 XSD check, PDF inspection, and IRS business-rule/ATS
+gates. The current Form 5498 and prior-return facts are reviewed fields, not
+authenticated source bytes; copy authentication and additional
+custodians/contributions remain open.

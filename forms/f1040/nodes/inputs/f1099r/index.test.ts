@@ -492,18 +492,17 @@ Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () =
   assertEquals(form4972, undefined);
 });
 
-Deno.test("f1099r.compute: exclude_8606_roth routes to form8606 with gross amount", () => {
-  const result = compute([minimalIraItem({
-    box1_gross_distribution: 10000,
-    box7_distribution_code: DistributionCode.CodeJ,
-    exclude_8606_roth: true,
-  })]);
-  const form8606Out = result.outputs.find((o) => o.nodeType === "form8606");
-  const f8606Fields = form8606Out!.fields as Record<string, unknown>;
-  assertEquals(f8606Fields.roth_distribution, 10000);
-  // exclude_8606_roth suppresses income lines
-  const input = f1040Input(result);
-  assertEquals(input.line4b_ira_taxable, 0);
+Deno.test("f1099r.compute: Roth exclusion cannot suppress income without Part III sources", () => {
+  assertThrows(
+    () =>
+      compute([minimalIraItem({
+        box1_gross_distribution: 10000,
+        box7_distribution_code: DistributionCode.CodeJ,
+        exclude_8606_roth: true,
+      })]),
+    Error,
+    "needs one taxpayer code J Form 1099-R",
+  );
 });
 
 Deno.test("f1099r.compute: rollover_code C routes to form8606 with taxable amount", () => {
