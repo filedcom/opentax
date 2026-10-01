@@ -1,10 +1,19 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../nodes/inputs/f8621/index.ts";
+import { calculateExcessEvents } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
-function explain(line: Form8621Lines): string {
+export function explainForm8621ExcessStatement(line: Form8621Lines): string {
+  const derived = (line.item.excess_events ?? []).flatMap(
+    calculateExcessEvents,
+  );
+  if (JSON.stringify(line.excessEvents) !== JSON.stringify(derived)) {
+    throw new Error(
+      "Form 8621 excess-distribution statement differs from source events",
+    );
+  }
   const allocations = line.excessEvents.map((result, index) => {
     const years = result.allocations.map((year) =>
       `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
@@ -48,7 +57,7 @@ export const form8621ExcessStatement: MefFormDescriptor<
       .filter((line) => line.excessEvents.some((event) => event.amount_usd > 0))
       .map((line) =>
         elements("TaxationOfExcessDistriStmt", [
-          element("ExplanationTxt", explain(line)),
+          element("ExplanationTxt", explainForm8621ExcessStatement(line)),
         ])
       );
   },

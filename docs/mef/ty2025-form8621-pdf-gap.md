@@ -1,8 +1,9 @@
 # TY2025 Form 8621 printable-return gap
 
-Static source, native, and blank-PDF review on 2026-09-28. No PDF descriptor or
-test was added; no test, typecheck, XSD, filled-PDF render, business-rule, or
-ATS run occurred. The current
+Static source, native, and blank-PDF review on 2026-09-28, followed by a Part V
+supporting-statement build slice. No parent Form 8621 PDF descriptor is
+registered; no test, typecheck, XSD, filled-PDF render, business-rule, or ATS
+run occurred in the later slice. The current
 [IRS December 2025 four-page Form 8621](https://www.irs.gov/pub/irs-pdf/f8621.pdf)
 and its [instructions](https://www.irs.gov/instructions/i8621) govern this
 review.
@@ -36,6 +37,15 @@ VI ledger or election status. Although `excessEvents` is calculated, multiple
 events would need separate printed Part V pages and reconciled holding-period
 statements. Printing one four-page copy per PFIC item would not cover those
 cases.
+
+The native holding-period statement now rederives every Part V event from its
+original source before generating its explanation. A standalone PDF statement
+writer prints that same source-checked explanation for each identified PFIC,
+adding continuation pages when needed. Its positive foreign-currency fixture
+retains the dated EUR/USD spot quote and source; changed computed interest and
+missing filer identity are rejected. These fixtures are written but unrun. The
+supporting page is a prerequisite for parent PDF parity and remains outside the
+export packet while Form 8621 lacks material page-1 and election facts.
 
 **Decision for this build slice:** no positive PDF projection is reliable even
 for one QEF or MTM item without inventing or leaving blank material page-1 facts
