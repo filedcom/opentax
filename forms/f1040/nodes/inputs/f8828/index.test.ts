@@ -103,6 +103,39 @@ function gift(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function jointOwnerSale(overrides: Record<string, unknown> = {}) {
+  const sale = transaction({
+    sales_price_of_interest: 225_000,
+    selling_expenses: 13_500,
+    adjusted_basis_of_interest: 187_500,
+    home_gain_included_in_gross_income: 4_500,
+    highest_federally_subsidized_loan_amount: 150_000,
+    issuer_federally_subsidized_amount: 9_375,
+    ...overrides,
+  });
+  return {
+    ...sale,
+    reviewed_issuer: {
+      ...sale.reviewed_issuer,
+      highest_federally_subsidized_loan_amount: 200_000,
+      federally_subsidized_amount: 12_500,
+    },
+    reviewed_coownership: {
+      ownership_record_reference: "deed-75-percent-14-main",
+      joint_loan_record_reference: "joint-loan-14-main",
+      joint_liability_confirmed: true,
+      owner_count: 2,
+      taxpayer_share_numerator: 3,
+      taxpayer_share_denominator: 4,
+      whole_property_sales_price: 300_000,
+      whole_property_selling_expenses: 18_000,
+      whole_property_adjusted_basis: 250_000,
+      whole_highest_federally_subsidized_loan_amount: 200_000,
+      whole_issuer_federally_subsidized_amount: 12_500,
+    },
+  };
+}
+
 function compute(...items: ReturnType<typeof transaction>[]) {
   const input = f8828.inputSchema.parse({ f8828s: items });
   return f8828.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -164,6 +197,40 @@ Deno.test("f8828: gift needs exact deed, appraisal, payoff, and no-consideration
     () => compute(gift({ home_gain_included_in_gross_income: 100 })),
     Error,
   );
+});
+
+Deno.test("f8828: jointly liable owner files only the documented three-quarter interest", () => {
+  const source =
+    f8828.inputSchema.parse({ f8828s: [jointOwnerSale()] }).f8828s[0];
+  const lines = computeF8828Lines(source);
+  assertEquals(lines.line9_sales_price, 225_000);
+  assertEquals(lines.line10_selling_expenses, 13_500);
+  assertEquals(lines.line12_adjusted_basis, 187_500);
+  assertEquals(lines.line19_federally_subsidized_amount, 9_375);
+  assertEquals(lines.line23_tax, 7_500);
+  assertEquals(
+    fieldsOf(compute(jointOwnerSale()).outputs, schedule2)
+      ?.line17b_mortgage_subsidy_recapture,
+    7_500,
+  );
+});
+
+Deno.test("f8828: jointly liable owner rejects share and liability tamper", () => {
+  const valid = jointOwnerSale();
+  for (
+    const reviewed_coownership of [
+      { ...valid.reviewed_coownership, taxpayer_share_numerator: 2 },
+      { ...valid.reviewed_coownership, joint_liability_confirmed: false },
+      { ...valid.reviewed_coownership, owner_count: 1 },
+      { ...valid.reviewed_coownership, whole_property_sales_price: 299_999 },
+      {
+        ...valid.reviewed_coownership,
+        whole_issuer_federally_subsidized_amount: 12_000,
+      },
+    ]
+  ) {
+    assertThrows(() => compute({ ...valid, reviewed_coownership }), Error);
+  }
 });
 
 Deno.test("f8828: income percentage rounds to nearest whole percent and caps at 100", () => {

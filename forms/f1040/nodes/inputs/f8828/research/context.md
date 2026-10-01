@@ -36,6 +36,15 @@ gross income; transfers with debt assumed or other consideration remain
 unsupported. A positive deemed gain can still create recapture tax on Schedule 2
 without a Form 8949 sale row.
 
+For jointly liable co-owners, the
+[IRS instructions](https://www.irs.gov/pub/irs-pdf/i8828.pdf) require each owner
+to calculate recapture separately on their interest. The staged joint-owner sale
+branch takes a deed-supported ownership fraction, joint-loan proof,
+whole-property proceeds, expenses and basis, and whole subsidized-loan/issuer
+amounts. It derives only the taxpayer's exact whole-dollar share for lines 9,
+10, 12 and 19. The other owner's Form 8828 belongs on that owner's return; this
+return includes only the filer's share.
+
 ## Calculation
 
 | Line       | Derivation                                                                                                                                                                                                                                            |

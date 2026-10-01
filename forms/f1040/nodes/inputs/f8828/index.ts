@@ -70,6 +70,27 @@ const reviewedGiftSchema = z.object({
   entire_taxpayer_interest_transferred: z.literal(true),
   no_consideration_confirmed: z.literal(true),
 });
+const reviewedCoownershipSchema = z.object({
+  ownership_record_reference: sourceReference,
+  joint_loan_record_reference: sourceReference,
+  joint_liability_confirmed: z.literal(true),
+  owner_count: z.number().int().min(2),
+  taxpayer_share_numerator: z.number().int().positive(),
+  taxpayer_share_denominator: z.number().int().positive(),
+  whole_property_sales_price: moneySchema,
+  whole_property_selling_expenses: moneySchema,
+  whole_property_adjusted_basis: moneySchema,
+  whole_highest_federally_subsidized_loan_amount: moneySchema,
+  whole_issuer_federally_subsidized_amount: moneySchema,
+});
+
+function coownerShare(
+  amount: number,
+  numerator: number,
+  denominator: number,
+): number {
+  return amount * numerator / denominator;
+}
 
 export const itemSchema = z.object({
   source_transaction_id: sourceReference,
@@ -77,6 +98,7 @@ export const itemSchema = z.object({
   reviewed_disposition: reviewedDispositionSchema,
   disposition_kind: z.enum(["sale", "gift"]),
   reviewed_gift: reviewedGiftSchema.optional(),
+  reviewed_coownership: reviewedCoownershipSchema.optional(),
   property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
   issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination
@@ -99,6 +121,57 @@ export const itemSchema = z.object({
   issuer_federally_subsidized_amount: moneySchema, // issuer notification, line 19
   issuer_holding_period_percentage: z.number().int().min(0).max(100), // issuer table, line 20
 }).superRefine((item, ctx) => {
+  const owners = item.reviewed_coownership;
+  if (owners) {
+    const numerator = owners.taxpayer_share_numerator;
+    const denominator = owners.taxpayer_share_denominator;
+    const shares = [
+      [
+        "sales_price_of_interest",
+        owners.whole_property_sales_price,
+        item.sales_price_of_interest,
+      ],
+      [
+        "selling_expenses",
+        owners.whole_property_selling_expenses,
+        item.selling_expenses,
+      ],
+      [
+        "adjusted_basis_of_interest",
+        owners.whole_property_adjusted_basis,
+        item.adjusted_basis_of_interest,
+      ],
+      [
+        "highest_federally_subsidized_loan_amount",
+        owners.whole_highest_federally_subsidized_loan_amount,
+        item.highest_federally_subsidized_loan_amount,
+      ],
+      [
+        "issuer_federally_subsidized_amount",
+        owners.whole_issuer_federally_subsidized_amount,
+        item.issuer_federally_subsidized_amount,
+      ],
+    ] as const;
+    if (item.disposition_kind !== "sale" || numerator >= denominator) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reviewed_coownership"],
+        message:
+          "Joint-owner branch needs a sale and a taxpayer interest below 100%",
+      });
+    }
+    for (const [name, whole, reported] of shares) {
+      const share = coownerShare(whole, numerator, denominator);
+      if (!Number.isSafeInteger(share) || reported !== share) {
+        ctx.addIssue({
+          code: "custom",
+          path: [name],
+          message:
+            "Form 8828 joint-owner amount must equal the exact documented taxpayer interest",
+        });
+      }
+    }
+  }
   if (item.disposition_kind === "gift") {
     const gift = item.reviewed_gift;
     if (!gift) {
@@ -273,13 +346,33 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
       "Form 8828 gift needs reviewed deed and valuation evidence",
     );
   }
+  const owners = item.reviewed_coownership;
+  const share = (whole: number): number =>
+    owners
+      ? coownerShare(
+        whole,
+        owners.taxpayer_share_numerator,
+        owners.taxpayer_share_denominator,
+      )
+      : whole;
   const line9_sales_price = item.disposition_kind === "gift"
     ? item.reviewed_gift!.fair_market_value_of_interest
+    : owners
+    ? share(owners.whole_property_sales_price)
     : item.sales_price_of_interest;
+  const line10_selling_expenses = owners
+    ? share(owners.whole_property_selling_expenses)
+    : item.selling_expenses;
+  const line12_adjusted_basis = owners
+    ? share(owners.whole_property_adjusted_basis)
+    : item.adjusted_basis_of_interest;
+  const line19_federally_subsidized_amount = owners
+    ? share(owners.whole_issuer_federally_subsidized_amount)
+    : item.issuer_federally_subsidized_amount;
   const line11_amount_realized = line9_sales_price -
-    item.selling_expenses;
+    line10_selling_expenses;
   const line13_gain_or_loss = line11_amount_realized -
-    item.adjusted_basis_of_interest;
+    line12_adjusted_basis;
   const line15_modified_agi = item.adjusted_gross_income +
     item.tax_exempt_interest - item.home_gain_included_in_gross_income;
   const line17_income_excess = line15_modified_agi -
@@ -294,8 +387,8 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
     item.full_repayment_date,
     item.disposition_date,
   );
-  const line21_holding_adjusted_amount =
-    item.issuer_federally_subsidized_amount * line20_holding_period_percentage /
+  const line21_holding_adjusted_amount = line19_federally_subsidized_amount *
+    line20_holding_period_percentage /
     100;
   const line22_recapture_amount = line21_holding_adjusted_amount *
     line18_income_percentage / 100;
@@ -304,16 +397,16 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
     line7_full_years: line7.years,
     line7_full_months: line7.months,
     line9_sales_price,
-    line10_selling_expenses: item.selling_expenses,
+    line10_selling_expenses,
     line11_amount_realized,
-    line12_adjusted_basis: item.adjusted_basis_of_interest,
+    line12_adjusted_basis,
     line13_gain_or_loss,
     line14_half_gain,
     line15_modified_agi,
     line16_adjusted_qualifying_income: item.adjusted_qualifying_income,
     line17_income_excess,
     line18_income_percentage,
-    line19_federally_subsidized_amount: item.issuer_federally_subsidized_amount,
+    line19_federally_subsidized_amount,
     line20_holding_period_percentage,
     line21_holding_adjusted_amount,
     line22_recapture_amount,

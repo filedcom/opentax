@@ -103,6 +103,39 @@ function gift(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function jointOwnerSale(overrides: Record<string, unknown> = {}) {
+  const sale = item({
+    sales_price_of_interest: 225_000,
+    selling_expenses: 13_500,
+    adjusted_basis_of_interest: 187_500,
+    home_gain_included_in_gross_income: 4_500,
+    highest_federally_subsidized_loan_amount: 150_000,
+    issuer_federally_subsidized_amount: 9_375,
+    ...overrides,
+  });
+  return {
+    ...sale,
+    reviewed_issuer: {
+      ...sale.reviewed_issuer,
+      highest_federally_subsidized_loan_amount: 200_000,
+      federally_subsidized_amount: 12_500,
+    },
+    reviewed_coownership: {
+      ownership_record_reference: "deed-75-percent-14-main",
+      joint_loan_record_reference: "joint-loan-14-main",
+      joint_liability_confirmed: true,
+      owner_count: 2,
+      taxpayer_share_numerator: 3,
+      taxpayer_share_denominator: 4,
+      whole_property_sales_price: 300_000,
+      whole_property_selling_expenses: 18_000,
+      whole_property_adjusted_basis: 250_000,
+      whole_highest_federally_subsidized_loan_amount: 200_000,
+      whole_issuer_federally_subsidized_amount: 12_500,
+    },
+  };
+}
+
 function pending(total = 6_250) {
   return {
     f1040: { line11_agi: 105_000, line2a_tax_exempt: 1_000 },
@@ -210,6 +243,61 @@ Deno.test("staged IRS8828 gift rejects unsupported consideration and valuation t
     () => form8828.build({ f8828s: [gift({ selling_expenses: 500 })] }),
     Error,
   );
+});
+
+Deno.test("staged IRS8828 joint-owner sale emits only the taxpayer share", () => {
+  const source = { f8828s: [jointOwnerSale()] };
+  const finalReturn = pending(7_500);
+  finalReturn.form8949.transaction.proceeds = 211_500;
+  finalReturn.form8949.transaction.cost_basis = 187_500;
+  finalReturn.form8949.transaction.adjustment_amount = -19_500;
+  finalReturn.form8949.transaction.gain_loss = 4_500;
+  const xml = form8828.build(source, { pending: finalReturn });
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdySalesPriceIntHomeAmt>225000</MortgSbsdySalesPriceIntHomeAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyFederallySbsdzdAmt>9375</MortgSbsdyFederallySbsdzdAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyRecaptureTaxAmt>7500</MortgSbsdyRecaptureTaxAmt>",
+  );
+  const printed = form8828Pdf.instances!(source, {
+    nameLine1: "Jane Taxpayer",
+    primarySSN: "123456789",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "14 Main St", city: "Boise", state: "ID", zip: "83702" },
+  }, finalReturn);
+  assertEquals(printed[0].line9, 225_000);
+  assertEquals(printed[0].line23, 7_500);
+});
+
+Deno.test("staged IRS8828 joint-owner source rejects issuer and ownership tamper", () => {
+  const valid = jointOwnerSale();
+  const wrongIssuer = {
+    ...valid,
+    reviewed_issuer: {
+      ...valid.reviewed_issuer,
+      federally_subsidized_amount: 9_375,
+    },
+  };
+  assertThrows(
+    () => form8828.build({ f8828s: [wrongIssuer] }),
+    Error,
+    "issuer",
+  );
+  const wrongShare = {
+    ...valid,
+    reviewed_coownership: {
+      ...valid.reviewed_coownership,
+      taxpayer_share_numerator: 2,
+    },
+  };
+  assertThrows(() => form8828.build({ f8828s: [wrongShare] }), Error);
 });
 
 Deno.test("staged IRS8828 emits each property, including required zero-tax attachment", () => {

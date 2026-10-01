@@ -17,15 +17,20 @@ function sameAddress(
 
 function assertReviewedRecords(item: F8828Item): void {
   const issuer = item.reviewed_issuer;
+  const owners = item.reviewed_coownership;
+  const expectedHighestLoan = owners
+    ? owners.whole_highest_federally_subsidized_loan_amount
+    : item.highest_federally_subsidized_loan_amount;
+  const expectedIssuerAmount = owners
+    ? owners.whole_issuer_federally_subsidized_amount
+    : item.issuer_federally_subsidized_amount;
   if (
     issuer.issuer_name !== item.issuer_name ||
     issuer.issuer_state !== item.issuer_state ||
     issuer.issuer_type !== item.issuer_type ||
     issuer.original_loan_closing_date !== item.original_loan_closing_date ||
-    issuer.highest_federally_subsidized_loan_amount !==
-      item.highest_federally_subsidized_loan_amount ||
-    issuer.federally_subsidized_amount !==
-      item.issuer_federally_subsidized_amount ||
+    issuer.highest_federally_subsidized_loan_amount !== expectedHighestLoan ||
+    issuer.federally_subsidized_amount !== expectedIssuerAmount ||
     issuer.adjusted_qualifying_income !== item.adjusted_qualifying_income ||
     issuer.holding_period_percentage !== item.issuer_holding_period_percentage
   ) {

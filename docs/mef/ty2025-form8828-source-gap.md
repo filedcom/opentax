@@ -18,6 +18,15 @@ confirms no consideration and transfer of the taxpayer's entire interest, and
 permits no sale expense or recognized sale gain. Gift recapture still flows to
 Schedule 2; no Form 8949 sale is invented.
 
+The [same instructions](https://www.irs.gov/pub/irs-pdf/i8828.pdf) require
+jointly liable co-owners to figure recapture separately on their interests. The
+staged joint-owner sale branch requires deed and joint-loan references, a
+documented ownership fraction below 100%, and whole-property proceeds, expenses,
+basis and subsidized-loan amounts. It derives the taxpayer's share for Form 8828
+lines 9, 10, 12 and 19, then calculates only that owner's tax. This bounded
+branch requires exact whole-dollar allocation and a Form 8949 row for that
+owner's taxable gain.
+
 For taxable home gain, exactly one Form 8949 row must carry the same transaction
 ID, net proceeds, basis, disposition date and taxable gain. A partial exclusion
 requires code H. A fully excluded gain requires a reviewed exclusion record
@@ -25,11 +34,20 @@ reference and does not invent a Form 8949 row.
 
 These reference fields are provenance identifiers, **not validated document
 bytes**. The current return graph cannot independently verify the issuer
-notification or closing/basis/exclusion/gift documents. It also lacks a modeled
-source path for transfers with consideration, spouse/ex-spouse divorce
-transfers, casualty replacement, co-owner share statements, qualified
+notification or closing/basis/exclusion/gift/ownership documents. It also lacks
+a modeled source path for transfers with consideration, spouse/ex-spouse divorce
+transfers, casualty replacement, non-joint-liability co-ownership, qualified
 subordinate mortgage loans, reissued MCCs, and amended returns. A Form 8949 row
 is required by this staged path for taxable home gain; the exact gain handoff
 for other reporting routes remains unsupported. Public MeF and PDF export must
 keep the Form 8828 guard closed until those filing rules and attachment
 validation are resolved.
+
+Foreclosure remains closed:
+[Form 8828 line 9](https://www.irs.gov/pub/irs-pdf/i8828.pdf) directs fair
+market value for a non-sale disposition, while
+[IRS Topic 432](https://www.irs.gov/taxtopics/tc432) can use the full
+nonrecourse debt as income-tax amount realized. That difference needs a separate
+Form 8949/debt-source reconciliation. A casualty replacement generally avoids
+recapture; failure to replace can require an amended return for the destruction
+year, which the current original-return path does not model.
