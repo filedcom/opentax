@@ -112,6 +112,22 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     end_month: z.number().int().min(1).max(12),
     allocated_enrollees_in_tax_family: z.number().int().min(0),
     total_enrollees: z.number().int().positive(),
+    nonagreement_review: z.object({
+      tax_year: z.literal(2025),
+      policy_number: z.string().trim().min(1),
+      filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_claimed_covered_ssn: z.string().regex(
+        /^\d{3}-?\d{2}-?\d{4}$/,
+      ),
+      marketplace_enrollment_reference: z.string().trim().min(1),
+      tax_family_review_reference: z.string().trim().min(1),
+      tax_family_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      no_agreement_review_reference: z.string().trim().min(1),
+      no_agreement_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      filer_enrolled_count: z.number().int().positive(),
+      policy_enrolled_count: z.number().int().positive(),
+    }).strict(),
   }).strict(),
 ]);
 
@@ -768,10 +784,14 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         }
         if (
           shared.basis === "other_no_agreement" &&
-          shared.allocated_enrollees_in_tax_family > shared.total_enrollees
+          (shared.allocated_enrollees_in_tax_family > shared.total_enrollees ||
+            shared.nonagreement_review.filer_enrolled_count !==
+              shared.allocated_enrollees_in_tax_family ||
+            shared.nonagreement_review.policy_enrolled_count !==
+              shared.total_enrollees)
         ) {
           throw new Error(
-            "Shared policy allocated enrollees cannot exceed total enrollees",
+            "Shared policy reviewed enrolled counts must match the allocated tax family and total policy enrollees",
           );
         }
         if (

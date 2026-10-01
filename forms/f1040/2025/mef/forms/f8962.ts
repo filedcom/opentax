@@ -2604,7 +2604,8 @@ function reconcileAgreedSharedPolicy(
     allocations.length < 1 || allocations.length > 5 ||
     allocations.some((allocation) =>
       (allocation.basis !== "other_agreed" &&
-        allocation.basis !== "divorce_agreed") ||
+        allocation.basis !== "divorce_agreed" &&
+        allocation.basis !== "other_no_agreement") ||
       allocation.premium_pct === undefined ||
       allocation.premium_pct <= 0 ||
       allocation.premium_pct !== allocation.slcsp_pct ||
@@ -2625,6 +2626,8 @@ function reconcileAgreedSharedPolicy(
   const covered = policy?.covered_individual_ssns?.map((ssn) =>
     ssn.replaceAll("-", "")
   );
+  const noAgreement = allocations.length === 1 &&
+    allocations[0].basis === "other_no_agreement";
   const sharedSourcePeriods = policy?.shared_policy_periods?.filter((period) =>
     period.basis !== "family_only"
   );
@@ -2656,7 +2659,43 @@ function reconcileAgreedSharedPolicy(
       policy.recipient_ssn?.replaceAll("-", "") !== filerSsn) ||
     (claimedDependent !== undefined &&
       !covered.includes(claimedDependent.ssn!.replaceAll("-", ""))) ||
+    (noAgreement && (() => {
+      if (!policy) return true;
+      const allocation = allocations[0];
+      const period = sharedSourcePeriods?.[0];
+      const review = period?.basis === "other_no_agreement"
+        ? period.nonagreement_review
+        : undefined;
+      const otherSsn = allocation.other_taxpayer_ssn;
+      return fields.household_size !== 1 ||
+        policy.recipient_ssn?.replaceAll("-", "") !== filerSsn ||
+        policy.shared_policy_periods?.length !== 1 ||
+        !period || period.basis !== "other_no_agreement" || !review ||
+        period.start_month !== 1 || period.end_month !== 12 ||
+        period.allocated_enrollees_in_tax_family !== 1 ||
+        period.total_enrollees !== 2 ||
+        allocation.start_month !== 1 || allocation.end_month !== 12 ||
+        allocation.premium_pct !== 0.5 ||
+        allocation.slcsp_pct !== 0.5 ||
+        allocation.aptc_pct !== 0.5 ||
+        otherSsn === filerSsn || covered?.includes(otherSsn) ||
+        review.policy_number !== policy.policy_number ||
+        review.filer_ssn.replaceAll("-", "") !== filerSsn ||
+        review.other_taxpayer_ssn.replaceAll("-", "") !== otherSsn ||
+        review.other_taxpayer_claimed_covered_ssn.replaceAll("-", "") !==
+          covered?.find((ssn) => ssn !== filerSsn) ||
+        review.filer_enrolled_count !== 1 ||
+        review.policy_enrolled_count !== 2 ||
+        review.tax_family_review_reference ===
+          review.no_agreement_review_reference ||
+        review.tax_family_review_sha256 ===
+          review.no_agreement_review_sha256 ||
+        policy.monthly_premiums!.some((amount) => amount <= 0) ||
+        policy.monthly_slcsps!.some((amount) => amount <= 0) ||
+        policy.monthly_aptcs!.some((amount) => amount <= 0);
+    })()) ||
     allocations.some((allocation, index) => {
+      if (noAgreement) return false;
       if (allocation.other_taxpayer_ssn === filerSsn) return true;
       if (
         claimedDependent?.ssn?.replaceAll("-", "") ===

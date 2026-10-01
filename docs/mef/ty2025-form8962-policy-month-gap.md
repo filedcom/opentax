@@ -479,6 +479,27 @@ still aggregate normally. Focused positive and negative source cases are written
 but unrun; this check does not relax the remaining MeF/PDF overlap boundaries or
 settle the remaining Publication 974 routes.
 
+## One full-year Situation 4 policy without an agreement (2026-10-01, unrun)
+
+The [2025 Form 8962 Part IV instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+assign a percentage based on enrolled individuals when the two tax families
+cannot agree. A bounded full-year case now requires exactly two covered people:
+the Marketplace recipient/filer and one child claimed by a different,
+nonenrolled taxpayer. One reviewed source record names the policy, the filer,
+the other taxpayer, the claimed child's SSN, the enrollment and tax-family
+review records, the no-agreement review record, and the exact 1-of-2 enrolled
+count. The two review references and hashes must differ. The one-half
+percentage applies to each month's premium, SLCSP, and APTC and to Form 8962
+Part IV. Native and PDF projection recompute the source rows and join the net
+credit to Schedule 3 line 9 and Form 1040 line 31. A full-return $1,800 credit
+and changed claim, owner, count, review, and final-credit fixtures are authored
+for the deferred bulk gate.
+
+The reviewed references and hashes are entered metadata; the Marketplace,
+claim, and no-agreement document bytes are not independently authenticated.
+Other enrolled counts, periods, policies, household sizes, and allocation
+situations remain outside this route.
+
 ## Agreed Situation 4 shared-policy filing path (build-first, unrun)
 
 The
