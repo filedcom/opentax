@@ -2,9 +2,9 @@
 
 ## Full status summary (2026-10-01)
 
-Open [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
+Merged [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **49 open TODOs and no
-completed checkboxes**. The **383 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **384 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -18,7 +18,7 @@ coverage decision, or release gate.
 | Named tax-form gaps | 18 | 326 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The rebased code checkpoint passes 10,006/10,006 local tests; the manual artifact and IRS gates remain open. |
-| IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
+| IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** Bounded routes now connect selected wage, information
 return, K-1, foreign-tax, mortgage, business, rental, investment, IRA, HSA,
@@ -38,8 +38,8 @@ Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
-**Current PR checkpoint.** New form implementation is paused while the current
-branch is validated for merge. The latest bounded slices add a qualifying prior
+**Merged code checkpoint.** PR #56 was squash-merged as `48f69237` on
+2026-10-01. The latest bounded slices add a qualifying prior
 ISO sale below both bases on Form 6251, four reported residence states on Form
 8962, and positive two-business Form 8995-A QBI with an extra-companion
 rejection. The prior batch includes a Schedule J
@@ -59,8 +59,7 @@ policy months, and a staged Form 8621 prior-distribution record check. These
 are bounded slices; each parent form TODO below still has wider inputs or
 evidence gates. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
 names the exact supported inputs and remaining gates for every slice.
-The code merge checkpoint is locally green and PR #56 has no merge conflicts.
-The branch was rebased onto
+The code checkpoint is locally green. The branch was rebased onto
 `origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
 the PR's shared Schedule SE calculation were retained at the two conflict
 sites. The repaired branch passes the complete local test suite. This is a
@@ -99,8 +98,15 @@ The pre-merge signed W-2 CLI, MeF archive, and filled-PDF smoke suite passed
 **34/34** on 2026-10-01
 ([local log](.state/research/pr56-release-smoke-premerge-2026-10-01.log)).
 A locally compiled binary reported `opentax dev` and listed 211 registered
-nodes. The five-platform `v2.0.5` release build and downloaded-binary smoke
-remain to be verified. The manual PDF and IRS ATS gates above remain open.
+nodes. [CLI v2.0.5](https://github.com/filedcom/opentax/releases/tag/v2.0.5)
+was published from merged commit `48f69237` after all five platform builds
+and the release job passed. The published macOS ARM binary's SHA-256 matched
+the release page; downloaded-binary smoke verified version `2.0.5`, 211
+registered nodes, a synthetic W-2 MeF XML document valid against TY2025 v5.4,
+and a parseable two-page PDF
+([local log](.state/research/pr56-v2.0.5-binary-smoke.log)). The release notes
+state that CLI export does not transmit returns. The manual PDF and IRS ATS
+gates above remain open.
 
 ## Scope and completion rules
 
@@ -174,5 +180,5 @@ remain to be verified. The manual PDF and IRS ATS gates above remain open.
 - [ ] Complete the Publication 1436 Form 1040 ATS scenario matrix, source-backed expected outputs, required supporting forms and attachments, and scenario-specific assertions in [ATS preparation](docs/ats/ty2025.md). Resolve the known Scenario 1 Form 5695 door-cost conflict and Scenario 8 printed QCD mark before submission.
 - [ ] Obtain and verify the issued ATS certificate, enrolled ASID/Test ETIN, current IRS ATS endpoint/WSDL/trust package, and authorized transmission credentials. Do not put private keys or certificate secrets in the repository.
 - [ ] Submit each required Form 1040-family ATS scenario only after its source, XML, PDF, and package checks pass; retain transmitted package, IRS acknowledgment, acceptance/rejection details, and repair/retest evidence. No local test or XSD pass substitutes for an accepted IRS acknowledgment.
-- [ ] Review the completed diff, user-approved scope decisions, security/privacy implications, and test/ATS evidence; then confirm PR #56's description and linked evidence. Do not merge merely because code is written.
-- [ ] After review and required acceptance gates, merge the PR, release a new version, verify the published artifact/version and release notes, and close or update the linked issues with a short human explanation and thanks.
+- [ ] Review the filing-ready diff, user-approved scope decisions, security/privacy implications, manual packet output, and test/ATS evidence before approving a filing-ready release.
+- [ ] After review and required IRS acceptance gates, publish a filing-ready version, verify its artifacts and release notes, and close or update any linked issues with a short human explanation and thanks.
