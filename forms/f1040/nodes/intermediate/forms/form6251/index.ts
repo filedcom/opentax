@@ -628,6 +628,13 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       const mixedFullyDeductibleLoss = !oneTermOnly &&
         fullyDeductibleNetLoss &&
         basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0);
+      // A single long-term sale can cross from a regular gain to an AMT loss.
+      // With a fully deductible AMT loss and no other capital activity, line
+      // 2k is the signed difference and AMT has no preferential net gain.
+      const longTermGainToAmtLoss = basisRows.length === 1 &&
+        longTermBasisRows.length === 1 &&
+        basisRows[0].regular_gain > 0 && basisRows[0].amt_gain < 0 &&
+        basisRows[0].amt_gain >= lossLimit;
       // A positive net of short-term rows changes ordinary AMTI, not the
       // preferential Schedule D net capital gain or Form 6251 Part III.
       const positiveShortTermNet =
@@ -642,12 +649,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         (!oneTermOnly && !mixedFullyDeductibleLoss &&
           !shortLossOffsetLongGain &&
           !longLossOffsetShortGain) ||
-        lossBasisRows.some((row) =>
+        (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
-        ) ||
+        ) && !longTermGainToAmtLoss) ||
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
-          longLossOffsetShortGain) ||
+          longLossOffsetShortGain || longTermGainToAmtLoss) ||
         ((input.qualified_dividends ?? 0) > 0 &&
           !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||

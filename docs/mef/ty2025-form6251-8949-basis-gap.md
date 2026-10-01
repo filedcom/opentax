@@ -9,15 +9,15 @@ The native and PDF Form 6251 exporters now replay every line 2k basis row
 against the retained raw Form 8949 input. The row set must be exact, with
 distinct source IDs and matching part, proceeds, regular/AMT bases, and gains;
 adjusted or extra source rows reject. The direct replay fixture is authored but
-awaits the agreed bulk validation. This binds the two in-memory form routes,
-not the underlying broker document bytes.
+awaits the agreed bulk validation. This binds the two in-memory form routes, not
+the underlying broker document bytes.
 
-One qualifying full-lot sale of a 2024 ISO exercise is now linked to this
-replay through a distinct reviewed prior-year Form 3921/Form 6251 source,
-2025 broker transaction reference, and the exact regular and AMT share bases.
-It can coexist with a separate retained 2025 Form 3921 line 2i adjustment.
-See the [ISO source note](ty2025-form6251-iso-source-gap.md) for that bounded
-route and its unauthenticated prior-filing limitation.
+One qualifying full-lot sale of a 2024 ISO exercise is now linked to this replay
+through a distinct reviewed prior-year Form 3921/Form 6251 source, 2025 broker
+transaction reference, and the exact regular and AMT share bases. It can coexist
+with a separate retained 2025 Form 3921 line 2i adjustment. See the
+[ISO source note](ty2025-form6251-iso-source-gap.md) for that bounded route and
+its unauthenticated prior-filing limitation.
 
 The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require refiguring Form 8949 and Schedule D for AMT when a disposition has a
@@ -140,3 +140,20 @@ qualified dividends, special-rate gain, Form 4952 elections, Form 2555, net loss
 or zero under either basis, and carryovers remain closed. See the
 [2025 Schedule D instructions](https://www.irs.gov/pub/irs-prior/i1040sd--2025.pdf)
 and [2025 Form 6251](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).
+
+## One long-term regular gain that becomes an AMT loss (staged, unrun)
+
+A single audited, unadjusted 2025 Form 8949 Part II sale may have a positive
+regular gain and a negative AMT gain when its AMT basis is higher. This route
+requires the AMT loss to fit within the separate $3,000 Schedule D limit
+($1,500 for married filing separately), no other capital activity or carryover,
+and no qualified dividends, Form 4952 election, or special-rate gains. The
+regular gain stays on Form 1040 line 7; the signed AMT-minus-regular difference
+goes to Form 6251 line 2k. Because the AMT side has a loss, no preferential AMT
+capital gain enters Part III. Native and PDF export replay the exact dated Form
+8949 row and match Schedule 2 line 2, Form 1040 lines 7/15, and the Form 1040
+line 17 tax total. The positive and changed-basis, tax, capital-gain, and limit
+fixtures are authored for the deferred batch. The underlying broker-copy bytes
+and basis workpaper are not independently authenticated. See the
+[2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
+for the separate AMT Schedule D loss limitation.

@@ -94,4 +94,35 @@ export function assertForm6251Form8949Source(
       "Form 6251 line 2k needs every AMT basis row to match the retained, unadjusted Form 8949 source and its 2025 holding period",
     );
   }
+  const gainToAmtLoss = rows.length === 1 &&
+    ["D", "E", "F"].includes(rows[0].part) &&
+    rows[0].regular_gain > 0 && rows[0].amt_gain < 0;
+  if (gainToAmtLoss) {
+    const row = rows[0];
+    const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
+    const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+    const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const amt = fields.line11_amt;
+    if (
+      row.amt_gain < lossLimit ||
+      fields.net_capital_gain !== row.regular_gain ||
+      (fields.qualified_dividends ?? 0) !== 0 ||
+      fields.prior_iso_sale_review !== undefined ||
+      (fields.form4952_regular_election ?? 0) !== 0 ||
+      (fields.form4952_amt_election ?? 0) !== 0 ||
+      (fields.unrecaptured_1250_gain ?? 0) !== 0 ||
+      (fields.rate_28_gain ?? 0) !== 0 ||
+      fields.line13 !== undefined || fields.line15 !== undefined ||
+      typeof amt !== "number" || amt <= 0 ||
+      schedule2?.line2_amt !== amt ||
+      form1040?.line7_capital_gain !== row.regular_gain ||
+      form1040?.line15_taxable_income !== fields.regular_taxable_income ||
+      typeof form1040?.line17_additional_taxes !== "number" ||
+      form1040.line17_additional_taxes < amt
+    ) {
+      throw new Error(
+        "Form 6251 gain-to-AMT-loss basis sale needs a deductible AMT loss and matching Schedule 2 and Form 1040 capital gain and tax",
+      );
+    }
+  }
 }
