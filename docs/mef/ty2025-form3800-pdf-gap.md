@@ -673,3 +673,13 @@ line 38 through Schedule 3 to finalized Form 1040 line 20. Authored fixtures
 alter the applied amount and final credit lines; they await the bulk run. The
 [December 2025 IRS Form 8864](https://www.irs.gov/pub/irs-pdf/f8864.pdf)
 routes line 11 to Form 3800. This does not add producer or transfer evidence.
+
+The retained Form 5884 printable copy now requires a prepared Form 3800 Part
+III line 4b source row with one IRS5884 document ID bound to the direct
+employer's line 2 credit. It checks the complete line 4 amount and applied
+Part V details, then follows Form 3800 line 38 through Schedule 3 to finalized
+Form 1040 line 20. Positive and altered document-ID, credit, and final-return
+fixtures await the bulk run. The current
+[IRS Form 5884](https://www.irs.gov/pub/irs-pdf/f5884.pdf) directs line 4 to
+Form 3800 Part III line 4b. Pass-through and controlled-group source evidence
+continues under their existing guards.

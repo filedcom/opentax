@@ -11,6 +11,7 @@ import {
   form3800PartIIIFields,
 } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
+import { form5884Pdf } from "./f5884.ts";
 
 const workOpportunity = {
   subject_to_passive_activity_limit: false,
@@ -189,5 +190,46 @@ Deno.test("one self-earned Form 5884 line 4b source binds Form 3800 native parts
       ),
     Error,
     "Form 3800 PDF line 4b differs",
+  );
+});
+
+Deno.test("Form 5884 printable copy binds its direct source and final Form 1040 credit", () => {
+  const prepared = prepareForm3800DocumentParts(f3800, {
+    pending,
+    documentIdsByPendingKey: {
+      f5884: ["IRS5884_1"],
+      f8835: [],
+      form6251: ["IRS6251_1"],
+    },
+  });
+  if (!prepared) throw new Error("Expected a prepared Form 3800 credit");
+  const fields = form5884Pdf.projectFields!(workOpportunity, pending);
+  assertEquals(form5884Pdf.instances!(fields, testFiler(), pending, prepared), [
+    fields,
+  ]);
+  assertThrows(() => form5884Pdf.instances!(fields, testFiler(), pending));
+  assertThrows(() =>
+    form5884Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentRows: prepared.currentRows.map((row) => ({
+        ...row,
+        metadata: { ...row.metadata, referenceDocumentId: "IRS5884_OTHER" },
+      })),
+    })
+  );
+  assertThrows(() =>
+    form5884Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentDetails: prepared.currentDetails.map((row) => ({
+        ...row,
+        credit: 2_399,
+      })),
+    })
+  );
+  assertThrows(() =>
+    form5884Pdf.instances!(fields, testFiler(), {
+      ...pending,
+      f1040: { ...pending.f1040, line20_nonrefundable_credits: 2_399 },
+    }, prepared)
   );
 });

@@ -1,5 +1,6 @@
 import { rgb, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
   calculateForm5884,
   inputSchema,
@@ -66,6 +67,45 @@ export const form5884Pdf: PdfFormDescriptor = {
       throw new Error("Form 5884 PDF does not reconcile to Form 3800 source");
     }
     return { ...fields, ...lines };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error("Form 5884 PDF needs the prepared Form 3800 document");
+    }
+    const source = inputSchema.parse(allPending.f5884);
+    const lines = calculateForm5884(source);
+    const rows = prepared.currentRows.filter((row) => row.line === "4b");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "4b");
+    const details = prepared.currentDetails.filter((row) => row.line === "4b");
+    const [row] = rows;
+    const [amount] = amounts;
+    const directDetails = details.filter((detail) =>
+      detail.sourceDocumentId === row?.metadata.referenceDocumentId &&
+      detail.passThroughEin === undefined
+    );
+    if (
+      lines.line2 <= 0 ||
+      fields.line2 !== lines.line2 || fields.line4 !== lines.line4 ||
+      rows.length !== 1 || amounts.length !== 1 ||
+      row.metadata.sourceCount !== details.length ||
+      row.metadata.referenceDocumentName !== "IRS5884" ||
+      !row.metadata.referenceDocumentId ||
+      directDetails.length !== 1 ||
+      directDetails[0].credit !== lines.line2 ||
+      details.reduce((sum, detail) => sum + detail.credit, 0) !==
+        lines.line4 ||
+      details.reduce((sum, detail) => sum + detail.appliedCredit, 0) !==
+        amount.appliedCredit ||
+      amount.nonpassiveCredit !== lines.line4 ||
+      amount.totalCredit !== lines.line4 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0
+    ) {
+      throw new Error("Form 5884 PDF differs from filed Form 3800 line 4b");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
   decoratePages: async (document, pages, fields) => {
     const source = inputSchema.parse(fields);
