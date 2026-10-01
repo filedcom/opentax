@@ -102,8 +102,7 @@ export function reconcileForm4952DirectDebtExport(
     new Set(interest.data.f1099ints.map((item) => item.payer_name)).size === 2;
   const oneDividend = dividend.success &&
     dividend.data.f1099divs.length === 1 &&
-    pending.f1099int === undefined && pending.f1099oid === undefined &&
-    (dividend.data.f1099divs[0].box1b ?? 0) === 0;
+    pending.f1099int === undefined && pending.f1099oid === undefined;
   const oneOid = oid.success && oid.data.f1099oids.length === 1 &&
     pending.f1099int === undefined && pending.f1099div === undefined;
   const oneInterestAndDividend = interest.success && dividend.success &&
@@ -153,7 +152,7 @@ export function reconcileForm4952DirectDebtExport(
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
-      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099-INT, ordinary 1099-DIV, or taxable 1099-OID investment payer inventory",
+      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099-INT, 1099-DIV, or taxable 1099-OID investment payer inventory",
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");

@@ -86,13 +86,21 @@ These source references remain reviewer assertions until document
 authentication is implemented.
 
 The same one-loan route also accepts exactly one affirmed Form 1099-DIV payer
-with ordinary box 1a dividends and no qualified box 1b amount. The retained
-loan, its payments, the dividend source, Form 4952 lines 1–8, Schedule A line
-9, and finalized Form 1040 line 3b and itemization must agree at native and
-PDF export. A focused positive and changed-source fixture is authored for the
-deferred batch. Qualified dividends, foreign tax, capital-gain distributions,
-and unauthenticated lender or broker bytes remain outside this direct-loan
-route.
+with ordinary box 1a dividends, including a sourced qualified box 1b portion.
+The [2025 Form 4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+put gross ordinary dividends on line 4a and remove qualified dividends on line
+4b unless the taxpayer makes a line 4g election. This bounded route makes no
+election. The retained loan and payments, payer amounts, Form 4952 lines
+1–8, Schedule A line 9, and finalized Form 1040 lines 3a/3b and itemization
+must agree at native and PDF export. A full-return fixture has $34,000 of box
+1a dividends, $15,000 of box 1b qualified dividends, and $20,000 of traced
+interest: line 4h and deductible line 8 are $19,000, while line 7 records a
+$1,000 current-year disallowance. Source-amount, final-return, and loan-payment
+tamper fixtures are authored for the deferred validation batch. Line 7 is a
+calculated 2025 output; importing it to a later filing still requires the
+accepted-year evidence described below. Foreign tax, capital-gain
+distributions, mixed-use debt, and unauthenticated lender or broker bytes
+remain outside this direct-loan route.
 
 The same direct-use loan now accepts two distinct affirmed, unadjusted taxable
 Form 1099-INT box 1 payers without a dividend payer. Both issued statement
