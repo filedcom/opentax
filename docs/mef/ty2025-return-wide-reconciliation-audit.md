@@ -23,6 +23,14 @@ entry points use the same pending-graph replay. This rejects a conflicting
 final return deposit even when its own Form 1040 arithmetic remains coherent.
 Schedule 2 Part I reuses its calculator rather than maintaining a second sum.
 
+The 2025 Schedule 2 line-structure review also blocks any positive legacy
+Form 5405 repayment on line 10 at graph calculation and direct native/PDF
+projection. The [official 2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf)
+marks line 10 reserved, and the [Form 5405 instructions](https://www.irs.gov/instructions/i5405)
+say 2024 was the final repayment filing year. The guarded source cannot
+silently increase Form 1040 line 23 without a printable 2025 line. Positive
+and direct-export rejection fixtures are authored but unrun.
+
 ## Remaining return-wide work
 
 | Area | Current graph observation | Unresolved join |
