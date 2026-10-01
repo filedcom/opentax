@@ -104,6 +104,19 @@ affirmative CDE status/history evidence before its recapture status can be
 considered proven; a taxpayer's unchecked "no notice received" assertion is
 insufficient.
 
+A separate, staged CDE no-event evidence helper now accepts an affirmative
+year-end statement for one QEI, signed after December 31, 2025. It requires a
+complete notice-history attestation, active CDE certification, maintained
+substantially-all use, no CDE redemption, and no recapture event through that
+date. It binds CDE/investor/date/amount to the reviewed Form 8874-A and checks
+distinct SHA-256 digests against the supplied issuance and statement bytes. Any
+reviewed Form 8874-B notice is separately byte-bound and an event through 2025
+conflicts with that status. These checks establish consistency of reviewed
+records and bytes; they cannot authenticate the CDE official's signature or
+prove the CDE's internal history is complete. The helper is not called by public
+direct-credit export, which remains guarded pending authenticated issuer
+evidence.
+
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date. It
 computes a $500 credit, prints the CDE identity and address on two lines within
