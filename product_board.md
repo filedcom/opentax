@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **362 completed bounded items** and their exact limits live in the
+The **363 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 306 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 307 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -48,8 +48,9 @@ The sourced Form 8835 landfill-gas facility and Form 4952 Treasury-interest
 plus OID pair, an age-55 Form 8889 recapture route, a four-copy Form 4972
 collection fix, and a Form 8995 REIT-only route are also recorded.
 The latest Form 6251 slice covers mixed-term gains offsetting losses across
-the separate regular and AMT deduction caps. Form 8283 carryovers, Form 8962
-corrected policy months, and Form 1116 carryover/PDF paths are in progress.
+the separate regular and AMT deduction caps. Form 8283 Section A stock
+carryovers above $5,000 are now recorded. Form 8962 corrected policy months
+and Form 1116 carryover/PDF paths are in progress.
 The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
@@ -107,7 +108,7 @@ release.
 
 ## Named tax-form gaps
 
-- [ ] **Form 8283:** finish the required FMV-reduction statement for every other applicable reason; reconcile deduction, FMV, appraisal, signed donee form, vehicle acknowledgment, Section B grouping, and prior-year carryover attachment to source bytes and Schedule A. See [reduction](docs/mef/ty2025-form8283-fmv-reduction-gap.md), [carryover](docs/mef/ty2025-form8283-carryover-source-gap.md), and [PDF](docs/mef/ty2025-form8283-pdf-gap.md).
+- [ ] **Form 8283:** finish the required FMV-reduction statement for every other applicable reason; reconcile deduction, FMV, appraisal, signed donee form, vehicle acknowledgment, Section B grouping, and remaining prior-year carryover attachments to authenticated source bytes and Schedule A. See [reduction](docs/mef/ty2025-form8283-fmv-reduction-gap.md), [carryover](docs/mef/ty2025-form8283-carryover-source-gap.md), and [PDF](docs/mef/ty2025-form8283-pdf-gap.md).
 - [ ] **Form 1116:** complete source-reconciled passive/general baskets, mixed income and countries, deductions, foreign-employer alternative compensation, K-3 combinations, Schedule B carryover vintages, and Schedule C redetermination with affected-year filed returns and amendments. Finish parent/Schedule B PDFs and register a valid Schedule C route or retain an approved rejection. See [Schedule C](docs/mef/ty2025-form1116-schedule-c-gap.md), [main PDF](docs/mef/ty2025-form1116-main-pdf-gap.md), [Schedule B PDF](docs/mef/ty2025-form1116-schedule-b-pdf.md), and [alternative compensation](docs/mef/ty2025-form1116-alternative-compensation-gap.md).
 - [ ] **Form 6251:** finish all still-applicable AMT adjustments, preferences, exemption and phaseout, AMT Form 4952, ISO source, other Form 8949 gain/loss and carryover combinations, circulation costs, and preferential-rate Part III; reconcile Schedule 2 and Form 1040 tax. See [remaining scope](docs/mef/ty2025-form6251-remaining-scope.md), [ISO](docs/mef/ty2025-form6251-iso-source-gap.md), [basis](docs/mef/ty2025-form6251-8949-basis-gap.md), [circulation](docs/mef/ty2025-form6251-circulation-cost-gap.md), and [mixed basis](docs/mef/ty2025-form6251-mixed-basis-net-loss.md).
 - [ ] **Form 8962:** complete household/dependent MAGI, policy-month and corrected SLCSP evidence, shared-policy allocation, multiple/overlapping/alternating policies, interstate moves, below-400%-FPL no-APTC paths, and all repayment caps beyond the bounded Pub. 974 ordering route. Reconcile each 1095-A month to Schedules 2/3 and Form 1040; reject unsupported policy combinations. See the [dependent MAGI](docs/mef/ty2025-form8962-dependent-magi-gap.md), [policy-month](docs/mef/ty2025-form8962-policy-month-gap.md), [three-policy](docs/mef/ty2025-form8962-three-policy-overlap.md), [alternating](docs/mef/ty2025-form8962-alternating-policy-gap.md), [interstate](docs/mef/ty2025-form8962-interstate-move-gap.md), and [Pub. 974 ordering](docs/mef/ty2025-form8962-pub974-ordering.md) notes.
