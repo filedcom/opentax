@@ -18,7 +18,8 @@ descriptor and
 [official PDF descriptor](https://www.irs.gov/pub/irs-pdf/f8994.pdf) are
 registered with exact source, Form 3800 allocation, and Schedule C wage joins.
 Form 3800 requires one reserved IRS8994 document ID. The public Form 8994
-attachment guard remains closed until bulk verification and review.
+attachment guard now fails closed for every positive direct claim until the
+reviewed policy/payroll packet is supplied and checked at export.
 
 Positive and tamper fixtures cover line 4j, Part V, and a partial tax-use
 allocation; they are authored but unrun pending the final bulk test pass. Policy
@@ -38,5 +39,13 @@ the deferred bulk pass.
 The helper is not yet part of public export. Hashes establish that reviewed
 facts are tied to the supplied bytes; they do not authenticate an employer's
 policy, payroll issuer, signatures, leave purpose, or wage-overlap assertions.
-An export preflight must require the reviewed evidence packet before the bounded
-direct claim can rely on those source facts.
+The native bundle builder validates submitted PDF attachment bytes and records
+their hashes, but the synchronous `buildMefXml` and attachment-coverage
+preflight receive only prepared tax fields. The PDF builder may receive a
+prepared MeF bundle, but its standalone path and descriptor preflight also
+receive only prepared tax fields. Neither exporter currently carries the
+reviewed Form 8994 evidence packet and exact document-to-source mapping into
+both preflights. The common preflight therefore rejects an otherwise valid Form
+8994 claim with a missing byte-bound packet error for both MeF and PDF. The
+direct route can open only after one packet API supplies reviewed facts and
+validated bytes consistently to both export paths.

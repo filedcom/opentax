@@ -109,10 +109,14 @@ Deno.test("Form 8941 guard binds source, allowed credit, and Schedule C", () => 
   }
 });
 
-Deno.test("Form 8994 guard binds source, allowed credit, and Schedule C", () => {
+Deno.test("Form 8994 guard blocks a valid claim until reviewed bytes are bound", () => {
   const pending = form8994MatchedPending;
   for (const kind of ["mef", "pdf"] as const) {
-    assertAttachmentCoverage(pending, kind);
+    assertThrows(
+      () => assertAttachmentCoverage(pending, kind),
+      Error,
+      "requires a reviewed byte-bound written policy and payroll evidence packet",
+    );
     assertThrows(() =>
       assertAttachmentCoverage({ f3800: pending.f3800 }, kind)
     );

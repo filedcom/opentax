@@ -459,6 +459,9 @@ export function assertAttachmentCoverage(
         { cause },
       );
     }
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Form 8994 requires a reviewed byte-bound written policy and payroll evidence packet; export blocked`,
+    );
   }
   // MeF's canonical pending projection stores Form 8949 rows as an array;
   // PDF uses the raw executor's transaction field. Neither may file a QOF
