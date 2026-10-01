@@ -224,6 +224,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
         "stock_basis_beginning",
         "ordinary_loss",
         "additional_contributions",
+        "reviewed_stock_loss_ledger",
         "new_loans",
         "reviewed_debt_evidence",
       ]);
@@ -233,8 +234,6 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
         !keys.includes("ordinary_loss") ||
         (keys.includes("new_loans") !==
           keys.includes("reviewed_debt_evidence")) ||
-        (keys.includes("new_loans") &&
-          keys.includes("additional_contributions")) ||
         (keys.includes("new_loans") && (
           typeof fields.new_loans !== "number" ||
           !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
@@ -245,6 +244,11 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
           typeof fields.additional_contributions !== "number" ||
           !Number.isSafeInteger(fields.additional_contributions) ||
           fields.additional_contributions <= 0
+        )) ||
+        (keys.includes("reviewed_stock_loss_ledger") && (
+          !keys.includes("additional_contributions") ||
+          !fields.reviewed_stock_loss_ledger ||
+          typeof fields.reviewed_stock_loss_ledger !== "object"
         )) ||
         typeof fields.stock_basis_beginning !== "number" ||
         !Number.isSafeInteger(fields.stock_basis_beginning) ||

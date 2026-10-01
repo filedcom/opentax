@@ -77,6 +77,8 @@ const source = {
 
 const filer = {
   primarySSN: "123456789",
+  firstNameWithInitial: "Alex",
+  lastName: "Taxpayer",
   nameLine1: "Alex Taxpayer",
   fullName: "Alex Taxpayer",
   nameControl: "TAXP",
@@ -101,9 +103,19 @@ function filedReturn(k1: Record<string, unknown> = source) {
       address_city: "Wilmington",
       address_state: "DE",
       address_zip: "19801",
+      digital_assets: false,
     },
-    w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
-    k1_s_corp: { k1_s_corps: [k1] },
+    w2: [{
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      employer_address_line1: "2 Main St",
+      employer_address_city: "Wilmington",
+      employer_address_state: "DE",
+      employer_address_zip: "19801",
+      box1_wages: 50_000,
+      box2_fed_withheld: 8_000,
+    }],
+    k1_s_corp: [k1],
   });
   return result;
 }
