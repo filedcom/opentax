@@ -841,7 +841,7 @@ function validateItem(item: R1099Item): void {
     const evidence = item.roth_distribution_evidence;
     if (
       item.exclude_8606_roth !== true || !evidence ||
-      item.ts !== "T" ||
+      (item.ts !== "T" && item.ts !== "S") ||
       item.box7_distribution_code !== DistributionCode.CodeJ ||
       item.box7_ira_simple_indicator !== true ||
       item.box2a_taxable_amount !== undefined ||
@@ -865,7 +865,7 @@ function validateItem(item: R1099Item): void {
       item.no_distribution_received === true
     ) {
       throw new Error(
-        "Form 8606 Roth Part III needs one taxpayer code J Form 1099-R matched to first-year contribution records",
+        "Form 8606 Roth Part III needs one owner code J Form 1099-R matched to first-year contribution records",
       );
     }
   }

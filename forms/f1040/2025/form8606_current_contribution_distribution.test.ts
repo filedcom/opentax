@@ -71,6 +71,12 @@ function filedReturn(receivedOn = "2026-02-15") {
     general,
     w2: [{
       employee_ssn: "111-22-3333",
+      employer_ein: "987654321",
+      employer_name: "Austin Employer",
+      employer_address_line1: "2 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box1_wages: 100_000,
       box2_fed_withheld: 15_000,
       box13_retirement_plan: true,

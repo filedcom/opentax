@@ -501,7 +501,7 @@ Deno.test("f1099r.compute: Roth exclusion cannot suppress income without Part II
         exclude_8606_roth: true,
       })]),
     Error,
-    "needs one taxpayer code J Form 1099-R",
+    "needs one owner code J Form 1099-R",
   );
 });
 
