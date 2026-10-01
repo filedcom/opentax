@@ -649,7 +649,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     const sectionA = source.section_a_items ?? [];
     const sectionB = source.section_b_items ?? [];
     if (
-      sectionA.length > 8 ||
+      sectionA.length > 12 ||
       (sectionA.length > 4 &&
         (sectionB.length > 0 ||
           sectionA.some((item) =>
@@ -657,7 +657,7 @@ export const form8283Pdf: PdfFormDescriptor = {
           )))
     ) {
       throw new Error(
-        "Form 8283 PDF supports five to eight Section A rows only as distinct unreduced nonvehicle gifts on two copies",
+        "Form 8283 PDF supports five to twelve Section A rows only as distinct unreduced nonvehicle gifts on repeated copies",
       );
     }
     if (sectionB.length > 0) {
@@ -834,9 +834,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       throw new Error("Form 8283 PDF source differs from the pending return");
     }
     if (!elected) assertOrdinarySectionAReconciled({ pending: allPending });
-    const pages = sectionA.length > 4
-      ? [sectionA.slice(0, 4), sectionA.slice(4)]
-      : [sectionA];
+    const pages = Array.from(
+      { length: Math.ceil(sectionA.length / 4) },
+      (_, index) => sectionA.slice(index * 4, (index + 1) * 4),
+    );
     return pages.map((items, pageIndex) => {
       const instance: Record<string, unknown> = {
         ...identity(filer),

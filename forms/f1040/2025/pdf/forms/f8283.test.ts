@@ -1115,6 +1115,117 @@ Deno.test("Form 8283 carries eight distinct unreduced Section A gifts across two
   assertThrows(() => form8283Pdf.instances?.(ninth, filer, pending), Error);
 });
 
+Deno.test("Form 8283 carries twelve distinct unreduced Section A gifts across three PDF copies", () => {
+  const base = ordinaryPending().f8283.section_a_items[0];
+  const propertyClasses = [
+    "bicycle",
+    "telescope",
+    "camera",
+    "lamp",
+    "clock",
+    "rug",
+    "violin",
+    "garden tool",
+    "sports equipment",
+    "furniture",
+    "kitchen equipment",
+    "sewing machine",
+  ];
+  const form = {
+    section_a_items: propertyClasses.map((propertyClass, index) => ({
+      ...base,
+      property_description: `Purchased used ${propertyClass}`,
+      donee_organization_name: `Community charity ${index + 1}`,
+      donee_organization_us_address: {
+        ...base.donee_organization_us_address,
+        line1: `${index + 1} Charity Lane`,
+      },
+      similar_item_group: propertyClass,
+      fmv: 700,
+      deduction_claimed: 700,
+      cost_or_adjusted_basis: 1_000,
+    })),
+  };
+  const pending = currentSectionAPending(form);
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 8_400);
+  assertEquals(pending.f1040.line12e_itemized_deductions, 8_400);
+  scheduleAMef.build(pending.schedule_a, { pending });
+  assertEquals(scheduleAPdf.includeWhen?.(pending.schedule_a, pending), true);
+  const pages = form8283Pdf.instances?.(form, filer, pending) ?? [];
+  assertEquals(pages.length, 3);
+  assertEquals(
+    pages.map((page) => [
+      page.row1_description,
+      page.row2_description,
+      page.row3_description,
+      page.row4_description,
+    ]),
+    propertyClasses.reduce<string[][]>((copies, propertyClass, index) => {
+      if (index % 4 === 0) copies.push([]);
+      copies[copies.length - 1].push(`Purchased used ${propertyClass}`);
+      return copies;
+    }, []),
+  );
+  const [xml] = form8283.build(form, { pending });
+  for (const propertyId of "ABCDEFGHIJKL") {
+    assertStringIncludes(xml, `<PropertyId>${propertyId}</PropertyId>`);
+  }
+  const changedTwelfth = {
+    section_a_items: [
+      ...form.section_a_items.slice(0, 11),
+      { ...form.section_a_items[11], fmv: 699, deduction_claimed: 699 },
+    ],
+  };
+  assertThrows(() => form8283.build(changedTwelfth, { pending }), Error);
+  assertThrows(
+    () => form8283Pdf.instances?.(changedTwelfth, filer, pending),
+    Error,
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(form, filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 8_399 },
+      }),
+    Error,
+  );
+  const repeatedGroup = {
+    section_a_items: [
+      ...form.section_a_items.slice(0, 11),
+      {
+        ...form.section_a_items[11],
+        similar_item_group: form.section_a_items[0].similar_item_group,
+      },
+    ],
+  };
+  assertThrows(() => form8283.build(repeatedGroup, { pending }), Error);
+  assertThrows(
+    () => form8283Pdf.instances?.(repeatedGroup, filer, pending),
+    Error,
+  );
+  const thirteenth = {
+    section_a_items: [
+      ...form.section_a_items,
+      {
+        ...form.section_a_items[0],
+        property_description: "Purchased used typewriter",
+        similar_item_group: "typewriter",
+      },
+    ],
+  };
+  const thirteenPending = currentSectionAPending(thirteenth);
+  assertThrows(
+    () => form8283.build(thirteenth, { pending: thirteenPending }),
+    Error,
+    "five to twelve",
+  );
+  assertThrows(
+    () => form8283Pdf.instances?.(thirteenth, filer, thirteenPending),
+    Error,
+    "five to twelve",
+  );
+});
+
 Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", () => {
   const form = {
     section_a_items: [

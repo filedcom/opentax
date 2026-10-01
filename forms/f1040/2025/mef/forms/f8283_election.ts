@@ -106,7 +106,7 @@ export function hasSectionAShortTermReduction(form: F8283Input): boolean {
     );
 }
 
-/** Reconcile up to eight current Section A gifts without a capital-gain election. */
+/** Reconcile up to twelve current Section A gifts without a capital-gain election. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
@@ -146,13 +146,13 @@ export function assertOrdinarySectionAReconciled(
         sectionA.map((item) => item.similar_item_group!.trim().toLowerCase()),
       ).size === sectionA.length;
   if (
-    sectionA.length < 1 || sectionA.length > 8 ||
+    sectionA.length < 1 || sectionA.length > 12 ||
     (form.section_b_items ?? []).length !== 0 ||
     sectionA.some((item) => !hasCompleteSectionAColumns(item)) ||
     (sectionA.length > 4 && !repeatedPagePlainGifts)
   ) {
     throw new Error(
-      "Form 8283 ordinary Section A needs one to four sourced gifts, or five to eight distinct unreduced nonvehicle gifts",
+      "Form 8283 ordinary Section A needs one to four sourced gifts, or five to twelve distinct unreduced nonvehicle gifts",
     );
   }
   if (

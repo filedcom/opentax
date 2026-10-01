@@ -1,5 +1,22 @@
 # TY2025 Form 8283 PDF boundary
 
+## Twelve distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+allow one or more Forms 8283 and require the full Form 8283 data in an electronic
+return. The existing bounded current-year purchased, noncapital, nonvehicle
+Section A route now accepts nine through twelve gifts with distinct
+similar-item-group identities. It requires the same complete acquisition,
+donee, valuation, Schedule A inventory, empty prior-carryover ledger, and
+itemized Form 1040 reconciliation as the five-through-eight gift route. The
+native document retains one property ID per gift, A through L. The PDF
+projects three official first-page copies, each with four actual rows, rather
+than omitting items after row H. A twelve-gift $8,400 case and changed twelfth
+item, duplicate group, changed final itemized total, and thirteenth-gift
+rejections are authored for the deferred bulk gate. Reduced gifts, vehicles,
+capital-gain property, mixed Section B, carryovers, actual source-byte
+authentication, and more than twelve Section A gifts remain closed.
+
 ## Two similar Section B art gifts (2026-10-01 build pass, unrun)
 
 The same two-copy path now also permits exactly one artwork to have a
