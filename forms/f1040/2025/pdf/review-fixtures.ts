@@ -4543,6 +4543,52 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-five-sequential-no-aptc-policies-full-year",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-FIVE-JAN-FEB", 1, 2, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-FIVE-MAR-APR", 3, 4, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-FIVE-MAY-JUN", 5, 6, 800),
+        sequentialNoAptcPolicy("TX-NO-APTC-FIVE-JUL-AUG", 7, 8, 900),
+        sequentialNoAptcPolicy("TX-NO-APTC-FIVE-SEP-DEC", 9, 12, 700),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Five separate same-state policies cover distinct contiguous months with their own SLCSP and timely payment evidence",
+      "$8,200 PTC reaches Form 8962, Schedule 3 line 9, and Form 1040 line 31",
+    ],
+  },
+  {
+    id: "single-twelve-sequential-no-aptc-policies-full-year",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: Array.from({ length: 12 }, (_, index) =>
+        sequentialNoAptcPolicy(
+          `TX-NO-APTC-MONTH-${index + 1}`,
+          index + 1,
+          index + 1,
+          700,
+        )),
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Twelve distinct same-state policies each contribute one covered month with separate Marketplace and payment evidence",
+      "$7,800 PTC reaches Form 8962, Schedule 3 line 9, and Form 1040 line 31",
+    ],
+  },
+  {
     id: "single-marketplace-aptc-repayment",
     inputs: {
       general: singleGeneral,

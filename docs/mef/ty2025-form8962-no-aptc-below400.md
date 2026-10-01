@@ -23,7 +23,7 @@ Missing second-policy July payment evidence and a payment after April 15,
 The fixtures are authored but unrun. Overlapping policies continue through
 the existing same-SLCSP two-policy checks. Sequential nonoverlapping policy
 blocks now cover all possible gap counts; two-policy overlap with more than two
-gaps, more than four policies, partial payments across policies, other covered
+gaps, partial payments across policies, other covered
 people, and authentication of Marketplace/payment document bytes remain open.
 
 ## Three sequential no-APTC policies (staged, unrun)
@@ -43,8 +43,8 @@ In the authored 200%-FPL Jan–Apr/May–Aug/Sep–Dec source case, each month h
 $900 paid premium and a Marketplace-determined $600, $700, or $800 SLCSP for
 its policy period. The twelve monthly credits total $7,800. Full-return,
 native/PDF, missing-third-policy-payment, overlapping-coverage, and
-returning-policy fixtures are authored but unrun. Four or more policies, other
-covered people, partial payments across policies, and external source-byte
+returning-policy fixtures are authored but unrun. Other covered people,
+partial payments across policies, and external source-byte
 authentication remain open.
 
 ## One uncovered month between two or three policies (staged, unrun)
@@ -136,9 +136,30 @@ returning policies, a mismatched covered SSN, missing fourth-policy payment,
 and finalized-credit drift. The
 [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) direct
 monthly calculation for partial-year enrollment, applicable SLCSP review when
-no APTC was paid, and combining multiple Forms 1095-A by month. More than four
-policies, shared or mixed-family policies, other payment arrangements, and
+no APTC was paid, and combining multiple Forms 1095-A by month. Shared or
+mixed-family policies, other payment arrangements, and
 external source-byte authentication remain open.
+
+## Five through twelve sequential same-state no-APTC policies (staged, unrun)
+
+The same one-filer route now admits up to twelve distinct policy periods in a
+calendar year, with one contiguous nonoverlapping block per policy and at least
+one covered month in each block. It checks each original Form 1095-A, each
+covered-month Marketplace SLCSP determination and timely full-payment record,
+and the finalized Form 8962, Schedule 3 line 9, and Form 1040 line 31. Native
+MeF emits one monthly group per covered month; the PDF uses the same guard.
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+combine multiple Forms 1095-A by affected month and impose no four-policy
+limit on that calculation.
+
+An authored five-policy case has two months under each of four policies and
+four months under the fifth, with $8,200 PTC. A twelve-policy case has one
+sourced policy per month and $7,800 PTC. Distinct-policy, missing-payment, and
+finalized-credit tamper fixtures are authored for both; none has run in the
+agreed final batch. The route continues to reject overlapping policies,
+returning policy blocks, covered-family changes, shared policies, and source
+facts without matching Marketplace/payment evidence. Issuer document bytes
+and wider household/payment arrangements remain open.
 
 The existing zero-APTC, one-person, one-policy route now reconciles the
 applicable figure from the TY2025 Form 8962 Table 2 at 100%-399% of the federal
@@ -171,8 +192,8 @@ line choice, and the premium-payment timing rule.
 
 - A zero-APTC household below 100% FPL without the reviewed lawfully present
   exception.
-- More than one covered person, more than the separately bounded four-policy
-  single-enrollee route, shared policy allocations, married filing separately,
+- More than one covered person, more than twelve distinct policy periods,
+  shared policy allocations, married filing separately,
   or a year-of-marriage alternative calculation.
 - Changes in coverage family, interstate moves, QSEHRA, self-employed
   health-insurance deduction circularity, and other MEC interactions when zero

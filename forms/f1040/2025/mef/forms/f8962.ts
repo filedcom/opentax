@@ -1119,7 +1119,9 @@ function reconcileMultiNoAptcPolicyMonths(
   const policies = current1095AStatements(source.data.f1095as);
   const rows = fields.monthly_ptc_rows;
   const ssn = context.filer.primarySSN.replaceAll("-", "");
-  const policyLabel = policies.length === 4
+  const policyLabel = policies.length > 4
+    ? `${policies.length}-policy`
+    : policies.length === 4
     ? "four-policy"
     : policies.length === 3
     ? "three-policy"
@@ -1142,7 +1144,7 @@ function reconcileMultiNoAptcPolicyMonths(
     general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
     (general.data.dependents?.length ?? 0) !== 0 ||
-    ![2, 3, 4].includes(policies.length) ||
+    policies.length < 2 || policies.length > 12 ||
     new Set(policies.map((policy) => policy.policy_number)).size !==
       policies.length ||
     (sequentialOnly && activePolicyCounts.some((count) => count > 1)) ||
@@ -2939,11 +2941,11 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
         reconcileAgreedSharedPolicy(fields, context);
       } else if (isNoAptcClaim(context)) {
         const policyCount = form1095aSchema.safeParse(context?.pending?.f1095a);
+        const currentPolicyCount = policyCount.success
+          ? current1095AStatements(policyCount.data.f1095as).length
+          : 0;
         if (
-          policyCount.success &&
-          [2, 3, 4].includes(
-            current1095AStatements(policyCount.data.f1095as).length,
-          )
+          currentPolicyCount >= 2 && currentPolicyCount <= 12
         ) {
           reconcileMultiNoAptcPolicyMonths(fields, context);
         } else {

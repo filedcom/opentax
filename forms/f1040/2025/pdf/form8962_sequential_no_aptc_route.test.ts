@@ -223,6 +223,129 @@ for (
 for (
   const variant of [
     {
+      id: "single-five-sequential-no-aptc-policies-full-year",
+      policyCount: 5,
+      credit: 8_200,
+    },
+    {
+      id: "single-twelve-sequential-no-aptc-policies-full-year",
+      policyCount: 12,
+      credit: 7_800,
+    },
+  ]
+) {
+  Deno.test(`${variant.policyCount} sourced sequential no-APTC policies reconcile every month to Form 1040, MeF, and PDF`, async () => {
+    const policyFixture = pdfReviewFixtures.find((item) =>
+      item.id === variant.id
+    )!;
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      policyFixture.inputs,
+      { taxYear: 2025, formType: "f1040" },
+    );
+    assertEquals(result.diagnostics, []);
+    assertEquals(
+      result.pending.form8962.total_premium_tax_credit,
+      variant.credit,
+    );
+    assertEquals(result.pending.form8962.total_advance_ptc, 0);
+    assertEquals(
+      result.pending.schedule3.line9_premium_tax_credit,
+      variant.credit,
+    );
+    assertEquals(
+      result.pending.f1040.line31_additional_payments,
+      variant.credit,
+    );
+    const pending = buildPending(result.pending);
+    const bundle = await buildMefBundle(pending, {
+      filer: policyFixture.filer,
+      attachments: [],
+    });
+    assertEquals(
+      (bundle.xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length,
+      12,
+    );
+    assertStringIncludes(
+      bundle.xml,
+      `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
+    );
+    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+      {};
+    assertEquals(
+      form8962Pdf.instances?.(projected, policyFixture.filer, pending)?.length,
+      1,
+    );
+    const pdf = await buildPdfBytes(
+      pending,
+      policyFixture.filer,
+      ".pdf-cache",
+      bundle,
+    );
+    assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+
+    const source = form1095aSchema.parse(pending.f1095a);
+    const first = source.f1095as[0];
+    const second = source.f1095as[1];
+    await assertRejects(
+      () =>
+        buildMefBundle({
+          ...pending,
+          f1095a: {
+            f1095as: [
+              first,
+              { ...second, policy_number: first.policy_number },
+              ...source.f1095as.slice(2),
+            ],
+          },
+        }, {
+          filer: policyFixture.filer,
+          attachments: [],
+        }),
+      Error,
+      `${variant.policyCount}-policy monthly PTC needs distinct same-state nonshared policies`,
+    );
+    await assertRejects(
+      () =>
+        buildMefBundle({
+          ...pending,
+          f1095a: {
+            f1095as: [first, {
+              ...second,
+              no_aptc_monthly_evidence: second.no_aptc_monthly_evidence!.slice(
+                1,
+              ),
+            }, ...source.f1095as.slice(2)],
+          },
+        }, {
+          filer: policyFixture.filer,
+          attachments: [],
+        }),
+      Error,
+      `${variant.policyCount}-policy monthly PTC needs a determination and payment for every policy-covered month`,
+    );
+    await assertRejects(
+      () =>
+        buildMefBundle({
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line9_premium_tax_credit: variant.credit - 1,
+          },
+        }, {
+          filer: policyFixture.filer,
+          attachments: [],
+        }),
+      Error,
+      `${variant.policyCount}-policy monthly credit differs from finalized return`,
+    );
+  });
+}
+
+for (
+  const variant of [
+    {
       id: "single-two-no-aptc-policies-ten-uncovered-months",
       coveredMonths: [1, 12],
       credit: 1_200,
