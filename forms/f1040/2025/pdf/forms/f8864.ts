@@ -14,7 +14,7 @@ const text = (domainKey: string, field: string): PdfFieldEntry => ({
 /** Bounded direct-producer official PDF projection. */
 export const form8864Pdf: PdfFormDescriptor = {
   pendingKey: "f8864",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8864.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8864--2025.pdf",
   pageIndices: () => [0],
   fields: [
     text("line7_gallons", `${table}Line7[0].f1_22[0]`),

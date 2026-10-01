@@ -1,12 +1,37 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
-Static comparison updated 2026-10-01 of the descriptors actually registered in
+Static comparison updated 2026-10-02 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **139 native descriptors and 109 PDF
+exclusion. The indexes currently hold **145 native descriptors and 115 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
+
+The current registered-key comparison leaves one parent taxpayer-form PDF
+absence, `form8621`. Most other native-only keys are supporting statements or
+issuer records. Form 8911 Schedule A uses the `f8911` pending slot on the
+native side and its own `f8911_schedule_a` pending key on the PDF side; this
+key difference does not imply a missing attachment. The native builder
+allocates document IDs for every discovered instance, then rejects references
+to IDs absent from the final document set. The PDF builder expands descriptor
+instances and retains the declared source pages per instance. These structural
+checks do not verify that every conditional native attachment is printable;
+that still needs a source-by-source packet review.
+
+Canonical PDF revision audit: registered Forms 8881 and 8864 now use the
+immutable [IRS 2025 Form 8881](https://www.irs.gov/pub/irs-prior/f8881--2025.pdf)
+and [IRS 2025 Form 8864](https://www.irs.gov/pub/irs-prior/f8864--2025.pdf)
+archives. Both are one-page fillable revisions; their mapped field paths were
+compared with the archived AcroForm fields. Forms 8844, 8882, and 8994 use
+the applicable current IRS PDFs because the IRS lists their latest form
+revisions as [March 2020](https://www.irs.gov/pub/irs-pdf/f8844.pdf),
+[December 2017](https://www.irs.gov/pub/irs-pdf/f8882.pdf), and
+[January 2021](https://www.irs.gov/pub/irs-pdf/f8994.pdf), respectively. The
+second page of Form 8882 contains instructions, so its descriptor retains only
+page 1. The other four audited PDFs each contain one page. The
+registry URL check now expects these exact current URLs and checks all mapped
+`extraPdfFields` against the official AcroForm, in addition to primary fields.
 
 Form 2106 now has one bounded registered native/PDF pair for a sourced
 taxpayer fee-basis state/local official job. Other Form 2106 shapes remain

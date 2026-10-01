@@ -14,7 +14,7 @@ const text = (domainKey: string, fieldNumber: number): PdfFieldEntry => ({
 
 export const form8881Pdf: PdfFormDescriptor = {
   pendingKey: "f8881",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8881.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8881--2025.pdf",
   fields: [
     text("lineA", 3),
     text("line1", 4),

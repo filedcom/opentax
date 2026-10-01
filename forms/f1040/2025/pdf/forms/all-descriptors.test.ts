@@ -60,14 +60,19 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   Deno.test(`${label}: pdfUrl uses the applicable IRS revision`, () => {
-    const currentOnly2020: Readonly<Record<string, string>> = {
+    const currentOnly: Readonly<Record<string, string>> = {
       f5471_schedule_j: "f5471sj",
       f5471_schedule_p: "f5471sp",
       f5471_schedule_r: "f5471sr",
+      // These are the IRS's current, applicable revisions (2020, 2017,
+      // and 2021); no TY2025 archive PDF exists for them.
+      f8844: "f8844",
+      f8882: "f8882",
+      f8994: "f8994",
     };
-    const currentOnlyFilename = currentOnly2020[label];
+    const currentOnlyFilename = currentOnly[label];
     if (currentOnlyFilename) {
-      // IRS publishes these December 2020 revisions only at their current URLs.
+      // IRS publishes these applicable revisions only at their current URLs.
       assertEquals(
         descriptor.pdfUrl,
         `https://www.irs.gov/pub/irs-pdf/${currentOnlyFilename}.pdf`,
@@ -142,12 +147,18 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   Deno.test(`${label}: mapped field paths are fully qualified AcroForm paths`, () => {
-    for (const entry of descriptor.fields) {
-      assertMatch(
-        entry.pdfField,
-        /^[A-Za-z][A-Za-z0-9]*\[0\]\.[A-Za-z][A-Za-z0-9]*\[0\]\./,
-        `Not a fully qualified AcroForm path in ${label}: ${entry.pdfField}`,
-      );
+    for (
+      const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
+    ) {
+      for (
+        const pdfField of [entry.pdfField, ...(entry.extraPdfFields ?? [])]
+      ) {
+        assertMatch(
+          pdfField,
+          /^[A-Za-z][A-Za-z0-9]*\[0\]\.[A-Za-z][A-Za-z0-9]*\[0\]\./,
+          `Not a fully qualified AcroForm path in ${label}: ${pdfField}`,
+        );
+      }
     }
   });
 
@@ -204,11 +215,15 @@ for (const descriptor of ALL_PDF_FORMS) {
       for (
         const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
       ) {
-        assertEquals(
-          realFields.has(entry.pdfField),
-          true,
-          `[${label}] pdfField not found in real PDF: "${entry.pdfField}"`,
-        );
+        for (
+          const pdfField of [entry.pdfField, ...(entry.extraPdfFields ?? [])]
+        ) {
+          assertEquals(
+            realFields.has(pdfField),
+            true,
+            `[${label}] pdfField not found in real PDF: "${pdfField}"`,
+          );
+        }
       }
       if (descriptor.rows) {
         for (let row = 1; row <= descriptor.rows.maxRows; row++) {
