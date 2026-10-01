@@ -45,3 +45,14 @@ depreciated-property routes, recapture, unstated interest, later-year payment
 history, combinations with other Form 4797 sources, IRS business rules, the
 agreed full batch, and ATS acceptance remain open. The Form 4797 correction
 does not establish full Part I/II/III PDF parity for every other route.
+
+## Short-term capital sale fixture for the next bulk pass
+
+A current-year investment-land installment sale acquired and sold in 2025 now
+requires an explicit capital-asset classification before its gain may reach
+Schedule D's short-term other-forms line. The authored full-return fixture
+traces $20,000 of payments and a 0.60000 gross-profit ratio to $12,000 on Form
+6252 line 26, Schedule D line 4, and Form 1040 line 7a, then projects the same
+sale to native XML and the official PDF. Missing classification and changed
+payment/destination amounts reject. These fixtures are unrun pending the agreed
+bulk test; no new XSD, filled-PDF, or source-byte review is claimed here.

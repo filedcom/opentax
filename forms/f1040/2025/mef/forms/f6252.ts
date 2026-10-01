@@ -58,6 +58,11 @@ export function validateFiledForm6252(input: F6252Item) {
       "Form 6252 is_long_term conflicts with actual holding period",
     );
   }
+  if (!isLongTerm && input.is_capital_asset === undefined) {
+    throw new Error(
+      "Form 6252 short-term sale needs explicit capital-asset classification",
+    );
+  }
   if (input.is_capital_asset === false && !isLongTerm) {
     throw new Error(
       "Form 6252 short-term business property needs Form 4797 Part II detail",

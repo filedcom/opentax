@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -7,10 +12,111 @@ import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
+import { form6252Pdf } from "./forms/f6252.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
+
+Deno.test("short-term capital installment sale joins Schedule D, Form 1040, native XML and PDF", async () => {
+  const sale = {
+    property_description: "Investment land",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-08-01",
+    sold_to_related_party: false,
+    selling_price_determinable: true,
+    selling_price: 100_000,
+    cost_basis: 40_000,
+    payments_received: 20_000,
+    is_capital_asset: true,
+    is_long_term: false,
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...base.inputs, form6252: [sale] },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_d.gain_form6252_st, 12_000);
+  assertEquals(result.pending.schedule_d.line_4_other_st, 12_000);
+  assertEquals(result.pending.f1040.line7_capital_gain, 12_000);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<InstalSaleLessOrdnryIncmAmt>12000</InstalSaleLessOrdnryIncmAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<STGainOrLossFromFormsAmt>12000</STGainOrLossFromFormsAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<CapitalGainLossAmt>12000</CapitalGainLossAmt>",
+  );
+  const [projected] = form6252Pdf.instances!(
+    pending.form6252!,
+    base.filer,
+    pending,
+  );
+  assertEquals(projected.line26, 12_000);
+  const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 5);
+
+  const unclassified = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...base.inputs, form6252: [{ ...sale, is_capital_asset: undefined }] },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertStringIncludes(
+    unclassified.diagnostics.find((entry) => entry.nodeType === "form6252")
+      ?.message ?? "",
+    "explicit capital-asset classification",
+  );
+  const changedSource = structuredClone(pending);
+  changedSource.form6252!.f6252s[0].payments_received = 20_001;
+  assertThrows(
+    () =>
+      form6252Pdf.instances!(
+        changedSource.form6252!,
+        base.filer,
+        changedSource,
+      ),
+    Error,
+    "Schedule D gain source",
+  );
+  await assertRejects(
+    () => buildMefBundle(changedSource, { filer: base.filer, attachments: [] }),
+    Error,
+    "Schedule D gain source",
+  );
+  const changedDestination = structuredClone(pending);
+  changedDestination.schedule_d!.gain_form6252_st = 11_999;
+  assertThrows(
+    () =>
+      form6252Pdf.instances!(
+        changedDestination.form6252!,
+        base.filer,
+        changedDestination,
+      ),
+    Error,
+    "Schedule D gain source",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(changedDestination, {
+        filer: base.filer,
+        attachments: [],
+      }),
+    Error,
+    "Schedule D gain source",
+  );
+});
 
 Deno.test("Form 6252 mortgage-assumed land sale joins Schedule D, Form 1040, native XML and PDF", async () => {
   const sale = {

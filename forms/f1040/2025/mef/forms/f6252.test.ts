@@ -188,6 +188,15 @@ Deno.test("Form 6252 rejects incomplete or unsupported sale data", () => {
       buildSale({
         ...sale,
         date_acquired: "2024-06-01",
+      }),
+    Error,
+    "explicit capital-asset classification",
+  );
+  assertThrows(
+    () =>
+      buildSale({
+        ...sale,
+        date_acquired: "2024-06-01",
         is_long_term: true,
       }),
     Error,

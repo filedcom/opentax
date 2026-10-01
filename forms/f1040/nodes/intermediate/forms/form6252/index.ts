@@ -155,6 +155,11 @@ function saleContributions(input: F6252Item): {
       "Form 6252 is_long_term conflicts with actual holding period",
     );
   }
+  if (lines && !isLongTerm && input.is_capital_asset === undefined) {
+    throw new Error(
+      "Form 6252 short-term sale needs explicit capital-asset classification",
+    );
+  }
   if (input.is_capital_asset === false) {
     if (lines && !isLongTerm) {
       throw new Error(
