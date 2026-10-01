@@ -22,6 +22,8 @@ import {
   inputSchema as f8936InputSchema,
 } from "../../../nodes/inputs/f8936/index.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
+import { reconcileDisabledAccessK1Credits } from "../../mef/forms/f8826_credit_evidence.ts";
+import { reconcileForm8826SelfSource } from "../../mef/forms/f8826_source.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import {
   inputSchema as f3800InputSchema,
@@ -132,6 +134,14 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
       const lines = calculateForm8826(filed);
+      reconcileForm8826SelfSource(filed, all);
+      reconcileDisabledAccessK1Credits([{
+        source_type: passThrough[0].entity_type,
+        entity_ein: passThrough[0].entity_ein,
+        source_document_reference: passThrough[0].source_document_reference,
+        credit_amount: passThrough[0].credit_amount,
+        subject_to_passive_activity_limit: false,
+      }], all);
       const expectedCredits = [
         lines.selfCreditAfterCap,
         lines.passThroughCreditsAfterCap[0],
@@ -156,6 +166,8 @@ export const form3800Pdf: PdfFormDescriptor = {
           passThrough[0].entity_type ||
         source.f8826_credit_entries[1].source_ein !==
           passThrough[0].entity_ein ||
+        source.f8826_credit_entries[1].source_document_reference !==
+          passThrough[0].source_document_reference ||
         source.f8826_credit_entries[1].credit_amount !==
           expectedCredits[1] ||
         rows.length !== 1 || amounts.length !== 1 ||

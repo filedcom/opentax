@@ -196,17 +196,7 @@ Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", 
       .f8826_credit_entries,
     [{
       source_type: "self",
-      credit_amount: 833.33,
-      subject_to_passive_activity_limit: false,
-    }, {
-      source_type: "partnership",
-      source_ein: "123456789",
-      credit_amount: 1_666.67,
-      subject_to_passive_activity_limit: false,
-    }, {
-      source_type: "s_corporation",
-      source_ein: "987654321",
-      credit_amount: 2_500,
+      credit_amount: 1_000,
       subject_to_passive_activity_limit: false,
     }],
   );

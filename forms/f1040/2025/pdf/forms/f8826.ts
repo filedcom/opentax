@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { form8826 } from "../../mef/forms/f8826_draft.ts";
+import { reconcileDisabledAccessK1Credits } from "../../mef/forms/f8826_credit_evidence.ts";
 import {
   calculateForm8826,
   inputSchema,
@@ -54,20 +55,44 @@ export const form8826Pdf: PdfFormDescriptor = {
     const lines = calculateForm8826(source);
     if (
       lines.line6 <= 0 || source.subject_to_passive_activity_limit ||
-      (source.pass_through_credits?.length ?? 0) > 0
+      (source.pass_through_credits?.length ?? 0) > 1 ||
+      source.pass_through_credits?.some((entry) =>
+        entry.entity_type !== "s_corporation" ||
+        entry.subject_to_passive_activity_limit
+      )
     ) {
       throw new Error(
-        "Form 8826 PDF currently needs one self-earned, nonpassive source without pass-through credits",
+        "Form 8826 PDF needs one sourced nonpassive self claim and at most one nonpassive S-corporation K-1",
       );
     }
     form8826.build(source, { pending: allPending });
+    const k1 = source.pass_through_credits?.[0];
+    if (k1) {
+      reconcileDisabledAccessK1Credits([{
+        source_type: k1.entity_type,
+        entity_ein: k1.entity_ein,
+        source_document_reference: k1.source_document_reference,
+        credit_amount: k1.credit_amount,
+        subject_to_passive_activity_limit: false,
+      }], allPending);
+    }
     const parent = form3800InputSchema.parse(allPending.f3800);
     const entries = parent.f8826_credit_entries ?? [];
     if (
-      entries.length !== 1 || entries[0].source_type !== "self" ||
+      entries.length !== (k1 ? 2 : 1) ||
+      entries[0].source_type !== "self" ||
       entries[0].source_ein !== undefined ||
       entries[0].subject_to_passive_activity_limit ||
-      entries[0].credit_amount !== lines.line8 ||
+      entries[0].credit_amount !== lines.selfCreditAfterCap ||
+      (k1 && (
+        entries[1].source_type !== "s_corporation" ||
+        entries[1].source_ein !== k1.entity_ein ||
+        entries[1].source_document_reference !== k1.source_document_reference ||
+        entries[1].credit_amount !== lines.passThroughCreditsAfterCap[0] ||
+        entries[1].subject_to_passive_activity_limit
+      )) ||
+      entries.reduce((sum, entry) => sum + entry.credit_amount, 0) !==
+        lines.line8 ||
       parent.allowed_credit === undefined
     ) {
       throw new Error("Form 8826 PDF line 8 differs from Form 3800 source");
@@ -78,6 +103,7 @@ export const form8826Pdf: PdfFormDescriptor = {
       ...moneyFields(3, lines.line3),
       ...moneyFields(5, lines.line5),
       ...moneyFields(6, lines.line6),
+      ...(k1 ? moneyFields(7, lines.line7) : {}),
       ...moneyFields(8, lines.line8),
     };
   },

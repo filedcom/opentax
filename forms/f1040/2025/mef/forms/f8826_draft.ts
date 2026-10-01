@@ -55,8 +55,7 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     const source = inputSchema.parse(fields);
     const lines = calculateForm8826(source);
     if (
-      lines.line6 > 0 && !source.subject_to_passive_activity_limit &&
-      (source.pass_through_credits?.length ?? 0) === 0
+      lines.line6 > 0 && !source.subject_to_passive_activity_limit
     ) {
       reconcileForm8826SelfSource(source, context?.pending ?? {});
     }

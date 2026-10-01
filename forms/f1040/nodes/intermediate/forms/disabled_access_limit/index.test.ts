@@ -76,6 +76,7 @@ Deno.test("disabled-access node retains the passive K-1 gross-source check", () 
         required_disabled_access_k1_credits: [{
           ...input.required_disabled_access_k1_credits[0],
           credit_amount: 2_999,
+          subject_to_passive_activity_limit: true,
         }],
       }),
     )

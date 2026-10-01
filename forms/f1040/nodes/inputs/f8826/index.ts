@@ -262,13 +262,14 @@ class F8826Node extends TaxNode<typeof inputSchema> {
             : {}),
           required_form8826_pass_through_credits:
             (input.pass_through_credits ?? []).flatMap((source) =>
-              source.credit_amount > 0 &&
-                source.subject_to_passive_activity_limit
+              source.credit_amount > 0
                 ? [{
                   source_type: source.entity_type,
                   source_ein: source.entity_ein,
                   source_document_reference: source.source_document_reference,
                   credit_amount: source.credit_amount,
+                  subject_to_passive_activity_limit:
+                    source.subject_to_passive_activity_limit,
                 }]
                 : []
             ),
@@ -281,17 +282,6 @@ class F8826Node extends TaxNode<typeof inputSchema> {
                 subject_to_passive_activity_limit: false,
               }]
               : []),
-            ...(input.pass_through_credits ?? []).flatMap((source) => {
-              return source.credit_amount > 0 &&
-                  !source.subject_to_passive_activity_limit
-                ? [{
-                  source_type: source.entity_type,
-                  source_ein: source.entity_ein,
-                  credit_amount: source.credit_amount,
-                  subject_to_passive_activity_limit: false,
-                }]
-                : [];
-            }),
           ],
         })]
         : [],

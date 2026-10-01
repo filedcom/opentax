@@ -1544,17 +1544,27 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
       subject_to_passive_activity_limit: false,
     }],
   };
+  const k1_s_corp = {
+    k1_s_corps: [{
+      corporation_name: "Access Corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
+      box13_code_k_disabled_access_credit: 1_250,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  };
   const xml = form3800.build({
     f8826_credit_entries: [{
       source_type: "s_corporation",
       source_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 1_250,
       subject_to_passive_activity_limit: false,
     }],
     tax_context: { ...tax, standardCredit: 1_250 },
     allowed_credit: 1_250,
   }, {
-    pending: { ...filedPending(tax, 1_250), f8826: source },
+    pending: { ...filedPending(tax, 1_250), f8826: source, k1_s_corp },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   });
   assertStringIncludes(
@@ -1568,6 +1578,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
         f8826_credit_entries: [{
           source_type: "s_corporation",
           source_ein: "987654321",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 1_250,
           subject_to_passive_activity_limit: false,
         }],
@@ -1576,6 +1587,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
       }, {
         pending: {
           ...filedPending(tax, 1_250),
+          k1_s_corp,
           f8826: {
             ...source,
             pass_through_credits: [{
@@ -1591,7 +1603,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
         },
       }),
     Error,
-    "disabled-access entries do not reconcile",
+    "Form 3800 disabled-access K-1 source differs",
   );
 });
 

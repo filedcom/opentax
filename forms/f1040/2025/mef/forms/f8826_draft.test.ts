@@ -222,12 +222,6 @@ Deno.test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap",
       credit_amount: 2_375,
       subject_to_passive_activity_limit: false,
     },
-    {
-      source_type: "partnership",
-      source_ein: "123456789",
-      credit_amount: 3_000,
-      subject_to_passive_activity_limit: false,
-    },
   ]);
 });
 
@@ -248,9 +242,8 @@ Deno.test("Form 8826 draft: pass-through-only source goes to Form 3800 without F
     passThroughOnly,
   ).outputs[0];
   assertEquals(
-    f3800.inputSchema.parse(output?.fields).f8826_credit_entries?.[0]
-      ?.credit_amount,
-    1_250,
+    output?.fields.f8826_credit_entries,
+    [],
   );
   assertThrows(
     () => buildForm8826Document(passThroughOnly),
@@ -276,6 +269,7 @@ Deno.test("Form 8826 draft: passive K-1 credit needs activity facts and ineligib
     source_ein: "123456789",
     source_document_reference: "2025 disabled-access K-1",
     credit_amount: 1_000,
+    subject_to_passive_activity_limit: true,
   }]);
   assertThrows(
     () =>

@@ -20,6 +20,31 @@ const form8826 = {
   prior_year_gross_receipts: 500_000,
   prior_year_full_time_employee_count: 20,
   subject_to_passive_activity_limit: false,
+  self_source_evidence: {
+    business_reference: "ACCESS-BUSINESS",
+    prior_year_gross_receipts_source_reference: "2024 business return",
+    prior_year_gross_receipts: 500_000,
+    prior_year_full_time_employee_count_source_reference: "2024 payroll roster",
+    prior_year_full_time_employee_count: 20,
+    no_predecessor_or_common_control_confirmed: true as const,
+    interpreter_expenditures: [{
+      expense_record_reference: "ACCESS-EXPENSE-1",
+      invoice_reference: "ACCESS-INVOICE-1",
+      payment_reference: "ACCESS-PAYMENT-1",
+      paid_or_incurred_on: "2025-06-01",
+      amount: 5_000,
+      hearing_impaired_service_confirmed: true as const,
+      ada_compliance_confirmed: true as const,
+      reasonable_and_necessary_confirmed: true as const,
+    }],
+    schedule_c_line27b: {
+      amount_before_credit_reduction: 5_000,
+      credit_reduction_amount: 2_375,
+      amount_after_credit_reduction: 2_625,
+      not_deducted_elsewhere_confirmed: true as const,
+      not_capitalized_or_used_for_other_credit_confirmed: true as const,
+    },
+  },
   pass_through_credits: [{
     entity_type: "s_corporation" as const,
     entity_ein: "987654321",
@@ -36,6 +61,7 @@ const form3800 = {
   }, {
     source_type: "s_corporation" as const,
     source_ein: "987654321",
+    source_document_reference: "2025 disability-access K-1",
     credit_amount: 1_250,
     subject_to_passive_activity_limit: false,
   }],
@@ -56,6 +82,26 @@ const form3800 = {
 const pending = {
   f3800: form3800,
   f8826: form8826,
+  k1_s_corp: {
+    k1_s_corps: [{
+      corporation_name: "Access Corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 disability-access K-1",
+      box13_code_k_disabled_access_credit: 1_250,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  },
+  schedule_c: {
+    schedule_cs: [{
+      business_reference: "ACCESS-BUSINESS",
+      line_a_principal_business: "Interpreter services",
+      line_b_business_code: "541930",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 100_000,
+      line_27b_other_expenses: 2_625,
+    }],
+  },
   f1040: {
     line16_income_tax: 40_000,
     line20_nonrefundable_credits: 3_625,
@@ -89,6 +135,8 @@ Deno.test("combined Form 8826 source reaches Form 3800 and final Form 1040", () 
       box12_entries: [],
     }],
     f8826: form8826,
+    k1_s_corp: pending.k1_s_corp.k1_s_corps,
+    schedule_c: pending.schedule_c.schedule_cs,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(

@@ -28,11 +28,10 @@ export function reconcileForm8826SelfSource(
   }
   const lines = calculateForm8826(input);
   if (
-    lines.line6 <= 0 || input.subject_to_passive_activity_limit ||
-    (input.pass_through_credits?.length ?? 0) !== 0
+    lines.line6 <= 0 || input.subject_to_passive_activity_limit
   ) {
     throw new Error(
-      "Form 8826 sourced self route currently needs one nonpassive claim without pass-through credits",
+      "Form 8826 sourced self route needs a nonpassive self claim",
     );
   }
   if (

@@ -35,6 +35,7 @@ const inputSchema = z.object({
       Number.isSafeInteger(Math.round(amount * 100)) &&
       Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
     ),
+    subject_to_passive_activity_limit: z.boolean(),
   })).optional(),
 }).passthrough();
 
@@ -64,7 +65,9 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
       ("required_disabled_access_k1_credits" in input ||
         "required_orphan_drug_k1_credits" in input ||
         input.required_disabled_access_self_credit !== undefined ||
-        (input.required_form8826_pass_through_credits?.length ?? 0) > 0)
+        input.required_form8826_pass_through_credits?.some((entry) =>
+          entry.subject_to_passive_activity_limit
+        ))
     ) {
       throw new Error(
         "Passive disabled-access credit needs Form 8582-CR activity and tax facts",
@@ -91,6 +94,23 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
       }
     }
     for (const required of input.required_form8826_pass_through_credits ?? []) {
+      if (!required.subject_to_passive_activity_limit) {
+        const matched = entries.filter((entry) =>
+          entry.source_type === required.source_type &&
+          entry.source_ein === required.source_ein &&
+          entry.source_document_reference ===
+            required.source_document_reference &&
+          !entry.subject_to_passive_activity_limit &&
+          Math.round(entry.credit_amount * 100) ===
+            Math.round(required.credit_amount * 100)
+        );
+        if (matched.length !== 1) {
+          throw new Error(
+            "Form 8826 pass-through declaration needs one matching K-1 disabled-access source",
+          );
+        }
+        continue;
+      }
       const matched = passive?.credit_sources.filter((source) =>
         source.source_form === "Form 8826" &&
         source.source_origin.kind === required.source_type &&

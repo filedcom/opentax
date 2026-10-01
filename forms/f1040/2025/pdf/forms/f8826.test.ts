@@ -247,7 +247,7 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
         pending,
       ),
     Error,
-    "self-earned, nonpassive",
+    "sourced nonpassive self claim",
   );
   assertThrows(
     () =>
@@ -262,6 +262,126 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
         }],
       }, pending),
     Error,
-    "without pass-through credits",
+    "K-1",
   );
+});
+
+Deno.test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K-1, and final tax", () => {
+  const passThrough = {
+    entity_type: "s_corporation" as const,
+    entity_ein: "987654321",
+    source_document_reference: "2025 disability-access K-1",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const mixed = { ...source, pass_through_credits: [passThrough] };
+  const mixedParent = {
+    ...parent,
+    f8826_credit_entries: [parent.f8826_credit_entries[0], {
+      source_type: "s_corporation" as const,
+      source_ein: passThrough.entity_ein,
+      source_document_reference: passThrough.source_document_reference,
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+    tax_context: { ...parent.tax_context, standardCredit: 3_625 },
+    allowed_credit: 3_625,
+  };
+  const mixedPending = {
+    ...pending,
+    f8826: mixed,
+    f3800: mixedParent,
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Access Corporation",
+        corporation_ein: passThrough.entity_ein,
+        source_document_reference: passThrough.source_document_reference,
+        box13_code_k_disabled_access_credit: 1_250,
+        disabled_access_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+    f1040: { ...pending.f1040, line20_nonrefundable_credits: 3_625 },
+    schedule3: { line6a_total: 3_625, line8_total: 3_625 },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+    },
+    w2: [{
+      box1_wages: 300_000,
+      box2_fed_withheld: 60_000,
+      box3_ss_wages: 120_000,
+      box4_ss_withheld: 7_440,
+      box5_medicare_wages: 300_000,
+      box6_medicare_withheld: 5_250,
+      employer_ein: "12-3456789",
+      employer_name: "ACME Corp",
+      box12_entries: [],
+    }],
+    f8826: mixed,
+    k1_s_corp: mixedPending.k1_s_corp.k1_s_corps,
+    schedule_c: pending.schedule_c.schedule_cs,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.f3800?.f8826_credit_entries,
+    mixedParent.f8826_credit_entries,
+  );
+  assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 3_625);
+
+  const native = form8826.build(mixed, {
+    pending: mixedPending,
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
+  assertStringIncludes(
+    native,
+    "<PrtshpandSCorpDisabledAcsCrAmt>1250</PrtshpandSCorpDisabledAcsCrAmt>",
+  );
+  assertStringIncludes(
+    native,
+    "<PrtshpandSCorpReportAmt>3625</PrtshpandSCorpReportAmt>",
+  );
+  const projected = form8826Pdf.projectFields!(mixed, mixedPending);
+  assertEquals(projected.line7_dollars, "1250");
+  assertEquals(projected.line8_dollars, "3625");
+  assertThrows(
+    () =>
+      form8826Pdf.projectFields!(mixed, {
+        ...mixedPending,
+        k1_s_corp: { k1_s_corps: [] },
+      }),
+    Error,
+    "K-1 box 13 code K",
+  );
+  assertThrows(
+    () =>
+      form8826Pdf.projectFields!(mixed, {
+        ...mixedPending,
+        f3800: {
+          ...mixedParent,
+          f8826_credit_entries: [
+            mixedParent.f8826_credit_entries[0],
+            { ...mixedParent.f8826_credit_entries[1], credit_amount: 1_249 },
+          ],
+        },
+      }),
+    Error,
+    "Form 8826 PDF line 8 differs",
+  );
+  const missingK1 = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+    },
+    f8826: mixed,
+    schedule_c: pending.schedule_c.schedule_cs,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(missingK1.diagnostics.length > 0, true);
 });

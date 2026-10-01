@@ -203,10 +203,7 @@ function sourceForm8826(
   if (actual.length === 0 && !ledger?.rawEntries.length) return undefined;
   const sourceEntries = ledger?.rawEntries ?? actual;
   const formSources = sourceEntries.filter((entry) =>
-    entry.source_type === "self" ||
-    ((entry.source_type === "partnership" ||
-      entry.source_type === "s_corporation") &&
-      !entry.source_document_reference)
+    entry.source_type === "self"
   );
   const directSources = sourceEntries.filter((entry) =>
     entry.source_type === "estate" || entry.source_type === "trust" ||
@@ -214,6 +211,11 @@ function sourceForm8826(
       entry.source_type === "s_corporation") &&
       Boolean(entry.source_document_reference))
   );
+  if (formSources.length + directSources.length !== sourceEntries.length) {
+    throw new Error(
+      "Form 3800 disabled-access pass-through source needs its K-1 document reference",
+    );
+  }
   const raw = context.pending?.f8826;
   if (formSources.length > 0 && !raw) {
     throw new Error(
@@ -222,18 +224,41 @@ function sourceForm8826(
   }
   const source = raw ? f8826InputSchema.parse(raw) : undefined;
   const lines = source ? calculateForm8826(source) : undefined;
-  if (
-    directSources.some((entry) =>
-      source?.pass_through_credits?.some((other) =>
-        entry.source_type === other.entity_type &&
-        entry.source_ein === other.entity_ein &&
-        entry.source_document_reference === other.source_document_reference
-      )
-    )
-  ) {
-    throw new Error(
-      "Form 3800 disabled-access K-1 source is duplicated on Form 8826",
+  for (const declared of source?.pass_through_credits ?? []) {
+    if (declared.subject_to_passive_activity_limit) continue;
+    const matching = directSources.filter((entry) =>
+      entry.source_type === declared.entity_type &&
+      entry.source_ein === declared.entity_ein &&
+      entry.source_document_reference === declared.source_document_reference &&
+      sameMoney(entry.credit_amount, declared.credit_amount) &&
+      !entry.subject_to_passive_activity_limit
     );
+    if (matching.length !== 1) {
+      throw new Error(
+        "Form 3800 disabled-access K-1 source differs from Form 8826 line 7",
+      );
+    }
+  }
+  if (source) {
+    for (const direct of directSources) {
+      if (
+        direct.source_type !== "partnership" &&
+        direct.source_type !== "s_corporation"
+      ) continue;
+      const matching = (source.pass_through_credits ?? []).filter((declared) =>
+        declared.entity_type === direct.source_type &&
+        declared.entity_ein === direct.source_ein &&
+        declared.source_document_reference ===
+          direct.source_document_reference &&
+        sameMoney(declared.credit_amount, direct.credit_amount) &&
+        !declared.subject_to_passive_activity_limit
+      );
+      if (matching.length !== 1) {
+        throw new Error(
+          "Form 3800 disabled-access K-1 source differs from Form 8826 line 7",
+        );
+      }
+    }
   }
   const expected = source && lines
     ? [
@@ -247,21 +272,6 @@ function sourceForm8826(
             source.subject_to_passive_activity_limit,
         }]
         : []),
-      ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
-        if (entry.subject_to_passive_activity_limit) return [];
-        const credit = ledger
-          ? entry.credit_amount
-          : lines.passThroughCreditsAfterCap[index] ?? 0;
-        return credit > 0
-          ? [{
-            source_type: entry.entity_type,
-            source_ein: entry.entity_ein,
-            credit_amount: credit,
-            subject_to_passive_activity_limit:
-              entry.subject_to_passive_activity_limit,
-          }]
-          : [];
-      }),
     ]
     : [];
   if (
@@ -279,7 +289,7 @@ function sourceForm8826(
       "Form 3800 disabled-access entries do not reconcile to Form 8826 sources",
     );
   }
-  if (directSources.length > 0 && !ledger) {
+  if (directSources.length > 0) {
     if (!context.pending) {
       throw new Error("Form 3800 estate/trust credit needs its K-1 source");
     }
