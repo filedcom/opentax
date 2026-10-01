@@ -1038,6 +1038,7 @@ export const form8283: MefFormDescriptor<
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
         propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
         propertyType !== SectionBPropertyType.Collectibles &&
+        propertyType !== SectionBPropertyType.Securities &&
         propertyType !== SectionBPropertyType.OtherRealEstate
       ) {
         throw new Error(

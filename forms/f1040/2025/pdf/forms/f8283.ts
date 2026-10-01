@@ -67,6 +67,11 @@ const fields: PdfFieldEntry[] = [
   },
   {
     kind: "checkbox",
+    domainKey: "section_b_securities",
+    pdfField: `${page}.Lines2d-h[0].c1_6[2]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "section_b_collectibles",
     pdfField: `${page}.Lines2d-h[0].c1_6[3]`,
   },
@@ -353,6 +358,7 @@ function sectionBOrdinaryTangibleInstance(
   const supportedType = propertyType === SectionBPropertyType.ArtUnder20000 ||
     propertyType === SectionBPropertyType.ArtAtLeast20000 ||
     propertyType === SectionBPropertyType.Equipment ||
+    propertyType === SectionBPropertyType.Securities ||
     propertyType === SectionBPropertyType.Collectibles ||
     propertyType === SectionBPropertyType.ClothingHousehold ||
     propertyType === SectionBPropertyType.OtherRealEstate;
@@ -361,6 +367,8 @@ function sectionBOrdinaryTangibleInstance(
     ? "art"
     : propertyType === SectionBPropertyType.Equipment
     ? "equipment"
+    : propertyType === SectionBPropertyType.Securities
+    ? "nonpublic securities"
     : propertyType === SectionBPropertyType.Collectibles
     ? "collectible"
     : propertyType === SectionBPropertyType.OtherRealEstate
@@ -386,11 +394,14 @@ function sectionBOrdinaryTangibleInstance(
       (item.investment_land_unimproved_confirmed !== true ||
         item.ordinary_income_reduction?.reason !==
           "purchased_short_term_capital_asset")) ||
+    (propertyType === SectionBPropertyType.Securities &&
+      item.ordinary_income_reduction === undefined) ||
     (item.ordinary_income_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
         propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
+        propertyType !== SectionBPropertyType.Securities &&
         propertyType !== SectionBPropertyType.Collectibles &&
         propertyType !== SectionBPropertyType.OtherRealEstate) ||
         !appraisal?.attachment_file_name ||
@@ -400,7 +411,9 @@ function sectionBOrdinaryTangibleInstance(
     item.cost_or_adjusted_basis === undefined ||
     (item.ordinary_income_reduction === undefined &&
       item.cost_or_adjusted_basis < item.fmv) ||
-    !item.property_description?.trim() || !item.physical_condition?.trim() ||
+    !item.property_description?.trim() ||
+    (propertyType !== SectionBPropertyType.Securities &&
+      !item.physical_condition?.trim()) ||
     !item.date_acquired || !item.date_contributed?.startsWith("2025-") ||
     item.date_acquired > item.date_contributed ||
     item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
@@ -414,6 +427,9 @@ function sectionBOrdinaryTangibleInstance(
     );
   }
   const ordinary = item.ordinary_income_reduction;
+  const securityReference = item.nonpublic_security
+    ? `Nonpublic C corporation issuer EIN ${item.nonpublic_security.issuer_ein}; ${item.nonpublic_security.shares_contributed} ${item.nonpublic_security.share_class} shares. `
+    : "";
   const ordinaryExplanation = ordinary?.reason === "purchased_inventory"
     ? `Purchased inventory held for sale to customers has $${
       ordinary.gain_removed.toFixed(2)
@@ -432,6 +448,7 @@ function sectionBOrdinaryTangibleInstance(
     section_b_art_under_20000:
       propertyType === SectionBPropertyType.ArtUnder20000,
     section_b_equipment: propertyType === SectionBPropertyType.Equipment,
+    section_b_securities: propertyType === SectionBPropertyType.Securities,
     section_b_collectibles: propertyType === SectionBPropertyType.Collectibles,
     section_b_clothing_household:
       propertyType === SectionBPropertyType.ClothingHousehold,
@@ -441,6 +458,7 @@ function sectionBOrdinaryTangibleInstance(
         item.deduction_claimed.toFixed(2)
       }, with adjusted basis $${item.cost_or_adjusted_basis.toFixed(2)}. ` +
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
+      securityReference +
       ordinaryExplanation +
       `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
@@ -572,6 +590,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       instance.section_b_art_at_least_20000 === true ||
       instance.section_b_art_under_20000 === true ||
       instance.section_b_equipment === true ||
+      instance.section_b_securities === true ||
       instance.section_b_collectibles === true ||
       instance.section_b_clothing_household === true ||
       instance.section_b_vehicle === true
@@ -655,6 +674,9 @@ export const form8283Pdf: PdfFormDescriptor = {
           SectionBPropertyType.ArtAtLeast20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
+          ...(sectionB[0].ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.Securities]
+            : []),
           SectionBPropertyType.Collectibles,
           SectionBPropertyType.ClothingHousehold,
           ...(sectionB[0].ordinary_income_reduction !== undefined
@@ -682,6 +704,8 @@ export const form8283Pdf: PdfFormDescriptor = {
           : item.property_type === SectionBPropertyType.ArtUnder20000 ||
               item.property_type === SectionBPropertyType.ArtAtLeast20000 ||
               item.property_type === SectionBPropertyType.Equipment ||
+              (item.property_type === SectionBPropertyType.Securities &&
+                item.ordinary_income_reduction !== undefined) ||
               item.property_type === SectionBPropertyType.Collectibles ||
               item.property_type === SectionBPropertyType.ClothingHousehold ||
               (item.property_type === SectionBPropertyType.OtherRealEstate &&
@@ -806,6 +830,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         instance.section_b_art_at_least_20000 === true ||
         instance.section_b_art_under_20000 === true ||
         instance.section_b_equipment === true ||
+        instance.section_b_securities === true ||
         instance.section_b_collectibles === true ||
         instance.section_b_clothing_household === true ||
         instance.section_b_vehicle === true

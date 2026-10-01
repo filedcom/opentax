@@ -378,6 +378,7 @@ export function assertOrdinarySectionBReconciled(
       SectionBPropertyType.ArtAtLeast20000,
       SectionBPropertyType.Vehicle,
       SectionBPropertyType.Equipment,
+      SectionBPropertyType.Securities,
       SectionBPropertyType.Collectibles,
       SectionBPropertyType.ClothingHousehold,
       SectionBPropertyType.OtherRealEstate,

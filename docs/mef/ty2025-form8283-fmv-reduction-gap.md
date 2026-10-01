@@ -499,3 +499,27 @@ classify a capital asset held one year or less as ordinary-income property and
 require a statement showing the FMV reduction. Long-held investment land uses
 the separate 50%-limit election route. Developed/depreciable real estate,
 inventory land, multiple gifts, and carryover combinations remain closed.
+
+## Purchased short-term Section B nonpublic C corporation stock (2026-10-01, unrun)
+
+One purchased, nonpublicly traded C corporation share lot held no more than one
+year can now use the existing Section B short-term ordinary-income reduction
+route when the claimed deduction exceeds $5,000. The source identifies the
+issuer name/EIN, share class and count, confirms that the shares are nonpublic,
+and requires the printed property description to match that exact lot. The
+purchase-record reviewer confirms those issuer and lot facts against the PDF. Its
+reviewed purchase/basis PDF, qualified appraisal, completed signed Form 8283,
+reduction statement, and separate appraiser/donee signature PDFs retain six
+distinct linked IDs; the reviewed PDFs have bound byte digests. The claim equals adjusted basis below
+appraised FMV; native Form 8283 and the PDF select the securities box, while
+Schedule A and itemized Form 1040 carry the basis-limited deduction. An
+authored $18,000 FMV/$12,000 basis full-return case and publicly-traded,
+description, reviewed-byte, and return-amount tamper fixtures await the bulk
+validation pass.
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+direct nonpublic securities over $5,000 to Section B with a qualified appraisal;
+publicly traded securities belong in Section A. The underlying issuer,
+purchase, valuation, and donee records still need real human review. Mixed
+lots, partnership/S corporation interests, long-term securities, carryovers,
+and IRS acceptance remain outside this bounded route.

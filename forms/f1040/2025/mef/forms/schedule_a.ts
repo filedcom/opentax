@@ -208,6 +208,9 @@ function buildIRS1040ScheduleA(
           SectionBPropertyType.ArtAtLeast20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
+          ...(form.section_b_items?.[0]?.ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.Securities]
+            : []),
           SectionBPropertyType.Collectibles,
           SectionBPropertyType.ClothingHousehold,
           ...(form.section_b_items?.[0]?.ordinary_income_reduction !== undefined

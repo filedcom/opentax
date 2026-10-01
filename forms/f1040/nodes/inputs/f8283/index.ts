@@ -669,6 +669,7 @@ const ordinaryIncomeReductionSchema = z.discriminatedUnion("reason", [
       reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
       property_dates_basis_match_confirmed: z.literal(true),
+      security_issuer_and_lot_match_confirmed: z.literal(true).optional(),
       capital_asset_not_inventory_confirmed: z.literal(true),
       no_depreciation_or_recapture_confirmed: z.literal(true),
       donor_did_not_create_property_confirmed: z.literal(true),
@@ -710,6 +711,15 @@ const sectionBItemSchema = z.object({
   // investment land. Developed real estate can involve recapture.
   investment_land_unimproved_confirmed: z.literal(true).optional(),
   ordinary_income_reduction: ordinaryIncomeReductionSchema.optional(),
+  nonpublic_security: z.object({
+    issuer_name: z.string().trim().min(1),
+    issuer_ein: z.string().regex(/^\d{9}$/),
+    share_class: z.string().trim().min(1),
+    shares_contributed: z.number().int().positive(),
+    nonpublicly_traded_confirmed: z.literal(true),
+    c_corporation_stock_confirmed: z.literal(true),
+    single_purchase_lot_confirmed: z.literal(true),
+  }).strict().optional(),
   reduction_statement_attachment_file_name: z.string().min(1).optional(),
   // A reviewer must verify the actual reduction computation in the PDF whose
   // bytes are submitted. Merely naming an attachment does not substantiate it.
@@ -811,7 +821,17 @@ const sectionBItemSchema = z.object({
         item.property_type !== SectionBPropertyType.ArtUnder20000 &&
         item.property_type !== SectionBPropertyType.ArtAtLeast20000 &&
         item.property_type !== SectionBPropertyType.Collectibles &&
+        item.property_type !== SectionBPropertyType.Securities &&
         item.property_type !== SectionBPropertyType.OtherRealEstate) ||
+      (item.property_type === SectionBPropertyType.Securities &&
+        (ordinaryReduction.reason !== "purchased_short_term_capital_asset" ||
+          !item.nonpublic_security ||
+          ordinaryReduction.purchase_record_review
+              .security_issuer_and_lot_match_confirmed !== true ||
+          item.property_description !==
+            `${item.nonpublic_security.shares_contributed} ${item.nonpublic_security.share_class} shares of ${item.nonpublic_security.issuer_name}`)) ||
+      (item.property_type !== SectionBPropertyType.Securities &&
+        item.nonpublic_security !== undefined) ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
         item.fmv >= 20_000) ||
       (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
@@ -849,9 +869,17 @@ const sectionBItemSchema = z.object({
         code: "custom",
         path: ["ordinary_income_reduction"],
         message:
-          "Form 8283 ordinary-income equipment, art, collectible, or short-term unimproved land needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase/cost record, and reduction statement",
+          "Form 8283 ordinary-income equipment, art, collectible, nonpublic security, or short-term unimproved land needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase/cost record, and reduction statement",
       });
     }
+  }
+  if (item.nonpublic_security && !ordinaryReduction) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["nonpublic_security"],
+      message:
+        "Form 8283 nonpublic securities need the reviewed short-term reduction source",
+    });
   }
   if (item.capital_gain_reduction_election_confirmed === true) {
     const acquired = item.date_acquired &&

@@ -45,6 +45,7 @@ for (
       "purchased_short_term_capital_asset",
     ],
     ["collectibles", 18_000, 12_000, "purchased_short_term_capital_asset"],
+    ["securities", 18_000, 12_000, "purchased_short_term_capital_asset"],
     ["other_real_estate", 18_000, 12_000, "purchased_short_term_capital_asset"],
     ["equipment", 18_000, 12_000, "purchased_inventory"],
   ] as const
@@ -53,14 +54,23 @@ for (
     const acquiredDate = reason === "purchased_inventory"
       ? "2023-01-15"
       : "2025-01-15";
+    const securityDescription = "100 Common shares of Cedar Grove Inc";
     const purchase = await evidence(
-      `invoice and basis $${basis}, ${acquiredDate}; inventory cost ledger INV-15`,
+      `invoice and basis $${basis}, ${acquiredDate}; ${
+        propertyType === "securities"
+          ? `${securityDescription}, issuer EIN 111223333`
+          : "inventory cost ledger INV-15"
+      }`,
     );
     const appraisal = await evidence(
-      `signed appraisal: ${propertyType} FMV $${appraisedFmv}`,
+      `signed appraisal: ${
+        propertyType === "securities" ? securityDescription : propertyType
+      } FMV $${appraisedFmv}`,
     );
     const signedForm = await evidence(
-      `completed signed Form 8283 for ${propertyType}`,
+      `completed signed Form 8283 for ${
+        propertyType === "securities" ? securityDescription : propertyType
+      }`,
     );
     const reduction = await evidence(
       `FMV $${appraisedFmv} less ordinary-income gain $${
@@ -85,11 +95,28 @@ for (
         ? "Purchased framed painting, catalog ST-8283"
         : propertyType === "other_real_estate"
         ? "Purchased unimproved vacant investment parcel ST-8283"
+        : propertyType === "securities"
+        ? securityDescription
         : "Purchased rare coin, catalog ST-8283",
       property_type: propertyType,
-      physical_condition: propertyType === "other_real_estate"
+      physical_condition: propertyType === "securities"
+        ? undefined
+        : propertyType === "other_real_estate"
         ? "Unimproved vacant land"
         : "Good used condition",
+      ...(propertyType === "securities"
+        ? {
+          nonpublic_security: {
+            issuer_name: "Cedar Grove Inc",
+            issuer_ein: "111223333",
+            share_class: "Common",
+            shares_contributed: 100,
+            nonpublicly_traded_confirmed: true,
+            c_corporation_stock_confirmed: true,
+            single_purchase_lot_confirmed: true,
+          },
+        }
+        : {}),
       ...(propertyType === "other_real_estate"
         ? { investment_land_unimproved_confirmed: true }
         : {}),
@@ -160,6 +187,9 @@ for (
             reviewed_on: "2025-09-01",
             pdf_sha256: await sha256(purchase),
             property_dates_basis_match_confirmed: true,
+            ...(propertyType === "securities"
+              ? { security_issuer_and_lot_match_confirmed: true }
+              : {}),
             capital_asset_not_inventory_confirmed: true,
             no_depreciation_or_recapture_confirmed: true,
             donor_did_not_create_property_confirmed: true,
@@ -254,6 +284,8 @@ for (
         ? "<ArtWorthAtLeast20000DollarsInd>X</ArtWorthAtLeast20000DollarsInd>"
         : propertyType === "other_real_estate"
         ? "<OtherRealEstateInd>X</OtherRealEstateInd>"
+        : propertyType === "securities"
+        ? "<SecuritiesInd>X</SecuritiesInd>"
         : "<CollectiblesInd>X</CollectiblesInd>",
     );
     const [projected] = form8283Pdf.instances!(
@@ -265,6 +297,13 @@ for (
       projected.section_b_collectibles,
       propertyType === "collectibles",
     );
+    assertEquals(projected.section_b_securities, propertyType === "securities");
+    if (propertyType === "securities") {
+      assertStringIncludes(
+        (projected.reduction_statements as string[])[0],
+        "issuer EIN 111223333",
+      );
+    }
     assertEquals(
       projected.section_b_art_at_least_20000,
       propertyType === "art_at_least_20000",
@@ -355,6 +394,56 @@ for (
           }, { filer: base.filer, attachments }),
         Error,
         "short-term unimproved land",
+      );
+    }
+    if (propertyType === "securities") {
+      await assertRejects(
+        () =>
+          buildMefBundle({
+            ...pending,
+            f8283: {
+              section_b_items: [{
+                ...item,
+                ordinary_income_reduction: {
+                  ...item.ordinary_income_reduction,
+                  purchase_record_review: {
+                    ...item.ordinary_income_reduction.purchase_record_review,
+                    security_issuer_and_lot_match_confirmed: undefined,
+                  },
+                },
+              }],
+            },
+          }, { filer: base.filer, attachments }),
+        Error,
+      );
+      await assertRejects(
+        () =>
+          buildMefBundle({
+            ...pending,
+            f8283: {
+              section_b_items: [{
+                ...item,
+                nonpublic_security: {
+                  ...item.nonpublic_security,
+                  nonpublicly_traded_confirmed: false,
+                },
+              }],
+            },
+          }, { filer: base.filer, attachments }),
+        Error,
+      );
+      await assertRejects(
+        () =>
+          buildMefBundle({
+            ...pending,
+            f8283: {
+              section_b_items: [{
+                ...item,
+                property_description: "100 Preferred shares of Cedar Grove Inc",
+              }],
+            },
+          }, { filer: base.filer, attachments }),
+        Error,
       );
     }
   });
