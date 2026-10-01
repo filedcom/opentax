@@ -78,6 +78,19 @@ export const inputSchema = z.object({
   death_benefit_exclusion_source_reference: z.string().trim().min(1).optional(),
   death_benefit_recipient_allocated_amount: z.number().int().nonnegative()
     .optional(),
+  // The plan administrator's participant-wide allocation. One row identifies
+  // the elected recipient; the other rows account for the rest of the benefit.
+  death_benefit_allocation: z.object({
+    participant_ssn: z.string().regex(/^\d{9}$/),
+    elected_recipient_ssn: z.string().regex(/^\d{9}$/),
+    recipients: z.array(
+      z.object({
+        recipient_ssn: z.string().regex(/^\d{9}$/),
+        share_pct: z.number().positive().max(100),
+        excluded_amount: z.number().int().nonnegative(),
+      }).strict(),
+    ).min(2),
+  }).strict().optional(),
   // Form 4972 lines 11 and 18.
   annuity_actuarial_value: z.number().nonnegative().optional(),
   // Form 1099-R box 8 percentage, distinct from the box 9a distribution share.
@@ -156,7 +169,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (
     !partialDeathBenefit &&
     (input.death_benefit_exclusion_source_reference !== undefined ||
-      input.death_benefit_recipient_allocated_amount !== undefined)
+      input.death_benefit_recipient_allocated_amount !== undefined ||
+      input.death_benefit_allocation !== undefined)
   ) {
     throw new Error(
       "form4972: partial-share death-benefit source facts need a positive full allowable exclusion",
@@ -176,6 +190,32 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     throw new Error(
       "form4972: partial-share death benefit needs Part II or III and an administrator source matching the full exclusion and recipient allocation, without annuity or estate tax",
     );
+  }
+  if (partialDeathBenefit) {
+    const allocation = input.death_benefit_allocation;
+    const rows = allocation?.recipients ?? [];
+    const elected = rows.filter((row) =>
+      row.recipient_ssn === allocation?.elected_recipient_ssn
+    );
+    if (
+      !allocation || new Set(rows.map((row) => row.recipient_ssn)).size !==
+        rows.length ||
+      rows.reduce((sum, row) => sum + row.share_pct, 0) !== 100 ||
+      rows.reduce((sum, row) => sum + row.excluded_amount, 0) !==
+        deathBenefit ||
+      rows.some((row) =>
+        !Number.isSafeInteger(deathBenefit * row.share_pct / 100) ||
+        row.excluded_amount !== deathBenefit * row.share_pct / 100
+      ) ||
+      elected.length !== 1 || elected[0].share_pct !==
+        input.recipient_share_pct ||
+      elected[0].excluded_amount !==
+        input.death_benefit_recipient_allocated_amount
+    ) {
+      throw new Error(
+        "form4972: partial-share death benefit needs a complete participant-wide recipient percentage and exclusion allocation",
+      );
+    }
   }
   if (
     partialShare &&

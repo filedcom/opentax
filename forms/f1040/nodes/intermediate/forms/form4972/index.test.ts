@@ -122,6 +122,14 @@ Deno.test("Form 4972 shared beneficiary Part III uses the full death-benefit exc
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -146,6 +154,14 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_capital_gain: true,
@@ -204,6 +220,14 @@ Deno.test("Form 4972 partial beneficiary Part-II-only uses recipient death-benef
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_capital_gain: true,
@@ -244,6 +268,14 @@ Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a bu
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -269,6 +301,14 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,

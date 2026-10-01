@@ -1,5 +1,26 @@
 # TY2025 Form 4972 remaining coverage
 
+## Participant-wide unequal death-benefit allocation (2026-10-01, unrun)
+
+The partial-share beneficiary death-benefit route now requires a complete
+administrator allocation schedule. It identifies the plan participant and
+elected recipient by SSN, lists every recipient's percentage and exclusion,
+and totals to 100% and the full allowable exclusion. Each allocation must be
+an exact whole-dollar product of the full exclusion and recipient percentage.
+The elected row must match its own amount and the source Form 1099-R box 9a;
+native and PDF export also join recipient SSN, participant SSN, issued-copy
+reference, plan identity, boxes 2a/3/6/8/9a, computed lines, and finalized
+Form 1040 special tax. A 25%/75% case uses a $5,000 participant-wide eligible
+exclusion, with $1,250 for the elected recipient. With the recipient's boxes
+2a/3 of $10,000/$2,000 and both elections, lines 6/7/8/9 are
+$1,750/$350/$32,000/$4,000; line 30 enters Form 1040 line 16. Positive and
+allocation, box, identity, and return-tamper fixtures are authored but unrun.
+The administrator reference and schedule remain preparer supplied; source
+bytes and external authentication, filled PDF, XSD/business rules, and ATS
+acceptance remain open. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+specify the full-exclusion line 9 and box 9a line 29 treatment for multiple
+recipients.
+
 ## Partial-share beneficiary NUA and death benefit (2026-10-01, unrun)
 
 One sourced Form 1099-R with box 9a below 100% can now combine elected box 6

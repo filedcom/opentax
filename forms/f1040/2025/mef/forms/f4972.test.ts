@@ -28,6 +28,15 @@ function partialRecipientCase(capitalGain = 0) {
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         ...(capitalGain > 0 ? { box3_capital_gain: capitalGain } : {}),
@@ -87,6 +96,15 @@ Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18"
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         box7_distribution_code: DistributionCode.CodeA,
@@ -149,6 +167,14 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
     recipient_share_pct: 50,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -162,6 +188,15 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         box7_distribution_code: DistributionCode.CodeA,
@@ -235,6 +270,14 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
     recipient_share_pct: 50,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_capital_gain: true,
@@ -249,6 +292,15 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         box3_capital_gain: 4_000,
@@ -315,6 +367,14 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
     recipient_share_pct: 50,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_capital_gain: true,
@@ -328,6 +388,15 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         box3_capital_gain: 4_000,
@@ -415,6 +484,15 @@ Deno.test("Form 4972 MeF keeps a partial-share Part-II-only election on the reci
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
         box3_capital_gain: 4_000,
@@ -573,6 +651,15 @@ function fullShareCase(
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: taxable,
         box2a_taxable_amount: taxable,
         ...(capitalGain > 0 ? { box3_capital_gain: capitalGain } : {}),
@@ -593,6 +680,15 @@ const electedNua1099r = {
   f1099rs: [{
     payer_name: "Qualified Plan",
     payer_ein: "123456789",
+    recipient_ssn: "123456789",
+    source_document_reference: "issued-1099r-2025",
+    form4972_plan: {
+      participant_name: "Pat Participant",
+      participant_ssn: "444556666",
+      plan_reference: "plan-2025",
+      full_balance_statement_reference: "plan-full-balance-2025",
+      all_qualified_distributions_included: true,
+    },
     box1_gross_distribution: 100_000,
     box2a_taxable_amount: 100_000,
     box3_capital_gain: 30_000,
@@ -751,6 +847,15 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "issued-1099r-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "plan-2025",
+          full_balance_statement_reference: "plan-full-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 30_000,

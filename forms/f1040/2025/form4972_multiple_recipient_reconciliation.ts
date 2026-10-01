@@ -54,6 +54,23 @@ export function reconcileForm4972MultipleRecipients(
       "Form 4972 partial share differs from Form 1099-R boxes 2a, 3, 6, 8 amount/percentage, or 9a",
     );
   }
+  if ((fields.death_benefit_exclusion ?? 0) > 0) {
+    const allocation = fields.death_benefit_allocation as
+      | { participant_ssn: string; elected_recipient_ssn: string }
+      | undefined;
+    if (
+      !allocation || !item.recipient_ssn || !item.form4972_plan ||
+      allocation.elected_recipient_ssn !==
+        item.recipient_ssn.replaceAll("-", "") ||
+      allocation.participant_ssn !== item.form4972_plan.participant_ssn ||
+      !item.source_document_reference ||
+      item.form4972_plan.all_qualified_distributions_included !== true
+    ) {
+      throw new Error(
+        "Form 4972 partial-share death benefit allocation needs elected Form 1099-R recipient, participant, plan, and issued-copy identity",
+      );
+    }
+  }
   const parsed = form4972Schema.parse(fields);
   const computed = form4972.compute(
     { taxYear: 2025, formType: "f1040" },

@@ -39,6 +39,14 @@ function partialNuaDeathCase() {
     recipient_share_pct: 50,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "plan administrator death-benefit allocation 2025",
     elect_capital_gain: true,
@@ -59,6 +67,15 @@ function partialNuaDeathCase() {
       f1099rs: [{
         payer_name: "Qualified Stock Bonus Plan",
         payer_ein: "123456789",
+        recipient_ssn: "123456789",
+        source_document_reference: "1099-R-beneficiary-2025",
+        form4972_plan: {
+          participant_name: "Pat Participant",
+          participant_ssn: "444556666",
+          plan_reference: "stock-bonus-plan-2025",
+          full_balance_statement_reference: "full-plan-balance-2025",
+          all_qualified_distributions_included: true,
+        },
         box1_gross_distribution: 24_000,
         box2a_taxable_amount: 20_000,
         box3_capital_gain: 4_000,
@@ -139,6 +156,7 @@ Deno.test("Form 4972 partial NUA/death source copy and election join on the fina
         death_benefit_exclusion: election.death_benefit_exclusion,
         death_benefit_recipient_allocated_amount:
           election.death_benefit_recipient_allocated_amount,
+        death_benefit_allocation: election.death_benefit_allocation,
         death_benefit_exclusion_source_reference:
           election.death_benefit_exclusion_source_reference,
         elect_capital_gain: election.elect_capital_gain,
