@@ -68,6 +68,8 @@ const attached9465 = {
     taxpayer_authorized_attached_request_confirmed: true,
   },
   final_1040_line37_amount_owed: 7_200,
+  home_phone_number: "5125550140",
+  best_time_to_call_at_home: "MORNINGS",
   proposed_monthly_payment: 100,
   payment_due_day: 15,
   payment_method: "manual_monthly_payment",

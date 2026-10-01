@@ -22,6 +22,8 @@ const source = {
     taxpayer_authorized_attached_request_confirmed: true,
   },
   final_1040_line37_amount_owed: 7_200,
+  home_phone_number: "5125550140",
+  best_time_to_call_at_home: "MORNINGS",
   proposed_monthly_payment: 100,
   payment_due_day: 15,
   payment_method: "manual_monthly_payment",
@@ -46,6 +48,10 @@ Deno.test("Form 9465 staged native route joins one attached 1040 balance and min
     "<F9465TaxReturnTypeCd>FORM 1040</F9465TaxReturnTypeCd>",
   );
   assertStringIncludes(xml, "<IATaxYrDt>2025</IATaxYrDt>");
+  assertStringIncludes(
+    xml,
+    "<HomePhoneGrp><PhoneNum>5125550140</PhoneNum><BestTimeToCallAtHomeTxt>MORNINGS</BestTimeToCallAtHomeTxt></HomePhoneGrp>",
+  );
   assertStringIncludes(xml, "<TaxDueAmt>7200</TaxDueAmt>");
   assertStringIncludes(xml, "<TotalBalanceDueAmt>7200</TotalBalanceDueAmt>");
   assertStringIncludes(
@@ -64,6 +70,8 @@ Deno.test("Form 9465 rejects legacy partial input, wrong mode, outside bound, an
       { ...source, final_1040_line37_amount_owed: 25_001 },
       { ...source, proposed_monthly_payment: 99 },
       { ...source, payment_due_day: 29 },
+      { ...source, home_phone_number: "512-555-0140" },
+      { ...source, best_time_to_call_at_home: "AFTERNOON HOURS" },
       { ...source, direct_debit: true },
     ]
   ) {
@@ -88,6 +96,15 @@ Deno.test("Form 9465 staged native route rejects changed return, identity, and p
     buildAttachedForm9465(source, {
       filer,
       pending: { ...pending, f9465: { ...source, payment_due_day: 14 } },
+    })
+  );
+  assertThrows(() =>
+    buildAttachedForm9465(source, {
+      filer,
+      pending: {
+        ...pending,
+        f9465: { ...source, home_phone_number: "5125550141" },
+      },
     })
   );
 });

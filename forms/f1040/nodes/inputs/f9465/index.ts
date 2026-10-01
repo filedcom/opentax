@@ -41,6 +41,8 @@ export const inputSchema = z.object({
     (amount) => amount <= 25_000,
     "Form 9465 bounded request cannot exceed $25,000",
   ),
+  home_phone_number: z.string().regex(/^\d{10}$/),
+  best_time_to_call_at_home: z.string().trim().min(1).max(10),
   proposed_monthly_payment: positiveWholeDollar,
   payment_due_day: z.number().int().min(1).max(28),
   payment_method: z.literal("manual_monthly_payment"),

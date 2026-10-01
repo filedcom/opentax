@@ -42,6 +42,17 @@ the native required line-5/7/9/10/11a/12 fields. Focused source, native and
 rejection cases are written but unrun. This is a direct replacement, not a
 legacy alias or fallback.
 
+The strict request now also requires a ten-digit home phone and a call-time
+description of at most ten characters. The staged native output includes
+`HomePhoneGrp/PhoneNum` and `BestTimeToCallAtHomeTxt` in schema order; the
+staged page-1 PDF maps them to inspected fields `f1_17` and `f1_18` on line 3.
+The checked-in TY2025 MeF rule `F9465-018-01` requires a home or work phone,
+and the [official Form 9465](https://www.irs.gov/pub/irs-pdf/f9465.pdf)
+prints both line-3 fields. Missing/malformed phone, overlong call-time, and
+changed native/PDF pending-source fixtures are authored but unrun. This closes
+a source-to-output prerequisite; it does not answer the attached electronic
+authorization question or enable export.
+
 The staged native builder is **not registered** in `ALL_MEF_FORMS`. The
 unregistered `pdf/forms/f9465_attached.ts` descriptor maps only page 1 of the
 [current official Form 9465 PDF](https://www.irs.gov/pub/irs-pdf/f9465.pdf),
@@ -52,6 +63,7 @@ static AcroForm field inspection found the following exact page-1 mapping:
 | --- | --- | --- |
 | Return type, year; 1a name and SSN | `f1_1`–`f1_5` | 1040/2025 and identified single filer |
 | 1a street, apartment, city/state/ZIP | `f1_9`–`f1_11` | same domestic filer address; reviewed as unchanged since prior return |
+| 3 home phone and call time | `f1_17`–`f1_18` | direct request contact fields |
 | 5, 7, 9 balance | `f1_22`, `f1_24`, `f1_26` | final 1040 line 37, with no other debt or current payment |
 | 10, 11a, 12 terms | `f1_27`, `f1_28`, `f1_30` | upward whole-dollar line 9 / 72, proposed payment, due day |
 
