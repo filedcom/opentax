@@ -88,7 +88,14 @@ joins both exact prior PDF byte hashes to the submitted MeF attachment
 descriptions and distinct binary document IDs, after matching the gift,
 taxpayer, appraisal review, and Schedule A carryover row. Positive and changed
 description/document-ID fixtures are authored for the deferred batch. Section
-B native and PDF export explicitly reject this source until the prior form's
-complete printable property, appraiser, and donee facts and accepted 2024
-filing proof are available. No current-year Section B filing is claimed by
-accepting the source contract.
+B native and PDF export explicitly reject this source. The reviewed source
+now requires the prior form's property description, physical condition,
+purchase method, appraiser name, tax ID, address and signature date, plus the
+donee's name, EIN, address, receipt date, unrelated-use answer and signature.
+The donee/date and appraiser ID are cross-checked, and review flags assert
+those printable fields match the exact prior-form PDF and appraisal. The
+positive fixture and altered donee, appraiser-ID and PDF-review fixtures are
+authored for the deferred batch. This supplies the printable-fact prerequisite,
+but the current executor has no authenticated accepted 2024 return or IRS
+acknowledgment to verify the claimed prior filing. No current-year Section B
+filing is claimed by accepting the source contract.

@@ -981,7 +981,7 @@ export const form8283: MefFormDescriptor<
         )
       ) {
         throw new Error(
-          "Form 8283 Section B artwork carryover needs printed prior-form facts and authenticated filing before native export",
+          "Form 8283 Section B artwork carryover needs authenticated accepted 2024 filing before native export",
         );
       }
       return buildCarryoverDocuments(parsed, context);

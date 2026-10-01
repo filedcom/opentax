@@ -574,7 +574,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         )
       ) {
         throw new Error(
-          "Form 8283 Section B artwork carryover needs printed prior-form facts and authenticated filing before PDF export",
+          "Form 8283 Section B artwork carryover needs authenticated accepted 2024 filing before PDF export",
         );
       }
       const reconciled = reconcileForm8283Carryover(

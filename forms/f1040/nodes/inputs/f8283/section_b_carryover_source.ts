@@ -3,6 +3,13 @@ import { sha256Hex } from "../../../2025/prepared-source.ts";
 import type { MefBuildContext } from "../../../2025/mef/form-descriptor.ts";
 
 const amount = z.number().int().nonnegative().refine(Number.isSafeInteger);
+const usAddress = z.object({
+  line1: z.string().trim().min(1),
+  line2: z.string().trim().min(1).optional(),
+  city: z.string().trim().min(1),
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: z.string().regex(/^\d{5}(?:-?\d{4})?$/),
+}).strict();
 const pdfReview = z.object({
   source_document_reference: z.string().trim().min(1),
   file_name: z.string().trim().regex(/\.pdf$/i),
@@ -28,6 +35,30 @@ export const form8283SectionBCarryoverSourceSchema = z.object({
   required_qualified_appraisal: pdfReview,
   section_b_appraiser_and_donee_signatures_reviewed: z.literal(true),
   appraisal_was_attached_to_2024_return_reviewed: z.literal(true),
+  prior_form_printed_facts: z.object({
+    property_description: z.string().trim().min(1),
+    physical_condition: z.string().trim().min(1),
+    donor_acquisition_description: z.literal("Purchase"),
+    appraiser: z.object({
+      first_name: z.string().trim().min(1),
+      last_name: z.string().trim().min(1),
+      ein: z.string().regex(/^\d{9}$/).optional(),
+      ssn: z.string().regex(/^\d{9}$/).optional(),
+      us_address: usAddress,
+      signed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      signature_on_prior_form_reviewed: z.literal(true),
+    }).strict(),
+    donee: z.object({
+      organization_name: z.string().trim().min(1),
+      ein: z.string().regex(/^\d{9}$/),
+      us_address: usAddress,
+      received_date: z.string().regex(/^2024-\d{2}-\d{2}$/),
+      unrelated_use: z.boolean(),
+      signature_on_prior_form_reviewed: z.literal(true),
+    }).strict(),
+    completed_form_fields_match_pdf_reviewed: z.literal(true),
+    appraisal_property_and_value_match_pdf_reviewed: z.literal(true),
+  }).strict(),
 }).strict();
 
 export function sectionBCarryoverAttachmentDescription(
@@ -65,6 +96,7 @@ export async function bindForm8283SectionBCarryoverSource(
 ): Promise<void> {
   const source = form8283SectionBCarryoverSourceSchema.parse(rawSource);
   const carryover = carryoverSchema.parse(rawCarryover);
+  const printed = source.prior_form_printed_facts;
   const acquisitionAnniversary = new Date(
     `${source.donor_acquired_date}T00:00:00Z`,
   );
@@ -76,6 +108,8 @@ export async function bindForm8283SectionBCarryoverSource(
     !validDate(source.donor_acquired_date) ||
     !validDate(source.completed_prior_form.reviewed_on) ||
     !validDate(source.required_qualified_appraisal.reviewed_on) ||
+    !validDate(printed.appraiser.signed_date) ||
+    !validDate(printed.donee.received_date) ||
     Date.parse(`${source.original_donation_date}T00:00:00Z`) <=
       acquisitionAnniversary.getTime() ||
     source.contribution_id !== carryover.contribution_id ||
@@ -87,6 +121,9 @@ export async function bindForm8283SectionBCarryoverSource(
     source.original_2024_deduction_claim !== source.original_fmv ||
     source.previously_deducted_through_2024 >= source.original_fmv ||
     source.filed_taxpayer_ssn !== currentTaxpayerSsn.replace(/\D/g, "") ||
+    printed.donee.organization_name !== source.donee_name ||
+    printed.donee.received_date !== source.original_donation_date ||
+    Boolean(printed.appraiser.ein) === Boolean(printed.appraiser.ssn) ||
     source.completed_prior_form.source_document_reference ===
       source.required_qualified_appraisal.source_document_reference ||
     source.completed_prior_form.file_name ===

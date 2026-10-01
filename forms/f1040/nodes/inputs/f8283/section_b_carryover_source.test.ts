@@ -46,6 +46,39 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
     },
     section_b_appraiser_and_donee_signatures_reviewed: true,
     appraisal_was_attached_to_2024_return_reviewed: true,
+    prior_form_printed_facts: {
+      property_description: "Purchased oil painting",
+      physical_condition: "Excellent",
+      donor_acquisition_description: "Purchase",
+      appraiser: {
+        first_name: "Alex",
+        last_name: "Valuer",
+        ein: "123456789",
+        us_address: {
+          line1: "10 Art Street",
+          city: "Boston",
+          state: "MA",
+          zip: "02108",
+        },
+        signed_date: "2024-12-15",
+        signature_on_prior_form_reviewed: true,
+      },
+      donee: {
+        organization_name: "Public Art Museum",
+        ein: "987654321",
+        us_address: {
+          line1: "1 Museum Way",
+          city: "Boston",
+          state: "MA",
+          zip: "02108",
+        },
+        received_date: "2024-12-01",
+        unrelated_use: false,
+        signature_on_prior_form_reviewed: true,
+      },
+      completed_form_fields_match_pdf_reviewed: true,
+      appraisal_property_and_value_match_pdf_reviewed: true,
+    },
   };
   const carryover = {
     contribution_id: "artwork-2024-1",
@@ -94,6 +127,39 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
   );
   await assertRejects(() =>
     bind({ ...source, appraisal_was_attached_to_2024_return_reviewed: false })
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      prior_form_printed_facts: {
+        ...source.prior_form_printed_facts,
+        donee: {
+          ...source.prior_form_printed_facts.donee,
+          organization_name: "Different Museum",
+        },
+      },
+    })
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      prior_form_printed_facts: {
+        ...source.prior_form_printed_facts,
+        appraiser: {
+          ...source.prior_form_printed_facts.appraiser,
+          ssn: "123456789",
+        },
+      },
+    })
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      prior_form_printed_facts: {
+        ...source.prior_form_printed_facts,
+        completed_form_fields_match_pdf_reviewed: false,
+      },
+    })
   );
   const context = {
     attachmentSha256ByFileName: {
@@ -164,11 +230,11 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
   assertThrows(
     () => form8283.build(filedSource, {}),
     Error,
-    "Section B artwork carryover needs printed prior-form facts",
+    "Section B artwork carryover needs authenticated accepted 2024 filing",
   );
   assertThrows(
     () => form8283Pdf.instances!(filedSource, undefined, {}),
     Error,
-    "Section B artwork carryover needs printed prior-form facts",
+    "Section B artwork carryover needs authenticated accepted 2024 filing",
   );
 });
