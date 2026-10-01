@@ -4,6 +4,22 @@ Status: coverage disposition only. This document does not turn an unsupported
 AMT situation into a supported return. The agreed full test batch, IRS XSD
 validation, filled-PDF review, and ATS acceptances have not run.
 
+## Two issued private-activity-bond interest payers on line 2g (2026-10-01, unrun)
+
+The bounded two-issuer Form 1099-INT route now requires distinct payer TINs,
+issued-copy references, and reviewed bond/expense references. Each review
+affirms that box 9 represents eligible specified private-activity-bond
+interest and that no deductible expense reduces it. The source excludes box 13
+bond-premium reductions and other tax-exempt payers in this case. Native MeF
+and PDF replay both copies, sum their box 8 amounts to Form 1040 tax-exempt
+interest line 2a and box 9 amounts to Form 6251 line 2g, then match positive
+AMT to Schedule 2 line 2 and Form 1040 line 17. The [2025 Form 6251 line 2g
+instructions](https://www.irs.gov/instructions/i6251) direct the specified
+bond interest from Form 1099-INT box 9 and its expense reduction. A full-return
+and copy, review, line-2a, and tax-tamper fixture are authored but unrun.
+Neither issued statement nor review bytes are authenticated; allocable expenses,
+excepted bonds, and wider payer combinations remain open.
+
 ## Two reviewed state-income-tax refunds on line 2b (2026-10-01, unrun)
 
 The bounded 2025 Form 1099-G route now accepts two taxable 2024 state-income-tax

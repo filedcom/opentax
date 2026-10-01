@@ -46,6 +46,10 @@ export const itemSchema = z.object({
   foreign_tax_source_document_reference: z.string().trim().min(1).optional(),
   box8: z.number().nonnegative().optional(),
   box9: z.number().nonnegative().optional(),
+  // Bounded two-issuer AMT line 2g route: issuer-copy and bond/expense review.
+  pab_eligible_bonds_reviewed: z.literal(true).optional(),
+  pab_no_allocable_deduction_reviewed: z.literal(true).optional(),
+  pab_review_reference: z.string().trim().min(1).optional(),
   box10: z.number().nonnegative().optional(),
   box11: z.number().nonnegative().optional(),
   // IRC §171 amortization election: taxpayer must affirmatively elect to amortize
