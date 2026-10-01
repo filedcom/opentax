@@ -591,7 +591,7 @@ import {
   preparer,
 } from "../nodes/inputs/preparer/index.ts";
 import {
-  itemSchema as sehiItemSchema,
+  inputSchema as sehiInputSchema,
   self_employed_health_insurance,
 } from "../nodes/inputs/self_employed_health_insurance/index.ts";
 import {
@@ -945,8 +945,8 @@ export const inputNodes: readonly InputNodeEntry[] = [
   },
   {
     node: self_employed_health_insurance,
-    itemSchema: sehiItemSchema,
-    isArray: true,
+    inputSchema: sehiInputSchema,
+    isArray: false,
   },
   { node: schedule_h, inputSchema: scheduleHInputSchema, isArray: false },
   {

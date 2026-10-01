@@ -23,7 +23,7 @@ Deno.test("requires explicit Marketplace overlap review before routing", () => {
         marketplace_ptc_premium_overlap: true,
       }),
     Error,
-    "requires Publication 974 deduction calculation",
+    "requires the Publication 974 deduction calculation",
   );
 });
 

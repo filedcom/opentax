@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { appendInput, loadInputs } from "../store/store.ts";
+import { appendInput, buildEngineInputs, loadInputs } from "../store/store.ts";
 import {
   formAddCommand,
   formDeleteCommand,
@@ -18,6 +18,61 @@ async function makeReturn(tmpDir: string): Promise<string> {
 }
 
 // ─── form add ────────────────────────────────────────────────────────────────
+
+Deno.test("SEHI CLI stores the Marketplace answer in the canonical singleton", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await formAddCommand({
+      returnId,
+      nodeType: "self_employed_health_insurance",
+      dataJson: JSON.stringify({
+        items: [{ premiums_paid: 0 }],
+        marketplace_ptc_premium_overlap: false,
+      }),
+      baseDir: tmpDir,
+    });
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    const engineInput = buildEngineInputs(
+      inputs,
+      new Set(["self_employed_health_insurance"]),
+    );
+    assertEquals(engineInput.self_employed_health_insurance, {
+      items: [{ premiums_paid: 0 }],
+      marketplace_ptc_premium_overlap: false,
+    });
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "self_employed_health_insurance",
+          dataJson: JSON.stringify({
+            items: [{ premiums_paid: 1200 }],
+            marketplace_ptc_premium_overlap: false,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "enter form7206 instead",
+    );
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "self_employed_health_insurance",
+          dataJson: JSON.stringify({
+            items: [{ premiums_paid: 0 }],
+            marketplace_ptc_premium_overlap: true,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Publication 974",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
 
 Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
   const tmpDir = await Deno.makeTempDir();
@@ -256,8 +311,14 @@ Deno.test("formListCommand returns all entries across node types", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
     await appendInput(returnPath, "general", { filing_status: 1 });
 
     const result = await formListCommand({ returnId, baseDir: tmpDir });
@@ -272,10 +333,17 @@ Deno.test("formListCommand filters by nodeType", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
     await appendInput(returnPath, "general", { filing_status: 1 });
 
-    const result = await formListCommand({ returnId, baseDir: tmpDir, nodeType: "w2" });
+    const result = await formListCommand({
+      returnId,
+      baseDir: tmpDir,
+      nodeType: "w2",
+    });
     assertEquals(result.length, 1);
     assertEquals(result[0].nodeType, "w2");
   } finally {
@@ -288,7 +356,10 @@ Deno.test("formListCommand returns entries with fields", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 85000, box2_fed_withheld: 10000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 85000,
+      box2_fed_withheld: 10000,
+    });
 
     const result = await formListCommand({ returnId, baseDir: tmpDir });
     assertEquals(result[0].fields["box1_wages"], 85000);
@@ -305,9 +376,16 @@ Deno.test("formGetCommand returns correct entry by id", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 5000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+    });
 
-    const result = await formGetCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const result = await formGetCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(result.id, "w2_01");
     assertEquals(result.nodeType, "w2");
     assertEquals(result.fields["box1_wages"], 50000);
@@ -335,10 +413,20 @@ Deno.test("formGetCommand retrieves second entry correctly", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 75000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 75000,
+      box2_fed_withheld: 0,
+    });
 
-    const result = await formGetCommand({ returnId, entryId: "w2_02", baseDir: tmpDir });
+    const result = await formGetCommand({
+      returnId,
+      entryId: "w2_02",
+      baseDir: tmpDir,
+    });
     assertEquals(result.fields["box1_wages"], 75000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -352,7 +440,10 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 5000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+    });
 
     const updated = await formUpdateCommand({
       returnId,
@@ -363,7 +454,11 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
     assertEquals(updated.id, "w2_01");
     assertEquals(updated.nodeType, "w2");
 
-    const entry = await formGetCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(entry.fields["box1_wages"], 75000);
     assertEquals(entry.fields["box2_fed_withheld"], 8000);
   } finally {
@@ -411,7 +506,10 @@ Deno.test("formUpdateCommand validates against schema", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
 
     await assertRejects(
       () =>
@@ -480,8 +578,14 @@ Deno.test("formUpdateCommand does not affect other entries", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
 
     await formUpdateCommand({
       returnId,
@@ -490,7 +594,11 @@ Deno.test("formUpdateCommand does not affect other entries", async () => {
       baseDir: tmpDir,
     });
 
-    const entry2 = await formGetCommand({ returnId, entryId: "w2_02", baseDir: tmpDir });
+    const entry2 = await formGetCommand({
+      returnId,
+      entryId: "w2_02",
+      baseDir: tmpDir,
+    });
     assertEquals(entry2.fields["box1_wages"], 30000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -504,10 +612,20 @@ Deno.test("formDeleteCommand removes entry", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
 
-    const deleted = await formDeleteCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const deleted = await formDeleteCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(deleted.id, "w2_01");
     assertEquals(deleted.nodeType, "w2");
 
@@ -538,7 +656,10 @@ Deno.test("formDeleteCommand removing all entries leaves empty list", async () =
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
 
     await formDeleteCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
 
