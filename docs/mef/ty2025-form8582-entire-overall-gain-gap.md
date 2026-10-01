@@ -33,6 +33,19 @@ released on Schedule E and carried once to Schedule 1. Native MeF and the Form
 8582/Schedule E PDF descriptors use the same source checks. Focused cases are
 written but unrun.
 
+An additional Part V case has zero current-year Schedule E operating income or
+loss, one identified filed-2024 Part VII operating PAL, and one fully taxable
+entire-interest Part II sale to an unrelated buyer. The sale gain must exceed
+the prior operating loss. The 2024 activity ID, unallowed balance and filed
+reference remain mandatory; current Form 4797 sale and closing facts must match
+the Schedule E source. Form 8582 releases the prior loss, Schedule E carries it
+to Schedule 1, and Form 4797 keeps the gain, giving the net Form 1040 AGI
+effect. Native Form 8582 Part V and PDF projection show sale gain, prior loss,
+and overall gain. An executor-produced full-return fixture plus prior-balance,
+buyer, sale-document, and amount-tamper cases are authored but unrun. This
+does not admit positive current operations, active-rental zero-current cases,
+Part I sales, prior Form 4797-character losses, or unauthenticated source bytes.
+
 A separate first-year Part V path covers one type-B rental acquired and sold in
 2025 with a current operating loss smaller than its direct Part II sale gain.
 The source must identify the activity acquisition date, a purchase document, and

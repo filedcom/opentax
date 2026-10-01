@@ -381,7 +381,9 @@ export function assertPriorYear8582Evidence(input: Form8582Input): void {
         input.active_participation === true &&
         input.has_active_rental === true)) &&
     activities[0].reporting_form === "schedule_e" &&
-    activities[0].current_net < 0 &&
+    activities[0].current_net <= 0 &&
+    (activities[0].current_net < 0 ||
+      activities[0].activity_type === "B") &&
     activities[0].prior_unallowed_operating > 0 &&
     activities[0].prior_unallowed_4797_part1 === 0 &&
     activities[0].prior_unallowed_4797_part2 === 0 &&

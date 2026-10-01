@@ -323,7 +323,11 @@ export function qualifiedEntireDispositionGain(
     (item.section_1231_gain_loss ?? 0) !== 0
   ) return undefined;
   const currentNet = computePropertyNet(item);
-  if (!Number.isSafeInteger(currentNet) || currentNet >= 0) return undefined;
+  if (
+    !Number.isSafeInteger(currentNet) || currentNet > 0 ||
+    (currentNet === 0 &&
+      (item.activity_type !== "B" || !sourcedPriorLoss))
+  ) return undefined;
   const loss = -currentNet + priorOperating;
   return Number.isSafeInteger(loss) && passiveSaleGain(sale) > loss
     ? loss
