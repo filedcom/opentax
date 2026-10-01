@@ -231,6 +231,66 @@ Deno.test("irs1040Pdf: full pension rollover prints zero taxable amount", () => 
   );
 });
 
+Deno.test("irs1040Pdf: QCD and PSO source rows mark the 2025 line 4c and 5c boxes", () => {
+  const byKey = new Map(irs1040Pdf.fields.map((field) => [
+    field.domainKey,
+    field.pdfField,
+  ]));
+  assertEquals(
+    byKey.get("print_ira_qcd"),
+    "topmostSubform[0].Page1[0].c1_36[0]",
+  );
+  assertEquals(
+    byKey.get("print_pension_pso"),
+    "topmostSubform[0].Page1[0].c1_39[0]",
+  );
+  const source = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "IRA Custodian",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 20_000,
+        box7_distribution_code: "7",
+        box7_ira_simple_indicator: true,
+        qcd_partial_amount: 5_000,
+      }, {
+        payer_name: "Public Pension Plan",
+        payer_ein: "22-2222222",
+        box1_gross_distribution: 15_000,
+        box2a_taxable_amount: 15_000,
+        box7_distribution_code: "7",
+        box7_ira_simple_indicator: false,
+        pso_premium: 1_500,
+      }],
+    },
+  };
+  const fields = {
+    line4a_ira_gross: 20_000,
+    line4b_ira_taxable: 15_000,
+    line5a_pension_gross: 15_000,
+    line5b_pension_taxable: 13_500,
+  };
+  const projected = irs1040Pdf.projectFields?.(fields, source);
+  assertEquals(projected?.print_ira_qcd, true);
+  assertEquals(projected?.print_pension_pso, true);
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({ ...fields, line4a_ira_gross: 0 }, source),
+    Error,
+    "QCD needs IRA line 4a",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { ...fields, line5a_pension_gross: 0 },
+        source,
+      ),
+    Error,
+    "PSO needs pension line 5a",
+  );
+});
+
 Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
   const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [

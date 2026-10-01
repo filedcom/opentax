@@ -34,7 +34,7 @@ import {
 //   f1_47–f1_57:  wages (lines 1a–1z)
 //                 f1_54 = line 1h description text (not a dollar field — skipped)
 //   f1_58–f1_75:  income lines 2–11 (interest, dividends, IRA, pension, SS, capital gains, AGI)
-//                 f1_64 = QCD sub-field (skipped), f1_67 = PSO sub-field (skipped),
+//                 f1_64 and f1_67 = line 4c/5c box 3 text spaces (skipped),
 //                 f1_71 = near line 7b check area (skipped)
 //   Lines 12–15 appear on page 2 only in the 2025 form.
 //
@@ -238,7 +238,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 
   // ── Page 1: Income (Lines 2–11) ───────────────────────────────────────────
-  // f1_64 = QCD sub-field (line 4 sub-item), f1_67 = PSO sub-field (line 5 sub-item),
+  // f1_64 and f1_67 are box 3 text spaces on lines 4c and 5c.
   // f1_71 = near line 7b checkbox area — all three skipped.
   {
     kind: "text",
@@ -286,7 +286,13 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line4c_ira_rollover",
     pdfField: "topmostSubform[0].Page1[0].c1_35[0]",
   },
-  // f1_64 skipped (QCD sub-field)
+  {
+    kind: "checkbox",
+    domainKey: "print_ira_qcd",
+    // 2025 Form 1040 line 4c box 2; see IRS Instructions, line 4c.
+    pdfField: "topmostSubform[0].Page1[0].c1_36[0]",
+  },
+  // f1_64 = line 4c box 3 entry space for another exception.
   {
     kind: "text",
     domainKey: "line5a_pension_gross",
@@ -302,7 +308,13 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line5c_pension_rollover",
     pdfField: "topmostSubform[0].Page1[0].c1_38[0]",
   },
-  // f1_67 skipped (PSO sub-field)
+  {
+    kind: "checkbox",
+    domainKey: "print_pension_pso",
+    // 2025 Form 1040 line 5c box 2; see IRS Instructions, line 5c.
+    pdfField: "topmostSubform[0].Page1[0].c1_39[0]",
+  },
+  // f1_67 = line 5c box 3 entry space for another exception.
   {
     kind: "text",
     domainKey: "line6a_ss_gross",
@@ -629,6 +641,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
     });
     const iraRollover = fields.line4c_ira_rollover === true;
     const rollover = fields.line5c_pension_rollover === true;
+    let printIraQcd = false;
+    let printPensionPso = false;
     if (
       fields.line4c_ira_rollover !== undefined &&
       typeof fields.line4c_ira_rollover !== "boolean"
@@ -658,6 +672,41 @@ export const irs1040Pdf: PdfFormDescriptor = {
         throw new Error(
           "Form 1040 PDF line 4c rollover does not match the reviewed IRA Form 1099-R source",
         );
+      }
+      for (const item of source.data.f1099rs) {
+        if (item.no_distribution_received === true) continue;
+        if (item.qcd_full === true || (item.qcd_partial_amount ?? 0) > 0) {
+          if (item.box7_ira_simple_indicator !== true) {
+            throw new Error("Form 1040 PDF line 4c QCD needs an IRA source");
+          }
+          if (
+            item.exclude_4972 === true || item.exclude_8606_roth === true
+          ) {
+            throw new Error(
+              "Form 1040 PDF line 4c QCD needs reported IRA gross",
+            );
+          }
+          printIraQcd = true;
+        }
+        if ((item.pso_premium ?? 0) > 0) {
+          if (item.box7_ira_simple_indicator === true) {
+            throw new Error("Form 1040 PDF line 5c PSO needs a pension source");
+          }
+          if (
+            item.disability_flag === true && item.disability_as_wages === true
+          ) {
+            throw new Error(
+              "Form 1040 PDF line 5c PSO cannot label disability wages on line 1h",
+            );
+          }
+          printPensionPso = true;
+        }
+      }
+      if (printIraQcd && !(Number(fields.line4a_ira_gross) > 0)) {
+        throw new Error("Form 1040 PDF line 4c QCD needs IRA line 4a");
+      }
+      if (printPensionPso && !(Number(fields.line5a_pension_gross) > 0)) {
+        throw new Error("Form 1040 PDF line 5c PSO needs pension line 5a");
       }
     }
     if (
@@ -712,6 +761,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_ira_qcd: printIraQcd,
+      print_pension_pso: printPensionPso,
       print_resident_election: residentElection !== undefined,
       print_resident_election_name: residentElection,
       print_mfs_spouse_full_name: printMfsSpouseName,
