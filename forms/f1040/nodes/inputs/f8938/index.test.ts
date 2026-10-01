@@ -5,6 +5,10 @@ import {
   ForeignAssetType,
   form8938ThresholdDecision,
 } from "./index.ts";
+import {
+  form8938AbroadEligibilityFixture,
+  form8938UsEligibilityFixture,
+} from "./eligibility-fixture.ts";
 
 function asset(overrides: Record<string, unknown> = {}) {
   return {
@@ -44,6 +48,7 @@ function input(overrides: Record<string, unknown> = {}) {
     annual_income_tax_return_required: true,
     filing_status: "single",
     residence: { location: "united_states" },
+    eligibility_evidence: form8938UsEligibilityFixture(),
     max_value_all_assets: 80_000,
     year_end_value_all_assets: 55_000,
     assets: [asset()],
@@ -80,7 +85,16 @@ Deno.test("f8938: threshold is strictly greater; no annual return means no 8938 
     })],
   }));
   assertEquals(form8938ThresholdDecision(boundary).filingRequired, false);
-  const noReturn = parsed(input({ annual_income_tax_return_required: false }));
+  const noReturn = parsed(input({
+    annual_income_tax_return_required: false,
+    eligibility_evidence: {
+      ...form8938UsEligibilityFixture(),
+      return_requirement: {
+        ...form8938UsEligibilityFixture().return_requirement,
+        determination_basis: "no_filing_requirement_workpaper",
+      },
+    },
+  }));
   assertEquals(form8938ThresholdDecision(noReturn).filingRequired, false);
 });
 
@@ -120,6 +134,11 @@ Deno.test("f8938: qualifying abroad status requires tax home and presence eviden
       qualifying_period_end: "2025-12-31",
       full_days_abroad_in_period: 330,
     },
+    eligibility_evidence: form8938AbroadEligibilityFixture(
+      "physical_presence_330_days",
+      "2025-01-01",
+      "2025-12-31",
+    ),
   }));
   assertEquals(form8938ThresholdDecision(value).yearEndThreshold, 200_000);
   assertEquals(form8938ThresholdDecision(value).filingRequired, false);
@@ -132,6 +151,11 @@ Deno.test("f8938: qualifying abroad status requires tax home and presence eviden
       qualifying_period_start: "2024-01-01",
       qualifying_period_end: "2025-12-31",
     },
+    eligibility_evidence: form8938AbroadEligibilityFixture(
+      "bona_fide_resident_full_year",
+      "2024-01-01",
+      "2025-12-31",
+    ),
   }));
   assertEquals(form8938ThresholdDecision(joint).yearEndThreshold, 400_000);
   assertEquals(form8938ThresholdDecision(joint).anyTimeThreshold, 600_000);
@@ -219,4 +243,45 @@ Deno.test("f8938: rejects tampered currency, aggregate, ownership and Part IV ev
       filing_status: "mfs",
       assets: [asset({ owner: "joint_with_spouse" })],
     })), Error);
+});
+
+Deno.test("f8938: eligibility requires distinct reviewed status, residence, and filing records", () => {
+  const evidence = form8938UsEligibilityFixture();
+  assertThrows(() => parsed(input({ eligibility_evidence: undefined })));
+  assertThrows(() =>
+    parsed(input({ specified_individual_type: "resident_alien" }))
+  );
+  assertThrows(() =>
+    parsed(input({
+      eligibility_evidence: {
+        ...evidence,
+        return_requirement: {
+          ...evidence.return_requirement,
+          determination_basis: "no_filing_requirement_workpaper",
+        },
+      },
+    }))
+  );
+  assertThrows(() =>
+    parsed(input({
+      eligibility_evidence: {
+        ...evidence,
+        us_residence: {
+          ...evidence.us_residence,
+          document_reference: evidence.legal_status.document_reference,
+        },
+      },
+    }))
+  );
+  assertThrows(() =>
+    parsed(input({
+      eligibility_evidence: {
+        ...evidence,
+        us_residence: {
+          ...evidence.us_residence,
+          subject_ssn: "999999999",
+        },
+      },
+    }))
+  );
 });

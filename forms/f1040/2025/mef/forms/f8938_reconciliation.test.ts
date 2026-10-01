@@ -13,10 +13,14 @@ import { assertForm8938ReturnReconciliation } from "./f8938_reconciliation.ts";
 function prepared(): MefBuildContext {
   return {
     phase: "final",
-    filer: { filingStatus: FilingStatus.Single } as FilerIdentity,
+    filer: {
+      primarySSN: "111223333",
+      filingStatus: FilingStatus.Single,
+    } as FilerIdentity,
     pending: {
       f1040: {
         filing_status: "single",
+        taxpayer_ssn: "111223333",
         line2b_taxable_interest: 200,
         line3b_ordinary_dividends: 100,
       },
@@ -99,6 +103,7 @@ Deno.test("staged Form 8938 rejects changed finalized line, payer, and return st
         ...base.pending,
         f1040: {
           filing_status: "single",
+          taxpayer_ssn: "111223333",
           line2b_taxable_interest: 201,
           line3b_ordinary_dividends: 100,
         },
@@ -123,6 +128,71 @@ Deno.test("staged Form 8938 rejects changed finalized line, payer, and return st
       filer: {
         filingStatus: FilingStatus.MarriedFilingJointly,
       } as FilerIdentity,
+    })
+  );
+});
+
+Deno.test("staged Form 8938 rejects reviewed evidence for another return owner", () => {
+  const source = form8938Fixture();
+  const base = prepared();
+  assertThrows(() =>
+    assertForm8938ReturnReconciliation(source, {
+      ...base,
+      filer: {
+        ...base.filer!,
+        primarySSN: "999999999",
+      },
+    })
+  );
+  assertThrows(() =>
+    assertForm8938ReturnReconciliation(source, {
+      ...base,
+      pending: {
+        ...base.pending,
+        f1040: {
+          ...(base.pending!.f1040 as Record<string, unknown>),
+          taxpayer_ssn: "999999999",
+        },
+      },
+    })
+  );
+});
+
+Deno.test("staged Form 8938 spouse asset needs the spouse on the finalized return", () => {
+  const source = form8938Fixture();
+  const joint = {
+    ...source,
+    filing_status: "mfj",
+    max_value_all_assets: 160_000,
+    year_end_value_all_assets: 120_000,
+    assets: source.assets.map((asset, index) =>
+      index === 0
+        ? {
+          ...asset,
+          owner: "joint_with_spouse",
+          maximum_value_native: 88_000,
+          maximum_value_usd: 110_000,
+          year_end_value_native: 64_000,
+          year_end_value_usd: 80_000,
+        }
+        : asset
+    ),
+  };
+  const base = prepared();
+  assertThrows(() =>
+    assertForm8938ReturnReconciliation(joint, {
+      ...base,
+      filer: {
+        ...base.filer!,
+        filingStatus: FilingStatus.MarriedFilingJointly,
+      },
+      pending: {
+        ...base.pending,
+        f1040: {
+          ...(base.pending!.f1040 as Record<string, unknown>),
+          filing_status: "mfj",
+        },
+      },
     })
   );
 });

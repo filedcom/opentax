@@ -1,4 +1,5 @@
 import { ForeignAssetType } from "../../../nodes/inputs/f8938/index.ts";
+import { form8938UsEligibilityFixture } from "../../../nodes/inputs/f8938/eligibility-fixture.ts";
 
 /** Reviewed-shape fixture only; no real taxpayer or institution identifiers. */
 export function form8938Fixture() {
@@ -7,6 +8,7 @@ export function form8938Fixture() {
     annual_income_tax_return_required: true,
     filing_status: "single",
     residence: { location: "united_states" },
+    eligibility_evidence: form8938UsEligibilityFixture(),
     max_value_all_assets: 100_000,
     year_end_value_all_assets: 95_000,
     assets: [

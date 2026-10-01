@@ -15,6 +15,19 @@ individual's threshold. An MFS asset jointly owned with a specified spouse
 counts at one-half for the threshold, but retains its full value for Form 8938
 detail.
 
+The eligibility source now requires separately reviewed legal-status,
+return-requirement and residence records with subject SSN, reviewer reference,
+document reference and SHA-256 digest. A U.S.-residence claim needs its own
+residence record. The higher abroad threshold needs distinct foreign tax-home
+and presence records; the latter must identify the same qualifying period as the
+claim. Citizenship/residency document kind must match the claimed
+specified-individual type, and the filing workpaper basis must agree with the
+claimed required-return status. The final staged join binds the evidence SSN to
+both the prepared filer and finalized Form 1040 taxpayer SSN, and requires a
+prepared spouse identity for joint-return spouse assets. These records are
+source metadata; the app does not yet verify the referenced document bytes or
+the reviewer determination.
+
 The source contract validates USD conversions against the stated December 31
 rate, year-end aggregates against ownership-adjusted assets, and contemporaneous
 peak bounds. It cannot infer a precise peak by summing individual asset maxima
@@ -43,10 +56,12 @@ that helper.
 are absent from the shared registries and the existing MeF/PDF guard remains in
 place. Before opening export:
 
-1. Establish taxpayer citizenship/residency and whether a return was legally
-   required from independently verified evidence. The current finalized return
-   graph proves a Form 1040 was prepared and checks filing status, but does not
-   carry these two legal determinations.
+1. Authenticate the referenced status, residence, tax-home, presence and
+   filing-requirement documents and independently review the legal
+   determinations. A prepared Form 1040 and a stored digest cannot alone prove
+   citizenship, tax residence or that filing was legally required. The
+   possession-resident and treaty dual-resident exceptions need separate source
+   routes and remain unsupported.
 2. Review any supplementary issuer statement and build prepared-document
    identity joins for Forms 3520, 3520-A and 8865, and other Form 5471 filing
    categories beyond the bounded Category 5a route. The TY2025 return graph has

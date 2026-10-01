@@ -231,14 +231,30 @@ export function assertForm8938ReturnReconciliation(
   }
   const { input } = projectForm8938(raw);
   const form1040 = record(context.pending.f1040);
+  const ownerSsn = input.eligibility_evidence.legal_status.subject_ssn;
   if (
     !input.annual_income_tax_return_required ||
+    ownerSsn !== context.filer.primarySSN.replaceAll("-", "") ||
+    typeof form1040.taxpayer_ssn !== "string" ||
+    ownerSsn !== form1040.taxpayer_ssn.replaceAll("-", "") ||
     context.filer.filingStatus !== status[input.filing_status] ||
     form1040.filing_status !== returnStatus[input.filing_status]
   ) {
     throw new Error(
       "Form 8938 individual or filing status differs from finalized Form 1040",
     );
+  }
+  if (
+    input.assets.some((asset) =>
+      asset.owner === "spouse" || asset.owner === "joint_with_spouse"
+    ) && (
+      !context.filer.spouse?.ssn ||
+      typeof form1040.spouse_ssn !== "string" ||
+      context.filer.spouse.ssn.replaceAll("-", "") !==
+        form1040.spouse_ssn.replaceAll("-", "")
+    )
+  ) {
+    throw new Error("Form 8938 spouse assets need a finalized spouse identity");
   }
   reconcilePartIII(input.assets, context.pending, context);
   reconcilePartIV(input.assets, context.pending, context);

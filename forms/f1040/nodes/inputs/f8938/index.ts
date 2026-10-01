@@ -235,7 +235,7 @@ const assetSchema = z.object({
   }
 });
 
-const usResidence = z.object({ location: z.literal("united_states") });
+const usResidence = z.object({ location: z.literal("united_states") }).strict();
 const abroadResidence = z.object({
   location: z.literal("qualifying_abroad"),
   foreign_tax_home_country: z.string().regex(/^[A-Z]{2}$/),
@@ -246,7 +246,59 @@ const abroadResidence = z.object({
   qualifying_period_start: date,
   qualifying_period_end: date,
   full_days_abroad_in_period: z.number().int().min(0).max(366).optional(),
-});
+}).strict();
+
+const reviewedEvidence = z.object({
+  document_reference: z.string().trim().min(1),
+  document_sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  subject_ssn: z.string().regex(/^\d{9}$/),
+  reviewer_reference: z.string().trim().min(1),
+  reviewed_on: date,
+}).strict();
+
+const eligibilityEvidence = z.object({
+  legal_status: reviewedEvidence.extend({
+    evidence_kind: z.enum([
+      "us_passport",
+      "citizenship_certificate",
+      "us_birth_record",
+      "permanent_resident_card",
+      "substantial_presence_determination",
+      "section_6013_joint_election",
+    ]),
+  }).strict(),
+  return_requirement: reviewedEvidence.extend({
+    determination_basis: z.enum([
+      "gross_income_threshold_workpaper",
+      "self_employment_income_workpaper",
+      "other_statutory_filing_requirement_workpaper",
+      "no_filing_requirement_workpaper",
+    ]),
+  }).strict(),
+  us_residence: reviewedEvidence.extend({
+    evidence_kind: z.enum([
+      "government_address_record",
+      "lease_or_deed",
+      "utility_record",
+    ]),
+  }).strict().optional(),
+  foreign_tax_home: reviewedEvidence.extend({
+    evidence_kind: z.enum([
+      "employment_or_business_record",
+      "foreign_tax_residence_record",
+    ]),
+    country: z.string().regex(/^[A-Z]{2}$/),
+  }).strict().optional(),
+  foreign_presence: reviewedEvidence.extend({
+    evidence_kind: z.enum([
+      "entry_exit_records",
+      "passport_travel_records",
+      "foreign_residence_determination",
+    ]),
+    qualifying_period_start: date,
+    qualifying_period_end: date,
+  }).strict().optional(),
+}).strict();
 
 export const inputSchema = z.object({
   specified_individual_type: z.enum([
@@ -257,10 +309,100 @@ export const inputSchema = z.object({
   annual_income_tax_return_required: z.boolean(),
   filing_status: z.enum(["single", "mfj", "mfs", "hoh", "qw"]),
   residence: z.discriminatedUnion("location", [usResidence, abroadResidence]),
+  eligibility_evidence: eligibilityEvidence,
   max_value_all_assets: money, // contemporaneous peak, not sum of per-asset maxima
   year_end_value_all_assets: money,
   assets: z.array(assetSchema).min(1),
-}).superRefine((input, ctx) => {
+}).strict().superRefine((input, ctx) => {
+  const evidence = input.eligibility_evidence;
+  const statusKinds = {
+    us_citizen: ["us_passport", "citizenship_certificate", "us_birth_record"],
+    resident_alien: [
+      "permanent_resident_card",
+      "substantial_presence_determination",
+    ],
+    nonresident_joint_return_election: ["section_6013_joint_election"],
+  } as const;
+  if (
+    !(statusKinds[input.specified_individual_type] as readonly string[])
+      .includes(evidence.legal_status.evidence_kind)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["eligibility_evidence", "legal_status", "evidence_kind"],
+      message:
+        "Reviewed status evidence differs from specified-individual type",
+    });
+  }
+  if (
+    input.annual_income_tax_return_required ===
+      (evidence.return_requirement.determination_basis ===
+        "no_filing_requirement_workpaper")
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["eligibility_evidence", "return_requirement"],
+      message: "Reviewed filing requirement differs from the claimed duty",
+    });
+  }
+  const documents = [
+    evidence.legal_status,
+    evidence.return_requirement,
+    evidence.us_residence,
+    evidence.foreign_tax_home,
+    evidence.foreign_presence,
+  ].filter((document) => document !== undefined);
+  if (
+    new Set(documents.map((document) => document.document_reference)).size !==
+      documents.length ||
+    new Set(documents.map((document) => document.document_sha256)).size !==
+      documents.length ||
+    documents.some((document) =>
+      document.subject_ssn !== evidence.legal_status.subject_ssn
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["eligibility_evidence"],
+      message: "Eligibility records must be distinct and belong to one filer",
+    });
+  }
+  if (input.residence.location === "united_states") {
+    if (
+      !evidence.us_residence || evidence.foreign_tax_home ||
+      evidence.foreign_presence
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eligibility_evidence"],
+        message: "U.S. threshold needs reviewed U.S. residence evidence",
+      });
+    }
+  } else {
+    if (
+      evidence.us_residence || !evidence.foreign_tax_home ||
+      !evidence.foreign_presence ||
+      evidence.foreign_tax_home?.country !==
+        input.residence.foreign_tax_home_country ||
+      evidence.foreign_presence?.qualifying_period_start !==
+        input.residence.qualifying_period_start ||
+      evidence.foreign_presence?.qualifying_period_end !==
+        input.residence.qualifying_period_end ||
+      (input.residence.presence_test === "bona_fide_resident_full_year" &&
+        evidence.foreign_presence?.evidence_kind !==
+          "foreign_residence_determination") ||
+      (input.residence.presence_test === "physical_presence_330_days" &&
+        evidence.foreign_presence?.evidence_kind ===
+          "foreign_residence_determination")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eligibility_evidence"],
+        message:
+          "Abroad threshold needs matching tax-home and presence records",
+      });
+    }
+  }
   if (
     input.specified_individual_type === "nonresident_joint_return_election" &&
     input.filing_status !== "mfj"
