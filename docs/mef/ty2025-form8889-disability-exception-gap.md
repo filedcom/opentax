@@ -36,14 +36,14 @@ the withdrawal after disability. Native and PDF export recompute both Forms 8889
 and match their taxable distributions and 20% charges to Schedule 1, Schedule 2,
 and Form 1040 lines 8 and 23. A positive paired-owner fixture and changed
 disability-source and Form 1040 tax fixtures are authored for deferred
-validation. Either owner can also allocate one sourced, code-1 rollover on
-line 14b: a pre-disability withdrawal for the disability owner, or a dated
-pre-age-65 withdrawal for the age-exception owner. A dated deposit within 60
-days, distinct source references, and transaction-level rollover allocations
-reconcile the two Forms 8889 with Schedule 1, Schedule 2, and Form 1040.
-Native/PDF fixtures for each owner reject a late deposit and altered Form 1040
-tax. This bounded combination excludes two simultaneous rollovers, prior
-excess, and Part III testing-period events.
+validation. Either owner can also allocate one sourced, code-1 rollover on line
+14b: a pre-disability withdrawal for the disability owner, or a dated pre-age-65
+withdrawal for the age-exception owner. A dated deposit within 60 days, distinct
+source references, and transaction-level rollover allocations reconcile the two
+Forms 8889 with Schedule 1, Schedule 2, and Form 1040. Native/PDF fixtures for
+each owner reject a late deposit and altered Form 1040 tax. This bounded
+combination excludes two simultaneous rollovers, prior excess, and Part III
+testing-period events.
 
 One primary HSA owner can also combine age-65 and disability exceptions in 2025.
 This bounded allocation accepts distinct code-1 Form 1099-SA sources before
@@ -86,12 +86,27 @@ distributions on both sides of the 65th birthday. Only the remaining taxable
 January dollars incur the 20% charge. Changed rollover date, transaction
 allocation, and Form 1040 line 23 are rejected.
 
-Same-day event ordering, rollovers after disability in that order, timely excess
-withdrawal, more than one rollover per owner, death, and nonspouse beneficiary rules
-remain open. Source references and disability confirmation are entered evidence,
-not independently authenticated medical or trustee records. Focused calculator,
-MeF, and PDF cases are written but intentionally unrun pending the agreed full
-test batch; XSD, visual PDF, and ATS gates also remain open.
+One primary HSA owner with disability evidence alone may now allocate a single
+post-disability HSA-to-HSA rollover from a code-3 Form 1099-SA. The rollover's
+dated withdrawal must be strictly after the documented disability date, match
+one dated transaction and the same code-3 box-1 source, and be redeposited to
+the same beneficiary within 60 days. It reaches line 14b, reduces taxable line
+16 and the line-17a exception allocation, and native/PDF export checks Schedule
+1, Schedule 2, and final Form 1040 line 23. A positive source-to-return fixture
+and altered date, owner, allocation, and final-tax fixtures are written but
+unrun. The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+put qualified rollovers on line 14b without an age or disability restriction;
+the
+[2025 Form 1099-SA code instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+assign code 3 to distributions after disability.
+
+Same-day event ordering, post-disability rollovers for paired owners or a
+combined age-65/disability claim, timely excess withdrawal, more than one
+rollover per owner, death, and nonspouse beneficiary rules remain open. Source
+references and disability confirmation are entered evidence, not independently
+authenticated medical or trustee records. Focused calculator, MeF, and PDF cases
+are written but intentionally unrun pending the agreed full test batch; XSD,
+visual PDF, and ATS gates also remain open.
 
 ## Separate paired owner rollovers (written, unrun)
 
@@ -103,5 +118,5 @@ precedes disability. Owner Form 8889 lines 14b, 16, and 17b reconcile to the
 combined Schedule 1 income and Schedule 2 penalty, and native/PDF export checks
 Form 1040 lines 8 and 23. Reused owner references and changed final tax reject.
 Positive and tamper fixtures are authored for deferred bulk validation. This
-route does not cover multiple rollovers for one owner, a post-disability rollover,
-or source-byte authentication.
+route does not cover multiple rollovers for one owner, a post-disability
+rollover, or source-byte authentication.

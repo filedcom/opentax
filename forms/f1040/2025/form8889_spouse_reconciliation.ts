@@ -199,6 +199,16 @@ export function reconcileDatedExceptionForm8889(
     print_line20: z.number().optional(),
     print_line21: z.number().optional(),
   }).passthrough().parse(filed);
+  const rollover = source.hsa_excluded_distributions?.rollover;
+  const postDisabilityCode3Rollover = rollover !== undefined &&
+    source.age_65_exception_evidence === undefined &&
+    source.disability_exception_evidence !== undefined &&
+    rollover.distribution_date >
+      source.disability_exception_evidence.disability_date &&
+    source.form1099_sa_distributions?.some((item) =>
+      item.source_reference === rollover.form1099_sa_source_reference &&
+      item.box3_distribution_code === "3"
+    );
   if (
     (schedule1.line13_hsa_deduction ?? 0) !==
       (printed.print_line13_deduction ?? 0) ||
@@ -211,8 +221,9 @@ export function reconcileDatedExceptionForm8889(
     schedule1.line10_total_additional_income !==
       return1040.line8_additional_income ||
     schedule1.line26_total_adjustments !== return1040.line10_adjustments ||
-    (source.age_65_exception_evidence !== undefined &&
-      source.disability_exception_evidence !== undefined &&
+    ((source.age_65_exception_evidence !== undefined &&
+        source.disability_exception_evidence !== undefined ||
+      postDisabilityCode3Rollover) &&
       return1040.line23_other_taxes !==
         (printed.print_line17b_penalty ?? 0) + (printed.print_line21 ?? 0))
   ) {

@@ -909,14 +909,24 @@ function verifyDistributionSources(
     const form = records?.find((record) =>
       record.source_reference === rollover.form1099_sa_source_reference
     );
+    const disability = input.disability_exception_evidence;
+    const sourcedPostDisabilityCode3 = form?.box3_distribution_code === "3" &&
+      input.beneficiary_identity.owner === TS.T &&
+      input.spouse_hsa === undefined &&
+      input.spouse_has_separate_hsa !== true &&
+      input.age_65_exception_evidence === undefined &&
+      disability !== undefined &&
+      rollover.distribution_date > disability.disability_date;
     if (
-      !form || form.box3_distribution_code !== "1" ||
+      !form ||
+      (form.box3_distribution_code !== "1" &&
+        !sourcedPostDisabilityCode3) ||
       form.box1_gross_distribution < rollover.amount ||
       rollover.form1099_sa_source_reference ===
         rollover.contribution_source_reference
     ) {
       throw new Error(
-        "Form 8889 rollover needs a linked code-1 Form 1099-SA with box 1 covering the excluded amount",
+        "Form 8889 rollover needs a linked code-1 Form 1099-SA or one strictly post-disability primary-owner code-3 source with box 1 covering the excluded amount",
       );
     }
   }
