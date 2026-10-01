@@ -136,6 +136,37 @@ function jointOwnerSale(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function reissuedMccSale(overrides: Record<string, unknown> = {}) {
+  const sale = transaction({
+    subsidy_type: "mortgage_credit_certificate",
+    ...overrides,
+  });
+  return {
+    ...sale,
+    reviewed_mcc_reissue: {
+      original_certificate_reference: "issuer-notification-14-main",
+      reissued_certificate_reference: "reissued-mcc-14-main",
+      refinance_settlement_reference: "refinance-closing-14-main",
+      issuer_compliance_reference: "issuer-reissue-compliance-14-main",
+      final_payoff_reference: "sale-payoff-14-main",
+      original_certificate_issued_to_borrower_confirmed: true,
+      original_certificate_replaced_entirely_confirmed: true,
+      issuer_no_annual_credit_increase_confirmed: true,
+      issuer_name: "Idaho Housing Agency",
+      issuer_state: "ID",
+      property_address: sale.property_address,
+      original_loan_closing_date: sale.original_loan_closing_date,
+      refinance_date: "2022-06-01",
+      reissued_certificate_effective_date: "2022-06-01",
+      final_replacement_loan_payoff_date: sale.full_repayment_date,
+      original_certificate_outstanding_debt_at_refinance: 170_000,
+      replacement_certificate_mortgage_debt: 160_000,
+      original_certificate_credit_rate: 0.20,
+      replacement_certificate_credit_rate: 0.18,
+    },
+  };
+}
+
 function compute(...items: ReturnType<typeof transaction>[]) {
   const input = f8828.inputSchema.parse({ f8828s: items });
   return f8828.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -231,6 +262,62 @@ Deno.test("f8828: jointly liable owner rejects share and liability tamper", () =
   ) {
     assertThrows(() => compute({ ...valid, reviewed_coownership }), Error);
   }
+});
+
+Deno.test("f8828: qualifying MCC reissue preserves original closing and final payoff", () => {
+  const source =
+    f8828.inputSchema.parse({ f8828s: [reissuedMccSale()] }).f8828s[0];
+  const lines = computeF8828Lines(source);
+  assertEquals(lines.line7_full_years, 4);
+  assertEquals(lines.line20_holding_period_percentage, 100);
+  assertEquals(lines.line23_tax, 6_250);
+  assertEquals(
+    fieldsOf(compute(reissuedMccSale()).outputs, schedule2)
+      ?.line17b_mortgage_subsidy_recapture,
+    6_250,
+  );
+});
+
+Deno.test("f8828: MCC reissue rejects missing issuer conditions and refinance-date payoff", () => {
+  const valid = reissuedMccSale();
+  for (
+    const reviewed_mcc_reissue of [
+      {
+        ...valid.reviewed_mcc_reissue,
+        original_certificate_reference: "other-mcc",
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        reissued_certificate_effective_date: "2022-06-02",
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        replacement_certificate_mortgage_debt: 175_000,
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        replacement_certificate_credit_rate: 0.21,
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        issuer_no_annual_credit_increase_confirmed: false,
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        final_replacement_loan_payoff_date: "2022-06-01",
+      },
+      {
+        ...valid.reviewed_mcc_reissue,
+        property_address: { ...valid.property_address, line1: "99 Other St" },
+      },
+    ]
+  ) {
+    assertThrows(() => compute({ ...valid, reviewed_mcc_reissue }), Error);
+  }
+  assertThrows(
+    () => compute({ ...valid, subsidy_type: "tax_exempt_bond_loan" }),
+    Error,
+  );
 });
 
 Deno.test("f8828: income percentage rounds to nearest whole percent and caps at 100", () => {

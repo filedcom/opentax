@@ -27,6 +27,18 @@ lines 9, 10, 12 and 19, then calculates only that owner's tax. This bounded
 branch requires exact whole-dollar allocation and a Form 8949 row for that
 owner's taxable gain.
 
+The bounded first-reissue MCC sale path follows the
+[IRS reissuance and line 8 instructions](https://www.irs.gov/pub/irs-pdf/i8828.pdf).
+A replacement certificate must take effect at refinancing, apply to the same
+property, replace the original certificate entirely, specify no more than the
+old outstanding debt, keep the certificate credit rate no higher, and be
+issuer-certified not to increase allowable annual credit. The original
+subsidized loan closing date remains line 5 and starts the nine-year recapture
+period. The qualifying reissue is treated as an extension, so line 8 uses final
+payoff of the replacement loan, not the refinancing date. The staged source
+requires original and reissued certificate, refinance settlement, issuer
+compliance, and final payoff references.
+
 For taxable home gain, exactly one Form 8949 row must carry the same transaction
 ID, net proceeds, basis, disposition date and taxable gain. A partial exclusion
 requires code H. A fully excluded gain requires a reviewed exclusion record
@@ -37,11 +49,13 @@ bytes**. The current return graph cannot independently verify the issuer
 notification or closing/basis/exclusion/gift/ownership documents. It also lacks
 a modeled source path for transfers with consideration, spouse/ex-spouse divorce
 transfers, casualty replacement, non-joint-liability co-ownership, qualified
-subordinate mortgage loans, reissued MCCs, and amended returns. A Form 8949 row
-is required by this staged path for taxable home gain; the exact gain handoff
-for other reporting routes remains unsupported. Public MeF and PDF export must
-keep the Form 8828 guard closed until those filing rules and attachment
-validation are resolved.
+subordinate mortgage loans, MCCs transferred to a new borrower or repeatedly
+reissued, and amended returns. The issuer's no-annual-credit-increase
+certification is referenced but its document bytes and Form 8396 credit history
+are not independently reconciled. A Form 8949 row is required by this staged
+path for taxable home gain; the exact gain handoff for other reporting routes
+remains unsupported. Public MeF and PDF export must keep the Form 8828 guard
+closed until those filing rules and attachment validation are resolved.
 
 Foreclosure remains closed:
 [Form 8828 line 9](https://www.irs.gov/pub/irs-pdf/i8828.pdf) directs fair

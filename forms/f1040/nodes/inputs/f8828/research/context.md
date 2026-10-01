@@ -45,6 +45,19 @@ amounts. It derives only the taxpayer's exact whole-dollar share for lines 9,
 10, 12 and 19. The other owner's Form 8828 belongs on that owner's return; this
 return includes only the filer's share.
 
+For a first reissue of an existing MCC to the same borrower, the
+[IRS instructions](https://www.irs.gov/pub/irs-pdf/i8828.pdf) treat a qualifying
+refinanced MCC loan as an extension of the original. The staged source requires
+original and reissued certificates, refinance settlement, issuer compliance and
+final payoff references; same property and issuer; complete replacement
+effective at refinance; replacement debt no greater than outstanding old debt; a
+credit rate no higher than the old rate; and issuer certification that allowable
+annual credit does not increase. Original closing remains line 5 and the
+nine-year clock's start. Line 8 uses final payoff, not the refinance date, so an
+early refinance with a qualifying reissue does not trigger the early-repayment
+worksheet. Transferred or repeatedly reissued MCCs and byte-level
+certificate/Form 8396 credit-history reconciliation remain unsupported.
+
 ## Calculation
 
 | Line       | Derivation                                                                                                                                                                                                                                            |

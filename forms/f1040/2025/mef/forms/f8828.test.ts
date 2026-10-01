@@ -136,6 +136,37 @@ function jointOwnerSale(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function reissuedMccSale(overrides: Record<string, unknown> = {}) {
+  const sale = item({
+    subsidy_type: "mortgage_credit_certificate",
+    ...overrides,
+  });
+  return {
+    ...sale,
+    reviewed_mcc_reissue: {
+      original_certificate_reference: "issuer-notification-14-main",
+      reissued_certificate_reference: "reissued-mcc-14-main",
+      refinance_settlement_reference: "refinance-closing-14-main",
+      issuer_compliance_reference: "issuer-reissue-compliance-14-main",
+      final_payoff_reference: "sale-payoff-14-main",
+      original_certificate_issued_to_borrower_confirmed: true,
+      original_certificate_replaced_entirely_confirmed: true,
+      issuer_no_annual_credit_increase_confirmed: true,
+      issuer_name: "Idaho Housing Agency",
+      issuer_state: "ID",
+      property_address: sale.property_address,
+      original_loan_closing_date: sale.original_loan_closing_date,
+      refinance_date: "2022-06-01",
+      reissued_certificate_effective_date: "2022-06-01",
+      final_replacement_loan_payoff_date: sale.full_repayment_date,
+      original_certificate_outstanding_debt_at_refinance: 170_000,
+      replacement_certificate_mortgage_debt: 160_000,
+      original_certificate_credit_rate: 0.20,
+      replacement_certificate_credit_rate: 0.18,
+    },
+  };
+}
+
 function pending(total = 6_250) {
   return {
     f1040: { line11_agi: 105_000, line2a_tax_exempt: 1_000 },
@@ -298,6 +329,61 @@ Deno.test("staged IRS8828 joint-owner source rejects issuer and ownership tamper
     },
   };
   assertThrows(() => form8828.build({ f8828s: [wrongShare] }), Error);
+});
+
+Deno.test("staged IRS8828 reissued MCC keeps original loan date and final payoff on native/PDF", () => {
+  const source = { f8828s: [reissuedMccSale()] };
+  const xml = form8828.build(source, { pending: pending() });
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyMortgageCrCertInd>true</MortgSbsdyMortgageCrCertInd>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyOriginalLoanClsDt>2020-06-01</MortgSbsdyOriginalLoanClsDt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyOrigLoanPaymentDt>2025-03-01</MortgSbsdyOrigLoanPaymentDt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyHoldingPeriodRt>1.00</MortgSbsdyHoldingPeriodRt>",
+  );
+  const printed = form8828Pdf.instances!(source, {
+    nameLine1: "Jane Taxpayer",
+    primarySSN: "123456789",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "14 Main St", city: "Boise", state: "ID", zip: "83702" },
+  }, pending());
+  assertEquals(printed[0].closing_year, "2020");
+  assertEquals(printed[0].repayment_year, "2025");
+  assertEquals(printed[0].line20, 100);
+});
+
+Deno.test("staged IRS8828 reissued MCC rejects certificate and payoff tamper", () => {
+  const valid = reissuedMccSale();
+  assertThrows(() =>
+    form8828.build({
+      f8828s: [{
+        ...valid,
+        reviewed_mcc_reissue: {
+          ...valid.reviewed_mcc_reissue,
+          replacement_certificate_mortgage_debt: 180_000,
+        },
+      }],
+    }), Error);
+  assertThrows(() =>
+    form8828.build({
+      f8828s: [{
+        ...valid,
+        reviewed_mcc_reissue: {
+          ...valid.reviewed_mcc_reissue,
+          final_replacement_loan_payoff_date: "2022-06-01",
+        },
+      }],
+    }), Error);
 });
 
 Deno.test("staged IRS8828 emits each property, including required zero-tax attachment", () => {

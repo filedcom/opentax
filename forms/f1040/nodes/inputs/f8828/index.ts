@@ -83,6 +83,27 @@ const reviewedCoownershipSchema = z.object({
   whole_highest_federally_subsidized_loan_amount: moneySchema,
   whole_issuer_federally_subsidized_amount: moneySchema,
 });
+const reviewedMccReissueSchema = z.object({
+  original_certificate_reference: sourceReference,
+  reissued_certificate_reference: sourceReference,
+  refinance_settlement_reference: sourceReference,
+  issuer_compliance_reference: sourceReference,
+  final_payoff_reference: sourceReference,
+  original_certificate_issued_to_borrower_confirmed: z.literal(true),
+  original_certificate_replaced_entirely_confirmed: z.literal(true),
+  issuer_no_annual_credit_increase_confirmed: z.literal(true),
+  issuer_name: z.string().min(1),
+  issuer_state: z.string().regex(/^[A-Z]{2}$/),
+  property_address: usAddressSchema,
+  original_loan_closing_date: dateSchema,
+  refinance_date: dateSchema,
+  reissued_certificate_effective_date: dateSchema,
+  final_replacement_loan_payoff_date: dateSchema,
+  original_certificate_outstanding_debt_at_refinance: moneySchema,
+  replacement_certificate_mortgage_debt: moneySchema,
+  original_certificate_credit_rate: z.number().finite().positive().max(1),
+  replacement_certificate_credit_rate: z.number().finite().positive().max(1),
+});
 
 function coownerShare(
   amount: number,
@@ -90,6 +111,13 @@ function coownerShare(
   denominator: number,
 ): number {
   return amount * numerator / denominator;
+}
+function sameUsAddress(
+  a: z.infer<typeof usAddressSchema>,
+  b: z.infer<typeof usAddressSchema>,
+): boolean {
+  return a.line1 === b.line1 && (a.line2 ?? "") === (b.line2 ?? "") &&
+    a.city === b.city && a.state === b.state && a.zip === b.zip;
 }
 
 export const itemSchema = z.object({
@@ -99,6 +127,7 @@ export const itemSchema = z.object({
   disposition_kind: z.enum(["sale", "gift"]),
   reviewed_gift: reviewedGiftSchema.optional(),
   reviewed_coownership: reviewedCoownershipSchema.optional(),
+  reviewed_mcc_reissue: reviewedMccReissueSchema.optional(),
   property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
   issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination
@@ -121,6 +150,42 @@ export const itemSchema = z.object({
   issuer_federally_subsidized_amount: moneySchema, // issuer notification, line 19
   issuer_holding_period_percentage: z.number().int().min(0).max(100), // issuer table, line 20
 }).superRefine((item, ctx) => {
+  const reissue = item.reviewed_mcc_reissue;
+  if (reissue) {
+    if (
+      item.subsidy_type !== "mortgage_credit_certificate" ||
+      item.disposition_kind !== "sale" ||
+      item.reviewed_coownership !== undefined ||
+      reissue.original_certificate_reference !==
+        item.reviewed_issuer.document_reference ||
+      reissue.issuer_name !== item.issuer_name ||
+      reissue.issuer_state !== item.issuer_state ||
+      reissue.original_loan_closing_date !== item.original_loan_closing_date ||
+      !sameUsAddress(reissue.property_address, item.property_address) ||
+      reissue.reissued_certificate_effective_date !== reissue.refinance_date ||
+      reissue.final_replacement_loan_payoff_date !== item.full_repayment_date ||
+      parseDate(reissue.refinance_date) <=
+        parseDate(item.original_loan_closing_date) ||
+      parseDate(reissue.refinance_date) >= parseDate(item.disposition_date) ||
+      parseDate(reissue.final_replacement_loan_payoff_date) <=
+        parseDate(reissue.refinance_date) ||
+      reissue.original_certificate_outstanding_debt_at_refinance <= 0 ||
+      reissue.replacement_certificate_mortgage_debt <= 0 ||
+      reissue.original_certificate_outstanding_debt_at_refinance >
+        item.highest_federally_subsidized_loan_amount ||
+      reissue.replacement_certificate_mortgage_debt >
+        reissue.original_certificate_outstanding_debt_at_refinance ||
+      reissue.replacement_certificate_credit_rate >
+        reissue.original_certificate_credit_rate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reviewed_mcc_reissue"],
+        message:
+          "Reissued MCC must preserve original loan/property, be effective at refinance, and not increase debt, rate, or annual credit",
+      });
+    }
+  }
   const owners = item.reviewed_coownership;
   if (owners) {
     const numerator = owners.taxpayer_share_numerator;
@@ -382,9 +447,14 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
     : line17_income_excess >= 5_000
     ? 100
     : Math.round(line17_income_excess / 5_000 * 100);
+  // A qualifying reissued MCC extends the original loan. Its refinancing
+  // settlement is not the full-repayment date for line 8 or the worksheet.
+  const effectiveRepaymentDate = item.reviewed_mcc_reissue
+    ? item.reviewed_mcc_reissue.final_replacement_loan_payoff_date
+    : item.full_repayment_date;
   const line20_holding_period_percentage = holdingPeriodPercentage(
     item.original_loan_closing_date,
-    item.full_repayment_date,
+    effectiveRepaymentDate,
     item.disposition_date,
   );
   const line21_holding_adjusted_amount = line19_federally_subsidized_amount *
