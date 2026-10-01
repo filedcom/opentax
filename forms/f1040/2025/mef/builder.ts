@@ -31,7 +31,7 @@ import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
 import { reconciledForm8908Source } from "./forms/f8908_source_reconciliation.ts";
 import { assertForm8908PwaSubmittedPdfs } from "./forms/f8908_pwa.ts";
-import { assertPreparedVehicleSaleAcknowledgments } from "./forms/f8283_vehicle_sale_evidence.ts";
+import { assertPreparedVehicleAcknowledgments } from "./forms/f8283_vehicle_sale_evidence.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 import {
@@ -446,7 +446,7 @@ export async function buildMefBundle(
     attachmentSha256ByFileName,
   );
   if (pending.f8283) {
-    await assertPreparedVehicleSaleAcknowledgments(
+    await assertPreparedVehicleAcknowledgments(
       pending.f8283,
       attachments,
       prepared.xml,

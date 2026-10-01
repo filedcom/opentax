@@ -200,12 +200,38 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
 });
 
 Deno.test("unreduced needy-transfer vehicle joins certification, native XML and filled PDF", async () => {
+  const acknowledgmentBytes = await syntheticDoneeAcknowledgment([
+    "Synthetic donee written acknowledgment - test fixture only",
+    "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",
+    "2020 Honda Civic VIN 1HGBH41JXMN109186, donated 2025-06-01",
+    "Certified transfer to needy recipient for significantly below FMV",
+    "Acknowledgment furnished 2025-06-20; no goods or services received",
+  ]);
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
   const needyVehicle = {
     ...vehicle,
     fmv: 4_000,
     deduction_claimed: 4_000,
     cost_or_adjusted_basis: 5_000,
     vehicle_sale_acknowledgment: undefined,
+    vehicle_needy_pdf_review: {
+      reviewed_by: "Pat Preparer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: base.filer.primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      vehicle_vin: "1HGBH41JXMN109186",
+      contribution_date: "2025-06-01",
+      acknowledgment_furnished_date: "2025-06-20",
+      copy_b_or_equivalent_confirmed: true,
+      needy_transfer_box5b_confirmed: true,
+      no_goods_or_services_confirmed: true,
+      reviewed_pdf_matches_source_confirmed: true,
+    },
     vehicle_needy_transfer_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -245,13 +271,7 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
       fileName: needyVehicle.vehicle_acknowledgment_attachment_file_name,
       description:
         "DoneeOrganizationContemporaneousWrittenAcknowledgment needy transfer",
-      bytes: await syntheticDoneeAcknowledgment([
-        "Synthetic donee written acknowledgment - test fixture only",
-        "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",
-        "2020 Honda Civic VIN 1HGBH41JXMN109186, donated 2025-06-01",
-        "Certified transfer to needy recipient for significantly below FMV",
-        "Acknowledgment furnished 2025-06-20; no goods or services received",
-      ]),
+      bytes: acknowledgmentBytes,
     }],
   });
   assertStringIncludes(
@@ -272,4 +292,64 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   const filled = await PDFDocument.load(pdf);
   assertEquals(filled.getPageCount(), 4);
+  await assertRejects(
+    () =>
+      buildMefBundle(pending, {
+        filer: base.filer,
+        attachments: [{
+          fileName: needyVehicle.vehicle_acknowledgment_attachment_file_name,
+          description:
+            "DoneeOrganizationContemporaneousWrittenAcknowledgment needy transfer",
+          bytes: new Uint8Array(acknowledgmentBytes).reverse(),
+        }],
+      }),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        f8283: {
+          ...pending.f8283,
+          section_a_items: [{
+            ...pending.f8283!.section_a_items![0],
+            vehicle_needy_pdf_review: {
+              ...pending.f8283!.section_a_items![0].vehicle_needy_pdf_review!,
+              vehicle_vin: "999887777",
+            },
+          }],
+        },
+      }, {
+        filer: base.filer,
+        attachments: [{
+          fileName: needyVehicle.vehicle_acknowledgment_attachment_file_name,
+          description:
+            "DoneeOrganizationContemporaneousWrittenAcknowledgment needy transfer",
+          bytes: acknowledgmentBytes,
+        }],
+      }),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        f8283: {
+          ...pending.f8283,
+          section_a_items: [{
+            ...pending.f8283!.section_a_items![0],
+            vehicle_needy_pdf_review: undefined,
+          }],
+        },
+      }, {
+        filer: base.filer,
+        attachments: [{
+          fileName: needyVehicle.vehicle_acknowledgment_attachment_file_name,
+          description:
+            "DoneeOrganizationContemporaneousWrittenAcknowledgment needy transfer",
+          bytes: acknowledgmentBytes,
+        }],
+      }),
+    Error,
+  );
 });

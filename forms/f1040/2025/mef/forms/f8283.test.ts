@@ -158,6 +158,13 @@ function needyTransferVehicle(
 ) {
   return {
     property_description: "2020 Honda Civic, good condition, 60,000 miles",
+    donee_organization_name: "City Charity",
+    donee_organization_us_address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
     is_vehicle: true,
     vehicle_vin: vin,
     vehicle_acknowledgment_attachment_file_name: fileName,
@@ -194,6 +201,34 @@ function needyTransferVehicle(
       goods_or_services_received: false,
     },
   } as const;
+}
+
+async function reviewedNeedyVehicle(
+  item: ReturnType<typeof needyTransferVehicle>,
+  bytes: Uint8Array,
+) {
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return {
+    ...item,
+    vehicle_needy_pdf_review: {
+      reviewed_by: "Pat Preparer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: testFiler().primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      vehicle_vin: item.vehicle_vin,
+      contribution_date: "2025-06-01",
+      acknowledgment_furnished_date: "2025-06-20",
+      copy_b_or_equivalent_confirmed: true as const,
+      needy_transfer_box5b_confirmed: true as const,
+      no_goods_or_services_confirmed: true as const,
+      reviewed_pdf_matches_source_confirmed: true as const,
+    },
+  };
 }
 
 function sectionBMaterialImprovementVehicle() {
@@ -504,12 +539,18 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over 
     f8283: {
       section_a_items: [
         {
-          ...needyTransferVehicle("1HGBH41JXMN109186", "Form1098C-First.pdf"),
+          ...await reviewedNeedyVehicle(
+            needyTransferVehicle("1HGBH41JXMN109186", "Form1098C-First.pdf"),
+            bytes,
+          ),
           deduction_claimed: 2_000,
           cost_or_adjusted_basis: 2_000,
         },
         {
-          ...needyTransferVehicle("1HGBH41JXMN109187", "Form1098C-Second.pdf"),
+          ...await reviewedNeedyVehicle(
+            needyTransferVehicle("1HGBH41JXMN109187", "Form1098C-Second.pdf"),
+            bytes,
+          ),
           deduction_claimed: 2_000,
           cost_or_adjusted_basis: 2_000,
         },
@@ -540,9 +581,15 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over 
 
 Deno.test("Form 8283 accepts a donee-issued written acknowledgment PDF instead of Form 1098-C", async () => {
   const fileName = "DoneeAcknowledgment-Civic.pdf";
+  const bytes = await acknowledgmentPdf();
   const xml = (await buildMefBundle({
     f8283: {
-      section_a_items: [needyTransferVehicle(undefined, fileName)],
+      section_a_items: [
+        await reviewedNeedyVehicle(
+          needyTransferVehicle(undefined, fileName),
+          bytes,
+        ),
+      ],
     },
   }, {
     filer: testFiler(),
@@ -550,7 +597,7 @@ Deno.test("Form 8283 accepts a donee-issued written acknowledgment PDF instead o
       fileName,
       description:
         "DoneeOrganizationContemporaneousWrittenAcknowledgment Civic needy transfer",
-      bytes: await acknowledgmentPdf(),
+      bytes,
     }],
   })).xml;
   assertStringIncludes(
@@ -1335,14 +1382,22 @@ Deno.test("Form 8283 still rejects gifts needing unlinked evidence", () => {
 });
 
 Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native box 5b certification", async () => {
+  const bytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
-    f8283: { section_a_items: [needyTransferVehicle()] },
+    f8283: {
+      section_a_items: [
+        await reviewedNeedyVehicle(
+          needyTransferVehicle(),
+          bytes,
+        ),
+      ],
+    },
   }, {
     filer: testFiler(),
     attachments: [{
       fileName: "Form1098C-Civic.pdf",
       description: "Form1098C Civic needy transfer certification",
-      bytes: await acknowledgmentPdf(),
+      bytes,
     }],
   });
   const xml = bundle.xml;

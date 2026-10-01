@@ -1,4 +1,25 @@
-# TY2025 Form 8283 vehicle sale acknowledgment byte prerequisite
+# TY2025 Form 8283 vehicle acknowledgment byte prerequisites
+
+## Section A needy-transfer certification (2026-10-01, unrun)
+
+The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)
+box 5b certifies an intended transfer to a needy individual for significantly
+below FMV in direct furtherance of the donee's charitable transportation
+purpose. The [IRS instructions](https://www.irs.gov/instructions/i1098c)
+require the acknowledgment to be furnished within 30 days of contribution.
+The bounded Section A route now requires a separate review of the exact
+donee-issued PDF bytes for a greater-than-$500 box 5b claim. The reviewed
+source identifies the filer, donee, VIN, contribution and furnishing dates,
+box 5b certification, and no-goods-or-services statement. Native bundle and
+PDF preparation require the same linked attachment, its reviewed SHA-256,
+at least one readable PDF page, and a furnishing date within 30 days. The
+existing $4,000 full-return vehicle claim reaches Schedule A and Form 1040;
+changed bytes and changed VIN fixtures are authored for the deferred batch.
+The content and donee signature are human-review assertions, not extracted
+or independently authenticated from the PDF. Other box 5a uses and Section B
+vehicle certifications retain their separate evidence boundaries.
+
+## Section A unrelated sale
 
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
 require a contemporaneous donee acknowledgment for a vehicle claim above $500.

@@ -83,6 +83,22 @@ export const vehicleSalePdfReviewSchema = z.object({
   reviewed_pdf_matches_source_confirmed: z.literal(true),
 }).strict();
 
+export const vehicleNeedyPdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  needy_transfer_box5b_confirmed: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
 // Form 1098-C box 5b: the donee certifies a below-FMV transfer to a needy
 // person in direct furtherance of its charitable transportation purpose.
 const vehicleNeedyTransferAcknowledgmentSchema = z.object({
@@ -246,6 +262,7 @@ const sectionAItemSchema = z.object({
   vehicle_sale_pdf_review: vehicleSalePdfReviewSchema.optional(),
   vehicle_needy_transfer_acknowledgment:
     vehicleNeedyTransferAcknowledgmentSchema.optional(),
+  vehicle_needy_pdf_review: vehicleNeedyPdfReviewSchema.optional(),
   vehicle_significant_use_acknowledgment:
     vehicleSignificantUseAcknowledgmentSchema.optional(),
   vehicle_material_improvement_acknowledgment:
