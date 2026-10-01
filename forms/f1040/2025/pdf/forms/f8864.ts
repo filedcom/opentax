@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { reconcileForm8864DocumentSource } from "../../form8864_source.ts";
 
 // Field IDs inspected in the official December 2025 one-page AcroForm.
@@ -63,6 +64,7 @@ export const form8864Pdf: PdfFormDescriptor = {
     const [amount] = amounts;
     const [detail] = details;
     if (
+      fields.line11 !== lines.line11 ||
       rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
       row.metadata.sourceCount !== 1 ||
       row.metadata.referenceDocumentName !== "IRS8864" ||
@@ -72,12 +74,14 @@ export const form8864Pdf: PdfFormDescriptor = {
       amount.nonpassiveCredit !== lines.line11 ||
       amount.totalCredit !== lines.line11 ||
       amount.transferOutCredit !== 0 ||
-      amount.appliedCredit !== detail.appliedCredit
+      amount.appliedCredit !== detail.appliedCredit ||
+      amount.appliedCredit !== allPending.f3800.form8864_applied_credit
     ) {
       throw new Error(
         "Form 8864 PDF differs from sourced Form 3800 document ID",
       );
     }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
     return [fields];
   },
 };

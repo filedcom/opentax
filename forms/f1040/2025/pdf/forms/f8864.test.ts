@@ -29,6 +29,14 @@ const prepared = buildForm3800NonpassiveParts({
   appliedCreditsByFacility: [],
   transferStatementIdsByFileName: {},
 });
+const finalPending = {
+  ...directAgriBiodieselPending,
+  f1040: {
+    ...directAgriBiodieselPending.f1040,
+    line20_nonrefundable_credits: 500,
+  },
+  schedule3: { line6a_total: 500, line8_total: 500 },
+};
 
 Deno.test("Form 8864 official PDF projects the dated direct producer lines", () => {
   const fields = Object.fromEntries(
@@ -56,7 +64,7 @@ Deno.test("Form 8864 official PDF projects the dated direct producer lines", () 
     form8864Pdf.instances?.(
       projected ?? {},
       undefined,
-      directAgriBiodieselPending,
+      finalPending,
       prepared,
     )?.length,
     1,
@@ -90,14 +98,13 @@ Deno.test("Form 8864 PDF rejects missing or altered Form 3800 document identity"
     directAgriBiodieselPending,
   ) ?? {};
   assertThrows(
-    () =>
-      form8864Pdf.instances?.(fields, undefined, directAgriBiodieselPending),
+    () => form8864Pdf.instances?.(fields, undefined, finalPending),
     Error,
     "prepared MeF Form 3800 document",
   );
   assertThrows(
     () =>
-      form8864Pdf.instances?.(fields, undefined, directAgriBiodieselPending, {
+      form8864Pdf.instances?.(fields, undefined, finalPending, {
         ...prepared,
         currentRows: prepared.currentRows.map((row) => ({
           ...row,
@@ -109,4 +116,52 @@ Deno.test("Form 8864 PDF rejects missing or altered Form 3800 document identity"
   );
   assertEquals(form8864Pdf.projectFields?.({}, {}), {});
   assertEquals(form8864Pdf.instances?.({}, undefined, {}), []);
+});
+
+Deno.test("Form 8864 PDF joins applied credit to Schedule 3 and finalized Form 1040", () => {
+  const fields = form8864Pdf.projectFields!(
+    directAgriBiodieselSource,
+    finalPending,
+  );
+  assertEquals(
+    form8864Pdf.instances!(fields, undefined, finalPending, prepared),
+    [fields],
+  );
+  assertThrows(() =>
+    form8864Pdf.instances!(fields, undefined, finalPending, {
+      ...prepared,
+      currentAmounts: prepared.currentAmounts.map((row) => ({
+        ...row,
+        appliedCredit: 499,
+      })),
+      currentDetails: prepared.currentDetails.map((row) => ({
+        ...row,
+        appliedCredit: 499,
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8864Pdf.instances!(fields, undefined, {
+      ...finalPending,
+      f3800: {
+        ...finalPending.f3800,
+        form8864_applied_credit: 499,
+      },
+    }, prepared)
+  );
+  assertThrows(() =>
+    form8864Pdf.instances!(fields, undefined, {
+      ...finalPending,
+      f1040: {
+        ...finalPending.f1040,
+        line20_nonrefundable_credits: 499,
+      },
+    }, prepared)
+  );
+  assertThrows(() =>
+    form8864Pdf.instances!(fields, undefined, {
+      ...finalPending,
+      schedule3: { line6a_total: 499, line8_total: 499 },
+    }, prepared)
+  );
 });

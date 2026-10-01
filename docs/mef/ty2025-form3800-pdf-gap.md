@@ -665,3 +665,11 @@ Schedule 3 and finalized Form 1040 line 20. Positive and changed document-ID,
 applied-credit, and final-return fixtures await the bulk run. The current
 [IRS Form 8994](https://www.irs.gov/pub/irs-pdf/f8994.pdf) directs line 3 to
 Form 3800 Part III line 4j. This adds no payroll evidence or wider eligibility.
+
+Form 8864's printable copy already checked its prepared Form 3800 Part III
+line 1l document ID and claimed line 11 amount. It now also requires its
+applied-credit allocation to match the prepared row and follows Form 3800
+line 38 through Schedule 3 to finalized Form 1040 line 20. Authored fixtures
+alter the applied amount and final credit lines; they await the bulk run. The
+[December 2025 IRS Form 8864](https://www.irs.gov/pub/irs-pdf/f8864.pdf)
+routes line 11 to Form 3800. This does not add producer or transfer evidence.
