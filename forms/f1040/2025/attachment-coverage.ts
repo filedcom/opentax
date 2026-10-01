@@ -188,6 +188,13 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
       !f3800InputSchema.safeParse(fields).success,
   },
   {
+    pendingKey: "f8874",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8874 direct QEI needs authenticated CDE status and recapture history",
+    isActive: (fields) => nonempty(fields.investments),
+  },
+  {
     pendingKey: "f8882",
     exportKinds: ["mef", "pdf"],
     reason: "Form 8882 needs a sourced direct Schedule C employer route",
