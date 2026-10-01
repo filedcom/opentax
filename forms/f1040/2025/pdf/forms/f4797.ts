@@ -19,6 +19,7 @@ import { z } from "zod";
 import {
   assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
+  assertMixedInvestment1245Return,
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
@@ -281,6 +282,7 @@ export const form4797Pdf: PdfFormDescriptor = {
         allPending.schedule1?.line4_other_gains,
       );
       assertFullyRecapturedInvestment1245Return(calculated, allPending);
+      assertMixedInvestment1245Return(calculated, allPending);
       const ordinary = calculated.reduce(
         (sum, sale) => sum + sale.ordinaryRecapture,
         0,

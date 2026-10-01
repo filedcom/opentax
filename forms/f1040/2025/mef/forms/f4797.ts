@@ -30,6 +30,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
+  assertMixedInvestment1245Return,
   calculateInvestment1245Disposition,
   type Investment1245Disposition,
   investment1245DispositionSchema,
@@ -114,6 +115,10 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       schedule1?.line4_other_gains,
     );
     assertFullyRecapturedInvestment1245Return(
+      calculated,
+      (pending ?? {}) as Record<string, unknown>,
+    );
+    assertMixedInvestment1245Return(
       calculated,
       (pending ?? {}) as Record<string, unknown>,
     );

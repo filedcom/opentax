@@ -1,5 +1,27 @@
 # TY2025 Form 4797 investment section 1245 route
 
+## One full and one partial recapture sale (written, unrun)
+
+A bounded two-property route now reconciles a fully recaptured investment
+§1245 sale and a second sale with excess capital gain through the finalized
+return. The focused source has a $3,000 first gain wholly recaptured and an
+$8,000 second gain split into $5,000 ordinary recapture and $3,000 excess
+capital gain. Form 4797 Part III totals $8,000 ordinary and $3,000 excess;
+the one excess Form 8949 row flows to Schedule D, while ordinary recapture
+flows to Schedule 1 line 4. Native MeF and the PDF projector now require one
+positive W-2, the Schedule 1 ordinary amount and additional-income total,
+Schedule D line 16, and Form 1040 wages, capital gain, additional income,
+total income, and AGI to reconcile. A full-return positive case and property,
+Schedule 1, Schedule D, and Form 1040 tamper cases are authored but unrun.
+
+This mixed route excludes unrelated capital gains or other income, further
+investment properties, business-use sales, other Form 4797 sources, and prior
+§1231 losses. Sale, basis, and depreciation references remain entered facts;
+the source bytes are not authenticated. Local XSD, filled-PDF, business-rule,
+and ATS validation for this mixed case await the coordinated batch. The [2025
+Form 4797 instructions](https://www.irs.gov/instructions/i4797) direct the
+recapture to Part III and excess gain on investment property to Form 8949.
+
 Status: bounded source-to-node, native, and PDF route validated locally on
 2026-09-30. One-property and four-property full returns pass the TY2025 v5.4
 XSD and generate nine-page filled packets. IRS business-rule and ATS validation
