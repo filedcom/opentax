@@ -776,7 +776,13 @@ Deno.test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, 
     f8835: [source],
   });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
   const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
@@ -847,7 +853,13 @@ Deno.test("non-owner open-loop biomass lessee joins Form 8835 owner, Form 3800, 
     f8835: [source],
   });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
   const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
