@@ -13,6 +13,7 @@ import {
   inputSchema as f8881InputSchema,
 } from "../nodes/inputs/f8881/index.ts";
 import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
+import { inputSchema as f8882InputSchema } from "../nodes/inputs/f8882/index.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -188,9 +189,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8882",
     exportKinds: ["mef", "pdf"],
-    reason:
-      "Form 8882 direct employer credit needs Form 3800 and registered native/PDF attachments",
-    isActive: () => true,
+    reason: "Form 8882 needs a sourced direct Schedule C employer route",
+    isActive: (fields) => !f8882InputSchema.safeParse(fields).success,
   },
   {
     pendingKey: "f8908",

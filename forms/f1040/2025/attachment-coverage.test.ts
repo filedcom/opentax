@@ -1,6 +1,7 @@
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 import { form8992Pending } from "./form8992.fixture.ts";
+import { form8882Fixture } from "../nodes/inputs/f8882/fixture.ts";
 
 Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
   for (const kind of ["mef", "pdf"] as const) {
@@ -81,6 +82,14 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
     },
     "mef",
   );
+});
+
+Deno.test("Form 8882 guard admits only its sourced direct employer contract", () => {
+  const source = form8882Fixture();
+  for (const kind of ["mef", "pdf"] as const) {
+    assertAttachmentCoverage({ f8882: source }, kind);
+    assertThrows(() => assertAttachmentCoverage({ f8882: {} }, kind));
+  }
 });
 
 Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => {
