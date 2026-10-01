@@ -54,23 +54,31 @@ export function form8862OverflowRows(source: F8862Input): OverflowRow[] {
         `14 lived with filer: ${yesNo(child.lived_with_over_half_year)}; ` +
         `15 qualifying child: ${yesNo(child.qualifying_child)}; ` +
         `16 dependent: ${yesNo(child.dependent)}; ` +
-        `17 US citizen/national/resident: ${yesNo(child.us_citizen_national_or_resident)}`,
+        `17 US citizen/national/resident: ${
+          yesNo(child.us_citizen_national_or_resident)
+        }`,
     });
   });
   source.other_dependents?.slice(4).forEach((person, i) => {
     rows.push({
-      heading: `13. Other dependent ${i + 5}: ${person.first_name} ${person.last_name}`,
-      answers:
-        `16 dependent: ${yesNo(person.dependent)}; ` +
-        `17 US citizen/national/resident: ${yesNo(person.us_citizen_national_or_resident)}`,
+      heading: `13. Other dependent ${
+        i + 5
+      }: ${person.first_name} ${person.last_name}`,
+      answers: `16 dependent: ${yesNo(person.dependent)}; ` +
+        `17 US citizen/national/resident: ${
+          yesNo(person.us_citizen_national_or_resident)
+        }`,
     });
   });
   source.aotc_students?.slice(3).forEach((student, i) => {
     rows.push({
-      heading: `18. Student ${i + 4}: ${student.first_name} ${student.last_name}`,
-      answers:
-        `19a eligible student: ${yesNo(student.eligible)}; ` +
-        `19b credit claimed four prior years: ${yesNo(student.credit_claimed_four_prior_years)}`,
+      heading: `18. Student ${
+        i + 4
+      }: ${student.first_name} ${student.last_name}`,
+      answers: `19a eligible student: ${yesNo(student.eligible)}; ` +
+        `19b credit claimed four prior years: ${
+          yesNo(student.credit_claimed_four_prior_years)
+        }`,
     });
   });
   return rows;
@@ -158,7 +166,9 @@ export const form8862Pdf: PdfFormDescriptor = {
         "Form 8862 PDF needs filer identity and finalized Form 1040 credit lines",
       );
     }
-    if (!nativeForm8862.build(source, { pending: allPending })) return [];
+    if (!nativeForm8862.build(source, { pending: allPending, filer })) {
+      return [];
+    }
     const projected: Record<string, unknown> = {
       tax_year: 2025,
       claim_eitc: source.claim_eitc,

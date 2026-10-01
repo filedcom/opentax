@@ -1,10 +1,11 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "../2025/registry.ts";
 import { buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { irs1040Pdf } from "../2025/pdf/forms/f1040.ts";
+import { form8862Pdf } from "../2025/pdf/forms/f8862.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 
 const plan = buildExecutionPlan(registry);
@@ -68,12 +69,7 @@ const form8862 = {
   },
 };
 const context = { taxYear: 2025, formType: "f1040" };
-const xsd = new URL(
-  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-  import.meta.url,
-).pathname;
-
-Deno.test("prior EIC disallowance needs matching Form 8862 through calculation and export", async () => {
+Deno.test("prior EIC disallowance calculates the credit but stops unauthenticated Form 8862 export", () => {
   const withoutForm = execute(plan, registry, {
     general,
     w2: [w2],
@@ -89,12 +85,16 @@ Deno.test("prior EIC disallowance needs matching Form 8862 through calculation a
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040.line27_eitc, 384);
   const filer = extractFilerIdentity(result.pending.f1040);
-  const xml = buildMefXml(buildPending(result.pending), filer);
-  assertStringIncludes(
-    xml,
-    "<EarnedIncomeCreditAmt>384</EarnedIncomeCreditAmt>",
+  assertThrows(
+    () => buildMefXml(buildPending(result.pending), filer),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
   );
-  assertStringIncludes(xml, "<IRS8862 documentId=");
+  assertThrows(
+    () => form8862Pdf.instances!(result.pending.f8862, filer, result.pending),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
 
   const wrongNotice = {
     ...result.pending,
@@ -113,24 +113,4 @@ Deno.test("prior EIC disallowance needs matching Form 8862 through calculation a
     Error,
     "reviewed prior-disallowance history",
   );
-  let xsdAvailable = false;
-  try {
-    Deno.statSync(xsd);
-    xsdAvailable = true;
-  } catch {
-    // The IRS schema bundle is local-only.
-  }
-  if (xsdAvailable) {
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-    try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const check = await new Deno.Command("xmllint", {
-        args: ["--noout", "--schema", xsd, xmlPath],
-        stderr: "piped",
-      }).output();
-      assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
-    } finally {
-      await Deno.remove(xmlPath);
-    }
-  }
 });

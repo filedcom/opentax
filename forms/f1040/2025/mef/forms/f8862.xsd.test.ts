@@ -252,77 +252,76 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: Form 8862 childless EITC validates with a claimed return credit",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
-  // This fixture checks XML shape and cross-document presence, not EITC math.
-  const xml = buildMefXml(
-    buildPending({
-      f8862: {
-        credit_disallowance_ban_active: false,
-        claim_eitc: true,
-        ...priorEicEvidence,
-        eitc_income_reporting_only: false,
-        eitc_qualifying_child_of_other: false,
-        eitc_without_child: {
-          primary: {
-            main_home_us_days: 365,
-            age: 35,
-            claimed_as_dependent: false,
+Deno.test("Form 8862 childless EITC return remains blocked before XSD", () => {
+  assertThrows(
+    () =>
+      buildMefXml(
+        buildPending({
+          f8862: {
+            credit_disallowance_ban_active: false,
+            claim_eitc: true,
+            ...priorEicEvidence,
+            eitc_income_reporting_only: false,
+            eitc_qualifying_child_of_other: false,
+            eitc_without_child: {
+              primary: {
+                main_home_us_days: 365,
+                age: 35,
+                claimed_as_dependent: false,
+              },
+            },
           },
-        },
-      },
-      f1040: {
-        filing_status: "single",
-        eic_tax_residency_review: childlessEicSource.eic_tax_residency_review,
-        main_home_in_us_over_half_year: true,
-        line27_eitc: 500,
-      },
-      general: childlessEicSource,
-      eitc: {
-        credit_amount: 500,
-        qualifying_children: 0,
-        investment_income_floor: 0,
-      },
-    }),
-    filer,
+          f1040: {
+            taxpayer_ssn: "123456789",
+            filing_status: "single",
+            eic_tax_residency_review:
+              childlessEicSource.eic_tax_residency_review,
+            main_home_in_us_over_half_year: true,
+            line27_eitc: 500,
+          },
+          general: childlessEicSource,
+          eitc: {
+            credit_amount: 500,
+            qualifying_children: 0,
+            investment_income_floor: 0,
+          },
+        }),
+        filer,
+      ),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
   );
-  assertEquals(xml.includes("<PrimaryNoQualifyingChildGrp>"), true);
-  await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: Form 8862 income-only EITC omits the rest of Part II",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
-  const xml = buildMefXml(
-    buildPending({
-      f8862: {
-        credit_disallowance_ban_active: false,
-        claim_eitc: true,
-        ...priorEicEvidence,
-        eitc_income_reporting_only: true,
-      },
-      f1040: {
-        filing_status: "single",
-        eic_tax_residency_review: childlessEicSource.eic_tax_residency_review,
-        main_home_in_us_over_half_year: true,
-        line27_eitc: 500,
-      },
-      general: childlessEicSource,
-      eitc: {
-        credit_amount: 500,
-        qualifying_children: 0,
-        investment_income_floor: 0,
-      },
-    }),
-    filer,
+Deno.test("Form 8862 income-only EITC return remains blocked before XSD", () => {
+  assertThrows(
+    () =>
+      buildMefXml(
+        buildPending({
+          f8862: {
+            credit_disallowance_ban_active: false,
+            claim_eitc: true,
+            ...priorEicEvidence,
+            eitc_income_reporting_only: true,
+          },
+          f1040: {
+            taxpayer_ssn: "123456789",
+            filing_status: "single",
+            eic_tax_residency_review:
+              childlessEicSource.eic_tax_residency_review,
+            main_home_in_us_over_half_year: true,
+            line27_eitc: 500,
+          },
+          general: childlessEicSource,
+          eitc: {
+            credit_amount: 500,
+            qualifying_children: 0,
+            investment_income_floor: 0,
+          },
+        }),
+        filer,
+      ),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
   );
-  assertEquals(xml.includes("EICEligClmQlfyChldOfOtherInd"), false);
-  await validateXsd(xml);
 });

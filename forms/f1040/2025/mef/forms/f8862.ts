@@ -251,6 +251,28 @@ function validateFinalizedCreditClaims(
       );
     }
   }
+  if (fields.claim_eitc) {
+    const review = general.success
+      ? general.data.prior_eic_disallowance_review
+      : undefined;
+    const eitc = pending?.eitc as Record<string, unknown> | undefined;
+    if (
+      !review || review.status !== "requires_8862" ||
+      review.disallowed_year !== fields.eitc_disallowed_year ||
+      review.disallowance_notice_reference !==
+        fields.eitc_disallowance_notice_reference ||
+      !filerSsn || !general.success ||
+      general.data.taxpayer_ssn?.replace(/\D/g, "") !== filerSsn ||
+      (typeof form1040.taxpayer_ssn !== "string" ||
+        form1040.taxpayer_ssn.replace(/\D/g, "") !== filerSsn) ||
+      fields.credit_disallowance_ban_active !== false ||
+      eitc?.credit_amount !== form1040.line27_eitc
+    ) {
+      throw new Error(
+        "Form 8862 EITC claim needs a matching reviewed prior IRS notice, filer, no active ban, and finalized EITC amount",
+      );
+    }
+  }
   if (
     fields.claim_ctc &&
     !(positive(form1040.line19_child_tax_credit) ||
@@ -488,6 +510,11 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
     if (fields.claim_ctc || fields.claim_aotc) {
       throw new Error(
         "Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents",
+      );
+    }
+    if (fields.claim_eitc) {
+      throw new Error(
+        "Form 8862 EITC export needs executor-owned authentication of prior IRS notice issuance and contents",
       );
     }
 

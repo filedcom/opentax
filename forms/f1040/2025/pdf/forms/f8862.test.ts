@@ -13,12 +13,18 @@ const filer = {
 };
 
 const priorEicEvidence = {
+  credit_disallowance_ban_active: false,
   eitc_disallowed_year: 2023,
   eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
 };
 const noticeReviews = {
   filing_status: "single",
   taxpayer_ssn: "123456789",
+  prior_eic_disallowance_review: {
+    status: "requires_8862",
+    disallowed_year: 2023,
+    disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  },
   prior_ctc_disallowance_review: {
     disallowed_year: 2023,
     notice_reference: "Synthetic 2023 IRS CTC notice",
@@ -89,6 +95,7 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
       form8862Pdf.instances?.(source, filer, {
         general: noticeReviews,
         f1040: {
+          taxpayer_ssn: "123456789",
           line27_eitc: 500,
           line19_child_tax_credit: 2200,
           dependent_details: [{

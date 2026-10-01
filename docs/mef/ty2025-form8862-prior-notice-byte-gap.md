@@ -15,7 +15,8 @@ reference, and filer against Form 8862 **and the matching final-return
 requires an explicit no-active-ban claim, and checks the SHA-256 of the exact
 retained bytes. It now parses each copy as a readable PDF with at least one
 page; a `%PDF-` prefix alone cannot pass. EITC claims remain outside this
-prerequisite. Positive, changed-byte, changed-year, changed-filer,
+prerequisite because their direct review has no retained copy key or
+issuer/content evidence. Positive, changed-byte, changed-year, changed-filer,
 changed-final-review, active-ban, malformed-PDF, and missing-copy fixtures are
 authored for the deferred bulk pass.
 
@@ -28,9 +29,30 @@ exporter. A future positive route needs executor-owned evidence from an
 authoritative IRS record establishing issuance, notice contents, credit
 category, tax year, taxpayer, nonclerical basis, and absence of an active ban.
 Only then may the final return and PDF claim be emitted. A retained PDF and
-its digest do not satisfy that gate. EITC-only routes are unaffected. The
+its digest do not satisfy that gate. EITC-only native and PDF routes now apply
+the same deliberate rejection after their source and final-credit joins. The
 claim-join tests, positive calculation fixtures, and deliberate export
 rejection fixtures are authored but unrun for the deferred bulk pass.
+
+## EITC-only notice boundary (2026-10-01, unrun)
+
+The EITC-only route previously accepted a reviewer-entered disallowance year
+and notice reference as enough to export Form 8862. Native and PDF export now
+first join those facts to the final `general.prior_eic_disallowance_review`,
+the claimant SSN, explicit no-active-ban assertion, the calculated EITC
+amount, and Form 1040 line 27. Child claims retain their Schedule EIC name
+and count check. Both exporters then reject the claim until an executor-owned
+authoritative IRS record proves notice issuance, credit category, year,
+claimant, nonclerical decision, and active-ban status. Childless and
+income-only claims have authored source-matched rejection cases; altered
+review, filer, ban, credit, and return cases fail earlier. The current EITC
+review schema has no notice-copy reference, taxpayer identity on the notice,
+or decision-content fields, so the standalone exact-byte binder cannot be
+extended to EITC without a new direct evidence contract. Even a digest-bound
+copy would not authenticate IRS issuance or its contents. The
+[2025 Form 8862 instructions](https://www.irs.gov/instructions/i8862) require
+the prior reduction or disallowance to be more than a math or clerical error
+and distinguish an active credit ban from an ordinary Form 8862 filing.
 
 ## Combined ODC and AOTC claimant (2026-10-01, unrun)
 
