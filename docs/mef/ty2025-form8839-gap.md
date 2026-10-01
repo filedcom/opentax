@@ -1,5 +1,26 @@
 # TY2025 Form 8839 coverage gap
 
+## Staged 2025 income phaseout and credit ordering (2026-10-01, unrun)
+
+The existing one-child, reviewed domestic-expense candidate now carries a
+partial income phaseout through the pure pre-adoption Form 1040 sink, adoption
+credit settlement, staged final Form 1040/Schedule 3, and unregistered native
+and PDF projections. The [2025 Form 8839](https://www.irs.gov/pub/irs-pdf/f8839.pdf)
+directs line 8 to subtract $259,190 from MAGI, line 9 to divide by $40,000,
+and line 10 to reduce each child's line 6 by that ratio. For the authored
+$269,190 MAGI/$12,000 unreimbursed expense case, lines 8/9/10 are
+$10,000/0.250/$3,000; $5,000 reaches Form 1040 line 30 and $4,000 reaches
+Schedule 3 line 6c/Form 1040 line 20. The staged native fields follow the
+checked-in TY2025 v5.4 `IRS8839` element order; PDF field names for the yes
+checkbox and lines 8/9 were inspected in the cached canonical 2025 form.
+Positive and credit/source/final-line tamper fixtures are authored but unrun.
+This remains limited to whole-dollar line amounts, a positive nonrefundable
+credit with no new carryforward, and MAGI below $299,190. The active node and
+registered exporters still reject every positive claim because reviewed
+document bytes and return-wide nonapplicability findings are not authenticated
+and bound to the executor. No XSD validation, filled-PDF review, or ATS result
+has run.
+
 Status: **active filing fails closed** in the tax node, MeF descriptor, and PDF
 descriptor. The pure Part II calculation helper remains for future source-backed
 work, but it does not emit Form 1040, Schedule 3, IRS8839 XML, or a filled PDF.
@@ -105,7 +126,7 @@ one-child `IRS8839` XML in the TY2025 XSD order and a field-value map for page 1
 of the
 [canonical 2025 Form 8839 PDF](https://www.irs.gov/pub/irs-pdf/f8839.pdf). This
 is deliberately narrower than the arithmetic helper: single filer, nonnegative
-whole-dollar MAGI no higher than $259,190, no phaseout, no prior child claim or
+whole-dollar MAGI below $299,190, no prior child claim or
 carryforward, no employer benefits, positive nonrefundable credit, and no unused
 nonrefundable adoption amount that would create a later carryforward. Focused
 projection and mismatch cases are written but unrun. The function does **not**

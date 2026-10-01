@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as MefFilingStatus } from "../../../../mef/header.ts";
 import { FilingStatus } from "../../../types.ts";
 import { projectStagedForm8839Documents } from "./staged_documents.ts";
+import { finalizeStagedForm8839Sink } from "./staged_sink_finalizer.ts";
 
 const source = {
   filing_status: FilingStatus.Single,
@@ -174,6 +175,83 @@ Deno.test("Form 8839 staged native and PDF values use one reconciled credit", ()
   assertEquals(result.pdfFields.line18, 7_000);
   assertEquals(result.pdfFields.noPriorForm, true);
   assertEquals(result.pdfFields.noPhaseout, true);
+});
+
+Deno.test("Form 8839 staged income phaseout settles credit before native/PDF projection", () => {
+  const phasedSink = {
+    ...sinkInput,
+    line1a_wages: 269_190,
+    line11_agi: 269_190,
+  };
+  const settled = finalizeStagedForm8839Sink(
+    source,
+    childReview,
+    phasedSink,
+    magiReview,
+  );
+  assertEquals(settled.credit.fraction, 0.25);
+  assertEquals(settled.credit.perChild[0]?.line10, 3_000);
+  assertEquals(settled.credit.line13, 5_000);
+  assertEquals(settled.credit.line18, 4_000);
+  assertEquals(settled.final1040.line30_refundable_adoption, 5_000);
+  assertEquals(settled.finalSchedule3.line6c_adoption_credit, 4_000);
+  const pending = {
+    form8839: source,
+    f1040: settled.final1040,
+    schedule3: settled.finalSchedule3,
+  };
+  const projected = projectStagedForm8839Documents(
+    source,
+    childReview,
+    phasedSink,
+    magiReview,
+    pending,
+    filer,
+  );
+  assertStringIncludes(
+    projected.xml,
+    "<AdoptionCreditModifAGILimitAmt>10000</AdoptionCreditModifAGILimitAmt>",
+  );
+  assertStringIncludes(
+    projected.xml,
+    "<AdoptionCreditAdjModifAGIPct>0.250</AdoptionCreditAdjModifAGIPct>",
+  );
+  assertStringIncludes(
+    projected.xml,
+    "<NonrefundableAdoptionCreditAmt>4000</NonrefundableAdoptionCreditAmt>",
+  );
+  assertEquals(projected.pdfFields.noPhaseout, false);
+  assertEquals(projected.pdfFields.phaseoutYes, true);
+  assertEquals(projected.pdfFields.line8, 10_000);
+  assertEquals(projected.pdfFields.line9Whole, "0");
+  assertEquals(projected.pdfFields.line9Fraction, "250");
+  assertEquals(projected.pdfFields.line10, 3_000);
+  assertThrows(() =>
+    projectStagedForm8839Documents(
+      source,
+      childReview,
+      phasedSink,
+      magiReview,
+      {
+        ...pending,
+        schedule3: {
+          ...pending.schedule3,
+          line6c_adoption_credit: 4_001,
+        },
+      },
+      filer,
+    )
+  );
+  assertThrows(() =>
+    projectStagedForm8839Documents(
+      source,
+      childReview,
+      { ...phasedSink, line1a_wages: 268_190 },
+      magiReview,
+      pending,
+      filer,
+    )
+  );
 });
 
 Deno.test("Form 8839 staged native/PDF candidate nets a documented private reimbursement", () => {
