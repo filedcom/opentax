@@ -5,6 +5,7 @@ import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_rec
 import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
 import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
 import { reconcileForm4972Collection } from "../../form4972_collection_reconciliation.ts";
+import { assertForm4972AmtJoin } from "../../form4972_amt_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../../../nodes/inputs/f1099r/index.ts";
 
 // Field positions checked against the 2025 IRS AcroForm. Only page 1 is filed;
@@ -316,13 +317,19 @@ export const form4972Pdf: PdfFormDescriptor = {
         "Form 4972 PDF collection needs the final pending return",
       );
     }
-    return reconcileForm4972Collection(raw, allPending, filer)
-      .map(({ fields: form, pending }) =>
-        projectedFields(
-          form,
-          pending as Record<string, Record<string, unknown>>,
-        )
+    const scoped = reconcileForm4972Collection(raw, allPending, filer);
+    if (allPending.form6251 !== undefined) {
+      assertForm4972AmtJoin(
+        scoped.reduce((sum, entry) => sum + entry.tax, 0),
+        allPending,
       );
+    }
+    return scoped.map(({ fields: form, pending }) =>
+      projectedFields(
+        form,
+        pending as Record<string, Record<string, unknown>>,
+      )
+    );
   },
   decoratePages: async (document, pages, fields) => {
     const annotations = form4972NuaAnnotations(fields);

@@ -6,6 +6,7 @@ import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_rec
 import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
 import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
 import { reconcileForm4972Collection } from "../../form4972_collection_reconciliation.ts";
+import { assertForm4972AmtJoin } from "../../form4972_amt_reconciliation.ts";
 
 export interface Fields {
   recipient?: TS;
@@ -204,9 +205,19 @@ export const form4972: MefFormDescriptor<
     if (!context?.pending) {
       throw new Error("Form 4972 collection needs the final pending return");
     }
-    return reconcileForm4972Collection(fields, context.pending, context.filer)
-      .map(({ fields: form, pending }) =>
-        buildIRS4972(form, { ...context, pending })
+    const scoped = reconcileForm4972Collection(
+      fields,
+      context.pending,
+      context.filer,
+    );
+    if (context.pending.form6251 !== undefined) {
+      assertForm4972AmtJoin(
+        scoped.reduce((sum, entry) => sum + entry.tax, 0),
+        context.pending,
       );
+    }
+    return scoped.map(({ fields: form, pending }) =>
+      buildIRS4972(form, { ...context, pending })
+    );
   },
 };
