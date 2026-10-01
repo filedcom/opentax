@@ -120,7 +120,7 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
         ...loss,
         part: "D" as const,
       }],
-    }, "one term of identified losses"],
+    }, "complete Schedule D source audit"],
     [{
       ...input,
       line2k_8949_basis_dispositions: [gain, {
@@ -128,7 +128,7 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
         amt_basis: 9_000,
         amt_gain: -5_000,
       }],
-    }, "net losses within both regular and AMT Schedule D deduction limits"],
+    }, "AMT basis losses need audited"],
     [{
       ...input,
       line2k_8949_basis_dispositions: [gain, {
@@ -136,7 +136,7 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
         amt_basis: 7_500,
         amt_gain: -3_500,
       }],
-    }, "net positive short-term gains"],
+    }, "AMT basis losses need audited"],
     [{
       ...input,
       line2k_8949_basis_dispositions: [gain, {
@@ -144,7 +144,7 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
         amt_basis: 3_500,
         amt_gain: 500,
       }],
-    }, "one term of identified losses"],
+    }, "AMT basis losses need audited"],
   ];
   for (const [candidate, reason] of unsupported) {
     assertThrows(() => compute(candidate), Error, reason);
@@ -246,6 +246,6 @@ Deno.test("Form 6251 nets audited long-term gains and losses for AMT Part III", 
         }],
       }),
     Error,
-    "net positive long-term gains",
+    "AMT basis losses need audited",
   );
 });

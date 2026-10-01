@@ -105,26 +105,25 @@ Deno.test("Form 6251 nets audited same-term gain and loss within both Schedule D
   );
 });
 
-Deno.test("Form 6251 rejects mixed-sign rows when either tax exceeds its loss limit", () => {
-  assertThrows(
-    () =>
-      compute({
-        ...input,
-        line2k_8949_basis_dispositions: [{
-          ...gain,
-        }, {
-          ...loss,
-          amt_basis: 8_000,
-          amt_gain: -4_000,
-        }],
-      }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+Deno.test("Form 6251 caps regular and AMT mixed-sign net losses separately", () => {
+  const deeperAmtLoss = compute({
+    ...input,
+    line2k_8949_basis_dispositions: [gain, {
+      ...loss,
+      amt_basis: 8_000,
+      amt_gain: -4_000,
+    }],
+  });
+  assertEquals(
+    deeperAmtLoss.outputs.find((row) => row.nodeType === "form6251")?.fields
+      .line2k_disposition,
+    -1_500,
   );
-  assertThrows(
-    () => compute({ ...input, filing_status: "mfs" }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  const mfs = compute({ ...input, filing_status: "mfs" });
+  assertEquals(
+    mfs.outputs.find((row) => row.nodeType === "form6251")?.fields
+      .line2k_disposition,
+    0,
   );
 });
 
@@ -160,7 +159,7 @@ Deno.test("Form 6251 rejects mixed-sign rows with other activity or a basis sign
         },
       }),
     Error,
-    "one term of identified losses",
+    "AMT basis losses need audited",
   );
 });
 
@@ -228,31 +227,31 @@ Deno.test("Form 6251 replays a cross-term offset with fully deductible regular a
   }
 });
 
-Deno.test("Form 6251 rejects a cross-term offset once the AMT loss exceeds the current limit", () => {
+Deno.test("Form 6251 caps a cross-term AMT loss at the current limit", () => {
   const longGain = { ...gain, part: "D" as const };
   const deepAmtLoss = {
     ...loss,
     amt_basis: 8_000,
     amt_gain: -4_000,
   };
-  assertThrows(
-    () =>
-      compute({
-        ...input,
-        line2k_8949_basis_dispositions: [deepAmtLoss, longGain],
-        line2k_8949_capital_audit: {
-          transactions: [deepAmtLoss, longGain].map((row) => ({
-            source_transaction_id: row.source_transaction_id,
-            part: row.part,
-            proceeds: row.proceeds,
-            cost_basis: row.regular_basis,
-            gain_loss: row.regular_gain,
-          })),
-          has_other_capital_activity: false,
-        },
-      }),
-    Error,
-    "one term of identified losses",
+  const capped = compute({
+    ...input,
+    line2k_8949_basis_dispositions: [deepAmtLoss, longGain],
+    line2k_8949_capital_audit: {
+      transactions: [deepAmtLoss, longGain].map((row) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        gain_loss: row.regular_gain,
+      })),
+      has_other_capital_activity: false,
+    },
+  });
+  assertEquals(
+    capped.outputs.find((row) => row.nodeType === "form6251")?.fields
+      .line2k_disposition,
+    -1_500,
   );
 });
 
@@ -313,10 +312,11 @@ Deno.test("Form 6251 reconciles four audited cross-term gain and loss lots insid
     form6251Pdf.projectFields?.(filed!.fields, pending)?.line2k_disposition,
     -500,
   );
-  assertThrows(
-    () => compute({ ...caseInput, filing_status: "mfs" }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  const mfs = compute({ ...caseInput, filing_status: "mfs" });
+  assertEquals(
+    mfs.outputs.find((row) => row.nodeType === "form6251")?.fields
+      .line2k_disposition,
+    0,
   );
   assertThrows(
     () =>

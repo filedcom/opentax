@@ -155,7 +155,7 @@ Deno.test("mixed-term gain-to-AMT-loss route rejects altered sources and return"
         }),
       ),
     Error,
-    "within both regular and AMT Schedule D deduction limits",
+    "AMT basis losses need audited",
   );
 });
 

@@ -198,7 +198,7 @@ Deno.test("gain-to-AMT-loss route rejects changed basis, tax join and excess AMT
         }),
       ),
     Error,
-    "within both regular and AMT Schedule D deduction limits",
+    "AMT basis losses need audited",
   );
   assertThrows(
     () =>
@@ -217,7 +217,7 @@ Deno.test("gain-to-AMT-loss route rejects changed basis, tax join and excess AMT
         }),
       ),
     Error,
-    "one term of identified losses",
+    "identified rows to reconcile with regular Schedule D",
   );
 });
 
@@ -287,7 +287,7 @@ Deno.test("two-lot gain-to-AMT-loss route rejects changed second lot and return"
         }),
       ),
     Error,
-    "within both regular and AMT Schedule D deduction limits",
+    "AMT basis losses need audited",
   );
 });
 
