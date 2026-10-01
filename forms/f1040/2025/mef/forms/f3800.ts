@@ -1467,6 +1467,7 @@ export function prepareForm3800DocumentParts(
   return {
     ...joined,
     form3468DocumentIds: form3468Ids,
+    form5884DocumentIds: form5884Ids,
     form8835DocumentIds: form8835Ids,
   };
 }

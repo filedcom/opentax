@@ -75,22 +75,26 @@ export const form5884Pdf: PdfFormDescriptor = {
     }
     const source = inputSchema.parse(allPending.f5884);
     const lines = calculateForm5884(source);
+    const expectedFields = form5884Pdf.projectFields!(source, allPending);
     const rows = prepared.currentRows.filter((row) => row.line === "4b");
     const amounts = prepared.currentAmounts.filter((row) => row.line === "4b");
     const details = prepared.currentDetails.filter((row) => row.line === "4b");
     const [row] = rows;
     const [amount] = amounts;
+    const documentIds = prepared.form5884DocumentIds;
     const directDetails = details.filter((detail) =>
       detail.sourceDocumentId === row?.metadata.referenceDocumentId &&
       detail.passThroughEin === undefined
     );
     if (
+      JSON.stringify(fields) !== JSON.stringify(expectedFields) ||
       lines.line2 <= 0 ||
       fields.line2 !== lines.line2 || fields.line4 !== lines.line4 ||
       rows.length !== 1 || amounts.length !== 1 ||
+      documentIds?.length !== 1 ||
       row.metadata.sourceCount !== details.length ||
       row.metadata.referenceDocumentName !== "IRS5884" ||
-      !row.metadata.referenceDocumentId ||
+      row.metadata.referenceDocumentId !== documentIds?.[0] ||
       directDetails.length !== 1 ||
       directDetails[0].credit !== lines.line2 ||
       details.reduce((sum, detail) => sum + detail.credit, 0) !==
@@ -100,7 +104,8 @@ export const form5884Pdf: PdfFormDescriptor = {
       amount.nonpassiveCredit !== lines.line4 ||
       amount.totalCredit !== lines.line4 ||
       amount.transferOutCredit !== 0 ||
-      amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0
+      amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
+      prepared.lines.line38 !== allPending.f3800?.allowed_credit
     ) {
       throw new Error("Form 5884 PDF differs from filed Form 3800 line 4b");
     }

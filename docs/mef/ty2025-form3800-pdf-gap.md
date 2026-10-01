@@ -735,6 +735,15 @@ fixtures await the bulk run. The current
 Form 3800 Part III line 4b. Pass-through and controlled-group source evidence
 continues under their existing guards.
 
+The same Form 5884 child PDF now replays the exact filed source before
+printing and matches its prepared line 4b IRS5884 reference to the reserved
+native document ID. A changed certification reference with unchanged credit,
+and a forged matching Part III/Part V document ID, are rejected by authored
+fixtures. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+retain the work opportunity credit in the current-year business-credit order.
+These checks bind the prepared packet; they do not authenticate the state
+certification or payroll source bytes.
+
 The Form 8826 printable copy already reconciled its direct and optional one
 S-corporation source to Form 3800 and finalized tax. It now also requires the
 prepared Form 3800 Part III line 1e source row to carry one IRS8826 document

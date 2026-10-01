@@ -207,7 +207,26 @@ Deno.test("Form 5884 printable copy binds its direct source and final Form 1040 
   assertEquals(form5884Pdf.instances!(fields, testFiler(), pending, prepared), [
     fields,
   ]);
+  assertEquals(prepared.form5884DocumentIds, ["IRS5884_1"]);
   assertThrows(() => form5884Pdf.instances!(fields, testFiler(), pending));
+  assertThrows(
+    () =>
+      form5884Pdf.instances!(fields, testFiler(), {
+        ...pending,
+        f5884: {
+          ...workOpportunity,
+          f5884s: [{
+            ...workOpportunity.f5884s[0],
+            certification: {
+              ...workOpportunity.f5884s[0].certification,
+              swa_certification_reference: "SWA-CHANGED",
+            },
+          }],
+        },
+      }, prepared),
+    Error,
+    "differs from filed Form 3800 line 4b",
+  );
   assertThrows(() =>
     form5884Pdf.instances!(fields, testFiler(), pending, {
       ...prepared,
@@ -225,6 +244,25 @@ Deno.test("Form 5884 printable copy binds its direct source and final Form 1040 
         credit: 2_399,
       })),
     })
+  );
+  assertThrows(
+    () =>
+      form5884Pdf.instances!(fields, testFiler(), pending, {
+        ...prepared,
+        currentRows: prepared.currentRows.map((row) => ({
+          ...row,
+          metadata: {
+            ...row.metadata,
+            referenceDocumentId: "IRS5884_OTHER",
+          },
+        })),
+        currentDetails: prepared.currentDetails.map((row) => ({
+          ...row,
+          sourceDocumentId: "IRS5884_OTHER",
+        })),
+      }),
+    Error,
+    "differs from filed Form 3800 line 4b",
   );
   assertThrows(() =>
     form5884Pdf.instances!(fields, testFiler(), {

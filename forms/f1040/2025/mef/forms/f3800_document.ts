@@ -34,6 +34,8 @@ export type Form3800DocumentParts = {
   readonly lines: Form3800NonpassiveLines;
   /** Reserved IRS3468 IDs in the same order as the filed trust properties. */
   readonly form3468DocumentIds?: readonly string[];
+  /** Reserved IRS5884 ID for the filed direct-employer child copy. */
+  readonly form5884DocumentIds?: readonly string[];
   /** Reserved IRS8835 IDs in the same order as the filed facility copies. */
   readonly form8835DocumentIds?: readonly string[];
   readonly transferStatementIds: readonly string[];
