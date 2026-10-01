@@ -278,5 +278,24 @@ appraisal threshold. Native MeF and the preview reconcile the complete Form
 MeF rejects a changed item against the pending source. The authored four-row
 fixture totals $5,500 and includes changed return, changed native source, and
 changed group fixtures for the deferred bulk pass. The route does not cover
-mixed Section A/B, more than four Section A rows, capital-gain property, or
+mixed Section A/B, more than five Section A rows, capital-gain property, or
 actual source authentication.
+
+## Five distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require all noncash gift data in the electronic submission; the checked-in
+TY2025 `IRS8283.xsd` permits repeated `InformationOnDonatedProperty` entries.
+The bounded fifth-item route requires five distinct current-year purchased,
+noncapital, nonvehicle Section A gifts, each claimed at its unreduced FMV with
+complete donee, acquisition, date, basis, valuation-method, and distinct
+similar-item-group facts. Native MeF keeps all five A–E items in one `IRS8283`
+document. The PDF preview fills two official first-page copies: rows A–D on the
+first and the fifth item in row A on the second. The source inventory is
+recomputed against Schedule A line 12 and itemized Form 1040 line 12e before
+either projection. A $6,400 case and changed fifth item, return total, and
+sixth-row rejection cases are authored but unrun pending bulk validation.
+Reduced, capital-gain, vehicle, mixed Section B, carryover, and larger Section A
+sets remain closed. These records are preparer-entered facts rather than
+authenticated donor/donee source bytes; PDF appearance, XSD/business rules,
+and IRS ATS acceptance are pending.

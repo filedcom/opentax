@@ -612,11 +612,6 @@ export const form8283Pdf: PdfFormDescriptor = {
       : [0],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    if (Array.isArray(raw.section_a_items) && raw.section_a_items.length > 4) {
-      throw new Error(
-        "Form 8283 PDF supports only four current Section A items; continuation pages remain unsupported",
-      );
-    }
     const source = inputSchema.parse(raw);
     if (source.carryover_evidence !== undefined) {
       if (
@@ -653,6 +648,18 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     const sectionA = source.section_a_items ?? [];
     const sectionB = source.section_b_items ?? [];
+    if (
+      sectionA.length > 5 ||
+      (sectionA.length === 5 &&
+        (sectionB.length > 0 ||
+          sectionA.some((item) =>
+            item.is_vehicle === true || needsFmvReductionStatement(item)
+          )))
+    ) {
+      throw new Error(
+        "Form 8283 PDF supports five Section A rows only as distinct unreduced nonvehicle gifts on two copies",
+      );
+    }
     if (sectionB.length > 0) {
       if (sectionB.length === 2) {
         const similarArt = isTwoSectionBSimilarArtGroup(source);
@@ -827,33 +834,40 @@ export const form8283Pdf: PdfFormDescriptor = {
       throw new Error("Form 8283 PDF source differs from the pending return");
     }
     if (!elected) assertOrdinarySectionAReconciled({ pending: allPending });
-    const instance: Record<string, unknown> = {
-      ...identity(filer),
-      reduction_statements: sectionA.flatMap((item, index) =>
-        needsFmvReductionStatement(item)
-          ? [fmvReductionExplanation(item, index)]
-          : []
-      ),
-    };
-    sectionA.forEach((item, index) => {
-      const prefix = `row${index + 1}_`;
-      instance[`${prefix}donee`] = doneeLine(item);
-      instance[`${prefix}vehicle`] = item.is_vehicle === true;
-      instance[`${prefix}vin`] = item.is_vehicle ? item.vehicle_vin : undefined;
-      instance[`${prefix}description`] = item.property_description;
-      instance[`${prefix}contribution_date`] = printedDate(
-        item.date_contributed,
-      );
-      instance[`${prefix}acquired_date`] = printedDate(
-        item.date_acquired,
-        true,
-      );
-      instance[`${prefix}how_acquired`] = item.donor_acquisition_description;
-      instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
-      instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
-      instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
+    const pages = sectionA.length === 5
+      ? [sectionA.slice(0, 4), sectionA.slice(4)]
+      : [sectionA];
+    return pages.map((items, pageIndex) => {
+      const instance: Record<string, unknown> = {
+        ...identity(filer),
+        reduction_statements: items.flatMap((item, index) =>
+          needsFmvReductionStatement(item)
+            ? [fmvReductionExplanation(item, pageIndex * 4 + index)]
+            : []
+        ),
+      };
+      items.forEach((item, index) => {
+        const prefix = `row${index + 1}_`;
+        instance[`${prefix}donee`] = doneeLine(item);
+        instance[`${prefix}vehicle`] = item.is_vehicle === true;
+        instance[`${prefix}vin`] = item.is_vehicle
+          ? item.vehicle_vin
+          : undefined;
+        instance[`${prefix}description`] = item.property_description;
+        instance[`${prefix}contribution_date`] = printedDate(
+          item.date_contributed,
+        );
+        instance[`${prefix}acquired_date`] = printedDate(
+          item.date_acquired,
+          true,
+        );
+        instance[`${prefix}how_acquired`] = item.donor_acquisition_description;
+        instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
+        instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
+        instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
+      });
+      return instance;
     });
-    return [instance];
   },
   async appendSupplementalPages(document, instance) {
     const statements = instance.reduction_statements as string[] | undefined;
