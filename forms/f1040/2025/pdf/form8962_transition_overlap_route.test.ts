@@ -1,4 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { z } from "zod";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
@@ -44,6 +45,7 @@ const inputs = {
     address_state: "TX",
     address_zip: "78701",
     taxpayer_can_be_claimed_as_dependent: false,
+    digital_assets: false,
   },
   w2: [{
     box1_wages: 75_300,
@@ -70,16 +72,27 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
   });
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form8962;
-  assertEquals(fields.monthly_ptc_rows[5].premium, 900);
-  assertEquals(fields.monthly_ptc_rows[5].slcsp, 600);
-  assertEquals(fields.monthly_ptc_rows[5].aptc, 350);
+  const monthlyRows = z.array(z.object({
+    premium: z.number(),
+    slcsp: z.number(),
+    aptc: z.number(),
+  })).parse(fields.monthly_ptc_rows);
+  assertEquals(monthlyRows[5].premium, 900);
+  assertEquals(monthlyRows[5].slcsp, 600);
+  assertEquals(monthlyRows[5].aptc, 350);
   assertEquals(fields.total_premium_tax_credit, 804);
   assertEquals(fields.total_advance_ptc, 2_250);
   assertEquals(fields.excess_advance_premium, 1_446);
   assertEquals(result.pending.schedule2.line1a_excess_advance_premium, 1_446);
   assertEquals(result.pending.f1040.line17_additional_taxes, 1_446);
   const pending = buildPending(result.pending);
-  const filer = extractFilerIdentity(pending.f1040);
+  const filer = extractFilerIdentity(pending.f1040!);
+  const pdfPending = {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule2: pending.schedule2!,
+  };
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
   assertEquals(
     bundle.xml.includes("<MonthlyPremiumAmt>900</MonthlyPremiumAmt>"),
@@ -89,10 +102,13 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
     bundle.xml.includes("<MonthlyPremiumSLCSPAmt>600</MonthlyPremiumSLCSPAmt>"),
     true,
   );
-  const projected = form8962Pdf.projectFields!(fields, pending);
+  const projected = form8962Pdf.projectFields!(fields, pdfPending);
   assertEquals(projected.pdf_month_6_premium, "900");
   assertEquals(projected.pdf_month_6_slcsp, "600");
-  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, pdfPending)?.length,
+    1,
+  );
   assertEquals(
     (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
     true,
@@ -117,7 +133,11 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
     Error,
   );
   assertThrows(
-    () => form8962Pdf.projectFields!(fields, twoOverlapMonths),
+    () =>
+      form8962Pdf.projectFields!(fields, {
+        ...pdfPending,
+        f1095a: twoOverlapMonths.f1095a,
+      }),
     Error,
   );
   const changedSlcsp = {
@@ -137,7 +157,11 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
     Error,
   );
   assertThrows(
-    () => form8962Pdf.instances?.(projected, filer, changedSlcsp),
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...pdfPending,
+        f1095a: changedSlcsp.f1095a,
+      }),
     Error,
   );
   const changedAptc = {
@@ -157,7 +181,11 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
     Error,
   );
   assertThrows(
-    () => form8962Pdf.instances?.(projected, filer, changedAptc),
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...pdfPending,
+        f1095a: changedAptc.f1095a,
+      }),
     Error,
   );
   const changedReturn = {
@@ -169,7 +197,11 @@ Deno.test("one-person June policy transition combines A/C once and SLCSP once th
     Error,
   );
   assertThrows(
-    () => form8962Pdf.instances?.(projected, filer, changedReturn),
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...pdfPending,
+        f1040: changedReturn.f1040,
+      }),
     Error,
   );
 });

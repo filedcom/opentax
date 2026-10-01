@@ -113,7 +113,13 @@ Deno.test("reviewed AOTC credit calculates, but notice assertions cannot authori
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
   assertThrows(
-    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pending),
+    () =>
+      form8862Pdf.instances?.(pending.f8862!, base.filer, {
+        f1040: pending.f1040!,
+        general: pending.general!,
+        f8863: pending.f8863!,
+        schedule3: pending.schedule3!,
+      }),
     Error,
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
@@ -172,7 +178,13 @@ Deno.test("standalone AOTC rejects altered student identity and exact credit amo
       Error,
     );
     assertThrows(
-      () => form8862Pdf.instances?.(pending.f8862!, base.filer, altered),
+      () =>
+        form8862Pdf.instances?.(pending.f8862!, base.filer, {
+          f1040: altered.f1040!,
+          general: altered.general!,
+          f8863: altered.f8863!,
+          schedule3: altered.schedule3!,
+        }),
       Error,
     );
   }

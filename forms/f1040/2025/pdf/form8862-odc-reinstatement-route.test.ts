@@ -24,7 +24,11 @@ function standaloneOdcPending() {
       ...base.inputs,
       general: {
         ...general,
-        dependents: [{ ...dependent, dob: "2003-06-15" }],
+        dependents: [{
+          ...dependent,
+          dob: "2003-06-15",
+          full_time_student: true,
+        }],
       },
       f8812: [{
         ...f8812,
@@ -57,7 +61,12 @@ Deno.test("reviewed ODC credit calculates, but unauthenticated notice blocks bot
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
   assertThrows(
-    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pending),
+    () =>
+      form8862Pdf.instances?.(pending.f8862!, base.filer, {
+        f1040: pending.f1040!,
+        general: pending.general!,
+        f8812: pending.f8812!,
+      }),
     Error,
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
@@ -70,13 +79,10 @@ Deno.test("reviewed ODC credit calculates, but unauthenticated notice blocks bot
 
 Deno.test("standalone ODC rejects altered Schedule 8812, dependent TIN, and Form 1040 amounts in both exports", () => {
   const pending = standaloneOdcPending();
-  const general = pending.general as Record<string, unknown>;
-  const sourceDependents = general.dependents as Record<string, unknown>[];
+  const general = pending.general!;
+  const sourceDependents = general.dependents!;
   const form8812 = pending.f8812!;
-  const filedDependents = pending.f1040.dependent_details as Record<
-    string,
-    unknown
-  >[];
+  const filedDependents = pending.f1040!.dependent_details!;
   const changed = [
     {
       ...pending,
@@ -121,7 +127,12 @@ Deno.test("standalone ODC rejects altered Schedule 8812, dependent TIN, and Form
       Error,
     );
     assertThrows(
-      () => form8862Pdf.instances?.(pending.f8862!, base.filer, altered),
+      () =>
+        form8862Pdf.instances?.(pending.f8862!, base.filer, {
+          f1040: altered.f1040!,
+          general: altered.general!,
+          f8812: altered.f8812!,
+        }),
       Error,
     );
   }

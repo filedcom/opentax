@@ -28,7 +28,12 @@ Deno.test("reviewed CTC credit calculates, but notice assertions cannot authoriz
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
   assertThrows(
-    () => form8862Pdf.instances?.(pending.f8862!, fixture.filer, pending),
+    () =>
+      form8862Pdf.instances?.(pending.f8862!, fixture.filer, {
+        f1040: pending.f1040!,
+        general: pending.general!,
+        f8812: pending.f8812!,
+      }),
     Error,
     "executor-owned authentication of prior IRS notice issuance and contents",
   );

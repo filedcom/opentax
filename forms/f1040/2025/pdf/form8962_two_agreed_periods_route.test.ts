@@ -71,7 +71,12 @@ Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV,
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>2400</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+  const projected = form8962Pdf.projectFields?.(pending.form8962!, {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule3: pending.schedule3!,
+  }) ??
     {};
   assertEquals(
     (projected as Record<string, unknown>).pdf_allocation_1_premium_pct,
@@ -84,10 +89,17 @@ Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV,
   const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
-  const policy = (pending.f1095a?.f1095as as Record<string, unknown>[])[0];
-  const periods = policy.shared_policy_periods as Record<string, unknown>[];
-  const firstReview = periods[0].agreement_review as Record<string, unknown>;
-  const secondReview = periods[1].agreement_review as Record<string, unknown>;
+  const policy = pending.f1095a!.f1095as[0];
+  const periods = policy.shared_policy_periods!;
+  if (
+    periods[0].basis !== "other_agreed" ||
+    periods[1].basis !== "other_agreed" ||
+    !periods[0].agreement_review || !periods[1].agreement_review
+  ) {
+    throw new Error("Fixture needs two reviewed Situation 4 agreements");
+  }
+  const firstReview = periods[0].agreement_review;
+  const secondReview = periods[1].agreement_review;
   for (
     const changedSecondReview of [
       { ...secondReview, filer_allocation_pct: 0.2 },

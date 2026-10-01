@@ -1909,9 +1909,6 @@ function reconcileSimplePolicyMonths(
       fields.household_size !== 3) ||
     (fields.household_size === 3 &&
       !threePersonPolicies && !onePolicyThreePerson) ||
-    fields.annual_premium !== undefined ||
-    fields.annual_slcsp !== undefined ||
-    fields.annual_aptc !== undefined ||
     fields.annual_ptc_allowed !== undefined ||
     pending?.form2555 !== undefined
   ) {

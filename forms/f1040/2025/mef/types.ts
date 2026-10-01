@@ -24,6 +24,7 @@ import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a
 import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
 import type { inputSchema as f8812InputSchema } from "../../nodes/inputs/f8812/index.ts";
+import type { inputSchema as f8863InputSchema } from "../../nodes/inputs/f8863/index.ts";
 import type { inputSchema as generalInputSchema } from "../../nodes/inputs/general/index.ts";
 import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099patr/index.ts";
 import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
@@ -61,6 +62,8 @@ export type MefFormsPending =
     // checks even when their input nodes do not emit standalone XML forms.
     general?: z.infer<typeof generalInputSchema>;
     f8812?: z.infer<typeof f8812InputSchema>;
+    // Education source rows remain available to reconcile Form 8862 and 8863.
+    f8863?: z.infer<typeof f8863InputSchema>;
     // Retained 1099-PATR source for the Form 8995-A Schedule D filing check.
     f1099patr?: z.infer<typeof patrInputSchema>;
     // K-1 source records are retained for downstream credit reconciliation.

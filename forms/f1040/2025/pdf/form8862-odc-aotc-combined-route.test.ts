@@ -21,7 +21,11 @@ function combinedInputs() {
     ...base.inputs,
     general: {
       ...baseGeneral,
-      dependents: [{ ...baseDependent, dob: "2003-06-15" }],
+      dependents: [{
+        ...baseDependent,
+        dob: "2003-06-15",
+        full_time_student: true,
+      }],
       prior_aotc_disallowance_review: {
         disallowed_year: 2022,
         notice_reference: "Synthetic 2022 IRS AOTC notice",
@@ -129,13 +133,20 @@ Deno.test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot
   assertEquals(result.pending.f1040.line29_refundable_aoc, 1_000);
   assertEquals(result.pending.schedule3.line3_education_credit, 1_500);
   const pending = buildPending(result.pending);
+  const pdfPending = {
+    f1040: pending.f1040!,
+    general: pending.general!,
+    f8812: pending.f8812!,
+    f8863: pending.f8863!,
+    schedule3: pending.schedule3!,
+  };
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
     Error,
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
   assertThrows(
-    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pending),
+    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pdfPending),
     Error,
     "executor-owned authentication of prior IRS notice issuance and contents",
   );
@@ -180,7 +191,14 @@ Deno.test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form
       "shared ODC and AOTC amounts differ",
     );
     assertThrows(
-      () => form8862Pdf.instances?.(pending.f8862!, base.filer, altered),
+      () =>
+        form8862Pdf.instances?.(pending.f8862!, base.filer, {
+          f1040: altered.f1040!,
+          general: altered.general!,
+          f8812: altered.f8812!,
+          f8863: altered.f8863!,
+          schedule3: altered.schedule3!,
+        }),
       Error,
       "shared ODC and AOTC amounts differ",
     );
@@ -201,7 +219,13 @@ Deno.test("combined Form 8862 ODC/AOTC rejects altered notice and student source
   const noticePending = buildPending(noticeResult.pending);
   assertThrows(
     () =>
-      form8862Pdf.instances?.(noticePending.f8862!, base.filer, noticePending),
+      form8862Pdf.instances?.(noticePending.f8862!, base.filer, {
+        f1040: noticePending.f1040!,
+        general: noticePending.general!,
+        f8812: noticePending.f8812!,
+        f8863: noticePending.f8863!,
+        schedule3: noticePending.schedule3!,
+      }),
     Error,
     "matching reviewed prior IRS notice",
   );
@@ -217,7 +241,14 @@ Deno.test("combined Form 8862 ODC/AOTC rejects altered notice and student source
   assertEquals(studentResult.diagnostics, []);
   const pending = buildPending(studentResult.pending);
   assertThrows(
-    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pending),
+    () =>
+      form8862Pdf.instances?.(pending.f8862!, base.filer, {
+        f1040: pending.f1040!,
+        general: pending.general!,
+        f8812: pending.f8812!,
+        f8863: pending.f8863!,
+        schedule3: pending.schedule3!,
+      }),
     Error,
     "students and credit must reconcile",
   );
@@ -237,7 +268,13 @@ Deno.test("combined Form 8862 ODC/AOTC rejects altered notice and student source
       form8862Pdf.instances?.(
         identityPending.f8862!,
         base.filer,
-        identityPending,
+        {
+          f1040: identityPending.f1040!,
+          general: identityPending.general!,
+          f8812: identityPending.f8812!,
+          f8863: identityPending.f8863!,
+          schedule3: identityPending.schedule3!,
+        },
       ),
     Error,
     "shared ODC and AOTC student needs one matching dependent SSN",

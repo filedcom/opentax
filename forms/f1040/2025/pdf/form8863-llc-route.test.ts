@@ -96,7 +96,10 @@ Deno.test("sourced LLC tuition, required materials, and scholarship reconcile to
   const [projected] = form8863Pdf.instances!(
     pending.f8863!,
     base.filer,
-    pending,
+    {
+      f1040: pending.f1040!,
+      schedule3: pending.schedule3!,
+    },
   );
   assertEquals(projected.pdf_line31, 7_500);
   assertEquals(projected.line19, 1_500);
@@ -125,7 +128,10 @@ Deno.test("sourced LLC tuition, required materials, and scholarship reconcile to
     }), Error);
   assertThrows(
     () =>
-      form8863Pdf.instances!(changedSource.f8863, base.filer, changedSource),
+      form8863Pdf.instances!(changedSource.f8863, base.filer, {
+        f1040: changedSource.f1040!,
+        schedule3: changedSource.schedule3!,
+      }),
     Error,
   );
   const missingRequirement = {
@@ -155,7 +161,10 @@ Deno.test("sourced LLC tuition, required materials, and scholarship reconcile to
       form8863Pdf.instances!(
         missingRequirement.f8863,
         base.filer,
-        missingRequirement,
+        {
+          f1040: missingRequirement.f1040!,
+          schedule3: missingRequirement.schedule3!,
+        },
       ),
     Error,
     "separate enrollment requirement",
