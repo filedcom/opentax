@@ -340,12 +340,12 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
   assertThrows(
     () => build(codeBFields, { pending: codeBPending }),
     Error,
-    "needs a source-linked deduction on the filed return",
+    "needs one K-1, filed Schedule E royalty row, finalized Schedule 1, Schedule A, and Form 1040",
   );
   assertThrows(
     () => form4952Pdf.projectFields?.(codeBFields, codeBPending),
     Error,
-    "needs a source-linked deduction on the filed return",
+    "needs one K-1, filed Schedule E royalty row, finalized Schedule 1, Schedule A, and Form 1040",
   );
   assertThrows(
     () =>
@@ -354,7 +354,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
         { pending: codeBPending },
       ),
     Error,
-    "needs a source-linked deduction on the filed return",
+    "needs one K-1, filed Schedule E royalty row, finalized Schedule 1, Schedule A, and Form 1040",
   );
   assertThrows(
     () =>
@@ -379,6 +379,6 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
         pending: codeBPending,
       }),
     Error,
-    "needs a source-linked deduction on the filed return",
+    "needs one K-1, filed Schedule E royalty row, finalized Schedule 1, Schedule A, and Form 1040",
   );
 });

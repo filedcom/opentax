@@ -52,6 +52,7 @@ function basisSourcePending(
           estate_trust_name: "Synthetic Trust",
           estate_trust_ein: "123456789",
           source_document_reference: "synthetic issued trust K-1",
+          beneficiary_ssn: "111223333",
           box12_code_a_amt_adjustment: trustAmount,
           box12_codes_b_through_f_absent: true,
           box12_codes_g_through_i_absent: true,
@@ -103,6 +104,24 @@ function basisSourcePending(
     : {};
   const pending: Record<string, Record<string, unknown>> = {};
   Object.assign(pending, f59e, scheduleC, trust, pab);
+  if (
+    (typeof trustAmount === "number" && trustAmount !== 0) ||
+    (typeof depletion === "number" && depletion !== 0)
+  ) {
+    const line16 = fields.regular_tax as number;
+    const amt = fields.line11_amt as number;
+    pending.f1040 = {
+      taxpayer_ssn: "111223333",
+      filing_status: "single",
+      line16_income_tax: line16,
+      line17_additional_taxes: amt,
+      line18_total_tax_before_credits: line16 + amt,
+    };
+    if (amt > 0) pending.schedule2 = { line2_amt: amt };
+    if (typeof depletion === "number" && depletion !== 0) {
+      pending.schedule1 = { line3_schedule_c: 50_000 - Math.max(depletion, 0) };
+    }
+  }
   if (raw === undefined) return pending;
   const rows = Array.isArray(raw) ? raw : [raw];
   pending.f8949 = {
@@ -1167,7 +1186,11 @@ Deno.test("form6251: negative trust K-1 code A with qualified dividends refigure
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
     ...basisSourcePending(filed!.fields),
-    f1040: { line11_agi: 120_000, line14_deductions_qbi_total: 20_000 },
+    f1040: {
+      ...basisSourcePending(filed!.fields).f1040,
+      line11_agi: 120_000,
+      line14_deductions_qbi_total: 20_000,
+    },
   });
   assertEquals(pdf?.line2j_estates_and_trusts, -20_000);
   assertEquals(form6251Pdf.includeWhen?.(pdf ?? {}), true);

@@ -132,7 +132,7 @@ Deno.test("Form 6251 line 2c reconciles two investment-interest payers and disti
   assertThrows(
     () => mef6251.build(filed, { pending: duplicatePayer, filer: testFiler() }),
     Error,
-    "supported 1099-INT",
+    "supported 1099 investment payer or royalty inventory",
   );
   const changedAmount = structuredClone(result.pending);
   (changedAmount.f1099int as { f1099ints: { box1: number }[] })

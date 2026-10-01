@@ -21,7 +21,7 @@ const business = {
   line_f_accounting_method: "cash",
   line_g_material_participation: true,
   line_i_made_1099_payments: false,
-  line_1_gross_receipts: 500_000,
+  line_1_gross_receipts: 200_000,
   line_12_depletion: 200_000,
   amt_depletion_worksheet: {
     source_reference: "2025 property depletion and income/basis workpaper",
@@ -82,7 +82,7 @@ function filing() {
 
 Deno.test("mixed property depletion reaches 6251, Schedule 2, 1040, MeF and PDF", async () => {
   const { fields, pending } = filing();
-  assertEquals(pending.schedule1?.line3_schedule_c, 300_000);
+  assertEquals(pending.schedule1?.line3_schedule_c, 0);
   assertEquals(fields.line2d_depletion, 150_000);
   assert(typeof fields.line11_amt === "number" && fields.line11_amt > 0);
   assertEquals(pending.schedule2?.line2_amt, fields.line11_amt);

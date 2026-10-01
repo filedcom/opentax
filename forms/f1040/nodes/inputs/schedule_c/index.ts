@@ -457,9 +457,35 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    // Per-item downstream routing (passive, at-risk, depletion, interest)
+    // Per-item downstream routing (passive, at-risk, depletion, interest).
+    // Form 6251 takes one signed scalar for each line, even when several
+    // businesses contribute property workpapers to the same adjustment.
+    const amtAdjustments = {
+      line2d_depletion: 0,
+      line2p_long_term_contracts: 0,
+      line2q_mining_costs: 0,
+    };
     for (let i = 0; i < items.length; i++) {
-      outputs.push(...deductionOutputs(items[i], netProfits[i]));
+      for (const row of deductionOutputs(items[i], netProfits[i])) {
+        if (row.nodeType !== form6251.nodeType) {
+          outputs.push(row);
+          continue;
+        }
+        for (
+          const key of Object.keys(amtAdjustments) as Array<
+            keyof typeof amtAdjustments
+          >
+        ) {
+          const value = row.fields[key];
+          if (typeof value === "number") amtAdjustments[key] += value;
+        }
+      }
+    }
+    const combinedAmt = Object.fromEntries(
+      Object.entries(amtAdjustments).filter(([, value]) => value !== 0),
+    );
+    if (Object.keys(combinedAmt).length > 0) {
+      outputs.push({ nodeType: form6251.nodeType, fields: combinedAmt });
     }
 
     // Form 461 line 2 uses signed Schedule 1 line 3 after at-risk limits.

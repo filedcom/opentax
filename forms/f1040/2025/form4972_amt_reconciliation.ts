@@ -41,6 +41,9 @@ export function assertForm4972AmtJoin(
   // its retained source tax and filed line 10 must both reconcile.
   if (pending.form6251 === undefined) return;
   const form6251 = record(pending.form6251, "calculated Form 6251");
+  // The execution graph also retains the Form 6251 input when the node returns
+  // no filed document. Only a filed output carries the calculated line 11.
+  if (form6251.line11_amt === undefined) return;
   const line10 = dollars(form6251.regular_tax, "Form 6251 line 10");
   if (form6251.form4972_tax !== specialTax) {
     throw new Error("Form 6251 omits the Form 4972 special tax source");
@@ -77,6 +80,8 @@ export function assertForm4972AmtJoin(
       optionalDollars(form6251.form8978_negative_line14, "Form 8978 line 14"),
   );
   if (line10 !== expected) {
-    throw new Error("Form 6251 line 10 differs from Form 4972 and Form 1040");
+    throw new Error(
+      `Form 6251 line 10 differs from Form 4972 and Form 1040: filed ${line10}, expected ${expected}, Form 1040 line 16 ${line16}, special tax ${specialTax}`,
+    );
   }
 }

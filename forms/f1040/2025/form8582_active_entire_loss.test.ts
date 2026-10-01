@@ -22,7 +22,7 @@ const sale = {
   activity_id: "first-year-active-loss-rental",
   activity_name: "First year active loss rental",
   part: "II" as const,
-  property_description: "Short-held rental equipment",
+  property_description: "Rental equipment",
   acquired_on: "2025-01-01",
   sold_on: "2025-06-01",
   gross_sales_price: 9_000,

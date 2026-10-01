@@ -144,7 +144,7 @@ Deno.test("Form 4952 reconciles qualified 1099-DIV income without a line 4g elec
         f1099div: { f1099divs: [{ ...qualifiedDividend, box1b: 600 }] },
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   const electedInputs = {
     ...qualifiedInputs,
@@ -157,7 +157,7 @@ Deno.test("Form 4952 reconciles qualified 1099-DIV income without a line 4g elec
         { pending: qualifiedPending },
       ),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
 });
 
@@ -187,7 +187,7 @@ Deno.test("Form 4952 dividend route rejects missing or conflicting source and re
         },
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   assertThrows(
     () =>
@@ -230,7 +230,7 @@ Deno.test("Form 4952 dividend route rejects unmatched qualified dividends and pa
         pending,
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   assertThrows(
     () =>
@@ -241,7 +241,7 @@ Deno.test("Form 4952 dividend route rejects unmatched qualified dividends and pa
         },
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   assertThrows(
     () =>
@@ -252,7 +252,7 @@ Deno.test("Form 4952 dividend route rejects unmatched qualified dividends and pa
         },
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
 });
 
@@ -284,7 +284,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-dividend payers", (
         source_1099_dividends: [600, 150],
       }, { pending: multiPending }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   assertThrows(
     () =>
@@ -295,7 +295,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-dividend payers", (
         },
       }),
     Error,
-    "supports only 1099-DIV box 1a/1b investment payers",
+    "supports only sourced 1099-DIV box 1a/1b investment payers",
   );
   assertThrows(
     () =>

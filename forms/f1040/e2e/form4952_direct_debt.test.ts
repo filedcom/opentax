@@ -429,7 +429,7 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
         filer: testFiler(),
       }),
     Error,
-    "supported 1099-INT, 1099-DIV, or taxable 1099-OID investment payer inventory",
+    "supported 1099 investment payer or royalty inventory",
   );
   assertThrows(
     () =>

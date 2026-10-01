@@ -24,6 +24,12 @@ export function assertForm6251TrustSource(
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
   const filedAmt = fields.line11_amt;
+  const taxpayerTin = typeof form1040?.taxpayer_ssn === "string"
+    ? form1040.taxpayer_ssn.replace(/\D/g, "")
+    : undefined;
+  const spouseTin = typeof form1040?.spouse_ssn === "string"
+    ? form1040.spouse_ssn.replace(/\D/g, "")
+    : undefined;
   if (
     !parsed.success || items.length === 0 ||
     typeof amount !== "number" || amount !== total ||
@@ -31,15 +37,18 @@ export function assertForm6251TrustSource(
     items.some((item) =>
       !item.estate_trust_ein || !item.source_document_reference ||
       !item.beneficiary_ssn ||
-      (item.beneficiary_ssn !== form1040?.taxpayer_ssn &&
+      (item.beneficiary_ssn !== taxpayerTin &&
         !(form1040?.filing_status === "mfj" &&
-          item.beneficiary_ssn === form1040?.spouse_ssn)) ||
+          item.beneficiary_ssn === spouseTin)) ||
       item.box12_codes_b_through_f_absent !== true ||
       item.box12_codes_g_through_i_absent !== true ||
       (item.box12_amt ?? 0) !== 0
     ) ||
-    typeof filedAmt !== "number" || filedAmt <= 0 ||
-    schedule2?.line2_amt !== filedAmt ||
+    typeof filedAmt !== "number" || filedAmt < 0 ||
+    (filedAmt === 0
+      ? fields.must_file_for_negative_adjustments !== true ||
+        (schedule2?.line2_amt ?? 0) !== 0
+      : schedule2?.line2_amt !== filedAmt) ||
     typeof form1040?.line17_additional_taxes !== "number" ||
     form1040.line17_additional_taxes < filedAmt ||
     typeof form1040.line16_income_tax !== "number" ||

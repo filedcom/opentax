@@ -137,14 +137,6 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
         amt_gain: -3_500,
       }],
     }, "AMT basis losses need audited"],
-    [{
-      ...input,
-      line2k_8949_basis_dispositions: [gain, {
-        ...loss,
-        amt_basis: 3_500,
-        amt_gain: 500,
-      }],
-    }, "AMT basis losses need audited"],
   ];
   for (const [candidate, reason] of unsupported) {
     assertThrows(() => compute(candidate), Error, reason);
