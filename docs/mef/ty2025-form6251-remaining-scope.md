@@ -4,6 +4,25 @@ Status: coverage disposition only. This document does not turn an unsupported
 AMT situation into a supported return. The agreed full test batch, IRS XSD
 validation, filled-PDF review, and ATS acceptances have not run.
 
+## Two distinct bonds reported by one 1099-INT issuer (2026-10-01, unrun)
+
+The bounded Form 6251 line 2g path now accepts two separately issued 1099-INT
+copies with the same verified payer name and TIN when they identify distinct
+specified private-activity bonds. Each copy must have a distinct issued-copy
+reference, bond identifier, eligibility review, and allocable-deduction
+workpaper and expense record. Box 8 must equal box 9 on each copy; the retained
+source node subtracts each reviewed deduction once. The [2025 Form 6251 line
+2g instructions](https://www.irs.gov/instructions/i6251) require specified
+bond interest, after qualifying allocable deductions, and the [1099-INT
+instructions](https://www.irs.gov/instructions/i1099int) include box 9 in box
+8. Native MeF and PDF replay both copies and reconcile Form 6251 line 2g,
+Schedule 2 line 2, Form 1040 lines 2a and 17. The authored case has $200,000
+tax-exempt interest and two $10,000 allocable deductions, producing $180,000
+on line 2g. Positive and bond identity, copy, deduction, and final-tax tamper
+fixtures are authored but unrun. Reviewed references do not authenticate the
+issued statements or expense records; more than two copies and mixed PAB
+sources remain open.
+
 ## Mixed-term gain offset with separately capped losses (2026-10-01, unrun)
 
 The complete Form 8949 audit now admits identified short-term gains and

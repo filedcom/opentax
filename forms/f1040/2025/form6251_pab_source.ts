@@ -48,12 +48,13 @@ export function assertForm6251PrivateActivityBondSource(
   const twoIntReferences = twoIntOnly
     ? ints.flatMap((item) => [
       item.source_document_reference,
-      item.payer_tin,
       item.pab_review_reference,
       item.pab_allocable_deduction_workpaper?.reviewed_workpaper_reference,
       item.pab_allocable_deduction_workpaper?.expense_record_reference,
     ])
     : [];
+  const sameIntIssuer = twoIntOnly &&
+    ints[0].payer_tin === ints[1].payer_tin;
   const oneOidOnly = oids.length === 1 &&
     (oids[0].box11_pab_oid ?? 0) > 0 &&
     ints.length === 0 && divs.length === 0 && children.length === 0;
@@ -159,12 +160,21 @@ export function assertForm6251PrivateActivityBondSource(
     )) ||
     (twoIntOnly && (
       ints.some((item) =>
-        !item.source_document_reference || !item.payer_tin ||
+        !item.source_document_reference ||
+        !/^[0-9]{9}$/.test(item.payer_tin ?? "") ||
+        !item.payer_name?.trim() ||
         !item.pab_review_reference ||
         item.pab_eligible_bonds_reviewed !== true ||
         !item.pab_allocable_deduction_workpaper ||
         (item.box13 ?? 0) !== 0
       ) ||
+      (sameIntIssuer && (
+        ints[0].payer_name !== ints[1].payer_name ||
+        !ints[0].pab_bond_identifier ||
+        !ints[1].pab_bond_identifier ||
+        ints[0].pab_bond_identifier === ints[1].pab_bond_identifier ||
+        ints.some((item) => item.box8 !== item.box9)
+      )) ||
       new Set(twoIntReferences).size !== twoIntReferences.length ||
       form1040?.line2a_tax_exempt !== twoIntTaxExempt ||
       amt === undefined ||
