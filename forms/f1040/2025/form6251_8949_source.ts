@@ -103,15 +103,21 @@ export function assertForm6251Form8949Source(
     rows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
         .length === rows.length - 1 &&
     regularNet > 0 && amtNet < 0;
+  const shortLoss = rows.find((row) => ["A", "B", "C"].includes(row.part));
+  const longGainToLoss = rows.find((row) => ["D", "E", "F"].includes(row.part));
+  const mixedTermGainToAmtLoss = rows.length === 2 && !!shortLoss &&
+    !!longGainToLoss && shortLoss.regular_gain < 0 &&
+    shortLoss.amt_gain < 0 && longGainToLoss.regular_gain > 0 &&
+    longGainToLoss.amt_gain < 0 && regularNet > 0 && amtNet < 0;
   if (
     rows.some((row) => row.regular_gain > 0 && row.amt_gain < 0) &&
-    !gainToAmtLoss
+    !gainToAmtLoss && !mixedTermGainToAmtLoss
   ) {
     throw new Error(
-      "Form 6251 gain-to-AMT-loss basis sale needs one or two audited long-term lots with a fully deductible AMT net loss",
+      "Form 6251 gain-to-AMT-loss basis sale needs audited long-term lots or one short-term loss offsetting a long-term regular gain with a fully deductible AMT net loss",
     );
   }
-  if (gainToAmtLoss) {
+  if (gainToAmtLoss || mixedTermGainToAmtLoss) {
     const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
     const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;

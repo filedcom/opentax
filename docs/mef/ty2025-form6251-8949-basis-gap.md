@@ -169,3 +169,17 @@ income, native element, and PDF line are joined. A changed second basis,
 capital-gain total, Schedule 2 tax, or AMT loss crossing the limit rejects.
 Mixed terms, a third lot, capital-loss carryovers, and adjusted transactions
 remain unsupported. The two-lot fixtures await the same final validation batch.
+
+A separate two-lot mixed-term route accepts one short-term loss under both bases
+and one long-term regular gain that becomes an AMT loss. The short loss offsets
+the regular long gain for Schedule D's preferential net capital gain; both AMT
+lots are losses, so AMT has no preferential gain and Form 6251 Part III stays
+empty. The regular aggregate must be a gain, while the AMT aggregate must fit
+within the separate $3,000/$1,500 loss limit. In the authored case, regular
+short −$500 and long +$2,000 produce a $1,500 regular preferential gain;
+AMT short −$700 and long −$500 produce a deductible −$1,200 loss. Line 2k is
+negative $2,700. Native and PDF export require exact dated short/long Form 8949
+rows, Schedule 2 line 2, Form 1040 lines 7/15, and sufficient line 17 tax.
+Changed source basis, return gain, Schedule 2 tax, or AMT loss beyond the
+deduction ceiling rejects. Other mixed-term sign changes and capital-loss
+carryovers remain closed. Fixtures await the final validation batch.

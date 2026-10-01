@@ -615,12 +615,19 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       longTermBasisRows.every((row) =>
         row.regular_gain < 0 && row.amt_gain < 0
       ) && regularBasisNet > 0 && amtBasisNet > 0;
+    const lossLimit = input.filing_status === FilingStatus.MFS
+      ? -1_500
+      : -3_000;
+    const shortLossLongGainToAmtLoss = basisRows.length === 2 &&
+      shortTermBasisRows.length === 1 && longTermBasisRows.length === 1 &&
+      shortTermBasisRows[0].regular_gain < 0 &&
+      shortTermBasisRows[0].amt_gain < 0 &&
+      longTermBasisRows[0].regular_gain > 0 &&
+      longTermBasisRows[0].amt_gain < 0 &&
+      regularBasisNet > 0 && amtBasisNet < 0 && amtBasisNet >= lossLimit;
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
-      const lossLimit = input.filing_status === FilingStatus.MFS
-        ? -1_500
-        : -3_000;
       const oneTermOnly = shortTermBasisRows.length === basisRows.length ||
         longTermBasisRows.length === basisRows.length;
       const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
@@ -652,13 +659,14 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       if (
         (!oneTermOnly && !mixedFullyDeductibleLoss &&
           !shortLossOffsetLongGain &&
-          !longLossOffsetShortGain) ||
+          !longLossOffsetShortGain && !shortLossLongGainToAmtLoss) ||
         (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
-        ) && !longTermGainToAmtLoss) ||
+        ) && !longTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
-          longLossOffsetShortGain || longTermGainToAmtLoss) ||
+          longLossOffsetShortGain || longTermGainToAmtLoss ||
+          shortLossLongGainToAmtLoss) ||
         ((input.qualified_dividends ?? 0) > 0 &&
           !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||
@@ -750,7 +758,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
       if (
         regularNetCg !==
-          (shortLossOffsetLongGain
+          (shortLossOffsetLongGain || shortLossLongGainToAmtLoss
             ? regularBasisNet
             : longLossOffsetShortGain
             ? 0
