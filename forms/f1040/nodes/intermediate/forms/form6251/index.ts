@@ -224,13 +224,12 @@ function line2kBasisDispositionAdjustment(input: Form6251Input): number {
   const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
   const lossLimit = input.filing_status === FilingStatus.MFS ? -1_500 : -3_000;
-  const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
-    rows.every((row) => ["D", "E", "F"].includes(row.part));
-  const allLosses = rows.every((row) =>
-    row.regular_gain < 0 && row.amt_gain < 0
+  const signStable = rows.every((row) =>
+    (row.regular_gain > 0 && row.amt_gain > 0) ||
+    (row.regular_gain < 0 && row.amt_gain < 0)
   );
   if (
-    rows.length > 0 && (oneTermOnly || allLosses) &&
+    rows.length > 0 && signStable &&
     regularNet < 0 && amtNet < 0 &&
     (regularNet < lossLimit || amtNet < lossLimit)
   ) {
@@ -656,13 +655,17 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length;
       const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
         regularBasisNet >= lossLimit && amtBasisNet >= lossLimit;
-      const cappedAuditedNetLoss = (oneTermOnly ||
-        basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0)) &&
+      const cappedAuditedNetLoss = basisRows.every((row) =>
+        (row.regular_gain > 0 && row.amt_gain > 0) ||
+        (row.regular_gain < 0 && row.amt_gain < 0)
+      ) &&
         regularBasisNet < 0 && amtBasisNet < 0 &&
         (regularBasisNet < lossLimit || amtBasisNet < lossLimit);
       const mixedFullyDeductibleLoss = !oneTermOnly &&
         fullyDeductibleNetLoss &&
-        basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0);
+        basisRows.every((row) =>
+          row.regular_gain < 0 && row.amt_gain < 0
+        );
       const mixedFullyDeductibleOffsetLoss = !oneTermOnly &&
         fullyDeductibleNetLoss &&
         basisRows.some((row) => row.regular_gain > 0 && row.amt_gain > 0) &&

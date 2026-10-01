@@ -61,12 +61,13 @@ export function assertForm6251Form8949Source(
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
   const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
     rows.every((row) => ["D", "E", "F"].includes(row.part));
-  const allLosses = rows.every((row) =>
-    row.regular_gain < 0 && row.amt_gain < 0
+  const signStable = rows.every((row) =>
+    (row.regular_gain > 0 && row.amt_gain > 0) ||
+    (row.regular_gain < 0 && row.amt_gain < 0)
   );
   const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
   const cappedAuditedNetLoss = rows.length > 0 &&
-    (oneTermOnly || allLosses) &&
+    signStable &&
     regularNet < 0 && amtNet < 0 &&
     (regularNet < lossLimit || amtNet < lossLimit);
   const calculatedDifference = cappedAuditedNetLoss

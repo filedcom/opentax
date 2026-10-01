@@ -192,3 +192,98 @@ Deno.test("Form 6251 capped mixed-term loss rejects omitted lot, changed AMT bas
   );
   assertThrows(() => form6251Pdf.projectFields?.(changed, result.pending));
 });
+
+const mixedGainAndLoss = [
+  {
+    part: "A",
+    description: "Short-term capital gain with AMT basis",
+    source_transaction_id: "broker-short-gain-cap",
+    broker_statement_reference: "2025 issued short-term gain lot",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    amt_cost_basis: 1_100,
+  },
+  {
+    part: "D",
+    description: "Long-term capital loss with AMT basis",
+    source_transaction_id: "broker-long-loss-cap",
+    broker_statement_reference: "2025 issued long-term loss lot",
+    date_acquired: "2023-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 1_000,
+    cost_basis: 4_500,
+    amt_cost_basis: 6_600,
+  },
+];
+
+function cappedMixedOffsetReturn() {
+  const retainedIso = priorIsoSaleFixture(general.taxpayer_ssn);
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    w2: retainedIso.w2,
+    f3921: retainedIso.f3921,
+    f8949: mixedGainAndLoss,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  return {
+    result,
+    filed: result.pending.form6251!,
+    filer: extractFilerIdentity(general),
+  };
+}
+
+Deno.test("Form 6251 caps audited mixed-term gain and loss separately for regular and AMT", () => {
+  const { result, filed, filer } = cappedMixedOffsetReturn();
+  // $1,000 short gain offsets a $3,500 long loss for regular tax. For AMT,
+  // $900 offsets a $5,600 loss, so only $3,000 of the $4,700 net is deducted.
+  assertEquals(result.pending.f1040?.line7_capital_gain, -2_500);
+  assertEquals(filed.line2k_disposition, -500);
+  assertEquals(filed.net_capital_gain, 0);
+  assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
+  assertStringIncludes(
+    mef6251.build(filed, { pending: result.pending, filer }),
+    "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed, result.pending)?.line2k_disposition,
+    -500,
+  );
+});
+
+Deno.test("Form 6251 capped mixed-term offset rejects missing lot, AMT basis, and final loss tampering", () => {
+  const { result, filed, filer } = cappedMixedOffsetReturn();
+  const altered = [
+    {
+      ...result.pending,
+      f8949: { f8949s: [mixedGainAndLoss[1]] },
+    },
+    {
+      ...result.pending,
+      f8949: {
+        f8949s: [
+          mixedGainAndLoss[0],
+          { ...mixedGainAndLoss[1], amt_cost_basis: 6_700 },
+        ],
+      },
+    },
+    {
+      ...result.pending,
+      f1040: { ...result.pending.f1040, line7_capital_gain: -3_000 },
+    },
+    {
+      ...result.pending,
+      schedule2: { ...result.pending.schedule2, line2_amt: 0 },
+    },
+  ];
+  for (const pending of altered) {
+    assertThrows(() => mef6251.build(filed, { pending, filer }));
+    assertThrows(() => form6251Pdf.projectFields?.(filed, pending));
+  }
+  const changed = { ...filed, line2k_disposition: -2_200 };
+  assertThrows(() =>
+    mef6251.build(changed, { pending: result.pending, filer })
+  );
+  assertThrows(() => form6251Pdf.projectFields?.(changed, result.pending));
+});
