@@ -27,6 +27,17 @@ unregistered MeF form files. A registered-file literal is not proof that its
 descriptor can file every branch. `IRS1116ScheduleC` is a seventh unregistered
 root builder whose token is also quoted in the registered Form 1116 file.
 
+The current descriptor inventory is **145 native** and **115 PDF** entries;
+the native set includes **29 wage/supporting descriptors**. These are not
+211-root coverage counts. The [root applicability crosswalk](ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
+records owner classes and unresolved product decisions, while the
+[supporting-descriptor audit](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
+distinguishes issuer copies, native statements and separate PDF attachments.
+The `Yes`/`No` column below is only a literal search; a row marked `No` can
+still have a registered builder without that literal, and a `Yes` can occur in
+a guarded or staged route. Per-return triggers and packet ownership require
+the linked evidence, not an inference from this flag.
+
 | IRS root              | Source literal | Applicability / coverage disposition                                                                                                                                                                                                                                                                                                                     |
 | --------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `IRS1040`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -153,7 +164,7 @@ root builder whose token is also quoted in the registered Form 1116 file.
 | `IRS8835`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8838`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8838P`            | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS8839`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8839`             | No             | Registered descriptor with a bounded reviewed one-child prepared-bundle and strict stored-input CLI route with byte-bound evidence. Sync XML/standalone PDF without bytes and other claims remain closed; issuer authenticity and final validation remain open. The `No` literal flag is not a registration flag. |
 | `IRS8844`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; payroll/zone source authenticity, wider branches, and final validation remain open. |
 | `IRS8845`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8846`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -234,21 +245,22 @@ root builder whose token is also quoted in the registered Form 1116 file.
 | `IRS970`              | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS982`              | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRSESPayment`        | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRSFormT`            | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRSFormT`            | No             | Conditional individual proprietor timber attachment, not a payment root. No timber/depletion/cutting-election source or native/PDF descriptor; entity-owned Form T is source to a K-1 recipient. See [owner review](ty2025-unregistered-root-decision-slice-payment-cfc.md). |
 | `IRSPayment`          | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRSRRB1042S`         | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRSSSA1042S`         | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRSW2`               | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRSW2G`              | Yes            | Bounded native document is written for payer-issued forms with withholding; PDF, XSD, full tests, business rules, and ATS remain open.                                                                                                                                                                                                                   |
+| `IRSW2`               | Yes            | Registered payer-issued wage source document; wages/withholding feed Form 1040. No dedicated filled W-2 PDF descriptor. Every issued/corrected employer copy, source authenticity, current XSD/business rules and ATS remain open. |
+| `IRSW2G`              | Yes            | Bounded native document and registered printed Copy B PDF exist for payer-issued forms with withholding. The prepared bundle requires a separate issued-copy PDF BinaryAttachment and checks modeled fields; issuer authenticity, current XSD/business rules and ATS remain open. |
 
 Known high-risk examples already identified: Schedule 1-A has a bounded native
-senior-only route, but other deductions remain unsupported. Schedule J has an
-active election input but no registered native document and fails closed.
+senior-only route, but other deductions remain unsupported. Schedule J has a bounded registered Schedule F-only native/PDF route; its
+wider election cases and prior-return authentication remain open.
 Schedule R has a bounded native/PDF route with focused XSD and filled-PDF checks;
 Form 7203 has a bounded registered native/PDF stock-loss route with focused and
 synthetic full-return XSD and filled-PDF checks. Form 8888 has a bounded native
 refund-allocation route with focused and synthetic full-return XSD and filled-PDF
 checks; Form 9465 has a staged bounded attached-return source and native/page-1
-PDF projections but no live export route. `IRS8839` has a registered descriptor name but active
-adoption-credit filing remains blocked. These are why a source-literal check is
+PDF projections but no live export route. `IRS8839` has a registered descriptor
+and a bounded byte-bound prepared-bundle route, while wider claims remain
+guarded. These are why a source-literal check is
 deliberately weaker than support.
