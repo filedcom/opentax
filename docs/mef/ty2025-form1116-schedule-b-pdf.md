@@ -111,6 +111,18 @@ fields. Focused field-path, projection, reconciliation, and preflight cases are
 written but intentionally unrun. PDF appearance, typecheck, XSD, full tests, and
 IRS acceptance remain pending the shared validation batch.
 
+A second bounded prior-use case combines **two issued 2025 foreign
+1099-INT payers in distinct countries** with one reviewed 2024-origin passive
+credit on filed 2024 Schedule B line 8. The same passive category's two
+country columns add to the parent Form 1116 limit; the $500 prior balance is
+used after $200 of current tax and flows through Schedule 3 line 1 and Form
+1040 line 20. Native Schedule B in a full-return export now checks its retained
+vintage source, parent category, Schedule 3, and Form 1040 before serializing,
+in parallel with the PDF path. The positive two-country parent/Schedule B
+native/PDF projections and changed filed reference, country, and return-total
+rejections are authored but unrun. This route does not authenticate the filed
+2024 Schedule B or the two issued 1099-INT statements.
+
 The native parent Form 1116 and full-return Schedule B PDF now also compare
 each embedded vintage and the filed-source references with the retained 2024
 Schedule B intake. A changed 2023/2024 split that preserves the $9,100 total

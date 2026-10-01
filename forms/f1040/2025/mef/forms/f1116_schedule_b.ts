@@ -2,10 +2,12 @@ import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   carryoverReviewSchema,
+  categorySummarySchema,
   IncomeCategory,
   priorYearCarryoverSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { assertForm1116CarryoverSource } from "../../form1116_carryover_source.ts";
 
 const currentYearExcessFieldsSchema = z.object({
   case: z.literal("current_year_excess"),
@@ -103,9 +105,7 @@ export function scheduleBPresentation(raw: unknown) {
       const amount = vintage.prior_year_schedule_b_line8_vintage_amount;
       const used = Math.min(amount, capacity);
       capacity -= used;
-      const expired = vintage.vintage_tax_year === 2015
-        ? amount - used
-        : 0;
+      const expired = vintage.vintage_tax_year === 2015 ? amount - used : 0;
       return {
         year: vintage.vintage_tax_year,
         tag: vintage.vintage_tax_year === 2015
@@ -137,7 +137,7 @@ export function scheduleBPresentation(raw: unknown) {
     if (
       capacity !== 0 ||
       fields.used_prior_year_carryover +
-          fields.remaining_prior_year_carryover + expired !==
+            fields.remaining_prior_year_carryover + expired !==
         fields.prior_year_carryover
     ) {
       throw new Error(
@@ -173,11 +173,65 @@ export const form1116ScheduleB: MefFormDescriptor<
   pendingKey: "form1116_schedule_b",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116sb.pdf",
-  build(raw) {
+  build(raw, context) {
     if (Array.isArray(raw) && raw.length === 0) return "";
     const presentation = scheduleBPresentation(raw);
+    const pending = context?.pending;
+    if (
+      presentation.case !== "current_year_excess" &&
+      (pending?.f1040 !== undefined ||
+        pending?.form1116_prior_carryover !== undefined)
+    ) {
+      const parsed = scheduleBFieldsSchema.parse(raw);
+      if (parsed.case === "current_year_excess") {
+        throw new Error("Form 1116 Schedule B prior-year source is missing");
+      }
+      assertForm1116CarryoverSource(
+        pending,
+        parsed.prior_year_carryover_source,
+      );
+    }
+    if (pending?.f1040 !== undefined) {
+      const parent = pending.form_1116 as
+        | { category_summaries?: unknown }
+        | undefined;
+      const summaries = Array.isArray(parent?.category_summaries)
+        ? parent.category_summaries.map((summary) =>
+          categorySummarySchema.parse(summary)
+        )
+        : [];
+      const matching = summaries.filter((summary) =>
+        summary.category === presentation.category
+      );
+      const summary = matching.length === 1 ? matching[0] : undefined;
+      const schedule3 = pending.schedule3 as
+        | { line1_foreign_tax_credit?: unknown; line8_total?: unknown }
+        | undefined;
+      const form1040 = pending.f1040 as
+        | { line20_nonrefundable_credits?: unknown }
+        | undefined;
+      if (
+        !summary ||
+        (presentation.case === "current_year_excess"
+          ? summary.currentYearExcessTax !== presentation.amount
+          : summary.priorYearCarryover !== presentation.balance ||
+            summary.usedPriorYearCarryover !== presentation.used ||
+            (presentation.case === "combined_current_excess_prior_balance" &&
+              summary.currentYearExcessTax !== presentation.amount)) ||
+        typeof schedule3?.line1_foreign_tax_credit !== "number" ||
+        (summaries.length === 1 &&
+          schedule3.line1_foreign_tax_credit !== summary.allowedCredit) ||
+        typeof schedule3.line8_total !== "number" ||
+        form1040?.line20_nonrefundable_credits !== schedule3.line8_total
+      ) {
+        throw new Error(
+          "Form 1116 Schedule B native attachment differs from the parent, Schedule 3, or Form 1040",
+        );
+      }
+    }
     if (presentation.case !== "current_year_excess") {
-      const { indicator, balance, used, expired, remaining, rows } = presentation;
+      const { indicator, balance, used, expired, remaining, rows } =
+        presentation;
       const currentExcess = presentation.case ===
           "combined_current_excess_prior_balance"
         ? presentation.amount
