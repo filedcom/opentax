@@ -92,6 +92,10 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Record artifact digests
+        working-directory: artifacts
+        run: sha256sum opentax-* > SHA256SUMS
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:

@@ -8,6 +8,10 @@ runners. A failed smoke step prevents that artifact from being uploaded and
 prevents the dependent release job from publishing the set. A manual dispatch
 with `dry_run: true` builds and smokes but does not create a release, even when
 dispatched from a tag.
+The release job writes `SHA256SUMS` from the five downloaded assets and
+publishes it beside them. Reviewers can compare each downloaded file with its
+recorded digest; the manifest alone does not establish a signature or publisher
+identity.
 
 `scripts/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
 source CLI, from an isolated temporary working directory. It checks the injected
