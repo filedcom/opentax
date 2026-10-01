@@ -18,10 +18,6 @@ export const form8864: MefFormDescriptor<"f8864", unknown> = {
     }
     const { lines } = reconcileForm8864DocumentSource(raw, context.pending);
     return elements("IRS8864", [
-      lines.line7_gallons
-        ? element("QualifiedAgriBioDieselProdQty", lines.line7_gallons)
-        : "",
-      lines.line7 ? element("QualifiedAgriBioDieselProdAmt", lines.line7) : "",
       lines.line8_gallons
         ? element("QlfyAgriBioDieselProdAfterQty", lines.line8_gallons)
         : "",

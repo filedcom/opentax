@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f3800 } from "../f3800/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 
 // December 2025 Form 8864. Only the section 40A small agri-biodiesel
 // producer credit survives for qualified 2025 sale or use.
@@ -20,7 +22,10 @@ const lotSchema = z.object({
   production_batch_reference: reference,
   production_date: date,
   sale_invoice_reference: reference,
-  sale_date: date.refine((value) => value.startsWith("2025-")),
+  // The checked-in TY2025 MeF rule F8864-012 forbids line 7 data.
+  sale_date: date.refine((value) =>
+    value >= "2025-07-01" && value < "2026-01-01"
+  ),
   gallons_sold: gallons,
   produced_by_taxpayer_confirmed: z.literal(true),
   agri_biodiesel_derived_solely_from_virgin_oils_or_animal_fats_confirmed: z
@@ -111,7 +116,7 @@ export function calculateForm8864(raw: F8864Input) {
   };
 }
 
-/** Prepared direct claims; the public node still rejects this staged route. */
+/** Prepared direct claims for one post-June direct Schedule C producer. */
 export function form8864DirectClaims(raw: F8864Input) {
   const source = inputSchema.parse(raw);
   const lines = calculateForm8864(source);
@@ -134,13 +139,16 @@ export function form8864DirectClaims(raw: F8864Input) {
 class F8864Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8864";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([f3800, form6251]);
 
   compute(_ctx: NodeContext, rawInput: F8864Input): NodeResult {
-    form8864DirectClaims(rawInput);
-    throw new Error(
-      "TY2025 Form 8864 direct producer credit awaits complete XSD/PDF route review before filing",
-    );
+    const claims = form8864DirectClaims(rawInput);
+    return {
+      outputs: [
+        output(f3800, claims.form3800),
+        output(form6251, claims.form6251),
+      ],
+    };
   }
 }
 

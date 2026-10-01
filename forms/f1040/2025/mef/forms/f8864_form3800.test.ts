@@ -54,13 +54,14 @@ Deno.test("IRS8864 native projection binds dated gallons to Form 3800 and AMT do
     },
   };
   const xml = form8864.build(directAgriBiodieselPending.f8864, context);
+  assertEquals(xml.includes("QualifiedAgriBioDieselProdQty"), false);
   assertStringIncludes(
     xml,
-    "<QualifiedAgriBioDieselProdQty>1000</QualifiedAgriBioDieselProdQty>",
+    "<QlfyAgriBioDieselProdAfterQty>2500</QlfyAgriBioDieselProdAfterQty>",
   );
   assertStringIncludes(
     xml,
-    "<QlfyAgriBioDieselProdAfterAmt>400</QlfyAgriBioDieselProdAfterAmt>",
+    "<QlfyAgriBioDieselProdAfterAmt>500</QlfyAgriBioDieselProdAfterAmt>",
   );
   assertStringIncludes(
     xml,

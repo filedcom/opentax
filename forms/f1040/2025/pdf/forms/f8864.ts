@@ -31,6 +31,7 @@ export const form8864Pdf: PdfFormDescriptor = {
     text("primarySSN", `${page}f1_2[0]`),
   ],
   projectFields(raw, allPending) {
+    if (Object.keys(raw).length === 0) return {};
     const { lines } = reconcileForm8864DocumentSource(raw, allPending);
     return {
       line7_gallons: lines.line7_gallons || undefined,
@@ -43,5 +44,40 @@ export const form8864Pdf: PdfFormDescriptor = {
       line10: undefined,
       line11: lines.line11,
     };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error(
+        "Form 8864 PDF needs the prepared MeF Form 3800 document",
+      );
+    }
+    const { lines } = reconcileForm8864DocumentSource(
+      allPending.f8864,
+      allPending,
+    );
+    const rows = prepared.currentRows.filter((row) => row.line === "1l");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1l");
+    const details = prepared.currentDetails.filter((row) => row.line === "1l");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8864" ||
+      !row.metadata.referenceDocumentId ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.credit !== lines.line11 ||
+      amount.nonpassiveCredit !== lines.line11 ||
+      amount.totalCredit !== lines.line11 ||
+      amount.transferOutCredit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit
+    ) {
+      throw new Error(
+        "Form 8864 PDF differs from sourced Form 3800 document ID",
+      );
+    }
+    return [fields];
   },
 };

@@ -16,9 +16,9 @@ export const directAgriBiodieselSource = inputSchema.parse({
   lots: [{
     production_batch_reference: "batch-2025-06-01",
     production_date: "2025-06-01",
-    sale_invoice_reference: "invoice-2025-06-20",
-    sale_date: "2025-06-20",
-    gallons_sold: 1_000,
+    sale_invoice_reference: "invoice-2025-07-20-a",
+    sale_date: "2025-07-20",
+    gallons_sold: 500,
     produced_by_taxpayer_confirmed: true,
     agri_biodiesel_derived_solely_from_virgin_oils_or_animal_fats_confirmed:
       true,
