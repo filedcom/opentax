@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **496 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **497 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,12 +15,12 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 427 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 428 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 24 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 496 bounded routes and
+**Implemented coverage.** The completed ledger records 497 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -45,6 +45,8 @@ PDFs now use a faint centered gray watermark. Positive extension payments now
 require reviewed source evidence and final-return reconciliation. The
 unregistered-root review has source calculations for Forms 8828, 8908, 8844,
 8881, and 8938, plus staged Form 8828, 8908, and 8938 native/PDF projections.
+The bounded Form 8839 adoption route now accepts one strict reviewed source and
+its exact PDF attachments through CLI MeF and PDF export.
 The bounded direct Schedule C Forms 8844, 8881, 8882, and 8941 reach Form 3800,
 Form 1040, native MeF, and PDF. A post-June Form 8864 direct producer route also
 reaches Form 3800, Form 6251, native MeF, and PDF. Form 8994 now requires
@@ -111,7 +113,7 @@ These gates and a filing-ready release remain open.
 - [ ] **Form 8835:** extend the completed filer-owned facility routes to every other retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
 - [ ] **Form 8990:** obtain authenticated debt tracing and filed-year interest/ATI inputs, reconcile its return-wide ordering, and design a durable accepted-filing carryforward ledger before allowing a positive nonexcepted-interest export. See the [Form 8990 gap](docs/mef/ty2025-form8990-gap.md).
-- [ ] **Form 8839:** bring the bounded reviewed one-child adoption claim through the CLI stored-input and convenience attachment entrypoints; complete unused-credit carryforward, exclusion, Form 2555, wider credit ordering, and external decree/expense/reimbursement authenticity before broader filing. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).
+- [ ] **Form 8839:** complete unused-credit carryforward, exclusion, Form 2555, wider credit ordering, and external decree/expense/reimbursement authenticity beyond the bounded reviewed one-child CLI route. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).
 - [ ] **Form 7203 / Form 9465 / Schedule J:** complete shareholder debt and other basis paths beyond the bounded stock-only loss; resolve Form 9465 attached electronic authorization and linked filing review before opening its fail-closed route; complete Schedule J fishing attribution and mixed farm/fishing cases beyond its bounded Schedule F-only election. See [7203](docs/mef/ty2025-form7203-stock-loss-gap.md), [9465](docs/mef/ty2025-form9465-filing-boundary.md), and [Schedule J](docs/mef/ty2025-schedule-j-integration-gap.md).
 - [ ] **Forms 2210/2210-F, 8801, 172, 461, 4562, 4797, 6252, 7206, 7217, 8829, 8606, 8815, 8915-F:** review their applicable public inputs, computations, source proof, Form 1040 joins, native/PDF documents, and conditional attachments; finish all positive routes or obtain a named fail-closed decision. Use the matching form gap notes under [docs/mef](docs/mef/) and the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 - [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Complete the remaining Form 8863 education-credit paths. For Form 8886, resolve the per-transaction current-return attachment and separate initial-year OTSA copy workflow under the [IRS instructions](https://www.irs.gov/instructions/i8886).
