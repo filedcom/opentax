@@ -51,6 +51,14 @@ Deno.test("Form 1040 native line 1h retains the reviewed W-2 code D excess", () 
   );
 });
 
+Deno.test("Form 1040 native line 1h rejects an unsourced positive amount", () => {
+  assertThrows(
+    () => irs1040.build({ line1h_other_earned: 500 }),
+    Error,
+    "exactly one supported retained source",
+  );
+});
+
 Deno.test("Form 1040 native line 1h rejects changed excess, wrong owner, and mixed source", () => {
   assertThrows(
     () => irs1040.build({ line1h_other_earned: 3_501 }, { pending, filer }),

@@ -417,16 +417,18 @@ Deno.test("Form 2555 rejects wage and exclusion mismatches across documents", ()
     () =>
       buildMefXml({
         f1040: { line1h_other_earned: 90_000 },
+        agi_aggregator: { line1h_other_earned: 90_000 },
         schedule1: { line8d_foreign_earned_income_exclusion: 100_000 },
         form2555: { filing_details: filingDetails },
       }, filer),
     Error,
-    "wages differ",
+    "exactly one supported retained source",
   );
   assertThrows(
     () =>
       buildMefXml({
         f1040: { line1h_other_earned: 100_000 },
+        agi_aggregator: { line1h_other_earned: 100_000 },
         schedule1: { line8d_foreign_earned_income_exclusion: 90_000 },
         form2555: { filing_details: filingDetails },
       }, filer),

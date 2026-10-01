@@ -107,12 +107,14 @@ Deno.test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", 
     Error,
     "must equal finalized and AGI line 1h",
   );
-  assertEquals(
-    irs1040Pdf.projectFields?.(
-      { line1h_other_earned: 3_000, print_line1h_type: "FEC" },
-      {},
-    )?.print_line1h_type,
-    undefined,
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { line1h_other_earned: 3_000, print_line1h_type: "FEC" },
+        {},
+      ),
+    Error,
+    "exactly one supported retained source",
   );
   const physical = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-form2555-full-year-physical-presence"
@@ -205,6 +207,24 @@ Deno.test("Form 1040 PDF line 1h labels only an identified code-8 corrective pla
   assertEquals(
     irs1040Pdf.projectFields?.(fields, source)?.print_line1h_type,
     "CORRECTIVE DISTRIBUTION",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { line1h_other_earned: 6_000 },
+        {
+          ...source,
+          f1099r: {
+            f1099rs: [
+              { ...source.f1099r.f1099rs[0], account_number: "PLAN-1" },
+              { ...source.f1099r.f1099rs[0], account_number: "PLAN-1" },
+            ],
+          },
+          agi_aggregator: { line1h_other_earned: 6_000 },
+        },
+      ),
+    Error,
+    "repeats the same payer",
   );
   assertThrows(
     () =>

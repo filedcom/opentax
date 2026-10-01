@@ -13,6 +13,7 @@ import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconcilia
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
+import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
 import { physicalPresenceFilingSchema } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import {
@@ -24,6 +25,7 @@ import {
   dependentFilingSchema,
 } from "../../../nodes/inputs/general/index.ts";
 import {
+  assertDistinct1099RCopies,
   assertIraRolloverEvidence,
   correctivePlanItems,
   inputSchema as f1099rInputSchema,
@@ -655,8 +657,10 @@ function line1hType(
     }
   }
   if (allPending.f1099r !== undefined) {
+    const retainedItems = f1099rInputSchema.parse(allPending.f1099r).f1099rs;
+    assertDistinct1099RCopies(retainedItems);
     const items = correctivePlanItems(
-      f1099rInputSchema.parse(allPending.f1099r).f1099rs,
+      retainedItems,
     );
     if (items.length > 0) {
       if (
@@ -717,6 +721,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
     const printLine1hType = line1hType(fields, allPending);
+    assertLine1hSupportedSource(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;
     const selected = typeof standard === "number"

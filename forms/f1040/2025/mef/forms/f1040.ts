@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
+import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -502,6 +503,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       }
     }
   }
+  assertLine1hSupportedSource(fields, context?.pending);
   const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
   if (
