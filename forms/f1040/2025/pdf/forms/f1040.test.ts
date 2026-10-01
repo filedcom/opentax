@@ -21,6 +21,33 @@ Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
 });
 
+Deno.test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", () => {
+  const mapped = irs1040Pdf.fields.find((entry) =>
+    entry.domainKey === "print_do_not_claim_actc"
+  );
+  assertEquals(mapped?.kind, "checkbox");
+  assertEquals(
+    mapped?.pdfField,
+    "topmostSubform[0].Page2[0].Line28_ReadOrder[0].c2_14[0]",
+  );
+  const source = { f8812: { f8812s: [{ do_not_claim_actc: true }] } };
+  assertEquals(
+    irs1040Pdf.projectFields?.({ line28_actc: 0 }, source)
+      ?.print_do_not_claim_actc,
+    true,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({ line28_actc: 0 }, {})
+      ?.print_do_not_claim_actc,
+    false,
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ line28_actc: 1 }, source),
+    Error,
+    "requires zero line 28 credit",
+  );
+});
+
 Deno.test("Form 1040 PDF maps the separated-spouse mark and MFS spouse name", () => {
   const mapped = new Map(
     irs1040Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),

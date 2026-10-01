@@ -760,6 +760,36 @@ Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   );
 });
 
+Deno.test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", () => {
+  const source = { f8812s: [{ do_not_claim_actc: true }] };
+  const xml = irs1040.build({
+    line28_actc: 0,
+    line29_refundable_aoc: 25,
+  }, {
+    pending: { f8812: source },
+  });
+  assertStringIncludes(xml, "<DoNotClaimACTCInd>X</DoNotClaimACTCInd>");
+  assertNotIncludes(xml, "<AdditionalChildTaxCreditAmt>");
+  assertEquals(
+    xml.indexOf("<DoNotClaimACTCInd>"),
+    xml.lastIndexOf("<DoNotClaimACTCInd>"),
+  );
+  assertEquals(
+    xml.indexOf("<DoNotClaimACTCInd>") <
+      xml.indexOf("<RefundableAmerOppCreditAmt>"),
+    true,
+  );
+  assertNotIncludes(irs1040.build({ line28_actc: 0 }), "DoNotClaimACTCInd");
+  assertThrows(
+    () =>
+      irs1040.build({ line28_actc: 1 }, {
+        pending: { f8812: source },
+      }),
+    Error,
+    "requires zero line 28 credit",
+  );
+});
+
 Deno.test("line29_refundable_aoc maps to RefundableAmerOppCreditAmt", () => {
   const result = irs1040.build({ line29_refundable_aoc: 2500 });
   assertStringIncludes(

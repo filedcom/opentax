@@ -1,4 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -638,8 +639,13 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     );
   }
 
+  const actcOptOut = retainedActcOptOut(
+    context?.pending?.f8812,
+    fields.line28_actc,
+  );
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
+    if (key === "line28_actc" && actcOptOut) return "";
     if (key === "line6b_ss_taxable") {
       return (value === undefined ? "" : element(tag, value)) +
         (statusCode === "3" &&
@@ -683,6 +689,14 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     }
     return element(tag, value);
   });
+  if (actcOptOut) {
+    const actcIndex = FIELD_MAP.findIndex(([key]) => key === "line28_actc");
+    incomeChildren.splice(
+      actcIndex + 1,
+      0,
+      element("DoNotClaimACTCInd", "X"),
+    );
+  }
   if (rollover) {
     const pensionIndex = FIELD_MAP.findIndex(([key]) =>
       key === "line5b_pension_taxable"

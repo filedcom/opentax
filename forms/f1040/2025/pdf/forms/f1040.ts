@@ -12,6 +12,7 @@ import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts"
 import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
+import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -549,6 +550,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_24[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_do_not_claim_actc",
+    pdfField: "topmostSubform[0].Page2[0].Line28_ReadOrder[0].c2_14[0]",
+  },
+  {
     kind: "text",
     domainKey: "line29_refundable_aoc",
     pdfField: "topmostSubform[0].Page2[0].f2_25[0]",
@@ -799,6 +805,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_do_not_claim_actc: retainedActcOptOut(
+        allPending.f8812,
+        fields.line28_actc,
+      ),
       print_ira_qcd: printIraQcd,
       print_pension_pso: printPensionPso,
       print_resident_election: residentElection !== undefined,

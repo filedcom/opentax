@@ -711,6 +711,24 @@ Deno.test("edge: do_not_claim_actc=true does not affect non-refundable CTC on f1
   assertEquals(input.line19_child_tax_credit, 4400);
 });
 
+Deno.test("ACTC opt-out rejects conflicting explicit answers across children", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          qualifying_children_count: 1,
+          do_not_claim_actc: true,
+        }),
+        minimalItem({
+          qualifying_children_count: 1,
+          do_not_claim_actc: false,
+        }),
+      ]),
+    Error,
+    "source answers conflict",
+  );
+});
+
 // Edge Case 7: Bona fide Puerto Rico resident — triggers Part II-B with < 3 children
 Deno.test("edge: bona_fide_pr_resident=true enables Part II-B path with 1 qualifying child", () => {
   // PR resident with 1 child: Part II-B applies even with < 3 children

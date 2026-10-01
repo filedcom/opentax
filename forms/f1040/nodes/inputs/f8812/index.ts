@@ -145,6 +145,19 @@ export const inputSchema = z.object({
   auto_other_dependents: z.number().int().nonnegative().optional(),
 });
 
+/** One Form 1040 line 28 election applies to the whole return. */
+export function actcOptOutAnswer(
+  items: ReadonlyArray<z.infer<typeof itemSchema>>,
+): boolean {
+  const answers = items.flatMap((item) =>
+    item.do_not_claim_actc === undefined ? [] : [item.do_not_claim_actc]
+  );
+  if (answers.includes(true) && answers.includes(false)) {
+    throw new Error("Form 1040 ACTC opt-out source answers conflict");
+  }
+  return answers.includes(true);
+}
+
 const PHASE_OUT_STEP = 50;
 const PHASE_OUT_INCREMENT = 1000;
 const ACTC_EARNED_INCOME_RATE = 0.15;
@@ -389,6 +402,7 @@ export function calculateSchedule8812Lines(
     : autoItem
     ? [autoItem]
     : [];
+  const doNotClaimActc = actcOptOutAnswer(items);
   if (items.length === 0) return null;
 
   const line4 = items.reduce(
@@ -451,7 +465,6 @@ export function calculateSchedule8812Lines(
   const hasFEIE = items.some((item) =>
     item.has_form_2555 === true || (item.form_2555_amounts ?? 0) > 0
   );
-  const doNotClaimActc = items.some((item) => item.do_not_claim_actc === true);
   const isPrResident = items.some((item) =>
     item.bona_fide_pr_resident === true
   );
