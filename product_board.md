@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
-completed checkboxes**. The **376 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **377 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 319 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 320 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -38,10 +38,12 @@ Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
-**Current implementation status.** This four-form batch added a Form 6251
+**Current implementation status.** The current batch has begun with a Schedule J
+election combining two positive Schedule F farms and one evidenced fishing
+Schedule C activity. The preceding four-form batch added a Form 6251
 regular long-term gain/AMT capital-loss crossover, one overlapping Form 8962
 Marketplace month, two separately sourced Form 8283 Section B equipment gifts,
-and a paired Form 8889/5329 Medicare-onset excess case. The preceding batch
+and a paired Form 8889/5329 Medicare-onset excess case. Earlier work
 added Form 6251 capital-loss caps and the opposite gain/loss crossover, Form
 1116 Schedule B vintage and two-country carryover reconciliation, Form 8582
 activity-ledger and Part IX paths, Form 3800 mixed credits, Form 8962 corrected
