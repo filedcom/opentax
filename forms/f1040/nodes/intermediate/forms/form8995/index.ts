@@ -458,6 +458,55 @@ function oneScheduleFLines(
   };
 }
 
+function reitOnlyLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, number> & { line15: number }) | undefined {
+  const reit = sumField(input.line6_sec199a_dividends);
+  if (
+    input.schedule_c_qbi_businesses !== undefined ||
+    input.schedule_f_qbi_businesses !== undefined ||
+    input.reit_dividend_sources?.length !== 1 ||
+    !Number.isSafeInteger(reit) || reit <= 0 ||
+    reit > 1_500 ||
+    sumField(input.qbi_from_schedule_c) !== 0 ||
+    sumField(input.qbi_from_schedule_f) !== 0 ||
+    sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
+    businessDeductions(input) !== 0 ||
+    sumField(input.net_capital_gain) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    input.agi === undefined || !Number.isFinite(input.agi) ||
+    input.filing_status === undefined
+  ) return undefined;
+  const line11 = Math.round(
+    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+  );
+  const line9 = Math.round(reit * QBI_RATE);
+  const line14 = Math.round(line11 * QBI_RATE);
+  return {
+    line1_qbi: 0,
+    line2: 0,
+    line3: 0,
+    line4: 0,
+    line5: 0,
+    line6: reit,
+    line7: 0,
+    line8: reit,
+    line9,
+    line10: line9,
+    line11,
+    line12: 0,
+    line13: line11,
+    line14,
+    line15: Math.min(line9, line14),
+    line16: 0,
+    line17: 0,
+  };
+}
+
 // ── Node class ────────────────────────────────────────────────────────────────
 
 class Form8995Node extends TaxNode<typeof inputSchema> {
@@ -500,7 +549,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
 
     const simplifiedLines = input.schedule_f_qbi_businesses !== undefined
       ? oneScheduleFLines(input, cfg)
-      : oneScheduleCLines(input, cfg);
+      : input.schedule_c_qbi_businesses !== undefined
+      ? oneScheduleCLines(input, cfg)
+      : reitOnlyLines(input, cfg);
     // The bounded one-business filed routes carry whole-dollar line 15 exactly
     // into Form 1040. Other QBI routes retain their existing calculation.
     const deduction = simplifiedLines === undefined

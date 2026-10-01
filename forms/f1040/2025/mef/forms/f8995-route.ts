@@ -79,6 +79,13 @@ export type OneBusiness8995 = {
   readonly lines: Readonly<Record<(typeof lineNumbers)[number], number>>;
 };
 
+export type Filed8995 = OneBusiness8995 | {
+  readonly businessName: undefined;
+  readonly tin: undefined;
+  readonly qbi: 0;
+  readonly lines: OneBusiness8995["lines"];
+};
+
 function assertFiledLines(
   fields: Record<string, unknown>,
   f1040: Record<string, unknown>,
@@ -668,12 +675,95 @@ export function assertOneScheduleF8995(
   };
 }
 
-export function assertOneBusiness8995(
+function assertReitOnly8995(
+  fields: Record<string, unknown>,
+  rawPending: Readonly<Record<string, unknown>> | undefined,
+): Filed8995 {
+  if (!rawPending) {
+    throw new Error(
+      "Form 8995 REIT-only filing needs its complete pending return",
+    );
+  }
+  const pending = normalizeAllPending(rawPending as Record<string, unknown>);
+  const f1040 = pending.f1040;
+  const general = pending.general;
+  const schedule1 = pending.schedule1;
+  const otherSourceKeys = [
+    "schedule_c",
+    "schedule_f",
+    "schedule_e",
+    "k1_partnership",
+    "k1_s_corp",
+    "f1099patr",
+    "schedule_d",
+    "f1099b",
+    "sep_retirement",
+    "form7206",
+    "schedule_se",
+  ] as const;
+  const reit = qualifiedReitDividends(
+    pending.f1099div,
+    fields.reit_dividend_sources,
+    0,
+  );
+  if (
+    !f1040 || !general || pending.form8995a !== undefined ||
+    otherSourceKeys.some((key) => pending[key] !== undefined) ||
+    !Array.isArray(fields.reit_dividend_sources) ||
+    fields.reit_dividend_sources.length !== 1 ||
+    general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    fields.schedule_c_qbi_businesses !== undefined ||
+    fields.schedule_f_qbi_businesses !== undefined ||
+    !zeroOrAbsent(fields.qbi_from_schedule_c) ||
+    !zeroOrAbsent(fields.qbi_from_schedule_f) ||
+    !zeroOrAbsent(fields.qbi) || !zeroOrAbsent(fields.sstb_qbi) ||
+    !zeroOrAbsent(fields.se_tax_deduction) ||
+    !zeroOrAbsent(fields.se_health_insurance_deduction) ||
+    !zeroOrAbsent(fields.retirement_plan_deduction) ||
+    !zeroOrAbsent(fields.qbi_loss_carryforward) ||
+    !zeroOrAbsent(fields.reit_loss_carryforward) ||
+    !zeroOrAbsent(fields.net_capital_gain) ||
+    fields.line1_qbi !== 0 ||
+    fields.line6_sec199a_dividends !== reit ||
+    !zeroOrAbsent(schedule1?.line3_schedule_c) ||
+    !zeroOrAbsent(schedule1?.line6_schedule_f) ||
+    !zeroOrAbsent(schedule1?.line15_se_deduction) ||
+    !zeroOrAbsent(schedule1?.line16_sep_simple) ||
+    !zeroOrAbsent(schedule1?.line17_se_health_insurance) ||
+    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    f1040.line3b_ordinary_dividends !== reit ||
+    !zeroOrAbsent(f1040.line7_capital_gain) ||
+    !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
+    !zeroOrAbsent(f1040.line13b_additional_deductions) ||
+    typeof f1040.line11_agi !== "number" ||
+    typeof f1040.line12c_deduction_total !== "number" ||
+    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+      fields.line11
+  ) {
+    throw new Error(
+      "Form 8995 REIT-only filing needs one reviewed issued 1099-DIV and exact Form 1040 source reconciliation",
+    );
+  }
+  return {
+    businessName: undefined,
+    tin: undefined,
+    qbi: 0,
+    lines: assertFiledLines(fields, f1040, reit, 0),
+  };
+}
+
+export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
-): OneBusiness8995 {
+): Filed8995 {
   if (fields.schedule_f_qbi_businesses !== undefined) {
     return assertOneScheduleF8995(fields, pending);
   }
-  return assertOneScheduleC8995(fields, pending);
+  if (fields.schedule_c_qbi_businesses !== undefined) {
+    return assertOneScheduleC8995(fields, pending);
+  }
+  return assertReitOnly8995(fields, pending);
 }

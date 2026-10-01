@@ -1,7 +1,8 @@
 # TY2025 Form 8995 positive export boundary
 
-Status: tightly bounded, positive one-business Schedule C and one-farm Schedule
-F routes are implemented for Form 8995 MeF and PDF. Other positive shapes still
+Status: tightly bounded, positive one-business Schedule C, one-farm Schedule
+F, and one-issuer REIT-dividend-only routes are implemented for Form 8995 MeF
+and PDF. Other positive shapes still
 fail explicitly. This is not complete Form 8995 coverage and is not an approved
 product exclusion.
 
@@ -22,8 +23,28 @@ deduction worksheet. A synthetic single-filer calculation with $26,000 of
 ordinary dividends and $15,000 of section 199A dividends passes the full
 graph: the $17,750 age-adjusted standard deduction limits Form 8995 line 15
 and Form 1040 line 13 to $1,650, and taxable income is $600 after the separate
-$6,000 senior deduction. This is a calculation regression; its dividend-only
-positive filing route remains subject to the source and export gates below.
+$6,000 senior deduction. This is a calculation regression; that high-value
+dividend-only shape remains outside the bounded filing route below.
+
+## Implemented REIT-dividend-only route
+
+One issued, nonnominee 1099-DIV copy with box 1a equal to positive box 5 of at
+most $1,500 can now support a Form 8995 claim with no trade or business QBI.
+The copy needs payer and document identity plus a retained 91-day holding
+review showing more than 45 qualifying held days, excluded diminished-risk
+days, and no related-payment obligation. The return explicitly confirms no
+prior or suspended QBI loss and no specified-cooperative patronage. The
+calculation records zero lines 1–5, box 5 on lines 6/8, 20% on line 9, and
+the taxable-income limit on lines 11–15. Native MeF omits the optional
+business group and emits the complete numbered lines; the PDF leaves its
+business row blank. Both replay the issued copy and final Form 1040 lines
+3a/3b/13. A $1,000 positive full-return case and issued-copy, holding,
+source-graph, prepared-line, and final-return tamper cases are authored for
+deferred validation. Multiple issuers, qualified dividends, Schedule B
+amounts, prior REIT/PTP losses, and issued-copy byte authentication remain
+open. The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+put qualified REIT dividends on line 6 and calculate the 20% component
+separately from trade or business QBI.
 
 ## Implemented one-business route
 
