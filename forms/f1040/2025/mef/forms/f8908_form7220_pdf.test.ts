@@ -200,14 +200,13 @@ Deno.test("Form 8908 Form 7220 PDF matches reviewed home, employer, wage and req
 Deno.test("Form 8908 Form 7220 PDF rejects mismatched home, employer, wage and mark", async () => {
   const page1 = "topmostSubform[0].Page1[0].";
   const wage = "topmostSubform[0].Page2[0].Table_PartII[0].Line1[0].";
-  for (
-    const changes of [
-      { [`${page1}f1_5[0]`]: "9 Other Street" },
-      { [`${wage}f2_1[0]`]: "Other Employer" },
-      { [`${wage}f2_6[0]`]: "2000" },
-      { [`${page1}c1_2[9]`]: "off" },
-    ]
-  ) {
+  const alteredFields: Record<string, string>[] = [
+    { [`${page1}f1_5[0]`]: "9 Other Street" },
+    { [`${wage}f2_1[0]`]: "Other Employer" },
+    { [`${wage}f2_6[0]`]: "2000" },
+    { [`${page1}c1_2[9]`]: "off" },
+  ];
+  for (const changes of alteredFields) {
     const bytes = await completedPdf(changes);
     await assertRejects(
       async () =>
@@ -281,13 +280,12 @@ Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an 
 
 Deno.test("Form 8908 signed statement PDF rejects changed home, signer date, and declaration", async () => {
   const formBytes = await completedPdf();
-  for (
-    const changes of [
-      { HomeStreet: "9 Other Street" },
-      { SignedOn: "01/21/2026" },
-      { PerjuryDeclarationAcknowledged: "off" },
-    ]
-  ) {
+  const alteredFields: Record<string, string>[] = [
+    { HomeStreet: "9 Other Street" },
+    { SignedOn: "01/21/2026" },
+    { PerjuryDeclarationAcknowledged: "off" },
+  ];
+  for (const changes of alteredFields) {
     const statementBytes = await completedStatementPdf(changes);
     const reviewed = await statementReviewedSource(formBytes, statementBytes);
     await assertRejects(

@@ -202,9 +202,13 @@ function reconcilePartIV(
           (cfc.foreign_corp_ein ?? cfc.foreign_corp_reference_id) ||
         asset.country !== cfc.country_of_incorporation ||
         sourceAddress.line1 !== address.line1 ||
-        sourceAddress.line2 !== address.line2 ||
+        sourceAddress.line2 !==
+          ("line2" in address ? address.line2 : undefined) ||
         sourceAddress.city !== address.city ||
-        sourceAddress.province_or_state !== address.province_or_state ||
+        sourceAddress.province_or_state !==
+          ("province_or_state" in address
+            ? address.province_or_state
+            : undefined) ||
         sourceAddress.country !== address.country_code ||
         sourceAddress.postal_code !== address.postal_code
       ) {

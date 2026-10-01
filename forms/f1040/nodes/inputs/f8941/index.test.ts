@@ -152,8 +152,9 @@ Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
     f3800.inputSchema.parse(result.outputs[0].fields),
   );
   assertEquals(
-    generalBusiness.outputs[0].fields.form3800_source_credits
-      .specifiedCredit,
+    (generalBusiness.outputs[0].fields.form3800_source_credits as {
+      specifiedCredit: number;
+    }).specifiedCredit,
     11_698,
   );
 });

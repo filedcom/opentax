@@ -92,7 +92,7 @@ Deno.test("2025 Schedule J PDF joins its line 23 to Form 1040 with Form 4972 tax
     () =>
       scheduleJPdf.projectFields?.(calculated, {
         ...joint,
-        form4972: undefined,
+        form4972: undefined as unknown as Record<string, unknown>,
       }),
     Error,
     "sourced Form 4972",

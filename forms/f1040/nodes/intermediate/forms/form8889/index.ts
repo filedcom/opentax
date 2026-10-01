@@ -925,7 +925,6 @@ function verifyDistributionSources(
     const disability = input.disability_exception_evidence;
     const sourcedPostDisabilityCode3 = form?.box3_distribution_code === "3" &&
       input.beneficiary_identity.owner === TS.T &&
-      input.spouse_hsa === undefined &&
       input.spouse_has_separate_hsa !== true &&
       input.age_65_exception_evidence === undefined &&
       disability !== undefined &&

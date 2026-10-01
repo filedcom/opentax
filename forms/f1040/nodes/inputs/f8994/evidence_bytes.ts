@@ -18,7 +18,9 @@ async function hash(bytes: Uint8Array): Promise<string> {
     throw new Error("Form 8994 evidence document is empty");
   }
   return Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
 }

@@ -89,11 +89,14 @@ Deno.test("one sourced fee-basis job reaches Schedule 1 and attached MeF/PDF For
 
 Deno.test("fee-basis filing rejects changed W-2, job, and finalized totals", () => {
   const pending = filedReturn();
-  const changed = [{
+  const changed: Record<string, Record<string, unknown>>[] = [{
     ...pending,
     w2: {
       ...pending.w2,
-      w2s: [{ ...pending.w2.w2s[0], employer_ein: "98-7654321" }],
+      w2s: [{
+        ...(pending.w2.w2s as Record<string, unknown>[])[0],
+        employer_ein: "98-7654321",
+      }],
     },
   }, {
     ...pending,

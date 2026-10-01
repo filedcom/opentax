@@ -150,7 +150,14 @@ Deno.test("f8958 staged projection requires the reviewed spouse return to match 
   }
   assertThrows(() =>
     projectStagedForm8958Documents(
-      { ...start, f8958: { ...source, reviewed_spouse_return: undefined } },
+      {
+        ...start,
+        f8958: {
+          ...source,
+          reviewed_spouse_return:
+            undefined as unknown as typeof source.reviewed_spouse_return,
+        },
+      },
       filer,
     )
   );

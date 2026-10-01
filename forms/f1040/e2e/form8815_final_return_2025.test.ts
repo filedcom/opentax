@@ -123,25 +123,24 @@ Deno.test("Form 8815 bond exclusion reconciles from source through return, nativ
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() > 1, true);
 
-  for (
-    const changed of [
-      { f1040: { ...result.pending.f1040, line9_total_income: 70_100 } },
-      { f1040: { ...result.pending.f1040, line11_agi: 70_100 } },
-      { schedule_b: { ...result.pending.schedule_b, print_line4_total: 100 } },
-      {
-        f1099int: {
-          f1099ints: [{
-            ...(result.pending.f1099int?.f1099ints as Record<
-              string,
-              unknown
-            >[])[0],
-            box3: 100,
-          }],
-        },
+  const changedCases: Record<string, Record<string, unknown>>[] = [
+    { f1040: { ...result.pending.f1040, line9_total_income: 70_100 } },
+    { f1040: { ...result.pending.f1040, line11_agi: 70_100 } },
+    { schedule_b: { ...result.pending.schedule_b, print_line4_total: 100 } },
+    {
+      f1099int: {
+        f1099ints: [{
+          ...(result.pending.f1099int?.f1099ints as Record<
+            string,
+            unknown
+          >[])[0],
+          box3: 100,
+        }],
       },
-    ]
-  ) {
-    const tampered = { ...result.pending, ...changed };
+    },
+  ];
+  for (const changed of changedCases) {
+    const tampered: typeof result.pending = { ...result.pending, ...changed };
     assertThrows(() => buildMefXml(tampered, filer), Error);
     const tamperedFields = form8815Pdf.projectFields!(
       tampered.form8815!,

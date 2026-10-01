@@ -81,7 +81,7 @@ for (
       source_document_reference: "issued ordinary 2025 1099-R account 456",
       box1_gross_distribution: 1_000,
       box2a_taxable_amount: 1_000,
-      box7_ira_simple_indicator: otherKind === "traditional_ira",
+      box7_ira_simple_indicator: false,
       box13_date_of_payment: "2025-09-01",
       form8915f_treatment: undefined,
     };

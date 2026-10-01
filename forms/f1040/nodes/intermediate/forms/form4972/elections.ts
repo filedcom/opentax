@@ -144,7 +144,7 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           (form.death_benefit_exclusion ?? 0) !== 0
         ) ||
         forms.some((form, index) =>
-          (form.box6_nua ?? 0) > 0 &&
+          typeof form.box6_nua === "number" && form.box6_nua > 0 &&
           (sourceByElection[index].box6_nua !== form.box6_nua ||
             elections[index].source_document_references.length !== 1 ||
             form.elect_include_nua !== true ||

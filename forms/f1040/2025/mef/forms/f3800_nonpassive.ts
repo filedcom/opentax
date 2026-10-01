@@ -31,6 +31,7 @@ function nontransferableCurrentRow(
     | "1aa"
     | "1dd"
     | "1ee"
+    | "3"
     | "4b"
     | "4h"
     | "4j",

@@ -134,7 +134,11 @@ Deno.test("Form 8844 direct employer reaches Form 3800, Schedule 3 and Form 1040
     result.pending.f3800?.f8844_direct_employer_credit,
     f3800.f8844_direct_employer_credit,
   );
-  assertEquals(result.pending.f3800?.tax_context?.empowermentCredit, 2_000);
+  assertEquals(
+    (result.pending.f3800?.tax_context as { empowermentCredit?: number })
+      ?.empowermentCredit,
+    2_000,
+  );
   assertEquals(result.pending.f3800?.allowed_credit, 2_000);
   assertEquals(result.pending.schedule3?.line6a_total, 2_000);
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 2_000);

@@ -104,7 +104,7 @@ Deno.test("spouse zero-opening-basis route rejects missing separate-form review 
     ...pending,
     ...next,
   });
-  const alterations = [
+  const alterations: Array<Record<string, Record<string, unknown>>> = [
     {
       form8606: {
         ...pending.form8606,

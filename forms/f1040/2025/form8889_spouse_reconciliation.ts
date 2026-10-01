@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FilerIdentity } from "../mef/header.ts";
 import { TS } from "../nodes/types.ts";
+import { FilingStatus } from "../mef/header.ts";
 import {
   CoverageType,
   form8889,

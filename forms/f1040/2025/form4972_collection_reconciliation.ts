@@ -170,7 +170,7 @@ export function reconcileForm4972Collection(
             fields.capital_gain_amount <= 0)) ||
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
-        ((fields.box6_nua ?? 0) > 0 &&
+        (typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
           (sources.length !== 1 || fields.elect_include_nua !== true ||
             fields.elect_10yr_averaging !== true ||
             (fields.elect_capital_gain === true &&
