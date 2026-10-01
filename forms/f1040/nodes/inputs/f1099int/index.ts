@@ -23,6 +23,7 @@ import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
+import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1),
@@ -48,8 +49,10 @@ export const itemSchema = z.object({
   box9: z.number().nonnegative().optional(),
   // Bounded two-issuer AMT line 2g route: issuer-copy and bond/expense review.
   pab_eligible_bonds_reviewed: z.literal(true).optional(),
-  pab_no_allocable_deduction_reviewed: z.literal(true).optional(),
+  pab_allocable_deduction_workpaper: pabAllocableDeductionWorkpaperSchema
+    .optional(),
   pab_review_reference: z.string().trim().min(1).optional(),
+  pab_bond_identifier: z.string().trim().min(1).optional(),
   box10: z.number().nonnegative().optional(),
   box11: z.number().nonnegative().optional(),
   // IRC §171 amortization election: taxpayer must affirmatively elect to amortize
@@ -184,7 +187,17 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     const totalBox2 = int1099s.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
     const totalBox4 = int1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);
     const totalBox6 = int1099s.reduce((sum, item) => sum + (item.box6 ?? 0), 0);
-    const totalBox9 = int1099s.reduce((sum, item) => sum + (item.box9 ?? 0), 0);
+    const totalBox9 = int1099s.reduce((sum, item) => {
+      const gross = item.box9 ?? 0;
+      const deduction = item.pab_allocable_deduction_workpaper
+        ?.allocable_deduction ?? 0;
+      if (deduction > gross) {
+        throw new Error(
+          "1099-INT PAB allocable deduction exceeds box 9 specified-bond interest",
+        );
+      }
+      return sum + gross - deduction;
+    }, 0);
     const totalTaxExempt = int1099s.reduce(
       (sum, item) => sum + (item.box8 ?? 0) - (item.box13 ?? 0),
       0,

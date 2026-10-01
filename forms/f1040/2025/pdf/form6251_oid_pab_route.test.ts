@@ -21,7 +21,15 @@ const oid = {
   box11_tax_exempt_oid: 200_000,
   box11_pab_oid: 200_000,
   pab_eligible_bonds_reviewed: true,
-  pab_no_allocable_deduction_reviewed: true,
+  pab_allocable_deduction_workpaper: {
+    tax_year: 2025,
+    reviewed_workpaper_reference: "2025-OID-EXPENSE-REVIEW",
+    expense_record_reference: "2025-OID-EXPENSE-RECORD",
+    allocable_deduction: 0,
+    direct_allocation_to_reported_bond: true,
+    deductible_if_interest_taxable: true,
+    not_claimed_elsewhere_on_return: true,
+  },
   pab_review_reference: "2025-OID-PAB-REVIEW",
 };
 
@@ -72,7 +80,7 @@ Deno.test("issued 1099-OID private-activity-bond source reaches Form 6251 line 2
     const altered of [
       { ...oid, box11_pab_oid: 199_999 },
       { ...oid, source_document_reference: undefined },
-      { ...oid, pab_no_allocable_deduction_reviewed: undefined },
+      { ...oid, pab_allocable_deduction_workpaper: undefined },
       { ...oid, payer_tin: "222222222", box11_tax_exempt_oid: 199_999 },
     ]
   ) {

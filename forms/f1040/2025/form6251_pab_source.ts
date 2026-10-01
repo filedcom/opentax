@@ -24,8 +24,14 @@ export function assertForm6251PrivateActivityBondSource(
   const oids = oid?.success ? oid.data.f1099oids : [];
   const divs = div?.success ? div.data.f1099divs : [];
   const children = child?.success ? child.data.f8814s : [];
-  const interest = ints.reduce((sum, item) => sum + (item.box9 ?? 0), 0) +
-    oids.reduce((sum, item) => sum + (item.box11_pab_oid ?? 0), 0) +
+  const intNet = (item: typeof ints[number]) =>
+    (item.box9 ?? 0) -
+    (item.pab_allocable_deduction_workpaper?.allocable_deduction ?? 0);
+  const oidNet = (item: typeof oids[number]) =>
+    (item.box11_pab_oid ?? 0) -
+    (item.pab_allocable_deduction_workpaper?.allocable_deduction ?? 0);
+  const interest = ints.reduce((sum, item) => sum + intNet(item), 0) +
+    oids.reduce((sum, item) => sum + oidNet(item), 0) +
     children.reduce(
       (sum, item) => sum + (item.private_activity_bond_interest ?? 0),
       0,
@@ -44,6 +50,8 @@ export function assertForm6251PrivateActivityBondSource(
       item.source_document_reference,
       item.payer_tin,
       item.pab_review_reference,
+      item.pab_allocable_deduction_workpaper?.reviewed_workpaper_reference,
+      item.pab_allocable_deduction_workpaper?.expense_record_reference,
     ])
     : [];
   const oneOidOnly = oids.length === 1 &&
@@ -52,7 +60,13 @@ export function assertForm6251PrivateActivityBondSource(
   const oneIntOneOid = ints.length === 1 && oids.length === 1 &&
     (ints[0].box9 ?? 0) > 0 && (oids[0].box11_pab_oid ?? 0) > 0 &&
     divs.length === 0 && children.length === 0;
+  const sameIssuer = oneIntOneOid &&
+    ints[0].payer_tin === oids[0].payer_tin &&
+    ints[0].payer_name === oids[0].payer_name;
   const hasOidPab = oids.some((item) => (item.box11_pab_oid ?? 0) > 0);
+  const hasAllocableDeduction = [...ints, ...oids].some((item) =>
+    (item.pab_allocable_deduction_workpaper?.allocable_deduction ?? 0) > 0
+  );
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
   const amt = typeof fields.line11_amt === "number"
@@ -75,6 +89,8 @@ export function assertForm6251PrivateActivityBondSource(
     int?.success === false || oid?.success === false ||
     div?.success === false || child?.success === false ||
     ints.some((item) => (item.box9 ?? 0) > (item.box8 ?? 0)) ||
+    ints.some((item) => intNet(item) < 0) ||
+    oids.some((item) => oidNet(item) < 0) ||
     oids.some((item) =>
       ((item.box11_tax_exempt_oid ?? 0) > 0 &&
         item.box11_pab_oid === undefined) ||
@@ -95,12 +111,13 @@ export function assertForm6251PrivateActivityBondSource(
     claimedInterest !== interest ||
     (fields.private_activity_bond_interest ?? 0) !== total ||
     (hasOidPab && !oneOidOnly && !oneIntOneOid) ||
+    (hasAllocableDeduction && !twoIntOnly && !oneOidOnly && !oneIntOneOid) ||
     (twoIntOnly && (
       ints.some((item) =>
         !item.source_document_reference || !item.payer_tin ||
         !item.pab_review_reference ||
         item.pab_eligible_bonds_reviewed !== true ||
-        item.pab_no_allocable_deduction_reviewed !== true ||
+        !item.pab_allocable_deduction_workpaper ||
         (item.box13 ?? 0) !== 0
       ) ||
       new Set(twoIntReferences).size !== twoIntReferences.length ||
@@ -116,7 +133,7 @@ export function assertForm6251PrivateActivityBondSource(
       !oids[0].source_document_reference ||
       !oids[0].pab_review_reference ||
       oids[0].pab_eligible_bonds_reviewed !== true ||
-      oids[0].pab_no_allocable_deduction_reviewed !== true ||
+      !oids[0].pab_allocable_deduction_workpaper ||
       oids[0].box11_pab_oid !== oneOidTaxExempt ||
       (oids[0].box1_oid ?? 0) !== 0 ||
       (oids[0].box2_other_interest ?? 0) !== 0 ||
@@ -138,19 +155,29 @@ export function assertForm6251PrivateActivityBondSource(
     (oneIntOneOid && (
       !/^[0-9]{9}$/.test(ints[0].payer_tin ?? "") ||
       !/^[0-9]{9}$/.test(oids[0].payer_tin ?? "") ||
-      ints[0].payer_tin === oids[0].payer_tin ||
       !ints[0].payer_name?.trim() || !oids[0].payer_name?.trim() ||
-      ints[0].payer_name === oids[0].payer_name ||
+      (ints[0].payer_tin === oids[0].payer_tin) !==
+        (ints[0].payer_name === oids[0].payer_name) ||
+      (sameIssuer && (
+        !ints[0].pab_bond_identifier ||
+        ints[0].pab_bond_identifier !== oids[0].pab_bond_identifier
+      )) ||
       !ints[0].source_document_reference ||
       !oids[0].source_document_reference ||
       ints[0].source_document_reference ===
         oids[0].source_document_reference ||
       !ints[0].pab_review_reference || !oids[0].pab_review_reference ||
       ints[0].pab_review_reference === oids[0].pab_review_reference ||
+      !ints[0].pab_allocable_deduction_workpaper ||
+      !oids[0].pab_allocable_deduction_workpaper ||
+      ints[0].pab_allocable_deduction_workpaper
+          ?.reviewed_workpaper_reference ===
+        oids[0].pab_allocable_deduction_workpaper
+          ?.reviewed_workpaper_reference ||
+      ints[0].pab_allocable_deduction_workpaper?.expense_record_reference ===
+        oids[0].pab_allocable_deduction_workpaper?.expense_record_reference ||
       ints[0].pab_eligible_bonds_reviewed !== true ||
-      ints[0].pab_no_allocable_deduction_reviewed !== true ||
       oids[0].pab_eligible_bonds_reviewed !== true ||
-      oids[0].pab_no_allocable_deduction_reviewed !== true ||
       ints[0].box9 !== ints[0].box8 ||
       oids[0].box11_pab_oid !==
         (oids[0].box11_tax_exempt_oid ?? 0) -

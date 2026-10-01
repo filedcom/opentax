@@ -98,7 +98,15 @@ Deno.test("Form 6251 line 2g replays net specified private-activity-bond OID", (
     box10_applies_to: "tax_exempt_oid",
     box11_pab_oid: 225,
     pab_eligible_bonds_reviewed: true,
-    pab_no_allocable_deduction_reviewed: true,
+    pab_allocable_deduction_workpaper: {
+      tax_year: 2025,
+      reviewed_workpaper_reference: "reviewed-OID-expenses",
+      expense_record_reference: "OID-expense-ledger",
+      allocable_deduction: 0,
+      direct_allocation_to_reported_bond: true,
+      deductible_if_interest_taxable: true,
+      not_claimed_elsewhere_on_return: true,
+    },
     pab_review_reference: "reviewed-bond-and-expense-workpaper",
   };
   const fields = {

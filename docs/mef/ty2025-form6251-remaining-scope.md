@@ -9,7 +9,8 @@ validation, filled-PDF review, and ATS acceptances have not run.
 The bounded two-issuer Form 1099-INT route now requires distinct payer TINs,
 issued-copy references, and reviewed bond/expense references. Each review
 affirms that box 9 represents eligible specified private-activity-bond
-interest and that no deductible expense reduces it. The source excludes box 13
+interest and supplies a direct allocable-deduction workpaper. The authored
+two-issuer case records zero deductions. The source excludes box 13
 bond-premium reductions and other tax-exempt payers in this case. Native MeF
 and PDF replay both copies, sum their box 8 amounts to Form 1040 tax-exempt
 interest line 2a and box 9 amounts to Form 6251 line 2g, then match positive
@@ -25,7 +26,7 @@ excepted bonds, and wider payer combinations remain open.
 The bounded Form 1099-OID route now accepts one tax-exempt OID copy with a
 positive box 11 amount entirely affirmed as specified private-activity-bond
 OID. It requires the payer TIN, issued-copy reference, reviewed bond/expense
-reference, and affirmative absence of an allocable deduction. Acquisition or
+reference, and a direct allocable-deduction workpaper. Acquisition or
 bond premium may reduce the tax-exempt OID, and the reviewed PAB share must
 equal that net amount. Other taxable OID and withholding boxes, other PAB
 payers, and additional tax-exempt OID are closed in this route. Native MeF and
@@ -37,7 +38,8 @@ authored for the deferred batch. The
 place specified private-activity-bond tax-exempt OID in Form 1099-OID box 11;
 the [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require line 2g to reflect specified bond interest after allowable expense
-reduction. Issued-copy and eligibility-review bytes are not authenticated.
+reduction. The authored one-issuer OID case has zero allocable deduction.
+Issued-copy and eligibility-review bytes are not authenticated.
 
 ## Distinct 1099-INT and 1099-OID PAB issuers on line 2g (2026-10-01, unrun)
 
@@ -47,7 +49,8 @@ issued-copy references, and bond/expense workpaper references. The INT copy's
 entire tax-exempt box 8 must be specified PAB box 9 interest, with no box 13
 tax-exempt bond premium. The OID copy's specified PAB share must equal its
 box 11 tax-exempt OID after any classified acquisition or bond premium. Each
-review affirms eligibility and no allocable deduction; taxable income,
+review affirms eligibility and supplies a per-copy allocable-deduction
+workpaper; the authored distinct-issuer case has zero deductions. Taxable income,
 withholding, foreign-interest, nominee, and other source boxes remain closed.
 Native MeF and PDF replay both copies, match their net sum to Form 1040 line
 2a and Form 6251 line 2g, and join positive AMT to Schedule 2 line 2 and Form
@@ -57,8 +60,31 @@ line-2a, and tax-tamper fixture are authored for the deferred batch. The
 require specified bond interest after allowable expenses, while the
 [information-return instructions](https://www.irs.gov/instructions/i1099int)
 place stated interest in 1099-INT boxes 8/9 and tax-exempt OID in 1099-OID
-box 11. Issued-copy and review bytes are not authenticated; a single issuer
-with both forms and other mixed PAB sources remain open.
+box 11. Issued-copy and review bytes are not authenticated; other mixed PAB
+sources remain open.
+
+## Same-issuer INT/OID with allocable deductions (2026-10-01, unrun)
+
+The mixed route also accepts two independently identified issued copies from
+one issuer when payer name and TIN, plus a reviewed bond identifier, match on
+both forms. The INT copy supplies stated interest in boxes 8/9 and the OID
+copy supplies distinct tax-exempt accrual in box 11. Copy and bond-eligibility
+references must differ, as must each expense record and deduction review
+reference. The former zero-expense affirmation has been replaced directly with
+one structured workpaper per positive PAB copy; there is no old-field alias.
+Each workpaper records its 2025 expense source, directly allocable amount,
+reviewer reference, hypothetical deductibility if interest were taxable, and
+confirmation it was not claimed elsewhere. The source nodes subtract each
+allocable amount once from its corresponding PAB interest before Form 6251
+line 2g, while Form 1040 line 2a retains the full tax-exempt interest after
+bond premium. In the authored case $100,000 of stated interest and $100,000 of
+net OID less separate $10,000 and $5,000 allocable deductions yields line 2a
+of $200,000 and line 2g of $185,000. Native/PDF replay both workpapers and
+join positive AMT to Schedule 2 and Form 1040. Positive, changed-expense,
+bond-identity, duplicate-record, and final-return fixtures are authored for
+the deferred batch. Expense and issuer records are reviewed references, not
+authenticated bytes; general Form 4952 investment-interest limitation and
+multi-bond allocations remain outside this bounded route.
 
 ## Two reviewed state-income-tax refunds on line 2b (2026-10-01, unrun)
 

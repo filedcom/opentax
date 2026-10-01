@@ -21,7 +21,15 @@ const interestPayer = {
   box8: 100_000,
   box9: 100_000,
   pab_eligible_bonds_reviewed: true,
-  pab_no_allocable_deduction_reviewed: true,
+  pab_allocable_deduction_workpaper: {
+    tax_year: 2025,
+    reviewed_workpaper_reference: "2025-INT-EXPENSE-REVIEW",
+    expense_record_reference: "2025-INT-EXPENSE-RECORD",
+    allocable_deduction: 0,
+    direct_allocation_to_reported_bond: true,
+    deductible_if_interest_taxable: true,
+    not_claimed_elsewhere_on_return: true,
+  },
   pab_review_reference: "2025-INT-BOND-EXPENSE-REVIEW",
 };
 const oidPayer = {
@@ -33,7 +41,15 @@ const oidPayer = {
   box10_applies_to: "tax_exempt_oid" as const,
   box11_pab_oid: 100_000,
   pab_eligible_bonds_reviewed: true,
-  pab_no_allocable_deduction_reviewed: true,
+  pab_allocable_deduction_workpaper: {
+    tax_year: 2025,
+    reviewed_workpaper_reference: "2025-OID-EXPENSE-REVIEW",
+    expense_record_reference: "2025-OID-EXPENSE-RECORD",
+    allocable_deduction: 0,
+    direct_allocation_to_reported_bond: true,
+    deductible_if_interest_taxable: true,
+    not_claimed_elsewhere_on_return: true,
+  },
   pab_review_reference: "2025-OID-BOND-EXPENSE-REVIEW",
 };
 
@@ -95,7 +111,7 @@ Deno.test("distinct issued INT and OID private-activity-bond sources reconcile F
         ...rawOid,
         f1099oids: [{
           ...oidPayer,
-          pab_no_allocable_deduction_reviewed: undefined,
+          pab_allocable_deduction_workpaper: undefined,
         }],
       },
     },
@@ -120,6 +136,117 @@ Deno.test("distinct issued INT and OID private-activity-bond sources reconcile F
     { ...pending, schedule2: { ...pending.schedule2, line2_amt: 0 } },
   ];
   for (const altered of changed) {
+    await assertRejects(() =>
+      buildMefBundle(altered as typeof pending, {
+        filer: base.filer,
+        attachments: [],
+      })
+    );
+    await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
+  }
+});
+
+Deno.test("same-issuer INT stated interest and OID with reviewed allocable deductions enter line 2g once", async () => {
+  const sameIssuerInt = {
+    ...interestPayer,
+    payer_name: "Private Bond Combined Issuer",
+    payer_tin: "333333333",
+    pab_bond_identifier: "2025-PAB-BOND-LOT-7",
+    pab_allocable_deduction_workpaper: {
+      ...interestPayer.pab_allocable_deduction_workpaper,
+      allocable_deduction: 10_000,
+    },
+  };
+  const sameIssuerOid = {
+    ...oidPayer,
+    payer_name: sameIssuerInt.payer_name,
+    payer_tin: sameIssuerInt.payer_tin,
+    pab_bond_identifier: sameIssuerInt.pab_bond_identifier,
+    pab_allocable_deduction_workpaper: {
+      ...oidPayer.pab_allocable_deduction_workpaper,
+      allocable_deduction: 5_000,
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      ...base.inputs,
+      f1099int: [sameIssuerInt],
+      f1099oid: [sameIssuerOid],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line2a_tax_exempt, 200_000);
+  const form = result.pending.form6251;
+  assert(form);
+  assertEquals(form.line2g_pab_interest, 185_000);
+  assertEquals(form.private_activity_bond_interest, 185_000);
+  assert(typeof form.line11_amt === "number" && form.line11_amt > 0);
+  assertEquals(result.pending.schedule2.line2_amt, form.line11_amt);
+  assertEquals(result.pending.f1040.line17_additional_taxes, form.line11_amt);
+  const pending = buildPending(result.pending);
+  assertEquals(
+    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    185_000,
+  );
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<ExemptPrivateActivityBondsAmt>185000</ExemptPrivateActivityBondsAmt>",
+  );
+  assert(
+    (await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle)).length > 0,
+  );
+
+  const rawInt = pending.f1099int as unknown as Record<string, unknown>;
+  const rawOid = pending.f1099oid as unknown as Record<string, unknown>;
+  for (
+    const altered of [
+      {
+        ...pending,
+        f1099int: {
+          ...rawInt,
+          f1099ints: [{
+            ...sameIssuerInt,
+            pab_allocable_deduction_workpaper: {
+              ...sameIssuerInt.pab_allocable_deduction_workpaper,
+              allocable_deduction: 9_999,
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        f1099oid: {
+          ...rawOid,
+          f1099oids: [{
+            ...sameIssuerOid,
+            pab_bond_identifier: "different-bond",
+          }],
+        },
+      },
+      {
+        ...pending,
+        f1099oid: {
+          ...rawOid,
+          f1099oids: [{
+            ...sameIssuerOid,
+            pab_allocable_deduction_workpaper: {
+              ...sameIssuerOid.pab_allocable_deduction_workpaper,
+              expense_record_reference: sameIssuerInt
+                .pab_allocable_deduction_workpaper.expense_record_reference,
+            },
+          }],
+        },
+      },
+      { ...pending, f1040: { ...pending.f1040, line2a_tax_exempt: 185_000 } },
+    ]
+  ) {
     await assertRejects(() =>
       buildMefBundle(altered as typeof pending, {
         filer: base.filer,

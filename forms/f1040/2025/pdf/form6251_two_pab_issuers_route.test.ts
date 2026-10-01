@@ -21,7 +21,15 @@ const payers = [{
   box8: 100_000,
   box9: 100_000,
   pab_eligible_bonds_reviewed: true,
-  pab_no_allocable_deduction_reviewed: true,
+  pab_allocable_deduction_workpaper: {
+    tax_year: 2025,
+    reviewed_workpaper_reference: "PAB-EXPENSE-REVIEW-ONE",
+    expense_record_reference: "PAB-EXPENSE-RECORD-ONE",
+    allocable_deduction: 0,
+    direct_allocation_to_reported_bond: true,
+    deductible_if_interest_taxable: true,
+    not_claimed_elsewhere_on_return: true,
+  },
   pab_review_reference: "PAB-ELIGIBILITY-ONE",
 }, {
   payer_name: "Private Bond Issuer Two",
@@ -30,7 +38,15 @@ const payers = [{
   box8: 100_000,
   box9: 100_000,
   pab_eligible_bonds_reviewed: true,
-  pab_no_allocable_deduction_reviewed: true,
+  pab_allocable_deduction_workpaper: {
+    tax_year: 2025,
+    reviewed_workpaper_reference: "PAB-EXPENSE-REVIEW-TWO",
+    expense_record_reference: "PAB-EXPENSE-RECORD-TWO",
+    allocable_deduction: 0,
+    direct_allocation_to_reported_bond: true,
+    deductible_if_interest_taxable: true,
+    not_claimed_elsewhere_on_return: true,
+  },
   pab_review_reference: "PAB-ELIGIBILITY-TWO",
 }];
 
@@ -100,7 +116,7 @@ Deno.test("two sourced PAB payers reconcile Form 6251 line 2g through Schedule 2
           ...source,
           f1099ints: [payers[0], {
             ...payers[1],
-            pab_no_allocable_deduction_reviewed: undefined,
+            pab_allocable_deduction_workpaper: undefined,
           }],
         },
       },
