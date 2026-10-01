@@ -4,7 +4,7 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -68,7 +68,7 @@ function filedReturn() {
     },
   });
   assertEquals(result.diagnostics, []);
-  return normalizeAllPending(result.pending);
+  return normalizeForm8606TestPending(result.pending);
 }
 
 Deno.test("first-year Roth contribution and code J distribution print Form 8606 Part III with 1040/5329 joins", () => {
@@ -129,7 +129,7 @@ Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finali
     },
   ];
   for (const change of altered) {
-    const tampered = { ...pending, ...change };
+    const tampered = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(tampered.form8606, { filer, pending: tampered }),
       Error,

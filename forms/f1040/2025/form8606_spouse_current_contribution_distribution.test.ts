@@ -10,10 +10,10 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
-  filing_status: FilingStatus.MarriedFilingJointly,
+  filing_status: FilingStatus.MFJ,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
   taxpayer_ssn: "111-22-3333",
@@ -96,7 +96,7 @@ function filedReturn(receivedOn = "2026-02-15") {
       }],
     },
     ira_deduction_worksheet: {
-      filing_status: FilingStatus.MarriedFilingJointly,
+      filing_status: FilingStatus.MFJ,
       magi: receivedOn.startsWith("2025-") ? 215_340 : 216_000,
       ira_contribution: 1_000,
       active_participant: true,
@@ -115,7 +115,7 @@ function filedReturn(receivedOn = "2026-02-15") {
     },
   });
   assertEquals(result.diagnostics, []);
-  return normalizeAllPending(result.pending);
+  return normalizeForm8606TestPending(result.pending);
 }
 
 for (
@@ -128,7 +128,7 @@ for (
     const pending = filedReturn(receiptDate);
     const filer = extractFilerIdentity(general);
     const fields = pending.form8606;
-    assertEquals(fields.filing_details.owner, IraOwner.Spouse);
+    assertEquals(fields.filing_details?.owner, IraOwner.Spouse);
     assertEquals(fields.print_line1_nondeductible, 1_000);
     assertEquals(fields.print_line2_prior_basis, 6_000);
     assertEquals(fields.print_line3_total_basis, 7_000);
@@ -163,6 +163,7 @@ for (
 Deno.test("spouse-owned current contribution rejects changed owner, receipt, 5498, prior basis, year-end, 1099-R, worksheet and return", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
+  assert(filer?.spouse);
   const source = pending.form8606
     .current_contribution_source as typeof contributionSource;
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
@@ -256,11 +257,18 @@ Deno.test("spouse-owned current contribution rejects changed owner, receipt, 549
         },
       },
     },
-    { w2: { w2s: [{ ...pending.w2.w2s[0], employee_ssn: "111-22-3333" }] } },
+    {
+      w2: {
+        w2s: [{
+          ...(pending.w2.w2s as Record<string, unknown>[])[0],
+          employee_ssn: "111-22-3333",
+        }],
+      },
+    },
     { f1040: { ...pending.f1040, line4b_ira_taxable: 15_999 } },
   ];
   for (const change of changed) {
-    const tampered = { ...pending, ...change };
+    const tampered = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(tampered.form8606, { filer, pending: tampered }),
       Error,

@@ -4,10 +4,10 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
-  filing_status: FilingStatus.MarriedFilingJointly,
+  filing_status: FilingStatus.MFJ,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
   taxpayer_ssn: "111-22-3333",
@@ -72,7 +72,7 @@ function filedReturn() {
     },
   });
   assertEquals(result.diagnostics, []);
-  return normalizeAllPending(result.pending);
+  return normalizeForm8606TestPending(result.pending);
 }
 
 Deno.test("spouse-owned first-year Roth distribution keeps one owner through Form 8606, Form 5329, and Form 1040", () => {
@@ -132,7 +132,7 @@ Deno.test("spouse Roth Form 8606 rejects changed owner, source, early tax, and f
     { f1040: { ...pending.f1040, line4b_ira_taxable: 1_999 } },
   ];
   for (const change of altered) {
-    const tampered = { ...pending, ...change };
+    const tampered = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(tampered.form8606, { filer, pending: tampered }),
       Error,

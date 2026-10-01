@@ -1,13 +1,18 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
-  filing_status: FilingStatus.MarriedFilingJointly,
+  filing_status: FilingStatus.MFJ,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
   taxpayer_ssn: "111-22-3333",
@@ -61,7 +66,7 @@ function filedReturn() {
     },
   });
   assertEquals(result.diagnostics, []);
-  return normalizeAllPending(result.pending);
+  return normalizeForm8606TestPending(result.pending);
 }
 
 Deno.test("spouse-owned prior-basis IRA distribution has one owner through Form 1040, native Form 8606, and PDF", () => {
@@ -91,6 +96,7 @@ Deno.test("spouse-owned prior-basis IRA distribution has one owner through Form 
 Deno.test("spouse-owned Form 8606 rejects owner and return tampering", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
+  assert(filer?.spouse);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
   const altered = [
     { form8606: { ...pending.form8606, print_line15c_taxable: 15_999 } },
@@ -110,7 +116,7 @@ Deno.test("spouse-owned Form 8606 rejects owner and return tampering", () => {
     },
   ];
   for (const change of altered) {
-    const tampered = { ...pending, ...change };
+    const tampered = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(tampered.form8606, { filer, pending: tampered }),
       Error,

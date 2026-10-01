@@ -9,7 +9,7 @@ import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
 
 const general = {
@@ -63,7 +63,7 @@ function filedReturn() {
     },
   });
   assertEquals(result.diagnostics, []);
-  return normalizeAllPending(result.pending);
+  return normalizeForm8606TestPending(result.pending);
 }
 
 Deno.test("reviewed prior-basis IRA distribution reconciles Form 8606 Part I and Form 1040", async () => {
@@ -110,7 +110,7 @@ Deno.test("reviewed Form 8606 distribution rejects changed source, basis, owner,
     },
   ];
   for (const change of alterations) {
-    const altered = { ...pending, ...change };
+    const altered = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(altered.form8606, { filer, pending: altered }),
       Error,

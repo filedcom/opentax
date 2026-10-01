@@ -319,12 +319,15 @@ export function reconcileFiledForm8582CROrdinary(
     );
   }
   const f3800 = form3800InputSchema.parse(pending.f3800);
+  const filedForm3800Allowed = (
+    pending.f3800 as Record<string, unknown> | undefined
+  )?.allowed_credit;
   if (
     (nonpassiveForm8874Credit > 0 &&
       (f3800.f8874_credit?.credit_amount !== nonpassiveForm8874Credit ||
         f3800.f8874_credit?.subject_to_passive_activity_limit !== false)) ||
     (nonpassiveForm8874Credit === 0 && f3800.f8874_credit !== undefined) ||
-    f3800.allowed_credit !== lines.line37 + nonpassiveForm8874Credit ||
+    filedForm3800Allowed !== lines.line37 + nonpassiveForm8874Credit ||
     !sameForm3800PassiveAllocations(
       lines.sourceAllocations,
       f3800.passive_source_allocations ?? [],

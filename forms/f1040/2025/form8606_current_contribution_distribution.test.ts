@@ -11,7 +11,7 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -114,7 +114,7 @@ function filedReturn(receivedOn = "2026-02-15") {
 
 Deno.test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 and does not offset a 2025 distribution", async () => {
   const result = filedReturn();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8606TestPending(result.pending);
   const filer = extractFilerIdentity(general);
   assertEquals(pending.form8606.print_line1_nondeductible, 1_000);
   assertEquals(pending.form8606.print_line2_prior_basis, 6_000);
@@ -148,7 +148,9 @@ Deno.test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 
 });
 
 Deno.test("2025 IRA contribution received in 2025 contributes to the distribution basis and leaves line 4 zero", () => {
-  const pending = normalizeAllPending(filedReturn("2025-12-15").pending);
+  const pending = normalizeForm8606TestPending(
+    filedReturn("2025-12-15").pending,
+  );
   const filer = extractFilerIdentity(general);
   assertEquals(pending.form8606.print_line4_post_year_contributions, 0);
   assertEquals(pending.form8606.print_line5_current_basis, 7_000);
@@ -161,7 +163,7 @@ Deno.test("2025 IRA contribution received in 2025 contributes to the distributio
 });
 
 Deno.test("Form 8606 contribution and distribution reject changed receipt, Form 5498, worksheet, line 4 and owner", () => {
-  const pending = normalizeAllPending(filedReturn().pending);
+  const pending = normalizeForm8606TestPending(filedReturn().pending);
   const filer = extractFilerIdentity(general);
   const source = pending.form8606
     .current_contribution_source as typeof contributionSource;
@@ -211,7 +213,7 @@ Deno.test("Form 8606 contribution and distribution reject changed receipt, Form 
     { f1040: { ...pending.f1040, line4b_ira_taxable: 15_999 } },
   ];
   for (const change of cases) {
-    const changed = { ...pending, ...change };
+    const changed = Object.assign({}, pending, change);
     assertThrows(
       () => form8606.build(changed.form8606, { filer, pending: changed }),
       Error,

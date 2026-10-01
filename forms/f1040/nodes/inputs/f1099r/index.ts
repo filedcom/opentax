@@ -999,7 +999,7 @@ function form8606PartIInput(item: R1099Item) {
     distribution_evidence: evidence,
     filing_details: {
       owner: item.ts === "S" ? IraOwner.Spouse : IraOwner.Taxpayer,
-      prior_basis_documented_from_2024_form8606: true,
+      prior_basis_documented_from_2024_form8606: true as const,
       no_ira_distributions_or_conversions_confirmed: false,
     },
   };

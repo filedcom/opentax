@@ -5,7 +5,7 @@ import { IraOwner } from "../nodes/intermediate/forms/form8606/index.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { form8606 } from "./mef/forms/f8606.ts";
 import { form8606Pdf } from "./pdf/forms/f8606.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -73,7 +73,7 @@ Deno.test("sourced zero-opening-basis IRA contribution joins Form 8606, Form 104
   assertEquals(result.pending.f1040?.line4a_ira_gross ?? 0, 0);
   assertEquals(result.pending.f1040?.line4b_ira_taxable ?? 0, 0);
   assertEquals(result.carryforwards.ira_remaining_basis_8606, 7_000);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8606TestPending(result.pending);
   const filer = extractFilerIdentity(general);
   const xml = form8606.build(pending.form8606, { filer, pending });
   assertStringIncludes(
@@ -96,7 +96,7 @@ Deno.test("sourced zero-opening-basis IRA contribution joins Form 8606, Form 104
 
 Deno.test("Form 8606 zero basis rejects a changed issuer, owner, prior record, worksheet or return", () => {
   const result = filedReturn();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8606TestPending(result.pending);
   const filer = extractFilerIdentity(general);
   const changed = (next: Record<string, Record<string, unknown>>) => ({
     ...pending,

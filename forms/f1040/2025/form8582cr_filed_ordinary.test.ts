@@ -15,7 +15,7 @@ import { buildCurrentYearCarryforwardLedger } from "../nodes/intermediate/forms/
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "./index.ts";
-import { normalizeAllPending } from "./pending.ts";
+import { normalizeForm8582CRTestPending } from "./form8582cr_test_pending.ts";
 import { form8582cr } from "./mef/forms/f8582cr.ts";
 import { form8582crPdf } from "./pdf/forms/f8582cr.ts";
 import { form3800Pdf } from "./pdf/forms/f3800.ts";
@@ -511,7 +511,7 @@ function filedSelfAndK1Return(
 
 Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedSCorpReturn();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   assertEquals(pending.schedule3.line6a_total, 500);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 500);
   const xml = form8582cr.build(pending.form8582cr, { pending });
@@ -535,7 +535,7 @@ Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Fo
 });
 
 Deno.test("S corporation K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
-  const pending = normalizeAllPending(filedSCorpReturn().pending);
+  const pending = normalizeForm8582CRTestPending(filedSCorpReturn().pending);
   const row = (pending.k1_s_corp.k1_s_corps as Record<string, unknown>[])[0];
   for (
     const changedRow of [
@@ -562,7 +562,7 @@ Deno.test("S corporation K-1 code AD passive credit rejects changed issuer, amou
 
 Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedPartnershipReturn();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   assertEquals(pending.schedule3.line6a_total, 500);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 500);
   const xml = form8582cr.build(pending.form8582cr, { pending });
@@ -586,7 +586,9 @@ Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form
 });
 
 Deno.test("partnership K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
-  const pending = normalizeAllPending(filedPartnershipReturn().pending);
+  const pending = normalizeForm8582CRTestPending(
+    filedPartnershipReturn().pending,
+  );
   const row =
     (pending.k1_partnership.k1_partnerships as Record<string, unknown>[])[0];
   for (
@@ -614,7 +616,7 @@ Deno.test("partnership K-1 code AD passive credit rejects changed issuer, amount
 
 Deno.test("partnership and S corporation code AD credits share one passive tax limit with distinct Worksheet 9 and Part V rows", async () => {
   const result = filedMixedK1Return();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.total_credit, 7_500);
   assertEquals(ledger.allowed_credit, 4_412);
@@ -675,7 +677,7 @@ Deno.test("partnership and S corporation code AD credits share one passive tax l
     "<PassThroughEntityEIN>234567891</PassThroughEntityEIN>",
   );
   assert(!prepared.bundle.xml.includes("<IRS8874 "));
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const form3800Printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -753,7 +755,7 @@ Deno.test("partnership and S corporation code AD credits share one passive tax l
 
 Deno.test("three partnership and one S corporation passive code AD credits keep four source-specific Worksheet 9 and Part V rows", async () => {
   const result = filedMixedK1Return([1_500, 500]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.total_credit, 9_500);
   assertEquals(ledger.allowed_credit, 4_412);
@@ -796,7 +798,7 @@ Deno.test("three partnership and one S corporation passive code AD credits keep 
     4,
   );
   assert(!prepared.bundle.xml.includes("<IRS8874 "));
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -887,7 +889,7 @@ Deno.test("three partnership and one S corporation passive code AD credits keep 
 
 Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject a sixteenth", async () => {
   const result = filedMixedK1Return(Array(13).fill(500));
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.rows.length, 15);
   assertEquals(ledger.total_credit, 14_000);
@@ -904,7 +906,7 @@ Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     15,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -935,7 +937,7 @@ Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and
 
 Deno.test("self-earned Form 8874 and two passive code AD K-1 credits reconcile source form line 2 and mixed Part V details", async () => {
   const result = filedSelfAndK1Return();
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.total_credit, 9_000);
   assertEquals(ledger.allowed_credit, 4_412);
@@ -998,7 +1000,7 @@ Deno.test("self-earned Form 8874 and two passive code AD K-1 credits reconcile s
     prepared.bundle.xml,
     "<PassThroughEntityEIN>567890123</PassThroughEntityEIN>",
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -1072,7 +1074,7 @@ Deno.test("self-earned Form 8874 and two passive code AD K-1 credits reconcile s
 
 Deno.test("two self-earned investments and three K-1s keep mixed source identities", async () => {
   const result = filedSelfAndK1Return([10_000], [800]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.rows.length, 5);
   assertEquals(ledger.total_credit, 10_300);
@@ -1088,7 +1090,7 @@ Deno.test("two self-earned investments and three K-1s keep mixed source identiti
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     5,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const sourcePdf = form8874Pdf.projectFields!(filed.f8874, filed);
   assertEquals(sourcePdf.line2, 4_800);
   assertEquals(sourcePdf.line3, 10_300);
@@ -1109,7 +1111,7 @@ Deno.test("two self-earned investments and three K-1s keep mixed source identiti
 });
 
 Deno.test("current-year passive New Markets credit and rental income reconcile Form 8582-CR line 6, Form 3800, Form 1040, native and PDF", () => {
-  const pending = normalizeAllPending(filedReturn().pending);
+  const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   assertEquals(pending.f1040.line8_additional_income, passiveIncome);
   assertEquals(pending.f1040.line16_income_tax, taxAll);
   assertEquals(pending.schedule3.line6a_total, 500);
@@ -1134,12 +1136,12 @@ Deno.test("current-year passive New Markets credit and rental income reconcile F
 
 Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 line 1i and final tax", async () => {
   const result = filedReturn(10_000, [], 5_000);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const passive = form8582crInputSchema.parse(pending.form8582cr);
   const business = f3800InputSchema.parse(pending.f3800);
   assertEquals(passive.credit_sources.length, 1);
   assertEquals(business.f8874_credit?.credit_amount, 300);
-  assertEquals(business.allowed_credit, 800);
+  assertEquals(pending.f3800.allowed_credit, 800);
   assertEquals(pending.schedule3.line6a_total, 800);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 800);
   const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
@@ -1181,7 +1183,7 @@ Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 li
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     2,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -1241,7 +1243,7 @@ Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 li
 
 Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive investment and retains the 2025 remainder", async () => {
   const result = filedReturn(100_000, [], 5_000);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   const allowedPassive = lines.line37;
@@ -1292,7 +1294,7 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     2,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -1354,7 +1356,7 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
 
 Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 Worksheet 9 balances", async () => {
   const result = filedReturn(100_000, [], 0, [100_000]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(lines.partI.line5, 10_000);
@@ -1421,7 +1423,7 @@ Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     2,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -1475,7 +1477,7 @@ Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 
 
 Deno.test("three different passive Form 8874 credits allocate one ordinary line 6 by source through native and PDF", async () => {
   const result = filedReturn(100_000, [], 0, [50_000, 50_000]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.total_credit, 10_000);
   assertEquals(ledger.allowed_credit, 4_412);
@@ -1519,7 +1521,7 @@ Deno.test("three different passive Form 8874 credits allocate one ordinary line 
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     3,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const printed = form3800Pdf.instances?.(
     filed.f3800,
     extractFilerIdentity(general),
@@ -1561,7 +1563,7 @@ Deno.test("three different passive Form 8874 credits allocate one ordinary line 
 
 Deno.test("seven passive Form 8874 activities use investment overflow and all seven Form 3800 Part V rows", async () => {
   const result = filedReturn(10_000, [], 0, Array(6).fill(10_000));
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.rows.length, 7);
   assertEquals(ledger.total_credit, 3_500);
@@ -1580,7 +1582,7 @@ Deno.test("seven passive Form 8874 activities use investment overflow and all se
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     7,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
   assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 2);
   const form3800Printed = form3800Pdf.instances?.(
@@ -1597,7 +1599,7 @@ Deno.test("seven passive Form 8874 activities use investment overflow and all se
 
 Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth remains closed", async () => {
   const result = filedReturn(10_000, [], 0, Array(14).fill(10_000));
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.rows.length, 15);
   assertEquals(ledger.total_credit, 7_500);
@@ -1616,7 +1618,7 @@ Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth r
     [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
     15,
   );
-  const filed = normalizeAllPending(prepared.bundle.pending);
+  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
   const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
   assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 10);
   const form3800Printed = form3800Pdf.instances?.(
@@ -1649,7 +1651,7 @@ Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth r
 
 Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Form 1040, native and PDF", async () => {
   const result = filedReturn(10_000, [1_000]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
   const expectedWithout = ordinaryTax2025(
     taxable + 1_000 - passiveIncome,
@@ -1683,7 +1685,9 @@ Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Fo
 });
 
 Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed interest, and tax", () => {
-  const pending = normalizeAllPending(filedReturn(10_000, [1_000]).pending);
+  const pending = normalizeForm8582CRTestPending(
+    filedReturn(10_000, [1_000]).pending,
+  );
   const row = (pending.f1099int.f1099ints as Record<string, unknown>[])[0];
   const cases = [
     {
@@ -1717,7 +1721,7 @@ Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed intere
 
 Deno.test("two distinct 1099-INT payers sum into passive rental line 6 and the complete native/PDF return", async () => {
   const result = filedReturn(10_000, [600, 400]);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
   const expectedWithout = ordinaryTax2025(
     taxable + 1_000 - passiveIncome,
@@ -1750,7 +1754,9 @@ Deno.test("two distinct 1099-INT payers sum into passive rental line 6 and the c
 });
 
 Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return drift", () => {
-  const pending = normalizeAllPending(filedReturn(10_000, [600, 400]).pending);
+  const pending = normalizeForm8582CRTestPending(
+    filedReturn(10_000, [600, 400]).pending,
+  );
   const [first, second] = pending.f1099int.f1099ints as Record<
     string,
     unknown
@@ -1789,7 +1795,7 @@ Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return 
 
 Deno.test("two issued 1099-INT copies from one payer retain separate accounts through Form 8582-CR and the complete return", async () => {
   const result = filedReturn(10_000, [600, 400], 0, [], true);
-  const pending = normalizeAllPending(result.pending);
+  const pending = normalizeForm8582CRTestPending(result.pending);
   const rows = pending.f1099int.f1099ints as Record<string, unknown>[];
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
   const expectedWithout = ordinaryTax2025(
@@ -1829,7 +1835,7 @@ Deno.test("two issued 1099-INT copies from one payer retain separate accounts th
 });
 
 Deno.test("same-payer 1099-INT line 6 rejects duplicate account, copy review, amount, and final return drift", () => {
-  const pending = normalizeAllPending(
+  const pending = normalizeForm8582CRTestPending(
     filedReturn(10_000, [600, 400], 0, [], true).pending,
   );
   const [first, second] = pending.f1099int.f1099ints as Record<
@@ -1878,7 +1884,7 @@ Deno.test("same-payer 1099-INT line 6 rejects duplicate account, copy review, am
 });
 
 Deno.test("Form 8582-CR native and PDF reject changed rental, credit, tax and filed-return joins", () => {
-  const pending = normalizeAllPending(filedReturn().pending);
+  const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   const cases = [
     {
       ...pending,
@@ -1934,7 +1940,7 @@ Deno.test("Form 8582-CR native and PDF reject changed rental, credit, tax and fi
 });
 
 Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinary route", () => {
-  const pending = normalizeAllPending(filedReturn().pending);
+  const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   const source = (pending.form8582cr.credit_sources as Record<
     string,
     unknown
@@ -1968,7 +1974,7 @@ Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinar
 });
 
 Deno.test("current-year excess credit retains an activity/year Worksheet 9 balance while native and PDF print the limited amount", () => {
-  const pending = normalizeAllPending(filedReturn(100_000).pending);
+  const pending = normalizeForm8582CRTestPending(filedReturn(100_000).pending);
   const lines = calculateForm8582CR(pending.form8582cr);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assert(lines.partI.line7 > 0);
