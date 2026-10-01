@@ -567,3 +567,16 @@ the business credit twice. It follows the [2025 Form 1040 line 20](https://www.i
 and [2025 Schedule 3 line 8](https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf)
 printed destinations. Focused positive and changed-line fixtures are authored
 for the deferred batch; the join does not authenticate each underlying credit.
+
+One additional mixed current-year route now joins a self-earned Form 8820
+orphan-drug credit with a separately sourced self-earned Form 5884 work
+opportunity credit. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+put these on Part III lines 1h and 4b, respectively. The PDF filing guard
+recalculates filed Form 8820 and Form 5884, checks the original pending/raw
+credit amounts, two distinct native source rows and document IDs, Parts I/II
+lines 17/37/38, Schedule 3, and finalized Form 1040. An authored $1,975 plus
+$2,400 example reaches $4,375 on line 38 and Form 1040 line 20; changed
+clinical expenses, employee hours, source-document linkage, and final tax
+amounts are rejected. These positive/tamper fixtures await the shared bulk
+run. This route does not claim transferred, passive, or carryforward credits;
+their evidence gates and Part V/VI overflow remain open.

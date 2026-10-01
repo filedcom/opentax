@@ -120,7 +120,7 @@ export const form3800Pdf: PdfFormDescriptor = {
     const source = f3800InputSchema.parse(pending3800);
     if (
       source.f8820_credit &&
-      !source.f8874_credit && !source.f5884_credit &&
+      !source.f8874_credit &&
       !source.f8835_credit_entries?.length &&
       !source.f8826_credit_entries?.length &&
       !source.f3468_trust_part_v_credit_entries?.length &&
@@ -137,6 +137,12 @@ export const form3800Pdf: PdfFormDescriptor = {
       const row = prepared.currentRows[0];
       const amount = prepared.currentAmounts[0];
       const detail = prepared.currentDetails[0];
+      const wotcCredit = source.f5884_credit?.credit_amount ?? 0;
+      const wotcRow = prepared.currentRows.find((item) => item.line === "4b");
+      const wotcDetail = prepared.currentDetails.find((item) =>
+        item.line === "4b"
+      );
+      const expectedRows = wotcCredit > 0 ? 2 : 1;
       if (
         filed.subject_to_passive_activity_limit ||
         (filed.pass_through_credits?.length ?? 0) !== 0 ||
@@ -145,9 +151,15 @@ export const form3800Pdf: PdfFormDescriptor = {
         source.f8820_credit.credit_amount !== credit ||
         JSON.stringify(rawSource.f8820_credit) !==
           JSON.stringify(source.f8820_credit) ||
-        prepared.currentRows.length !== 1 ||
-        prepared.currentAmounts.length !== 1 ||
-        prepared.currentDetails.length !== 1 ||
+        prepared.currentRows.length !== expectedRows ||
+        prepared.currentAmounts.length !== expectedRows ||
+        prepared.currentDetails.length !== expectedRows ||
+        prepared.currentRows.some((item) =>
+          item.line !== "1h" && item.line !== "4b"
+        ) ||
+        prepared.currentDetails.some((item) =>
+          item.line !== "1h" && item.line !== "4b"
+        ) ||
         prepared.carryoverRows.length !== 0 ||
         row?.line !== "1h" || row.metadata.sourceCount !== 1 ||
         row.metadata.referenceDocumentName !== "IRS8820" ||
@@ -163,10 +175,17 @@ export const form3800Pdf: PdfFormDescriptor = {
         detail.appliedCredit !== credit ||
         detail.passThroughEin !== undefined ||
         detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        (wotcCredit > 0 &&
+          (!wotcRow?.metadata.referenceDocumentId ||
+            wotcRow.metadata.referenceDocumentId ===
+              row.metadata.referenceDocumentId ||
+            wotcDetail?.sourceDocumentId !==
+              wotcRow.metadata.referenceDocumentId)) ||
         prepared.lines.line1 !== credit ||
         prepared.lines.line6 !== credit ||
         prepared.lines.line17 !== credit ||
-        prepared.lines.line38 !== credit
+        (prepared.lines.line37 ?? 0) !== wotcCredit ||
+        prepared.lines.line38 !== credit + wotcCredit
       ) {
         throw new Error(
           "Form 3800 PDF line 1h differs from one filed self-earned Form 8820 source",
