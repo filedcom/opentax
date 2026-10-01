@@ -413,14 +413,10 @@ export const form3800Pdf: PdfFormDescriptor = {
     if (
       !source.f8874_credit &&
       source.passive_source_allocations !== undefined &&
-      source.passive_source_allocations.length === 2 &&
-      source.passive_source_allocations.some((entry) =>
-        entry.source_origin.kind === "partnership" &&
-        entry.source_form === "Form 8874" &&
-        entry.form3800_credit_line === "1i"
-      ) &&
-      source.passive_source_allocations.some((entry) =>
-        entry.source_origin.kind === "s_corporation" &&
+      source.passive_source_allocations.length >= 2 &&
+      source.passive_source_allocations.every((entry) =>
+        (entry.source_origin.kind === "partnership" ||
+          entry.source_origin.kind === "s_corporation") &&
         entry.source_form === "Form 8874" &&
         entry.form3800_credit_line === "1i"
       ) &&
@@ -448,10 +444,12 @@ export const form3800Pdf: PdfFormDescriptor = {
         all.f8874 !== undefined ||
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
-        ledger.rows.length !== 2 ||
-        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        ledger.rows.length !== source.passive_source_allocations.length ||
+        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
+        rows.length !== 1 || amounts.length !== 1 ||
+        details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
-        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.sourceCount !== ledger.rows.length ||
         rows[0].metadata.referenceDocumentId !== undefined ||
         rows[0].metadata.referenceDocumentName !== undefined ||
         details.some((detail) => {
@@ -497,7 +495,7 @@ export const form3800Pdf: PdfFormDescriptor = {
         prepared.lines.line38 !== passive.line37
       ) {
         throw new Error(
-          "Form 3800 PDF mixed pass-through New Markets activities differ from filed K-1 and Worksheet 9 sources",
+          "Form 3800 PDF pass-through New Markets activities differ from filed K-1 and Worksheet 9 sources",
         );
       }
     }

@@ -44,53 +44,101 @@ type CreditSource = ReturnType<
   typeof form8582crInputSchema.parse
 >["credit_sources"][number];
 
-function reconcilePartnershipK1Credit(source: CreditSource, pending: Pending) {
+function reconcilePartnershipK1Credits(
+  sources: readonly CreditSource[],
+  pending: Pending,
+) {
+  if (sources.length === 0) {
+    if (nonemptySource(pending.k1_partnership)) {
+      throw new Error("Form 8582-CR has an unclaimed partnership K-1 source");
+    }
+    return;
+  }
   const k1s = partnershipK1InputSchema.parse(pending.k1_partnership)
     .k1_partnerships;
-  const k1 = k1s[0];
-  const origin = source.source_origin;
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
-    k1s.length !== 1 || !k1 ||
-    Object.keys(k1).some((key) => !creditOnlyPartnershipFields.has(key)) ||
-    origin.kind !== PassiveCreditSourceOrigin.Partnership ||
-    origin.ein !== k1.partnership_ein ||
-    origin.entity_reference !== k1.partnership_name ||
-    source.activity_reference !== k1.source_document_reference ||
-    source.source_document_reference !== k1.source_document_reference ||
-    source.source_statement_reference !== undefined ||
-    k1.box15_code_ad_new_markets_credit !== source.current_year_credit ||
-    k1.new_markets_credit_subject_to_passive_activity_limit !== true ||
-    !k1.recipient_tin ||
-    k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "")
+    k1s.length !== sources.length ||
+    k1s.some((k1) =>
+      Object.keys(k1).some((key) => !creditOnlyPartnershipFields.has(key)) ||
+      !k1.recipient_tin ||
+      k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
+      k1.new_markets_credit_subject_to_passive_activity_limit !== true
+    ) ||
+    sources.some((source) =>
+      k1s.filter((k1) =>
+        source.source_origin.kind === PassiveCreditSourceOrigin.Partnership &&
+        source.source_origin.ein === k1.partnership_ein &&
+        source.source_origin.entity_reference === k1.partnership_name &&
+        source.activity_reference === k1.source_document_reference &&
+        source.source_document_reference === k1.source_document_reference &&
+        source.source_statement_reference === undefined &&
+        k1.box15_code_ad_new_markets_credit === source.current_year_credit
+      ).length !== 1
+    ) ||
+    k1s.some((k1) =>
+      sources.filter((source) =>
+        source.source_origin.kind === PassiveCreditSourceOrigin.Partnership &&
+        source.source_origin.ein === k1.partnership_ein &&
+        source.source_origin.entity_reference === k1.partnership_name &&
+        source.activity_reference === k1.source_document_reference &&
+        source.source_document_reference === k1.source_document_reference &&
+        source.source_statement_reference === undefined &&
+        k1.box15_code_ad_new_markets_credit === source.current_year_credit
+      ).length !== 1
+    )
   ) {
     throw new Error(
-      "Form 8582-CR partnership code AD credit differs from the filed credit-only K-1",
+      "Form 8582-CR partnership code AD credits differ from the filed credit-only K-1s",
     );
   }
 }
 
-function reconcileSCorpK1Credit(source: CreditSource, pending: Pending) {
+function reconcileSCorpK1Credits(
+  sources: readonly CreditSource[],
+  pending: Pending,
+) {
+  if (sources.length === 0) {
+    if (nonemptySource(pending.k1_s_corp)) {
+      throw new Error("Form 8582-CR has an unclaimed S corporation K-1 source");
+    }
+    return;
+  }
   const k1s = sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
-  const k1 = k1s[0];
-  const origin = source.source_origin;
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
-    k1s.length !== 1 || !k1 ||
-    Object.keys(k1).some((key) => !creditOnlySCorpFields.has(key)) ||
-    origin.kind !== PassiveCreditSourceOrigin.SCorporation ||
-    origin.ein !== k1.corporation_ein ||
-    origin.entity_reference !== k1.corporation_name ||
-    source.activity_reference !== k1.source_document_reference ||
-    source.source_document_reference !== k1.source_document_reference ||
-    source.source_statement_reference !== undefined ||
-    k1.box13_code_ad_new_markets_credit !== source.current_year_credit ||
-    k1.new_markets_credit_subject_to_passive_activity_limit !== true ||
-    !k1.recipient_tin ||
-    k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "")
+    k1s.length !== sources.length ||
+    k1s.some((k1) =>
+      Object.keys(k1).some((key) => !creditOnlySCorpFields.has(key)) ||
+      !k1.recipient_tin ||
+      k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
+      k1.new_markets_credit_subject_to_passive_activity_limit !== true
+    ) ||
+    sources.some((source) =>
+      k1s.filter((k1) =>
+        source.source_origin.kind === PassiveCreditSourceOrigin.SCorporation &&
+        source.source_origin.ein === k1.corporation_ein &&
+        source.source_origin.entity_reference === k1.corporation_name &&
+        source.activity_reference === k1.source_document_reference &&
+        source.source_document_reference === k1.source_document_reference &&
+        source.source_statement_reference === undefined &&
+        k1.box13_code_ad_new_markets_credit === source.current_year_credit
+      ).length !== 1
+    ) ||
+    k1s.some((k1) =>
+      sources.filter((source) =>
+        source.source_origin.kind === PassiveCreditSourceOrigin.SCorporation &&
+        source.source_origin.ein === k1.corporation_ein &&
+        source.source_origin.entity_reference === k1.corporation_name &&
+        source.activity_reference === k1.source_document_reference &&
+        source.source_document_reference === k1.source_document_reference &&
+        source.source_statement_reference === undefined &&
+        k1.box13_code_ad_new_markets_credit === source.current_year_credit
+      ).length !== 1
+    )
   ) {
     throw new Error(
-      "Form 8582-CR S corporation code AD credit differs from the filed credit-only K-1",
+      "Form 8582-CR S corporation code AD credits differ from the filed credit-only K-1s",
     );
   }
 }
@@ -107,22 +155,16 @@ export function reconcileFiledForm8582CROrdinary(
     input.credit_sources.every((entry) =>
       entry.source_origin.kind === PassiveCreditSourceOrigin.Self
     );
-  const mixedK1Credit = input.credit_sources.length === 2 &&
-    input.credit_sources.some((entry) =>
-      entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership
-    ) &&
-    input.credit_sources.some((entry) =>
+  const passThroughCredit = input.credit_sources.length > 0 &&
+    input.credit_sources.length <= FORM3800_PRINTED_PART_V_ROWS &&
+    input.credit_sources.every((entry) =>
+      entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership ||
       entry.source_origin.kind === PassiveCreditSourceOrigin.SCorporation
     );
-  const partnershipCredit = source?.source_origin.kind ===
-    PassiveCreditSourceOrigin.Partnership;
-  const sCorpCredit = source?.source_origin.kind ===
-    PassiveCreditSourceOrigin.SCorporation;
   if (
     !input.line6_ordinary_worksheet || input.credit_sources.length === 0 ||
     input.credit_sources.length > FORM3800_PRINTED_PART_V_ROWS || !source ||
-    (!selfCredit && !mixedK1Credit && input.credit_sources.length !== 1) ||
-    (!selfCredit && !mixedK1Credit && !partnershipCredit && !sCorpCredit) ||
+    (!selfCredit && !passThroughCredit) ||
     input.credit_sources.some((entry) =>
       entry.source_form !== "Form 8874" ||
       entry.category !== PassiveCreditCategory.Other ||
@@ -146,7 +188,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 credits within Form 3800 Part V capacity, one credit-only K-1 code AD, or one partnership and one S corporation credit-only K-1, plus one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 or credit-only partnership/S corporation K-1 code AD sources within Form 3800 Part V capacity, plus one sourced passive rental income activity",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -211,49 +253,38 @@ export function reconcileFiledForm8582CROrdinary(
       );
     }
     nonpassiveForm8874Credit = ordinaryCredits[0]?.creditAmount ?? 0;
-  } else if (mixedK1Credit) {
-    if (nonemptySource(pending.f8874)) {
-      throw new Error(
-        "Form 8582-CR mixed K-1 route has another Form 8874 source",
-      );
-    }
-    const partnershipSource = input.credit_sources.find((entry) =>
-      entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership
-    )!;
-    const sCorpSource = input.credit_sources.find((entry) =>
-      entry.source_origin.kind === PassiveCreditSourceOrigin.SCorporation
-    )!;
-    if (
-      partnershipSource.activity_reference === sCorpSource.activity_reference ||
-      partnershipSource.source_document_reference ===
-        sCorpSource.source_document_reference
-    ) {
-      throw new Error(
-        "Form 8582-CR mixed K-1 credits need distinct activity and source references",
-      );
-    }
-    reconcilePartnershipK1Credit(partnershipSource, pending);
-    reconcileSCorpK1Credit(sCorpSource, pending);
-  } else if (partnershipCredit) {
-    if (nonemptySource(pending.f8874)) {
-      throw new Error(
-        "Form 8582-CR partnership route has another Form 8874 source",
-      );
-    }
-    if (nonemptySource(pending.k1_s_corp)) {
-      throw new Error("Form 8582-CR partnership route has another K-1 source");
-    }
-    reconcilePartnershipK1Credit(source, pending);
   } else {
-    if (
-      nonemptySource(pending.f8874) ||
-      nonemptySource(pending.k1_partnership)
-    ) {
+    if (nonemptySource(pending.f8874)) {
       throw new Error(
-        "Form 8582-CR S corporation route has another credit source",
+        "Form 8582-CR K-1 route has another Form 8874 source",
       );
     }
-    reconcileSCorpK1Credit(source, pending);
+    const activities = input.credit_sources.map((entry) =>
+      entry.activity_reference
+    );
+    const references = input.credit_sources.map((entry) =>
+      entry.source_document_reference
+    );
+    if (
+      new Set(activities).size !== activities.length ||
+      new Set(references).size !== references.length
+    ) {
+      throw new Error(
+        "Form 8582-CR K-1 credits need distinct activity and source references",
+      );
+    }
+    reconcilePartnershipK1Credits(
+      input.credit_sources.filter((entry) =>
+        entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership
+      ),
+      pending,
+    );
+    reconcileSCorpK1Credits(
+      input.credit_sources.filter((entry) =>
+        entry.source_origin.kind === PassiveCreditSourceOrigin.SCorporation
+      ),
+      pending,
+    );
   }
   const lines = calculateForm8582CR(input);
   const ledger = buildCurrentYearCarryforwardLedger(input);

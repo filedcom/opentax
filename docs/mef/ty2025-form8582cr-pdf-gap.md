@@ -3,9 +3,9 @@
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
 one to fifteen current-year passive New Markets credits from distinct
 self-earned Form 8874 investments (one passive investment may also be paired
-with one distinct nonpassive Form 8874 investment), a credit-only partnership
-K-1 box 15 code AD, a credit-only S corporation K-1 box 13 code AD, or one
-credit-only K-1 of each type, plus one
+with one distinct nonpassive Form 8874 investment), or one to fifteen
+credit-only partnership K-1 box 15 code AD and S corporation K-1 box 13
+code AD sources in any mix, plus one
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
 
@@ -21,10 +21,11 @@ source's activity, source document, and current-year amount. The fifteen-source
 limit is the printed Form 3800 Part V capacity. When there is only one passive
 investment, one additional nonpassive investment on that Form 8874 enters
 Form 3800 line 1i outside the passive Worksheet 9.
-Alternatively, one partnership K-1 box 15 code AD, one S corporation K-1 box
-13 code AD, or one of each must match the pass-through EIN/name, K-1 reference,
-recipient TIN, passive classification, and current-year amount. The paired
-sources must have distinct activity and document references. Those K-1s have no other income,
+Alternatively, each partnership K-1 box 15 code AD or S corporation K-1 box
+13 code AD must match one source's pass-through EIN/name, K-1 reference,
+recipient TIN, passive classification, and current-year amount. All K-1
+sources must have distinct activity and document references, and no K-1 may
+remain unclaimed. Those K-1s have no other income,
 deduction, or credit boxes in this bounded route, so the Schedule E rental is
 the complete positive passive-income inventory. No prior credit, PTP, special allowance,
 additional passive income source, or Part VI election enters this route.
@@ -70,6 +71,16 @@ rows carry the distinct pass-through EINs; Schedule 3/Form 1040, native MeF,
 and the PDF use the $4,412 allowed total. No individual Form 8874 is attached
 for this bounded direct K-1 route. Full-return and issuer, recipient, extra-box,
 and prepared-detail tamper fixtures are authored for deferred validation.
+The same direct source reconciliation now covers up to fifteen credit-only
+pass-through code AD K-1s, including multiple partnerships or S corporations
+with distinct issuers and document references. A four-activity return with
+three partnerships and one S corporation allocates $9,500 of credit against
+$4,412 of sourced ordinary tax, retaining each activity's separate 2025
+Worksheet 9 balance and Form 3800 Part V EIN. A fifteen-source return fills
+the physical Part V capacity; a sixteenth source is rejected. Positive,
+missing/changed K-1, prepared-detail, and capacity fixtures are authored but
+unrun. [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+require Part V when a credit has multiple pass-through sources.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
 The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
@@ -89,7 +100,7 @@ their line 6 source, final-return tax method, or carryforward join:
 | Native calculation branch | Printable gap |
 | --- | --- |
 | Other-category current-year credits from estate, trust, or cooperative K-1 sources; partnership or S corporation K-1s with other income, deduction, or credit boxes; or self-earned sources other than the bounded Form 8874 investments | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
-| More than fifteen self-earned current-year Form 8874 activities, more than one K-1 per pass-through type, other pass-through mixes, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
+| More than fifteen current-year sources, K-1s with other income/deduction/credit boxes, self-earned/K-1 combinations, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
 | Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
 | Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
 | Other tax methods, multiple Schedule E rentals, K-1 or farm-rental passive income, and passive dispositions | Reperform line 6 under the actual finalized Form 1040 method and complete passive net-income set. |

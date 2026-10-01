@@ -287,9 +287,48 @@ function filedSCorpReturn() {
   return result;
 }
 
-function filedMixedK1Return() {
+function filedMixedK1Return(
+  additionalPartnershipCredits: number[] = [],
+  additionalSCorpCredits: number[] = [],
+) {
   const partnershipReference = "2025 partnership K-1 code AD mixed";
   const sCorpReference = "2025 S corporation K-1 code AD mixed";
+  const partnerships = [
+    {
+      partnership_name: "Community partnership",
+      partnership_ein: "123456789",
+      source_document_reference: partnershipReference,
+      recipient_tin: "111223333",
+      box15_code_ad_new_markets_credit: 5_000,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    },
+    ...additionalPartnershipCredits.map((credit, index) => ({
+      partnership_name: `Community partnership ${index + 2}`,
+      partnership_ein: String(345678901 - index),
+      source_document_reference: `2025 partnership K-1 code AD ${index + 2}`,
+      recipient_tin: "111223333",
+      box15_code_ad_new_markets_credit: credit,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    })),
+  ];
+  const corporations = [
+    {
+      corporation_name: "Community S corporation",
+      corporation_ein: "234567891",
+      source_document_reference: sCorpReference,
+      recipient_tin: "111223333",
+      box13_code_ad_new_markets_credit: 2_500,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    },
+    ...additionalSCorpCredits.map((credit, index) => ({
+      corporation_name: `Community S corporation ${index + 2}`,
+      corporation_ein: String(456789012 - index),
+      source_document_reference: `2025 S corporation K-1 code AD ${index + 2}`,
+      recipient_tin: "111223333",
+      box13_code_ad_new_markets_credit: credit,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    })),
+  ];
   const result = f1040_2025.executeReturn({
     general,
     w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
@@ -306,47 +345,36 @@ function filedMixedK1Return() {
       form_1099_payments_made: false,
     }],
     k1_partnership: {
-      k1_partnerships: [{
-        partnership_name: "Community partnership",
-        partnership_ein: "123456789",
-        source_document_reference: partnershipReference,
-        recipient_tin: "111223333",
-        box15_code_ad_new_markets_credit: 5_000,
-        new_markets_credit_subject_to_passive_activity_limit: true,
-      }],
+      k1_partnerships: partnerships,
     },
     k1_s_corp: {
-      k1_s_corps: [{
-        corporation_name: "Community S corporation",
-        corporation_ein: "234567891",
-        source_document_reference: sCorpReference,
-        recipient_tin: "111223333",
-        box13_code_ad_new_markets_credit: 2_500,
-        new_markets_credit_subject_to_passive_activity_limit: true,
-      }],
+      k1_s_corps: corporations,
     },
     form8582cr: {
-      credit_sources: [{
-        ...source,
-        activity_reference: partnershipReference,
-        source_document_reference: partnershipReference,
-        current_year_credit: 5_000,
-        source_origin: {
-          kind: "partnership" as const,
-          entity_reference: "Community partnership",
-          ein: "123456789",
-        },
-      }, {
-        ...source,
-        activity_reference: sCorpReference,
-        source_document_reference: sCorpReference,
-        current_year_credit: 2_500,
-        source_origin: {
-          kind: "s_corporation" as const,
-          entity_reference: "Community S corporation",
-          ein: "234567891",
-        },
-      }],
+      credit_sources: [
+        ...partnerships.map((k1) => ({
+          ...source,
+          activity_reference: k1.source_document_reference,
+          source_document_reference: k1.source_document_reference,
+          current_year_credit: k1.box15_code_ad_new_markets_credit,
+          source_origin: {
+            kind: "partnership" as const,
+            entity_reference: k1.partnership_name,
+            ein: k1.partnership_ein,
+          },
+        })),
+        ...corporations.map((k1) => ({
+          ...source,
+          activity_reference: k1.source_document_reference,
+          source_document_reference: k1.source_document_reference,
+          current_year_credit: k1.box13_code_ad_new_markets_credit,
+          source_origin: {
+            kind: "s_corporation" as const,
+            entity_reference: k1.corporation_name,
+            ein: k1.corporation_ein,
+          },
+        })),
+      ],
       regular_tax_all_income: taxAll,
       regular_tax_without_passive: taxWithout,
       line6_ordinary_worksheet: worksheet,
@@ -594,7 +622,189 @@ Deno.test("partnership and S corporation code AD credits share one passive tax l
         },
       ),
     Error,
-    "mixed pass-through New Markets activities",
+    "pass-through New Markets activities",
+  );
+});
+
+Deno.test("three partnership and one S corporation passive code AD credits keep four source-specific Worksheet 9 and Part V rows", async () => {
+  const result = filedMixedK1Return([1_500, 500]);
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.total_credit, 9_500);
+  assertEquals(ledger.allowed_credit, 4_412);
+  assertEquals(
+    ledger.rows.map((row) => [
+      row.source.source_origin.kind,
+      row.total_credit,
+      row.allowed_credit,
+      row.unallowed_credit,
+    ]),
+    [
+      ["partnership", 5_000, 2_322, 2_678],
+      ["partnership", 1_500, 697, 803],
+      ["partnership", 500, 232, 268],
+      ["s_corporation", 2_500, 1_161, 1_339],
+    ],
+  );
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 4);
+  assertEquals(
+    parts.passiveCurrentDetails.map((detail) => [
+      detail.source.sourceOrigin.kind,
+      detail.source.activityReference,
+      detail.source.afterPassiveLimit,
+    ]),
+    ledger.rows.map((row) => [
+      row.source.source_origin.kind,
+      row.source.activity_reference,
+      row.allowed_credit,
+    ]),
+  );
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    4,
+  );
+  assert(!prepared.bundle.xml.includes("<IRS8874 "));
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
+  assertEquals(
+    [1, 2, 3, 4].map((index) => printed?.[form3800PartVFields(index).c1]),
+    ["123456789", "345678901", "345678900", "234567891"],
+  );
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const partnershipRows = filed.k1_partnership.k1_partnerships as Record<
+    string,
+    unknown
+  >[];
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(filed.form8582cr, {
+        ...filed,
+        k1_partnership: { k1_partnerships: partnershipRows.slice(0, 2) },
+      }),
+    Error,
+    "partnership code AD credits differ",
+  );
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(filed.form8582cr, {
+        ...filed,
+        k1_partnership: {
+          k1_partnerships: [...partnershipRows, {
+            ...partnershipRows[2],
+            partnership_ein: "987654321",
+            source_document_reference: "unclaimed fourth partnership K-1",
+          }],
+        },
+      }),
+    Error,
+    "partnership code AD credits differ",
+  );
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(filed.form8582cr, {
+        ...filed,
+        k1_partnership: {
+          k1_partnerships: [
+            partnershipRows[0],
+            partnershipRows[1],
+            {
+              ...partnershipRows[2],
+              box15_code_ad_new_markets_credit: 499,
+            },
+          ],
+        },
+      }),
+    Error,
+    "partnership code AD credits differ",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        filed.f3800,
+        extractFilerIdentity(general),
+        filed,
+        {
+          ...parts,
+          passiveCurrentDetails: [
+            parts.passiveCurrentDetails[0],
+            parts.passiveCurrentDetails[1],
+            {
+              ...parts.passiveCurrentDetails[2],
+              source: {
+                ...parts.passiveCurrentDetails[2].source,
+                sourceDocumentReference: "wrong third partnership K-1",
+              },
+            },
+            parts.passiveCurrentDetails[3],
+          ],
+        },
+      ),
+    Error,
+    "pass-through New Markets activities",
+  );
+});
+
+Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject a sixteenth", async () => {
+  const result = filedMixedK1Return(Array(13).fill(500));
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.rows.length, 15);
+  assertEquals(ledger.total_credit, 14_000);
+  assertEquals(ledger.allowed_credit, 4_412);
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 15);
+  assertEquals(parts.passiveCurrentDetails.length, 15);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    15,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartVFields(15).c1], "234567891");
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const originalSources = form8582crInputSchema.parse(pending.form8582cr)
+    .credit_sources;
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!({
+        ...pending.form8582cr,
+        credit_sources: [...originalSources, {
+          ...originalSources[0],
+          activity_reference: "sixteenth-pass-through-activity",
+          source_document_reference: "sixteenth-pass-through-K-1",
+        }],
+      }, pending),
+    Error,
+    "within Form 3800 Part V capacity",
   );
 });
 

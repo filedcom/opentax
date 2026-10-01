@@ -393,6 +393,16 @@ allowed amount. Issuer/recipient/extra-box and prepared-detail tamper fixtures
 are authored but unrun. Other K-1 mixes and prior-year accepted-carryover
 claims remain closed.
 
+The direct passive New Markets K-1 route now handles one to fifteen distinct
+credit-only partnership box 15 code AD and S corporation box 13 code AD
+sources in any mix. Each source's issuer, recipient, activity, K-1 reference,
+amount, and passive classification is matched one-to-one to Form 8582-CR and
+its current-year Worksheet 9 row. The Form 3800 Part III line 1i aggregate
+and every Part V EIN/amount row reconcile to native XML, PDF, Schedule 3, and
+Form 1040. A three-partnership/one-S-corporation return and the fifteen-row
+printable boundary have positive and tamper fixtures authored for the deferred
+run. Other source types and accepted prior-year credit imports remain closed.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional
