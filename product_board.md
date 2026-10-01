@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **616 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **619 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -25,10 +25,10 @@ diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 132-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
+| Automated and artifact validation | 5 | A 134-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 616 bounded routes and
+**Implemented coverage.** The completed ledger records 619 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -77,8 +77,8 @@ owner before native/PDF export.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
-now has 132 source fixtures, 56 of 112 unique registered PDF keys represented,
-and a deterministic per-page review manifest; the 56 uncovered keys remain open.
+now has 134 source fixtures, 59 of 112 unique registered PDF keys represented,
+and a deterministic per-page review manifest; the 53 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
 human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
@@ -102,8 +102,13 @@ identity for finalized export and reject identified duplicate transactions;
 ownerless historical benchmarks can still calculate pending gains. A 14-route evidence matrix records where
 reviewed facts, retained source bytes, signatures, and IRS acceptance differ;
 the overall evidence policy still needs a user decision.
+Positive 1099-PATR backup withholding now needs an owner-matched recipient TIN
+at finalized export.
 A nine-root workflow matrix states the remaining amendment, payment,
 recipient-copy, and optional preference decisions without assuming their outcome.
+The TY2025 v5.4 schema archive and extracted XSD have pinned local hashes and
+an authorized SOR verification procedure; the local copy's IRS origin remains
+unverified.
 
 **Coverage and release gates.** The current static audit counts 145 registered native MeF
 descriptors, 115 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
