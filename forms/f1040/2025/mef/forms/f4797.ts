@@ -28,6 +28,7 @@ import {
 import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
+  assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
   calculateInvestment1245Disposition,
   type Investment1245Disposition,
@@ -111,6 +112,10 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       calculated,
       rows,
       schedule1?.line4_other_gains,
+    );
+    assertFullyRecapturedInvestment1245Return(
+      calculated,
+      (pending ?? {}) as Record<string, unknown>,
     );
     return elements("IRS4797", [
       element("TotalOrdinaryGainLossAmt", ordinary),

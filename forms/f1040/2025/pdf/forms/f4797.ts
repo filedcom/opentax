@@ -16,6 +16,7 @@ import {
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import { z } from "zod";
 import {
+  assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,
@@ -265,6 +266,7 @@ export const form4797Pdf: PdfFormDescriptor = {
         rows,
         allPending.schedule1?.line4_other_gains,
       );
+      assertFullyRecapturedInvestment1245Return(calculated, allPending);
       const ordinary = calculated.reduce(
         (sum, sale) => sum + sale.ordinaryRecapture,
         0,

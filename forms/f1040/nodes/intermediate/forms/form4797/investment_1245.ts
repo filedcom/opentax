@@ -118,3 +118,35 @@ export function assertInvestment1245FilingLinks(
     );
   }
 }
+
+/** One fully recaptured investment sale has no capital-gain remainder. */
+export function assertFullyRecapturedInvestment1245Return(
+  calculated: ReadonlyArray<
+    ReturnType<typeof calculateInvestment1245Disposition>
+  >,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (calculated.length !== 1 || calculated[0].excessCapitalGain !== 0) {
+    return;
+  }
+  const ordinary = calculated[0].ordinaryRecapture;
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const form1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const additionalIncome = schedule1?.line10_total_additional_income;
+  const totalIncome = form1040?.line9_total_income;
+  const adjustments = form1040?.line10_adjustments ?? 0;
+  if (
+    !schedule1 || !form1040 ||
+    schedule1.line4_other_gains !== ordinary ||
+    typeof additionalIncome !== "number" ||
+    !Number.isSafeInteger(additionalIncome) ||
+    form1040.line8_additional_income !== additionalIncome ||
+    typeof totalIncome !== "number" || !Number.isSafeInteger(totalIncome) ||
+    typeof adjustments !== "number" || !Number.isSafeInteger(adjustments) ||
+    form1040.line11_agi !== totalIncome - adjustments
+  ) {
+    throw new Error(
+      "Form 4797 fully recaptured investment sale needs an exact Schedule 1/Form 1040 ordinary-income join",
+    );
+  }
+}

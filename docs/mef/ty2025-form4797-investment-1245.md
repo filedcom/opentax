@@ -42,6 +42,21 @@ Form 8949 page were rendered and inspected. Their local PDF snapshots are:
 - `.state/research/ty2025-filled-pdf-review/2026-09-30-form4797-four-investment-1245/filled-return.pdf`
   (SHA-256 `bbe867fd3ede05debf6b98d5e3d20a7dcd0d8be73d00f543db7c2798757a5e26`).
 
+A separate one-property full-recapture source route is now authored for the
+deferred bulk pass. The $10,000 sale price less $7,000 adjusted basis gives
+$3,000 total gain, entirely within $5,000 prior depreciation. Under the
+[2025 Form 4797 instructions](https://www.irs.gov/instructions/i4797), only
+gain above recapture goes to Form 8949, so this route emits no capital row.
+The native and PDF filing boundaries now require the property's recapture
+on Schedule 1 line 4, the finalized Schedule 1 line 10 total on Form 1040
+line 8, and Form 1040 line 11 to reconcile with lines 9 and 10. The Form 8949
+source check rejects a capital row attributed to this fully recaptured
+property while allowing unrelated capital rows and other income. The
+authored one-property full-return fixture has zero line 7 capital gain and
+wages as its only other income. Positive full-return and
+sale/depreciation/return tamper fixtures are authored but unrun; sale, basis,
+and depreciation references remain assertions without authenticated bytes.
+
 This bounded route permits one to four properties and no overlapping Form
 4797 aggregate or passive source. It does not yet model business-use
 property, holding of one year or less, installment sales, exchanges,
