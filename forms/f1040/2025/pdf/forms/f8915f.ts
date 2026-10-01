@@ -1,6 +1,7 @@
 import {
   currentYearDistributionLines,
   inputSchema,
+  verifyCurrentYearDistributionSource,
 } from "../../../nodes/inputs/f8915f/index.ts";
 import {
   buildCurrentYearDistributionForm8915F,
@@ -33,7 +34,12 @@ export const form8915FPdf: PdfFormDescriptor = {
       filer,
       pending: allPending,
     });
-    const lines = currentYearDistributionLines(item);
+    const other = verifyCurrentYearDistributionSource(
+      item,
+      allPending?.f1099r,
+      filer,
+    );
+    const lines = currentYearDistributionLines(item, other);
     return [{
       owner_name: form8915FOwnerName(item, filer),
       owner_ssn: item.recipient_ssn,
@@ -48,6 +54,7 @@ export const form8915FPdf: PdfFormDescriptor = {
       line2b: lines.line2b_qualified_plan_distributions,
       line3a: lines.line3a_ira_distributions,
       line3b: lines.line3b_qualified_ira_distributions,
+      line5aa: lines.line5a_nonqualified_distributions,
       line5ba: lines.line5b_qualified_distributions,
       line5bb: lines.line5b_qualified_distributions,
       line6: lines.line6_total_qualified,
@@ -101,6 +108,7 @@ export const form8915FPdf: PdfFormDescriptor = {
     field("line2b", `${page2}.Table_Lines1-5[0].Row2[0].f2_19[0]`),
     field("line3a", `${page2}.Table_Lines1-5[0].Row3[0].f2_20[0]`),
     field("line3b", `${page2}.Table_Lines1-5[0].Row3[0].f2_21[0]`),
+    field("line5aa", `${page2}.Table_Lines1-5[0].Row5a[0].f2_22[0]`),
     field("line5ba", `${page2}.Table_Lines1-5[0].Row5b[0].f2_24[0]`),
     field("line5bb", `${page2}.Table_Lines1-5[0].Row5b[0].f2_25[0]`),
     field("line6", `${page2}.f2_26[0]`),

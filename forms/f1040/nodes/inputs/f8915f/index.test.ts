@@ -44,6 +44,7 @@ Deno.test("Form 8915-F absent and empty source make no claim", () => {
 Deno.test("Form 8915-F calculates one current-year fully taxable plan distribution", () => {
   const lines = currentYearDistributionLines(
     itemSchema.parse(reviewed2025Plan),
+    { planGross: 0, iraGross: 0 },
   );
   assertEquals(lines.line1e_available, 22_000);
   assertEquals(lines.line2a_plan_distributions, 20_000);
@@ -53,10 +54,13 @@ Deno.test("Form 8915-F calculates one current-year fully taxable plan distributi
 });
 
 Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", () => {
-  const lines = currentYearDistributionLines(itemSchema.parse({
-    ...reviewed2025Plan,
-    full_inclusion_elected: false,
-  }));
+  const lines = currentYearDistributionLines(
+    itemSchema.parse({
+      ...reviewed2025Plan,
+      full_inclusion_elected: false,
+    }),
+    { planGross: 0, iraGross: 0 },
+  );
   assertEquals(lines.line10_taxable, 20_000);
   assertEquals(lines.line11_current_income, 6_667);
   assertEquals(lines.line15_form1040_line5b, 6_667);
@@ -78,7 +82,10 @@ Deno.test("Form 8915-F bounds repayment to income and the reviewed filing deadli
     full_inclusion_elected: false,
     repayment,
   };
-  const lines = currentYearDistributionLines(itemSchema.parse(source));
+  const lines = currentYearDistributionLines(itemSchema.parse(source), {
+    planGross: 0,
+    iraGross: 0,
+  });
   assertEquals(lines.line14_plan_repayment, 1_000);
   assertEquals(lines.line15_form1040_line5b, 5_667);
   assertEquals(
@@ -189,12 +196,15 @@ Deno.test("Form 8915-F traditional IRA path needs reviewed no-basis history", ()
     }).success,
     false,
   );
-  const lines = currentYearDistributionLines(itemSchema.parse({
-    ...reviewed2025Plan,
-    retirement_source_kind: "traditional_ira",
-    no_ira_basis_review_reference: "reviewed nondeductible basis history",
-    full_inclusion_elected: false,
-  }));
+  const lines = currentYearDistributionLines(
+    itemSchema.parse({
+      ...reviewed2025Plan,
+      retirement_source_kind: "traditional_ira",
+      no_ira_basis_review_reference: "reviewed nondeductible basis history",
+      full_inclusion_elected: false,
+    }),
+    { planGross: 0, iraGross: 0 },
+  );
   assertEquals(lines.line3b_qualified_ira_distributions, 20_000);
   assertEquals(lines.line15_form1040_line5b, 0);
   assertEquals(lines.line22_current_ira_income, 6_667);
@@ -343,6 +353,42 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
     Error,
     "one matching",
   );
+  const withOrdinary = itemSchema.parse({
+    ...reviewed2025Plan,
+    other_distribution_nonqualified_review_reference:
+      "reviewed ordinary plan withdrawal outside disaster claim",
+  });
+  const ordinary = {
+    ...source.f1099rs[0],
+    account_number: "other plan",
+    source_document_reference: "issued other plan 1099-R",
+    box1_gross_distribution: 1_000,
+    box2a_taxable_amount: 1_000,
+    form8915f_treatment: undefined,
+  };
+  assertEquals(
+    verifyCurrentYearDistributionSource(
+      withOrdinary,
+      { f1099rs: [source.f1099rs[0], ordinary] },
+      filer,
+    ),
+    { planGross: 1_000, iraGross: 0 },
+  );
+  assertThrows(
+    () =>
+      verifyCurrentYearDistributionSource(
+        withOrdinary,
+        {
+          f1099rs: [source.f1099rs[0], {
+            ...ordinary,
+            box2a_taxable_amount: 999,
+          }],
+        },
+        filer,
+      ),
+    Error,
+    "one reviewed ordinary nonqualified distribution",
+  );
   assertThrows(
     () =>
       verifyCurrentYearDistributionSource(
@@ -356,7 +402,7 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
         filer,
       ),
     Error,
-    "one matching",
+    "one reviewed ordinary nonqualified distribution",
   );
   assertThrows(
     () =>

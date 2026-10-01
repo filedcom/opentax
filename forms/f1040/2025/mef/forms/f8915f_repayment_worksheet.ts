@@ -24,7 +24,10 @@ export async function buildForm8915FRepaymentWorksheet(
   if (!filer?.primarySSN) {
     throw new Error("Form 8915-F repayment worksheet needs filer identity");
   }
-  const lines = currentYearDistributionLines(item);
+  const lines = currentYearDistributionLines(item, {
+    planGross: 0,
+    iraGross: 0,
+  });
   const worksheetNumber = item.retirement_source_kind === "plan" ? 3 : 5;
   const priorRepaymentLine = worksheetNumber === 3 ? 14 : 25;
   const priorIncomeLine = worksheetNumber === 3 ? 13 : 24;

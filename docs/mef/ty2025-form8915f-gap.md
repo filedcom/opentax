@@ -14,9 +14,14 @@ exactly one 1099-R with the same
 recipient, payer, account, issue reference, date, gross, and taxable amount and
 a straightforward taxable code 1, 2, or 7 route. A linked code 1 qualified
 disaster distribution is exempt from Form 5329; an ordinary code 1 distribution
-still reaches that form. The bounded Part I source
-currently requires that this be the return's only 1099-R, so line 2(a)
-represents all plan distributions. The old amount-only source is rejected. The
+still reaches that form. The bounded Part I source also permits one separately
+reviewed ordinary, fully taxable code 7 distribution for the same owner.
+Part I lines 2(a) and 3(a) include it in the appropriate account column;
+line 5a records the nonqualified amount, while line 5b remains the qualified
+amount. Native and PDF exports compare both affected Form 1040 line pairs
+against the issued sources. Positive and tamper fixtures for another plan
+alongside a qualified plan or traditional IRA have been authored; the bulk
+test and rendered PDF review remain pending. The old amount-only source is rejected. The
 Form 1099-R calculation supplies Form 1040 lines 5a/5b for a plan or 4a/4b
 for a traditional IRA. An explicit
 Form 8915-F treatment link makes the three-year election report one third of
@@ -58,8 +63,8 @@ rather than an arbitrary current-year income credit. The bounded route removes
 those errors for its supported current-year plan and traditional IRA distributions. Wider routes
 remain active correctness gaps, not approved exclusions.
 
-Next, wider sources still need Roth IRA, nonzero basis/Form 8606, and other
-IRA account cases; the 2026–27 annual
+Next, wider sources still need Roth IRA, nonzero basis/Form 8606, multiple
+ordinary or qualified 1099-Rs, and other IRA account cases; the 2026–27 annual
 inclusions and accepted-filing carryforward for a 2025 three-year election,
 prior filed Form 8915-F elections, repayments after the applicable 2026 deadline, excess repayment
 carryback and later-year allocation, additional disasters, cost basis, early-distribution

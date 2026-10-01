@@ -211,3 +211,40 @@ Deno.test("Form 8915-F PDF maps a traditional IRA to Part I and Part III", () =>
   assertEquals(fields.line26, 6_667);
   assertEquals(fields.line8_no, true);
 });
+
+Deno.test("Form 8915-F PDF separates an ordinary plan distribution on Part I", () => {
+  const reviewed = {
+    ...item,
+    full_inclusion_elected: false,
+    other_distribution_nonqualified_review_reference:
+      "reviewed ordinary plan distribution outside disaster claim",
+  };
+  const fields = form8915FPdf.instances!({ f8915fs: [reviewed] }, filer, {
+    ...pending,
+    f1099r: {
+      f1099rs: [{
+        ...pending.f1099r.f1099rs[0],
+        form8915f_treatment: "three_years",
+      }, {
+        ...pending.f1099r.f1099rs[0],
+        payer_ein: "98-7654321",
+        account_number: "456",
+        source_document_reference: "other issued 1099-R",
+        box1_gross_distribution: 1_000,
+        box2a_taxable_amount: 1_000,
+        form8915f_treatment: undefined,
+      }],
+    },
+    f1040: { line5a_pension_gross: 21_000, line5b_pension_taxable: 7_667 },
+  })[0];
+  assertEquals(fields.line2a, 21_000);
+  assertEquals(fields.line2b, 20_000);
+  assertEquals(fields.line5aa, 1_000);
+  assertEquals(fields.line5ba, 20_000);
+  assertEquals(
+    form8915FPdf.fields.some((entry) =>
+      entry.domainKey === "line5aa" && entry.pdfField.endsWith("f2_22[0]")
+    ),
+    true,
+  );
+});

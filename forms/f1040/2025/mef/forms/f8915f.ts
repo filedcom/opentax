@@ -34,7 +34,11 @@ export function buildCurrentYearDistributionForm8915F(
   context: MefBuildContext | undefined,
 ): string {
   const filer = context?.filer;
-  verifyCurrentYearDistributionSource(item, context?.pending?.f1099r, filer);
+  const other = verifyCurrentYearDistributionSource(
+    item,
+    context?.pending?.f1099r,
+    filer,
+  );
   const filed1040 = context?.pending?.f1040 as
     | {
       line4a_ira_gross?: number;
@@ -43,7 +47,7 @@ export function buildCurrentYearDistributionForm8915F(
       line5b_pension_taxable?: number;
     }
     | undefined;
-  const lines = currentYearDistributionLines(item);
+  const lines = currentYearDistributionLines(item, other);
   const worksheetId = context?.documentIdsByAttachmentFileName
     ?.[repaymentWorksheetFileName(item)];
   if (
@@ -59,10 +63,20 @@ export function buildCurrentYearDistributionForm8915F(
     }
     : undefined;
   const matches1040 = item.retirement_source_kind === "plan"
-    ? filed1040?.line5a_pension_gross === item.gross_distribution &&
-      filed1040?.line5b_pension_taxable === lines.line15_form1040_line5b
-    : filed1040?.line4a_ira_gross === item.gross_distribution &&
-      filed1040?.line4b_ira_taxable === lines.line26_form1040_line4b;
+    ? filed1040?.line5a_pension_gross ===
+        item.gross_distribution + other.planGross &&
+      filed1040?.line5b_pension_taxable ===
+        lines.line15_form1040_line5b + other.planGross &&
+      (other.iraGross === 0 ||
+        (filed1040?.line4a_ira_gross === other.iraGross &&
+          filed1040?.line4b_ira_taxable === other.iraGross))
+    : filed1040?.line4a_ira_gross ===
+        item.gross_distribution + other.iraGross &&
+      filed1040?.line4b_ira_taxable ===
+        lines.line26_form1040_line4b + other.iraGross &&
+      (other.planGross === 0 ||
+        (filed1040?.line5a_pension_gross === other.planGross &&
+          filed1040?.line5b_pension_taxable === other.planGross));
   if (!matches1040) {
     throw new Error(
       item.retirement_source_kind === "plan"
@@ -85,7 +99,7 @@ export function buildCurrentYearDistributionForm8915F(
       ]),
       element("DistributionDt", item.distribution_date),
       element("TotalCYAvailDistributionsAmt", lines.line1e_available),
-      item.retirement_source_kind === "plan"
+      lines.line2a_plan_distributions > 0
         ? elements("DistriFromNotIRARetirePlanGrp", [
           element("CYTotalDistributionsAmt", lines.line2a_plan_distributions),
           element(
@@ -93,14 +107,23 @@ export function buildCurrentYearDistributionForm8915F(
             lines.line2b_qualified_plan_distributions,
           ),
         ])
-        : elements("DistriTrdnSEPAndSIMPLEIRAGrp", [
+        : "",
+      lines.line3a_ira_distributions > 0
+        ? elements("DistriTrdnSEPAndSIMPLEIRAGrp", [
           element("CYTotalDistributionsAmt", lines.line3a_ira_distributions),
           element(
             "QualifiedDistributionsAmt",
             lines.line3b_qualified_ira_distributions,
           ),
-        ]),
+        ])
+        : "",
       elements("TotalDistriAmtFromAllPlansGrp", [
+        lines.line5a_nonqualified_distributions > 0
+          ? element(
+            "TotalNonqlfyDisasterDistriAmt",
+            lines.line5a_nonqualified_distributions,
+          )
+          : "",
         element(
           "CYTotalDistributionsAmt",
           lines.line5b_qualified_distributions,
