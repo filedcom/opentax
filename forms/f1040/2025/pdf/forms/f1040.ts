@@ -8,6 +8,7 @@ import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
+import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -575,6 +576,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     assertReturnWideArithmetic(fields);
+    assertEstimatedPaymentLine26(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);
     assertSchedule2Line23(fields, allPending);
     const residentElection = residentElectionName(fields, allPending);

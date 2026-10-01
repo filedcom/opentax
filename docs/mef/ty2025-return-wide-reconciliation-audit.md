@@ -94,6 +94,25 @@ and assert their sum through line 21 and Form 1040 line 23. A positive
 two-obligation case, a later-year carryover, both statutory classifications,
 and tampered workpaper/line totals should be in the bulk validation batch.
 
+### Form 1040 line 26 estimated-payment amount
+
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+include 2025 estimated federal income-tax payments and any 2024 return or
+amended-return overpayment applied to 2025 on line 26. The existing `f1040es`
+input holds four quarterly amounts and one prior-year applied amount. A shared
+calculator now sums those five fields in both the graph node and final
+native/PDF Form 1040 export, rejecting a positive filed line 26 without the
+retained source or any changed source/line amount. Positive and tampered export
+fixtures are authored for the bulk gate.
+
+The source still lacks an IRS payment confirmation, posted tax period, payer
+identity, and reference to the accepted prior-year overpayment election. It
+also cannot allocate joint payments on separate returns or establish whether
+an applied credit was later changed by an amended return. The amount replay
+does not authenticate that these dollars were paid, credited to 2025, or owned
+by the filer. Those receipt/ownership joins remain before line 26 can be
+treated as externally verified.
+
 ## Remaining return-wide work
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |

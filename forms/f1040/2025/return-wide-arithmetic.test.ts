@@ -1,7 +1,42 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "./mef/forms/f1040.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
-import { assertReturnScheduleJoins } from "./return-wide-arithmetic.ts";
+import {
+  assertReturnScheduleJoins,
+  assertReturnWideArithmetic,
+} from "./return-wide-arithmetic.ts";
+
+Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
+  const income = {
+    line9_total_income: 70_000,
+    line10_adjustments: 2_000,
+    line11_agi: 68_000,
+    line12c_deduction_total: 15_000,
+    line13_qbi_deduction: 1_000,
+    line13b_additional_deductions: 500,
+    line14_deductions_qbi_total: 16_500,
+    line15_taxable_income: 51_500,
+  };
+  assertReturnWideArithmetic(income);
+  for (
+    const [key, reason] of [
+      ["line11_agi", "line 11"],
+      ["line14_deductions_qbi_total", "line 14"],
+      ["line15_taxable_income", "line 15"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...income, [key]: income[key] + 1 }),
+      Error,
+      reason,
+    );
+  }
+  assertReturnWideArithmetic({
+    line11_agi: 1_000,
+    line14_deductions_qbi_total: 2_000,
+    line15_taxable_income: 0,
+  });
+});
 
 const filed = {
   filing_status: "single",
@@ -27,11 +62,12 @@ const filed = {
 };
 
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
+  const pending = { f1040es: { payment_q1: 100 } };
   assertStringIncludes(
-    irs1040.build(filed),
+    irs1040.build(filed, { pending }),
     "<TotalPaymentsAmt>1890</TotalPaymentsAmt>",
   );
-  irs1040Pdf.projectFields?.(filed, {});
+  irs1040Pdf.projectFields?.(filed, pending);
 
   for (
     const [change, reason] of [
@@ -45,9 +81,9 @@ Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => 
     ] as const
   ) {
     const changed = { ...filed, ...change };
-    assertThrows(() => irs1040.build(changed), Error, reason);
+    assertThrows(() => irs1040.build(changed, { pending }), Error, reason);
     assertThrows(
-      () => irs1040Pdf.projectFields?.(changed, {}),
+      () => irs1040Pdf.projectFields?.(changed, pending),
       Error,
       reason,
     );
