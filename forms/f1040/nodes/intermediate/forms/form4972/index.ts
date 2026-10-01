@@ -129,7 +129,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (input.multiple_1099r) {
     const refs = input.multiple_1099r.source_document_references;
     if (
-      refs[0] === refs[1] || input.recipient !== "T" ||
+      refs[0] === refs[1] ||
+      (input.recipient !== "T" && input.recipient !== "S") ||
       input.beneficiary_distribution !== false ||
       input.participant_five_year_member !== true ||
       input.elect_10yr_averaging !== true ||
@@ -143,7 +144,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       (input.recipient_share_pct ?? 100) !== 100
     ) {
       throw new Error(
-        "form4972: two Form 1099-R sources require one taxpayer participant and a full-share Part-III election, with matching Part II capital gain if elected",
+        "form4972: two Form 1099-R sources require one identified participant and a full-share Part-III election, with matching Part II capital gain if elected",
       );
     }
   }

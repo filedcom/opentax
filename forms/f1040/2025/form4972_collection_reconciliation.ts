@@ -163,7 +163,7 @@ export function reconcileForm4972Collection(
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||
       scoped.some(({ fields, sources }) =>
-        sources.length !== 1 ||
+        (sources.length !== 1 && sources.length !== 2) ||
         fields.elect_10yr_averaging !== true ||
         fields.elect_capital_gain === true ||
         fields.beneficiary_distribution !== false ||
@@ -182,8 +182,12 @@ export function reconcileForm4972Collection(
     const spouse = scoped.find(({ fields }) => fields.recipient === "S");
     if (
       !taxpayer || !spouse ||
-      taxpayer.sources[0].form4972_plan?.participant_ssn !== filer.primarySSN ||
-      spouse.sources[0].form4972_plan?.participant_ssn !== filer.spouse.ssn ||
+      taxpayer.sources.some((source) =>
+        source.form4972_plan?.participant_ssn !== filer.primarySSN
+      ) ||
+      spouse.sources.some((source) =>
+        source.form4972_plan?.participant_ssn !== filer.spouse!.ssn
+      ) ||
       taxpayer.sources[0].form4972_plan?.plan_reference ===
         spouse.sources[0].form4972_plan?.plan_reference
     ) {

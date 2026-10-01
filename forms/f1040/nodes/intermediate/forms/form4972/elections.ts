@@ -154,10 +154,14 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         }) ||
         sources.some((source) =>
           !Array.isArray(source.source_document_references) ||
-          source.source_document_references.length !== 1 ||
+          (source.source_document_references.length !== 1 &&
+            source.source_document_references.length !== 2) ||
           source.beneficiary_distribution === true ||
           source.recipient_share_pct !== undefined ||
-          source.multiple_1099r !== undefined ||
+          (source.source_document_references.length === 2 &&
+            source.multiple_1099r === undefined) ||
+          (source.source_document_references.length === 1 &&
+            source.multiple_1099r !== undefined) ||
           (source.box6_nua ?? 0) !== 0 ||
           (source.annuity_actuarial_value ?? 0) !== 0
         )

@@ -23,14 +23,16 @@ export function reconcileForm4972Multiple1099R(
   if (
     !owner || owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
     owner.name.trim() !== plan.participant_name ||
-    form.recipient !== "T" || form.elect_10yr_averaging !== true ||
+    (form.recipient !== "T" && form.recipient !== "S") ||
+    form.elect_10yr_averaging !== true ||
     (form.elect_capital_gain === true
       ? (form.capital_gain_amount ?? 0) <= 0
       : (form.capital_gain_amount ?? 0) !== 0) ||
     refs[0] === refs[1] ||
     elected.length !== 2 ||
     elected.some((item, index) =>
-      item.ts !== "T" || item.source_document_reference !== refs[index] ||
+      item.ts !== form.recipient ||
+      item.source_document_reference !== refs[index] ||
       item.form4972_plan?.participant_name !== plan.participant_name ||
       item.form4972_plan?.participant_ssn !== plan.participant_ssn ||
       item.form4972_plan?.plan_reference !== plan.plan_reference ||
@@ -50,10 +52,11 @@ export function reconcileForm4972Multiple1099R(
       form.lump_sum_amount ||
     elected.reduce((sum, item) => sum + (item.box3_capital_gain ?? 0), 0) !==
       (form.capital_gain_amount ?? 0) ||
-    source.success && source.data.f1099rs.some((item) =>
-      item.exclude_4972 !== true &&
-      item.form4972_plan?.plan_reference === plan.plan_reference
-    )
+    source.success &&
+      source.data.f1099rs.some((item) =>
+        item.exclude_4972 !== true &&
+        item.form4972_plan?.plan_reference === plan.plan_reference
+      )
   ) {
     throw new Error(
       "Form 4972 two-source election needs matching owner, plan, complete source copies, and summed boxes 2a and 3",
