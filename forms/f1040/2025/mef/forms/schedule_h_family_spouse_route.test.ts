@@ -115,7 +115,7 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
     buildPending(result.pending),
     filer,
   );
-  assertStringIncludes(fullReturnXml, "<IRS1040ScheduleH>");
+  assertStringIncludes(fullReturnXml, "<IRS1040ScheduleH ");
   assertStringIncludes(fullReturnXml, "<WagesAmt>5000</WagesAmt>");
   assertStringIncludes(
     fullReturnXml,
