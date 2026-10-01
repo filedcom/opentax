@@ -624,6 +624,23 @@ require spouses filing jointly to attach separate forms and combine tax on line
 16; their reporting directions place the Part-II-only ordinary share on Form
 1040 lines 5a/5b and exclude a Part III distribution from those lines. This
 slice does not authenticate plan statements or prior-election history. Spouse
-pairs with NUA, annuities, beneficiary allocations, partial shares, or more
-than one source for a Part-II-only plan remain closed, as do filled-PDF, XSD,
+pairs with annuities, beneficiary allocations, partial shares, or more than one
+source for a Part-II-only plan remain closed, as do filled-PDF, XSD,
 business-rule, and ATS verification.
+
+## One spouse's NUA alongside the other's Part III election (2026-10-01, unrun)
+
+A joint return can now carry two separate full-share Part III elections when
+one spouse's single 1099-R reports box 6 employer-security NUA and the other
+spouse's distinct plan has an ordinary lump sum. The NUA spouse must elect
+current NUA inclusion; box 2a and box 6 reach that spouse's Form 4972 line 8
+and the NUA dotted-line amount, while the other spouse's line 8 remains
+separate. The two line 30 taxes add once on Form 1040 line 16, and neither
+Part III distribution reaches line 5b. The source groups retain distinct
+participant and plan identities. Native MeF and PDF replay each scoped source,
+calculated line, and combined tax. A positive fixture plus altered box 6,
+printed line, and Form 1040 tax fixtures are authored but unrun. Both-spouse
+NUA, capital-gain elections with NUA, shared annuities, beneficiaries, partial
+shares, and multiple copies for either NUA plan remain outside this path.
+The underlying source documents, prior-election history, filled PDF, local
+XSD, business rules, and ATS acceptance still need verification.

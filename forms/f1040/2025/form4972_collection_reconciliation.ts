@@ -162,6 +162,7 @@ export function reconcileForm4972Collection(
     if (
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||
+      scoped.filter(({ fields }) => (fields.box6_nua ?? 0) > 0).length > 1 ||
       scoped.some(({ fields, sources }) =>
         (sources.length !== 1 && sources.length !== 2) ||
         (fields.elect_10yr_averaging !== true &&
@@ -170,7 +171,11 @@ export function reconcileForm4972Collection(
             fields.capital_gain_amount <= 0)) ||
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
-        (fields.box6_nua ?? 0) !== 0 ||
+        ((fields.box6_nua ?? 0) > 0 &&
+          (sources.length !== 1 || fields.elect_include_nua !== true ||
+            fields.elect_10yr_averaging !== true ||
+            fields.elect_capital_gain === true ||
+            sources[0].box6_nua !== fields.box6_nua)) ||
         (fields.annuity_actuarial_value ?? 0) !== 0 ||
         (fields.federal_estate_tax ?? 0) !== 0 ||
         (fields.death_benefit_exclusion ?? 0) !== 0

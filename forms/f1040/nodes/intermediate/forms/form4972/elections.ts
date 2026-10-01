@@ -143,6 +143,15 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           (form.federal_estate_tax ?? 0) !== 0 ||
           (form.death_benefit_exclusion ?? 0) !== 0
         ) ||
+        forms.filter((form) => (form.box6_nua ?? 0) > 0).length > 1 ||
+        forms.some((form, index) =>
+          (form.box6_nua ?? 0) > 0 &&
+          (sourceByElection[index].box6_nua !== form.box6_nua ||
+            elections[index].source_document_references.length !== 1 ||
+            form.elect_include_nua !== true ||
+            form.elect_10yr_averaging !== true ||
+            form.elect_capital_gain === true)
+        ) ||
         plans.some((plan) => !plan || typeof plan !== "object") ||
         elections.some((election, index) => {
           const plan = sourceByElection[index].form4972_plan as Record<
@@ -165,7 +174,6 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
             source.multiple_1099r === undefined) ||
           (source.source_document_references.length === 1 &&
             source.multiple_1099r !== undefined) ||
-          (source.box6_nua ?? 0) !== 0 ||
           (source.annuity_actuarial_value ?? 0) !== 0
         )
       ) {
