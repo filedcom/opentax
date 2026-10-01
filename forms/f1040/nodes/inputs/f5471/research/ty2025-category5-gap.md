@@ -56,7 +56,7 @@ H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. Form 5471 page 1,
 Schedule B Part II, G, and I, plus Form 8992, its Schedule A, and separate
 Form 5471 Schedules E/E-1, H, I-1 and J now have source-reconciled native MeF/PDF
-descriptors, but Schedules P, Q, R and conditional attachments remain.
+descriptors, but Schedules Q, R and conditional attachments remain.
 Schedule G-1 is required for each cost sharing arrangement in which the CFC
 was a controlled participant; this branch requires Schedule G line 7 No, so
 G-1 is not present.
@@ -72,6 +72,14 @@ bounded branch has native and PDF projections but no executed validation.
 The fixture's prior Schedule I line 1a lower-tier CFC dividend was moved to
 line 1e; this preserves the $10,000 subpart F total and aligns with Schedule G
 line 3a No and the absence of lower-tier foreign entities.
+Schedule P now reports the sole shareholder's general-category PTEP from that
+Schedule J: Part I is in functional currency and Part II tracks U.S.-dollar
+basis. Its current inclusions and section 956 reclassification close with
+$53,000 of section 959(c)(1) PTEP in each part for the authored one-to-one
+currency fixture. Prior-year PTEP, distributions, separate categories and
+other adjustments are explicitly excluded; source and prior-year Schedule P
+references are required. Its native and four-page PDF cases are authored but
+not executed.
 The full Form 5471
 packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a
@@ -86,9 +94,10 @@ Sources:
 - [2025 Form 5471 and Schedule I](https://www.irs.gov/pub/irs-pdf/f5471.pdf)
 - [Form 5471 instructions and required Category 5 schedules](https://www.irs.gov/instructions/i5471)
 - [Schedule J (Form 5471)](https://www.irs.gov/pub/irs-pdf/f5471sj.pdf)
+- [Schedule P (Form 5471)](https://www.irs.gov/pub/irs-pdf/f5471sp.pdf)
 - Checked-in TY2025 v5.4 `IRS5471.xsd` parent model, including embedded
   Schedule B Part II, G, and I.
 - [Form 8992](https://www.irs.gov/pub/irs-pdf/f8992.pdf) and
   [Schedule A](https://www.irs.gov/pub/irs-pdf/f8992sa.pdf)
 - Checked-in TY2025 v5.4 MeF schemas for IRS1040Schedule1, IRS5471, IRS8992, and
-  IRS5471ScheduleJ, IRS8992, and IRS8992ScheduleA.
+  IRS5471ScheduleJ, IRS5471ScheduleP, IRS8992, and IRS8992ScheduleA.

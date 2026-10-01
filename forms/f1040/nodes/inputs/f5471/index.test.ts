@@ -166,6 +166,20 @@ const item: F5471Item = {
     prior_year_schedule_j_reference: "2024 Schedule J",
     source_workpaper_reference: "2025 Schedule J workpaper",
   },
+  schedule_p: {
+    opening_ptep_functional: 0,
+    opening_ptep_usd_basis: 0,
+    beginning_balance_adjustments: 0,
+    tax_splitting_adjustments: 0,
+    lower_tier_ptep_distributions: 0,
+    nonrecognition_ptep: 0,
+    other_pre_inclusion_adjustments: 0,
+    actual_distributions: 0,
+    other_post_inclusion_adjustments: 0,
+    section956_ptep_reclassified_usd_basis: 52_000,
+    prior_year_schedule_p_reference: "2024 Schedule P",
+    source_workpaper_reference: "2025 Schedule P workpaper",
+  },
   form5471_identity: {
     cfc_tax_year_begin: "2025-01-01",
     cfc_tax_year_end: "2025-12-31",
@@ -288,6 +302,17 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
     {
       ...item,
       schedule_j: { ...item.schedule_j, prior_year_schedule_j_reference: "" },
+    },
+    {
+      ...item,
+      schedule_p: {
+        ...item.schedule_p,
+        section956_ptep_reclassified_usd_basis: 51_999,
+      },
+    },
+    {
+      ...item,
+      schedule_p: { ...item.schedule_p, opening_ptep_usd_basis: 1 },
     },
     {
       ...item,

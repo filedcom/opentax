@@ -292,6 +292,23 @@ export const scheduleJSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// One shareholder owns all stock, so Schedule P Part I agrees with the CFC's
+// Schedule J PTEP columns. Part II tracks the inclusion-based U.S. dollar basis.
+export const schedulePSchema = z.object({
+  opening_ptep_functional: z.literal(0),
+  opening_ptep_usd_basis: z.literal(0),
+  beginning_balance_adjustments: z.literal(0),
+  tax_splitting_adjustments: z.literal(0),
+  lower_tier_ptep_distributions: z.literal(0),
+  nonrecognition_ptep: z.literal(0),
+  other_pre_inclusion_adjustments: z.literal(0),
+  actual_distributions: z.literal(0),
+  other_post_inclusion_adjustments: z.literal(0),
+  section956_ptep_reclassified_usd_basis: dollars,
+  prior_year_schedule_p_reference: sourceReference,
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -354,6 +371,7 @@ export const itemSchema = z.object({
   schedule_e: scheduleESchema,
   schedule_g: scheduleGSchema,
   schedule_j: scheduleJSchema,
+  schedule_p: schedulePSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
@@ -390,6 +408,19 @@ export const itemSchema = z.object({
     value.schedule_i.line1e +
     value.schedule_i.line1f + value.schedule_i.line1g + value.schedule_i.line1h;
   const { gilti } = calculateCategory5Inclusions(value);
+  if (
+    value.schedule_p.section956_ptep_reclassified_usd_basis !==
+      subpartF + gilti ||
+    value.schedule_p.opening_ptep_functional !==
+      value.schedule_j.opening_prior_ptep_functional
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_p"],
+      message:
+        "Schedule P dollar-basis reclassification must match sole-shareholder inclusions and opening PTEP must match Schedule J",
+    });
+  }
   if (
     Math.round(
         j.subpart_f_inclusion_functional /
