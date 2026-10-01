@@ -11,6 +11,7 @@ import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -230,11 +231,12 @@ async function runReturnPipeline(
   }
 
   // Extract filer identity for output builders and validation.
-  const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
+  const pending = normalizeAllPending(result.pending);
+  const f1040 = pending["f1040"] ?? {};
   const filer = extractFilerIdentity(f1040);
 
   return {
-    pending: result.pending,
+    pending,
     def,
     filer,
     executorDiagnostics: result.diagnostics,

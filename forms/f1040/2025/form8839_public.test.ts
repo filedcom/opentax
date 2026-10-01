@@ -22,6 +22,7 @@ const general = {
   address_city: "Austin",
   address_state: "TX",
   address_zip: "78701",
+  digital_assets: false,
 };
 
 async function reviewedSource() {
@@ -146,6 +147,10 @@ async function reviewedSource() {
       employee_ssn: "111-22-3333",
       employer_ein: "12-3456789",
       employer_name: "Example Employer",
+      employer_address_line1: "2 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box1_wages: 100_000,
       box2_fed_withheld: 15_000,
       box3_ss_wages: 100_000,
