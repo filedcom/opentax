@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **644 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **645 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 141-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 644 bounded routes and
+**Implemented coverage.** The completed ledger records 645 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -117,6 +117,8 @@ external receipt and owner proof remain open. Final Form 1040 export also checks
 printed AGI, deductions, and taxable income against their component lines.
 Filed overpayment and amount owed now replay whole-dollar tax/payment balance
 and any reported estimated-tax penalty before native/PDF projection.
+Filed wage total and total income now replay retained Form 1040 component rows
+at native/PDF export when those rows are present.
 Final native/PDF export now matches filing status and an explicitly supplied
 digital-assets answer to the retained general source record. Claimed dependent
 rows and CTC/ODC counts now replay that same source, excluding children the
