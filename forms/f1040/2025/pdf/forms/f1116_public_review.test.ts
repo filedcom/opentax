@@ -10,6 +10,7 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { buildMefBundle } from "../../mef/builder.ts";
 import { buildPending } from "../../mef/pending.ts";
+import { normalizeAllPending } from "../../pending.ts";
 import { buildPdfBytes } from "../builder.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form1116Pdf } from "./f1116.ts";
@@ -226,10 +227,10 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
     ]
   ) {
     await assertRejects(() =>
-      buildMefBundle(altered, { filer, attachments: [] })
+      buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
     );
   }
 });
@@ -608,16 +609,16 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     () =>
       form1116ScheduleBPdf.projectFields?.(
         changedSplit.form1116_schedule_b,
-        changedSplit,
+        normalizeAllPending(changedSplit),
       ),
     Error,
     "filed source",
   );
   await assertRejects(() =>
-    buildMefBundle(changedSplit, { filer, attachments: [] })
+    buildMefBundle(buildPending(changedSplit), { filer, attachments: [] })
   );
   await assertRejects(() =>
-    buildPdfBytes(changedSplit, filer, ".pdf-cache", bundle)
+    buildPdfBytes(buildPending(changedSplit), filer, ".pdf-cache", bundle)
   );
   const changedIntake = {
     ...pending,
@@ -639,7 +640,7 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     () =>
       form1116ScheduleBPdf.projectFields?.(
         scheduleB,
-        changedIntake,
+        normalizeAllPending(changedIntake),
       ),
     Error,
     "filed source",
@@ -673,10 +674,10 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     ]
   ) {
     await assertRejects(() =>
-      buildMefBundle(altered, { filer, attachments: [] })
+      buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
     );
   }
   assertThrows(
@@ -731,7 +732,11 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     "Schedule 3 and Form 1040",
   );
   assertThrows(
-    () => form1116ScheduleBPdf.projectFields?.(scheduleB, changedReturn),
+    () =>
+      form1116ScheduleBPdf.projectFields?.(
+        scheduleB,
+        normalizeAllPending(changedReturn),
+      ),
     Error,
     "Schedule 3 and Form 1040",
   );

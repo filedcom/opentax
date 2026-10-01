@@ -165,6 +165,7 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
     f8835: [source],
   });
   assertEquals(result.diagnostics, []);
+  assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
   assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
@@ -258,6 +259,7 @@ Deno.test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and 
     f8835: [source],
   });
   assertEquals(result.diagnostics, []);
+  assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
   assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);

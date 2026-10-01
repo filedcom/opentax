@@ -76,6 +76,7 @@ Deno.test("landfill gas Form 8835 line 1g reconciles source, Form 3800, native a
   const source = landfill();
   const result = f1040_2025.executeReturn({ ...base.inputs, f8835: [source] });
   assertEquals(result.diagnostics, []);
+  assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
   assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);

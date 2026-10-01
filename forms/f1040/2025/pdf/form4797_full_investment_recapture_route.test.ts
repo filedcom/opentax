@@ -1,10 +1,16 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
+import { normalizeAllPending } from "../pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form4797Pdf } from "./forms/f4797.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
@@ -46,6 +52,8 @@ Deno.test("one fully recaptured investment asset reaches Form 4797, Schedule 1, 
   assertEquals(result.pending.f1040.line11_agi, 78_000);
   assertEquals(result.pending.f1040.line7_capital_gain ?? 0, 0);
   const pending = buildPending(result.pending);
+  const form4797 = pending.form4797;
+  assert(form4797);
   assertEquals(pending.form8949, undefined);
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
@@ -58,8 +66,9 @@ Deno.test("one fully recaptured investment asset reaches Form 4797, Schedule 1, 
   assertStringIncludes(bundle.xml, "<OtherGainLossAmt>3000</OtherGainLossAmt>");
   assertStringIncludes(bundle.xml, "<NetGainAmt>0</NetGainAmt>");
   assertEquals(bundle.xml.includes("<IRS8949>"), false);
-  const projected = form4797Pdf.projectFields?.(pending.form4797, pending) ??
-    {};
+  const projected =
+    form4797Pdf.projectFields?.(form4797, normalizeAllPending(pending)) ??
+      {};
   assertEquals(
     (projected as Record<string, unknown>).pdf_investment_1_line25b,
     3_000,
@@ -68,20 +77,18 @@ Deno.test("one fully recaptured investment asset reaches Form 4797, Schedule 1, 
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
-  const source = (pending.form4797?.investment_1245_dispositions as Record<
-    string,
-    unknown
-  >[])[0];
+  const source = form4797.investment_1245_dispositions?.[0];
+  assert(source);
   for (
     const changed of [
       { ...source, gross_sales_price: 10_001 },
       { ...source, depreciation_allowed_or_allowable: 4_999 },
     ]
   ) {
-    const drift = {
+    const drift = buildPending({
       ...pending,
       form4797: { investment_1245_dispositions: [changed] },
-    };
+    });
     await assertRejects(
       () => buildMefBundle(drift, { filer: base.filer, attachments: [] }),
       Error,

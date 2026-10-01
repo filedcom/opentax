@@ -2,11 +2,12 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form1116,
   IncomeCategory,
+  inputSchema as form1116InputSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { stagedCase } from "./f1116_schedule_c.fixture.ts";
 import { reconcileScheduleCCurrentYearCandidate } from "./f1116_schedule_c_current_year.ts";
 
-const currentForm1116 = {
+const currentForm1116 = form1116InputSchema.parse({
   foreign_tax_items: [{
     foreign_tax_paid: 50,
     foreign_gross_income: 1_000,
@@ -33,7 +34,7 @@ const currentForm1116 = {
     no_preferential_rate_income_confirmed: true,
     no_other_category_credit_confirmed: true,
   },
-};
+});
 
 function currentReturn() {
   const computed = form1116.compute(

@@ -75,6 +75,8 @@ Deno.test("trash-combustion Form 8835 line 1h reconciles source, 1040, native, a
   const source = trash();
   const result = f1040_2025.executeReturn({ ...base.inputs, f8835: [source] });
   assertEquals(result.diagnostics, []);
+  assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
+  const creditEntries = result.pending.f3800.f8835_credit_entries;
   assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
@@ -201,7 +203,7 @@ Deno.test("trash-combustion Form 8835 line 1h reconciles source, 1040, native, a
         f3800: {
           ...pending.f3800,
           f8835_credit_entries: [{
-            ...result.pending.f3800.f8835_credit_entries[0],
+            ...creditEntries[0],
             credit_amount: 301,
           }],
         },

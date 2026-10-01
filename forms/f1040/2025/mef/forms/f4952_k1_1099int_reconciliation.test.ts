@@ -6,6 +6,7 @@ import { calculateForm4952 } from "../../../nodes/intermediate/forms/form4952/in
 import { form4952Pdf } from "../../pdf/forms/f4952.ts";
 import { form4952 } from "./f4952.ts";
 import { testFiler } from "../test-filer.ts";
+import { normalizeAllPending } from "../../pending.ts";
 
 const filer = testFiler();
 const build: typeof form4952.build = (fields, context) =>
@@ -142,7 +143,10 @@ Deno.test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone o
     build(fields, { pending: oidPending }),
     "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
   );
-  assertEquals(form4952Pdf.projectFields?.(fields, oidPending), fields);
+  assertEquals(
+    form4952Pdf.projectFields?.(fields, normalizeAllPending(oidPending)),
+    fields,
+  );
   const mixedInputs = {
     ...inputs,
     source_1099_interest: [500, 250],
@@ -174,7 +178,7 @@ Deno.test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone o
       "supports only identified code H K-1 expenses",
     );
     assertThrows(
-      () => form4952Pdf.projectFields?.(fields, altered),
+      () => form4952Pdf.projectFields?.(fields, normalizeAllPending(altered)),
       Error,
       "supports only identified code H K-1 expenses",
     );

@@ -1,7 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { reconcileForm4952DirectDebtTrace } from "./debt_trace.ts";
+import {
+  form4952DirectDebtTraceSchema,
+  reconcileForm4952DirectDebtTrace,
+} from "./debt_trace.ts";
 
-const trace = {
+const trace = form4952DirectDebtTraceSchema.parse({
   tax_year: 2025,
   owner_tin: "123456789",
   loan_id: "broker-loan-1",
@@ -29,7 +32,7 @@ const trace = {
     payment_record_reference: "bank-payment-2025-12-31",
     interest_amount: 200,
   }],
-} as const;
+});
 
 Deno.test("Form 4952 direct debt trace matches one taxable purchase and paid interest", () => {
   assertEquals(

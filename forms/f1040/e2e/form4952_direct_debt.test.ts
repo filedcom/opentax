@@ -260,7 +260,9 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
   );
   const interest = result.pending.f1099int!;
   const oid = result.pending.f1099oid!;
-  if (!Array.isArray(interest.f1099ints) || !Array.isArray(oid.f1099oids)) {
+  const interestRows = interest.f1099ints;
+  const oidRows = oid.f1099oids;
+  if (!Array.isArray(interestRows) || !Array.isArray(oidRows)) {
     throw new Error("Expected synthetic investment payer rows");
   }
   assertThrows(
@@ -271,9 +273,9 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
           f1099oid: {
             ...oid,
             f1099oids: [{
-              ...oid.f1099oids[0],
+              ...oidRows[0],
               source_document_reference:
-                interest.f1099ints[0].source_document_reference,
+                interestRows[0].source_document_reference,
             }],
           },
         },
@@ -288,7 +290,7 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
         ...result.pending,
         f1099oid: {
           ...oid,
-          f1099oids: [{ ...oid.f1099oids[0], box1_oid: 39_999 }],
+          f1099oids: [{ ...oidRows[0], box1_oid: 39_999 }],
         },
       }),
     Error,
