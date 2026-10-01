@@ -1,5 +1,28 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Reviewed interest-only dependent below the filing threshold (2026-10-01, unrun)
+
+The `not_required` source also accepts one identified 2025 Form 1099-INT for
+one under-65, nonblind single dependent when box 1 taxable interest is positive
+and at most $1,350. A distinct, post-year-end filing-requirement workpaper
+must identify the dependent and interest document, confirm no other income or
+separate filing trigger, and confirm no return was filed. Box 8 tax-exempt
+interest is recorded but does not make the dependent's income meet the filing
+threshold. The strict wage and interest records cannot be mixed. The existing
+one-policy no-APTC monthly route excludes the dependent's income from Form 8962
+line 2b, then reconciles household income, monthly credit, Schedule 3 line 9,
+and Form 1040 line 31 through native MeF and PDF projection. A $1,350 taxable
+plus $100 tax-exempt interest case and threshold, SSN, workpaper identity, and
+final-credit tamper fixtures are authored for the deferred bulk gate.
+
+This applies [2025 Publication 501 Table 2 and Table 3](https://www.irs.gov/pub/irs-prior/p501--2025.pdf)
+and [2025 Form 8962 Worksheet 1-2](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf).
+The document references and reviewed inventory do not authenticate the issued
+1099-INT or independently establish that no other filing trigger exists.
+Mixed wage/interest, multiple interest sources, older or blind dependents,
+required-filing interest, and wider policy/household configurations retain
+their separate bounds.
+
 ## Reviewed wage-only dependent below the filing threshold (2026-10-01, unrun)
 
 The `not_required` source now takes one identified 2025 W-2 and a distinct

@@ -77,7 +77,10 @@ export function reconcileDependentMagi(
       const ssn = dependent.ssn?.replaceAll("-", "");
       if (!ssn || !source) return true;
       if (source.filing === "not_required") {
-        return source.wage_form_w2.employee_ssn.replaceAll("-", "") !== ssn ||
+        const sourceSsn = "wage_form_w2" in source
+          ? source.wage_form_w2.employee_ssn
+          : source.interest_form1099.recipient_ssn;
+        return sourceSsn.replaceAll("-", "") !== ssn ||
           source.filing_requirement_review.dependent_ssn.replaceAll("-", "") !==
             ssn;
       }
@@ -107,7 +110,9 @@ export function reconcileDependentMagi(
     const source = dependent.ptc_tax_return;
     return source?.filing === "not_required"
       ? [
-        source.wage_form_w2.source_document_id,
+        "wage_form_w2" in source
+          ? source.wage_form_w2.source_document_id
+          : source.interest_form1099.source_document_id,
         source.filing_requirement_review.source_document_id,
       ]
       : source?.filing === "required"

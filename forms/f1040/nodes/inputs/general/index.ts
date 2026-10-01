@@ -125,7 +125,7 @@ export const dependentSchema = z.object({
   gross_income: z.number().nonnegative().optional(), // For qualifying relative test
   // Form 8962 Worksheet 1-2. A dependent's MAGI counts only when a return is
   // required because income meets the filing threshold, not for refund-only returns.
-  ptc_tax_return: z.discriminatedUnion("filing", [
+  ptc_tax_return: z.union([
     z.object({
       filing: z.literal("not_required"),
       // Bounded wage-only Table 2 determination. The reviewed inventory also
@@ -144,6 +144,28 @@ export const dependentSchema = z.object({
         filing_status: z.literal("single"),
         blind: z.literal(false),
         wage_source_document_id: z.string().min(1),
+        other_income_reviewed_absent: z.literal(true),
+        other_filing_triggers_reviewed_absent: z.literal(true),
+        return_filed: z.literal(false),
+        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reviewer_name: z.string().trim().min(1),
+      }).strict(),
+    }).strict(),
+    z.object({
+      filing: z.literal("not_required"),
+      interest_form1099: z.object({
+        source_document_id: z.string().min(1),
+        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1_taxable_interest: z.number().positive().max(1_350),
+        box8_tax_exempt_interest: z.number().nonnegative(),
+      }).strict(),
+      filing_requirement_review: z.object({
+        source_document_id: z.string().min(1),
+        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        tax_year: z.literal(2025),
+        filing_status: z.literal("single"),
+        blind: z.literal(false),
+        interest_source_document_id: z.string().min(1),
         other_income_reviewed_absent: z.literal(true),
         other_filing_triggers_reviewed_absent: z.literal(true),
         return_filed: z.literal(false),
@@ -360,7 +382,6 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
   return dependents.reduce((total, dep) => {
     const taxReturn = dep.ptc_tax_return;
     if (taxReturn?.filing === "not_required") {
-      const wage = taxReturn.wage_form_w2;
       const review = taxReturn.filing_requirement_review;
       const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
         ? new Date(`${dep.dob}T00:00:00Z`)
@@ -374,21 +395,43 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       }
       if (
         birth.getTime() < Date.UTC(1961, 0, 2) ||
-        wage.box1_wages > 15_750 ||
         Number.isNaN(reviewed.getTime()) ||
         reviewed.toISOString().slice(0, 10) !== review.reviewed_on ||
         reviewed.getTime() < Date.UTC(2026, 0, 1) ||
-        review.wage_source_document_id !== wage.source_document_id ||
-        review.source_document_id === wage.source_document_id ||
-        wage.employee_ssn.replaceAll("-", "") !==
-          dep.ssn?.replaceAll("-", "") ||
         review.dependent_ssn.replaceAll("-", "") !==
           dep.ssn?.replaceAll("-", "") ||
         !dep.ssn
       ) {
         throw new Error(
-          "Form 8962 dependent wage-only not-required review must match the under-65 dependent, W-2, and 2025 filing threshold",
+          "Form 8962 dependent not-required review must match the under-65 dependent and 2025 filing threshold",
         );
+      }
+      if ("wage_form_w2" in taxReturn) {
+        const wage = taxReturn.wage_form_w2;
+        if (
+          wage.box1_wages > 15_750 ||
+          !("wage_source_document_id" in review) ||
+          review.wage_source_document_id !== wage.source_document_id ||
+          review.source_document_id === wage.source_document_id ||
+          wage.employee_ssn.replaceAll("-", "") !== dep.ssn.replaceAll("-", "")
+        ) {
+          throw new Error(
+            "Form 8962 dependent wage-only not-required review must match the W-2 and filing threshold",
+          );
+        }
+      } else {
+        const interest = taxReturn.interest_form1099;
+        if (
+          !("interest_source_document_id" in review) ||
+          review.interest_source_document_id !== interest.source_document_id ||
+          review.source_document_id === interest.source_document_id ||
+          interest.recipient_ssn.replaceAll("-", "") !==
+            dep.ssn.replaceAll("-", "")
+        ) {
+          throw new Error(
+            "Form 8962 dependent interest-only not-required review must match the Form 1099-INT",
+          );
+        }
       }
       return total;
     }

@@ -45,6 +45,32 @@ const dependent = {
   },
 };
 
+const interestDependent = {
+  ...dependent,
+  ptc_tax_return: {
+    filing: "not_required" as const,
+    interest_form1099: {
+      source_document_id: "casey-issued-2025-1099-int",
+      recipient_ssn: "987654321",
+      box1_taxable_interest: 1_350,
+      box8_tax_exempt_interest: 100,
+    },
+    filing_requirement_review: {
+      source_document_id: "casey-2025-interest-filing-review",
+      dependent_ssn: "987654321",
+      tax_year: 2025 as const,
+      filing_status: "single" as const,
+      blind: false as const,
+      interest_source_document_id: "casey-issued-2025-1099-int",
+      other_income_reviewed_absent: true as const,
+      other_filing_triggers_reviewed_absent: true as const,
+      return_filed: false as const,
+      reviewed_on: "2026-03-01",
+      reviewer_name: "Tax reviewer",
+    },
+  },
+};
+
 const policy = {
   issuer_name: "Texas Marketplace",
   policy_number: "TX-FAMILY-NO-APTC-2025",
@@ -91,7 +117,7 @@ const filer = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 
-function filedReturn() {
+function filedReturn(interestOnly = false) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -105,7 +131,7 @@ function filedReturn() {
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
-      dependents: [dependent],
+      dependents: [interestOnly ? interestDependent : dependent],
     },
     w2: [{
       employer_ein: "12-3456789",
@@ -121,6 +147,94 @@ function filedReturn() {
     f1095a: [policy],
   });
 }
+
+Deno.test("Form 8962 monthly policy excludes reviewed below-threshold dependent interest through final return, native and PDF", async () => {
+  const result = filedReturn(true);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 0);
+  assertEquals(pending.form8962.household_income, 40_880);
+  assertEquals(pending.form8962.total_premium_tax_credit, 8_184);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 8_184);
+  assertEquals(pending.f1040.line31_additional_payments, 8_184);
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(projected.dependents_modified_agi, 0);
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(prepared.bundle.xml, "<IRS8962 ");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>8184</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 excluded dependent interest rejects threshold, identity, review, and final-return tampering", async () => {
+  const result = filedReturn(true);
+  const pending = normalizeAllPending(result.pending);
+  const changed = (source: unknown) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...interestDependent,
+        ptc_tax_return: source,
+      }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDependent.ptc_tax_return,
+        interest_form1099: {
+          ...interestDependent.ptc_tax_return.interest_form1099,
+          box1_taxable_interest: 1_351,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDependent.ptc_tax_return,
+        interest_form1099: {
+          ...interestDependent.ptc_tax_return.interest_form1099,
+          recipient_ssn: "999999999",
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDependent.ptc_tax_return,
+        wage_form_w2: dependent.ptc_tax_return.wage_form_w2,
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDependent.ptc_tax_return,
+        filing_requirement_review: {
+          ...interestDependent.ptc_tax_return.filing_requirement_review,
+          interest_source_document_id: "other-document",
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      schedule3: { ...pending.schedule3, line9_premium_tax_credit: 8_183 },
+    }, filer)
+  );
+});
 
 Deno.test("Form 8962 monthly no-APTC policy excludes reviewed below-threshold dependent wages through final return, native and PDF", async () => {
   const result = filedReturn();
