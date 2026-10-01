@@ -1079,7 +1079,7 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
     form7203_debt_evidence: prior,
   };
   const inputs = {
-    general: { taxpayer_ssn: "123-45-6789" },
+    general: { filing_status: "single", taxpayer_ssn: "123-45-6789" },
     k1_s_corp: [source],
   };
   const bound = await executePriorReduced7203WithSourceDocuments(

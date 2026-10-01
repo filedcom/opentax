@@ -124,7 +124,7 @@ Deno.test("form7203 — debt cannot allow an ordinary loss without Part II sourc
     assertThrows(
       () => compute(input),
       Error,
-      "debt-supported loss needs identified note or open-account source",
+      "debt-supported loss needs identified formal-note source",
     );
   }
 });
@@ -144,7 +144,7 @@ Deno.test("form7203 — partial debt-supported loss cannot post a reduced Schedu
   assertThrows(
     () => compute({ stock_basis_beginning: 2_000, debt_basis_beginning: 1_000, ordinary_loss: 5_000 }),
     Error,
-    "debt-supported loss needs identified note or open-account source",
+    "debt-supported loss needs identified formal-note source",
   );
 });
 
@@ -253,7 +253,7 @@ Deno.test("form7203 — unsourced new loan cannot increase loss basis", () => {
   assertThrows(
     () => compute({ stock_basis_beginning: 0, new_loans: 3_000, ordinary_loss: 4_000 }),
     Error,
-    "debt-supported loss needs identified note or open-account source",
+    "debt-supported loss needs identified formal-note source",
   );
 });
 
@@ -296,7 +296,7 @@ Deno.test("form7203 — positive debt basis still stops before mixed stock/debt 
   assertThrows(
     () => compute({ stock_basis_beginning: 5_000, debt_basis_beginning: 3_000, ordinary_loss: 9_000 }),
     Error,
-    "debt-supported loss needs identified note or open-account source",
+    "debt-supported loss needs identified formal-note source",
   );
 });
 

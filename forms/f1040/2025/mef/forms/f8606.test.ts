@@ -86,7 +86,7 @@ Deno.test("Form 8606: spouse owner and joint return reject instead of guessing",
         filing_details: { ...partI.filing_details, owner: IraOwner.Spouse },
       }, { filer }),
     Error,
-    "spouse-owned IRA",
+    "spouse-owned no-activity IRA",
   );
   assertThrows(
     () =>
