@@ -60,3 +60,14 @@ preferential gain. Native and PDF source replay, a mismatched Form 1040 line 7,
 and an MFS over-limit rejection are authored for the deferred bulk run. Sign
 changes, capital-loss carryovers, special-rate gains, issuer-byte proof, and
 final XSD/filled-output/ATS validation remain open.
+
+Another bounded cross-term route covers identified, sign-stable short-term
+gains and long-term losses when regular Schedule D nets a positive ordinary-rate
+gain but AMT Schedule D nets a fully deductible loss. The retained Form 8949
+and complete Schedule D audit must contain exactly these rows; no capital-loss
+carryover, qualified dividend, Form 4952 election, or special-rate gain may be
+present. A two-lot example has a $1,000 regular gain, a $1,000 AMT loss, and a
+negative $2,000 line-2k adjustment, with no Part III preferential capital gain.
+Native/PDF source and final Form 1040/Schedule 2 tamper fixtures are authored
+for the deferred bulk validation. Broker-copy authentication, carryovers, the
+reverse long-gain/short-loss crossover, and release validation remain open.

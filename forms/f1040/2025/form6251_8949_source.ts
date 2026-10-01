@@ -129,6 +129,11 @@ export function assertForm6251Form8949Source(
     shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
     longRows[0].regular_gain > 0 && longRows[0].amt_gain < 0 &&
     regularNet > 0 && amtNet < 0;
+  const shortGainLongLossToAmtLoss = shortLosses.length > 0 &&
+    longRows.length > 0 &&
+    shortLosses.every((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
+    longRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
+    regularNet > 0 && amtNet < 0;
   if (
     rows.some((row) => row.regular_gain > 0 && row.amt_gain < 0) &&
     !gainToAmtLoss && !mixedTermGainToAmtLoss
@@ -137,7 +142,10 @@ export function assertForm6251Form8949Source(
       "Form 6251 gain-to-AMT-loss basis sale needs audited same-term lots or identified short-term losses offsetting one long-term regular gain with a fully deductible AMT net loss",
     );
   }
-  if (gainToAmtLoss || mixedTermGainToAmtLoss) {
+  if (
+    gainToAmtLoss || mixedTermGainToAmtLoss ||
+    shortGainLongLossToAmtLoss
+  ) {
     const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
     const amt = fields.line11_amt;
