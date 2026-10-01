@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **645 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **646 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 141-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 645 bounded routes and
+**Implemented coverage.** The completed ledger records 646 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -140,6 +140,8 @@ Schedule 2 Part II now reconciles to Form 1040 line 23 after the retained
 Form 8978 reduction; Schedule 3 line 8 reconciles to Form 1040 line 20.
 Schedule 3 PDF now prints the supported Form 8911 personal-use credit on line 6j.
 Form 1040 PDF now marks source-backed QCD line 4c and PSO line 5c boxes.
+Its single-account refund fields now print finalized bank routing, account
+type, and account number on lines 35b–d.
 The Schedule 2 lines 14/15 audit identifies missing installment-obligation
 history and interest inputs; those positive routes remain open.
 A nine-root workflow matrix states the remaining amendment, payment,
