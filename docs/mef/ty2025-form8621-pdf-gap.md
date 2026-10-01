@@ -40,10 +40,10 @@ cases.
 
 The native holding-period statement now rederives every Part V event from its
 original source before generating its explanation. A standalone PDF statement
-writer prints that same source-checked explanation for each identified PFIC,
-adding continuation pages when needed. Its positive foreign-currency fixture
-retains the dated EUR/USD spot quote and source; changed computed interest and
-missing filer identity are rejected. These fixtures are written but unrun. The
+writer prints source-checked explanations for each positive PFIC event, adding
+continuation pages when needed. Its positive foreign-currency fixture retains
+the dated EUR/USD spot quote and source; changed computed interest and missing
+filer identity are rejected. These fixtures are written but unrun. The
 supporting page is a prerequisite for parent PDF parity and remains outside the
 export packet while Form 8621 lacks material page-1 and election facts.
 
@@ -67,6 +67,14 @@ zero/nonexcess distribution is explicitly outside that bounded Part V path. Part
 VI fields are empty only when the typed source declares that no prior section
 1294 election is outstanding. Positive two-event and calculated-value-tamper
 fixtures are written but unrun.
+
+The staged packet projector now requires every holding to use the bounded
+section 1291 route and reconciles source-derived line 16b income, line 16e tax,
+and line 16f interest with Schedule 1, Form 1040 line 16's Form 8621 component,
+and Schedule 2. It rejects changed return totals. Printable line 16a attachments
+now make a separate statement page for each positive Part V event, with its own
+holding period, year allocations, and spot quote when foreign currency applies.
+The packet projector and parent form remain outside the registered PDF packet.
 
 The issuer record is a locator and declared digest; the product does not yet
 fetch or authenticate its bytes. The current source does not prove historical

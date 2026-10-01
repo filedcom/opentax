@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { Form8621Lines } from "../../../nodes/inputs/f8621/index.ts";
-import { explainForm8621ExcessStatement } from "../../mef/forms/f8621_excess_statement.ts";
+import { explainForm8621ExcessEvent } from "../../mef/forms/f8621_excess_statement.ts";
 
 const left = 42;
 const top = 748;
@@ -16,8 +16,10 @@ export async function appendForm8621ExcessStatement(
   lines: readonly Form8621Lines[],
   filer: FilerIdentity | undefined,
 ): Promise<number> {
-  const reportable = lines.filter((line) =>
-    line.excessEvents.some((event) => event.amount_usd > 0)
+  const reportable = lines.flatMap((line) =>
+    line.excessEvents.flatMap((event, index) =>
+      event.amount_usd > 0 ? [{ line, event, index }] : []
+    )
   );
   if (reportable.length === 0) return 0;
   const name = filer?.fullName ?? filer?.nameLine1;
@@ -29,17 +31,24 @@ export async function appendForm8621ExcessStatement(
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
   let added = 0;
 
-  for (const line of reportable) {
-    const explanation = explainForm8621ExcessStatement(line);
-    const heading =
-      `Form 8621 Part V, line 16a - ${line.item.company_name} (${line.item.company_ein_or_ref})`;
-    const identity = `${name} | SSN ${ssn} | Tax year 2025`;
+  for (const { line, event, index } of reportable) {
+    const explanation = explainForm8621ExcessEvent(line, index);
+    const heading = `Form 8621 Part V, line 16a - ${line.item.company_name}`;
+    const identity = `${name} | SSN ${ssn} | Tax year 2025 | Event ${
+      index + 1
+    } on ${event.event_date} | ${line.item.company_ein_or_ref}`;
     if (
       !/^[\x20-\x7E]*$/.test(`${heading}${identity}${explanation}`)
     ) {
       throw new Error(
         "Form 8621 excess statement needs printable ASCII source text",
       );
+    }
+    if (
+      bold.widthOfTextAtSize(`${heading} (continued)`, 11) > textWidth ||
+      font.widthOfTextAtSize(identity, 9) > textWidth
+    ) {
+      throw new Error("Form 8621 excess statement heading is too long");
     }
     let page = document.addPage([pageWidth, pageHeight]);
     added++;

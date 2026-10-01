@@ -7,6 +7,7 @@ import {
 } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import {
+  explainForm8621ExcessEvent,
   explainForm8621ExcessStatement,
   form8621ExcessStatement,
 } from "../../mef/forms/f8621_excess_statement.ts";
@@ -51,6 +52,10 @@ Deno.test("Form 8621 Part V explanation matches source-derived native and printa
   const explanation = explainForm8621ExcessStatement(line);
   assertStringIncludes(explanation, "1.2 USD per EUR");
   assertStringIncludes(explanation, "Issuer spot quote 2025-12-31");
+  assertStringIncludes(
+    explainForm8621ExcessEvent(line, 0),
+    "Issuer spot quote 2025-12-31",
+  );
   const [native] = form8621ExcessStatement.build({}, {
     pending: { form8621: { items: [line] } },
   });

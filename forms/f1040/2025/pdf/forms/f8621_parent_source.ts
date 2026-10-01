@@ -5,7 +5,10 @@ import {
 } from "../../../nodes/inputs/f8621/index.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
-import { explainForm8621ExcessStatement } from "../../mef/forms/f8621_excess_statement.ts";
+import {
+  explainForm8621ExcessEvent,
+  explainForm8621ExcessStatement,
+} from "../../mef/forms/f8621_excess_statement.ts";
 
 type Fields = Record<string, string | boolean>;
 
@@ -170,8 +173,8 @@ export function projectForm8621ParentPages(
     page1,
     partV,
     partVI: {} as Fields,
-    holdingPeriodStatement: partV.length > 0
-      ? explainForm8621ExcessStatement(line)
-      : undefined,
+    holdingPeriodStatements: partV.map((_, index) =>
+      explainForm8621ExcessEvent(line, index)
+    ),
   };
 }
