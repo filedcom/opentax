@@ -47,6 +47,81 @@ const preparedAmendmentSchema = z.object({
   line11_total_tax: amendedLineSchema,
 }).strict();
 
+type PreparedAmendment = z.infer<typeof preparedAmendmentSchema>;
+
+const form1040xFieldPrefix = "topmostSubform[0].Page1[0].";
+const preparedAmendmentPdfFields = {
+  line6_tax: ["f1_37[0]", "f1_38[0]", "f1_39[0]"],
+  line7_nonrefundable_credits: ["f1_40[0]", "f1_41[0]", "f1_42[0]"],
+  line8_tax_after_credits: ["f1_43[0]", "f1_44[0]", "f1_45[0]"],
+  line10_other_taxes: ["f1_49[0]", "f1_50[0]", "f1_51[0]"],
+  line11_total_tax: ["f1_52[0]", "f1_53[0]", "f1_54[0]"],
+} as const;
+
+function verifyPreparedForm1040XPdf(
+  pdf: PDFDocument,
+  amendment: PreparedAmendment,
+  filerSSN: string,
+): void {
+  if (pdf.getPageCount() !== 2) {
+    throw new Error(
+      "Form 1116 Schedule C prepared Form 1040-X needs both official form pages",
+    );
+  }
+  const form = pdf.getForm();
+  const read = (fieldName: string): string => {
+    try {
+      return form.getTextField(`${form1040xFieldPrefix}${fieldName}`).getText()
+        ?.trim() ?? "";
+    } catch {
+      throw new Error(
+        `Form 1116 Schedule C prepared Form 1040-X PDF lacks ${fieldName}`,
+      );
+    }
+  };
+  if (
+    read("f1_01[0]") !== String(amendment.tax_year) ||
+    read("f1_05[0]").replaceAll("-", "") !== filerSSN
+  ) {
+    throw new Error(
+      "Form 1116 Schedule C prepared Form 1040-X PDF year or taxpayer differs from the reviewed amendment",
+    );
+  }
+  for (
+    const lineName of Object.keys(preparedAmendmentPdfFields) as Array<
+      keyof typeof preparedAmendmentPdfFields
+    >
+  ) {
+    const expected = amendment[lineName];
+    const fieldNames = preparedAmendmentPdfFields[lineName];
+    for (
+      const [index, column] of ([
+        "column_a",
+        "column_b",
+        "column_c",
+      ] as const).entries()
+    ) {
+      const fieldName = fieldNames[index];
+      if (!fieldName) {
+        throw new Error(
+          `Form 1116 Schedule C prepared Form 1040-X PDF lacks ${lineName} ${column}`,
+        );
+      }
+      const text = read(fieldName);
+      if (!/^-?(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) {
+        throw new Error(
+          `Form 1116 Schedule C prepared Form 1040-X PDF ${lineName} ${column} needs a whole-dollar amount`,
+        );
+      }
+      if (Number(text.replaceAll(",", "")) !== expected[column]) {
+        throw new Error(
+          `Form 1116 Schedule C prepared Form 1040-X PDF ${lineName} ${column} differs from the reviewed amendment`,
+        );
+      }
+    }
+  }
+}
+
 export const scheduleCDocumentIntakeSchema = z.object({
   ledger: redeterminationDisclosureSchema,
   filed_year_evidence: scheduleCFiledYearEvidenceSchema,
@@ -272,6 +347,8 @@ function verifyCrossReferences(
 
 async function documentManifest(
   document: ScheduleCDocumentIntake["documents"][number],
+  amendment: PreparedAmendment | undefined,
+  filerSSN: string,
 ): Promise<ScheduleCDocumentManifest> {
   const digest = new Uint8Array(
     await crypto.subtle.digest(
@@ -300,6 +377,14 @@ async function documentManifest(
     throw new Error(
       `Form 1116 Schedule C ${document.role} source needs a PDF page`,
     );
+  }
+  if (document.role === ScheduleCDocumentRole.PreparedForm1040X) {
+    if (!amendment) {
+      throw new Error(
+        "Form 1116 Schedule C prepared Form 1040-X PDF has no reviewed amendment",
+      );
+    }
+    verifyPreparedForm1040XPdf(pdf, amendment, filerSSN);
   }
   return {
     role: document.role,
@@ -337,7 +422,11 @@ export async function reviewScheduleCDocuments(
     input.ledger,
     input.filed_year_evidence,
   );
-  const documents = await Promise.all(input.documents.map(documentManifest));
+  const documents = await Promise.all(
+    input.documents.map((document) =>
+      documentManifest(document, input.prepared_amendment, filerSSN)
+    ),
+  );
   const affected = input.ledger.affected_years[0];
   const amendedReturnRequired = affected.redetermined_us_tax_liability_usd !==
     affected.us_tax_liability_on_filed_return_usd;

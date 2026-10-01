@@ -112,9 +112,54 @@ function reviewedCase() {
   return { ledger, evidence };
 }
 
-async function reviewedPdf(reference: string) {
+async function reviewedPdf(
+  reference: string,
+  amendment?: NonNullable<ScheduleCDocumentIntake["prepared_amendment"]>,
+  changedFields: Record<string, string> = {},
+) {
   const pdf = await PDFDocument.create();
-  pdf.addPage().drawText(reference);
+  const firstPage = pdf.addPage();
+  firstPage.drawText(reference);
+  if (amendment) {
+    pdf.addPage();
+    const fields: Record<string, string> = {
+      "f1_01[0]": String(amendment.tax_year),
+      "f1_05[0]": FILER_SSN,
+    };
+    const names = {
+      line6_tax: ["f1_37[0]", "f1_38[0]", "f1_39[0]"],
+      line7_nonrefundable_credits: ["f1_40[0]", "f1_41[0]", "f1_42[0]"],
+      line8_tax_after_credits: ["f1_43[0]", "f1_44[0]", "f1_45[0]"],
+      line10_other_taxes: ["f1_49[0]", "f1_50[0]", "f1_51[0]"],
+      line11_total_tax: ["f1_52[0]", "f1_53[0]", "f1_54[0]"],
+    } as const;
+    for (const lineName of Object.keys(names) as Array<keyof typeof names>) {
+      const line = amendment[lineName];
+      const fieldNames = names[lineName];
+      for (
+        const [index, column] of ([
+          "column_a",
+          "column_b",
+          "column_c",
+        ] as const).entries()
+      ) {
+        const fieldName = fieldNames[index];
+        if (fieldName) fields[fieldName] = String(line[column]);
+      }
+    }
+    for (
+      const [name, value] of Object.entries({
+        ...fields,
+        ...changedFields,
+      })
+    ) {
+      const field = pdf.getForm().createTextField(
+        `topmostSubform[0].Page1[0].${name}`,
+      );
+      field.addToPage(firstPage, { x: 20, y: 20, width: 100, height: 12 });
+      field.setText(value);
+    }
+  }
   const bytes = Uint8Array.from(await pdf.save());
   const digest = new Uint8Array(
     await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
@@ -161,7 +206,12 @@ async function intake(): Promise<ScheduleCDocumentIntake> {
       ...(role === ScheduleCDocumentRole.ForeignRedetermination
         ? { foreign_tax_owner_reference: "reviewed-taxpayer-foreign-account" }
         : { reviewed_subject_ssn: FILER_SSN }),
-      ...await reviewedPdf(reference),
+      ...await reviewedPdf(
+        reference,
+        role === ScheduleCDocumentRole.PreparedForm1040X
+          ? prepared_amendment
+          : undefined,
+      ),
       reviewed_by: "Tax reviewer",
     })),
   );
@@ -177,7 +227,13 @@ Deno.test("Schedule C intake binds eight reviewed PDF byte streams and flags ame
   const input = await intake();
   const reviewed = await reviewScheduleCDocuments(input);
   assertEquals(reviewed.documents.length, 8);
-  assertEquals(reviewed.documents.every((doc) => doc.page_count === 1), true);
+  assertEquals(
+    reviewed.documents.every((doc) =>
+      doc.page_count ===
+        (doc.role === ScheduleCDocumentRole.PreparedForm1040X ? 2 : 1)
+    ),
+    true,
+  );
   assertEquals(reviewed.filer_ssn, FILER_SSN);
   assertEquals(reviewed.amended_return_required, true);
   assertEquals(reviewed.affected_year_amendment_status, "required_unverified");
@@ -211,6 +267,34 @@ Deno.test("Schedule C intake binds eight reviewed PDF byte streams and flags ame
     Error,
     "owner differs from reviewed documents",
   );
+});
+
+Deno.test("Schedule C intake rejects a prepared 1040-X whose printed tax or identity differs", async () => {
+  for (
+    const [changedFields, expected] of [
+      [{ "f1_41[0]": "-19" }, "line7_nonrefundable_credits column_b"],
+      [{ "f1_01[0]": "2023" }, "PDF year or taxpayer"],
+      [{ "f1_05[0]": "999887777" }, "PDF year or taxpayer"],
+    ] as const
+  ) {
+    const input = await intake();
+    const index = input.documents.findIndex((document) =>
+      document.role === ScheduleCDocumentRole.PreparedForm1040X
+    );
+    const document = input.documents[index];
+    if (!document) throw new Error("Prepared Form 1040-X fixture is missing");
+    const changedPdf = await reviewedPdf(
+      "prepared-1040x-2024",
+      input.prepared_amendment,
+      changedFields,
+    );
+    input.documents[index] = { ...document, ...changedPdf };
+    await assertRejects(
+      () => reviewScheduleCDocuments(input),
+      Error,
+      expected,
+    );
+  }
 });
 
 Deno.test("Schedule C intake binds filed documents to the current filer and foreign records to that taxpayer", async () => {

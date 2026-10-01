@@ -270,3 +270,22 @@ must be bound to an authenticated completed return before registration or
 export; source references and reviewed PDF hashes alone cannot prove that filing
 state. No tests, typecheck, XSD validation or filled-PDF rendering was run in
 this implementation batch.
+
+## Prepared Form 1040-X printed-field review (staged, unrun)
+
+For a changed affected-year U.S. liability, document intake now reads the
+prepared Form 1040-X PDF itself after checking its reviewed SHA-256. It requires
+the two-page [December 2025 Form 1040-X](https://www.irs.gov/pub/irs-pdf/f1040x.pdf)
+AcroForm fields for calendar year, taxpayer SSN, and columns A, B, and C of
+lines 6, 7, 8, 10, and 11. The printed values must match the existing
+affected-year recomputation and reviewed amendment transcription. These field
+paths were inspected on the IRS PDF. Positive and changed printed tax, year,
+and SSN fixtures are authored for the deferred bulk gate. A flattened or
+scanned prepared form without readable fields stops at intake.
+
+This binds the prepared PDF bytes to the staged tax reconciliation, but it does
+not establish that the Form 1040-X and changed Forms 1116, Schedule 3, and 1040
+were submitted or accepted. An authenticated IRS receipt or filing record and
+review of intervening-year attributes are still required. The Schedule C
+native/PDF candidates remain unregistered and the live export guard remains
+closed.
