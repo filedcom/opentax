@@ -214,6 +214,7 @@ export const itemSchema = z.object({
   payer_address_city: z.string().optional(),
   payer_address_state: z.string().optional(),
   payer_address_zip: z.string().optional(),
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   recipient_address_line1: z.string().optional(),
   recipient_address_city: z.string().optional(),
   recipient_address_state: z.string().optional(),

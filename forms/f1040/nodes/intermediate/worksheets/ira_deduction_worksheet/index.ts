@@ -11,6 +11,7 @@ import {
   currentContributionSourceSchema,
   filingDetailsSchema,
   form8606,
+  IraOwner,
   zeroBasisSourceSchema,
 } from "../../forms/form8606/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
@@ -216,7 +217,9 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
     if (capped > 0) {
       outputs.push(
         this.outputNodes.output(form8880, {
-          ira_contributions_taxpayer: capped,
+          ...(input.form8606_filing_details?.owner === IraOwner.Spouse
+            ? { ira_contributions_spouse: capped }
+            : { ira_contributions_taxpayer: capped }),
         }),
       );
     }

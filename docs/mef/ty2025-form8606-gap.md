@@ -4,6 +4,8 @@ Status: bounded taxpayer-owned no-activity and prior-basis distribution Part I
 native MeF/PDF routes, plus one spouse-owned prior-basis distribution on a joint
 return without a current contribution, written but unrun. One sourced 2025
 nondeductible contribution with the taxpayer distribution is also written. One
+spouse-owned prior-basis distribution with a sourced 2025 nondeductible
+contribution now covers both receipt windows, written but unrun. One
 first-year taxpayer Roth IRA code J distribution now has a sourced Part III
 native/PDF route. Tests, local XSD validation, filled PDF rendering, and IRS ATS
 remain outstanding.
@@ -74,6 +76,24 @@ taxpayer and spouse Form 8606 claims remain closed.
    but unrun. Current-year rollover/repayment, qualified-disaster,
    first-time-homebuyer, other contribution or distribution sources, and
    mixed/multiple IRA sources remain open.
+   A spouse-owned variant now also accepts one 2025 nondeductible traditional
+   IRA contribution with that spouse's prior basis and one traditional IRA
+   payment on a joint return. The issued 2025 Form 5498, designated-year
+   custodian receipt, filed 2024 Form 8606, year-end all-IRA statement, W-2,
+   and Form 1099-R recipient SSN must identify the spouse; the 1099-R must
+   also be marked spouse-owned. The receipt, 5498, prior return, year-end
+   statement, and 1099-R references are distinct. A 2025 receipt enters
+   distribution basis immediately; a January 1–April 15, 2026 receipt prints
+   on line 4 and remains in line 14 rather than reducing the 2025 taxable
+   distribution. Both timings reconcile Form 8606 Part I and spouse native/PDF
+   identity with joint Form 1040 lines 4a/4b. Positive and owner, source,
+   receipt-date, worksheet, return, and printed-line tamper fixtures are
+   authored for the deferred gate. The [2025 instructions](https://www.irs.gov/instructions/i8606)
+   require separate owner forms on joint returns and line 4 for contributions
+   made after 2025; [Form 5498](https://www.irs.gov/pub/irs-prior/f5498--2025.pdf)
+   box 1 includes 2025 designated contributions received through April 15,
+   2026. Additional custodians, contributions, distributions, and source-byte
+   authentication remain open.
 3. One first-year taxpayer Roth IRA route requires an opening statement
    confirming all Roth IRAs and no prior Roth activity, an issued 2025 Form 5498
    with positive box 10 and zero boxes 2/3, a separate dated contribution

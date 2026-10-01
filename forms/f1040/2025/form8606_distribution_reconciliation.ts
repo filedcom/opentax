@@ -84,7 +84,8 @@ export function reconcileForm8606Distribution(
     worksheet?.success === true && w2s?.success === true &&
     w2s.data.w2s.length === 1 &&
     worksheet.data.ira_contribution === contribution &&
-    worksheet.data.form8606_filing_details?.owner === IraOwner.Taxpayer &&
+    worksheet.data.form8606_filing_details?.owner ===
+      (spouseOwned ? IraOwner.Spouse : IraOwner.Taxpayer) &&
     worksheet.data.form8606_filing_details
         ?.no_ira_distributions_or_conversions_confirmed === false &&
     JSON.stringify(worksheet.data.form8606_current_contribution_source) ===
@@ -101,12 +102,13 @@ export function reconcileForm8606Distribution(
     !filer || !ownerSsn || !ownerName?.trim() ||
     (spouseOwned
       ? filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
-        !filer.spouse?.firstName || !filer.spouse?.lastName ||
-        contributionSource !== undefined
+        !filer.spouse?.firstName || !filer.spouse?.lastName
       : filer.filingStatus !== FilingStatus.Single) ||
     entered.length !== 1 || !item ||
     item.box7_ira_simple_indicator !== true ||
     item.ts !== (spouseOwned ? "S" : "T") ||
+    (spouseOwned && contributionSource !== undefined &&
+      item.recipient_ssn?.replace(/\D/g, "") !== ownerSsn) ||
     item.no_distribution_received === true ||
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
