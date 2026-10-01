@@ -3,8 +3,8 @@
 ## Full status summary (2026-10-01)
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
-TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **532 completed bounded items** and their exact limits live in the
+TY2025 Form 1040 code checkpoint. This board contains **56 open TODOs and no
+completed checkboxes**. The **534 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,12 +15,13 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
+| Reported CLI issues | 2 | 2 | Issue #60's SEHI entry and array inspection are implemented; spouse Form 7206 and QBI cents remain. |
 | Named tax-form gaps | 20 | 452 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 35 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 532 bounded routes and
+**Implemented coverage.** The completed ledger records 534 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -55,6 +56,8 @@ prepared MeF bundle and PDF; direct XML and standalone PDF claims stay closed. T
 positive routes remain closed.
 The new positive and tamper fixtures are authored but the agreed full-batch test,
 XSD checks, and filled-PDF visual review have not run on this branch.
+The four reported CLI paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
+are being corrected in this batch before that test gate.
 
 **Coverage and release gates.** The last audit counted 139 registered native MeF
 descriptors, 109 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
@@ -96,6 +99,11 @@ These gates and a filing-ready release remain open.
   - [ ] Finish Worksheet 1 passive-activity lines 11–13, reconcile the complete investment-income limit to finalized Schedule E, Form 8582, K-1, other Form 4797 ordinary gains and losses, and other passive sources, and verify the full $11,950 threshold across combined categories and allowed losses.
 - [ ] Finish Schedule C and Schedule F/Form 4835 source, at-risk, passive, self-employment, QBI, and PDF cross-checks, including Schedule C [PDF mapping](docs/mef/ty2025-schedule-c-pdf-gap.md), Schedule J's [source](docs/mef/ty2025-schedule-j-source-gap.md) and [integration](docs/mef/ty2025-schedule-j-integration-gap.md), and the applicable Schedule E rental/royalty joins.
 - [ ] Verify Form 1040 assembly order, document references, multiple-instance IDs, required PDF descriptions, manifest/return archives, A2A request package, and explicit failures for missing or invalid AcroForm fields.
+
+## Reported CLI issues
+
+- [ ] **Spouse Form 7206:** support a spouse-owned Schedule C and eligible Medicare Part B premiums with owner-specific business earnings, Schedule 1/Form 1040, native and PDF reconciliation. See [issue #60](https://github.com/filedcom/opentax/issues/60).
+- [ ] **Form 8995 cents:** prevent a fractional Schedule C QBI amount from failing integer validation while preserving correct Form 8995, Form 1040, native and PDF dollars. See [issue #60](https://github.com/filedcom/opentax/issues/60).
 
 ## Named tax-form gaps
 
