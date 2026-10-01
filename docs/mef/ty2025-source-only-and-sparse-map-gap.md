@@ -4,6 +4,32 @@ Status: route-by-route audit, 2026-09-29. The table records focused evidence
 where available; it is not a current-source full-batch or ATS result. These
 paths remain in the Form 1040 scope.
 
+## Current registry and trigger reconciliation (2026-10-02)
+
+| Audited group | Bounded native + PDF registrations | Staged, unregistered and blocked | Rows with open source/scope decisions | Whole-form verified by this audit |
+| --- | ---: | ---: | ---: | ---: |
+| Four originally source-only public paths | 3: Schedule R, Forms 7203 and 8888 | 1: Form 9465 | 4 | 0 |
+| Six sparse or source-derived maps | 6: Forms 8880, 6198, 7217, 6252, 8862 and 8863 | 0 | 6 | 0 |
+| Total rows in this audit | **9** | **1** | **10** | **0** |
+
+These counts follow the public input entries in `forms/f1040/2025/inputs.ts`
+and both `ALL_MEF_FORMS` and `ALL_PDF_FORMS`. They count coded bounded routes,
+not validated complete forms. Form 9465's native/PDF projections exist only
+outside the registries; its public `f9465` trigger remains blocked in both
+exports. The other nine have registered serializers, but each row below names
+source, return-join, or wider-trigger decisions that remain open. No missing
+registration can safely be activated from this audit alone.
+
+The actionable mismatches are source and ownership rather than descriptor
+count: Form 8880's supplied tax limit lacks a finalized-return capacity join;
+Form 6198's aggregate public payload cannot represent the per-activity C/F
+filing path; Form 7217 needs issuer K-1 and basis history; Form 8862 needs
+authenticated disallowance/ban evidence and overflow statements; and Form
+9465 needs filing authorization and signature handling. The current guards
+reject those unsupported positive branches instead of implying that an empty
+`FIELD_MAP` or a staged builder is a filed document. Final source-to-return,
+XSD, filled-PDF, IRS-rule and ATS decisions remain open for all ten rows.
+
 ## 2026-10-01 implementation reconciliation (unrun)
 
 The Form 7203 source path now combines one reviewed cash capital contribution
@@ -29,7 +55,7 @@ XSD, filled-PDF, or ATS evidence reported below.
 
 ## Four public paths originally flagged as source-only
 
-| Path       | Source and tax effect                                                                                                                                          | Missing filing document                                                 | Current export boundary                                                                                                                                                                                                                                                                  | Work still required                                                                                                                                                                                                            |
+| Path       | Source and tax effect                                                                                                                                          | Remaining source or attachment gap                                                 | Current export boundary                                                                                                                                                                                                                                                                  | Work still required                                                                                                                                                                                                            |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Schedule R | Public `schedule_r` facts can calculate `schedule3.line6d_elderly_disabled_credit`, flowing to Form 1040 line 20. | Disability boxes 2/4/5/6/9, authenticated dependent/support and benefit evidence, current-source full batch and ATS. | An earlier sourced single-filer age-65 case passed local TY2025 v5.4 XSD and filled two-page PDF review; a dependent/interest case passed full-return XSD and six-page filled-PDF review. The age-only single, HOH, QSS, MFJ and apart-all-year MFS native/PDF routes are now written with status/owner, benefit, AGI and tax-limit reconciliation, but the new cases are unrun. See the [age-only route](ty2025-schedule-r-age-only.md); historical artifact: `.state/research/ty2025-schedule-r-filled-review.pdf`. | Verify actual dependent/support and income source records, finish disability and all remaining combinations, then run the current-source full batch and obtain ATS acceptance before claiming broad filing support. |
 | Form 7203  | An identified K-1 current box-1 loss requires one strict per-corporation `form7203_stock_loss_ledger`, including material-participation workpaper evidence; the loose numeric basis field is not a loss-source alternative. | Other basis/loss paths, authenticated source bytes, current-source full batch, business rules, and ATS. | Registered bounded `IRS7203` and Schedule E Part II MeF/PDF descriptors reconcile Form 7203, Schedule E line 41, Schedule 1 line 5/10, and Form 1040 line 8. Other shapes still reject. The bounded XML passes local TY2025 v5.4 XSD and ten focused native/PDF cases pass. A synthetic reviewed K-1 and general taxpayer source yielded a full-return XSD-valid XML and seven-page PDF packet; the $3,000 allowed loss appears on Form 7203, Schedule E, Schedule 1 and Form 1040. Retain `.state/research/ty2025-form7203-full-return.xml` and `.state/research/ty2025-form7203-full-return.pdf`. | Complete other loss categories, multiple K-1s, prior carryovers, distributions, dispositions, and debt; verify authenticated sources and other business-rule combinations, then current-source full batch and ATS acceptance. |

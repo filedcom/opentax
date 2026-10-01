@@ -1,13 +1,36 @@
 # TY2025 conditional schedules: 8995-A A-D and 1116 C
 
-Static source and schema audit, 2026-09-28. This records **conditional filing
+Static source and schema audit, reconciled 2026-10-02. This records **conditional filing
 triggers**, not blanket implementation or exclusion. The checked-in TY2025 v5.4
 `ReturnData1040.xsd` permits one each of `IRS8995AScheduleA`, `B`, `C`, and `D`,
 and unbounded `IRS1116ScheduleC` documents. Their individual XSDs live under
 `Shared/IRS8995ASchedule[A-D]/` and `Shared/IRS1116ScheduleC/`. Schedules A, B,
 C and D now have separate bounded registered native and PDF descriptors. Form
 1116 Schedule C remains unregistered for filing with only a staged source/XML
-projection. Local test/typecheck/XSD/render and IRS acceptance are pending.
+projection. The current PR bulk run is not passing; complete current-source
+XSD/PDF, IRS business-rule and ATS acceptance evidence is pending.
+
+| Registry and public-trigger state | Roots | Count |
+| --- | --- | ---: |
+| Bounded native and PDF companion registered | `IRS8995AScheduleA`, `B`, `C`, `D` | **4** |
+| Public source/parent trigger, staged XML only, export blocked | `IRS1116ScheduleC` | **1** |
+| Literal-free among these five | None | **0** |
+| Rows with open source/scope decisions, including wider registered branches | All five | **5** |
+| Whole-form or all-trigger support established by this audit | None | **0** |
+
+The registered Form 8995-A parent detects Schedule A from
+`sstb_filing_details`, Schedule B from `aggregation_filing_details` or
+`aggregation_groups`, Schedule C from a negative business QBI entry, and
+Schedule D from `patron_of_specified_cooperative`. It requires the matching
+pending companion or rejects an orphan companion, and reconciles the bounded
+parent deduction to Form 1040 line 13. The four companions are also in the
+PDF registry. Broader SSTB, aggregation, loss, and cooperative triggers remain
+outside those bounded routes. The public `form1116_schedule_c_source.ledgers`
+deposits `foreign_tax_redeterminations` into Form 1116; both its MeF and PDF
+parent exporters reject the triggered route. The source does not itself
+authenticate affected-year filed returns or detect an unentered foreign-tax
+event. Registration before that evidence and affected-year amendment decision
+would be premature.
 
 | Native root         | Official TY2025 trigger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Local evidence and open source/output path                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +43,7 @@ projection. Local test/typecheck/XSD/render and IRS acceptance are pending.
 No row is a blanket attachment for every Form 1040. Conversely, a positive
 trigger needs a source-backed schedule or an explicit fail-closed path. The
 parent 8995-A MeF guard covers the numerical SSTB, aggregation and loss inputs
-it currently accepts; its bounded Schedules A/C/D still need source and
+it currently accepts; all four bounded companions still need source and
 filled-PDF review. The current Form 1116 path does not independently detect
 every Schedule C redetermination. These are open source/filing decisions, not
 user-approved exclusions.
