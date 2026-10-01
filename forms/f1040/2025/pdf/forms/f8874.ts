@@ -164,16 +164,16 @@ export const form8874Pdf: PdfFormDescriptor = {
     }
     const source = inputSchema.parse(allPending.f8874);
     const lines = calculateForm8874(source);
-    const claim = f3800InputSchema.parse(allPending.f3800);
     // The parent checks mixed and passive allocations. This child check binds
     // the retained direct, nonpassive Form 8874 copy to its own filed document.
     if (
       lines.nonpassiveCredit === 0 ||
-      lines.rows.some((row) =>
-        row.investment.subject_to_passive_activity_limit
-      ) ||
-      (claim.f8874_k1_credit_entries?.length ?? 0) > 0
+      lines.rows.some((row) => row.investment.subject_to_passive_activity_limit)
     ) return [fields];
+    if (reconciledForm8874K1Line2({ pending: allPending }) > 0) {
+      return [fields];
+    }
+    const claim = f3800InputSchema.parse(allPending.f3800);
     if (!prepared) {
       throw new Error("Form 8874 PDF needs the prepared Form 3800 document");
     }

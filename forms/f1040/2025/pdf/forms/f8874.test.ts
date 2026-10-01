@@ -163,7 +163,12 @@ Deno.test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () =>
       regular_tax_without_passive: 40_000,
     },
   };
-  assertEquals(form8874Pdf.projectFields!(passive, pending).line3, 50_000);
+  const printed = form8874Pdf.projectFields!(passive, pending);
+  assertEquals(printed.line3, 50_000);
+  const { f3800: _claim, ...passiveOnly } = pending;
+  assertEquals(form8874Pdf.instances!(printed, undefined, passiveOnly), [
+    printed,
+  ]);
   assertThrows(
     () =>
       form8874Pdf.projectFields!(passive, {
