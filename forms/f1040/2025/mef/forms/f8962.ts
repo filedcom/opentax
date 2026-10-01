@@ -2478,16 +2478,33 @@ function reconcileAgreedSharedPolicy(
     reconcileNoAptcSharedPolicy(fields, context);
     return;
   }
+  const dependentMagi = fields.household_size === 2
+    ? reconcileDependentMagi(
+      2,
+      fields.dependents_modified_agi,
+      pending?.general,
+    )
+    : 0;
+  const claimedDependent = general.success && fields.household_size === 2 &&
+      general.data.dependents?.length === 1 &&
+      general.data.dependents[0].dependent_on_another_return !== true
+    ? general.data.dependents[0]
+    : undefined;
   const rows = fields.monthly_ptc_rows;
   if (
     !context?.filer || !source.success || !form1040.success ||
     !general.success || !Array.isArray(rows) || rows.length !== 12 ||
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
-    fields.household_size !== 1 ||
+    (fields.household_size !== 1 && fields.household_size !== 2) ||
+    fields.dependents_modified_agi !== dependentMagi ||
     general.data.taxpayer_ssn?.replaceAll("-", "") !==
       context.filer.primarySSN.replaceAll("-", "") ||
-    (general.data.dependents?.length ?? 0) !== 0 ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_can_be_claimed_as_dependent === true ||
+    (fields.household_size === 1 &&
+      (general.data.dependents?.length ?? 0) !== 0) ||
+    (fields.household_size === 2 && !claimedDependent?.ssn) ||
     source.data.alternative_marriage_month !== undefined ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
@@ -2503,7 +2520,7 @@ function reconcileAgreedSharedPolicy(
     )
   ) {
     throw new Error(
-      "Form 8962 shared filing needs reviewed nonoverlapping periods, two covered taxpayers, and a finalized one-person single return",
+      "Form 8962 shared filing needs reviewed nonoverlapping periods, verified tax-family members, and a finalized single return",
     );
   }
   const policies = current1095AStatements(source.data.f1095as);
@@ -2536,16 +2553,38 @@ function reconcileAgreedSharedPolicy(
     familyOnlyPeriods?.some((period) =>
       period.only_tax_family_covered !== true
     ) ||
-    covered?.length !== 2 || new Set(covered).size !== 2 ||
+    covered?.length !== (fields.household_size === 2 ? 3 : 2) ||
+    new Set(covered).size !== (fields.household_size === 2 ? 3 : 2) ||
     !covered.includes(filerSsn) ||
+    (fields.household_size === 2 &&
+      policy.recipient_ssn?.replaceAll("-", "") !== filerSsn) ||
+    (claimedDependent !== undefined &&
+      !covered.includes(claimedDependent.ssn!.replaceAll("-", ""))) ||
     allocations.some((allocation, index) => {
       if (allocation.other_taxpayer_ssn === filerSsn) return true;
+      if (
+        claimedDependent?.ssn?.replaceAll("-", "") ===
+          allocation.other_taxpayer_ssn
+      ) return true;
       const period = sharedSourcePeriods?.[index];
       const review = period?.basis === "other_agreed"
         ? period.other_family_claim_review
         : undefined;
       if (covered?.includes(allocation.other_taxpayer_ssn)) {
-        return review !== undefined;
+        return review !== undefined ||
+          (fields.household_size === 2 &&
+            (allocation.basis !== "other_agreed" ||
+              !period || period.basis !== "other_agreed" ||
+              !period.agreement_review ||
+              period.agreement_review.policy_number !== policy.policy_number ||
+              period.agreement_review.filer_ssn.replaceAll("-", "") !==
+                filerSsn ||
+              period.agreement_review.other_taxpayer_ssn.replaceAll("-", "") !==
+                allocation.other_taxpayer_ssn ||
+              period.agreement_review.start_month !== allocation.start_month ||
+              period.agreement_review.end_month !== allocation.end_month ||
+              period.agreement_review.filer_allocation_pct !==
+                allocation.premium_pct));
       }
       // The other Part IV taxpayer can claim a covered dependent without
       // being an enrollee. Bind the recipient, covered person, tax-family
@@ -2623,8 +2662,8 @@ function reconcileAgreedSharedPolicy(
   const derivedInput = form8962InputSchema.parse({
     ...derivedSource,
     taxpayer_modified_agi: form1040.data.line11_agi,
-    dependents_modified_agi: 0,
-    household_size: 1,
+    dependents_modified_agi: dependentMagi,
+    household_size: fields.household_size,
     fpl_region: fields.fpl_region,
     filing_status: SourceFilingStatus.Single,
     dependent_income_complete: true,

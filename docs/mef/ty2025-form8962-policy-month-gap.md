@@ -509,6 +509,22 @@ five-period Situation 4 allocation whose percentages change. Wider tax
 families, multiple policies, mixed allocation situations, and independent
 source-byte authentication remain open.
 
+### One claimed dependent on an agreed shared policy (build-first, unrun)
+
+The single-return Situation 4 route now also accepts one policy covering the
+filer, one claimed dependent, and one other enrolled taxpayer. The filer must
+be the 1095-A recipient. The dependent must have a source-backed required
+2025 return and matching income form; Worksheet 1-2 MAGI is rederived from
+those records. Each allocation period needs a reviewed agreement naming the
+policy, both taxpayers, months, and percentage. The source's three enrolled
+SSNs must match the filer, claimed dependent, and other Part IV taxpayer.
+Form 1095-A allocation is recomputed by month, then Form 8962, Schedule 2/3,
+and Form 1040 amounts are reconciled in the native and PDF builders. A positive
+credit fixture and dependent, agreement, covered-person, and finalized-return
+tampering fixtures are written but unrun. Agreement hashes and dependent
+document identifiers are source metadata; independent authentication of the
+underlying Marketplace, agreement, and dependent-return bytes remains open.
+
 ## One full-year MFS spouse policy
 
 The MeF descriptor now reconciles one full-year policy shared by an MFS filer
