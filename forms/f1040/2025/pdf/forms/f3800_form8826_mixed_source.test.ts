@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 import {
   form3800 as form3800Builder,
   prepareForm3800DocumentParts,
@@ -107,7 +108,7 @@ const pending = {
     line20_nonrefundable_credits: 3_625,
   },
   form6251: { line11_amt: 0, net_tmt: 20_000 },
-  schedule3: { line6a_total: 3_625, line8_total: 3_625 },
+  schedule3: { line6a_total: 3_625, line7_total: 3_625, line8_total: 3_625 },
 };
 const ids = {
   f8826: ["IRS8826_1"],
@@ -140,8 +141,12 @@ Deno.test("combined Form 8826 source reaches Form 3800 and final Form 1040", () 
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(
-    result.pending.f3800?.f8826_credit_entries,
-    form3800.f8826_credit_entries,
+    f3800InputSchema.parse(result.pending.f3800).f8826_credit_entries?.toSorted(
+      (a, b) => a.source_type.localeCompare(b.source_type),
+    ),
+    form3800.f8826_credit_entries.toSorted((a, b) =>
+      a.source_type.localeCompare(b.source_type)
+    ),
   );
   assertEquals(result.pending.f3800?.allowed_credit, 3_625);
   assertEquals(result.pending.schedule3?.line6a_total, 3_625);
@@ -186,7 +191,7 @@ Deno.test("Form 3800 line 1e retains one self and one S corporation Form 8826 so
         f8826: { ...form8826, eligible_expenditures: 4_000 },
       }, prepared),
     Error,
-    "Form 3800 PDF line 1e differs",
+    "Form 8826 interpreter expenses and credit reduction do not reconcile",
   );
   assertThrows(
     () =>
@@ -213,7 +218,7 @@ Deno.test("Form 3800 line 1e retains one self and one S corporation Form 8826 so
         },
       }, prepared),
     Error,
-    "Form 3800 PDF line 1e differs",
+    "Form 8826 S-corporation credit does not reconcile to K-1 box 13 code K",
   );
   assertThrows(
     () =>

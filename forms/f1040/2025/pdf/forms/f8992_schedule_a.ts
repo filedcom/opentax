@@ -22,7 +22,7 @@ const cell = (key: string, number: number, total = false): PdfFieldEntry =>
 
 export const form8992ScheduleAPdf: PdfFormDescriptor = {
   pendingKey: "form8992_schedule_a",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8992sa.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8992sa--2022.pdf",
   pageIndices: () => [0],
   filerFields: [
     text("nameLine1", "f1_1[0]"),

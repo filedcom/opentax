@@ -15,7 +15,7 @@ const field = (
 
 export const form5471ScheduleI1Pdf: PdfFormDescriptor = {
   pendingKey: "f5471_schedule_i1",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471si1.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f5471si1--2021.pdf",
   pageIndices: () => [0],
   fields: [
     field("shareholder_name", 1),

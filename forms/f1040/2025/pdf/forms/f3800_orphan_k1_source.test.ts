@@ -48,6 +48,7 @@ const pending = {
   form6251: { line11_amt: 0, net_tmt: 20_000 },
   schedule3: {
     line6a_total: 1_250,
+    line7_total: 1_250,
     line8_total: 1_250,
   },
 };

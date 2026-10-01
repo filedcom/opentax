@@ -33,7 +33,7 @@ const adjustmentFields: ReadonlyArray<PdfFieldEntry> = (
 
 export const form5471ScheduleHPdf: PdfFormDescriptor = {
   pendingKey: "f5471_schedule_h",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471sh.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f5471sh--2021.pdf",
   pageIndices: () => [0],
   fields: [
     simple("shareholder_name", 1),

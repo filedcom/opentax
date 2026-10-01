@@ -22,7 +22,7 @@ const row = (
 
 export const form5471ScheduleQPdf: PdfFormDescriptor = {
   pendingKey: "f5471_schedule_q",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471sq.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f5471sq--2024.pdf",
   pageIndices: () => [0, 1, 2, 3],
   fields: [
     text("filer_name", 1, "f1_01[0]"),

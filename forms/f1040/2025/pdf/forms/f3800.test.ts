@@ -687,7 +687,7 @@ Deno.test("orphan-drug and New Markets credits retain distinct current-year sour
     allPending,
     parts,
   )?.[0];
-  assertEquals(printed3800?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed3800?.[form3800PartIIIFields("1h").e], 1_975);
   assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 500);
   assertEquals(printed3800?.[form3800PartIAndIIFields.line38], 2_475);
   assertEquals(
@@ -709,7 +709,7 @@ Deno.test("orphan-drug and New Markets credits retain distinct current-year sour
         parts,
       ),
     Error,
-    "mixed orphan-drug/New Markets rows",
+    "pending allowed credit differs from prepared MeF line 38",
   );
   assertThrows(
     () =>
@@ -793,9 +793,9 @@ Deno.test("one self-earned orphan-drug credit reconciles Form 3800 native and PD
     allPending,
     parts,
   )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed?.[form3800PartIIIFields("1h").e], 1_975);
   assertEquals(printed?.[form3800PartVFields(1).c1], undefined);
-  assertEquals(printed?.[form3800PartVFields(1).e], 1_975);
+  assertEquals(printed?.[form3800PartVFields(1).e], undefined);
   assertEquals(printed?.[form3800PartIAndIIFields.line38], 1_975);
   assertThrows(
     () =>
@@ -832,7 +832,7 @@ Deno.test("one self-earned orphan-drug credit reconciles Form 3800 native and PD
         parts,
       ),
     Error,
-    "one filed self-earned Form 8820 source",
+    "pending allowed credit differs from prepared MeF line 38",
   );
   assertThrows(
     () =>
@@ -924,7 +924,7 @@ Deno.test("orphan-drug ordinary and geothermal specified credits keep separate F
     allPending,
     parts,
   )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed?.[form3800PartIIIFields("1h").e], 1_975);
   assertEquals(printed?.[form3800PartIIIFields("4e").g], 600);
   assertEquals(printed?.[form3800PartIAndIIFields.line38], 2_575);
   assertEquals(
@@ -946,7 +946,7 @@ Deno.test("orphan-drug ordinary and geothermal specified credits keep separate F
         parts,
       ),
     Error,
-    "mixed orphan-drug/geothermal sources",
+    "pending allowed credit differs from prepared MeF line 38",
   );
   assertThrows(
     () =>

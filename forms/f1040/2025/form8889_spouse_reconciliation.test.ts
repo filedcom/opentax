@@ -1000,7 +1000,7 @@ Deno.test("paired Form 8889 rejects reused receipts and return totals that omit 
         },
       }),
     Error,
-    "cannot reuse a Form 1099-SA, qualified medical expense, or dated distribution reference",
+    "cannot reuse a Form 1099-SA, medical expense, dated distribution, or rollover reference",
   );
   assertThrows(
     () =>

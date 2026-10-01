@@ -68,7 +68,7 @@ const scheduleGQuestions = [
 
 export const form5471Pdf: PdfFormDescriptor = {
   pendingKey: "f5471_parent",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f5471--2025.pdf",
   // The direct sole owner is both Category 4 and 5a.
   pageIndices: () => [0, 1, 2, 3, 4, 5],
   fields: [
@@ -155,7 +155,13 @@ export const form5471Pdf: PdfFormDescriptor = {
     ...scheduleGQuestions.map(([domainKey, pdfPage, question]) => ({
       kind: "checkboxWhen" as const,
       domainKey,
-      pdfField: `${page(pdfPage)}c${pdfPage}_${question}[1]`,
+      pdfField: `${page(pdfPage)}${
+        pdfPage === 4 && question === 1
+          ? "TagCorrectingSubform[0]."
+          : pdfPage === 5 && question === 1
+          ? "TagCorrectionSubform[0]."
+          : ""
+      }c${pdfPage}_${question}[1]`,
       whenValue: "false",
     })),
     p6("shareholder_name", 8),

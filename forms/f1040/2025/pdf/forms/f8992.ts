@@ -15,7 +15,7 @@ const text = (
 
 export const form8992Pdf: PdfFormDescriptor = {
   pendingKey: "form8992",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8992.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8992--2022.pdf",
   pageIndices: () => [0],
   filerFields: [
     text("nameLine1", 1),

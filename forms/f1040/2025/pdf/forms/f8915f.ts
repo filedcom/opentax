@@ -24,7 +24,7 @@ const checkbox = (domainKey: string, pdfField: string): PdfFieldEntry => ({
 
 export const form8915FPdf: PdfFormDescriptor = {
   pendingKey: "f8915f",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8915f.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8915f--2025.pdf",
   instances(fields, filer, allPending) {
     const items = inputSchema.parse(fields).f8915fs ?? [];
     if (items.length === 0) return [];
