@@ -401,7 +401,7 @@ Form 1040 total. The PDF prints appraised FMV and basis-limited claim separately
 and describes the reduction. A synthetic full-return positive, altered-PDF-byte,
 and altered-Form-1040 fixture are authored but unrun. Actual taxpayer source
 bytes and reviews are required before a real filing can use this route.
-Other Section B property types, multiple gifts, other reduction reasons, and
+Other Section B variants, multiple gifts, other reduction reasons, and
 carryover attachment combinations remain closed. This route follows the
 [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 for ordinary-income-property reductions and signed Form 8283 attachments.
@@ -419,3 +419,18 @@ recomputed as for equipment. A synthetic full-return art fixture and an
 out-of-range FMV rejection are authored for the deferred bulk pass. Art valued
 at $20,000 or more, multiple items, donor-created art, and unrelated-use art
 remain outside this route.
+
+## Purchased short-term Section B collectible (2026-10-01, unrun)
+
+The same reviewed-document and basis-limited route accepts one purchased
+non-art collectible, such as a rare coin, when its claimed deduction exceeds
+$5,000. A full qualified appraisal, completed signed Form 8283, purchase/basis
+record, separate reduction computation, and distinct reviewed attachment bytes
+remain required. The claim equals adjusted basis, and the FMV sale gain from
+the short holding period is removed under section 170(e)(1)(A). Native Form
+8283 selects `CollectiblesInd`; the PDF selects its collectibles box and keeps
+appraised FMV separate from the claim. The full-return fixture covers Schedule
+A, itemized Form 1040, native attachments, PDF projection, altered
+reduction-PDF bytes, and altered Form 1040 itemization. Actual taxpayer
+documents and source assertions still need review; long-term collectibles,
+art, inventory, multiple gifts, and carryovers remain outside this slice.

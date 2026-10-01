@@ -1024,7 +1024,8 @@ export const form8283: MefFormDescriptor<
       const propertyType = parsed.section_b_items?.[0]?.property_type;
       if (
         propertyType !== SectionBPropertyType.Equipment &&
-        propertyType !== SectionBPropertyType.ArtUnder20000
+        propertyType !== SectionBPropertyType.ArtUnder20000 &&
+        propertyType !== SectionBPropertyType.Collectibles
       ) {
         throw new Error(
           "Form 8283 short-term Section B property type is unsupported",

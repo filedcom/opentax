@@ -381,7 +381,8 @@ function sectionBOrdinaryTangibleInstance(
     (item.short_term_tangible_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
-        propertyType !== SectionBPropertyType.ArtUnder20000) ||
+        propertyType !== SectionBPropertyType.ArtUnder20000 &&
+        propertyType !== SectionBPropertyType.Collectibles) ||
         !appraisal?.attachment_file_name ||
         !appraisal.full_appraisal_source_review ||
         item.deduction_claimed !== item.cost_or_adjusted_basis ||
