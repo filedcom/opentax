@@ -221,12 +221,14 @@ export const inputSchema = z.object({
         attributable_aptc: z.number().nonnegative(),
       }).strict(),
     ).min(1),
-    form1095a_policy_months: z.array(z.object({
-      form1095a_policy_number: z.string().trim().min(1),
-      month: z.number().int().min(1).max(12),
-      premium: z.number().positive(),
-      aptc: z.number().nonnegative(),
-    }).strict()).min(1).max(12),
+    form1095a_policy_months: z.array(
+      z.object({
+        form1095a_policy_number: z.string().trim().min(1),
+        month: z.number().int().min(1).max(12),
+        premium: z.number().positive(),
+        aptc: z.number().nonnegative(),
+      }).strict(),
+    ).min(1).max(12),
     worksheet_x_source: z.object({
       form1040_line9_total_income: z.number().finite(),
       form1040_line2a_tax_exempt_interest: z.number().nonnegative(),
@@ -245,6 +247,7 @@ export const inputSchema = z.object({
     fpl_region: z.enum(["contiguous", "alaska", "hawaii"]),
     filing_status: filingStatusSchema,
     total_premium_tax_credit: z.number().nonnegative(),
+    worksheet_x_repayment_limit: z.number().nonnegative(),
     specified_premiums: z.number().nonnegative(),
     attributable_specified_ptc: z.number().nonnegative(),
     specified_deduction: z.number().nonnegative(),
@@ -772,7 +775,9 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         coverageMonths.size === allPolicyMonths.length &&
         expectedRows.size === allPolicyMonths.length &&
         expectedPolicyMonths.every((row) => {
-          const policy = expectedRows.get(`${row.form1095a_policy_number}:${row.month}`);
+          const policy = expectedRows.get(
+            `${row.form1095a_policy_number}:${row.month}`,
+          );
           return policy !== undefined &&
             Math.abs(policy.premium - row.specified_premium) < 0.01 &&
             Math.abs(policy.aptc - row.attributable_aptc) < 0.01;
@@ -1176,11 +1181,13 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       pub974 && (
         line24 !== pub974.total_premium_tax_credit ||
         !monthlyRows ||
-        Math.abs(attributableSpecifiedPtc(
-            monthlyRows,
-            new Set(pub974.specified_policy_months.map((row) => row.month)),
-            new Set(pub974.form1095a_policy_months.map((row) => row.month)),
-          ) - pub974.attributable_specified_ptc) >= 0.01 ||
+        Math.abs(
+            attributableSpecifiedPtc(
+              monthlyRows,
+              new Set(pub974.specified_policy_months.map((row) => row.month)),
+              new Set(pub974.form1095a_policy_months.map((row) => row.month)),
+            ) - pub974.attributable_specified_ptc,
+          ) >= 0.01 ||
         pub974.specified_deduction + pub974.attributable_specified_ptc >
           pub974.specified_premiums + 0.01
       )
@@ -1198,12 +1205,14 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const line26 = alternativeMarriage ? 0 : Math.max(0, line24 - line25);
     const line27 = Math.max(0, line25 - line24);
     const cap = line27 > 0
-      ? repaymentCap(incomePct, input.filing_status)
+      ? pub974?.worksheet_x_repayment_limit ??
+        repaymentCap(incomePct, input.filing_status)
       : null;
     const line29 = cap === null ? line27 : Math.min(line27, cap);
 
     const formFields: Record<string, unknown> = {
       ...baseFields,
+      ...(pub974 ? { pub974_reconciliation: pub974 } : {}),
       ...(mfsStatus ? { mfs_exception_ind: true } : {}),
       ...(qsehraFacts ? { qsehra_ind: true } : {}),
       ...(allocations.length > 0

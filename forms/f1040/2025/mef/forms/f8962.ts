@@ -15,6 +15,7 @@ import { inputSchema as generalSchema } from "../../../nodes/inputs/general/inde
 import { inputSchema as f1099intSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
 import { roundForm8962Amounts } from "../../form8962-money.ts";
+import { assertForm8962Pub974Return } from "../../form8962_pub974_return.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 interface MonthlyRow {
@@ -83,6 +84,16 @@ export interface Fields {
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
+
+function repaymentLimitForFields(
+  fields: Input,
+  tableLimit: number | undefined,
+): number | undefined {
+  if (fields.pub974_reconciliation === undefined) return tableLimit;
+  return form8962InputSchema.shape.pub974_reconciliation.parse(
+    fields.pub974_reconciliation,
+  )?.worksheet_x_repayment_limit;
+}
 
 const MONTH_CODES = [
   "JANUARY",
@@ -727,7 +738,11 @@ function reconcileSimpleAnnualPolicy(
   const advance = Math.round(annualAptc);
   const net = Math.max(0, credit - advance);
   const excess = Math.max(0, advance - credit);
-  const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);
+  const repaymentLimit = repaymentLimitForFields(
+    fields,
+    incomeAmounts.repaymentCap,
+  );
+  const repayment = Math.min(excess, repaymentLimit ?? excess);
   if (
     fields.annual_applicable_contribution !== annualContribution ||
     fields.monthly_applicable_contribution !==
@@ -743,7 +758,7 @@ function reconcileSimpleAnnualPolicy(
     (fields.excess_advance_payment ?? 0) !== excess ||
     (fields.excess_advance_premium ?? 0) !== repayment ||
     fields.repayment_limitation !==
-      (excess > 0 ? incomeAmounts.repaymentCap : undefined)
+      (excess > 0 ? repaymentLimit : undefined)
   ) {
     throw new Error(
       "Form 8962 annual line 11 and lines 24 through 29 differ from Form 1095-A and calculated contribution",
@@ -2286,7 +2301,11 @@ function reconcileSimplePolicyMonths(
   const advance = rows.reduce((sum, row) => sum + (row.aptc ?? 0), 0);
   const net = Math.max(0, credit - advance);
   const excess = Math.max(0, advance - credit);
-  const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);
+  const repaymentLimit = repaymentLimitForFields(
+    fields,
+    incomeAmounts.repaymentCap,
+  );
+  const repayment = Math.min(excess, repaymentLimit ?? excess);
   if (
     fields.total_premium_tax_credit !== credit ||
     fields.total_advance_ptc !== advance ||
@@ -2294,7 +2313,7 @@ function reconcileSimplePolicyMonths(
     (fields.excess_advance_payment ?? 0) !== excess ||
     (fields.excess_advance_premium ?? 0) !== repayment ||
     fields.repayment_limitation !==
-      (excess > 0 ? incomeAmounts.repaymentCap : undefined)
+      (excess > 0 ? repaymentLimit : undefined)
   ) {
     throw new Error(
       "Form 8962 lines 24 through 29 differ from sourced monthly policy totals",
@@ -3173,6 +3192,7 @@ export const form8962: MefFormDescriptor<"form8962", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8962.pdf",
   build(fields, context) {
+    assertForm8962Pub974Return(fields, context?.pending);
     return buildIRS8962(fields, context);
   },
 };

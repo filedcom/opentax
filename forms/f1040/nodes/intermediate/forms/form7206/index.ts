@@ -333,6 +333,8 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
               filing_status: source.worksheet_x.filing_status,
               total_premium_tax_credit: result.form8962_fields
                 .total_premium_tax_credit as number,
+              worksheet_x_repayment_limit:
+                result.worksheet_x.line25_repayment_limit,
               specified_premiums: result.worksheet_w.line1_specified_premiums,
               attributable_specified_ptc: result.attributable_specified_ptc,
               specified_deduction: result.schedule1_line17_deduction -

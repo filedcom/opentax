@@ -8,6 +8,7 @@ import { inputSchema as generalSchema } from "../../../nodes/inputs/general/inde
 import { form8962 as form8962Mef } from "../../mef/forms/f8962.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
+import { assertForm8962Pub974Return } from "../../form8962_pub974_return.ts";
 
 // TY2025 Form 8962 AcroForm fields, verified against the year-pinned IRS PDF.
 const PAGE1 = "topmostSubform[0].Page1[0]";
@@ -209,6 +210,7 @@ function projectFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> {
+  assertForm8962Pub974Return(fields, allPending);
   const hasPolicy = fields.annual_premium !== undefined ||
     fields.annual_aptc !== undefined || fields.annual_slcsp !== undefined ||
     Array.isArray(fields.monthly_ptc_rows);
