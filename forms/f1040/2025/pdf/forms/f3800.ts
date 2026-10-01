@@ -6,6 +6,10 @@ import {
   inputSchema as f8820InputSchema,
 } from "../../../nodes/inputs/f8820/index.ts";
 import {
+  calculateForm5884,
+  inputSchema as f5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
+import {
   calculateForm8874,
   inputSchema as f8874InputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
@@ -104,6 +108,49 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    if (source.f5884_credit) {
+      const workOpportunity = f5884InputSchema.parse(all.f5884);
+      if (
+        workOpportunity.f5884s.length === 1 &&
+        (workOpportunity.pass_through_credits?.length ?? 0) === 0
+      ) {
+        const lines = calculateForm5884(workOpportunity);
+        const rawSource = f3800InputSchema.parse(raw);
+        const rows = prepared.currentRows.filter((row) => row.line === "4b");
+        const amounts = prepared.currentAmounts.filter((row) =>
+          row.line === "4b"
+        );
+        const details = prepared.currentDetails.filter((row) =>
+          row.line === "4b"
+        );
+        if (
+          workOpportunity.subject_to_passive_activity_limit ||
+          lines.line2 <= 0 || lines.line3 !== 0 ||
+          source.f5884_credit.subject_to_passive_activity_limit ||
+          source.f5884_credit.credit_amount !== lines.line4 ||
+          JSON.stringify(rawSource.f5884_credit) !==
+            JSON.stringify(source.f5884_credit) ||
+          rows.length !== 1 || amounts.length !== 1 ||
+          details.length !== 1 || rows[0].metadata.sourceCount !== 1 ||
+          rows[0].metadata.referenceDocumentName !== "IRS5884" ||
+          !rows[0].metadata.referenceDocumentId ||
+          details[0].sourceDocumentId !==
+            rows[0].metadata.referenceDocumentId ||
+          details[0].passThroughEin !== undefined ||
+          details[0].credit !== lines.line4 ||
+          details[0].appliedCredit !== amounts[0].appliedCredit ||
+          amounts[0].nonpassiveCredit !== lines.line4 ||
+          amounts[0].totalCredit !== lines.line4 ||
+          amounts[0].passiveBeforeLimit !== 0 ||
+          amounts[0].passiveAfterLimit !== 0 ||
+          amounts[0].transferOutCredit !== 0
+        ) {
+          throw new Error(
+            "Form 3800 PDF line 4b differs from one self-earned Form 5884 source",
+          );
+        }
+      }
+    }
     if (
       source.f8820_credit && source.f8874_credit &&
       (source.f8820_k1_credit_entries?.length ?? 0) === 0 &&

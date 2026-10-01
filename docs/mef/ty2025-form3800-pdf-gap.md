@@ -14,6 +14,20 @@ credit fails before any page fields are projected. Positive and tamper fixtures
 are authored for the deferred bulk run; this closes the direct-projection
 amount drift, while individual credit-source authenticity remains open.
 
+For one nonpassive, self-earned Form 5884 employer claim, the Form 3800 PDF
+now recalculates the work opportunity credit from the employee certification,
+hours, and payroll source, and matches it to the pending and raw Form 3800
+credit. It rechecks the prepared native Part III line 4b and its one linked
+Part V source detail, then uses the existing line 38 → Schedule 3 line 6a/8
+→ Form 1040 line 20 join. Positive and changed hours, prepared detail, raw
+credit, and final-return fixtures are authored but unrun. The
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) place
+current-year work opportunity credit in Part III and require the appropriate
+credit source form; the [Form 5884 instructions](https://www.irs.gov/instructions/i5884)
+require state certification and a wage-deduction reduction. This PDF check
+does not expand support for multiple employees, pass-through combinations,
+passive credits, or independent certification/payroll authentication.
+
 The direct partnership K-1 orphan-drug route now carries one nonpassive 2025 code Z
 credit to Form 3800 Part III line 1h, Part II line 38, Schedule 3 line 6a/8,
 and Form 1040 line 20. The native preparer already matches the claimed credit
