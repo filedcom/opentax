@@ -121,3 +121,28 @@ authored for the deferred batch.
 The referenced records are reviewed assertions, not authenticated bytes.
 Multiple workers, family employees, other minor classifications, and prior or
 current FUTA-qualifying quarters remain outside this FICA-only route.
+
+## One spouse employee with agreed withholding on a joint return (written, unrun)
+
+The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
+exclude wages paid to a spouse from FICA and FUTA, while a completed Form W-4
+and the household employer's agreement can support federal income tax
+withholding. The family payroll source now has direct child and spouse variants.
+The spouse variant requires a reviewed marriage date before 2025, distinct
+marriage, relationship, and 2025 marriage-continuity records, payroll, Form
+W-4 and Form W-2 references, and an affirmation that the marriage continued
+through 2025. The 2025 quarters
+must sum to W-2 box 1; at least one reaches $1,000 to demonstrate the family
+FUTA exclusion. W-2 boxes 3/5 and Schedule H FICA/FUTA remain zero.
+
+This bounded joint-return route requires the employer to be the primary filer
+and the employee to match the final-filer spouse identity. Exactly one filed
+W-2 must match the spouse SSN, employer EIN, wages, withholding, and zero FICA
+boxes. The same W-2 wages and withholding must reach Form 1040 lines 1a and
+25a. Schedule H line 7/8 and Schedule 2 line 9 must equal W-2 box 2 and
+Form 1040 line 23. Native and PDF exports replay those final-return joins.
+The synthetic $5,000 wage/$250 withholding and source/identity/return tamper
+fixtures are authored for the deferred batch. Source references are reviewed
+assertions, not authenticated document bytes. Separate returns, multiple
+workers or W-2s, other relationship histories, and other family cases remain
+open.

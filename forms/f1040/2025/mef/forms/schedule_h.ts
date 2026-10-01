@@ -4,6 +4,7 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule_h/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
 
 export interface Fields {
   employer_ein?: string;
@@ -172,16 +173,43 @@ function buildIRS1040ScheduleH(
   }
   if (source.family_withholding_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    const family = source.family_withholding_only_payroll;
+    const spouseW2s = (context.pending?.w2 as {
+      w2s?: Array<Record<string, unknown>>;
+    } | undefined)?.w2s;
+    const spouseW2 = spouseW2s?.length === 1 ? spouseW2s[0] : undefined;
+    const return1040 = context.pending?.f1040 as
+      | Record<string, unknown>
+      | undefined;
+    const digits = (value: unknown): string | undefined =>
+      typeof value === "string" ? value.replace(/\D/g, "") : undefined;
     if (
       filer.primarySSN.replace(/\D/g, "") !==
-        source.family_withholding_only_payroll.employer_parent_ssn ||
+        family.employer_ssn ||
+      (family.employee.relationship === "spouse" &&
+        (filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          filer.spouse?.ssn.replace(/\D/g, "") !==
+            family.employee.employee_ssn ||
+          digits(spouseW2?.employee_ssn) !==
+            family.employee.employee_ssn ||
+          digits(spouseW2?.employer_ein) !==
+            fields.employer_ein ||
+          spouseW2?.box1_wages !== family.employee.w2.box1_wages ||
+          spouseW2?.box2_fed_withheld !==
+            family.employee.w2.box2_federal_income_tax_withheld ||
+          spouseW2?.box3_ss_wages !== 0 ||
+          spouseW2?.box5_medicare_wages !== 0 ||
+          return1040?.line1a_wages !== family.employee.w2.box1_wages ||
+          return1040?.line25a_w2_withheld !==
+            family.employee.w2.box2_federal_income_tax_withheld ||
+          return1040?.line23_other_taxes !== amounts.totalTax)) ||
       JSON.stringify(retained.family_withholding_only_payroll) !==
-        JSON.stringify(source.family_withholding_only_payroll) ||
+        JSON.stringify(family) ||
       (context.pending?.schedule2 as Record<string, unknown> | undefined)
           ?.line9_household_employment !== amounts.totalTax
     ) {
       throw new Error(
-        "Schedule H child withholding source must match the filer, retained payroll, and Schedule 2 line 9",
+        "Schedule H family withholding source must match the filer, spouse W-2 and Form 1040 if applicable, retained payroll, and Schedule 2 line 9",
       );
     }
   }

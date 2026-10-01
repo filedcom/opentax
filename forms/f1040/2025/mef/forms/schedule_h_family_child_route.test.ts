@@ -28,7 +28,7 @@ const source = {
   federal_income_tax_withheld: 250,
   family_withholding_only_payroll: {
     all_household_employees_included: true,
-    employer_parent_ssn: "400001032",
+    employer_ssn: "400001032",
     employee: {
       employee_id: "child-employee-1",
       employee_ssn: "400001041",
