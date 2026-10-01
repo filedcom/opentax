@@ -609,3 +609,25 @@ The payer and lender record identifiers and amounts remain supplied facts;
 issued bytes are not authenticated. Mixed loan use, a second loan, capital-gain
 distributions, foreign income/tax, prior carryover, and line 4g election remain
 outside this bounded route.
+
+## Traced Treasury interest and taxable OID pair (2026-10-01, unrun)
+
+The single direct-use taxable-securities loan now admits one affirmed Form
+1099-INT box 3 Treasury-interest payer together with one unadjusted taxable
+Form 1099-OID box 1 payer. Their payer names and issued-copy references must
+be present and distinct. The existing income-source reconciliation matches
+both amounts separately to Form 4952 line 4a and their sum to Form 1040 line
+2b; the loan guard checks the retained principal, purchase, lender total,
+individual interest payments, numbered Form 4952 lines, Schedule A line 9,
+and final filer identity before native or PDF export. A $60,000 box 3 plus
+$40,000 box 1 OID return with $20,000 of traced interest, and changed-copy,
+OID amount, and owner fixtures are authored for the deferred batch.
+
+The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+includes investment-property interest income on line 4a. The
+[IRS 1099-INT/OID instructions](https://www.irs.gov/instructions/i1099int)
+identify Treasury interest in Form 1099-INT box 3 and taxable OID in Form
+1099-OID box 1. Bond premium, adjusted OID, foreign-source/tax facts,
+dividends, prior carryover, mixed-use or second debt, and line 4g elections
+remain outside this pair. Issuer, lender, payment, and broker bytes have not
+been authenticated.

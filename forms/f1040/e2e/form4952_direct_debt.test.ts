@@ -52,7 +52,8 @@ function filing(
     | "two_interest"
     | "two_interest_dividend"
     | "two_interest_two_dividends"
-    | "interest_two_dividends" = "interest",
+    | "interest_two_dividends"
+    | "treasury_oid" = "interest",
   spouseOwned = false,
 ) {
   return execute(buildExecutionPlan(registry), registry, {
@@ -112,6 +113,21 @@ function filing(
               source === "interest_two_dividends"
             ? 60_000
             : 100_000,
+          investment_property_for_form4952: true,
+        }],
+      }
+      : source === "treasury_oid"
+      ? {
+        f1099int: [{
+          payer_name: "Treasury interest broker",
+          source_document_reference: "issued-2025-treasury-box3",
+          box3: 60_000,
+          investment_property_for_form4952: true,
+        }],
+        f1099oid: [{
+          payer_name: "Taxable OID bond broker",
+          source_document_reference: "issued-2025-taxable-oid-box1",
+          box1_oid: 40_000,
           investment_property_for_form4952: true,
         }],
       }
@@ -215,6 +231,75 @@ Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF"
   assertEquals(
     form4952Pdf.instances!(fields, testFiler(), result.pending).length,
     1,
+  );
+});
+
+Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 investment income", () => {
+  const result = filing("treasury_oid");
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form4952!;
+  assertEquals(fields.line1, 20_000);
+  assertEquals(fields.line4a, 100_000);
+  assertEquals(fields.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 100_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentIncomeAmt>100000</InvestmentIncomeAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  assertEquals(
+    form4952Pdf.instances!(fields, testFiler(), result.pending).length,
+    1,
+  );
+  const interest = result.pending.f1099int!;
+  const oid = result.pending.f1099oid!;
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: {
+          ...result.pending,
+          f1099oid: {
+            ...oid,
+            f1099oids: [{
+              ...oid.f1099oids[0],
+              source_document_reference:
+                interest.f1099ints[0].source_document_reference,
+            }],
+          },
+        },
+        filer: testFiler(),
+      }),
+    Error,
+    "supported 1099-INT, 1099-DIV, or taxable 1099-OID investment payer inventory",
+  );
+  assertThrows(
+    () =>
+      form4952Pdf.projectFields!(fields, {
+        ...result.pending,
+        f1099oid: {
+          ...oid,
+          f1099oids: [{ ...oid.f1099oids[0], box1_oid: 39_999 }],
+        },
+      }),
+    Error,
+    "Form 4952 interest path supports only",
+  );
+  assertThrows(
+    () =>
+      form4952Pdf.instances!(
+        fields,
+        { ...testFiler(), primarySSN: "999887777" },
+        result.pending,
+      ),
+    Error,
+    "owner must match the final filer",
   );
 });
 
