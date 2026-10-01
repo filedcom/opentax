@@ -9,6 +9,7 @@ import {
   multiSourcePdfReviewSchema,
   singleSourcePdfReviewSchema,
   twoCountryInterestPdfReviewSchema,
+  twoCountryMixedPdfReviewSchema,
   twoCountryTreasuryPdfReviewSchema,
 } from "../../intermediate/forms/form_1116/index.ts";
 
@@ -25,6 +26,7 @@ export const inputSchema = z.object({
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
+  two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
   two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
 }).strict();
 
@@ -40,6 +42,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
       multi_source_pdf_review,
       mixed_interest_dividend_pdf_review,
       two_country_interest_pdf_review,
+      two_country_mixed_pdf_review,
       two_country_treasury_pdf_review,
       ...preferential
     } = review;
@@ -49,6 +52,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         multi_source_pdf_review,
         mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review,
+        two_country_mixed_pdf_review,
         two_country_treasury_pdf_review,
       ].filter(Boolean).length > 1
     ) {
@@ -63,6 +67,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         multi_source_pdf_review,
         mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review,
+        two_country_mixed_pdf_review,
         two_country_treasury_pdf_review,
       })],
     };

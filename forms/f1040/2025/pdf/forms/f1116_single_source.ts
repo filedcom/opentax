@@ -8,6 +8,7 @@ import {
   singleSourceK3PdfReviewSchema,
   singleSourcePdfReviewSchema,
   twoCountryInterestPdfReviewSchema,
+  twoCountryMixedPdfReviewSchema,
   twoCountryTreasuryPdfReviewSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { inputSchema as f1099intInputSchema } from "../../../nodes/inputs/f1099int/index.ts";
@@ -20,6 +21,7 @@ import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividen
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
+import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -53,8 +55,9 @@ export function projectSingleSourceForm1116Pdf(
     fields,
     pending,
   );
+  const twoCountryMixed = reconcileForm1116TwoCountryMixed(fields, pending);
   const twoCountry = reconcileForm1116TwoCountryInterest(fields, pending) ??
-    twoCountryTreasury;
+    twoCountryTreasury ?? twoCountryMixed;
   const mixed = reconcileForm1116MixedInterestDividend(fields, pending);
   const dividend = reconcileForm1116ForeignDividend(fields, pending);
   const multi = reconcileForm1116MultiForeignInterest(fields, pending);
@@ -66,7 +69,12 @@ export function projectSingleSourceForm1116Pdf(
   }
   const item = twoCountry
     ? {
-      ...summary.items[0],
+      ...(twoCountryMixed
+        ? summary.items.find((row) =>
+          row.tax_kind === ForeignTaxKind.Interest
+        ) ??
+          summary.items[0]
+        : summary.items[0]),
       foreign_gross_income: twoCountry.foreignGross,
       foreign_tax_paid: twoCountry.foreignTax,
     }
@@ -91,6 +99,8 @@ export function projectSingleSourceForm1116Pdf(
     (twoCountry
       ? twoCountryTreasury
         ? twoCountryTreasuryPdfReviewSchema
+        : twoCountryMixed
+        ? twoCountryMixedPdfReviewSchema
         : twoCountryInterestPdfReviewSchema
       : mixed
       ? mixedInterestDividendPdfReviewSchema
@@ -103,6 +113,8 @@ export function projectSingleSourceForm1116Pdf(
         twoCountry
           ? twoCountryTreasury
             ? fields.two_country_treasury_pdf_review
+            : twoCountryMixed
+            ? fields.two_country_mixed_pdf_review
             : fields.two_country_interest_pdf_review
           : mixed
           ? fields.mixed_interest_dividend_pdf_review
@@ -458,7 +470,10 @@ export function projectSingleSourceForm1116Pdf(
     !f1040 || !schedule3 ||
     (twoCountry
       ? f1040.line2b_taxable_interest !==
-        (twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross)
+          (twoCountryMixed?.a.gross ??
+            twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) ||
+        (twoCountryMixed !== undefined &&
+          f1040.line3b_ordinary_dividends !== twoCountryMixed.b.gross)
       : mixed
       ? f1040.line2b_taxable_interest !==
           summary.items.find((row) => row.tax_kind === ForeignTaxKind.Interest)
@@ -482,7 +497,8 @@ export function projectSingleSourceForm1116Pdf(
     !zero(f1040.line13b_additional_deductions) ||
     pending.schedule1a?.senior_zero_exclusions_review === true ||
     otherIncomeLines.some((key) =>
-      (key !== "line3b_ordinary_dividends" || !(dividend || mixed)) &&
+      (key !== "line3b_ordinary_dividends" ||
+        !(dividend || mixed || twoCountryMixed)) &&
       !zero(f1040[key])
     ) ||
     (!reportedOn1099 && pending.f1099int !== undefined) ||
@@ -571,7 +587,7 @@ export function projectSingleSourceForm1116Pdf(
     income_category: summary.category,
     pdf_country_a: twoCountry?.a.country ?? item.irs_country_code,
     pdf_country_b: twoCountry?.b.country,
-    pdf_income_description: mixed
+    pdf_income_description: mixed || twoCountryMixed
       ? "Interest and dividend income"
       : dividend
       ? "Dividend income"
@@ -628,7 +644,8 @@ export function projectSingleSourceForm1116Pdf(
       ? undefined
       : item.foreign_tax_paid,
     pdf_part2_total_a: twoCountry?.a.tax ?? item.foreign_tax_paid,
-    pdf_part2_us_interest_b: twoCountry?.b.tax,
+    pdf_part2_us_interest_b: twoCountryMixed ? undefined : twoCountry?.b.tax,
+    pdf_part2_us_dividend_b: twoCountryMixed?.b.tax,
     pdf_part2_total_b: twoCountry?.b.tax,
     pdf_line8: item.foreign_tax_paid,
     pdf_line9: item.foreign_tax_paid,

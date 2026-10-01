@@ -1,5 +1,28 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Two-country interest and ordinary dividends (written, unrun):** One issued
+Canadian Form 1099-INT with foreign box 1/box 6 and one issued French
+corporation Form 1099-DIV with nonqualified foreign box 1a/box 7 and France
+in box 8 now occupy
+separate passive Form 1116 country columns. A single
+`two_country_mixed_pdf_review` binds each column to its exact source copy and
+country. The existing dividend holding review establishes the qualifying
+31-day period and absence of a related-payment obligation. The source guard
+checks the separate income and tax kinds, exclusion of other statement boxes,
+both five-decimal standard-deduction allocations, Schedule 3 line 1, and
+Form 1040 taxable interest, ordinary dividends, taxable income, and tax.
+Native MeF emits two country sources; the parent PDF puts interest withholding
+in Part II row A and dividend withholding in row B. Positive full-return and
+source, country, holding, review, and return-tamper fixtures are authored for
+deferred validation. Requiring the French country in Form 1099-DIV box 8
+excludes the RIC pass-through reporting pattern, for which the issuer leaves
+box 8 blank under the [Form 1099-DIV instructions](https://www.irs.gov/instructions/i1099div).
+This bound excludes qualified dividends,
+domestic income, additional payers, source bytes, and filled-output/XSD review.
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+direct separate country columns in Parts I and II and permit U.S.-dollar
+Form 1099-INT/1099-DIV taxes in Part II with “1099 taxes” as the date.
+
 **Two foreign countries with same-issuer Treasury box 3 (written, unrun):**
 One Canadian Form 1099-INT now supplies foreign box 1/box 6 and domestic
 U.S. Treasury box 3 on the same issued statement; a separate French Form

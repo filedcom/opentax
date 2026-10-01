@@ -144,6 +144,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("pdf_part2_us_interest_a", `${part2a}f1_59[0]`),
   textField("pdf_part2_us_interest_b", `${part2b}f1_69[0]`),
   textField("pdf_part2_us_dividend_a", `${part2a}f1_57[0]`),
+  textField("pdf_part2_us_dividend_b", `${part2b}f1_67[0]`),
   textField("pdf_part2_us_other_a", `${part2a}f1_60[0]`),
   textField("pdf_part2_total_a", `${part2a}f1_61[0]`),
   textField("pdf_part2_total_b", `${part2b}f1_71[0]`),

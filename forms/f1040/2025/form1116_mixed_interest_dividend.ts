@@ -55,6 +55,7 @@ export function reconcileForm1116MixedInterestDividend(
   interestTax: number;
   dividendTax: number;
 } | undefined {
+  if (fields.two_country_mixed_pdf_review !== undefined) return undefined;
   const raw = fields.category_summaries;
   const parsed = Array.isArray(raw) && raw.length === 1
     ? categorySummarySchema.safeParse(raw[0])
