@@ -1,3 +1,5 @@
+import { schedule2Part1Total } from "../nodes/intermediate/aggregation/schedule2/index.ts";
+
 /** Replay final Form 1040 tax and payment subtotals before native/PDF export. */
 export function assertReturnWideArithmetic(
   fields: Record<string, unknown>,
@@ -79,5 +81,68 @@ export function assertReturnWideArithmetic(
     !matches(line33, line25d + (amount("line26_estimated_tax") ?? 0) + line32)
   ) {
     throw new Error("Form 1040 line 33 differs from withholding and payments");
+  }
+}
+
+/** Match attached Schedule totals to the final return after graph execution. */
+export function assertReturnScheduleJoins(
+  fields: Record<string, unknown>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  if (!pending) return;
+  const amount = (row: Record<string, unknown>, key: string): number => {
+    const value = row[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  };
+  const record = (key: string): Record<string, unknown> | undefined => {
+    const value = pending[key];
+    return value !== null && typeof value === "object" &&
+        !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : undefined;
+  };
+  const match = (filed: number, source: number, label: string): void => {
+    if (Math.abs(filed - source) >= 0.01) {
+      throw new Error(`Form 1040 ${label} differs from its attached Schedule`);
+    }
+  };
+
+  const schedule1 = record("schedule1");
+  if (schedule1) {
+    const income = schedule1.line10_total_additional_income;
+    if (typeof income === "number") {
+      match(amount(fields, "line8_additional_income"), income, "line 8");
+    }
+    const adjustments = schedule1.line26_total_adjustments;
+    if (typeof adjustments === "number") {
+      match(amount(fields, "line10_adjustments"), adjustments, "line 10");
+    }
+  }
+
+  const schedule1a = record("schedule1a");
+  if (schedule1a && typeof schedule1a.line38_total === "number") {
+    match(
+      amount(fields, "line13b_additional_deductions"),
+      schedule1a.line38_total,
+      "line 13b",
+    );
+  }
+
+  const schedule2 = record("schedule2");
+  if (schedule2) {
+    match(
+      amount(fields, "line17_additional_taxes"),
+      schedule2Part1Total(schedule2),
+      "line 17",
+    );
+  }
+
+  const schedule3 = record("schedule3");
+  if (schedule3) {
+    match(
+      amount(fields, "line31_additional_payments"),
+      amount(schedule3, "line15_total"),
+      "line 31",
+    );
   }
 }

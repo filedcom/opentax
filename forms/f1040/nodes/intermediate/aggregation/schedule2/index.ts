@@ -155,6 +155,10 @@ function part1Total(input: Schedule2Input): number {
     (input.line1f_form4255_20_percent_ep ?? 0);
 }
 
+export function schedule2Part1Total(raw: unknown): number {
+  return part1Total(inputSchema.parse(raw));
+}
+
 function part2Total(input: Schedule2Input): number {
   return (input.line4_se_tax ?? 0) +
     (input.line5_unreported_tip_tax ?? 0) +

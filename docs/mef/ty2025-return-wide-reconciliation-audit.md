@@ -16,13 +16,20 @@ line 20 or line 31 when the final 1040 component is present. It accepts
 unsupplied optional line components as zero, matching the sink's arithmetic.
 Positive and per-subtotal tamper fixtures are authored for the bulk test gate.
 
+The next bounded pass checks attached Schedule 1 line 10/26 against Form 1040
+lines 8/10; Schedule 1-A line 38 against line 13b; Schedule 2 Part I against
+line 17; and Schedule 3 line 15 against line 31. Both native and PDF Form 1040
+entry points use the same pending-graph replay. This rejects a conflicting
+final return deposit even when its own Form 1040 arithmetic remains coherent.
+Schedule 2 Part I reuses its calculator rather than maintaining a second sum.
+
 ## Remaining return-wide work
 
 | Area | Current graph observation | Unresolved join |
 | --- | --- | --- |
 | Income/AGI | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 9, 11, and 15. | Recompute income, adjustments, deduction choice, and taxable income from identified source rows at export; sparse direct sink inputs currently prevent a blanket equality assertion. |
-| Schedule 1 and 1-A | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; positive line 13b has a separate attachment check. | General lines 8/10 and all Schedule 1-A deductions need a single final-source replay across calculation, native page, PDF, and Form 1040. |
-| Schedule 2 and 3 | The aggregators deposit additional taxes and credits/payments, while several credits are finalized in the Form 1040 sink after tax is known. | Replay every Schedule 2 line 3/21 and Schedule 3 lines 8/15 against the final Form 1040 and attached child rows after all late credit ordering is resolved. The staged check proves only the 1040 arithmetic, not child authenticity. |
+| Schedule 1 and 1-A | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040. | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open. |
+| Schedule 2 and 3 | Schedule 2 Part I and Schedule 3 payment total now reconcile to Form 1040; several credits are finalized in the Form 1040 sink after tax is known. | Replay Schedule 2 Part II and Schedule 3 nonrefundable credits against final tax after Form 8978 reductions and late credit ordering. The staged check proves totals, not child authenticity. |
 | Withholding and payments | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines. | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31. |
 | Multiple copies and carryovers | Several child descriptors create multiple owner/source-specific native and PDF copies; credit and loss carryovers have route-specific ledgers. | Require a complete per-copy source inventory and origin-year/earlier-use ledger across the final return. One arithmetic total cannot establish that all copies belong to the taxpayer or that a carryover is available. |
 

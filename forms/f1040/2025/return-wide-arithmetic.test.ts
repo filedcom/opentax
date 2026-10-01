@@ -1,6 +1,7 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "./mef/forms/f1040.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
+import { assertReturnScheduleJoins } from "./return-wide-arithmetic.ts";
 
 const filed = {
   filing_status: "single",
@@ -51,4 +52,73 @@ Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => 
       reason,
     );
   }
+});
+
+Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
+  const fields = {
+    line8_additional_income: 300,
+    line10_adjustments: 50,
+    line13b_additional_deductions: 75,
+    line17_additional_taxes: 100,
+    line31_additional_payments: 40,
+  };
+  const pending = {
+    schedule1: {
+      line10_total_additional_income: 300,
+      line26_total_adjustments: 50,
+    },
+    schedule1a: { line38_total: 75 },
+    schedule2: { line2_amt: 100 },
+    schedule3: { line15_total: 40 },
+  };
+  assertReturnScheduleJoins(fields, pending);
+  for (
+    const [key, reason] of [
+      ["line8_additional_income", "line 8"],
+      ["line10_adjustments", "line 10"],
+      ["line13b_additional_deductions", "line 13b"],
+      ["line17_additional_taxes", "line 17"],
+      ["line31_additional_payments", "line 31"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnScheduleJoins({ ...fields, [key]: 999 }, pending),
+      Error,
+      reason,
+    );
+  }
+
+  const attached = {
+    schedule1: pending.schedule1,
+    schedule2: pending.schedule2,
+    schedule3: pending.schedule3,
+  };
+  const filedWithSchedules = {
+    line8_additional_income: 300,
+    line10_adjustments: 50,
+    line17_additional_taxes: 100,
+    line31_additional_payments: 40,
+  };
+  assertStringIncludes(
+    irs1040.build(filedWithSchedules, { pending: attached }),
+    "<TotalAdditionalIncomeAmt>300</TotalAdditionalIncomeAmt>",
+  );
+  irs1040Pdf.projectFields?.(filedWithSchedules, attached);
+  assertThrows(
+    () =>
+      irs1040.build({ ...filedWithSchedules, line8_additional_income: 301 }, {
+        pending: attached,
+      }),
+    Error,
+    "line 8",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { ...filedWithSchedules, line31_additional_payments: 41 },
+        attached,
+      ),
+    Error,
+    "line 31",
+  );
 });

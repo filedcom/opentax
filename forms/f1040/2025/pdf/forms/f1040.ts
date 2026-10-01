@@ -7,7 +7,10 @@ import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
-import { assertReturnWideArithmetic } from "../../return-wide-arithmetic.ts";
+import {
+  assertReturnScheduleJoins,
+  assertReturnWideArithmetic,
+} from "../../return-wide-arithmetic.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -571,6 +574,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     assertReturnWideArithmetic(fields);
+    assertReturnScheduleJoins(fields, allPending);
     const residentElection = residentElectionName(fields, allPending);
     assertMfsEitcSource(
       fields.filing_status,
