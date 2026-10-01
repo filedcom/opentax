@@ -153,6 +153,7 @@ Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => 
   const base = isoContext(180_000);
   const first = {
     payerName: "First Dividend Payer",
+    source_document_reference: "issued-2025-1099-div-first",
     isNominee: false,
     box11: false,
     box1a: 7_000,
@@ -160,6 +161,7 @@ Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => 
   };
   const second = {
     payerName: "Second Dividend Payer",
+    source_document_reference: "issued-2025-1099-div-second",
     isNominee: false,
     box11: false,
     box1a: 5_000,
@@ -194,6 +196,20 @@ Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => 
   );
   assertThrows(
     () => form6251Pdf.projectFields!(fields, changedPayer),
+    Error,
+    "reconciled 1099-DIV payers",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields!(fields, {
+        ...pending,
+        f1099div: {
+          f1099divs: [first, {
+            ...second,
+            source_document_reference: first.source_document_reference,
+          }],
+        },
+      }),
     Error,
     "reconciled 1099-DIV payers",
   );

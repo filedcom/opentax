@@ -112,6 +112,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
     codeB.issuer_crosswalk.issuer_reported_amount !== codeB.reported_amount ||
     codeB.issuer_crosswalk.box13_code_i_statement_reference !==
       codeI.statement_reference ||
+    codeB.issuer_crosswalk.issuer_expense_item_id !==
+      codeI.issuer_expense_item_id ||
     codeB.issuer_crosswalk.royalty_property_description !==
       royalty.property_description ||
     Object.keys(k1).some((key) => !permittedPartnershipFields.has(key)) ||
@@ -132,7 +134,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
     source.source_document_reference !== k1.source_document_reference ||
     source.box7_gross_royalties !== gross ||
     source.box13_code_i_allowed_deduction !== expense ||
-    source.box13_code_i_statement_reference !== codeI.statement_reference
+    source.box13_code_i_statement_reference !== codeI.statement_reference ||
+    source.issuer_expense_item_id !== codeI.issuer_expense_item_id
   ) {
     throw new Error(
       "Form 4952 code B must identify the same allowed code I expense deducted once on its K-1 Schedule E royalty row",

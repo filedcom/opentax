@@ -144,3 +144,25 @@ is `.state/research/ty2025-form1116-alternative-compensation-full.pdf`
 The affected focused run passed 110/110 tests. Uploaded wage and tax-record
 bytes, mixed employers and deductions, other categories, wider carryovers,
 IRS business rules, ATS acceptance, and the final bulk regression remain open.
+
+## Same-employee second foreign-employer wages (implementation staged)
+
+The [2025 line 1b instructions](https://www.irs.gov/instructions/i1116)
+measure **total employee compensation from U.S. and foreign sources**, not
+just the compensation item allocated on line 1a. A bounded two-record route
+now permits one alternative-basis foreign-service pay item below $250,000 when
+one additional foreign-employer record puts the **same employee's** combined
+compensation at or above $250,000. Both records must carry that employee's SSN
+and distinct wage-document references; the alternative item's reference must
+match its statement. The second record must have only U.S.-service wages, no
+foreign tax, no exclusion, and no alternative allocation. The existing dated
+paid-tax, allocation and statement checks still apply to the first record.
+
+Form 1116 calculation includes only the first item's foreign-service amount
+on line 1a and includes both wages in worldwide gross income. Native MeF and
+PDF projections independently match the combined wage inventory to the filer,
+Form 1040 line 1h/1z, standard-deduction ratio, and Schedule 3 credit. The
+source, complete-graph, native, PDF, and owner-tamper fixtures are authored
+for the deferred bulk run. W-2 wages, non-box-1 compensation, mixed foreign
+service/tax on the second employer, spouse wages, more employers, and uploaded
+wage-record byte authentication remain closed.

@@ -152,6 +152,7 @@ export const itemSchema = z.object({
     box7_gross_royalties: z.number().positive(),
     box13_code_i_allowed_deduction: z.number().nonnegative().optional(),
     box13_code_i_statement_reference: z.string().trim().min(1).optional(),
+    issuer_expense_item_id: z.string().trim().min(1).optional(),
   }).strict().optional(),
   // One reviewed 1099-MISC box 2 mapped to this royalty property. The
   // passthrough amount is the same income, not a second Schedule E receipt.

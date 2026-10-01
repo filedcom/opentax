@@ -366,3 +366,24 @@ reduction statement. The current native Section B builder correctly rejects a
 claim below appraised FMV without the supported land-election reason. No new
 positive Section B route can be asserted from the existing typed and reviewed
 facts alone; these source and document contracts are the build prerequisite.
+
+## Bounded purchased short-term Section B equipment (2026-10-01)
+
+One current-year purchased equipment gift can now use a basis-limited claim
+above $5,000 when the acquisition and contribution dates show no more than one
+year of holding. The source requires an identified capital asset that was not
+inventory, donor-created property, or subject to depreciation/recapture. Its
+purchase/basis record, full signed qualified appraisal, completed signed Form
+8283, and separate FMV-reduction computation each require reviewer/date and
+SHA-256 evidence; appraiser and donee signature PDFs are separate. The reduction
+statement must show original FMV, basis, removed short-term gain, and the claim.
+Native filing checks the actual attachment digests, distinct document IDs,
+and complete Schedule A inventory against the Form 8283 source and itemized
+Form 1040 total. The PDF prints appraised FMV and basis-limited claim separately
+and describes the reduction. A synthetic full-return positive, altered-PDF-byte,
+and altered-Form-1040 fixture are authored but unrun. Actual taxpayer source
+bytes and reviews are required before a real filing can use this route.
+Other Section B property types, multiple gifts, other reduction reasons, and
+carryover attachment combinations remain closed. This route follows the
+[2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+for ordinary-income-property reductions and signed Form 8283 attachments.

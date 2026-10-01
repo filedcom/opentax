@@ -1,5 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { inputSchema as fecInputSchema } from "../../../nodes/inputs/fec/index.ts";
+import {
+  alternativeCompensationWorldwideTotal,
+  inputSchema as fecInputSchema,
+} from "../../../nodes/inputs/fec/index.ts";
 import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { projectSingleSourceForm1116Pdf } from "./f1116_single_source.ts";
 import { projectGeneralWageForm1116Pdf } from "./f1116_general_wage.ts";
@@ -188,7 +191,13 @@ export const form1116Pdf: PdfFormDescriptor = {
           return matches.length !== 1 || !source ||
             JSON.stringify(source.alternative_compensation_sourcing) !==
               JSON.stringify(alternative) ||
-            source.compensation_usd < 250_000 ||
+            alternativeCompensationWorldwideTotal(
+                fec.data.fecs,
+                source,
+                typeof allPending.general?.taxpayer_ssn === "string"
+                  ? allPending.general.taxpayer_ssn
+                  : undefined,
+              ) < 250_000 ||
             Math.round(source.compensation_usd * 100) !==
               Math.round(alternative.compensation_item_total_usd * 100) ||
             Math.round((source.foreign_service_compensation_usd ?? 0) * 100) !==

@@ -14,6 +14,7 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertNeedyVehicleUnreducedSource,
+  assertOrdinarySectionBReconciled,
   assertOrdinarySectionAReconciled,
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
@@ -637,6 +638,59 @@ function requiredReductionAttachment(
   return id;
 }
 
+function requiredShortTermAttachments(
+  item: SectionBItem,
+  context: MefBuildContext,
+): string[] {
+  const evidence = item.short_term_tangible_reduction;
+  const appraisal = item.qualified_appraisal;
+  if (!evidence || !appraisal?.attachment_file_name ||
+    !appraisal.full_appraisal_source_review ||
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review) {
+    throw new Error("Form 8283 short-term equipment needs reviewed purchase, appraisal, signed form, and reduction PDFs");
+  }
+  const names = [
+    evidence.purchase_record_attachment_file_name,
+    appraisal.attachment_file_name,
+    item.signed_form_attachment_file_name,
+    evidence.reduction_statement_attachment_file_name,
+    appraisal.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+  ];
+  if (names.some((name) => !name) || new Set(names).size !== names.length) {
+    throw new Error("Form 8283 short-term equipment evidence must use six distinct PDFs");
+  }
+  const reviewed = [
+    [evidence.purchase_record_attachment_file_name,
+      "Form 8283 Section B purchase and basis record",
+      evidence.purchase_record_review.pdf_sha256],
+    [evidence.reduction_statement_attachment_file_name,
+      "Form 8283 Section B FMV reduction statement",
+      evidence.reduction_statement_review.pdf_sha256],
+  ] as const;
+  const ids: string[] = [];
+  for (const [name, description, digest] of reviewed) {
+    if (context.attachmentDescriptionsByFileName?.[name] !== description) {
+      throw new Error(`Form 8283 short-term equipment needs ${description}`);
+    }
+    if (context.documentIdsByPendingKey) {
+      if (context.attachmentSha256ByFileName?.[name] !== digest) {
+        throw new Error(`Form 8283 short-term equipment ${description} bytes differ from reviewed SHA-256`);
+      }
+      const id = context.documentIdsByAttachmentFileName?.[name];
+      if (!id) throw new Error(`Form 8283 short-term equipment ${description} has no linked MeF document`);
+      ids.push(id);
+    }
+  }
+  const appraisalId = requiredQualifiedAppraisalAttachment(
+    appraisal.attachment_file_name,
+    context,
+    appraisal.full_appraisal_source_review,
+  );
+  if (appraisalId) ids.push(appraisalId);
+  return ids;
+}
+
 function requiredSignedFormAttachment(
   item: SectionBItem,
   context: MefBuildContext,
@@ -740,10 +794,11 @@ function buildSectionBItem(
   }
   if (
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0 &&
-    item.capital_gain_reduction_election_confirmed !== true
+    item.capital_gain_reduction_election_confirmed !== true &&
+    item.short_term_tangible_reduction === undefined
   ) {
     throw new Error(
-      "Form 8283 Section B reduced claim needs a sourced FMV-reduction computation and statement; only the reviewed capital-gain election route is supported",
+      "Form 8283 Section B reduced claim needs a supported reviewed FMV-reduction computation and statement",
     );
   }
   const appraisal = item.qualified_appraisal;
@@ -762,6 +817,9 @@ function buildSectionBItem(
     (id): id is string => id !== undefined,
   );
   const signedFormId = requiredSignedFormAttachment(item, context);
+  const shortTermIds = item.short_term_tangible_reduction
+    ? requiredShortTermAttachments(item, context)
+    : [];
   const artAtLeast20000 =
     item.property_type === SectionBPropertyType.ArtAtLeast20000;
   if (
@@ -772,7 +830,8 @@ function buildSectionBItem(
       "Form 8283 art needs its complete signed appraisal PDF separate from the completed signed Form 8283",
     );
   }
-  const qualifiedAppraisalId = similarGroupTotal > 500_000 || artAtLeast20000
+  const qualifiedAppraisalId = (similarGroupTotal > 500_000 || artAtLeast20000) &&
+      item.short_term_tangible_reduction === undefined
     ? requiredQualifiedAppraisalAttachment(
       appraisal.attachment_file_name,
       context,
@@ -784,6 +843,7 @@ function buildSectionBItem(
     qualifiedAppraisalId,
     reductionAttachmentId,
     signedFormId,
+    ...shortTermIds,
     ...signatureIds,
   ]
     .filter(
@@ -857,7 +917,10 @@ export const form8283: MefFormDescriptor<
       return buildCarryoverDocuments(parsed, context);
     }
     if (
-      (parsed.section_a_items ?? []).some(needsFmvReductionStatement) &&
+      ((parsed.section_a_items ?? []).some(needsFmvReductionStatement) ||
+        (parsed.section_b_items ?? []).some((item) =>
+          item.short_term_tangible_reduction !== undefined
+        )) &&
       context.pending?.f8283 !== undefined &&
       JSON.stringify(parsed) !==
         JSON.stringify(inputSchema.parse(context.pending.f8283))
@@ -879,6 +942,9 @@ export const form8283: MefFormDescriptor<
     const electedB = (parsed.section_b_items ?? []).some((item) =>
       item.capital_gain_reduction_election_confirmed === true
     );
+    const shortTermB = (parsed.section_b_items ?? []).some((item) =>
+      item.short_term_tangible_reduction !== undefined
+    );
     if (elected || electedB) {
       if (electedB) {
         assertElectedSectionBReconciled(context);
@@ -891,6 +957,9 @@ export const form8283: MefFormDescriptor<
       ) {
         throw new Error("Form 8283 election differs from the pending source");
       }
+    }
+    if (shortTermB) {
+      assertOrdinarySectionBReconciled(context, SectionBPropertyType.Equipment);
     }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];

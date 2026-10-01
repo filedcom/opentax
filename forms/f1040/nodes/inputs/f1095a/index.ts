@@ -135,6 +135,9 @@ export const itemSchema = z.object({
         "marketplace_tool",
         "marketplace_contact",
       ]),
+      determination_reference: z.string().trim().min(1).optional(),
+      determination_record_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+      determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }).strict(),
   ).min(1).optional(),
   // Separate source records for a no-APTC positive PTC claim. The Marketplace

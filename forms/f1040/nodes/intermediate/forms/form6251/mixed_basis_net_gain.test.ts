@@ -130,3 +130,86 @@ Deno.test("Form 6251 short-term mixed-sign rows retain a zero difference", () =>
   assertEquals(filed?.fields.line2k_disposition, 0);
   assertEquals(filed?.fields.amti, 200_000);
 });
+
+Deno.test("Form 6251 nets audited long-term gains and losses for AMT Part III", () => {
+  const longGain = {
+    ...gain,
+    source_transaction_id: "long-gain",
+    part: "D" as const,
+  };
+  const longLoss = {
+    ...loss,
+    source_transaction_id: "long-loss",
+    part: "E" as const,
+  };
+  const longInput = {
+    ...input,
+    regular_taxable_income: 200_000,
+    net_capital_gain: 2_000,
+    line2k_8949_basis_dispositions: [longGain, longLoss],
+    line2k_8949_capital_audit: {
+      transactions: [longGain, longLoss].map((row) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        gain_loss: row.regular_gain,
+      })),
+      has_other_capital_activity: false,
+    },
+  };
+  const result = compute(longInput);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, 300);
+  assertEquals(filed?.fields.amti, 200_300);
+  assertEquals(filed?.fields.line13, 2_300);
+  assertEquals(filed?.fields.line15, 2_300);
+  assertStringIncludes(
+    mef6251.build(filed!.fields),
+    "<CapitalGainsWorksheetAmt>2300</CapitalGainsWorksheetAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+    })?.line13,
+    2_300,
+  );
+  assertThrows(
+    () => compute({ ...longInput, net_capital_gain: 0 }),
+    Error,
+    "regular Schedule D net capital gain",
+  );
+  assertThrows(
+    () => compute({ ...longInput, qualified_dividends: 100 }),
+    Error,
+    "no preferential-rate extras",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...longInput,
+        line2k_8949_capital_audit: {
+          ...longInput.line2k_8949_capital_audit,
+          transactions: [
+            longInput.line2k_8949_capital_audit.transactions[0],
+            longInput.line2k_8949_capital_audit.transactions[0],
+          ],
+        },
+      }),
+    Error,
+    "complete Schedule D source audit",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...longInput,
+        line2k_8949_basis_dispositions: [longGain, {
+          ...longLoss,
+          amt_basis: 9_000,
+          amt_gain: -5_000,
+        }],
+      }),
+    Error,
+    "net positive long-term gains",
+  );
+});

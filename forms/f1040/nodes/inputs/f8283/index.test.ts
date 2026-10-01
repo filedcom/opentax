@@ -589,6 +589,75 @@ Deno.test("f8283.inputSchema: Section B election is limited to purchased unimpro
   }
 });
 
+Deno.test("f8283.inputSchema: purchased short-term Section B equipment needs reviewed basis, appraisal, signed form and statement", () => {
+  const gift = {
+    property_type: SectionBPropertyType.Equipment,
+    date_acquired: "2025-01-15",
+    date_contributed: "2025-06-01",
+    donor_acquisition_description: "Purchase",
+    fmv: 18_000,
+    deduction_claimed: 12_000,
+    cost_or_adjusted_basis: 12_000,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    signed_form_attachment_file_name: "Signed8283.pdf",
+    signed_form_source_review: {
+      reviewed_by: "Reviewer", reviewed_on: "2025-09-01", pdf_sha256: "a".repeat(64),
+      appraiser_signature_present: true as const,
+      donee_signature_present: true as const,
+      matches_electronic_form_confirmed: true as const,
+    },
+    qualified_appraisal: {
+      appraiser_first_name: "Jane", appraiser_last_name: "Smith",
+      signed_date: "2025-05-28", appraiser_ein: "123456789",
+      signed_by_appraiser: true as const,
+      attachment_file_name: "Appraisal.pdf",
+      full_appraisal_source_review: {
+        reviewed_by: "Reviewer", reviewed_on: "2025-09-01", pdf_sha256: "b".repeat(64),
+        signed_appraisal_confirmed: true as const,
+        donated_property_matches_confirmed: true as const,
+        appraised_fmv_matches_confirmed: true as const,
+      },
+      us_address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+    },
+    short_term_tangible_reduction: {
+      short_term_gain_removed: 6_000,
+      purchase_record_attachment_file_name: "Purchase.pdf",
+      purchase_record_review: {
+        reviewed_by: "Reviewer", reviewed_on: "2025-09-01", pdf_sha256: "c".repeat(64),
+        property_dates_basis_match_confirmed: true as const,
+        capital_asset_not_inventory_confirmed: true as const,
+        no_depreciation_or_recapture_confirmed: true as const,
+        donor_did_not_create_property_confirmed: true as const,
+      },
+      reduction_statement_attachment_file_name: "Reduction.pdf",
+      reduction_statement_review: {
+        reviewed_by: "Reviewer", reviewed_on: "2025-09-01", pdf_sha256: "d".repeat(64),
+        property_and_fmv_match_confirmed: true as const,
+        basis_and_short_term_gain_match_confirmed: true as const,
+        reduced_claim_matches_confirmed: true as const,
+      },
+    },
+  };
+  assertEquals(inputSchema.safeParse({ section_b_items: [gift] }).success, true);
+  for (const changed of [
+    { ...gift, date_acquired: "2023-01-15" },
+    { ...gift, deduction_claimed: 12_001 },
+    { ...gift, short_term_tangible_reduction: {
+      ...gift.short_term_tangible_reduction,
+      short_term_gain_removed: 5_999,
+    } },
+    { ...gift, qualified_appraisal: undefined },
+    { ...gift, signed_form_source_review: undefined },
+    { ...gift, short_term_tangible_reduction: {
+      ...gift.short_term_tangible_reduction,
+      reduction_statement_review: undefined,
+    } },
+  ]) {
+    assertEquals(inputSchema.safeParse({ section_b_items: [changed] }).success, false);
+  }
+});
+
 // =============================================================================
 // 5. Informational Fields — must NOT produce tax outputs
 // =============================================================================

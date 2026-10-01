@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
@@ -150,5 +155,70 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
     () => buildMefBundle(buildPending(changed), { filer, attachments: [] }),
     Error,
     "must match each identified foreign-employer wage item",
+  );
+});
+
+Deno.test("two owner-matched foreign employers establish worldwide compensation for one alternative wage item", async () => {
+  const secondWageReference = "2025 second foreign employer wage ledger";
+  const twoEmployerInputs = {
+    ...inputs,
+    fec: [{
+      ...inputs.fec[0],
+      compensation_amount: 160_000,
+      compensation_usd: 200_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: wageReference,
+      alternative_compensation_sourcing: {
+        ...alternative,
+        compensation_item_total_usd: 200_000,
+        alternative_us_source_usd: 60_000,
+        ordinary_us_source_usd: 80_000,
+        alternative_allocation_computation:
+          "140000 of 200000 salary sourced to Germany",
+      },
+    }, {
+      foreign_employer_name: "Second Foreign Employer",
+      country_code: "FR",
+      currency: "EUR",
+      compensation_amount: 80_000,
+      compensation_usd: 100_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: secondWageReference,
+      foreign_service_compensation_usd: 0,
+      foreign_tax_paid_usd: 0,
+    }],
+  };
+  const result = execute(buildExecutionPlan(registry), registry, twoEmployerInputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
+  assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
+  const projected = form1116Pdf.projectFields?.(
+    result.pending.form_1116!,
+    result.pending,
+  ) ?? {};
+  assertEquals(projected.pdf_line3e_a, 300_000);
+  assertEquals(projected.pdf_line3g_a, 7_350);
+  assertEquals(projected.pdf_line7, 132_650);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer,
+    attachments: [],
+  });
+  assertStringIncludes(bundle.xml, "<AltBasisCompensationSourceStmt documentId=");
+  const altered = structuredClone(result.pending);
+  (altered.fec as { fecs: Array<{ compensation_owner_ssn: string }> })
+    .fecs[1].compensation_owner_ssn = "999-88-7777";
+  assertThrows(
+    () => form1116Pdf.projectFields?.(altered.form_1116!, altered),
+    Error,
+    "must match each sourced foreign-employer compensation item",
+  );
+  await assertRejects(
+    () => buildMefBundle(buildPending(altered), { filer, attachments: [] }),
+    Error,
+    "employee's $250,000 threshold",
   );
 });

@@ -381,6 +381,7 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
     nonpassive_investment_property: true,
     issuer_crosswalk: {
       issuer_supplement_reference: "2025 K-1 investment supplement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       issuer_reported_amount: 600,
       same_expense_as_box13_code_i_confirmed: true,
       box13_code_i_statement_reference: "2025 code I statement",
@@ -402,6 +403,7 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
       reported_amount: 600,
       allowed_amount: 600,
       statement_reference: "2025 code I statement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       expense_kind: "depreciation",
       basis_workpaper_reference: "2025 basis review",
       at_risk_workpaper_reference: "2025 at-risk review",
@@ -437,6 +439,30 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
       }]),
     Error,
     "same issuer-identified",
+  );
+  assertThrows(
+    () => compute([{ ...item, box20_code_b_investment_expenses: {
+      ...codeB,
+      issuer_crosswalk: {
+        ...codeB.issuer_crosswalk,
+        issuer_expense_item_id: "another-depreciation-item",
+      },
+    } }]),
+    Error,
+    "same issuer-identified",
+  );
+  assertThrows(
+    () => compute([item, item]),
+    Error,
+    "issuer expense item ID must be unique",
+  );
+  assertThrows(
+    () => compute([item, {
+      ...item,
+      source_document_reference: "amended 2025 K-1",
+    }]),
+    Error,
+    "issuer expense item ID must be unique",
   );
   assertThrows(
     () =>

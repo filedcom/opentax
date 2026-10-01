@@ -5,7 +5,10 @@ import {
   IncomeCategory,
   singleSourcePdfReviewSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
-import { inputSchema as fecInputSchema } from "../../../nodes/inputs/fec/index.ts";
+import {
+  alternativeCompensationWorldwideTotal,
+  inputSchema as fecInputSchema,
+} from "../../../nodes/inputs/fec/index.ts";
 import { assertAlternativeCompensationSources } from "../../mef/forms/f1116_alternative_compensation_source.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
@@ -25,7 +28,7 @@ function ratio(numerator: number, denominator: number): number {
     100_000;
 }
 
-/** One employer, a sourced line 1b election, and the filed standard deduction. */
+/** One alternative wage item, a sourced compensation inventory, and the filed standard deduction. */
 export function projectGeneralWageForm1116Pdf(
   fields: Record<string, unknown>,
   pending: Pending,
@@ -75,14 +78,36 @@ export function projectGeneralWageForm1116Pdf(
     );
   }
   const fec = fecInputSchema.safeParse(pending.fec);
-  if (!fec.success || fec.data.fecs.length !== 1) {
+  if (!fec.success || fec.data.fecs.length < 1 || fec.data.fecs.length > 2) {
     throw new Error(
-      "Form 1116 general wage PDF needs one foreign-employer source",
+      "Form 1116 general wage PDF needs one or two identified foreign-employer sources",
     );
   }
   assertAlternativeCompensationSources([summary], { pending });
-  const wage = fec.data.fecs[0];
-  const gross = wage.compensation_usd;
+  const wage = fec.data.fecs.find((source) =>
+    source.alternative_compensation_sourcing?.source_document_reference ===
+      alternative.source_document_reference
+  );
+  const gross = fec.data.fecs.reduce(
+    (sum, source) => sum + source.compensation_usd,
+    0,
+  );
+  const taxpayerSsn = typeof pending.general?.taxpayer_ssn === "string"
+    ? pending.general.taxpayer_ssn
+    : undefined;
+  if (
+    !wage ||
+    (fec.data.fecs.length === 2 && !taxpayerSsn) ||
+    alternativeCompensationWorldwideTotal(
+        fec.data.fecs,
+        wage,
+        taxpayerSsn,
+      ) < 250_000
+  ) {
+    throw new Error(
+      "Form 1116 general wage PDF needs the identified employee's $250,000 compensation inventory",
+    );
+  }
   const foreign = item.foreign_gross_income;
   const tax = item.foreign_tax_paid;
   const line18 = fields.total_income;

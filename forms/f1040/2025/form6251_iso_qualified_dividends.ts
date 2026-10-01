@@ -19,8 +19,14 @@ export function assertIsoQualifiedDividendSource(
     (sum, payer) => sum + (payer.box1b ?? 0),
     0,
   );
+  const sourceReferences = payers.map((payer) =>
+    payer.source_document_reference
+  );
   if (
     payers.length === 0 || !form1040 ||
+    (payers.length > 1 &&
+      (sourceReferences.some((reference) => reference === undefined) ||
+        new Set(sourceReferences).size !== payers.length)) ||
     ordinaryTotal < qualified || qualifiedTotal !== qualified ||
     payers.some((payer) =>
       payer.isNominee !== false || payer.box11 !== false ||

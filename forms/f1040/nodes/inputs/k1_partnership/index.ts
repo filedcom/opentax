@@ -140,6 +140,7 @@ export const itemSchema = z.object({
     reported_amount: z.number().positive(),
     allowed_amount: z.number().nonnegative(),
     statement_reference: z.string().trim().min(1),
+    issuer_expense_item_id: z.string().trim().min(1).optional(),
     expense_kind: z.enum([
       "depreciation",
       "depletion",
@@ -236,6 +237,7 @@ export const itemSchema = z.object({
     nonpassive_investment_property: z.literal(true),
     issuer_crosswalk: z.object({
       issuer_supplement_reference: z.string().trim().min(1),
+      issuer_expense_item_id: z.string().trim().min(1),
       issuer_reported_amount: z.number().positive(),
       same_expense_as_box13_code_i_confirmed: z.literal(true),
       box13_code_i_statement_reference: z.string().trim().min(1),
@@ -493,6 +495,8 @@ export const itemSchema = z.object({
       codeB.issuer_crosswalk.issuer_reported_amount !== codeB.reported_amount ||
       codeB.issuer_crosswalk.box13_code_i_statement_reference !==
         codeI.statement_reference ||
+      codeB.issuer_crosswalk.issuer_expense_item_id !==
+        codeI.issuer_expense_item_id ||
       codeB.issuer_crosswalk.royalty_property_description !==
         royalty.property_description
     ) {
@@ -520,7 +524,23 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  k1_partnerships: z.array(itemSchema).min(1),
+  k1_partnerships: z.array(itemSchema).min(1).superRefine((items, ctx) => {
+    const seen = new Set<string>();
+    for (const [index, item] of items.entries()) {
+      const id = item.box20_code_b_investment_expenses?.issuer_crosswalk
+        .issuer_expense_item_id;
+      if (!id) continue;
+      const key = `${item.partnership_ein}:${id}`;
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [index, "box20_code_b_investment_expenses"],
+          message: "K-1 code B issuer expense item ID must be unique within its partnership",
+        });
+      }
+      seen.add(key);
+    }
+  }),
 });
 
 type K1PartnershipItem = z.infer<typeof itemSchema>;
@@ -580,6 +600,9 @@ function royaltyScheduleEOutputs(items: K1PartnershipItems): NodeOutput[] {
             ? {
               box13_code_i_allowed_deduction: deduction.allowed_amount,
               box13_code_i_statement_reference: deduction.statement_reference,
+              ...(deduction.issuer_expense_item_id
+                ? { issuer_expense_item_id: deduction.issuer_expense_item_id }
+                : {}),
             }
             : {}),
         },

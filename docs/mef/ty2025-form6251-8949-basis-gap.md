@@ -109,5 +109,20 @@ the **$300 difference**, not the $2,300 AMT net amount, and Part III gets no
 capital gain. A zero difference remains zero. Mixed terms, a zero or negative
 net on either side, an item changing sign between bases, dividends, Form 4952,
 Form 2555, special-rate gain, source-audit mismatch, and other capital activity
-remain rejected. This does not calculate any carryover or expand the long-term
-mixed-sign route. The shared test, XSD, filled-PDF and ATS gates remain open.
+remain rejected. This does not calculate any carryover. The shared test, XSD,
+filled-PDF and ATS gates remain open.
+
+A parallel long-term-only mixed-sign net-gain slice is now staged. Every
+identified Part II gain and loss must retain its sign under both regular and AMT
+bases; the complete Schedule D audit contains exactly those rows and no other
+capital activity. The regular and AMT long-term net totals must each be
+positive. Form 6251 line 2k receives their signed difference, and Part III uses
+the AMT net as preferential gain while retaining the regular net for its
+regular-tax worksheet base. For $3,000 regular gain less $1,000 regular loss,
+and $3,500 AMT gain less $1,200 AMT loss, the line 2k adjustment is $300 and
+Part III lines 13/15 use $2,300. The source, calculation, native/PDF, and
+rejection fixtures are authored for the deferred bulk pass. Mixed terms,
+qualified dividends, special-rate gain, Form 4952 elections, Form 2555, net loss
+or zero under either basis, and carryovers remain closed. See the
+[2025 Schedule D instructions](https://www.irs.gov/pub/irs-prior/i1040sd--2025.pdf)
+and [2025 Form 6251](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).

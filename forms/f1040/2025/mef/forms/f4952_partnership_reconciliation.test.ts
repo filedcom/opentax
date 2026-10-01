@@ -291,6 +291,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
       reported_amount: 350,
       allowed_amount: 350,
       statement_reference: "2025 code I statement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       expense_kind: "depreciation" as const,
       basis_workpaper_reference: "2025 basis review",
       at_risk_workpaper_reference: "2025 at-risk review",
@@ -302,6 +303,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
       nonpassive_investment_property: true as const,
       issuer_crosswalk: {
         issuer_supplement_reference: "2025 K-1 investment supplement",
+        issuer_expense_item_id: "mineral-property-depreciation-1",
         issuer_reported_amount: 350,
         same_expense_as_box13_code_i_confirmed: true as const,
         box13_code_i_statement_reference: "2025 code I statement",

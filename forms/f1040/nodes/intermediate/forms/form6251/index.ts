@@ -578,35 +578,41 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const lossBasisRows = basisRows.filter((row) =>
       row.regular_gain < 0 || row.amt_gain < 0
     );
+    const regularBasisNet = basisRows.reduce(
+      (sum, row) => sum + row.regular_gain,
+      0,
+    );
+    const amtBasisNet = basisRows.reduce(
+      (sum, row) => sum + row.amt_gain,
+      0,
+    );
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
-      const regularNet = basisRows.reduce(
-        (sum, row) => sum + row.regular_gain,
-        0,
-      );
-      const amtNet = basisRows.reduce(
-        (sum, row) => sum + row.amt_gain,
-        0,
-      );
       const lossLimit = input.filing_status === FilingStatus.MFS
         ? -1_500
         : -3_000;
       const oneTermOnly = shortTermBasisRows.length === basisRows.length ||
         longTermBasisRows.length === basisRows.length;
-      const fullyDeductibleNetLoss = regularNet < 0 && amtNet < 0 &&
-        regularNet >= lossLimit && amtNet >= lossLimit;
+      const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
+        regularBasisNet >= lossLimit && amtBasisNet >= lossLimit;
       // A positive net of short-term rows changes ordinary AMTI, not the
       // preferential Schedule D net capital gain or Form 6251 Part III.
       const positiveShortTermNet =
         shortTermBasisRows.length === basisRows.length &&
-        regularNet > 0 && amtNet > 0;
+        regularBasisNet > 0 && amtBasisNet > 0;
+      // A positive net of long-term rows is preferential gain after losses
+      // offset gains separately under the regular and AMT bases.
+      const positiveLongTermNet =
+        longTermBasisRows.length === basisRows.length &&
+        regularBasisNet > 0 && amtBasisNet > 0;
       if (
         !oneTermOnly ||
         lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
         ) ||
-        !(fullyDeductibleNetLoss || positiveShortTermNet) ||
+        !(fullyDeductibleNetLoss || positiveShortTermNet ||
+          positiveLongTermNet) ||
         (input.qualified_dividends ?? 0) !== 0 ||
         (input.form4952_regular_election ?? 0) !== 0 ||
         (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
@@ -618,7 +624,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         (input.foreign_earned_income_exclusion ?? 0) !== 0
       ) {
         throw new Error(
-          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits or net positive short-term gains, with no preferential-rate or other capital activity",
+          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits, net positive short-term gains, or net positive long-term gains, with no preferential-rate extras or other capital activity",
         );
       }
     }
@@ -652,6 +658,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       if (
         !audit || audit.has_other_capital_activity || !auditedRows ||
         auditedRows.length !== basisRows.length ||
+        new Set(auditedRows.map((row) => row.source_transaction_id)).size !==
+          auditedRows.length ||
         auditedRows.some((audited) => {
           const source = basisRows.find((row) =>
             row.source_transaction_id === audited.source_transaction_id
@@ -695,7 +703,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
       if (
         regularNetCg !==
-          (lossBasisRows.length > 0 ? 0 : sourceRegularNetCapitalGain) ||
+          (lossBasisRows.length > 0
+            ? longTermBasisRows.length === basisRows.length &&
+                regularBasisNet > 0
+              ? regularBasisNet
+              : 0
+            : sourceRegularNetCapitalGain) ||
         (shortTermBasisRows.length > 0 &&
           ((input.form4952_regular_election ?? 0) !== 0 ||
             (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
@@ -728,7 +741,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     // become preferential net capital gain on the AMT Schedule D.
     const netCg = basisRows.length > 0
       ? lossBasisRows.length > 0
-        ? 0
+        ? longTermBasisRows.length === basisRows.length && amtBasisNet > 0
+          ? amtBasisNet
+          : 0
         : longTermBasisRows.reduce((sum, row) => sum + row.amt_gain, 0)
       : regularNetCg + line2k;
     const amtElection = input.form4952_amt_election ?? 0;

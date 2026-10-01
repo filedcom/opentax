@@ -32,9 +32,29 @@ an interior uncovered month and are written but unrun. The
 [2025 monthly instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
 direct a blank contribution column when both premium and SLCSP are blank.
 
+An additional bounded route handles an **unreported** interstate move when
+the arrival policy's Form 1095-A column B is wrong. The arrival policy must
+have one unreported `move` review from the first arrival month through
+December and one independently determined `move` SLCSP correction for every
+covered arrival month. Each correction records a Marketplace tool/contact
+method, nonempty determination reference, reviewed source-record SHA-256, and
+determination date between the coverage month and April 15, 2026. The
+original annual column B must still total the original twelve monthly
+statement amounts; the corrected series feeds Form 8962 monthly calculation,
+native MeF, and PDF. Native/PDF projection rejects an omitted or altered
+arrival correction, another policy's correction, a reported move paired with
+corrections, or an unreported move without corrections. Source/calculation,
+MeF/PDF, and tampering fixtures are authored but unrun. The [2025 Form 8962
+instructions, line 10](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+direct taxpayers who moved without notifying the Marketplace to determine
+the applicable SLCSP when column B may be wrong; [2025 Publication
+974](https://www.irs.gov/publications/p974) identifies the Marketplace tool
+or Marketplace contact as determination channels.
+
 This does not authorize an annual line 11 for a move, multiple household
-members, shared policies, move-related SLCSP corrections, unreported moves,
-overlapping policies, more than two states, or switching back to a prior
-state. The residence facts identify the intended calculation but are not
-independently authenticated. The full test batch, XSD validation, filled-page
+members, shared policies, corrections on the departure policy, partially
+determined arrival months, overlapping policies, more than two states, or
+switching back to a prior state. The residence and determination metadata
+identify the intended calculation but their underlying record bytes remain
+subject to external review. The full test batch, XSD validation, filled-page
 review, IRS business rules, and ATS acknowledgments remain pending.

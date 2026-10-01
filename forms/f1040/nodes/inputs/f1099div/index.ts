@@ -55,6 +55,7 @@ const nomineeDistributionSchema = z.object({
 
 export const itemSchema = z.object({
   payerName: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   isNominee: z.boolean(),
   nominee_distribution: nomineeDistributionSchema.optional(),
   box11: z.boolean(),

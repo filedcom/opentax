@@ -1709,7 +1709,7 @@ function reconcileSimplePolicyMonths(
         : policy.coverage_state !== context.filer?.address.state) ||
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || policy.shared_policy_periods ||
-      policy.slcsp_corrections ||
+      (!interstateMove && policy.slcsp_corrections) ||
       (!interstateMove && policy.slcsp_review_periods)
     ) ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
@@ -1834,19 +1834,50 @@ function reconcileSimplePolicyMonths(
     );
     const reviews = arrivalPolicy?.slcsp_review_periods;
     const review = reviews?.[0];
+    const arrivalCorrections = arrivalPolicy?.slcsp_corrections;
+    const correctedMove = arrivalCorrections !== undefined;
     if (
       moveIndex < 1 || reviews?.length !== 1 ||
       review?.reason !== "move" ||
-      review?.reported_to_marketplace !== true ||
+      review?.reported_to_marketplace !== !correctedMove ||
       review?.start_month !== moveIndex + 1 ||
       review?.end_month !== 12 ||
       policies.some((policy) =>
-        policy !== arrivalPolicy && policy.slcsp_review_periods !== undefined
+        policy !== arrivalPolicy &&
+        (policy.slcsp_review_periods !== undefined ||
+          policy.slcsp_corrections !== undefined)
       )
     ) {
       throw new Error(
-        "Form 8962 interstate move needs a reported Marketplace move review on the arrival policy",
+        "Form 8962 interstate move needs a matching Marketplace move review on the arrival policy",
       );
+    }
+    if (correctedMove) {
+      const correctedMonths = new Set(arrivalCorrections.map((item) => item.month));
+      const coveredMonths = arrivalPolicy!.monthly_premiums!.flatMap((amount, index) =>
+        amount > 0 || arrivalPolicy!.monthly_aptcs![index] > 0
+          ? [index + 1]
+          : []
+      );
+      if (
+        arrivalCorrections.length !== coveredMonths.length ||
+        correctedMonths.size !== coveredMonths.length ||
+        coveredMonths.some((month) =>
+          month < moveIndex + 1 || !correctedMonths.has(month)
+        ) ||
+        arrivalCorrections.some((item) =>
+          item.basis !== "move" || item.corrected_slcsp <= 0 ||
+          !item.determination_reference ||
+          !item.determination_record_sha256 ||
+          !item.determined_on || !validIsoDate(item.determined_on) ||
+          item.determined_on < `2025-${String(item.month).padStart(2, "0")}-01` ||
+          item.determined_on > "2026-04-15"
+        )
+      ) {
+        throw new Error(
+          "Form 8962 unreported interstate move needs a complete sourced Marketplace SLCSP correction for each covered arrival month",
+        );
+      }
     }
   }
   const annualContribution = Math.round(householdIncome * incomeAmounts.figure);
@@ -1966,13 +1997,16 @@ function reconcileSimplePolicyMonths(
         sum + (activePolicy.monthly_premiums?.[index] ?? 0),
       0,
     );
+    const correctedSlcsp = policy.slcsp_corrections?.find((item) =>
+      item.month === index + 1
+    )?.corrected_slcsp;
     const slcsp = twoStateFamilyPolicies && active.length === 2
       ? active.reduce(
         (sum, activePolicy) =>
           sum + (activePolicy.monthly_slcsps?.[index] ?? 0),
         0,
       )
-      : policy.monthly_slcsps?.[index];
+      : correctedSlcsp ?? policy.monthly_slcsps?.[index];
     const aptc = active.reduce(
       (sum, activePolicy) => sum + (activePolicy.monthly_aptcs?.[index] ?? 0),
       0,
@@ -1986,7 +2020,7 @@ function reconcileSimplePolicyMonths(
     const filedSlcsp = roundForm8962Amounts(
       twoStateFamilyPolicies && active.length === 2
         ? active.map((activePolicy) => activePolicy.monthly_slcsps![index])
-        : [policy.monthly_slcsps![index]],
+        : [correctedSlcsp ?? policy.monthly_slcsps![index]],
     );
     const filedAptc = roundForm8962Amounts(
       active.map((activePolicy) => activePolicy.monthly_aptcs![index]),
