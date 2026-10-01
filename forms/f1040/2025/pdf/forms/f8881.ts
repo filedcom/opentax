@@ -66,8 +66,8 @@ export const form8881Pdf: PdfFormDescriptor = {
   },
   instances(fields, _filer, allPending, prepared) {
     if (Object.keys(fields).length === 0) return [];
-    if (!allPending?.f8881 || !allPending.f3800 || !prepared) {
-      throw new Error("Form 8881 PDF needs the prepared Form 3800 document");
+    if (!allPending?.f8881 || !allPending.f3800) {
+      throw new Error("Form 8881 PDF needs the filed source return");
     }
     const lines = reconcileForm8881DirectEmployer(allPending);
     const expected = form8881Pdf.projectFields!(allPending.f8881, allPending);
@@ -79,6 +79,10 @@ export const form8881Pdf: PdfFormDescriptor = {
     const documentIds = new Set<string>();
     if (JSON.stringify(fields) !== JSON.stringify(expected)) {
       throw new Error("Form 8881 PDF differs from filed source lines");
+    }
+    if (parts.every((part) => part.credit === 0)) return [fields];
+    if (!prepared) {
+      throw new Error("Form 8881 PDF needs the prepared Form 3800 document");
     }
     for (const part of parts) {
       const rows = prepared.currentRows.filter((row) => row.line === part.line);

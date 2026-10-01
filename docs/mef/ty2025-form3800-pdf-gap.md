@@ -22,6 +22,10 @@ unclaimed rows, requires one IRS8881 document ID across the prepared rows and
 details, and follows line 38 through Schedule 3 and Form 1040. Startup plus
 enrollment and three-part military-spouse positives, with altered print,
 document ID, amount, line 38, and final-credit cases, await the bulk run.
+One valid contribution-only source can phase out to zero at 100 employees.
+Its child PDF source projection remains available without a prepared parent,
+with a source-line tamper fixture; public MeF/PDF export still rejects that
+zero-credit claim under the existing positive-credit guards.
 
 The direct PDF descriptor now requires the pending Form 3800 allowed-credit
 amount to match both its return-wide pending source and the prepared native

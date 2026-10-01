@@ -283,6 +283,56 @@ Deno.test("Form 8881 child PDF rejects changed source, prepared part links, and 
   );
 });
 
+Deno.test("Form 8881 contribution phaseout retains its zero-credit source projection", () => {
+  const zeroSource = {
+    schedule_c_business_reference: source.schedule_c_business_reference,
+    plan_type: source.plan_type,
+    contributions: {
+      plan_effective_on: "2025-01-01",
+      preceding_first_plan_year_qualified_employee_count: 100,
+      preceding_2025_employee_count: 100,
+      eligible_defined_contribution_plan_confirmed: true,
+      no_substantially_same_employee_plan_in_prior_three_years_confirmed: true,
+      contribution_deduction_reduced_by_credit_confirmed: true,
+      employees: [{
+        employee_reference: "PLAN-EMP-1",
+        contribution_record_reference: "PLAN-PAY-1",
+        contributed_on: "2025-09-15",
+        wages_2025: 50_000,
+        qualified_employer_contribution: 1_000,
+        elective_deferrals_excluded_confirmed: true,
+      }],
+    },
+  };
+  const zeroPending = {
+    ...pending,
+    f8881: zeroSource,
+    f3800: {
+      f8881_credit: {
+        schedule_c_business_reference: source.schedule_c_business_reference,
+        part_i_credit: 0,
+        part_ii_credit: 0,
+        part_iii_credit: 0,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  };
+  const fields = form8881Pdf.projectFields!(zeroSource, zeroPending);
+  assertEquals(fields.line8, 0);
+  assertEquals(fields.line11, 0);
+  assertEquals(fields.line15, 0);
+  assertEquals(form8881Pdf.instances!(fields, testFiler(), zeroPending), [
+    fields,
+  ]);
+  assertThrows(() =>
+    form8881Pdf.instances!(
+      { ...fields, line8: 1 },
+      testFiler(),
+      zeroPending,
+    )
+  );
+});
+
 Deno.test("Form 8881 export rejects altered source, document link and prepared row", () => {
   assertThrows(
     () =>
