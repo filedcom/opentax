@@ -87,6 +87,7 @@ export function reconcileFiledForm8582CROrdinary(
     pending.f1040,
     pending.schedule1,
     pending.general,
+    pending.f1099int,
   );
   if (selfCredit) {
     if (

@@ -77,6 +77,7 @@ Deno.test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from
     form1040,
     schedule1,
     general,
+    undefined,
   );
   assertEquals(result.line6, taxAll - taxWithout);
   assertEquals(result.activity_id, "rental-1");
@@ -85,41 +86,49 @@ Deno.test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from
 
 Deno.test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () => {
   assertThrows(
-    () => calculateForm8582CRLine6OrdinaryWorksheet(
-      worksheet,
-      { schedule_es: [{
-        ...scheduleE.schedule_es[0],
-        passive_income_source_document_reference: "different ledger",
-      }] },
-      form8582cr,
-      form1040,
-      schedule1,
-      general,
-    ),
+    () =>
+      calculateForm8582CRLine6OrdinaryWorksheet(
+        worksheet,
+        {
+          schedule_es: [{
+            ...scheduleE.schedule_es[0],
+            passive_income_source_document_reference: "different ledger",
+          }],
+        },
+        form8582cr,
+        form1040,
+        schedule1,
+        general,
+        undefined,
+      ),
     Error,
     "one sourced passive Schedule E income activity",
   );
   assertThrows(
-    () => calculateForm8582CRLine6OrdinaryWorksheet(
-      { ...worksheet, tax_without_passive: taxWithout + 1 },
-      scheduleE,
-      form8582cr,
-      form1040,
-      schedule1,
-      general,
-    ),
+    () =>
+      calculateForm8582CRLine6OrdinaryWorksheet(
+        { ...worksheet, tax_without_passive: taxWithout + 1 },
+        scheduleE,
+        form8582cr,
+        form1040,
+        schedule1,
+        general,
+        undefined,
+      ),
     Error,
     "finalized Form 1040 ordinary-tax method",
   );
   assertThrows(
-    () => calculateForm8582CRLine6OrdinaryWorksheet(
-      worksheet,
-      scheduleE,
-      form8582cr,
-      { ...form1040, line16_income_tax: taxAll + 1 },
-      schedule1,
-      general,
-    ),
+    () =>
+      calculateForm8582CRLine6OrdinaryWorksheet(
+        worksheet,
+        scheduleE,
+        form8582cr,
+        { ...form1040, line16_income_tax: taxAll + 1 },
+        schedule1,
+        general,
+        undefined,
+      ),
     Error,
     "finalized Form 1040 ordinary-tax method",
   );

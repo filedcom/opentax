@@ -3,6 +3,7 @@ import {
   computePropertyNet,
   inputSchema as scheduleEInputSchema,
 } from "../../../inputs/schedule_e/index.ts";
+import { inputSchema as form1099IntInputSchema } from "../../../inputs/f1099int/index.ts";
 import { filingStatusSchema } from "../../../types.ts";
 import { ordinaryTax2025 } from "../../worksheets/tax_table_2025.ts";
 import { inputSchema as form8582crInputSchema } from "./index.ts";
@@ -18,6 +19,7 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   rawForm1040: unknown,
   rawSchedule1: unknown,
   rawGeneral: unknown,
+  rawForm1099Int: unknown,
 ) {
   const worksheet = line6OrdinaryWorksheetSchema.parse(rawWorksheet);
   const scheduleE = scheduleEInputSchema.parse(rawScheduleE);
@@ -48,8 +50,27 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   }).parse(rawGeneral);
   const property = scheduleE.schedule_es[0];
   const netPassive = property ? computePropertyNet(property) : 0;
+  let taxableInterest = 0;
+  if (rawForm1099Int !== undefined) {
+    const interestSource = form1099IntInputSchema.parse(rawForm1099Int);
+    const row = interestSource.f1099ints[0];
+    if (
+      interestSource.f1099ints.length !== 1 || !row ||
+      !row.source_document_reference ||
+      typeof row.box1 !== "number" || !Number.isSafeInteger(row.box1) ||
+      row.box1 <= 0 ||
+      Object.keys(row).some((key) =>
+        !["payer_name", "payer_tin", "source_document_reference", "box1"]
+          .includes(key)
+      )
+    ) {
+      throw new Error(
+        "Form 8582-CR ordinary interest branch needs one retained Form 1099-INT box 1 source",
+      );
+    }
+    taxableInterest = row.box1!;
+  }
   const otherIncome = [
-    form1040.line2b_taxable_interest,
     form1040.line3a_qualified_dividends,
     form1040.line3b_ordinary_dividends,
     form1040.line4b_ira_taxable,
@@ -82,8 +103,9 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     schedule1.line5_schedule_e !== netPassive ||
     schedule1.line10_total_additional_income !== netPassive ||
     form1040.line8_additional_income !== netPassive ||
+    (form1040.line2b_taxable_interest ?? 0) !== taxableInterest ||
     form1040.line9_total_income !==
-      form1040.line1z_total_wages + netPassive ||
+      form1040.line1z_total_wages + netPassive + taxableInterest ||
     (form1040.line10_adjustments ?? 0) !== 0 ||
     form1040.line11_agi !== form1040.line9_total_income ||
     form1040.line15_taxable_income !== Math.max(

@@ -169,6 +169,21 @@ Schedule E, K-1, Form 4835, property-disposition, and other sources, or persist
 accepted-return Worksheet 9 balances. Preferential tax methods, special
 allowances, PTPs, and Part VI remain closed.
 
+### One taxable-interest source with the rental (2026-10-01, unrun)
+
+The ordinary-tax line 6 route also accepts one retained Form 1099-INT with a
+positive whole-dollar box 1 amount, payer, and source-document reference. It
+requires no other 1099-INT boxes or adjustments, matches box 1 to finalized Form
+1040 line 2b, and includes that amount in line 9 and in both ordinary-tax
+calculations. The passive rental remains the only income removed for the
+without-passive side, following the
+[Form 8582-CR line 6 instructions](https://www.irs.gov/instructions/i8582cr).
+The resulting credit still joins Form 3800, Schedule 3, Form 1040, native MeF,
+and the two-page PDF. A positive full-return fixture and altered box 1,
+unsupported box 3, filed interest, and final-tax fixtures are authored but
+unrun. Additional interest payers, OID, bond premium, foreign interest, other
+income types, and issuer-copy authentication remain outside this bounded branch.
+
 ## 2026 opening credit prerequisite
 
 The current-year-only Worksheet 9 ledger now has a strict, standalone 2026
