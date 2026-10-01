@@ -1,9 +1,57 @@
 # TY2025 Form 8582-CR PDF boundary
 
-Status: no Form 8582-CR PDF descriptor is registered. This is an open coverage
-gap, not an approved exclusion. Do not print a partial Form 8582-CR from its
-native MeF calculation until the source, final-return and carryforward joins
-below are complete.
+Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
+one current-year self-earned passive Form 8874 investment credit and one
+Schedule E passive rental income activity. Other branches remain closed at PDF
+export until their source, final-return, and carryforward joins are complete.
+
+## Bounded ordinary-tax filing route (written, unrun)
+
+`form8582cr.line6_ordinary_worksheet` is a direct reviewed source record for
+the one-rental ordinary-tax calculation. The native and PDF exporters recompute
+its taxable-income-with/without-passive tax pair from the finalized Form 1040
+method, Schedule E rental ledger, Schedule 1, and filer status. The credit
+activity may be distinct from the rental income activity: one issued Form 8874
+investment must exactly match the Form 8582-CR source's activity, source
+document, and current-year amount. No prior credit, PTP, special allowance,
+additional passive income source, or Part VI election enters this route.
+
+Both exporters re-derive the current-year Worksheet 9 ledger and match its
+allowed/unallowed amount to line 37 and the Form 3800 passive allocation.
+Form 3800 line 38, Schedule 3 line 6a/8, and Form 1040 line 20 must agree
+with the allowed credit. The PDF prints Parts I and V: line 4a/4c, lines 5-7,
+and line 37; unused special-allowance fields stay blank. Its AcroForm mappings
+follow the official two-page blank, including page 2 `f2_21` for line 37.
+A full-return/native/PDF and source,
+credit, tax, and return-tamper fixture are authored for deferred validation.
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
+the same Form 1040 tax method for both line 6 worksheet tax calculations and
+state that line 7 zero allows direct line 37 reporting; Worksheet 9 applies
+when source credits remain unallowed. The retained current-year ledger covers
+that latter case but is not yet an authenticated accepted-return record or
+2026 importer. Source bytes, filled-output/XSD review, and wider credit or
+income mixes remain open.
+
+### Remaining native-only and rejected branches
+
+The existing native builder can still emit broader `IRS8582CR` rows from
+supplied tax values. The printable descriptor rejects these branches pending
+their line 6 source, final-return tax method, or carryforward join:
+
+| Native calculation branch | Printable gap |
+| --- | --- |
+| Other-category current-year credits from partnership, S corporation, estate, trust, or cooperative K-1 sources, or self-earned sources other than the one Form 8874 investment | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
+| Multiple current-year credit activities or mixed Form 3800 reporting lines 3, 24, and 33 | Per-activity allocation and Form 3800/Form 1040 tax-use proof for every source. |
+| Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
+| Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
+| Other tax methods, multiple Schedule E rentals, K-1 or farm-rental passive income, and passive dispositions | Reperform line 6 under the actual finalized Form 1040 method and complete passive net-income set. |
+
+Publicly traded partnerships are already rejected by the source schema.
+Allowed Form 8834 credits are rejected by the native builder pending their
+separate filing/tax limit. Estate/trust orphan-drug box 13 code M remains
+rejected for absent reviewed passive-source evidence. These are not positive
+native-only filing paths. The Part VI basis-increase election has no modeled
+source and remains outside both exporters.
 
 Estate and trust K-1 **box 13 code M is orphan-drug credit**; **box 14 code M
 supplies clean electricity investment-credit information**, under the
@@ -29,8 +77,8 @@ Their canonical AcroForm contains 51 leaf fields: page 1 has filer name/TIN at
 has 21 numeric fields `f2_1`-`f2_21` for lines 17-37, then the Part VI box
 `c2_01_0_` and four text fields `f2_22`-`f2_25` for lines 39-41. The logical
 names have the `topmostSubform[0].Page1[0]` or `Page2[0]` prefix. This is a
-field-location inventory only; there is still no registered descriptor or
-filled Form 8582-CR packet.
+field-location inventory; the bounded descriptor above now uses the verified
+line order and page 2 line 37 field.
 
 The native `IRS8582CR` builder recalculates Parts I-IV and line 37 from
 `form8582cr.credit_sources`, `regular_tax_all_income`, and
@@ -40,20 +88,18 @@ activity reference and credit amount to the attached Form 8874, and its allowed
 allocation to Form 3800. Form 3800 separately requires finalized Part II tax
 context and a matching passive allocation. These joins do not prove the Form
 8582-CR tax attributable to passive income on line 6:
-`regular_tax_without_passive` is an entered number, not a tax calculation
-reperformed from the same final Form 1040 income and identified passive activity
-income. Matching `regular_tax_all_income` to Form 1040 line 16 would still leave
-the other side of that subtraction unproved. Therefore no positive allowed line
-37 can yet be printed source-to-return.
+`regular_tax_without_passive` remains an entered number in the general model.
+The bounded ordinary-tax route above replays both tax sides against the same
+final return and its identified passive rental income; other tax methods and
+passive income sets remain unproved.
 
 The [December 2025 IRS instructions](https://www.irs.gov/instructions/i8582cr)
 require line 6 to use taxable income with and without net passive income, with
 both tax amounts computed by the method used for the return. They also use
 prior-year Worksheet 9 column (b) as the source for multiple unallowed
-activities or credit types. The next implementation step must preserve that
-worksheet and its source activities, then recompute both tax sides from the
-same finalized return method before the native and printable routes can share
-line 6.
+activities or credit types. The bounded current-year route preserves that
+worksheet's activity/source identity and recomputes both tax sides from the
+finalized ordinary-tax method.
 
 The apparent zero-tax subset is not a safe shortcut. A positive source credit
 with line 37 equal to zero becomes an unallowed passive activity credit. The
@@ -70,25 +116,23 @@ It deliberately rejects any prior-year unallowed credit because the filed
 prior Worksheet 9 and an ordering rule are still needed to assign allowed
 amounts to vintages. This helper is not yet a persisted accepted-return record
 or a next-year importer. Authored positive and tamper fixtures remain unrun.
-The line 6 tax-without-passive-income source and registered PDF still block
+The accepted-return import and wider line 6 sources still block broader
 source-to-return parity.
 The current source schema now requires whole-dollar tax values and rejects a
 tax-without-passive amount above the all-income amount before the line 6
 subtraction. This prevents an inverted input from being silently clamped to
 zero; it does not establish either tax amount from the finalized return method.
 
-To open a bounded PDF route, first provide a reviewed, source-linked
-tax-without-passive-income worksheet whose inputs reconcile to final Form 1040
-taxable income and each passive activity. Preserve per-activity and origin-year
-unallowed credit records across tax years. Then map the official AcroForm
-fields, reconcile every printed line to the native calculation, Form 8874/Form
-3800 documents and final return, and explicitly exclude unsupported special
-allowances and Part VI election until they have their own source-backed routes.
+The bounded route now uses the reviewed tax-without-passive worksheet and a
+current-year per-activity ledger. Wider routes still need accepted-return
+carryforward records, all passive-income sources, and a source-backed treatment
+of special allowances and Part VI before their lines can print.
 
-No PDF descriptor or print test was added. No test, typecheck, XSD validation or
-filled-PDF rendering was run in this audit.
+The prior audit added no PDF descriptor or print test. The bounded route above
+adds both, authored but unrun; no typecheck, XSD validation, or filled-PDF
+rendering has been run in this implementation pass.
 
-## Ordinary-tax line 6 candidate (staged for the next filing join)
+## Ordinary-tax line 6 source implementation
 
 A bounded worksheet now recomputes both line 6 tax sides using the same TY2025
 ordinary Tax Table/Tax Computation Worksheet function as Form 1040 line 16.
@@ -103,13 +147,11 @@ This follows the [2025 line 6 instructions](https://www.irs.gov/instructions/i85
 which require the same tax method used for the return on both taxable-income
 amounts. Positive and tamper fixtures are authored for deferred verification.
 
-This worksheet is a **prerequisite**, not a registered filing path. It remains
-outside the native and PDF descriptors because the current graph does not yet
-prove an exclusive passive-income inventory across Schedule E, K-1, Form 4835,
-property dispositions, and other passive sources, or persist accepted-return
-Worksheet 9 activity/year balances. Preferential tax methods, special
-allowances, PTPs, and Part VI remain closed. Native/PDF registration must call
-the worksheet only after those source and carryforward joins are established.
+The worksheet is registered only for the bounded route above. The current
+graph still does not prove an exclusive passive-income inventory across wider
+Schedule E, K-1, Form 4835, property-disposition, and other sources, or persist
+accepted-return Worksheet 9 balances. Preferential tax methods, special
+allowances, PTPs, and Part VI remain closed.
 
 ## 2026 opening credit prerequisite
 
@@ -124,4 +166,4 @@ reject. Positive and tamper fixtures are authored for the deferred batch.
 The accepted-return reference is still a supplied identifier, not verified IRS
 acknowledgment evidence. There is no durable store or 2026 engine importer;
 prior-year Worksheet 9 credits that originated before 2025 remain closed.
-The current native route and absent PDF descriptor are unchanged.
+The bounded 2025 PDF route does not create an authenticated 2026 opening.

@@ -6,6 +6,7 @@ import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { f3800 } from "../../../inputs/f3800/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { PassiveCreditReportingRoute } from "./credit-route.ts";
+import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 import {
   creditSourceSchema,
   PassiveCreditCategory,
@@ -209,6 +210,7 @@ export const inputSchema = z.object({
   // Regular tax computed on income excluding net passive income
   // Part I, Line 6 (ex-passive side)
   regular_tax_without_passive: z.number().int().nonnegative(),
+  line6_ordinary_worksheet: line6OrdinaryWorksheetSchema.optional(),
 
   // MAGI for Part II rental real estate phase-out calculation
   // IRC §469(i)(3)

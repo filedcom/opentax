@@ -6,19 +6,10 @@ import {
 import { filingStatusSchema } from "../../../types.ts";
 import { ordinaryTax2025 } from "../../worksheets/tax_table_2025.ts";
 import { inputSchema as form8582crInputSchema } from "./index.ts";
+import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 
 /** A reviewed, one-activity ordinary-tax candidate for line 6; filing is gated separately. */
-export const line6OrdinaryWorksheetSchema = z.object({
-  tax_year: z.literal(2025),
-  tax_method: z.literal("ordinary"),
-  activity_id: z.string().trim().min(1).max(64),
-  passive_income_source_document_reference: z.string().trim().min(1),
-  net_passive_income: z.number().int().positive(),
-  taxable_income_including_passive: z.number().int().nonnegative(),
-  taxable_income_without_passive: z.number().int().nonnegative(),
-  tax_including_passive: z.number().int().nonnegative(),
-  tax_without_passive: z.number().int().nonnegative(),
-}).strict();
+export { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 
 export function calculateForm8582CRLine6OrdinaryWorksheet(
   rawWorksheet: unknown,
@@ -96,9 +87,9 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     (form1040.line10_adjustments ?? 0) !== 0 ||
     form1040.line11_agi !== form1040.line9_total_income ||
     form1040.line15_taxable_income !== Math.max(
-      0,
-      form1040.line11_agi - form1040.line14_deductions_qbi_total,
-    ) ||
+        0,
+        form1040.line11_agi - form1040.line14_deductions_qbi_total,
+      ) ||
     otherIncome.some((amount) => (amount ?? 0) !== 0) ||
     form8582cr.credit_sources.some((source) =>
       source.publicly_traded_partnership ||

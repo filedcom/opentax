@@ -18,7 +18,6 @@ found expenditure-level evidence and no-double-benefit checks still missing.
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `f965`                  | `IRS965A`                   | No Form 965-A PDF. Source includes prior-year liability/payment and transfer history that still needs independent review.                                  |
-| `form8582cr`            | `IRS8582CR`                 | No passive-credit limitation PDF, including when its native document is linked to Form 3800.                                                               |
 | `form8621`              | `IRS8621`                   | No PFIC Form 8621 PDF or Part V excess-distribution statement print route.                                                                                 |
 | `f4255`                 | `IRS4255`                   | No investment-credit recapture PDF.                                                                                                                        |
 | `f8611`                 | `IRS8611`                   | No low-income-housing-credit recapture PDF.                                                                                                                |
@@ -62,6 +61,13 @@ statement page with a reconciled $500 parent credit.
 See `ty2025-form8874-pdf-gap.md`. A
 pass-through-only K-1 recipient does not create its own Form 8874, but still
 needs the Form 3800 parent in the print packet.
+
+Form 8582-CR now has a bounded two-page descriptor for one current-year
+self-earned passive Form 8874 credit plus one separately sourced Schedule E
+rental income activity with an ordinary-tax line 6 worksheet. Other native-only
+source, category, carryover, and tax-method branches reject PDF export; the
+precise list is in `ty2025-form8582cr-pdf-gap.md`. The full-return fixture is
+authored but unrun.
 
 ## Priority 2: conditional roots with no complete trigger-to-attachment route
 

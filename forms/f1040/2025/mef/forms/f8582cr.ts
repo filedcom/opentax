@@ -1,4 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { reconcileFiledForm8582CROrdinary } from "../../form8582cr_filed_ordinary.ts";
 import {
   calculateForm8582CR,
   inputSchema,
@@ -269,7 +270,16 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
     if (!raw || typeof raw !== "object" || !("credit_sources" in raw)) {
       return "";
     }
-    const lines = calculateForm8582CR(inputSchema.parse(raw));
+    const input = inputSchema.parse(raw);
+    const lines = calculateForm8582CR(input);
+    if (input.line6_ordinary_worksheet) {
+      if (!context?.pending) {
+        throw new Error(
+          "Form 8582-CR ordinary line 6 needs the finalized return",
+        );
+      }
+      reconcileFiledForm8582CROrdinary(raw, context.pending);
+    }
     if (context) {
       reconcilePassiveDisabledAccessSources(lines.sourceAllocations, context);
       if (lines.partI.line5 > 0) {

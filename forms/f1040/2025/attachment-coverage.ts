@@ -334,8 +334,11 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "form8582cr",
     exportKinds: ["pdf"],
-    reason: "Form 8582-CR has a native filing but no source-backed PDF",
-    isActive: (fields) => nonempty(fields.credit_sources),
+    reason:
+      "Form 8582-CR PDF needs a filed-return ordinary line 6 source worksheet",
+    isActive: (fields) =>
+      nonempty(fields.credit_sources) &&
+      fields.line6_ordinary_worksheet === undefined,
   },
   {
     pendingKey: "f4255",

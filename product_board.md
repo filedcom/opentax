@@ -6,7 +6,7 @@ Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. The checklist below is the source of truth for
 task status: a checked row records only its stated, bounded implementation or
 historical verification; its unchecked parent and release gates remain open.
-After consolidating duplicate checkpoints, the checklist has **197 checked
+After consolidating duplicate checkpoints, the checklist has **198 checked
 items and 54 open items**.
 The earlier detailed checkpoint record is in the
 [2026-09-30 archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
@@ -33,7 +33,7 @@ ATS acceptance result is claimed.
 
 **Remaining implementation.** Resolve the named workflow and evidence choices,
 then complete or obtain an approved, named fail-closed boundary for each
-applicable Form 1040 path. Reconcile the 126 registered MeF descriptors, 89 PDF
+applicable Form 1040 path. Reconcile the 126 registered MeF descriptors, 90 PDF
 descriptors, and 211 TY2025 IRS schema roots with public inputs, source proof,
 calculations, owner identity, Form 1040 joins, native XML, printable output,
 statements, and attachments. The form-specific open rows below identify current
@@ -314,7 +314,8 @@ own evidence exists.
 
 ## Native MeF and PDF parity
 
-- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially Form 965-A, Form 8582-CR, and Form 8621. For Form 8582-CR, the official two-page, 51-field blank has been inspected, but the filed line 6 tax-without-passive-income worksheet and prior-year activity/year carryforward import remain open; see its [PDF gap](docs/mef/ty2025-form8582cr-pdf-gap.md). Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
+- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially Form 965-A, wider Form 8582-CR branches, and Form 8621. Form 8582-CR now has one bounded ordinary-tax PDF route on its inspected two-page, 51-field blank, but other passive-income and credit sources, special allowances, and prior-year activity/year carryforward imports remain open; see its [PDF gap](docs/mef/ty2025-form8582cr-pdf-gap.md). Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
+  - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
   - [x] Stage a source-linked Form 8582-CR line 6 ordinary-tax worksheet prerequisite: one passive Schedule E income activity and retained ledger reference reconcile to Schedule 1, finalized Form 1040 taxable income/line 16, and both recomputed tax sides. Positive and tamper fixtures are authored for the deferred batch; native/PDF registration remains closed pending complete passive-source inventory and accepted-return carryforward joins.
   - [x] Model a strict Form 8582-CR 2026 opening-credit reconciliation against the re-derived, filed 2025 Worksheet 9 ledger by activity, source document, credit route, accepted-reference identifier, origin year, and unallowed amount. Fixtures are authored for deferred validation; authenticated acceptance, durable persistence, and the 2026 importer remain open.
   - [x] Add a versioned, storage-ready 2025 Form 8582-CR Worksheet 9 ledger for current-year-only credit sources, preserving each activity, source document, route, allowed amount, and unallowed 2025-origin amount with aggregate checks. Positive and tamper fixtures are authored for the deferred batch; prior-year Worksheet 9 import, persistence, line 6 source, and PDF parity remain open.
