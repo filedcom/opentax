@@ -229,6 +229,71 @@ function mixedInputs() {
   };
 }
 
+function twoFarmMixedInputs() {
+  const input = mixedInputs();
+  return {
+    ...input,
+    schedule_f: {
+      schedule_fs: [
+        {
+          ...input.schedule_f.schedule_fs[0],
+          line2_sales_products_raised: 60_000,
+        },
+        {
+          ...input.schedule_f.schedule_fs[0],
+          farm_id: "orchard",
+          line_a_principal_crop_activity: "FRUIT FARMING",
+          line_b_agricultural_activity_code: "111300",
+          line2_sales_products_raised: 40_000,
+        },
+      ],
+    },
+  };
+}
+
+Deno.test("Schedule J combines two positive farm activities and one fishing business", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    twoFarmMixedInputs(),
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const lines = result.pending.schedule_j as ScheduleJFields;
+  assertEquals(lines.line2a, 15_000);
+  assertEquals(result.pending.f1040?.line16_income_tax, lines.line23);
+  assert(
+    scheduleJ.build(lines, { pending: result.pending }).includes(
+      "<ElectedFarmIncomeAmt>15000</ElectedFarmIncomeAmt>",
+    ),
+  );
+  assertEquals(
+    scheduleJPdf.projectFields?.(lines, result.pending)?.line23,
+    lines.line23,
+  );
+});
+
+Deno.test("Schedule J mixed two-farm route rejects a loss hidden by the other farm", () => {
+  const input = twoFarmMixedInputs();
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...input,
+    schedule_f: {
+      schedule_fs: [
+        input.schedule_f.schedule_fs[0],
+        { ...input.schedule_f.schedule_fs[1], line28_supplies: 50_000 },
+      ],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_j_calculation" &&
+      entry.message.includes("positive sourced farms")
+    ),
+    true,
+  );
+});
+
 Deno.test("Schedule J combines one farm and one sourced fishing business into Form 1040 and both filing outputs", () => {
   const result = execute(
     buildExecutionPlan(registry),

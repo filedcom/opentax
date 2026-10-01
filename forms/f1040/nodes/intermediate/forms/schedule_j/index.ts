@@ -21,6 +21,7 @@ const completeInputSchema = z.object({
   tax_treatment: scheduleJOrdinaryIncomeInputSchema.shape.tax_treatment,
   farm_net_profit: finiteAmount.optional(),
   farm_activity_count: z.number().int().nonnegative().optional(),
+  farm_positive_activity_count: z.number().int().nonnegative().optional(),
   farm_only_income_verified: z.boolean(),
   farm_only_unsupported_source_key: z.string().optional(),
   fishing_net_profit: finiteAmount.optional(),
@@ -62,7 +63,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     mixed && (
       !source.mixed_farm_fishing_income_verified ||
       source.mixed_farm_fishing_unsupported_source_key !== undefined ||
-      source.farm_activity_count !== 1 ||
+      (source.farm_activity_count !== 1 &&
+        source.farm_activity_count !== 2) ||
+      (source.farm_activity_count === 2 &&
+        source.farm_positive_activity_count !== 2) ||
       source.farm_net_profit! <= 0 ||
       !Number.isSafeInteger(source.farm_net_profit!) ||
       source.fishing_net_profit! <= 0 ||
@@ -73,7 +77,7 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     throw new Error(
       source.mixed_farm_fishing_unsupported_source_key
         ? `Schedule J mixed election cannot include ${source.mixed_farm_fishing_unsupported_source_key}`
-        : "Schedule J mixed election needs one positive sourced farm and one positive sourced fishing business",
+        : "Schedule J mixed election needs one or two positive sourced farms and one positive sourced fishing business",
     );
   }
   if (

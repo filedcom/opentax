@@ -63,8 +63,18 @@ finalized line 1/23 return joins. Positive and missing-evidence/unrelated-income
 fixtures are authored for the deferred batch. The [2025 Schedule J
 instructions](https://www.irs.gov/instructions/i1040sj) require combining
 attributable income, gains, losses, and deductions from both businesses.
-Multiple farm/fishing activities, source-record authentication, losses, and
-other income/deduction combinations remain open.
+Further farm/fishing activity combinations, source-record authentication,
+losses, and other income/deduction combinations remain open.
+
+The mixed ordinary-rate route now also accepts exactly two distinct positive
+Schedule F activities with one catch-evidenced Schedule C fishing business.
+Schedule F reports each at-risk profit and its positive-activity count to the
+Schedule J calculation; the aggregate must still reconcile with Schedule 1,
+AGI, attributable SE/QBI deductions, taxable income, and Form 1040 line 16.
+Native MeF and PDF use the same finalized line 23. A full-return two-farm
+positive case and a second-farm-loss rejection are authored for the deferred
+bulk run. A farm loss within a positive aggregate, additional businesses,
+unverified source bytes, and preferential-rate combinations remain closed.
 
 The graph uses direct declared edges from Schedule F, the AGI aggregator,
 standard deduction, and the public election to the calculated node. There is

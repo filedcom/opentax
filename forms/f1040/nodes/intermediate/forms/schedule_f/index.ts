@@ -756,6 +756,8 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     outputs.push(this.outputNodes.output(schedule_j_calculation, {
       farm_net_profit: totalNetProfit,
       farm_activity_count: input.schedule_fs.length,
+      farm_positive_activity_count: netProfits.filter((profit) => profit > 0)
+        .length,
     }));
 
     // Per-item downstream routing
