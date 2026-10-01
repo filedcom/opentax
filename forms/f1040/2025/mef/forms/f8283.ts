@@ -188,6 +188,35 @@ export function assertUnrelatedUseReductionSource(item: SectionAItem): void {
   }
 }
 
+export function assertPrivateFoundationReductionSource(
+  item: SectionAItem,
+): void {
+  const review = item.private_foundation_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.purchase_record_reference.trim() ||
+    !review.foundation_status_record_reference.trim() ||
+    review.foundation_name !== item.donee_organization_name ||
+    review.foundation_us_address.line1 !== address.line1 ||
+    (review.foundation_us_address.line2 ?? "") !== (address.line2 ?? "") ||
+    review.foundation_us_address.city !== address.city ||
+    review.foundation_us_address.state !== address.state ||
+    review.foundation_us_address.zip !== address.zip
+  ) {
+    throw new Error(
+      "Form 8283 private-foundation reduction needs matching donee status, purchase, property, dates, basis, and valuation records",
+    );
+  }
+}
+
 export function assertVehicleSaleReductionSource(item: SectionAItem): void {
   if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
     return;
@@ -276,6 +305,11 @@ export function fmvReductionExplanation(
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.private_foundation_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased long-term capital property contributed outright to private nonoperating foundation ${item.private_foundation_capital_gain_reduction.foundation_name} (EIN ${item.private_foundation_capital_gain_reduction.foundation_ein}). Foundation status record ${item.private_foundation_capital_gain_reduction.foundation_status_record_reference} and purchase record ${item.private_foundation_capital_gain_reduction.purchase_record_reference} support the section 170(e)(1)(B)(ii) reduction of long-term appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -308,6 +342,7 @@ export function buildFmvReductionStatement(
   assertCreatorReductionSource(item);
   assertManuscriptReductionSource(item);
   assertUnrelatedUseReductionSource(item);
+  assertPrivateFoundationReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -1128,6 +1163,7 @@ export const form8283: MefFormDescriptor<
       assertCreatorReductionSource(item);
       assertManuscriptReductionSource(item);
       assertUnrelatedUseReductionSource(item);
+      assertPrivateFoundationReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -1209,7 +1245,8 @@ export const form8283: MefFormDescriptor<
       hasSectionAShortTermReduction(parsed) ||
       isSingleSectionANeedyVehicleUnreduced(parsed) ||
       sectionA.some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);

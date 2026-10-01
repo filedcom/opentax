@@ -144,6 +144,60 @@ const unrelatedUseGift = {
   },
 };
 
+const privateFoundationGift = {
+  ...unrelatedUseGift,
+  donee_organization_name: "Albany Private Foundation",
+  donee_organization_us_address: {
+    line1: "10 Foundation Lane",
+    city: "Albany",
+    state: "NY",
+    zip: "12201",
+  },
+  charitable_limit_category: "capital_gain_20" as const,
+  unrelated_use_capital_gain_reduction: undefined,
+  private_foundation_capital_gain_reduction: {
+    purchase_record_reference: "Coin purchase record COIN-20",
+    foundation_status_record_reference: "Foundation status record PF-20",
+    foundation_name: "Albany Private Foundation",
+    foundation_ein: "123456789",
+    foundation_us_address: {
+      line1: "10 Foundation Lane",
+      city: "Albany",
+      state: "NY",
+      zip: "12201",
+    },
+    private_nonoperating_foundation_not_50_percent_limit_verified:
+      true as const,
+    not_qualified_appreciated_stock_verified: true as const,
+    outright_contribution_verified: true as const,
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+Deno.test("Form 8283 PDF prints private-foundation basis claim and explanation", () => {
+  const pending = currentSectionAPending({
+    section_a_items: [privateFoundationGift],
+  });
+  const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
+    [];
+  assertEquals(instance?.row1_claim, 3_000);
+  assertEquals(instance?.row1_basis, 3_000);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "private nonoperating foundation",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(pending.f8283, filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 2_999 },
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+});
+
 const soldVehicle = {
   property_description: "2020 Honda Civic, good condition, 60,000 miles",
   donee_organization_name: "City Charity",

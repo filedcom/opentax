@@ -34,6 +34,8 @@ const noncashContributionItemSchema = z.object({
   adjusted_basis: z.number().nonnegative().optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
   unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
+  private_foundation_capital_gain_reduction_confirmed: z.literal(true)
+    .optional(),
 });
 const capitalGainCarryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),

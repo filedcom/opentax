@@ -318,15 +318,17 @@ export const scheduleAPdf: PdfFormDescriptor = {
       assertElectedSectionAReconciled({ pending: all }, input);
     }
     const noncashItems = all?.schedule_a?.noncash_contribution_items;
-    const hasUnrelatedUseGift = Array.isArray(noncashItems) &&
+    const hasLinkedCapitalGainReductionGift = Array.isArray(noncashItems) &&
       noncashItems.some((item) =>
         item !== null && typeof item === "object" &&
-        (item as Record<string, unknown>)
-            .unrelated_use_capital_gain_reduction_confirmed === true
+        ((item as Record<string, unknown>)
+              .unrelated_use_capital_gain_reduction_confirmed === true ||
+          (item as Record<string, unknown>)
+              .private_foundation_capital_gain_reduction_confirmed === true)
       );
-    if (hasUnrelatedUseGift && !all?.f8283) {
+    if (hasLinkedCapitalGainReductionGift && !all?.f8283) {
       throw new Error(
-        "Schedule A unrelated-use capital-gain reduction PDF needs its linked Form 8283 source",
+        "Schedule A capital-gain FMV reduction PDF needs its linked Form 8283 source",
       );
     }
     const form8283Source = all?.f8283
@@ -334,7 +336,8 @@ export const scheduleAPdf: PdfFormDescriptor = {
       : undefined;
     if (
       (form8283Source?.section_a_items ?? []).some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled({ pending: all }, input);

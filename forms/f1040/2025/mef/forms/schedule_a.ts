@@ -154,15 +154,20 @@ function buildIRS1040ScheduleA(
     | Record<string, unknown>
     | undefined;
   const noncashItems = sourceScheduleA?.noncash_contribution_items;
-  const unrelatedUseGift = Array.isArray(noncashItems) &&
+  const linkedCapitalGainReductionGift = Array.isArray(noncashItems) &&
     noncashItems.some((item) =>
       item !== null && typeof item === "object" &&
-      (item as Record<string, unknown>)
-          .unrelated_use_capital_gain_reduction_confirmed === true
+      ((item as Record<string, unknown>)
+            .unrelated_use_capital_gain_reduction_confirmed === true ||
+        (item as Record<string, unknown>)
+            .private_foundation_capital_gain_reduction_confirmed === true)
     );
-  if (unrelatedUseGift && context?.pending?.f8283 === undefined) {
+  if (
+    linkedCapitalGainReductionGift &&
+    context?.pending?.f8283 === undefined
+  ) {
     throw new Error(
-      "Schedule A unrelated-use capital-gain reduction needs its linked Form 8283 source",
+      "Schedule A capital-gain FMV reduction needs its linked Form 8283 source",
     );
   }
   const hasPriorCapitalGainProperty = [
@@ -189,7 +194,8 @@ function buildIRS1040ScheduleA(
       hasSectionAShortTermReduction(form) ||
       isSingleSectionANeedyVehicleUnreduced(form) ||
       (form.section_a_items ?? []).some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context, fields);

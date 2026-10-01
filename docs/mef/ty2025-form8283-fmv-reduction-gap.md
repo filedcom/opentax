@@ -1,5 +1,31 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased Section A capital property to a private nonoperating foundation (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526 (2025)](https://www.irs.gov/publications/p526)
+require a reduction of long-term appreciation when capital gain property other
+than qualified appreciated stock is given to certain private nonoperating
+foundations. One bounded current-year Section A route now takes a purchased,
+nonvehicle capital item with FMV no more than $5,000, held more than one year,
+and an outright gift to a 20% limit private nonoperating foundation. A typed
+foundation-status record identifies the same donee name and address plus EIN,
+and the source names both that record and the purchase record. It requires
+reviewed assertions that the 50% foundation exception and qualified-appreciated-
+stock exception do not apply, the hypothetical FMV sale gain is wholly long
+term, and no other reduction applies. The claim equals adjusted basis below
+FMV.
+
+Form 8283 Section A, its separate native FMV statement, the PDF explanation,
+Schedule A, and itemized Form 1040 all use the same $4,500 FMV/$3,000 basis
+example. The native and PDF Schedule A preflights require the linked Form 8283
+source; changed category, holding date, foundation status, amount, and return
+fixtures are authored for the deferred bulk pass. Status, purchase, and FMV
+records remain reviewed references rather than authenticated bytes. Larger
+Section B gifts, publicly traded stock, foundations with special 50% status,
+partial interests, other reduction reasons, carryovers, filled-PDF review,
+schema validation, and IRS acceptance remain open.
+
 ## Purchased long-term Section B art at least $20,000 put to unrelated use (2026-10-01, unrun)
 
 The existing reviewed seven-PDF unrelated-use route now accepts one purchased

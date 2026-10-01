@@ -171,6 +171,20 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  private_foundation_capital_gain_reduction: z.object({
+    purchase_record_reference: z.string().trim().min(1),
+    foundation_status_record_reference: z.string().trim().min(1),
+    foundation_name: z.string().trim().min(1),
+    foundation_ein: z.string().regex(/^\d{9}$/),
+    foundation_us_address: usAddressSchema,
+    private_nonoperating_foundation_not_50_percent_limit_verified: z.literal(
+      true,
+    ),
+    not_qualified_appreciated_stock_verified: z.literal(true),
+    outright_contribution_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -280,10 +294,25 @@ const sectionAItemSchema = z.object({
     const manuscript = item.manuscript_ordinary_income_reduction !== undefined;
     const unrelatedUse =
       item.unrelated_use_capital_gain_reduction !== undefined;
+    const privateFoundation =
+      item.private_foundation_capital_gain_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
     if (
-      (inventory || creator || manuscript || unrelatedUse) &&
+      privateFoundation &&
+      (shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        capitalGainElection || certifiedSaleReduction)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deduction_claimed"],
+        message:
+          "Form 8283 Section A supports one FMV reduction reason per gift",
+      });
+    }
+    if (
+      (inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation) &&
       reductionCents <= 0
     ) {
       ctx.addIssue({
@@ -295,6 +324,7 @@ const sectionAItemSchema = z.object({
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
+      !privateFoundation &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -538,12 +568,73 @@ const sectionAItemSchema = z.object({
         });
       }
     }
+    if (privateFoundation) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "capital_gain_20" ||
+        item.donee_organization_name !==
+          item.private_foundation_capital_gain_reduction!.foundation_name ||
+        item.donee_organization_us_address?.line1 !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.line1 ||
+        (item.donee_organization_us_address?.line2 ?? "") !==
+          (item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.line2 ?? "") ||
+        item.donee_organization_us_address?.city !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.city ||
+        item.donee_organization_us_address?.state !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.state ||
+        item.donee_organization_us_address?.zip !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.zip ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["private_foundation_capital_gain_reduction"],
+          message:
+            "Form 8283 private-foundation reduction needs a purchased long-term nonvehicle capital item, a 20% limit foundation, and a basis claim below $5,000 FMV",
+        });
+      }
+    }
   }
   if (
     (item.inventory_ordinary_income_reduction !== undefined ||
       item.creator_ordinary_income_reduction !== undefined ||
       item.manuscript_ordinary_income_reduction !== undefined ||
-      item.unrelated_use_capital_gain_reduction !== undefined) &&
+      item.unrelated_use_capital_gain_reduction !== undefined ||
+      item.private_foundation_capital_gain_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
     ctx.addIssue({
@@ -1233,6 +1324,20 @@ export const inputSchema = z.object({
       index,
     })),
   ].filter(({ item }) => (item.deduction_claimed ?? item.fmv ?? 0) > 0);
+  if (
+    sectionA.some((item) =>
+      item.private_foundation_capital_gain_reduction !== undefined
+    ) &&
+    (positive.length !== 1 || sectionB.length > 0 ||
+      input.carryover_evidence !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["section_a_items"],
+      message:
+        "Form 8283 private-foundation reduction supports one current Section A gift without a Section B item",
+    });
+  }
   if (positive.length > 1) {
     for (const { item, section, index } of positive) {
       if (!item.similar_item_group) {
@@ -1486,6 +1591,10 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
         item.capital_gain_reduction_election_confirmed,
       unrelated_use_capital_gain_reduction_confirmed:
         item.unrelated_use_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      private_foundation_capital_gain_reduction_confirmed:
+        item.private_foundation_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];

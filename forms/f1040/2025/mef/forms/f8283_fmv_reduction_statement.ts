@@ -3,6 +3,7 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertCreatorReductionSource,
   assertInventoryReductionSource,
+  assertPrivateFoundationReductionSource,
   assertShortTermReductionSource,
   assertUnrelatedUseReductionSource,
   buildFmvReductionStatement,
@@ -61,7 +62,8 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       assertElectedSectionAReconciled(context);
     } else if (
       (parsed.section_a_items ?? []).some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);
@@ -74,6 +76,7 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       assertInventoryReductionSource(item);
       assertCreatorReductionSource(item);
       assertUnrelatedUseReductionSource(item);
+      assertPrivateFoundationReductionSource(item);
     }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey

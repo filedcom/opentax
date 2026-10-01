@@ -10,6 +10,7 @@ import {
   assertCreatorReductionSource,
   assertInventoryReductionSource,
   assertManuscriptReductionSource,
+  assertPrivateFoundationReductionSource,
   assertShortTermReductionSource,
   assertUnrelatedUseReductionSource,
   assertVehicleSaleReductionSource,
@@ -763,10 +764,15 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.unrelated_use_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const privateFoundationReduction = sectionA.some((item) =>
+      item.private_foundation_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction &&
       !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
+      !privateFoundationReduction &&
       sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
@@ -777,6 +783,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
+      !privateFoundationReduction &&
       !soldVehicle &&
       !needyVehicle
     ) {
@@ -796,6 +803,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertCreatorReductionSource(item);
         assertManuscriptReductionSource(item);
         assertUnrelatedUseReductionSource(item);
+        assertPrivateFoundationReductionSource(item);
       }
     }
     if (
