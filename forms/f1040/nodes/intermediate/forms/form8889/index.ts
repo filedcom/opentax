@@ -983,6 +983,7 @@ function nonQualifiedPenalty(
       Number(age.date_of_birth.slice(5, 7)) - 1,
       Number(age.date_of_birth.slice(8, 10)) - 1,
     )).toISOString().slice(0, 10);
+    const disabilityBeforeAge65 = disability.disability_date < age65;
     const grossByForm = new Map<string, number>();
     for (const row of rows) {
       grossByForm.set(
@@ -991,16 +992,23 @@ function nonQualifiedPenalty(
           row.gross_amount,
       );
     }
-    const exceptedFromDates = rows.reduce(
+    const exceptedFromDates = ageRows.reduce(
       (sum, row) =>
         sum +
         (row.distribution_date >= age65
           ? row.gross_amount - row.qualified_medical_amount
           : 0),
       0,
+    ) + disabilityRows.reduce(
+      (sum, row) =>
+        sum +
+        (row.distribution_date >= disability.disability_date
+          ? row.gross_amount - row.qualified_medical_amount
+          : 0),
+      0,
     );
     if (
-      !validDate(age65) || age65 > disability.disability_date ||
+      !validDate(age65) ||
       input.hsa_excluded_distributions !== undefined ||
       input.employer_excess_treatment?.timely_withdrawal !== undefined ||
       age.birth_date_source_reference ===
@@ -1014,11 +1022,18 @@ function nonQualifiedPenalty(
         row.rollover_excluded_amount !== undefined
       ) ||
       ageRows.some((row) =>
-        row.distribution_date >= disability.disability_date
+        disabilityBeforeAge65
+          ? row.distribution_date >= disability.disability_date &&
+            row.distribution_date < age65
+          : row.distribution_date >= disability.disability_date
       ) ||
       disabilityRows.some((row) =>
-        row.distribution_date < disability.disability_date
+        row.distribution_date < disability.disability_date ||
+        (disabilityBeforeAge65 && row.distribution_date >= age65)
       ) ||
+      (disabilityBeforeAge65 &&
+        (!ageRows.some((row) => row.distribution_date >= age65) ||
+          !disabilityRows.some((row) => row.distribution_date < age65))) ||
       forms.some((form) =>
         grossByForm.get(form.source_reference) !==
           form.box1_gross_distribution ||

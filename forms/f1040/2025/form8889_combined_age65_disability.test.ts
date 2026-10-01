@@ -86,6 +86,36 @@ function combinedCase() {
       }],
     },
   });
+  return filingCase(source);
+}
+
+function disabilityFirstCase() {
+  const original = combinedCase().source;
+  const source = inputSchema.parse({
+    ...original,
+    form1099_sa_distributions: original.form1099_sa_distributions!.map((row) =>
+      row.source_reference === "may-1099-sa"
+        ? { ...row, box3_distribution_code: "3" }
+        : { ...row, box3_distribution_code: "1" }
+    ),
+    age_65_exception_evidence: {
+      ...original.age_65_exception_evidence!,
+      date_of_birth: "1960-07-01",
+      distributions: [
+        original.age_65_exception_evidence!.distributions[0],
+        original.disability_exception_evidence!.distributions[0],
+      ],
+    },
+    disability_exception_evidence: {
+      ...original.disability_exception_evidence!,
+      disability_date: "2025-03-01",
+      distributions: [original.age_65_exception_evidence!.distributions[1]],
+    },
+  });
+  return filingCase(source);
+}
+
+function filingCase(source: ReturnType<typeof inputSchema.parse>) {
   const outputs = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     source,
@@ -172,6 +202,75 @@ Deno.test("combined HSA exception rejects changed owner source, dates, 1099-SA a
             row,
           ) =>
             row.source_reference === "aug-1099-sa"
+              ? { ...row, box3_distribution_code: "1" as const }
+              : row
+          ),
+          forms,
+        },
+      }),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: { ...pending, schedule2: { line17c_hsa_penalty: 0 } },
+      }),
+    Error,
+    "amounts differ from filed return",
+  );
+});
+
+Deno.test("one HSA owner has disability before age 65 with separate code-3 and later code-1 sources", () => {
+  const { forms, pending } = disabilityFirstCase();
+  assertEquals(forms[0]?.print_line16_taxable, 1000);
+  assertEquals(forms[0]?.print_line17b_penalty, 60);
+  const xml = form8889.build({ forms }, { filer, pending }).join("");
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxExcInd>X</HSADistriAddnlPercentTaxExcInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxAmt>60</HSADistriAddnlPercentTaxAmt>",
+  );
+  const [pdf] = form8889Pdf.instances!(pending.form8889, filer, pending);
+  assertEquals(pdf?.print_line16_taxable, 1000);
+  assertEquals(pdf?.print_line17b_penalty, 60);
+});
+
+Deno.test("disability-before-age-65 allocation rejects interval and return tampering", () => {
+  const { source, forms, pending } = disabilityFirstCase();
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          form8889: {
+            ...source,
+            disability_exception_evidence: {
+              ...source.disability_exception_evidence!,
+              disability_date: "2025-06-01",
+            },
+            forms,
+          },
+        },
+      }),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form8889Pdf.instances!(pending.form8889, filer, {
+        ...pending,
+        form8889: {
+          ...source,
+          form1099_sa_distributions: source.form1099_sa_distributions!.map((
+            row,
+          ) =>
+            row.source_reference === "may-1099-sa"
               ? { ...row, box3_distribution_code: "1" as const }
               : row
           ),

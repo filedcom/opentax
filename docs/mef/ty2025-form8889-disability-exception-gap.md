@@ -51,9 +51,18 @@ Form 1040 line 8, and native/PDF Form 8889. Changed disability date, Form
 a rollover or timely excess withdrawal, or allow a single 1099-SA source to span
 the two dated ledgers.
 
-Disability before age 65 for the same owner, timely excess withdrawal, multiple
-paired rollovers, death, and nonspouse beneficiary rules remain open. Source
-references and disability confirmation are entered evidence, not independently
-authenticated medical or trustee records. Focused calculator, MeF, and PDF cases
-are written but intentionally unrun pending the agreed full test batch; XSD,
-visual PDF, and ATS gates also remain open.
+The complementary dated route covers disability before age 65. The code-3 Form
+1099-SA transactions fall after disability and before the 65th birthday; code-1
+transactions may fall before disability or after age 65. Each source belongs to
+exactly one ledger, and the taxable portions after the applicable event reach
+line 17a while earlier taxable withdrawals retain the 20% tax. The positive
+fixture joins Schedule 1/2 and Form 1040 to native/PDF lines; changed disability
+date, distribution code, and filed tax are rejected.
+
+Same-day event ordering, code-3 distributions after age 65 in the
+disability-first route, timely excess withdrawal, multiple paired rollovers,
+death, and nonspouse beneficiary rules remain open. Source references and
+disability confirmation are entered evidence, not independently authenticated
+medical or trustee records. Focused calculator, MeF, and PDF cases are written
+but intentionally unrun pending the agreed full test batch; XSD, visual PDF, and
+ATS gates also remain open.
