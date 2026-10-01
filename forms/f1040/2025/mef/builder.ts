@@ -36,6 +36,7 @@ import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
+import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -241,6 +242,7 @@ function buildReturnXml(
   }
   assert1099RRecipientOwner(pending.f1099r, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
+  assert1099BRecipientOwner(pending.f1099b, filer);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);

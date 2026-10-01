@@ -26,6 +26,11 @@ const NONCOVERED_PART_SHIFT: Partial<Record<string, string>> = {
 };
 
 export const itemSchema = z.object({
+  recipient_ssn: z.string().regex(/^\d{9}$/),
+  payer_tin: z.string().regex(/^\d{9}$/).optional(),
+  account_number: z.string().trim().min(1).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  transaction_id: z.string().trim().min(1).optional(),
   part: z.enum(["A", "B", "C", "D", "E", "F"]),
   description: z.string(),
   date_acquired: z.string(),
@@ -67,6 +72,29 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1099bs: z.array(itemSchema).min(1),
+}).superRefine(({ f1099bs }, ctx) => {
+  const seen = new Set<string>();
+  for (const [index, item] of f1099bs.entries()) {
+    if (
+      !item.payer_tin || !item.account_number ||
+      !item.source_document_reference || !item.transaction_id
+    ) continue;
+    const key = JSON.stringify([
+      item.payer_tin,
+      item.recipient_ssn,
+      item.account_number,
+      item.source_document_reference,
+      item.transaction_id,
+    ]);
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1099bs", index],
+        message: "1099-B repeats the same identified issued transaction",
+      });
+    }
+    seen.add(key);
+  }
 });
 
 type B99Item = z.infer<typeof itemSchema>;

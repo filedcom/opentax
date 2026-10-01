@@ -8,6 +8,7 @@ import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
+    recipient_ssn: "111223333",
     part: "A",
     description: "100 sh XYZ",
     date_acquired: "01012024",
@@ -64,6 +65,41 @@ Deno.test("schema: empty b99s array is rejected", () => {
   assertThrows(
     () => f1099b.compute({ taxYear: 2025, formType: "f1040" }, { f1099bs: [] }),
     Error,
+  );
+});
+
+Deno.test("1099-B requires an issued recipient for capital-gain attribution", () => {
+  assertThrows(
+    () => compute([minimalItem({ recipient_ssn: undefined })]),
+    Error,
+  );
+});
+
+Deno.test("1099-B rejects an identified transaction repeated with altered tax adjustments", () => {
+  const issued = {
+    payer_tin: "123456789",
+    account_number: "Brokerage 1",
+    source_document_reference: "broker-2025-original",
+    transaction_id: "sale-42",
+  };
+  assertThrows(
+    () =>
+      compute([
+        minimalItem(issued),
+        minimalItem({ ...issued, adjustment_amount: 200 }),
+      ]),
+    Error,
+    "repeats the same identified issued transaction",
+  );
+  assertEquals(
+    findAllOutputs(
+      compute([
+        minimalItem(issued),
+        minimalItem({ ...issued, transaction_id: "sale-43" }),
+      ]),
+      "form8949",
+    ).length,
+    2,
   );
 });
 
