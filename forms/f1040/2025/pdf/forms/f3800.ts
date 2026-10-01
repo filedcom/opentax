@@ -10,6 +10,10 @@ import {
   inputSchema as f5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
 import {
+  calculateForm8826,
+  inputSchema as f8826InputSchema,
+} from "../../../nodes/inputs/f8826/index.ts";
+import {
   calculateForm8874,
   inputSchema as f8874InputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
@@ -112,6 +116,77 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    if (
+      source.f8826_credit_entries?.length === 2 &&
+      source.f8826_credit_entries.some((entry) => entry.source_type === "self")
+    ) {
+      const filed = f8826InputSchema.parse(all.f8826);
+      const passThrough = filed.pass_through_credits ?? [];
+      if (
+        filed.subject_to_passive_activity_limit !== false ||
+        passThrough.length !== 1 ||
+        passThrough[0].subject_to_passive_activity_limit !== false
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 1e needs one self and one nonpassive pass-through Form 8826 source",
+        );
+      }
+      const lines = calculateForm8826(filed);
+      const expectedCredits = [
+        lines.selfCreditAfterCap,
+        lines.passThroughCreditsAfterCap[0],
+      ];
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1e");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1e"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1e"
+      );
+      const credit = expectedCredits[0] + expectedCredits[1];
+      if (
+        expectedCredits.some((amount) => amount <= 0) ||
+        JSON.stringify(rawSource.f8826_credit_entries) !==
+          JSON.stringify(source.f8826_credit_entries) ||
+        source.f8826_credit_entries[0].source_type !== "self" ||
+        source.f8826_credit_entries[0].credit_amount !==
+          expectedCredits[0] ||
+        source.f8826_credit_entries[1].source_type !==
+          passThrough[0].entity_type ||
+        source.f8826_credit_entries[1].source_ein !==
+          passThrough[0].entity_ein ||
+        source.f8826_credit_entries[1].credit_amount !==
+          expectedCredits[1] ||
+        rows.length !== 1 || amounts.length !== 1 ||
+        details.length !== 2 ||
+        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.referenceDocumentName !== "IRS8826" ||
+        !rows[0].metadata.referenceDocumentId ||
+        details[0].sourceDocumentId !==
+          rows[0].metadata.referenceDocumentId ||
+        details[0].passThroughEin !== undefined ||
+        details[0].credit !== expectedCredits[0] ||
+        details[1].sourceDocumentId !== undefined ||
+        details[1].passThroughEin !== passThrough[0].entity_ein ||
+        details[1].credit !== expectedCredits[1] ||
+        details.some((detail) =>
+          detail.appliedCredit < 0 ||
+          detail.appliedCredit > detail.credit
+        ) ||
+        amounts[0].nonpassiveCredit !== credit ||
+        amounts[0].totalCredit !== credit ||
+        amounts[0].passiveBeforeLimit !== 0 ||
+        amounts[0].passiveAfterLimit !== 0 ||
+        amounts[0].transferOutCredit !== 0 ||
+        amounts[0].appliedCredit !==
+          details[0].appliedCredit + details[1].appliedCredit
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 1e differs from self and pass-through Form 8826 sources",
+        );
+      }
+    }
     if (source.f5884_credit) {
       const workOpportunity = f5884InputSchema.parse(all.f5884);
       if (

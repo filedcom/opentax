@@ -29,6 +29,17 @@ close acquisitions after September 30. Multiple vehicles, passive business
 credits, source-document authentication, carryforwards, and the deferred
 test/XSD/filled-PDF/business-rule/ATS batch remain open.
 
+The parent PDF now replays one combined nonpassive Form 8826 line 1e claim:
+$2,375 self-earned disabled-access credit and $1,250 from one S corporation
+source. It checks the filed Form 8826 calculation and pass-through EIN against
+both pending and raw Form 3800 entries, the prepared Part III aggregate, two
+Part V rows and distinct document/EIN links. A $3,625 native/PDF/Schedule 3/
+Form 1040 positive case and source, raw-entry, prepared-detail, and final-tax
+tamper cases are authored for the deferred bulk run. The Form 8826 source
+document still has no registered PDF descriptor, and issuer-copy byte
+authentication, wider source combinations, passive allocations, and external
+acceptance remain open.
+
 The parent PDF also accepts that one vehicle alongside one self-earned,
 nonpassive Form 5884 work opportunity credit when the finalized return can use
 both credits. It separately recalculates the vehicle and certified-payroll
