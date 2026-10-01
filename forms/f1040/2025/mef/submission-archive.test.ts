@@ -376,7 +376,7 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
         attachments: [{ ...bundle.attachments[0], bytes: changedBytes }],
       }, options),
     Error,
-    "attachment differs from preparation",
+    "PDF bytes differ from digest",
   );
 });
 

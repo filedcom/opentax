@@ -10,6 +10,8 @@ import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
+import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
+import { buildPdfBytes } from "../pdf/builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
 import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
@@ -336,6 +338,46 @@ Deno.test("MeF bundle pairs a readable PDF with one BinaryAttachment document", 
   assertEquals(bundle.attachments[0].bytes, bytes);
   assertEquals(bundle.attachments[0].bytes === bytes, false);
   assertStringIncludes(buildMefXml({}), 'binaryAttachmentCnt="0"');
+});
+
+Deno.test("prepared PDF and submission manifest reject changed attachment bytes or metadata", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "SourceStatement.pdf",
+      description: "Reviewed source statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const changedDescription = {
+    ...bundle,
+    attachments: [{
+      ...bundle.attachments[0],
+      description: "Different source statement",
+    }],
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(changedDescription),
+    Error,
+    "binary manifest differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes({}, sampleFiler(), ".pdf-cache", changedDescription),
+    Error,
+    "binary manifest differs",
+  );
+  const changedBytes = Uint8Array.from(bundle.attachments[0].bytes);
+  changedBytes[changedBytes.length - 1] ^= 1;
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        attachments: [{ ...bundle.attachments[0], bytes: changedBytes }],
+      }),
+    Error,
+    "PDF bytes differ from digest",
+  );
 });
 
 Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => {

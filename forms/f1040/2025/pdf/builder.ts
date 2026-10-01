@@ -6,6 +6,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
+import { assertPreparedAttachmentManifest } from "../mef/prepared-attachment-manifest.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertEitcChildSources,
@@ -315,6 +316,9 @@ export async function buildPdfBytes(
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  if (preparedBundle) {
+    await assertPreparedAttachmentManifest(preparedBundle);
   }
   const form8283Source = normalized.f8283
     ? form8283SourceSchema.parse(normalized.f8283)

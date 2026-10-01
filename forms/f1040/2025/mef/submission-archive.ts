@@ -3,6 +3,7 @@ import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
 import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
 import {
   assertFilingResidencyReview,
@@ -199,27 +200,7 @@ export async function buildMefSubmissionArchive(
     options.processingDate,
     bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
   );
-  const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
-  const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
-  if (
-    new Set(attachmentNames).size !== attachmentNames.length ||
-    attachmentNames.length !== digestNames.length ||
-    attachmentNames.some((name) =>
-      !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
-    )
-  ) {
-    throw new Error("MeF submission attachment set differs from preparation");
-  }
-  for (const attachment of bundle.attachments) {
-    if (
-      await sha256Hex(attachment.bytes) !==
-        bundle.attachmentSha256ByFileName[attachment.fileName]
-    ) {
-      throw new Error(
-        `MeF submission attachment differs from preparation: ${attachment.fileName}`,
-      );
-    }
-  }
+  await assertPreparedAttachmentManifest(bundle);
   const manifestXml = buildManifestXml(options.submissionId, efin, tin);
   const files: Record<string, Uint8Array> = {
     "manifest/manifest.xml": encoder.encode(manifestXml),
