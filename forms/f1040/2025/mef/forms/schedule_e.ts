@@ -34,6 +34,7 @@ import {
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
 import { scheduleEK1Part2Rows } from "../../schedule-e-k1-part2.ts";
 import { buildScheduleEType8Statement } from "./schedule_e_type8_statement.ts";
+import { assertSingleFilerActiveEntireLoss } from "../../form8582_active_entire_loss.ts";
 
 type Fields = Partial<z.infer<typeof inputSchema>>;
 type Property = z.infer<typeof itemSchema>;
@@ -363,6 +364,7 @@ export function validatePassiveActivityLink(
     ? qualifiedEntireDispositionLoss(items[0])
     : undefined;
   if (entireLoss !== undefined) {
+    assertSingleFilerActiveEntireLoss(items[0], context?.pending);
     const sale = items[0].passive_property_sales?.[0];
     const pendingSales = (context?.pending?.form4797 as
       | { passive_property_sales?: unknown[] }

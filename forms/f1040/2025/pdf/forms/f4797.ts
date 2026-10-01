@@ -33,6 +33,7 @@ import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/bo
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 import { appendForm4797Line2Statement } from "./f4797_line2_statement.ts";
 import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
+import { assertSingleFilerActiveEntireLoss } from "../../form8582_active_entire_loss.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
 // Part I  — installment/exchange gain and section 1231 lines 4–9.
@@ -354,6 +355,9 @@ export const form4797Pdf: PdfFormDescriptor = {
       const entireGain = activity
         ? qualifiedEntireDispositionGain(activity)
         : undefined;
+      if (entireLoss !== undefined && activity) {
+        assertSingleFilerActiveEntireLoss(activity, allPending);
+      }
       const gainLedger = entireGain === undefined
         ? undefined
         : form8582InputSchema.safeParse(allPending.form8582);

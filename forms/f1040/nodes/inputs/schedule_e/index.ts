@@ -295,7 +295,11 @@ export function qualifiedEntireDispositionLoss(
     item.disallowed_mortgage_interest_8990 === undefined &&
     item.disallowed_other_interest_8990 === undefined;
   if (
-    item.activity_type !== "B" || item.disposed_of !== true ||
+    (item.activity_type !== "B" &&
+      !(item.activity_type === "A" && item.property_type !== 6 &&
+        sourcedFirstYear &&
+        item.prior_passive_losses_active_when_incurred === undefined)) ||
+    item.disposed_of !== true ||
     !item.activity_id || item.passive_property_sales?.length !== 1 ||
     !sale || sale.part !== "II" || !isQualifiedEntireSale(sale) ||
     sale.activity_id !== item.activity_id ||
