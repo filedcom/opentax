@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **687 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **688 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 151-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 687 bounded routes and
+**Implemented coverage.** The completed ledger records 688 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -138,7 +138,9 @@ Positive Form 1040 line 26 estimated payments now replay the retained 1040-ES
 quarter amounts and applied prior-year overpayment at native/PDF export;
 external receipt and owner proof remain open. Final Form 1040 export also checks
 printed AGI, deductions, and taxable income against their component lines.
-Filed overpayment and amount owed now replay whole-dollar tax/payment balance
+Form 1040 line 33 now replays present payment components even when zero
+subtotals on lines 25d or 32 are omitted, while checking any explicit
+subtotals. Filed overpayment and amount owed now replay whole-dollar tax/payment balance
 and any reported estimated-tax penalty before native/PDF projection.
 Filed wage total and total income now replay retained Form 1040 component rows
 at native/PDF export when those rows are present.
