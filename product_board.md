@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **345 completed bounded items** and their exact limits live in the
+The **349 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,8 +15,8 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 34 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 292 | Many sourced form slices exist; the listed parent form paths remain open. |
-| Native MeF and PDF parity | 3 | 18 | Registry, attachment, and printable-output parity remain open. |
+| Named tax-form gaps | 20 | 294 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
 
@@ -26,17 +26,18 @@ Marketplace, education, dependent-credit, household-employment, and business
 credit sources to Form 1040. The ledger details source checks, owner identity,
 calculations, native MeF, PDF projection, and authored positive or tamper cases
 for each completed slice. Recent work includes three-country Form 1116 income,
-two-owner Form 8889 distributions and rollovers, Form 6251 capital-basis and
-AMT adjustments, Form 3800 mixed and Form 8826 direct-plus-K-1 credits,
-Form 5471 Schedule G answers, guarded Forms 4255, 8611, 965-A, and annual 8854
-PDFs, staged Form 8621 section 1291 pages and its Part V statement, and a
-Form 8962 shared policy with a claimed dependent and another tax family.
+two-owner Form 8889 distributions and rollovers, Form 6251 multi-lot AMT basis
+losses, Form 3800 mixed and Form 8826 direct-plus-K-1 credits, Form 5471
+Schedule G answers and Schedule R boundary, guarded Forms 4255, 8611, 965-A,
+and initial/annual 8854 PDFs, staged Form 8621 section 1291 pages and separate
+Part V statements, and a Form 8962 shared policy with a claimed dependent and
+another tax family.
 Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
-descriptors, 107 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
+descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
 literals, 99 without) with the form audit and applicability crosswalk. Set
 the ownership and workflow boundaries for entity-associated attachments,
 amendments, payment/account forms, and optional filing forms. Resolve whether
@@ -113,7 +114,7 @@ release.
 
 ## Native MeF and PDF parity
 
-- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially Form 965-A, wider Form 8582-CR branches, and Form 8621. Form 8582-CR now has one bounded ordinary-tax PDF route on its inspected two-page, 51-field blank, but other passive-income and credit sources, special allowances, and prior-year activity/year carryforward imports remain open; see its [PDF gap](docs/mef/ty2025-form8582cr-pdf-gap.md). Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
+- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially the Form 8621 parent; finish the guarded Forms 965-A, 4255, 8611, 8826, and 8854 descriptors and wider Form 8582-CR branches. Form 8582-CR now has one bounded ordinary-tax PDF route on its inspected two-page, 51-field blank, but other passive-income and credit sources, special allowances, and prior-year activity/year carryforward imports remain open; see its [PDF gap](docs/mef/ty2025-form8582cr-pdf-gap.md). Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
 - [ ] Audit every registered PDF descriptor against its canonical TY2025 IRS AcroForm fields, page count, row overflow, owner identity, checkbox semantics, descriptions, statements, document references, and current calculation. Fix stale or missing mappings rather than silently dropping fields.
 - [ ] Ensure native XML, PDF, and manifest use the same finalized return graph and prepared form instances; verify repeated owner/form copies and attachment references, including signed Form 8283 and source-issued acknowledgments.
 
