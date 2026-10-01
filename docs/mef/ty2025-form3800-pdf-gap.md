@@ -370,6 +370,18 @@ Form 1040, native XML, and PDF use $4,412. Source amount and prepared activity
 tamper fixtures are authored for the deferred bulk run. Prior-year credit
 import remains closed without authenticated accepted-year evidence.
 
+The self-earned passive Form 8874 route now takes up to fifteen distinctly
+identified current-year investments, the physical capacity of the nine-page
+Form 3800 PDF Part V. Each source's activity, notice reference, and credit
+amount is matched one-to-one with its Form 8582-CR source and retained 2025
+Worksheet 9 balance. Form 3800 Part III line 1i and every Part V detail
+reconcile to native XML and PDF; the total allowed amount joins Schedule 3
+and Form 1040. Authored three-source unequal-allocation, seven-source Form
+8874 attachment, fifteen-source capacity, sixteenth-source rejection, and
+tamper fixtures await the shared validation run. The separate one-passive
+plus one-nonpassive route stays bounded to that pair. Accepted prior-year
+credit import remains closed without authenticated evidence.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional

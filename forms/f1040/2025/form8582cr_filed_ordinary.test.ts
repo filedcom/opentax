@@ -19,6 +19,7 @@ import { normalizeAllPending } from "./pending.ts";
 import { form8582cr } from "./mef/forms/f8582cr.ts";
 import { form8582crPdf } from "./pdf/forms/f8582cr.ts";
 import { form3800Pdf } from "./pdf/forms/f3800.ts";
+import { form8874Pdf } from "./pdf/forms/f8874.ts";
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
@@ -92,7 +93,7 @@ function filedReturn(
   investmentAmount = 10_000,
   interestBoxes: number[] = [],
   nonpassiveInvestmentAmount = 0,
-  secondPassiveInvestmentAmount = 0,
+  additionalPassiveInvestmentAmounts: number[] = [],
 ) {
   const interestAmount = interestBoxes.reduce((sum, amount) => sum + amount, 0);
   const taxableWithInterest = taxable + interestAmount;
@@ -148,20 +149,21 @@ function filedReturn(
             passive_source_document_reference: undefined,
           }]
           : []),
-        ...(secondPassiveInvestmentAmount > 0
-          ? [{
-            ...investment,
-            cde_name: "Second Community Development Entity",
-            cde_ein: "987654321",
-            initial_investment_date: "2025-06-15",
-            credit_allowance_date: "2025-06-15",
-            designation_notice_reference: "2025 second community QEI notice",
-            qualified_equity_investment_amount: secondPassiveInvestmentAmount,
-            passive_activity_reference: "community-investment-2",
-            passive_source_document_reference:
-              "2025 second community QEI notice",
-          }]
-          : []),
+        ...additionalPassiveInvestmentAmounts.map((amount, index) => ({
+          ...investment,
+          cde_name: `Community Development Entity ${index + 2}`,
+          cde_ein: String(987654321 - index),
+          initial_investment_date: "2025-06-15",
+          credit_allowance_date: "2025-06-15",
+          designation_notice_reference: `2025 community QEI notice ${
+            index + 2
+          }`,
+          qualified_equity_investment_amount: amount,
+          passive_activity_reference: `community-investment-${index + 2}`,
+          passive_source_document_reference: `2025 community QEI notice ${
+            index + 2
+          }`,
+        })),
       ],
     },
     form8582cr: {
@@ -170,14 +172,12 @@ function filedReturn(
           ...source,
           current_year_credit: investmentAmount * 0.05,
         },
-        ...(secondPassiveInvestmentAmount > 0
-          ? [{
-            ...source,
-            activity_reference: "community-investment-2",
-            source_document_reference: "2025 second community QEI notice",
-            current_year_credit: secondPassiveInvestmentAmount * 0.05,
-          }]
-          : []),
+        ...additionalPassiveInvestmentAmounts.map((amount, index) => ({
+          ...source,
+          activity_reference: `community-investment-${index + 2}`,
+          source_document_reference: `2025 community QEI notice ${index + 2}`,
+          current_year_credit: amount * 0.05,
+        })),
       ],
       regular_tax_all_income: taxAllWithInterest,
       regular_tax_without_passive: taxWithoutWithInterest,
@@ -634,7 +634,7 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
 });
 
 Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 Worksheet 9 balances", async () => {
-  const result = filedReturn(100_000, [], 0, 100_000);
+  const result = filedReturn(100_000, [], 0, [100_000]);
   const pending = normalizeAllPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -750,7 +750,181 @@ Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 
         },
       ),
     Error,
-    "two passive Form 8874 activities",
+    "passive Form 8874 activities",
+  );
+});
+
+Deno.test("three different passive Form 8874 credits allocate one ordinary line 6 by source through native and PDF", async () => {
+  const result = filedReturn(100_000, [], 0, [50_000, 50_000]);
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.total_credit, 10_000);
+  assertEquals(ledger.allowed_credit, 4_412);
+  assertEquals(
+    ledger.rows.map((row) => [
+      row.source.activity_reference,
+      row.total_credit,
+      row.allowed_credit,
+      row.unallowed_credit,
+    ]),
+    [
+      ["community-investment-1", 5_000, 2_206, 2_794],
+      ["community-investment-2", 2_500, 1_103, 1_397],
+      ["community-investment-3", 2_500, 1_103, 1_397],
+    ],
+  );
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 3);
+  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
+  assertEquals(
+    parts.passiveCurrentDetails.map((detail) => [
+      detail.source.activityReference,
+      detail.source.beforePassiveLimit,
+      detail.source.afterPassiveLimit,
+      detail.sourceDocument?.documentId,
+    ]),
+    ledger.rows.map((row) => [
+      row.source.activity_reference,
+      row.total_credit,
+      row.allowed_credit,
+      parts.currentRows[0].metadata.referenceDocumentId,
+    ]),
+  );
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    3,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const filedAllocations = f3800InputSchema.parse(filed.f3800)
+    .passive_source_allocations!;
+  const changed = {
+    ...filed,
+    f3800: {
+      ...filed.f3800,
+      passive_source_allocations: [
+        ...filedAllocations.slice(0, 2),
+        {
+          ...filedAllocations[2],
+          source_document_reference: "wrong-third-QEI-notice",
+        },
+      ],
+    },
+  };
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        changed.f3800,
+        extractFilerIdentity(general),
+        changed,
+        parts,
+      ),
+    Error,
+    "line 37 and current-year source allocation differ",
+  );
+});
+
+Deno.test("seven passive Form 8874 activities use investment overflow and all seven Form 3800 Part V rows", async () => {
+  const result = filedReturn(10_000, [], 0, Array(6).fill(10_000));
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.rows.length, 7);
+  assertEquals(ledger.total_credit, 3_500);
+  assertEquals(ledger.allowed_credit, 3_500);
+  assertEquals(ledger.unallowed_credit, 0);
+  assertEquals(pending.schedule3.line6a_total, 3_500);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 3_500);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 7);
+  assertEquals(parts.passiveCurrentDetails.length, 7);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    7,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
+  assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 2);
+  const form3800Printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(form3800Printed?.[form3800PartIIIFields("1i").g], 3_500);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+});
+
+Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth remains closed", async () => {
+  const result = filedReturn(10_000, [], 0, Array(14).fill(10_000));
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.rows.length, 15);
+  assertEquals(ledger.total_credit, 7_500);
+  assertEquals(ledger.allowed_credit, 4_412);
+  assertEquals(ledger.unallowed_credit, 3_088);
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 15);
+  assertEquals(parts.passiveCurrentDetails.length, 15);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    15,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
+  assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 10);
+  const form3800Printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(form3800Printed?.[form3800PartIIIFields("1i").g], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const originalSources = form8582crInputSchema.parse(pending.form8582cr)
+    .credit_sources;
+  const manySources = Array.from({ length: 16 }, (_, index) => ({
+    ...originalSources[index % 15],
+    activity_reference: `too-many-activities-${index}`,
+    source_document_reference: `too-many-notices-${index}`,
+  }));
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!({
+        ...pending.form8582cr,
+        credit_sources: manySources,
+      }, pending),
+    Error,
+    "within Form 3800 Part V capacity",
   );
 });
 

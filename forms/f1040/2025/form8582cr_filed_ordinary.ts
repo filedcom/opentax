@@ -16,6 +16,7 @@ import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_part
 import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { sameForm3800PassiveAllocations } from "./mef/forms/f3800_passive_link.ts";
 import { assertForm3800FinalCreditJoin } from "./form3800_final_credit_join.ts";
+import { FORM3800_PRINTED_PART_V_ROWS } from "./pdf/forms/f3800_capacity.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
 const nonemptySource = (value: unknown): boolean =>
@@ -48,7 +49,7 @@ export function reconcileFiledForm8582CROrdinary(
   const input = form8582crInputSchema.parse(raw);
   const source = input.credit_sources[0];
   const selfCredit = input.credit_sources.length > 0 &&
-    input.credit_sources.length <= 2 &&
+    input.credit_sources.length <= FORM3800_PRINTED_PART_V_ROWS &&
     input.credit_sources.every((entry) =>
       entry.source_origin.kind === PassiveCreditSourceOrigin.Self
     );
@@ -58,7 +59,7 @@ export function reconcileFiledForm8582CROrdinary(
     PassiveCreditSourceOrigin.SCorporation;
   if (
     !input.line6_ordinary_worksheet || input.credit_sources.length === 0 ||
-    input.credit_sources.length > 2 || !source ||
+    input.credit_sources.length > FORM3800_PRINTED_PART_V_ROWS || !source ||
     (!selfCredit && input.credit_sources.length !== 1) ||
     (!selfCredit && !partnershipCredit && !sCorpCredit) ||
     input.credit_sources.some((entry) =>
@@ -84,7 +85,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs one or two self-earned current-year Form 8874 credits, or one credit-only K-1 code AD credit, and one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 credits within Form 3800 Part V capacity, or one credit-only K-1 code AD credit, and one sourced passive rental income activity",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -121,6 +122,9 @@ export function reconcileFiledForm8582CROrdinary(
     if (
       credits.length !== input.credit_sources.length ||
       ordinaryCredits.length > 1 ||
+      (ordinaryCredits.length === 1 && credits.length !== 1) ||
+      input.credit_sources.length + ordinaryCredits.length >
+        FORM3800_PRINTED_PART_V_ROWS ||
       new Set(sourceKeys).size !== sourceKeys.length ||
       credits.some((row) =>
         input.credit_sources.filter((entry) =>

@@ -1,9 +1,10 @@
 # TY2025 Form 8582-CR PDF boundary
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
-one or two current-year passive New Markets credits from self-earned Form 8874
-investment (optionally paired with one distinct nonpassive Form 8874
-investment), a credit-only partnership K-1 box 15 code AD, or a credit-only
+one to fifteen current-year passive New Markets credits from distinct
+self-earned Form 8874 investments (one passive investment may also be paired
+with one distinct nonpassive Form 8874 investment), a credit-only partnership
+K-1 box 15 code AD, or a credit-only
 S corporation K-1 box 13 code AD, plus one
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
@@ -14,11 +15,12 @@ export until their source, final-return, and carryforward joins are complete.
 the one-rental ordinary-tax calculation. The native and PDF exporters recompute
 its taxable-income-with/without-passive tax pair from the finalized Form 1040
 method, Schedule E rental ledger, Schedule 1, and filer status. The credit
-activity may be distinct from the rental income activity: each of up to two
+activity may be distinct from the rental income activity: each of up to fifteen
 passive Form 8874 investments must exactly match one distinct Form 8582-CR
-source's activity, source document, and current-year amount. One additional
-nonpassive investment on
-that Form 8874 enters Form 3800 line 1i outside the passive Worksheet 9.
+source's activity, source document, and current-year amount. The fifteen-source
+limit is the printed Form 3800 Part V capacity. When there is only one passive
+investment, one additional nonpassive investment on that Form 8874 enters
+Form 3800 line 1i outside the passive Worksheet 9.
 Alternatively, one partnership K-1 box 15
 code AD or S corporation K-1 box 13 code AD must match the pass-through
 EIN/name, K-1 reference, recipient TIN, passive classification, and
@@ -53,6 +55,13 @@ $2,206 allowed and $2,794 unallowed. Form 3800 Part III line 1i and its two
 Part V details, Schedule 3, Form 1040, native XML, and the printable forms
 reconcile to that $4,412 allowed amount. The full-return and source/prepared
 activity tamper fixtures are authored for the deferred bulk validation.
+The same direct source matching and proportional whole-dollar Worksheet 9
+allocation now apply to three through fifteen distinct passive investments.
+Three unequal credits exercise per-activity allowed/unallowed balances;
+seven investments exercise the Form 8874 attachment; fifteen fill every
+printable Form 3800 Part V row. A sixteenth activity is rejected at the
+printable capacity boundary. These full-return/native/PDF and tamper fixtures
+are authored but unrun.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
 The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
@@ -72,7 +81,7 @@ their line 6 source, final-return tax method, or carryforward join:
 | Native calculation branch | Printable gap |
 | --- | --- |
 | Other-category current-year credits from estate, trust, or cooperative K-1 sources; partnership or S corporation K-1s with other income, deduction, or credit boxes; or self-earned sources other than the bounded Form 8874 investments | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
-| More than two current-year credit activities, multiple pass-through activities, or mixed Form 3800 reporting lines 3, 24, and 33 | Per-activity allocation and Form 3800/Form 1040 tax-use proof for every source. |
+| More than fifteen self-earned current-year Form 8874 activities, multiple pass-through activities, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
 | Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
 | Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
 | Other tax methods, multiple Schedule E rentals, K-1 or farm-rental passive income, and passive dispositions | Reperform line 6 under the actual finalized Form 1040 method and complete passive net-income set. |

@@ -16,6 +16,7 @@ import {
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../nodes/inputs/f3800/index.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
+import { FORM3800_PRINTED_PART_V_ROWS } from "./f3800_capacity.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 import {
   form3800HeaderFields,
@@ -324,7 +325,8 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       !source.f8874_credit &&
-      source.passive_source_allocations?.length === 2 &&
+      source.passive_source_allocations !== undefined &&
+      source.passive_source_allocations.length >= 2 &&
       source.passive_source_allocations.every((entry) =>
         entry.source_origin.kind === "self" &&
         entry.source_form === "Form 8874" &&
@@ -353,20 +355,22 @@ export const form3800Pdf: PdfFormDescriptor = {
         row.line === "1i"
       );
       if (
-        credits.rows.length !== 2 || credits.nonpassiveCredit !== 0 ||
+        credits.rows.length !== ledger.rows.length ||
+        credits.nonpassiveCredit !== 0 ||
         credits.passiveCredit !== passive.partI.line5 ||
-        ledger.rows.length !== 2 ||
+        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         new Set(ledger.rows.map((row) =>
             JSON.stringify([
               row.source.activity_reference,
               row.source.source_document_reference,
             ])
-          )).size !== 2 ||
+          )).size !== ledger.rows.length ||
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
-        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        rows.length !== 1 || amounts.length !== 1 ||
+        details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
-        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.sourceCount !== ledger.rows.length ||
         rows[0].metadata.referenceDocumentName !== "IRS8874" ||
         !rows[0].metadata.referenceDocumentId ||
         details.some((detail) => {
@@ -402,7 +406,7 @@ export const form3800Pdf: PdfFormDescriptor = {
         prepared.lines.line38 !== passive.line37
       ) {
         throw new Error(
-          "Form 3800 PDF two passive Form 8874 activities differ from filed Worksheet 9",
+          "Form 3800 PDF passive Form 8874 activities differ from filed Worksheet 9",
         );
       }
     }

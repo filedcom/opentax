@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { reconcileFiledForm8582CROrdinary } from "../../form8582cr_filed_ordinary.ts";
 import { form8582cr as nativeForm8582cr } from "../../mef/forms/f8582cr.ts";
+import { FORM3800_PRINTED_PART_V_ROWS } from "./f3800_capacity.ts";
 
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
@@ -66,7 +67,8 @@ export const form8582crPdf: PdfFormDescriptor = {
       throw new Error("Form 8582-CR PDF line 37 differs from native MeF");
     }
     if (
-      ledger.rows.length < 1 || ledger.rows.length > 2 ||
+      ledger.rows.length < 1 ||
+      ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
       tax.line6 !== lines.partI.line6 ||
       ledger.rows.some((row) => row.source.source_form !== "Form 8874")
     ) {
