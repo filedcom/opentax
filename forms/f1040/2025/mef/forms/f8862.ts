@@ -311,6 +311,58 @@ function validateFinalizedCreditClaims(
         "Form 8862 Part III must include every filed CTC and ODC dependent",
       );
     }
+    if (
+      !fields.claim_eitc && !fields.claim_aotc &&
+      (fields.ctc_children?.length ?? 0) === 0 &&
+      (fields.other_dependents?.length ?? 0) === 1
+    ) {
+      const form8812 = form8812InputSchema.safeParse(pending?.f8812);
+      const lines = form8812.success
+        ? calculateSchedule8812Lines(2025, form8812.data)
+        : undefined;
+      const person = fields.other_dependents![0];
+      const name = `${person.first_name} ${person.last_name}`.trim()
+        .toUpperCase();
+      const sourceDependents = general.success
+        ? general.data.dependents ?? []
+        : [];
+      const sourcePerson = sourceDependents.filter((row) =>
+        `${row.first_name} ${row.last_name}`.trim().toUpperCase() === name
+      );
+      const filedPerson = dependentRows.filter((row) =>
+        row !== null && typeof row === "object" &&
+        `${(row as Record<string, unknown>).first_name} ${
+            (row as Record<string, unknown>).last_name
+          }`.trim().toUpperCase() === name
+      ) as Record<string, unknown>[];
+      const identifiers = ["ssn", "itin", "atin"] as const;
+      const sourceIdentifiers = identifiers.filter((key) =>
+        typeof sourcePerson[0]?.[key] === "string"
+      );
+      const identifier = sourceIdentifiers[0];
+      const sourceTin = identifier === undefined
+        ? undefined
+        : sourcePerson[0]?.[identifier];
+      const filedTin = identifier === undefined
+        ? undefined
+        : filedPerson[0]?.[identifier];
+      if (
+        !form8812.success || !lines ||
+        form8812.data.form8862_filed !== true ||
+        sourcePerson.length !== 1 || filedPerson.length !== 1 ||
+        sourceIdentifiers.length !== 1 || !sourceTin ||
+        typeof filedTin !== "string" ||
+        sourceTin.replace(/\D/g, "") !== filedTin.replace(/\D/g, "") ||
+        lines.line4 !== 0 || lines.line6 !== 1 || lines.line7 !== 500 ||
+        lines.line14 <= 0 || lines.line27 !== 0 ||
+        form1040.line19_child_tax_credit !== lines.line14 ||
+        (form1040.line28_actc ?? 0) !== lines.line27
+      ) {
+        throw new Error(
+          "Form 8862 standalone ODC source, Schedule 8812, dependent TIN, and Form 1040 amounts do not reconcile",
+        );
+      }
+    }
   }
   if (fields.claim_aotc) {
     const form8863 = form8863InputSchema.safeParse(pending?.f8863);

@@ -50,3 +50,17 @@ parity to the existing same-name, same-SSN and prior-notice joins for the shared
 claimant. Positive full-return and changed line 19, line 29, and Schedule 3
 credit fixtures are authored for the deferred batch. Notice content and issuer
 authenticity remain open.
+
+## Standalone one-dependent ODC amount and identity replay (2026-10-01, unrun)
+
+The [2025 Schedule 8812 instructions](https://www.irs.gov/instructions/i1040s8)
+place the other-dependent count on line 6, multiply it by $500 on line 7, and
+send the allowed nonrefundable amount on line 14 to Form 1040 line 19. For a
+Form 8862 claim with exactly one ODC dependent and no CTC child, EITC, or AOTC
+claim, native and PDF export now recompute Schedule 8812 from the retained
+input. They require its Form 8862 marker, lines 4/6/7 and 14/27, finalized Form
+1040 lines 19/28, and the dependent's original and filed name and TIN to agree.
+A full-return fixture and altered schedule, credit, source TIN, and filed TIN
+fixtures are authored for the deferred bulk pass. Other claimant combinations
+retain their separate guards; this does not authenticate the prior IRS notice or
+expand the claim to unsourced dependents.
