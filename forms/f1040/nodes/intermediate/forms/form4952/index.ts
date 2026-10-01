@@ -8,6 +8,11 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  form4952DirectDebtTraceSchema,
+  reconcileForm4952DirectDebtTrace,
+} from "./debt_trace.ts";
+import { form4952PriorCarryforwardSourceSchema } from "./prior_carryforward.ts";
 
 // The manual line 4 source facts exclude 1099s explicitly marked as investment
 // property and amounts routed by Form 8814. Each source has its own field so
@@ -36,11 +41,14 @@ function sum(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   investment_interest_expense: z.number().nonnegative().optional(),
+  direct_debt_trace: form4952DirectDebtTraceSchema.optional(),
   investment_interest_expense_excludes_sourced_k1: z.literal(true).optional(),
   investment_interest_expense_excludes_royalty_attributable_interest: z.literal(
     true,
   ).optional(),
   prior_year_carryforward: z.number().nonnegative().optional(),
+  prior_year_carryforward_source: form4952PriorCarryforwardSourceSchema
+    .optional(),
   other_investment_property_gross_income: z.number().nonnegative().optional(),
   other_investment_property_gross_income_excludes_sourced_royalties: z.literal(
     true,
@@ -73,6 +81,24 @@ export const inputSchema = z.object({
   form8814_line10_capital_gain: z.number().nonnegative().optional(),
   form8814_line12_investment_income: z.number().nonnegative().optional(),
   amt_refigure: amtRefigureSchema.optional(),
+}).superRefine((input, context) => {
+  const prior = input.prior_year_carryforward ?? 0;
+  const amtPrior = input.amt_refigure?.prior_year_disallowed_interest ?? 0;
+  const source = input.prior_year_carryforward_source;
+  if (
+    (prior > 0 || amtPrior > 0 || source !== undefined) &&
+    (!source || prior !== source.filed_2024_form4952.line7 ||
+      amtPrior !== source.reviewed_2024_amt_form4952_line7 ||
+      (input.direct_debt_trace !== undefined &&
+        input.direct_debt_trace.owner_tin !== source.filed_primary_ssn))
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prior_year_carryforward_source"],
+      message:
+        "Form 4952 prior-year line 2 and AMT carryforward need matching reviewed filed-2024 Form 4952 source and owner",
+    });
+  }
 });
 
 type Form4952Input = z.infer<typeof inputSchema>;
@@ -271,6 +297,13 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form4952Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.direct_debt_trace) {
+      reconcileForm4952DirectDebtTrace(
+        input.direct_debt_trace,
+        input,
+        input.direct_debt_trace.owner_tin,
+      );
+    }
     const lines = calculateForm4952(input);
     if (lines.line3 === 0 && lines.line4g > 0) {
       throw new Error(

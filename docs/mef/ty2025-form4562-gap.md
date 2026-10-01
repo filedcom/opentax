@@ -4,6 +4,24 @@ Status: bounded build-first implementation, not filing ready. Do not treat the
 registered `IRS4562` builder or PDF descriptor as a fully supported filing path.
 No test, XSD, PDF render, or IRS ATS validation has run yet.
 
+## One taxpayer-owned W-2 included in the section 179 income limit (2026-10-01, unrun)
+
+The bounded one-asset Schedule C route now permits one ordinary employee W-2
+whose box 1 wages belong to the taxpayer. The 2025
+[Form 4562 instructions, line 11](https://www.irs.gov/instructions/i4562)
+include Form 1040 line 1a employee compensation in taxable income from an
+actively conducted business. The source replay requires the W-2 employee SSN
+to match the return taxpayer, an identified employer EIN, and exact box 1
+agreement with finalized Form 1040 lines 1a and 1z. It adds those wages to
+the single active Schedule C profit recomputed before its section 179 expense,
+and requires that sum to equal the asset's reviewed taxpayer income amount.
+The resulting line 11 cap, line 12 deduction, Schedule C line 13, Schedule 1,
+Form 1040, native MeF, and PDF use one set of amounts. A full-return positive
+fixture and wage, owner, and business-profit tamper fixtures are authored but
+unrun. Other wage lines, a second W-2, statutory employee wages, community
+property allocation, another active business, and authenticated W-2 bytes
+remain outside this route.
+
 Build-first progress: the invalid flat XML serializer has been replaced with the
 TY2025 native section 179 line and elected-property sequence. A new direct
 `form4562.asset` source accepts one fully elected, nonlisted Schedule C asset,
@@ -17,12 +35,13 @@ unverified. No tests, XSD validation, PDF rendering, or ATS acceptance has run
 for this new path.
 
 The MeF builder now also checks line 11 against the filed sole Schedule C profit
-recomputed without this asset's section 179 deduction. This narrower route
-requires an active, all-at-risk business, no employee wages, no other
+recomputed without this asset's section 179 deduction, plus the one sourced
+ordinary W-2 when present. This narrower route
+requires an active, all-at-risk business, no other
 business-income attachments, no home-office adjustment, and no separate Schedule
 C passthrough amounts or WOTC reduction. A referenced workpaper or an entered
-income amount alone no longer establishes the active-income limit. Employee
-wages and other businesses can contribute to the legal limit, but their
+income amount alone no longer establishes the active-income limit. Other
+compensation and other businesses can contribute to the legal limit, but their
 combination is outside this route until sourced reconciliation exists.
 
 This first path is limited to a 2025 asset whose entire cost is elected under

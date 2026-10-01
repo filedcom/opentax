@@ -2,7 +2,9 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { fec } from "./index.ts";
 import { ForeignTaxCreditMethod } from "../../intermediate/forms/form_1116/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
     foreign_employer_name: "ACME Foreign Corp",
     country_code: "DE",
@@ -12,8 +14,11 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return fec.compute({ taxYear: 2025, formType: "f1040" }, { fecs: items });
+function compute(items: Record<string, unknown>[]) {
+  return fec.compute(
+    { taxYear: 2025, formType: "f1040" },
+    fec.inputSchema.parse({ fecs: items }),
+  );
 }
 
 const alternativeBasis = {
@@ -61,6 +66,107 @@ Deno.test("fec: alternative employee compensation sourcing follows the general-c
     (form?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
       .foreign_tax_currency,
     paidTaxCurrency,
+  );
+});
+
+Deno.test("fec: same employee's second foreign-employer wage proves the line 1b worldwide threshold", () => {
+  const primary = minimalItem({
+    compensation_usd: 200_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference:
+      alternativeBasis.source_document_reference,
+    foreign_tax_paid_usd: 2_000,
+    foreign_service_compensation_usd: 140_000,
+    foreign_tax_irs_country_code: "GM",
+    foreign_tax_paid_or_accrued_date: "2025-12-01",
+    foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+    foreign_tax_currency: paidTaxCurrency,
+    alternative_compensation_sourcing: {
+      ...alternativeBasis,
+      compensation_item_total_usd: 200_000,
+      alternative_us_source_usd: 60_000,
+      ordinary_us_source_usd: 80_000,
+    },
+  });
+  const second = minimalItem({
+    foreign_employer_name: "Second Corp",
+    compensation_usd: 100_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference: "second employer 2025 payroll",
+    foreign_service_compensation_usd: 0,
+    foreign_tax_paid_usd: 0,
+  });
+  const result = compute([primary, second]);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 300_000);
+  assertEquals(
+    (result.outputs.find((item) => item.nodeType === "form_1116")?.fields
+      .foreign_tax_items as Array<Record<string, unknown>>).length,
+    1,
+  );
+  assertThrows(
+    () =>
+      compute([primary, { ...second, compensation_owner_ssn: "999-88-7777" }]),
+    Error,
+    "at least $250,000 of identified employee compensation",
+  );
+  assertThrows(
+    () =>
+      compute([primary, { ...second, foreign_service_compensation_usd: 1 }]),
+    Error,
+    "at least $250,000 of identified employee compensation",
+  );
+});
+
+Deno.test("fec: four or five distinct owner-matched wage records prove the alternative-basis threshold", () => {
+  const primary = minimalItem({
+    compensation_usd: 200_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference:
+      alternativeBasis.source_document_reference,
+    foreign_tax_paid_usd: 2_000,
+    foreign_service_compensation_usd: 140_000,
+    foreign_tax_irs_country_code: "GM",
+    foreign_tax_paid_or_accrued_date: "2025-12-01",
+    foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+    foreign_tax_currency: paidTaxCurrency,
+    alternative_compensation_sourcing: {
+      ...alternativeBasis,
+      compensation_item_total_usd: 200_000,
+      alternative_us_source_usd: 60_000,
+      ordinary_us_source_usd: 80_000,
+    },
+  });
+  const others = Array.from({ length: 4 }, (_, index) =>
+    minimalItem({
+      foreign_employer_name: `Additional employer ${index + 1}`,
+      compensation_usd: 25_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: `additional employer ${
+        index + 1
+      } payroll`,
+      foreign_service_compensation_usd: 0,
+      foreign_tax_paid_usd: 0,
+    }));
+  for (const count of [3, 4]) {
+    const result = compute([primary, ...others.slice(0, count)]);
+    assertEquals(
+      result.outputs[0].fields.line1h_other_earned,
+      200_000 + 25_000 * count,
+    );
+    assertEquals(
+      (result.outputs.find((item) => item.nodeType === "form_1116")?.fields
+        .foreign_tax_items as Array<Record<string, unknown>>).length,
+      1,
+    );
+  }
+  assertThrows(
+    () =>
+      compute([primary, ...others, {
+        ...others[0],
+        compensation_source_document_reference: "sixth employer payroll",
+      }]),
+    Error,
+    "at least $250,000 of identified employee compensation",
   );
 });
 

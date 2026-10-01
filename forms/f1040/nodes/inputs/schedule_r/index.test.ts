@@ -5,7 +5,10 @@ import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_r.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof schedule_r.compute>[1]);
+  return schedule_r.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input as Parameters<typeof schedule_r.compute>[1],
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -100,6 +103,18 @@ Deno.test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750"
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
+Deno.test("schedule_r.compute: qualifying surviving spouse uses box 1 base and AGI threshold", () => {
+  const result = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_age_65_or_older: true,
+    agi: 7_500,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6d_elderly_disabled_credit,
+    750,
+  );
+});
+
 Deno.test("schedule_r.compute: MFJ both spouses 65+ — produces output with $7500 base", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
@@ -126,7 +141,7 @@ Deno.test("schedule_r.compute: single 65+ zero AGI — credit = 5000 * 15% = 750
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: MFS disabled zero AGI — credit = 3750 * 15% = 562.5", () => {
+Deno.test("schedule_r.compute: MFS disabled zero AGI — whole-dollar credit = 563", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     taxpayer_disabled: true,
@@ -134,7 +149,7 @@ Deno.test("schedule_r.compute: MFS disabled zero AGI — credit = 3750 * 15% = 5
     agi: 0,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6d_elderly_disabled_credit, 562.5);
+  assertEquals(fields.line6d_elderly_disabled_credit, 563);
 });
 
 // =============================================================================
@@ -272,6 +287,69 @@ Deno.test("schedule_r.compute: age 65+ with disability income — no cap applied
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6d_elderly_disabled_credit, 750); // 5000 * 15%
+});
+
+Deno.test("schedule_r.compute: box 6 keeps the older spouse's $5,000 before disability cap", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_age_65_or_older: true,
+    spouse_disabled: true,
+    spouse_disability_income: 1_000,
+    agi: 0,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6d_elderly_disabled_credit,
+    900,
+  );
+});
+
+Deno.test("schedule_r.compute: reviewed disability evidence reaches the Form 1040 credit guard", () => {
+  const source = {
+    filing_status: FilingStatus.Single,
+    taxpayer_disabled: true,
+    taxpayer_disability_income: 5_000,
+    agi: 7_500,
+  };
+  assertEquals(findOutput(compute(source), "f1040"), undefined);
+  const reviewed = compute({
+    ...source,
+    taxpayer_disability_evidence: {
+      retired_on_permanent_total_disability: true,
+      below_mandatory_retirement_age_on_january_1: true,
+      unable_to_perform_substantial_gainful_activity: true,
+      condition_expected_to_last_one_year_or_result_in_death_verified: true,
+      disability_income_source_reference: "Employer W-2",
+      disability_income_reported_on: "wages",
+      eligibility_source_reference: "Retirement record",
+      physician_statement: "current_year",
+      physician_statement_source_reference: "Signed physician statement",
+      physician_or_va_statement_signed_verified: true,
+    },
+  });
+  assertEquals(findOutput(reviewed, "f1040")?.fields, {
+    schedule_r_disability_qualified: true,
+  });
+});
+
+Deno.test("schedule_r.inputSchema: disability review needs duration and signed statement", () => {
+  const evidence = {
+    retired_on_permanent_total_disability: true,
+    below_mandatory_retirement_age_on_january_1: true,
+    unable_to_perform_substantial_gainful_activity: true,
+    disability_income_source_reference: "Employer W-2",
+    disability_income_reported_on: "wages",
+    eligibility_source_reference: "Retirement record",
+    physician_statement: "current_year",
+    physician_statement_source_reference: "Physician statement",
+  };
+  assertEquals(
+    schedule_r.inputSchema.safeParse({
+      filing_status: FilingStatus.Single,
+      taxpayer_disabled: true,
+      taxpayer_disability_evidence: evidence,
+    }).success,
+    false,
+  );
 });
 
 // =============================================================================

@@ -128,11 +128,48 @@ coverage is claimed.
 
 One identified SSTB for a single filer inside the 2025 taxable-income phase-in
 range now produces a separate registered `IRS8995AScheduleA` native document.
+The same one-business route also accepts a married-filing-jointly return inside
+the $394,600–$494,600 phase-in range. It calculates the joint $100,000 range
+from the 2025 configuration, projects the threshold and range in the parent and
+Schedule A native/PDF documents, and requires the native parent status to match
+the final return header. Positive, boundary, and status-mismatch fixtures are
+authored but unrun. The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a)
+specify those joint thresholds and Schedule A requirement.
+One head-of-household return is also admitted under the instructions' "all other
+returns" $197,300–$247,300 phase-in range. The parent and Schedule A native
+builders both require the head-of-household return header; the same source,
+deduction, native attachment, and PDF calculations apply. Positive, boundary,
+status-mismatch, and still-unsupported qualifying-surviving-spouse fixtures
+are authored but unrun. QSS remains closed pending its return-boundary review.
+One qualifying-surviving-spouse return with an identified SSTB also uses the
+2025 $197,300–$247,300 nonjoint Schedule A phase-in. The calculator retains
+the same single-business, source-attested QBI/W-2/UBIA and zero-other-item
+limits; both native documents require a qualifying-surviving-spouse return
+header, and both PDF instances reject a different final filer status. The
+parent and companion line calculations, Form 1040 line 13 deduction, native
+XML, PDF projection, and wrong-status cases are authored for the deferred
+batch. The general return's underlying surviving-spouse eligibility evidence
+and the issued business-source bytes remain separate validation gates. The
+[2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+place all returns other than joint in the $197,300 threshold and $50,000
+phase-in range.
+
+An MFS return with one taxpayer-owned SSTB now uses the same nonjoint phase-in
+only when the SSTB filing details identify the primary taxpayer by SSN, name a
+separate-return QBI/W-2/UBIA allocation workpaper, and affirm that no spouse
+share is claimed. Both native documents compare that owner and MFS status with
+the final return header; both PDF descriptors check them at rendering. Their
+projected lines still reconcile to the matching parent/companion and Form 1040
+line 13. Positive, omitted-reference, owner-tamper, and status-tamper fixtures
+are authored but unrun. The allocation workpaper and upstream business source
+bytes are not authenticated, and spouse-share or multiple-business variants
+remain unsupported. The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a)
+place MFS in the $197,300–$247,300 "all other returns" range.
 Its attested business identity and QBI, W-2 wage, and UBIA amounts must match
 the parent source. The calculated applicable percentage and phased-in wage limit
 reconcile to the parent Form 8995-A and Form 1040 line 13a. A bounded
 official-field PDF descriptor for the companion and parent is registered. This
-excludes multiple businesses, PTPs, MFJ, patron, aggregation, gain, REIT/PTP
+excludes multiple businesses, PTPs, patron, aggregation, gain, REIT/PTP
 loss, and prior-loss combinations. The asserted business source has not been
 independently authenticated. Focused cases are written but unrun; local XSD,
 filled-PDF inspection, IRS business rules, and ATS acceptance remain open.
@@ -149,9 +186,23 @@ match its Schedule C source item. The route excludes prior or suspended losses,
 SSTB, aggregation, patron, net capital gain, REIT/PTP, other business and
 negative-business wage/UBIA variants. The native companion and bounded PDF map
 reconcile their rows and final deduction with parent Form 8995-A and Form 1040
-line 13. No current net-zero/negative result or prior-year loss carryforward is
-supported. Focused cases are written but unrun, and source authentication, full
+line 13. That initial slice has no unused current loss or prior-year loss
+carryforward. Focused cases are written but unrun, and source authentication, full
 XSD, filled-PDF, IRS-rule and ATS gates remain open.
+
+The same two identified Schedule C business route now also retains a current
+$200 net QBI loss: $1,000 of positive QBI is fully absorbed by a $1,200
+qualified loss. Schedule C (Form 8995-A) line 5 uses $1,000 and line 6 records
+the remaining $200 as a positive loss magnitude for next year's carryforward.
+The parent's adjusted QBI, W-2 wages, UBIA, and line 39 deduction are zero, as
+the [2025 instructions](https://www.irs.gov/instructions/i8995a) direct when
+loss netting leaves no positive QBI for that business. The graph retains the
+$200 in its in-memory carryforwards while Form 1040 line 13 is zero. A
+full-return fixture links two source Schedule C items to parent and companion
+native/PDF documents and rejects changed business, companion, or final-return
+figures. This does not authenticate source bytes, durably store the loss, or
+import it in 2026. Cases are written but unrun pending the bulk validation
+gate.
 
 ## Build-first Schedule D patron route (written, unrun)
 
@@ -174,8 +225,27 @@ allocable QBI and 50% of allocable W-2 wages. Line 6 is their lesser amount.
 Form 8995-A line 14 uses that line 6, line 15 subtracts it from line 13 (not
 below zero), and line 39 must equal Form 1040 line 13. The route requires a
 positive whole-dollar reduction and excludes SSTB, aggregation, loss, REIT/PTP,
-capital-gain, qualified-dividend, and nonzero cooperative section 199A(g)
-deduction variants. No old box-name alias or fallback exists.
+capital-gain and qualified-dividend variants. The nonzero cooperative section
+199A(g) deduction has the bounded route below. No old box-name alias or fallback exists.
+
+### One reviewed cooperative box 6 pass-through (2026-10-01, unrun)
+
+The same one-business/one-specified-cooperative Schedule D route now accepts a
+positive Form 1099-PATR box 6 section 199A(g) deduction when the retained
+source item names the primary recipient TIN and a reviewed cooperative written-notice
+reference confirms that recipient and amount. Box 7 and the reviewed QBI/W-2
+allocation still calculate Schedule D line 6 and parent line 14. Parent line
+38 then imports the exact box 6 amount, provided it does not exceed line 33
+less line 37; line 39 and Form 1040 line 13a add it to the limited QBI
+component. Native Form 8995-A, Schedule D, and both PDF projections use that
+single retained source; parent and companion reject a changed recipient,
+source item, missing notice, or return amount. The [2025 Form 1099-PATR](https://www.irs.gov/pub/irs-prior/f1099ptr--2025.pdf)
+requires the cooperative to designate box 6 in a written notice, and the
+[2025 Form 8995-A](https://www.irs.gov/pub/irs-prior/f8995a--2025.pdf)
+caps line 38 at line 33 less line 37. A $2,000 box 6 positive and source,
+owner, notice, cap, and return tamper cases are authored for the bulk pass.
+Issued-copy and written-notice bytes, multiple cooperatives, excess box 6
+carryover treatment, filled PDF, XSD, and IRS acceptance remain open.
 
 The [2025 Form 1099-PATR](https://www.irs.gov/pub/irs-prior/f1099ptr--2025.pdf)
 and [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) are

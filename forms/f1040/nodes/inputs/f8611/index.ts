@@ -172,7 +172,19 @@ export const itemSchema = common.extend({
 });
 
 export const inputSchema = z.object({
-  f8611s: z.array(itemSchema).min(1),
+  f8611s: z.array(itemSchema).min(1).superRefine((items, ctx) => {
+    const seenBins = new Set<string>();
+    for (const [index, item] of items.entries()) {
+      if (seenBins.has(item.building_bin)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [index, "building_bin"],
+          message: "Form 8611 requires one combined document per building BIN",
+        });
+      }
+      seenBins.add(item.building_bin);
+    }
+  }),
 });
 
 export type F8611Item = z.infer<typeof itemSchema>;

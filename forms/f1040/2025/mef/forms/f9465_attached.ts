@@ -47,6 +47,10 @@ export function buildAttachedForm9465(
     ]),
     element("PrimaryNameControlTxt", filer.nameControl),
     element("PrimarySSN", filer.primarySSN),
+    elements("HomePhoneGrp", [
+      element("PhoneNum", source.home_phone_number),
+      element("BestTimeToCallAtHomeTxt", source.best_time_to_call_at_home),
+    ]),
     element("TaxDueAmt", amount),
     element("TotalBalanceDueAmt", amount),
     element("TotalTaxDueAmt", amount),

@@ -1,35 +1,40 @@
 # TY2025 Form 1040 coverage disposition queue
 
-Static build-stage checkpoint, 2026-09-28. This is the decision layer over the
-[123 registered-descriptor audit](ty2025-form1040-form-audit.md) and the
-[211-root schema census](ty2025-xsd-document-root-census.md). It does not
-certify any filing route. The MeF registry contains 123 descriptors and the PDF
-registry contains 87. The schema census has 97 roots with a source literal and
-114 without one. Those are different measures: some descriptors are statements,
-and a literal is neither registration nor valid, complete output. The ordered
-[unregistered-root reviews](ty2025-unregistered-root-applicability.md) cover the
-historical 128-root review, including fourteen roots that gained literals. These
-are static source counts: list entries in `ALL_MEF_FORMS` and `ALL_PDF_FORMS`
-were counted, and the 211 XSD-root names were intersected with exact `IRS...`
-tokens in non-test `.ts` files under `forms/f1040/2025/mef/forms/`. A source
-token can occur in a staged, unregistered builder, as with `IRS9465`; these
-counts are not execution or acceptance evidence.
+Build-stage disposition queue updated 2026-10-01. This is the decision layer
+over the [registered-descriptor audit](ty2025-form1040-form-audit.md) and the
+[211-root schema census](ty2025-xsd-document-root-census.md); it does not
+certify any filing route. The current descriptor and source-literal counts are
+recorded in those inventories and the [product board](../../product_board.md).
+They measure different things: some descriptors are statements, and a literal
+is neither registration nor valid, complete output. The ordered
+[unregistered-root reviews](ty2025-unregistered-root-applicability.md) cover
+the historical 128-root review, including roots that have since gained literals.
+These are static source counts from `ALL_MEF_FORMS`, `ALL_PDF_FORMS`, and exact
+`IRS...` tokens in non-test MeF form source files. A source token can occur in
+a staged, unregistered builder, as with `IRS9465`; these counts are not
+execution or acceptance evidence.
 
-The descriptor counts include each identifier entry between the respective
-`ALL_MEF_FORMS = [` / `] as const` and `ALL_PDF_FORMS = [` / `];` delimiters.
+The descriptor counts in the linked inventories include each identifier entry
+in `ALL_MEF_FORMS` and `ALL_PDF_FORMS`.
 The literal count uses the 211 root names in the first table column of the
 schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
+
+The Form 3800 carryforward computation descriptor was registered on
+2026-09-29. It passes a standalone schema check and a synthetic parent-link
+check, but the production parent filing remains blocked; this does not change
+any disposition below. The root list was captured 2026-09-28; its source-literal
+statuses have since been reconciled with the current tree.
 
 ## What can be decided from current evidence
 
 | Disposition                                 | Exact boundary                                                                                                                                                                                                                                                                                                                                                  | What remains                                                                                                                                                                                               |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agreed product exclusion                    | Standalone 1040-NR, 1040-SS, Form 4868, and dual-status 1040 e-file.                                                                                                                                                                                                                                                                                            | No other Form 1040-family route has been approved for exclusion.                                                                                                                                           |
-| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each of 123 descriptors.                                                                                                                                                                              | A bounded route is not whole-form support. Current full-batch, local XSD, filled-PDF, IRS-rule, and ATS evidence is absent for every row.                                                                  |
+| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each currently registered descriptor.                                                                                                                                                                              | A bounded route is not whole-form support. The `11d5047d` source snapshot passed 8,897/8,897, but per-row positive XSD, filled-PDF, IRS-rule, and ATS evidence is still incomplete.                                                                  |
 | Registered, active claim blocked            | Positive Form 8839 adoption credit and nonexempt Form 8990 interest do not have a complete source-to-filed-return route.                                                                                                                                                                                                                                        | Complete their sources, calculations and native/PDF output or retain explicit fail-closed behavior; registration alone cannot turn either into support.                                                    |
-| Public source, positive filing route absent | The [root crosswalk](ty2025-unregistered-root-applicability.md) lists public-input and graph paths, including Forms 9465, 8997, 8958, 5471 and 172. Schedule J has a bounded registered Schedule F-only election, while wider claims reject. Form 7203 has a bounded registered stock-only loss route, while other shareholder-basis situations remain blocked. | A guard or staged descriptor is a current safety boundary, not a permanent product exclusion. Each conditional filing trigger, source owner and required native document still needs a decision.           |
+| Public source, positive filing route absent | The [root crosswalk](ty2025-unregistered-root-applicability.md) lists public-input and graph paths, including Forms 9465, 8997, 8958, 5471 and 172; Form 5471 has a bounded incomplete Category 5a packet, with positive export still closed. Schedule J has a bounded registered Schedule F-only election, while wider claims reject. Form 7203 has a bounded registered stock-only loss route, while other shareholder-basis situations remain blocked. | A guard or staged descriptor is a current safety boundary, not a permanent product exclusion. Each conditional filing trigger, source owner and required native document still needs a decision.           |
 | Conditional companion incomplete            | Form 8995-A Schedules A, B, C and D have bounded registered native routes. Schedule B's route covers only one group of two sourced Schedule C businesses. Form 1116 Schedule C retains a positive trigger without a registered filing route; it has a staged source/XML projection only.                                                                        | The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names trigger and guard status. Complete the remaining attachments or explicitly approve fail-closed unsupported scenarios. |
 | Source-only or separate workflow candidate  | Some K-1, payment, entity and information roots may belong to another filer or workflow.                                                                                                                                                                                                                                                                        | The current return's attachment rule must be confirmed individually. Neither schema presence nor nonregistration proves an exclusion.                                                                      |
 
@@ -44,15 +49,17 @@ signed attachment evidence.
 
 Schedule LEP is no longer an absent optional attachment: a taxpayer or joint
 spouse language request has a typed public input, native serializer, and
-one-page-per-person PDF projection. It remains build-only until the full XSD,
-filled-PDF, IRS-rule, and ATS gates run. This is not an exclusion decision.
+one-page-per-person PDF projection. A joint source return now passes local
+TY2025 v5.4 full-return XSD with two distinct LEP documents, and all four
+PDF pages were inspected for owner identity and separate language selections.
+IRS business-rule and ATS gates remain open. This is not an exclusion decision.
 
 ### Evidence that code cannot infer
 
 | Filing path still blocked                                                | External evidence needed before a positive route can be built                                                                                                                                                       | Current boundary                                                                                                                           |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Form 1116 Schedule C redetermination                                     | Authenticated filed affected-year Forms 1116, Schedule 3 and Form 1040, foreign assessment/payment/refund records, later-year carryover review, and any required amended-return package.                            | Staged arithmetic only; export rejects.                                                                                                    |
-| Form 8283 capital-gain-property carryover year                           | A completed previous-year Form 8283 copy for each carried gift and any appraisal copy required with that earlier filing, tied to original gift and donee facts.                                                     | Amount-only Schedule A ledger cannot produce the required attachment; export rejects.                                                      |
+| Form 8283 capital-gain-property carryover year                           | A completed previous-year Form 8283 copy for each carried gift and any appraisal copy required with that earlier filing, tied to original gift and donee facts.                                                     | A bounded reviewed Section A publicly traded securities route is wired and its one- and two-gift bundles pass local XSD. Other carryovers reject; the synthetic prior PDFs do not authenticate actual filed copies. |
 | Form 8839 positive adoption credit                                       | Reviewed adoption decree, expense/reimbursement records, applicable exclusion facts, finalized Form 2555 and final-return credit priority.                                                                          | Pure calculator may compute, but node, MeF and PDF positive filing reject.                                                                 |
 | Form 8995-A Schedule B aggregation beyond the bounded two-business route | Ownership and operational-relationship proof, prior election/RPE statements, and each business's TIN, QBI, W-2 wages and UBIA.                                                                                      | The reviewed two-Schedule-C route is registered and has local tests; names-only or wider aggregation still rejects.                        |
 | Form 4952 K-1 code B expense                                             | A source crosswalk tying the box 20 code B amount to the exact allowed K-1 deduction, expense character, and filed destination. The separate box 7 royalty and box 13 code I Schedule E route is written but unrun. | Informational box 20 code B alone cannot establish an allowed deduction; export rejects.                                                   |
@@ -64,6 +71,19 @@ either provide a supported evidence path or explicitly approve a named release
 boundary while retaining fail-closed behavior for entered unsupported claims.
 
 ## Exact proposed decisions for user review, not applied
+
+For TY2025 current-return inputs, two additional named exclusions are under
+review. The [Form 8873 instructions](https://www.irs.gov/instructions/i8873)
+say its binding-contract exception was repealed for tax years beginning after
+May 17, 2006. The [latest Form 8915-D instructions](https://www.irs.gov/instructions/i8915d)
+cover 2024 repayments and amendments of affected 2021–2023 returns. The
+previous `f8873` and `f8915d` nodes incorrectly deposited these asserted
+amounts into Schedule 1 line 8z for a TY2025 return. Populated input now
+rejects at calculation, and both exports already reject; this is a safety
+boundary while the named product decisions remain open. If the user approves
+these two specific exclusions, record that disposition and retain the
+rejection. An affected-year amendment remains a separate workflow decision.
+No exclusion is applied by this note.
 
 The following are candidates to separate from the initial **current-year Form
 1040 return preparation** workflow. They are **not excluded now**. A decision to

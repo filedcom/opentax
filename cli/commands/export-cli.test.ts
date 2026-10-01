@@ -53,7 +53,7 @@ Deno.test("CLI force and draft cannot export an empty return with invented ident
     );
     assertStringIncludes(
       new TextDecoder().decode(draft.stderr),
-      "requires a real filer identity",
+      "needs the identified taxpayer's SSN",
     );
   } finally {
     await Deno.remove(cwd, { recursive: true });
@@ -89,6 +89,7 @@ Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without f
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-01",
+      digital_assets: false,
       taxpayer_signature_pin: "12345",
       taxpayer_signature_date: "2026-09-29",
       address_line1: "123 Main St",

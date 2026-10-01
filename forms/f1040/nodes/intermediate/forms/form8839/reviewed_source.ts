@@ -30,6 +30,13 @@ export const reviewedDomestic8839SourceSchema = z.object({
     child_origin: z.literal("US"),
     taxpayer_named_as_adoptive_parent_confirmed: z.literal(true),
   }).strict(),
+  birth_record: z.object({
+    source_document_id: documentId,
+    document_sha256: sha256,
+    child_first_name: z.string().trim().min(1),
+    child_last_name: z.string().trim().min(1),
+    date_of_birth: date,
+  }).strict(),
   reviewed_facts: z.object({
     child_us_citizen_or_resident_when_effort_began_confirmed: z.literal(true),
     child_under_18_on_2025_12_31_confirmed: z.literal(true),
@@ -37,7 +44,7 @@ export const reviewedDomestic8839SourceSchema = z.object({
     no_other_nonspouse_taxpayer_claim_confirmed: z.literal(true),
     no_prior_form8839_claim_for_child_confirmed: z.literal(true),
     no_employer_adoption_benefits_confirmed: z.literal(true),
-    no_government_or_other_reimbursement_confirmed: z.literal(true),
+    all_reimbursements_disclosed_confirmed: z.literal(true),
     no_other_federal_credit_or_deduction_for_expenses_confirmed: z.literal(
       true,
     ),
@@ -58,6 +65,14 @@ export const reviewedDomestic8839SourceSchema = z.object({
       ]),
       payee: z.string().trim().min(1),
       amount: positiveWholeDollar,
+      reimbursement: z.object({
+        source_document_id: documentId,
+        document_sha256: sha256,
+        reimbursed_amount: positiveWholeDollar,
+        payer_name: z.string().trim().min(1),
+        paid_date: date,
+        not_employer_or_public_funds_confirmed: z.literal(true),
+      }).strict().optional(),
       directly_related_to_legal_adoption_confirmed: z.literal(true),
     }).strict(),
   ).min(1),
@@ -97,6 +112,7 @@ export function assertReviewedDomestic8839Source(
     );
   }
   const decree = review.decree;
+  const birthRecord = review.birth_record;
   if (
     decree.source_document_id !== child.final_decree.source_document_id ||
     decree.child_first_name !== child.first_name ||
@@ -108,6 +124,19 @@ export function assertReviewedDomestic8839Source(
   ) {
     throw new Error(
       "Form 8839 reviewed decree does not match the child ledger",
+    );
+  }
+  if (
+    birthRecord.source_document_id === decree.source_document_id ||
+    birthRecord.child_first_name !== child.first_name ||
+    birthRecord.child_last_name !== child.last_name ||
+    birthRecord.date_of_birth.slice(0, 4) !== String(child.birth_year) ||
+    birthRecord.date_of_birth < "2008-01-01" ||
+    birthRecord.date_of_birth > child.final_decree.finalization_date ||
+    birthRecord.date_of_birth > review.reviewed_on
+  ) {
+    throw new Error(
+      "Form 8839 reviewed birth record does not prove this child's identity and under-18 status",
     );
   }
   const sourceExpenses = new Map(child.expenses.map((expense) =>
@@ -122,14 +151,25 @@ export function assertReviewedDomestic8839Source(
   const paymentProofIds = new Set(
     review.expenses.map((expense) => expense.payment_proof_document_id),
   );
+  const reimbursementIds = review.expenses.flatMap((expense) =>
+    expense.reimbursement ? [expense.reimbursement.source_document_id] : []
+  );
   if (
     sourceExpenses.size !== child.expenses.length ||
     reviewedIds.size !== review.expenses.length ||
     paymentProofIds.size !== review.expenses.length ||
     review.expenses.length !== child.expenses.length ||
     sourceExpenses.has(decree.source_document_id) ||
+    sourceExpenses.has(birthRecord.source_document_id) ||
     paymentProofIds.has(decree.source_document_id) ||
-    [...paymentProofIds].some((id) => sourceExpenses.has(id))
+    paymentProofIds.has(birthRecord.source_document_id) ||
+    [...paymentProofIds].some((id) => sourceExpenses.has(id)) ||
+    new Set(reimbursementIds).size !== reimbursementIds.length ||
+    reimbursementIds.some((id) =>
+      id === decree.source_document_id ||
+      id === birthRecord.source_document_id || sourceExpenses.has(id) ||
+      paymentProofIds.has(id)
+    )
   ) {
     throw new Error("Form 8839 reviewed expense documents must match uniquely");
   }
@@ -142,8 +182,14 @@ export function assertReviewedDomestic8839Source(
       expense.category !== evidence.category ||
       expense.payee !== evidence.payee ||
       expense.amount !== evidence.amount ||
-      expense.reimbursed_amount !== 0 ||
-      expense.reimbursement_source_document_id !== undefined ||
+      expense.reimbursed_amount !==
+        (evidence.reimbursement?.reimbursed_amount ?? 0) ||
+      expense.reimbursement_source_document_id !==
+        evidence.reimbursement?.source_document_id ||
+      (evidence.reimbursement !== undefined &&
+        (!evidence.reimbursement.paid_date.startsWith("2025-") ||
+          evidence.reimbursement.paid_date < expense.paid_date ||
+          evidence.reimbursement.paid_date > review.reviewed_on)) ||
       !/^202[45]-/.test(expense.paid_date)
     ) {
       throw new Error(

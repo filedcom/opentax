@@ -1,11 +1,101 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule1Pdf } from "./schedule1.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
     "nameLine1",
     "primarySSN",
   ]);
+});
+
+Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {
+  const field = (key: string) =>
+    schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
+  assertEquals(
+    field("line8n_section951a_inclusion"),
+    "topmostSubform[0].Page1[0].f1_26[0]",
+  );
+  assertEquals(
+    field("line8o_section951aa_inclusion"),
+    "topmostSubform[0].Page1[0].f1_27[0]",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8n_section951a_inclusion: 11_000 },
+        undefined,
+        {},
+      ),
+    Error,
+    "complete Form 5471 schedules",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8o_section951aa_inclusion: 42_000 },
+        undefined,
+        {},
+      ),
+    Error,
+    "Form 8992 with Schedule A",
+  );
+});
+
+Deno.test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer source", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_200 },
+        filer,
+        {},
+      ),
+    Error,
+    "needs payer source rows",
+  );
+  const source = {
+    f1098s: [{
+      box1_mortgage_interest: 0,
+      box4_refund_overpaid: 2_000,
+      box4_prior_year_refund: true,
+      box4_taxable_recovery_verified_amount: 1_200,
+      box4_recovery_workpaper_reference: "Pub. 525 review",
+      lender_name: "Home Lender",
+      recipient_tin: "999887777",
+      source_document_reference: "issued 1098",
+    }],
+  };
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_200 },
+        filer,
+        { f1098: source },
+      ),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_199 },
+        filer,
+        {
+          f1098: {
+            f1098s: [{ ...source.f1098s[0], recipient_tin: filer.primarySSN }],
+          },
+        },
+      ),
+    Error,
+    "must match sourced taxable recovery",
+  );
 });
 
 Deno.test("Schedule 1 PDF puts Form 2106 deductions on line 12", () => {
@@ -42,6 +132,14 @@ Deno.test("Schedule 1 PDF uses 2025 fields after the Form 1099-K entry", () => {
   );
   assertEquals(at("line24f_501c18d"), "topmostSubform[0].Page2[0].f2_21[0]");
   assertEquals(
+    at("line24k_section67e_excess_deduction"),
+    "topmostSubform[0].Page2[0].f2_26[0]",
+  );
+  assertEquals(
+    at("line25_total_other_adjustments"),
+    "topmostSubform[0].Page2[0].f2_29[0]",
+  );
+  assertEquals(
     at("line26_total_adjustments"),
     "topmostSubform[0].Page2[0].f2_30[0]",
   );
@@ -77,4 +175,19 @@ Deno.test("Schedule 1 PDF rejects an untyped generic line 8z amount", () => {
     Error,
     "line 8z generic income needs identified source types",
   );
+});
+
+Deno.test("Schedule 1 PDF combines 1099-K and 1099-NEC activity income on line 8j", () => {
+  const projected = schedule1Pdf.instances?.({
+    line8j_f1099k_hobby_income: 100,
+    f1099nec_nonbusiness_sources: [{
+      payer_name: "Event Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "One-time event",
+      amount: 2_000,
+    }],
+  })?.[0];
+  assertEquals(projected?.line8j_f1099k_hobby_income, 2_100);
+  assertEquals(projected?.line8z_other, undefined);
 });

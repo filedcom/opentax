@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  assertFullyRecapturedInvestment1245Return,
+  assertInvestment1245FilingLinks,
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,
 } from "./investment_1245.ts";
@@ -35,28 +37,76 @@ Deno.test("investment section 1245 property separates ordinary recapture and exc
   assertEquals(excess.excessCapitalGain, 3_000);
 });
 
+Deno.test("fully recaptured investment sale preserves unrelated income, adjustments, and capital rows", () => {
+  const calculated = [calculateInvestment1245Disposition(sale)];
+  assertInvestment1245FilingLinks(
+    calculated,
+    [{ proceeds: 1_000, gain_loss: 100 }],
+    3_000,
+  );
+  assertFullyRecapturedInvestment1245Return(calculated, {
+    schedule1: {
+      line4_other_gains: 3_000,
+      line10_total_additional_income: 3_500,
+    },
+    f1040: {
+      line1z_total_wages: 75_000,
+      line2b_taxable_interest: 200,
+      line7_capital_gain: 100,
+      line8_additional_income: 3_500,
+      line9_total_income: 78_800,
+      line10_adjustments: 50,
+      line11_agi: 78_750,
+    },
+  });
+  assertThrows(() =>
+    assertFullyRecapturedInvestment1245Return(calculated, {
+      schedule1: {
+        line4_other_gains: 3_000,
+        line10_total_additional_income: 3_500,
+      },
+      f1040: {
+        line8_additional_income: 3_499,
+        line9_total_income: 78_800,
+        line10_adjustments: 50,
+        line11_agi: 78_750,
+      },
+    })
+  );
+});
+
 Deno.test("investment section 1245 source rejects short holding and impossible depreciation", () => {
-  assertThrows(
-    () => investment1245DispositionSchema.parse({
+  assertEquals(
+    investment1245DispositionSchema.safeParse({
       ...sale,
-      acquired_on: "2025-01-01",
-    }),
+      property_description: "Rental property longer",
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        acquired_on: "2025-01-01",
+      }),
     Error,
     "over-one-year",
   );
   assertThrows(
-    () => investment1245DispositionSchema.parse({
-      ...sale,
-      depreciation_allowed_or_allowable: 13_000,
-    }),
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        depreciation_allowed_or_allowable: 13_000,
+      }),
     Error,
     "supported basis and depreciation",
   );
   assertThrows(
-    () => investment1245DispositionSchema.parse({
-      ...sale,
-      depreciation_schedule_reference: "",
-    }),
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        depreciation_schedule_reference: "",
+      }),
     Error,
   );
 });

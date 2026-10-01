@@ -16,15 +16,37 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
+const ficaOnlySource = {
+  employer_ein: "000000029",
+  cash_wages_over_2025_limit: true,
+  cash_wages_over_quarter_limit: false,
+  ss_wages: 3_100,
+  medicare_wages: 3_100,
+  federal_income_tax_withheld: 0,
+  fica_only_payroll: {
+    all_household_employees_included: true,
+    prior_year_payroll_source_reference: "2024-household-payroll-review",
+    prior_year_quarter_cash_wages: [0, 0, 0, 0],
+    employee_wages: [{
+      employee_id: "synthetic-worker-1",
+      payroll_source_reference: "2025-household-payroll-review",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: true,
+      ordinary_cash_only: true,
+      annual_cash_wages: 3_100,
+      quarterly_cash_wages: [775, 775, 775, 775],
+      w2: {
+        source_reference: "2025-household-w2-review",
+        box2_federal_income_tax_withheld: 0,
+        box3_social_security_wages: 3_100,
+        box5_medicare_wages: 3_100,
+      },
+    }],
+  },
+};
+
 Deno.test("Schedule H uses the form's required identity and line-level tax amounts", () => {
-  const xml = scheduleH.build({
-    employer_ein: "000000029",
-    cash_wages_over_2025_limit: true,
-    cash_wages_over_quarter_limit: false,
-    ss_wages: 3_100,
-    medicare_wages: 3_100,
-    federal_income_tax_withheld: 0,
-  }, { filer });
+  const xml = scheduleH.build(ficaOnlySource, { filer });
   assertStringIncludes(
     xml,
     "<HouseholdEmployerNm>Tara Black</HouseholdEmployerNm>",
@@ -41,26 +63,102 @@ Deno.test("Schedule H uses the form's required identity and line-level tax amoun
   );
 });
 
-Deno.test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
+Deno.test("Schedule H native FUTA-only student minor keeps Part I wages at zero", () => {
   const xml = scheduleH.build({
     employer_ein: "123456789",
-    cash_wages_over_2025_limit: true,
-    cash_wages_over_quarter_limit: false,
-    ss_wages: 176_100,
-    medicare_wages: 220_000,
-    additional_medicare_wages: 20_000,
+    cash_wages_over_2025_limit: false,
+    cash_wages_over_quarter_limit: true,
+    ss_wages: 0,
+    medicare_wages: 0,
+    federal_income_tax_withheld: 0,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 40,
+      taxable_wages: 4_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "student-worker",
+        payroll_source_reference: "2025-student-payroll",
+        relationship: "unrelated",
+        age_18_or_older_for_fica: false,
+        student_minor_fica_exclusion: {
+          birth_date: "2008-05-10",
+          birth_date_source_reference: "student-age-record",
+          student_enrollment_source_reference: "2025-school-enrollment",
+          student_during_2025_verified: true,
+        },
+        ordinary_cash_only: true,
+        annual_cash_wages: 4_000,
+        quarterly_cash_wages: [1_000, 1_000, 1_000, 1_000],
+      }],
+    },
   }, { filer });
   assertStringIncludes(
     xml,
-    "<TotMedcrTaxCashWagesAddnlWhAmt>20000</TotMedcrTaxCashWagesAddnlWhAmt>",
+    "<SocialSecurityTaxCashWagesAmt>0</SocialSecurityTaxCashWagesAmt>",
   );
   assertStringIncludes(
     xml,
-    "<AddnlMedicareTaxWithholdingAmt>180</AddnlMedicareTaxWithholdingAmt>",
+    "<TotalCashWagesSubjFUTATaxAmt>4000</TotalCashWagesSubjFUTATaxAmt>",
   );
+  assertStringIncludes(xml, "<FUTATaxAmt>24</FUTATaxAmt>");
   assertStringIncludes(
     xml,
-    "<TotSocSecMedcrAndFedIncmTaxAmt>28396</TotSocSecMedcrAndFedIncmTaxAmt>",
+    "<CombinedFUTATaxPlusNetTaxesAmt>24</CombinedFUTATaxPlusNetTaxesAmt>",
+  );
+});
+
+Deno.test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
+  assertThrows(
+    () =>
+      scheduleH.build({
+        employer_ein: "123456789",
+        cash_wages_over_2025_limit: true,
+        cash_wages_over_quarter_limit: false,
+        ss_wages: 176_100,
+        medicare_wages: 220_000,
+        additional_medicare_wages: 20_000,
+      }, { filer }),
+    Error,
+    "needs employee payroll source",
+  );
+});
+
+Deno.test("Schedule H FICA-only source rejects current/prior quarter and W-2 drift", () => {
+  const base = ficaOnlySource.fica_only_payroll;
+  assertThrows(
+    () =>
+      scheduleH.build({
+        ...ficaOnlySource,
+        fica_only_payroll: {
+          ...base,
+          prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
+        },
+      }, { filer }),
+    Error,
+    "below the FUTA quarter threshold",
+  );
+  assertThrows(
+    () =>
+      scheduleH.build({
+        ...ficaOnlySource,
+        fica_only_payroll: {
+          ...base,
+          employee_wages: [{
+            ...base.employee_wages[0],
+            w2: {
+              ...base.employee_wages[0].w2,
+              box3_social_security_wages: 3_099,
+            },
+          }],
+        },
+      }, { filer }),
+    Error,
+    "differ from the employee Form W-2",
   );
 });
 
@@ -78,6 +176,23 @@ Deno.test("Schedule H emits single-state Section A facts and computed FUTA", () 
       state: "OH",
       contributions_paid: 100,
       taxable_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 10_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [10_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 10_000,
+          box5_medicare_wages: 10_000,
+        },
+      }],
     },
   }, { filer });
   assertStringIncludes(
@@ -104,6 +219,22 @@ Deno.test("Schedule H Section A identifies a state-granted zero experience rate"
       state: "OH",
       zero_experience_rate: true,
       taxable_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
+        employee_id: `worker-${index + 1}`,
+        payroll_source_reference: `2025-household-payroll-${index + 1}`,
+        relationship: "unrelated" as const,
+        annual_cash_wages,
+        age_18_or_older_for_fica: true as const,
+        ordinary_cash_only: true as const,
+        quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      })),
     },
   }, { filer });
   assertStringIncludes(
@@ -119,10 +250,26 @@ Deno.test("Schedule H Section B computes state-rate credit and CA credit reducti
     cash_wages_over_2025_limit: false,
     cash_wages_over_quarter_limit: true,
     federal_unemployment: {
-      paid_only_one_state: false,
-      all_contributions_paid_on_time: true,
-      all_futa_wages_state_taxable: true,
+      paid_only_one_state: false as const,
+      all_contributions_paid_on_time: true as const,
+      all_futa_wages_state_taxable: true as const,
       taxable_futa_wages: 7_000,
+      all_household_employees_included: true as const,
+      prior_year_quarter_threshold_met: false as const,
+      employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
+        employee_id: `worker-${index + 1}`,
+        payroll_source_reference: `2025-household-payroll-${index + 1}`,
+        relationship: "unrelated" as const,
+        annual_cash_wages,
+        age_18_or_older_for_fica: true as const,
+        ordinary_cash_only: true as const,
+        quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      })),
       state_rows: [{
         state: "CA",
         taxable_state_wages: 7_000,
@@ -164,6 +311,22 @@ Deno.test("Schedule H Section B gives only 90 percent of the available late cred
       all_contributions_paid_on_time: false,
       all_futa_wages_state_taxable: true,
       taxable_futa_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
+        employee_id: `worker-${index + 1}`,
+        payroll_source_reference: `2025-household-payroll-${index + 1}`,
+        relationship: "unrelated" as const,
+        annual_cash_wages,
+        age_18_or_older_for_fica: true as const,
+        ordinary_cash_only: true as const,
+        quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      })),
       state_rows: [{
         state: "OH",
         taxable_state_wages: 7_000,
@@ -229,7 +392,7 @@ Deno.test("Schedule H does not infer required employer or unemployment facts", (
         filer,
       }),
     Error,
-    "Part II",
+    "employee payroll source",
   );
   assertThrows(
     () =>
@@ -249,10 +412,26 @@ Deno.test("Schedule H refuses contradictory Section B source facts", () => {
     cash_wages_over_2025_limit: false,
     cash_wages_over_quarter_limit: true,
     federal_unemployment: {
-      paid_only_one_state: false,
-      all_contributions_paid_on_time: true,
-      all_futa_wages_state_taxable: true,
+      paid_only_one_state: false as const,
+      all_contributions_paid_on_time: true as const,
+      all_futa_wages_state_taxable: true as const,
       taxable_futa_wages: 7_000,
+      all_household_employees_included: true as const,
+      prior_year_quarter_threshold_met: false as const,
+      employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
+        employee_id: `worker-${index + 1}`,
+        payroll_source_reference: `2025-household-payroll-${index + 1}`,
+        relationship: "unrelated" as const,
+        annual_cash_wages,
+        age_18_or_older_for_fica: true as const,
+        ordinary_cash_only: true as const,
+        quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      })),
       state_rows: [{
         state: "CA",
         taxable_state_wages: 7_000,

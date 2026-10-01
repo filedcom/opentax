@@ -38,7 +38,7 @@ type IntItem = z.infer<typeof form1099intSchema>["f1099ints"][number];
 
 // Box 1 and box 3 both contribute taxable interest from an affirmed investment
 // property. The source node posts their sum once for each 1099-INT payer.
-function plainInvestmentBox1Or3(item: IntItem): boolean {
+export function plainInvestmentBox1Or3(item: IntItem): boolean {
   return item.investment_property_for_form4952 === true &&
     (item.box1 ?? 0) + (item.box3 ?? 0) > 0 &&
     item.seller_financed !== true &&
@@ -131,13 +131,18 @@ export function reconcileForm4952InterestPath(
     (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
-    (form.data.prior_year_carryforward ?? 0) !== 0 ||
+    ((form.data.prior_year_carryforward ?? 0) > 0 &&
+      (!form.data.direct_debt_trace ||
+        (interestItems.length !== 1 && interestItems.length !== 2) ||
+        oidItems.length !== 0)) ||
     (form.data.form8814_line9_qualified_dividends ?? 0) !== 0 ||
     (form.data.form8814_line10_capital_gain ?? 0) !== 0 ||
     (form.data.form8814_line12_investment_income ?? 0) !== 0 ||
     (form.data.investment_interest_expense ?? 0) <= 0 ||
     !form.data.amt_refigure ||
-    Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
+    Object.entries(form.data.amt_refigure).some(([key, amount]) =>
+      key !== "prior_year_disallowed_interest" && amount !== 0
+    )
   ) {
     throw new Error(
       "Form 4952 interest path supports only unadjusted box 1 or box 3 investment payers without other income or election components",

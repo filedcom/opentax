@@ -10,6 +10,60 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function businessItem(gross: number, overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    pse_tin: "123456789",
+    recipient_tin: "987654321",
+    box1a_gross_payments: gross,
+    for_routing: "schedule_c",
+    schedule_c_business_reference: "business-1",
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: gross,
+      not_included_in_schedule_c_receipts: 0,
+      allocation_reference: "2025 payment settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 information-return overlap review",
+    },
+    ...overrides,
+  });
+}
+
+function hobbyItem(gross: number, overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    pse_tin: "123456789",
+    recipient_tin: "987654321",
+    box1a_gross_payments: gross,
+    for_routing: "schedule_1_line_8j",
+    nonbusiness_activity_review: {
+      activity_description: "Occasional craft sales",
+      included_in_line8j: gross,
+      allocation_reference: "2025 activity payment ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 information-return overlap review",
+    },
+    ...overrides,
+  });
+}
+
+function personalSale(overrides: Record<string, unknown> = {}) {
+  return {
+    transaction_id: "item-1",
+    description: "Personal chair",
+    date_acquired: "2024-06-15",
+    date_sold: "2025-06-15",
+    proceeds: 700,
+    cost_basis: 1_000,
+    acquired_by_purchase: true,
+    acquisition_record_reference: "purchase receipt",
+    sale_record_reference: "processor settlement",
+    personal_use_only: true,
+    not_main_home: true,
+    not_collectible: true,
+    no_other_information_return_for_sale: true,
+    ...overrides,
+  };
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ks: items,
@@ -593,32 +647,79 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
 // ============================================================
 
 Deno.test("for_routing=schedule_c: box1a above $5,000 routes to schedule_c", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 10_000, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(10_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
 });
 
+Deno.test("1099-K business route allocates box 1a and retains reviewed tip evidence", () => {
+  const result = compute([businessItem(10_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 8_000,
+      not_included_in_schedule_c_receipts: 2_000,
+      allocation_reference: "2025 processor settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 NEC and MISC overlap review",
+      duplicate_1099_review: {
+        source_form: "1099misc",
+        payer_tin: "23-4567890",
+        amount: 2_000,
+        transaction_review_reference:
+          "2025 MISC/K duplicate transaction review",
+      },
+    },
+    qualified_tips_box1a_review: {
+      amount: 5_000,
+      occupation_code: "102",
+      occupation_review_reference: "occupation record",
+      tip_records_reference: "2025 POS tip ledger",
+      included_in_box1a: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference: "Schedule 1 review",
+    },
+  })]);
+  const business = findOutput(result, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<
+      { amount: number; box1a_gross_payments: number }
+    >;
+  assertEquals(business[0].amount, 8_000);
+  assertEquals(business[0].box1a_gross_payments, 10_000);
+  const tips = findOutput(result, "schedule1a")!.fields
+    .qualified_trade_business_tips as Array<
+      { source_form: string; amount: number }
+    >;
+  assertEquals(tips[0].source_form, "1099k");
+  assertEquals(tips[0].amount, 5_000);
+  assertThrows(
+    () =>
+      compute([businessItem(10_000, {
+        schedule_c_receipts_review: {
+          included_in_schedule_c_gross_receipts: 7_999,
+          not_included_in_schedule_c_receipts: 2_000,
+          allocation_reference: "2025 processor settlement ledger",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "2025 overlap review",
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
 Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 5_000, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
   assertEquals(
-    (schedCOut!.fields as { schedule_cs: { line_1_gross_receipts: number }[] })
-      .schedule_cs[0].line_1_gross_receipts,
+    (schedCOut!.fields as { f1099k_receipt_sources: { amount: number }[] })
+      .f1099k_receipt_sources[0].amount,
     5_000,
   );
 });
 
 Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and AGI", () => {
   const result = compute([
-    minimalItem({
-      box1a_gross_payments: 8_000,
-      for_routing: "schedule_1_line_8j",
-    }),
+    hobbyItem(8_000),
   ]);
   const sched1Out = findOutput(result, "schedule1");
   assertEquals(sched1Out !== undefined, true);
@@ -633,6 +734,379 @@ Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and 
   );
 });
 
+Deno.test("1099-K nonbusiness route requires all box 1a receipts on line 8j", () => {
+  assertThrows(
+    () =>
+      compute([hobbyItem(8_000, {
+        nonbusiness_activity_review: {
+          activity_description: "Occasional craft sales",
+          included_in_line8j: 5_000,
+          allocation_reference: "2025 activity payment ledger",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "2025 information-return overlap review",
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+  assertThrows(
+    () =>
+      compute([hobbyItem(8_000, { nonbusiness_activity_review: undefined })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
+Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short term", () => {
+  const item = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 700,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale()],
+  });
+  const row = findOutput(compute([item]), "form8949")!.fields
+    .transaction as Record<string, unknown>;
+  assertEquals(row.part, "C");
+  assertEquals(row.adjustment_codes, "L");
+  assertEquals(row.adjustment_amount, 300);
+  assertEquals(row.gain_loss, 0);
+  const leapRow = findOutput(
+    compute([minimalItem({
+      ...item,
+      personal_item_sales_review: [personalSale({
+        date_acquired: "2024-02-29",
+        date_sold: "2025-03-01",
+      })],
+    })]),
+    "form8949",
+  )!.fields.transaction as Record<string, unknown>;
+  assertEquals(leapRow.part, "F");
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ proceeds: 699 })],
+      })]),
+    Error,
+    "proceeds equal to box 1a",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ date_sold: "2025-02-30" })],
+      })]),
+    Error,
+    "valid dated items",
+  );
+});
+
+Deno.test("1099-K personal selling expenses reduce Form 8949 proceeds but not box 1a", () => {
+  const item = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 700,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale({
+      cost_basis: 500,
+      selling_expenses_review: {
+        amount: 50,
+        expense_record_reference: "marketplace fee statement",
+        not_in_cost_basis_or_other_deduction: true,
+      },
+    })],
+  });
+  const row = findOutput(compute([item]), "form8949")!.fields
+    .transaction as Record<string, unknown>;
+  assertEquals(row.proceeds, 650);
+  assertEquals(row.cost_basis, 500);
+  assertEquals(row.gain_loss, 150);
+  assertEquals(row.adjustment_codes, undefined);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({
+          selling_expenses_review: {
+            amount: 701,
+            expense_record_reference: "marketplace fee statement",
+            not_in_cost_basis_or_other_deduction: true,
+          },
+        })],
+      })]),
+    Error,
+    "personal-item sales",
+  );
+});
+
+Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C", () => {
+  const refunds = [{
+    original_payment_transaction_id: "sale-1",
+    refund_transaction_id: "refund-1",
+    amount: 400,
+    refund_record_reference: "processor refund ledger",
+    issued_in_2025: true,
+    same_business_sale: true,
+    not_claimed_elsewhere: true,
+  }];
+  const review = {
+    included_in_schedule_c_gross_receipts: 3_000,
+    not_included_in_schedule_c_receipts: 0,
+    customer_refunds_review: refunds,
+    allocation_reference: "settlement ledger",
+    no_overlap_with_other_1099s: true,
+    overlap_review_reference: "overlap review",
+  };
+  const item = businessItem(3_000, { schedule_c_receipts_review: review });
+  const rows = findOutput(compute([item]), "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>;
+  assertEquals(rows[0].amount, 3_000);
+  assertEquals(rows[0].customer_refunds_review, refunds);
+  assertThrows(
+    () =>
+      compute([businessItem(3_000, {
+        schedule_c_receipts_review: {
+          ...review,
+          customer_refunds_review: [
+            { ...refunds[0], amount: 3_001 },
+          ],
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
+Deno.test("1099-K reviewed service processor fees retain gross receipts for Schedule C", () => {
+  const feeReview = {
+    amount: 90,
+    fee_record_reference: "processor fee statement",
+    for_service_payments_only: true,
+    not_capitalized_or_deducted_elsewhere: true,
+  };
+  const item = businessItem(3_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 3_000,
+      not_included_in_schedule_c_receipts: 0,
+      processor_fees_review: feeReview,
+      allocation_reference: "settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "overlap review",
+    },
+  });
+  const rows = findOutput(compute([item]), "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>;
+  assertEquals(rows[0].amount, 3_000);
+  assertEquals(rows[0].processor_fees_review, feeReview);
+});
+
+Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
+  const receiptReview = {
+    included_in_schedule_c_gross_receipts: 2_000,
+    not_included_in_schedule_c_receipts: 0,
+    allocation_reference: "settlement ledger",
+    no_overlap_with_other_1099s: true,
+    overlap_review_reference: "overlap review",
+  };
+  const item = businessItem(2_800, {
+    for_routing: "mixed_schedule_c_personal_item_sales",
+    schedule_c_receipts_review: receiptReview,
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+  });
+  const result = compute([item]);
+  const receipt = (findOutput(result, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+  assertEquals(receipt.box1a_gross_payments, 2_800);
+  assertEquals(receipt.amount, 2_000);
+  assertEquals(receipt.personal_item_sales_gross, 800);
+  assertEquals(
+    (findOutput(result, "form8949")!.fields.transaction as Record<
+      string,
+      unknown
+    >).gain_loss,
+    0,
+  );
+  const duplicated = compute([businessItem(2_900, {
+    for_routing: "mixed_schedule_c_personal_item_sales",
+    schedule_c_receipts_review: {
+      ...receiptReview,
+      not_included_in_schedule_c_receipts: 100,
+      duplicate_1099_review: {
+        source_form: "1099nec",
+        payer_tin: "23-4567890",
+        amount: 100,
+        transaction_review_reference: "duplicate payment record",
+      },
+    },
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+  })]);
+  const duplicateRow = (findOutput(duplicated, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+  assertEquals(duplicateRow.amount, 2_000);
+  assertEquals(duplicateRow.not_included_in_schedule_c_receipts, 100);
+  assertEquals(duplicateRow.personal_item_sales_gross, 800);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ proceeds: 700 })],
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        schedule_c_receipts_review: {
+          ...receiptReview,
+          not_included_in_schedule_c_receipts: 100,
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
+Deno.test("1099-K reported-error payments aggregate on Schedule 1 without income", () => {
+  const erroneous = (amount: number, pseTin: string) =>
+    minimalItem({
+      pse_tin: pseTin,
+      recipient_tin: "987-65-4321",
+      box1a_gross_payments: amount,
+      for_routing: "reported_in_error",
+      reported_error_review: {
+        payments: [{
+          transaction_id: `gift-${pseTin}`,
+          amount,
+          kind: "personal_gift",
+          sender_name: "Example Friend",
+          payment_record_reference: "2025 payment record",
+          no_goods_or_services: true,
+        }],
+        correction_request_reference: "2025 payer correction request",
+      },
+    });
+  const first = erroneous(800, "12-3456789");
+  const second = erroneous(200, "23-4567890");
+  const result = compute([first, second]);
+  assertEquals(
+    (findOutput(result, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    1_000,
+  );
+  assertEquals(findOutput(result, "agi_aggregator"), undefined);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...first,
+        reported_error_review: {
+          payments: [{
+            transaction_id: "gift-1",
+            amount: 700,
+            kind: "personal_gift",
+            sender_name: "Example Friend",
+            payment_record_reference: "2025 payment record",
+            no_goods_or_services: true,
+          }],
+          correction_request_reference: "2025 payer correction request",
+        },
+      })]),
+    Error,
+    "payments equal to box 1a",
+  );
+});
+
+Deno.test("1099-K partial reported error leaves only classified payments in income", () => {
+  const reportedError = {
+    payments: [{
+      transaction_id: "repayment-2025",
+      amount: 200,
+      kind: "expense_reimbursement",
+      sender_name: "Example Friend",
+      payment_record_reference: "2025 shared-expense record",
+      no_goods_or_services: true,
+    }],
+    correction_request_reference: "2025 payer correction request",
+  };
+  const business = businessItem(3_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 2_800,
+      not_included_in_schedule_c_receipts: 0,
+      allocation_reference: "2025 settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 overlap review",
+    },
+    reported_error_review: reportedError,
+  });
+  const businessResult = compute([business]);
+  assertEquals(
+    (findOutput(businessResult, "schedule_c")!.fields
+      .f1099k_receipt_sources as Array<Record<string, unknown>>)[0].amount,
+    2_800,
+  );
+  assertEquals(
+    (findOutput(businessResult, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    200,
+  );
+  const hobby = hobbyItem(3_000, {
+    nonbusiness_activity_review: {
+      activity_description: "Occasional craft sales",
+      included_in_line8j: 2_800,
+      allocation_reference: "2025 payment ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 overlap review",
+    },
+    reported_error_review: reportedError,
+  });
+  const hobbyResult = compute([hobby]);
+  assertEquals(
+    hobbyResult.outputs.find((item) =>
+      item.nodeType === "schedule1" &&
+      "line8j_f1099k_hobby_income" in item.fields
+    )?.fields.line8j_f1099k_hobby_income,
+    2_800,
+  );
+  const personal = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 1_000,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+    reported_error_review: reportedError,
+  });
+  const personalResult = compute([personal]);
+  assertEquals(
+    (findOutput(personalResult, "form8949")!.fields.transaction as Record<
+      string,
+      unknown
+    >).proceeds,
+    800,
+  );
+  assertEquals(
+    (findOutput(personalResult, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    200,
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...personal,
+        reported_error_review: {
+          ...reportedError,
+          payments: [{
+            ...reportedError.payments[0],
+            transaction_id: "item-1",
+          }],
+        },
+      })]),
+    Error,
+    "cannot share a transaction ID",
+  );
+});
+
 Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
@@ -640,21 +1114,19 @@ Deno.test("no for_routing: box1a above threshold still produces no income output
 });
 
 Deno.test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 4_999, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(4_999)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
   assertEquals(
-    (schedCOut!.fields as { schedule_cs: { line_1_gross_receipts: number }[] })
-      .schedule_cs[0].line_1_gross_receipts,
+    (schedCOut!.fields as { f1099k_receipt_sources: { amount: number }[] })
+      .f1099k_receipt_sources[0].amount,
     4_999,
   );
 });
 
 Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer threshold", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 1, for_routing: "schedule_1_line_8j" }),
+    hobbyItem(1),
   ]);
   const sched1Out = findOutput(result, "schedule1");
   assertEquals(
@@ -670,7 +1142,7 @@ Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer thresh
 
 Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1 nor AGI income", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 0, for_routing: "schedule_1_line_8j" }),
+    hobbyItem(0, { nonbusiness_activity_review: undefined }),
   ]);
   assertEquals(findOutput(result, "schedule1"), undefined);
   assertEquals(findOutput(result, "agi_aggregator"), undefined);
@@ -678,11 +1150,8 @@ Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1
 
 Deno.test("for_routing=schedule_1_line_8j: sourced items aggregate once for Schedule 1 and AGI", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 1, for_routing: "schedule_1_line_8j" }),
-    minimalItem({
-      box1a_gross_payments: 4_999,
-      for_routing: "schedule_1_line_8j",
-    }),
+    hobbyItem(1),
+    hobbyItem(4_999),
   ]);
   const schedule1Amounts = result.outputs.filter((o) =>
     o.nodeType === "schedule1"

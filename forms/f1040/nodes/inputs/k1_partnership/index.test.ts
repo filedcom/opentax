@@ -25,6 +25,278 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("partnership K-1 box 11 code J keeps each reviewed recovery source", () => {
+  const item = (ein: string, amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_j_recovery: {
+        reported_amount: amount + 100,
+        taxable_amount: amount,
+        prior_year_tax_benefit_reviewed: true,
+        prior_year_tax_benefit_workpaper_reference: `2024 return ${ein}`,
+        statement_reference: `2025 box 11 J statement ${ein}`,
+        recipient_tin: "111223333",
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_j_sources as Array<{ taxable_amount: number }>;
+    assertEquals(rows.map((row) => row.taxable_amount), [400, 600]);
+  }
+  assertThrows(
+    () => compute([minimalItem({ box11_other_income: 100 })]),
+    Error,
+    "Untyped partnership K-1 box 11",
+  );
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code J source",
+  );
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [item("123456789", 400), {
+        ...item("987654321", 600),
+        box11_code_j_recovery: {
+          reported_amount: 700,
+          taxable_amount: 800,
+          prior_year_tax_benefit_reviewed: true,
+          prior_year_tax_benefit_workpaper_reference: "2024 return",
+          statement_reference: "2025 box 11 J statement",
+          recipient_tin: "111223333",
+        },
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("partnership K-1 box 11 code E keeps fully taxable COD sources", () => {
+  const item = (ein: string, amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_e_cod: {
+        reported_amount: amount,
+        debt_reference: `debt-${ein}`,
+        statement_reference: `box 11 E statement ${ein}`,
+        recipient_tin: "111223333",
+        fully_taxable_reviewed: true,
+        no_section108_exclusion_confirmed: true,
+        not_reported_on_form1099c_confirmed: true,
+        taxability_workpaper_reference: `COD review ${ein}`,
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_e_sources as Array<{ amount: number }>;
+    assertEquals(rows.map((row) => row.amount), [400, 600]);
+  }
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code E debt source",
+  );
+  const invalid = item("123456789", 400) as Record<string, unknown>;
+  const review = invalid.box11_code_e_cod as Record<string, unknown>;
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [{
+        ...invalid,
+        box11_code_e_cod: {
+          ...review,
+          no_section108_exclusion_confirmed: false,
+        },
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("partnership K-1 box 11 code K keeps reviewed gambling winnings sources", () => {
+  const item = (ein: string, winnings: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_k_gambling: {
+        reported_winnings: winnings,
+        reported_losses: 0,
+        nonbusiness_gambling_confirmed: true,
+        no_overlap_with_w2g_confirmed: true,
+        statement_reference: `box 11 K statement ${ein}`,
+        recipient_tin: "111223333",
+        gambling_review_reference: `Gambling review ${ein}`,
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_k_sources as Array<{ winnings: number }>;
+    assertEquals(rows.map((row) => row.winnings), [400, 600]);
+  }
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code K source",
+  );
+  const invalid = item("123456789", 400) as Record<string, unknown>;
+  const review = invalid.box11_code_k_gambling as Record<string, unknown>;
+  for (
+    const change of [
+      { reported_losses: 100 },
+      { nonbusiness_gambling_confirmed: false },
+      { no_overlap_with_w2g_confirmed: false },
+    ]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_code_k_gambling: { ...review, ...change },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
+Deno.test("partnership K-1 box 11 code S keeps short and long source rows", () => {
+  const item = (ein: string, shortTerm: number, longTerm: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_s_nonportfolio_capital: {
+        short_term_gain_loss: shortTerm,
+        long_term_gain_loss: longTerm,
+        nonpassive_reviewed: true,
+        no_special_rate_components_confirmed: true,
+        statement_reference: `box 11 S statement ${ein}`,
+        recipient_tin: "111223333",
+        character_workpaper_reference: `Capital review ${ein}`,
+      },
+    });
+  const result = compute([
+    item("123456789", 400, 0),
+    item("987654321", 0, 600),
+  ]);
+  const fields = findOutput(result, "schedule_d")?.fields;
+  assertEquals(fields?.line_5_k1_st, 400);
+  assertEquals(fields?.line_12_k1_lt, 600);
+  assertEquals(fields?.k1_partnership_line5_source_total, 400);
+  assertEquals(fields?.k1_partnership_line12_source_total, 600);
+  assertEquals(
+    (fields?.k1_partnership_box11_code_s_sources as Array<
+      { short_term_gain_loss: number; long_term_gain_loss: number }
+    >).map((row) => [row.short_term_gain_loss, row.long_term_gain_loss]),
+    [[400, 0], [0, 600]],
+  );
+  const signed = findOutput(
+    compute([item("123456789", -400, 600)]),
+    "schedule_d",
+  )?.fields;
+  assertEquals(signed?.line_5_k1_st, -400);
+  assertEquals(signed?.line_12_k1_lt, 600);
+  const combined = findOutput(
+    compute([{
+      ...item("123456789", 400, 600),
+      box8_net_st_cap_gain: -100,
+      box9a_net_lt_cap_gain: 50,
+    }]),
+    "schedule_d",
+  )?.fields;
+  assertEquals(combined?.line_5_k1_st, 300);
+  assertEquals(combined?.line_12_k1_lt, 650);
+  assertThrows(
+    () => compute([item("123456789", 400, 0), item("123456789", 400, 0)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code S source",
+  );
+  const invalid = item("123456789", 400, 0) as Record<string, unknown>;
+  const review = invalid.box11_code_s_nonportfolio_capital as Record<
+    string,
+    unknown
+  >;
+  for (
+    const change of [
+      { short_term_gain_loss: 0 },
+      { nonpassive_reviewed: false },
+      { no_special_rate_components_confirmed: false },
+    ]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_code_s_nonportfolio_capital: { ...review, ...change },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
+Deno.test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", () => {
+  const item = (ein: string, code: "L" | "R", amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_line10_ordinary: [{
+        code,
+        gain_loss: amount,
+        statement_reference: `box 11 ${code} statement ${ein}`,
+        recipient_tin: "111223333",
+        ordinary_character_reviewed: true,
+        character_workpaper_reference: `Ordinary review ${ein}`,
+      }],
+    });
+  const result = compute([
+    item("123456789", "L", 400),
+    item("987654321", "R", -200),
+  ]);
+  const rows = findOutput(result, "form4797")?.fields
+    .k1_box11_line10_rows as Array<{ code: string; gain_loss: number }>;
+  assertEquals(rows.map((row) => [row.code, row.gain_loss]), [["L", 400], [
+    "R",
+    -200,
+  ]]);
+  assertThrows(
+    () => compute([item("123456789", "L", 400), item("123456789", "L", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code L/R source",
+  );
+  const many = compute([
+    item("111111111", "L", 100),
+    item("222222222", "L", 100),
+    item("333333333", "L", 100),
+    item("444444444", "L", 100),
+    item("555555555", "L", 100),
+  ]);
+  assertEquals(
+    (findOutput(many, "form4797")?.fields.k1_box11_line10_rows as unknown[])
+      .length,
+    5,
+  );
+  const invalid = item("123456789", "L", 400) as Record<string, unknown>;
+  const review =
+    (invalid.box11_line10_ordinary as Array<Record<string, unknown>>)[0];
+  for (
+    const change of [{ gain_loss: 0 }, { ordinary_character_reviewed: false }]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_line10_ordinary: [{ ...review, ...change }],
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",
@@ -109,6 +381,7 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
     nonpassive_investment_property: true,
     issuer_crosswalk: {
       issuer_supplement_reference: "2025 K-1 investment supplement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       issuer_reported_amount: 600,
       same_expense_as_box13_code_i_confirmed: true,
       box13_code_i_statement_reference: "2025 code I statement",
@@ -130,6 +403,7 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
       reported_amount: 600,
       allowed_amount: 600,
       statement_reference: "2025 code I statement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       expense_kind: "depreciation",
       basis_workpaper_reference: "2025 basis review",
       at_risk_workpaper_reference: "2025 at-risk review",
@@ -165,6 +439,30 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
       }]),
     Error,
     "same issuer-identified",
+  );
+  assertThrows(
+    () => compute([{ ...item, box20_code_b_investment_expenses: {
+      ...codeB,
+      issuer_crosswalk: {
+        ...codeB.issuer_crosswalk,
+        issuer_expense_item_id: "another-depreciation-item",
+      },
+    } }]),
+    Error,
+    "same issuer-identified",
+  );
+  assertThrows(
+    () => compute([item, item]),
+    Error,
+    "issuer expense item ID must be unique",
+  );
+  assertThrows(
+    () => compute([item, {
+      ...item,
+      source_document_reference: "amended 2025 K-1",
+    }]),
+    Error,
+    "issuer expense item ID must be unique",
   );
   assertThrows(
     () =>
@@ -373,15 +671,46 @@ Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", (
 
 Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
   const result = compute([
-    minimalItem({ partnership_name: "Partner One", box10_net_1231: 10_000 }),
-    minimalItem({ partnership_name: "Partner Two", box10_net_1231: -2_000 }),
+    minimalItem({
+      partnership_name: "Partner One",
+      partnership_ein: "123456789",
+      source_document_reference: "K-1 P1",
+      recipient_tin: "111223333",
+      box10_net_1231: 10_000,
+    }),
+    minimalItem({
+      partnership_name: "Partner Two",
+      partnership_ein: "987654321",
+      source_document_reference: "K-1 P2",
+      recipient_tin: "111223333",
+      box10_net_1231: -2_000,
+    }),
   ]);
   const fields = findOutput(result, "form4797")?.fields;
   assertEquals(fields?.section_1231_gain, 8_000);
   assertEquals(fields?.k1_1231_rows, [
-    { source: "partnership", entity_name: "Partner One", gain_loss: 10_000 },
-    { source: "partnership", entity_name: "Partner Two", gain_loss: -2_000 },
+    {
+      source: "partnership",
+      entity_name: "Partner One",
+      source_ein: "123456789",
+      source_document_reference: "K-1 P1",
+      recipient_tin: "111223333",
+      gain_loss: 10_000,
+    },
+    {
+      source: "partnership",
+      entity_name: "Partner Two",
+      source_ein: "987654321",
+      source_document_reference: "K-1 P2",
+      recipient_tin: "111223333",
+      gain_loss: -2_000,
+    },
   ]);
+  assertThrows(
+    () => compute([minimalItem({ box10_net_1231: 1_000 })]),
+    Error,
+    "box 10 needs EIN",
+  );
 });
 
 // ── 1. Input schema validation ────────────────────────────────────────────────

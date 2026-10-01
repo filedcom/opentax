@@ -41,6 +41,8 @@ export const itemSchema = z.object({
   box_11_state_withheld: z.number().nonnegative().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
   const refund = item.box_2_state_refund ?? 0;
@@ -55,19 +57,23 @@ export const itemSchema = z.object({
     }
     return;
   }
-  if (taxable === undefined || taxable > refund ||
-    (item.box_2_prior_year_itemized === false && (taxable ?? 0) > 0)) {
+  if (
+    taxable === undefined || taxable > refund ||
+    (item.box_2_prior_year_itemized === false && (taxable ?? 0) > 0)
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["box_2_taxable_recovery_verified_amount"],
-      message: "Form 1099-G box 2 needs a reviewed taxable recovery from zero through the refund, consistent with the prior-year deduction",
+      message:
+        "Form 1099-G box 2 needs a reviewed taxable recovery from zero through the refund, consistent with the prior-year deduction",
     });
   }
   if (!item.box_2_recovery_workpaper_reference) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["box_2_recovery_workpaper_reference"],
-      message: "Form 1099-G box 2 needs a reviewed prior-year tax-benefit workpaper reference",
+      message:
+        "Form 1099-G box 2 needs a reviewed prior-year tax-benefit workpaper reference",
     });
   }
 });
@@ -120,7 +126,7 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   const rtaa = totalRtaa(g99s);
   const grants = totalTaxableGrants(g99s);
 
-  const fields: Record<string, number> = {};
+  const fields: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (unemploymentNet > 0) {
     fields.line7_unemployment = unemploymentNet;
   }

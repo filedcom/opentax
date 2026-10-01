@@ -12,6 +12,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
 
 // Per-item schema — one 1099-OID from one payer
 // IRS Form 1099-OID TY2025: Original Issue Discount
@@ -19,6 +20,7 @@ export const itemSchema = z.object({
   // Payer identification
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),
@@ -63,6 +65,11 @@ export const itemSchema = z.object({
   // Explicit AMT preference share of net tax-exempt OID. Box 11 alone does
   // not establish that the bond is a specified private-activity bond.
   box11_pab_oid: z.number().nonnegative().optional(),
+  pab_eligible_bonds_reviewed: z.literal(true).optional(),
+  pab_allocable_deduction_workpaper: pabAllocableDeductionWorkpaperSchema
+    .optional(),
+  pab_review_reference: z.string().trim().min(1).optional(),
+  pab_bond_identifier: z.string().trim().min(1).optional(),
 
   // Box 12: State tax withheld (informational)
   box12_state_tax: z.number().nonnegative().optional(),
@@ -201,7 +208,17 @@ function scheduleBOutputs(items: OIDItems): NodeOutput[] {
 // Form 6251 AMT: tax-exempt OID from private activity bonds (box11)
 function form6251Output(items: OIDItems): NodeOutput[] {
   const total = items.reduce(
-    (sum, item) => sum + (item.box11_pab_oid ?? 0),
+    (sum, item) => {
+      const gross = item.box11_pab_oid ?? 0;
+      const deduction = item.pab_allocable_deduction_workpaper
+        ?.allocable_deduction ?? 0;
+      if (deduction > gross) {
+        throw new Error(
+          "1099-OID PAB allocable deduction exceeds specified-bond OID",
+        );
+      }
+      return sum + gross - deduction;
+    },
     0,
   );
   if (total <= 0) return [];

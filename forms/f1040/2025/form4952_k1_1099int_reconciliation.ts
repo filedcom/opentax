@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { inputSchema as interestSchema } from "../nodes/inputs/f1099int/index.ts";
+import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
 import { inputSchema as partnershipSchema } from "../nodes/inputs/k1_partnership/index.ts";
 import {
   calculateForm4952,
   inputSchema as form4952Schema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
-import {
-  plainInvestmentInterest,
-  sourceAmountsMatch,
-} from "./form4952_combined_reconciliation.ts";
+import { sourceAmountsMatch } from "./form4952_combined_reconciliation.ts";
+import { plainInvestmentBox1Or3 } from "./form4952_interest_reconciliation.ts";
 import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
+import { plainInvestmentOid } from "./form4952_oid_source.ts";
 
 const scheduleASchema = z.object({
   line_9_investment_interest: z.number().nonnegative(),
@@ -39,44 +39,50 @@ const permittedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
+  "recipient_tin",
   "box13_code_h_investment_interest",
 ]);
 
-/** K-1 code H interest expense limited by unadjusted 1099-INT box 1 income. */
+/** K-1 code H expense limited by unadjusted 1099-INT or 1099-OID income. */
 export function reconcileForm4952K1InterestAgainst1099Path(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>>,
 ): void {
   const partnership = partnershipSchema.safeParse(pending.k1_partnership);
   const interest = interestSchema.safeParse(pending.f1099int);
+  const oid = oidSchema.safeParse(pending.f1099oid);
   const form = form4952Schema.safeParse(fields);
   const scheduleA = scheduleASchema.safeParse(pending.schedule_a);
   const form1040 = form1040Schema.safeParse(pending.f1040);
   if (
-    !partnership.success || !interest.success || !form.success ||
+    !partnership.success || (!interest.success && !oid.success) ||
+    (pending.f1099int !== undefined && !interest.success) ||
+    (pending.f1099oid !== undefined && !oid.success) || !form.success ||
     !scheduleA.success || !form1040.success
   ) {
     throw new Error(
-      "Form 4952 mixed K-1/1099-INT path needs both sources, completed Form 4952, Schedule A, and finalized Form 1040",
+      "Form 4952 mixed K-1/1099 interest path needs its sources, completed Form 4952, Schedule A, and finalized Form 1040",
     );
   }
   const k1s = partnership.data.k1_partnerships;
-  const payers = interest.data.f1099ints;
+  const payers = interest.success ? interest.data.f1099ints : [];
+  const oidPayers = oid.success ? oid.data.f1099oids : [];
   const k1Expense = k1s.reduce(
     (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
     0,
   );
   const portfolioInterest = payers.reduce(
-    (sum, item) => sum + (item.box1 ?? 0),
+    (sum, item) => sum + (item.box1 ?? 0) + (item.box3 ?? 0),
     0,
-  );
+  ) + oidPayers.reduce((sum, item) => sum + (item.box1_oid ?? 0), 0);
   if (
-    k1s.length === 0 || payers.length === 0 ||
+    k1s.length === 0 || payers.length + oidPayers.length === 0 ||
     new Set(k1s.map((item) => item.partnership_ein)).size !== k1s.length ||
     new Set(k1s.map((item) => item.source_document_reference)).size !==
       k1s.length ||
     k1s.some((item) =>
       !item.partnership_ein || !item.source_document_reference ||
+      !item.recipient_tin ||
       (item.box13_code_h_investment_interest ?? 0) <= 0 ||
       Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
     ) ||
@@ -86,14 +92,18 @@ export function reconcileForm4952K1InterestAgainst1099Path(
       (item.box7?.trim().length ?? 0) > 0 ||
       item.foreign_tax_irs_country_code !== undefined
     ) ||
-    !payers.every(plainInvestmentInterest) ||
+    !payers.every(plainInvestmentBox1Or3) ||
+    !oidPayers.every(plainInvestmentOid) ||
     !sourceAmountsMatch(
       form.data.source_k1_investment_interest,
       k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
     ) ||
     !sourceAmountsMatch(
       form.data.source_1099_interest,
-      payers.map((item) => item.box1 ?? 0),
+      [
+        ...payers.map((item) => (item.box1 ?? 0) + (item.box3 ?? 0)),
+        ...oidPayers.map((item) => item.box1_oid ?? 0),
+      ],
     ) ||
     k1Expense <= 0 || portfolioInterest <= 0 ||
     (form.data.investment_interest_expense ?? 0) !== 0 ||
@@ -121,7 +131,7 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 mixed path supports only identified code H K-1 expenses and unadjusted domestic 1099-INT box 1 income",
+      "Form 4952 mixed path supports only identified code H K-1 expenses and unadjusted domestic 1099-INT box 1/3 or 1099-OID box 1 income",
     );
   }
   const lines = calculateForm4952(form.data);
@@ -132,7 +142,7 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     numberedLines.some((line) => fields[line] !== lines[line])
   ) {
     throw new Error(
-      "Form 4952 mixed numbered lines differ from sourced K-1 and 1099-INT amounts",
+      "Form 4952 mixed numbered lines differ from sourced K-1 and 1099 interest amounts",
     );
   }
   if (

@@ -3,8 +3,44 @@ import { f8801 } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
+function reviewedSources(input: Record<string, unknown>) {
+  const amt = Number(input.prior_year_amt_paid ?? 0);
+  const carryforward = Number(input.prior_year_carryforward ?? 0);
+  return {
+    reviewed_by: "Prior return reviewer",
+    reviewed_on: "2026-04-01",
+    taxpayer_ssn: "123456789",
+    ...(amt > 0
+      ? {
+        form6251: {
+          tax_year: 2024,
+          filed_document_reference: "filed-2024-form6251",
+          filed_taxpayer_ssn: "123456789",
+          filed_line11_amt: amt,
+        },
+      }
+      : {}),
+    ...(carryforward > 0
+      ? {
+        form8801: {
+          tax_year: 2024,
+          filed_document_reference: "filed-2024-form8801",
+          filed_taxpayer_ssn: "123456789",
+          filed_line26_credit_carryforward: carryforward,
+        },
+      }
+      : {}),
+  };
+}
+
 function compute(input: Record<string, unknown>) {
-  return f8801.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f8801.compute>[1]);
+  return f8801.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      ...input,
+      prior_year_evidence: reviewedSources(input),
+    } as Parameters<typeof f8801.compute>[1],
+  );
 }
 
 // =============================================================================
@@ -22,8 +58,63 @@ Deno.test("f8801.inputSchema: valid full input passes", () => {
     prior_year_carryforward: 2000,
     current_year_regular_tax: 20000,
     current_year_tmt: 14000,
+    prior_year_evidence: reviewedSources({
+      prior_year_amt_paid: 5000,
+      prior_year_carryforward: 2000,
+    }),
   });
   assertEquals(parsed.success, true);
+});
+
+Deno.test("Form 8801 staged credit needs exact reviewed prior Form 6251 and 8801 lines", () => {
+  const claim = {
+    prior_year_amt_paid: 5_000,
+    prior_year_carryforward: 2_000,
+    current_year_regular_tax: 20_000,
+    current_year_tmt: 14_000,
+    prior_year_evidence: reviewedSources({
+      prior_year_amt_paid: 5_000,
+      prior_year_carryforward: 2_000,
+    }),
+  };
+  assertEquals(f8801.inputSchema.safeParse(claim).success, true);
+  for (
+    const changed of [
+      { ...claim, prior_year_evidence: undefined },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          form6251: {
+            ...claim.prior_year_evidence.form6251,
+            filed_line11_amt: 4_999,
+          },
+        },
+      },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          form8801: {
+            ...claim.prior_year_evidence.form8801,
+            filed_taxpayer_ssn: "987654321",
+          },
+        },
+      },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          form8801: {
+            ...claim.prior_year_evidence.form8801,
+            filed_document_reference: "filed-2024-form6251",
+          },
+        },
+      },
+    ]
+  ) {
+    assertEquals(f8801.inputSchema.safeParse(changed).success, false);
+  }
 });
 
 Deno.test("f8801.inputSchema: negative prior_year_amt_paid fails", () => {

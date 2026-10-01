@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
@@ -7,13 +10,30 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+const priorYearEvidenceSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().date(),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  form6251: z.object({
+    tax_year: z.literal(2024),
+    filed_document_reference: z.string().trim().min(1),
+    filed_taxpayer_ssn: z.string().regex(/^\d{9}$/),
+    filed_line11_amt: z.number().int().nonnegative(),
+  }).strict().optional(),
+  form8801: z.object({
+    tax_year: z.literal(2024),
+    filed_document_reference: z.string().trim().min(1),
+    filed_taxpayer_ssn: z.string().regex(/^\d{9}$/),
+    filed_line26_credit_carryforward: z.number().int().nonnegative(),
+  }).strict().optional(),
+}).strict();
+
 export const inputSchema = z.object({
-  // AMT paid in the immediately preceding tax year (prior year Form 6251 result)
-  // IRC §53(b)(1)
+  // Reviewed prior Form 6251 line 11. This amount alone does not establish
+  // the deferral-item credit computed on 2025 Form 8801 line 21.
   prior_year_amt_paid: z.number().nonnegative().optional(),
 
-  // Unused minimum tax credit carried from prior Form 8801 line 26
-  // IRC §53(b)(2)
+  // Reviewed prior Form 8801 line 26; actual filed-copy acceptance remains open.
   prior_year_carryforward: z.number().nonnegative().optional(),
 
   // Regular tax before credits — f1040 line 16 / Schedule 2
@@ -23,24 +43,56 @@ export const inputSchema = z.object({
   // Tentative minimum tax from current year Form 6251
   // IRC §53(c)(1)
   current_year_tmt: z.number().nonnegative().optional(),
+  prior_year_evidence: priorYearEvidenceSchema.optional(),
+}).strict().superRefine((input, context) => {
+  const amt = input.prior_year_amt_paid ?? 0;
+  const carryforward = input.prior_year_carryforward ?? 0;
+  if (amt <= 0 && carryforward <= 0) return;
+  const evidence = input.prior_year_evidence;
+  if (
+    !evidence ||
+    (amt > 0 && !evidence.form6251) ||
+    (carryforward > 0 && !evidence.form8801) ||
+    evidence.form6251?.filed_taxpayer_ssn !== undefined &&
+      evidence.form6251.filed_taxpayer_ssn !== evidence.taxpayer_ssn ||
+    evidence.form8801?.filed_taxpayer_ssn !== undefined &&
+      evidence.form8801.filed_taxpayer_ssn !== evidence.taxpayer_ssn ||
+    (evidence.form6251?.filed_line11_amt ?? 0) !== amt ||
+    (evidence.form8801?.filed_line26_credit_carryforward ?? 0) !==
+      carryforward ||
+    evidence.form6251?.filed_document_reference !== undefined &&
+      evidence.form6251.filed_document_reference ===
+        evidence.form8801?.filed_document_reference
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prior_year_evidence"],
+      message:
+        "Form 8801 prior AMT and carryforward need distinct reviewed 2024 Forms 6251/8801 for one taxpayer and exact source lines",
+    });
+  }
 });
 
 type F8801Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Line 14 — Net minimum tax credit available this year
-// IRC §53(b): sum of prior-year AMT paid and carryforward from prior Form 8801
+// Staged preview only. The official line 21 also needs the 2024 exclusion-item
+// computation, so this is not an exportable Form 8801 credit calculation.
 function availableCredit(input: F8801Input): number {
-  return (input.prior_year_amt_paid ?? 0) + (input.prior_year_carryforward ?? 0);
+  return (input.prior_year_amt_paid ?? 0) +
+    (input.prior_year_carryforward ?? 0);
 }
 
 // IRC §53(c)(1) — limitation: excess of regular tax over tentative minimum tax
 function excessRegularOverTmt(input: F8801Input): number {
-  return Math.max(0, (input.current_year_regular_tax ?? 0) - (input.current_year_tmt ?? 0));
+  return Math.max(
+    0,
+    (input.current_year_regular_tax ?? 0) - (input.current_year_tmt ?? 0),
+  );
 }
 
-// Line 25 — Credit allowed this year
+// Preview of a possible credit only; not the official line 25 calculation.
 function creditAllowed(input: F8801Input): number {
   return Math.min(availableCredit(input), excessRegularOverTmt(input));
 }
@@ -59,7 +111,9 @@ class F8801Node extends TaxNode<typeof inputSchema> {
     if (credit === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule3, { line6b_prior_year_min_tax_credit: credit }),
+      this.outputNodes.output(schedule3, {
+        line6b_prior_year_min_tax_credit: credit,
+      }),
     ];
 
     return { outputs };

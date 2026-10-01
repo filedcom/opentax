@@ -6,7 +6,9 @@ import { ext } from "../nodes/inputs/ext/index.ts";
 import { form1116_review } from "../nodes/inputs/form1116_review/index.ts";
 import { form1116_carryover_review } from "../nodes/inputs/form1116_carryover_review/index.ts";
 import { form1116_prior_carryover } from "../nodes/inputs/form1116_prior_carryover/index.ts";
+import { form8582_prior_year_record } from "../nodes/inputs/form8582_prior_year_record/index.ts";
 import { f1098 } from "../nodes/inputs/f1098/index.ts";
+import { mortgage_refinance_points } from "../nodes/inputs/mortgage_refinance_points/index.ts";
 import { f1099b } from "../nodes/inputs/f1099b/index.ts";
 import { f1099c } from "../nodes/inputs/f1099c/index.ts";
 import { f1099div } from "../nodes/inputs/f1099div/index.ts";
@@ -30,6 +32,7 @@ import { k1Partnership } from "../nodes/inputs/k1_partnership/index.ts";
 import { scheduleA } from "../nodes/inputs/schedule_a/index.ts";
 import { scheduleC } from "../nodes/inputs/schedule_c/index.ts";
 import { scheduleE } from "../nodes/inputs/schedule_e/index.ts";
+import { personal_property_rental } from "../nodes/inputs/personal_property_rental/index.ts";
 import { rrb1099r } from "../nodes/inputs/rrb1099r/index.ts";
 import { ssa1099 } from "../nodes/inputs/ssa1099/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
@@ -156,7 +159,7 @@ import { form4952 } from "../nodes/intermediate/forms/form4952/index.ts";
 import { form4684 } from "../nodes/intermediate/forms/form4684/index.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
 import { form8824 } from "../nodes/intermediate/forms/form8824/index.ts";
-import { form4972 } from "../nodes/intermediate/forms/form4972/index.ts";
+import { form4972Elections } from "../nodes/intermediate/forms/form4972/elections.ts";
 import { form5329 } from "../nodes/intermediate/forms/form5329/index.ts";
 import { form5695 } from "../nodes/intermediate/forms/form5695/index.ts";
 import { jointOccupancyStatementNode } from "../nodes/intermediate/forms/joint_occupancy_statement/index.ts";
@@ -226,6 +229,7 @@ export const registry: NodeRegistry = {
   // ── Inputs ─────────────────────────────────────────────────────────────────
   ext,
   f1098,
+  mortgage_refinance_points,
   f1099b,
   f1099c,
   f1099div,
@@ -246,12 +250,14 @@ export const registry: NodeRegistry = {
   form1116_review,
   form1116_carryover_review,
   form1116_prior_carryover,
+  form8582_prior_year_record,
   k1_trust,
   k1_s_corp: k1SCorpNode,
   k1_partnership: k1Partnership,
   schedule_a: scheduleA,
   schedule_c: scheduleC,
   schedule_e: scheduleE,
+  personal_property_rental,
   rrb1099r,
   ssa1099,
   w2,
@@ -378,7 +384,7 @@ export const registry: NodeRegistry = {
   form4952,
   form4797,
   form8824,
-  form4972,
+  form4972: form4972Elections,
   form5329,
   form5695,
   jointOccupancyStatementNode,

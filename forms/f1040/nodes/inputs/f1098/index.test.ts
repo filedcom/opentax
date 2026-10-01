@@ -1,8 +1,16 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f1098, ForRouting, inputSchema } from "./index.ts";
+import {
+  assertForm1098Box4Sources,
+  assertForm1098MortgageLimitSources,
+  assertPurchasePointsCrossLoanSources,
+  f1098,
+  ForRouting,
+  inputSchema,
+} from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,6 +56,9 @@ function reviewedPoints(
     box6_points_paid: points,
     box6_current_year_deductible_points: deductible,
     box6_deduction_workpaper_reference: "reviewed-pub936-workpaper-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: `issued-1098-${points}-${deductible}`,
     ...overrides,
   });
 }
@@ -70,6 +81,9 @@ function reviewedRecovery(
     box4_prior_year_refund: true,
     box4_taxable_recovery_verified_amount: taxable,
     box4_recovery_workpaper_reference: "reviewed-pub525-recovery-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: `issued-1098-recovery-${refund}-${taxable}`,
     ...overrides,
   });
 }
@@ -92,6 +106,179 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("f1098.schema: empty array accepted — zero items produces empty outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("2025 purchase points and existing acquisition loan share the $750,000 limit", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const source = inputSchema.parse({
+    f1098s: fixture.f1098,
+    ...fixture.f1098_purchase_points_cross_loan_review,
+  });
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, source);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    21_000,
+  );
+  assertPurchasePointsCrossLoanSources(
+    source,
+    ["111223333"],
+    true,
+    21_000,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertPurchasePointsCrossLoanSources(
+        source,
+        ["111223333"],
+        true,
+        20_999,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "exact sourced line 8a",
+  );
+  const review = fixture.f1098_purchase_points_cross_loan_review
+    .purchase_points_cross_loan_review;
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_loan: {
+          ...review.existing_loan,
+          maximum_2025_balance: 500_001,
+        },
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: review,
+      mortgage_limit_review: { loans: [] },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () => {
+  const source = {
+    f1098s: [
+      reviewedInterest(20_000, 16_660, {
+        lender_name: "First Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 first Form 1098",
+        box3_origination_date: "01/15/2020",
+      }),
+      reviewedInterest(16_000, 13_328, {
+        lender_name: "Second Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 second Form 1098",
+        box3_origination_date: "02/15/2021",
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 Pub. 936 Table 1 both loans",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: ([
+        ["2025 first Form 1098", 500_000],
+        ["2025 second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const parsed = inputSchema.parse(source);
+  const result = f1098.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsed,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    29_988,
+  );
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    true,
+    29_988,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [
+        source.f1098s[0],
+        { ...source.f1098s[1], box1_current_year_deductible_interest: 16_000 },
+      ],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        false,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "same single filer",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        true,
+        29_988,
+        0,
+        1,
+        true,
+        false,
+      ),
+    Error,
+    "no other mortgage-interest",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        true,
+        29_988,
+        0,
+        0,
+        false,
+        true,
+      ),
+    Error,
+    "no other mortgage-interest",
+  );
 });
 
 Deno.test("f1098.schema: missing box1_mortgage_interest throws", () => {
@@ -225,6 +412,41 @@ Deno.test("f1098.compute: box4 same-year designation is rejected", () => {
   );
 });
 
+Deno.test("f1098.compute: positive box4 needs identified lender, recipient, and payer copy", () => {
+  for (
+    const missing of [
+      "lender_name",
+      "recipient_tin",
+      "source_document_reference",
+    ]
+  ) {
+    assertThrows(
+      () => compute([reviewedRecovery(200, 100, { [missing]: undefined })]),
+      Error,
+    );
+  }
+});
+
+Deno.test("f1098 box4 filing reconciles payer recipient and taxable recovery", () => {
+  const source = { f1098s: [reviewedRecovery(2_000, 1_200)] };
+  assertForm1098Box4Sources(source, ["111223333"], 1_200);
+  assertThrows(
+    () => assertForm1098Box4Sources(source, ["999887777"], 1_200),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () => assertForm1098Box4Sources(source, ["111223333"], 1_199),
+    Error,
+    "must match sourced taxable recovery",
+  );
+  assertThrows(
+    () => assertForm1098Box4Sources(undefined, ["111223333"], 1_200),
+    Error,
+    "needs payer source rows",
+  );
+});
+
 Deno.test("f1098.compute: box4 taxable recovery above refund is rejected", () => {
   assertThrows(() => compute([reviewedRecovery(200, 201)]), Error);
 });
@@ -286,6 +508,61 @@ Deno.test("f1098.compute: box6 deduction without workpaper reference is rejected
 Deno.test("f1098.compute: box6 refinance claim is rejected pending amortization facts", () => {
   assertThrows(
     () => compute([reviewedPoints(2_000, 2_000, { refinance: true })]),
+    Error,
+  );
+});
+
+Deno.test("f1098.compute: construction refinance box6 points amortize by 2025 payments", () => {
+  const source = reviewedPoints(2_000, 0, {
+    refinance: true,
+    box6_current_year_deductible_points: undefined,
+    box6_construction_refinance_review: {
+      construction_loan_record_reference: "2025 original construction loan",
+      closing_disclosure_reference: "2025 construction refinance closing",
+      original_construction_debt: 100_000,
+      refinanced_principal: 100_000,
+      loan_term_months: 180,
+      monthly_payment_records: [
+        { month: 7, document_reference: "payment-july" },
+        { month: 8, document_reference: "payment-august" },
+        { month: 9, document_reference: "payment-september" },
+        { month: 10, document_reference: "payment-october" },
+        { month: 11, document_reference: "payment-november" },
+        { month: 12, document_reference: "payment-december" },
+      ],
+      principal_residence_when_complete_verified: true,
+      points_paid_directly_verified: true,
+      reportable_points_within_acquisition_limit_verified: true,
+    },
+  });
+  const result = compute([source]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    67,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...source,
+        box6_construction_refinance_review: {
+          ...(source.box6_construction_refinance_review as Record<
+            string,
+            unknown
+          >),
+          monthly_payment_records: [{
+            month: 7,
+            document_reference: "payment-july",
+          }],
+        },
+      }]),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...source,
+        box6_current_year_deductible_points: 2_000,
+      }]),
     Error,
   );
 });
@@ -437,6 +714,27 @@ Deno.test("f1098.compute: two reviewed box6 sources aggregate on Schedule A line
   assertEquals(fields.line_8c_points_no_1098, undefined);
 });
 
+Deno.test("f1098.compute: positive box6 needs identified lender and recipient", () => {
+  assertThrows(
+    () => compute([reviewedPoints(1_000, 1_000, { lender_name: undefined })]),
+    Error,
+    "needs lender, recipient TIN",
+  );
+  assertThrows(
+    () => compute([reviewedPoints(1_000, 1_000, { recipient_tin: undefined })]),
+    Error,
+    "needs lender, recipient TIN",
+  );
+});
+
+Deno.test("f1098.compute: duplicate payer-issued Form 1098 rejects", () => {
+  assertThrows(
+    () => compute([reviewedPoints(1_000), reviewedPoints(1_000)]),
+    Error,
+    "same payer-issued Form 1098",
+  );
+});
+
 Deno.test("f1098.compute: multiple unreviewed rental box1 sources fail closed", () => {
   assertThrows(() =>
     compute([
@@ -551,6 +849,9 @@ Deno.test("f1098.compute: smoke — comprehensive item routes correctly", () => 
     box6_points_paid: 2_400,
     box6_current_year_deductible_points: 2_400,
     box6_deduction_workpaper_reference: "reviewed-pub936-workpaper-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: "issued-1098-complete-case",
     box7_property_address_same: true,
     box9_number_of_properties: 1,
     box10_other: "Homeowner insurance: $1,200",

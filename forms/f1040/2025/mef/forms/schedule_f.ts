@@ -12,6 +12,7 @@ import {
   wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as form4835InputSchema } from "../../../nodes/inputs/f4835/index.ts";
 import {
   calculateForm5884,
@@ -39,6 +40,30 @@ function buildFarm(
 ): string {
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule F ${index + 1} needs filer identity`);
+  if (
+    item.proprietor_recipient === undefined &&
+    filer.filingStatus === FilingStatus.MarriedFilingJointly
+  ) {
+    throw new Error(
+      `Schedule F ${index + 1} joint return needs an explicit proprietor`,
+    );
+  }
+  const spouse = item.proprietor_recipient === "S" ? filer.spouse : undefined;
+  if (
+    item.proprietor_recipient === "S" &&
+    (filer.filingStatus !== FilingStatus.MarriedFilingJointly || !spouse)
+  ) {
+    throw new Error(
+      `Schedule F ${
+        index + 1
+      } spouse proprietor needs a joint return and spouse identity`,
+    );
+  }
+  const proprietorName = spouse
+    ? [spouse.firstName, spouse.middleInitial, spouse.lastName, spouse.suffix]
+      .filter(Boolean).join(" ")
+    : filer.fullName ?? filer.nameLine1;
+  const proprietorSSN = spouse?.ssn ?? filer.primarySSN;
   const gross = computeGrossIncome(item);
   const expenses = computeTotalExpenses(item, gross, wotcReduction);
   const preliminaryNet = gross - expenses;
@@ -209,9 +234,9 @@ function buildFarm(
   ]);
   return elements("IRS1040ScheduleF", [
     elements("FarmProprietorName", [
-      element("BusinessNameLine1Txt", filer.fullName ?? filer.nameLine1),
+      element("BusinessNameLine1Txt", proprietorName),
     ]),
-    element("SSN", filer.primarySSN.replace(/\D/g, "")),
+    element("SSN", proprietorSSN.replace(/\D/g, "")),
     element("PrincipalProductDesc", item.line_a_principal_crop_activity),
     element("AgriculturalActivityCd", item.line_b_agricultural_activity_code),
     element(

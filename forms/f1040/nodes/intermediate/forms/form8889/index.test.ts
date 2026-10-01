@@ -15,6 +15,12 @@ const uniformSelfOnly = {
     made_in_2026_for_2025: 0,
   },
 };
+const priorExcessSource = {
+  tax_year: 2024 as const,
+  filed_form5329_reference: "filed-2024-5329-primary",
+  filed_return_reviewed: true as const,
+  owner_ssn: "123456789",
+};
 const uniformFamily = {
   ...uniformSelfOnly,
   eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
@@ -117,12 +123,14 @@ function employerCode2Sa(principal: number, earnings: number) {
   };
 }
 
-function rolloverEvidence(amount: number) {
+function rolloverEvidence(amount: number, reportedGross = amount) {
   return {
     amount,
     distribution_date: "2025-05-01",
     contribution_date: "2025-05-30",
     distribution_source_reference: "2025 HSA 1099-SA distribution A",
+    form1099_sa_source_reference:
+      `2025 ordinary HSA distribution ${reportedGross}`,
     contribution_source_reference: "2025 destination HSA receipt B",
     same_beneficiary: true as const,
     receiving_hsa_no_other_rollover_in_preceding_12_months: true as const,
@@ -980,7 +988,11 @@ Deno.test("Form 8889 paired HSA excess preserves each owner's Part VII source", 
   }
   const prior = compute({
     ...primary,
-    prior_year_hsa_excess: { form5329_line48: 1_000, form5329_line49: 60 },
+    prior_year_hsa_excess: {
+      ...priorExcessSource,
+      form5329_line48: 1_000,
+      form5329_line49: 60,
+    },
     spouse_hsa: spouse,
   });
   assertEquals(
@@ -1087,6 +1099,7 @@ Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 2_000,
       form5329_line49: 120,
     },
@@ -1103,6 +1116,11 @@ Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8
   );
   assertEquals(hsaPartVII(result), {
     line42_prior_excess: 2_000,
+    prior_year_source: {
+      ...priorExcessSource,
+      form5329_line48: 2_000,
+      form5329_line49: 120,
+    },
     line43_unused_contribution_room: 500,
     line44_taxable_distributions: 0,
     line47_current_year_excess: 0,
@@ -1114,6 +1132,7 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 1_000,
       form5329_line49: 60,
     },
@@ -1133,11 +1152,30 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
   );
 });
 
+Deno.test("part1: prior excess rejects a different filed Form 5329 owner", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        prior_year_hsa_excess: {
+          ...priorExcessSource,
+          owner_ssn: "987654321",
+          form5329_line48: 1_000,
+          form5329_line49: 60,
+        },
+        hsa_december_31_value: 1_000,
+      }),
+    Error,
+    "must belong to this HSA owner",
+  );
+});
+
 Deno.test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 3_800,
     prior_year_hsa_excess: {
+      ...priorExcessSource,
       form5329_line48: 1_000,
       form5329_line49: 0,
     },
@@ -1857,7 +1895,7 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
 Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
   const result = compute({
     ...ordinary1099Sa(5000),
-    hsa_excluded_distributions: { rollover: rolloverEvidence(3000) },
+    hsa_excluded_distributions: { rollover: rolloverEvidence(3000, 5000) },
     qualified_medical_expenses: 1500,
     exception_qualified_taxable_amount: 0,
   });
@@ -1923,6 +1961,40 @@ Deno.test("part2: HSA rollover line 14b needs supported redeposit evidence", () 
     Error,
     "distinct distribution and redeposit sources",
   );
+  assertEquals(
+    firstForm(compute(source(base)))?.print_line14b_excluded_distributions,
+    500,
+  );
+  assertThrows(
+    () =>
+      compute(source({
+        ...base,
+        form1099_sa_source_reference: "unmatched 1099-SA",
+      })),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
+  assertThrows(
+    () =>
+      compute(source({
+        ...base,
+        form1099_sa_source_reference: base.contribution_source_reference,
+      })),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...source(base),
+        form1099_sa_distributions: [{
+          ...ordinary1099Sa(500).form1099_sa_distributions[0],
+          box3_distribution_code: "3",
+        }],
+      }),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
   for (
     const field of [
       "same_beneficiary",
@@ -1950,16 +2022,16 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
     () =>
       compute({
         ...ordinary1099Sa(1000),
-        hsa_excluded_distributions: { rollover: rolloverEvidence(1001) },
+        hsa_excluded_distributions: { rollover: rolloverEvidence(1001, 1000) },
       }),
     Error,
-    "line 14b cannot exceed",
+    "linked code-1 Form 1099-SA",
   );
   assertThrows(
     () =>
       compute({
         ...ordinary1099Sa(1000),
-        hsa_excluded_distributions: { rollover: rolloverEvidence(600) },
+        hsa_excluded_distributions: { rollover: rolloverEvidence(600, 1000) },
         qualified_medical_expenses: 500,
       }),
     Error,
@@ -2400,6 +2472,7 @@ Deno.test("part2: sourced rollover and age-65 exception allocate separate dollar
   const rollover = {
     ...rolloverEvidence(1000),
     distribution_source_reference: "May trustee transaction",
+    form1099_sa_source_reference: "2025 Form 1099-SA",
   };
   const source = {
     hsa_distributions: 2000,
@@ -2638,8 +2711,66 @@ Deno.test("part3: married one-HSA 2024 self-only last-month rule uses filed self
         },
       }),
     Error,
-    "age-55 mixed-coverage recapture needs the filed additional-contribution worksheet",
+    "filed lines 3-8",
   );
+});
+
+Deno.test("part3: married age-55 one-HSA family-to-self-only recapture uses separate line 7", () => {
+  const evidence = {
+    ...prior2024MarriedFamily,
+    eligible_hdhp_coverage_by_month: [
+      CoverageType.Family,
+      CoverageType.Family,
+      ...Array(9).fill(null),
+      CoverageType.SelfOnly,
+    ],
+    age_55_or_older: true,
+    filed_form8889_line2: 4_317,
+    filed_form8889_line3: 4_150,
+    filed_form8889_line5: 4_150,
+    filed_form8889_line6: 4_150,
+    filed_form8889_line7: 167,
+    filed_form8889_line8: 4_317,
+    filed_form8889_line13: 4_317,
+  };
+  const failure = {
+    last_month_rule_evidence: evidence,
+    qualified_funding_distribution_amount: 0,
+    not_death_or_disability: true as const,
+    prior_year_source: "Filed 2024 owner Form 8889 and monthly HDHP records",
+  };
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: failure,
+  });
+  // Line 3 $1,813 plus line 7 $167 gives a $1,980 monthly limit.
+  assertEquals(firstForm(result)?.print_line18, 2_337);
+  assertAlmostEquals(firstForm(result)?.print_line21 as number, 233.7);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 2_337);
+  assertAlmostEquals(
+    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax as number,
+    233.7,
+  );
+  for (
+    const changed of [
+      { filed_form8889_line3: 5_150 },
+      { filed_form8889_line7: 0 },
+      { filed_form8889_line8: 4_150 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          eligible_hdhp_coverage_by_month: Array(12).fill(null),
+          testing_period_failure: {
+            ...failure,
+            last_month_rule_evidence: { ...evidence, ...changed },
+          },
+        }),
+      Error,
+      "filed lines 3-8",
+    );
+  }
 });
 
 Deno.test("part3: married one-HSA 2024 family-to-self-only election uses the greater filed limit", () => {

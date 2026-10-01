@@ -1,10 +1,20 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
+import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
+import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
-import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
+import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
+import { assertEicSource } from "../../eic-source.ts";
+import { residentElectionName } from "../../resident-election-source.ts";
 import {
+  DependentCreditCategory,
+  dependentFilingSchema,
+} from "../../../nodes/inputs/general/index.ts";
+import {
+  assertIraRolloverEvidence,
   inputSchema as f1099rInputSchema,
+  isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
 
@@ -34,6 +44,11 @@ import {
 //   f2_32:        line 37 amount owed
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "checkbox",
+    domainKey: "main_home_in_us_over_half_year",
+    pdfField: "topmostSubform[0].Page1[0].c1_5[0]",
+  },
   // ── Page 1: Filing Status checkboxes ──────────────────────────────────────
   // Verified against the 2025 f1040 AcroForm field dump (rects at y≈578–554):
   // the left column (Single/MFJ/MFS) lives under Checkbox_ReadOrder[0] with
@@ -72,6 +87,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].c1_8[1]",
     whenValue: "qss",
   },
+  {
+    kind: "checkbox",
+    domainKey: "print_resident_election",
+    pdfField: "topmostSubform[0].Page1[0].c1_9[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_resident_election_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+  },
 
   // ── Page 1: Digital assets question (Yes = c1_10[0], No = c1_10[1]) ───────
   // Required answer on every 2025 return; previously unmapped (left blank).
@@ -87,6 +112,70 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].c1_10[1]",
     whenValue: "false",
   },
+  {
+    kind: "checkbox",
+    domainKey: "print_more_than_four_dependents",
+    pdfField: "topmostSubform[0].Page1[0].Dependents_ReadOrder[0].c1_11[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "mfs_eitc_separation_rule",
+    pdfField: "topmostSubform[0].Page1[0].c1_32[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_mfs_spouse_full_name",
+    pdfField: "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].f1_28[0]",
+  },
+
+  // Four dependent columns, each with first/last name, TIN, relationship,
+  // residence answers, and one credit-category mark.
+  ...Array.from({ length: 4 }, (_, i): PdfFieldEntry[] => {
+    const column = i + 1;
+    const table = "topmostSubform[0].Page1[0].Table_Dependents[0]";
+    return [
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_first_name`,
+        pdfField: `${table}.Row1[0].f1_${31 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_last_name`,
+        pdfField: `${table}.Row2[0].f1_${35 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_tin`,
+        pdfField: `${table}.Row3[0].f1_${39 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_relationship`,
+        pdfField: `${table}.Row4[0].f1_${43 + i}[0]`,
+      },
+      ...["home", "home_us"].map((fact, j): PdfFieldEntry => ({
+        kind: "checkbox",
+        domainKey: `dependent_${i}_${fact}`,
+        pdfField: `${table}.Row5[0].Dependent${column}[0].c1_${
+          12 + 2 * i + j
+        }[0]`,
+      })),
+      ...["full_time_student", "disabled"].map((fact, j): PdfFieldEntry => ({
+        kind: "checkbox",
+        domainKey: `dependent_${i}_${fact}`,
+        pdfField: `${table}.Row6[0].Dependent${column}[0].c1_${
+          20 + 2 * i + j
+        }[0]`,
+      })),
+      ...["ctc", "odc"].map((category, j): PdfFieldEntry => ({
+        kind: "checkboxWhen",
+        domainKey: `dependent_${i}_credit_category`,
+        pdfField: `${table}.Row7[0].Dependent${column}[0].c1_${28 + i}[${j}]`,
+        whenValue: category,
+      })),
+    ];
+  }).flat(),
 
   // ── Page 1: Wages (Lines 1a–1z) ───────────────────────────────────────────
   {
@@ -185,6 +274,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line4b_ira_taxable",
     pdfField: "topmostSubform[0].Page1[0].f1_63[0]",
   },
+  {
+    kind: "checkbox",
+    domainKey: "line4c_ira_rollover",
+    pdfField: "topmostSubform[0].Page1[0].c1_35[0]",
+  },
   // f1_64 skipped (QCD sub-field)
   {
     kind: "text",
@@ -262,6 +356,31 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "checkbox",
     domainKey: "taxpayer_can_be_claimed_as_dependent",
     pdfField: "topmostSubform[0].Page2[0].c2_1[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "mfs_spouse_itemizing",
+    pdfField: "topmostSubform[0].Page2[0].c2_3[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "taxpayer_age_65_or_older",
+    pdfField: "topmostSubform[0].Page2[0].c2_5[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "taxpayer_blind",
+    pdfField: "topmostSubform[0].Page2[0].c2_6[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "spouse_age_65_or_older",
+    pdfField: "topmostSubform[0].Page2[0].c2_7[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "spouse_blind",
+    pdfField: "topmostSubform[0].Page2[0].c2_8[0]",
   },
   // Line 12a: standard deduction written first; itemized overwrites if non-zero.
   {
@@ -426,6 +545,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_31[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_form8888_attached",
+    // The 2025 line 35a attachment box is c2_15 at x467.2, y290.
+    pdfField: "topmostSubform[0].Page2[0].c2_15[0]",
+  },
+  {
     kind: "text",
     domainKey: "line37_amount_owed",
     pdfField: "topmostSubform[0].Page2[0].f2_35[0]",
@@ -444,30 +569,82 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const residentElection = residentElectionName(fields, allPending);
+    assertMfsEitcSource(
+      fields.filing_status,
+      fields.mfs_eitc_separation_rule,
+      typeof fields.line27_eitc === "number" ? fields.line27_eitc : undefined,
+      allPending,
+    );
+    assertEicSource(
+      fields.filing_status,
+      typeof fields.line27_eitc === "number" ? fields.line27_eitc : undefined,
+      fields.main_home_in_us_over_half_year,
+      allPending,
+    );
+    const dependents = dependentFilingSchema.array().parse(
+      fields.dependent_details ?? [],
+    );
+    if (
+      fields.dependent_count !== undefined &&
+      fields.dependent_count !== dependents.length
+    ) {
+      throw new Error("Form 1040 PDF dependent count differs from filed rows");
+    }
+    const printedDependents: Record<string, unknown> = {};
+    dependents.forEach((dep, i) => {
+      if (dep.lived_in_us_over_half_year === undefined) {
+        throw new Error(
+          "Form 1040 PDF dependent needs a reviewed U.S.-residence answer",
+        );
+      }
+      if (i >= 4) return;
+      printedDependents[`dependent_${i}_first_name`] = dep.first_name;
+      printedDependents[`dependent_${i}_last_name`] = dep.last_name;
+      printedDependents[`dependent_${i}_tin`] =
+        (dep.ssn ?? dep.itin ?? dep.atin)?.replaceAll("-", "");
+      printedDependents[`dependent_${i}_relationship`] = dep.relationship;
+      printedDependents[`dependent_${i}_home`] = dep.months_in_home > 6;
+      printedDependents[`dependent_${i}_home_us`] =
+        dep.lived_in_us_over_half_year;
+      printedDependents[`dependent_${i}_full_time_student`] =
+        dep.full_time_student === true;
+      printedDependents[`dependent_${i}_disabled`] = dep.disabled === true;
+      printedDependents[`dependent_${i}_credit_category`] =
+        dep.credit_category === DependentCreditCategory.None
+          ? undefined
+          : dep.credit_category;
+    });
+    const iraRollover = fields.line4c_ira_rollover === true;
     const rollover = fields.line5c_pension_rollover === true;
-    if (fields.line5c_pension_rollover !== undefined &&
-        typeof fields.line5c_pension_rollover !== "boolean") {
+    if (
+      fields.line4c_ira_rollover !== undefined &&
+      typeof fields.line4c_ira_rollover !== "boolean"
+    ) {
+      throw new Error("Form 1040 PDF line 4c rollover must be a boolean");
+    }
+    if (
+      fields.line5c_pension_rollover !== undefined &&
+      typeof fields.line5c_pension_rollover !== "boolean"
+    ) {
       throw new Error("Form 1040 PDF line 5c rollover must be a boolean");
     }
-    if (rollover || allPending.f1099r !== undefined) {
+    if (iraRollover || rollover || allPending.f1099r !== undefined) {
       const source = f1099rInputSchema.safeParse(allPending.f1099r);
       if (!source.success) {
-        throw new Error("Form 1040 PDF line 5c needs valid Form 1099-R source facts");
+        throw new Error(
+          "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
+        );
       }
+      assertIraRolloverEvidence(source.data.f1099rs);
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
           "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",
         );
       }
-    }
-    if (allPending.w2g !== undefined) {
-      const source = w2gInputSchema.safeParse(allPending.w2g);
-      if (!source.success) {
-        throw new Error("Form 1040 W-2G withholding needs valid payer-issued source facts");
-      }
-      if (source.data.w2gs.some((item) => (item.box4_federal_withheld ?? 0) > 0)) {
+      if (iraRollover !== source.data.f1099rs.some(isIraRollover)) {
         throw new Error(
-          "Form 1040 W-2G withholding cannot render until its payer-issued W-2G attachment is supported",
+          "Form 1040 PDF line 4c rollover does not match the reviewed IRA Form 1099-R source",
         );
       }
     }
@@ -486,13 +663,57 @@ export const irs1040Pdf: PdfFormDescriptor = {
       }
     }
     const child = form8814ParentPrintAmounts(allPending);
+    if (
+      child.dividends > 0 &&
+      ((typeof fields.line3a_qualified_dividends !== "number" ||
+        fields.line3a_qualified_dividends < child.dividends) ||
+        (typeof fields.line3b_ordinary_dividends !== "number" ||
+          fields.line3b_ordinary_dividends < child.dividends))
+    ) {
+      throw new Error(
+        "Form 1040 PDF child-dividend marks need the Form 8814 amount on lines 3a and 3b",
+      );
+    }
+    const childGainDirect = child.capitalGain > 0 &&
+      typeof fields.line7a_cap_gain_distrib === "number" &&
+      fields.line7a_cap_gain_distrib >= child.capitalGain;
+    const childGainOnScheduleD = child.capitalGain > 0 &&
+      typeof fields.line7_capital_gain === "number" &&
+      typeof allPending.schedule_d?.print_line13_cap_gain_distrib === "number" &&
+      allPending.schedule_d.print_line13_cap_gain_distrib >= child.capitalGain;
+    if (childGainDirect && childGainOnScheduleD) {
+      throw new Error(
+        "Form 1040 PDF child capital gain cannot use direct line 7a and Schedule D together",
+      );
+    }
+    if (child.capitalGain > 0 && !childGainDirect && !childGainOnScheduleD) {
+      throw new Error(
+        "Form 1040 PDF child capital gain needs the Form 8814 amount on line 7a or Schedule D line 13",
+      );
+    }
+    const printMfsSpouseName = fields.filing_status === "mfs" &&
+        typeof fields.spouse_first_name === "string" &&
+        typeof fields.spouse_last_name === "string"
+      ? `${fields.spouse_first_name} ${fields.spouse_last_name}`
+      : undefined;
     return {
       ...fields,
+      ...printedDependents,
+      print_resident_election: residentElection !== undefined,
+      print_resident_election_name: residentElection,
+      print_mfs_spouse_full_name: printMfsSpouseName,
+      print_more_than_four_dependents: dependents.length > 4,
+      ...(iraRollover && fields.line4b_ira_taxable === 0
+        ? { line4b_ira_taxable: "0" }
+        : {}),
+      ...(rollover && fields.line5b_pension_taxable === 0
+        ? { line5b_pension_taxable: "0" }
+        : {}),
+      print_form8888_attached: Object.keys(allPending.f8888 ?? {}).length > 0,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
-      print_form8814_line7a_included: child.capitalGain > 0,
-      print_form8814_line7a_note: child.capitalGain > 0 &&
-          typeof fields.line7a_cap_gain_distrib === "number"
+      print_form8814_line7a_included: childGainDirect,
+      print_form8814_line7a_note: childGainDirect
         ? `Form 8814 $${child.capitalGain}`
         : undefined,
     };
@@ -513,6 +734,14 @@ export const irs1040Pdf: PdfFormDescriptor = {
       color: rgb(1, 1, 1),
     });
     page.drawText(note, { x: 315, y: 93, size: 7, font });
+  },
+  async appendSupplementalPages(document, fields, filer, allPending) {
+    await appendDependentContinuation(
+      document,
+      fields.dependent_details,
+      filer,
+    );
+    await appendIraDistributionStatement(document, allPending?.f1099r, filer);
   },
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).

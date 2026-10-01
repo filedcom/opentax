@@ -8,6 +8,7 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8835/index.ts";
 import { inputSchema as form3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import type { Form3800DocumentParts } from "../../mef/forms/f3800_document.ts";
 
 export interface Form8835PdfSource {
   readonly item: F8835Item;
@@ -32,6 +33,7 @@ function addressLines(item: F8835Item): readonly [string, string] {
 export function form8835PdfSources(
   allPending: Record<string, Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  prepared: Form3800DocumentParts,
 ): readonly Form8835PdfSource[] {
   const raw = allPending.f8835;
   if (!raw) return [];
@@ -44,7 +46,13 @@ export function form8835PdfSources(
       );
     }
     if (
-      item.energy_type !== EnergyType.Geothermal ||
+      (item.energy_type !== EnergyType.Geothermal &&
+        item.energy_type !== EnergyType.Wind &&
+        item.energy_type !== EnergyType.BiomassClosed &&
+        item.energy_type !== EnergyType.Solar &&
+        item.energy_type !== EnergyType.BiomassOpen &&
+        item.energy_type !== EnergyType.Landfill &&
+        item.energy_type !== EnergyType.Trash) ||
       item.facility_placed_in_service_date < "2022-01-01" ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
@@ -59,13 +67,15 @@ export function form8835PdfSources(
       item.facility_latitude === undefined ||
       item.facility_longitude === undefined ||
       item.ac_nameplate_kw === undefined || item.ac_nameplate_kw <= 0 ||
+      (item.energy_type === EnergyType.Solar &&
+        (item.solar_dc_nameplate_kw ?? 0) <= 0) ||
       !item.facility_description ||
       item.facility_description.length > 70 ||
       item.registration_number !== undefined ||
       lines.form3800Line !== "4e"
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive geothermal facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
       );
     }
     if (
@@ -90,6 +100,13 @@ export function form8835PdfSources(
   const credits = return1040.form3800_source_credits;
   const finalized3800 = allPending.f3800 ?? {};
   const schedule3 = allPending.schedule3 ?? {};
+  const currentRows = prepared.currentRows.filter((row) => row.line === "4e");
+  const currentAmounts = prepared.currentAmounts.filter((row) =>
+    row.line === "4e"
+  );
+  const sourceDetails = prepared.currentDetails.filter((row) =>
+    row.line === "4e"
+  );
   if (
     entries.length !== rows.length ||
     entries.some((entry, index) =>
@@ -99,16 +116,30 @@ export function form8835PdfSources(
       entry.subject_to_passive_activity_limit !== false
     ) ||
     !credits ||
-    credits.standardCredit !== 0 ||
-    credits.specifiedCredit !== totalCredit ||
+    credits.specifiedCredit < totalCredit ||
     credits.passiveLines.line2 !== 0 ||
     credits.passiveLines.line23 !== 0 ||
     credits.passiveLines.line32 !== 0 ||
-    finalized3800.allowed_credit !== totalCredit ||
-    finalized3800.specified_credit_allowed !== totalCredit ||
-    schedule3.line6a_total !== totalCredit ||
-    schedule3.line8_total !== totalCredit ||
-    return1040.line20_nonrefundable_credits !== totalCredit
+    currentRows.length !== 1 ||
+    currentRows[0].metadata.sourceCount !== rows.length ||
+    currentAmounts.length !== 1 ||
+    currentAmounts[0].nonpassiveCredit !== totalCredit ||
+    currentAmounts[0].transferOutCredit !== 0 ||
+    currentAmounts[0].appliedCredit !== totalCredit ||
+    sourceDetails.length !== rows.length ||
+    sourceDetails.some((detail, index) =>
+      detail.credit !== rows[index].lines.line15 ||
+      detail.appliedCredit !== rows[index].lines.line15 ||
+      (detail.transferOutCredit ?? 0) !== 0 ||
+      !detail.sourceDocumentId
+    ) ||
+    currentRows[0].metadata.referenceDocumentId !==
+      sourceDetails.map((detail) => detail.sourceDocumentId).join(" ") ||
+    prepared.lines.line37 < totalCredit ||
+    finalized3800.allowed_credit !== prepared.lines.line38 ||
+    finalized3800.specified_credit_allowed !== prepared.lines.line37 ||
+    schedule3.line6a_total !== prepared.lines.line38 ||
+    schedule3.line8_total !== return1040.line20_nonrefundable_credits
   ) {
     throw new Error(
       "Form 8835 PDF production credit disagrees with native Form 3800, Schedule 3, or finalized Form 1040",

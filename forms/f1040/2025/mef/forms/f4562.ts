@@ -8,6 +8,7 @@ import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
 } from "../../../nodes/inputs/schedule_c/model.ts";
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Fields = z.infer<typeof filedForm4562Schema>;
@@ -124,18 +125,21 @@ function reconcileActiveBusinessIncome(
     "form4797",
     "form6252",
     "form8824",
-    "form7206",
     "form8829",
-    "form461",
   ] as const;
-  if (unsupportedSources.some((key) => pending[key] !== undefined)) {
+  if (
+    unsupportedSources.some((key) => pending[key] !== undefined) ||
+    (pending.form7206 as Record<string, unknown> | undefined)?.line13 !==
+      undefined ||
+    (pending.form461 as Record<string, unknown> | undefined)
+        ?.line16_excess_business_loss !== undefined
+  ) {
     throw new Error(
       "Form 4562 active-business limit cannot include another business-income or deduction source",
     );
   }
   const f1040 = z.record(z.unknown()).parse(pending.f1040);
-  const wageLines = [
-    f1040.line1a_wages,
+  const otherWageLines = [
     f1040.line1b_household_wages,
     f1040.line1c_unreported_tips,
     f1040.line1d_medicaid_waiver,
@@ -143,12 +147,45 @@ function reconcileActiveBusinessIncome(
     f1040.line1f_taxable_adoption_benefits,
     f1040.line1g_wages_8919,
     f1040.line1h_other_earned,
-    f1040.line1z_total_wages,
   ];
-  if (wageLines.some((amount) => (amount ?? 0) !== 0)) {
+  if (otherWageLines.some((amount) => (amount ?? 0) !== 0)) {
     throw new Error(
-      "Form 4562 active-business limit needs employee compensation included; the no-wages route cannot use it",
+      "Form 4562 active-business limit needs separately reconciled non-Form-1040-line-1a compensation",
     );
+  }
+  let employeeWages = 0;
+  if (
+    (typeof f1040.line1a_wages === "number" &&
+      f1040.line1a_wages > 0) || pending.w2 !== undefined
+  ) {
+    if (!pending.w2) {
+      throw new Error(
+        "Form 4562 line 11 employee wages need their identified W-2 source",
+      );
+    }
+    const w2 = w2InputSchema.parse(pending.w2);
+    const general = z.record(z.unknown()).parse(pending.general);
+    const item = w2.w2s[0];
+    const taxpayerSSN = typeof general.taxpayer_ssn === "string"
+      ? general.taxpayer_ssn.replaceAll("-", "")
+      : "";
+    if (
+      w2.w2s.length !== 1 || w2.f8958_allocation !== undefined ||
+      !item || item.box13_statutory_employee === true ||
+      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+      item.employee_ssn?.replaceAll("-", "") !== taxpayerSSN ||
+      !/^\d{9}$/.test(taxpayerSSN) ||
+      !Number.isSafeInteger(item.box1_wages) || item.box1_wages <= 0 ||
+      f1040.line1a_wages !== item.box1_wages ||
+      f1040.line1z_total_wages !== item.box1_wages
+    ) {
+      throw new Error(
+        "Form 4562 line 11 requires one taxpayer-owned ordinary W-2 matching final Form 1040 wages",
+      );
+    }
+    employeeWages = item.box1_wages;
+  } else if ((f1040.line1z_total_wages ?? 0) !== 0) {
+    throw new Error("Form 4562 line 11 cannot reconcile Form 1040 wages");
   }
   const schedule1 = z.record(z.unknown()).parse(pending.schedule1);
   if (
@@ -168,7 +205,7 @@ function reconcileActiveBusinessIncome(
   });
   if (
     schedule1.line3_schedule_c !== currentProfit ||
-    Math.max(0, profitWithoutSection179) !==
+    Math.max(0, profitWithoutSection179 + employeeWages) !==
       fields.taxpayer_active_business_income
   ) {
     throw new Error(

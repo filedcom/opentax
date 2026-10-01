@@ -34,6 +34,10 @@ Deno.test("TY2025 HSA prior excess reaches Form 8889, Form 5329, and Schedule 2 
       last_month_rule_elected: false,
       taxpayer_hsa_contributions: 3_800,
       prior_year_hsa_excess: {
+        tax_year: 2024,
+        filed_form5329_reference: "filed-2024-5329-jane",
+        filed_return_reviewed: true,
+        owner_ssn: "123456789",
         form5329_line48: 2_000,
         form5329_line49: 120,
       },

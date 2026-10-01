@@ -41,7 +41,7 @@ Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its d
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
     Error,
-    "line 13b needs an attached senior-only Schedule 1-A",
+    "line 13b needs an attached reviewed Schedule 1-A",
   );
 });
 
@@ -601,15 +601,17 @@ Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
 });
 
 Deno.test("payer code G reconciles to Form 1040 line 5c in native MeF sequence", () => {
-  const source = { f1099rs: [{
-    payer_name: "Jubilee",
-    payer_ein: "12-3456789",
-    box1_gross_distribution: 20_300,
-    box2a_taxable_amount: 10_300,
-    box7_distribution_code: "G",
-    box7_ira_simple_indicator: false,
-    direct_rollover_confirmed: true,
-  }] };
+  const source = {
+    f1099rs: [{
+      payer_name: "Jubilee",
+      payer_ein: "12-3456789",
+      box1_gross_distribution: 20_300,
+      box2a_taxable_amount: 10_300,
+      box7_distribution_code: "G",
+      box7_ira_simple_indicator: false,
+      direct_rollover_confirmed: true,
+    }],
+  };
   const fields = {
     line5a_pension_gross: 20_300,
     line5b_pension_taxable: 10_300,
@@ -626,11 +628,102 @@ Deno.test("payer code G reconciles to Form 1040 line 5c in native MeF sequence",
     "needs valid Form 1099-R source facts",
   );
   assertThrows(
-    () => irs1040.build({ ...fields, line5c_pension_rollover: false }, {
-      pending: { f1099r: source },
-    }),
+    () =>
+      irs1040.build({ ...fields, line5c_pension_rollover: false }, {
+        pending: { f1099r: source },
+      }),
     Error,
     "does not match the payer-reported",
+  );
+});
+
+Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
+  const source = {
+    f1099rs: [{
+      payer_name: "IRA Custodian",
+      payer_ein: "12-3456789",
+      box1_gross_distribution: 5000,
+      box2a_taxable_amount: 0,
+      box7_distribution_code: "7",
+      box7_ira_simple_indicator: true,
+      rollover_code: "S",
+      ira_rollover: {
+        source_ira_type: "traditional",
+        destination: "ira",
+        destination_ira_type: "traditional",
+        distributed_on: "2025-06-01",
+        completed_on: "2025-06-02",
+        last_ira_to_ira_rollover_on: null,
+      },
+    }],
+  };
+  const fields = {
+    line4a_ira_gross: 5000,
+    line4b_ira_taxable: 0,
+    line4c_ira_rollover: true,
+  };
+  const xml = irs1040.build(fields, { pending: { f1099r: source } });
+  assertStringIncludes(
+    xml,
+    "<IRADistributionsAmt>5000</IRADistributionsAmt><TaxableIRAAmt>0</TaxableIRAAmt><IRADistributionRolloverInd>X</IRADistributionRolloverInd>",
+  );
+  assertThrows(
+    () =>
+      irs1040.build({ ...fields, line4c_ira_rollover: false }, {
+        pending: { f1099r: source },
+      }),
+    Error,
+    "does not match the reviewed IRA",
+  );
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: {
+          f1099r: {
+            f1099rs: [{
+              ...source.f1099rs[0],
+              ira_rollover: {
+                ...source.f1099rs[0].ira_rollover,
+                destination: "qualified_plan",
+                destination_ira_type: undefined,
+              },
+            }],
+          },
+        },
+      }),
+    Error,
+    "needs its destination name",
+  );
+  const qualifiedSource = {
+    f1099rs: [{
+      ...source.f1099rs[0],
+      ira_rollover: {
+        source_ira_type: "traditional",
+        destination: "qualified_plan",
+        destination_name: "Example 401(k)",
+        distributed_on: "2025-06-01",
+        completed_on: "2025-06-02",
+        last_ira_to_ira_rollover_on: null,
+      },
+    }],
+  };
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: { f1099r: qualifiedSource },
+        documentIdsByPendingKey: { ira_distribution_statement: [] },
+      }),
+    Error,
+    "needs one linked IRA distribution statement",
+  );
+  assertStringIncludes(
+    irs1040.build(fields, {
+      pending: { f1099r: qualifiedSource },
+      documentIdsByPendingKey: {
+        ira_distribution_statement: ["IRADistributionStatement3"],
+      },
+    }),
+    '<IRADistributionRolloverInd referenceDocumentId="IRADistributionStatement3" referenceDocumentName="IRADistributionStatement">X</IRADistributionRolloverInd>',
   );
 });
 
@@ -841,15 +934,17 @@ Deno.test("age and blindness boxes carry a matching count before the deduction",
 });
 
 Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields", () => {
-  const source = { f1099rs: [{
-    payer_name: "Jubilee",
-    payer_ein: "12-3456789",
-    box1_gross_distribution: 20_300,
-    box2a_taxable_amount: 10_300,
-    box7_distribution_code: "G",
-    box7_ira_simple_indicator: false,
-    direct_rollover_confirmed: true,
-  }] };
+  const source = {
+    f1099rs: [{
+      payer_name: "Jubilee",
+      payer_ein: "12-3456789",
+      box1_gross_distribution: 20_300,
+      box2a_taxable_amount: 10_300,
+      box7_distribution_code: "G",
+      box7_ira_simple_indicator: false,
+      direct_rollover_confirmed: true,
+    }],
+  };
   const result = irs1040.build({
     filing_status: "mfs",
     line5a_pension_gross: 20_300,
@@ -933,22 +1028,29 @@ Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
 
 Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   assertThrows(
-    () => irs1040.build({ line25c_total: 250 }, {
-      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] } },
-      documentIdsByPendingKey: { w2g: [] },
-    }),
+    () =>
+      irs1040.build({ line25c_total: 250 }, {
+        pending: {
+          w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+        },
+        documentIdsByPendingKey: { w2g: [] },
+      }),
     Error,
     "needs each linked payer-issued W-2G document",
   );
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
-      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 0 }] } },
+      pending: {
+        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 0 }] },
+      },
     }),
     "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",
   );
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
-      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] } },
+      pending: {
+        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+      },
       documentIdsByPendingKey: { w2g: ["IRSW2G1"] },
     }),
     "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",

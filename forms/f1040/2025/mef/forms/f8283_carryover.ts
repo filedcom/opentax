@@ -14,7 +14,10 @@ import {
 } from "./f8283_carryover_evidence.ts";
 
 export type Form8283CarryoverReconciliation = Readonly<{
-  evidence: NonNullable<F8283Input["carryover_evidence"]>[number];
+  evidence: Extract<
+    NonNullable<F8283Input["carryover_evidence"]>[number],
+    { property_kind: "publicly_traded_securities" }
+  >;
   priorFormAttachmentId?: string;
 }>;
 
@@ -47,13 +50,18 @@ export function reconcileForm8283Carryover(
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): readonly Form8283CarryoverReconciliation[] {
   const form = form8283InputSchema.parse(rawForm);
-  const evidenceRows = form.carryover_evidence ?? [];
+  const suppliedRows = form.carryover_evidence ?? [];
+  const evidenceRows = suppliedRows.filter((
+    row,
+  ): row is Form8283CarryoverReconciliation["evidence"] =>
+    row.property_kind === "publicly_traded_securities"
+  );
   const sourceScheduleA = context.pending?.schedule_a;
   const returnFields = context.pending?.f1040 as
     | Record<string, unknown>
     | undefined;
   if (
-    evidenceRows.length === 0 ||
+    evidenceRows.length === 0 || evidenceRows.length !== suppliedRows.length ||
     (form.section_a_items ?? []).length > 0 ||
     (form.section_b_items ?? []).length > 0 ||
     !sourceScheduleA || typeof sourceScheduleA !== "object" ||

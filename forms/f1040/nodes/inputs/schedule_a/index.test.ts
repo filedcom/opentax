@@ -109,6 +109,7 @@ Deno.test("scheduleA.inputSchema: elected current gifts need complete item class
 Deno.test("scheduleA.compute: no-appreciation capital property still participates in a return-wide 50% election", () => {
   const result = compute({
     agi: 20_000,
+    capital_gain_50_percent_election_confirmed: true,
     current_noncash_gift_inventory_complete_confirmed: true,
     other_prior_charitable_carryovers_absent_confirmed: true,
     noncash_contribution_items: [{

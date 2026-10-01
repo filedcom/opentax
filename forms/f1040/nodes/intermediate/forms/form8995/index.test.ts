@@ -294,14 +294,27 @@ Deno.test("calc: reit_loss_carryforward reduces current REIT dividends", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1600);
 });
 
-Deno.test("calc: reit_loss_carryforward exceeds REIT dividends → REIT component zero, no f1040 if no QBI", () => {
-  // line6 = 3000, carryforward = -5000 → net = -2000 → REIT component = 0; no QBI → no f1040
-  const result = compute({
-    line6_sec199a_dividends: 3000,
-    reit_loss_carryforward: -5000,
-    taxable_income: 100000,
-  });
-  assertEquals(findOutput(result, "f1040"), undefined);
+Deno.test("calc: negative REIT/PTP line 8 rejects until line 17 can be filed", () => {
+  // Line 6 $3,000 less a $5,000 prior loss leaves $2,000 for next year.
+  assertThrows(
+    () =>
+      compute({
+        line6_sec199a_dividends: 3_000,
+        reit_loss_carryforward: -5_000,
+        taxable_income: 100_000,
+      }),
+    Error,
+    "sourced line 17 carryforward",
+  );
+  assertThrows(
+    () =>
+      compute({
+        reit_loss_carryforward: -2_000,
+        taxable_income: 100_000,
+      }),
+    Error,
+    "sourced line 17 carryforward",
+  );
 });
 
 // ── Income limitation (Lines 11–13) ──────────────────────────────────────────

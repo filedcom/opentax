@@ -10,6 +10,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { eitc } from "../eitc/index.ts";
 import {
   calculatePhysicalPresence2555,
   physicalPresenceFilingSchema,
@@ -103,6 +104,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     schedule_se,
     income_tax_calculation,
+    eitc,
   ]);
 
   compute(ctx: NodeContext, rawInput: Form2555Input): NodeResult {
@@ -136,6 +138,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
       );
       return {
         outputs: [
+          output(eitc, { form2555_filed: true }),
           output(f1040, {
             line1h_other_earned: lines.line19,
             form8839_form2555_line45: lines.line45,
@@ -172,6 +175,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [];
+    outputs.push(output(eitc, { form2555_filed: true }));
 
     // FEIE — prorated by qualifying days per IRC §911(b)(2)(A)
     const feieLimit = proratedFeieLimit(input, cfg.feieLimit);

@@ -31,3 +31,24 @@ section 737, section 731(c) reductions, multiple holding-period lots,
 related/service or disguised-sale distributions, and non-U.S.-taxable gain
 remain rejected. Native XML still needs the full TY2025 XSD batch, filled PDFs
 need visual review, and IRS business-rule/ATS acceptance is unproved.
+
+## Liquidating property-basis prerequisite
+
+The [Form 7217 instructions](https://www.irs.gov/instructions/i7217) direct a
+section 732(c) allocation when a liquidating distribution's outside basis
+after cash differs from the partnership's aggregate property basis. For the
+bounded **basis-increase** case with multiple section 732 properties, the
+source now identifies inventory/receivables versus other property and names a
+section 732(c) workpaper. The calculation preserves inventory/receivables at
+partnership basis, allocates the increase to other property first up to its
+unrealized appreciation, then allocates any remainder by FMV. Each Part II
+column (e) row must match that result, even when the submitted total matches
+Part I line 10. The IRS instruction's $750 outside basis, $100 cash,
+$100 inventory, $50 asset X, and $100 asset Y basis example gives $100, $440,
+and $110 of property basis. Source, native, and PDF projection fixtures, plus
+an offsetting $1 row tamper, are authored but unrun.
+
+The bounded calculation excludes basis decreases, section 731(c) securities
+within liquidating multi-property distributions, and distributions needing
+other section 732(c) class rules. The workpaper reference remains unauthenticated;
+full-return native XSD, filled-PDF, business-rule, and ATS checks remain open.

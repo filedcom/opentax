@@ -3,6 +3,46 @@
 // checkbox: Part II line 15, repeated on Part I line 4b, conveys it.
 export const NET_EARNINGS_MULTIPLIER = 0.9235;
 
+export function scheduleSELines(input: {
+  readonly net_profit_schedule_c?: number | null;
+  readonly net_profit_schedule_f?: number | null;
+  readonly farm_optional_method_elected?: boolean | null;
+  readonly gross_farm_income?: number | null;
+  readonly w2_ss_wages?: number | null;
+  readonly unreported_tips_4137?: number | null;
+  readonly wages_8919?: number | null;
+}, ssWageBase: number) {
+  const optional = farmOptionalMethodLines(input);
+  const line3 = optional?.line3 ??
+    ((input.net_profit_schedule_c ?? 0) + (input.net_profit_schedule_f ?? 0));
+  const line4a = optional?.line4a ??
+    (line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3);
+  const line4c = optional?.line4c ?? line4a;
+  if (line4c < 400) return undefined;
+  const line6 = optional?.line6 ?? line4c;
+  const line8d = (input.w2_ss_wages ?? 0) +
+    (input.unreported_tips_4137 ?? 0) + (input.wages_8919 ?? 0);
+  const line9 = Math.max(0, ssWageBase - line8d);
+  const line10 = Math.min(line6, line9) * 0.124;
+  const line11 = line6 * 0.029;
+  const line12 = line10 + line11;
+  const line13 = line12 * 0.5;
+  return {
+    line3,
+    line4a,
+    ...(optional ? { line4b: optional.line4b } : {}),
+    line4c,
+    line6,
+    line8d,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13,
+    ...(optional ? { line15: optional.line15 } : {}),
+  };
+}
+
 export function farmOptionalMethodLines(input: {
   readonly farm_optional_method_elected?: unknown;
   readonly gross_farm_income?: unknown;

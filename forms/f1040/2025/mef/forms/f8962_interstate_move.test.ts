@@ -1,6 +1,11 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { general } from "../../../nodes/inputs/general/index.ts";
+import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
+import {
+  form8962 as form8962Calculation,
+  inputSchema as form8962InputSchema,
+} from "../../../nodes/intermediate/forms/form8962/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";
 import { form8962 } from "./f8962.ts";
@@ -160,7 +165,7 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
         },
       }),
     Error,
-    "needs twelve residence months with one state switch",
+    "needs twelve residence months with one chronological state switch",
   );
   assertThrows(
     () =>
@@ -178,7 +183,7 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
         },
       }),
     Error,
-    "reported Marketplace move review",
+    "matching Marketplace move review",
   );
   assertThrows(
     () =>
@@ -192,7 +197,7 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
         },
       }),
     Error,
-    "reported Marketplace move review",
+    "matching Marketplace move review",
   );
   assertThrows(
     () =>
@@ -209,7 +214,7 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
         },
       }),
     Error,
-    "reported Marketplace move review",
+    "matching Marketplace move review",
   );
   assertThrows(
     () =>
@@ -223,5 +228,118 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
       ),
     Error,
     "residence months disagree",
+  );
+});
+
+Deno.test("Form 8962 unreported interstate move uses evidenced arrival SLCSP corrections in calculation, MeF, and PDF", () => {
+  const corrections = Array.from({ length: 6 }, (_, index) => ({
+    month: index + 7,
+    basis: "move" as const,
+    corrected_slcsp: 650,
+    determination_source: "marketplace_tool" as const,
+    determination_reference: `TX-2025-${index + 7}`,
+    determination_record_sha256: "a".repeat(64),
+    determined_on: "2026-02-01",
+  }));
+  const correctedPolicies = [policies[0], {
+    ...policies[1],
+    slcsp_review_periods: [{
+      start_month: 7,
+      end_month: 12,
+      reason: "move" as const,
+      reported_to_marketplace: false,
+    }],
+    slcsp_corrections: corrections,
+  }];
+  const correctedPending = {
+    ...pending,
+    f1095a: { f1095as: correctedPolicies },
+    schedule2: { line1a_excess_advance_premium: 1_296 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 1_296 },
+  };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    correctedPending.f1095a,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(sourceFields?.monthly_slcsps, [
+    ...Array<number>(6).fill(600),
+    ...Array<number>(6).fill(650),
+  ]);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "alaska",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 1_104);
+  assertEquals(calculated?.excess_advance_premium, 1_296);
+  const correctedFields = {
+    ...fields,
+    monthly_ptc_rows: fields.monthly_ptc_rows.map((row, index) =>
+      index < 6 ? row : {
+        ...row,
+        slcsp: 650,
+        max_assistance: 117,
+        allowed_credit: 117,
+      }
+    ),
+    total_premium_tax_credit: 1_104,
+    excess_advance_payment: 1_296,
+    excess_advance_premium: 1_296,
+  };
+  const xml = form8962.build(correctedFields, {
+    filer,
+    pending: correctedPending,
+  });
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>650</MonthlyPremiumSLCSPAmt>",
+  );
+  const pdf = form8962Pdf.projectFields?.(correctedFields, correctedPending) ??
+    {};
+  assertEquals(
+    form8962Pdf.instances?.(pdf, filer, correctedPending)?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [correctedPolicies[0], {
+              ...correctedPolicies[1],
+              slcsp_corrections: corrections.slice(0, 5),
+            }],
+          },
+        },
+      }),
+    Error,
+    "complete sourced Marketplace SLCSP correction",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.instances?.(pdf, filer, {
+        ...correctedPending,
+        f1095a: {
+          f1095as: [correctedPolicies[0], {
+            ...correctedPolicies[1],
+            slcsp_corrections: corrections.map((item, index) =>
+              index === 0
+                ? { ...item, determination_reference: undefined }
+                : item
+            ),
+          }],
+        },
+      }),
+    Error,
+    "complete sourced Marketplace SLCSP correction",
   );
 });

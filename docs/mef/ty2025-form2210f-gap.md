@@ -42,5 +42,20 @@ payments, excess Social Security withholding, section 965 exclusion, section
 waiver evidence, disaster relief, and other exceptions need separate sourced
 branches. The ordinary `f2210` input is not a substitute.
 
+For the already supported one-full-settlement box-B calculation, a standalone
+payment-source prerequisite now binds the 2025 underpayment to one reviewed IRS
+payment confirmation and retained PDF copy. It checks the final filer's SSN,
+effective 2026 payment date against line 14, exact amount applied against
+line 13, the no-other-post-January-15-settlement assertion, and the copy's
+SHA-256. Positive and changed-date/amount/bytes/owner fixtures are authored
+for the deferred batch. The [IRS 2026 Q2 interest ruling](https://www.irs.gov/irb/2026-08_IRB)
+confirms that the Q1 7% section 6654 rate extends through April 15 despite
+the ordinary Q2 underpayment rate becoming 6%.
+
+The confirmation identifier, effective date, and allocated amount are still
+reviewed assertions; the retained PDF bytes are not parsed or authenticated
+against IRS payment records. This prerequisite is not called by the active
+native/PDF route, so it does not authorize a wider payment pattern.
+
 Full-batch tests, generated TY2025 XSD validation, filled-PDF review, IRS
 rules, and ATS acceptance are still pending. Do not claim release readiness.

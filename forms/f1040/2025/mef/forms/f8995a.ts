@@ -4,6 +4,7 @@ import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  assertMfsSstbOwner,
   assertPatron1099PATRSource,
   calculateOneBusiness8995ALines,
   calculateOneSstb8995ALines,
@@ -21,6 +22,20 @@ import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
 type Input = Form8995AInput | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
+
+export function assertNoFiledForm8995(
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  const source = pending?.form8995;
+  if (
+    source && typeof source === "object" &&
+    (Object.hasOwn(source, "qbi_deduction") || Object.hasOwn(source, "line15"))
+  ) {
+    throw new Error(
+      "Form 8995-A and a filed Form 8995 cannot both be pending for one return",
+    );
+  }
+}
 
 // Native parent projection for the single bounded aggregation.
 export function buildStagedAggregatedIRS8995A(
@@ -149,7 +164,9 @@ export function assertScheduleCLossSources(
   if (
     !source.success || !source.data.schedule_cs ||
     source.data.schedule_cs.length !== 2 ||
-    source.data.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    (pending?.general as Record<string, unknown> | undefined)
+        ?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     pending?.form8829 !== undefined || pending?.form5884 !== undefined
   ) {
     throw new Error(
@@ -184,16 +201,45 @@ function reconcileReturn(
       "Form 8995-A MeF needs return header and pending deduction reconciliation context",
     );
   }
-  if (context.filer.filingStatus !== HeaderFilingStatus.Single) {
+  const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
+    ? HeaderFilingStatus.MarriedFilingJointly
+    : fields.filing_status === NodeFilingStatus.MFS
+    ? HeaderFilingStatus.MarriedFilingSeparately
+    : fields.filing_status === NodeFilingStatus.HOH
+    ? HeaderFilingStatus.HeadOfHousehold
+    : fields.filing_status === NodeFilingStatus.QSS
+    ? HeaderFilingStatus.QualifyingSurvivingSpouse
+    : HeaderFilingStatus.Single;
+  if (
+    context.filer.filingStatus !== expectedStatus ||
+    (fields.filing_status !== NodeFilingStatus.Single &&
+      fields.filing_status !== NodeFilingStatus.HOH &&
+      fields.filing_status !== NodeFilingStatus.QSS &&
+      fields.filing_status !== NodeFilingStatus.MFS &&
+      fields.filing_status !== NodeFilingStatus.MFJ) ||
+    ((fields.filing_status === NodeFilingStatus.MFJ ||
+      fields.filing_status === NodeFilingStatus.MFS ||
+      fields.filing_status === NodeFilingStatus.HOH ||
+      fields.filing_status === NodeFilingStatus.QSS) &&
+      !fields.sstb_filing_details)
+  ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }
-  if (context.pending.form8995 !== undefined) {
+  assertMfsSstbOwner(fields, context.filer.primarySSN);
+  if (
+    (fields.patron_filing_details?.source_1099patr
+        .box6_section199ag_deduction ?? 0) > 0 &&
+    fields.patron_filing_details?.source_1099patr.recipient_tin !==
+      context.filer.primarySSN.replaceAll("-", "")
+  ) {
     throw new Error(
-      "Form 8995-A and Form 8995 cannot both be pending for one return",
+      "Form 8995-A cooperative box 6 recipient differs from the final filer",
     );
   }
+  assertNoFiledForm8995(context.pending);
   const companion = context.pending.form8995a_schedule_d;
   const sstbCompanion = context.pending.form8995a_schedule_a;
+  const aggregationCompanion = context.pending.form8995a_schedule_b;
   const lossCompanion = context.pending.form8995a_schedule_c;
   if (fields.sstb_filing_details) {
     const parsed = inputSchema.strict().safeParse(sstbCompanion);
@@ -208,6 +254,11 @@ function reconcileReturn(
     throw new Error("Form 8995-A Schedule A companion has no SSTB parent");
   }
   if (fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
+    if (aggregationCompanion !== undefined) {
+      throw new Error(
+        "Form 8995-A Schedule C loss cannot accompany Schedule B aggregation",
+      );
+    }
     assertScheduleCLossSources(fields, context.pending);
     const parsed = inputSchema.strict().safeParse(lossCompanion);
     if (
@@ -343,13 +394,13 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("TotalQBIComponentAmt", lines.line16),
       element(
         "FilingStatusThresholdCd",
-        CONFIG_BY_YEAR[2025].qbiThresholdSingle,
+        lines.threshold,
       ),
       element(
         "TXIBfrQBIDedLessThresholdAmt",
-        lines.line33 - CONFIG_BY_YEAR[2025].qbiThresholdSingle,
+        lines.line33 - lines.threshold,
       ),
-      element("FilingStatusPhaseInRangeCd", 50_000),
+      element("FilingStatusPhaseInRangeCd", lines.phaseInRange),
       element("PhaseInPct", lines.phaseIn.toFixed(5)),
       element("QlfyREITDivPTPIncomeLossAmt", 0),
       element("PYQlfyREITDivPTPLossCfwdAmt", 0),
@@ -404,7 +455,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     element("AdjustedTaxableIncomeAmt", lines.line35),
     element("IncomeLimitationAmt", lines.line36),
     element("QBIDedBeforeDPADSect199AgAmt", lines.line37),
-    element("DPADSect199AgAllocAgricHortAmt", 0),
+    element("DPADSect199AgAllocAgricHortAmt", lines.line38),
     element("QualifiedBusinessIncomeDedAmt", lines.line39),
     element("TotQlfyREITDivPTPLossCfwdAmt", 0),
   ]);

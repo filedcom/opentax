@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
   allocateForm3800SourceTaxUse,
   calculateForm3800Nonpassive,
@@ -47,15 +48,19 @@ import {
   type Form3800DocumentParts,
 } from "./f3800_document.ts";
 import { joinForm3800DocumentParts } from "./f3800_join.ts";
+import {
+  buildForm3800CarryforwardRows,
+  form3800CarryforwardCreditUseRows,
+} from "./f3800_carryforward_rows.ts";
 import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
-import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
+import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -66,6 +71,8 @@ const taxBase = z.object({
   tentativeMinimumTax: amount,
   standardCredit: amount,
   specifiedCredit: amount,
+  standardCarryforward: amount,
+  specifiedCarryforward: amount,
 });
 const taxContextSchema = z.union([
   taxBase.extend({
@@ -184,6 +191,7 @@ function reconcileFiledTaxContext(
       "Form 3800 allowed credit does not reconcile to Schedule 3 line 6a",
     );
   }
+  assertForm3800FinalCreditJoin(allowedCredit, context.pending ?? {});
 }
 
 function sourceForm8826(
@@ -195,10 +203,7 @@ function sourceForm8826(
   if (actual.length === 0 && !ledger?.rawEntries.length) return undefined;
   const sourceEntries = ledger?.rawEntries ?? actual;
   const formSources = sourceEntries.filter((entry) =>
-    entry.source_type === "self" ||
-    ((entry.source_type === "partnership" ||
-      entry.source_type === "s_corporation") &&
-      !entry.source_document_reference)
+    entry.source_type === "self"
   );
   const directSources = sourceEntries.filter((entry) =>
     entry.source_type === "estate" || entry.source_type === "trust" ||
@@ -206,6 +211,11 @@ function sourceForm8826(
       entry.source_type === "s_corporation") &&
       Boolean(entry.source_document_reference))
   );
+  if (formSources.length + directSources.length !== sourceEntries.length) {
+    throw new Error(
+      "Form 3800 disabled-access pass-through source needs its K-1 document reference",
+    );
+  }
   const raw = context.pending?.f8826;
   if (formSources.length > 0 && !raw) {
     throw new Error(
@@ -214,18 +224,27 @@ function sourceForm8826(
   }
   const source = raw ? f8826InputSchema.parse(raw) : undefined;
   const lines = source ? calculateForm8826(source) : undefined;
-  if (
-    directSources.some((entry) =>
-      source?.pass_through_credits?.some((other) =>
-        entry.source_type === other.entity_type &&
-        entry.source_ein === other.entity_ein &&
-        entry.source_document_reference === other.source_document_reference
-      )
-    )
-  ) {
-    throw new Error(
-      "Form 3800 disabled-access K-1 source is duplicated on Form 8826",
+  for (const declared of source?.pass_through_credits ?? []) {
+    if (declared.subject_to_passive_activity_limit) {
+      if (!ledger) {
+        throw new Error(
+          "Passive Form 8826 pass-through credit needs its gross source ledger",
+        );
+      }
+      continue;
+    }
+    const matching = directSources.filter((entry) =>
+      entry.source_type === declared.entity_type &&
+      entry.source_ein === declared.entity_ein &&
+      entry.source_document_reference === declared.source_document_reference &&
+      sameMoney(entry.credit_amount, declared.credit_amount) &&
+      !entry.subject_to_passive_activity_limit
     );
+    if (matching.length !== 1) {
+      throw new Error(
+        "Form 3800 disabled-access K-1 source differs from Form 8826 line 7",
+      );
+    }
   }
   const expected = source && lines
     ? [
@@ -239,21 +258,6 @@ function sourceForm8826(
             source.subject_to_passive_activity_limit,
         }]
         : []),
-      ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
-        if (entry.subject_to_passive_activity_limit) return [];
-        const credit = ledger
-          ? entry.credit_amount
-          : lines.passThroughCreditsAfterCap[index] ?? 0;
-        return credit > 0
-          ? [{
-            source_type: entry.entity_type,
-            source_ein: entry.entity_ein,
-            credit_amount: credit,
-            subject_to_passive_activity_limit:
-              entry.subject_to_passive_activity_limit,
-          }]
-          : [];
-      }),
     ]
     : [];
   if (
@@ -271,7 +275,7 @@ function sourceForm8826(
       "Form 3800 disabled-access entries do not reconcile to Form 8826 sources",
     );
   }
-  if (directSources.length > 0 && !ledger) {
+  if (directSources.length > 0) {
     if (!context.pending) {
       throw new Error("Form 3800 estate/trust credit needs its K-1 source");
     }
@@ -368,7 +372,7 @@ function sourceForm8874(
   return { source, lines, credit: lines.nonpassiveCredit };
 }
 
-function sourceOrphanDrugK1Credits(
+export function sourceOrphanDrugK1Credits(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
 ) {
@@ -382,12 +386,6 @@ function sourceOrphanDrugK1Credits(
   const sCorpK1s =
     entries.some((entry) => entry.source_type === "s_corporation")
       ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
-      : [];
-  const trustK1s =
-    entries.some((entry) =>
-        entry.source_type === "estate" || entry.source_type === "trust"
-      )
-      ? trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts
       : [];
   const seen = new Set<string>();
   for (const entry of entries) {
@@ -436,21 +434,9 @@ function sourceOrphanDrugK1Credits(
         );
       }
     } else {
-      const matches = trustK1s.filter((k1) =>
-        k1.entity_type === entry.source_type &&
-        k1.estate_trust_ein === entry.source_ein &&
-        k1.source_document_reference === entry.source_document_reference
+      throw new Error(
+        "Form 3800 estate/trust K-1 box 13 code M orphan-drug credit needs qualified clinical-testing and passive-activity source evidence",
       );
-      if (
-        matches.length !== 1 ||
-        matches[0].box13_code_m_orphan_drug_credit !== entry.credit_amount ||
-        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
-          entry.subject_to_passive_activity_limit
-      ) {
-        throw new Error(
-          "Form 3800 orphan-drug credit does not reconcile to estate/trust K-1 box 13 code M",
-        );
-      }
     }
   }
   return entries;
@@ -655,7 +641,7 @@ function form5884SourceAllocations(
 }
 
 function nonpassiveSourceAllocations(
-  form: "8820" | "8874",
+  form: "8820" | "8874" | "3468",
   amounts: readonly number[],
   credit: number,
   appliedCredit: number,
@@ -737,6 +723,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8936_commercial_vehicle_credit?.credit_amount ?? 0) > 0 ||
+    Boolean(fields.carryforward_vintages?.length) ||
     Boolean(fields.passive_source_allocations?.length);
   if (!hasSourceCredit) return undefined;
   if (fields.tax_context === undefined || fields.allowed_credit === undefined) {
@@ -775,6 +762,7 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
+  const carryforwardEntries = parsed.carryforward_vintages ?? [];
   reconcileFiledTaxContext(tax, allowedCredit, context);
   reconcilePassiveSources(parsed, context);
   if (
@@ -792,6 +780,71 @@ export function prepareForm3800DocumentParts(
     parsed,
     context,
   );
+  const trustPartVEntries = parsed.f3468_trust_part_v_credit_entries ?? [];
+  const filedTrustPartVClaims = reconcileFiledTrustPartVClaims(
+    context.pending ?? {},
+  );
+  if (trustPartVEntries.length !== filedTrustPartVClaims.length) {
+    throw new Error(
+      "Form 3800 line 1v trust credits differ from filed Form 3468 Part V",
+    );
+  }
+  const form3468Ids = context.documentIdsByPendingKey.f3468 ?? [];
+  if (
+    trustPartVEntries.length > 0 &&
+    (form3468Ids.length !== filedTrustPartVClaims.length ||
+      form3468Ids.some((id) => !id))
+  ) {
+    throw new Error(
+      "Form 3800 line 1v needs one attached Form 3468 per trust property",
+    );
+  }
+  const trustPartVSourceRows = filedTrustPartVClaims.map((claim, index) => {
+    if (
+      context.filer &&
+      claim.statement.beneficiary_ssn !== context.filer.primarySSN
+    ) {
+      throw new Error(
+        "Form 3800 line 1v trust beneficiary differs from filed taxpayer",
+      );
+    }
+    const matches = trustPartVEntries.filter((entry) =>
+      entry.source_type === claim.source_type &&
+      entry.source_ein === claim.source_ein &&
+      entry.source_document_reference === claim.source_document_reference &&
+      entry.source_statement_reference === claim.source_statement_reference &&
+      entry.credit_amount === claim.credit_amount &&
+      entry.subject_to_passive_activity_limit === false
+    );
+    if (matches.length !== 1) {
+      throw new Error(
+        "Form 3800 line 1v credit differs from reviewed trust Form 3468 source",
+      );
+    }
+    const documentId = form3468Ids[index];
+    if (!documentId) {
+      throw new Error(
+        "Form 3800 line 1v trust property lacks its Form 3468 document ID",
+      );
+    }
+    return {
+      credit: claim.credit_amount,
+      ein: claim.source_ein,
+      documentId,
+    };
+  });
+  const form3468PartVCredit = trustPartVSourceRows.reduce(
+    (sum, source) => sum + source.credit,
+    0,
+  );
+  if (
+    form3468PartVCredit === 0 &&
+    parsed.form3468_part_v_applied_credits_by_source !== undefined
+  ) {
+    throw new Error(
+      "Form 3800 has Form 3468 Part V allocations without a trust source",
+    );
+  }
   const facilities = sourceForm8835(parsed, context);
   const form5884 = sourceForm5884(parsed, context);
   const form8936 = sourceForm8936(parsed, context);
@@ -841,6 +894,7 @@ export function prepareForm3800DocumentParts(
     form8826Credit,
     form8820Credit,
     form8874Credit,
+    form3468PartVCredit,
     form5884Credit: form5884?.credit,
     form8936NewVehicleCredit: form8936?.credit,
     form8936CommercialVehicleCredit: form8936Commercial?.credit,
@@ -852,7 +906,10 @@ export function prepareForm3800DocumentParts(
       source_statement_reference: source.source_statement_reference,
       form3800_credit_line: source.form3800_credit_line,
     })),
-    nonpassiveSources,
+    [
+      ...form3800CarryforwardCreditUseRows(carryforwardEntries),
+      ...nonpassiveSources,
+    ],
     lines,
   );
   const sourceUse = new Map(
@@ -904,6 +961,11 @@ export function prepareForm3800DocumentParts(
     parsed.form8820_applied_credit,
   );
   const form8874Applied = applied("nonpassive:8874");
+  const form3468PartVApplied = sourceApplied(
+    form3468PartVCredit > 0,
+    "nonpassive:3468-part-v",
+    undefined,
+  );
   if (
     form8820Credit === 0 &&
     parsed.form8820_applied_credits_by_source !== undefined
@@ -1036,6 +1098,20 @@ export function prepareForm3800DocumentParts(
           ),
         }
         : undefined,
+      form3468PartV: form3468PartVCredit > 0
+        ? {
+          credit: form3468PartVCredit,
+          appliedCredit: form3468PartVApplied,
+          sources: trustPartVSourceRows,
+          appliedCreditsBySource: nonpassiveSourceAllocations(
+            "3468",
+            trustPartVSourceRows.map((source) => source.credit),
+            form3468PartVCredit,
+            form3468PartVApplied,
+            parsed.form3468_part_v_applied_credits_by_source,
+          ),
+        }
+        : undefined,
       form8936: form8936
         ? {
           credit: form8936.credit,
@@ -1073,7 +1149,43 @@ export function prepareForm3800DocumentParts(
       }
       : {},
   );
-  return joinForm3800DocumentParts(lines, nonpassiveParts, passiveParts);
+  const carryforward = buildForm3800CarryforwardRows(
+    carryforwardEntries,
+    context.documentIdsByTag?.CarryforwardGeneralBusinessCr ?? [],
+    taxUse.nonpassiveSources,
+  );
+  const nonpassiveWithCarryforward: Form3800DocumentParts | undefined =
+    carryforwardEntries.length > 0
+      ? {
+        ...(nonpassiveParts ?? {
+          lines,
+          transferStatementIds: [],
+          carryforwardSources: [],
+          currentRows: [],
+          currentAmounts: [],
+          carryoverRows: [],
+          currentDetails: [],
+          carryoverDetails: [],
+          passiveCurrentDetails: [],
+          passiveCarryoverDetails: [],
+        }),
+        carryforwardSources: carryforward.sources,
+        carryoverRows: carryforward.rows,
+        carryoverDetails: carryforward.details,
+      }
+      : nonpassiveParts;
+  const joined = joinForm3800DocumentParts(
+    lines,
+    nonpassiveWithCarryforward,
+    passiveParts,
+  );
+  if (carryforwardEntries.length > 0) {
+    buildIRS3800Document(joined);
+    throw new Error(
+      "Form 3800 carryforward needs authenticated prior-return evidence and an attached filed history statement",
+    );
+  }
+  return joined;
 }
 
 export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {

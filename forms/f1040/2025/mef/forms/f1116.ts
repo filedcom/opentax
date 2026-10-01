@@ -6,6 +6,7 @@ import {
   ForeignTaxKind,
   IncomeCategory,
   type RedeterminationDisclosure,
+  scheduleCFilingBlockReason,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -22,6 +23,16 @@ import {
 } from "./f1116_conversion_explanation.ts";
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
+import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
+import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
+import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
+import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
+import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
+import { reconcileForm1116ThreeCountryMixed } from "../../form1116_three_country_mixed.ts";
+import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
+import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
+import { assertForm1116CarryoverSource } from "../../form1116_carryover_source.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
@@ -115,12 +126,28 @@ function sourceXml(
     0,
   );
   const allocatedGeneralDeduction = worldwideGrossIncome > 0
-    ? items.reduce(
-      (sum, item) =>
-        sum + generalDeductions *
-          Number(ratio(item.foreign_gross_income, worldwideGrossIncome)),
-      0,
-    )
+    ? items.length > 1 &&
+        items.every((item) =>
+          item.tax_reported_on_1099 === true &&
+          (item.tax_kind === ForeignTaxKind.Interest ||
+            item.tax_kind === ForeignTaxKind.Dividends) &&
+          item.irs_country_code === first.irs_country_code
+        ) &&
+        (items.every((item) => item.tax_kind === ForeignTaxKind.Interest) ||
+          (items.length === 2 &&
+            new Set(items.map((item) => item.tax_kind)).size === 2))
+      ? Math.round(
+        generalDeductions *
+          Number(ratio(foreignGrossIncome, worldwideGrossIncome)),
+      )
+      : items.reduce(
+        (sum, item) =>
+          sum + Math.round(
+            generalDeductions *
+              Number(ratio(item.foreign_gross_income, worldwideGrossIncome)),
+          ),
+        0,
+      )
     : 0;
   const deductions = items.reduce(
     (sum, item) => sum + (item.apportioned_deductions ?? 0),
@@ -368,9 +395,9 @@ function buildIRS1116(
   context?: MefBuildContext,
 ): readonly string[] {
   if (fields.foreign_tax_redeterminations !== undefined) {
-    throw new Error(
-      "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-    );
+    throw new Error(scheduleCFilingBlockReason(
+      fields.foreign_tax_redeterminations,
+    ));
   }
   const rawSummaries = fields.category_summaries;
   if (!rawSummaries || rawSummaries.length === 0) {
@@ -381,6 +408,42 @@ function buildIRS1116(
   }
   const summaries = rawSummaries.map((summary) =>
     categorySummarySchema.parse(summary)
+  );
+  reconcileForm1116TreasuryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116MultiForeignInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116TwoCountryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116ThreeCountryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116ThreeCountryMixed(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116TwoCountryTreasury(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116TwoCountryMixed(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116MixedInterestDividend(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116ForeignDividend(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
   const k3Items = summaries.flatMap((summary) => summary.items).filter((item) =>
     item.schedule_k3_line12_reduction !== undefined ||
@@ -650,6 +713,9 @@ function buildIRS1116(
     const companion = scheduleBFieldsSchema.safeParse(
       context?.pending?.form1116_schedule_b,
     );
+    const presentation = companion.success
+      ? scheduleBPresentation(companion.data)
+      : undefined;
     if (
       !companion.success ||
       (companion.data.case !== "prior_year_use" &&
@@ -666,11 +732,32 @@ function buildIRS1116(
           .prior_year_schedule_b_line8_total !==
         priorUse[0].priorYearCarryover ||
       companion.data.used_prior_year_carryover +
-            companion.data.remaining_prior_year_carryover !==
-        priorUse[0].priorYearCarryover
+            companion.data.remaining_prior_year_carryover +
+            (presentation && presentation.case !== "current_year_excess"
+              ? presentation.expired
+              : 0) !== priorUse[0].priorYearCarryover
     ) {
       throw new Error(
         "Form 1116 prior-year credit needs a matching sourced Schedule B reconciliation",
+      );
+    }
+    assertForm1116CarryoverSource(
+      context?.pending,
+      companion.data.prior_year_carryover_source,
+    );
+    const schedule3 = context?.pending?.schedule3 as
+      | Record<string, unknown>
+      | undefined;
+    const return1040 = context?.pending?.f1040 as
+      | Record<string, unknown>
+      | undefined;
+    if (
+      return1040 &&
+      (typeof schedule3?.line8_total !== "number" ||
+        return1040.line20_nonrefundable_credits !== schedule3.line8_total)
+    ) {
+      throw new Error(
+        "Form 1116 prior-year credit differs from Schedule 3 and Form 1040",
       );
     }
     scheduleBPresentation(companion.data);

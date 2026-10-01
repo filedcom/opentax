@@ -7,7 +7,10 @@ export * from "./form461/index.ts";
 export * from "./form4684/index.ts";
 export * from "./form4797/index.ts";
 export * from "./form4952/index.ts";
-export * from "./form4972/index.ts";
+export {
+  form4972Elections as form4972,
+  publicElectionCollectionSchema as form4972PublicElectionSchema,
+} from "./form4972/elections.ts";
 export * from "./form5329/index.ts";
 export * from "./form5695/index.ts";
 export * from "./form6198/index.ts";

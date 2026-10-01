@@ -95,6 +95,21 @@ Deno.test("Schedule J rejects unverified farm attribution and excess election", 
   ));
 });
 
+Deno.test("Schedule J reports the unsupported source when fishing income lacks attribution", () => {
+  assertThrows(
+    () => schedule_j_calculation.compute(
+      { taxYear: 2025, formType: "f1040" },
+      {
+        ...source(),
+        farm_only_income_verified: false,
+        farm_only_unsupported_source_key: "line3_schedule_c",
+      },
+    ),
+    Error,
+    "Schedule F-only election cannot include line3_schedule_c",
+  );
+});
+
 Deno.test("Schedule J rejects other deduction methods and unreconciled AGI", () => {
   for (const changed of [
     { ...source(), taking_standard_deduction: false },

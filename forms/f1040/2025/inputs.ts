@@ -1,5 +1,7 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
+import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
+import { priorIsoSaleReviewSchema } from "./form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/form4797/investment_1245.ts";
 import {
@@ -10,6 +12,10 @@ import {
   form1116_prior_carryover,
   inputSchema as form1116PriorCarryoverInputSchema,
 } from "../nodes/inputs/form1116_prior_carryover/index.ts";
+import {
+  form8582_prior_year_record,
+  inputSchema as form8582PriorYearRecordInputSchema,
+} from "../nodes/inputs/form8582_prior_year_record/index.ts";
 import {
   form1116_carryover_review,
   inputSchema as form1116CarryoverReviewInputSchema,
@@ -29,7 +35,13 @@ import {
 import {
   f1098,
   itemSchema as f1098ItemSchema,
+  mortgageLimitReviewSchema,
+  purchasePointsCrossLoanReviewSchema,
 } from "../nodes/inputs/f1098/index.ts";
+import {
+  inputSchema as mortgageRefinancePointsInputSchema,
+  mortgage_refinance_points,
+} from "../nodes/inputs/mortgage_refinance_points/index.ts";
 import {
   f1098e,
   itemSchema as f1098eItemSchema,
@@ -95,6 +107,7 @@ import {
   itemSchema as f8812ItemSchema,
 } from "../nodes/inputs/f8812/index.ts";
 import {
+  creditLimitWorksheetSchema as f8863CreditLimitWorksheetSchema,
   f8863,
   itemSchema as f8863ItemSchema,
 } from "../nodes/inputs/f8863/index.ts";
@@ -130,6 +143,10 @@ import {
   itemSchema as scheduleEItemSchema,
   scheduleE,
 } from "../nodes/inputs/schedule_e/index.ts";
+import {
+  itemSchema as personalPropertyRentalItemSchema,
+  personal_property_rental,
+} from "../nodes/inputs/personal_property_rental/index.ts";
 import {
   itemSchema as ssaItemSchema,
   ssa1099,
@@ -614,9 +631,9 @@ import {
   inputSchema as form4952InputSchema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
 import {
-  form4972,
-  publicElectionSchema as form4972PublicElectionSchema,
-} from "../nodes/intermediate/forms/form4972/index.ts";
+  form4972Elections,
+  publicElectionCollectionSchema as form4972PublicElectionSchema,
+} from "../nodes/intermediate/forms/form4972/elections.ts";
 import {
   form8815,
   inputSchema as form8815InputSchema,
@@ -661,15 +678,53 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099b, itemSchema: f1099bItemSchema, isArray: true },
   { node: f1099r, itemSchema: f1099rItemSchema, isArray: true },
   { node: f1098, itemSchema: f1098ItemSchema, isArray: true },
+  {
+    node: form6251,
+    inputKey: "form6251_prior_iso_sale",
+    inputSchema: z.object({ prior_iso_sale_review: priorIsoSaleReviewSchema }),
+    isArray: false,
+  },
+  {
+    node: f1098,
+    inputKey: "f1098_mortgage_limit_review",
+    inputSchema: z.object({ mortgage_limit_review: mortgageLimitReviewSchema }),
+    isArray: false,
+  },
+  {
+    node: f1098,
+    inputKey: "f1098_purchase_points_cross_loan_review",
+    inputSchema: z.object({
+      purchase_points_cross_loan_review: purchasePointsCrossLoanReviewSchema,
+    }),
+    isArray: false,
+  },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
+  {
+    node: f8863,
+    inputKey: "f8863_credit_limit_worksheet",
+    inputSchema: z.object({
+      credit_limit_worksheet: f8863CreditLimitWorksheetSchema,
+    }),
+    isArray: false,
+  },
   { node: f8949, itemSchema: f8949ItemSchema, isArray: true },
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
+  {
+    node: form8582_prior_year_record,
+    inputSchema: form8582PriorYearRecordInputSchema,
+    isArray: false,
+  },
+  {
+    node: personal_property_rental,
+    itemSchema: personalPropertyRentalItemSchema,
+    isArray: true,
+  },
   { node: rrb1099r, itemSchema: rrb1099rItemSchema, isArray: true },
   { node: ssa1099, itemSchema: ssaItemSchema, isArray: true },
   { node: f1095a, itemSchema: f1095aItemSchema, isArray: true },
@@ -694,6 +749,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form2441, inputSchema: form2441InputSchema, isArray: false },
   { node: form2555, inputSchema: form2555InputSchema, isArray: false },
   { node: scheduleA, inputSchema: scheduleAInputSchema, isArray: false },
+  {
+    node: mortgage_refinance_points,
+    inputSchema: mortgageRefinancePointsInputSchema,
+    isArray: false,
+  },
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
   { node: ext, inputSchema: extInputSchema, isArray: false },
   { node: general, inputSchema: generalInputSchema, isArray: false },
@@ -733,7 +793,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form6781, inputSchema: form6781InputSchema, isArray: false },
   { node: form5329, inputSchema: form5329InputSchema, isArray: false },
   {
-    node: form4972,
+    node: form4972Elections,
     inputSchema: form4972PublicElectionSchema,
     isArray: false,
   },

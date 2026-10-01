@@ -68,7 +68,26 @@ type ItemOverrides = Partial<{
   box15: string;
   box16: number;
   holdingPeriodDays: number;
+  foreign_tax_holding_review: {
+    ex_dividend_date: string;
+    qualifying_held_days_in_31_day_window: number;
+    diminished_risk_days_excluded: number;
+    no_related_payment_obligation_confirmed: true;
+    ordinary_stock_holding_rule_confirmed: true;
+    review_reference: string;
+    reviewed_on: string;
+  };
 }>;
+
+const foreignHoldingReview = {
+  ex_dividend_date: "2025-06-15",
+  qualifying_held_days_in_31_day_window: 20,
+  diminished_risk_days_excluded: 0,
+  no_related_payment_obligation_confirmed: true as const,
+  ordinary_stock_holding_rule_confirmed: true as const,
+  review_reference: "2025 holding ledger",
+  reviewed_on: "2026-02-01",
+};
 
 function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
   return {
@@ -92,6 +111,7 @@ function taxedDividend(
     foreign_source_dividends_usd: foreignDividends,
     foreign_tax_irs_country_code: "CA",
     holdingPeriodDays: 20,
+    foreign_tax_holding_review: foreignHoldingReview,
     ...overrides,
   });
 }
@@ -423,7 +443,14 @@ Deno.test("box7 not routed when holding period < 16 days", () => {
 Deno.test("foreign tax cannot assume all ordinary dividends are foreign source", () => {
   assertThrows(
     () =>
-      compute([minimalItem({ box1a: 500, box7: 50, holdingPeriodDays: 20 })]),
+      compute([
+        minimalItem({
+          box1a: 500,
+          box7: 50,
+          holdingPeriodDays: 20,
+          foreign_tax_holding_review: foreignHoldingReview,
+        }),
+      ]),
     Error,
     "verified foreign-source dividends",
   );
@@ -519,8 +546,7 @@ Deno.test("multiple payers — each listed separately on schedule_b when above t
     { payer_name: "Gamma Fund", gross: 600, net: 600, nominee: 0 },
   ]);
   const total = sbOutputs.reduce(
-    (sum, o) =>
-      sum + ((o.fields.dividend_detail as { net: number }).net),
+    (sum, o) => sum + ((o.fields.dividend_detail as { net: number }).net),
     0,
   );
   assertEquals(total, 2100);
@@ -1002,6 +1028,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
         box12: 400,
         box13: 100,
         holdingPeriodDays: 60,
+        foreign_tax_holding_review: foreignHoldingReview,
       }),
       minimalItem({
         payerName: "Fidelity",

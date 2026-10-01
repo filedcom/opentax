@@ -4,6 +4,7 @@ import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
 import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_recipient_reconciliation.ts";
 import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
 import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
+import { reconcileForm4972Collection } from "../../form4972_collection_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../../../nodes/inputs/f1099r/index.ts";
 
 // Field positions checked against the 2025 IRS AcroForm. Only page 1 is filed;
@@ -88,10 +89,10 @@ function recipientIdentity(
   return { recipient_name: name, recipient_ssn: ssn.replaceAll("-", "") };
 }
 
-function projectedFields(
+export function projectedFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
-) {
+): Record<string, unknown> {
   if (typeof fields.line6 !== "number" && typeof fields.line8 !== "number") {
     if (Object.keys(fields).length > 0) {
       throw new Error(
@@ -104,11 +105,14 @@ function projectedFields(
     fields,
     allPending,
   );
+  const recipient = recipientIdentity(fields, allPending);
   assertElectedPdfShape(fields, allPending, multipleRecipients);
   reconcileForm4972Nua(fields, allPending);
   reconcileForm4972EstatePartII(fields, allPending);
-  reconcileForm4972FullShare(fields, allPending);
-  const recipient = recipientIdentity(fields, allPending);
+  reconcileForm4972FullShare(fields, allPending, {
+    name: recipient.recipient_name,
+    ssn: recipient.recipient_ssn,
+  });
   const printedFields = { ...fields };
   if (fields.beneficiary_distribution === true) {
     delete printedFields.prior_election_after_1986;
@@ -169,20 +173,22 @@ function assertElectedPdfShape(
       item.exclude_4972 === true && item.no_distribution_received !== true
     )
     : [];
-  const item = elected[0];
-  if (
-    elected.length !== 1 || !item || item.ts !== fields.recipient ||
-    item.box9a_pct_total !== undefined &&
-      item.box9a_pct_total !== 100 && !multipleRecipients ||
-    item.box2a_taxable_amount !== fields.lump_sum_amount ||
-    (item.box3_capital_gain ?? 0) !== (fields.capital_gain_amount ?? 0) ||
-    (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
-    (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
-    (item.box8_pct_total ?? null) !== (fields.annuity_share_pct ?? null)
-  ) {
-    throw new Error(
-      "Form 4972 PDF needs one matching Form 1099-R source and recipient share",
-    );
+  if (fields.multiple_1099r === undefined) {
+    const item = elected[0];
+    if (
+      elected.length !== 1 || !item || item.ts !== fields.recipient ||
+      item.box9a_pct_total !== undefined &&
+        item.box9a_pct_total !== 100 && !multipleRecipients ||
+      item.box2a_taxable_amount !== fields.lump_sum_amount ||
+      (item.box3_capital_gain ?? 0) !== (fields.capital_gain_amount ?? 0) ||
+      (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
+      (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
+      (item.box8_pct_total ?? null) !== (fields.annuity_share_pct ?? null)
+    ) {
+      throw new Error(
+        "Form 4972 PDF needs one matching Form 1099-R source and recipient share",
+      );
+    }
   }
   if (capital) {
     if (
@@ -303,7 +309,21 @@ export const form4972Pdf: PdfFormDescriptor = {
   pendingKey: "form4972",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4972--2025.pdf",
   pageIndices: () => [0],
-  projectFields: projectedFields,
+  instances(raw, filer, allPending) {
+    if (Object.keys(raw).length === 0) return [];
+    if (!allPending) {
+      throw new Error(
+        "Form 4972 PDF collection needs the final pending return",
+      );
+    }
+    return reconcileForm4972Collection(raw, allPending, filer)
+      .map(({ fields: form, pending }) =>
+        projectedFields(
+          form,
+          pending as Record<string, Record<string, unknown>>,
+        )
+      );
+  },
   decoratePages: async (document, pages, fields) => {
     const annotations = form4972NuaAnnotations(fields);
     const multipleRecipients = typeof fields.recipient_share_pct === "number" &&

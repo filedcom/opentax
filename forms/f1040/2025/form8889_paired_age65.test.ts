@@ -152,6 +152,393 @@ Deno.test("paired Form 8889 exports the leap-day age-65 exception in MeF and PDF
   assertEquals(pdf?.[1]?.print_line17b_penalty, 80);
 });
 
+Deno.test("paired owners reconcile age-65 and disability exceptions through both Forms 8889 and Form 1040", () => {
+  const { source } = pairedAge65Case();
+  const mixed = inputSchema.parse({
+    ...source,
+    spouse_hsa: {
+      ...source.spouse_hsa!,
+      form1099_sa_distributions: [{
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 100,
+        box3_distribution_code: "1",
+        source_reference: "spouse-1099-before-disability",
+      }, {
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 400,
+        box3_distribution_code: "3",
+        source_reference: "spouse-1099-after-disability",
+      }],
+      exception_qualified_taxable_amount: 300,
+      disability_exception_evidence: {
+        disability_date: "2025-06-01",
+        disability_source_reference: "spouse-disability-determination",
+        section_72m7_disability_confirmed: true,
+        distributions: [{
+          distribution_date: "2025-05-01",
+          gross_amount: 100,
+          qualified_medical_amount: 0,
+          source_reference: "spouse-before-disability",
+          form1099_sa_source_reference: "spouse-1099-before-disability",
+        }, {
+          distribution_date: "2025-07-01",
+          gross_amount: 400,
+          qualified_medical_amount: 100,
+          source_reference: "spouse-after-disability",
+          form1099_sa_source_reference: "spouse-1099-after-disability",
+        }],
+      },
+    },
+  });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    mixed,
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  assertEquals(forms[0]?.print_line16_taxable, 700);
+  assertEquals(forms[0]?.print_line17b_penalty, 60);
+  assertEquals(forms[1]?.print_line16_taxable, 400);
+  assertEquals(forms[1]?.print_line17b_penalty, 20);
+  const pending = {
+    form8889: { ...mixed, forms },
+    schedule1: {
+      line13_hsa_deduction: 4_000,
+      line8f_hsa_income: 1_100,
+      line10_total_additional_income: 1_100,
+      line26_total_adjustments: 4_000,
+    },
+    schedule2: { line17c_hsa_penalty: 80 },
+    f1040: {
+      line8_additional_income: 1_100,
+      line10_adjustments: 4_000,
+      line23_other_taxes: 80,
+    },
+  };
+  const xml = form8889.build({ forms }, { filer, pending });
+  assertEquals(xml.length, 2);
+  assertStringIncludes(
+    xml[0],
+    "<HSADistriAddnlPercentTaxAmt>60</HSADistriAddnlPercentTaxAmt>",
+  );
+  assertStringIncludes(
+    xml[1],
+    "<HSADistriAddnlPercentTaxAmt>20</HSADistriAddnlPercentTaxAmt>",
+  );
+  const pdf = form8889Pdf.instances?.({ forms }, filer, pending);
+  assertEquals(pdf?.[0]?.print_line17b_penalty, 60);
+  assertEquals(pdf?.[1]?.print_line17b_penalty, 20);
+  const changed = {
+    ...pending,
+    form8889: {
+      ...mixed,
+      spouse_hsa: {
+        ...mixed.spouse_hsa!,
+        disability_exception_evidence: {
+          ...mixed.spouse_hsa!.disability_exception_evidence!,
+          distributions: mixed.spouse_hsa!.disability_exception_evidence!
+            .distributions.map((row) => ({
+              ...row,
+              form1099_sa_source_reference: "spouse-1099-after-disability",
+            })),
+        },
+      },
+      forms,
+    },
+  };
+  assertThrows(
+    () => form8889.build({ forms }, { filer, pending: changed }),
+    Error,
+  );
+  assertThrows(() => form8889Pdf.instances?.({ forms }, filer, changed), Error);
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line23_other_taxes: 79 },
+        },
+      }),
+    Error,
+    "age-65 and disability totals differ",
+  );
+});
+
+Deno.test("paired age-65 and disability exceptions include one sourced disability-owner rollover", () => {
+  const { source } = pairedAge65Case();
+  const mixed = inputSchema.parse({
+    ...source,
+    spouse_hsa: {
+      ...source.spouse_hsa!,
+      form1099_sa_distributions: [{
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 100,
+        box3_distribution_code: "1",
+        source_reference: "spouse-1099-before-disability",
+      }, {
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 400,
+        box3_distribution_code: "3",
+        source_reference: "spouse-1099-after-disability",
+      }],
+      exception_qualified_taxable_amount: 300,
+      hsa_excluded_distributions: {
+        rollover: {
+          amount: 50,
+          distribution_date: "2025-05-01",
+          contribution_date: "2025-05-30",
+          distribution_source_reference: "spouse-before-disability",
+          form1099_sa_source_reference: "spouse-1099-before-disability",
+          contribution_source_reference: "spouse-rollover-deposit",
+          same_beneficiary: true,
+          receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+          not_direct_trustee_transfer: true,
+        },
+      },
+      disability_exception_evidence: {
+        disability_date: "2025-06-01",
+        disability_source_reference: "spouse-disability-determination",
+        section_72m7_disability_confirmed: true,
+        distributions: [{
+          distribution_date: "2025-05-01",
+          gross_amount: 100,
+          qualified_medical_amount: 0,
+          rollover_excluded_amount: 50,
+          source_reference: "spouse-before-disability",
+          form1099_sa_source_reference: "spouse-1099-before-disability",
+        }, {
+          distribution_date: "2025-07-01",
+          gross_amount: 400,
+          qualified_medical_amount: 100,
+          rollover_excluded_amount: 0,
+          source_reference: "spouse-after-disability",
+          form1099_sa_source_reference: "spouse-1099-after-disability",
+        }],
+      },
+    },
+  });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    mixed,
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  assertEquals(forms[0]?.print_line16_taxable, 700);
+  assertEquals(forms[0]?.print_line17b_penalty, 60);
+  assertEquals(forms[1]?.print_line14b_excluded_distributions, 50);
+  assertEquals(forms[1]?.print_line16_taxable, 350);
+  assertEquals(forms[1]?.print_line17b_penalty, 10);
+  const pending = {
+    form8889: { ...mixed, forms },
+    schedule1: {
+      line13_hsa_deduction: 4_000,
+      line8f_hsa_income: 1_050,
+      line10_total_additional_income: 1_050,
+      line26_total_adjustments: 4_000,
+    },
+    schedule2: { line17c_hsa_penalty: 70 },
+    f1040: {
+      line8_additional_income: 1_050,
+      line10_adjustments: 4_000,
+      line23_other_taxes: 70,
+    },
+  };
+  const xml = form8889.build({ forms }, { filer, pending });
+  assertEquals(xml.length, 2);
+  assertStringIncludes(
+    xml[1],
+    "<HSADistributionRolloverAmt>50</HSADistributionRolloverAmt>",
+  );
+  assertStringIncludes(
+    xml[1],
+    "<HSADistriAddnlPercentTaxAmt>10</HSADistriAddnlPercentTaxAmt>",
+  );
+  const pdf = form8889Pdf.instances?.({ forms }, filer, pending);
+  assertEquals(pdf?.[1]?.print_line14b_excluded_distributions, 50);
+  assertEquals(pdf?.[1]?.print_line17b_penalty, 10);
+  const changedSource = {
+    ...pending,
+    form8889: {
+      ...mixed,
+      spouse_hsa: {
+        ...mixed.spouse_hsa!,
+        hsa_excluded_distributions: {
+          ...mixed.spouse_hsa!.hsa_excluded_distributions!,
+          rollover: {
+            ...mixed.spouse_hsa!.hsa_excluded_distributions!.rollover!,
+            contribution_date: "2025-07-01",
+          },
+        },
+      },
+      forms,
+    },
+  };
+  assertThrows(
+    () => form8889.build({ forms }, { filer, pending: changedSource }),
+    Error,
+  );
+  assertThrows(
+    () => form8889Pdf.instances?.({ forms }, filer, changedSource),
+    Error,
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line23_other_taxes: 69 },
+        },
+      }),
+    Error,
+    "age-65 and disability totals differ",
+  );
+});
+
+Deno.test("paired age-65 and disability exceptions include one sourced age-owner rollover", () => {
+  const { source } = pairedAge65Case();
+  const mixed = inputSchema.parse({
+    ...source,
+    hsa_excluded_distributions: {
+      rollover: {
+        amount: 100,
+        distribution_date: "2025-02-27",
+        contribution_date: "2025-03-15",
+        distribution_source_reference: "primary-before-65",
+        form1099_sa_source_reference: "1099-sa-primary",
+        contribution_source_reference: "primary-rollover-deposit",
+        same_beneficiary: true,
+        receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+        not_direct_trustee_transfer: true,
+      },
+    },
+    age_65_exception_evidence: {
+      ...source.age_65_exception_evidence!,
+      distributions: source.age_65_exception_evidence!.distributions.map(
+        (row) => ({
+          ...row,
+          rollover_excluded_amount: row.source_reference === "primary-before-65"
+            ? 100
+            : 0,
+        }),
+      ),
+    },
+    spouse_hsa: {
+      ...source.spouse_hsa!,
+      form1099_sa_distributions: [{
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 100,
+        box3_distribution_code: "1",
+        source_reference: "spouse-1099-before-disability",
+      }, {
+        tax_year: 2025,
+        recipient_ssn: "987654321",
+        box1_gross_distribution: 400,
+        box3_distribution_code: "3",
+        source_reference: "spouse-1099-after-disability",
+      }],
+      exception_qualified_taxable_amount: 300,
+      disability_exception_evidence: {
+        disability_date: "2025-06-01",
+        disability_source_reference: "spouse-disability-determination",
+        section_72m7_disability_confirmed: true,
+        distributions: [{
+          distribution_date: "2025-05-01",
+          gross_amount: 100,
+          qualified_medical_amount: 0,
+          source_reference: "spouse-before-disability",
+          form1099_sa_source_reference: "spouse-1099-before-disability",
+        }, {
+          distribution_date: "2025-07-01",
+          gross_amount: 400,
+          qualified_medical_amount: 100,
+          source_reference: "spouse-after-disability",
+          form1099_sa_source_reference: "spouse-1099-after-disability",
+        }],
+      },
+    },
+  });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    mixed,
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  assertEquals(forms[0]?.print_line14b_excluded_distributions, 100);
+  assertEquals(forms[0]?.print_line16_taxable, 600);
+  assertEquals(forms[0]?.print_line17b_penalty, 40);
+  assertEquals(forms[1]?.print_line16_taxable, 400);
+  assertEquals(forms[1]?.print_line17b_penalty, 20);
+  const pending = {
+    form8889: { ...mixed, forms },
+    schedule1: {
+      line13_hsa_deduction: 4_000,
+      line8f_hsa_income: 1_000,
+      line10_total_additional_income: 1_000,
+      line26_total_adjustments: 4_000,
+    },
+    schedule2: { line17c_hsa_penalty: 60 },
+    f1040: {
+      line8_additional_income: 1_000,
+      line10_adjustments: 4_000,
+      line23_other_taxes: 60,
+    },
+  };
+  const xml = form8889.build({ forms }, { filer, pending });
+  assertEquals(xml.length, 2);
+  assertStringIncludes(
+    xml[0],
+    "<HSADistributionRolloverAmt>100</HSADistributionRolloverAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<HSADistriAddnlPercentTaxAmt>40</HSADistriAddnlPercentTaxAmt>",
+  );
+  const pdf = form8889Pdf.instances?.({ forms }, filer, pending);
+  assertEquals(pdf?.[0]?.print_line14b_excluded_distributions, 100);
+  assertEquals(pdf?.[0]?.print_line17b_penalty, 40);
+  const changedSource = {
+    ...pending,
+    form8889: {
+      ...mixed,
+      hsa_excluded_distributions: {
+        ...mixed.hsa_excluded_distributions!,
+        rollover: {
+          ...mixed.hsa_excluded_distributions!.rollover!,
+          contribution_date: "2025-05-01",
+        },
+      },
+      forms,
+    },
+  };
+  assertThrows(
+    () => form8889.build({ forms }, { filer, pending: changedSource }),
+    Error,
+  );
+  assertThrows(
+    () => form8889Pdf.instances?.({ forms }, filer, changedSource),
+    Error,
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line23_other_taxes: 59 },
+        },
+      }),
+    Error,
+    "age-65 and disability totals differ",
+  );
+});
+
 Deno.test("paired age-65 evidence and return totals fail closed when altered", () => {
   const { source, forms, pending, context } = pairedAge65Case();
   const wrongFormReference = {

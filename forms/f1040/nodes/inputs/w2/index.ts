@@ -31,7 +31,10 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
-import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  isQualifiedTipsOccupationCode,
+  schedule1a,
+} from "../../intermediate/forms/schedule1a/index.ts";
 import {
   AllocationBasis,
   Form8958Line,
@@ -153,6 +156,28 @@ export const w2ItemSchema = z.object({
   box14_entries: z.array(box14EntrySchema).optional().describe(
     "Other — employer-labeled items; SDI/PFML deductible on Sch A",
   ),
+  qualified_tips_box14_review: z.object({
+    box14_description: z.string().trim().min(1),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tips_included_in_box1: z.literal(true),
+    source_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  flsa_overtime_review: z.object({
+    covered_nonexempt_employee: z.literal(true),
+    premium_included_in_box1: z.literal(true),
+    source_reference: z.string().trim().min(1),
+    employer_statement: z.object({
+      tax_year: z.literal(2025),
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      qualified_overtime_premium: z.number().int().positive(),
+      statement_reference: z.string().trim().min(1),
+      furnished_to_employee: z.literal(true),
+    }).strict().optional(),
+  }).strict().optional().describe(
+    "Source review for an employer-identified FLSA overtime premium in box 14 or a 2025 employer statement",
+  ),
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
   ),
@@ -213,12 +238,71 @@ function validateItem(
   ssTaxPerEmployer: number,
   retirementLimits: Record<string, Record<number, number>>,
 ): void {
+  if (item.flsa_overtime_review !== undefined) {
+    const statement = item.flsa_overtime_review.employer_statement;
+    const premiums = (item.box14_entries ?? []).filter((entry) =>
+      entry.description.trim().toLowerCase() === "flsa overtime premium"
+    );
+    if (
+      (statement === undefined
+        ? premiums.length !== 1 || premiums[0].amount <= 0 ||
+          premiums[0].amount > item.box1_wages ||
+          premiums[0].is_state_sdi_pfml
+        : premiums.length !== 0 ||
+          statement.qualified_overtime_premium > item.box1_wages ||
+          statement.employee_ssn.replaceAll("-", "") !==
+            item.employee_ssn?.replaceAll("-", "") ||
+          statement.employer_ein.replaceAll("-", "") !==
+            item.employer_ein?.replaceAll("-", "")) ||
+      item.box13_statutory_employee === true ||
+      !/^\d{3}-?\d{2}-?\d{4}$/.test(item.employee_ssn ?? "") ||
+      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "")
+    ) {
+      throw new Error(
+        "W-2 FLSA overtime review needs one positive box 14 or employer-statement premium included in box 1 and matching source identities",
+      );
+    }
+  }
+  if (item.qualified_tips_box14_review !== undefined) {
+    const review = item.qualified_tips_box14_review;
+    const matches = (item.box14_entries ?? []).filter((entry) =>
+      entry.description === review.box14_description
+    );
+    if (
+      matches.length !== 1 || matches[0].amount <= 0 ||
+      !Number.isSafeInteger(matches[0].amount) ||
+      matches[0].amount > item.box1_wages ||
+      matches[0].is_state_sdi_pfml ||
+      !isQualifiedTipsOccupationCode(review.occupation_code) ||
+      (item.box14b_tipped_code !== undefined &&
+        item.box14b_tipped_code !== review.occupation_code) ||
+      item.box13_statutory_employee === true ||
+      !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "") ||
+      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+      !item.employer_name?.trim() ||
+      (box14Amount(item, "RRTA compensation") ?? 0) > 0
+    ) {
+      throw new Error(
+        "W-2 qualified tips box 14 review needs one positive included tip entry, matching occupation, and employer/employee identities",
+      );
+    }
+  }
   if (
     item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
     (item.box7_ss_tips ?? 0) > 0 &&
     !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "")
   ) {
     throw new Error("W-2 qualified tips need a nine-digit employee SSN");
+  }
+  if (
+    item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+    (item.box7_ss_tips ?? 0) > 0 &&
+    (!/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+      !item.employer_name?.trim())
+  ) {
+    throw new Error("W-2 qualified tips need employer EIN and name");
   }
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
   const rrtaCompensation = box14Amount(item, "RRTA compensation") ?? 0;
@@ -478,6 +562,12 @@ export function form4137Sources(w2s: W2Items) {
         employer_ein: item.employer_ein,
       }),
       allocated_tips: item.box8_allocated_tips ?? 0,
+      ...(item.box14b_tipped_code !== undefined && {
+        tipped_occupation_code: item.box14b_tipped_code,
+      }),
+      ...(item.box13_statutory_employee === true && {
+        statutory_employee: true as const,
+      }),
       ...(rrtaCompensation !== undefined && {
         rrta_compensation: rrtaCompensation,
       }),
@@ -569,15 +659,55 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
   const tips = regularItems(w2s)
     .filter((item) =>
-      item.box14b_tipped_code !== undefined &&
-      (item.box7_ss_tips ?? 0) > 0
+      item.qualified_tips_box14_review !== undefined ||
+      (item.box14b_tipped_code !== undefined &&
+        isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+        (item.box7_ss_tips ?? 0) > 0)
     )
-    .map((item) => ({
-      employee_ssn: item.employee_ssn!,
-      amount: item.box7_ss_tips!,
-    }));
+    .map((item) => {
+      const review = item.qualified_tips_box14_review;
+      return {
+        employee_ssn: item.employee_ssn!,
+        employer_ein: item.employer_ein!,
+        employer_name: item.employer_name!,
+        amount: review === undefined
+          ? item.box7_ss_tips!
+          : box14Amount(item, review.box14_description)!,
+        box5_medicare_wages: item.box5_medicare_wages,
+        occupation_code: review?.occupation_code ?? item.box14b_tipped_code!,
+        source_type: review === undefined
+          ? "w2_box7" as const
+          : "w2_box14" as const,
+      };
+    });
   return tips.length > 0
     ? [output(schedule1a, { qualified_employee_tips: tips })]
+    : [];
+}
+
+function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
+  const premiums = regularItems(w2s)
+    .filter((item) => item.flsa_overtime_review !== undefined)
+    .map((item) => ({
+      employee_ssn: item.employee_ssn!,
+      employer_ein: item.employer_ein!,
+      amount: item.flsa_overtime_review!.employer_statement
+        ?.qualified_overtime_premium ?? item.box14_entries!.find((entry) =>
+          entry.description.trim().toLowerCase() === "flsa overtime premium"
+        )!.amount,
+      box1_wages: item.box1_wages,
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: item.flsa_overtime_review!.source_reference,
+      ...(item.flsa_overtime_review!.employer_statement
+        ? {
+          employer_statement_reference:
+            item.flsa_overtime_review!.employer_statement!.statement_reference,
+        }
+        : {}),
+    }));
+  return premiums.length > 0
+    ? [output(schedule1a, { qualified_w2_overtime: premiums })]
     : [];
 }
 
@@ -777,6 +907,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...scheduleSEOutput(input.w2s),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
+      ...qualifiedOvertimeOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

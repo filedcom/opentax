@@ -63,6 +63,13 @@ Deno.test("Form 4972 shared beneficiary Part III uses full attributable estate t
     participant_five_year_member: false,
     prior_beneficiary_election_after_1986: false,
     federal_estate_tax: 2_000,
+    partial_estate_tax_source: {
+      administrator_statement_reference: "plan-estate-allocation-2025",
+      estate_tax_return_reference: "estate-form706-2025",
+      full_distribution_taxable_amount: 40_000,
+      full_distribution_federal_estate_tax: 2_000,
+      recipient_allocated_federal_estate_tax: 1_000,
+    },
     elect_10yr_averaging: true,
   });
   assertEquals(result.lines?.line8, 40_000);
@@ -71,6 +78,38 @@ Deno.test("Form 4972 shared beneficiary Part III uses full attributable estate t
   assertEquals(result.lines?.line29, 1_955);
   assertEquals(result.lines?.line30, 1_955);
   assertEquals(result.tax, 1_955);
+});
+
+Deno.test("Form 4972 partial-share estate tax rejects absent or changed allocation source", () => {
+  const base = {
+    lump_sum_amount: 20_000,
+    recipient_share_pct: 50,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    federal_estate_tax: 2_000,
+    elect_10yr_averaging: true,
+  };
+  assertThrows(
+    () => calculated(base),
+    Error,
+    "administrator and estate-return sources",
+  );
+  assertThrows(
+    () =>
+      calculated({
+        ...base,
+        partial_estate_tax_source: {
+          administrator_statement_reference: "plan-estate-allocation-2025",
+          estate_tax_return_reference: "estate-form706-2025",
+          full_distribution_taxable_amount: 40_000,
+          full_distribution_federal_estate_tax: 2_000,
+          recipient_allocated_federal_estate_tax: 999,
+        },
+      }),
+    Error,
+    "recipient allocation",
+  );
 });
 
 Deno.test("Form 4972 shared beneficiary Part III uses the full death-benefit exclusion before line 29 proration", () => {
@@ -83,6 +122,14 @@ Deno.test("Form 4972 shared beneficiary Part III uses the full death-benefit exc
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -107,6 +154,14 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_capital_gain: true,
@@ -142,7 +197,6 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
   );
   for (
     const unsupported of [
-      { box6_nua: 1_000, elect_include_nua: true },
       { annuity_actuarial_value: 1_000, annuity_share_pct: 50 },
       { federal_estate_tax: 1_000 },
     ]
@@ -150,9 +204,58 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
     assertThrows(
       () => calculated({ ...source, ...unsupported }),
       Error,
-      "partial-share death benefit needs Part III",
+      "partial-share death benefit needs Part II or III",
     );
   }
+});
+
+Deno.test("Form 4972 partial beneficiary Part-II-only uses recipient death-benefit share on Form 1040", () => {
+  const result = calculated({
+    lump_sum_amount: 20_000,
+    capital_gain_amount: 4_000,
+    recipient_share_pct: 50,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    participant_died_before_1996_08_21: true,
+    prior_beneficiary_election_after_1986: false,
+    death_benefit_exclusion: 5_000,
+    death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
+    death_benefit_exclusion_source_reference:
+      "Plan administrator beneficiary exclusion allocation",
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 3_500);
+  assertEquals(result.lines?.line7, 700);
+  assertEquals(result.lines?.line8, undefined);
+  assertEquals(result.tax, 700);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 14_000);
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 20_000,
+        capital_gain_amount: 4_000,
+        recipient_share_pct: 50,
+        beneficiary_distribution: true,
+        participant_five_year_member: false,
+        participant_died_before_1996_08_21: true,
+        prior_beneficiary_election_after_1986: false,
+        death_benefit_exclusion: 5_000,
+        death_benefit_recipient_allocated_amount: 2_000,
+        death_benefit_exclusion_source_reference:
+          "Plan administrator beneficiary exclusion allocation",
+        elect_capital_gain: true,
+      }),
+    Error,
+    "recipient allocation",
+  );
 });
 
 Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a but not the grossed-up distribution", () => {
@@ -165,6 +268,14 @@ Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a bu
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -190,6 +301,14 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     prior_beneficiary_election_after_1986: false,
     death_benefit_exclusion: 5_000,
     death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_allocation: {
+      participant_ssn: "444556666",
+      elected_recipient_ssn: "123456789",
+      recipients: [
+        { recipient_ssn: "123456789", share_pct: 50, excluded_amount: 2_500 },
+        { recipient_ssn: "987654321", share_pct: 50, excluded_amount: 2_500 },
+      ],
+    },
     death_benefit_exclusion_source_reference:
       "Plan administrator beneficiary exclusion allocation",
     elect_10yr_averaging: true,
@@ -198,7 +317,6 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     const changed of [
       { death_benefit_exclusion_source_reference: undefined },
       { death_benefit_recipient_allocated_amount: 2_000 },
-      { box6_nua: 1_000, elect_include_nua: true },
       { annuity_actuarial_value: 1_000, annuity_share_pct: 50 },
       { federal_estate_tax: 1_000 },
     ]
@@ -206,7 +324,7 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     assertThrows(
       () => calculated({ ...base, ...changed }),
       Error,
-      "partial-share death benefit needs Part III",
+      "partial-share death benefit needs Part II or III",
     );
   }
 });
@@ -411,7 +529,7 @@ Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () =
         death_benefit_exclusion: 1_000,
       }),
     Error,
-    "partial-share death benefit needs Part III",
+    "partial-share death benefit needs Part II or III",
   );
   assertThrows(
     () =>
@@ -430,11 +548,20 @@ Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () =
 
 Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations pending allocation evidence", () => {
   for (
-    const extra of [
-      { elect_capital_gain: true },
-      { elect_include_nua: true, box6_nua: 2_000 },
-      { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
-    ]
+    const [extra, message] of [
+      [
+        { elect_capital_gain: true },
+        "partial box 9a share supports Part II or III",
+      ],
+      [
+        { elect_include_nua: true, box6_nua: 2_000 },
+        "partial-share estate tax needs",
+      ],
+      [
+        { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
+        "partial box 9a share supports Part II or III",
+      ],
+    ] as const
   ) {
     assertThrows(
       () =>
@@ -450,7 +577,7 @@ Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations 
           ...extra,
         }),
       Error,
-      "partial box 9a share supports Part II or III",
+      message,
     );
   }
 });

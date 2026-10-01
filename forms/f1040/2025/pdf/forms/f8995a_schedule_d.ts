@@ -29,6 +29,21 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },
   ],
   fields,
+  instances(raw, filer) {
+    if (Object.keys(raw).length === 0) return [];
+    const input = inputSchema.strict().parse(raw);
+    if (
+      (input.patron_filing_details?.source_1099patr
+          .box6_section199ag_deduction ?? 0) > 0 &&
+      input.patron_filing_details?.source_1099patr.recipient_tin !==
+        filer?.primarySSN.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8995-A Schedule D PDF box 6 recipient differs from the final filer",
+      );
+    }
+    return [raw];
+  },
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
     const schedule = inputSchema.strict().parse(raw);

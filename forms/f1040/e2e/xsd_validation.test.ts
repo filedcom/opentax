@@ -121,6 +121,20 @@ const BASE_IDENTITY = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
   taxpayer_dob: "1985-06-15",
+  child_eic_filer_review: {
+    not_qualifying_child_of_another_taxpayer_verified: true,
+    relationship_age_residence_record_reference:
+      "Synthetic 2025 filer family and residence review",
+  },
+  prior_eic_disallowance_review: {
+    status: "none",
+    irs_account_record_reference: "Synthetic IRS account transcript review",
+    no_nonclerical_disallowance_since_1996_verified: true,
+  },
+  eic_tax_residency_review: {
+    status: "all_year_resident",
+    taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+  },
   address_line1: "123 Main St",
   address_city: "Springfield",
   address_state: "IL",
@@ -252,9 +266,8 @@ Deno.test({
 
 Deno.test({
   name:
-    "XSD: ATS 1040 Scenario 1 Schedule H and Schedule 2 slice conforms to v5.4",
-  ignore: !xsdAvailable,
-}, async () => {
+    "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
+}, () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
     general: {
@@ -276,14 +289,11 @@ Deno.test({
       federal_income_tax_withheld: facts.scheduleH.federalWithholding,
     },
   });
-  const xml = buildXml(result);
-  assertEquals(xml.includes("<IRS1040ScheduleH"), true);
-  assertEquals(
-    xml.includes("<HouseholdEmploymentTaxAmt>474</HouseholdEmploymentTaxAmt>"),
-    true,
+  assertThrows(
+    () => buildXml(result),
+    Error,
+    "FICA-only export needs employee payroll source",
   );
-  const { success, stderr } = await validateXml(xml);
-  assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
 Deno.test({
@@ -904,7 +914,7 @@ Deno.test({
     },
     w2: [w2Item(32_000, 3_500)],
   });
-  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2"]);
+  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2", "general"]);
   assertEquals((xml.match(/<DependentDetail>/g) ?? []).length, 2);
   assertEquals((xml.match(/<IRS1040ScheduleEIC documentId=/g) ?? []).length, 1);
   assertEquals((xml.match(/<QualifyingChildInformation>/g) ?? []).length, 2);
@@ -922,10 +932,19 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const result = runReturn({
-    general: singleGeneral(),
+    general: {
+      ...singleGeneral(),
+      main_home_in_us_over_half_year: true,
+      taxpayer_can_be_claimed_as_dependent: false,
+      childless_eic_review: {
+        not_qualifying_child_of_another_taxpayer_verified: true,
+        qualifying_child_status_record_reference:
+          "Synthetic 2025 family review",
+      },
+    },
     w2: [w2Item(12_000, 500)],
   });
-  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2"]);
+  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2", "general"]);
   assertStringIncludes(xml, "<EarnedIncomeCreditAmt>");
   assertEquals(xml.includes("<IRS1040ScheduleEIC"), false);
   assertEquals(

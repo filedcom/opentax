@@ -40,6 +40,12 @@ interest. The node sums each building's line 14 into Schedule 2 line 16. The MeF
 descriptor emits one `IRS8611` document per building, and Schedule 2 links the
 resulting document IDs.
 
+The TY2025 PDF descriptor projects those same calculated lines onto the December
+2021 one-page form, one copy per building, and reconciles the line 14 sum to
+final Schedule 2 line 16. It is registered for direct parity review; printable
+export remains gated while the prior-filed forms or pass-through K-1 and
+interest source records remain unverified.
+
 ## Limits and verification still needed
 
 The current source model does not derive the Form 8609-A worksheet inputs,

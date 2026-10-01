@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { zipSync } from "fflate";
 import {
+  readA2aArchivedSubmission,
   readA2aInboundPayload,
   readA2aSendRecord,
   recordA2aInboundPayload,
@@ -11,6 +12,18 @@ const submissionId = "1234562026269abcdefg";
 const messageId = "00123202626900000001";
 const encoder = new TextEncoder();
 
+async function digest(bytes: Uint8Array): Promise<string> {
+  return Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(bytes),
+      ),
+    ),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
 function packageFor(id = submissionId) {
   return {
     sendSubmissionsRequestXml:
@@ -18,6 +31,72 @@ function packageFor(id = submissionId) {
     containerZipBytes: zipSync({ [`${id}.zip`]: encoder.encode("archive") }),
   };
 }
+
+Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const manifest = encoder.encode(
+      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+    );
+    const xml = encoder.encode(
+      `<Return><PrimarySSN>111223333</PrimarySSN><IRS8990><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></Return>`,
+    );
+    const archive = zipSync({
+      "manifest/manifest.xml": manifest,
+      "xml/submission.xml": xml,
+    });
+    await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: {
+        sendSubmissionsRequestXml:
+          `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+        containerZipBytes: zipSync({ [`${submissionId}.zip`]: archive }),
+      },
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const expected = {
+      submissionId,
+      taxpayerSsn: "111223333",
+      submissionXmlSha256: await digest(xml),
+    };
+    const evidence = await readA2aArchivedSubmission(root, messageId, expected);
+    assertEquals(evidence.submissionArchiveSha256, await digest(archive));
+    assertEquals(evidence.manifestSha256, await digest(manifest));
+    await assertRejects(
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          ...expected,
+          submissionXmlSha256: "0".repeat(64),
+        }),
+      Error,
+      "XML digest differs from expected return",
+    );
+    await assertRejects(
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          ...expected,
+          taxpayerSsn: "999887777",
+        }),
+      Error,
+      "taxpayer, or XML digest differs",
+    );
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      zipSync({
+        [`${submissionId}.zip`]: encoder.encode("substituted archive"),
+      }),
+    );
+    await assertRejects(
+      () => readA2aArchivedSubmission(root, messageId, expected),
+      Error,
+      "Send evidence integrity",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
 
 Deno.test("A2A evidence stores exact Send and raw acknowledgment bytes with stable correlation", async () => {
   const root = await Deno.makeTempDir();

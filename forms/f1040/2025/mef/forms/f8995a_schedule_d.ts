@@ -17,20 +17,37 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
   const parent = inputSchema.strict().safeParse(context?.pending?.form8995a);
-  if (!parent.success || JSON.stringify(parent.data) !== JSON.stringify(fields)) {
-    throw new Error("Form 8995-A Schedule D needs matching parent pending source");
+  if (
+    !parent.success || JSON.stringify(parent.data) !== JSON.stringify(fields)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule D needs matching parent pending source",
+    );
   }
   assertPatron1099PATRSource(fields, context?.pending?.f1099patr);
   validateOneBusiness(fields);
   const source = fields.patron_filing_details;
   const business = fields.business_filing_details;
   if (!source || !business) {
-    throw new Error("Form 8995-A Schedule D needs identified business and cooperative source");
+    throw new Error(
+      "Form 8995-A Schedule D needs identified business and cooperative source",
+    );
+  }
+  if (
+    (source.source_1099patr.box6_section199ag_deduction ?? 0) > 0 &&
+    source.source_1099patr.recipient_tin !==
+      context?.filer?.primarySSN.replaceAll("-", "")
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule D box 6 recipient differs from the final filer",
+    );
   }
   const schedule = calculatePatronScheduleDLines(fields);
   const parentLines = calculateOneBusiness8995ALines(fields);
   if (schedule.line6 !== parentLines.line14) {
-    throw new Error("Form 8995-A Schedule D line 6 differs from parent line 14");
+    throw new Error(
+      "Form 8995-A Schedule D line 6 differs from parent line 14",
+    );
   }
   const form1040 = context?.pending?.f1040;
   if (
@@ -38,7 +55,9 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
     !("line13_qbi_deduction" in form1040) ||
     form1040.line13_qbi_deduction !== parentLines.line39
   ) {
-    throw new Error("Form 8995-A Schedule D parent line 39 differs from Form 1040 line 13");
+    throw new Error(
+      "Form 8995-A Schedule D parent line 39 differs from Form 1040 line 13",
+    );
   }
   return elements("IRS8995AScheduleD", [
     elements("PatronAgricHortCoopGrp", [

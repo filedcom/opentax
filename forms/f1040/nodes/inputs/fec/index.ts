@@ -45,6 +45,10 @@ export const itemSchema = z.object({
   currency: z.string().optional(),
   // Amount converted to US dollars at IRS-approved exchange rate
   compensation_usd: z.number().nonnegative(),
+  // Needed when other foreign-employer wage records establish the same
+  // employee's $250,000 worldwide compensation threshold for line 1b.
+  compensation_owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  compensation_source_document_reference: z.string().trim().min(1).optional(),
   // Optional description of the position/employment
   description: z.string().optional(),
   // Foreign income tax paid or accrued on this compensation, converted to USD.
@@ -78,6 +82,39 @@ export const inputSchema = z.object({
 
 type FecItem = z.infer<typeof itemSchema>;
 type FecItems = FecItem[];
+
+export function alternativeCompensationWorldwideTotal(
+  items: FecItems,
+  source: FecItem,
+  taxpayerSsn?: string,
+): number {
+  if (items.length === 1) return source.compensation_usd;
+  if (
+    items.length < 2 || items.length > 5 ||
+    !source.alternative_compensation_sourcing
+  ) return 0;
+  const others = items.filter((item) => item !== source);
+  const owner = source.compensation_owner_ssn?.replace(/\D/g, "");
+  if (
+    others.length !== items.length - 1 || !owner ||
+    (taxpayerSsn && taxpayerSsn.replace(/\D/g, "") !== owner) ||
+    !source.compensation_source_document_reference ||
+    source.compensation_source_document_reference !==
+      source.alternative_compensation_sourcing.source_document_reference ||
+    others.some((other) =>
+      other.compensation_owner_ssn?.replace(/\D/g, "") !== owner ||
+      !other.compensation_source_document_reference ||
+      other.compensation_usd <= 0 ||
+      (other.foreign_service_compensation_usd ?? 0) !== 0 ||
+      (other.foreign_tax_paid_usd ?? 0) !== 0 ||
+      (other.foreign_earned_income_exclusion_usd ?? 0) !== 0 ||
+      other.alternative_compensation_sourcing !== undefined
+    ) ||
+    new Set(items.map((item) => item.compensation_source_document_reference))
+        .size !== items.length
+  ) return 0;
+  return items.reduce((total, item) => total + item.compensation_usd, 0);
+}
 
 function totalCompensationUsd(items: FecItems): number {
   return items.reduce(
@@ -119,7 +156,7 @@ function form1116Output(items: FecItems): NodeOutput[] {
           Math.round(item.compensation_usd * 100) ||
         Math.round(alternative.alternative_foreign_source_usd * 100) !==
           Math.round(foreignServices * 100) ||
-        item.compensation_usd < 250_000 ||
+        alternativeCompensationWorldwideTotal(items, item) < 250_000 ||
         (item.foreign_earned_income_exclusion_usd ?? 0) !== 0 ||
         item.foreign_tax_credit_method !== ForeignTaxCreditMethod.Paid ||
         !item.foreign_tax_irs_country_code ||
@@ -129,7 +166,7 @@ function form1116Output(items: FecItems): NodeOutput[] {
           Math.round(tax * 100))
     ) {
       throw new Error(
-        "Form 1116 line 1b needs dated paid foreign-currency wage tax, reconciled ordinary/alternative source amounts, no exclusion, and at least $250,000 for the identified foreign-employer pay item",
+        "Form 1116 line 1b needs dated paid foreign-currency wage tax, reconciled ordinary/alternative source amounts, no exclusion, and at least $250,000 of identified employee compensation",
       );
     }
     if (tax <= 0 || foreignServices <= 0) return [];

@@ -77,13 +77,26 @@ Deno.test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z",
   assertStringIncludes(xml, ">1800</OtherIncomeTotalAmt>");
 });
 
-Deno.test("TY2025 nonbusiness Form 1099-NEC has a typed line 8z statement row", () => {
-  const fields = { line8z_f1099nec_nonbusiness: 2_000 };
-  const statement = schedule1OtherIncomeStatement.build({}, {
-    pending: { schedule1: fields },
+Deno.test("TY2025 nonbusiness Form 1099-NEC uses line 8j and rejects the old 8z scalar", () => {
+  assertThrows(
+    () => schedule1.build({ line8z_f1099nec_nonbusiness: 2_000 }),
+    Error,
+    "needs Schedule 1 line 8j source rows",
+  );
+  const xml = schedule1.build({
+    line8j_f1099k_hobby_income: 100,
+    f1099nec_nonbusiness_sources: [{
+      payer_name: "Occasional Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Occasional service",
+      amount: 2_000,
+    }],
   });
-  assertStringIncludes(statement, "Form 1099-NEC nonbusiness services");
-  assertStringIncludes(statement, "<OtherIncomeAmt>2000</OtherIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<ActivityNotForProfitIncmAmt>2100</ActivityNotForProfitIncmAmt>",
+  );
 });
 
 Deno.test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 8z row", () => {

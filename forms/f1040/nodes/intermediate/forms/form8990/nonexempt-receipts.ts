@@ -10,6 +10,7 @@ export const priorFiledScheduleCSchema = z.object({
   tax_year: z.union([z.literal(2022), z.literal(2023), z.literal(2024)]),
   business_reference: z.string().trim().min(1),
   filed_schedule_c_document_reference: z.string().trim().min(1),
+  filed_taxpayer_ssn: z.string().regex(/^\d{9}$/),
   filed_tax_period_start: z.string().date(),
   filed_tax_period_end: z.string().date(),
   filed_line1_gross_receipts: filedAmount,
@@ -62,6 +63,7 @@ export interface NonexemptPriorReceiptsProof {
 export function proveNonexemptPriorReceipts(
   provisional: ProvisionalScheduleCInterestPass,
   raw: unknown,
+  currentTaxpayerSsn: string,
 ): NonexemptPriorReceiptsProof {
   const documents = z.array(priorFiledScheduleCSchema).length(3).parse(raw);
   const years = new Set(documents.map((entry) => entry.tax_year));
@@ -80,6 +82,14 @@ export function proveNonexemptPriorReceipts(
   ) {
     throw new Error(
       "Form 8990 prior receipts are not for the identified business",
+    );
+  }
+  if (
+    !/^\d{9}$/.test(currentTaxpayerSsn) ||
+    documents.some((entry) => entry.filed_taxpayer_ssn !== currentTaxpayerSsn)
+  ) {
+    throw new Error(
+      "Form 8990 prior filed Schedule C taxpayer differs from current return",
     );
   }
   const total = documents.reduce(

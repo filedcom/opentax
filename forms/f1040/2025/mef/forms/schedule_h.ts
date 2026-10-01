@@ -4,6 +4,7 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule_h/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
 
 export interface Fields {
   employer_ein?: string;
@@ -13,6 +14,7 @@ export interface Fields {
   medicare_wages?: number | null;
   additional_medicare_wages?: number | null;
   federal_income_tax_withheld?: number | null;
+  family_withholding_only_payroll?: unknown;
   federal_unemployment?: {
     paid_only_one_state: true;
     all_contributions_paid_on_time: true;
@@ -21,11 +23,75 @@ export interface Fields {
     contributions_paid?: number;
     zero_experience_rate?: true;
     taxable_wages: number;
+    all_household_employees_included: true;
+    prior_year_quarter_threshold_met: boolean;
+    prior_year_quarter_source_reference?: string;
+    employee_wages: Array<{
+      employee_id: string;
+      payroll_source_reference: string;
+      relationship: "unrelated";
+      age_18_or_older_for_fica: boolean;
+      student_minor_fica_exclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        student_enrollment_source_reference: string;
+        student_during_2025_verified: true;
+      };
+      nonstudent_minor_fica_inclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        education_status_source_reference: string;
+        principal_occupation_source_reference: string;
+        not_a_student_during_2025_verified: true;
+        household_services_principal_occupation_verified: true;
+      };
+      ordinary_cash_only: true;
+      annual_cash_wages: number;
+      quarterly_cash_wages: [number, number, number, number];
+      w2?: {
+        source_reference: string;
+        box2_federal_income_tax_withheld: number;
+        box3_social_security_wages: number;
+        box5_medicare_wages: number;
+      };
+    }>;
   } | {
     paid_only_one_state: boolean;
     all_contributions_paid_on_time: boolean;
     all_futa_wages_state_taxable: boolean;
     taxable_futa_wages: number;
+    all_household_employees_included: true;
+    prior_year_quarter_threshold_met: boolean;
+    prior_year_quarter_source_reference?: string;
+    employee_wages: Array<{
+      employee_id: string;
+      payroll_source_reference: string;
+      relationship: "unrelated";
+      age_18_or_older_for_fica: boolean;
+      student_minor_fica_exclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        student_enrollment_source_reference: string;
+        student_during_2025_verified: true;
+      };
+      nonstudent_minor_fica_inclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        education_status_source_reference: string;
+        principal_occupation_source_reference: string;
+        not_a_student_during_2025_verified: true;
+        household_services_principal_occupation_verified: true;
+      };
+      ordinary_cash_only: true;
+      annual_cash_wages: number;
+      quarterly_cash_wages: [number, number, number, number];
+      w2?: {
+        source_reference: string;
+        box2_federal_income_tax_withheld: number;
+        box3_social_security_wages: number;
+        box5_medicare_wages: number;
+      };
+    }>;
     state_rows: Array<{
       state: string;
       taxable_state_wages: number;
@@ -77,7 +143,87 @@ function buildIRS1040ScheduleH(
       "Schedule H taxable FICA wages conflict with a false line A answer",
     );
   }
-  const amounts = computeScheduleHAmounts(inputSchema.parse(fields), 2025);
+  const source = inputSchema.parse(fields);
+  if (
+    source.federal_unemployment === undefined &&
+    ((source.ss_wages ?? 0) > 0 || (source.medicare_wages ?? 0) > 0 ||
+      (source.federal_income_tax_withheld ?? 0) > 0) &&
+    source.fica_only_payroll === undefined &&
+    source.family_withholding_only_payroll === undefined
+  ) {
+    throw new Error(
+      "Schedule H FICA-only export needs employee payroll source",
+    );
+  }
+  const amounts = computeScheduleHAmounts(source, 2025);
+  const ficaOnlyMinor = source.fica_only_payroll?.employee_wages[0]
+    ?.nonstudent_minor_fica_inclusion;
+  if (ficaOnlyMinor) {
+    const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    if (
+      JSON.stringify(retained.fica_only_payroll) !==
+        JSON.stringify(source.fica_only_payroll) ||
+      (context.pending?.schedule2 as Record<string, unknown> | undefined)
+          ?.line9_household_employment !== amounts.totalTax
+    ) {
+      throw new Error(
+        "Schedule H FICA-only minor source and tax must reconcile to retained payroll and Schedule 2 line 9",
+      );
+    }
+  }
+  if (source.family_withholding_only_payroll) {
+    const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    const family = source.family_withholding_only_payroll;
+    const spouseW2s = (context.pending?.w2 as {
+      w2s?: Array<Record<string, unknown>>;
+    } | undefined)?.w2s;
+    const spouseW2 = spouseW2s?.length === 1 ? spouseW2s[0] : undefined;
+    const return1040 = context.pending?.f1040 as
+      | Record<string, unknown>
+      | undefined;
+    const digits = (value: unknown): string | undefined =>
+      typeof value === "string" ? value.replace(/\D/g, "") : undefined;
+    if (
+      filer.primarySSN.replace(/\D/g, "") !==
+        family.employer_ssn ||
+      (family.employee.relationship === "spouse" &&
+        (filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          filer.spouse?.ssn.replace(/\D/g, "") !==
+            family.employee.employee_ssn ||
+          digits(spouseW2?.employee_ssn) !==
+            family.employee.employee_ssn ||
+          digits(spouseW2?.employer_ein) !==
+            fields.employer_ein ||
+          spouseW2?.box1_wages !== family.employee.w2.box1_wages ||
+          spouseW2?.box2_fed_withheld !==
+            family.employee.w2.box2_federal_income_tax_withheld ||
+          spouseW2?.box3_ss_wages !== 0 ||
+          spouseW2?.box5_medicare_wages !== 0 ||
+          return1040?.line1a_wages !== family.employee.w2.box1_wages ||
+          return1040?.line25a_w2_withheld !==
+            family.employee.w2.box2_federal_income_tax_withheld ||
+          return1040?.line23_other_taxes !== amounts.totalTax)) ||
+      JSON.stringify(retained.family_withholding_only_payroll) !==
+        JSON.stringify(family) ||
+      (context.pending?.schedule2 as Record<string, unknown> | undefined)
+          ?.line9_household_employment !== amounts.totalTax
+    ) {
+      throw new Error(
+        "Schedule H family withholding source must match the filer, spouse W-2 and Form 1040 if applicable, retained payroll, and Schedule 2 line 9",
+      );
+    }
+  }
+  if (
+    source.federal_unemployment?.employee_wages.some((employee) =>
+      employee.nonstudent_minor_fica_inclusion !== undefined
+    ) &&
+    (context.pending?.schedule2 as Record<string, unknown> | undefined)
+        ?.line9_household_employment !== amounts.totalTax
+  ) {
+    throw new Error(
+      "Schedule H nonstudent minor tax must reconcile to Schedule 2 line 9",
+    );
+  }
   const unemployment = fields.federal_unemployment;
   const ssTax = fields.ss_wages == null ? undefined : amounts.socialSecurityTax;
   const medicareTax = fields.medicare_wages == null

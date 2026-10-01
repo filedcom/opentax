@@ -19,6 +19,8 @@ const request = {
     taxpayer_authorized_attached_request_confirmed: true,
   },
   final_1040_line37_amount_owed: 7_200,
+  home_phone_number: "5125550140",
+  best_time_to_call_at_home: "MORNINGS",
   proposed_monthly_payment: 100,
   payment_due_day: 15,
   payment_method: "manual_monthly_payment",
@@ -55,6 +57,8 @@ Deno.test("Form 9465 rejects unsourced and inconsistent attached terms", () => {
       { ...request, final_1040_line37_amount_owed: 25_001 },
       { ...request, proposed_monthly_payment: 99 },
       { ...request, payment_due_day: 29 },
+      { ...request, home_phone_number: "512-555-0140" },
+      { ...request, best_time_to_call_at_home: "AFTERNOON HOURS" },
       {
         ...request,
         reviewed_source: {

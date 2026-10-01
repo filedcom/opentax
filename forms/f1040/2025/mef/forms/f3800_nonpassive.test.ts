@@ -81,6 +81,8 @@ const tax = {
   tentativeMinimumTax: 20_000,
   standardCredit: 18_000,
   specifiedCredit: 15_000,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 Deno.test("Form 3800 nonpassive source builder exposes structured document parts", () => {
@@ -285,6 +287,69 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
       }),
     Error,
     "invalid Form 8874",
+  );
+});
+
+Deno.test("Form 3800 XML: two trust Form 3468 Part V sources share line 1v and Part V", () => {
+  const sources = [{
+    credit: 15_000,
+    ein: "123456789",
+    documentId: "IRS3468_1",
+  }, {
+    credit: 15_000,
+    ein: "987654321",
+    documentId: "IRS3468_2",
+  }];
+  const input = {
+    tax: { ...tax, standardCredit: 30_000, specifiedCredit: 0 },
+    form3468PartV: {
+      credit: 30_000,
+      appliedCredit: 20_000,
+      sources,
+      appliedCreditsBySource: [15_000, 5_000],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  const parts = buildForm3800NonpassiveParts({
+    ...input,
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
+  });
+  assertEquals(
+    parts.currentAmounts.find((row) => row.line === "1v")?.totalCredit,
+    30_000,
+  );
+  assertEquals(
+    parts.currentAmounts.find((row) => row.line === "1v")?.appliedCredit,
+    20_000,
+  );
+  assertEquals(
+    parts.currentDetails.filter((row) => row.line === "1v").length,
+    2,
+  );
+  const xml = buildIRS3800Document(parts);
+  assertStringIncludes(xml, "<Form3468PartVCYCreditsGrp");
+  assertStringIncludes(xml, "<Frm3468PartVCYAggrgtAmtGrp");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(xml, 'referenceDocumentName="IRS3468"');
+  assertStringIncludes(xml, 'referenceDocumentName="IRS3468 BinaryAttachment"');
+  assertThrows(
+    () =>
+      buildFiledNonpassive({
+        ...input,
+        form3468PartV: {
+          ...input.form3468PartV,
+          appliedCreditsBySource: [16_000, 4_000],
+        },
+      }),
+    Error,
+    "Form 3468 Part V applied credits",
   );
 });
 
@@ -526,6 +591,8 @@ Deno.test("Form 3800 XML: direct estate and trust disabled-access sources share 
       regularTax: 22_500,
       standardCredit: 3_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: {
       credit: 3_000,
@@ -570,6 +637,8 @@ Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and
       regularTax: 22_000,
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       source,
@@ -611,6 +680,8 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
       regularTax: 23_000,
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       {
@@ -702,6 +773,8 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
       tentativeMinimumTax: 20_000,
       standardCredit: 4.47,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       {
@@ -994,6 +1067,8 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
         regularTax: 23_000,
         standardCredit: 5_000,
         specifiedCredit: 0,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
       },
       disabledAccess: disabledAccessFromForm(
         {

@@ -14,7 +14,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 //
 // Taxpayers must file this form to reclaim EITC, CTC/ACTC, or AOTC after
 // the IRS disallowed the credit in a prior year (e.g., due to an audit).
-// This input node signals eligibility restoration to the downstream credit nodes.
+// This input node carries the filed claim and prior notice facts to credit nodes.
 
 const personNameSchema = z.object({
   first_name: z.string().min(1).max(20).regex(/^[A-Za-z-]+(?: [A-Za-z-]+)*$/),
@@ -54,6 +54,21 @@ const aotcStudentSchema = personNameSchema.extend({
   credit_claimed_four_prior_years: z.boolean(),
 });
 
+// A reviewed prior IRS notice is separate from the current-year Form 8862
+// answers. Its copy reference identifies the retained source, while the
+// matching year, notice, and taxpayer are checked again at export.
+export const priorCreditDisallowanceReviewSchema = z.object({
+  disallowed_year: z.number().int().min(2016).max(2024),
+  notice_reference: z.string().trim().min(1),
+  notice_copy_reference: z.string().trim().min(1),
+  taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  nonclerical_disallowance_verified: z.literal(true),
+  no_active_ban_verified: z.literal(true),
+}).strict();
+export type PriorCreditDisallowanceReview = z.infer<
+  typeof priorCreditDisallowanceReviewSchema
+>;
+
 export const inputSchema = z.object({
   // Which credits were previously disallowed and are being reclaimed
   claim_eitc: z.boolean().optional(),
@@ -65,9 +80,12 @@ export const inputSchema = z.object({
 
   // Internal prior-disallowance metadata. Part I line 1 is the filing year,
   // not any of these years; the TY2025 MeF document does not serialize them.
-  eitc_disallowed_year: z.number().int().nonnegative().optional(),
-  ctc_disallowed_year: z.number().int().nonnegative().optional(),
-  aotc_disallowed_year: z.number().int().nonnegative().optional(),
+  eitc_disallowed_year: z.number().int().min(1997).max(2024).optional(),
+  eitc_disallowance_notice_reference: z.string().trim().min(1).optional(),
+  ctc_disallowed_year: z.number().int().min(2016).max(2024).optional(),
+  ctc_disallowance_notice_reference: z.string().trim().min(1).optional(),
+  aotc_disallowed_year: z.number().int().min(2016).max(2024).optional(),
+  aotc_disallowance_notice_reference: z.string().trim().min(1).optional(),
 
   // Part II: EITC — qualifying children eligibility re-certification
   eitc_qualifying_children_count: z.number().int().min(0).max(3).optional(),
@@ -93,10 +111,47 @@ export const inputSchema = z.object({
 
 export type F8862Input = z.infer<typeof inputSchema>;
 
+export function assertCreditDisallowanceEvidence(input: F8862Input): void {
+  if (
+    input.claim_eitc &&
+    (input.eitc_disallowed_year === undefined ||
+      !input.eitc_disallowance_notice_reference)
+  ) {
+    throw new Error(
+      "Form 8862 EIC claim needs the prior disallowance year and IRS notice reference",
+    );
+  }
+  if (
+    input.claim_ctc &&
+    (input.ctc_disallowed_year === undefined ||
+      !input.ctc_disallowance_notice_reference)
+  ) {
+    throw new Error(
+      "Form 8862 CTC/ACTC/ODC claim needs the prior disallowance year and IRS notice reference",
+    );
+  }
+  if (
+    input.claim_aotc &&
+    (input.aotc_disallowed_year === undefined ||
+      !input.aotc_disallowance_notice_reference)
+  ) {
+    throw new Error(
+      "Form 8862 AOTC claim needs the prior disallowance year and IRS notice reference",
+    );
+  }
+}
+
 function eitcOutput(input: F8862Input): NodeOutput[] {
   if (!input.claim_eitc) return [];
-  // Signal to the eitc node that disallowance has been cleared via Form 8862.
-  return [{ nodeType: eitc.nodeType, fields: { form8862_filed: true } }];
+  // Carry the claim and its notice identity to the EIC eligibility check.
+  return [{
+    nodeType: eitc.nodeType,
+    fields: {
+      form8862_filed: true,
+      form8862_disallowed_year: input.eitc_disallowed_year,
+      form8862_notice_reference: input.eitc_disallowance_notice_reference,
+    },
+  }];
 }
 
 function ctcOutput(input: F8862Input): NodeOutput[] {
@@ -116,6 +171,7 @@ class F8862Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F8862Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertCreditDisallowanceEvidence(input);
     const outputs: NodeOutput[] = [
       ...eitcOutput(input),
       ...ctcOutput(input),

@@ -6,49 +6,66 @@ import { normalizeAllPending, normalizePendingDict } from "./pending.ts";
 // ---------------------------------------------------------------------------
 
 Deno.test("normalizePendingDict: returns undefined for null", () => {
-  assertEquals(normalizePendingDict(null), undefined);
+  assertEquals(normalizePendingDict(null, "f1040"), undefined);
 });
 
 Deno.test("normalizePendingDict: returns undefined for undefined", () => {
-  assertEquals(normalizePendingDict(undefined), undefined);
+  assertEquals(normalizePendingDict(undefined, "f1040"), undefined);
 });
 
 Deno.test("normalizePendingDict: returns undefined for array", () => {
-  assertEquals(normalizePendingDict([1, 2, 3]), undefined);
+  assertEquals(normalizePendingDict([1, 2, 3], "f1040"), undefined);
 });
 
 Deno.test("normalizePendingDict: returns undefined for primitive", () => {
-  assertEquals(normalizePendingDict(42), undefined);
+  assertEquals(normalizePendingDict(42, "f1040"), undefined);
 });
 
 Deno.test("normalizePendingDict: passes through scalar number values unchanged", () => {
-  assertEquals(normalizePendingDict({ wages: 75000 }), { wages: 75000 });
+  assertEquals(normalizePendingDict({ wages: 75000 }, "f1040"), {
+    wages: 75000,
+  });
 });
 
 Deno.test("normalizePendingDict: passes through string values unchanged", () => {
   assertEquals(
-    normalizePendingDict({ filing_status: "single" }),
+    normalizePendingDict({ filing_status: "single" }, "f1040"),
     { filing_status: "single" },
   );
 });
 
 Deno.test("normalizePendingDict: resolves all-numeric array to last element", () => {
   assertEquals(
-    normalizePendingDict({ wages: [60000, 75000] }),
+    normalizePendingDict({ wages: [60000, 75000] }, "f1040"),
     { wages: 75000 },
+  );
+});
+
+Deno.test("normalizePendingDict: adds independent Schedule E and passive K-1 sources", () => {
+  assertEquals(
+    normalizePendingDict({
+      line5_schedule_e: [6_000, 5_950],
+      eic_passive_k1_income: [6_000, 5_950],
+      agi: [15_000, 16_950],
+    }, "f1040"),
+    {
+      line5_schedule_e: 11_950,
+      eic_passive_k1_income: 11_950,
+      agi: 16_950,
+    },
   );
 });
 
 Deno.test("normalizePendingDict: single-element numeric array resolves to that element", () => {
   assertEquals(
-    normalizePendingDict({ wages: [75000] }),
+    normalizePendingDict({ wages: [75000] }, "f1040"),
     { wages: 75000 },
   );
 });
 
 Deno.test("normalizePendingDict: mixed-type array is left as-is", () => {
   const input = { items: [1, "two", 3] };
-  assertEquals(normalizePendingDict(input), { items: [1, "two", 3] });
+  assertEquals(normalizePendingDict(input, "f1040"), { items: [1, "two", 3] });
 });
 
 Deno.test("normalizePendingDict: handles multiple fields independently", () => {
@@ -57,11 +74,26 @@ Deno.test("normalizePendingDict: handles multiple fields independently", () => {
       wages: [50000, 75000],
       interest: 1200,
       filing_status: "single",
-    }),
+    }, "f1040"),
     {
       wages: 75000,
       interest: 1200,
       filing_status: "single",
+    },
+  );
+});
+
+Deno.test("normalizePendingDict: Form 4952 retains individual payer amounts", () => {
+  assertEquals(
+    normalizePendingDict({
+      source_1099_interest: [30_000, 30_000],
+      source_1099_dividends: [15_000, 25_000],
+      line4a: [60_000, 100_000],
+    }, "form4952"),
+    {
+      source_1099_interest: [30_000, 30_000],
+      source_1099_dividends: [15_000, 25_000],
+      line4a: 100_000,
     },
   );
 });

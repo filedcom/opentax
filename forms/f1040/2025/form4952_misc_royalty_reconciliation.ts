@@ -15,7 +15,8 @@ const scheduleASchema = z.object({
 });
 const schedule1Schema = z.object({
   line5_schedule_e: z.number(),
-  line9_total_other_income: z.number(),
+  line9_total_other_income: z.number().optional(),
+  line10_total_additional_income: z.number(),
 });
 const form1040Schema = z.object({
   line8_additional_income: z.number(),
@@ -145,7 +146,8 @@ export function reconcileForm4952MiscRoyaltyPath(
   }
   if (
     schedule1.data.line5_schedule_e !== royalty ||
-    schedule1.data.line9_total_other_income !== royalty ||
+    (schedule1.data.line9_total_other_income ?? 0) !== 0 ||
+    schedule1.data.line10_total_additional_income !== royalty ||
     form1040.data.line8_additional_income !== royalty ||
     scheduleA.data.line_9_investment_interest !== lines.line8 ||
     form1040.data.line12e_itemized_deductions < lines.line8

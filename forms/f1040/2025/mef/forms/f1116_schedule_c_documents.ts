@@ -14,6 +14,7 @@ export enum ScheduleCDocumentRole {
   FiledForm1116 = "filed_form1116",
   FiledSchedule3 = "filed_schedule3",
   FiledForm1040 = "filed_form1040",
+  PreparedForm1040X = "prepared_form1040x",
   ForeignRedetermination = "foreign_redetermination",
   RevisedCalculation = "revised_calculation",
   AffectedYearRecalculation = "affected_year_recalculation",
@@ -23,14 +24,33 @@ export enum ScheduleCDocumentRole {
 const documentSchema = z.object({
   role: z.nativeEnum(ScheduleCDocumentRole),
   source_reference: z.string().trim().min(1),
+  reviewed_subject_ssn: z.string().regex(/^\d{9}$/).optional(),
+  foreign_tax_owner_reference: z.string().trim().min(1).optional(),
   bytes: z.instanceof(Uint8Array).refine((bytes) => bytes.length > 0),
   reviewed_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   reviewed_by: z.string().trim().min(1),
 }).strict();
 
+const amendedLineSchema = z.object({
+  column_a: z.number().int().nonnegative(),
+  column_b: z.number().int(),
+  column_c: z.number().int().nonnegative(),
+}).strict();
+
+const preparedAmendmentSchema = z.object({
+  tax_year: z.union([z.literal(2023), z.literal(2024)]),
+  prepared_form1040x_document_reference: z.string().trim().min(1),
+  line6_tax: amendedLineSchema,
+  line7_nonrefundable_credits: amendedLineSchema,
+  line8_tax_after_credits: amendedLineSchema,
+  line10_other_taxes: amendedLineSchema,
+  line11_total_tax: amendedLineSchema,
+}).strict();
+
 export const scheduleCDocumentIntakeSchema = z.object({
   ledger: redeterminationDisclosureSchema,
   filed_year_evidence: scheduleCFiledYearEvidenceSchema,
+  prepared_amendment: preparedAmendmentSchema.optional(),
   documents: z.array(documentSchema).min(7),
 }).strict().superRefine((input, ctx) => {
   const identities = input.documents.map((document) =>
@@ -53,12 +73,15 @@ export type ScheduleCDocumentIntake = z.infer<
 export interface ScheduleCDocumentManifest {
   readonly role: ScheduleCDocumentRole;
   readonly source_reference: string;
+  readonly reviewed_subject_ssn?: string;
+  readonly foreign_tax_owner_reference?: string;
   readonly sha256: string;
   readonly reviewed_by: string;
   readonly page_count: number;
 }
 
 export interface ScheduleCReviewedCandidate {
+  readonly filer_ssn: string;
   readonly documents: readonly ScheduleCDocumentManifest[];
   readonly relation_back_tax_year: number;
   readonly filed_us_tax_liability: number;
@@ -67,6 +90,7 @@ export interface ScheduleCReviewedCandidate {
   readonly affected_year_amendment_status:
     | "required_unverified"
     | "not_required";
+  readonly prepared_amendment_reviewed: boolean;
   readonly relation_back_year_unused_foreign_tax_before: 0;
   readonly relation_back_year_unused_foreign_tax_after: 0;
   readonly native_xml_candidate: string;
@@ -94,6 +118,14 @@ function requiredReferences(input: ScheduleCDocumentIntake) {
       ScheduleCDocumentRole.FiledForm1040,
       evidence.filed_form1040.filed_document_reference,
     ],
+    ...(input.prepared_amendment
+      ? [
+        [
+          ScheduleCDocumentRole.PreparedForm1040X,
+          input.prepared_amendment.prepared_form1040x_document_reference,
+        ] as const,
+      ]
+      : []),
     ...ledger.payor_events.flatMap((payor) =>
       payor.source_document_references.map((reference) =>
         [ScheduleCDocumentRole.ForeignRedetermination, reference] as const
@@ -115,7 +147,77 @@ function requiredReferences(input: ScheduleCDocumentIntake) {
   return references;
 }
 
-function verifyCrossReferences(input: ScheduleCDocumentIntake): void {
+function verifyPreparedAmendment(input: ScheduleCDocumentIntake): void {
+  const {
+    ledger,
+    filed_year_evidence: evidence,
+    prepared_amendment: amendment,
+  } = input;
+  const affected = ledger.affected_years[0];
+  const changed = affected.redetermined_us_tax_liability_usd !==
+    affected.us_tax_liability_on_filed_return_usd;
+  if (changed !== !!amendment) {
+    throw new Error(
+      "Form 1116 Schedule C changed affected-year liability needs a reviewed prepared Form 1040-X; unchanged liability must not include one",
+    );
+  }
+  if (!amendment) return;
+  if (amendment.tax_year !== ledger.relation_back_tax_year) {
+    throw new Error(
+      "Form 1116 Schedule C prepared Form 1040-X tax year differs from the affected year",
+    );
+  }
+  const u = evidence.filed_form1040;
+  const revised = evidence.revised_form1040;
+  const expected = [
+    ["line6_tax", u.line18_tax_before_credits, u.line18_tax_before_credits],
+    [
+      "line7_nonrefundable_credits",
+      u.line21_nonrefundable_credits,
+      revised.line21_nonrefundable_credits,
+    ],
+    [
+      "line8_tax_after_credits",
+      u.line22_tax_after_credits,
+      revised.line22_tax_after_credits,
+    ],
+    ["line10_other_taxes", u.line23_other_taxes, u.line23_other_taxes],
+    ["line11_total_tax", u.line24_total_tax, revised.line24_total_tax],
+  ] as const;
+  for (const [name, filed, corrected] of expected) {
+    const line = amendment[name];
+    if (
+      line.column_a !== filed || line.column_c !== corrected ||
+      line.column_b !== corrected - filed
+    ) {
+      throw new Error(
+        `Form 1116 Schedule C prepared Form 1040-X ${name} disagrees with the affected-year return reconciliation`,
+      );
+    }
+  }
+  for (const column of ["column_a", "column_c"] as const) {
+    if (
+      amendment.line8_tax_after_credits[column] !==
+        Math.max(
+          0,
+          amendment.line6_tax[column] -
+            amendment.line7_nonrefundable_credits[column],
+        ) ||
+      amendment.line11_total_tax[column] !==
+        amendment.line8_tax_after_credits[column] +
+          amendment.line10_other_taxes[column]
+    ) {
+      throw new Error(
+        "Form 1116 Schedule C prepared Form 1040-X tax lines do not add up",
+      );
+    }
+  }
+}
+
+function verifyCrossReferences(
+  input: ScheduleCDocumentIntake,
+  filerSSN: string,
+): void {
   const { ledger, filed_year_evidence: evidence } = input;
   if (
     ledger.filed_form1116.source_document_reference !==
@@ -145,6 +247,24 @@ function verifyCrossReferences(input: ScheduleCDocumentIntake): void {
     if (!expectedKeys.has(`${document.role}:${document.source_reference}`)) {
       throw new Error(
         `Form 1116 Schedule C ${document.role} PDF does not match its reviewed source reference`,
+      );
+    }
+    if (document.role === ScheduleCDocumentRole.ForeignRedetermination) {
+      if (
+        !document.foreign_tax_owner_reference ||
+        (document.reviewed_subject_ssn !== undefined &&
+          document.reviewed_subject_ssn !== filerSSN)
+      ) {
+        throw new Error(
+          "Form 1116 Schedule C foreign record needs a reviewed taxpayer ownership link",
+        );
+      }
+    } else if (
+      document.reviewed_subject_ssn !== filerSSN ||
+      document.foreign_tax_owner_reference !== undefined
+    ) {
+      throw new Error(
+        "Form 1116 Schedule C filed return or workpaper owner differs from the current filer",
       );
     }
   }
@@ -184,6 +304,8 @@ async function documentManifest(
   return {
     role: document.role,
     source_reference: document.source_reference,
+    reviewed_subject_ssn: document.reviewed_subject_ssn,
+    foreign_tax_owner_reference: document.foreign_tax_owner_reference,
     sha256,
     reviewed_by: document.reviewed_by,
     page_count: pdf.getPageCount(),
@@ -196,9 +318,17 @@ async function documentManifest(
  */
 export async function reviewScheduleCDocuments(
   raw: ScheduleCDocumentIntake,
+  currentFilerSSN: string,
 ): Promise<ScheduleCReviewedCandidate> {
   const input = scheduleCDocumentIntakeSchema.parse(raw);
-  verifyCrossReferences(input);
+  const filerSSN = currentFilerSSN.replaceAll("-", "");
+  if (!/^\d{9}$/.test(filerSSN)) {
+    throw new Error(
+      "Form 1116 Schedule C review needs the current filer's SSN",
+    );
+  }
+  verifyPreparedAmendment(input);
+  verifyCrossReferences(input, filerSSN);
   const nativeXmlCandidate = buildScheduleCProjection(
     input.ledger,
     input.filed_year_evidence,
@@ -212,6 +342,7 @@ export async function reviewScheduleCDocuments(
   const amendedReturnRequired = affected.redetermined_us_tax_liability_usd !==
     affected.us_tax_liability_on_filed_return_usd;
   return {
+    filer_ssn: filerSSN,
     documents,
     relation_back_tax_year: input.ledger.relation_back_tax_year,
     filed_us_tax_liability: affected.us_tax_liability_on_filed_return_usd,
@@ -220,15 +351,19 @@ export async function reviewScheduleCDocuments(
     affected_year_amendment_status: amendedReturnRequired
       ? "required_unverified"
       : "not_required",
+    prepared_amendment_reviewed: !!input.prepared_amendment,
     relation_back_year_unused_foreign_tax_before:
       recomputed.filedUnusedForeignTax,
     relation_back_year_unused_foreign_tax_after:
       recomputed.revisedUnusedForeignTax,
     native_xml_candidate: nativeXmlCandidate,
-    pdf_fields_candidate: projectScheduleCPdfCandidate(
-      input.ledger,
-      input.filed_year_evidence,
-    ),
+    pdf_fields_candidate: {
+      ...projectScheduleCPdfCandidate(
+        input.ledger,
+        input.filed_year_evidence,
+      ),
+      reviewed_filer_ssn: filerSSN,
+    },
     export_ready: false,
   };
 }

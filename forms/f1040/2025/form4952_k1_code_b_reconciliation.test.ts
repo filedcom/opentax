@@ -6,6 +6,7 @@ const k1 = {
   partnership_name: "Mineral Partnership",
   partnership_ein: "123456789",
   source_document_reference: "2025-issued-k1",
+  recipient_tin: "123456789",
   investment_property_for_form4952: true,
   box7_royalties: 600,
   box7_royalty_reporting: {
@@ -19,6 +20,7 @@ const k1 = {
     reported_amount: 350,
     allowed_amount: 350,
     statement_reference: "2025 code I statement",
+    issuer_expense_item_id: "mineral-property-depreciation-1",
     expense_kind: "depreciation",
     basis_workpaper_reference: "2025 basis workpaper",
     at_risk_workpaper_reference: "2025 at-risk workpaper",
@@ -30,6 +32,7 @@ const k1 = {
     nonpassive_investment_property: true,
     issuer_crosswalk: {
       issuer_supplement_reference: "2025 issuer supplement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       issuer_reported_amount: 350,
       same_expense_as_box13_code_i_confirmed: true,
       box13_code_i_statement_reference: "2025 code I statement",
@@ -57,6 +60,7 @@ const property = {
     box7_gross_royalties: 600,
     box13_code_i_allowed_deduction: 350,
     box13_code_i_statement_reference: "2025 code I statement",
+    issuer_expense_item_id: "mineral-property-depreciation-1",
   },
 };
 const input = {
@@ -78,7 +82,7 @@ const fields = { ...input, ...calculateForm4952(input) };
 const pending = {
   k1_partnership: { k1_partnerships: [k1] },
   schedule_e: { schedule_es: [property] },
-  schedule1: { line5_schedule_e: 250, line9_total_other_income: 250 },
+  schedule1: { line5_schedule_e: 250, line10_total_additional_income: 250 },
   schedule_a: { line_9_investment_interest: 250 },
   standard_deduction: { itemized_deductions: 20_000 },
   income_tax_calculation: { taking_standard_deduction: false },
@@ -93,6 +97,17 @@ Deno.test("Form 4952 code B matches one issuer-linked code I Schedule E deductio
 });
 
 Deno.test("Form 4952 code B rejects a duplicate or tampered Schedule E deduction", () => {
+  assertThrows(
+    () => reconcileForm4952K1CodeBRoyaltyPath(fields, {
+      ...pending,
+      schedule_e: { schedule_es: [{ ...property, k1_royalty_source: {
+        ...property.k1_royalty_source,
+        issuer_expense_item_id: "another-depreciation-item",
+      } }] },
+    }),
+    Error,
+    "same allowed code I expense deducted once",
+  );
   assertThrows(
     () =>
       reconcileForm4952K1CodeBRoyaltyPath(fields, {

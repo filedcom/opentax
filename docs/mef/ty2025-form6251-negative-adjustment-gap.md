@@ -215,6 +215,19 @@ The positive magnitude maps to TY2025 `IRS6251` `TotalRefundReceivedAmt` (an
 cached 2025 PDF. Focused source, calculation, MeF, and PDF mapping cases are
 written but unrun.
 
+The bounded positive export now replays one retained, identified Form 1099-G
+box 2 source with a reviewed 2024 tax-benefit workpaper. Its recipient SSN
+must match the final filer or joint spouse. Its taxable recovery must equal
+Schedule 1 line 1 and Form 6251 line 2b; Schedule 1 line 10 must
+equal Form 1040 line 8. Final Form 1040 income, AGI, deductions, and tax lines
+must reconcile with Form 6251 line 1b and Schedule 2 line 2. Both native and
+PDF reject a direct or altered refund claim. This bounded route excludes mixed
+or multiple refund statements, business tax refunds, other recovery years, and
+the other Schedule 1 line 8z refund types described in the
+[2025 Form 6251 line 2b instructions](https://www.irs.gov/instructions/i6251).
+The positive and tamper fixtures are authored for the deferred combined pass;
+issued 1099-G and prior filed-return bytes remain unauthenticated.
+
 ## Canonical PDF fields and ATNOLD sign
 
 The cached TY2025 Form 6251 PDF confirms that page-1 fields `f1_1` and `f1_2`

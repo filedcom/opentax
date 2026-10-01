@@ -1,6 +1,37 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
+
+function necContext(excess: number) {
+  return {
+    filer: {
+      primarySSN: "111223333",
+      nameLine1: "Test Taxpayer",
+      nameControl: "TAXP",
+      address: {
+        line1: "1 Test Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: {
+      f1099nec: {
+        f1099necs: [{
+          payer_name: "Former Company",
+          payer_tin: "12-3456789",
+          recipient_ssn: "111223333",
+          box1_nec: excess + 1_000,
+          box3_golden_parachute: excess,
+          for_routing: "schedule_c",
+          schedule_c_business_reference: "business-1",
+        }],
+      },
+    },
+  };
+}
 
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
@@ -23,6 +54,24 @@ Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => 
     rows: [{
       source_document_reference: "2024 Form 3800 and recapture workpaper",
       credit_line: "2a" as const,
+      prior_credit_evidence: {
+        tax_year: 2024,
+        original_form: "8933" as const,
+        filed_return_reference: "accepted-2024-form8933",
+        filed_return_sha256: "a".repeat(64),
+        prior_credit_claimed: 10_000,
+        gross_epe: 8_000,
+        gross_epe_applied_regular_tax: 3_000,
+        non_epe_applied_regular_tax: 1_000,
+      },
+      excessive_payment_notice: {
+        determination_tax_year: 2025 as const,
+        notice_reference: "irs-2025-ep-determination",
+        notice_sha256: "b".repeat(64),
+        determined_excessive_payment: 300,
+        net_epe_portion: 300,
+        reasonable_cause_accepted: false,
+      },
       prior_credit_claimed: 10_000,
       gross_epe: 8_000,
       gross_epe_applied_regular_tax: 3_000,
@@ -520,13 +569,41 @@ Deno.test(
     const result = schedule2.build({
       golden_parachute_excise: 2000,
       line17k_golden_parachute_excise: 3000,
-    });
+    }, necContext(15_000));
     assertStringIncludes(
       result,
       "<ExcessParachutePaymentAmt>5000</ExcessParachutePaymentAmt>",
     );
   },
 );
+
+Deno.test("1099-NEC box 3 Schedule 2 tax rejects absent, changed, and wrong-recipient source", () => {
+  assertThrows(
+    () => schedule2.build({ line17k_golden_parachute_excise: 3_000 }),
+    Error,
+    "needs filer identity",
+  );
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line17k_golden_parachute_excise: 2_999 },
+        necContext(15_000),
+      ),
+    Error,
+    "differs from 1099-NEC box 3 sources",
+  );
+  const wrongRecipient = necContext(15_000);
+  wrongRecipient.pending.f1099nec.f1099necs[0].recipient_ssn = "999887777";
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line17k_golden_parachute_excise: 3_000 },
+        wrongRecipient,
+      ),
+    Error,
+    "recipient must match",
+  );
+});
 
 Deno.test(
   "golden_parachute_excise(2000) alone emits ExcessParachutePaymentAmt=2000",
@@ -595,13 +672,13 @@ const allFields = {
 };
 
 Deno.test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(result, "<IRS1040Schedule2>");
   assertStringIncludes(result, "</IRS1040Schedule2>");
 });
 
 Deno.test("all fields present: all direct-mapped elements emitted", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>100</AlternativeMinimumTaxAmt>",
@@ -640,7 +717,7 @@ Deno.test("all fields present: all direct-mapped elements emitted", () => {
 });
 
 Deno.test("all fields present: aggregated elements summed correctly", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   // uncollected_fica(800) + uncollected_fica_gtl(900) = 1700
   assertStringIncludes(
     result,

@@ -13,6 +13,24 @@ Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkb
     rows: [{
       source_document_reference: "2024 Form 3800 and recapture workpaper",
       credit_line: "1d" as const,
+      prior_credit_evidence: {
+        tax_year: 2024,
+        original_form: "3468_part_iv" as const,
+        filed_return_reference: "accepted-2024-form3468",
+        filed_return_sha256: "a".repeat(64),
+        prior_credit_claimed: 10_000,
+        gross_epe: 8_000,
+        gross_epe_applied_regular_tax: 3_000,
+        non_epe_applied_regular_tax: 1_000,
+      },
+      excessive_payment_notice: {
+        determination_tax_year: 2025 as const,
+        notice_reference: "irs-2025-ep-determination",
+        notice_sha256: "b".repeat(64),
+        determined_excessive_payment: 300,
+        net_epe_portion: 300,
+        reasonable_cause_accepted: false,
+      },
       prior_credit_claimed: 10_000,
       gross_epe: 8_000,
       gross_epe_applied_regular_tax: 3_000,
@@ -93,6 +111,10 @@ Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () 
     "form1[0].Page1[0].f1_24[0]",
   );
   assertEquals(
+    byKey.get("line7_unreported_ss_medicare_total"),
+    "form1[0].Page1[0].f1_18[0]",
+  );
+  assertEquals(
     byKey.get("line16_lihtc_recapture"),
     "form1[0].Page1[0].f1_27[0]",
   );
@@ -133,10 +155,67 @@ Deno.test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on t
     golden_parachute_excise: 250,
     line17k_golden_parachute_excise: 150,
     line20_965_tax_installment: 2_000,
-  }, {});
+  }, {
+    general: { taxpayer_ssn: "111-22-3333", filing_status: "single" },
+    f1099nec: {
+      f1099necs: [{
+        payer_name: "Former Company",
+        payer_tin: "12-3456789",
+        recipient_ssn: "111-22-3333",
+        box1_nec: 1_000,
+        box3_golden_parachute: 750,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "business-1",
+      }],
+    },
+  });
   assertEquals(projected?.line13_uncollected_fica_total, 200);
   assertEquals(projected?.line17h_nqdc_total, 1_000);
   assertEquals(projected?.line17k_golden_parachute_total, 400);
   assertEquals(projected?.line20_965_tax_installment, 2_000);
-  assertEquals(projected?.line21_total, undefined);
+  assertEquals(projected?.line18_other_additional_taxes, 1_400);
+  assertEquals(projected?.line21_total, 1_600);
+});
+
+Deno.test("Schedule 2 PDF prints Form 4137 tax through lines 7 and 21", () => {
+  const projected = schedule2Pdf.projectFields?.({
+    line5_unreported_tip_tax: 115,
+  }, {});
+  assertEquals(projected?.line5_unreported_tip_tax, 115);
+  assertEquals(projected?.line7_unreported_ss_medicare_total, 115);
+  assertEquals(projected?.line21_total, 115);
+});
+
+Deno.test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17k_golden_parachute_excise: 150 },
+        { general: { taxpayer_ssn: "111-22-3333" } },
+      ),
+    Error,
+    "needs its payer source",
+  );
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17k_golden_parachute_excise: 149 },
+        {
+          general: { taxpayer_ssn: "111-22-3333" },
+          f1099nec: {
+            f1099necs: [{
+              payer_name: "Former Company",
+              payer_tin: "12-3456789",
+              recipient_ssn: "111-22-3333",
+              box1_nec: 1_000,
+              box3_golden_parachute: 750,
+              for_routing: "schedule_c",
+              schedule_c_business_reference: "business-1",
+            }],
+          },
+        },
+      ),
+    Error,
+    "differs from 1099-NEC box 3 sources",
+  );
 });

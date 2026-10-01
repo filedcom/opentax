@@ -12,9 +12,14 @@ import { FilingStatus } from "../../../nodes/types.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
   inputSchema as f1099rInputSchema,
+  iraDistributionExplanation,
+  isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
+import { assertEicSource } from "../../eic-source.ts";
+import { residentElectionName } from "../../resident-election-source.ts";
 
 export interface Fields {
   filing_status?: string;
@@ -27,6 +32,12 @@ export interface Fields {
   spouse_ssn_issued_before_due_date?: boolean;
   spouse_tin_issued_by_due_date?: boolean;
   digital_assets?: boolean;
+  main_home_in_us_over_half_year?: boolean;
+  eic_tax_residency_review?: unknown;
+  taxpayer_first_name?: string;
+  taxpayer_last_name?: string;
+  spouse_first_name?: string;
+  spouse_last_name?: string;
   dependent_details?: readonly DependentFiling[];
   dependent_count?: number;
   qualifying_child_tax_credit_count?: number;
@@ -47,12 +58,14 @@ export interface Fields {
   line3b_ordinary_dividends?: number | null;
   line4a_ira_gross?: number | null;
   line4b_ira_taxable?: number | null;
+  line4c_ira_rollover?: boolean;
   line5a_pension_gross?: number | null;
   line5b_pension_taxable?: number | null;
   line5c_pension_rollover?: boolean;
   line6a_ss_gross?: number | null;
   line6b_ss_taxable?: number | null;
   mfs_spouse_lived_with_taxpayer?: boolean;
+  mfs_eitc_separation_rule?: boolean;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
   line8_additional_income?: number | null;
@@ -286,7 +299,12 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
       "Form 1040 dependent credits do not match the dependent rows",
     );
   }
-  if (details.length === 0) return [];
+  const separatedSpouseMark = fields.mfs_eitc_separation_rule === true
+    ? element("SepdSpsFilingSepRetMeetsRqrInd", "X")
+    : "";
+  if (details.length === 0) {
+    return separatedSpouseMark ? [separatedSpouseMark] : [];
+  }
 
   if (
     !Object.values(FilingStatus).includes(fields.filing_status as FilingStatus)
@@ -399,6 +417,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
   const livedWithYou = details.filter((dep) => dep.months_in_home > 6).length;
   return [
     ...rows,
+    separatedSpouseMark,
     details.length > 4 ? element("MoreDependentsInd", "X") : "",
     element("ChldWhoLivedWithYouCnt", livedWithYou),
     element("OtherDependentsListedCnt", details.length - livedWithYou),
@@ -406,13 +425,23 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
-  if (fields.line5c_pension_rollover !== undefined &&
-      typeof fields.line5c_pension_rollover !== "boolean") {
+  if (
+    fields.line4c_ira_rollover !== undefined &&
+    typeof fields.line4c_ira_rollover !== "boolean"
+  ) {
+    throw new Error("Form 1040 line 4c rollover must be a boolean");
+  }
+  if (
+    fields.line5c_pension_rollover !== undefined &&
+    typeof fields.line5c_pension_rollover !== "boolean"
+  ) {
     throw new Error("Form 1040 line 5c rollover must be a boolean");
   }
   const f1099rSource = context?.pending?.f1099r;
-  if (rollover || f1099rSource !== undefined) {
+  let iraStatementId: string | undefined;
+  if (iraRollover || rollover || f1099rSource !== undefined) {
     const parsed = f1099rInputSchema.safeParse(f1099rSource);
     if (!parsed.success) {
       throw new Error("Form 1040 line 5c needs valid Form 1099-R source facts");
@@ -421,6 +450,22 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       throw new Error(
         "Form 1040 line 5c rollover does not match the payer-reported Form 1099-R code G",
       );
+    }
+    if (iraRollover !== parsed.data.f1099rs.some(isIraRollover)) {
+      throw new Error(
+        "Form 1040 line 4c rollover does not match the reviewed IRA Form 1099-R source",
+      );
+    }
+    const explanation = iraDistributionExplanation(parsed.data.f1099rs);
+    if (explanation !== undefined && context?.documentIdsByPendingKey) {
+      const ids = context.documentIdsByPendingKey.ira_distribution_statement ??
+        [];
+      if (ids.length !== 1 || !ids[0]?.trim()) {
+        throw new Error(
+          "Form 1040 line 4c needs one linked IRA distribution statement",
+        );
+      }
+      iraStatementId = ids[0];
     }
   }
   if (context?.pending?.w2g !== undefined) {
@@ -468,7 +513,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         context.documentIdsByPendingKey.schedule1a?.length !== 1)
     ) {
       throw new Error(
-        "Form 1040 line 13b needs an attached senior-only Schedule 1-A",
+        "Form 1040 line 13b needs an attached reviewed Schedule 1-A",
       );
     }
   }
@@ -519,16 +564,49 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 1040 digital-asset answer must be Yes or No");
   }
 
+  const mainHomeInUS = fields.main_home_in_us_over_half_year;
+  if (mainHomeInUS !== undefined && typeof mainHomeInUS !== "boolean") {
+    throw new Error("Form 1040 U.S. main-home answer must be Yes or No");
+  }
+  const residentElection = residentElectionName(
+    fields,
+    context?.pending,
+    context?.attachmentSha256ByFileName,
+    true,
+  );
+
   // VirtualCurAcquiredDurTYInd is required by IRS1040.xsd §338 (BooleanType).
   // Preserve the answer supplied on the general input rather than overwriting Yes.
   const requiredPrefix = [
+    ...(mainHomeInUS === true
+      ? [element("MainHomeInUSOverHalfYrInd", "X")]
+      : []),
     element("IndividualReturnFilingStatusCd", statusCode),
+    ...(residentElection
+      ? [elements("NRASpouseTreatedAsResidentGrp", [
+        element("NRASpouseTreatedAsResidentInd", "X"),
+        element("SpouseNm", residentElection),
+      ])]
+      : []),
     element(
       "VirtualCurAcquiredDurTYInd",
       digitalAssets === true ? "true" : "false",
     ),
     ...dependentXml(fields, context),
   ];
+
+  assertMfsEitcSource(
+    fields.filing_status,
+    fields.mfs_eitc_separation_rule,
+    resolveNumber(fields.line27_eitc),
+    context?.pending,
+  );
+  assertEicSource(
+    fields.filing_status,
+    resolveNumber(fields.line27_eitc),
+    mainHomeInUS,
+    context?.pending,
+  );
 
   const capitalGain = resolveNumber(fields.line7_capital_gain);
   const directDistribution = resolveNumber(fields.line7a_cap_gain_distrib);
@@ -591,6 +669,25 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       pensionIndex + 1,
       0,
       element("PensionsAnnuitiesRolloverInd", "X"),
+    );
+  }
+  if (iraRollover) {
+    const iraIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line4b_ira_taxable"
+    );
+    incomeChildren.splice(
+      iraIndex + 1,
+      0,
+      element(
+        "IRADistributionRolloverInd",
+        "X",
+        iraStatementId
+          ? {
+            referenceDocumentId: iraStatementId,
+            referenceDocumentName: "IRADistributionStatement",
+          }
+          : undefined,
+      ),
     );
   }
   if (typeof fields.form8814_tax === "number" && fields.form8814_tax > 0) {

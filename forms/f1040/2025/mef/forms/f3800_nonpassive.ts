@@ -18,7 +18,7 @@ import {
 } from "./f3800_current_rows.ts";
 
 function nontransferableCurrentRow(
-  line: "1e" | "1h" | "1i" | "1y" | "1aa" | "4b",
+  line: "1e" | "1h" | "1i" | "1v" | "1y" | "1aa" | "4b",
   credit: number,
   appliedCredit: number,
   metadata: Form3800CurrentCreditRowMetadata,
@@ -95,6 +95,16 @@ export type Form3800NonpassiveXmlInput = {
     readonly sources: readonly {
       readonly credit: number;
       readonly ein?: string;
+    }[];
+    readonly appliedCreditsBySource?: readonly number[];
+  };
+  readonly form3468PartV?: {
+    readonly credit: number;
+    readonly appliedCredit: number;
+    readonly sources: readonly {
+      readonly credit: number;
+      readonly ein: string;
+      readonly documentId: string;
     }[];
     readonly appliedCreditsBySource?: readonly number[];
   };
@@ -202,7 +212,7 @@ export function buildForm3800NonpassiveParts(
   const credits = classifyForm8835Credits(input.facilities);
   if (
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
-    !input.form5884 &&
+    !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
     !input.form8936Commercial &&
     input.facilities.length === 0
@@ -212,6 +222,7 @@ export function buildForm3800NonpassiveParts(
   const form8826Credit = input.disabledAccess?.credit ?? 0;
   const form8820Credit = input.form8820?.credit ?? 0;
   const form8874Credit = input.form8874?.credit ?? 0;
+  const form3468PartVCredit = input.form3468PartV?.credit ?? 0;
   const form5884Credit = input.form5884?.credit ?? 0;
   const form8936Credit = input.form8936?.credit ?? 0;
   const form8936CommercialCredit = input.form8936Commercial?.credit ?? 0;
@@ -253,6 +264,41 @@ export function buildForm3800NonpassiveParts(
       }
     } else if (source.appliedCreditsBySource !== undefined) {
       throw new Error("Form 3800 Form 8874 allocations need multiple sources");
+    }
+  }
+  if (input.form3468PartV) {
+    const source = input.form3468PartV;
+    if (
+      !Number.isInteger(source.credit) || source.credit <= 0 ||
+      !Number.isInteger(source.appliedCredit) ||
+      source.appliedCredit < 0 || source.appliedCredit > source.credit ||
+      source.sources.length === 0 || source.sources.length > 999 ||
+      source.sources.some((entry) =>
+        !Number.isInteger(entry.credit) || entry.credit <= 0 ||
+        !/^\d{9}$/.test(entry.ein) || !entry.documentId
+      ) ||
+      source.sources.reduce((sum, entry) => sum + entry.credit, 0) !==
+        source.credit
+    ) {
+      throw new Error("Form 3800 has an invalid Form 3468 Part V trust source");
+    }
+    if (source.sources.length > 1) {
+      const applied = source.appliedCreditsBySource;
+      if (
+        !applied || applied.length !== source.sources.length ||
+        applied.some((amount, index) =>
+          !Number.isInteger(amount) || amount < 0 ||
+          amount > source.sources[index].credit
+        ) ||
+        applied.reduce((sum, amount) => sum + amount, 0) !==
+          source.appliedCredit
+      ) {
+        throw new Error(
+          "Form 3800 Form 3468 Part V applied credits do not reconcile",
+        );
+      }
+    } else if (source.appliedCreditsBySource !== undefined) {
+      throw new Error("Form 3800 Form 3468 allocations need multiple sources");
     }
   }
   if (
@@ -392,7 +438,7 @@ export function buildForm3800NonpassiveParts(
   }
   if (
     credits.standardCredit + form8826Credit + form8820Credit +
-          form8874Credit + form8936Credit +
+          form8874Credit + form3468PartVCredit + form8936Credit +
           form8936CommercialCredit !==
       input.tax.standardCredit ||
     credits.specifiedCredit + form5884Credit !== input.tax.specifiedCredit
@@ -529,6 +575,7 @@ export function buildForm3800NonpassiveParts(
       sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
     form8826Applied + (input.form8820?.appliedCredit ?? 0) +
       (input.form8874?.appliedCredit ?? 0) +
+      (input.form3468PartV?.appliedCredit ?? 0) +
       (input.form8936?.appliedCredit ?? 0) +
       (input.form8936Commercial?.appliedCredit ?? 0),
   );
@@ -592,6 +639,16 @@ export function buildForm3800NonpassiveParts(
       };
     })
     : [];
+  const form3468PartVGroups: Form3800NonpassiveDetailRow[] =
+    input.form3468PartV?.sources.map((source, index) => ({
+      line: "1v" as const,
+      credit: source.credit,
+      appliedCredit: input.form3468PartV!.sources.length > 1
+        ? input.form3468PartV!.appliedCreditsBySource![index]
+        : input.form3468PartV!.appliedCredit,
+      passThroughEin: source.ein,
+      sourceDocumentId: source.documentId,
+    })) ?? [];
   const form5884 = input.form5884;
   const form5884PartVGroups: Form3800NonpassiveDetailRow[] = form5884
     ? form5884.sources.map((source, index) => {
@@ -701,6 +758,9 @@ export function buildForm3800NonpassiveParts(
   const form8874EntityCredits = passThroughEntityCredits(
     input.form8874?.sources.filter((source) => source.ein !== undefined) ?? [],
   );
+  const form3468PartVEntityCredits = passThroughEntityCredits(
+    input.form3468PartV?.sources ?? [],
+  );
   const form5884EntityCredits = passThroughEntityCredits(
     form5884PassThroughSources,
   );
@@ -759,6 +819,22 @@ export function buildForm3800NonpassiveParts(
           form8874EntityCredits,
         ),
       ]
+      : []),
+    ...(input.form3468PartV
+      ? [nontransferableCurrentRow(
+        "1v",
+        form3468PartVCredit,
+        input.form3468PartV.appliedCredit,
+        {
+          sourceCount: input.form3468PartV.sources.length,
+          entity: largestForm3800CurrentEntity(form3468PartVEntityCredits),
+          referenceDocumentId: input.form3468PartV.sources.map((source) =>
+            source.documentId
+          ).join(" "),
+          referenceDocumentName: "IRS3468",
+        },
+        form3468PartVEntityCredits,
+      )]
       : []),
     ...(input.form8936
       ? [
@@ -843,6 +919,14 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: input.form8874.appliedCredit,
       }]
       : []),
+    ...(input.form3468PartV
+      ? [{
+        line: "1v" as const,
+        grossCredit: form3468PartVCredit,
+        transferOutCredit: 0,
+        appliedCredit: input.form3468PartV.appliedCredit,
+      }]
+      : []),
     ...(input.form8936
       ? [{
         line: "1y" as const,
@@ -871,6 +955,7 @@ export function buildForm3800NonpassiveParts(
   return {
     lines,
     transferStatementIds: statementIds,
+    carryforwardSources: [],
     currentRows,
     currentAmounts,
     carryoverRows: [],
@@ -879,6 +964,7 @@ export function buildForm3800NonpassiveParts(
       ...partVGroups,
       ...form8820PartVGroups,
       ...form8874PartVGroups,
+      ...form3468PartVGroups,
       ...form5884PartVGroups,
       ...(input.form8936
         ? [{

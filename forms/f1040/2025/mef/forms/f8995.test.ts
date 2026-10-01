@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { form8995 } from "./f8995.ts";
+import { inputSchema as form8995InputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
@@ -71,6 +72,376 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
       }),
     Error,
     "source reconciliation",
+  );
+});
+
+Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line 12 and both filed outputs", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const dividend = {
+    payerName: "Example Dividend Fund",
+    source_document_reference: "2025 issued Example Dividend Fund 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 1_000,
+    box1b: 600,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [dividend],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const { pending } = result;
+  const fields = pending.form8995;
+  assertEquals(pending.f1040?.line3a_qualified_dividends, 600);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
+  assertEquals(fields?.line12, 600);
+  assertEquals(fields?.line13, Math.max(0, (fields?.line11 as number) - 600));
+  assertEquals(fields?.line14, Math.round((fields?.line13 as number) * 0.2));
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(xml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
+  const returnXml = buildMefXml(pending, fixture.filer);
+  assertStringIncludes(returnXml, "<IRS8995 documentId=");
+  assertStringIncludes(returnXml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line12, 600);
+  assertEquals(pdf?.line13, fields?.line13);
+  assertEquals(pdf?.line15, pending.f1040?.line13_qbi_deduction);
+
+  const changedSource = (change: Record<string, unknown>) => ({
+    ...pending,
+    f1099div: { f1099divs: [{ ...dividend, ...change }] },
+  });
+  for (
+    const changed of [
+      changedSource({ box1b: 500 }),
+      changedSource({ box1a: 999 }),
+      changedSource({ source_document_reference: undefined }),
+      changedSource({ box5: 100 }),
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line3a_qualified_dividends: 500 },
+      },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 999 },
+      },
+    ]
+  ) {
+    assertThrows(() => form8995.build(fields, { pending: changed }), Error);
+    assertThrows(() => form8995Pdf.projectFields?.(fields, changed), Error);
+  }
+  assertThrows(
+    () =>
+      form8995.build(
+        Object.assign({}, fields, { line12: 500 }) as Parameters<
+          typeof form8995.build
+        >[0],
+        { pending },
+      ),
+    Error,
+  );
+});
+
+Deno.test("one Schedule C combines separate qualified and held REIT dividend issuers", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const qualified = {
+    payerName: "Qualified Dividend Fund",
+    source_document_reference: "2025 qualified-dividend 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 700,
+    box1b: 500,
+  };
+  const reit = {
+    payerName: "Separate REIT",
+    source_document_reference: "2025 REIT 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 600,
+    box5: 600,
+    holdingPeriodDays: 60,
+    section199a_holding_review: {
+      ex_dividend_date: "2025-07-01",
+      qualified_held_days_in_91_day_window: 50,
+      diminished_risk_days_excluded: 10,
+      no_related_payment_obligation_confirmed: true,
+      review_reference: "Separate REIT holding review",
+      reviewed_on: "2026-03-01",
+    },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [qualified, reit],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const { pending } = result;
+  const fields = pending.form8995;
+  assertEquals(pending.f1040?.line3a_qualified_dividends, 500);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_300);
+  assertEquals(fields?.line6, 600);
+  assertEquals(fields?.line9, 120);
+  assertEquals(fields?.line12, 500);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(
+    xml,
+    "<QlfyREITDivPTPIncomeLossAmt>600</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  assertStringIncludes(xml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
+  const returnXml = buildMefXml(pending, fixture.filer);
+  assertStringIncludes(returnXml, "<IRS8995 documentId=");
+  assertStringIncludes(returnXml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line6, 600);
+  assertEquals(pdf?.line12, 500);
+  assertEquals(pdf?.line15, fields?.line15);
+
+  const alteredSources = [
+    [qualified],
+    [{ ...qualified, box1b: 400 }, reit],
+    [qualified, { ...reit, box5: 599 }],
+    [qualified, {
+      ...reit,
+      source_document_reference: qualified.source_document_reference,
+    }],
+    [qualified, { ...reit, payerName: qualified.payerName }],
+    [qualified, {
+      ...reit,
+      section199a_holding_review: {
+        ...reit.section199a_holding_review,
+        no_related_payment_obligation_confirmed: false,
+      },
+    }],
+    [qualified, reit, { ...reit, payerName: "Third REIT" }],
+  ];
+  for (const copies of alteredSources) {
+    const changed = { ...pending, f1099div: { f1099divs: copies } };
+    assertThrows(() => form8995.build(fields, { pending: changed }), Error);
+    assertThrows(() => form8995Pdf.projectFields?.(fields, changed), Error);
+  }
+  const changedReturn = {
+    ...pending,
+    f1040: { ...pending.f1040, line3b_ordinary_dividends: 1_299 },
+  };
+  assertThrows(() => form8995.build(fields, { pending: changedReturn }), Error);
+  assertThrows(() => form8995Pdf.projectFields?.(fields, changedReturn), Error);
+});
+
+Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const dividend = {
+    payerName: "Example REIT",
+    source_document_reference: "2025 issued Example REIT Form 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 1_000,
+    box5: 1_000,
+    holdingPeriodDays: 60,
+    section199a_holding_review: {
+      ex_dividend_date: "2025-07-01",
+      qualified_held_days_in_91_day_window: 50,
+      diminished_risk_days_excluded: 10,
+      no_related_payment_obligation_confirmed: true,
+      review_reference: "2025 REIT holding and obligation review",
+      reviewed_on: "2026-03-01",
+    },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [dividend],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(fields?.line6, 1_000);
+  assertEquals(fields?.line8, 1_000);
+  assertEquals(fields?.line9, 200);
+  assertEquals(fields?.line10, (fields?.line5 as number) + 200);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(
+    xml,
+    "<QlfyREITDivPTPIncomeLossAmt>1000</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  assertStringIncludes(xml, "<REITPTPComponentAmt>200</REITPTPComponentAmt>");
+  const projected = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(projected?.line6, 1_000);
+  assertEquals(projected?.line9, 200);
+  assertEquals(projected?.line15, fields?.line15);
+
+  const changedDividend = (change: Record<string, unknown>) => ({
+    ...pending,
+    f1099div: { f1099divs: [{ ...dividend, ...change }] },
+  });
+  for (
+    const change of [
+      { box5: 999 },
+      { holdingPeriodDays: 44 },
+      { source_document_reference: undefined },
+      { box1b: 100 },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          qualified_held_days_in_91_day_window: 45,
+        },
+      },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          no_related_payment_obligation_confirmed: false,
+        },
+      },
+      {
+        section199a_holding_review: {
+          ...dividend.section199a_holding_review,
+          diminished_risk_days_excluded: 42,
+        },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => form8995.build(fields, { pending: changedDividend(change) }),
+      Error,
+    );
+    assertThrows(
+      () => form8995Pdf.projectFields?.(fields, changedDividend(change)),
+      Error,
+    );
+  }
+  assertThrows(() =>
+    form8995.build(fields, {
+      pending: {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 999 },
+      },
+    }), Error);
+  assertThrows(
+    () =>
+      form8995.build({ ...fields, line6_sec199a_dividends: 999 }, { pending }),
+    Error,
+  );
+});
+
+Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 1040, native MeF, and PDF", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const dividends = [
+    {
+      payerName: "North REIT",
+      source_document_reference: "2025 issued North REIT 1099-DIV",
+      isNominee: false,
+      box11: false,
+      box1a: 400,
+      box5: 400,
+      holdingPeriodDays: 60,
+      section199a_holding_review: {
+        ex_dividend_date: "2025-07-01",
+        qualified_held_days_in_91_day_window: 50,
+        diminished_risk_days_excluded: 10,
+        no_related_payment_obligation_confirmed: true,
+        review_reference: "North REIT 2025 holding review",
+        reviewed_on: "2026-03-01",
+      },
+    },
+    {
+      payerName: "South REIT",
+      source_document_reference: "2025 issued South REIT 1099-DIV",
+      isNominee: false,
+      box11: false,
+      box1a: 600,
+      box5: 600,
+      holdingPeriodDays: 70,
+      section199a_holding_review: {
+        ex_dividend_date: "2025-08-01",
+        qualified_held_days_in_91_day_window: 60,
+        diminished_risk_days_excluded: 10,
+        no_related_payment_obligation_confirmed: true,
+        review_reference: "South REIT 2025 holding review",
+        reviewed_on: "2026-03-01",
+      },
+    },
+  ];
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: dividends,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const { pending } = result;
+  const fields = pending.form8995;
+  assertEquals(
+    form8995InputSchema.parse(fields).reit_dividend_sources?.length,
+    2,
+  );
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
+  assertEquals(fields?.line6, 1_000);
+  assertEquals(fields?.line8, 1_000);
+  assertEquals(fields?.line9, 200);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = buildMefXml(pending, fixture.filer);
+  assertStringIncludes(xml, "<IRS8995 documentId=");
+  assertStringIncludes(
+    xml,
+    "<QlfyREITDivPTPIncomeLossAmt>1000</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  await assertReturnXsd(xml);
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line6, 1_000);
+  assertEquals(pdf?.line9, 200);
+  assertEquals(pdf?.line15, pending.f1040?.line13_qbi_deduction);
+
+  const changed = (items: typeof dividends) => ({
+    ...pending,
+    f1099div: { f1099divs: items },
+  });
+  for (
+    const items of [
+      [dividends[0], { ...dividends[1], box5: 599 }],
+      [{ ...dividends[0], box1a: 500, box5: 500 }, {
+        ...dividends[1],
+        box1a: 500,
+        box5: 500,
+      }],
+      [dividends[0], {
+        ...dividends[1],
+        source_document_reference: dividends[0].source_document_reference,
+      }],
+      [dividends[0], {
+        ...dividends[1],
+        source_document_reference: "replacement South REIT 1099-DIV",
+      }],
+      [dividends[0], { ...dividends[1], payerName: "North REIT" }],
+      [dividends[0], {
+        ...dividends[1],
+        section199a_holding_review: {
+          ...dividends[1].section199a_holding_review,
+          qualified_held_days_in_91_day_window: 45,
+        },
+      }],
+    ]
+  ) {
+    assertThrows(() => form8995.build(fields, { pending: changed(items) }));
+    assertThrows(() => form8995Pdf.projectFields?.(fields, changed(items)));
+  }
+  assertThrows(() =>
+    form8995.build(fields, {
+      pending: {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 999 },
+      },
+    })
   );
 });
 
@@ -371,6 +742,35 @@ Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {
   );
 });
 
+Deno.test("Form 8995 zero deduction cannot discard a REIT/PTP loss carryforward", () => {
+  const unfiled = {
+    qbi_deduction: 0,
+    line6_sec199a_dividends: 3_000,
+    reit_loss_carryforward: -5_000,
+  };
+  assertThrows(
+    () => form8995.build(unfiled),
+    Error,
+    "cannot omit an unfiled",
+  );
+  assertThrows(
+    () => form8995Pdf.projectFields?.(unfiled, {}),
+    Error,
+    "cannot omit an unfiled",
+  );
+  const line17Unfiled = { qbi_deduction: 0, line17: 2_000 };
+  assertThrows(
+    () => form8995.build(line17Unfiled),
+    Error,
+    "cannot omit an unfiled",
+  );
+  assertThrows(
+    () => form8995Pdf.projectFields?.(line17Unfiled, {}),
+    Error,
+    "cannot omit an unfiled",
+  );
+});
+
 Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports", () => {
   const fields = {
     qbi_from_schedule_c: 50_000,
@@ -382,12 +782,12 @@ Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports
   assertThrows(
     () => form8995.build(fields),
     Error,
-    "needs its complete source and final return pending graph",
+    "needs its complete pending return",
   );
   assertThrows(
     () => form8995Pdf.projectFields?.(fields, {}),
     Error,
-    "needs one identified Schedule C business",
+    "needs one reviewed issued 1099-DIV",
   );
 });
 
@@ -395,12 +795,12 @@ Deno.test("Form 8995 rejects a positive deduction even without other source fiel
   assertThrows(
     () => form8995.build({ qbi_deduction: 1 }),
     Error,
-    "needs its complete source and final return pending graph",
+    "needs its complete pending return",
   );
   assertThrows(
     () => form8995Pdf.projectFields?.({ qbi_deduction: 1 }, {}),
     Error,
-    "needs one identified Schedule C business",
+    "needs one reviewed issued 1099-DIV",
   );
 });
 

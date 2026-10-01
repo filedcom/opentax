@@ -1,6 +1,12 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { inputSchema as fecInputSchema } from "../../../nodes/inputs/fec/index.ts";
-import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
+import {
+  alternativeCompensationWorldwideTotal,
+  inputSchema as fecInputSchema,
+} from "../../../nodes/inputs/fec/index.ts";
+import {
+  categorySummarySchema,
+  scheduleCFilingBlockReason,
+} from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { projectSingleSourceForm1116Pdf } from "./f1116_single_source.ts";
 import { projectGeneralWageForm1116Pdf } from "./f1116_general_wage.ts";
 import { IncomeCategory } from "../../../nodes/intermediate/forms/form_1116/index.ts";
@@ -10,6 +16,8 @@ const page1 = "topmostSubform[0].Page1[0].";
 const page2 = "topmostSubform[0].Page2[0].";
 const part1 = `${page1}Table_Part1_Lines2-6[0].`;
 const part2a = `${page1}Table_Part2[0].RowA[0].`;
+const part2b = `${page1}Table_Part2[0].RowB[0].`;
+const part2c = `${page1}Table_Part2[0].RowC[0].`;
 function p1(line: string, number: number): string {
   return `${part1}${line}[0].f1_${number}[0]`;
 }
@@ -86,22 +94,62 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     `${page1}Table_Part1_LinesI-1a[0].Rowi[0].f1_04[0]`,
   ),
   textField(
+    "pdf_country_b",
+    `${page1}Table_Part1_LinesI-1a[0].Rowi[0].f1_05[0]`,
+  ),
+  textField(
+    "pdf_country_c",
+    `${page1}Table_Part1_LinesI-1a[0].Rowi[0].f1_06[0]`,
+  ),
+  textField(
     "pdf_line1a_a",
     `${page1}Table_Part1_LinesI-1a[0].Line1a[0].ColA[0].f1_10[0]`,
   ),
+  textField(
+    "pdf_line1a_b",
+    `${page1}Table_Part1_LinesI-1a[0].Line1a[0].ColB[0].f1_11[0]`,
+  ),
+  textField(
+    "pdf_line1a_c",
+    `${page1}Table_Part1_LinesI-1a[0].Line1a[0].ColC[0].f1_12[0]`,
+  ),
   textField("pdf_line1a_total", `${page1}f1_13[0]`),
   textField("pdf_line2_a", p1("Line2", 14), true),
+  textField("pdf_line2_b", p1("Line2", 15), true),
+  textField("pdf_line2_c", p1("Line2", 16), true),
   textField("pdf_line3a_a", p1("Line3a", 17), true),
+  textField("pdf_line3a_b", p1("Line3a", 18), true),
+  textField("pdf_line3a_c", p1("Line3a", 19), true),
   textField("pdf_line3b_a", p1("Line3b", 20), true),
+  textField("pdf_line3b_b", p1("Line3b", 21), true),
+  textField("pdf_line3b_c", p1("Line3b", 22), true),
   textField("pdf_line3c_a", p1("Line3c", 23), true),
+  textField("pdf_line3c_b", p1("Line3c", 24), true),
+  textField("pdf_line3c_c", p1("Line3c", 25), true),
   textField("pdf_line3d_a", p1("Line3d", 26)),
+  textField("pdf_line3d_b", p1("Line3d", 27)),
+  textField("pdf_line3d_c", p1("Line3d", 28)),
   textField("pdf_line3e_a", p1("Line3e", 29)),
+  textField("pdf_line3e_b", p1("Line3e", 30)),
+  textField("pdf_line3e_c", p1("Line3e", 31)),
   textField("pdf_line3f_a", p1("Line3f", 32)),
+  textField("pdf_line3f_b", p1("Line3f", 33)),
+  textField("pdf_line3f_c", p1("Line3f", 34)),
   textField("pdf_line3g_a", p1("Line3g", 35), true),
+  textField("pdf_line3g_b", p1("Line3g", 36), true),
+  textField("pdf_line3g_c", p1("Line3g", 37), true),
   textField("pdf_line4a_a", p1("Line4a", 38), true),
+  textField("pdf_line4a_b", p1("Line4a", 39), true),
+  textField("pdf_line4a_c", p1("Line4a", 40), true),
   textField("pdf_line4b_a", p1("Line4b", 41), true),
+  textField("pdf_line4b_b", p1("Line4b", 42), true),
+  textField("pdf_line4b_c", p1("Line4b", 43), true),
   textField("pdf_line5_a", p1("Line5", 44), true),
+  textField("pdf_line5_b", p1("Line5", 45), true),
+  textField("pdf_line5_c", p1("Line5", 46), true),
   textField("pdf_line6_a", p1("Line6", 47), true),
+  textField("pdf_line6_b", p1("Line6", 48), true),
+  textField("pdf_line6_c", p1("Line6", 49), true),
   textField("pdf_line6_total", `${page1}f1_50[0]`, true),
   textField("pdf_line7", `${page1}f1_51[0]`),
   {
@@ -111,11 +159,19 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     whenValue: "paid",
   },
   textField("pdf_part2_date_a", `${part2a}f1_52[0]`),
+  textField("pdf_part2_date_b", `${part2b}f1_62[0]`),
+  textField("pdf_part2_date_c", `${part2c}f1_72[0]`),
   textField("pdf_part2_foreign_interest_a", `${part2a}f1_55[0]`),
   textField("pdf_part2_foreign_other_a", `${part2a}f1_56[0]`),
   textField("pdf_part2_us_interest_a", `${part2a}f1_59[0]`),
+  textField("pdf_part2_us_interest_b", `${part2b}f1_69[0]`),
+  textField("pdf_part2_us_interest_c", `${part2c}f1_79[0]`),
+  textField("pdf_part2_us_dividend_a", `${part2a}f1_57[0]`),
+  textField("pdf_part2_us_dividend_b", `${part2b}f1_67[0]`),
   textField("pdf_part2_us_other_a", `${part2a}f1_60[0]`),
   textField("pdf_part2_total_a", `${part2a}f1_61[0]`),
+  textField("pdf_part2_total_b", `${part2b}f1_71[0]`),
+  textField("pdf_part2_total_c", `${part2c}f1_81[0]`),
   textField("pdf_line8", `${page1}f1_82[0]`),
   textField("pdf_line9", `${page2}Line9_ReadOrder[0].f2_01[0]`),
   textField("pdf_line10", `${page2}f2_02[0]`, true),
@@ -150,9 +206,9 @@ export const form1116Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf",
   projectFields(fields, allPending) {
     if (fields.foreign_tax_redeterminations !== undefined) {
-      throw new Error(
-        "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-      );
+      throw new Error(scheduleCFilingBlockReason(
+        fields.foreign_tax_redeterminations,
+      ));
     }
     const summaries = Array.isArray(fields.category_summaries)
       ? fields.category_summaries.map((summary) =>
@@ -188,7 +244,13 @@ export const form1116Pdf: PdfFormDescriptor = {
           return matches.length !== 1 || !source ||
             JSON.stringify(source.alternative_compensation_sourcing) !==
               JSON.stringify(alternative) ||
-            source.compensation_usd < 250_000 ||
+            alternativeCompensationWorldwideTotal(
+                fec.data.fecs,
+                source,
+                typeof allPending.general?.taxpayer_ssn === "string"
+                  ? allPending.general.taxpayer_ssn
+                  : undefined,
+              ) < 250_000 ||
             Math.round(source.compensation_usd * 100) !==
               Math.round(alternative.compensation_item_total_usd * 100) ||
             Math.round((source.foreign_service_compensation_usd ?? 0) * 100) !==

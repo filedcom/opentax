@@ -20,6 +20,20 @@ function buildSale(item: F6252Item): string {
   return form6252.build({ f6252s: [item] })[0];
 }
 
+const filed2024 = {
+  filed_form_reference: "2024 Form 6252 review record, vacant land",
+  property_description: "Vacant land",
+  date_acquired: "2020-01-01",
+  date_sold: "2024-03-01",
+  line16_gross_profit: 60_000,
+  line18_contract_price: 100_000,
+  line19_gross_profit_ratio: 0.6,
+  line20_year_of_sale_payment: 0,
+  line22_total_payments: 80_000,
+  line23_prior_payments: 0,
+  line26_gain: 48_000,
+};
+
 Deno.test("Form 6252 emits no document for absent data", () => {
   assertEquals(buildMefXml({}, testFiler()).includes("<IRS6252"), false);
 });
@@ -51,6 +65,14 @@ Deno.test("Form 6252 prior-year sale does not repeat the debt-over-basis payment
     ...sale,
     date_sold: "2024-03-01",
     payments_received_prior_years: 25_000,
+    prior_year_form6252_source: {
+      ...filed2024,
+      line18_contract_price: 60_000,
+      line19_gross_profit_ratio: 1,
+      line20_year_of_sale_payment: 20_000,
+      line22_total_payments: 25_000,
+      line26_gain: 25_000,
+    },
   });
   assertStringIncludes(xml, "<YearOfSaleAmt>0</YearOfSaleAmt>");
   assertStringIncludes(
@@ -66,6 +88,7 @@ Deno.test("Form 6252 retains a prior-year obligation paid in full during 2025", 
     mortgage_assumed: 0,
     payments_received_prior_years: 80_000,
     payments_received: 20_000,
+    prior_year_form6252_source: filed2024,
   });
   assertStringIncludes(
     xml,
@@ -78,6 +101,39 @@ Deno.test("Form 6252 retains a prior-year obligation paid in full during 2025", 
   assertStringIncludes(
     xml,
     "<InstallmentSaleIncomeAmt>12000</InstallmentSaleIncomeAmt>",
+  );
+});
+
+Deno.test("Form 6252 rejects a changed 2024 filed ratio or payment history", () => {
+  const later = {
+    ...sale,
+    date_sold: "2024-03-01",
+    mortgage_assumed: 0,
+    payments_received_prior_years: 80_000,
+    payments_received: 20_000,
+    prior_year_form6252_source: filed2024,
+  };
+  assertThrows(
+    () =>
+      buildSale({
+        ...later,
+        prior_year_form6252_source: {
+          ...filed2024,
+          line19_gross_profit_ratio: 0.5,
+        },
+      }),
+    Error,
+    "filed 2024 source conflicts",
+  );
+  assertThrows(
+    () => buildSale({ ...later, payments_received_prior_years: 79_999 }),
+    Error,
+    "filed 2024 source conflicts",
+  );
+  assertThrows(
+    () => buildSale({ ...later, prior_year_form6252_source: undefined }),
+    Error,
+    "filed 2024 Form 6252",
   );
 });
 

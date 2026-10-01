@@ -22,6 +22,37 @@ const UNTAXED_AMOUNT = 1_350;
 const BASE_AMOUNT = 2_700;
 const MAX_CHILD_GROSS_INCOME = 13_500;
 
+const sourcedAmounts = [
+  "interest_income",
+  "tax_exempt_interest",
+  "private_activity_bond_interest",
+  "dividend_income",
+  "dividend_nominee_distribution",
+  "qualified_dividends",
+  "capital_gain_distributions",
+  "capital_gain_nominee_distribution",
+  "alaska_pfd",
+  "nontaxable_social_security",
+] as const;
+const sourceIncomeSchema = z.object(
+  Object.fromEntries(sourcedAmounts.map((key) => [key, z.number().nonnegative().optional()])) as
+    Record<typeof sourcedAmounts[number], z.ZodOptional<z.ZodNumber>>,
+).strict();
+const sourceReviewSchema = z.object({
+  source_document_reference: z.string().trim().min(1),
+  tax_year: z.literal(2025),
+  child_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  electing_parent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  eligibility_reviewed: z.literal(true),
+  income: sourceIncomeSchema,
+  interest_adjustments: z.object({
+    nominee_distribution: z.number().nonnegative().optional(),
+    accrued_interest: z.number().nonnegative().optional(),
+    abp_adjustment: z.number().nonnegative().optional(),
+    oid_adjustment: z.number().nonnegative().optional(),
+  }).strict().optional(),
+}).strict();
+
 export const itemSchema = z.object({
   child_name: z.string().min(1),
   child_name_control: z.string().regex(/^[A-Z][A-Z\- ]{0,3}$/),
@@ -34,6 +65,9 @@ export const itemSchema = z.object({
   child_no_estimated_payments: z.literal(true),
   child_no_withholding: z.literal(true),
   parent_eligible_to_elect: z.literal(true),
+  // Reviewed child-income/election packet; filing export joins it to both
+  // the elected child and the finalized parent. The reference is not byte proof.
+  source_review: sourceReviewSchema.optional(),
   interest_income: z.number().nonnegative().optional(),
   // These amounts are already excluded from interest_income (Form 8814 line 1a).
   // MeF requires them on a linked ChildTaxableInterestStmt.
@@ -79,6 +113,38 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({ f8814s: z.array(itemSchema).max(10) });
 export type F8814Item = z.infer<typeof itemSchema>;
 type F8814Input = z.infer<typeof inputSchema>;
+
+export function assertForm8814SourceReview(
+  item: F8814Item,
+  parentSSN: string,
+): void {
+  if (!item.source_review) {
+    throw new Error("Form 8814 needs a reviewed child-income source");
+  }
+  const source = sourceReviewSchema.parse(item.source_review);
+  const digits = (value: string) => value.replaceAll("-", "");
+  if (
+    digits(source.child_ssn) !== digits(item.child_ssn) ||
+    digits(source.electing_parent_ssn) !== digits(parentSSN)
+  ) {
+    throw new Error("Form 8814 reviewed source child/parent owner differs from the filed return");
+  }
+  for (const key of sourcedAmounts) {
+    if ((source.income[key] ?? 0) !== (item[key] ?? 0)) {
+      throw new Error(`Form 8814 reviewed child income differs on ${key}`);
+    }
+  }
+  for (
+    const key of ["nominee_distribution", "accrued_interest", "abp_adjustment", "oid_adjustment"] as const
+  ) {
+    if (
+      (source.interest_adjustments?.[key] ?? 0) !==
+        (item.interest_adjustments?.[key] ?? 0)
+    ) {
+      throw new Error(`Form 8814 reviewed interest adjustment differs on ${key}`);
+    }
+  }
+}
 
 export interface Form8814Lines {
   readonly item: F8814Item;
@@ -145,6 +211,24 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   };
 }
 
+/** Pub. 596 Worksheet 1 line 4, using Worksheet 2 for an Alaska PFD. */
+export function form8814EicLine4(line: Form8814Lines): number {
+  const alaskaPfd = line.item.alaska_pfd ?? 0;
+  if (alaskaPfd === 0) return line.line12;
+  const nonqualifiedInterestAndDividends = (line.item.interest_income ?? 0) +
+    line.line2a -
+    (line.item.qualified_dividends ?? 0);
+  if (nonqualifiedInterestAndDividends <= 0) {
+    throw new Error("Form 8814 Alaska PFD worksheet needs positive income");
+  }
+  return Math.max(
+    0,
+    line.line12 - Math.round(
+      line.line12 * alaskaPfd / nonqualifiedInterestAndDividends,
+    ),
+  );
+}
+
 class F8814Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8814";
   readonly inputSchema = inputSchema;
@@ -181,6 +265,10 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     const line12 = sum((line) => line.line12);
     const line15 = sum((line) => line.line15);
     const line12InvestmentIncome = sum((line) => line.line12InvestmentIncome);
+    const eicTaxExemptInterest = sum((line) =>
+      line.item.tax_exempt_interest ?? 0
+    );
+    const eicLine4 = sum(form8814EicLine4);
     const childHadForeignAccount = lines.some((line) =>
       line.item.child_had_foreign_account === true
     );
@@ -189,6 +277,13 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     );
     const outputs: NodeOutput[] = [
       { nodeType: "form8814", fields: { items: lines } },
+      {
+        nodeType: agi_aggregator.nodeType,
+        fields: {
+          form8814_eic_tax_exempt_interest: eicTaxExemptInterest,
+          form8814_eic_line4: eicLine4,
+        },
+      },
       {
         nodeType: form8962.nodeType,
         fields: {

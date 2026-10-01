@@ -1,9 +1,14 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { trustPartVStatementSchema } from "./trust-part-v-source.ts";
 
 // Form 3468 — Investment Credit (IRC §§47, 48, 48C, 48E)
 // All credit components aggregate to Schedule 3, Line 6z (General Business Credit).
@@ -13,9 +18,9 @@ const REHAB_HISTORIC_RATE = 0.20;
 const SOLAR_RATE = 0.30;
 const FIBER_OPTIC_SOLAR_RATE = 0.30;
 const FUEL_CELL_RATE = 0.30;
-const FUEL_CELL_CAP_PER_HALF_KW = 1_500;   // $1,500 per 0.5 kW
+const FUEL_CELL_CAP_PER_HALF_KW = 1_500; // $1,500 per 0.5 kW
 const MICROTURBINE_RATE = 0.10;
-const MICROTURBINE_CAP_PER_KW = 200;        // $200 per kW
+const MICROTURBINE_CAP_PER_KW = 200; // $200 per kW
 const SMALL_WIND_RATE = 0.30;
 const GEOTHERMAL_HEAT_PUMP_RATE = 0.10;
 const CHP_RATE = 0.10;
@@ -47,6 +52,18 @@ export const inputSchema = z.object({
 
   // Part VI — §48E Clean Electricity Investment Credit
   clean_electricity_basis: z.number().nonnegative().optional(),
+  trust_part_v_claims: z.array(
+    z.object({
+      source_type: z.literal("trust"),
+      source_ein: z.string().regex(/^\d{9}$/),
+      source_document_reference: z.string().trim().min(1),
+      statement: trustPartVStatementSchema,
+    }).strict(),
+  ).min(1).optional(),
+  // Separately reviewed property packet. It is supplied independently from
+  // the fiduciary K-1 intake and must match every derived claim exactly.
+  trust_part_v_source_reviews: z.array(trustPartVStatementSchema).min(1)
+    .optional(),
 });
 
 type F3468Input = z.infer<typeof inputSchema>;
@@ -139,17 +156,79 @@ function totalCredit(input: F3468Input): number {
 
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+  return [{
+    nodeType: schedule3.nodeType,
+    fields: { line6a_general_business_credit: credit },
+  }];
 }
 
 class F3468Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f3468";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, f3800]);
   readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f3468.pdf";
 
   compute(_ctx: NodeContext, rawInput: F3468Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.trust_part_v_claims?.length) {
+      const reviews = input.trust_part_v_source_reviews ?? [];
+      if (
+        reviews.length !== input.trust_part_v_claims.length ||
+        input.trust_part_v_claims.some((claim) =>
+          !reviews.some((review) =>
+            JSON.stringify(review) === JSON.stringify(claim.statement)
+          )
+        )
+      ) {
+        throw new Error(
+          "Form 3468 trust Part V claim needs a separate reviewed property-statement packet",
+        );
+      }
+      if (
+        Object.entries(input).some(([key, value]) =>
+          key !== "trust_part_v_claims" &&
+          key !== "trust_part_v_source_reviews" &&
+          ((typeof value === "number" && value > 0) || value === true)
+        )
+      ) {
+        throw new Error(
+          "Form 3468 trust Part V claim cannot mix with legacy direct investment-credit inputs",
+        );
+      }
+      const seen = new Set<string>();
+      const entries = input.trust_part_v_claims.map((claim) => {
+        const statement = claim.statement;
+        const key =
+          `${claim.source_ein}:${claim.source_document_reference}:${statement.statement_reference}`;
+        if (seen.has(key)) {
+          throw new Error("Duplicate trust Form 3468 Part V source");
+        }
+        seen.add(key);
+        if (
+          claim.source_ein !== statement.issuer_ein ||
+          claim.source_document_reference !==
+            statement.source_document_reference
+        ) {
+          throw new Error(
+            "Form 3468 trust claim differs from its reviewed statement",
+          );
+        }
+        return {
+          source_type: claim.source_type,
+          source_ein: claim.source_ein,
+          source_document_reference: claim.source_document_reference,
+          source_statement_reference: statement.statement_reference,
+          credit_amount: statement.beneficiary_allocated_credit,
+          subject_to_passive_activity_limit: false as const,
+        };
+      });
+      return {
+        outputs: [{
+          nodeType: f3800.nodeType,
+          fields: { f3468_trust_part_v_credit_entries: entries },
+        }],
+      };
+    }
     const credit = totalCredit(input);
     return { outputs: buildOutputs(credit) };
   }

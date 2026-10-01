@@ -1,4 +1,4 @@
-import { StandardFonts } from "pdf-lib";
+import { rgb, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   computeScheduleHAmounts,
@@ -273,6 +273,8 @@ export const scheduleHPdf: PdfFormDescriptor = {
           width: widths[column],
           height: rowHeight,
           borderWidth: 0.5,
+          borderColor: rgb(0, 0, 0),
+          color: rgb(1, 1, 1),
         });
         page.drawText(headings[column], {
           x: x + 3,
@@ -302,6 +304,8 @@ export const scheduleHPdf: PdfFormDescriptor = {
             width,
             height: rowHeight,
             borderWidth: 0.5,
+            borderColor: rgb(0, 0, 0),
+            color: rgb(1, 1, 1),
           });
           page.drawText(value, {
             x: x + 3,

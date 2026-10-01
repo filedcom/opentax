@@ -12,6 +12,15 @@ The [2025 Form 2210](https://www.irs.gov/pub/irs-prior/f2210--2025.pdf) and [ins
 
 The current source's `filed_return_reference` and SHA-256 strings are caller-supplied assertions. The executor does not ingest the filed 2024 return bytes, verify the digests, or extract the line amounts from them. The 2025 tax and withholding values in `box_e_source` are also caller-supplied rather than joined to executor-owned finalized Form 1040 pending data. Therefore the staged calculation is **not** a filing path: there is no native `IRS2210` or PDF descriptor and the both-export guard remains unconditional for `box_e_source`. Do not exempt it based on the presence of a plausible digest or the computed lines.
 
+A standalone finalized-year reconciliation prerequisite now checks that the
+staged box-E source agrees with 2025 Form 1040 filing status, line 22 tax and
+line 25d withholding, with no filed line 23 other tax, line 25c other
+withholding, line 32 refundable credit, or line 38 claimed penalty. It then
+recomputes page-1 lines 1-9. This guard is not yet invoked by the executor or
+MeF/PDF projection; the prior-year filed-return bytes and finalized-return
+ownership binding remain unresolved. The box-E export rejection stays active.
+Positive and tamper fixtures are authored for the deferred bulk pass.
+
 ## Source contract needed before activating native/PDF
 
 - Derive Part I lines 1-9 from finalized 2025 Form 1040 tax after credits, specified other taxes and refundable credits, withholding, plus a sourced 2024 return covering 12 months. Reconcile line 38 and any Form 2210 line 19 to the finalized return rather than trusting an isolated amount.

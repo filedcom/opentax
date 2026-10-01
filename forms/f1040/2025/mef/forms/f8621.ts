@@ -2,7 +2,9 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../nodes/inputs/f8621/index.ts";
 import { PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
+import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { explainForm8621ExcessStatement } from "./f8621_excess_statement.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
@@ -65,6 +67,9 @@ function buildItem(
   context?: MefBuildContext,
 ): string {
   const { item } = line;
+  const parent = item.parent_source
+    ? projectForm8621ParentSource(item)
+    : undefined;
   const filer = context?.filer;
   const statementId = statementIndex === undefined ? undefined : context
     ?.documentIdsByPendingKey?.form8621_excess_statement?.[statementIndex];
@@ -87,6 +92,11 @@ function buildItem(
   if (currencies.size > 1) {
     throw new Error("Form 8621 Part V needs one line 15 currency per filing");
   }
+  explainForm8621ExcessStatement(line);
+  const section1291Amount = line.excessEvents.reduce(
+    (sum, event) => sum + event.amount_usd,
+    0,
+  );
   const children = [
     filer
       ? element("ShareholderPersonNm", filer.fullName ?? filer.nameLine1)
@@ -97,6 +107,19 @@ function buildItem(
     elements("PFICOrQEFName", [
       element("BusinessNameLine1Txt", item.company_name),
     ]),
+    parent
+      ? elements("PFICOrQEFForeignAddress", [
+        element("AddressLine1Txt", parent.corporation_address.line1),
+        element("AddressLine2Txt", parent.corporation_address.line2),
+        element("CityNm", parent.corporation_address.city),
+        element(
+          "ProvinceOrStateNm",
+          parent.corporation_address.province_or_state,
+        ),
+        element("CountryCd", parent.corporation_address.country_code),
+        element("ForeignPostalCd", parent.corporation_address.postal_code),
+      ])
+      : "",
     hasEin
       ? element("PFICOrQEFEIN", item.company_ein_or_ref.replaceAll("-", ""))
       : "",
@@ -105,15 +128,46 @@ function buildItem(
         element("ForeignEntityReferenceIdNum", item.company_ein_or_ref),
       ])
       : "",
+    parent?.corporation_tax_year_start === "2025-01-01" &&
+      parent?.corporation_tax_year_end === "2025-12-31"
+      ? element("TaxYr", "2025")
+      : parent
+      ? element("TaxYearBeginDt", parent.corporation_tax_year_start) +
+        element("TaxYearEndDt", parent.corporation_tax_year_end)
+      : "",
+    parent
+      ? element(
+        "ClassOfShareTxt",
+        parent.share_classes.map((share) => share.description).join("; "),
+      )
+      : "",
+    parent?.jointly_owned_with_spouse
+      ? element("JointlyOwnedWithSpouseInd", "X")
+      : "",
+    parent?.acquisition_date
+      ? element("SharesAcquiredDt", parent.acquisition_date)
+      : "",
     Number.isInteger(item.shares_owned)
       ? element("EndTaxYearSharesCnt", item.shares_owned)
       : "",
     shareValue(item),
     item.regime === PficRegime.EXCESS_DISTRIBUTION
-      ? element("Section1291Ind", "X")
+      ? element(
+        "Section1291Ind",
+        "X",
+        section1291Amount > 0
+          ? { section1291Amt: String(Math.round(section1291Amount)) }
+          : undefined,
+      )
       : "",
     item.regime === PficRegime.QEF ? element("Section1293Ind", "X") : "",
     item.regime === PficRegime.MTM ? element("Section1296Ind", "X") : "",
+    parent?.election_status === "qef_new_2025"
+      ? element("ElectionToTreatThePFICAsQEFInd", "X")
+      : "",
+    parent?.election_status === "mtm_new_2025"
+      ? element("ElectionToMarkToMrktPFICStkInd", "X")
+      : "",
     item.regime === PficRegime.QEF
       ? [
         element("ProRataShareOfQEFOrdnryEarnAmt", qefOrdinary),

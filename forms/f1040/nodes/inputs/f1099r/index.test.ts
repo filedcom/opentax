@@ -1,11 +1,13 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import { TS } from "../../types.ts";
 import {
   DistributionCode,
   f1099r,
+  iraDistributionExplanation,
   type itemSchema,
   RolloverCode,
+  SelfCertificationReason,
 } from "./index.ts";
 
 // ---------------------------------------------------------------------------
@@ -26,16 +28,47 @@ function minimalIraItem(overrides: Partial<Item> = {}): Item {
   };
 }
 
+function priorBasisDistributionEvidence(yearEndValue: number) {
+  return {
+    prior_form8606: {
+      tax_year: 2024 as const,
+      source_document_reference: "2024 filed Form 8606",
+      owner_ssn: "111223333",
+      filed_line14_basis: 20_000,
+    },
+    year_end_statement: {
+      as_of: "2025-12-31" as const,
+      source_document_reference: "2025 all-IRA statement",
+      owner_ssn: "111223333",
+      all_traditional_ira_balances_included_confirmed: true as const,
+      total_fair_market_value: yearEndValue,
+    },
+    form1099r_source_document_reference: "2025 issued Form 1099-R",
+    no_current_nondeductible_contribution_confirmed: true as const,
+    no_other_traditional_ira_distribution_or_conversion_confirmed:
+      true as const,
+    no_rollover_repayment_qcd_hsa_or_disaster_amount_confirmed: true as const,
+  };
+}
+
 function minimalPensionItem(overrides: Partial<Item> = {}): Item {
   return {
     payer_name: "Test Pension",
     payer_ein: "98-7654321",
+    source_document_reference: "default-pension-source",
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: false,
     ts: TS.T,
     ...overrides,
   };
+}
+
+function firstForm4972Source(
+  result: ReturnType<typeof compute>,
+): Record<string, unknown> | undefined {
+  return (result.outputs.find((o) => o.nodeType === "form4972")?.fields
+    .source_forms as Record<string, unknown>[] | undefined)?.[0];
 }
 
 function compute(items: Item[]) {
@@ -191,6 +224,8 @@ Deno.test("f1099r.compute: code 1 IRA with basis sends the Form 8606 taxable amo
     box7_distribution_code: DistributionCode.Code1,
     prior_ira_basis: 20000,
     year_end_ira_value: 60000,
+    source_document_reference: "2025 issued Form 1099-R",
+    form8606_distribution_evidence: priorBasisDistributionEvidence(60_000),
   })]);
   // Form 8606 Part I: basis 20,000 over (60,000 + 20,000) is a 0.25 nontaxable ratio,
   // so line 15c taxable = 20,000 - 5,000 = 15,000. Form 5329 line 1 takes the amount
@@ -209,6 +244,8 @@ Deno.test("f1099r.compute: code 1 IRA fully covered by basis sends 0 to form5329
     box7_distribution_code: DistributionCode.Code1,
     prior_ira_basis: 20000,
     year_end_ira_value: 0,
+    source_document_reference: "2025 issued Form 1099-R",
+    form8606_distribution_evidence: priorBasisDistributionEvidence(0),
   })]);
   // Basis covers the whole distribution, so Form 8606 line 15c is 0 and nothing is
   // includible in income for the 10% additional tax.
@@ -224,6 +261,24 @@ Deno.test("f1099r.compute: distribution code 2 does not route to form5329 automa
   ]);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
   assertEquals(form5329, undefined);
+});
+
+Deno.test("f1099r.compute: linked code 1 disaster distribution bypasses Form 5329", () => {
+  const result = compute([minimalIraItem({
+    account_number: "123",
+    source_document_reference: "issued 2025 1099-R account 123",
+    box13_date_of_payment: "2025-06-01",
+    box1_gross_distribution: 20_000,
+    box2a_taxable_amount: 20_000,
+    box7_distribution_code: DistributionCode.Code1,
+    form8915f_treatment: "three_years",
+  })]);
+  assertEquals(f1040Input(result).line4a_ira_gross, 20_000);
+  assertEquals(f1040Input(result).line4b_ira_taxable, 6_667);
+  assertEquals(
+    result.outputs.some((item) => item.nodeType === "form5329"),
+    false,
+  );
 });
 
 Deno.test("f1099r.compute: distribution code 7 does not route to form5329", () => {
@@ -265,7 +320,7 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  const fields = form4972Out!.fields as Record<string, unknown>;
+  const fields = firstForm4972Source(result)!;
   assertEquals(fields.lump_sum_amount, 80_000);
   assertEquals(fields.capital_gain_amount, 10_000);
   assertEquals(fields.box6_nua, 4_000);
@@ -281,7 +336,7 @@ Deno.test("f1099r.compute: Form 4972 retains a partial box 9a share", () => {
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  assertEquals(form4972Out?.fields.recipient_share_pct, 50);
+  assertEquals(firstForm4972Source(result)?.recipient_share_pct, 50);
 });
 
 Deno.test("f1099r.compute: Form 4972 retains the separate box 8 percentage", () => {
@@ -294,7 +349,7 @@ Deno.test("f1099r.compute: Form 4972 retains the separate box 8 percentage", () 
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const fields = result.outputs.find((o) => o.nodeType === "form4972")?.fields;
+  const fields = firstForm4972Source(result);
   assertEquals(fields?.annuity_actuarial_value, 2_000);
   assertEquals(fields?.annuity_share_pct, 25);
   assertEquals(fields?.recipient_share_pct, 50);
@@ -309,7 +364,7 @@ Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share
     ts: TS.T,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  assertEquals(form4972Out?.fields.lump_sum_amount, 80_000);
+  assertEquals(firstForm4972Source(result)?.lump_sum_amount, 80_000);
 });
 
 Deno.test("f1099r.compute: multiple elected Form 4972 distributions need participant identity", () => {
@@ -329,9 +384,93 @@ Deno.test("f1099r.compute: multiple elected Form 4972 distributions need partici
           ts: secondRecipient,
         }]),
       Error,
-      "needs plan-participant identity and separate forms",
+      secondRecipient === TS.S
+        ? "spouse pair needs distinct fully identified participants"
+        : "multi-distribution election needs one fully identified participant",
     );
   }
+});
+
+Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () => {
+  const form4972_plan = {
+    participant_name: "Ada Taxpayer",
+    participant_ssn: "123456789",
+    plan_reference: "Plan-2025-A",
+    full_balance_statement_reference: "Administrator final-balance statement",
+    all_qualified_distributions_included: true as const,
+  };
+  const first = minimalPensionItem({
+    box1_gross_distribution: 30_000,
+    box2a_taxable_amount: 30_000,
+    box9a_pct_total: 100,
+    exclude_4972: true,
+    source_document_reference: "1099-R-A",
+    form4972_plan,
+  });
+  const second = {
+    ...first,
+    box1_gross_distribution: 40_000,
+    box2a_taxable_amount: 40_000,
+    source_document_reference: "1099-R-B",
+  };
+  const fields = firstForm4972Source(compute([first, second]));
+  assertEquals(fields?.lump_sum_amount, 70_000);
+  assertEquals(fields?.multiple_1099r, {
+    ...form4972_plan,
+    source_document_references: ["1099-R-A", "1099-R-B"],
+  });
+  assertThrows(
+    () =>
+      compute([first, {
+        ...second,
+        form4972_plan: {
+          ...form4972_plan,
+          participant_ssn: "987654321",
+        },
+      }]),
+    Error,
+    "multi-distribution election needs one fully identified participant",
+  );
+  assertThrows(
+    () => compute([first, { ...second, ts: TS.S }]),
+    Error,
+    "spouse pair needs distinct fully identified participants",
+  );
+  assertThrows(
+    () =>
+      compute([first, { ...second, source_document_reference: "1099-R-A" }]),
+    Error,
+    "distinct full-share source copies",
+  );
+});
+
+Deno.test("f1099r.compute: two same-plan box 3 gains combine for one Form 4972", () => {
+  const form4972_plan = {
+    participant_name: "Ada Taxpayer",
+    participant_ssn: "123456789",
+    plan_reference: "Plan-2025-A",
+    full_balance_statement_reference: "Administrator final-balance statement",
+    all_qualified_distributions_included: true as const,
+  };
+  const first = minimalPensionItem({
+    box1_gross_distribution: 30_000,
+    box2a_taxable_amount: 30_000,
+    box3_capital_gain: 5_000,
+    box9a_pct_total: 100,
+    exclude_4972: true,
+    source_document_reference: "1099-R-capital-A",
+    form4972_plan,
+  });
+  const second = {
+    ...first,
+    box1_gross_distribution: 40_000,
+    box2a_taxable_amount: 40_000,
+    box3_capital_gain: 7_000,
+    source_document_reference: "1099-R-capital-B",
+  };
+  const fields = firstForm4972Source(compute([first, second]));
+  assertEquals(fields?.lump_sum_amount, 70_000);
+  assertEquals(fields?.capital_gain_amount, 12_000);
 });
 
 Deno.test("f1099r.compute: an elected Form 4972 source cannot also deny receipt", () => {
@@ -355,18 +494,17 @@ Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () =
   assertEquals(form4972, undefined);
 });
 
-Deno.test("f1099r.compute: exclude_8606_roth routes to form8606 with gross amount", () => {
-  const result = compute([minimalIraItem({
-    box1_gross_distribution: 10000,
-    box7_distribution_code: DistributionCode.CodeJ,
-    exclude_8606_roth: true,
-  })]);
-  const form8606Out = result.outputs.find((o) => o.nodeType === "form8606");
-  const f8606Fields = form8606Out!.fields as Record<string, unknown>;
-  assertEquals(f8606Fields.roth_distribution, 10000);
-  // exclude_8606_roth suppresses income lines
-  const input = f1040Input(result);
-  assertEquals(input.line4b_ira_taxable, 0);
+Deno.test("f1099r.compute: Roth exclusion cannot suppress income without Part III sources", () => {
+  assertThrows(
+    () =>
+      compute([minimalIraItem({
+        box1_gross_distribution: 10000,
+        box7_distribution_code: DistributionCode.CodeJ,
+        exclude_8606_roth: true,
+      })]),
+    Error,
+    "needs one owner code J Form 1099-R",
+  );
 });
 
 Deno.test("f1099r.compute: rollover_code C routes to form8606 with taxable amount", () => {
@@ -920,17 +1058,40 @@ Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified
 // 8. Edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA line and no gross", () => {
-  const result = compute([minimalIraItem({
+Deno.test("f1099r.compute: code G IRA payment to plan reports gross and zero taxable", () => {
+  const item = minimalIraItem({
     box1_gross_distribution: 5000,
-    box2a_taxable_amount: 5000,
+    box2a_taxable_amount: 0,
     box7_distribution_code: DistributionCode.CodeG,
     rollover_code: RolloverCode.G,
-  })]);
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "qualified_plan",
+      destination_name: "Example 401(k)",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: null,
+    },
+  });
+  const result = compute([item]);
   const input = f1040Input(result);
-  // Code G (direct rollover) is not reported on line 4a per IRS Form 1040 instructions
-  assertEquals(input.line4a_ira_gross, undefined);
+  assertEquals(input.line4a_ira_gross, 5000);
   assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "IRA custodian paid 5000 directly to Example 401(k) qualified plan",
+  );
+  assertEquals(
+    f1040Input(compute([{
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        completed_on: "2025-09-01",
+      },
+    }])).line4c_ira_rollover,
+    true,
+  );
 });
 
 Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct rollover", () => {
@@ -940,7 +1101,7 @@ Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct roll
     direct_rollover_confirmed: true,
   })]);
   const input = f1040Input(result);
-  assertEquals(input.line5a_pension_gross, undefined);
+  assertEquals(input.line5a_pension_gross, 20_300);
   assertEquals(input.line5b_pension_taxable, 0);
   assertEquals(input.line5c_pension_rollover, true);
 });
@@ -961,6 +1122,15 @@ Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension ro
   const ira = f1040Input(compute([minimalIraItem({
     box7_distribution_code: DistributionCode.CodeG,
     direct_rollover_confirmed: true,
+    rollover_code: RolloverCode.G,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "qualified_plan",
+      destination_name: "Example 401(k)",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: null,
+    },
   })]));
   const pension = f1040Input(compute([minimalPensionItem()]));
   const unconfirmed = f1040Input(compute([minimalPensionItem({
@@ -968,6 +1138,7 @@ Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension ro
     box2a_taxable_amount: 10_000,
   })]));
   assertEquals(ira.line5c_pension_rollover, undefined);
+  assertEquals(ira.line4c_ira_rollover, true);
   assertEquals(pension.line5c_pension_rollover, undefined);
   assertEquals(unconfirmed.line5c_pension_rollover, undefined);
 });
@@ -976,11 +1147,564 @@ Deno.test("f1099r.compute: code S rollover produces zero taxable", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 8000,
     box2a_taxable_amount: 8000,
-    box7_distribution_code: DistributionCode.CodeG,
+    box7_distribution_code: DistributionCode.Code7,
     rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: null,
+    },
   })]);
   const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 8000);
   assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+});
+
+Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
+  const item = minimalIraItem({ rollover_code: RolloverCode.S });
+  assertThrows(() => compute([item]), Error, "needs destination");
+  assertThrows(
+    () =>
+      compute([minimalIraItem({
+        box7_distribution_code: DistributionCode.CodeG,
+        direct_rollover_confirmed: true,
+      })]),
+    Error,
+    "needs destination",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          source_ira_type: "traditional",
+          destination: "qualified_plan",
+          distributed_on: "2025-12-01",
+          completed_on: "2025-12-15",
+          last_ira_to_ira_rollover_on: null,
+        },
+      }]),
+    Error,
+    "needs its destination name",
+  );
+  const nextYear = {
+    ...item,
+    ira_rollover: {
+      source_ira_type: "traditional" as const,
+      destination: "ira" as const,
+      destination_ira_type: "traditional" as const,
+      distributed_on: "2025-12-01",
+      completed_on: "2026-01-15",
+      last_ira_to_ira_rollover_on: null,
+    },
+  };
+  assertEquals(f1040Input(compute([nextYear])).line4c_ira_rollover, true);
+  assertEquals(
+    iraDistributionExplanation([nextYear]),
+    "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into another IRA on 2026-01-15.",
+  );
+  const qualified = {
+    ...item,
+    ira_rollover: {
+      source_ira_type: "traditional" as const,
+      destination: "qualified_plan" as const,
+      destination_name: "Example 401(k)",
+      distributed_on: "2025-12-01",
+      completed_on: "2025-12-15",
+      last_ira_to_ira_rollover_on: null,
+    },
+  };
+  assertEquals(f1040Input(compute([qualified])).line4c_ira_rollover, true);
+  assertThrows(
+    () =>
+      compute([{
+        ...qualified,
+        ira_rollover: {
+          ...qualified.ira_rollover,
+          completed_on: "2026-02-15",
+        },
+      }]),
+    Error,
+    "completion within 60 days",
+  );
+  assertEquals(
+    iraDistributionExplanation([qualified]),
+    "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into Example 401(k) qualified plan on 2025-12-15.",
+  );
+  assertStringIncludes(
+    iraDistributionExplanation([nextYear, { ...qualified, ts: TS.S }]) ?? "",
+    "Distribution 2: Spouse received 10000 from an IRA",
+  );
+});
+
+Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA rollover", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-1",
+    source_document_reference: "issued-1099r-2025-1",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-09-15",
+      last_ira_to_ira_rollover_on: null,
+      automatic_late_waiver: {
+        institution_received_on: "2025-06-20",
+        deposit_instructions_on: "2025-06-20",
+        institution_error_only: true,
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-1",
+        institution_receipt_reference: "custodian-receipt-1",
+        deposit_instructions_reference: "instructions-1",
+        institution_error_reference: "custodian-error-1",
+        deposit_confirmation_reference: "deposit-1",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "automatic 60-day waiver applies",
+  );
+  assertEquals(
+    iraDistributionExplanation([item])?.includes("custodian-error-1"),
+    false,
+  );
+
+  const planItem = {
+    ...item,
+    ira_rollover: {
+      ...item.ira_rollover!,
+      destination: "qualified_plan" as const,
+      destination_ira_type: undefined,
+      destination_name: "Example 401(k)",
+      automatic_late_waiver: {
+        ...item.ira_rollover!.automatic_late_waiver!,
+        qualified_plan_acceptance_reference: "plan-acceptance-1",
+      },
+    },
+  };
+  assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
+  assertEquals(
+    iraDistributionExplanation([planItem])?.includes("plan-acceptance-1"),
+    false,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...planItem,
+        ira_rollover: {
+          ...planItem.ira_rollover,
+          automatic_late_waiver: {
+            ...planItem.ira_rollover.automatic_late_waiver,
+            qualified_plan_acceptance_reference: undefined,
+          },
+        },
+      }]),
+    Error,
+    "needs plan acceptance evidence",
+  );
+
+  const waiver = item.ira_rollover!.automatic_late_waiver!;
+  const invalid = [
+    { ...item, source_document_reference: undefined },
+    {
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        automatic_late_waiver: {
+          ...waiver,
+          institution_received_on: "2025-08-01",
+        },
+      },
+    },
+    {
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        automatic_late_waiver: {
+          ...waiver,
+          deposit_instructions_on: "2025-08-01",
+        },
+      },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, completed_on: "2026-07-01" },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, completed_on: "2025-06-25" },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, automatic_late_waiver: undefined },
+    },
+  ];
+  for (const bad of invalid) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  for (
+    const key of [
+      "not_inherited_ira_confirmed",
+      "not_required_minimum_distribution_confirmed",
+    ] as const
+  ) {
+    assertEquals(
+      f1099r.inputSchema.safeParse({
+        f1099rs: [{
+          ...item,
+          ira_rollover: {
+            ...item.ira_rollover!,
+            automatic_late_waiver: { ...waiver, [key]: undefined },
+          },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
+Deno.test("f1099r.compute: signed self-certification keeps a late rollover within the 30-day safe harbor", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-2",
+    source_document_reference: "issued-1099r-2025-2",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-05-01",
+      completed_on: "2025-09-10",
+      last_ira_to_ira_rollover_on: null,
+      self_certified_late_waiver: {
+        reason: SelfCertificationReason.SeriousIllness,
+        reason_prevented_timely_rollover: true,
+        reason_resolved_on: "2025-08-20",
+        reason_evidence_reference: "medical-review-1",
+        no_prior_irs_waiver_denial_confirmed: true,
+        prior_denial_review_reference: "irs-history-review-1",
+        certification_signed_on: "2025-09-01",
+        certification_delivered_on: "2025-09-02",
+        signed_certification_reference: "signed-letter-1",
+        contribution_confirmation_reference: "deposit-2",
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-2",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "Rev. Proc. 2020-46 self-certification",
+  );
+  assertEquals(
+    iraDistributionExplanation([item])?.includes("signed-letter-1"),
+    false,
+  );
+  const rollover = item.ira_rollover!;
+  const certification = rollover.self_certified_late_waiver!;
+  for (
+    const bad of [
+      { ...item, source_document_reference: undefined },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-09-20" } },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-05-20" } },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          self_certified_late_waiver: {
+            ...certification,
+            certification_delivered_on: "2025-09-11",
+          },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          self_certified_late_waiver: {
+            ...certification,
+            reason_resolved_on: "2025-06-01",
+          },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: { ...rollover, self_certified_late_waiver: undefined },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  const automatic = minimalIraItem({
+    account_number: "IRA-AUTO",
+    source_document_reference: "issued-1099r-auto",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      ...rollover,
+      automatic_late_waiver: {
+        institution_received_on: "2025-05-20",
+        deposit_instructions_on: "2025-05-20",
+        institution_error_only: true,
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-3",
+        institution_receipt_reference: "receipt-3",
+        deposit_instructions_reference: "instructions-3",
+        institution_error_reference: "error-3",
+        deposit_confirmation_reference: "deposit-3",
+      },
+    },
+  });
+  assertThrows(
+    () => compute([automatic]),
+    Error,
+    "cannot claim two waiver methods",
+  );
+});
+
+Deno.test("f1099r.compute: favorable IRS ruling links a late distribution and deposit", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-PLR",
+    source_document_reference: "issued-1099r-2025-plr",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-05-01",
+      completed_on: "2025-09-10",
+      last_ira_to_ira_rollover_on: null,
+      irs_private_letter_waiver: {
+        ruling_number: "PLR-2025-EXAMPLE",
+        issued_on: "2025-08-01",
+        ruling_rollover_deadline_on: "2025-10-01",
+        favorable_60_day_waiver_confirmed: true,
+        issued_ruling_reference: "issued-ruling-1",
+        owner_distribution_match_review_reference: "ruling-source-match-1",
+        deposit_confirmation_reference: "deposit-confirmation-1",
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "rollover-eligibility-1",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "private letter ruling PLR-2025-EXAMPLE",
+  );
+  const rollover = item.ira_rollover!;
+  const ruling = rollover.irs_private_letter_waiver!;
+  for (
+    const bad of [
+      { ...item, source_document_reference: undefined },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-05-15" } },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-10-02" } },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          irs_private_letter_waiver: { ...ruling, issued_on: "2025-04-01" },
+        },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  assertEquals(
+    f1099r.inputSchema.safeParse({
+      f1099rs: [{
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          irs_private_letter_waiver: {
+            ...ruling,
+            favorable_60_day_waiver_confirmed: undefined,
+          },
+        },
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("f1099r.compute: IRA rollover requires account type and prior-history review", () => {
+  const item = minimalIraItem({
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: null,
+    },
+  });
+  assertEquals(f1040Input(compute([item])).line4c_ira_rollover, true);
+  assertEquals(
+    f1099r.inputSchema.safeParse({
+      f1099rs: [{
+        ...item,
+        ira_rollover: { ...item.ira_rollover, source_ira_type: undefined },
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f1099r.inputSchema.safeParse({
+      f1099rs: [{
+        ...item,
+        ira_rollover: {
+          ...item.ira_rollover,
+          last_ira_to_ira_rollover_on: undefined,
+        },
+      }],
+    }).success,
+    false,
+  );
+  for (
+    const source_ira_type of [
+      "traditional_simple",
+      "roth",
+      "roth_sep",
+      "roth_simple",
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        compute([{
+          ...item,
+          ira_rollover: { ...item.ira_rollover!, source_ira_type },
+        }]),
+      Error,
+      "source must be a reviewed traditional or SEP IRA",
+    );
+  }
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          ...item.ira_rollover!,
+          destination_ira_type: "roth",
+        },
+      }]),
+    Error,
+    "destination must be a reviewed traditional or SEP IRA",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        box7_distribution_code: DistributionCode.CodeG,
+        rollover_code: RolloverCode.G,
+      }]),
+    Error,
+    "cannot use payer code G",
+  );
+  for (const code of [DistributionCode.CodeS, DistributionCode.CodeJ]) {
+    assertThrows(
+      () => compute([{ ...item, box7_distribution_code: code }]),
+      Error,
+      "conflicts with the payer distribution code",
+    );
+  }
+});
+
+Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit", () => {
+  const item = minimalIraItem({
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional_sep",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: "2024-06-01",
+    },
+  });
+  assertEquals(f1040Input(compute([item])).line4c_ira_rollover, true);
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          ...item.ira_rollover!,
+          last_ira_to_ira_rollover_on: "2024-06-02",
+        },
+      }]),
+    Error,
+    "one rollover per owner in 12 months",
+  );
+  const second = {
+    ...item,
+    ira_rollover: {
+      ...item.ira_rollover!,
+      distributed_on: "2025-11-01",
+      completed_on: "2025-11-02",
+      last_ira_to_ira_rollover_on: null,
+    },
+  };
+  assertThrows(
+    () => compute([item, second]),
+    Error,
+    "one rollover per owner in 12 months",
+  );
+  assertEquals(
+    f1040Input(compute([item, { ...second, ts: TS.S }]))
+      .line4c_ira_rollover,
+    true,
+  );
+  assertEquals(
+    f1040Input(compute([item, {
+      ...second,
+      ira_rollover: {
+        ...second.ira_rollover,
+        destination: "qualified_plan",
+        destination_ira_type: undefined,
+        destination_name: "Example 401(k)",
+      },
+    }])).line4c_ira_rollover,
+    true,
+  );
+});
+
+Deno.test("f1099r.compute: partial IRA rollover marks line 4c and taxes the remainder", () => {
+  const input = f1040Input(compute([minimalIraItem({
+    box1_gross_distribution: 10_000,
+    box2a_taxable_amount: 10_000,
+    rollover_code: RolloverCode.X,
+    partial_rollover_amount: 6_000,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-09-01",
+      completed_on: "2025-09-30",
+      last_ira_to_ira_rollover_on: null,
+    },
+  })]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 4_000);
+  assertEquals(input.line4c_ira_rollover, true);
 });
 
 Deno.test("f1099r.compute: code S taxable SIMPLE IRA distribution reaches the 25% Form 5329 line", () => {

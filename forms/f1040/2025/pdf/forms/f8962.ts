@@ -5,9 +5,13 @@ import {
   inputSchema as form1095aSchema,
 } from "../../../nodes/inputs/f1095a/index.ts";
 import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
-import { form8962 as form8962Mef } from "../../mef/forms/f8962.ts";
+import {
+  form8962 as form8962Mef,
+  onePersonTransitionOverlapMonth,
+} from "../../mef/forms/f8962.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
+import { assertForm8962Pub974Return } from "../../form8962_pub974_return.ts";
 
 // TY2025 Form 8962 AcroForm fields, verified against the year-pinned IRS PDF.
 const PAGE1 = "topmostSubform[0].Page1[0]";
@@ -209,6 +213,7 @@ function projectFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> {
+  assertForm8962Pub974Return(fields, allPending);
   const hasPolicy = fields.annual_premium !== undefined ||
     fields.annual_aptc !== undefined || fields.annual_slcsp !== undefined ||
     Array.isArray(fields.monthly_ptc_rows);
@@ -216,6 +221,15 @@ function projectFields(
     const policies = current1095AStatements(
       form1095aSchema.parse(allPending.f1095a).f1095as,
     );
+    const twoNoAptcPoliciesWithEvidence = fields.household_size === 1 &&
+      policies.length === 2 &&
+      policies.every((policy) =>
+        policy.policy_number &&
+        policy.covered_individual_ssns?.length === 1 &&
+        policy.monthly_aptcs?.every((amount) => amount === 0) &&
+        policy.slcsp_corrections?.length === 12 &&
+        policy.no_aptc_monthly_evidence?.length === 12
+      );
     if (
       Array.isArray(fields.monthly_ptc_rows) &&
       Array.from(
@@ -227,7 +241,9 @@ function projectFields(
             (policy.monthly_aptcs?.[month] ?? 0) > 0
           ).length > 1,
       ).some(Boolean) && fields.household_size !== 2 &&
-      fields.household_size !== 3
+      fields.household_size !== 3 && !twoNoAptcPoliciesWithEvidence &&
+      !(fields.household_size === 1 &&
+        onePersonTransitionOverlapMonth(policies) !== undefined)
     ) {
       throw new Error(
         "Form 8962 PDF overlapping policies need enrollee and coverage-family source reconciliation",
@@ -434,6 +450,8 @@ export const form8962Pdf: PdfFormDescriptor = {
         (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
       ((projected.annual_premium !== undefined ||
         Array.isArray(projected.monthly_ptc_rows)) && policies.length > 1) ||
+      (Array.isArray(projected.monthly_ptc_rows) &&
+        policies.some((policy) => policy.slcsp_corrections !== undefined)) ||
       ((projected.household_size === 2 || projected.household_size === 3) &&
         Array.isArray(projected.monthly_ptc_rows)) ||
       (typeof projected.federal_poverty_pct === "number" &&

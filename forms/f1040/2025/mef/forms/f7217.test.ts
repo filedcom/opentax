@@ -78,13 +78,104 @@ const gainItem = {
   },
 };
 
+const liquidatingAllocation = {
+  partnership_name: "PRS Partnership",
+  partnership_ein: "12-3456789",
+  distribution_date: "2025-08-01",
+  complete_liquidation: true,
+  section_751b_sale_or_exchange: false,
+  partner_adjusted_basis_before_distribution: 750,
+  cash_received: 100,
+  section_732c_allocation_workpaper_reference:
+    "2025 PRS section 732(c) allocation",
+  distributed_properties: [
+    {
+      description: "Inventory",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "inventory_or_receivable" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 200,
+      partner_basis_after_section_732: 100,
+    },
+    {
+      description: "Asset X",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 50,
+      fair_market_value: 400,
+      partner_basis_after_section_732: 440,
+    },
+    {
+      description: "Asset Y",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 100,
+      partner_basis_after_section_732: 110,
+    },
+  ],
+};
+
+Deno.test("Form 7217 native and PDF preserve section 732(c) liquidating property basis", () => {
+  const [xml] = form7217.build({ form7217s: [liquidatingAllocation] }, {
+    filer,
+  });
+  assertStringIncludes(
+    xml,
+    "<TotPrtnrBssAllocDistriPropAmt>650</TotPrtnrBssAllocDistriPropAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrtnrBssPropAftrSect732Amt>440</PrtnrBssPropAftrSect732Amt>",
+  );
+  const [pdf] = form7217Pdf.instances(
+    { form7217s: [liquidatingAllocation] },
+    filer,
+  );
+  assertEquals(pdf?.line10, 650);
+  assertEquals(pdf?.row1_partner_basis, 100);
+  assertEquals(pdf?.row2_partner_basis, 440);
+  assertEquals(pdf?.row3_partner_basis, 110);
+  const tampered = {
+    ...liquidatingAllocation,
+    distributed_properties: [
+      liquidatingAllocation.distributed_properties[0],
+      {
+        ...liquidatingAllocation.distributed_properties[1],
+        partner_basis_after_section_732: 439,
+      },
+      {
+        ...liquidatingAllocation.distributed_properties[2],
+        partner_basis_after_section_732: 111,
+      },
+    ],
+  };
+  assertThrows(
+    () => form7217.build({ form7217s: [tampered] }, { filer }),
+    Error,
+    "property basis conflicts with section 732(c)",
+  );
+  assertThrows(
+    () => form7217Pdf.instances({ form7217s: [tampered] }, filer),
+    Error,
+    "property basis conflicts with section 732(c)",
+  );
+});
+
 Deno.test("Form 7217 section 731 cash gain matches the filed Form 8949 row in MeF and PDF", () => {
   const transaction = section731Form8949Transaction(gainItem);
   const pending = { form8949: [transaction] };
   const [xml] = form7217.build({ form7217s: [gainItem] }, { filer, pending });
   assertStringIncludes(xml, "<RecognizedGainAmt>5000</RecognizedGainAmt>");
-  assertStringIncludes(xml, "<TotPrtnrBssAllocDistriPropAmt>0</TotPrtnrBssAllocDistriPropAmt>");
-  const [pdf] = form7217Pdf.instances({ form7217s: [gainItem] }, filer, pending);
+  assertStringIncludes(
+    xml,
+    "<TotPrtnrBssAllocDistriPropAmt>0</TotPrtnrBssAllocDistriPropAmt>",
+  );
+  const [pdf] = form7217Pdf.instances(
+    { form7217s: [gainItem] },
+    filer,
+    pending,
+  );
   assertEquals(pdf?.line7, 5_000);
   assertEquals(pdf?.line10, 0);
   assertThrows(
@@ -102,18 +193,25 @@ Deno.test("Form 7217 section 731 cash gain matches the filed Form 8949 row in Me
 Deno.test("Form 7217 gain rejects a wrong K-1 owner or tampered Form 8949 row", () => {
   const transaction = section731Form8949Transaction(gainItem)!;
   assertThrows(
-    () => form7217.build({ form7217s: [{ ...gainItem, section_731_capital_gain_source: {
-      ...gainItem.section_731_capital_gain_source,
-      k1_partner_ssn: "111223333",
-    } }] }, { filer, pending: { form8949: [transaction] } }),
+    () =>
+      form7217.build({
+        form7217s: [{
+          ...gainItem,
+          section_731_capital_gain_source: {
+            ...gainItem.section_731_capital_gain_source,
+            k1_partner_ssn: "111223333",
+          },
+        }],
+      }, { filer, pending: { form8949: [transaction] } }),
     Error,
     "matching owner",
   );
   assertThrows(
-    () => form7217.build({ form7217s: [gainItem] }, {
-      filer,
-      pending: { form8949: [{ ...transaction, gain_loss: 4_999 }] },
-    }),
+    () =>
+      form7217.build({ form7217s: [gainItem] }, {
+        filer,
+        pending: { form8949: [{ ...transaction, gain_loss: 4_999 }] },
+      }),
     Error,
     "exactly one sourced Form 8949 capital-gain row",
   );

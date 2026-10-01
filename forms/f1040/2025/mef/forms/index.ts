@@ -4,6 +4,7 @@ import { cccLoanAccrualStatement } from "./ccc_loan_accrual_statement.ts";
 import { cropInsuranceDeferralStatement } from "./crop_insurance_deferral_statement.ts";
 import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 import { irs1040 } from "./f1040.ts";
+import { iraDistributionStatement } from "./ira_distribution_statement.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
 import { form2210f } from "./f2210f_box_b.ts";
@@ -15,6 +16,8 @@ import { form1116AlternativeCompensationStatement } from "./f1116_alternative_co
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
+import { form3468 } from "./f3468.ts";
+import { form3800CarryforwardStatement } from "./f3800_carryforward_statement.ts";
 import { form4137 } from "./f4137.ts";
 import { form4255 } from "./f4255.ts";
 import { form4136 } from "./f4136.ts";
@@ -33,6 +36,15 @@ import { form4835 } from "./f4835.ts";
 import { form4952 } from "./f4952.ts";
 import { form4972 } from "./f4972.ts";
 import { form5329 } from "./f5329.ts";
+import { form5471 } from "./f5471.ts";
+import { form5471ScheduleE } from "./f5471_schedule_e.ts";
+import { form5471ScheduleH } from "./f5471_schedule_h.ts";
+import { form5471ScheduleI1 } from "./f5471_schedule_i1.ts";
+import { form5471ScheduleJ } from "./f5471_schedule_j.ts";
+import { form5471ScheduleM } from "./f5471_schedule_m.ts";
+import { form5471ScheduleP } from "./f5471_schedule_p.ts";
+import { form5471ScheduleQ } from "./f5471_schedule_q.ts";
+import { form5471ScheduleR } from "./f5471_schedule_r.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
 import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
@@ -81,6 +93,7 @@ import { form8888 } from "./f8888.ts";
 import { form8889 } from "./f8889.ts";
 import { form8911 } from "./f8911.ts";
 import { form8912 } from "./f8912.ts";
+import { form8915F } from "./f8915f.ts";
 import { form8911ScheduleA } from "./f8911_schedule_a.ts";
 import { form8936 } from "./f8936.ts";
 import { form8936ScheduleA } from "./f8936_schedule_a.ts";
@@ -94,6 +107,8 @@ import { form8978ScheduleA } from "./f8978_schedule_a.ts";
 import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 import { form8990 } from "./f8990.ts";
+import { form8992 } from "./f8992.ts";
+import { form8992ScheduleA } from "./f8992_schedule_a.ts";
 import { form8995 } from "./f8995.ts";
 import { form8995a } from "./f8995a.ts";
 import { form8995aScheduleA } from "./f8995a_schedule_a.ts";
@@ -177,6 +192,8 @@ export const ALL_MEF_FORMS = [
   form2441,
   // Form 2555
   form2555,
+  // Trust-sourced Form 3468 Part V: one attachment per qualified facility.
+  form3468,
   // Form 3800 is one document after Form 2555 in ReturnData1040.xsd.
   form3800,
   // Form 4136 precedes Form 4137 in ReturnData1040.xsd.
@@ -198,6 +215,16 @@ export const ALL_MEF_FORMS = [
   form4972,
   // Form 5329
   form5329,
+  // Form 5471 and its separate schedules follow ReturnData1040 order.
+  form5471,
+  form5471ScheduleE,
+  form5471ScheduleH,
+  form5471ScheduleI1,
+  form5471ScheduleJ,
+  form5471ScheduleM,
+  form5471ScheduleP,
+  form5471ScheduleQ,
+  form5471ScheduleR,
   // Form 5695
   form5695,
   // Form 5884
@@ -268,6 +295,7 @@ export const ALL_MEF_FORMS = [
   // Form 8911
   form8911,
   form8912,
+  form8915F,
   // Form 8919
   form8919,
   // Form 8911 Schedule A follows Form 8919 in ReturnData1040.xsd.
@@ -288,6 +316,9 @@ export const ALL_MEF_FORMS = [
   form8978ScheduleA,
   // Form 8990
   form8990,
+  // One Category 5a shareholder Form 8992 and its single-CFC Schedule A.
+  form8992,
+  form8992ScheduleA,
   // Form 8995
   form8995,
   // Form 8995A
@@ -301,6 +332,8 @@ export const ALL_MEF_FORMS = [
   // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
   w2g,
   fecRecord,
+  // Form 1040 line 4c IRA statement precedes other income statements.
+  iraDistributionStatement,
   // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
   schedule1OtherIncomeStatement,
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
@@ -317,6 +350,8 @@ export const ALL_MEF_FORMS = [
   form1116AlternativeCompensationStatement,
   form1116DirectExpenseStatement,
   form1116OtherDeductionsStatement,
+  // Native Form 3800 carryforward computations follow Form 1116 statements.
+  form3800CarryforwardStatement,
   form4136EmulsionBlendingStatement,
   form4136CreditCardUsersStatement,
   form4136DieselGovernmentSalesStatement,

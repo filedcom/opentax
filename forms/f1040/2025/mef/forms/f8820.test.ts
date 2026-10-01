@@ -337,7 +337,7 @@ Deno.test("Form 8820 pass-through credit reconciles to partnership and S-corp K-
   );
 });
 
-Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code M", () => {
+Deno.test("Form 8820 rejects estate and trust K-1 code M as orphan-drug credit", () => {
   const credits = ["estate", "trust"].map((type, index) => ({
     source_type: type as "estate" | "trust",
     entity_ein: String(123_456_789 + index),
@@ -352,72 +352,16 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
     form8932_overlapping_wage_credit: 0,
     pass_through_credits: credits,
   };
-  const k1_trusts = credits.map((credit) => ({
-    estate_trust_name: `Example ${credit.source_type}`,
-    entity_type: credit.source_type,
-    estate_trust_ein: credit.entity_ein,
-    source_document_reference: credit.source_document_reference,
-    box13_code_m_orphan_drug_credit: credit.credit_amount,
-    orphan_drug_credit_subject_to_passive_activity_limit: false,
-  }));
-  assertEquals(
-    form8820.build(passThroughOnly, {
-      pending: { f8820: passThroughOnly, k1_trust: { k1_trusts } },
-    }),
-    "",
-  );
-  assertThrows(
-    () =>
-      form8820.build(passThroughOnly, {
-        pending: {
-          f8820: passThroughOnly,
-          k1_trust: {
-            k1_trusts: [
-              { ...k1_trusts[0], entity_type: "trust" },
-              k1_trusts[1],
-            ],
-          },
-        },
-      }),
-    Error,
-    "does not reconcile to K-1 box 13 code M",
-  );
-  assertThrows(
-    () =>
-      form8820.build(passThroughOnly, {
-        pending: {
-          f8820: passThroughOnly,
-          k1_trust: {
-            k1_trusts: [{
-              ...k1_trusts[0],
-              box13_code_m_orphan_drug_credit: 999,
-            }, k1_trusts[1]],
-          },
-        },
-      }),
-    Error,
-    "does not reconcile to K-1 box 13 code M",
-  );
-  assertThrows(
-    () =>
-      form8820.build(passThroughOnly, {
-        pending: {
-          f8820: passThroughOnly,
-          k1_trust: {
-            k1_trusts: [{
-              ...k1_trusts[0],
-              box13_code_m_orphan_drug_credit: undefined,
-              box13_code_zz_disabled_access_credit: 500,
-              box13_code_zz_disabled_access_statement_reference:
-                "Unrelated disabled-access statement",
-              disabled_access_credit_subject_to_passive_activity_limit: false,
-            }, k1_trusts[1]],
-          },
-        },
-      }),
-    Error,
-    "does not reconcile to K-1 box 13 code M",
-  );
+  for (const credit of credits) {
+    assertThrows(
+      () =>
+        form8820.build({ ...passThroughOnly, pass_through_credits: [credit] }, {
+          pending: { f8820: passThroughOnly },
+        }),
+      Error,
+      "orphan-drug credit needs a reviewed source route before Form 8820",
+    );
+  }
 });
 
 Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule C", () => {

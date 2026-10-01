@@ -1,6 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { itemSchema } from "../../../nodes/inputs/schedule_e/index.ts";
+import { buildMefBundle, buildMefXml } from "../builder.ts";
+import { FilingStatus } from "../types.ts";
 import { scheduleE } from "./schedule_e.ts";
+import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./schedule_e_type8_statement.ts";
 
 function property(overrides: Record<string, unknown> = {}) {
   return itemSchema.parse({
@@ -20,6 +24,53 @@ function property(overrides: Record<string, unknown> = {}) {
     ...overrides,
   });
 }
+
+Deno.test("Schedule E long type 8 description is preserved in a bundled statement", async () => {
+  const description = "Detached mixed-use storage facility";
+  const pending = {
+    schedule_e: {
+      schedule_es: [property({
+        property_type: 8,
+        property_type_other_desc: description,
+        property_description: "Storage rental",
+      })],
+    },
+  };
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "John A Smith",
+    nameLine1: "SMITH JOHN A",
+    nameControl: "SMIT",
+    address: {
+      line1: "123 MAIN ST",
+      city: "SPRINGFIELD",
+      state: "IL",
+      zip: "62701",
+    },
+    filingStatus: FilingStatus.Single,
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "needs its binary PDF attachment",
+  );
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(bundle.attachments[0].fileName, SCHEDULE_E_TYPE8_STATEMENT_FILE);
+  assertEquals(
+    (await PDFDocument.load(bundle.attachments[0].bytes)).getPageCount(),
+    1,
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OtherPropertyTypeDesc>SEE ATTACHED</OtherPropertyTypeDesc>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<Desc>Schedule E Type 8 Property Descriptions</Desc>",
+  );
+  assertEquals(bundle.xml.includes(description), false);
+});
 
 Deno.test("Schedule E serializes property lines and totals in XSD order", () => {
   const xml = scheduleE.build({
@@ -63,6 +114,158 @@ Deno.test("Schedule E serializes property lines and totals in XSD order", () => 
   );
 });
 
+Deno.test("Schedule E Part III matches a trust K-1 box 5 source", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  };
+  const row = {
+    estate_trust_name: source.estate_trust_name,
+    estate_trust_ein: source.estate_trust_ein,
+    source_document_reference: source.source_document_reference,
+    other_income: 750,
+  };
+  const xml = scheduleE.build({ estate_trust_rows: [row] }, {
+    pending: {
+      k1_trust: { k1_trusts: [source] },
+      schedule1: { line5_schedule_e: 750 },
+    },
+  });
+  assertStringIncludes(xml, "<EstateOrTrustEIN>123456789</EstateOrTrustEIN>");
+  assertStringIncludes(xml, "<OtherIncomeAmt>750</OtherIncomeAmt>");
+  assertStringIncludes(xml, "<TotalOtherIncomeAmt>750</TotalOtherIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotEstateAndTrustIncOrLossAmt>750</TotEstateAndTrustIncOrLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>750</TotalSuppIncomeOrLossAmt>",
+  );
+  assertThrows(
+    () =>
+      scheduleE.build({ estate_trust_rows: [row] }, {
+        pending: {
+          k1_trust: { k1_trusts: [{ ...source, box5_other_portfolio: 751 }] },
+          schedule1: { line5_schedule_e: 750 },
+        },
+      }),
+    Error,
+    "must match one",
+  );
+  assertThrows(
+    () =>
+      scheduleE.build({ estate_trust_rows: [row] }, {
+        pending: {
+          k1_trust: { k1_trusts: [source] },
+          schedule1: { line5_schedule_e: 751 },
+        },
+      }),
+    Error,
+    "finalized Schedule 1 line 5",
+  );
+});
+
+Deno.test("Schedule E Part III carries sourced passive trust income", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box6_ordinary_business: 300,
+    box7_rental_real_estate: 200,
+    box8_other_rental: 100,
+    box6_8_activity_statement: [
+      {
+        box: "6",
+        activity_name: "Shop",
+        statement_reference: "A-6",
+        income: 300,
+      },
+      {
+        box: "7",
+        activity_name: "House",
+        statement_reference: "A-7",
+        income: 200,
+      },
+      {
+        box: "8",
+        activity_name: "Equipment",
+        statement_reference: "A-8",
+        income: 100,
+      },
+    ],
+  };
+  const row = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    passive_income: 600,
+  };
+  const xml = scheduleE.build({ estate_trust_rows: [row] }, {
+    pending: {
+      k1_trust: { k1_trusts: [source] },
+      schedule1: { line5_schedule_e: 600 },
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<EstateAndTrustPassiveIncomeAmt>600</EstateAndTrustPassiveIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EstateAndTrustTotPssvIncmAmt>600</EstateAndTrustTotPssvIncmAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>600</TotalSuppIncomeOrLossAmt>",
+  );
+});
+
+Deno.test("Schedule E combines passive and other income from one trust once", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+    box6_ordinary_business: 600,
+    box6_8_activity_statement: [{
+      box: "6",
+      activity_name: "Shop",
+      statement_reference: "A-6",
+      income: 600,
+    }],
+  };
+  const xml = scheduleE.build({
+    estate_trust_rows: [{
+      estate_trust_name: "Family Trust",
+      estate_trust_ein: "123456789",
+      source_document_reference: "K1-2025-A",
+      other_income: 750,
+      passive_income: 600,
+    }],
+  }, {
+    pending: {
+      k1_trust: { k1_trusts: [source] },
+      schedule1: { line5_schedule_e: 1350 },
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<EstateAndTrustTotPssvIncmAmt>600</EstateAndTrustTotPssvIncmAmt>",
+  );
+  assertStringIncludes(xml, "<TotalOtherIncomeAmt>750</TotalOtherIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotEstateAndTrustIncOrLossAmt>1350</TotEstateAndTrustIncOrLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>1350</TotalSuppIncomeOrLossAmt>",
+  );
+});
+
 Deno.test("Schedule E combines two properties and Form 4835 farm income", () => {
   const xml = scheduleE.build({
     schedule_es: [
@@ -75,6 +278,16 @@ Deno.test("Schedule E combines two properties and Form 4835 farm income", () => 
     ],
     farm_rental_net: 3000,
     farm_rental_gross: 5000,
+  }, {
+    pending: {
+      f4835: {
+        f4835s: [{
+          activity_name: "Farm",
+          livestock_crop_income: 5000,
+          expense_feed: 2000,
+        }],
+      },
+    },
   });
   assertStringIncludes(
     xml,

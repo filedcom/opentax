@@ -28,18 +28,25 @@ import {
 import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
+  assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
   calculateInvestment1245Disposition,
-  investment1245DispositionSchema,
   type Investment1245Disposition,
+  investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
+import {
+  type Box11Line10Source,
+  box11Line10SourceSchema,
+} from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertK1Section1231FilingLinks } from "../../../nodes/intermediate/forms/form4797/k1_1231_source.ts";
 
 export interface Fields {
   section_1231_gain?: number | null;
   gain_form6252?: number | null;
   gain_form8824?: number | null;
   k1_1231_rows?: readonly K1Section1231Row[] | null;
+  k1_box11_line10_rows?: readonly Box11Line10Source[] | null;
   passive_property_sales?: unknown;
   nonrecaptured_1231_loss?: number | null;
   ordinary_gain?: number | null;
@@ -66,7 +73,9 @@ function wholeDollar(value: unknown, name: string): number {
 
 function propertyDesc(value: string): string {
   if (value.length > 20) {
-    throw new Error("Form 4797 property description exceeds the 20-character MeF limit");
+    throw new Error(
+      "Form 4797 property description exceeds the 20-character MeF limit",
+    );
   }
   return value;
 }
@@ -79,7 +88,8 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       new Set(sales.map((sale) => sale.property_id)).size !== sales.length ||
       Object.entries(fields).some(([key, value]) =>
         key !== "investment_1245_dispositions" && value !== undefined &&
-        value !== null && (Array.isArray(value) ? value.length > 0 : value !== 0)
+        value !== null &&
+        (Array.isArray(value) ? value.length > 0 : value !== 0)
       )
     ) {
       throw new Error(
@@ -95,27 +105,44 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
     const excess = totalGain - ordinary;
     const pending = context?.pending;
     const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
-    const rows = z.array(form8949TransactionSchema).parse(pending?.form8949 ?? []);
+    const rows = z.array(form8949TransactionSchema).parse(
+      pending?.form8949 ?? [],
+    );
     assertInvestment1245FilingLinks(
       calculated,
       rows,
       schedule1?.line4_other_gains,
     );
+    assertFullyRecapturedInvestment1245Return(
+      calculated,
+      (pending ?? {}) as Record<string, unknown>,
+    );
     return elements("IRS4797", [
       element("TotalOrdinaryGainLossAmt", ordinary),
       element("OtherGainLossAmt", ordinary),
-      ...calculated.map((item) => elements("PropertyDispositionGain", [
-        element("PropertyDesc", propertyDesc(item.sale.property_description)),
-        element("AcquiredDt", item.sale.acquired_on),
-        element("SoldDt", item.sale.sold_on),
-        element("GrossSalesPriceAmt", item.sale.gross_sales_price),
-        element("CostOrOtherBasisExpenseSaleAmt", item.sale.cost_or_other_basis_plus_sale_expense),
-        element("DepreciationDepletionAllwAmt", item.sale.depreciation_allowed_or_allowable),
-        element("AdjustedBasisAmt", item.adjustedBasis),
-        element("TotalGainAmt", item.totalGain),
-        element("Section1245DepreciationAllwAmt", item.sale.depreciation_allowed_or_allowable),
-        element("Section1245PropertyAmt", item.ordinaryRecapture),
-      ])),
+      ...calculated.map((item) =>
+        elements("PropertyDispositionGain", [
+          element("PropertyDesc", propertyDesc(item.sale.property_description)),
+          element("AcquiredDt", item.sale.acquired_on),
+          element("SoldDt", item.sale.sold_on),
+          element("GrossSalesPriceAmt", item.sale.gross_sales_price),
+          element(
+            "CostOrOtherBasisExpenseSaleAmt",
+            item.sale.cost_or_other_basis_plus_sale_expense,
+          ),
+          element(
+            "DepreciationDepletionAllwAmt",
+            item.sale.depreciation_allowed_or_allowable,
+          ),
+          element("AdjustedBasisAmt", item.adjustedBasis),
+          element("TotalGainAmt", item.totalGain),
+          element(
+            "Section1245DepreciationAllwAmt",
+            item.sale.depreciation_allowed_or_allowable,
+          ),
+          element("Section1245PropertyAmt", item.ordinaryRecapture),
+        ])
+      ),
       element("TotalGainsForAllPropertiesAmt", totalGain),
       element("TotalSectionPropertyAmt", ordinary),
       element("NetGainAmt", excess),
@@ -147,7 +174,8 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       fields.recapture_form6252 !== undefined ||
       fields.nonrecaptured_1231_loss !== undefined ||
       fields.unrecaptured_section_1250_gain !== undefined ||
-      (fields.k1_1231_rows?.length ?? 0) > 0)
+      (fields.k1_1231_rows?.length ?? 0) > 0 ||
+      (fields.k1_box11_line10_rows?.length ?? 0) > 0)
   ) {
     throw new Error(
       "Form 4797 prior passive losses cannot overlap current Form 4797 transactions",
@@ -172,6 +200,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         (fields.k1_1231_rows?.length ?? 0) > 0)) ||
     (passivePartII.length > 0 &&
       (fields.ordinary_gain !== undefined ||
+        (fields.k1_box11_line10_rows?.length ?? 0) > 0 ||
         fields.ordinary_gain_form4684 !== undefined ||
         fields.recapture_form6252 !== undefined))
   ) {
@@ -196,6 +225,38 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       const activity = matches[0];
+      if (
+        sale.part === "I" &&
+        sale.entire_activity_interest_disposed === true
+      ) {
+        throw new Error(
+          "Form 4797 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+        );
+      }
+      const retainedPartI = passiveSales.length === 1 &&
+        sale.part === "I" &&
+        sale.entire_activity_interest_disposed === false &&
+        (activity.prior_unallowed_passive_operating ?? 0) > 0 &&
+        (activity.prior_unallowed_passive_4797_part1 ?? 0) === 0 &&
+        (activity.prior_unallowed_passive_4797_part2 ?? 0) === 0;
+      if (
+        retainedPartI &&
+        (activity.passive_property_sales?.length !== 1 ||
+          !samePassiveSale(activity.passive_property_sales[0], sale))
+      ) {
+        throw new Error(
+          "Form 4797 passive Part I sale differs from its Schedule E property source",
+        );
+      }
+      if (
+        retainedPartI &&
+        (activity.section_1231_lookback_source?.nonrecaptured_loss !== 0 ||
+          fields.nonrecaptured_1231_loss !== 0)
+      ) {
+        throw new Error(
+          "Form 4797 passive Part I sale needs matching five-year section 1231 loss source",
+        );
+      }
       const hasPassiveLoss = computePropertyNet(activity) < 0 ||
         (activity.prior_unallowed_passive_operating ?? 0) > 0 ||
         (activity.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
@@ -223,13 +284,16 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       if (
-        entireLoss !== undefined && passiveLedger !== undefined
+        entireLoss !== undefined && passiveLedger !== undefined &&
+        (!Object.hasOwn(passiveLedger, "filing_status") ||
+          Object.keys(passiveLedger).some((key) => key !== "filing_status"))
       ) {
         throw new Error(
           "Form 4797 overall-loss entire disposition must bypass Form 8582",
         );
       }
-      if (entireGain !== undefined &&
+      if (
+        entireGain !== undefined &&
         (passiveLedger?.activities?.length !== 1 ||
           passiveLedger.activities[0].activity_id !== activity.activity_id ||
           !passiveLedger.current_4797_sale_gains?.some((row) =>
@@ -238,7 +302,8 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
             row.part === sale.part &&
             row.gain === passiveSaleGain(sale) &&
             row.entire_activity_interest_disposed === true
-          ))) {
+          ))
+      ) {
         throw new Error(
           "Form 4797 overall-gain entire disposition needs its linked Form 8582 sale",
         );
@@ -261,7 +326,9 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
     }
   }
   if (
-    passiveSales.some((sale) => sale.entire_activity_interest_disposed === true) &&
+    passiveSales.some((sale) =>
+      sale.entire_activity_interest_disposed === true
+    ) &&
     !context?.pending
   ) {
     throw new Error(
@@ -286,6 +353,12 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
     : wholeDollar(fields.gain_form8824, "Form 8824 section 1231 gain");
   const k1Rows = z.array(k1Section1231RowSchema).parse(
     fields.k1_1231_rows ?? [],
+  );
+  if (k1Rows.length > 0 && context?.pending) {
+    assertK1Section1231FilingLinks(k1Rows, context.pending, context.filer);
+  }
+  const ordinaryK1Rows = z.array(box11Line10SourceSchema).parse(
+    fields.k1_box11_line10_rows ?? [],
   );
   const k1Gain = k1Rows.reduce(
     (sum, row) =>
@@ -407,6 +480,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   if (
     (gross === undefined || gross === 0) && form4684 === 0 &&
     installmentGain === 0 && exchangeGain === 0 && k1Rows.length === 0 &&
+    ordinaryK1Rows.length === 0 &&
     passivePartI.length === 0 &&
     (priorPassive?.allowedPartI ?? 0) === 0 &&
     passivePartII.length === 0 &&
@@ -418,9 +492,10 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
     : gross < 0
     ? gross
     : Math.min(gross, prior);
-  const totalOrdinary = ordinaryFrom1231 + form4684 + passivePartIIGain;
+  const totalOrdinary = ordinaryFrom1231 + form4684 + passivePartIIGain +
+    ordinaryK1Rows.reduce((sum, row) => sum + row.gain_loss, 0);
   const hasOrdinary = ordinaryFrom1231 !== 0 || form4684 !== 0 ||
-    passivePartIIGain !== 0;
+    passivePartIIGain !== 0 || ordinaryK1Rows.length > 0;
   if (!Number.isSafeInteger(totalOrdinary)) {
     throw new Error(
       "Form 4797 ordinary gains and losses exceed whole-dollar range",
@@ -448,7 +523,9 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       elements("PropertySaleOrExchange", [
         element(
           "PropertyDesc",
-          row.source === "partnership" ? "K-1 Form 1065" : "K-1 Form 1120-S",
+          row.source === "partnership"
+            ? `K-1 1065 ${row.source_ein}`
+            : `K-1 1120-S ${row.source_ein}`,
         ),
         row.source === "s_corp"
           ? element("DateAcquiredInheritedCd", "FROM SCHEDULE K-1 F1120S")
@@ -483,6 +560,12 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         element("DepreciationAllowedAmt", sale.depreciation_allowed),
         element("CostOrOtherBasisAmt", sale.cost_or_other_basis),
         element("GainOrLossAmt", passiveSaleGain(sale)),
+      ])
+    ),
+    ...ordinaryK1Rows.map((row) =>
+      elements("OrdinaryGainLoss", [
+        element("PropertyDesc", `K-1 ${row.code} ${row.partnership_ein}`),
+        element("GainOrLossAmt", row.gain_loss),
       ])
     ),
     ...(priorPassive?.allowedPartII

@@ -32,9 +32,13 @@ Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate che
   }) ?? [];
   assertEquals(instances.length, 2);
   assertEquals(instances.map((instance) => instance.pdf_part), ["A", "F"]);
-  assertEquals(instances.map((instance) => form8949Pdf.pageIndices?.(instance)), [
-    [0], [1],
-  ]);
+  assertEquals(
+    instances.map((instance) => form8949Pdf.pageIndices?.(instance)),
+    [
+      [0],
+      [1],
+    ],
+  );
   assertEquals(instances[0]?.pdf_page1_row1_date_acquired, "01/15/2025");
   assertEquals(instances[0]?.pdf_page1_row1_proceeds, "1000.25");
   assertEquals(instances[0]?.pdf_page1_row1_gain_loss, "(100)");
@@ -59,6 +63,33 @@ Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate che
       field.kind === "checkboxWhen" && field.whenValue === "F"
     )?.pdfField,
     "topmostSubform[0].Page2[0].c2_1[2]",
+  );
+});
+
+Deno.test("Form 8949 PDF requires canonical sale rows for every source category", () => {
+  assertThrows(
+    () =>
+      form8949Pdf.projectFields?.({}, {
+        f8949: { f8949s: [{ part: "A" }, { part: "D" }] },
+      }),
+    Error,
+    "needs computed canonical transaction rows",
+  );
+  assertThrows(
+    () =>
+      form8949Pdf.projectFields?.({}, {
+        f8949: { f8949s: [{ part: "B" }] },
+      }),
+    Error,
+    "needs computed canonical transaction rows",
+  );
+  assertThrows(
+    () =>
+      form8949Pdf.projectFields?.({}, {
+        f8949: { f8949s: [{ part: "A", adjustment_amount: 0 }] },
+      }),
+    Error,
+    "needs computed canonical transaction rows",
   );
 });
 
@@ -98,21 +129,23 @@ Deno.test("Form 8949 PDF leaves dates and basis blank for linked Form 4797 exces
   };
   const pending = {
     form8949: { transaction: row },
-    form4797: { investment_1245_dispositions: [{
-      property_id: "investment-1245-1",
-      property_description: "Investment equipment",
-      acquired_on: "2022-05-01",
-      sold_on: "2025-06-01",
-      gross_sales_price: 15_000,
-      cost_or_other_basis_plus_sale_expense: 12_000,
-      depreciation_allowed_or_allowable: 5_000,
-      property_held_for_investment_not_business: true,
-      section_1245_classification_reviewed: true,
-      direct_cash_sale_no_special_recapture_exception: true,
-      sale_document_reference: "SALE-2025-1",
-      basis_document_reference: "BASIS-2022-1",
-      depreciation_schedule_reference: "DEPR-2025-1",
-    }] },
+    form4797: {
+      investment_1245_dispositions: [{
+        property_id: "investment-1245-1",
+        property_description: "Investment equipment",
+        acquired_on: "2022-05-01",
+        sold_on: "2025-06-01",
+        gross_sales_price: 15_000,
+        cost_or_other_basis_plus_sale_expense: 12_000,
+        depreciation_allowed_or_allowable: 5_000,
+        property_held_for_investment_not_business: true,
+        section_1245_classification_reviewed: true,
+        direct_cash_sale_no_special_recapture_exception: true,
+        sale_document_reference: "SALE-2025-1",
+        basis_document_reference: "BASIS-2022-1",
+        depreciation_schedule_reference: "DEPR-2025-1",
+      }],
+    },
   };
   form8949Pdf.projectFields?.(pending.form8949, pending as never);
   const instances = form8949Pdf.instances?.(pending.form8949) ?? [];
@@ -126,30 +159,34 @@ Deno.test("Form 8949 PDF leaves dates and basis blank for linked Form 4797 exces
 
 Deno.test("Form 8949 PDF stops mismatched holding period and unsupported dates", () => {
   assertThrows(
-    () => form8949Pdf.instances?.({
-      transaction: { ...longTerm, gain_loss: 1_500 },
-    }),
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...longTerm, gain_loss: 1_500 },
+      }),
     Error,
     "does not reconcile to proceeds, basis, and column (g)",
   );
   assertThrows(
-    () => form8949Pdf.instances?.({
-      transaction: { ...longTerm, is_long_term: false },
-    }),
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...longTerm, is_long_term: false },
+      }),
     Error,
     "holding-period flag",
   );
   assertThrows(
-    () => form8949Pdf.instances?.({
-      transaction: { ...shortTerm, date_sold: "2025-02-30" },
-    }),
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...shortTerm, date_sold: "2025-02-30" },
+      }),
     Error,
     "valid calendar date",
   );
   assertThrows(
-    () => form8949Pdf.instances?.({
-      transaction: { ...shortTerm, date_acquired: "VARIOUS" },
-    }),
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...shortTerm, date_acquired: "VARIOUS" },
+      }),
     Error,
     "supported calendar date",
   );

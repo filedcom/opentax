@@ -26,7 +26,11 @@ Schedule D or Form 4797 destination. MeF emits one IRS6252 document per sale.
 - `gross_profit` and `contract_price` are optional cross-checks against
   calculated lines 16 and 18.
 - `payments_received` — installment payments received this tax year (line 21)
-- `payments_received_prior_years` — line 23; required for a sale before 2025.
+- `payments_received_prior_years` — line 23; for a 2024 sale it must match
+  the reviewed 2024 Form 6252 line 22 total.
+- `prior_year_form6252_source` — required for a 2024 sale. Sale identity and
+  filed lines 16, 18, 19, 20, 22, 23, and 26 reconcile to the 2025 calculation;
+  older sales need a longer history and remain closed.
 - `depreciation_recapture` — §1245/§1250 recapture; recognized entirely in year
   of sale (IRC §453(i)(1))
 - `is_capital_asset` — true (default) = capital gain → schedule_d; false = §1231

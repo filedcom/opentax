@@ -126,6 +126,9 @@ export const sstbFilingDetailsSchema = z.object({
   qualified_dividends_zero_confirmed: z.literal(true),
   qbi_wages_ubia_source_reference: z.string().trim().min(1),
   taxable_income_before_qbi_confirmed: z.literal(true),
+  mfs_owner_ssn: z.string().regex(/^\d{9}$/).optional(),
+  mfs_allocation_source_reference: z.string().trim().min(1).optional(),
+  mfs_no_spouse_share_confirmed: z.literal(true).optional(),
 });
 
 export const patronFilingDetailsSchema = z.object({
@@ -136,6 +139,14 @@ export const patronFilingDetailsSchema = z.object({
   allocation_worksheet_reference: z.string().trim().min(1),
   allocation_worksheet_reviewed_by: z.string().trim().min(1),
   allocation_worksheet_review_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  box6_written_notice_review: z.object({
+    notice_reference: z.string().trim().min(1),
+    recipient_tin: z.string().regex(/^\d{9}$/),
+    designated_199ag_amount: z.number().int().positive(),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    recipient_and_amount_match_confirmed: z.literal(true),
+  }).strict().optional(),
 });
 
 export const scheduleCQbiBusinessSchema = z.object({
@@ -409,28 +420,30 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
-    adjustedQbi <= 0 || adjustedQbi >= 400 ||
+    adjustedQbi >= 400 ||
     (input.qbi ?? 0) !== positive.qbi + negative.qbi ||
     (input.w2_wages ?? 0) !== positive.w2_wages + negative.w2_wages ||
     (input.unadjusted_basis ?? 0) !== positive.ubia + negative.ubia ||
     positive.w2_wages < 0 || negative.w2_wages !== 0 ||
-    negative.ubia !== 0 || line6 !== 0
+    negative.ubia !== 0
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs positive net QBI below the Schedule SE threshold and no unused loss or negative-business limitation amount",
+      "Form 8995-A Schedule C bounded route needs sourced net QBI below the Schedule SE threshold and no negative-business limitation amount",
     );
   }
   const line2 = adjustedQbi;
   const line3Parent = line2 * QBI_RATE;
-  const line4Parent = positive.w2_wages;
+  // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
+  // amounts on the parent; those limits cannot create a deduction by themselves.
+  const line4Parent = adjustedQbi > 0 ? positive.w2_wages : 0;
   const line5Parent = line4Parent * W2_LIMIT_A_RATE;
   const line6Parent = line4Parent * W2_LIMIT_B_WAGE_RATE;
-  const line7Parent = positive.ubia;
+  const line7Parent = adjustedQbi > 0 ? positive.ubia : 0;
   const line8Parent = line7Parent * UBIA_RATE;
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);
   const line11Parent = Math.min(line3Parent, line10Parent);
-  const line36 = input.taxable_income * QBI_RATE;
+  const line36 = Math.round(input.taxable_income * QBI_RATE);
   const line39 = Math.min(line11Parent, line36);
   if (
     ![
@@ -443,10 +456,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line11Parent,
       line36,
       line39,
-    ].every(Number.isInteger) || line39 <= 0
+    ].every(Number.isInteger) || (adjustedQbi > 0 && line39 <= 0)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs a positive whole-dollar deduction",
+      "Form 8995-A Schedule C bounded route needs a whole-dollar deduction or sourced unused loss",
     );
   }
   return {
@@ -493,15 +506,34 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
 
 export function calculateOneSstb8995ALines(input: Form8995AInput) {
   const source = input.sstb_filing_details;
-  const threshold = CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const joint = input.filing_status === FilingStatus.MFJ;
+  const separate = input.filing_status === FilingStatus.MFS;
+  const threshold = joint
+    ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
+    : CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const phaseInRange = joint
+    ? CONFIG_BY_YEAR[2025].qbiPhaseInRange
+    : CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2;
   if (
-    !source || input.filing_status !== FilingStatus.Single ||
+    !source ||
+    (input.filing_status !== FilingStatus.Single &&
+      input.filing_status !== FilingStatus.HOH &&
+      input.filing_status !== FilingStatus.QSS && !joint && !separate) ||
     !Number.isInteger(input.taxable_income) ||
     input.taxable_income <= threshold ||
-    input.taxable_income >= threshold + 50_000
+    input.taxable_income >= threshold + phaseInRange
   ) {
     throw new Error(
-      "Form 8995-A Schedule A needs one identified single-filer SSTB within the phase-in range",
+      "Form 8995-A Schedule A needs one identified single, head-of-household, surviving-spouse, separate, or joint-filer SSTB within the phase-in range",
+    );
+  }
+  if (
+    separate &&
+    (!source.mfs_owner_ssn || !source.mfs_allocation_source_reference ||
+      source.mfs_no_spouse_share_confirmed !== true)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A MFS needs taxpayer-owned SSTB and separate-return allocation source",
     );
   }
   if (
@@ -521,7 +553,7 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
       "Form 8995-A Schedule A source must be the only business, with no aggregation, patron, gain, REIT/PTP, or loss path",
     );
   }
-  const phaseIn = (input.taxable_income - threshold) / 50_000;
+  const phaseIn = (input.taxable_income - threshold) / phaseInRange;
   const applicable = 1 - phaseIn;
   const line2 = source.business_qbi * applicable;
   const line4 = source.business_w2_wages * applicable;
@@ -570,6 +602,8 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   }
   return {
     source,
+    threshold,
+    phaseInRange,
     phaseIn,
     applicable,
     line2,
@@ -596,6 +630,20 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
     line37: line39,
     line39,
   };
+}
+
+export function assertMfsSstbOwner(
+  input: Form8995AInput,
+  primarySSN: string,
+): void {
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    input.sstb_filing_details?.mfs_owner_ssn !== primarySSN
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A MFS SSTB owner differs from the final filer",
+    );
+  }
 }
 
 export function assertPatron1099PATRSource(
@@ -642,11 +690,21 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     !/^\d{9}$/.test(patr.payer_tin ?? "") ||
     !Number.isInteger(patr.box7_qualified_payments) ||
     (patr.box7_qualified_payments ?? 0) <= 0 ||
-    patr.box6_section199ag_deduction !== 0 ||
+    typeof patr.box6_section199ag_deduction !== "number" ||
+    !Number.isInteger(patr.box6_section199ag_deduction) ||
+    ((patr.box6_section199ag_deduction ?? 0) > 0 &&
+      (!/^\d{9}$/.test(patr.recipient_tin ?? "") ||
+        !source.box6_written_notice_review ||
+        source.box6_written_notice_review.recipient_tin !==
+          patr.recipient_tin ||
+        source.box6_written_notice_review.designated_199ag_amount !==
+          patr.box6_section199ag_deduction)) ||
+    ((patr.box6_section199ag_deduction ?? 0) === 0 &&
+      source.box6_written_notice_review !== undefined) ||
     (patr.box9_section199aa_sstb_items ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8995-A Schedule D needs a sourced business 1099-PATR with box 7 payments, zero box 6 section 199A(g) deduction, specified-cooperative box 13, and no box 9 SSTB items",
+      "Form 8995-A Schedule D needs a sourced business 1099-PATR with box 7 payments, reviewed box 6 notice when present, specified-cooperative box 13, and no box 9 SSTB items",
     );
   }
   if (
@@ -696,7 +754,16 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line35 = Math.max(0, line33 - line34);
   const line36 = line35 * QBI_RATE;
   const line37 = Math.min(line32, line36);
-  const line39 = line37;
+  const line38 = input.patron_of_specified_cooperative === true
+    ? input.patron_filing_details?.source_1099patr
+      .box6_section199ag_deduction ?? 0
+    : 0;
+  if (line38 > line33 - line37) {
+    throw new Error(
+      "Form 8995-A cooperative box 6 exceeds the line 38 taxable-income limit",
+    );
+  }
+  const line39 = line37 + line38;
   return {
     line2,
     line3,
@@ -718,6 +785,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     line35,
     line36,
     line37,
+    line38,
     line39,
   };
 }
@@ -846,6 +914,8 @@ function incomeCap(input: Form8995AInput): number {
 
 function hasQbiActivity(input: Form8995AInput): boolean {
   return (
+    input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) ===
+      true ||
     input.patron_of_specified_cooperative === true ||
     input.business_filing_details !== undefined ||
     (input.qbi ?? 0) !== 0 ||
@@ -1049,6 +1119,13 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
           { nodeType: this.nodeType, fields: input },
           this.outputNodes.output(form8995aScheduleC, input),
         ],
+        ...(lines.schedule.line6 > 0
+          ? {
+            carryforwards: {
+              qbi_loss_carryforward_8995a: lines.schedule.line6,
+            },
+          }
+          : {}),
       };
     }
 

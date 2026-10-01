@@ -24,6 +24,12 @@ import {
 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
+import {
+  reconcileCashCapitalAndNewNote,
+  reconcileNewFormalNotes,
+  reviewedForm7203DebtEvidenceSchema,
+  sumPrincipalRepayments,
+} from "../../intermediate/forms/form7203/debt-note.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
@@ -35,6 +41,10 @@ import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  k1PassiveEicReviewSchema,
+  reviewedK1PassiveIncome,
+} from "../k1_passive_eic.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
 //
@@ -50,6 +60,7 @@ export const itemSchema = z.object({
   corporation_name: z.string().min(1),
   corporation_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   // Box 13 code Z is the shareholder's orphan-drug credit.
   box13_code_z_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
@@ -75,6 +86,7 @@ export const itemSchema = z.object({
 
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
+  eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
 
   // Box 4 — Interest income → Schedule B
   box4_interest: z.number().nonnegative().optional(),
@@ -140,6 +152,7 @@ export const itemSchema = z.object({
   box16_tax_exempt_income: z.number().nonnegative().optional().describe(
     "Box 16 — Tax-exempt income and nondeductible expenses",
   ),
+  box16_code_e_loan_repayment: z.number().int().nonnegative().optional(),
 
   // Previously mislabeled distribution field. TY2025 nondividend distributions
   // are box 16 code D; this field is rejected until that source is modeled.
@@ -183,6 +196,10 @@ export const itemSchema = z.object({
   stock_basis_beginning: z.number().nonnegative().optional(),
   // Direct reviewed per-corporation source for the bounded current box-1 loss.
   form7203_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
+  // The prior reduced-basis branch is a staged workpaper until bytes can be
+  // retained and bound to the filed return in this execution.
+  form7203_debt_evidence: reviewedForm7203DebtEvidenceSchema
+    .optional(),
   // Shareholder's debt basis at beginning of the tax year
   debt_basis_beginning: z.number().nonnegative().optional(),
 
@@ -192,6 +209,37 @@ export const itemSchema = z.object({
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (item.eic_passive_activity_review) {
+    for (
+      const key of ["corporation_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 passive activity review needs ${key}`,
+        });
+      }
+    }
+    for (
+      const [reviewKey, amountKey] of [
+        ["box1", "box1_ordinary_business"],
+        ["box2", "box2_rental_re"],
+        ["box3", "box3_other_rental"],
+      ] as const
+    ) {
+      if (
+        (item[amountKey] ?? 0) > 0 &&
+        !item.eic_passive_activity_review[reviewKey]
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eic_passive_activity_review", reviewKey],
+          message: `K-1 ${reviewKey} needs passive activity classification`,
+        });
+      }
+    }
+  }
   if (item.box10_other_income !== undefined) {
     ctx.addIssue({
       code: "custom",
@@ -330,7 +378,10 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
   if (total === 0) return [];
   return [
     output(schedule1, { line5_schedule_e: total }),
-    output(agi_aggregator, { line5_schedule_e: total }),
+    output(agi_aggregator, {
+      line5_schedule_e: total,
+      eic_passive_k1_income: reviewedK1PassiveIncome(items),
+    }),
   ];
 }
 
@@ -452,11 +503,24 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
 function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
   const rows = items
     .filter((item) => (item.box9_net_1231 ?? 0) !== 0)
-    .map((item) => ({
-      source: "s_corp" as const,
-      entity_name: item.corporation_name,
-      gain_loss: item.box9_net_1231 ?? 0,
-    }));
+    .map((item) => {
+      if (
+        !item.corporation_ein || !item.source_document_reference ||
+        !item.recipient_tin
+      ) {
+        throw new Error(
+          "S corporation K-1 box 9 needs EIN, issued K-1 reference, and recipient TIN",
+        );
+      }
+      return {
+        source: "s_corp" as const,
+        entity_name: item.corporation_name,
+        source_ein: item.corporation_ein,
+        source_document_reference: item.source_document_reference,
+        recipient_tin: item.recipient_tin,
+        gain_loss: item.box9_net_1231 ?? 0,
+      };
+    });
   if (rows.length === 0) return [];
   const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
   return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
@@ -482,13 +546,22 @@ function hasBasisData(item: K1SCorpItem): boolean {
   return (
     item.stock_basis_beginning !== undefined ||
     item.debt_basis_beginning !== undefined ||
-    item.form7203_stock_loss_ledger !== undefined
+    item.form7203_stock_loss_ledger !== undefined ||
+    item.form7203_debt_evidence !== undefined
   );
 }
 
 function buildForm7203Fields(
   item: K1SCorpItem,
 ): Parameters<typeof output<typeof form7203>>[1] {
+  if (
+    item.form7203_debt_evidence?.kind ===
+      "prior_reduced_formal_note_repayment"
+  ) {
+    throw new Error(
+      "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+    );
+  }
   const loss = Math.max(0, -(item.box1_ordinary_business ?? 0));
   const beginningBasis = loss > 0
     ? item.form7203_stock_loss_ledger?.beginning_stock_basis
@@ -502,8 +575,25 @@ function buildForm7203Fields(
     ...(beginningBasis !== undefined
       ? { stock_basis_beginning: beginningBasis }
       : {}),
+    ...(loss > 0 && item.form7203_stock_loss_ledger?.cash_capital_contribution
+      ? {
+        additional_contributions:
+          item.form7203_stock_loss_ledger.cash_capital_contribution.amount,
+        ...(item.form7203_debt_evidence
+          ? { reviewed_stock_loss_ledger: item.form7203_stock_loss_ledger }
+          : {}),
+      }
+      : {}),
     ...(item.debt_basis_beginning !== undefined
       ? { debt_basis_beginning: item.debt_basis_beginning }
+      : {}),
+    ...(item.form7203_debt_evidence
+      ? {
+        new_loans: item.form7203_debt_evidence.cash_advance_amount +
+          (item.form7203_debt_evidence.second_formal_note
+            ?.cash_advance_amount ?? 0),
+        reviewed_debt_evidence: item.form7203_debt_evidence,
+      }
       : {}),
     ...(loss > 0 ? { ordinary_loss: loss } : {}),
   } as Parameters<typeof output<typeof form7203>>[1];
@@ -662,6 +752,64 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
+
+    for (const item of k1_s_corps) {
+      if (item.form7203_debt_evidence) {
+        if (
+          item.form7203_debt_evidence.kind ===
+            "prior_reduced_formal_note_repayment"
+        ) {
+          throw new Error(
+            "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+          );
+        }
+        const { note } = reconcileNewFormalNotes(
+          item.form7203_debt_evidence,
+          item,
+        );
+        const ledger = item.form7203_stock_loss_ledger;
+        if (
+          !ledger || ledger.no_shareholder_debt_or_repayments ||
+          ledger.shareholder_ssn !== note.shareholder_ssn ||
+          ledger.corporation_ein !== note.corporation_ein ||
+          ledger.beginning_stock_basis !== note.beginning_stock_basis ||
+          ledger.beginning_basis_workpaper_reference !==
+            note.beginning_stock_basis_workpaper_reference ||
+          (item.box16_code_e_loan_repayment ?? 0) !==
+            (sumPrincipalRepayments(note.principal_repayments) +
+              (note.second_formal_note?.principal_repayment?.amount ?? 0))
+        ) {
+          throw new Error(
+            "Form 7203 formal note and reviewed stock ledger must reconcile",
+          );
+        }
+        if (ledger.cash_capital_contribution) {
+          reconcileCashCapitalAndNewNote(ledger, note);
+          if (
+            note.current_box1_ordinary_loss <=
+              ledger.beginning_stock_basis +
+                ledger.cash_capital_contribution.amount
+          ) {
+            throw new Error(
+              "Form 7203 combined capital-and-debt route needs a loss reaching the reviewed note basis",
+            );
+          }
+        }
+      } else if (
+        (item.box16_code_e_loan_repayment ?? 0) > 0
+      ) {
+        throw new Error(
+          "Form 7203 K-1 box 16 code E repayment needs an identified reviewed shareholder note",
+        );
+      } else if (
+        item.form7203_stock_loss_ledger &&
+        !item.form7203_stock_loss_ledger.no_shareholder_debt_or_repayments
+      ) {
+        throw new Error(
+          "Form 7203 stock-only ledger cannot report shareholder debt",
+        );
+      }
+    }
 
     if (
       k1_s_corps.some((item) =>

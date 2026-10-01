@@ -15,6 +15,8 @@ import type { Form3800DocumentParts } from "./f3800_document.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 import { joinForm3800DocumentParts } from "./f3800_join.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
+import { projectForm3800PartVIFields } from "../../pdf/forms/f3800_detail_projection.ts";
+import { form3800PartVIFields } from "../../pdf/forms/f3800_fields.ts";
 
 const tax = {
   filingStatus: FilingStatus.Single as const,
@@ -25,6 +27,8 @@ const tax = {
   tentativeMinimumTax: 0,
   standardCredit: 300,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 const lines = calculateForm3800Nonpassive(
   tax,
@@ -45,6 +49,7 @@ const ordinaryMetadata = {
 const nonpassive: Form3800DocumentParts = {
   lines: calculateForm3800Nonpassive(tax, ZERO_FORM3800_PASSIVE_ACTIVITY),
   transferStatementIds: [],
+  carryforwardSources: [],
   currentRows: [{
     line: "1h",
     metadata: ordinaryMetadata,
@@ -159,4 +164,107 @@ Deno.test("Form 3800 join rejects a mismatched source-row set", () => {
     Error,
     "source rows and amounts do not reconcile",
   );
+});
+
+Deno.test("Form 3800 joins passive and nonpassive carryovers on one Part IV line", async () => {
+  const carryoverLines = calculateForm3800Nonpassive({
+    ...tax,
+    regularTax: 1_000,
+    standardCredit: 0,
+    standardCarryforward: 100,
+  }, { ...ZERO_FORM3800_PASSIVE_ACTIVITY, line2: 200, line3: 150 });
+  const ordinaryCarryover: Form3800DocumentParts = {
+    ...nonpassive,
+    lines: carryoverLines,
+    carryforwardSources: [{
+      sourceKey: "nonpassive-2023",
+      line: "1h",
+      originatingTaxYear: 2023,
+      documentId: "CarryforwardGeneralBusinessCr1",
+      availableCredit: 100,
+      revisedFromOriginal: false,
+    }],
+    currentRows: [],
+    currentAmounts: [],
+    currentDetails: [],
+    carryoverRows: [{
+      line: "1h",
+      sourceKeys: ["nonpassive-2023"],
+      originatingTaxYear: 2023,
+      entity: { ein: "987654321" },
+      amount: {
+        line: "1h",
+        passiveBeforeLimit: 0,
+        passiveAfterLimit: 0,
+        nonpassiveCredit: 100,
+        appliedCredit: 100,
+        recapturedOrAdjusted: 0,
+        carryforwardCredit: 0,
+      },
+    }],
+  };
+  const passiveCarryover = buildForm3800PassiveRowXml([{
+    ...firstPassiveSource,
+    sourceKey: "passive-2024",
+    originatingTaxYear: 2024,
+    sourceOrigin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership 2024",
+      ein: "123456789",
+    },
+    beforePassiveLimit: 200,
+    afterPassiveLimit: 150,
+    availableAfterPassiveLimit: 150,
+    appliedAgainstTax: 150,
+    unusedAfterTaxLimit: 0,
+  }], {});
+  const parts = joinForm3800DocumentParts(
+    carryoverLines,
+    ordinaryCarryover,
+    passiveCarryover,
+  );
+  assertEquals(parts.carryoverRows.length, 1);
+  assertEquals(parts.carryoverRows[0].sourceKeys, [
+    "nonpassive-2023",
+    "passive-2024",
+  ]);
+  assertEquals(parts.carryoverRows[0].amount.appliedCredit, 250);
+  assertEquals(parts.carryoverRows[0].entity, { ein: "123456789" });
+  assertEquals(parts.carryoverDetails.length, 1);
+  assertEquals(parts.passiveCarryoverDetails.length, 1);
+  const xml = buildIRS3800Document(parts);
+  assertStringIncludes(
+    xml,
+    "<CyovGeneralBusinessCrItemCnt>2</CyovGeneralBusinessCrItemCnt>",
+  );
+  const pdf = projectForm3800PartVIFields(parts);
+  assertEquals(pdf[form3800PartVIFields(1).a], "1h");
+  assertEquals(pdf[form3800PartVIFields(2).a], "1h");
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsd);
+  } catch {
+    return;
+  }
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(
+      path,
+      xml.replace(
+        "<IRS3800>",
+        '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
+      ),
+    );
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });

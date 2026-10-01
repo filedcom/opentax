@@ -3,6 +3,13 @@ import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { form8995a } from "./f8995a.ts";
 import { form8995aScheduleD } from "./f8995a_schedule_d.ts";
+import {
+  calculateOneBusiness8995ALines,
+  form8995a as node,
+  inputSchema,
+} from "../../../nodes/intermediate/forms/form8995a/index.ts";
+import { form8995aPdf } from "../../pdf/forms/f8995a.ts";
+import { form8995aScheduleDPdf } from "../../pdf/forms/f8995a_schedule_d.ts";
 
 const patron = {
   filing_status: NodeFilingStatus.Single,
@@ -67,33 +74,61 @@ Deno.test("Form 8995-A patron parent and distinct Schedule D both use the same n
   assertStringIncludes(parent, "<PatronInd>X</PatronInd>");
   assertStringIncludes(parent, "<PatronReductionAmt>4500</PatronReductionAmt>");
   assertStringIncludes(parent, "<QBIComponentAmt>15500</QBIComponentAmt>");
-  assertStringIncludes(parent, "<QualifiedBusinessIncomeDedAmt>15500</QualifiedBusinessIncomeDedAmt>");
-  assertStringIncludes(scheduleD, "<IRS8995AScheduleD><PatronAgricHortCoopGrp>");
-  assertStringIncludes(scheduleD, "<QBIAllcblQlfyCoopPymtAmt>50000</QBIAllcblQlfyCoopPymtAmt>");
-  assertStringIncludes(scheduleD, "<QBIAllcblQlfyCoopPymtPctAmt>4500</QBIAllcblQlfyCoopPymtPctAmt>");
-  assertStringIncludes(scheduleD, "<W2WageAllcblQlfyCoopPymtPctAmt>5000</W2WageAllcblQlfyCoopPymtPctAmt>");
-  assertStringIncludes(scheduleD, "<PatronReductionAmt>4500</PatronReductionAmt>");
+  assertStringIncludes(
+    parent,
+    "<QualifiedBusinessIncomeDedAmt>15500</QualifiedBusinessIncomeDedAmt>",
+  );
+  assertStringIncludes(
+    scheduleD,
+    "<IRS8995AScheduleD><PatronAgricHortCoopGrp>",
+  );
+  assertStringIncludes(
+    scheduleD,
+    "<QBIAllcblQlfyCoopPymtAmt>50000</QBIAllcblQlfyCoopPymtAmt>",
+  );
+  assertStringIncludes(
+    scheduleD,
+    "<QBIAllcblQlfyCoopPymtPctAmt>4500</QBIAllcblQlfyCoopPymtPctAmt>",
+  );
+  assertStringIncludes(
+    scheduleD,
+    "<W2WageAllcblQlfyCoopPymtPctAmt>5000</W2WageAllcblQlfyCoopPymtPctAmt>",
+  );
+  assertStringIncludes(
+    scheduleD,
+    "<PatronReductionAmt>4500</PatronReductionAmt>",
+  );
 });
 
 Deno.test("Schedule D trigger rejects a missing companion before Form 8995-A XML", () => {
-  assertThrows(() => form8995a.build(patron, {
-    filer,
-    pending: {
-      f1040: { line13_qbi_deduction: 15_500 },
-      form8995a: patron,
-      f1099patr: context.pending.f1099patr,
-    },
-  }), Error, "companion is missing");
+  assertThrows(
+    () =>
+      form8995a.build(patron, {
+        filer,
+        pending: {
+          f1040: { line13_qbi_deduction: 15_500 },
+          form8995a: patron,
+          f1099patr: context.pending.f1099patr,
+        },
+      }),
+    Error,
+    "companion is missing",
+  );
 });
 
 Deno.test("Schedule D rejects a missing parent and altered line 14 source", () => {
-  assertThrows(() => form8995aScheduleD.build(patron, {
-    filer,
-    pending: {
-      f1040: { line13_qbi_deduction: 15_500 },
-      form8995a_schedule_d: patron,
-    },
-  }), Error, "matching parent");
+  assertThrows(
+    () =>
+      form8995aScheduleD.build(patron, {
+        filer,
+        pending: {
+          f1040: { line13_qbi_deduction: 15_500 },
+          form8995a_schedule_d: patron,
+        },
+      }),
+    Error,
+    "matching parent",
+  );
   const altered = {
     ...patron,
     patron_filing_details: {
@@ -101,37 +136,230 @@ Deno.test("Schedule D rejects a missing parent and altered line 14 source", () =
       qbi_allocable_to_qualified_payments: 60_000,
     },
   };
-  assertThrows(() => form8995aScheduleD.build(altered, context), Error, "matching parent");
-  assertThrows(() => form8995a.build(patron, {
-    filer,
-    pending: { ...context.pending, form8995a_schedule_d: altered },
-  }), Error, "differs from its parent");
+  assertThrows(
+    () => form8995aScheduleD.build(altered, context),
+    Error,
+    "matching parent",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(patron, {
+        filer,
+        pending: { ...context.pending, form8995a_schedule_d: altered },
+      }),
+    Error,
+    "differs from its parent",
+  );
 });
 
 Deno.test("Schedule D rejects Form 1040 line 13 mismatch and untriggered companion", () => {
-  assertThrows(() => form8995aScheduleD.build(patron, {
-    filer,
-    pending: { ...context.pending, f1040: { line13_qbi_deduction: 15_501 } },
-  }), Error, "Form 1040 line 13");
-  assertThrows(() => form8995aScheduleD.build({
-    ...patron,
-    patron_of_specified_cooperative: false,
-  }, {
-    filer,
-    pending: {
-      ...context.pending,
-      form8995a: { ...patron, patron_of_specified_cooperative: false },
-    },
-  }), Error, "cooperative source requires affirmative patron status");
+  assertThrows(
+    () =>
+      form8995aScheduleD.build(patron, {
+        filer,
+        pending: {
+          ...context.pending,
+          f1040: { line13_qbi_deduction: 15_501 },
+        },
+      }),
+    Error,
+    "Form 1040 line 13",
+  );
+  assertThrows(
+    () =>
+      form8995aScheduleD.build({
+        ...patron,
+        patron_of_specified_cooperative: false,
+      }, {
+        filer,
+        pending: {
+          ...context.pending,
+          form8995a: { ...patron, patron_of_specified_cooperative: false },
+        },
+      }),
+    Error,
+    "cooperative source requires affirmative patron status",
+  );
   assertEquals(form8995aScheduleD.build([]), "");
 });
 
 Deno.test("Schedule D requires reviewed QBI and wage allocation worksheet reference", () => {
-  assertThrows(() => form8995aScheduleD.build({
+  assertThrows(() =>
+    form8995aScheduleD.build({
+      ...patron,
+      patron_filing_details: {
+        ...patron.patron_filing_details,
+        allocation_worksheet_reference: "",
+      },
+    }, context), Error);
+});
+
+Deno.test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, and Form 1040", () => {
+  const withBox6 = {
     ...patron,
     patron_filing_details: {
       ...patron.patron_filing_details,
-      allocation_worksheet_reference: "",
+      source_1099patr: {
+        ...patron.patron_filing_details.source_1099patr,
+        recipient_tin: "123456789",
+        box6_section199ag_deduction: 2_000,
+      },
+      box6_written_notice_review: {
+        notice_reference: "coop-199ag-written-notice-2025",
+        recipient_tin: "123456789",
+        designated_199ag_amount: 2_000,
+        reviewed_by: "Tax Reviewer",
+        reviewed_on: "2026-01-30",
+        recipient_and_amount_match_confirmed: true as const,
+      },
     },
-  }, context), Error);
+  };
+  const retained = {
+    ...context.pending,
+    form8995a: withBox6,
+    form8995a_schedule_d: withBox6,
+    f1099patr: { f1099patrs: [withBox6.patron_filing_details.source_1099patr] },
+    f1040: { line13_qbi_deduction: 17_500 },
+  };
+  const parsed = inputSchema.parse(withBox6);
+  const lines = calculateOneBusiness8995ALines(parsed);
+  assertEquals(lines.line37, 15_500);
+  assertEquals(lines.line38, 2_000);
+  assertEquals(lines.line39, 17_500);
+  const computed = node.compute({ taxYear: 2025, formType: "f1040" }, parsed);
+  assertEquals(
+    computed.outputs.find((output) => output.nodeType === "f1040")?.fields
+      .line13_qbi_deduction,
+    17_500,
+  );
+  const parentXml = form8995a.build(withBox6, { filer, pending: retained });
+  assertStringIncludes(
+    parentXml,
+    "<DPADSect199AgAllocAgricHortAmt>2000</DPADSect199AgAllocAgricHortAmt>",
+  );
+  assertStringIncludes(
+    parentXml,
+    "<QualifiedBusinessIncomeDedAmt>17500</QualifiedBusinessIncomeDedAmt>",
+  );
+  assertStringIncludes(
+    form8995aScheduleD.build(withBox6, { filer, pending: retained }),
+    "<PatronReductionAmt>4500</PatronReductionAmt>",
+  );
+  assertEquals(form8995aPdf.projectFields!(withBox6, retained).line38, 2_000);
+  assertEquals(
+    form8995aScheduleDPdf.projectFields!(withBox6, retained).line6,
+    4_500,
+  );
+  assertEquals(form8995aPdf.instances!(withBox6, filer, retained).length, 1);
+  assertEquals(
+    form8995aScheduleDPdf.instances!(withBox6, filer, retained).length,
+    1,
+  );
+
+  const changedSource = {
+    ...retained,
+    f1099patr: {
+      f1099patrs: [{
+        ...withBox6.patron_filing_details.source_1099patr,
+        box6_section199ag_deduction: 1_999,
+      }],
+    },
+  };
+  assertThrows(
+    () => form8995a.build(withBox6, { filer, pending: changedSource }),
+    Error,
+  );
+  assertThrows(
+    () => form8995aPdf.projectFields!(withBox6, changedSource),
+    Error,
+  );
+  const changedOwner = {
+    ...withBox6,
+    patron_filing_details: {
+      ...withBox6.patron_filing_details,
+      source_1099patr: {
+        ...withBox6.patron_filing_details.source_1099patr,
+        recipient_tin: "999999999",
+      },
+      box6_written_notice_review: {
+        ...withBox6.patron_filing_details.box6_written_notice_review,
+        recipient_tin: "999999999",
+      },
+    },
+  };
+  const changedOwnerPending = {
+    ...retained,
+    form8995a: changedOwner,
+    form8995a_schedule_d: changedOwner,
+    f1099patr: {
+      f1099patrs: [changedOwner.patron_filing_details.source_1099patr],
+    },
+  };
+  assertThrows(
+    () =>
+      form8995a.build(changedOwner, { filer, pending: changedOwnerPending }),
+    Error,
+    "recipient differs",
+  );
+  assertThrows(
+    () => form8995aPdf.instances!(changedOwner, filer, changedOwnerPending),
+    Error,
+    "recipient differs",
+  );
+  const missingNotice = {
+    ...withBox6,
+    patron_filing_details: {
+      ...withBox6.patron_filing_details,
+      box6_written_notice_review: undefined,
+    },
+  };
+  assertThrows(
+    () => calculateOneBusiness8995ALines(inputSchema.parse(missingNotice)),
+    Error,
+    "reviewed box 6 notice",
+  );
+  const changedNoticeAmount = {
+    ...withBox6,
+    patron_filing_details: {
+      ...withBox6.patron_filing_details,
+      box6_written_notice_review: {
+        ...withBox6.patron_filing_details.box6_written_notice_review,
+        designated_199ag_amount: 1_999,
+      },
+    },
+  };
+  assertThrows(
+    () =>
+      calculateOneBusiness8995ALines(inputSchema.parse(changedNoticeAmount)),
+    Error,
+    "reviewed box 6 notice",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(withBox6, {
+        filer,
+        pending: { ...retained, f1040: { line13_qbi_deduction: 17_499 } },
+      }),
+    Error,
+    "Form 1040 line 13",
+  );
+  const excessBox6 = {
+    ...withBox6,
+    patron_filing_details: {
+      ...withBox6.patron_filing_details,
+      source_1099patr: {
+        ...withBox6.patron_filing_details.source_1099patr,
+        box6_section199ag_deduction: 300_000,
+      },
+      box6_written_notice_review: {
+        ...withBox6.patron_filing_details.box6_written_notice_review,
+        designated_199ag_amount: 300_000,
+      },
+    },
+  };
+  assertThrows(
+    () => calculateOneBusiness8995ALines(inputSchema.parse(excessBox6)),
+    Error,
+    "line 38 taxable-income limit",
+  );
 });

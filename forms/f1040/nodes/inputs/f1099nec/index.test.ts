@@ -6,7 +6,6 @@ import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
-import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 
 // ---------------------------------------------------------------------------
@@ -17,6 +16,10 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
     payer_name: "Test Payer",
     payer_tin: "12-3456789",
+    recipient_ssn: "987654321",
+    nonbusiness_activity_description: "Occasional activity",
+    schedule_c_business_reference: "business-1",
+    for_routing: "schedule_c" as const,
     farm_id: "farm-1",
     ...overrides,
   };
@@ -32,17 +35,64 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-// Extract gross receipts from a schedule_c output (which uses schedule_cs array)
+// Extract the total linked NEC receipts emitted for Schedule C.
 function schedCGrossReceipts(
   result: ReturnType<typeof compute>,
 ): number | undefined {
   const out = findOutput(result, "schedule_c");
   if (!out) return undefined;
   const fields = out.fields as {
-    schedule_cs?: Array<{ line_1_gross_receipts: number }>;
+    f1099nec_receipt_sources?: Array<{ amount: number }>;
   };
-  return fields.schedule_cs?.[0]?.line_1_gross_receipts;
+  return fields.f1099nec_receipt_sources?.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
 }
+
+Deno.test("reviewed NEC tips retain the payer source and reject an amount outside box 1", () => {
+  const review = {
+    amount: 4_000,
+    occupation_code: "102",
+    occupation_review_reference: "occupation record",
+    tip_records_reference: "2025 POS ledger",
+    included_in_box1: true,
+    no_other_allocable_deductions: true,
+    no_other_allocable_deductions_review_reference: "Schedule 1 review",
+  };
+  const result = compute([minimalItem({
+    box1_nec: 5_000,
+    qualified_tips_review: review,
+  })]);
+  assertEquals(
+    findOutput(result, "schedule1a")?.fields.qualified_trade_business_tips,
+    [{
+      source_form: "1099nec",
+      business_reference: "business-1",
+      recipient_ssn: "987654321",
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      source_amount: 5_000,
+      amount: review.amount,
+      occupation_code: review.occupation_code,
+      occupation_review_reference: review.occupation_review_reference,
+      tip_records_reference: review.tip_records_reference,
+      included_in_source_amount: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference:
+        review.no_other_allocable_deductions_review_reference,
+    }],
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 3_999,
+        qualified_tips_review: review,
+      })]),
+    Error,
+    "qualified tips need Schedule C income included in box 1",
+  );
+});
 
 // ---------------------------------------------------------------------------
 // 1. Input Schema Validation
@@ -131,7 +181,7 @@ Deno.test("schema: all valid routing enum values pass", () => {
       "schedule_c",
       "schedule_f",
       "form_8919",
-      "schedule_1_line_8z",
+      "schedule_1_line_8j",
     ]
   ) {
     const parsed = f1099nec.inputSchema.safeParse({
@@ -165,8 +215,28 @@ Deno.test("routing: box1_nec with schedule_f → schedule_f node", () => {
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099nec_farm_income", amount: 8000 },
+    {
+      farm_id: "farm-1",
+      kind: "1099nec_farm_income",
+      amount: 8000,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+    },
   ]);
+});
+
+Deno.test("routing: Schedule F 1099-NEC needs recipient and payer identity", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 8000,
+        for_routing: "schedule_f",
+        recipient_ssn: undefined,
+      })]),
+    Error,
+    "needs a farm, payer, and recipient identity",
+  );
 });
 
 Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
@@ -188,30 +258,36 @@ Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   }]);
 });
 
-Deno.test("routing: nonbusiness 1099-NEC income reaches typed Schedule 1 line 8z and AGI", () => {
+Deno.test("routing: nonbusiness 1099-NEC activity reaches Schedule 1 line 8j and AGI", () => {
   const result = compute([
-    minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8j" }),
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
   assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_f1099nec_nonbusiness,
-    1200,
+    fieldsOf(result.outputs, schedule1)!.f1099nec_nonbusiness_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Occasional activity",
+      amount: 1200,
+    }],
   );
   assertEquals(
-    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099nec_nonbusiness,
+    fieldsOf(result.outputs, agi_aggregator)!.line8j_f1099nec_nonbusiness,
     1200,
   );
 });
 
 Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without losing AGI", () => {
   const result = compute([
-    minimalItem({ box1_nec: 1_200, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 1_200, for_routing: "schedule_1_line_8j" }),
     minimalItem({
       payer_name: "Second Payer",
       payer_tin: "98-7654321",
       box1_nec: 800,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
     }),
   ]);
   assertEquals(
@@ -223,20 +299,46 @@ Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without lo
     1,
   );
   assertEquals(
-    fieldsOf(result.outputs, schedule1)?.line8z_f1099nec_nonbusiness,
-    2_000,
+    fieldsOf(result.outputs, schedule1)?.f1099nec_nonbusiness_sources?.map(
+      (row) => row.amount,
+    ),
+    [1_200, 800],
   );
   assertEquals(
-    fieldsOf(result.outputs, agi_aggregator)?.line8z_f1099nec_nonbusiness,
+    fieldsOf(result.outputs, agi_aggregator)?.line8j_f1099nec_nonbusiness,
     2_000,
   );
 });
 
-Deno.test("routing: omitting for_routing defaults to schedule_c", () => {
-  const result = compute([minimalItem({ box1_nec: 3000 })]);
-  const out = findOutput(result, "schedule_c");
-  assertEquals(out !== undefined, true);
-  assertEquals(schedCGrossReceipts(result), 3000);
+Deno.test("routing: nonbusiness 1099-NEC needs a reviewed activity and recipient", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 500,
+        for_routing: "schedule_1_line_8j",
+        nonbusiness_activity_description: undefined,
+      })]),
+    Error,
+    "needs a description",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 500,
+        for_routing: "schedule_1_line_8j",
+        recipient_ssn: undefined,
+      })]),
+    Error,
+    "needs a description",
+  );
+});
+
+Deno.test("routing: positive box 1 needs an explicit route", () => {
+  assertThrows(
+    () => compute([minimalItem({ box1_nec: 3000, for_routing: undefined })]),
+    Error,
+    "explicit income route",
+  );
 });
 
 Deno.test("routing: box1_nec = 0 with schedule_c produces no schedule_c output", () => {
@@ -253,18 +355,20 @@ Deno.test("routing: box1_nec absent produces no routing output", () => {
   assertEquals(findOutput(result, "form8919"), undefined);
 });
 
-Deno.test("routing: box3_golden_parachute > 0 → schedule1 line8z_golden_parachute", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_golden_parachute,
-    100000,
-  );
+Deno.test("routing: box3 is already in box1 and does not add Schedule 1 income", () => {
+  const result = compute([minimalItem({
+    box1_nec: 150000,
+    box3_golden_parachute: 100000,
+  })]);
+  assertEquals(schedCGrossReceipts(result), 150000);
+  assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
 Deno.test("routing: box3_golden_parachute > 0 → schedule2 line17k_golden_parachute_excise", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
+  const result = compute([minimalItem({
+    box1_nec: 150000,
+    box3_golden_parachute: 100000,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -314,7 +418,7 @@ Deno.test("routing: state boxes (5,6,7) produce no federal outputs", () => {
 // 3. Aggregation — multiple items in one compute() call
 // ---------------------------------------------------------------------------
 
-Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separate outputs", () => {
+Deno.test("aggregation: multiple schedule_c items retain payer source rows", () => {
   const result = compute([
     minimalItem({ box1_nec: 5000, for_routing: "schedule_c" }),
     minimalItem({
@@ -326,15 +430,13 @@ Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separ
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  // Expect two separate schedule_c outputs (one per item)
-  assertEquals(schedCOutputs.length, 2);
-  const amounts = schedCOutputs.map(
-    (o) =>
-      ((o.fields as { schedule_cs?: Array<{ line_1_gross_receipts: number }> })
-        .schedule_cs?.[0]?.line_1_gross_receipts) as number,
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 8000);
+  assertEquals(
+    (schedCOutputs[0].fields as { f1099nec_receipt_sources: unknown[] })
+      .f1099nec_receipt_sources.length,
+    2,
   );
-  assertEquals(amounts.includes(5000), true);
-  assertEquals(amounts.includes(3000), true);
 });
 
 Deno.test("aggregation: multiple schedule_f items produce separate outputs", () => {
@@ -370,8 +472,12 @@ Deno.test("aggregation: multiple box4_federal_withheld items produce separate f1
 
 Deno.test("aggregation: multiple box3_golden_parachute items produce separate outputs", () => {
   const result = compute([
-    minimalItem({ box3_golden_parachute: 50000 }),
-    minimalItem({ box3_golden_parachute: 30000, payer_name: "Payer Two" }),
+    minimalItem({ box1_nec: 60000, box3_golden_parachute: 50000 }),
+    minimalItem({
+      box1_nec: 40000,
+      box3_golden_parachute: 30000,
+      payer_name: "Payer Two",
+    }),
   ]);
   const sch2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
   assertEquals(sch2Outputs.length, 2);
@@ -401,7 +507,7 @@ Deno.test("aggregation: mixed routing routes each item independently", () => {
     }),
     minimalItem({
       box1_nec: 4000,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
       payer_name: "Other",
     }),
   ]);
@@ -473,7 +579,10 @@ Deno.test("threshold: box4_federal_withheld at 24% of box1_nec — engine accept
 
 // Box 3 excise: 20% of golden parachute amount
 Deno.test("threshold: box3 excise = box3 × 0.20 — exact calculation", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 50000 })]);
+  const result = compute([minimalItem({
+    box1_nec: 60000,
+    box3_golden_parachute: 50000,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -483,7 +592,10 @@ Deno.test("threshold: box3 excise = box3 × 0.20 — exact calculation", () => {
 });
 
 Deno.test("threshold: box3 = 1 (minimum non-zero) — excise = 0.20", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 1 })]);
+  const result = compute([minimalItem({
+    box1_nec: 1,
+    box3_golden_parachute: 1,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -565,6 +677,9 @@ Deno.test("warning: box4 > 24% of box1 — plausibility warning, does not throw"
       payer_name: "Acme",
       payer_tin: "12-3456789",
       box1_nec: 1000,
+      for_routing: "schedule_c",
+      recipient_ssn: "987654321",
+      schedule_c_business_reference: "business-1",
       box4_federal_withheld: 400, // > 24% (240)
     }],
   });
@@ -578,21 +693,30 @@ Deno.test("warning: second_tin_notice = true — informational, does not throw",
       payer_tin: "12-3456789",
       second_tin_notice: true,
       farm_id: "farm-1",
-    } as ReturnType<typeof minimalItem>],
+    } as unknown as ReturnType<typeof minimalItem>],
   });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning: box3_golden_parachute with no box1_nec — does not throw", () => {
-  // Box 3 can exist without box1 in edge scenarios (unusual but not invalid)
-  const result = f1099nec.compute({ taxYear: 2025, formType: "f1040" }, {
+Deno.test("validation: box3 without box1 is rejected", () => {
+  const parsed = f1099nec.inputSchema.safeParse({
     f1099necs: [{
       payer_name: "BigCo",
       payer_tin: "11-2233445",
       box3_golden_parachute: 50000,
     }],
   });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(parsed.success, false);
+});
+
+Deno.test("validation: box3 greater than box1 is rejected", () => {
+  const parsed = f1099nec.inputSchema.safeParse({
+    f1099necs: [minimalItem({
+      box1_nec: 40000,
+      box3_golden_parachute: 50000,
+    })],
+  });
+  assertEquals(parsed.success, false);
 });
 
 // ---------------------------------------------------------------------------
@@ -635,10 +759,7 @@ Deno.test("informational: payer_tin change does not affect output count", () => 
 
 Deno.test("informational: account_number present does not change output count", () => {
   const withAcct = compute([{
-    payer_name: "Acme",
-    payer_tin: "12-3456789",
-    box1_nec: 2000,
-    for_routing: "schedule_c" as const,
+    ...minimalItem({ box1_nec: 2000 }),
     account_number: "ACC-001",
   } as unknown as ReturnType<typeof minimalItem>]);
   const withoutAcct = compute([
@@ -661,8 +782,7 @@ Deno.test("informational: state boxes (5,6,7) produce zero federal outputs", () 
 // 8. Edge Cases
 // ---------------------------------------------------------------------------
 
-Deno.test("edge: multiple 1099-NECs for same schedule_c produce separate schedule_c outputs", () => {
-  // Per context.md: each NEC item produces its own output; Schedule C aggregates them
+Deno.test("edge: multiple 1099-NECs for same schedule_c produce linked source rows", () => {
   const result = compute([
     minimalItem({ box1_nec: 10000, for_routing: "schedule_c" }),
     minimalItem({
@@ -679,7 +799,8 @@ Deno.test("edge: multiple 1099-NECs for same schedule_c produce separate schedul
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  assertEquals(schedCOutputs.length, 3);
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 18000);
 });
 
 Deno.test("edge: form_8919 routing excludes schedule_c output", () => {
@@ -694,19 +815,19 @@ Deno.test("edge: form_8919 routing excludes schedule_c output", () => {
   assertEquals(findOutput(result, "form8919") !== undefined, true);
 });
 
-Deno.test("edge: schedule_1_line_8z routing excludes schedule_c and form8919 outputs", () => {
+Deno.test("edge: schedule_1_line_8j routing excludes schedule_c and form8919 outputs", () => {
   const result = compute([
-    minimalItem({ box1_nec: 5000, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 5000, for_routing: "schedule_1_line_8j" }),
   ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
   assertEquals(findOutput(result, "form8919"), undefined);
   assertEquals(findOutput(result, "schedule1") !== undefined, true);
 });
 
-Deno.test("edge: box1_nec with schedule_1_line_8z produces no schedule2 output (no SE tax)", () => {
+Deno.test("edge: box1_nec with schedule_1_line_8j produces no schedule2 output (no SE tax)", () => {
   // Non-business income on Sch1 Line 8z is NOT subject to SE tax
   const result = compute([
-    minimalItem({ box1_nec: 10000, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 10000, for_routing: "schedule_1_line_8j" }),
   ]);
   assertEquals(findOutput(result, "schedule2"), undefined);
 });
@@ -723,15 +844,16 @@ Deno.test("edge: box1_nec with form_8919 routing produces no schedule_c output",
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-Deno.test("edge: box3_golden_parachute with box1_nec schedule_c produces both outputs", () => {
-  // Total in box1 (→ schedule_c), excess in box3 (→ schedule1 + schedule2 excise)
+Deno.test("edge: box3 with Schedule C box1 produces income once and excise", () => {
+  // Total in box1 reaches Schedule C; excess in box3 reaches Schedule 2.
   const result = compute([minimalItem({
     box1_nec: 200000,
     for_routing: "schedule_c",
     box3_golden_parachute: 150000,
   })]);
   assertEquals(findOutput(result, "schedule_c") !== undefined, true);
-  assertEquals(findOutput(result, "schedule1") !== undefined, true);
+  assertEquals(schedCGrossReceipts(result), 200000);
+  assertEquals(findOutput(result, "schedule1"), undefined);
   assertEquals(findOutput(result, "schedule2") !== undefined, true);
 });
 
@@ -817,22 +939,23 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
       box3_golden_parachute: 300000,
       for_routing: "schedule_c",
     }),
-    // Isolated one-time director fee → schedule_1_line_8z
+    // Isolated one-time director fee → schedule_1_line_8j
     minimalItem({
       payer_name: "Board LLC",
       payer_tin: "44-4444444",
       box1_nec: 5000,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
     }),
   ]);
 
-  // Three schedule_c outputs (clients 1, 2, OldCo)
+  // Three payer receipts flow to one reviewed Schedule C business.
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  assertEquals(schedCOutputs.length, 3);
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 597000);
 
-  // One schedule1 output for line 8z (director fee) + one for golden parachute income
+  // One Schedule 1 output for the director fee; box 3 adds no income.
   const schedule1Outputs = result.outputs.filter((o) =>
     o.nodeType === "schedule1"
   );

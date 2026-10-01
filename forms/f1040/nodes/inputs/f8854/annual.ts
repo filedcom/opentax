@@ -141,6 +141,36 @@ const annualTrustSchema = annualItemSchema.extend({
   treaty_reduction_waiver_confirmed: z.literal(true),
 }).strict();
 
+const priorObligationLedgerSchema = z.object({
+  source_document_id: documentId,
+  source_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  filed_tax_year: z.number().int().min(2008).max(2024),
+  irs_acceptance_reference: z.string().trim().min(1),
+  deferred_properties: z.array(
+    z.object({
+      item_id: z.string().trim().min(1),
+      description: z.string().trim().min(1),
+      mark_to_market_gain_or_loss_amount: dollars,
+      deferred_tax_amount: positiveDollars,
+    }).strict(),
+  ),
+  eligible_deferred_compensation_items: z.array(
+    z.object({
+      item_id: z.string().trim().min(1),
+      description: z.string().trim().min(1),
+      irrevocable_treaty_reduction_waiver_confirmed: z.literal(true),
+    }).strict(),
+  ),
+  nongrantor_trust_interests: z.array(
+    z.object({
+      item_id: z.string().trim().min(1),
+      description: z.string().trim().min(1),
+      no_prior_full_value_election_confirmed: z.literal(true),
+      treaty_reduction_waiver_confirmed: z.literal(true),
+    }).strict(),
+  ),
+}).strict();
+
 export const annualInputSchema = z.object({
   expatriation_date: dateSchema.refine(
     (date) => date >= "2008-06-17" && date < "2025-01-01",
@@ -150,6 +180,7 @@ export const annualInputSchema = z.object({
   part_i: partISchema,
   tax_status_2025: taxStatus2025Schema,
   prior_form8854_obligations_confirmed_complete: z.literal(true),
+  prior_form8854_obligation_ledger: priorObligationLedgerSchema,
   original_form8854_mailed_confirmed: z.literal(true),
   attached_form8854_copy_marked_copy_confirmed: z.literal(true),
   source_1042s: z.array(source1042SSchema),
@@ -203,6 +234,55 @@ export const annualInputSchema = z.object({
     ...input.eligible_deferred_compensation_items,
     ...input.nongrantor_trust_interests,
   ];
+  const ledger = input.prior_form8854_obligation_ledger;
+  const sameItems = <T extends { item_id: string }>(
+    current: readonly T[],
+    prior: readonly T[],
+  ) =>
+    current.length === prior.length &&
+    current.every((item) =>
+      prior.some((source) =>
+        source.item_id === item.item_id &&
+        JSON.stringify(source) === JSON.stringify(item)
+      )
+    );
+  const priorProperties = input.deferred_properties.map((item) => ({
+    item_id: item.item_id,
+    description: item.description,
+    mark_to_market_gain_or_loss_amount:
+      item.prior_mark_to_market_gain_or_loss_amount,
+    deferred_tax_amount: item.prior_deferred_tax_amount,
+  }));
+  const priorEligible = input.eligible_deferred_compensation_items.map(
+    (item) => ({
+      item_id: item.item_id,
+      description: item.description,
+      irrevocable_treaty_reduction_waiver_confirmed:
+        item.irrevocable_treaty_reduction_waiver_confirmed,
+    }),
+  );
+  const priorTrusts = input.nongrantor_trust_interests.map((item) => ({
+    item_id: item.item_id,
+    description: item.description,
+    no_prior_full_value_election_confirmed:
+      item.no_prior_full_value_election_confirmed,
+    treaty_reduction_waiver_confirmed: item.treaty_reduction_waiver_confirmed,
+  }));
+  if (
+    itemGroups.some((item) =>
+      item.prior_form8854_document_id !== ledger.source_document_id
+    ) ||
+    !sameItems(priorProperties, ledger.deferred_properties) ||
+    !sameItems(priorEligible, ledger.eligible_deferred_compensation_items) ||
+    !sameItems(priorTrusts, ledger.nongrantor_trust_interests)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Annual Form 8854 obligations differ from the prior filed inventory",
+      path: ["prior_form8854_obligation_ledger"],
+    });
+  }
   if (itemGroups.length === 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

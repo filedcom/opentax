@@ -35,6 +35,29 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("Schedule D files direct transaction and entered aggregate once on line 1a", () => {
+  const result = compute({
+    line_1a_proceeds: 1_000,
+    line_1a_cost: 500,
+    transaction: mkTx(),
+  });
+  const filed = findOutput(result, "schedule_d")?.fields;
+  assertEquals(filed?.line_1a_proceeds, 2_000);
+  assertEquals(filed?.line_1a_cost, 1_300);
+  assertEquals(filed?.print_line1a_gain, 700);
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 700);
+});
+
+Deno.test("Schedule D keeps amount-only adjusted sale off direct line 1a", () => {
+  const result = compute({
+    transaction: mkTx({ adjustment_amount: 300, gain_loss: 500 }),
+  });
+  const filed = findOutput(result, "schedule_d")?.fields;
+  assertEquals(filed?.print_line1a_proceeds, undefined);
+  assertEquals(filed?.print_line7_st_total, 500);
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 500);
+});
+
 Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () => {
   const result = compute({ line_11_form2439: [11_000, 10_000] });
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 21_000);
@@ -681,6 +704,26 @@ Deno.test("compute: line_5_k1_st (ST K-1) included in ST net", () => {
   assertEquals(input.line7_capital_gain, 2_500);
 });
 
+Deno.test("compute: mixed K-1 deposits sum signed Schedule D lines 5 and 12", () => {
+  const result = computeD2({
+    line_5_k1_st: [900, -700],
+    line_12_k1_lt: [400, 100],
+  });
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 700);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_5_k1_st, 200);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_12_k1_lt, 500);
+});
+
+Deno.test("compute: offsetting trust K-1 short-term items still file Schedule D", () => {
+  const result = computeD2({ line_5_k1_st: 0 });
+  assertEquals(findOutput(result, "schedule_d")?.fields.print_line7_st_total, 0);
+});
+
+Deno.test("compute: final trust K-1 code D allows a loss and rejects positive special-rate worksheet exposure", () => {
+  assertEquals(findOutput(computeD2({ line_12_k1_lt: -900, trust_k1_code_d_loss: 900 }), "f1040")?.fields.line7_capital_gain, -900);
+  assertThrows(() => computeD2({ line_12_k1_lt: [-900, 1000], trust_k1_code_d_loss: 900 }), Error, "needs 28% and unrecaptured");
+});
+
 Deno.test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
   const result = computeD2({ line_12_k1_lt: 3_500 });
   const f1040 = findOutput(result, "f1040");
@@ -789,9 +832,9 @@ Deno.test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no c
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -2_500);
-  // The schedule_d self-output holds only print-line fields — no carryforward.
+  // The Schedule D self-output does not create a carryforward.
   const selfOut = findOutput(result, "schedule_d");
-  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
+  assertEquals((selfOut!.fields as Record<string, unknown>).capital_loss_carryover, undefined);
 });
 
 Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward", () => {
@@ -802,9 +845,9 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
-  // The schedule_d self-output holds only print-line fields — no carryforward.
+  // The Schedule D self-output does not create a carryforward.
   const selfOut = findOutput(result, "schedule_d");
-  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
+  assertEquals((selfOut!.fields as Record<string, unknown>).capital_loss_carryover, undefined);
 });
 
 // REMOVED: "threshold: loss -$3,001 (just above $3,000) — capped at -$3,000, carryforward = $1"
@@ -821,9 +864,9 @@ Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, n
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -1_500);
-  // The schedule_d self-output holds only print-line fields — no carryforward.
+  // The Schedule D self-output does not create a carryforward.
   const selfOut = findOutput(result, "schedule_d");
-  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
+  assertEquals((selfOut!.fields as Record<string, unknown>).capital_loss_carryover, undefined);
 });
 
 // REMOVED: "threshold (MFS): loss -$1,501 — capped at -$1,500, carryforward = $1"
@@ -1536,9 +1579,9 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 23_800);
 
   // Net gain is positive — no carryforward
-  // The schedule_d self-output holds only print-line fields — no carryforward.
+  // The Schedule D self-output does not create a carryforward.
   const selfOut = findOutput(result, "schedule_d");
-  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
+  assertEquals((selfOut!.fields as Record<string, unknown>).capital_loss_carryover, undefined);
 });
 
 Deno.test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", () => {

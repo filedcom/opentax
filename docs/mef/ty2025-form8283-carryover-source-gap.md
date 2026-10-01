@@ -9,9 +9,17 @@ amounts and gift IDs, not those completed prior documents.
 
 `forms/f1040/2025/mef/forms/f8283_carryover_evidence.ts` enforces one narrow
 proof contract for a publicly traded securities gift whose previous-year copy
-was completed in Section A, whose similar-item total and FMV were no more than
-$5,000, and for which no appraisal was required with the 2024 return. It
-matches the donation year, gift ID, FMV, basis, prior deductions and taxpayer
+was completed in Section A and for which no appraisal was required with the
+2024 return. For a gift or similar-item total above $5,000, a separate reviewed
+exchange quotation now identifies the ticker, exchange, shares, per-share FMV,
+donation-day quote, and source record; its multiplication must equal the prior
+form's FMV, and the ticker must appear in the prior property description. This
+extends the exact prior-PDF-to-Schedule-A-to-native/PDF path to exchange-listed
+stock above $5,000. The [2024 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2024.pdf)
+and [2025 instructions](https://www.irs.gov/instructions/i8283) both place
+publicly traded securities of any amount in Section A. The quote review is a
+source assertion; quote bytes and exchange authenticity are not independently
+verified. The binding matches the donation year, gift ID, FMV, basis, prior deductions and taxpayer
 against the Schedule A carryover ledger, then requires the exact reviewed PDF
 SHA-256, binary-attachment description and MeF document ID. It also records
 the reviewer's name/date and the referenced filed 2024 return/workpaper. The
@@ -54,5 +62,70 @@ complete. The filed 2024 return and prior deduction workpaper are referenced
 assertions. Source values and the PDF must be independently inspected before
 use. Section B, required appraisals, pass-through gifts, special carryover
 histories, mixed current-year gifts, additional e-file business
-rules, and ATS acceptance remain open. The single full test batch, generated
-XML XSD validation, and filled-PDF visual check have not run.
+rules, and ATS acceptance remain open. The one-gift and two-gift synthetic
+bundles passed the local TY2025 v5.4 Return1040 XSD on 2026-09-30, including
+their distinct native Form 8283, statement, and prior-PDF references. The
+single full test batch and filled-PDF visual check have not run. XSD success
+does not establish that the synthetic blank prior PDFs represent actually
+filed 2024 forms.
+
+## Prior Section B artwork and appraisal prerequisite
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+require the completed previous-year Form 8283 for a noncash carryover and a
+copy of any appraisal that had to accompany that return. A distinct standalone
+source check now covers one purchased long-held artwork gift made in 2024,
+originally claimed at its $20,000-or-more appraised FMV, with a partial 2024
+deduction and a 2025 30%-category capital-gain-property carryover. It joins the
+gift ID, year, FMV, basis, previous deduction, and taxpayer to the Schedule A
+carryover row; requires reviewed prior Section B signatures and an appraisal
+recorded as attached to the 2024 return; and hashes the two distinct retained
+PDF copies separately. Positive, changed-byte, changed-amount, ownership, and
+missing-appraisal-review fixtures are authored for the deferred batch.
+
+This is an evidence prerequisite, not an active Section B carryover filing
+route. The reviewed fields and purported 2024 attachment are assertions; the
+PDF contents, appraiser qualification, 2024 filing, and amount previously
+deducted are not independently authenticated. Native Form 8283 and PDF export
+remain limited to the bounded Section A securities carryover route above.
+
+The public `f8283.carryover_evidence` input now accepts a tagged
+`purchased_artwork` Section B source alongside the existing
+`publicly_traded_securities` Section A source. A dedicated Section B review
+joins both exact prior PDF byte hashes to the submitted MeF attachment
+descriptions and distinct binary document IDs, after matching the gift,
+taxpayer, appraisal review, and Schedule A carryover row. Positive and changed
+description/document-ID fixtures are authored for the deferred batch. Section
+B native and PDF export explicitly reject this source. The reviewed source
+now requires the prior form's property description, physical condition,
+purchase method, appraiser name, tax ID, address and signature date, plus the
+donee's name, EIN, address, receipt date, unrelated-use answer and signature.
+The donee/date and appraiser ID are cross-checked, and review flags assert
+those printable fields match the exact prior-form PDF and appraisal. The
+positive fixture and altered donee, appraiser-ID and PDF-review fixtures are
+authored for the deferred batch. This supplies the printable-fact prerequisite,
+but the current executor has no authenticated accepted 2024 return or IRS
+acknowledgment to verify the claimed prior filing. No current-year Section B
+filing is claimed by accepting the source contract.
+
+The Section B source contract now requires separate byte-hashed copies of the
+filed 2024 return and its purported IRS acceptance notice, reviewed 2024
+taxpayer/year/reference, the filed Schedule A line 12 noncash amount, and a
+review that this artwork was the sole 2024 noncash gift. The filed line 12 must
+equal the prior deduction carried into the 2025 ledger. All four retained source
+files have distinct references, names, hashes, and review dates; changed bytes,
+owner, and deduction amount are rejected. The filed return and acknowledgment
+are retained evidence, not 2025 MeF attachments. Only the prior Form 8283 and
+required appraisal are checked against distinct proposed MeF PDF attachment IDs.
+
+A separate staged return review checks this one-gift, primary-owner case against
+the complete finalized 2025 Schedule A capital-gain election ledger. It
+recomputes lines 11–13, requires the refigured basis less the 2024 deduction to
+be fully deductible on line 13, and matches the Form 1040 itemized total. The
+fixture uses a $30,000 artwork FMV, $20,000 basis, $15,000 prior deduction, and
+$5,000 current carryover; changed current Schedule A and Form 1040 amounts are
+rejected. This review is not called by filing output. The acceptance notice is
+only checked against a reviewer-entered hash and claimed status; no trusted IRS
+submission or transcript is available to authenticate it or to verify the
+filed-return PDF contents. Native Form 8283 and PDF export remain closed for
+Section B carryovers.

@@ -1,5 +1,155 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased Section B inventory and shared ordinary-income evidence (2026-10-01, unrun)
+
+The Section B source now uses one required-reason `ordinary_income_reduction`
+record for a purchased short-term capital asset or purchased inventory. This is
+a direct replacement of the former short-term-only source field; there is no
+alias. Both routes require appraised FMV above an undeducted cost basis, a claim
+equal to basis, and a reviewed statement computing the gain removed under
+section 170(e)(1)(A), as described in the
+[2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283). The
+inventory reason additionally requires a named cost
+ledger, a reviewed purchase/basis PDF confirming inventory held for sale to
+customers, that the cost was not previously deducted, and that the individual
+does not claim a corporate enhanced deduction. Its purchase date need not be
+within a year of contribution; the short-term capital-asset reason still does.
+The one-item Schedule A and itemized Form 1040 amounts must match the source.
+Native Form 8283 retains original appraised FMV and the lower basis claim, and
+links the reviewed purchase/cost record, full appraisal, reduction statement,
+completed signed Form 8283, and two signature PDFs as six distinct documents.
+The official PDF preview selects the property box, prints both amounts, and
+names the inventory cost record and reduction reason in its supplement. An
+$18,000 equipment inventory FMV/$12,000 basis case and altered-byte assertions
+are authored but unrun. The PDF evidence and reviewer assertions still require
+human verification of actual signatures, inventory classification, cost, and
+appraiser qualification. Prior-year Section B carryovers stay closed without
+authenticated accepted 2024 filing evidence.
+
+## Purchased short-term Section B art at $20,000 or more (2026-10-01, unrun)
+
+The bounded purchased short-term tangible-property route now includes one
+artwork with appraised FMV above the basis-limited claim of at least $20,000.
+The reviewed source requires a purchase/basis PDF, complete signed qualified
+appraisal PDF, FMV-reduction computation PDF, completed signed Form 8283 PDF,
+and distinct appraiser and donee signature PDFs. It ties short-term appreciation
+removed under section 170(e)(1)(A) to appraised FMV minus basis; the claim must
+equal basis. The native form reports original appraised FMV separately from the
+reduced claim and links all six distinct reviewed documents. Schedule A and
+Form 1040 must reconcile to the same one-gift source; the official PDF preview
+prints the art-at-least-$20,000 box, both values, appraiser/donee facts, and a
+supplemental explanation. A $25,000 FMV/$22,000 basis example and altered
+reduction, appraisal, and signed-form byte rejection fixtures are authored but
+unrun. This does not verify signatures or
+appraisal content automatically; document review remains required. Other
+Section B reduction reasons, multi-item forms, and carryovers stay closed.
+
+## Donor-prepared Section A manuscript reduction (2026-10-01, unrun)
+
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) explicitly
+identifies manuscripts prepared by the donor as ordinary-income property.
+The bounded Section A route now takes one donor-prepared manuscript with a
+2025 contribution, original FMV no more than $5,000, substantial-completion
+date, preparation record, capitalized-cost record, and confirmation that those
+basis costs were not previously deducted. It requires a 50%-limit donee,
+no vehicle or competing reduction reason, and a claim equal to adjusted basis
+below FMV. Native Form 8283 links the reduced column (h) amount to a separate
+statement showing the original FMV, hypothetical ordinary gain removed under
+section 170(e)(1)(A), both record references, and basis claim. The PDF prints
+the same reason. Complete current-gift Schedule A and Form 1040 itemized
+deduction reconciliation is required. Positive and source-tamper native/PDF
+fixtures are authored but unrun. The preparation and cost references are
+reviewed structured facts, not authenticated record bytes; Section B manuscripts
+and later-year carryovers remain closed.
+
+## Section A unrelated-use tangible property (implementation staged 2026-10-01)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526](https://www.irs.gov/publications/p526) reduce an
+appreciated long-term tangible-personal-property gift to basis when the donee
+puts it to an unrelated use. A separate bounded Section A route now requires a
+purchased nonvehicle gift with original FMV no more than $5,000, a 50%-limit
+donee, purchase and donee-use record references, an explicit unrelated-use
+review, and a claim equal to adjusted basis below FMV. It does not use the
+return-wide 50%-limit capital-gain election. The source produces a distinct
+native FMV-reduction statement, PDF explanation, and current-gift Schedule A
+and Form 1040 reconciliation. Positive and mismatched-source fixtures are
+authored but unrun. The underlying purchase and donee records are not byte
+authenticated; Section B, later donee disposition, and other reduction reasons
+remain open.
+
+## Donor-created Section A artwork reduction (implementation staged 2026-10-01)
+
+The 2025 [Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+identify donor-created artwork as ordinary-income property and use its
+substantial-completion date in the acquisition-date column. A separate bounded
+Section A source route now requires a creation record, a capitalized-cost
+record, confirmation that those basis costs were not previously deducted, and
+confirmation that the entire hypothetical FMV-sale gain would be ordinary.
+It requires a nonvehicle 2025 gift with original FMV no more than $5,000,
+adjusted basis equal to the claim below FMV, and a 50%-limit donee category.
+The native FMV statement names the creation and cost records, ordinary gain
+removed under section 170(e)(1)(A), and basis claim; the PDF uses the same
+explanation. Complete current-gift Schedule A and Form 1040 reconciliation is
+required. Native and PDF fixtures are authored but unrun for the bulk pass.
+The record identifiers and taxpayer confirmations do not authenticate the
+underlying creation or cost bytes. Other creator property and Section B remain
+outside this route.
+
+## Purchased Section A inventory reduction (implementation staged 2026-10-01)
+
+A distinct Section A route now identifies purchased inventory held for sale to
+customers, a purchase invoice reference, and an inventory cost-record
+reference. The source confirms that a hypothetical FMV sale would produce only
+ordinary gain and that no other reduction reason applies. The bounded route
+requires a nonvehicle gift with FMV no more than $5,000, a 50%-limit donee
+category, a 2025 contribution, and a claim equal to cost below FMV. It uses
+the complete current-gift inventory and Schedule A/Form 1040 reconciliation.
+Native Form 8283 links column (h) to a separate `FairMarketValueStatement`
+that explains the FMV, ordinary gain removed under section 170(e)(1)(A),
+invoice and cost-record references, and resulting basis claim. The PDF uses
+the same reason and prints the basis claim. Native and PDF source fixtures are
+authored for the bulk verification pass; tests, XSD, and PDF review have not
+yet run for this slice. The references and verified assertions are source
+fields, not authenticated invoice or ledger bytes. Section B inventory and
+other special reduction reasons remain outside this route.
+
+## Bounded Section A election return review (2026-09-30)
+
+The synthetic `single-section-a-capital-gain-reduction-gift` fixture now runs
+through the finalized return graph, TY2025 v5.4 MeF XML, and filled PDF. A
+purchased collectible coin with $4,500 original FMV and $3,000 adjusted basis
+produces a $3,000 Section A column (h) amount linked to a native
+`FairMarketValueStatement`. The statement computes the $1,500 reduction and
+names the 50% AGI-limit election. Schedule A line 12 is $3,000 and Form 1040
+line 12e is $39,000, including $24,000 state tax and $12,000 mortgage interest.
+The five-page filled PDF was rendered and visually checked: Form 8283 prints the
+donee, property, dates, basis, reduced claim, and a separate matching FMV
+explanation; Schedule A and Form 1040 show the same totals. The focused fixture
+passes local TY2025 v5.4 XSD validation and checks its native link, statement,
+Schedule A, and Form 1040 amounts. The focused Form 8283 source, native, and PDF
+suites passed 93 tests. The PDF reviewed here has SHA-256
+`ea7556683edb34931ef0e43a1756657868ae9724bbb565ab793276debecc3469`. This
+synthetic case does not verify a taxpayer's valuation, basis, donee, or
+election, and does not open the other reduction reasons or carryover routes.
+
+## Two purchased short-term Section A gifts (2026-09-30)
+
+The non-election purchased short-term reduction now uses the same complete
+current-gift inventory, finalized Schedule A, and itemized Form 1040
+reconciliation in native Form 8283, Schedule A MeF, and the PDF. A synthetic
+two-print return claims $700 for each $1,000 original FMV gift, links each
+reduced column (h) amount to a distinct native FMV statement, and retains the
+second gift's item B label in both statements. Local TY2025 v5.4 full-return
+XSD passed. The five-page filled packet was visually checked: both rows show
+$700, the supplemental page explains both $300 reductions, Schedule A line 12
+shows $1,400, and Form 1040 line 12e shows $37,400. The reviewed PDF has
+SHA-256
+`b81969831c5c5629da73fc85d748a3f7355cbad591416bac890f751fe1a83537`.
+Native Form 8283 and Schedule A reject a mismatched filed amount in focused
+checks. This synthetic source does not verify the taxpayer's purchase, holding
+period, valuation, or donee record, and does not cover other reduction reasons.
+
 The separate
 [prior-year carryover attachment gap](ty2025-form8283-carryover-source-gap.md)
 now has one bounded, unverified native Section A and reviewed-PDF route. Other
@@ -50,7 +200,7 @@ with a $24,000 current reduced gift and $60,000 AGI, the focused unrun case
 expects $24,000 on Schedule A line 12 and $5,000 on line 13. Mixed 20%/30%
 categories with such a carryover remain fail-closed, as do special carryover
 histories. The input's basis, holding period, donee category, and election need
-external verification. Unrelated-use tangible property, foundation gifts,
+external verification. Other unrelated-use tangible-property variants, foundation gifts,
 intellectual property, taxidermy, recapture, combined vehicle sale/appreciation
 reductions, and Section B reduction statements remain separate unsupported
 paths. Full MeF XSD, business-rule, PDF, and return-batch validation remain
@@ -130,10 +280,11 @@ from the signed Form 8283 and signature excerpts. This is a source-review gate,
 not automated verification of the appraisal or tax facts. Focused mismatch and
 missing-review cases are written but unrun.
 
-Other Section B items with a claimed amount below appraised FMV now stop at
-native export. The bounded land election is the only Section B reduction with a
-sourced computation and reviewed statement PDF; another reduced Section B gift
-cannot be filed as if its FMV were unreduced. A focused rejection case is
+At that implementation stage, other Section B items with a claimed amount below
+appraised FMV stopped at native export. The bounded land election then was the
+only Section B reduction with a sourced computation and reviewed statement PDF;
+another reduced Section B gift could not be filed as if its FMV were unreduced.
+A focused rejection case is
 written but unrun. Positive Section B fixtures that did not intend a
 property-level reduction now use equal appraised FMV and claimed amount. This
 does not implement inventory, recapture, unrelated-use, or other Section B
@@ -152,16 +303,16 @@ reviewer, review date, signature/data checks, and SHA-256 of the submitted
 bytes; the bundle verifies that digest and links the PDF to the IRS8283
 document. Form 8453 mailing is not an implemented alternative in this export.
 Schedule A PDF calls the return-wide election reconciliation before printing the
-deduction. The descriptor rejects other Section B routes, mixed Section A/B,
-more than four Section A items, vehicles, missing return-wide source, and
-non-election routes rather than printing a partial form. Mapping and negative
+deduction. At that checkpoint, the descriptor rejected other Section B routes,
+mixed Section A/B, more than four Section A items, vehicles, missing return-wide
+source, and non-election routes rather than printing a partial form. Mapping and negative
 cases are written but unrun; the filled PDF has not been rendered or visually
 checked. The
 [Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf) also
 require filing the form in a section 170(d) carryover year, so each deducted
 older property needs a carryover-year Form 8283 document, not only a Schedule A
 line 13 amount. The next build must cover other Section B paths, signed PDF
-composition, carryover-year Form 8283 documents, vehicle and other Section A PDF
+composition, carryover-year Form 8283 documents, other vehicle and Section A PDF
 routes, and continuation pages. No tests, typecheck, XSD validation, or
 filled-PDF rendering ran in this pass.
 
@@ -242,16 +393,41 @@ itemized total, map every required Section B field, and preserve the distinct
 signed-form/appraiser/donee attachments. No such taxpayer evidence or complete
 source contract is currently available for this case.
 
-The remaining Section A reasons need similarly specific source evidence: a
+Other Section A reasons need similarly specific source evidence: a
 donee's actual unrelated or exempt use and any disposition/certification,
 foundation status, intellectual-property basis, taxidermy costs, or a prior
 filed Form 8283 and appraisal for carryovers. The current supported Section A
-short-term, election, and certified-sale cases do not prove those facts by
+short-term, inventory, donor-created artwork, election, and certified-sale cases do not prove those facts by
 analogy. These routes remain fail-closed rather than emitting a generic FMV
 statement. This audit changed documentation only; no tests, typecheck, XSD
 validation, or filled-PDF rendering was run.
 
 ## Section B source contract needed for the next reduction route
+
+### Landed bounded unrelated-use art route
+
+Purchased long-term art with appraised FMV above $5,000 and below $20,000 now
+has a separate Section B `unrelated_use_capital_gain_reduction` source. The
+source requires a basis-limited claim, a 50% limit donee, explicit capital-gain
+classification, and the donee's unrelated-use indication. The purchase/basis
+record, donee's actual-use statement, reduction computation, full qualified
+appraisal, completed signed Form 8283, appraiser signature, and donee signature
+are seven distinct named PDFs. Three source reviews and the appraisal/signed
+form reviews bind their respective PDF bytes by SHA-256; native MeF links the
+seven separate document IDs. The same claim reaches Schedule A, itemized Form
+1040, native Form 8283, and the unsigned PDF projection. A synthetic full-return
+fixture checks the positive route and rejects changed donee-use bytes, a false
+unrelated-use indication, an unreduced claim, and a changed Form 1040 itemized
+total. This route does not assert that the generated PDF contains signatures.
+
+The current route excludes other tangible property, same-year disposition,
+recapture/depreciation, appraised art at $20,000 or more, and prior-year Section
+B carryovers. Those still need their own typed evidence and acceptance boundary.
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+require a reduction statement when the claimed amount is below FMV and state
+that unrelated-use tangible property loses its appreciation.
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) explains the
+unrelated-use test and the basis limit.
 
 The current `sectionBItemSchema` distinguishes appraised FMV from the claimed
 deduction, but only its purchased, unimproved investment-land election has a
@@ -278,3 +454,117 @@ reduction statement. The current native Section B builder correctly rejects a
 claim below appraised FMV without the supported land-election reason. No new
 positive Section B route can be asserted from the existing typed and reviewed
 facts alone; these source and document contracts are the build prerequisite.
+
+## Bounded purchased short-term Section B equipment (2026-10-01)
+
+One current-year purchased equipment gift can now use a basis-limited claim
+above $5,000 when the acquisition and contribution dates show no more than one
+year of holding. The source requires an identified capital asset that was not
+inventory, donor-created property, or subject to depreciation/recapture. Its
+purchase/basis record, full signed qualified appraisal, completed signed Form
+8283, and separate FMV-reduction computation each require reviewer/date and
+SHA-256 evidence; appraiser and donee signature PDFs are separate. The reduction
+statement must show original FMV, basis, removed short-term gain, and the claim.
+Native filing checks the actual attachment digests, distinct document IDs,
+and complete Schedule A inventory against the Form 8283 source and itemized
+Form 1040 total. The PDF prints appraised FMV and basis-limited claim separately
+and describes the reduction. A synthetic full-return positive, altered-PDF-byte,
+and altered-Form-1040 fixture are authored but unrun. Actual taxpayer source
+bytes and reviews are required before a real filing can use this route.
+Other Section B variants, multiple gifts, other reduction reasons, and
+carryover attachment combinations remain closed. This route follows the
+[2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+for ordinary-income-property reductions and signed Form 8283 attachments.
+
+## Purchased short-term Section B art below $20,000 (2026-10-01)
+
+The same reviewed-document and basis-limited route now accepts one purchased
+art item with appraised FMV below $20,000 and a claim above $5,000. It retains
+the capital-asset, holding-period, no creator/recapture, full appraisal, signed
+Form 8283, purchase/basis record, and reduction-statement requirements. The
+native form chooses the art-under-$20,000 property indicator and still requires
+six distinct attachment IDs; the PDF prints that art checkbox and the reduced
+claim. The complete Schedule A inventory and Form 1040 itemized total are
+recomputed as for equipment. A synthetic full-return art fixture and an
+out-of-range FMV rejection are authored for the deferred bulk pass. Art valued
+at $20,000 or more, multiple items, donor-created art, and unrelated-use art
+remain outside this route.
+
+## Purchased short-term Section B collectible (2026-10-01, unrun)
+
+The same reviewed-document and basis-limited route accepts one purchased
+non-art collectible, such as a rare coin, when its claimed deduction exceeds
+$5,000. A full qualified appraisal, completed signed Form 8283, purchase/basis
+record, separate reduction computation, and distinct reviewed attachment bytes
+remain required. The claim equals adjusted basis, and the FMV sale gain from
+the short holding period is removed under section 170(e)(1)(A). Native Form
+8283 selects `CollectiblesInd`; the PDF selects its collectibles box and keeps
+appraised FMV separate from the claim. The full-return fixture covers Schedule
+A, itemized Form 1040, native attachments, PDF projection, altered
+reduction-PDF bytes, and altered Form 1040 itemization. Actual taxpayer
+documents and source assertions still need review; long-term collectibles,
+art, inventory, multiple gifts, and carryovers remain outside this slice.
+
+## Purchased short-term Section B unimproved land (2026-10-01, unrun)
+
+One purchased, unimproved vacant investment-land parcel acquired no more than
+one year before its 2025 contribution can use the ordinary-income-property
+reduction route. The claimed amount exceeds $5,000 but equals reviewed adjusted
+basis; a separate signed qualified appraisal gives the higher FMV. The purchase
+review confirms the land is a capital asset rather than inventory, has no
+depreciation or recapture, and was not donor-created. The existing six distinct
+reviewed PDFs cover purchase/basis, complete appraisal, signed Form 8283,
+reduction computation, and appraiser/donee signatures. Native Form 8283 selects
+`OtherRealEstateInd` and keeps appraised FMV separate from the basis claim;
+Schedule A and itemized Form 1040 use the claim. The PDF selects the same
+property class and prints the reduced amount. A full-return native/PDF fixture
+and altered document bytes, land-status, holding-period, and Form 1040 fixtures
+are authored for deferred validation. The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+classify a capital asset held one year or less as ordinary-income property and
+require a statement showing the FMV reduction. Long-held investment land uses
+the separate 50%-limit election route. Developed/depreciable real estate,
+inventory land, multiple gifts, and carryover combinations remain closed.
+
+## Purchased short-term Section B nonpublic C corporation stock (2026-10-01, unrun)
+
+One purchased, nonpublicly traded C corporation share lot held no more than one
+year can now use the existing Section B short-term ordinary-income reduction
+route when the claimed deduction exceeds $5,000. The source identifies the
+issuer name/EIN, share class and count, confirms that the shares are nonpublic,
+and requires the printed property description to match that exact lot. The
+purchase-record reviewer confirms those issuer and lot facts against the PDF. Its
+reviewed purchase/basis PDF, qualified appraisal, completed signed Form 8283,
+reduction statement, and separate appraiser/donee signature PDFs retain six
+distinct linked IDs; the reviewed PDFs have bound byte digests. The claim equals adjusted basis below
+appraised FMV; native Form 8283 and the PDF select the securities box, while
+Schedule A and itemized Form 1040 carry the basis-limited deduction. An
+authored $18,000 FMV/$12,000 basis full-return case and publicly-traded,
+description, reviewed-byte, and return-amount tamper fixtures await the bulk
+validation pass.
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+direct nonpublic securities over $5,000 to Section B with a qualified appraisal;
+publicly traded securities belong in Section A. The underlying issuer,
+purchase, valuation, and donee records still need real human review. Mixed
+lots, partnership/S corporation interests, long-term securities, carryovers,
+and IRS acceptance remain outside this bounded route.
+
+## Two separately reviewed short-term Section B equipment gifts (2026-10-01, unrun)
+
+The reviewed short-term ordinary-income reduction route now also handles
+exactly two purchased equipment gifts in one similar-item group, made to
+different donees. Each item has its own appraised FMV above its basis-limited
+claim, purchase/basis record, full qualified appraisal, completed signed Form
+8283, appraiser and donee signature PDFs, and a separate FMV-reduction
+computation. All twelve named PDFs must be distinct; the existing attachment
+checks compare the reviewed SHA-256 values with the submitted bytes. The
+[2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require Section B for similar items whose total claimed deduction exceeds
+$5,000 and a separate Section B for each donee. The source-to-return guard
+recomputes the complete Schedule A inventory and itemized Form 1040 total;
+native MeF emits two Section B documents and the PDF projects two unsigned
+copies with their separate FMV and claimed amounts. An authored $18,000/$12,000
+and $19,000/$13,000 pair produces a $25,000 Schedule A deduction, with
+changed reduction-PDF bytes, repeated donee EIN, and changed itemized-total
+fixtures for deferred bulk validation. Other combinations, carryovers, and
+actual taxpayer document review remain open.

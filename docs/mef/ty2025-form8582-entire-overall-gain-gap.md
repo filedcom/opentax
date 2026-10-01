@@ -1,5 +1,60 @@
 # TY2025 Form 8582 entire disposition with overall gain
 
+## Direct Part I section 1231 sale prerequisite (2026-10-01, unrun)
+
+The requested first-year activity bought and sold in 2025 cannot have a
+direct Form 4797 Part I section 1231 real-property gain: the [2025 Form 4797
+instructions](https://www.irs.gov/instructions/i4797) require the property
+to be held **more than one year**. The passive sale source now rejects this
+classification explicitly. This does not rule out a separately evidenced
+tacked holding period; that would require a different source contract.
+
+For a genuine long-held rental acquired before 2025, the Schedule E source can
+now retain the purchase date/document, same durable activity ID and name,
+filed 2024 Schedule E reference, zero prior PAL assertion, and no-grouping
+assertion. A character-specific reviewer checks that these match a single
+fully taxable unrelated-party entire-interest closing, Form 4797 Part I sale
+gain, zero five-year section 1231 loss lookback, and a whole-dollar current
+Schedule E operating loss smaller than the gain. It yields a proposed Part IV
+or V row: sale gain in column (a), current operating loss in (b), and zero
+prior loss in (c). The gain retains Form 4797 Part I character and would flow
+to Schedule D if its section 1231 lookback is truly zero; the operating loss
+would remain on Schedule E and Schedule 1. The [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) require the entire
+activity's overall gain in Part IV or V while gains and losses stay on their
+normal reporting forms.
+
+This is a prerequisite, not a positive filing route. A reviewer-entered 2024
+Schedule E reference and zero-PAL assertion do not authenticate that return's
+acceptance or its activity and loss balance. Schedule E calculation and native
+Form 8582/Form 4797 and their PDFs reject the candidate until an executor-owned
+accepted-return source can prove those facts. Purchase, activity identity,
+closing, lookback, and prior-loss tamper fixtures are authored but unrun. The
+Form 1040/Schedule D and native/PDF positive joins remain open pending that
+source.
+
+## First-year entire disposition with overall loss (written, unrun)
+
+A bounded type-B rental acquired and sold in 2025 can now release its current
+operating loss in full when its one short-held, no-recapture Form 4797 Part II
+sale gain is smaller. The source must identify the acquisition document, match
+the activity ID/name and acquisition date to the sale, affirm no grouping with a
+prior activity, and identify an unrelated buyer and fully taxable noninstallment
+entire-interest closing. Entered prior PALs, at-risk or expense carryovers, and
+Form 4797-character losses close this route. The complete disposition bypasses
+Form 8582, with the operating loss on Schedule E, the ordinary sale gain on Form
+4797, their net on Schedule 1 and Form 1040, and matching native and PDF forms.
+Full-return positive and acquisition/closing tamper fixtures are authored for
+the deferred batch.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+direct an entire activity with overall loss to its normal reporting forms and
+no Form 8582 activity entry. The [2025 Form 4797 instructions](https://www.irs.gov/instructions/i4797)
+put a short-held property's ordinary gain in Part II. The acquisition and
+closing references are entered evidence, not authenticated document bytes.
+Long-held sales, recapture, multiple activities, prior loss release, and
+filled-output/XSD/IRS acceptance remain open.
+
 The [2025 Form 8582 instructions](https://www.irs.gov/pub/irs-pdf/i8582.pdf),
 "Reporting an Entire Disposition on Form 4797 or Form 8949," require an entire
 passive-activity disposition with an **overall gain** to include the current
@@ -33,6 +88,19 @@ released on Schedule E and carried once to Schedule 1. Native MeF and the Form
 8582/Schedule E PDF descriptors use the same source checks. Focused cases are
 written but unrun.
 
+An additional Part V case has zero current-year Schedule E operating income or
+loss, one identified filed-2024 Part VII operating PAL, and one fully taxable
+entire-interest Part II sale to an unrelated buyer. The sale gain must exceed
+the prior operating loss. The 2024 activity ID, unallowed balance and filed
+reference remain mandatory; current Form 4797 sale and closing facts must match
+the Schedule E source. Form 8582 releases the prior loss, Schedule E carries it
+to Schedule 1, and Form 4797 keeps the gain, giving the net Form 1040 AGI
+effect. Native Form 8582 Part V and PDF projection show sale gain, prior loss,
+and overall gain. An executor-produced full-return fixture plus prior-balance,
+buyer, sale-document, and amount-tamper cases are authored but unrun. This
+does not admit positive current operations, active-rental zero-current cases,
+Part I sales, prior Form 4797-character losses, or unauthenticated source bytes.
+
 A separate first-year Part V path covers one type-B rental acquired and sold in
 2025 with a current operating loss smaller than its direct Part II sale gain.
 The source must identify the activity acquisition date, a purchase document, and
@@ -47,6 +115,20 @@ about an unverified 2024 accepted return. Schedule E, Form 4797, Form 8582 Part
 V, Schedule 1, and the PDF descriptor use the same activity and sale identifiers
 and whole-dollar amounts. Focused calculation, MeF/XSD, and PDF-projection cases
 are written but **not run**.
+
+The same first-year source contract now admits one actively participated
+type-A rental to Part IV when the owner bought and sold it in 2025. The
+identified purchase and sale dates, purchase-document reference, no-prior-
+grouping attestation, whole-dollar current Schedule E loss, and one short-held
+no-recapture Form 4797 Part II gain must match. The gain must exceed the loss;
+no prior PAL or at-risk/expense carryover can be entered. The calculated Part IV
+gain and allowed current loss flow through Schedule E, Form 4797, Schedule 1,
+and Form 1040; native MeF and PDF compare the same source activity and sale.
+A full-return positive fixture and changed-purchase-reference rejection fixture
+are authored but unrun. This applies the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) for an active rental's
+entire disposition with overall gain. Acquisition/closing document bytes,
+other sale characters, and wider activity combinations remain open.
 
 An activity acquired before 2025, grouped with an older passive activity, or
 carrying any prior unallowed loss still needs authenticated filed-return

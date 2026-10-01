@@ -20,10 +20,22 @@ export interface F8949Transaction {
 import type { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { z } from "zod";
 import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index.ts";
+import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a/index.ts";
+import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
+import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
+import type { inputSchema as f8812InputSchema } from "../../nodes/inputs/f8812/index.ts";
+import type { inputSchema as f8863InputSchema } from "../../nodes/inputs/f8863/index.ts";
+import type { inputSchema as generalInputSchema } from "../../nodes/inputs/general/index.ts";
 import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099patr/index.ts";
 import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
 import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_corp/index.ts";
 import type { inputSchema as trustK1InputSchema } from "../../nodes/inputs/k1_trust/index.ts";
+import type { inputSchema as refinancePointsInputSchema } from "../../nodes/inputs/mortgage_refinance_points/index.ts";
+import type { inputSchema as form3921InputSchema } from "../../nodes/inputs/f3921/index.ts";
+import type { inputSchema as form8949SourceInputSchema } from "../../nodes/inputs/f8949/index.ts";
+import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs/f59e/index.ts";
+import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/form1116_prior_carryover/index.ts";
+import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
 
@@ -41,10 +53,36 @@ export type MefFormsPending =
     // Form 1116 line 1b needs the source compensation record for a filing check.
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;
+    // Marketplace statements remain available for Form 8962 month-by-month
+    // reconciliation even though they are not themselves native attachments.
+    f1095a?: z.infer<typeof f1095aInputSchema>;
+    // Payer statements remain available for Form 6251 AMT interest replay.
+    f1099int?: z.infer<typeof f1099intInputSchema>;
+    f1099oid?: z.infer<typeof f1099oidInputSchema>;
+    // Filing and dependent source facts are retained for native cross-form
+    // checks even when their input nodes do not emit standalone XML forms.
+    general?: z.infer<typeof generalInputSchema>;
+    f8812?: z.infer<typeof f8812InputSchema>;
+    // Education source rows remain available to reconcile Form 8862 and 8863.
+    f8863?: z.infer<typeof f8863InputSchema>;
     // Retained 1099-PATR source for the Form 8995-A Schedule D filing check.
     f1099patr?: z.infer<typeof patrInputSchema>;
     // K-1 source records are retained for downstream credit reconciliation.
     k1_partnership?: z.infer<typeof partnershipK1InputSchema>;
     k1_s_corp?: z.infer<typeof sCorpK1InputSchema>;
     k1_trust?: z.infer<typeof trustK1InputSchema>;
+    // Source-only refinancing records support Schedule A line 8c.
+    mortgage_refinance_points?: z.infer<typeof refinancePointsInputSchema>;
+    // Payer-issued ISO exercise copies support Form 6251 line 2i.
+    f3921?: z.infer<typeof form3921InputSchema> & {
+      iso_amt_basis_ledger?: readonly IsoAmtBasisLot[];
+    };
+    // Raw transaction input is retained to replay AMT basis rows at export.
+    f8949?: z.infer<typeof form8949SourceInputSchema>;
+    // Current-year §59(e) records support Form 6251 line 2o replay.
+    f59e?: z.infer<typeof form59eSourceInputSchema>;
+    // Accepted prior Form 1116 Schedule B rows remain available for carryover replay.
+    form1116_prior_carryover?: z.infer<
+      typeof form1116PriorCarryoverInputSchema
+    >;
   };

@@ -214,6 +214,161 @@ Deno.test("Form 1116 Schedule B PDF carries 2020 through page-1 and page-2 subto
   );
 });
 
+Deno.test("Form 1116 Schedule B PDF places 2018-2020 vintages and sums page-1 subtotals", () => {
+  const source = {
+    ...priorFields,
+    category: IncomeCategory.General,
+    prior_year_carryover: 400,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 250,
+    prior_year_carryover_source: {
+      ...priorFields.prior_year_carryover_source,
+      vintages: [
+        { vintage_tax_year: 2020 as const, prior_year_schedule_b_line8_vintage_amount: 200 },
+        { vintage_tax_year: 2019 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2018 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 400,
+      source_document_references: ["Filed 2024 general Schedule B line 8, original 2018-2020 vintages"],
+    },
+  };
+  const projected = form1116ScheduleBPdf.projectFields?.(source, {
+    form_1116: {
+      category_summaries: [parentSummary(IncomeCategory.General, 0, 400, 150)],
+    },
+  }) ?? {};
+  assertEquals(projected.line1_2018, 100);
+  assertEquals(projected.line3_2018, 100);
+  assertEquals(projected.line4_2018, -100);
+  assertEquals(projected.line8_2018, 0);
+  assertEquals(projected.line1_2019, 100);
+  assertEquals(projected.line3_2019, 100);
+  assertEquals(projected.line4_2019, -50);
+  assertEquals(projected.line8_2019, 50);
+  assertEquals(projected.line1_page1_subtotal, 400);
+  assertEquals(projected.line1_page2_subtotal, 400);
+  assertEquals(projected.line4_page1_subtotal, -150);
+  assertEquals(projected.line4_page2_subtotal, -150);
+  assertEquals(projected.line8_page1_subtotal, 250);
+  assertEquals(projected.line8_page2_subtotal, 250);
+  assertEquals(form1116ScheduleBPdf.instances?.(projected, filer)?.length, 1);
+  const field = form1116ScheduleBPdf.fields.find((entry) => entry.domainKey === "line1_2018");
+  assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_13[0]");
+});
+
+Deno.test("Form 1116 Schedule B PDF places passive 2017 in page-1 eighth column", () => {
+  const source = {
+    ...priorFields,
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 200,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 50,
+    prior_year_carryover_source: {
+      ...priorFields.prior_year_carryover_source,
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        { vintage_tax_year: 2018 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2017 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 200,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2017-2018 vintages"],
+    },
+  };
+  const projected = form1116ScheduleBPdf.projectFields?.(source, {
+    form_1116: {
+      category_summaries: [parentSummary(IncomeCategory.Passive, 0, 200, 150)],
+    },
+  }) ?? {};
+  assertEquals(projected.line1_2017, 100);
+  assertEquals(projected.line3_2017, 100);
+  assertEquals(projected.line4_2017, -100);
+  assertEquals(projected.line8_2017, 0);
+  assertEquals(projected.line4_2018, -50);
+  assertEquals(projected.line8_2018, 50);
+  assertEquals(projected.line1_page1_subtotal, 200);
+  assertEquals(projected.line4_page2_subtotal, -150);
+  assertEquals(projected.line8_page2_subtotal, 50);
+  assertEquals(form1116ScheduleBPdf.instances?.(projected, filer)?.length, 1);
+  const field = form1116ScheduleBPdf.fields.find((entry) => entry.domainKey === "line1_2017");
+  assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_12[0]");
+});
+
+Deno.test("Form 1116 Schedule B PDF places passive 2016 in page-1 ninth column", () => {
+  const source = {
+    ...priorFields,
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 200,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 50,
+    prior_year_carryover_source: {
+      ...priorFields.prior_year_carryover_source,
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        { vintage_tax_year: 2017 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2016 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 200,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2016-2017 vintages"],
+    },
+  };
+  const projected = form1116ScheduleBPdf.projectFields?.(source, {
+    form_1116: {
+      category_summaries: [parentSummary(IncomeCategory.Passive, 0, 200, 150)],
+    },
+  }) ?? {};
+  assertEquals(projected.line1_2016, 100);
+  assertEquals(projected.line3_2016, 100);
+  assertEquals(projected.line4_2016, -100);
+  assertEquals(projected.line8_2016, 0);
+  assertEquals(projected.line4_2017, -50);
+  assertEquals(projected.line8_2017, 50);
+  assertEquals(projected.line1_page1_subtotal, 200);
+  assertEquals(projected.line4_page2_subtotal, -150);
+  assertEquals(projected.line8_page2_subtotal, 50);
+  assertEquals(form1116ScheduleBPdf.instances?.(projected, filer)?.length, 1);
+  const field = form1116ScheduleBPdf.fields.find((entry) => entry.domainKey === "line1_2016");
+  assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_11[0]");
+});
+
+Deno.test("Form 1116 Schedule B PDF prints 2015 line-5 expiry and omits it from next year", () => {
+  const source = {
+    ...priorFields,
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 600,
+    used_prior_year_carryover: 300,
+    remaining_prior_year_carryover: 200,
+    prior_year_carryover_source: {
+      ...priorFields.prior_year_carryover_source,
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        { vintage_tax_year: 2016 as const, prior_year_schedule_b_line8_vintage_amount: 200 },
+        { vintage_tax_year: 2015 as const, prior_year_schedule_b_line8_vintage_amount: 400 },
+      ],
+      prior_year_schedule_b_line8_total: 600,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2015 and 2016 vintages"],
+    },
+  };
+  const projected = form1116ScheduleBPdf.projectFields?.(source, {
+    form_1116: {
+      category_summaries: [parentSummary(IncomeCategory.Passive, 0, 600, 300)],
+    },
+  }) ?? {};
+  assertEquals(projected.line1_2015, 400);
+  assertEquals(projected.line3_2015, 400);
+  assertEquals(projected.line4_2015, -300);
+  assertEquals(projected.line5_2015, -100);
+  assertEquals(projected.line5_page1_subtotal, -100);
+  assertEquals(projected.line5_page2_subtotal, -100);
+  assertEquals(projected.line5_total, -100);
+  assertEquals(projected.line8_2015, 0);
+  assertEquals(projected.line8_2016, 200);
+  assertEquals(projected.line8_total, 200);
+  assertEquals(form1116ScheduleBPdf.instances?.(projected, filer)?.length, 1);
+  const byKey = new Map(form1116ScheduleBPdf.fields.map((field) => [field.domainKey, field.pdfField]));
+  assertEquals(byKey.get("line1_2015"), "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_10[0]");
+  assertEquals(byKey.get("line5_2015"), "topmostSubform[0].Page1[0].Table_Page1[0].Line5[0].f1_85[0]");
+});
+
 Deno.test("Form 1116 Schedule B PDF prints current-year excess in column xiii and total", () => {
   const projected = form1116ScheduleBPdf.projectFields?.(currentFields, {
     form_1116: {

@@ -1,5 +1,8 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { Form8814Lines } from "../../../nodes/inputs/f8814/index.ts";
+import {
+  assertForm8814SourceReview,
+  type Form8814Lines,
+} from "../../../nodes/inputs/f8814/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = { items?: readonly Form8814Lines[] } & Record<string, unknown>;
@@ -84,6 +87,12 @@ export const form8814: MefFormDescriptor<"form8814", Input, readonly string[]> =
     pdfUrl: "https://www.irs.gov/pub/irs-prior/f8814--2025.pdf",
     build(fields, context?: MefBuildContext) {
       const items = fields.items ?? [];
+      if (items.length > 0 && !context?.filer?.primarySSN) {
+        throw new Error("Form 8814 needs finalized electing-parent identity");
+      }
+      for (const line of items) {
+        assertForm8814SourceReview(line.item, context!.filer!.primarySSN);
+      }
       const statementIds = context?.documentIdsByPendingKey
         ?.child_taxable_interest_statement ?? [];
       let statementIndex = 0;

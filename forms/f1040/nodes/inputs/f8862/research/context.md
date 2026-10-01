@@ -25,9 +25,12 @@ I line 1 is 2025; it is not a prior disallowance year.
 | claim_eitc                     | boolean      | No       | Reclaim EITC                 | True to reclaim the Earned Income Tax Credit                  | Form 8862 Part I             | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
 | claim_ctc                      | boolean      | No       | Reclaim CTC/ACTC             | True to reclaim Child Tax Credit / Additional CTC (Form 8812) | Form 8862 Part III           | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
 | claim_aotc                     | boolean      | No       | Reclaim AOTC                 | True to reclaim American Opportunity Tax Credit (Form 8863)   | Form 8862 Part IV            | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
-| eitc_disallowed_year           | number (int) | No       | Internal prior-year metadata | Not serialized into TY2025 IRS8862 XML                        | No field on TY2025 Form 8862 | https://www.irs.gov/pub/irs-pdf/f8862.pdf |
-| ctc_disallowed_year            | number (int) | No       | Internal prior-year metadata | Not serialized into TY2025 IRS8862 XML                        | No field on TY2025 Form 8862 | https://www.irs.gov/pub/irs-pdf/f8862.pdf |
-| aotc_disallowed_year           | number (int) | No       | Internal prior-year metadata | Not serialized into TY2025 IRS8862 XML                        | No field on TY2025 Form 8862 | https://www.irs.gov/pub/irs-pdf/f8862.pdf |
+| eitc_disallowed_year           | 1997–2024 integer | With EIC claim | Prior IRS disallowance notice | Must match the reviewed general-source year; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
+| eitc_disallowance_notice_reference | string | With EIC claim | Prior IRS disallowance notice | Source record must match the reviewed general-source notice; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
+| ctc_disallowed_year            | 2016–2024 integer | With CTC/ACTC/ODC claim | Prior IRS disallowance notice | Required to identify the earlier disallowance; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
+| ctc_disallowance_notice_reference | string | With CTC/ACTC/ODC claim | Prior IRS disallowance notice | Required source record reference; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
+| aotc_disallowed_year           | 2016–2024 integer | With AOTC claim | Prior IRS disallowance notice | Required to identify the earlier disallowance; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
+| aotc_disallowance_notice_reference | string | With AOTC claim | Prior IRS disallowance notice | Required source record reference; not serialized into TY2025 IRS8862 XML | No field on TY2025 Form 8862 | https://www.irs.gov/instructions/i8862 |
 | eitc_qualifying_children_count | number (0–3) | No       | EITC children count          | Number of qualifying children for EITC reclaim (Part II)      | Form 8862 Part II            | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
 | ctc_qualifying_children_count  | number (int) | No       | CTC children count           | Number of qualifying children for CTC reclaim (Part III)      | Form 8862 Part III           | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
 | aotc_student_count             | number (int) | No       | AOTC student count           | Number of students for AOTC reclaim (Part IV)                 | Form 8862 Part IV            | https://www.irs.gov/pub/irs-pdf/i8862.pdf |
@@ -44,6 +47,29 @@ rest of Part II. For a child born or deceased during TY2025 who meets the home
 test, the instructions require entering 365 on line 7 and completing line 8.
 Sources: [December 2025 Form 8862](https://www.irs.gov/pub/irs-pdf/f8862.pdf)
 and [its instructions](https://www.irs.gov/pub/irs-pdf/i8862.pdf).
+
+The three-page PDF holds four CTC children, four other dependents, and three
+AOTC students. Additional people now print on a numbered continuation with
+their line 12/14–17, 13/16–17, or 18/19a–b answers and filer identity, as the
+2025 form directs. The native document continues to carry every person. This
+continuation is written but has not yet entered the agreed final PDF batch.
+
+When Part II names qualifying children, both export paths now require the same
+distinct names and count on finalized Schedule EIC, plus the Schedule EIC credit
+equal to Form 1040 line 27. A document-ID-aware native build also requires the
+Schedule EIC attachment. Residence days and prior-notice document bytes still
+need source review; the current structured facts alone do not prove them.
+Parts III and IV now require complete person sets: every finalized Form 1040
+CTC/ODC dependent must appear in Form 8862, and every Form 8863 AOC student must
+appear once. A matching subset is no longer enough to file those parts.
+For CTC/ODC and AOTC, the general source now carries separate reviewed prior
+IRS notice records. Each records the earlier disallowance year, notice
+reference, retained-copy reference, taxpayer SSN, a nonclerical-disallowance
+review, and a no-active-ban review. Native and PDF export compare the year,
+notice reference, and taxpayer to the Form 8862 claim and filer. These
+structured records do not authenticate the underlying IRS notice bytes; that
+source-copy proof remains open. Full-return ODC and AOTC XSD/PDF cases are
+authored for the agreed final batch and have not yet run.
 
 ---
 

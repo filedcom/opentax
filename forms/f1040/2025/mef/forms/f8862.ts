@@ -1,9 +1,19 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  assertCreditDisallowanceEvidence,
   type F8862Input,
   inputSchema,
+  type PriorCreditDisallowanceReview,
 } from "../../../nodes/inputs/f8862/index.ts";
-import { inputSchema as form8863InputSchema } from "../../../nodes/inputs/f8863/index.ts";
+import {
+  calculateForm8863Lines,
+  inputSchema as form8863InputSchema,
+} from "../../../nodes/inputs/f8863/index.ts";
+import {
+  calculateSchedule8812Lines,
+  inputSchema as form8812InputSchema,
+} from "../../../nodes/inputs/f8812/index.ts";
+import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 function boolElement(tag: string, value: boolean | undefined): string {
@@ -160,12 +170,108 @@ function validateFinalizedCreditClaims(
   if (!form1040) {
     throw new Error("Form 8862 needs finalized Form 1040 credit lines");
   }
+  const general = generalInputSchema.safeParse(pending?.general);
+  const filerSsn = context?.filer?.primarySSN ??
+    (general.success
+      ? general.data.taxpayer_ssn?.replace(/\D/g, "")
+      : undefined);
+  const assertPriorNotice = (
+    credit: "CTC/ODC" | "AOTC",
+    review: PriorCreditDisallowanceReview | undefined,
+    year: number | undefined,
+    reference: string | undefined,
+  ) => {
+    if (
+      !review || review.disallowed_year !== year ||
+      review.notice_reference !== reference ||
+      !filerSsn || review.taxpayer_ssn.replace(/\D/g, "") !== filerSsn
+    ) {
+      throw new Error(
+        `Form 8862 ${credit} claim needs a matching reviewed prior IRS notice and taxpayer`,
+      );
+    }
+  };
+  if (fields.claim_ctc) {
+    assertPriorNotice(
+      "CTC/ODC",
+      general.success ? general.data.prior_ctc_disallowance_review : undefined,
+      fields.ctc_disallowed_year,
+      fields.ctc_disallowance_notice_reference,
+    );
+  }
+  if (fields.claim_aotc) {
+    assertPriorNotice(
+      "AOTC",
+      general.success ? general.data.prior_aotc_disallowance_review : undefined,
+      fields.aotc_disallowed_year,
+      fields.aotc_disallowance_notice_reference,
+    );
+  }
   const positive = (value: unknown) =>
     typeof value === "number" && Number.isFinite(value) && value > 0;
   if (fields.claim_eitc && !positive(form1040.line27_eitc)) {
     throw new Error(
       "Form 8862 EITC claim needs positive finalized Form 1040 line 27",
     );
+  }
+  if (fields.claim_eitc && (fields.eitc_children?.length ?? 0) > 0) {
+    const eitc = pending?.eitc as Record<string, unknown> | undefined;
+    const filedChildren = eitc?.qualifying_child_details;
+    if (
+      !Array.isArray(filedChildren) ||
+      eitc?.qualifying_children !== fields.eitc_children?.length ||
+      eitc?.credit_amount !== form1040.line27_eitc ||
+      (context?.documentIdsByPendingKey &&
+        (context.documentIdsByPendingKey.eitc?.length ?? 0) === 0)
+    ) {
+      throw new Error(
+        "Form 8862 EITC children must match finalized Schedule EIC and Form 1040 line 27",
+      );
+    }
+    const names = filedChildren.map((child) => {
+      if (child === null || typeof child !== "object") return "";
+      const person = child as Record<string, unknown>;
+      if (
+        typeof person.first_name !== "string" ||
+        typeof person.last_name !== "string"
+      ) return "";
+      return `${person.first_name} ${person.last_name}`.trim().toUpperCase();
+    });
+    const claimed = fields.eitc_children!.map((child) =>
+      `${child.first_name} ${child.last_name}`.trim().toUpperCase()
+    );
+    if (
+      names.length !== claimed.length ||
+      new Set(names).size !== names.length ||
+      new Set(claimed).size !== claimed.length ||
+      names.some((name) => !name || !claimed.includes(name))
+    ) {
+      throw new Error(
+        "Form 8862 EITC children must match finalized Schedule EIC and Form 1040 line 27",
+      );
+    }
+  }
+  if (fields.claim_eitc) {
+    const review = general.success
+      ? general.data.prior_eic_disallowance_review
+      : undefined;
+    const eitc = pending?.eitc as Record<string, unknown> | undefined;
+    if (
+      !review || review.status !== "requires_8862" ||
+      review.disallowed_year !== fields.eitc_disallowed_year ||
+      review.disallowance_notice_reference !==
+        fields.eitc_disallowance_notice_reference ||
+      !filerSsn || !general.success ||
+      general.data.taxpayer_ssn?.replace(/\D/g, "") !== filerSsn ||
+      (typeof form1040.taxpayer_ssn !== "string" ||
+        form1040.taxpayer_ssn.replace(/\D/g, "") !== filerSsn) ||
+      fields.credit_disallowance_ban_active !== false ||
+      eitc?.credit_amount !== form1040.line27_eitc
+    ) {
+      throw new Error(
+        "Form 8862 EITC claim needs a matching reviewed prior IRS notice, filer, no active ban, and finalized EITC amount",
+      );
+    }
   }
   if (
     fields.claim_ctc &&
@@ -176,6 +282,110 @@ function validateFinalizedCreditClaims(
       "Form 8862 CTC/ODC claim needs a finalized Form 1040 line 19 or 28 credit",
     );
   }
+  if (fields.claim_ctc) {
+    const dependentRows = form1040.dependent_details;
+    if (!Array.isArray(dependentRows)) {
+      throw new Error(
+        "Form 8862 CTC and ODC names need finalized Form 1040 dependent rows",
+      );
+    }
+    const filed = new Map<string, string>();
+    for (const row of dependentRows) {
+      if (row === null || typeof row !== "object") continue;
+      const dep = row as Record<string, unknown>;
+      if (
+        typeof dep.first_name !== "string" ||
+        typeof dep.last_name !== "string" ||
+        typeof dep.credit_category !== "string"
+      ) continue;
+      const name = `${dep.first_name} ${dep.last_name}`.trim().toUpperCase();
+      if (filed.has(name)) {
+        throw new Error("Form 8862 dependent names are ambiguous on Form 1040");
+      }
+      filed.set(name, dep.credit_category);
+    }
+    const claimed = new Set<string>();
+    for (
+      const [people, category] of [
+        [fields.ctc_children ?? [], "ctc"],
+        [fields.other_dependents ?? [], "odc"],
+      ] as const
+    ) {
+      for (const person of people) {
+        const name = `${person.first_name} ${person.last_name}`.trim()
+          .toUpperCase();
+        if (claimed.has(name) || filed.get(name) !== category) {
+          throw new Error(
+            "Form 8862 CTC and ODC names must match filed Form 1040 dependent credit rows",
+          );
+        }
+        claimed.add(name);
+      }
+    }
+    const filedCreditNames = [...filed.entries()].filter(([, category]) =>
+      category === "ctc" || category === "odc"
+    ).map(([name]) => name);
+    if (
+      claimed.size !== filedCreditNames.length ||
+      filedCreditNames.some((name) => !claimed.has(name))
+    ) {
+      throw new Error(
+        "Form 8862 Part III must include every filed CTC and ODC dependent",
+      );
+    }
+    if (
+      !fields.claim_eitc && !fields.claim_aotc &&
+      (fields.ctc_children?.length ?? 0) === 0 &&
+      (fields.other_dependents?.length ?? 0) === 1
+    ) {
+      const form8812 = form8812InputSchema.safeParse(pending?.f8812);
+      const lines = form8812.success
+        ? calculateSchedule8812Lines(2025, form8812.data)
+        : undefined;
+      const person = fields.other_dependents![0];
+      const name = `${person.first_name} ${person.last_name}`.trim()
+        .toUpperCase();
+      const sourceDependents = general.success
+        ? general.data.dependents ?? []
+        : [];
+      const sourcePerson = sourceDependents.filter((row) =>
+        `${row.first_name} ${row.last_name}`.trim().toUpperCase() === name
+      );
+      const filedPerson = dependentRows.filter((row) =>
+        row !== null && typeof row === "object" &&
+        `${(row as Record<string, unknown>).first_name} ${
+            (row as Record<string, unknown>).last_name
+          }`.trim().toUpperCase() === name
+      ) as Record<string, unknown>[];
+      const identifiers = ["ssn", "itin", "atin"] as const;
+      const sourceIdentifiers = identifiers.filter((key) =>
+        typeof sourcePerson[0]?.[key] === "string"
+      );
+      const identifier = sourceIdentifiers[0];
+      const sourceTin = identifier === undefined
+        ? undefined
+        : sourcePerson[0]?.[identifier];
+      const filedTin = identifier === undefined
+        ? undefined
+        : filedPerson[0]?.[identifier];
+      if (
+        !form8812.success || !lines ||
+        form8812.data.form8862_filed !== true ||
+        sourcePerson.length !== 1 || filedPerson.length !== 1 ||
+        sourceIdentifiers.length !== 1 || !sourceTin ||
+        typeof filedTin !== "string" ||
+        sourceTin.replace(/\D/g, "") !== filedTin.replace(/\D/g, "") ||
+        lines.line4 !== 0 || lines.line6 !== 1 || lines.line7 !== 500 ||
+        lines.line14 <= 0 || lines.line27 !== 0 ||
+        form1040.line19_child_tax_credit !== lines.line14 ||
+        (form1040.line28_actc ?? 0) !== lines.line27
+      ) {
+        throw new Error(
+          "Form 8862 standalone ODC source, Schedule 8812, dependent TIN, and Form 1040 amounts do not reconcile",
+        );
+      }
+    }
+  }
   if (fields.claim_aotc) {
     const form8863 = form8863InputSchema.safeParse(pending?.f8863);
     if (!form8863.success) {
@@ -183,15 +393,24 @@ function validateFinalizedCreditClaims(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
     }
-    const names = new Set(
-      form8863.data.f8863s.filter((student) => student.credit_type === "aoc")
-        .map((student) => student.student_name.trim().toUpperCase()),
+    const aocStudents = form8863.data.f8863s.filter((student) =>
+      student.credit_type === "aoc"
     );
+    const filedStudents = aocStudents.map((student) =>
+      student.student_name.trim().toUpperCase()
+    );
+    const claimedStudents = (fields.aotc_students ?? []).map((student) =>
+      `${student.first_name} ${student.last_name}`.trim().toUpperCase()
+    );
+    const filedNames = new Set(filedStudents);
+    const claimedNames = new Set(claimedStudents);
     const schedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
     if (
-      fields.aotc_students?.some((student) =>
-        !names.has(`${student.first_name} ${student.last_name}`.toUpperCase())
-      ) || !names.size ||
+      !filedNames.size ||
+      filedNames.size !== filedStudents.length ||
+      claimedNames.size !== claimedStudents.length ||
+      filedNames.size !== claimedNames.size ||
+      filedStudents.some((name) => !claimedNames.has(name)) ||
       !(positive(form1040.line29_refundable_aoc) ||
         positive(schedule3?.line3_education_credit)) ||
       (context?.documentIdsByPendingKey &&
@@ -200,6 +419,78 @@ function validateFinalizedCreditClaims(
       throw new Error(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
+    }
+    if (
+      !fields.claim_ctc && !fields.claim_eitc &&
+      form8863.data.f8863s.length === 1 && aocStudents.length === 1
+    ) {
+      const student = aocStudents[0];
+      const details = student.filing_details;
+      const filedName = details
+        ? `${details.first_name} ${details.last_name}`.trim().toUpperCase()
+        : undefined;
+      const creditLines = calculateForm8863Lines(form8863.data);
+      if (
+        !details || filedName !== filedStudents[0] ||
+        !student.student_ssn || !creditLines ||
+        form8863.data.form8862_filed !== true ||
+        creditLines.line8 + creditLines.line19 <= 0 ||
+        (form1040.line29_refundable_aoc ?? 0) !== creditLines.line8 ||
+        (schedule3?.line3_education_credit ?? 0) !== creditLines.line19
+      ) {
+        throw new Error(
+          "Form 8862 standalone AOTC source, Form 8863, Schedule 3, and Form 1040 amounts do not reconcile",
+        );
+      }
+    }
+    if (fields.claim_ctc && Array.isArray(form1040.dependent_details)) {
+      const odcDependents = form1040.dependent_details.filter((row) =>
+        row !== null && typeof row === "object" &&
+        (row as Record<string, unknown>).credit_category === "odc"
+      ) as Record<string, unknown>[];
+      for (const student of aocStudents) {
+        const name = student.student_name.trim().toUpperCase();
+        const samePerson = odcDependents.find((row) =>
+          `${row.first_name} ${row.last_name}`.trim().toUpperCase() === name
+        );
+        if (
+          samePerson &&
+          (typeof samePerson.ssn !== "string" ||
+            typeof student.student_ssn !== "string" ||
+            samePerson.ssn.replace(/\D/g, "") !==
+              student.student_ssn.replace(/\D/g, ""))
+        ) {
+          throw new Error(
+            "Form 8862 shared ODC and AOTC student needs one matching dependent SSN",
+          );
+        }
+        if (samePerson) {
+          const form8812 = form8812InputSchema.safeParse(pending?.f8812);
+          const creditLines = calculateForm8863Lines(form8863.data);
+          if (!form8812.success || !creditLines) {
+            throw new Error(
+              "Form 8862 shared ODC and AOTC amounts need Schedule 8812 and Form 8863 source",
+            );
+          }
+          const odcLines = calculateSchedule8812Lines(2025, form8812.data);
+          if (
+            !odcLines || form8812.data.form8862_filed !== true ||
+            form8863.data.form8862_filed !== true ||
+            odcLines.line4 !== (fields.ctc_children?.length ?? 0) ||
+            odcLines.line6 !== (fields.other_dependents?.length ?? 0) ||
+            (form1040.line19_child_tax_credit ?? 0) !== odcLines.line14 ||
+            (form1040.line28_actc ?? 0) !== odcLines.line27 ||
+            (form1040.line29_refundable_aoc ?? 0) !== creditLines.line8 ||
+            (schedule3?.line3_education_credit ?? 0) !== creditLines.line19 ||
+            odcLines.line14 + odcLines.line27 <= 0 ||
+            creditLines.line8 + creditLines.line19 <= 0
+          ) {
+            throw new Error(
+              "Form 8862 shared ODC and AOTC amounts differ from Schedule 8812, Form 8863, Schedule 3, or Form 1040",
+            );
+          }
+        }
+      }
     }
   }
 }
@@ -211,11 +502,22 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
   build(rawFields, context) {
     if (Object.keys(rawFields).length === 0) return "";
     const fields = inputSchema.parse(rawFields);
+    assertCreditDisallowanceEvidence(fields);
     validateDetail(fields);
     if (!fields.claim_eitc && !fields.claim_ctc && !fields.claim_aotc) {
       return "";
     }
     validateFinalizedCreditClaims(fields, context);
+    if (fields.claim_ctc || fields.claim_aotc) {
+      throw new Error(
+        "Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents",
+      );
+    }
+    if (fields.claim_eitc) {
+      throw new Error(
+        "Form 8862 EITC export needs executor-owned authentication of prior IRS notice issuance and contents",
+      );
+    }
 
     return elements("IRS8862", [
       element("TaxYr", 2025),

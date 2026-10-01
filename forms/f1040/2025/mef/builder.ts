@@ -1,12 +1,34 @@
-import { buildReturnHeader } from "../../mef/header.ts";
+import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { PDFDocument } from "pdf-lib";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
+import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/schedule_e_type8_statement.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import {
+  assertEitcChildSources,
+  assertF1040SourceIdentity,
+  assertKIncomeClassification,
+  assertKPersonalSaleSources,
+  assertKReportedErrorSources,
+  assertKWithholdingSourceIdentity,
+  assertSchedule1Box3SourceIdentity,
+  assertSchedule1KSourceIdentity,
+  assertSchedule1NecSourceIdentity,
+  assertScheduleCReceiptSourceIdentity,
+  assertScheduleFFarmSourceIdentity,
+} from "../filer-source-reconciliation.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
+import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
+import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
+import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
+import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -170,6 +192,12 @@ function validateDocumentReferences(
     ) {
       throw new Error("MeF joint-occupancy statement is not referenced");
     }
+    if (
+      fragment.tag === "IRADistributionStatement" &&
+      !referencedIds.includes(ids[index])
+    ) {
+      throw new Error("MeF IRA distribution statement is not referenced");
+    }
   }
 }
 
@@ -182,15 +210,69 @@ function buildReturnXml(
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
 ): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
+  if (year !== 2025 || returnType !== "1040") {
+    throw new Error(
+      "TY2025 Form 1040 export requires year 2025 and return type 1040",
+    );
+  }
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
+  if (pending.f1040?.dual_status_return_2025 === true) {
+    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  }
+  if (pending.f1040) {
+    assertF1040SourceIdentity(pending.f1040, filer);
+  }
+  assertForm8915FSourceLinks(pending);
+  assertKIncomeClassification(pending);
+  assertEitcChildSources(pending, filer);
+  assertKReportedErrorSources(pending, filer);
+  assertScheduleCReceiptSourceIdentity(pending, filer);
+  assertKWithholdingSourceIdentity(pending, filer);
+  assertKPersonalSaleSources(pending, filer);
+  assertSchedule1Box3SourceIdentity(pending, filer);
+  assertSchedule1NecSourceIdentity(pending, filer);
+  assertSchedule1KSourceIdentity(pending, filer);
+  assertScheduleFFarmSourceIdentity(pending, filer);
+  const k1Recipients = [
+    filer.primarySSN,
+    ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ? [filer.spouse.ssn]
+      : []),
+  ];
+  assertBox11CodeJSources(pending, k1Recipients);
+  assertBox11CodeESources(pending, k1Recipients);
+  assertBox11CodeKSources(pending, k1Recipients);
+  assertBox11CodeSSources(pending, k1Recipients);
+  assertBox11Line10Sources(pending, k1Recipients);
+  if (
+    Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
+    !pending.schedule_d
+  ) {
+    throw new Error("Form 8949 needs its reconciled Schedule D");
+  }
   assertAttachmentCoverage(pending, "mef");
+  if (
+    pending.schedule_e?.schedule_es?.some((item) =>
+      item.property_type === 8 &&
+      (item.property_type_other_desc?.length ?? 0) > 20
+    ) &&
+    !attachments.some((item) =>
+      item.fileName === SCHEDULE_E_TYPE8_STATEMENT_FILE
+    )
+  ) {
+    throw new Error(
+      "Schedule E long type 8 description needs its binary PDF attachment",
+    );
+  }
   const binaryAttachmentFileNames = attachments.map((item) => item.fileName);
   const attachmentDescriptionsByFileName = Object.fromEntries(
     attachments.map((item) => [item.fileName, item.description]),
   );
   const initial = buildFragments(pending, {
+    phase: "discovery",
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
@@ -223,6 +305,7 @@ function buildReturnXml(
   );
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
+    phase: "final",
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
@@ -291,6 +374,7 @@ export async function buildMefBundle(
   pending: MefFormsPending,
   options: MefBundleOptions,
 ): Promise<MefBundle> {
+  await assertForm1098IssuerCopies(pending);
   const generated = await Promise.all(
     ALL_MEF_FORMS.map((form) =>
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
@@ -305,6 +389,7 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  await assertW2GPayerCopyContents(pending, options.filer, attachments);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
       return [fileName, await sha256Hex(bytes)] as const;

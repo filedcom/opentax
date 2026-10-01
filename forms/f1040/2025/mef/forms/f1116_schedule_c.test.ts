@@ -1,116 +1,11 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
-import { scheduleCLedger } from "../../../nodes/inputs/form1116_schedule_c_source/test-fixture.ts";
 import { IncomeCategory } from "../../../nodes/intermediate/forms/form_1116/index.ts";
-import {
-  buildScheduleCProjection,
-  type ScheduleCFiledYearEvidence,
-} from "./f1116_schedule_c.ts";
+import { buildScheduleCProjection } from "./f1116_schedule_c.ts";
+import { stagedCase } from "./f1116_schedule_c.fixture.ts";
 import {
   form1116ScheduleCPdfCandidate,
   projectScheduleCPdfCandidate,
 } from "../../pdf/forms/f1116_schedule_c_candidate.ts";
-
-function stagedCase(
-  category: IncomeCategory = IncomeCategory.Passive,
-  kind:
-    | "foreign_tax_refund_or_reduction"
-    | "additional_accrued_tax"
-    | "accrued_tax_unpaid_after_24_months" = "foreign_tax_refund_or_reduction",
-) {
-  const source = scheduleCLedger(category, kind);
-  const revised =
-    source.redetermined_form1116.foreign_taxes_paid_or_accrued_usd;
-  const ledger = {
-    ...source,
-    filed_form1116: {
-      ...source.filed_form1116,
-      foreign_tax_credit_claimed_usd: 100,
-    },
-    redetermined_form1116: {
-      ...source.redetermined_form1116,
-      foreign_tax_credit_claimed_usd: revised,
-    },
-    affected_years: [{
-      ...source.affected_years[0],
-      us_tax_liability_on_filed_return_usd: 4_900,
-      redetermined_us_tax_liability_usd: 5_000 - revised,
-    }],
-  };
-  const evidence: ScheduleCFiledYearEvidence = {
-    tax_year_end: source.relation_back_year_end as "2023-12-31" | "2024-12-31",
-    filed_form1116: {
-      line9_foreign_tax: 100,
-      line10_carryover_or_carryback: 0,
-      line12_foreign_tax_reduction: 0,
-      line13_high_tax_kickout: 0,
-      line14_available_tax: 100,
-      line16_foreign_income_adjustment: 0,
-      line17_foreign_taxable_income: 10_000,
-      line18_worldwide_taxable_income: 100_000,
-      line19_ratio: 0.1,
-      line20_us_income_tax: 5_000,
-      line21_limit: 500,
-      line22_limit_increase: 0,
-      line23_limit: 500,
-      line24_allowed_credit: 100,
-      line33_total_credit: 100,
-      line34_boycott_reduction: 0,
-      line35_credit: 100,
-      unused_foreign_tax: 0,
-      filed_document_reference: "Filed Form 1116 page 2",
-    },
-    filed_form1040: {
-      line15_taxable_income: 100_000,
-      line16_income_tax: 5_000,
-      line17_schedule2_tax: 0,
-      line18_tax_before_credits: 5_000,
-      line19_child_and_dependent_credit: 0,
-      line20_schedule3_nonrefundable_credit: 100,
-      line21_nonrefundable_credits: 100,
-      line22_tax_after_credits: 4_900,
-      line23_other_taxes: 0,
-      line24_total_tax: 4_900,
-      filed_document_reference: "Filed Form 1040 page 2",
-    },
-    filed_schedule3: {
-      line1_foreign_tax_credit: 100,
-      line8_nonrefundable_credits: 100,
-      filed_document_reference: "Filed Schedule 3 page 1",
-    },
-    revised_form1116: {
-      line9_foreign_tax: revised,
-      line14_available_tax: revised,
-      line23_limit: 500,
-      line24_allowed_credit: revised,
-      line33_total_credit: revised,
-      line35_credit: revised,
-      unused_foreign_tax: 0,
-      calculation_document_reference:
-        source.redetermined_form1116.calculation_document_reference,
-    },
-    revised_schedule3: {
-      line1_foreign_tax_credit: revised,
-      line8_nonrefundable_credits: revised,
-      calculation_document_reference:
-        source.redetermined_form1116.calculation_document_reference,
-    },
-    revised_form1040: {
-      line20_schedule3_nonrefundable_credit: revised,
-      line21_nonrefundable_credits: revised,
-      line22_tax_after_credits: 5_000 - revised,
-      line24_total_tax: 5_000 - revised,
-      recalculation_document_reference:
-        source.affected_years[0].recalculation_document_reference,
-    },
-    reviewed_no_other_form1116_or_special_adjustment: true,
-    reviewed_no_qualified_dividend_or_capital_gain_rate_adjustment: true,
-    reviewed_income_tax_and_other_tax_lines_unchanged: true,
-    reviewed_no_later_year_tax_attribute_effect: true,
-    later_year_review_document_reference:
-      "Filed later-year FTC and attribute review",
-  };
-  return { ledger, evidence };
-}
 
 function multiPayorCase(extraPayors: number) {
   const { ledger, evidence } = stagedCase();
@@ -239,6 +134,55 @@ function mixedDirectionCase() {
         line21_nonrefundable_credits: revisedTax,
         line22_tax_after_credits: 5_000 - revisedTax,
         line24_total_tax: 5_000 - revisedTax,
+      },
+    },
+  };
+}
+
+function balancedMixedDirectionCase() {
+  const { ledger, evidence } = mixedDirectionCase();
+  const revisedTax = 150;
+  return {
+    ledger: {
+      ...ledger,
+      payor_events: [ledger.payor_events[0], {
+        ...ledger.payor_events[1],
+        tax_change_local_currency: 200,
+        tax_change_functional_currency: 200,
+        tax_change_usd: 20,
+        payor_revised_tax_usd: 70,
+      }],
+      redetermined_form1116: {
+        ...ledger.redetermined_form1116,
+        foreign_taxes_paid_or_accrued_usd: revisedTax,
+        foreign_tax_credit_claimed_usd: revisedTax,
+      },
+      affected_years: [{
+        ...ledger.affected_years[0],
+        redetermined_us_tax_liability_usd: 4_850,
+      }],
+    },
+    evidence: {
+      ...evidence,
+      revised_form1116: {
+        ...evidence.revised_form1116,
+        line9_foreign_tax: revisedTax,
+        line14_available_tax: revisedTax,
+        line24_allowed_credit: revisedTax,
+        line33_total_credit: revisedTax,
+        line35_credit: revisedTax,
+      },
+      revised_schedule3: {
+        ...evidence.revised_schedule3,
+        line1_foreign_tax_credit: revisedTax,
+        line8_nonrefundable_credits: revisedTax,
+      },
+      revised_form1040: {
+        ...evidence.revised_form1040,
+        line20_schedule3_nonrefundable_credit: revisedTax,
+        line21_nonrefundable_credits: revisedTax,
+        line22_tax_after_credits: 4_850,
+        line24_total_tax: 4_850,
       },
     },
   };
@@ -437,6 +381,31 @@ Deno.test("Form 1116 Schedule C stages mixed Part I and II changes with net Part
     pdf.part4_col4 !== 10
   ) {
     throw new Error("Schedule C mixed PDF candidate lost a payor or net tax");
+  }
+});
+
+Deno.test("Form 1116 Schedule C keeps Part III and omits Part IV when balanced redeterminations leave U.S. tax unchanged", () => {
+  const { ledger, evidence } = balancedMixedDirectionCase();
+  const xml = buildScheduleCProjection(ledger, evidence);
+  assertStringIncludes(xml, "<IncrAmtFrgnTaxesAccruedDtl>");
+  assertStringIncludes(xml, "<DecrAmtFrgnTaxesPdAccruedDtl>");
+  assertStringIncludes(
+    xml,
+    "<RedetermFrgnTxsPdAccruedAmt>150</RedetermFrgnTxsPdAccruedAmt>",
+  );
+  if (xml.includes("<ChgUSTxLiabilityGrp>")) {
+    throw new Error(
+      "Schedule C Part IV cannot report an unchanged U.S. liability",
+    );
+  }
+  const pdf = projectScheduleCPdfCandidate(ledger, evidence);
+  if (
+    pdf.part3_col2 !== 150 || pdf.part4_col1 !== undefined ||
+    pdf.part4_col4 !== undefined
+  ) {
+    throw new Error(
+      "Schedule C PDF candidate must leave unchanged-liability Part IV blank",
+    );
   }
 });
 

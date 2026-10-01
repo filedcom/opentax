@@ -13,9 +13,11 @@ export function element(
   attrs?: Record<string, string>,
 ): string {
   if (value === undefined) return "";
-  const content = typeof value === "number" ? String(Math.round(value)) : escapeXml(value);
+  const content = typeof value === "number"
+    ? String(Math.round(value))
+    : escapeXml(value);
   const attrsStr = attrs
-    ? Object.entries(attrs).map(([k, v]) => ` ${k}="${v}"`).join("")
+    ? Object.entries(attrs).map(([k, v]) => ` ${k}="${escapeXml(v)}"`).join("")
     : "";
   return `<${tag}${attrsStr}>${content}</${tag}>`;
 }

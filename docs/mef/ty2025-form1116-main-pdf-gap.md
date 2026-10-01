@@ -1,5 +1,259 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Three-country interest and ordinary dividends (written, unrun):** Two
+separately issued Forms 1099-INT with foreign box 1/box 6 interest in Canada
+and Germany and one French corporation Form 1099-DIV with nonqualified foreign
+box 1a/box 7 dividends now occupy passive Form 1116 country columns A/C and
+B, respectively. A distinct three-column review binds each issued copy and
+country; the dividend retains its 31-day holding and no-related-payment
+review. The source guard checks the three tax kinds and Part II rows, no other
+statement income, five-decimal standard-deduction allocation, Schedule 3,
+Form 1040 interest/dividend/taxable-income/tax totals, native MeF, and the
+parent PDF. Full-return positive and interest, dividend, review, and return
+tamper fixtures are authored for the deferred batch. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+direct country-by-country Parts I and II and an additional attachment only
+after three countries. This bounded case excludes qualified dividends,
+domestic income, same-country multiple payers, source-byte authentication,
+and filled-output/XSD verification.
+
+**Three-country 1099-INT passive interest (written, unrun):** Three separately
+issued 2025 Forms 1099-INT, one each from Canada, France, and Germany, now
+carry positive foreign box 1 interest and box 6 U.S.-dollar tax through one
+passive Form 1116. The explicit `three_country_interest_pdf_review` binds
+each document reference and IRS country code to Part I columns A/B/C and
+Part II tax rows A/B/C. Its source guard checks distinct payers and countries,
+all source boxes, the three five-decimal standard-deduction allocations,
+Schedule 3 line 1, Form 1040 interest/taxable income/tax, and the matching
+current-year excess on Schedule B. Native MeF groups each country separately;
+the parent PDF writes all three columns and rows. Full-return positive and
+source, review, Schedule B, and return-tamper fixtures are authored for the
+deferred bulk gate. Column C and row C field paths were checked against the
+canonical blank 2025 AcroForm. The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+require country-by-country columns and lines and an additional attachment only
+for more than three countries. Domestic income, multiple payers in one country,
+mixed income categories, source bytes, and filled-output/XSD inspection remain
+open.
+
+**Two-country interest and ordinary dividends (written, unrun):** One issued
+Canadian Form 1099-INT with foreign box 1/box 6 and one issued French
+corporation Form 1099-DIV with nonqualified foreign box 1a/box 7 and France
+in box 8 now occupy
+separate passive Form 1116 country columns. A single
+`two_country_mixed_pdf_review` binds each column to its exact source copy and
+country. The existing dividend holding review establishes the qualifying
+31-day period and absence of a related-payment obligation. The source guard
+checks the separate income and tax kinds, exclusion of other statement boxes,
+both five-decimal standard-deduction allocations, Schedule 3 line 1, and
+Form 1040 taxable interest, ordinary dividends, taxable income, and tax.
+Native MeF emits two country sources; the parent PDF puts interest withholding
+in Part II row A and dividend withholding in row B. Positive full-return and
+source, country, holding, review, and return-tamper fixtures are authored for
+deferred validation. Requiring the French country in Form 1099-DIV box 8
+excludes the RIC pass-through reporting pattern, for which the issuer leaves
+box 8 blank under the [Form 1099-DIV instructions](https://www.irs.gov/instructions/i1099div).
+This bound excludes qualified dividends,
+domestic income, additional payers, source bytes, and filled-output/XSD review.
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+direct separate country columns in Parts I and II and permit U.S.-dollar
+Form 1099-INT/1099-DIV taxes in Part II with “1099 taxes” as the date.
+
+**Two foreign countries with same-issuer Treasury box 3 (written, unrun):**
+One Canadian Form 1099-INT now supplies foreign box 1/box 6 and domestic
+U.S. Treasury box 3 on the same issued statement; a separate French Form
+1099-INT supplies the second foreign box 1/box 6 country. The existing
+two-country Treasury review binds the domestic source reference to the
+Canadian foreign-tax source reference, with exactly two reviewed issued
+statements. Native and parent PDF replay both foreign country columns,
+Form 1116 Part I's $60,000 worldwide-gross denominator and per-country
+standard-deduction apportionment, Part II interest taxes, Schedule 3 line 1,
+and Form 1040 taxable interest. Positive full-return and box-3, document,
+tax, country, review, and return tamper cases are authored but unrun. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
+both U.S. and foreign income on line 3e; the
+[Form 1099-INT instructions](https://www.irs.gov/instructions/i1099int)
+identify box 3 as U.S. Treasury interest separate from box 1. Other mixed
+boxes, more payers, source bytes, and filled-output/XSD review remain open.
+
+**Two foreign countries plus a distinct domestic Treasury payer (written,
+unrun):** One foreign box-1/box-6 Form 1099-INT payer in each of two countries
+and one Treasury-only box-3 payer can share a passive Form 1116. The explicit
+`two_country_treasury_pdf_review` records the two country-column sources and
+the domestic Treasury source separately. The calculation uses all three
+issued payers for worldwide gross income and allocates the standard deduction
+to each foreign country at its five-decimal share of that denominator. Native
+country sources and parent PDF columns A/B retain only the two foreign gross
+and tax amounts; Part I line 3e uses worldwide interest including Treasury.
+The shared export guard reconciles all three source references, boxes,
+country codes, Form 1040 line 2b/9/11/12a/15/16 and Schedule 3 line 1.
+Positive and domestic/foreign payer, country, review, and return tamper
+fixtures are authored for deferred validation. Multiple Treasury or foreign
+payers per column, source bytes, and filled-output/XSD review remain open.
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+govern Part I's worldwide-gross allocation.
+
+**Two-country 1099-INT passive interest (written, unrun):** Two distinct
+issued Form 1099-INT payers may occupy Form 1116 country columns A and B when
+each reports only foreign box 1 interest and box 6 tax, their IRS country
+codes differ, and those items make up all worldwide income and foreign tax.
+The explicit `two_country_interest_pdf_review` identifies one document
+reference and IRS country code for each column; it cannot coexist with the
+single-source, same-country multi-payer, or interest/dividend review. The
+source ledger checks both payers, each native country source, each five-decimal
+standard-deduction allocation, their aggregate limitation, Form 1040 line
+2b/9/11/12a/15/16, and Schedule 3 line 1. The parent PDF populates Part I
+columns A/B and Part II U.S.-dollar interest-tax rows A/B from the same
+ledger. A full-return positive case and payer, country, tax, review and
+return tamper cases are authored for deferred validation. Multiple payers per
+country, domestic income, other tax kinds, source bytes,
+and filled-output/XSD review remain open. See the [2025 Form 1116
+instructions](https://www.irs.gov/instructions/i1116).
+
+**One foreign 1099-INT plus one ordinary foreign 1099-DIV, same country
+(written, unrun):** A distinct bank and fund statement may contribute one
+positive foreign box-1/box-6 interest item and one positive nonqualified
+foreign box-1a/box-7 dividend item to one passive country column. The new
+`mixed_interest_dividend_pdf_review` names each source separately and retains
+the Part I–IV affirmations; the existing single and all-interest multi-payer
+review meanings remain unchanged. The calculation and native country source
+round the full standard deduction once against aggregate foreign/worldwide
+income. Native and PDF export replay each source, the dividend's qualifying
+31-day holding review and absence of related payments, both tax kinds and
+their separate Part II columns, Form 1040 lines 2b/3b/9/11/12a/15/16, and
+Schedule 3 line 1. A full-return positive case and changed interest, dividend,
+holding, source-reference, review-conflict, and return fixtures are authored
+for deferred validation. More payers, mixed countries, qualified dividends,
+domestic income, source bytes, and filled-output/XSD review remain open. See
+the [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116).
+
+**One ordinary foreign 1099-DIV payer (written, unrun):** A sole issued
+Form 1099-DIV with positive box 1a ordinary dividends and box 7 foreign tax
+can feed one passive Form 1116 country column when the full box 1a amount is
+reviewed as foreign source, no box 1b qualified dividends or other monetary
+boxes are present, and its source reference matches the Form 1116 review.
+The payer's reviewed holding ledger records the ex-dividend date, at least 16
+qualifying days within the 31-day window, excluded diminished-risk days, and
+absence of a related-payment obligation. The ordinary-stock holding rule is
+affirmed; preferred stock with a longer required period stays closed. The
+calculation carries that source reference with the tax item, and native/PDF
+export replays the payer, holding ledger, country, Form 1040 line 3b, taxable
+income and tax, and Schedule 3 credit. The PDF projects the U.S.-dollar
+dividend withholding to Part II column q. A full-return positive case and
+source, holding, and return tamper cases are authored for deferred validation.
+Mixed interest/dividends, multiple payers, qualified dividends, nominee
+distributions, source bytes, and filled-output/XSD review remain open. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) state
+the dividend holding-period and related-payment limits.
+
+**Multiple same-country foreign 1099-INT payers (written, unrun):** A distinct
+`multi_source_pdf_review` names every foreign payer's document reference while
+retaining the existing single-source review for its original routes. One or
+more than two foreign 1099-INT payers may enter the bounded route when each has
+only positive box 1 foreign interest and box 6 foreign tax, all use the same
+IRS country and paid method, and the reviewed reference set matches the Form
+1116 item set exactly. The source ledger rejects a changed payer, amount,
+country, duplicate reference, additional monetary box, and any extra worldwide
+income. Form 1116 Part I and Part II aggregate the payers in one country
+column; the standard deduction is apportioned from their aggregate gross
+income so per-payer rounding does not distort line 3g. The category limit,
+Schedule 3 credit, Form 1040 lines 2b/9/11/12a/15/16, native XML, and parent
+PDF replay the same source/return guard. A three-payer full-return case and
+tamper fixtures are authored but unrun. Multiple countries, dividend/rent
+tax, reductions, mixed domestic income, authenticated source bytes, and
+filled-output/XSD/ATS review remain open. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) direct
+same-country income to one Part I column and require worldwide gross income
+for line 3e.
+
+**One 1099-INT with foreign interest and U.S. Treasury interest (written,
+unrun):** A single identified payer may now report passive foreign box 1
+interest, U.S.-source Treasury box 3 interest, and box 6 foreign tax. The
+foreign tax item remains box 1 only; worldwide income and Form 1040 taxable
+interest equal boxes 1 plus 3. The 2025 Part I standard deduction is allocated
+at the foreign/worldwide five-decimal ratio, with a whole-dollar line 3g/6
+amount matching the native source group and category calculation. A shared
+native/PDF guard replays all three source boxes, excludes other monetary boxes
+and interest adjustments, checks Form 1040 lines 2b/9/11/12a/15/16, and ties
+the allowed credit to Schedule 3 line 1. The existing affirmative one-source
+review and prior-year carryback review remain required. Positive and changed
+box-3/return fixtures are authored for deferred validation. Treasury securities
+from another payer, bond-premium adjustments, other income, source bytes, and
+filled-PDF/XSD review remain open. See the [2025 Form 1116 Part I
+instructions](https://www.irs.gov/instructions/i1116).
+
+**Two identified 1099-INT payers (written, unrun):** The same passive-interest
+calculation now accepts one foreign-interest payer with box 1 and box 6 and a
+separate U.S. Treasury-only payer with box 3. The Treasury payer has its own
+source-document reference, distinct payer name and no foreign-tax or other
+monetary boxes; the affirmative Form 1116 review identifies both references.
+The native/PDF source guard requires exactly those two Form 1099-INT rows,
+checks the foreign payer against the single Part II tax item, and recomputes
+the five-decimal standard-deduction apportionment from combined worldwide
+interest. Form 1040 lines 2b, 9, 11, 12a, 15 and 16 and Schedule 3 line 1
+must match. A full-return positive case and changed payer, tax, and return
+cases are authored but unrun. Other payers, adjustments, income categories,
+countries, source bytes, and filled-output/XSD/ATS validation remain open.
+
+**Sole 1099-INT source inventory (staged, unrun):** The original bounded passive-interest
+PDF route rejects another positive monetary box or interest adjustment on
+its sole identified Form 1099-INT; the separately reconciled box-3 case above
+is the only extension. The original affirmative review and return
+join say box 1 is the entire worldwide income, box 6 is the only foreign tax,
+and Form 1040 lines 2a, 2b, 9, and 11 reconcile to that one item. U.S. Treasury
+interest from another source, tax-exempt interest, withholding, early-withdrawal penalty, bond
+premium, nominee interest, and similar amounts on the same statement require a
+separate source-to-return calculation before this PDF can truthfully print a
+one-income-source Form 1116. The ordinary box-1/box-6 positive fixture and
+box-8/box-4/box-11 tamper fixtures are authored for deferred validation; box 3
+without its full route still rejects.
+The broader native source model is unchanged; mixed 1099-INT payer content
+remains outside this narrow PDF projection. See the [2025 Form 1116 Part I
+instructions](https://www.irs.gov/instructions/i1116) for worldwide gross
+income and the standard-deduction allocation.
+
+**Reviewed prior-year passive use (staged, unrun):** The one-source 1099-INT
+standard-deduction PDF route now accepts one reviewed Schedule B prior-year
+balance when current-year tax is below the category limit. The public PDF
+review explicitly states that the zero-carryover assertion is false. The
+parent PDF reconciles line 10 to the reviewed balance, line 11 to current tax
+plus that balance, lines 14 and 24 to the allowed credit, and line 35 to
+Schedule 3. Its companion Schedule B must be the same passive category and
+show the exact balance and oldest-first amount used. Native Form 1116 now
+reconciles the companion's 2015 expiration on Schedule B line 5 before checking
+the following-year balance; the earlier equality incorrectly rejected an
+otherwise valid expiring vintage. A 2015-origin passive credit that is only
+partly used therefore reaches the parent native/PDF, Schedule B native/PDF,
+and Schedule 3 without carrying the expired dollars forward. Focused public
+graph, projection, native, and tamper cases are authored for the deferred batch.
+The same one-source passive boundary now admits a reviewed 2015 balance while
+2025 foreign tax exceeds the category limit. Parent Form 1116 Part III uses
+current tax only, Schedule 3/Form 1040 claim the limited credit, and Schedule B
+line 5 expires the entire unused 2015 amount while lines 6/8 carry only new
+2025 excess. The parent PDF checks the companion's combined case, source
+category, balance, zero prior use, and current excess; native MeF and the
+two-page Schedule B PDF replay those amounts. A full-return and balance/excess
+tamper fixture is authored but unrun. The filed 2024 Schedule B source remains
+a reviewed transcription; issued return bytes are not authenticated. Other
+baskets, mixed income, and multiple parent PDF items remain closed in this
+slice. [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
+govern oldest-first use and expiration.
+
+**Two unexpired prior-year vintages (written, unrun):** A reviewed filed 2024
+passive Schedule B line 8 can supply separate 2023 and 2024 balances to a
+single-source 2025 interest return. The 2025 limitation first consumes the
+2023 balance and then part of the 2024 balance. Parent Form 1116 line 10 and
+the allowed credit, Schedule B lines 1/4/8 in both vintage columns, Schedule 3
+line 1, and Form 1040 line 20 are joined in the full-return fixture. Native
+MeF and the two PDFs are authored for this same case. The parent PDF now
+compares the Schedule B vintage source to the filed prior-year intake, so a
+changed vintage split with an unchanged total is rejected; it also checks
+Form 1040 line 20 against Schedule 3 line 8. Changed utilization, vintage
+sum, vintage split, and return-credit fixtures are authored for the deferred
+batch. The filed Schedule B remains a reviewed transcription rather than
+authenticated filing bytes. See the [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb).
+
 Build-first public intake and standard-deduction route (2026-09-29):
 `form1116_review` now carries the typed affirmative single-source PDF review
 directly into the Form 1116 calculation. One documented Form 1099-INT can be the

@@ -93,10 +93,11 @@ absence of later-year tax-attribute effects is still supplied with a document
 reference, not proven by the current-year graph. Document intake requires six
 base reviewed PDF/hash records for the filed return, filed Form 1116 and
 Schedule 3, revised Form 1116 calculation, affected-year recalculation, and
-later-year review, plus one for every payor foreign record. The filed documents
-and amended-year workpapers must be reviewed for authenticity and completeness.
-The projection remains unregistered, so no Schedule C is filed from these
-assertions. Supporting primary sources:
+later-year review, plus one for every payor foreign record and, when liability
+changes, one prepared Form 1040-X. The filed documents and amended-year
+workpapers must be reviewed for authenticity and completeness. The projection
+remains unregistered, so no Schedule C is filed from these assertions.
+Supporting primary sources:
 [2023 Form 1116](https://www.irs.gov/pub/irs-prior/f1116--2023.pdf),
 [2024 Form 1116](https://www.irs.gov/pub/irs-prior/f1116--2024.pdf),
 [2023 Form 1040](https://www.irs.gov/pub/irs-prior/f1040--2023.pdf),
@@ -160,6 +161,38 @@ still rejects any positive Schedule C redetermination until affected-year
 amendments, later-year attributes, 2025 Form 1116/Schedule 3/Form 1040 joins,
 and the deferred test, XSD, PDF, and IRS-rule gates are resolved.
 
+The staged reviewed-document intake now requires the current filer's SSN and
+checks that every filed return or recalculation workpaper's reviewed subject
+matches it. Each foreign redetermination record needs an explicit reviewed
+taxpayer ownership link. The reviewed PDF candidate carries the same SSN and
+refuses a different filer at rendering. This binds reviewer assertions and
+hashed PDFs to one filer; it does not extract identity from those PDFs or
+authenticate that the IRS received the prior filed return or amendment. A
+wrong-owner and missing-foreign-link rejection fixture is written but unrun.
+
+## Prepared affected-year Form 1040-X prerequisite, still not filed
+
+When the staged relation-back-year recomputation changes U.S. tax liability,
+document intake now requires a separately reviewed prepared Form 1040-X PDF with
+its own reference, filer identity, and SHA-256. The reviewer must transcribe
+columns A, B, and C of lines 6, 7, 8, 10, and 11. Intake checks the amendment
+year, every A/C amount against the filed and recalculated Form 1040 lines, every
+B amount as C minus A, and the tax arithmetic in A/C. The same reviewed
+recalculation drives Schedule C Part IV in the staged native and PDF candidates.
+An unchanged-liability case cannot supply this amendment. Positive and altered
+credit/PDF-byte rejection fixtures are written but unrun.
+
+The [December 2025 Form 1040-X](https://www.irs.gov/pub/irs-pdf/f1040x.pdf)
+places tax, nonrefundable credits, tax after credits, other taxes, and total tax
+on those five lines. The
+[Schedule C instructions](https://www.irs.gov/instructions/i1116sc) require an
+affected-year amendment when the U.S. liability changes. This reviewed prepared
+document is a source prerequisite only. It does not establish that Form 1040-X
+and its changed Form 1116, Schedule 3, and Form 1040 were submitted or accepted.
+Payment/refund reconciliation, required explanations, signatures, current-year
+joins, authentication, and the batch validation gates remain open. The live
+export guard is unchanged.
+
 ## Mixed increases and decreases, still staged and unrun
 
 The staged native and PDF projections now place a same-year accrued-tax increase
@@ -184,3 +217,56 @@ required affected-year amendment filed and its receipt verified; every
 intervening year's carryover and tax attributes checked; and the 2025 Form 1116,
 Schedule B, Schedule 3, and Form 1040 effects joined to the current return. No
 claim of those facts is inferred from this staged projection.
+
+## Balanced changes with no U.S. liability change, still staged
+
+The same single-category, single-year staged route now handles an accrued-tax
+increase and a separate refund whose dollar changes cancel. Part III still
+reports the filed and redetermined foreign tax and credit. Native and PDF
+projections leave Part IV blank when the independently recomputed U.S. tax
+liability is unchanged. A focused native/PDF candidate fixture is written but
+unrun. The [Schedule C instructions](https://www.irs.gov/instructions/i1116sc)
+require the current-year Schedule C even when there is no U.S. liability change;
+an affected-year amended return is required only when liability changes. This
+branch remains unregistered and fail-closed for filing because filed-year
+authenticity, later-year attributes, 2025 return joins, and the deferred
+validation gates are still unresolved.
+
+## Active filing gate for the affected year
+
+The active Form 1116 calculation, direct native builder, and parent PDF
+projector now use the same parsed Schedule C ledger to identify the blocked
+category and affected year. A changed U.S. liability explicitly requires an
+authenticated affected-year filing and amendment receipt. An unchanged liability
+still requires authenticated filed-year records. Both branches also require
+verified intervening-year tax attributes and a 2025 Form 1116, Schedule 3, and
+Form 1040 join before Schedule C registration. Focused unchanged and
+changed-liability rejection fixtures are authored for the deferred batch. The
+staged reviewed PDFs establish byte hashes and reviewer links, but do not
+extract filed lines from an authenticated IRS record or prove an amendment was
+accepted; they therefore cannot activate this route.
+
+## Staged 2025 return join, still not filed
+
+`reconcileScheduleCCurrentYearCandidate` now takes the bounded affected-year
+Schedule C ledger/evidence and the ordinary 2025 Form 1116 source separately. It
+runs the existing Form 1116 calculator for one passive or general category with
+one identified 2025 tax source, zero prior carryovers and zero current excess
+tax. It compares the calculated category credit to the prospective current Form
+1116, Schedule 3 lines 1 and 8, and Form 1040 lines 15-24 and Form 1116
+worksheet deposits. It requires Schedule B to be absent: the
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
+Schedule B when a prior carryover is entered or a current excess is generated.
+Changed credits, tax totals, and unexpected Schedule B entries have focused
+rejection fixtures. The native and PDF Schedule C candidates remain staged and
+the live Form 1116 redetermination guard remains unchanged.
+
+This arithmetic join does not authenticate the affected-year filed Forms 1116,
+Schedule 3 and 1040, the foreign tax assessment/refund source, the reviewed 2025
+foreign income and tax records, or the claimed absence of intervening-year
+carryovers. A changed affected-year liability still needs a filed/accepted
+amendment and its changed-return package. The prospective 2025 return snapshot
+must be bound to an authenticated completed return before registration or
+export; source references and reviewed PDF hashes alone cannot prove that filing
+state. No tests, typecheck, XSD validation or filled-PDF rendering was run in
+this implementation batch.

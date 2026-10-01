@@ -3,6 +3,67 @@ import { scheduleEPdf } from "./schedule_e.ts";
 import { scheduleE } from "../../mef/forms/schedule_e.ts";
 import { inputSchema as scheduleEInputSchema } from "../../../nodes/inputs/schedule_e/index.ts";
 
+Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      other_income: 750,
+    }],
+  });
+  const pending = {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 750 },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, pending);
+  assertEquals(projected?.trust_0_name, "Family Trust");
+  assertEquals(projected?.trust_0_ein, "123456789");
+  assertEquals(projected?.trust_0_other_income, 750);
+  assertEquals(projected?.trust_line37, 750);
+  assertEquals(projected?.trust_line41, 750);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
+Deno.test("trust K-1 activity income prints Part III passive column", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box6_ordinary_business: 600,
+    box6_8_activity_statement: [{
+      box: "6",
+      activity_name: "Shop",
+      statement_reference: "A-6",
+      income: 600,
+    }],
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      passive_income: 600,
+    }],
+  });
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 600 },
+  });
+  assertEquals(projected?.trust_0_passive_income, 600);
+  assertEquals(projected?.trust_total_passive_income, 600);
+  assertEquals(projected?.trust_line37, 600);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
 Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF", () => {
   const k1 = {
     partnership_name: "Mineral Partnership",
@@ -62,11 +123,11 @@ Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF",
     true,
   );
   const projected = scheduleEPdf.projectFields?.(raw, pending);
-  assertEquals(projected?.property_address, undefined);
-  assertEquals(projected?.fair_rental_days, undefined);
-  assertEquals(projected?.personal_use_days, undefined);
-  assertEquals(projected?.line4, 700);
-  assertEquals(projected?.line19, 100);
+  assertEquals(projected?.property_0_address, undefined);
+  assertEquals(projected?.property_0_fair_rental_days, undefined);
+  assertEquals(projected?.property_0_personal_use_days, undefined);
+  assertEquals(projected?.property_0_line4, 700);
+  assertEquals(projected?.property_0_line19, 100);
   assertEquals(projected?.line26, 600);
   assertThrows(
     () =>
@@ -144,16 +205,25 @@ Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a cur
     },
   };
   const projected = scheduleEPdf.projectFields?.(raw, linked);
-  assertEquals(projected?.line21, -5_000);
-  assertEquals(projected?.line22, undefined);
+  assertEquals(projected?.property_0_line21, -5_000);
+  assertEquals(projected?.property_0_line22, undefined);
   assertEquals(projected?.line25, undefined);
   assertEquals(projected?.line26, 0);
-  assertThrows(() => scheduleEPdf.projectFields?.(raw, {
-    ...linked,
-    form8582: { ...linked.form8582, activities: [{
-      ...linked.form8582.activities[0], current_net: -4_999,
-    }] },
-  }), Error, "does not match Form 8582 activity");
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...linked,
+        form8582: {
+          ...linked.form8582,
+          activities: [{
+            ...linked.form8582.activities[0],
+            current_net: -4_999,
+          }],
+        },
+      }),
+    Error,
+    "does not match Form 8582 activity",
+  );
 });
 
 Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {
@@ -162,30 +232,104 @@ Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A
     schedule_e: raw,
     schedule1: { line5_schedule_e: 8_350 },
   });
-  assertEquals(projected?.property_address, "12 Main Street, Austin, TX 78701");
-  assertEquals(projected?.property_type, 1);
+  assertEquals(
+    projected?.property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(projected?.property_0_type, 1);
   assertEquals(projected?.payments_made, false);
-  assertEquals(projected?.personal_use_days, 0);
-  assertEquals(projected?.line3, 12_000);
-  assertEquals(projected?.line18, 1_500);
+  assertEquals(projected?.property_0_personal_use_days, 0);
+  assertEquals(projected?.property_0_line3, 12_000);
+  assertEquals(projected?.property_0_line18, 1_500);
   assertEquals(projected?.line19_description, "Bank fees");
-  assertEquals(projected?.line19, 50);
-  assertEquals(projected?.line20, 3_650);
-  assertEquals(projected?.line21, 8_350);
-  assertEquals(projected?.line22, undefined);
+  assertEquals(projected?.property_0_line19, 50);
+  assertEquals(projected?.property_0_line20, 3_650);
+  assertEquals(projected?.property_0_line21, 8_350);
+  assertEquals(projected?.property_0_line22, undefined);
   assertEquals(projected?.line23c, 2_000);
   assertEquals(projected?.line23e, 3_650);
   assertEquals(projected?.line24, 8_350);
   assertEquals(projected?.line26, 8_350);
   assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [0]);
   assertEquals(
-    scheduleEPdf.fields.find((field) => field.domainKey === "line22")?.pdfField,
+    scheduleEPdf.fields.find((field) => field.domainKey === "property_0_line22")
+      ?.pdfField,
     "topmostSubform[0].Page1[0].Table_Expenses[0].Line22[0].f1_74[0]",
   );
   assertEquals(
     scheduleEPdf.fields.find((field) => field.domainKey === "line26")?.pdfField,
     "topmostSubform[0].Page1[0].f1_84[0]",
   );
+});
+
+Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals on the first copy", () => {
+  const properties = Array.from({ length: 4 }, (_, index) => ({
+    ...rental,
+    activity_id: `rental-${index}`,
+    street_address: `${12 + index} Main Street`,
+  }));
+  const raw = { schedule_es: properties };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 33_400 },
+  }) ?? {};
+  const copies = scheduleEPdf.instances?.(projected) ?? [];
+  assertEquals(copies.length, 2);
+  assertEquals(
+    copies[0].property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(
+    copies[0].property_2_address,
+    "14 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[0].line23a, 48_000);
+  assertEquals(copies[0].line26, 33_400);
+  assertEquals(
+    copies[1].property_0_address,
+    "15 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[1].property_0_line3, 12_000);
+  assertEquals(copies[1].line23a, undefined);
+  assertEquals(copies[1].line26, undefined);
+  assertEquals(copies[1].payments_made, undefined);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[0]), [0]);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
+});
+
+Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {
+  const properties = [{
+    ...rental,
+    activity_id: "first",
+    expense_other_lines: [{ description: "Tolls", amount: 20 }, {
+      description: "Bank fees",
+      amount: 30,
+    }],
+  }, {
+    ...rental,
+    activity_id: "second",
+    property_type: 8,
+    property_type_other_desc: "Mixed-use warehouse",
+    street_address: "13 Main Street",
+  }, {
+    ...rental,
+    activity_id: "third",
+    property_type: 8,
+    property_type_other_desc: "Detached storage",
+    street_address: "14 Main Street",
+  }];
+  const raw = { schedule_es: properties };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 25_050 },
+  }) ?? {};
+  assertEquals(projected.property_0_line19, 50);
+  assertEquals(projected.property_1_line19, 50);
+  assertEquals(projected.line19_description, "See attached");
+  assertEquals(projected.other_property_description, "See attached");
+  assertEquals((projected.partIStatementRows as unknown[]).length, 6);
+  assertEquals(projected.line23e, 10_950);
+  assertEquals(projected.line26, 25_050);
 });
 
 Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
@@ -231,11 +375,11 @@ Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and n
     schedule1: { line5_schedule_e: -9_000 },
   };
   const projected = scheduleEPdf.projectFields?.(raw, allPending);
-  assertEquals(projected?.line3, 1_000);
-  assertEquals(projected?.expense_taxes, 7_000);
-  assertEquals(projected?.line20, 7_000);
-  assertEquals(projected?.line21, -6_000);
-  assertEquals(projected?.line22, 9_000);
+  assertEquals(projected?.property_0_line3, 1_000);
+  assertEquals(projected?.property_0_expense_taxes, 7_000);
+  assertEquals(projected?.property_0_line20, 7_000);
+  assertEquals(projected?.property_0_line21, -6_000);
+  assertEquals(projected?.property_0_line22, 9_000);
   assertEquals(projected?.line24, 0);
   assertEquals(projected?.line25, 9_000);
   assertEquals(projected?.line26, -9_000);
@@ -269,19 +413,13 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
   );
   assertThrows(
     () =>
-      scheduleEPdf.projectFields?.({ schedule_es: [rental, rental] }, linked),
-    Error,
-    "one supported Part I rental",
-  );
-  assertThrows(
-    () =>
       scheduleEPdf.projectFields?.({
         schedule_es: [rental],
         farm_rental_net: 100,
         farm_rental_gross: 100,
       }, linked),
     Error,
-    "one supported Part I rental",
+    "needs its Form 4835 source",
   );
   assertThrows(
     () =>

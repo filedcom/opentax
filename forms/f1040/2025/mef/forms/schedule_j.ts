@@ -46,10 +46,14 @@ function numberFromReturn(
   key: string,
 ): number {
   const value = fields[key];
-  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
+  if (
+    typeof value !== "number" || !Number.isFinite(value) ||
+    !Number.isSafeInteger(Math.round(value))
+  ) {
     throw new Error(`Schedule J needs finalized Form 1040 ${key}`);
   }
-  return value;
+  // Form 1040's XML serializer writes whole dollars using Math.round.
+  return Math.round(value);
 }
 
 export function buildScheduleJ(

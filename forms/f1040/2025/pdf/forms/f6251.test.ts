@@ -1,6 +1,35 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form6251Pdf } from "./f6251.ts";
 
+const seniorSource = {
+  filing_status: "mfj",
+  magi: 100_000,
+  taxpayer_age_65_or_older: true,
+  taxpayer_has_valid_ssn: true,
+  taxpayer_ssn: "111223333",
+  senior_zero_exclusions_review: {
+    no_section933_puerto_rico_excluded_income: true,
+    section933_review_source_reference: "Synthetic residency review",
+    no_form2555_filed: true,
+    form2555_review_source_reference: "Synthetic foreign-income review",
+    no_form4563_filed: true,
+    form4563_review_source_reference: "Synthetic Samoa-source review",
+  },
+};
+const seniorReturn = {
+  filing_status: "mfj",
+  line11_agi: 100_000,
+  line13b_additional_deductions: 6_000,
+  line14_deductions_qbi_total: 20_000,
+  schedule1a_line37_senior_deduction: 6_000,
+  taxpayer_ssn: "111223333",
+  taxpayer_age_65_or_older: true,
+  taxpayer_ssn_valid_for_employment: true,
+  taxpayer_ssn_issued_before_due_date: true,
+  taxpayer_tin_issued_by_due_date: true,
+};
+const seniorPending = { f1040: seniorReturn, schedule1a: seniorSource };
+
 Deno.test("Form 6251 PDF maps signed estate/trust adjustment to line 2j", () => {
   assertEquals(
     form6251Pdf.fields.find((field) =>
@@ -82,10 +111,7 @@ Deno.test("Form 6251 PDF maps signed line 1b, Part II, Part III, and filer heade
 Deno.test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {
   const projected = form6251Pdf.projectFields?.(
     { regular_tax_income: 86_000 },
-    {
-      f1040: { line11_agi: 100_000, line14_deductions_qbi_total: 20_000 },
-      schedule1a: { line37_senior: 6_000 },
-    },
+    seniorPending,
   );
   assertEquals(projected?.line1a_less_senior_deduction, 14_000);
   for (const adjustment of [-10_000, 10_000]) {
@@ -93,10 +119,7 @@ Deno.test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {
       () =>
         form6251Pdf.projectFields?.(
           { regular_tax_income: 86_000, nol_adjustment: adjustment },
-          {
-            f1040: { line11_agi: 100_000, line14_deductions_qbi_total: 20_000 },
-            schedule1a: { line37_senior: 6_000 },
-          },
+          seniorPending,
         ),
       Error,
       "sourced regular NOL and AMT NOL refigures",
@@ -114,13 +137,18 @@ Deno.test("Form 6251 PDF rejects missing or contradictory Form 1040 line 1a sour
     () =>
       form6251Pdf.projectFields?.(
         { regular_tax_income: 85_000 },
-        {
-          f1040: { line11_agi: 100_000, line14_deductions_qbi_total: 20_000 },
-          schedule1a: { line37_senior: 6_000 },
-        },
+        seniorPending,
       ),
     Error,
     "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(
+        { regular_tax_income: 86_000 },
+        { f1040: seniorReturn },
+      ),
+    Error,
   );
 });
 

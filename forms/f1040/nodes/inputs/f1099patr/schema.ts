@@ -19,6 +19,7 @@ export const itemSchema = z.object({
   box13_specified_cooperative: z.boolean().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
   // Retained for the specified-cooperative QBI source cross-check.
   trade_or_business: z.boolean().optional(),

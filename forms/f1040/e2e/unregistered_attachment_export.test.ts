@@ -357,7 +357,7 @@ Deno.test("refund, dependent, allocation, and foreign-corporation sources cannot
             filing_category: "4",
           }],
         },
-        "Form 5471 foreign-corporation reporting needs native schedules",
+        "Form 5471 Schedule R all-zero treatment and parent reference linkage need current MeF evidence",
       ],
     ] as const
   ) {

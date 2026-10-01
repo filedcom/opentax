@@ -5,6 +5,9 @@ import {
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { box11CodeJSourceSchema } from "../../inputs/k1_partnership/box11_code_j.ts";
+import { box11CodeESourceSchema } from "../../inputs/k1_partnership/box11_code_e.ts";
+import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly
 //
@@ -17,6 +20,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const inputSchema = z.object({
+  // Entry space above Part I: Form 1099-K amounts reported in error or
+  // personal items sold at a loss. It does not enter income or AGI totals.
+  form1099k_reported_error_or_loss: z.number().int().nonnegative().optional(),
   // ── Part I — Additional Income ────────────────────────────────────────────
   // Line 1 — Taxable refunds, credits, or offsets of state/local income taxes
   line1_state_refund: z.number().optional(),
@@ -46,6 +52,10 @@ const inputSchema = z.object({
   line8g_child_interest_dividends: z.number().nonnegative().optional(),
   line8i_prizes_awards: z.number().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
+  line8l_personal_property_rent: z.number().int().nonnegative().optional(),
+  // Section 951(a) and 951A(a) have distinct TY2025 printed lines.
+  line8n_section951a_inclusion: z.number().int().nonnegative().optional(),
+  line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
   line8z_taxable_grants: z.number().optional(),
@@ -61,9 +71,33 @@ const inputSchema = z.object({
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
-  line8z_f1099nec_nonbusiness: z.number().nonnegative().optional(),
+  f1099nec_nonbusiness_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      description: z.string().trim().min(1).max(100),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
+  line8z_f1099nec_nonbusiness: z.never().optional(),
+  f1099m_box3_other_income_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      description: z.string().trim().min(1).max(100),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
+  k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
+    .optional(),
+  k1_partnership_box11_code_e_sources: z.array(box11CodeESourceSchema)
+    .optional(),
+  k1_partnership_box11_code_k_sources: z.array(box11CodeKSourceSchema)
+    .optional(),
   // ── Part II — Adjustments to Income ──────────────────────────────────────
   // Line 11 — Educator expenses (up to $300 / $600 MFJ)
   line11_educator_expenses: z.number().nonnegative().optional(),
@@ -91,6 +125,10 @@ const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction
   line24f_501c18d: z.number().nonnegative().optional(),
+  line24b_personal_property_expenses: z.number().int().nonnegative().optional(),
+  // Line 24k — estate/trust K-1 box 11 code A section 67(e) expense.
+  line24k_section67e_excess_deduction: z.number().int().nonnegative()
+    .optional(),
   // Line 24h — Domestic Production Activities Deduction (DPAD) — LEGACY TY2017 and prior only
   // Repealed by TCJA §13305 effective TY2018+; retained for amended pre-2018 returns
   line24h_dpad: z.number().nonnegative().optional(),
@@ -121,7 +159,15 @@ function otherIncome(input: Schedule1Input): number {
       ? -(input.line8a_nol_deduction)
       : 0) +
     (input.line8b_gambling_winnings ?? 0) +
+    (input.k1_partnership_box11_code_k_sources ?? []).reduce(
+      (sum, row) => sum + row.winnings,
+      0,
+    ) +
     (input.line8c_cod_income ?? 0) +
+    (input.k1_partnership_box11_code_e_sources ?? []).reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ) +
     (input.line8d_foreign_earned_income_exclusion !== undefined
       ? -(input.line8d_foreign_earned_income_exclusion)
       : 0) +
@@ -133,6 +179,9 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8g_child_interest_dividends ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8l_personal_property_rent ?? 0) +
+    (input.line8n_section951a_inclusion ?? 0) +
+    (input.line8o_section951aa_inclusion ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
@@ -148,9 +197,20 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
-    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.f1099nec_nonbusiness_sources ?? []).reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ) +
+    (input.f1099m_box3_other_income_sources ?? []).reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ) +
     (input.line8z_f1098_interest_recovery ?? 0) +
     (input.line8z_k1_s_corp_tax_benefit_recovery ?? 0) +
+    (input.k1_partnership_box11_code_j_sources ?? []).reduce(
+      (sum, row) => sum + row.taxable_amount,
+      0,
+    ) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0)
@@ -186,11 +246,13 @@ function totalAdjustments(input: Schedule1Input): number {
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0) +
+    (input.line24b_personal_property_expenses ?? 0) +
+    (input.line24k_section67e_excess_deduction ?? 0) +
     (input.line24h_dpad ?? 0)
   );
 }
 
-function assembleSchedule1(input: Schedule1Input): Record<string, number> {
+function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
   const line10_total_additional_income = totalAdditionalIncome(input);
   const line26_total_adjustments = totalAdjustments(input);
 
@@ -198,6 +260,16 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     line10_total_additional_income,
     line26_total_adjustments,
   };
+  if (
+    input.line24f_501c18d !== undefined ||
+    input.line24b_personal_property_expenses !== undefined ||
+    input.line24k_section67e_excess_deduction !== undefined
+  ) {
+    result.line25_total_other_adjustments =
+      (input.line24b_personal_property_expenses ?? 0) +
+      (input.line24f_501c18d ?? 0) +
+      (input.line24k_section67e_excess_deduction ?? 0);
+  }
 
   // Pass-through fields when present
   if (input.line1_state_refund !== undefined) {
@@ -224,6 +296,13 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
   }
   if (input.line8b_gambling_winnings !== undefined) {
     result.line8b_gambling_winnings = input.line8b_gambling_winnings;
+  }
+  if (input.k1_partnership_box11_code_k_sources?.length) {
+    result.line8b_gambling_winnings = (input.line8b_gambling_winnings ?? 0) +
+      input.k1_partnership_box11_code_k_sources.reduce(
+        (sum, row) => sum + row.winnings,
+        0,
+      );
   }
   if (input.line8d_foreign_earned_income_exclusion !== undefined) {
     result.line8d_foreign_earned_income_exclusion =
@@ -260,6 +339,9 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     "line8f_hsa_income",
     "line8i_prizes_awards",
     "line8j_f1099k_hobby_income",
+    "line8l_personal_property_rent",
+    "line8n_section951a_inclusion",
+    "line8o_section951aa_inclusion",
     "line8p_excess_business_loss",
     "line8z_rtaa",
     "line8z_taxable_grants",
@@ -275,7 +357,6 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     "line8z_form8621_qef",
     "line8z_form8621_mtm",
     "line8z_form8621_section1291",
-    "line8z_f1099nec_nonbusiness",
     "line8z_f1098_interest_recovery",
     "line8z_k1_s_corp_tax_benefit_recovery",
     "at_risk_disallowed_add_back",
@@ -287,10 +368,19 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     "line21_student_loan_interest",
     "line23_archer_msa_deduction",
     "line24f_501c18d",
+    "line24b_personal_property_expenses",
+    "line24k_section67e_excess_deduction",
   ] as const satisfies readonly (keyof Schedule1Input)[];
   for (const key of directLines) {
     const value = input[key];
     if (value !== undefined) result[key] = value;
+  }
+  if (input.k1_partnership_box11_code_e_sources?.length) {
+    result.line8c_cod_income = (input.line8c_cod_income ?? 0) +
+      input.k1_partnership_box11_code_e_sources.reduce(
+        (sum, row) => sum + row.amount,
+        0,
+      );
   }
   if (input.line8d_foreign_housing_deduction !== undefined) {
     result.line8d_foreign_earned_income_exclusion =
@@ -298,7 +388,36 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
       input.line8d_foreign_housing_deduction;
   }
 
-  return result;
+  return {
+    ...result,
+    ...(input.f1099nec_nonbusiness_sources !== undefined
+      ? { f1099nec_nonbusiness_sources: input.f1099nec_nonbusiness_sources }
+      : {}),
+    ...(input.f1099m_box3_other_income_sources !== undefined
+      ? {
+        f1099m_box3_other_income_sources:
+          input.f1099m_box3_other_income_sources,
+      }
+      : {}),
+    ...(input.k1_partnership_box11_code_j_sources !== undefined
+      ? {
+        k1_partnership_box11_code_j_sources:
+          input.k1_partnership_box11_code_j_sources,
+      }
+      : {}),
+    ...(input.k1_partnership_box11_code_e_sources !== undefined
+      ? {
+        k1_partnership_box11_code_e_sources:
+          input.k1_partnership_box11_code_e_sources,
+      }
+      : {}),
+    ...(input.k1_partnership_box11_code_k_sources !== undefined
+      ? {
+        k1_partnership_box11_code_k_sources:
+          input.k1_partnership_box11_code_k_sources,
+      }
+      : {}),
+  };
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

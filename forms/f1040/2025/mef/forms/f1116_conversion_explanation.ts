@@ -11,7 +11,7 @@ export const CONVERSION_EXPLANATION_DESCRIPTION =
 
 export function conversionExplanationAttachmentId(
   context: MefBuildContext | undefined,
-): string {
+): string | undefined {
   const names = context?.binaryAttachmentFileNames;
   if (!names?.includes(CONVERSION_EXPLANATION_FILE)) {
     throw new Error(
@@ -26,6 +26,7 @@ export function conversionExplanationAttachmentId(
       "Form 1116 conversion explanation attachment description does not match",
     );
   }
+  if (context?.phase === "discovery") return undefined;
   const id = context?.documentIdsByAttachmentFileName?.[
     CONVERSION_EXPLANATION_FILE
   ];

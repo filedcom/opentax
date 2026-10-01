@@ -1,7 +1,9 @@
 import {
   f8283,
+  type F8283Input,
   inputSchema as form8283InputSchema,
   type SectionAItem,
+  SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   inputSchema as scheduleAInputSchema,
@@ -23,9 +25,91 @@ function hasCompleteSectionAColumns(item: SectionAItem): boolean {
     item.cost_or_adjusted_basis !== undefined;
 }
 
-/** Reconcile one ordinary, unreduced Section A gift before printing its PDF. */
+export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
+  const sectionA = form.section_a_items ?? [];
+  const item = sectionA[0];
+  return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
+    item.is_vehicle === true &&
+    item.vehicle_sale_acknowledgment !== undefined &&
+    !!item.vehicle_acknowledgment_attachment_file_name?.trim() &&
+    item.capital_gain_reduction_election_confirmed !== true &&
+    item.short_term_ordinary_income_reduction_confirmed !== true &&
+    item.fmv !== undefined && item.deduction_claimed !== undefined &&
+    Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
+}
+
+export function isSingleSectionANeedyVehicleUnreduced(
+  form: F8283Input,
+): boolean {
+  const sectionA = form.section_a_items ?? [];
+  const item = sectionA[0];
+  return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
+    item.is_vehicle === true &&
+    item.vehicle_needy_transfer_acknowledgment !== undefined &&
+    item.fmv !== undefined && item.deduction_claimed === item.fmv;
+}
+
+export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
+  if (!isSingleSectionANeedyVehicleUnreduced(form)) {
+    throw new Error(
+      "Form 8283 needy-transfer Section A route needs one vehicle claimed at original FMV",
+    );
+  }
+  const item = form.section_a_items![0];
+  const acknowledgment = item.vehicle_needy_transfer_acknowledgment!;
+  const address = item.donee_organization_us_address;
+  const certifiedAddress = acknowledgment.donee_us_address;
+  const description = item.property_description?.toLowerCase() ?? "";
+  const compactDescription = description.replace(/[,\s]/g, "");
+  if (
+    !hasCompleteSectionAColumns(item) ||
+    !item.vehicle_vin?.trim() ||
+    !item.vehicle_acknowledgment_attachment_file_name?.trim() ||
+    !item.date_acquired || !item.date_contributed?.startsWith("2025-") ||
+    item.date_acquired > item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.fmv === undefined || item.fmv <= 500 || item.fmv > 5_000 ||
+    item.cost_or_adjusted_basis === undefined ||
+    item.cost_or_adjusted_basis < item.fmv ||
+    item.is_capital_gain_property !== false ||
+    item.charitable_limit_category !== "noncash_50" ||
+    item.short_term_ordinary_income_reduction_confirmed === true ||
+    item.capital_gain_reduction_election_confirmed === true ||
+    !description.includes(String(acknowledgment.vehicle_year)) ||
+    !description.includes(acknowledgment.vehicle_make.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_model.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_condition.toLowerCase()) ||
+    !compactDescription.includes(String(acknowledgment.odometer_miles)) ||
+    !item.donee_organization_name?.trim() || !address ||
+    item.donee_organization_name.trim() !== acknowledgment.donee_name.trim() ||
+    address.line1.trim() !== certifiedAddress.line1.trim() ||
+    (address.line2?.trim() ?? "") !==
+      (certifiedAddress.line2?.trim() ?? "") ||
+    address.city.trim() !== certifiedAddress.city.trim() ||
+    address.state.trim() !== certifiedAddress.state.trim() ||
+    address.zip.trim() !== certifiedAddress.zip.trim()
+  ) {
+    throw new Error(
+      "Form 8283 needy-transfer Section A route needs complete purchased vehicle and matching donee facts",
+    );
+  }
+}
+
+export function hasSectionAShortTermReduction(form: F8283Input): boolean {
+  const sectionA = form.section_a_items ?? [];
+  return sectionA.length > 0 && (form.section_b_items ?? []).length === 0 &&
+    sectionA.every((item) => item.is_vehicle !== true) &&
+    sectionA.some((item) =>
+      item.short_term_ordinary_income_reduction_confirmed === true &&
+      item.fmv !== undefined && item.deduction_claimed !== undefined &&
+      Math.round((item.fmv - item.deduction_claimed) * 100) > 0
+    );
+}
+
+/** Reconcile up to four current Section A gifts without a capital-gain election. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
+  filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
   const pending = context?.pending;
   const returnFields = pending?.f1040 as Record<string, unknown> | undefined;
@@ -42,13 +126,14 @@ export function assertOrdinarySectionAReconciled(
     );
   }
   const form = form8283InputSchema.parse(pending.f8283);
+  const sectionA = form.section_a_items ?? [];
   if (
-    (form.section_a_items ?? []).length !== 1 ||
+    sectionA.length < 1 || sectionA.length > 4 ||
     (form.section_b_items ?? []).length !== 0 ||
-    !hasCompleteSectionAColumns(form.section_a_items![0])
+    sectionA.some((item) => !hasCompleteSectionAColumns(item))
   ) {
     throw new Error(
-      "Form 8283 ordinary Section A needs one fully sourced current-year gift",
+      "Form 8283 ordinary Section A needs one to four fully sourced current-year gifts",
     );
   }
   if (
@@ -109,7 +194,15 @@ export function assertOrdinarySectionAReconciled(
     computed.line_12_noncash_contributions !==
       scheduleFields.line_12_noncash_contributions ||
     computed.line_13_contribution_carryover !==
-      scheduleFields.line_13_contribution_carryover
+      scheduleFields.line_13_contribution_carryover ||
+    (filedScheduleA && (
+      filedScheduleA.line_11_cash_contributions !==
+        computed.line_11_cash_contributions ||
+      filedScheduleA.line_12_noncash_contributions !==
+        computed.line_12_noncash_contributions ||
+      filedScheduleA.line_13_contribution_carryover !==
+        computed.line_13_contribution_carryover
+    ))
   ) {
     throw new Error(
       "Form 8283 ordinary Section A differs from recomputed Schedule A or Form 1040 itemized deductions",
@@ -257,6 +350,161 @@ export function assertElectedSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
+  assertSectionBReconciled(context, filedScheduleA);
+}
+
+/** Reconcile a current-year Section B gift or the paired similar-art group. */
+export function assertOrdinarySectionBReconciled(
+  context: MefBuildContext | undefined,
+  propertyType: SectionBPropertyType,
+  filedScheduleA?: Readonly<Record<string, unknown>>,
+): void {
+  if (propertyType === SectionBPropertyType.OtherRealEstate) {
+    const item = form8283InputSchema.parse(context?.pending?.f8283)
+      .section_b_items?.[0];
+    if (
+      item?.ordinary_income_reduction?.reason !==
+        "purchased_short_term_capital_asset" ||
+      item.investment_land_unimproved_confirmed !== true
+    ) {
+      throw new Error(
+        "Form 8283 ordinary Section B real estate needs purchased short-term unimproved investment land",
+      );
+    }
+  }
+  if (
+    !new Set<SectionBPropertyType>([
+      SectionBPropertyType.ArtUnder20000,
+      SectionBPropertyType.ArtAtLeast20000,
+      SectionBPropertyType.Vehicle,
+      SectionBPropertyType.Equipment,
+      SectionBPropertyType.Securities,
+      SectionBPropertyType.Collectibles,
+      SectionBPropertyType.ClothingHousehold,
+      SectionBPropertyType.OtherRealEstate,
+    ]).has(propertyType)
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section B property type is unsupported",
+    );
+  }
+  assertSectionBReconciled(context, filedScheduleA, propertyType);
+}
+
+/** Two separate Section B copies for one sourced similar-art group. */
+export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
+  const items = form.section_b_items ?? [];
+  if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
+    return false;
+  }
+  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const documents = items.flatMap((item) => [
+    item.signed_form_attachment_file_name,
+    item.qualified_appraisal?.attachment_file_name,
+    item.qualified_appraisal?.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+    ...(item.ordinary_income_reduction
+      ? [
+        item.ordinary_income_reduction.purchase_record_attachment_file_name,
+        item.ordinary_income_reduction
+          .reduction_statement_attachment_file_name,
+      ]
+      : []),
+  ]);
+  const reduced = items.filter((item) =>
+    item.ordinary_income_reduction !== undefined
+  );
+  return !!group &&
+    reduced.length <= 1 &&
+    items.every((item) =>
+      item.similar_item_group?.trim().toLowerCase() === group &&
+      item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+      item.fmv >= 20_000 && item.fmv <= 500_000 &&
+      (item.ordinary_income_reduction
+        ? item.ordinary_income_reduction.reason ===
+            "purchased_short_term_capital_asset" &&
+          item.deduction_claimed >= 20_000 &&
+          item.deduction_claimed === item.cost_or_adjusted_basis &&
+          item.ordinary_income_reduction.gain_removed ===
+            item.fmv - item.deduction_claimed
+        : item.deduction_claimed === item.fmv &&
+          item.cost_or_adjusted_basis === item.fmv) &&
+      item.charitable_limit_category === "noncash_50" &&
+      item.is_capital_gain_property === false &&
+      item.donor_acquisition_description?.trim().toLowerCase() ===
+        "purchase" &&
+      item.date_acquired?.startsWith("2025-") &&
+      item.date_contributed?.startsWith("2025-") &&
+      item.date_acquired < item.date_contributed &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      item.reduction_statement_attachment_file_name === undefined &&
+      item.qualified_appraisal?.full_appraisal_source_review !== undefined &&
+      item.signed_form_source_review !== undefined &&
+      item.donee_acknowledgment?.signed_by_donee === true &&
+      item.donee_acknowledgment.unrelated_use === false
+    ) &&
+    items[0]!.donee_acknowledgment!.ein !==
+      items[1]!.donee_acknowledgment!.ein &&
+    documents.length === 8 + 2 * reduced.length &&
+    documents.every(Boolean) &&
+    new Set(documents).size === documents.length;
+}
+
+/** Two fully reviewed short-term equipment gifts in one similar-item group. */
+export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
+  const items = form.section_b_items ?? [];
+  if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
+    return false;
+  }
+  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const documents = items.flatMap((item) => [
+    item.signed_form_attachment_file_name,
+    item.qualified_appraisal?.attachment_file_name,
+    item.qualified_appraisal?.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+    item.ordinary_income_reduction?.purchase_record_attachment_file_name,
+    item.ordinary_income_reduction?.reduction_statement_attachment_file_name,
+  ]);
+  return !!group &&
+    items.every((item) =>
+      item.similar_item_group?.trim().toLowerCase() === group &&
+      item.property_type === SectionBPropertyType.Equipment &&
+      item.fmv > 5_000 && item.fmv <= 500_000 &&
+      item.deduction_claimed > 5_000 &&
+      item.deduction_claimed === item.cost_or_adjusted_basis &&
+      item.deduction_claimed < item.fmv &&
+      item.ordinary_income_reduction?.reason ===
+        "purchased_short_term_capital_asset" &&
+      item.ordinary_income_reduction.gain_removed ===
+        item.fmv - item.deduction_claimed &&
+      item.ordinary_income_reduction.purchase_record_review !== undefined &&
+      item.ordinary_income_reduction.reduction_statement_review !== undefined &&
+      item.charitable_limit_category === "noncash_50" &&
+      item.is_capital_gain_property === false &&
+      item.donor_acquisition_description?.trim().toLowerCase() ===
+        "purchase" &&
+      item.date_acquired?.startsWith("2025-") &&
+      item.date_contributed?.startsWith("2025-") &&
+      item.date_acquired < item.date_contributed &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      item.qualified_appraisal?.full_appraisal_source_review !== undefined &&
+      item.signed_form_source_review !== undefined &&
+      item.donee_acknowledgment?.signed_by_donee === true &&
+      item.donee_acknowledgment.unrelated_use === false
+    ) &&
+    items[0]!.donee_acknowledgment!.ein !==
+      items[1]!.donee_acknowledgment!.ein &&
+    documents.length === 12 && documents.every(Boolean) &&
+    new Set(documents).size === documents.length;
+}
+
+function assertSectionBReconciled(
+  context: MefBuildContext | undefined,
+  filedScheduleA: Readonly<Record<string, unknown>> | undefined,
+  ordinaryPropertyType?: SectionBPropertyType,
+): void {
+  const ordinary = ordinaryPropertyType !== undefined;
+  const route = ordinaryPropertyType?.replaceAll("_", " ") ?? "election";
   const pending = context?.pending;
   const source8283 = pending?.f8283;
   const sourceScheduleA = pending?.schedule_a;
@@ -266,29 +514,46 @@ export function assertElectedSectionBReconciled(
     typeof sourceScheduleA !== "object"
   ) {
     throw new Error(
-      "Form 8283 Section B election needs filed Form 8283, complete Schedule A source, and itemized Form 1040",
+      `Form 8283 Section B ${route} needs filed Form 8283, complete Schedule A source, and itemized Form 1040`,
     );
   }
   if (
     returnFields.line12e_itemized_deductions === undefined ||
     returnFields.line12a_standard_deduction !== undefined
   ) {
-    throw new Error("Form 8283 Section B election needs an itemized Form 1040");
+    throw new Error(
+      `Form 8283 Section B ${route} needs an itemized Form 1040`,
+    );
   }
   const form = form8283InputSchema.parse(source8283);
+  const pairedArt = ordinary &&
+    ordinaryPropertyType === SectionBPropertyType.ArtAtLeast20000 &&
+    isTwoSectionBSimilarArtGroup(form);
+  const pairedEquipment = ordinary &&
+    ordinaryPropertyType === SectionBPropertyType.Equipment &&
+    isTwoSectionBReducedEquipmentGroup(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
-    (form.section_b_items ?? []).length !== 1 ||
-    form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
-      true
+    (!pairedArt && !pairedEquipment &&
+      (form.section_b_items ?? []).length !== 1) ||
+    (ordinary
+      ? form.section_b_items?.some((item) =>
+        item.property_type !== ordinaryPropertyType ||
+        item.capital_gain_reduction_election_confirmed === true
+      )
+      : form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
+        true)
   ) {
     throw new Error(
-      "Form 8283 Section B election is bounded to one current-year investment-land gift",
+      ordinary
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar gifts`
+        : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }
   const scheduleFields = sourceScheduleA as Record<string, unknown>;
   if (
-    scheduleFields.capital_gain_election_finalized !== true ||
+    (ordinary && scheduleFields.capital_gain_election_finalized === true) ||
+    (!ordinary && scheduleFields.capital_gain_election_finalized !== true) ||
     scheduleFields.charitable_limits_finalized !== true ||
     scheduleFields.current_noncash_gift_inventory_complete_confirmed !== true ||
     scheduleFields.other_prior_charitable_carryovers_absent_confirmed !==
@@ -298,7 +563,7 @@ export function assertElectedSectionBReconciled(
     scheduleFields.line_13_contribution_carryover !== 0
   ) {
     throw new Error(
-      "Form 8283 Section B election needs a finalized complete current-gift inventory and an empty prior-carryover ledger",
+      `Form 8283 Section B ${route} needs a finalized complete current-gift inventory and an empty prior-carryover ledger`,
     );
   }
   const {
@@ -326,7 +591,7 @@ export function assertElectedSectionBReconciled(
     );
   }
   if (parsedScheduleA.agi !== returnFields.line11_agi) {
-    throw new Error("Schedule A election AGI differs from Form 1040 line 11");
+    throw new Error("Schedule A AGI differs from Form 1040 line 11");
   }
   const recomputed = scheduleA.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -339,7 +604,9 @@ export function assertElectedSectionBReconciled(
     output.nodeType === "standard_deduction"
   )?.fields.itemized_deductions;
   if (
-    !computed || computed.capital_gain_election_finalized !== true ||
+    !computed ||
+    (ordinary && computed.capital_gain_election_finalized === true) ||
+    (!ordinary && computed.capital_gain_election_finalized !== true) ||
     itemizedTotal !== returnFields.line12e_itemized_deductions ||
     computed.line_11_cash_contributions !==
       scheduleFields.line_11_cash_contributions ||
@@ -357,7 +624,7 @@ export function assertElectedSectionBReconciled(
     ))
   ) {
     throw new Error(
-      "Form 8283 Section B election differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total",
+      `Form 8283 Section B ${route} differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total`,
     );
   }
 }

@@ -34,10 +34,27 @@ Deno.test("schedule1: compute returns one self-referencing output", () => {
   assertEquals(result.outputs[0].nodeType, "schedule1");
 });
 
+Deno.test("schedule1: rejects the old unlinked 1099-NEC line 8z amount", () => {
+  assertThrows(() =>
+    compute(
+      {
+        line8z_f1099nec_nonbusiness: 500,
+      } as unknown as Parameters<typeof schedule1.compute>[1],
+    )
+  );
+});
+
 Deno.test("schedule1: empty input emits zero totals", () => {
   const f = fields({});
   assertEquals(f.line10_total_additional_income, 0);
   assertEquals(f.line26_total_adjustments, 0);
+});
+
+Deno.test("schedule1: section 67(e) excess deduction prints on line 24k and line 26", () => {
+  const f = fields({ line24k_section67e_excess_deduction: 500 });
+  assertEquals(f.line24k_section67e_excess_deduction, 500);
+  assertEquals(f.line25_total_other_adjustments, 500);
+  assertEquals(f.line26_total_adjustments, 500);
 });
 
 // ─── Part I — Additional Income ───────────────────────────────────────────────
@@ -107,6 +124,18 @@ Deno.test("schedule1: taxable Form 8889 amounts enter line 8f and total income",
   const f = fields({ line8f_hsa_income: 1100 });
   assertEquals(f.line8f_hsa_income, 1100);
   assertEquals(f.line10_total_additional_income, 1100);
+});
+
+Deno.test("schedule1: section 951(a) and 951A(a) occupy distinct lines and total", () => {
+  const f = fields({
+    line8n_section951a_inclusion: 11_000,
+    line8o_section951aa_inclusion: 42_000,
+  });
+  assertEquals(f.line8n_section951a_inclusion, 11_000);
+  assertEquals(f.line8o_section951aa_inclusion, 42_000);
+  assertEquals(f.line9_total_other_income, 53_000);
+  assertEquals(f.line10_total_additional_income, 53_000);
+  assertEquals(f.line8z_other, undefined);
 });
 
 Deno.test("schedule1: HSA excess-withdrawal earnings enter line 8z total", () => {

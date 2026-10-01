@@ -52,6 +52,43 @@ function rental(current: number, prior = 0, activity = "Rental house") {
   return source(PassiveCreditCategory.ActiveRental, current, prior, activity);
 }
 
+Deno.test("Form 8582-CR rejects estate and trust orphan-drug K-1 claims", () => {
+  for (
+    const kind of [
+      PassiveCreditSourceOrigin.Estate,
+      PassiveCreditSourceOrigin.Trust,
+    ]
+  ) {
+    const activity = {
+      ...other(500),
+      source_origin: {
+        kind,
+        entity_reference: "Example fiduciary",
+        ein: "123456789",
+      },
+    };
+    const facts = {
+      credit_sources: [activity],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    };
+    assertEquals(inputSchema.safeParse(facts).success, false);
+    assertEquals(
+      inputSchema.safeParse({
+        ...facts,
+        credit_sources: [],
+        required_orphan_drug_k1_credits: [{
+          source_type: kind,
+          source_ein: "123456789",
+          source_document_reference: activity.source_document_reference,
+          credit_amount: 500,
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity sources", () => {
   const evidence = {
     source_type: "partnership" as const,

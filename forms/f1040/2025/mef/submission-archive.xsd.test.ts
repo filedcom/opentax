@@ -11,6 +11,8 @@ const filer: FilerIdentity = {
   primarySSN: "123456789",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
+  firstNameWithInitial: "Test",
+  lastName: "Taxpayer",
   address: {
     line1: "1 Test Way",
     city: "Austin",
@@ -37,12 +39,22 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const bundle = await buildMefBundle({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
   }, { filer, attachments: [] });
   const submission = await buildMefSubmissionArchive(bundle, {
     filer,
     submissionId: "1234562026269abcdefg",
     processingDate: new Date("2026-09-26T10:00:00Z"),
+    residencyReview: {
+      tax_year: 2025,
+      taxpayer: {
+        tin: "123456789",
+        tax_status: "full_year_us_citizen",
+        status_source_reference: "reviewed-2025-citizenship-record",
+        reviewer_reference: "reviewer-2026-04-01",
+        reviewed_on: "2026-04-01",
+      },
+    },
   });
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {

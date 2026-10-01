@@ -1,5 +1,91 @@
 # TY2025 paired Form 8889 boundary
 
+## One code-2 return plus the other owner's medical distribution (written, unrun)
+
+The paired full-year self-only route now accepts one owner's full timely
+personal-excess return on a recipient-matched code-2 Form 1099-SA while the
+other owner has one code-1 Form 1099-SA and one reviewed medical receipt. The
+first owner's box 1 and earnings reach Form 8889 lines 14a/14b and Schedule 1
+line 8z; the second owner's qualified and taxable amounts reach lines 15/16,
+Schedule 1 line 8f, and any 20% tax on Schedule 2 line 17c. Native and PDF
+export recompute both owner forms, enforce separate source references, and
+match the combined Schedule 1 totals to Form 1040 lines 8 and 10 and the
+additional tax to line 23. A full-return positive case and receipt and return
+tamper cases are authored for the deferred validation batch.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+place timely returned excess plus earnings on line 14b and qualified medical
+expenses on line 15. The [2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+identify distribution codes 1 and 2 and include box 2 earnings in box 1. This
+route excludes employer excess, a second ordinary statement or medical receipt,
+age-65/disability exceptions, rollovers, prior excess, and testing-period
+events. Form 1099-SA and receipt references remain entered evidence rather than
+authenticated source bytes.
+
+## Both owners' prior HSA excess (2026-10-01 build pass, unrun)
+
+The paired full-year self-only route now accepts independently reviewed 2024
+Form 5329 Part VII excess for each spouse. Each owner must provide their own
+filed-return reference, matching SSN, positive 2024 lines 48 and 49, and a
+2025 HSA year-end value. The two references must be distinct. The owner
+calculator reduces each carryover by that owner's unused 2025 contribution
+room and produces separate 2025 Forms 5329 lines 42–49. Native MeF and PDF
+export replay both source calculations, verify both owner copies and identities,
+sum the two 6% taxes on Schedule 2 line 8 and Form 1040 line 23, and reconcile
+both Form 8889 deductions through Schedule 1 and Form 1040. Positive and
+source/tax tamper fixtures are authored but unrun.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+require separate spouse Forms 8889; the [2025 Form 5329
+instructions](https://www.irs.gov/instructions/i5329) require separate spouse
+Forms 5329 and permit 2024 line 48 on 2025 line 42 when 2024 line 49 was
+positive. This route still requires no current excess, distributions, rollovers,
+employer funding, or testing-period event. The reviewed 2024 return references
+are not authenticated source bytes.
+
+## Distinct rollovers for both owners (2026-10-01 build pass, unrun)
+
+The paired full-year self-only route now accepts one sourced HSA-to-HSA
+rollover for each spouse. Each owner has a distinct code-1 Form 1099-SA,
+withdrawal and redeposit references, a 2025 distribution, a redeposit within
+60 days to an HSA of the same beneficiary, and the one-rollover-in-12-months
+affirmation. The owner calculator independently determines each Form 8889 line
+14a/14b/16/17b. The paired native and PDF exporters require distinct references
+across owners, the two printed forms to equal those calculations, both line-13
+deductions and taxable amounts to aggregate once on Schedule 1, the two 20%
+taxes to aggregate once on Schedule 2, and those totals to agree with Form 1040
+lines 8, 10, and 23. A positive two-owner case and source/return tamper cases
+are authored but unrun. The [2025 Form 8889
+instructions](https://www.irs.gov/instructions/i8889) direct separate spouse
+forms and place qualified rollovers on line 14b.
+
+This two-owner extension requires positive taxable remainders on both forms and
+no other Schedule 1 income or Schedule 2 tax, age-65/disability exception,
+medical-expense claim, or testing-period event. Other paired coverage patterns
+and mixed HSA events remain closed. Trustee and Form 1099-SA bytes are not
+authenticated by the entered references.
+
+## One owner's prior HSA excess on paired self-only returns (2026-10-01, unrun)
+
+The bounded two-HSA self-only route now accepts one owner's reviewed filed
+2024 Form 5329 Part VII excess when the other owner has no carryover. That
+owner's 2024 line 48, positive line 49, return reference, and SSN must match
+the existing owner source contract; the 2025 calculator uses available line 12
+contribution room to deduct the absorbed portion and carries the taxable
+remainder to owner Form 5329 lines 42–49. This positive route requires a 2025
+HSA value and remaining 6% tax. It excludes current-year excess, distributions,
+testing-period events, rollovers, employer funding, and other HSA events.
+
+Paired Form 8889 native and PDF export now recompute both owners, compare the
+exact pending Form 5329 source and printed owner copy to the calculation, and
+run Form 5329's owner/SSN and Form 8889 line-12/13/16 reconciliation. They
+match the two deductions to Schedule 1 and Form 1040, and the one owner tax to
+Schedule 2 line 8 and Form 1040 line 23. Form 5329's native and PDF exporters
+then independently verify the same source and Schedule 2 tax. Positive and
+source/tax tamper fixtures are authored but unrun. The filed 2024 return is
+referenced and reviewed, not authenticated by retained bytes; other coverage
+patterns and mixed HSA events remain open.
+
 ## One spouse loses eligibility to nonpermitted other coverage (written, unrun)
 
 The [2025 Publication 969](https://www.irs.gov/publications/p969) says the
@@ -86,9 +172,10 @@ independent document verification.
 
 The exporter recomputes both owner forms, matches all printed lines, and
 reconciles the sum of taxable line 16 distributions to Schedule 1 line 8f and
-the sum of line 17b penalties to Schedule 2 line 17c. It still rejects paired
-rollovers, timely excess withdrawals, employer/W-2 contributions, IRA funding,
-prior excess, and testing-period events. Form 1099-SA codes 2-6 and deemed
+the sum of line 17b penalties to Schedule 2 line 17c. This normal-only
+subpath excludes rollovers, timely excess withdrawals, employer/W-2
+contributions, IRA funding, prior excess, and testing-period events. Form
+1099-SA codes 2-6 and deemed
 distributions remain outside this bounded route. A dated age-65 exception
 subpath is described below. Positive and negative MeF/PDF/source cases are
 written but have not been run. The
@@ -123,6 +210,19 @@ PDF, IRS business-rule, and ATS gates remain pending.
 
 ## HSA rollover line 14b source boundary (written, unrun)
 
+A bounded paired-owner route now accepts one owner's 2025 HSA-to-HSA rollover
+with a matched code-1 Form 1099-SA, dated withdrawal and redeposit, and the
+existing 60-day, same-beneficiary, and receiving-HSA assertions. Both owners
+must otherwise fit the paired self-only/family coverage and ordinary
+contribution route. The paired MeF and PDF projections recompute both owners'
+Form 8889 lines, preserve the rollover only on its owner's line 14b, and match
+combined Schedule 1 income/deduction and Schedule 2 additional tax to the
+return. Age-65 or disability evidence on the rollover owner's distributions
+remains closed pending a transaction allocation. A separate full-year self-only
+two-owner rollover route is documented above. Positive,
+changed-source, changed-return, and second-rollover fixtures are authored but
+unrun. Trustee and Form 1099-SA document bytes remain unauthenticated.
+
 The former bare `hsa_excluded_distributions.rollover_amount` input is removed.
 An HSA-to-HSA rollover claimed on line 14b now needs one `rollover` source
 record with the amount, the 2025 distribution and redeposit dates, distinct
@@ -133,7 +233,10 @@ calculator checks valid dates, a nonnegative interval of at most 60 days, and
 that the line-14b amount does not exceed line 14a. A direct trustee transfer is
 not reported on line 14a or 14b. This is a direct input cutover, not a legacy
 branch. The references and affirmations are entered evidence, not verified
-documents; rollover-specific 1099-SA source reconciliation remains open.
+documents. The rollover source now names an owner-matched code-1 Form 1099-SA
+whose box 1 covers the excluded amount and participates in exact line-14a
+reconciliation. Native and PDF projections recompute line 14b from that same
+source; focused source-link and wrong-code cases are authored but unrun.
 Positive and negative focused cases are written but have not been run. The
 [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) supply the
 rollover, direct-transfer, and line-14b rules.
@@ -376,3 +479,20 @@ and PDF recompute the owner lines and reconcile any present Schedule 1, Schedule
 2, and Form 1040 totals. Focused positive and tampered-source cases are written
 but unrun pending the single full validation batch. This does not expand the
 paired route to mixed employer and personal contributions.
+
+## Reviewed prior-year HSA excess for one owner (written, unrun)
+
+The [2025 Form 5329 instructions](https://www.irs.gov/instructions/i5329)
+carry 2024 line 48 into 2025 line 42 only when 2024 line 49 was positive.
+The bounded Form 8889 source now requires the filed 2024 Form 5329 reference,
+an explicit review assertion, the prior lines 48 and 49, and the same owner SSN
+as the HSA beneficiary. A positive carryover is passed to that owner's Form
+5329 Part VII entry. Native MeF and PDF recalculate its 2025 lines and require
+the owner SSN, line 42, and Form 8889 line 13 deduction to reconcile with the
+source before export. A line 49 above six percent of line 48 rejects.
+
+The 2024 filed-return reference and review assertion are entered evidence;
+document bytes and the 2024 HSA year-end value are not authenticated. The
+single-owner source, calculation, MeF, PDF, and tamper fixtures are written but
+unrun. Multiple simultaneous prior excess carryovers and wider paired-owner
+combinations remain outside this bounded route.

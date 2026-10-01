@@ -401,6 +401,33 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const carryover = {
+    income_category: IncomeCategory.Passive,
+    vintages: [
+      {
+        vintage_tax_year: 2021 as const,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2022 as const,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2023 as const,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2024 as const,
+        prior_year_schedule_b_line8_vintage_amount: 500,
+      },
+    ],
+    prior_year_schedule_b_line8_total: 800,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
+    ],
+  };
   const result = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -415,33 +442,7 @@ Deno.test({
       }],
       worldwide_taxable_income: 50_000,
       us_tax_before_credits: 2_500,
-      prior_year_carryovers: [{
-        income_category: IncomeCategory.Passive,
-        vintages: [
-          {
-            vintage_tax_year: 2021,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2022,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2023,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2024,
-            prior_year_schedule_b_line8_vintage_amount: 500,
-          },
-        ],
-        prior_year_schedule_b_line8_total: 800,
-        prior_year_schedule_b_line8_other_vintages_total: 0,
-        no_intervening_adjustments: true,
-        source_document_references: [
-          "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
-        ],
-      }],
+      prior_year_carryovers: [carryover],
     },
   );
   const formFields = result.outputs.find((output) =>
@@ -452,6 +453,7 @@ Deno.test({
   )?.fields;
   assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
   const xml = buildMefXml({
+    form1116_prior_carryover: { carryovers: [carryover] },
     form_1116: formFields as Parameters<typeof form1116.build>[0],
     form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
     schedule3: {
@@ -587,7 +589,7 @@ Deno.test({
 
 Deno.test({
   name:
-    "XSD: 1099 interest and dividends from one country share a Form 1116 source",
+    "Form 1116 mixed interest/dividend source remains closed without a combined review",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
@@ -637,24 +639,23 @@ Deno.test({
       foreign_source_dividends_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
       holdingPeriodDays: 20,
+      foreign_tax_holding_review: {
+        ex_dividend_date: "2025-06-15",
+        qualifying_held_days_in_31_day_window: 20,
+        diminished_risk_days_excluded: 0,
+        no_related_payment_obligation_confirmed: true,
+        ordinary_stock_holding_rule_confirmed: true,
+        review_reference: "Canadian Fund holding ledger",
+        reviewed_on: "2026-02-01",
+      },
     }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  const xml = buildMefXml(result.pending, filer);
-  assertEquals([...xml.matchAll(/<ForeignTaxCreditSource>/g)].length, 1);
-  assertStringIncludes(
-    xml,
-    "<ForeignTaxSpecialTypeCd>1099 TAX</ForeignTaxSpecialTypeCd>",
+  assertThrows(
+    () => buildMefXml(result.pending, filer),
+    Error,
+    "two reviewed same-country 1099 sources and the finalized return",
   );
-  assertStringIncludes(
-    xml,
-    "<USTaxWithheldOnDividendAmt>100</USTaxWithheldOnDividendAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<USTaxWithheldOnInterestAmt>100</USTaxWithheldOnInterestAmt>",
-  );
-  await validateXsd(xml);
 });
 
 Deno.test({

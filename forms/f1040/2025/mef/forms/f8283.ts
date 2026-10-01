@@ -13,6 +13,14 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertNeedyVehicleUnreducedSource,
+  assertOrdinarySectionAReconciled,
+  assertOrdinarySectionBReconciled,
+  hasSectionAShortTermReduction,
+  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAVehicleSale,
+  isTwoSectionBReducedEquipmentGroup,
+  isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -97,6 +105,89 @@ export function assertShortTermReductionSource(item: SectionAItem): void {
   }
 }
 
+export function assertInventoryReductionSource(item: SectionAItem): void {
+  if (item.inventory_ordinary_income_reduction === undefined) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed || !item.donor_acquisition_description?.trim() ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !item.inventory_ordinary_income_reduction.purchase_invoice_reference
+      .trim() ||
+    !item.inventory_ordinary_income_reduction.inventory_cost_record_reference
+      .trim()
+  ) {
+    throw new Error(
+      "Form 8283 inventory reduction needs complete donee, property, dates, basis, valuation method, invoice, and cost-ledger source",
+    );
+  }
+}
+
+export function assertCreatorReductionSource(item: SectionAItem): void {
+  if (item.creator_ordinary_income_reduction === undefined) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed || !item.donor_acquisition_description?.trim() ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !item.creator_ordinary_income_reduction.creation_record_reference.trim() ||
+    !item.creator_ordinary_income_reduction.capitalized_cost_record_reference
+      .trim()
+  ) {
+    throw new Error(
+      "Form 8283 creator reduction needs complete donee, property, completion date, basis, valuation method, and capitalized-cost records",
+    );
+  }
+}
+
+export function assertManuscriptReductionSource(item: SectionAItem): void {
+  const review = item.manuscript_ordinary_income_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "created" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.manuscript_preparation_record_reference.trim() ||
+    !review.capitalized_cost_record_reference.trim()
+  ) {
+    throw new Error(
+      "Form 8283 manuscript reduction needs complete donee, property, completion date, basis, valuation method, and preparation/cost records",
+    );
+  }
+}
+
+export function assertUnrelatedUseReductionSource(item: SectionAItem): void {
+  const review = item.unrelated_use_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.purchase_record_reference.trim() ||
+    !review.donee_unrelated_use_statement_reference.trim()
+  ) {
+    throw new Error(
+      "Form 8283 unrelated-use reduction needs complete donee, tangible property, dates, basis, valuation, purchase, and donee-use records",
+    );
+  }
+}
+
 export function assertVehicleSaleReductionSource(item: SectionAItem): void {
   if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
     return;
@@ -159,6 +250,32 @@ export function fmvReductionExplanation(
     } would be ordinary income or short-term gain under section 170(e)(1)(A), so the contribution is reduced to adjusted basis ${
       usd(item.cost_or_adjusted_basis)
     }.`
+    : item.inventory_ordinary_income_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased inventory held for sale to customers: hypothetical sale gain of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } would be ordinary income under section 170(e)(1)(A). Invoice ${item.inventory_ordinary_income_reduction.purchase_invoice_reference} and cost record ${item.inventory_ordinary_income_reduction.inventory_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
+    : item.creator_ordinary_income_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Donor-created artwork substantially completed on ${item.date_acquired}: hypothetical sale gain of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } would be ordinary income under section 170(e)(1)(A). Creation record ${item.creator_ordinary_income_reduction.creation_record_reference} and capitalized undeducted cost record ${item.creator_ordinary_income_reduction.capitalized_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
+    : item.manuscript_ordinary_income_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Donor-prepared manuscript substantially completed on ${item.date_acquired}: hypothetical sale gain of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } would be ordinary income under section 170(e)(1)(A). Preparation record ${item.manuscript_ordinary_income_reduction.manuscript_preparation_record_reference} and capitalized undeducted cost record ${item.manuscript_ordinary_income_reduction.capitalized_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
+    : item.unrelated_use_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -168,7 +285,7 @@ export function fmvReductionExplanation(
     : "";
   if (!reason) {
     throw new Error(
-      "Form 8283 reduced claim needs certified sale proceeds, a sourced short-term ordinary-income reduction, or a sourced capital-gain reduction election",
+      "Form 8283 reduced claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
     );
   }
   const explanation = `Section A item ${propertyId(index)}: unreduced FMV ${
@@ -187,6 +304,10 @@ export function buildFmvReductionStatement(
   index: number,
 ): string {
   assertShortTermReductionSource(item);
+  assertInventoryReductionSource(item);
+  assertCreatorReductionSource(item);
+  assertManuscriptReductionSource(item);
+  assertUnrelatedUseReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -452,7 +573,10 @@ function requiredSignatureAttachment(
   if (!fileName) {
     throw new Error(`Form 8283 needs ${description} PDF`);
   }
-  if (context.attachmentDescriptionsByFileName?.[fileName] !== description) {
+  if (!matchesAttachmentDescription(
+    context.attachmentDescriptionsByFileName?.[fileName],
+    description,
+  )) {
     throw new Error(
       `Form 8283 needs a matching PDF described exactly as ${description}`,
     );
@@ -464,9 +588,21 @@ function requiredSignatureAttachment(
   return id;
 }
 
+function matchesAttachmentDescription(
+  actual: string | undefined,
+  required: string,
+): boolean {
+  return actual === required ||
+    (actual?.startsWith(`${required}: `) === true &&
+      actual.length > required.length + 2);
+}
+
 function requiredQualifiedAppraisalAttachment(
   fileName: string | undefined,
   context: MefBuildContext,
+  review?: NonNullable<
+    SectionBItem["qualified_appraisal"]
+  >["full_appraisal_source_review"],
 ): string | undefined {
   if (!fileName) {
     throw new Error(
@@ -477,6 +613,14 @@ function requiredQualifiedAppraisalAttachment(
   if (!description?.startsWith("Qualified Appraisal")) {
     throw new Error(
       "Form 8283 high-value appraisal PDF needs a description beginning Qualified Appraisal",
+    );
+  }
+  if (
+    review && context.documentIdsByPendingKey &&
+    context.attachmentSha256ByFileName?.[fileName] !== review.pdf_sha256
+  ) {
+    throw new Error(
+      "Form 8283 full qualified-appraisal PDF bytes do not match the reviewed source SHA-256",
     );
   }
   const id = context.documentIdsByAttachmentFileName?.[fileName];
@@ -499,8 +643,10 @@ function requiredReductionAttachment(
     );
   }
   if (
-    context.attachmentDescriptionsByFileName?.[fileName] !==
-      "Form 8283 Section B FMV reduction statement"
+    !matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[fileName],
+      "Form 8283 Section B FMV reduction statement",
+    )
   ) {
     throw new Error(
       "Form 8283 Section B election needs its matching FMV-reduction statement PDF",
@@ -535,6 +681,167 @@ function requiredReductionAttachment(
     );
   }
   return id;
+}
+
+function requiredOrdinaryIncomeAttachments(
+  item: SectionBItem,
+  context: MefBuildContext,
+): string[] {
+  const evidence = item.ordinary_income_reduction;
+  const appraisal = item.qualified_appraisal;
+  if (
+    !evidence || !appraisal?.attachment_file_name ||
+    !appraisal.full_appraisal_source_review ||
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review
+  ) {
+    throw new Error(
+      "Form 8283 ordinary-income Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs",
+    );
+  }
+  const names = [
+    evidence.purchase_record_attachment_file_name,
+    appraisal.attachment_file_name,
+    item.signed_form_attachment_file_name,
+    evidence.reduction_statement_attachment_file_name,
+    appraisal.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+  ];
+  if (names.some((name) => !name) || new Set(names).size !== names.length) {
+    throw new Error(
+      "Form 8283 ordinary-income Section B gift evidence must use six distinct PDFs",
+    );
+  }
+  const reviewed = [
+    [
+      evidence.purchase_record_attachment_file_name,
+      "Form 8283 Section B purchase and basis record",
+      evidence.purchase_record_review.pdf_sha256,
+    ],
+    [
+      evidence.reduction_statement_attachment_file_name,
+      "Form 8283 Section B FMV reduction statement",
+      evidence.reduction_statement_review.pdf_sha256,
+    ],
+  ] as const;
+  const ids: string[] = [];
+  for (const [name, description, digest] of reviewed) {
+    if (!matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[name],
+      description,
+    )) {
+      throw new Error(
+        `Form 8283 ordinary-income Section B gift needs ${description}`,
+      );
+    }
+    if (context.documentIdsByPendingKey) {
+      if (context.attachmentSha256ByFileName?.[name] !== digest) {
+        throw new Error(
+          `Form 8283 ordinary-income Section B gift ${description} bytes differ from reviewed SHA-256`,
+        );
+      }
+      const id = context.documentIdsByAttachmentFileName?.[name];
+      if (!id) {
+        throw new Error(
+          `Form 8283 ordinary-income Section B gift ${description} has no linked MeF document`,
+        );
+      }
+      ids.push(id);
+    }
+  }
+  const appraisalId = requiredQualifiedAppraisalAttachment(
+    appraisal.attachment_file_name,
+    context,
+    appraisal.full_appraisal_source_review,
+  );
+  if (appraisalId) ids.push(appraisalId);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(
+      "Form 8283 ordinary-income Section B gift PDFs need distinct MeF document IDs",
+    );
+  }
+  return ids;
+}
+
+function requiredUnrelatedUseAttachments(
+  item: SectionBItem,
+  context: MefBuildContext,
+): string[] {
+  const evidence = item.unrelated_use_capital_gain_reduction;
+  const appraisal = item.qualified_appraisal;
+  if (
+    !evidence || !appraisal?.attachment_file_name ||
+    !appraisal.full_appraisal_source_review ||
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review ||
+    !appraisal.signature_attachment_file_name ||
+    !item.donee_acknowledgment?.signature_attachment_file_name
+  ) {
+    throw new Error(
+      "Form 8283 unrelated-use Section B art needs reviewed source, appraisal, signed-form, and signature PDFs",
+    );
+  }
+  const files = [
+    evidence.purchase_record_attachment_file_name,
+    evidence.donee_use_attachment_file_name,
+    evidence.reduction_statement_attachment_file_name,
+    appraisal.attachment_file_name,
+    item.signed_form_attachment_file_name,
+    appraisal.signature_attachment_file_name,
+    item.donee_acknowledgment.signature_attachment_file_name,
+  ];
+  if (new Set(files).size !== 7) {
+    throw new Error(
+      "Form 8283 unrelated-use Section B art needs seven distinct evidence PDFs",
+    );
+  }
+  const reviewed = [
+    [
+      evidence.purchase_record_attachment_file_name,
+      "Form 8283 Section B purchase and basis record",
+      evidence.purchase_record_review.pdf_sha256,
+    ],
+    [
+      evidence.donee_use_attachment_file_name,
+      "Form 8283 Section B unrelated-use donee statement",
+      evidence.donee_use_review.pdf_sha256,
+    ],
+    [
+      evidence.reduction_statement_attachment_file_name,
+      "Form 8283 Section B FMV reduction statement",
+      evidence.reduction_statement_review.pdf_sha256,
+    ],
+  ] as const;
+  const ids: string[] = [];
+  for (const [name, description, digest] of reviewed) {
+    if (!matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[name],
+      description,
+    )) {
+      throw new Error(
+        `Form 8283 unrelated-use Section B art needs ${description}`,
+      );
+    }
+    if (context.documentIdsByPendingKey) {
+      if (context.attachmentSha256ByFileName?.[name] !== digest) {
+        throw new Error(
+          `Form 8283 unrelated-use Section B art ${description} bytes differ from reviewed SHA-256`,
+        );
+      }
+      const id = context.documentIdsByAttachmentFileName?.[name];
+      if (!id) {
+        throw new Error(
+          `Form 8283 unrelated-use Section B art ${description} has no linked MeF document`,
+        );
+      }
+      ids.push(id);
+    }
+  }
+  const appraisalId = requiredQualifiedAppraisalAttachment(
+    appraisal.attachment_file_name,
+    context,
+    appraisal.full_appraisal_source_review,
+  );
+  if (appraisalId) ids.push(appraisalId);
+  return ids;
 }
 
 function requiredSignedFormAttachment(
@@ -623,6 +930,7 @@ function buildSectionBItem(
   }
   const tangible = new Set<SectionBPropertyType>([
     SectionBPropertyType.ArtUnder20000,
+    SectionBPropertyType.ArtAtLeast20000,
     SectionBPropertyType.OtherRealEstate,
     SectionBPropertyType.Equipment,
     SectionBPropertyType.Collectibles,
@@ -632,11 +940,6 @@ function buildSectionBItem(
   if (tangible.has(item.property_type) && !item.physical_condition?.trim()) {
     throw new Error("Form 8283 tangible property needs its physical condition");
   }
-  if (item.property_type === SectionBPropertyType.ArtAtLeast20000) {
-    throw new Error(
-      "Form 8283 Section B gift needs a linked appraisal or vehicle acknowledgment attachment",
-    );
-  }
   if (item.donee_acknowledgment.received_date !== item.date_contributed) {
     throw new Error(
       "Form 8283 Section B donee receipt date differs from contribution date",
@@ -644,10 +947,12 @@ function buildSectionBItem(
   }
   if (
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0 &&
-    item.capital_gain_reduction_election_confirmed !== true
+    item.capital_gain_reduction_election_confirmed !== true &&
+    item.ordinary_income_reduction === undefined &&
+    item.unrelated_use_capital_gain_reduction === undefined
   ) {
     throw new Error(
-      "Form 8283 Section B reduced claim needs a sourced FMV-reduction computation and statement; only the reviewed capital-gain election route is supported",
+      "Form 8283 Section B reduced claim needs a supported reviewed FMV-reduction computation and statement",
     );
   }
   const appraisal = item.qualified_appraisal;
@@ -666,22 +971,61 @@ function buildSectionBItem(
     (id): id is string => id !== undefined,
   );
   const signedFormId = requiredSignedFormAttachment(item, context);
-  const qualifiedAppraisalId = similarGroupTotal > 500_000
-    ? requiredQualifiedAppraisalAttachment(
-      appraisal.attachment_file_name,
-      context,
-    )
-    : undefined;
+  const ordinaryReductionIds = item.ordinary_income_reduction
+    ? requiredOrdinaryIncomeAttachments(item, context)
+    : [];
+  const unrelatedReductionIds = item.unrelated_use_capital_gain_reduction
+    ? requiredUnrelatedUseAttachments(item, context)
+    : [];
+  const artAtLeast20000 =
+    item.property_type === SectionBPropertyType.ArtAtLeast20000;
+  if (
+    artAtLeast20000 &&
+    appraisal.attachment_file_name === item.signed_form_attachment_file_name
+  ) {
+    throw new Error(
+      "Form 8283 art needs its complete signed appraisal PDF separate from the completed signed Form 8283",
+    );
+  }
+  const qualifiedAppraisalId =
+    (similarGroupTotal > 500_000 || artAtLeast20000) &&
+      item.ordinary_income_reduction === undefined &&
+      item.unrelated_use_capital_gain_reduction === undefined
+      ? requiredQualifiedAppraisalAttachment(
+        appraisal.attachment_file_name,
+        context,
+        artAtLeast20000 ? appraisal.full_appraisal_source_review : undefined,
+      )
+      : undefined;
   const binaryIds = [
     vehicleAttachmentId,
     qualifiedAppraisalId,
     reductionAttachmentId,
     signedFormId,
+    ...ordinaryReductionIds,
+    ...unrelatedReductionIds,
     ...signatureIds,
   ]
     .filter(
       (id): id is string => id !== undefined,
     );
+  if (
+    item.ordinary_income_reduction && context.documentIdsByPendingKey &&
+    (binaryIds.length !== 6 || new Set(binaryIds).size !== 6)
+  ) {
+    throw new Error(
+      "Form 8283 ordinary-income Section B gift needs six distinct linked MeF document IDs",
+    );
+  }
+  if (
+    item.unrelated_use_capital_gain_reduction &&
+    context.documentIdsByPendingKey &&
+    (binaryIds.length !== 7 || new Set(binaryIds).size !== 7)
+  ) {
+    throw new Error(
+      "Form 8283 unrelated-use Section B art needs seven distinct linked MeF document IDs",
+    );
+  }
   return elements(
     "IRS8283",
     [
@@ -747,10 +1091,23 @@ export const form8283: MefFormDescriptor<
   build(fields, context = {}) {
     const parsed = inputSchema.parse(fields);
     if (parsed.carryover_evidence !== undefined) {
+      if (
+        parsed.carryover_evidence.some((row) =>
+          row.property_kind === "purchased_artwork"
+        )
+      ) {
+        throw new Error(
+          "Form 8283 Section B artwork carryover needs authenticated accepted 2024 filing before native export",
+        );
+      }
       return buildCarryoverDocuments(parsed, context);
     }
     if (
-      (parsed.section_a_items ?? []).some(needsFmvReductionStatement) &&
+      ((parsed.section_a_items ?? []).some(needsFmvReductionStatement) ||
+        (parsed.section_b_items ?? []).some((item) =>
+          item.ordinary_income_reduction !== undefined ||
+          item.unrelated_use_capital_gain_reduction !== undefined
+        )) &&
       context.pending?.f8283 !== undefined &&
       JSON.stringify(parsed) !==
         JSON.stringify(inputSchema.parse(context.pending.f8283))
@@ -761,6 +1118,10 @@ export const form8283: MefFormDescriptor<
     }
     for (const item of parsed.section_a_items ?? []) {
       assertShortTermReductionSource(item);
+      assertInventoryReductionSource(item);
+      assertCreatorReductionSource(item);
+      assertManuscriptReductionSource(item);
+      assertUnrelatedUseReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -769,6 +1130,11 @@ export const form8283: MefFormDescriptor<
     const electedB = (parsed.section_b_items ?? []).some((item) =>
       item.capital_gain_reduction_election_confirmed === true
     );
+    const ordinaryReductionB = (parsed.section_b_items ?? []).some((item) =>
+      item.ordinary_income_reduction !== undefined ||
+      item.unrelated_use_capital_gain_reduction !== undefined
+    );
+    const sectionB = parsed.section_b_items ?? [];
     if (elected || electedB) {
       if (electedB) {
         assertElectedSectionBReconciled(context);
@@ -782,8 +1148,51 @@ export const form8283: MefFormDescriptor<
         throw new Error("Form 8283 election differs from the pending source");
       }
     }
+    if (ordinaryReductionB) {
+      const propertyType = parsed.section_b_items?.[0]?.property_type;
+      if (
+        propertyType !== SectionBPropertyType.Equipment &&
+        propertyType !== SectionBPropertyType.ArtUnder20000 &&
+        propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
+        propertyType !== SectionBPropertyType.Collectibles &&
+        propertyType !== SectionBPropertyType.Securities &&
+        propertyType !== SectionBPropertyType.OtherRealEstate
+      ) {
+        throw new Error(
+          "Form 8283 ordinary-income Section B property type is unsupported",
+        );
+      }
+      assertOrdinarySectionBReconciled(context, propertyType);
+    }
+    if (sectionB.length === 2) {
+      const similarArt = isTwoSectionBSimilarArtGroup(parsed);
+      const reducedEquipment = isTwoSectionBReducedEquipmentGroup(parsed);
+      if (!similarArt && !reducedEquipment) {
+        throw new Error(
+          "Form 8283 two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",
+        );
+      }
+      assertOrdinarySectionBReconciled(
+        context,
+        similarArt
+          ? SectionBPropertyType.ArtAtLeast20000
+          : SectionBPropertyType.Equipment,
+      );
+    }
     const sectionA = parsed.section_a_items ?? [];
-    const sectionB = parsed.section_b_items ?? [];
+    if (isSingleSectionANeedyVehicleUnreduced(parsed)) {
+      assertNeedyVehicleUnreducedSource(parsed);
+    }
+    if (
+      isSingleSectionAVehicleSale(parsed) ||
+      hasSectionAShortTermReduction(parsed) ||
+      isSingleSectionANeedyVehicleUnreduced(parsed) ||
+      sectionA.some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled(context);
+    }
     const signedFormFiles = sectionB.map((item) =>
       item.signed_form_attachment_file_name
     ).filter((fileName): fileName is string => fileName !== undefined);

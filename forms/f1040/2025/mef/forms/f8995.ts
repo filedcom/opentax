@@ -1,7 +1,7 @@
 import type { inputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { element, elements } from "../../../mef/xml.ts";
-import { assertOneBusiness8995 } from "./f8995-route.ts";
+import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
@@ -14,6 +14,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
   build(fields, context) {
     const deduction = fields.qbi_deduction;
     if (deduction === undefined || deduction === null || deduction === 0) {
+      assertNoUnfiled8995Loss(fields as Record<string, unknown>);
       return "";
     }
     if (
@@ -22,18 +23,20 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     ) {
       throw new Error("Form 8995 needs a valid nonnegative QBI deduction");
     }
-    const { businessName, tin, qbi, lines } = assertOneBusiness8995(
+    const { businessName, tin, qbi, lines } = assertPositive8995(
       fields as Record<string, unknown>,
       context?.pending,
     );
     return elements("IRS8995", [
-      elements("QualifiedBusinessIncomeDedGrp", [
-        elements("TradeOrBusinessName", [
-          element("BusinessNameLine1Txt", businessName),
-        ]),
-        element(tin.kind === "ein" ? "EIN" : "SSN", tin.value),
-        element("QlfyBusinessIncomeOrLossAmt", qbi),
-      ]),
+      ...(businessName && tin
+        ? [elements("QualifiedBusinessIncomeDedGrp", [
+          elements("TradeOrBusinessName", [
+            element("BusinessNameLine1Txt", businessName),
+          ]),
+          element(tin.kind === "ein" ? "EIN" : "SSN", tin.value),
+          element("QlfyBusinessIncomeOrLossAmt", qbi),
+        ])]
+        : []),
       element("TotQlfyBusinessIncomeOrLossAmt", lines[2]),
       element("PYQlfyBusinessNetLossCfwdAmt", lines[3]),
       element("TotQualifiedBusinessIncomeAmt", lines[4]),

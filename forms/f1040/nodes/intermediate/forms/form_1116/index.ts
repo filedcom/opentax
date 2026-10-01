@@ -45,6 +45,8 @@ export const foreignTaxCurrencySchema = z.object({
 
 export const singleSourcePdfReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
+  domestic_treasury_source_document_reference: z.string().trim().min(1)
+    .optional(),
   all_foreign_tax_items_identified_confirmed: z.literal(true),
   all_worldwide_income_sources_identified_confirmed: z.literal(true),
   all_part_i_deductions_and_losses_except_standard_zero_confirmed: z.literal(
@@ -55,7 +57,7 @@ export const singleSourcePdfReviewSchema = z.object({
   no_foreign_income_adjustment_confirmed: z.literal(true),
   no_section_960c_increase_confirmed: z.literal(true),
   no_international_boycott_confirmed: z.literal(true),
-  no_prior_year_carryover_or_carryback_confirmed: z.literal(true),
+  no_prior_year_carryover_or_carryback_confirmed: z.boolean(),
   no_preferential_rate_income_confirmed: z.literal(true),
   no_other_category_credit_confirmed: z.literal(true),
 }).strict();
@@ -65,6 +67,64 @@ export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
 }).extend({
   only_identified_k3_line12_reduction_confirmed: z.literal(true),
 }).strict();
+
+export const multiSourcePdfReviewSchema = singleSourcePdfReviewSchema.omit({
+  source_document_reference: true,
+  domestic_treasury_source_document_reference: true,
+}).extend({
+  payer_source_document_references: z.array(z.string().trim().min(1)).min(2),
+}).strict();
+
+export const mixedInterestDividendPdfReviewSchema = singleSourcePdfReviewSchema
+  .omit({
+    source_document_reference: true,
+    domestic_treasury_source_document_reference: true,
+  }).extend({
+    interest_source_document_reference: z.string().trim().min(1),
+    dividend_source_document_reference: z.string().trim().min(1),
+  }).strict();
+
+export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
+  .omit({
+    source_document_reference: true,
+    domestic_treasury_source_document_reference: true,
+  }).extend({
+    column_a_source_document_reference: z.string().trim().min(1),
+    column_a_irs_country_code: z.string().length(2),
+    column_b_source_document_reference: z.string().trim().min(1),
+    column_b_irs_country_code: z.string().length(2),
+  }).strict();
+
+export const threeCountryInterestPdfReviewSchema =
+  twoCountryInterestPdfReviewSchema.extend({
+    column_c_source_document_reference: z.string().trim().min(1),
+    column_c_irs_country_code: z.string().length(2),
+  }).strict();
+
+export const twoCountryTreasuryPdfReviewSchema =
+  twoCountryInterestPdfReviewSchema
+    .extend({
+      domestic_treasury_source_document_reference: z.string().trim().min(1),
+    }).strict();
+
+export const twoCountryMixedPdfReviewSchema = twoCountryInterestPdfReviewSchema
+  .omit({
+    column_a_source_document_reference: true,
+    column_a_irs_country_code: true,
+    column_b_source_document_reference: true,
+    column_b_irs_country_code: true,
+  }).extend({
+    column_a_interest_source_document_reference: z.string().trim().min(1),
+    column_a_interest_irs_country_code: z.string().length(2),
+    column_b_dividend_source_document_reference: z.string().trim().min(1),
+    column_b_dividend_irs_country_code: z.string().length(2),
+  }).strict();
+
+export const threeCountryMixedPdfReviewSchema = twoCountryMixedPdfReviewSchema
+  .extend({
+    column_c_interest_source_document_reference: z.string().trim().min(1),
+    column_c_interest_irs_country_code: z.string().length(2),
+  }).strict();
 
 export const partnershipK3PassiveInterestSchema = z.object({
   partnership_ein: z.string().regex(/^\d{9}$/),
@@ -388,6 +448,29 @@ export type RedeterminationDisclosure = z.infer<
   typeof redeterminationDisclosureSchema
 >;
 
+/** The staged Schedule C workpaper cannot establish an accepted affected-year
+ * return, amendment receipt, or the 2025 return's carryover consequences. */
+export function scheduleCFilingBlockReason(raw: unknown): string {
+  const ledgers = z.array(redeterminationDisclosureSchema).min(1).parse(raw);
+  const changed = ledgers.flatMap((ledger) =>
+    ledger.affected_years.filter((year) =>
+      year.redetermined_us_tax_liability_usd !==
+        year.us_tax_liability_on_filed_return_usd
+    ).map((year) => `${ledger.income_category} ${year.tax_year_end}`)
+  );
+  if (changed.length > 0) {
+    return `Form 1116 Schedule C cannot file: ${
+      changed.join(", ")
+    } changes U.S. liability; authenticated affected-year filing and amendment receipts, intervening-year attributes, and the 2025 Form 1116/Schedule 3/Form 1040 join are required`;
+  }
+  const years = ledgers.map((ledger) =>
+    `${ledger.income_category} ${ledger.relation_back_year_end}`
+  );
+  return `Form 1116 Schedule C cannot file: ${
+    years.join(", ")
+  } has no liability change, but authenticated filed-year records, intervening-year attributes, and the 2025 Form 1116/Schedule 3/Form 1040 join are required`;
+}
+
 export const carryoverReviewSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
   prior_year_form1116_line23_limit: z.number().nonnegative(),
@@ -399,6 +482,11 @@ export const carryoverReviewSchema = z.object({
 
 const priorYearCarryoverVintageSchema = z.object({
   vintage_tax_year: z.union([
+    z.literal(2015),
+    z.literal(2016),
+    z.literal(2017),
+    z.literal(2018),
+    z.literal(2019),
     z.literal(2020),
     z.literal(2021),
     z.literal(2022),
@@ -410,14 +498,25 @@ const priorYearCarryoverVintageSchema = z.object({
 
 export const priorYearCarryoverSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
-  // Filed 2024 Schedule B line 8: reviewed 2020-2024 columns and total.
-  // In 2025 these shift to the fifth- through first-preceding columns.
-  vintages: z.array(priorYearCarryoverVintageSchema).min(1).max(5),
+  // Filed 2024 Schedule B line 8: reviewed 2015-2024 columns and total.
+  // In 2025 these shift to the tenth- through first-preceding columns.
+  vintages: z.array(priorYearCarryoverVintageSchema).min(1).max(10),
   prior_year_schedule_b_line8_total: z.number().int().positive(),
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
 }).strict().superRefine((source, ctx) => {
+  if (
+    source.income_category !== IncomeCategory.Passive &&
+    source.vintages.some((v) => v.vintage_tax_year <= 2017)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 1116 pre-2018 general-category carryover needs separate foreign-branch allocation evidence",
+      path: ["vintages"],
+    });
+  }
   if (
     new Set(source.vintages.map((v) => v.vintage_tax_year)).size !==
       source.vintages.length
@@ -502,6 +601,16 @@ export const inputSchema = z.object({
     singleSourcePdfReviewSchema,
     singleSourceK3PdfReviewSchema,
   ]).optional(),
+  multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
+  mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
+    .optional(),
+  two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
+    .optional(),
+  three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
+    .optional(),
+  two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
+  three_country_mixed_pdf_review: threeCountryMixedPdfReviewSchema.optional(),
+  two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
 });
 
 type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
@@ -637,14 +746,32 @@ function categoryTotals(
         "Form 1116 needs worldwide gross income to apportion deductions",
       );
     }
+    const oneCountry1099PassiveIncome = matching.length > 1 &&
+      matching.every((item) =>
+        item.tax_reported_on_1099 === true &&
+        (item.tax_kind === ForeignTaxKind.Interest ||
+          item.tax_kind === ForeignTaxKind.Dividends) &&
+        item.irs_country_code === matching[0].irs_country_code
+      ) && (matching.every((item) =>
+        item.tax_kind === ForeignTaxKind.Interest
+      ) ||
+        (matching.length === 2 &&
+          new Set(matching.map((item) => item.tax_kind)).size === 2));
     const automaticApportioned = worldwideGrossIncome > 0
-      ? matching.reduce(
-        (sum, item) =>
-          sum +
+      ? oneCountry1099PassiveIncome
+        ? Math.round(
           generalDeductions *
-            fraction(item.foreign_gross_income, worldwideGrossIncome),
-        0,
-      )
+            fraction(foreignGrossIncome, worldwideGrossIncome),
+        )
+        : matching.reduce(
+          (sum, item) =>
+            sum +
+            Math.round(
+              generalDeductions *
+                fraction(item.foreign_gross_income, worldwideGrossIncome),
+            ),
+          0,
+        )
       : 0;
     const vehicleInterestByCountry = [...vehicleInterestAllocations]
       .filter(([key]) => key.startsWith(`${category}|`))
@@ -812,9 +939,9 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.foreign_tax_redeterminations?.length ?? 0) > 0) {
-      throw new Error(
-        "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-      );
+      throw new Error(scheduleCFilingBlockReason(
+        input.foreign_tax_redeterminations,
+      ));
     }
     for (const item of input.foreign_tax_items ?? []) {
       if (
@@ -1048,9 +1175,26 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         us_tax_before_credits: input.us_tax_before_credits,
         category_summaries: categories,
         single_source_pdf_review: input.single_source_pdf_review,
+        multi_source_pdf_review: input.multi_source_pdf_review,
+        mixed_interest_dividend_pdf_review:
+          input.mixed_interest_dividend_pdf_review,
+        two_country_interest_pdf_review: input.two_country_interest_pdf_review,
+        three_country_interest_pdf_review:
+          input.three_country_interest_pdf_review,
+        two_country_mixed_pdf_review: input.two_country_mixed_pdf_review,
+        three_country_mixed_pdf_review: input.three_country_mixed_pdf_review,
+        two_country_treasury_pdf_review: input.two_country_treasury_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });
+    const origin2015 =
+      priorCarryovers[0]?.vintages.find((vintage) =>
+        vintage.vintage_tax_year === 2015
+      )?.prior_year_schedule_b_line8_vintage_amount ?? 0;
+    const expired2015 = Math.max(
+      0,
+      origin2015 - (categories[0]?.usedPriorYearCarryover ?? 0),
+    );
     if (carryoverReview && priorCarryovers.length === 1) {
       outputs.push({
         nodeType: "form1116_schedule_b",
@@ -1061,7 +1205,8 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
           prior_year_review: carryoverReview,
           prior_year_carryover: categories[0].priorYearCarryover,
           used_prior_year_carryover: 0,
-          remaining_prior_year_carryover: categories[0].priorYearCarryover,
+          remaining_prior_year_carryover:
+            (categories[0].priorYearCarryover ?? 0) - expired2015,
           prior_year_carryover_source: priorCarryovers[0],
         },
       });
@@ -1086,7 +1231,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
           used_prior_year_carryover: categories[0].usedPriorYearCarryover,
           remaining_prior_year_carryover:
             (categories[0].priorYearCarryover ?? 0) -
-            (categories[0].usedPriorYearCarryover ?? 0),
+            (categories[0].usedPriorYearCarryover ?? 0) - expired2015,
           prior_year_carryover_source: priorCarryovers[0],
         },
       });

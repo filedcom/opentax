@@ -40,6 +40,8 @@ import type { FilerIdentity } from "../../mef/header.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 
 export interface MefBuildContext {
+  /** The initial document-discovery pass runs before stable document IDs exist. */
+  readonly phase?: "discovery" | "final";
   readonly filer?: FilerIdentity;
   /** Read-only full pending graph for cross-document reconciliation. */
   readonly pending?: Readonly<Record<string, unknown>>;

@@ -3,19 +3,22 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import {
-  type AtLeastOne,
-  output,
-  TaxNode,
-} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { scheduleE } from "../schedule_e/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";
+import { f3468 } from "../f3468/index.ts";
+import {
+  reconcileTrustPartVStatement,
+  trustPartVStatementSchema,
+} from "../f3468/trust-part-v-source.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import {
@@ -41,8 +44,14 @@ export const itemSchema = z.object({
   entity_type: z.enum(["estate", "trust"]).optional(),
   estate_trust_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
-  box13_code_m_orphan_drug_credit: z.number().int().positive().optional(),
-  orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  // TY2025 box 14 code M supplies Part V information, not a credit amount.
+  // Box 13 code M is the separate orphan-drug credit and stays closed here.
+  box13_code_m_clean_electricity_investment_credit: z.never().optional(),
+  box14_code_m_clean_electricity_investment_information: z.literal(true)
+    .optional(),
+  box14_code_m_form3468_part_v_statement: trustPartVStatementSchema.optional(),
+  box13_code_m_orphan_drug_credit: z.never().optional(),
+  orphan_drug_credit_subject_to_passive_activity_limit: z.never().optional(),
   box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
   box13_code_zz_new_markets_statement_reference: z.string().trim().min(1)
     .optional(),
@@ -61,11 +70,9 @@ export const itemSchema = z.object({
   // income not already included in Form 4952's manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
 
-  // Distributable Net Income (DNI) — the ceiling on beneficiary inclusion
-  // per IRC §662(a). If provided and total distributions exceed DNI, all
-  // income characters are scaled proportionally per IRC §662(b).
-  // Omit (or set equal/greater than total distributions) to apply no cap.
-  distributable_net_income: z.number().nonnegative().optional(),
+  // Fiduciary-allocated K-1 boxes are final beneficiary shares. A second
+  // beneficiary-side DNI cap would underreport them, so reject that input.
+  distributable_net_income: z.never().optional(),
 
   // Box 1 — Interest income → Schedule B Part I
   box1_interest: z.number().nonnegative().optional(),
@@ -76,11 +83,11 @@ export const itemSchema = z.object({
   // Box 2b — Qualified dividends → Form 1040 line 3a
   box2b_qualified_dividends: z.number().nonnegative().optional(),
 
-  // Box 3 — Net short-term capital gain/loss → Schedule D line 5 (K-1 ST)
-  box3_net_st_cap_gain: z.number().optional(),
+  // Box 3 — Net short-term capital gain → Schedule D line 5 (K-1 ST)
+  box3_net_st_cap_gain: z.number().nonnegative().optional(),
 
-  // Box 4a — Net long-term capital gain/loss → Schedule D line 12 (K-1 LT)
-  box4a_net_lt_cap_gain: z.number().optional(),
+  // Box 4a — Net long-term capital gain → Schedule D line 12 (K-1 LT)
+  box4a_net_lt_cap_gain: z.number().nonnegative().optional(),
 
   // Box 4b — 28% rate gain (informational; used in Schedule D 28% Rate Gain Worksheet)
   box4b_28pct_rate_gain: z.number().nonnegative().optional(),
@@ -88,17 +95,25 @@ export const itemSchema = z.object({
   // Box 4c — Unrecaptured §1250 gain (informational; Schedule D Worksheet line 11)
   box4c_unrecaptured_1250: z.number().nonnegative().optional(),
 
-  // Box 5 — Other portfolio income/loss → Schedule 1 line 8z
-  box5_other_portfolio: z.number().optional(),
+  // Box 5 — Other portfolio income → Schedule E Part III, column (f)
+  box5_other_portfolio: z.number().int().nonnegative().optional(),
 
-  // Box 6 — Ordinary business income/loss → Schedule E page 2 → Schedule 1 line 5
-  box6_ordinary_business: z.number().optional(),
+  // Box 6 — Ordinary business income → Schedule E page 2 → Schedule 1 line 5
+  box6_ordinary_business: z.number().int().nonnegative().optional(),
 
-  // Box 7 — Net rental real estate income/loss → Schedule E → Schedule 1 line 5
-  box7_rental_real_estate: z.number().optional(),
+  // Box 7 — Net rental real estate income → Schedule E → Schedule 1 line 5
+  box7_rental_real_estate: z.number().int().nonnegative().optional(),
 
-  // Box 8 — Other rental income/loss → Schedule E → Schedule 1 line 5
-  box8_other_rental: z.number().optional(),
+  // Box 8 — Other rental income → Schedule E → Schedule 1 line 5
+  box8_other_rental: z.number().int().nonnegative().optional(),
+  box6_8_activity_statement: z.array(
+    z.object({
+      box: z.enum(["6", "7", "8"]),
+      activity_name: z.string().trim().min(1),
+      statement_reference: z.string().trim().min(1),
+      income: z.number().int().positive(),
+    }).strict(),
+  ).min(1).optional(),
 
   // Box 9 — Directly apportioned deductions (codes A–B)
   // Deductions allocated directly to the beneficiary (e.g. depreciation, depletion).
@@ -111,6 +126,18 @@ export const itemSchema = z.object({
 
   // Box 11 — Final year deductions (excess deductions on termination)
   box11_final_year_deductions: z.number().nonnegative().optional(),
+  box11_code_a_section67e_excess_deduction: z.number().int().positive()
+    .optional(),
+  box11_code_a_statement_reference: z.string().trim().min(1).optional(),
+  box11_code_c_short_term_capital_loss_carryover: z.number().int().positive()
+    .optional(),
+  box11_code_c_statement_reference: z.string().trim().min(1).optional(),
+  box11_code_d_long_term_capital_loss_carryover: z.number().int().positive()
+    .optional(),
+  box11_code_d_statement_reference: z.string().trim().min(1).optional(),
+  box11_final_k1: z.literal(true).optional(),
+  box11_beneficiary_succeeds_to_property: z.literal(true).optional(),
+  beneficiary_ssn: z.string().regex(/^\d{9}$/).optional(),
 
   // Uncoded box 12 cannot identify a Form 6251 line.
   box12_amt: z.number().optional(),
@@ -142,20 +169,178 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.box14_code_m_clean_electricity_investment_information !== undefined ||
+    item.box14_code_m_form3468_part_v_statement !== undefined
+  ) {
+    if (
+      item.entity_type !== "trust" ||
+      item.box14_code_m_clean_electricity_investment_information !== true ||
+      item.box14_code_m_form3468_part_v_statement === undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box14_code_m_form3468_part_v_statement"],
+        message:
+          "Trust K-1 box 14 code M needs a reviewed Form 3468 Part V statement",
+      });
+    } else {
+      try {
+        reconcileTrustPartVStatement(
+          item.box14_code_m_form3468_part_v_statement,
+          item,
+        );
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["box14_code_m_form3468_part_v_statement"],
+          message: String(error),
+        });
+      }
+    }
+  }
+  for (
+    const key of [
+      "box4b_28pct_rate_gain",
+      "box4c_unrecaptured_1250",
+      "box10_estate_tax_deduction",
+      "box11_final_year_deductions",
+    ] as const
+  ) {
+    if ((item[key] ?? 0) > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: [key],
+        message:
+          `K-1 ${key} needs its coded tax-rate or deduction filing route`,
+      });
+    }
+  }
+  if (item.box11_code_a_section67e_excess_deduction !== undefined) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box11_code_a_statement_reference",
+        "box11_final_k1",
+        "box11_beneficiary_succeeds_to_property",
+        "beneficiary_ssn",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 11 code A needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box11_code_c_short_term_capital_loss_carryover !== undefined) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box11_code_c_statement_reference",
+        "box11_final_k1",
+        "box11_beneficiary_succeeds_to_property",
+        "beneficiary_ssn",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 11 code C needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box11_code_d_long_term_capital_loss_carryover !== undefined) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box11_code_d_statement_reference",
+        "box11_final_k1",
+        "box11_beneficiary_succeeds_to_property",
+        "beneficiary_ssn",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 11 code D needs ${key}`,
+        });
+      }
+    }
+  }
+  if (
+    (item.box5_other_portfolio ?? 0) !== 0 ||
+    (item.box6_ordinary_business ?? 0) > 0 ||
+    (item.box7_rental_real_estate ?? 0) > 0 ||
+    (item.box8_other_rental ?? 0) > 0
+  ) {
+    for (
+      const key of ["estate_trust_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 5 Schedule E income needs ${key}`,
+        });
+      }
+    }
+  }
+  const activityBoxes = [
+    ["6", "box6_ordinary_business"],
+    ["7", "box7_rental_real_estate"],
+    ["8", "box8_other_rental"],
+  ] as const;
+  for (const [box, key] of activityBoxes) {
+    const amount = item[key] ?? 0;
+    const rows = item.box6_8_activity_statement?.filter((row) =>
+      row.box === box
+    ) ?? [];
+    if (
+      amount < 0 || rows.reduce((sum, row) => sum + row.income, 0) !== amount ||
+      (amount > 0 && rows.length === 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: [key],
+        message:
+          `K-1 ${key} needs positive income reconciled to its per-activity statement; losses need the Schedule E limitation route`,
+      });
+    }
+  }
+  if ((item.box9_directly_apportioned_deductions ?? 0) > 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box9_directly_apportioned_deductions"],
+      message:
+        "K-1 box 9 deductions need their per-activity character and Schedule E limitation route",
+    });
+  }
   if ((item.box12_amt ?? 0) !== 0) {
     ctx.addIssue({
       code: "custom",
       path: ["box12_amt"],
-      message: "Uncoded K-1 box 12 AMT amount needs its source code before filing",
+      message:
+        "Uncoded K-1 box 12 AMT amount needs its source code before filing",
     });
   }
   if (item.box12_code_a_amt_adjustment !== undefined) {
-    for (const key of [
-      "estate_trust_ein",
-      "source_document_reference",
-      "box12_codes_b_through_f_absent",
-      "box12_codes_g_through_i_absent",
-    ] as const) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box12_codes_b_through_f_absent",
+        "box12_codes_g_through_i_absent",
+      ] as const
+    ) {
       if (item[key] === undefined) {
         ctx.addIssue({
           code: "custom",
@@ -163,34 +348,6 @@ export const itemSchema = z.object({
           message: `K-1 box 12 code A AMT adjustment needs ${key}`,
         });
       }
-    }
-  }
-  if (item.box13_code_m_orphan_drug_credit !== undefined) {
-    for (
-      const key of [
-        "entity_type",
-        "estate_trust_ein",
-        "source_document_reference",
-        "orphan_drug_credit_subject_to_passive_activity_limit",
-      ] as const
-    ) {
-      if (item[key] === undefined) {
-        ctx.addIssue({
-          code: "custom",
-          path: [key],
-          message: `K-1 box 13 code M orphan-drug credit needs ${key}`,
-        });
-      }
-    }
-    if (
-      item.box13_credits !== undefined &&
-      item.box13_credits < item.box13_code_m_orphan_drug_credit
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["box13_credits"],
-        message: "K-1 orphan-drug credit exceeds box 13 total credits",
-      });
     }
   }
   if (item.box13_code_zz_disabled_access_credit !== undefined) {
@@ -234,14 +391,35 @@ export const itemSchema = z.object({
   if (
     item.box13_credits !== undefined &&
     Math.round(item.box13_credits * 100) <
-      Math.round((item.box13_code_m_orphan_drug_credit ?? 0) * 100) +
-        Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100) +
+      Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100) +
         Math.round((item.box13_code_zz_new_markets_credit ?? 0) * 100)
   ) {
     ctx.addIssue({
       code: "custom",
       path: ["box13_credits"],
       message: "K-1 named credits exceed box 13 total credits",
+    });
+  }
+  const namedCredits = (item.box13_code_zz_disabled_access_credit ?? 0) +
+    (item.box13_code_zz_new_markets_credit ?? 0);
+  if ((item.box13_credits ?? 0) > namedCredits) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box13_credits"],
+      message:
+        "K-1 box 13 residual credits need their source codes and filing routes",
+    });
+  }
+  if (
+    (item.box14_foreign_tax ?? 0) > 0 &&
+    ((item.box14_foreign_income ?? 0) <= 0 ||
+      item.box14_foreign_income_category === undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box14_foreign_tax"],
+      message:
+        "K-1 box 14 foreign tax needs income and category before Form 1116 routing",
     });
   }
 });
@@ -252,77 +430,6 @@ export const inputSchema = z.object({
 
 type K1TrustItem = z.infer<typeof itemSchema>;
 type K1TrustItems = K1TrustItem[];
-
-// ─── DNI limitation (IRC §662) ────────────────────────────────────────────────
-
-// Compute total positive income across all characters for DNI comparison.
-// Losses are excluded from the total — they reduce DNI directly at the trust level.
-function totalPositiveIncome(item: K1TrustItem): number {
-  return (
-    (item.box1_interest ?? 0) +
-    (item.box2a_ordinary_dividends ?? 0) +
-    Math.max(0, item.box3_net_st_cap_gain ?? 0) +
-    Math.max(0, item.box4a_net_lt_cap_gain ?? 0) +
-    Math.max(0, item.box5_other_portfolio ?? 0) +
-    Math.max(0, item.box6_ordinary_business ?? 0) +
-    Math.max(0, item.box7_rental_real_estate ?? 0) +
-    Math.max(0, item.box8_other_rental ?? 0)
-  );
-}
-
-// Apply the DNI limitation per IRC §662(a)/(b).
-// If total distributions exceed DNI, scale every income character proportionally
-// so that the beneficiary's total inclusion equals DNI.
-// Losses pass through unchanged (they are not "distributed income").
-function applyDniLimit(item: K1TrustItem): K1TrustItem {
-  const dni = item.distributable_net_income;
-  if (dni === undefined) return item;
-
-  const total = totalPositiveIncome(item);
-  if (total <= 0 || total <= dni) return item;
-
-  const ratio = dni / total;
-
-  return {
-    ...item,
-    box1_interest: item.box1_interest !== undefined
-      ? item.box1_interest * ratio
-      : undefined,
-    box2a_ordinary_dividends: item.box2a_ordinary_dividends !== undefined
-      ? item.box2a_ordinary_dividends * ratio
-      : undefined,
-    box2b_qualified_dividends: item.box2b_qualified_dividends !== undefined
-      ? item.box2b_qualified_dividends * ratio
-      : undefined,
-    box3_net_st_cap_gain:
-      item.box3_net_st_cap_gain !== undefined && item.box3_net_st_cap_gain > 0
-        ? item.box3_net_st_cap_gain * ratio
-        : item.box3_net_st_cap_gain,
-    box4a_net_lt_cap_gain:
-      item.box4a_net_lt_cap_gain !== undefined && item.box4a_net_lt_cap_gain > 0
-        ? item.box4a_net_lt_cap_gain * ratio
-        : item.box4a_net_lt_cap_gain,
-    box5_other_portfolio:
-      item.box5_other_portfolio !== undefined && item.box5_other_portfolio > 0
-        ? item.box5_other_portfolio * ratio
-        : item.box5_other_portfolio,
-    box6_ordinary_business: item.box6_ordinary_business !== undefined &&
-        item.box6_ordinary_business > 0
-      ? item.box6_ordinary_business * ratio
-      : item.box6_ordinary_business,
-    box7_rental_real_estate: item.box7_rental_real_estate !== undefined &&
-        item.box7_rental_real_estate > 0
-      ? item.box7_rental_real_estate * ratio
-      : item.box7_rental_real_estate,
-    box8_other_rental:
-      item.box8_other_rental !== undefined && item.box8_other_rental > 0
-        ? item.box8_other_rental * ratio
-        : item.box8_other_rental,
-    box14_foreign_income: item.box14_foreign_income !== undefined
-      ? item.box14_foreign_income * ratio
-      : undefined,
-  };
-}
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
@@ -363,58 +470,68 @@ function f1040QualDivOutput(items: K1TrustItems): NodeOutput[] {
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1TrustItems): NodeOutput[] {
   const totalSt = items.reduce(
-    (sum, item) => sum + (item.box3_net_st_cap_gain ?? 0),
+    (sum, item) =>
+      sum + (item.box3_net_st_cap_gain ?? 0) -
+      (item.box11_code_c_short_term_capital_loss_carryover ?? 0),
     0,
   );
   const totalLt = items.reduce(
-    (sum, item) => sum + (item.box4a_net_lt_cap_gain ?? 0),
+    (sum, item) =>
+      sum + (item.box4a_net_lt_cap_gain ?? 0) -
+      (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
     0,
   );
-  const hasSt = totalSt !== 0;
-  const hasLt = totalLt !== 0;
+  const finalLtCarryover = items.reduce(
+    (sum, item) =>
+      sum + (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
+    0,
+  );
+  const hasSt = items.some((item) =>
+    (item.box3_net_st_cap_gain ?? 0) !== 0 ||
+    item.box11_code_c_short_term_capital_loss_carryover !== undefined
+  );
+  const hasLt = totalLt !== 0 || finalLtCarryover > 0;
   if (!hasSt && !hasLt) return [];
 
   if (hasSt && hasLt) {
     return [
-      output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt }),
+      output(schedule_d, {
+        line_5_k1_st: totalSt,
+        line_12_k1_lt: totalLt,
+        ...(finalLtCarryover > 0
+          ? { trust_k1_code_d_loss: finalLtCarryover }
+          : {}),
+      }),
     ];
   }
   if (hasSt) {
     return [output(schedule_d, { line_5_k1_st: totalSt })];
   }
-  return [output(schedule_d, { line_12_k1_lt: totalLt })];
+  return [output(schedule_d, {
+    line_12_k1_lt: totalLt,
+    ...(finalLtCarryover > 0 ? { trust_k1_code_d_loss: finalLtCarryover } : {}),
+  })];
 }
 
-// Aggregate pass-through income/loss → schedule1
-// Box 6 (business) + Box 7 (rental RE) + Box 8 (other rental) → line5_schedule_e
-// Box 5 (other portfolio) → line8z_other_income
-function schedule1Output(items: K1TrustItems): NodeOutput[] {
-  const scheduleETotal = items.reduce(
-    (sum, item) =>
-      sum +
-      (item.box6_ordinary_business ?? 0) +
+function scheduleEOutputs(items: K1TrustItems): NodeOutput[] {
+  return items.flatMap((item) => {
+    const passiveIncome = (item.box6_ordinary_business ?? 0) +
       (item.box7_rental_real_estate ?? 0) +
-      (item.box8_other_rental ?? 0),
-    0,
-  );
-  const otherPortfolioTotal = items.reduce(
-    (sum, item) => sum + (item.box5_other_portfolio ?? 0),
-    0,
-  );
-
-  if (scheduleETotal === 0 && otherPortfolioTotal === 0) return [];
-  if (scheduleETotal !== 0 && otherPortfolioTotal !== 0) {
-    return [
-      output(schedule1, {
-        line5_schedule_e: scheduleETotal,
-        line8z_other_income: otherPortfolioTotal,
-      }),
-    ];
-  }
-  if (scheduleETotal !== 0) {
-    return [output(schedule1, { line5_schedule_e: scheduleETotal })];
-  }
-  return [output(schedule1, { line8z_other_income: otherPortfolioTotal })];
+      (item.box8_other_rental ?? 0);
+    return (item.box5_other_portfolio ?? 0) > 0 || passiveIncome > 0
+      ? [output(scheduleE, {
+        estate_trust_rows: [{
+          estate_trust_name: item.estate_trust_name,
+          estate_trust_ein: item.estate_trust_ein!,
+          source_document_reference: item.source_document_reference!,
+          ...(item.box5_other_portfolio
+            ? { other_income: item.box5_other_portfolio }
+            : {}),
+          ...(passiveIncome > 0 ? { passive_income: passiveIncome } : {}),
+        }],
+      })]
+      : [];
+  });
 }
 
 // Route foreign taxes → form_1116 (one output per K-1 with foreign taxes)
@@ -440,19 +557,6 @@ function form1116Outputs(items: K1TrustItems): NodeOutput[] {
         }],
       })
     );
-}
-
-// box9_directly_apportioned_deductions: deductions allocated directly to the beneficiary
-// (depreciation, depletion, etc.) that reduce income of the same character per IRC §1041.
-// Routed to schedule1 line8z_other_income as a negative adjustment to offset passthrough
-// income, which is the closest available sink until a dedicated schedule_e sink is wired.
-function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
-  const total = items.reduce(
-    (sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0),
-    0,
-  );
-  if (total <= 0) return [];
-  return [output(schedule1, { line8z_other_income: -total })];
 }
 
 function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
@@ -485,38 +589,6 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
         source_document_reference: item.source_document_reference,
         source_statement_reference:
           item.box13_code_zz_disabled_access_statement_reference,
-        credit_amount: credit,
-        subject_to_passive_activity_limit: false,
-      }],
-    })];
-  });
-}
-
-function orphanDrugCreditOutputs(items: K1TrustItems): NodeOutput[] {
-  return items.flatMap((item) => {
-    const credit = item.box13_code_m_orphan_drug_credit;
-    if (credit === undefined) return [];
-    if (
-      !item.entity_type || !item.estate_trust_ein ||
-      !item.source_document_reference
-    ) {
-      throw new Error("Estate/trust orphan-drug K-1 source is incomplete");
-    }
-    if (item.orphan_drug_credit_subject_to_passive_activity_limit) {
-      return [output(form8582cr, {
-        required_orphan_drug_k1_credits: [{
-          source_type: item.entity_type,
-          source_ein: item.estate_trust_ein,
-          source_document_reference: item.source_document_reference,
-          credit_amount: credit,
-        }],
-      })];
-    }
-    return [output(f3800, {
-      f8820_k1_credit_entries: [{
-        source_type: item.entity_type,
-        source_ein: item.estate_trust_ein,
-        source_document_reference: item.source_document_reference,
         credit_amount: credit,
         subject_to_passive_activity_limit: false,
       }],
@@ -563,6 +635,25 @@ function newMarketsCreditOutputs(items: K1TrustItems): NodeOutput[] {
   });
 }
 
+function cleanElectricityInvestmentCreditOutputs(
+  items: K1TrustItems,
+): NodeOutput[] {
+  return items.flatMap((item) => {
+    if (item.box14_code_m_clean_electricity_investment_information !== true) {
+      return [];
+    }
+    const statement = item.box14_code_m_form3468_part_v_statement!;
+    return [output(f3468, {
+      trust_part_v_claims: [{
+        source_type: "trust",
+        source_ein: item.estate_trust_ein!,
+        source_document_reference: item.source_document_reference!,
+        statement,
+      }],
+    })];
+  });
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -571,10 +662,13 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     f1040,
     schedule_d,
     schedule1,
+    agi_aggregator,
+    scheduleE,
     form_1116,
     form4952,
     form6251,
     f3800,
+    f3468,
     form8582cr,
     disabledAccessLimit,
   ]);
@@ -582,30 +676,42 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_trusts } = inputSchema.parse(input);
 
-    // Apply DNI limitation per IRC §662 before routing any income
-    const limitedItems = k1_trusts.map(applyDniLimit);
-
     const outputs: NodeOutput[] = [
-      ...scheduleBInterestOutputs(limitedItems),
-      ...scheduleBDividendOutputs(limitedItems),
-      ...f1040QualDivOutput(limitedItems),
-      ...scheduleDOutput(limitedItems),
-      ...schedule1Output(limitedItems),
-      ...form1116Outputs(limitedItems),
-      ...apportionedDeductionOutputs(limitedItems),
-      ...disabledAccessCreditOutputs(limitedItems),
-      ...orphanDrugCreditOutputs(limitedItems),
-      ...newMarketsCreditOutputs(limitedItems),
-      ...limitedItems.flatMap((item) =>
-        (item.box12_code_a_amt_adjustment ?? 0) === 0
-          ? []
-          : [output(form6251, {
-            line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,
-          })]
+      ...scheduleBInterestOutputs(k1_trusts),
+      ...scheduleBDividendOutputs(k1_trusts),
+      ...f1040QualDivOutput(k1_trusts),
+      ...scheduleDOutput(k1_trusts),
+      ...scheduleEOutputs(k1_trusts),
+      ...(() => {
+        const codeAItems = k1_trusts.filter((item) =>
+          item.box11_code_a_section67e_excess_deduction !== undefined
+        );
+        if (codeAItems.length === 0) return [];
+        const amount = codeAItems.reduce(
+          (sum, item) => sum + item.box11_code_a_section67e_excess_deduction!,
+          0,
+        );
+        return [
+          output(schedule1, {
+            line24k_section67e_excess_deduction: amount,
+          }),
+          output(agi_aggregator, {
+            line24k_section67e_excess_deduction: amount,
+          }),
+        ];
+      })(),
+      ...form1116Outputs(k1_trusts),
+      ...disabledAccessCreditOutputs(k1_trusts),
+      ...newMarketsCreditOutputs(k1_trusts),
+      ...cleanElectricityInvestmentCreditOutputs(k1_trusts),
+      ...k1_trusts.flatMap((item) =>
+        (item.box12_code_a_amt_adjustment ?? 0) === 0 ? [] : [output(form6251, {
+          line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,
+        })]
       ),
     ];
 
-    for (const item of limitedItems) {
+    for (const item of k1_trusts) {
       if (item.investment_property_for_form4952 !== true) continue;
       if (
         (item.box2b_qualified_dividends ?? 0) >

@@ -76,18 +76,30 @@ export function runBoundedForm8990TwoPass(args: {
   const provisionalSource = stageProvisionalScheduleCInterest(
     { schedule_cs: args.returnInputs.schedule_c },
   );
+  const reviewedPriorCarryforward = proveZeroPriorForm8990Carryforward(
+    args.priorFiledForm8990,
+    args.returnInputs.general,
+  );
   reconcileBusinessInterestExpenseRecords(
     provisionalSource,
+    reviewedPriorCarryforward.taxpayerSsn,
     args.interestExpenseRecords,
   );
   const nonexemptPriorReceipts = proveNonexemptPriorReceipts(
     provisionalSource,
     args.priorFiledScheduleCs,
+    reviewedPriorCarryforward.taxpayerSsn,
   );
-  const reviewedPriorCarryforward = proveZeroPriorForm8990Carryforward(
-    args.priorFiledForm8990,
-    args.returnInputs.general,
-  );
+  if (
+    nonexemptPriorReceipts.sourceDocuments.some((document) =>
+      document.filed_schedule_c_document_reference ===
+        reviewedPriorCarryforward.sourceDocumentReference
+    )
+  ) {
+    throw new Error(
+      "Form 8990 filed Schedule C and prior Form 8990 need distinct documents",
+    );
+  }
   const plan = buildExecutionPlan(registry);
   const provisionalReturn = execute(
     plan,

@@ -1,7 +1,8 @@
 # TY2025 Form 8995 positive export boundary
 
-Status: tightly bounded, positive one-business Schedule C and one-farm Schedule
-F routes are implemented for Form 8995 MeF and PDF. Other positive shapes still
+Status: tightly bounded, positive one-business Schedule C, one-farm Schedule
+F, and one-issuer REIT-dividend-only routes are implemented for Form 8995 MeF
+and PDF. Other positive shapes still
 fail explicitly. This is not complete Form 8995 coverage and is not an approved
 product exclusion.
 
@@ -16,7 +17,116 @@ group has `minOccurs="0"`, so an aggregate-only XML fragment can be
 syntactically accepted by the schema while still failing to represent a complete
 claimed calculation. Schema permissiveness is not source proof.
 
+The general-input node now derives 2025 age-65 status from a valid birth date
+once and sends that result to Form 8995 as well as Form 1040 and the standard
+deduction worksheet. A synthetic single-filer calculation with $26,000 of
+ordinary dividends and $15,000 of section 199A dividends passes the full
+graph: the $17,750 age-adjusted standard deduction limits Form 8995 line 15
+and Form 1040 line 13 to $1,650, and taxable income is $600 after the separate
+$6,000 senior deduction. This is a calculation regression; that high-value
+dividend-only shape remains outside the bounded filing route below.
+
+## Implemented REIT-dividend-only route
+
+One issued, nonnominee 1099-DIV copy with box 1a equal to positive box 5 of at
+most $1,500 can now support a Form 8995 claim with no trade or business QBI.
+The copy needs payer and document identity plus a retained 91-day holding
+review showing more than 45 qualifying held days, excluded diminished-risk
+days, and no related-payment obligation. The return explicitly confirms no
+prior or suspended QBI loss and no specified-cooperative patronage. The
+calculation records zero lines 1–5, box 5 on lines 6/8, 20% on line 9, and
+the taxable-income limit on lines 11–15. Native MeF omits the optional
+business group and emits the complete numbered lines; the PDF leaves its
+business row blank. Both replay the issued copy and final Form 1040 lines
+3a/3b/13. A $1,000 positive full-return case and issued-copy, holding,
+source-graph, prepared-line, and final-return tamper cases are authored for
+deferred validation. Multiple issuers, qualified dividends, Schedule B
+amounts, prior REIT/PTP losses, and issued-copy byte authentication remain
+open. The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+put qualified REIT dividends on line 6 and calculate the 20% component
+separately from trade or business QBI.
+
 ## Implemented one-business route
+
+The one-Schedule-C route also combines exactly two distinct issued 1099-DIV
+copies: one with positive qualified dividends and one with reviewed section
+199A REIT dividends. Their combined ordinary dividends must be at most $1,500,
+so this bounded case does not require Schedule B. The REIT copy retains its
+91-day holding and related-payment review, while the qualified copy has no
+other dividend components. Native and PDF export replay both source copies,
+require distinct payer and document identities, and reconcile the REIT amount
+on Form 8995 lines 6/8/9, qualified dividends on line 12, Form 1040 lines
+3a/3b, and the final QBI deduction. A $700 ordinary/$500 qualified copy plus
+a separate $600 ordinary/$600 box 5 copy has authored positive and source,
+identity, holding-review, extra-copy, and return-tamper fixtures. These fixtures
+are unrun. This follows the
+[2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995) for
+the separate REIT component and line 12's qualified-dividend increase to net
+capital gain. Larger totals, Schedule B, other dividend boxes, capital gains,
+and issued-copy byte authentication remain open.
+
+One bounded extension combines that single sourced Schedule C business with
+one identified Form 1099-DIV whose whole box 1a ordinary-dividend amount is
+box 5 section 199A dividends. A separate reviewed record names the
+ex-dividend date, more than 45 qualified held days in its 91-day window,
+excluded diminished-risk days, and absence of a related-payment obligation.
+The issued copy must have no nominee status, no qualified dividend, capital-gain distribution,
+foreign amount or other dividend box, and no separate Schedule B trigger.
+Form 8995 lines 6/8 carry the box 5 amount, line 9 its rounded 20% component,
+and line 10 includes the business and REIT components. The exporter compares
+that record with Form 1040 line 3b, the final line 13 deduction, and every
+printed Form 8995 line; the PDF invokes the same source check. An executor
+positive case and amount, 91-day holding, related-payment, source-reference, qualified-dividend,
+return and prepared-line tamper fixtures are authored but unrun. More than three
+REIT issuers, qualified dividends, capital gains, prior REIT/PTP losses,
+PTP income, and issued-document byte authentication remain open. This follows
+the [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+for the separate qualified-REIT component and taxable-income limit.
+
+The same one-business route now accepts exactly two separately identified
+Form 1099-DIV issuers when each issued copy has only box 5 ordinary dividends,
+each has a distinct 91-day holding and related-payment review, and their
+combined box 1a/box 5 amount is no more than $1,500, so no Schedule B is
+required. The calculation retains each issuer's amount, source reference, and
+holding review. Native and PDF export require distinct payer names, document
+references, and review references and replay those retained facts against each
+issued copy; they sum both issued amounts into Form 8995
+lines 6/8/9, reconcile Form 1040 lines 3b/13, and replay every printed line.
+A full-return positive and changed-source, duplicate-identity, insufficient-
+holding, and changed-return fixtures are authored for the deferred validation
+pass. More than three issuers, Schedule B amounts, other dividend boxes, and
+issued-document byte authentication remain open.
+
+The one-Schedule-C route now also accepts exactly three distinct issued
+Form 1099-DIV copies when each has box 1a equal to positive box 5 section
+199A dividends and the combined ordinary dividends are at most $1,500. Each
+copy needs its own payer name, source reference, and 91-day holding-review
+reference; native and PDF export replay those identities and the full amounts
+against retained sources, Form 8995 lines 6–10, and Form 1040 lines 3b/13.
+An authored $350/$450/$500 positive case and amount, duplicate identity,
+holding, fourth-copy, return, and prepared-line tamper cases await the bulk
+gate. A simultaneous qualified-dividend issuer remains bounded to one REIT
+issuer; Schedule B amounts, additional boxes, and source-byte authentication
+remain open. The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+allow qualified REIT dividends in the line 6 aggregate; the
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+require Schedule B when ordinary dividends exceed $1,500.
+
+The one-Schedule-C route also accepts one identified, nonnominee Form 1099-DIV
+with positive box 1b qualified dividends not exceeding box 1a ordinary
+dividends. Box 1a must be at most $1,500; capital-gain distributions, section
+199A dividends, foreign tax, other dividend boxes, and any simultaneous REIT
+component are outside this route. The calculation places box 1b on Form 8995
+line 12, subtracts it from line 11 for line 13, and applies the 20% income
+limit on line 14. The native and PDF guards replay the issued-copy amounts
+against Form 1040 lines 3a/3b, Form 8995 lines 12-15, and Form 1040 line 13.
+An authored positive case uses box 1a $1,000 and box 1b $600; changed source
+amount, missing document reference, changed return, and changed prepared-line
+cases are authored but unrun. This follows the
+[2025 Form 8995 line 12 instructions](https://www.irs.gov/instructions/i8995).
+Qualified dividends from multiple issuers, mixed REIT and qualified dividends,
+Schedule B amounts, capital gains, and issued-copy byte authentication remain
+open.
 
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the
@@ -27,14 +137,16 @@ of a specified cooperative. The source Schedule C must independently recalculate
 to the business profit and match Schedule 1 line 3. The final Schedule 1 line 15
 must match the sourced half of self-employment tax when Schedule SE applies;
 that deduction reduces line 1 QBI. Lines 16-17 remain zero, so health insurance
-or retirement-plan deductions cannot be silently allocated. No other QBI, REIT/PTP, gain or
-qualified-dividend input is allowed. The
+or retirement-plan deductions cannot be silently allocated. Other QBI sources,
+capital gain, and dividend combinations beyond the bounded routes above remain
+closed. The
 [corrected IRS TY2025 instructions](https://www.irs.gov/instructions/i8995)
 define Form 8995 line 11 for 1040 filers as Form 1040 line 11a minus lines 12e
 and 13b. The code checks the same equation using its internal `line11_agi`,
 `line12c_deduction_total` (the filed line 12e total), and zero
 `line13b_additional_deductions` keys. Form 8995 line 12 is qualified dividends
-plus net capital gain; both are explicitly checked zero here. Form 1040 line 13
+plus net capital gain; the qualified-dividend route checks its nonzero box 1b
+amount, while the other bounded routes check line 12 as zero. Form 1040 line 13
 must equal Form 8995 line 15. The native XML includes the required business
 group and every line 2-17 in XSD order. The PDF maps the same business and lines
 to the official TY2025 AcroForm fields.
@@ -52,6 +164,21 @@ document. The synthetic profitable Schedule C fixture exercises the ordinary
 half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Implemented one-farm route
+
+One sourced Schedule F farm may now combine with one separately identified,
+nonnominee Form 1099-DIV containing qualified dividends in box 1b no greater
+than box 1a ordinary dividends, with box 1a at most $1,500. The farm source
+and half-SE-tax deduction still reconcile to Schedule 1. The issued dividend
+copy supplies Form 1040 lines 3a/3b and Form 8995 line 12, reducing the line
+13 taxable-income limit; line 15 remains tied to Form 1040 line 13. Native and
+PDF export replay the dividend copy, reject other dividend components and REIT
+anchors, and compare the final return and every printed QBI line. A positive
+$80,000 cash farm with $1,000 ordinary/$600 qualified dividends and source,
+return, and printed-line tamper fixtures are authored but unrun. The
+[2025 Form 8995 line 12 instructions](https://www.irs.gov/instructions/i8995)
+require qualified dividends in the net-capital-gain limit. Multiple issuers,
+Schedule B amounts, capital gains, REIT/PTP combinations, source-byte
+authentication, and the full deferred validation batch remain open.
 
 The Schedule F node now retains an identified farm row with the source Schedule
 F item and its computed profit. A positive Form 8995 claim requires one farm ID,
@@ -125,8 +252,14 @@ reject. Focused and graph-to-export cases pass for the two bounded sources.
 The synthetic Schedule F filled PDF was visually reviewed and its full return
 passed local XSD validation. ATS validation and the broader routes remain open.
 
-The zero-deduction route needs a separate audit: a current REIT/PTP loss may
-still need a Form 8995 carryforward line even when no line 13 deduction is
-allowed. The existing calculation node can return no pending form in that case.
-Do not interpret the no-claim omission here as approval to drop a reportable
-carryforward.
+The zero-deduction route now rejects a negative net REIT/PTP line 8 at the
+calculation node instead of silently returning no pending form. Direct MeF and
+PDF zero-deduction calls also reject an indicated unfiled line 16 or 17 loss,
+or a negative net of current section 199A dividends and a prior REIT/PTP loss.
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8995) require a
+negative line 8 amount to carry forward and line 17 to be carried to the next
+year. A $3,000 current section 199A dividend less a $5,000 prior loss therefore
+needs a $2,000 ending loss record; the current source and export contract does
+not support that filing route. Focused node and direct native/PDF rejection
+cases are written but unrun. Source-backed line 17 filing, prior-loss
+provenance, and the wider zero-deduction audit remain open.

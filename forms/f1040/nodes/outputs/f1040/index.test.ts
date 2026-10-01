@@ -47,6 +47,117 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
+Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 750,
+    line7: 750,
+  };
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: true,
+        line16_income_tax: 0,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "Schedule R line 22 exceeds",
+  );
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: true,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 950,
+        credit_limit_schedule3_lines: { ...schedule3, line1: 200 },
+      }),
+    Error,
+    "Schedule R line 22 exceeds",
+  );
+  assertEquals(
+    fields({
+      taxpayer_age_65_or_older: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 750,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    150,
+  );
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: false,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "Schedule R credit needs",
+  );
+});
+
+Deno.test("f1040: Schedule R age credit accepts an older joint spouse and rejects MFS cohabitation", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 750,
+    line7: 750,
+  };
+  assertEquals(
+    fields({
+      filing_status: FilingStatus.MFJ,
+      taxpayer_age_65_or_older: false,
+      spouse_age_65_or_older: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 750,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    150,
+  );
+  assertThrows(
+    () =>
+      fields({
+        filing_status: FilingStatus.MFS,
+        taxpayer_age_65_or_older: true,
+        mfs_spouse_lived_with_taxpayer: true,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "lived apart all year",
+  );
+});
+
+Deno.test("f1040: Schedule R disability credit requires the reviewed source marker", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 225,
+    line7: 225,
+  };
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: false,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 225,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "reviewed disability evidence",
+  );
+  assertEquals(
+    fields({
+      taxpayer_age_65_or_older: false,
+      schedule_r_disability_qualified: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 225,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    675,
+  );
+});
+
 Deno.test("f1040: verifies Form 1116 lines 18 and 20 against filed return sources", () => {
   const f = fields({
     line11_agi: 80_000,
@@ -176,6 +287,7 @@ Deno.test("f1040: Form 1116 limitation requires the actual Form 1040 tax source"
 
 Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3", () => {
   const result = compute({
+    taxpayer_age_65_or_older: true,
     line16_income_tax: 1_500,
     line19_child_tax_credit: 100,
     line20_nonrefundable_credits: 300,
@@ -233,6 +345,7 @@ Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3",
 
 Deno.test("f1040: Form 8859 limits carryforward after the listed prior credits", () => {
   const result = compute({
+    taxpayer_age_65_or_older: true,
     line16_income_tax: 1_000,
     line19_child_tax_credit: 100,
     line20_nonrefundable_credits: 70,
@@ -428,6 +541,8 @@ Deno.test("f1040: Form 8912 uses tax remaining after allowed Form 3800 credit", 
     form3800_source_credits: {
       standardCredit: 200,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     form8912_source_lines: {
@@ -471,6 +586,8 @@ Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit
     form3800_source_credits: {
       standardCredit: 25_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 20_000,
@@ -501,6 +618,8 @@ Deno.test("f1040: passive Form 3800 credit is limited again by available tax", (
     form3800_source_credits: {
       standardCredit: 0,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines,
     },
     credit_limit_form6251_line9: 0,
@@ -526,6 +645,8 @@ Deno.test("f1040: specified Form 3800 credit uses its separate AMT limit", () =>
     form3800_source_credits: {
       standardCredit: 0,
       specifiedCredit: 10_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 25_000,
@@ -552,6 +673,8 @@ Deno.test("f1040: Form 3800 follows finalized personal clean-vehicle credit", ()
     form3800_source_credits: {
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 0,
@@ -574,6 +697,8 @@ Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC
     form3800_source_credits: {
       standardCredit: 1_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
@@ -607,6 +732,8 @@ Deno.test("f1040: MFS Form 3800 requires the spouse business-credit answer", () 
     form3800_source_credits: {
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 0,

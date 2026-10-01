@@ -1,5 +1,60 @@
 # TY2025 Form 8582 durable activity identity
 
+## Reviewed 2024 record joined to the 2025 return graph, unrun
+
+The public `form8582_prior_year_record` source now carries one typed, reviewed
+filed-2024 Form 8582 record into the existing Schedule E activity node. It names
+the accepted-return reference, filed Form 8582 reference, durable activity IDs,
+Part VII column (c) balances, and Part VIII/IX reporting form and loss
+character. Schedule E intake reconciles every positive prior PAL against the
+computed 2025 Form 8582 input before allowing the graph to proceed. The native
+Form 8582 builder replays this reconciliation against the pending Schedule E
+source; the PDF invokes that native builder. The bounded $5,000 prior PAL/$3,000
+current rental profit fixture reaches Schedule E, Form 8582, Schedule 1 and Form
+1040, plus a $2,000 activity-ID carryforward. Changed activity ID, prior source,
+amount and final return fixtures are authored for the deferred batch.
+
+The record is a reviewed transcription and its acceptance reference is an
+entered string. It does not authenticate 2024 return or IRS acknowledgment
+bytes. Both MeF and PDF export therefore reject any positive prior Form 8582 PAL
+until executor-owned accepted-return verification is available. The
+storage-ready 2025 ledger and 2026 opening validator below remain domain
+contracts; neither has a connected filing store. No tests, typecheck, XSD,
+filled-PDF, business-rule, or ATS run is claimed.
+
+## One filed-2024 operating PAL against the same rental's 2025 profit
+
+A bounded no-sale Part V route now uses one identified other-passive Schedule E
+rental's $5,000 prior operating PAL against $3,000 current profit. Its 2024 Form
+8582 Part VII column (c) amount, filed-document reference, and durable activity
+ID must match the 2025 source. Form 8582 allows $3,000 and retains $2,000 by
+activity ID; Schedule E and Schedule 1 net to zero while the final Form 1040
+retains the separately sourced $50,000 wages. Native export rechecks the
+activity, prior source, allowed/suspended split, Schedule 1, and Form 1040; the
+PDF projector invokes that check. Full-return, native/PDF, and prior-source and
+return-tamper fixtures are authored but unrun. The
+[2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582) place
+other-passive activity income and prior unallowed losses in Part V and direct
+the prior amount to the filed 2024 Part VII column (c). The supplied
+filed-return reference is not independently authenticated. Other activity mixes,
+dispositions, durable accepted-return import, and the full test/XSD/
+filled-PDF/business-rule/ATS batch remain open.
+
+## One current farm-rental loss offset by one rental profit
+
+A bounded no-prior, no-sale type-B route now joins one Form 4835 share-rent
+farm's $5,000 current at-risk loss to one distinct Schedule E rental's $3,000
+current profit. Form 8582 allows $3,000 of the farm loss against passive rental
+income and suspends $2,000 under the farm activity ID. The native Form 8582
+descriptor requires the two source activities, one W-2, final Schedule 1 line 5,
+and Form 1040 wages, additional income, and AGI to reconcile. The Form 8582 PDF
+replays the native check; Form 4835 PDF uses the same allowed-loss allocation. A
+full-return positive fixture and source/final-return tamper cases are authored
+but unrun. This is not an active-rental special allowance: both activities are
+other passive, and the farm source explicitly says the investment is all at
+risk. Other income, prior PALs, sales, multiple farms, source-byte
+authentication, and filled-PDF/XSD/ATS validation remain open.
+
 ## Native worksheet source-order join
 
 The native MeF/PDF worksheet now joins pending Schedule E/Form 4835 activities
@@ -16,6 +71,17 @@ removes an array-order dependency but does not establish transaction-level
 property identity, add a transaction-ID source, or change any §469(g)
 disposition/prior-loss release rule. Multiple-sale positive and same-total
 mismatch cases are written but unrun.
+
+The native sale join now also compares complete canonical Schedule E and Form
+4797 disposition records as a multiset before projecting Form 8582. Sale dates,
+proceeds, basis, retained-interest status, unrelated-buyer and fully-taxable
+assertions, installment status, and closing-document reference must match even
+when the net gain is unchanged. Reordered records remain valid; missing or
+duplicated transactions reject. The PDF invokes the same native guard. An
+entire-gain closing-reference mismatch and a retained-gain unrelated-buyer
+mismatch have focused native/PDF rejection fixtures written but unrun. This
+enforces agreement between entered records; it does not authenticate the closing
+document or expand the supported sale character.
 
 Active native MeF output now also requires a pending Schedule E/Form 4835 source
 context. Direct `form8582.build` calls with active rows and no context reject
@@ -163,6 +229,19 @@ Part I/II character. An absent row, duplicate character, altered amount, current
 sale, and active-rental combination reject. Source, node and native XML cases
 are written but unrun.
 
+A bounded no-income 2025 packet now carries a reviewed three-line 2024 Part IX
+record ($2,000 Schedule E, $6,000 Form 4797 Part I, and $2,000 Form 4797 Part
+II) without treating any suspended amount as a current deduction. The native
+Form 8582 Part V/VII/IX worksheet and the single printed PDF Part IX block
+retain each character. The native builder checks zero Schedule 1 income and
+the finalized wages-only Form 1040 for this route. A full-return fixture
+reconciles the three retained balances to the in-memory carryforward ledger
+and a complete three-row 2026 opening contract, with changed character,
+return, and opening-row rejection cases. The fixture's acceptance references
+are synthetic. Filing remains gated on authenticating the accepted 2024
+return; the 2026 import remains a contract, not an enabled engine route. These
+cases are written but unrun pending the full implementation batch.
+
 This only proves an entered reference and row reconciliation, not that the filed
 2024 return has been fetched or authenticated. A prior single-form Part VIII
 loss has only the separate bounded route below; active-rental prior Form 4797
@@ -197,6 +276,23 @@ durable cross-year import/export remain open.
 ## Remaining source and persistence gates
 
 ### Active-rental current loss ledger, written but unrun
+
+The version-1 ledger now also accepts one or two identified, actively
+participated Schedule E rentals with current losses and filed-2024 Part VII
+operating PALs, provided participation is affirmed for both years and there is
+no 2025 sale or Form 4797-character prior loss. The prior source reference and
+$8,000 opening balance remain on the activity row; a $20,000 current loss at
+$120,000 modified AGI allows $15,000 and ends with $13,000 suspended.
+Stored-ledger read recomputes against the original source and accepted-return
+reference. Native MeF Part IV column (c), Part II allowance, Parts VI–VIII
+allocation, and the PDF projector use the same identified Schedule E and
+filed-year facts. In a two-rental case with $28,000 and $12,000 of
+current-plus-prior losses, the $15,000 allowance allocates $10,500 and $4,500,
+leaving $17,500 and $7,500 by activity. Focused ledger, native, PDF projection,
+and mismatch cases are written but unrun. The
+[2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582) require
+active participation in both years to place the prior loss in Part IV; the filed
+2024 reference remains an entered fact, not an authenticated return.
 
 The storage-ready 2025 ledger first admitted one identified, actively
 participated Schedule E single-family rental with a current whole-dollar loss,
@@ -334,13 +430,23 @@ remains separate from this narrow complete-disposition route. An asserted
 outside these two sourced routes must still reject.
 
 The calculation currently emits `suspended_pal_8582` and activity-ID-keyed
-amounts in the in-memory `NodeResult`. The 2024 reviewed-record reconciler and
-2025 storage-ready snapshot above do not constitute a durable filed-year store,
-an authenticated filing-status lookup, or a 2026 importer. The native XML/PDF
-descriptor cannot establish those contracts. A production cross-year store must
-durably retain the reviewed source reference, activity ID, reporting form/part,
-original and used amounts, and resulting balance, then verify the next-year
-import against those records before a prior loss is used.
+amounts in the in-memory `NodeResult`. The graph-connected 2024 reviewed-record
+reconciler and 2025 storage-ready snapshot above do not constitute a durable
+filed-year store, an authenticated filing-status lookup, or a 2026 importer. The
+native XML/PDF descriptor cannot establish those contracts. A production
+cross-year store must durably retain the reviewed source reference, activity ID,
+reporting form/part, original and used amounts, and resulting balance, then
+verify the next-year import against those records before a prior loss is used.
+
+A strict 2026 opening-balance contract is now modeled as that next import
+prerequisite. `reconcileForm8582NextYearOpening` first re-derives the 2025
+ledger from its original source and accepted-return reference, then requires the
+2026 opening rows to match every positive ending loss by durable activity ID,
+Part VIII/IX, reporting form, and whole-dollar amount. It rejects missing,
+extra, duplicate, or changed rows and a changed 2025 source. Focused fixtures
+are authored but unrun. The accepted reference remains an externally supplied
+identifier; no IRS acknowledgment, durable store, or 2026 engine import is
+implemented, so this contract cannot by itself authorize a prior loss.
 
 ## MFS lived-apart calculation parity, written but unverified
 
@@ -355,6 +461,31 @@ as the existing $60,000 phase-out case. The full test and XSD batch remains
 unrun.
 
 ## PDF projection boundary
+
+### Three current-year Schedule E rental activities (2026-10-01, unrun)
+
+One bounded no-sale Part V route now offsets a $5,000 current loss from one
+type-B rental with $2,000 and $1,000 of profit from two distinct type-B rentals.
+Their durable activity IDs and individual Schedule E income/expense rows flow
+through Form 8582; $3,000 of loss is allowed against passive profit and $2,000
+remains suspended under the loss activity ID. Native Form 8582 and Schedule E,
+the PDF Part V/Part VII rows and three Schedule E properties, and Schedule
+1/Form 1040 zero net income are reconciled. A full-return positive and changed
+rental/return fixtures are authored for the deferred batch. This slice has no
+prior PAL, sale, grouping, or special rental allowance. Property and expense
+source bytes and the durable accepted-return ledger remain open.
+
+The same bounded three-property route now also covers one $2,000 passive
+rental profit against two separate $4,000 and $2,000 current-year losses. The
+$2,000 allowed loss offsets the profit on Schedule E and Schedule 1, while
+$4,000 remains suspended across the two loss activity IDs. The native and PDF
+Form 8582 builders require the linked Schedule E activity sources and finalized
+Schedule 1/Form 1040 totals to agree. A full-return fixture traces both
+activity balances into the 2025 ledger and two exact 2026 opening rows; missing
+or changed rows, activity source, or final return are rejection cases. The
+fixture uses a synthetic acceptance reference and does not authenticate an
+accepted return or enable a 2026 import. All cases remain unrun until the
+agreed implementation batch finishes.
 
 The earlier PDF descriptor assigned raw Schedule C/F and aggregate loss inputs
 to Part I lines 1a–1c and 2a–2c. On the
@@ -378,3 +509,26 @@ projection/guard cases are written but unrun. The requested full batch,
 canonical-field/widget-value check after fill, visual filled-PDF review, IRS
 business rules and ATS acceptance remain open. Until those checks run, the new
 PDF mapping is an unverified implementation, not a release clearance.
+
+## Retained long-held direct property sale
+
+A bounded type-B Schedule E rental with one retained-activity direct property
+sale can now carry a positive, no-depreciation Form 4797 Part I section 1231
+gain into Form 8582 Part V and Schedule D, while Form 8582 allocates a
+source-linked 2024 operating PAL back to Schedule E and Schedule 1. The source
+records the dated sale, signed closing-reference, explicit less-than-entire
+activity interest, filed 2024 Form 8582 Part VII amount, and a 2020–2024 section
+1231 lookback reference with zero nonrecaptured loss. Native MeF and Form
+4797/8582 PDFs match the sale to the same Schedule E activity and check the
+computed PAL. A full-return positive and tamper fixture are authored, but
+execution, XSD validation, and filled-PDF review await the agreed bulk pass.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+require passive sale gains on their normal Form 4797 lines and Form 8582 to
+allocate losses while the activity remains held. The
+[2025 Form 4797 instructions](https://www.irs.gov/instructions/i4797) place a
+long-held section 1231 sale on Part I line 2 and use line 8 for any five-year
+nonrecaptured section 1231 loss. This slice needs reviewed document bytes and an
+authenticated accepted 2024 return before the prior PAL is proven; other Part I
+dispositions, prior Form 4797-character PALs, recapture, partial §1231 lookback
+balances, and multi-activity joins remain closed.

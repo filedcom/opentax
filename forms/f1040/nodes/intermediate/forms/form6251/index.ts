@@ -11,6 +11,10 @@ import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { normalizeArray } from "../../../utils.ts";
+import {
+  assertPriorIsoSaleCalculation,
+  priorIsoSaleReviewSchema,
+} from "../../../../2025/form6251_prior_iso_sale.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;
@@ -151,9 +155,14 @@ export const inputSchema = z.object({
     })),
     has_other_capital_activity: z.boolean(),
   }).optional(),
+  prior_iso_sale_review: priorIsoSaleReviewSchema.optional(),
   // Line 2o: current-year regular circulation-cost deduction less the AMT
   // deduction, sourced from the reviewed §59(e) expenditure record.
   line2o_circulation_costs: z.number().int().finite().optional(),
+  // First-year non-home long-term contract AMT profit less deferred regular income.
+  line2p_long_term_contracts: z.number().int().positive().optional(),
+  // Schedule C current-year mining deduction less ten-year AMT amortization.
+  line2q_mining_costs: z.number().int().nonnegative().optional(),
 
   // Legacy mixed AMT source bucket. It cannot identify the filed line and is
   // rejected below until its producers have line-specific AMT refigures.
@@ -211,10 +220,22 @@ function estatesAndTrustsAdjustment(input: Form6251Input): number {
 }
 
 function line2kBasisDispositionAdjustment(input: Form6251Input): number {
-  return normalizeArray(input.line2k_8949_basis_dispositions).reduce(
-    (sum, row) => sum + row.amt_gain - row.regular_gain,
-    0,
+  const rows = normalizeArray(input.line2k_8949_basis_dispositions);
+  const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
+  const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
+  const lossLimit = input.filing_status === FilingStatus.MFS ? -1_500 : -3_000;
+  const signStable = rows.every((row) =>
+    (row.regular_gain > 0 && row.amt_gain > 0) ||
+    (row.regular_gain < 0 && row.amt_gain < 0)
   );
+  if (
+    rows.length > 0 && signStable &&
+    regularNet < 0 && amtNet < 0 &&
+    (regularNet < lossLimit || amtNet < lossLimit)
+  ) {
+    return Math.max(amtNet, lossLimit) - Math.max(regularNet, lossLimit);
+  }
+  return amtNet - regularNet;
 }
 
 // The fourth 2025 "Who Must File" test uses the signed total of lines 2c
@@ -228,6 +249,8 @@ function knownLine2cThrough3Total(input: Form6251Input): number {
     estatesAndTrustsAdjustment(input) +
     line2kBasisDispositionAdjustment(input) +
     (input.line2o_circulation_costs ?? 0) +
+    (input.line2p_long_term_contracts ?? 0) +
+    (input.line2q_mining_costs ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
     privateActivityBondInterest(input) +
@@ -243,6 +266,8 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
     line2j_estates_and_trusts: 0,
     line2k_8949_basis_dispositions: undefined,
     line2o_circulation_costs: 0,
+    line2p_long_term_contracts: 0,
+    line2q_mining_costs: 0,
     depreciation_adjustment: 0,
     nol_adjustment: 0,
     private_activity_bond_interest: 0,
@@ -268,6 +293,8 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
     estatesAndTrustsAdjustment(input) +
     line2kBasisDispositionAdjustment(input) +
     (input.line2o_circulation_costs ?? 0) +
+    (input.line2p_long_term_contracts ?? 0) +
+    (input.line2q_mining_costs ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
     privateActivityBondInterest(input) +
@@ -568,6 +595,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
     }
     const basisRows = normalizeArray(input.line2k_8949_basis_dispositions);
+    if (input.prior_iso_sale_review !== undefined) {
+      assertPriorIsoSaleCalculation(
+        input.prior_iso_sale_review,
+        basisRows,
+      );
+    }
     const basisIds = new Set<string>();
     const shortTermBasisRows = basisRows.filter((row) =>
       ["A", "B", "C"].includes(row.part)
@@ -578,36 +611,126 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const lossBasisRows = basisRows.filter((row) =>
       row.regular_gain < 0 || row.amt_gain < 0
     );
+    const regularBasisNet = basisRows.reduce(
+      (sum, row) => sum + row.regular_gain,
+      0,
+    );
+    const amtBasisNet = basisRows.reduce(
+      (sum, row) => sum + row.amt_gain,
+      0,
+    );
+    // Audited cross-term losses offset the other term's gain before Schedule D
+    // determines whether a preferential net capital gain remains.
+    const shortLossOffsetLongGain = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) && regularBasisNet > 0 && amtBasisNet > 0;
+    const longLossOffsetShortGain = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) && regularBasisNet > 0 && amtBasisNet > 0;
+    const lossLimit = input.filing_status === FilingStatus.MFS
+      ? -1_500
+      : -3_000;
+    const shortLossLongGainToAmtLoss = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length === 1 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
+      longTermBasisRows[0].regular_gain > 0 &&
+      longTermBasisRows[0].amt_gain < 0 &&
+      regularBasisNet > 0 && amtBasisNet < 0 && amtBasisNet >= lossLimit;
+    const shortGainLongLossToAmtLoss = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) && regularBasisNet > 0 && amtBasisNet < 0 &&
+      amtBasisNet >= lossLimit;
+    const shortLossLongGainToAmtLossStable = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length > 0 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
+      longTermBasisRows.every((row) =>
+        row.regular_gain > 0 && row.amt_gain > 0
+      ) && regularBasisNet > 0 && amtBasisNet < 0 &&
+      amtBasisNet >= lossLimit;
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
-      const regularNet = basisRows.reduce(
-        (sum, row) => sum + row.regular_gain,
-        0,
-      );
-      const amtNet = basisRows.reduce(
-        (sum, row) => sum + row.amt_gain,
-        0,
-      );
-      const lossLimit = input.filing_status === FilingStatus.MFS
-        ? -1_500
-        : -3_000;
       const oneTermOnly = shortTermBasisRows.length === basisRows.length ||
         longTermBasisRows.length === basisRows.length;
-      const fullyDeductibleNetLoss = regularNet < 0 && amtNet < 0 &&
-        regularNet >= lossLimit && amtNet >= lossLimit;
+      const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
+        regularBasisNet >= lossLimit && amtBasisNet >= lossLimit;
+      const cappedAuditedNetLoss = basisRows.every((row) =>
+        (row.regular_gain > 0 && row.amt_gain > 0) ||
+        (row.regular_gain < 0 && row.amt_gain < 0)
+      ) &&
+        regularBasisNet < 0 && amtBasisNet < 0 &&
+        (regularBasisNet < lossLimit || amtBasisNet < lossLimit);
+      const mixedFullyDeductibleLoss = !oneTermOnly &&
+        fullyDeductibleNetLoss &&
+        basisRows.every((row) =>
+          row.regular_gain < 0 && row.amt_gain < 0
+        );
+      const mixedFullyDeductibleOffsetLoss = !oneTermOnly &&
+        fullyDeductibleNetLoss &&
+        basisRows.some((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
+        basisRows.some((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
+        basisRows.every((row) =>
+          (row.regular_gain > 0 && row.amt_gain > 0) ||
+          (row.regular_gain < 0 && row.amt_gain < 0)
+        );
+      // One same-term lot can change from regular gain to AMT loss while
+      // other audited lots remain losses under both bases, provided the
+      // separate AMT net loss is fully deductible.
+      const sameTermGainToAmtLoss = basisRows.length >= 1 &&
+        oneTermOnly &&
+        basisRows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
+            .length === 1 &&
+        basisRows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
+            .length === basisRows.length - 1 &&
+        regularBasisNet > 0 && amtBasisNet < 0 && amtBasisNet >= lossLimit;
       // A positive net of short-term rows changes ordinary AMTI, not the
       // preferential Schedule D net capital gain or Form 6251 Part III.
       const positiveShortTermNet =
         shortTermBasisRows.length === basisRows.length &&
-        regularNet > 0 && amtNet > 0;
+        regularBasisNet > 0 && amtBasisNet > 0;
+      // A positive net of long-term rows is preferential gain after losses
+      // offset gains separately under the regular and AMT bases.
+      const positiveLongTermNet =
+        longTermBasisRows.length === basisRows.length &&
+        regularBasisNet > 0 && amtBasisNet > 0;
       if (
-        !oneTermOnly ||
-        lossBasisRows.some((row) =>
+        (!oneTermOnly && !cappedAuditedNetLoss &&
+          !mixedFullyDeductibleLoss &&
+          !mixedFullyDeductibleOffsetLoss &&
+          !shortLossOffsetLongGain &&
+          !longLossOffsetShortGain && !shortLossLongGainToAmtLoss &&
+          !shortGainLongLossToAmtLoss &&
+          !shortLossLongGainToAmtLossStable) ||
+        (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
-        ) ||
-        !(fullyDeductibleNetLoss || positiveShortTermNet) ||
-        (input.qualified_dividends ?? 0) !== 0 ||
+        ) && !sameTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
+        !(fullyDeductibleNetLoss || cappedAuditedNetLoss ||
+          positiveShortTermNet ||
+          positiveLongTermNet || shortLossOffsetLongGain ||
+          longLossOffsetShortGain || sameTermGainToAmtLoss ||
+          shortLossLongGainToAmtLoss || shortGainLongLossToAmtLoss ||
+          shortLossLongGainToAmtLossStable) ||
+        ((input.qualified_dividends ?? 0) > 0 &&
+          !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||
         (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
         (input.form4952_amt_election ?? 0) !== 0 ||
@@ -618,7 +741,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         (input.foreign_earned_income_exclusion ?? 0) !== 0
       ) {
         throw new Error(
-          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits or net positive short-term gains, with no preferential-rate or other capital activity",
+          "Form 6251 line 2k AMT basis losses need audited same-term or mixed-term deductible losses, all-loss lots with a separately capped loss, net positive same-term gains, or audited mixed-term gains remaining positive under both bases, with no preferential-rate extras or other capital activity",
         );
       }
     }
@@ -652,6 +775,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       if (
         !audit || audit.has_other_capital_activity || !auditedRows ||
         auditedRows.length !== basisRows.length ||
+        new Set(auditedRows.map((row) => row.source_transaction_id)).size !==
+          auditedRows.length ||
         auditedRows.some((audited) => {
           const source = basisRows.find((row) =>
             row.source_transaction_id === audited.source_transaction_id
@@ -695,7 +820,17 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
       if (
         regularNetCg !==
-          (lossBasisRows.length > 0 ? 0 : sourceRegularNetCapitalGain) ||
+          (shortLossOffsetLongGain || shortLossLongGainToAmtLoss ||
+              shortLossLongGainToAmtLossStable
+            ? regularBasisNet
+            : longLossOffsetShortGain
+            ? 0
+            : lossBasisRows.length > 0
+            ? longTermBasisRows.length === basisRows.length &&
+                regularBasisNet > 0
+              ? regularBasisNet
+              : 0
+            : sourceRegularNetCapitalGain) ||
         (shortTermBasisRows.length > 0 &&
           ((input.form4952_regular_election ?? 0) !== 0 ||
             (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
@@ -710,25 +845,29 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           "Form 6251 line 2k AMT basis path needs its identified rows to reconcile with regular Schedule D net capital gain, with no other capital activity, Form 4952, special-rate gain, or Form 2555",
         );
       }
-      // With only audited positive short-term gains, Schedule D has no net
-      // capital gain for either tax. Qualified dividends still use Part III;
-      // keep this route to bases where neither worksheet caps that amount.
+      // Qualified dividends and audited capital gains use Part III only when
+      // neither regular nor AMT taxable income caps their combined amount.
       if (
-        shortTermBasisRows.length > 0 && longTermBasisRows.length === 0 &&
         qualDiv > 0 &&
-        (qualDiv > (input.regular_taxable_income ?? 0) ||
-          qualDiv > taxableExcess)
+        (qualDiv + regularNetCg > (input.regular_taxable_income ?? 0) ||
+          qualDiv + Math.max(0, amtBasisNet) > taxableExcess)
       ) {
         throw new Error(
-          "Form 6251 short-term AMT basis with qualified dividends needs the dividend amount within regular and AMT taxable income",
+          "Form 6251 AMT basis with qualified dividends needs the preferential amount within regular and AMT taxable income",
         );
       }
     }
     // Positive short-term gains enter taxable income and line 2k, but never
     // become preferential net capital gain on the AMT Schedule D.
     const netCg = basisRows.length > 0
-      ? lossBasisRows.length > 0
+      ? shortLossOffsetLongGain
+        ? amtBasisNet
+        : longLossOffsetShortGain
         ? 0
+        : lossBasisRows.length > 0
+        ? longTermBasisRows.length === basisRows.length && amtBasisNet > 0
+          ? amtBasisNet
+          : 0
         : longTermBasisRows.reduce((sum, row) => sum + row.amt_gain, 0)
       : regularNetCg + line2k;
     const amtElection = input.form4952_amt_election ?? 0;

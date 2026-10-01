@@ -1,8 +1,11 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
+  assertMfsSstbOwner,
   calculateOneSstb8995ALines,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const partI = `${page}Table_PartI[0].`;
@@ -52,9 +55,9 @@ export function projectOneSstbScheduleA(
     line3: lines.source.business_w2_wages,
     line4: lines.source.business_ubia,
     line5: lines.line33,
-    line6: 197_300,
-    line7: lines.line33 - 197_300,
-    line8: 50_000,
+    line6: lines.threshold,
+    line7: lines.line33 - lines.threshold,
+    line8: lines.phaseInRange,
     line9: lines.phaseIn * 100,
     line10: lines.applicable * 100,
     line11: lines.line2,
@@ -72,4 +75,23 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields: projectOneSstbScheduleA,
+  instances(raw, filer) {
+    if (Object.keys(raw).length === 0) return [];
+    const input = inputSchema.strict().parse(raw);
+    if (input.filing_status === NodeFilingStatus.MFS) {
+      if (!filer || filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately) {
+        throw new Error("Form 8995-A Schedule A PDF MFS status differs from the final filer");
+      }
+      assertMfsSstbOwner(input, filer.primarySSN);
+    }
+    if (
+      input.filing_status === NodeFilingStatus.QSS &&
+      filer?.filingStatus !== HeaderFilingStatus.QualifyingSurvivingSpouse
+    ) {
+      throw new Error(
+        "Form 8995-A Schedule A PDF surviving-spouse status differs from the final filer",
+      );
+    }
+    return [raw];
+  },
 };

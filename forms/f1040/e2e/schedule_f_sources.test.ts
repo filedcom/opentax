@@ -14,6 +14,7 @@ const plan = buildExecutionPlan(registry);
 function farm(line4a: number) {
   return {
     farm_id: "north",
+    proprietor_recipient: "T" as const,
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100" as const,
     line_e_material_participation: true,
@@ -56,6 +57,7 @@ function sourceInputs(line4a: number) {
       payer_tin: "123456789",
       box1_nec: 8_000,
       for_routing: "schedule_f",
+      recipient_ssn: "123456789",
     }],
     auto_expense: [{
       farm_id: "north",
@@ -96,6 +98,7 @@ Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",
+        proprietor_recipient: "T",
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,

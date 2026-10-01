@@ -11,6 +11,63 @@ import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/f
 import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 
+Deno.test("Form 3800 rejects carryforward export until source rows and history evidence are linked", () => {
+  assertThrows(
+    () =>
+      form3800.build({
+        carryforward_vintages: [{
+          vintage: {
+            source_key: "2024-new-markets-1",
+            source_origin: { kind: PassiveCreditSourceOrigin.Self },
+            credit_type: "New markets credit",
+            form3800_credit_line: "1i",
+            originating_tax_year: 2024,
+            originating_tax_year_end_date: "2024-12-31",
+            source_document_reference: "2024 filed Form 8874",
+            originating_return_reference:
+              "2024 accepted Form 1040 and Form 3800",
+            permitted_carryback_years: 1,
+            credit_generated_as_filed: 1_000,
+            credit_allowed_origin_year: 400,
+            historical_uses: [],
+            prior_adjustments: [],
+            balance_carried_to_2025: 600,
+            original_reported_balance_carried_to_2025: 600,
+          },
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 40_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 20_000,
+          standardCredit: 0,
+          specifiedCredit: 0,
+          standardCarryforward: 600,
+          specifiedCarryforward: 0,
+        },
+        allowed_credit: 600,
+      }, {
+        documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+        documentIdsByTag: {
+          CarryforwardGeneralBusinessCr: ["CarryforwardGeneralBusinessCr1"],
+        },
+        pending: {
+          f1040: {
+            line16_income_tax: 40_000,
+            line20_nonrefundable_credits: 600,
+          },
+          schedule3: { line6a_total: 600, line7_total: 600, line8_total: 600 },
+          form6251: { line11_amt: 0, net_tmt: 20_000 },
+        },
+      }),
+    Error,
+    "needs authenticated prior-return evidence",
+  );
+});
+
 Deno.test("Form 3800 files a source-backed passive-only current-year credit", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
@@ -41,6 +98,8 @@ Deno.test("Form 3800 files a source-backed passive-only current-year credit", ()
     tentativeMinimumTax: 0,
     standardCredit: 0,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const xml = form3800.build({
     passive_source_allocations: [source],
@@ -129,6 +188,8 @@ const tax = {
   tentativeMinimumTax: 20_000,
   standardCredit: 5_000,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 const selfEarned = {
@@ -153,9 +214,10 @@ const windFacility = {
   facility_latitude: 30.267153,
   facility_longitude: -97.743061,
   facility_owned_by_filer: true,
-  ac_nameplate_kw: 900,
-  facility_placed_in_service_date: "2023-01-01",
-  facility_construction_start_date: "2022-12-01",
+  ac_nameplate_kw: 1_500,
+  maximum_net_output_mw: 1.5,
+  facility_placed_in_service_date: "2024-01-01",
+  facility_construction_start_date: "2023-06-01",
   production_period_start_date: "2025-01-01",
   production_period_end_date: "2025-12-31",
   increased_credit_reason: "none" as const,
@@ -187,6 +249,8 @@ function filedPending(
     f1040: {
       line16_income_tax: context.regularTax,
       line17_additional_taxes: context.alternativeMinimumTax,
+      line20_nonrefundable_credits: allowedCredit +
+        context.priorAllowableCredits,
     },
     form6251: {
       line11_amt: context.alternativeMinimumTax,
@@ -195,6 +259,7 @@ function filedPending(
     schedule3: {
       line6a_total: allowedCredit,
       line7_total: allowedCredit + context.priorAllowableCredits,
+      line8_total: allowedCredit + context.priorAllowableCredits,
     },
   };
 }
@@ -719,70 +784,152 @@ Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820"
   assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
 });
 
-Deno.test("Form 3800 files trust K-1 code M directly on line 1h", () => {
-  const businessTax = { ...tax, standardCredit: 1_250 };
+Deno.test("Form 3800 rejects estate and trust code M on orphan-drug line 1h", () => {
+  for (const source_type of ["estate", "trust"] as const) {
+    const businessTax = { ...tax, standardCredit: 1_250 };
+    assertThrows(
+      () =>
+        form3800.build({
+          f8820_k1_credit_entries: [{
+            source_type,
+            source_ein: "123456789",
+            source_document_reference: `2025 ${source_type} K-1`,
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          }],
+          tax_context: businessTax,
+          allowed_credit: 1_250,
+        }, {
+          pending: filedPending(businessTax, 1_250),
+          documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+        }),
+      Error,
+      "qualified clinical-testing and passive-activity source evidence",
+    );
+  }
+});
+
+Deno.test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V line 1v and final tax", () => {
+  const statement = {
+    source_document_reference: "k1-trust-2025",
+    statement_reference: "trust-solar-stmt",
+    reviewed_on: "2026-02-01",
+    reviewer_reference: "review-3468",
+    issuer_pdf_sha256: "a".repeat(64),
+    issuer_ein: "123456789",
+    beneficiary_ssn: "123456789",
+    facility_type: "solar",
+    facility_address: {
+      line1: "1 Sun St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    construction_started_on: "2024-06-01",
+    placed_in_service_on: "2025-03-01",
+    net_output_kw_ac: 500,
+    beneficiary_allocated_qualified_basis: 10_000,
+    beneficiary_allocated_credit: 3_000,
+    beneficiary_nonpassive_activity_reviewed: true,
+    generation_emissions_rate_zero: true,
+    no_prior_or_current_incompatible_section38_credit: true,
+    no_interconnection_property: true,
+    no_domestic_content_or_energy_community_bonus: true,
+    no_subsidized_financing_or_private_activity_bonds: true,
+    no_elective_payment_or_transfer: true,
+    no_cooperative_credit: true,
+    not_section48d_lessee_confirmed: true,
+  };
   const entry = {
     source_type: "trust" as const,
     source_ein: "123456789",
-    source_document_reference: "2025 trust K-1",
-    credit_amount: 1_250,
-    subject_to_passive_activity_limit: false,
+    source_document_reference: "k1-trust-2025",
+    source_statement_reference: "trust-solar-stmt",
+    credit_amount: 3_000,
+    subject_to_passive_activity_limit: false as const,
+  };
+  const businessTax = { ...tax, standardCredit: 3_000 };
+  const fields = {
+    f3468_trust_part_v_credit_entries: [entry],
+    tax_context: businessTax,
+    allowed_credit: 3_000,
+  };
+  const pending = {
+    ...filedPending(businessTax, 3_000),
+    f3800: fields,
+    k1_trust: {
+      k1_trusts: [{
+        estate_trust_name: "Solar Trust",
+        entity_type: "trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "k1-trust-2025",
+        beneficiary_ssn: "123456789",
+        box14_code_m_clean_electricity_investment_information: true,
+        box14_code_m_form3468_part_v_statement: statement,
+      }],
+    },
+    f3468: {
+      trust_part_v_source_reviews: [statement],
+      trust_part_v_claims: [{
+        source_type: "trust",
+        source_ein: "123456789",
+        source_document_reference: "k1-trust-2025",
+        statement,
+      }],
+    },
   };
   const context = {
-    pending: {
-      ...filedPending(businessTax, 1_250),
-      k1_trust: {
-        k1_trusts: [{
-          estate_trust_name: "Clinical trust",
-          entity_type: "trust" as const,
-          estate_trust_ein: "123456789",
-          source_document_reference: "2025 trust K-1",
-          box13_code_m_orphan_drug_credit: 1_250,
-          orphan_drug_credit_subject_to_passive_activity_limit: false,
-        }],
-      },
+    pending,
+    documentIdsByPendingKey: {
+      form6251: ["IRS6251_1"],
+      f3468: ["IRS3468_1"],
     },
-    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
   };
-  const xml = form3800.build({
-    f8820_k1_credit_entries: [entry],
-    tax_context: businessTax,
-    allowed_credit: 1_250,
-  }, context);
-  assertStringIncludes(xml, "<Form8820CYCreditsGrp>");
+  const parts = prepareForm3800DocumentParts(fields, context);
+  assertEquals(
+    parts?.currentAmounts.find((row) => row.line === "1v")?.totalCredit,
+    3_000,
+  );
+  assertEquals(
+    parts?.currentRows.find((row) => row.line === "1v")?.metadata.entity,
+    { ein: "123456789" },
+  );
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form3468PartVCYCreditsGrp");
+  assertEquals(xml.includes("<Frm3468PartVCYAggrgtAmtGrp"), false);
   assertStringIncludes(
     xml,
-    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+    "<CurrentYearCreditAllowedAmt>3000</CurrentYearCreditAllowedAmt>",
   );
-  assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
   assertThrows(
     () =>
       form3800.build({
-        f8820_k1_credit_entries: [{ ...entry, credit_amount: 1_251 }],
-        tax_context: { ...businessTax, standardCredit: 1_251 },
-        allowed_credit: 1_251,
-      }, {
+        ...fields,
+        f3468_trust_part_v_credit_entries: [{ ...entry, credit_amount: 3_001 }],
+      }, context),
+    Error,
+    "reviewed trust Form 3468 source",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
+        ...context,
+        documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+      }),
+    Error,
+    "one attached Form 3468",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
         ...context,
         pending: {
-          ...context.pending,
-          ...filedPending(businessTax, 1_251),
+          ...pending,
+          f1040: { ...pending.f1040, line20_nonrefundable_credits: 2_999 },
         },
       }),
     Error,
-    "does not reconcile to estate/trust K-1",
-  );
-  assertThrows(
-    () =>
-      form3800.build({
-        f8820_k1_credit_entries: [{
-          ...entry,
-          subject_to_passive_activity_limit: true,
-        }],
-        tax_context: businessTax,
-        allowed_credit: 1_250,
-      }, context),
-    Error,
-    "needs Form 8582-CR",
+    "Form 1040 line 20",
   );
 });
 
@@ -847,7 +994,7 @@ Deno.test("Form 3800 reconciles partnership and S-corporation code Z on line 1h"
   }
 });
 
-Deno.test("Form 3800 combines own Form 8820 and trust K-1 on line 1h", () => {
+Deno.test("Form 3800 rejects estate code M even alongside own Form 8820", () => {
   const ownForm = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -862,50 +1009,35 @@ Deno.test("Form 3800 combines own Form 8820 and trust K-1 on line 1h", () => {
     form8932_overlapping_wage_credit: 0,
     subject_to_passive_activity_limit: false,
   };
-  const entry = {
-    source_type: "estate" as const,
-    source_ein: "123456789",
-    source_document_reference: "2025 estate K-1",
-    credit_amount: 1_250,
-    subject_to_passive_activity_limit: false,
-  };
   const businessTax = { ...tax, regularTax: 50_000, standardCredit: 21_000 };
-  const xml = form3800.build({
-    f8820_credit: {
-      credit_amount: 19_750,
-      subject_to_passive_activity_limit: false,
-    },
-    f8820_k1_credit_entries: [entry],
-    tax_context: businessTax,
-    allowed_credit: 21_000,
-  }, {
-    pending: {
-      ...filedPending(businessTax, 21_000),
-      f8820: ownForm,
-      k1_trust: {
-        k1_trusts: [{
-          estate_trust_name: "Clinical estate",
-          entity_type: "estate" as const,
-          estate_trust_ein: "123456789",
+  assertThrows(
+    () =>
+      form3800.build({
+        f8820_credit: {
+          credit_amount: 19_750,
+          subject_to_passive_activity_limit: false,
+        },
+        f8820_k1_credit_entries: [{
+          source_type: "estate",
+          source_ein: "123456789",
           source_document_reference: "2025 estate K-1",
-          box13_code_m_orphan_drug_credit: 1_250,
-          orphan_drug_credit_subject_to_passive_activity_limit: false,
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: false,
         }],
-      },
-    },
-    documentIdsByPendingKey: {
-      f8820: ["IRS8820_1"],
-      form6251: ["IRS6251_1"],
-    },
-  });
-  assertStringIncludes(xml, "<Form8820CYCreditsGrp");
-  assertStringIncludes(
-    xml,
-    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
-  );
-  assertStringIncludes(
-    xml,
-    "<TotalGeneralBusCreditsAmt>21000</TotalGeneralBusCreditsAmt>",
+        tax_context: businessTax,
+        allowed_credit: 21_000,
+      }, {
+        pending: {
+          ...filedPending(businessTax, 21_000),
+          f8820: ownForm,
+        },
+        documentIdsByPendingKey: {
+          f8820: ["IRS8820_1"],
+          form6251: ["IRS6251_1"],
+        },
+      }),
+    Error,
+    "qualified clinical-testing and passive-activity source evidence",
   );
 });
 
@@ -1146,6 +1278,8 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
     ...tax,
     standardCredit: 0,
     specifiedCredit: 2_400,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const fields = {
     f5884_credit: {
@@ -1217,6 +1351,8 @@ Deno.test("Form 3800 reports pass-through-only Form 5884 credit without a recipi
     ...tax,
     standardCredit: 0,
     specifiedCredit: 1_250,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const xml = form3800.build({
     f5884_credit: {
@@ -1280,6 +1416,8 @@ Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are pa
     ...tax,
     standardCredit: 0,
     specifiedCredit: 3_650,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
     regularTax: 1_000,
     tentativeMinimumTax: 0,
   };
@@ -1407,17 +1545,27 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
       subject_to_passive_activity_limit: false,
     }],
   };
+  const k1_s_corp = {
+    k1_s_corps: [{
+      corporation_name: "Access Corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
+      box13_code_k_disabled_access_credit: 1_250,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  };
   const xml = form3800.build({
     f8826_credit_entries: [{
       source_type: "s_corporation",
       source_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 1_250,
       subject_to_passive_activity_limit: false,
     }],
     tax_context: { ...tax, standardCredit: 1_250 },
     allowed_credit: 1_250,
   }, {
-    pending: { ...filedPending(tax, 1_250), f8826: source },
+    pending: { ...filedPending(tax, 1_250), f8826: source, k1_s_corp },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   });
   assertStringIncludes(
@@ -1431,6 +1579,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
         f8826_credit_entries: [{
           source_type: "s_corporation",
           source_ein: "987654321",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 1_250,
           subject_to_passive_activity_limit: false,
         }],
@@ -1439,6 +1588,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
       }, {
         pending: {
           ...filedPending(tax, 1_250),
+          k1_s_corp,
           f8826: {
             ...source,
             pass_through_credits: [{
@@ -1454,7 +1604,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
         },
       }),
     Error,
-    "disabled-access entries do not reconcile",
+    "Passive Form 8826 pass-through credit needs its gross source ledger",
   );
 });
 
@@ -1596,27 +1746,27 @@ Deno.test("Form 3800 files direct partnership and S-corporation code K without F
         ? "does not reconcile to K-1 box 15 code K"
         : "does not reconcile to K-1 box 13 code K",
     );
-    assertThrows(
-      () =>
-        form3800.build(fields, {
-          ...context,
-          pending: {
-            ...context.pending,
-            f8826: {
-              eligible_expenditures: 0,
-              subject_to_passive_activity_limit: false,
-              pass_through_credits: [{
-                entity_type: source_type,
-                entity_ein: "123456789",
-                source_document_reference: entry.source_document_reference,
-                credit_amount: 1_250,
-                subject_to_passive_activity_limit: false,
-              }],
-            },
-          },
-        }),
-      Error,
-      "duplicated on Form 8826",
+    const withOptionalSource = form3800.build(fields, {
+      ...context,
+      pending: {
+        ...context.pending,
+        f8826: {
+          eligible_expenditures: 0,
+          subject_to_passive_activity_limit: false,
+          pass_through_credits: [{
+            entity_type: source_type,
+            entity_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+      },
+    });
+    assertStringIncludes(withOptionalSource, "<Form8826CYCreditsGrp>");
+    assertEquals(
+      withOptionalSource.includes('referenceDocumentName="IRS8826"'),
+      false,
     );
   }
 });
@@ -1809,11 +1959,13 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     f8826_credit_entries: [{
       source_type: "partnership" as const,
       source_ein: "111111111",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 2_000,
       subject_to_passive_activity_limit: false,
     }, {
       source_type: "s_corporation" as const,
       source_ein: "222222222",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],
@@ -1824,6 +1976,24 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     pending: {
       ...filedPending(fields.tax_context, 3_000),
       f8826: source,
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Access partnership",
+          partnership_ein: "111111111",
+          source_document_reference: "2025 disabled-access K-1",
+          box15_code_k_disabled_access_credit: 2_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      k1_s_corp: {
+        k1_s_corps: [{
+          corporation_name: "Access S corporation",
+          corporation_ein: "222222222",
+          source_document_reference: "2025 disabled-access K-1",
+          box13_code_k_disabled_access_credit: 3_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
     },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   };
@@ -1850,6 +2020,8 @@ Deno.test("Form 3800 descriptor links a specified Form 8835 facility", () => {
       ...tax,
       standardCredit: 0,
       specifiedCredit: 6_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 6_000,
   };
@@ -1898,6 +2070,8 @@ Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited sam
       tentativeMinimumTax: 0,
       standardCredit: 0,
       specifiedCredit: 12_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 7_000,
   };
@@ -1962,6 +2136,8 @@ Deno.test("Form 3800 descriptor requires a bundled transfer-election statement",
       ...tax,
       standardCredit: 0,
       specifiedCredit: 4_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 4_000,
   };

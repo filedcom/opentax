@@ -2,8 +2,10 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   allocateOtherPassivePrior4797,
   allocatePassiveActivityLosses,
+  assertMfsLivedApartSource,
   assertPriorYear8582Evidence,
   inputSchema,
+  mfsLivedApartSourceSchema,
   passiveLossLimit,
   priorYear8582SourceSchema,
 } from "../../../nodes/intermediate/forms/form8582/index.ts";
@@ -11,7 +13,7 @@ import {
   computePropertyNet,
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
-  qualifiedRetainedPartIISale,
+  qualifiedRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
   calculateForm4835AtRiskNet,
@@ -21,6 +23,8 @@ import {
   passivePropertySaleSchema,
   passiveSaleGain,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
+import { reconcileFiled2024Form8582Record } from "../../../nodes/intermediate/forms/form8582/prior_year_import.ts";
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -83,13 +87,24 @@ function linkedActivities(context: MefBuildContext): Array<{
   );
   if (
     scheduleE.schedule_es.some((item) =>
+      item.passive_property_sales?.some((sale) =>
+        sale.part === "I" && sale.entire_activity_interest_disposed === true
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+    );
+  }
+  if (
+    scheduleE.schedule_es.some((item) =>
       ((item.prior_unallowed_passive_operating ?? 0) > 0 ||
         (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
         (item.prior_unallowed_passive_4797_part2 ?? 0) > 0) &&
       (item.disposed_of === true ||
         (item.passive_property_sales?.length ?? 0) > 0) &&
       qualifiedEntireDispositionGain(item) === undefined &&
-      !qualifiedRetainedPartIISale(item)
+      !qualifiedRetainedPropertySale(item)
     )
   ) {
     throw new Error(
@@ -224,6 +239,29 @@ function assertLinkedSales(
       ? form4797.passive_property_sales
       : [],
   );
+  const scheduleESales = scheduleEInputSchema.parse(
+    context.pending.schedule_e ?? {},
+  ).schedule_es.flatMap((property) => property.passive_property_sales ?? []);
+  const saleCounts = (rows: typeof sales): Map<string, number> => {
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = JSON.stringify(row);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  };
+  const scheduleECounts = saleCounts(scheduleESales);
+  const form4797Counts = saleCounts(sales);
+  if (
+    scheduleESales.length !== sales.length ||
+    [...scheduleECounts].some(([key, count]) =>
+      form4797Counts.get(key) !== count
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Schedule E and Form 4797 disposition facts do not match property-sale sources",
+    );
+  }
   const actual = input.current_4797_sale_gains ?? [];
   const key = (
     activityId: string,
@@ -383,6 +421,183 @@ function buildOtherPassive(
     activeParticipation: false,
     filingStatus: input.filing_status,
   });
+  // A filed Part IX source with no current passive activity income must carry
+  // each reporting character intact. Reconcile the zero-deduction result to
+  // the finalized return before printing the three-line Part IX workpaper.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net === 0 &&
+    activities[0].prior_year_8582_source?.filed_part_ix_rows?.length === 3 &&
+    activities[0].prior_unallowed_operating > 0 &&
+    activities[0].prior_unallowed_4797_part1 > 0 &&
+    activities[0].prior_unallowed_4797_part2 > 0 &&
+    currentIncome === 0 && currentLoss === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      wages === undefined || !f1040 ||
+      limit.allowed !== 0 || limit.suspended !== priorLoss ||
+      (schedule1?.line5_schedule_e ?? 0) !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 Part IX zero-income carryover must reconcile its source, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // A prior operating PAL used against the same rental's current profit must
+  // cancel that profit on Schedule E, while leaving the remainder suspended.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net > 0 &&
+    activities[0].prior_unallowed_operating > activities[0].current_net &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !activities[0].prior_year_8582_source || !w2.success ||
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== activities[0].current_net ||
+      limit.suspended !==
+        activities[0].prior_unallowed_operating - activities[0].current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 prior rental loss and current profit must reconcile the filed-year source, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // One current Form 4835 loss offset by one unrelated Schedule E passive
+  // rental profit must reach the finalized return exactly once. This narrow
+  // no-prior, no-sale route has no special rental allowance.
+  const farmLoss = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const rentalProfit = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  if (
+    activities.length === 2 && farmLoss && rentalProfit &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = pending?.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const net = Math.max(0, rentalProfit.current_net + farmLoss.current_net);
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
+    if (
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !== Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
+      schedule1.line5_schedule_e !== net ||
+      (f1040.line8_additional_income ?? 0) !== net ||
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages + net
+    ) {
+      throw new Error(
+        "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // Three distinct passive rentals may share current profit across one or two
+  // loss activities. The remaining losses stay suspended by activity ID.
+  const scheduleELoss = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  const scheduleEProfits = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  const threeRentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && scheduleELoss.length >= 1 &&
+    scheduleEProfits.length >= 1 &&
+    threeRentalSource.success &&
+    threeRentalSource.data.schedule_es.length === 3 &&
+    context?.pending?.f4835 === undefined &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined &&
+    activities.every((activity) =>
+      activity.reporting_form === "schedule_e" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) &&
+    scheduleEProfits.reduce(
+        (total, activity) => total + activity.current_net,
+        0,
+      ) < scheduleELoss.reduce(
+        (total, activity) => total - activity.current_net,
+        0,
+      ) &&
+    saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const profits = scheduleEProfits.reduce(
+      (total, activity) => total + activity.current_net,
+      0,
+    );
+    if (
+      !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !==
+        (schedule1.line10_total_additional_income ?? 0) ||
+      typeof f1040.line9_total_income !== "number" ||
+      (f1040.line10_adjustments !== undefined &&
+        typeof f1040.line10_adjustments !== "number") ||
+      typeof f1040.line11_agi !== "number" ||
+      f1040.line11_agi !==
+        f1040.line9_total_income -
+          (typeof f1040.line10_adjustments === "number"
+            ? f1040.line10_adjustments
+            : 0)
+    ) {
+      throw new Error(
+        "Form 8582 three-rental passive offset must reconcile Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   const losses = activities.map((activity) =>
     Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
     activity.prior_unallowed_4797_part1 +
@@ -616,6 +831,12 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     }
 
     assertPriorYear8582Evidence(input);
+    const filed2024 = scheduleEInputSchema.parse(
+      context.pending.schedule_e ?? {},
+    ).filed_2024_form8582_record;
+    if (filed2024) {
+      reconcileFiled2024Form8582Record(filed2024, input);
+    }
     const activities = input.activities ?? [];
     if (
       activities.length > 0 &&
@@ -748,10 +969,20 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
           "Form 8582 MFS allowance needs general lived-apart source",
         );
       }
-      z.object({
+      const general = z.object({
         filing_status: z.literal("mfs"),
         mfs_spouse_lived_with_taxpayer: z.literal(false),
+        mfs_lived_apart_source: mfsLivedApartSourceSchema,
       }).parse(context.pending.general);
+      assertMfsLivedApartSource(input.mfs_lived_apart_source);
+      if (
+        JSON.stringify(general.mfs_lived_apart_source) !==
+          JSON.stringify(input.mfs_lived_apart_source)
+      ) {
+        throw new Error(
+          "Form 8582 MFS residence source differs from the filed general input",
+        );
+      }
     }
     const prior4797Allocation =
       activities.some((activity) =>
@@ -804,7 +1035,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     const upper = mfsApart ? 75_000 : 150_000;
     const maximum = mfsApart ? 12_500 : 25_000;
     const difference = Math.max(0, upper - magi);
-    const phasedMaximum = Math.min(maximum, difference * 0.5);
+    const phasedMaximum = Math.round(Math.min(maximum, difference * 0.5));
     const specialAllowance = overallNet < 0
       ? Math.max(0, limit.allowed - currentIncome)
       : 0;

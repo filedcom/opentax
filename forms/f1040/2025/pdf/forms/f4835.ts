@@ -5,6 +5,7 @@ import {
 } from "../../../nodes/inputs/f4835/index.ts";
 import { farmAllowedLosses } from "../../mef/forms/f4835_passive_loss.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { StandardFonts } from "pdf-lib";
 
 // Checked against the TY2025 Form 4835 AcroForm field tree and printed lines.
 const page = "topmostSubform[0].Page1[0]";
@@ -83,7 +84,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     text(`other_${index + 1}_amount`, 42 + index * 2),
   ]).flat(),
   text("line31_expenses", 55),
-  text("line32_income", 56),
+  { ...text("line32_income", 56), printZero: true },
   {
     kind: "checkboxWhen",
     domainKey: "risk_status",
@@ -106,6 +107,13 @@ function activityFields(
   const lines = calculateForm4835Lines(item);
   const other = item.expense_other_details ?? [];
   const capitalized = item.expense_capitalized_263a ?? 0;
+  const priorPassiveLoss = item.prior_unallowed_passive_operating ?? 0;
+  const reportedNet = lines.preliminaryNet >= 0 && priorPassiveLoss > 0
+    ? Math.max(0, lines.preliminaryNet - allowedLoss)
+    : lines.preliminaryNet;
+  const deductibleLoss = lines.preliminaryNet >= 0
+    ? Math.max(0, allowedLoss - lines.preliminaryNet)
+    : allowedLoss;
   const otherRows = Array.from({ length: 7 }, (_, index) => {
     if (index === 6 && capitalized > 0) {
       return {
@@ -133,20 +141,18 @@ function activityFields(
     ...Object.assign({}, ...otherRows),
     line31_expenses: lines.expenses,
     // The printed instructions require a loss to bypass line 32 and go to 34.
-    line32_income: lines.preliminaryNet >= 0 ? lines.preliminaryNet : undefined,
+    line32_income: lines.preliminaryNet >= 0 ? reportedNet : undefined,
+    line32_pal: priorPassiveLoss > 0 && allowedLoss > 0,
     risk_status: lines.preliminaryNet < 0
       ? item.some_investment_not_at_risk ? "some" : "all"
       : undefined,
-    line34c_allowed_loss: lines.preliminaryNet < 0 ? allowedLoss : undefined,
+    line34c_allowed_loss: lines.preliminaryNet < 0 || deductibleLoss > 0
+      ? deductibleLoss
+      : undefined,
   };
 }
 
 function assertSupportedPaperPath(item: F4835Item): void {
-  if ((item.prior_unallowed_passive_operating ?? 0) > 0) {
-    throw new Error(
-      "Form 4835 PDF needs the prior passive-loss PAL annotation on line 32",
-    );
-  }
   if ((item.ccc_loans_reported_election ?? 0) > 0) {
     throw new Error(
       "Form 4835 PDF needs the CCC loan election supporting statement",
@@ -164,7 +170,7 @@ export const form4835Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4835--2025.pdf",
   pageIndices: () => [0],
   filerFields: [
-    text("nameLine1", 1),
+    text("fullName", 1),
     text("primarySSN", 2),
   ],
   projectFields(raw, allPending) {
@@ -187,6 +193,16 @@ export const form4835Pdf: PdfFormDescriptor = {
       throw new Error("Form 4835 PDF needs source activity instances");
     }
     return activities as Record<string, unknown>[];
+  },
+  async decoratePages(document, pages, fields) {
+    if (fields.line32_pal !== true || !pages[0]) return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    pages[0].drawText("PAL", {
+      x: 458,
+      y: 159,
+      size: 7,
+      font,
+    });
   },
   fields,
 };

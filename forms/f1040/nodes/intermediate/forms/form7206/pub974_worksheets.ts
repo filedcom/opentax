@@ -27,6 +27,7 @@ export const worksheetWSourceSchema = z.object({
   business: z.discriminatedUnion("kind", [
     z.object({
       kind: z.literal("self_employed"),
+      establishing_business_reference: z.string().trim().min(1),
       establishing_business_earned_income: money,
       all_profitable_business_earned_income: money.positive(),
       schedule1_line15_se_tax_deduction: money,
@@ -236,12 +237,14 @@ export const pub974SingleBusinessSourceSchema = z.object({
   // Every Form 1095-A covered policy/month, including months that are not
   // specified SEHI premiums. This bounded path allows one policy and only
   // whole-month specified premiums, with no other SEHI premium deduction.
-  form1095a_policy_months: z.array(z.object({
-    form1095a_policy_number: z.string().trim().min(1),
-    month: z.number().int().min(1).max(12),
-    premium: money.positive(),
-    aptc: money,
-  }).strict()).min(1).max(12),
+  form1095a_policy_months: z.array(
+    z.object({
+      form1095a_policy_number: z.string().trim().min(1),
+      month: z.number().int().min(1).max(12),
+      premium: money.positive(),
+      aptc: money,
+    }).strict(),
+  ).min(1).max(12),
   no_other_se_income_sources_verified: z.literal(true),
   form8962_source: form8962InputSchema,
 }).strict();
@@ -290,7 +293,9 @@ export function calculatePub974SingleBusinessIterative(
   const aptcs = f.monthly_aptcs;
   const policyMonths = source.form1095a_policy_months;
   const coverageMonths = new Set(policyMonths.map((row) => row.month));
-  const policyNumbers = new Set(policyMonths.map((row) => row.form1095a_policy_number));
+  const policyNumbers = new Set(
+    policyMonths.map((row) => row.form1095a_policy_number),
+  );
   if (
     coverageMonths.size !== policyMonths.length || policyNumbers.size !== 1 ||
     policyMonths.some((row) => row.aptc > row.premium)
@@ -321,23 +326,31 @@ export function calculatePub974SingleBusinessIterative(
       "Publication 974 single-business route needs monthly Form 8962 policy facts without other special branches or prefilled income",
     );
   }
-  const specifiedMonths = new Set(source.worksheet_w.specified_policy_months.map((row) => row.month));
+  const specifiedMonths = new Set(
+    source.worksheet_w.specified_policy_months.map((row) => row.month),
+  );
   const policyByMonth = new Map(policyMonths.map((row) => [row.month, row]));
-  const specifiedMatch = source.worksheet_w.specified_policy_months.every((row) => {
-    const policy = policyByMonth.get(row.month);
-    return policy !== undefined &&
-      policy.form1095a_policy_number === row.form1095a_policy_number &&
-      cents(policy.premium) === cents(row.specified_premium) &&
-      cents(policy.aptc) === cents(row.attributable_aptc);
-  });
+  const specifiedMatch = source.worksheet_w.specified_policy_months.every(
+    (row) => {
+      const policy = policyByMonth.get(row.month);
+      return policy !== undefined &&
+        policy.form1095a_policy_number === row.form1095a_policy_number &&
+        cents(policy.premium) === cents(row.specified_premium) &&
+        cents(policy.aptc) === cents(row.attributable_aptc);
+    },
+  );
   if (
-    !specifiedMatch || specifiedMonths.size !== source.worksheet_w.specified_policy_months.length ||
+    !specifiedMatch ||
+    specifiedMonths.size !==
+      source.worksheet_w.specified_policy_months.length ||
     Array.from({ length: 12 }, (_, index) => {
       const row = policyByMonth.get(index + 1);
       return row
         ? cents(row.premium) !== cents(premiums[index]) ||
-          cents(row.aptc) !== cents(aptcs[index]) || f.monthly_slcsps![index] <= 0
-        : premiums[index] !== 0 || aptcs[index] !== 0 || f.monthly_slcsps![index] !== 0;
+          cents(row.aptc) !== cents(aptcs[index]) ||
+          f.monthly_slcsps![index] <= 0
+        : premiums[index] !== 0 || aptcs[index] !== 0 ||
+          f.monthly_slcsps![index] !== 0;
     }).some(Boolean)
   ) {
     throw new Error(
@@ -374,14 +387,20 @@ export function calculatePub974SingleBusinessIterative(
         "Publication 974 iteration could not compute Form 8962 PTC",
       );
     }
-    const monthlyRows = fields.monthly_ptc_rows as
-      { month_code: string; allowed_credit: number }[] | undefined;
+    const monthlyRows = fields.monthly_ptc_rows as {
+      month_code: string;
+      allowed_credit: number;
+    }[] | undefined;
     if (!monthlyRows) {
       throw new Error("Publication 974 needs monthly Form 8962 PTC rows");
     }
     return {
       ptc: fields.total_premium_tax_credit,
-      specifiedPtc: attributableSpecifiedPtc(monthlyRows, specifiedMonths, coverageMonths),
+      specifiedPtc: attributableSpecifiedPtc(
+        monthlyRows,
+        specifiedMonths,
+        coverageMonths,
+      ),
       fields,
     };
   }

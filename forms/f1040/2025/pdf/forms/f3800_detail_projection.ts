@@ -7,6 +7,8 @@ import {
 } from "../../mef/forms/f3800_passive_tags.ts";
 import type { Form3800NonpassiveDetailRow } from "../../mef/forms/f3800_nonpassive_details.ts";
 import type { Form3800PassiveDetailRow } from "../../mef/forms/f3800_passive_rows.ts";
+import { validateForm3800NonpassiveCarryoverDetail } from "../../mef/forms/f3800_carryover_details.ts";
+import { reconcileForm3800CarryforwardLinks } from "../../mef/forms/f3800_carryforward_link.ts";
 import { assertForm3800PrintableDetailCapacity } from "./f3800_capacity.ts";
 import { form3800PartVFields, form3800PartVIFields } from "./f3800_fields.ts";
 
@@ -174,16 +176,27 @@ export function projectForm3800PartVIFields(
   parts: Form3800DocumentParts,
 ): Readonly<Record<string, string | number>> {
   assertForm3800PrintableDetailCapacity(parts);
-  if (parts.carryoverDetails.length > 0) {
-    throw new Error(
-      "Form 3800 printable Part VI needs typed carryover details",
-    );
-  }
-  const lineOrder = Object.keys(form3800CarryoverDetailXmlTags);
-  const details = [...parts.passiveCarryoverDetails].sort((a, b) =>
-    lineOrder.indexOf(a.line) - lineOrder.indexOf(b.line)
+  reconcileForm3800CarryforwardLinks(
+    parts.lines,
+    parts.carryoverRows,
+    parts.carryforwardSources,
+    parts.carryoverDetails,
+    parts.passiveCarryoverDetails,
   );
-  if (details.some((detail) => lineOrder.indexOf(detail.line) < 0)) {
+  const lineOrder = Object.keys(form3800CarryoverDetailXmlTags);
+  const details = [
+    ...parts.carryoverDetails.map((row) => ({
+      kind: "nonpassive" as const,
+      row,
+    })),
+    ...parts.passiveCarryoverDetails.map((row) => ({
+      kind: "passive" as const,
+      row,
+    })),
+  ].sort((a, b) =>
+    lineOrder.indexOf(a.row.line) - lineOrder.indexOf(b.row.line)
+  );
+  if (details.some((detail) => lineOrder.indexOf(detail.row.line) < 0)) {
     throw new Error("Form 3800 printable Part VI has an unsupported line");
   }
   const fields: Record<string, string | number> = {};
@@ -191,60 +204,89 @@ export function projectForm3800PartVIFields(
     keys: string[];
     before: number;
     after: number;
+    nonpassive: number;
     applied: number;
+    adjusted: number;
     unused: number;
     latestYear: number;
   }>();
   for (const [index, detail] of details.entries()) {
-    const source = detail.source;
-    if (
-      source.form3800CreditLine !== detail.line ||
-      !Number.isInteger(source.originatingTaxYear) ||
-      source.originatingTaxYear < 1900 || source.originatingTaxYear >= 2025 ||
-      !Number.isSafeInteger(source.beforePassiveLimit) ||
-      !Number.isSafeInteger(source.afterPassiveLimit) ||
-      !Number.isSafeInteger(source.appliedAgainstTax) ||
-      !Number.isSafeInteger(source.unusedAfterTaxLimit) ||
-      source.beforePassiveLimit < 0 || source.afterPassiveLimit < 0 ||
-      source.afterPassiveLimit > source.beforePassiveLimit ||
-      source.appliedAgainstTax < 0 || source.unusedAfterTaxLimit < 0 ||
-      source.appliedAgainstTax + source.unusedAfterTaxLimit !==
-        source.afterPassiveLimit
-    ) {
-      throw new Error("Form 3800 printable Part VI source is invalid");
-    }
     const pdf = form3800PartVIFields(index + 1);
-    fields[pdf.a] = detail.line;
-    fields[pdf.b] = source.originatingTaxYear;
-    const ein = passThroughEin(source);
-    if (ein) fields[pdf.c] = ein;
-    fields[pdf.d] = source.beforePassiveLimit;
-    fields[pdf.e] = source.afterPassiveLimit;
-    fields[pdf.g] = source.appliedAgainstTax;
-    fields[pdf.i] = source.unusedAfterTaxLimit;
-    const total = byLine.get(detail.line) ?? {
+    fields[pdf.a] = detail.row.line;
+    const total = byLine.get(detail.row.line) ?? {
       keys: [],
       before: 0,
       after: 0,
+      nonpassive: 0,
       applied: 0,
+      adjusted: 0,
       unused: 0,
       latestYear: 0,
     };
-    total.keys.push(source.sourceKey);
-    total.before += source.beforePassiveLimit;
-    total.after += source.afterPassiveLimit;
-    total.applied += source.appliedAgainstTax;
-    total.unused += source.unusedAfterTaxLimit;
-    total.latestYear = Math.max(total.latestYear, source.originatingTaxYear);
+    if (detail.kind === "nonpassive") {
+      const source = detail.row;
+      validateForm3800NonpassiveCarryoverDetail(source);
+      fields[pdf.b] = source.originatingTaxYear;
+      if (source.entity) {
+        fields[pdf.c] = "ein" in source.entity
+          ? source.entity.ein
+          : source.entity.missingEinReason;
+      }
+      fields[pdf.f] = source.nonpassiveCredit;
+      fields[pdf.g] = source.appliedCredit;
+      if (source.recapturedOrAdjusted > 0) {
+        fields[pdf.h] = source.recapturedOrAdjusted;
+      }
+      fields[pdf.i] = source.carryforwardCredit;
+      total.keys.push(source.sourceKey);
+      total.nonpassive += cents(source.nonpassiveCredit);
+      total.applied += cents(source.appliedCredit);
+      total.adjusted += cents(source.recapturedOrAdjusted);
+      total.unused += cents(source.carryforwardCredit);
+      total.latestYear = Math.max(total.latestYear, source.originatingTaxYear);
+    } else {
+      const source = detail.row.source;
+      if (
+        source.form3800CreditLine !== detail.row.line ||
+        !Number.isInteger(source.originatingTaxYear) ||
+        source.originatingTaxYear < 1900 || source.originatingTaxYear >= 2025 ||
+        !Number.isSafeInteger(source.beforePassiveLimit) ||
+        !Number.isSafeInteger(source.afterPassiveLimit) ||
+        !Number.isSafeInteger(source.appliedAgainstTax) ||
+        !Number.isSafeInteger(source.unusedAfterTaxLimit) ||
+        source.beforePassiveLimit < 0 || source.afterPassiveLimit < 0 ||
+        source.afterPassiveLimit > source.beforePassiveLimit ||
+        source.appliedAgainstTax < 0 || source.unusedAfterTaxLimit < 0 ||
+        source.appliedAgainstTax + source.unusedAfterTaxLimit !==
+          source.afterPassiveLimit
+      ) {
+        throw new Error("Form 3800 printable Part VI source is invalid");
+      }
+      fields[pdf.b] = source.originatingTaxYear;
+      const ein = passThroughEin(source);
+      if (ein) fields[pdf.c] = ein;
+      fields[pdf.d] = source.beforePassiveLimit;
+      fields[pdf.e] = source.afterPassiveLimit;
+      fields[pdf.g] = source.appliedAgainstTax;
+      fields[pdf.i] = source.unusedAfterTaxLimit;
+      total.keys.push(source.sourceKey);
+      total.before += cents(source.beforePassiveLimit);
+      total.after += cents(source.afterPassiveLimit);
+      total.applied += cents(source.appliedAgainstTax);
+      total.unused += cents(source.unusedAfterTaxLimit);
+      total.latestYear = Math.max(total.latestYear, source.originatingTaxYear);
+    }
     if (
       !Number.isSafeInteger(total.before) ||
       !Number.isSafeInteger(total.after) ||
+      !Number.isSafeInteger(total.nonpassive) ||
       !Number.isSafeInteger(total.applied) ||
+      !Number.isSafeInteger(total.adjusted) ||
       !Number.isSafeInteger(total.unused)
     ) {
       throw new Error("Form 3800 printable Part VI exceeds whole-dollar range");
     }
-    byLine.set(detail.line, total);
+    byLine.set(detail.row.line, total);
   }
   for (const row of parts.carryoverRows) {
     const total = byLine.get(row.line);
@@ -261,12 +303,12 @@ export function projectForm3800PartVIFields(
       total.keys.length !== row.sourceKeys.length ||
       total.keys.some((key, index) => key !== row.sourceKeys[index]) ||
       total.latestYear !== row.originatingTaxYear ||
-      row.amount.nonpassiveCredit !== 0 ||
-      row.amount.recapturedOrAdjusted !== 0 ||
-      total.before !== row.amount.passiveBeforeLimit ||
-      total.after !== row.amount.passiveAfterLimit ||
-      total.applied !== row.amount.appliedCredit ||
-      total.unused !== row.amount.carryforwardCredit
+      total.before !== cents(row.amount.passiveBeforeLimit) ||
+      total.after !== cents(row.amount.passiveAfterLimit) ||
+      total.nonpassive !== cents(row.amount.nonpassiveCredit) ||
+      total.applied !== cents(row.amount.appliedCredit) ||
+      total.adjusted !== cents(row.amount.recapturedOrAdjusted) ||
+      total.unused !== cents(row.amount.carryforwardCredit)
     ) {
       throw new Error(
         `Form 3800 printable Part VI line ${row.line} sources do not reconcile`,

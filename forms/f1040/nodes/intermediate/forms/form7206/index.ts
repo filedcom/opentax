@@ -105,6 +105,44 @@ export const inputSchema = z.object({
 
 type Form7206Input = z.infer<typeof inputSchema>;
 
+export function reconcileSingleScheduleCGraphSource(
+  fields: {
+    schedule_c_source?: unknown;
+    schedule_se_source?: unknown;
+    schedule1_line16_source?: unknown;
+    marketplace_ptc_premium_overlap?: unknown;
+  },
+  plan: SingleScheduleCPlan,
+  computedSELine13: number,
+): void {
+  const scheduleC = inputSchema.shape.schedule_c_source.parse(
+    fields.schedule_c_source,
+  );
+  const scheduleSE = inputSchema.shape.schedule_se_source.parse(
+    fields.schedule_se_source,
+  );
+  const business = scheduleC?.businesses[0];
+  if (
+    fields.marketplace_ptc_premium_overlap !== false ||
+    scheduleC?.unadjusted_source !== true ||
+    scheduleC.businesses.length !== 1 ||
+    !business ||
+    business.business_reference !== plan.business_reference ||
+    business.proprietor_recipient !== plan.recipient ||
+    business.line31_net_profit !== plan.schedule_c_line31_net_profit ||
+    !scheduleSE ||
+    scheduleSE.net_profit_schedule_c !== plan.schedule_c_line31_net_profit ||
+    scheduleSE.net_profit_schedule_f !== 0 ||
+    scheduleSE.farm_optional_method_elected ||
+    scheduleSE.line13_deduction !== computedSELine13 ||
+    (fields.schedule1_line16_source ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 7206 prepared source checks differ from Schedule C, Schedule SE, or the identified plan",
+    );
+  }
+}
+
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
 export function calculateSingleScheduleCForm7206(
@@ -220,6 +258,33 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
           "Form 7206 Publication 974 filed route needs one Schedule C business",
         );
       }
+      const scheduleCBusinesses = input.schedule_c_source?.businesses;
+      const scheduleCBusiness = scheduleCBusinesses?.[0];
+      const scheduleSE = input.schedule_se_source;
+      if (
+        input.schedule_c_source?.unadjusted_source !== true ||
+        scheduleCBusinesses?.length !== 1 || !scheduleCBusiness ||
+        scheduleCBusiness.business_reference !==
+          business.establishing_business_reference ||
+        scheduleCBusiness.proprietor_recipient !== TS.T ||
+        scheduleCBusiness.line31_net_profit !==
+          business.establishing_business_earned_income ||
+        scheduleCBusiness.line31_net_profit !==
+          business.all_profitable_business_earned_income ||
+        !scheduleSE ||
+        scheduleSE.net_profit_schedule_c !==
+          scheduleCBusiness.line31_net_profit ||
+        scheduleSE.net_profit_schedule_f !== 0 ||
+        scheduleSE.farm_optional_method_elected ||
+        scheduleSE.line13_deduction !==
+          business.schedule1_line15_se_tax_deduction ||
+        (input.schedule1_line16_source ?? 0) !==
+          business.establishing_business_schedule1_line16_retirement_deduction
+      ) {
+        throw new Error(
+          "Publication 974 Worksheet W business income and deductions must match the identified Schedule C, Schedule SE, and retirement source",
+        );
+      }
       const result = calculatePub974SingleBusinessIterative(source);
       const f = source.form8962_source;
       return {
@@ -268,6 +333,8 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
               filing_status: source.worksheet_x.filing_status,
               total_premium_tax_credit: result.form8962_fields
                 .total_premium_tax_credit as number,
+              worksheet_x_repayment_limit:
+                result.worksheet_x.line25_repayment_limit,
               specified_premiums: result.worksheet_w.line1_specified_premiums,
               attributable_specified_ptc: result.attributable_specified_ptc,
               specified_deduction: result.schedule1_line17_deduction -

@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildForm8582Ledger, readForm8582Ledger } from "./ledger.ts";
+import { reconcileForm8582NextYearOpening } from "./next_year_import.ts";
 import { FilingStatus } from "../../../types.ts";
 
 const source = {
@@ -114,6 +115,266 @@ Deno.test("Form 8582 ledger records sourced single active rental special allowan
   );
 });
 
+Deno.test("Form 8582 2026 opening matches the 2025 accepted-reference ledger by activity and form", () => {
+  const accepted = "Accepted 2025 active-rental return";
+  const ledger = buildForm8582Ledger(activeRentalSource, accepted);
+  const opening = {
+    tax_year: 2026,
+    prior_accepted_return_reference: accepted,
+    rows: [{
+      activity_id: "active-rental-2025",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 25_000,
+    }],
+  };
+  assertEquals(
+    reconcileForm8582NextYearOpening(
+      opening,
+      ledger,
+      activeRentalSource,
+      accepted,
+    ),
+    opening,
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...opening,
+          rows: [{ ...opening.rows[0], activity_id: "another-rental" }],
+        },
+        ledger,
+        activeRentalSource,
+        accepted,
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...opening,
+          rows: [{ ...opening.rows[0], reporting_form: "form4835" }],
+        },
+        ledger,
+        activeRentalSource,
+        accepted,
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...opening,
+          prior_accepted_return_reference: "different return",
+        },
+        ledger,
+        activeRentalSource,
+        accepted,
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...opening,
+          rows: [{ ...opening.rows[0], prior_unallowed_loss: 24_999 }],
+        },
+        ledger,
+        activeRentalSource,
+        accepted,
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...opening,
+          rows: [opening.rows[0], opening.rows[0]],
+        },
+        ledger,
+        activeRentalSource,
+        accepted,
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(opening, ledger, {
+        ...activeRentalSource,
+        modified_agi: 121_000,
+      }, accepted),
+    Error,
+    "stored ledger does not match",
+  );
+});
+
+Deno.test("Form 8582 ledger retains filed active-rental opening loss and 2025 suspension", () => {
+  const prior = {
+    tax_year: 2024 as const,
+    activity_id: "active-rental-2025",
+    filed_part_vii_column_c: 8_000,
+    source_document_reference: "Filed 2024 Form 8582 rental row",
+  };
+  const source = {
+    ...activeRentalSource,
+    activities: [{
+      ...activeRentalSource.activities[0],
+      current_net: -20_000,
+      prior_unallowed_operating: 8_000,
+      prior_active_participation: true,
+      prior_year_8582_source: prior,
+    }],
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+    prior_unallowed: 8_000,
+    rental_prior_eligible_loss: 8_000,
+  };
+  const filingId = "Accepted 2025 active prior rental";
+  const ledger = buildForm8582Ledger(source, filingId);
+  assertEquals(ledger.ending_unallowed_loss, 13_000);
+  assertEquals(
+    ledger.activities[0].previous_filed_form_8582_reference,
+    prior.source_document_reference,
+  );
+  assertEquals(ledger.activities[0].lines, [{
+    reporting_form: "schedule_e",
+    opening_unallowed_loss: 8_000,
+    current_year_loss: 20_000,
+    current_same_part_income: 0,
+    allowed_loss: 15_000,
+    ending_unallowed_loss: 13_000,
+  }]);
+  assertEquals(readForm8582Ledger(ledger, source, filingId), ledger);
+  assertThrows(
+    () =>
+      buildForm8582Ledger({
+        ...source,
+        activities: [{
+          ...source.activities[0],
+          prior_active_participation: false,
+        }],
+        rental_prior_eligible_loss: 0,
+        has_other_passive: true,
+      }, filingId),
+    Error,
+    "operating ledger needs",
+  );
+  assertThrows(
+    () =>
+      readForm8582Ledger(ledger, {
+        ...source,
+        activities: [{
+          ...source.activities[0],
+          prior_year_8582_source: { ...prior, filed_part_vii_column_c: 7_999 },
+        }],
+      }, filingId),
+    Error,
+  );
+});
+
+Deno.test("Form 8582 ledger allocates two filed active-rental PALs by activity", () => {
+  const first = {
+    ...activeRentalSource.activities[0],
+    current_net: -20_000,
+    prior_unallowed_operating: 8_000,
+    prior_active_participation: true,
+    prior_year_8582_source: {
+      tax_year: 2024 as const,
+      activity_id: "active-rental-2025",
+      filed_part_vii_column_c: 8_000,
+      source_document_reference: "Filed 2024 Form 8582",
+    },
+  };
+  const second = {
+    ...first,
+    activity_id: "active-rental-2",
+    name: "Second active rental",
+    current_net: -10_000,
+    prior_unallowed_operating: 2_000,
+    prior_year_8582_source: {
+      ...first.prior_year_8582_source,
+      activity_id: "active-rental-2",
+      filed_part_vii_column_c: 2_000,
+    },
+  };
+  const source = {
+    ...activeRentalSource,
+    activities: [first, second],
+    current_loss: 30_000,
+    rental_current_loss: 30_000,
+    prior_unallowed: 10_000,
+    rental_prior_eligible_loss: 10_000,
+  };
+  const ledger = buildForm8582Ledger(source, "Accepted 2025 two-rental return");
+  assertEquals(ledger.ending_unallowed_loss, 25_000);
+  assertEquals(
+    ledger.activities.map((activity) => activity.lines[0].allowed_loss),
+    [
+      10_500,
+      4_500,
+    ],
+  );
+  assertEquals(
+    ledger.activities.map((activity) => activity.ending_unallowed_loss),
+    [
+      17_500,
+      7_500,
+    ],
+  );
+  assertEquals(
+    readForm8582Ledger(ledger, source, "Accepted 2025 two-rental return"),
+    ledger,
+  );
+  const reversedOpening = {
+    tax_year: 2026,
+    prior_accepted_return_reference: "Accepted 2025 two-rental return",
+    rows: [{
+      activity_id: "active-rental-2",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 7_500,
+    }, {
+      activity_id: "active-rental-2025",
+      reporting_part: "viii",
+      reporting_form: "schedule_e",
+      prior_unallowed_loss: 17_500,
+    }],
+  };
+  assertEquals(
+    reconcileForm8582NextYearOpening(
+      reversedOpening,
+      ledger,
+      source,
+      "Accepted 2025 two-rental return",
+    ),
+    reversedOpening,
+  );
+  assertThrows(
+    () =>
+      reconcileForm8582NextYearOpening(
+        {
+          ...reversedOpening,
+          rows: reversedOpening.rows.slice(0, 1),
+        },
+        ledger,
+        source,
+        "Accepted 2025 two-rental return",
+      ),
+    Error,
+    "activity, character, and loss ledger",
+  );
+});
+
 Deno.test("Form 8582 ledger apportions one special allowance across two active rentals", () => {
   const multiRentalSource = {
     ...activeRentalSource,
@@ -212,6 +473,16 @@ Deno.test("Form 8582 multi-rental ledger requires every property to be eligible"
 });
 
 Deno.test("Form 8582 MFS lived-apart rental ledger uses the $12,500 allowance and $50k-$75k phaseout", () => {
+  const mfsLivedApartSource = {
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      taxpayer_residence: "1 Taxpayer Street",
+      spouse_residence: "2 Spouse Avenue",
+      taxpayer_residence_record_reference: `Taxpayer month ${index + 1}`,
+      spouse_residence_record_reference: `Spouse month ${index + 1}`,
+      no_shared_residence_any_day: true as const,
+    })),
+  };
   for (
     const [magi, allowed] of [
       [50_000, 12_500],
@@ -223,6 +494,7 @@ Deno.test("Form 8582 MFS lived-apart rental ledger uses the $12,500 allowance an
       ...activeRentalSource,
       filing_status: FilingStatus.MFS,
       mfs_lived_apart_all_year: true,
+      mfs_lived_apart_source: mfsLivedApartSource,
       modified_agi: magi,
     };
     const ledger = buildForm8582Ledger(

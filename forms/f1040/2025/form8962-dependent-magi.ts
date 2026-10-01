@@ -78,34 +78,48 @@ export function reconcileDependentMagi(
         source.filed_form1040.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
         source.interest_forms1099.some((form) =>
           form.recipient_ssn?.replaceAll("-", "") !== ssn
+        ) || source.wage_forms_w2?.some((form) =>
+          form.employee_ssn.replaceAll("-", "") !== ssn
         );
     })
   ) {
+    const hasWages = claimed.some((dependent) =>
+      dependent.ptc_tax_return?.filing === "required" &&
+      dependent.ptc_tax_return.wage_forms_w2 !== undefined
+    );
     throw new Error(
-      householdSize === 3
+      hasWages
+        ? "Form 8962 dependent needs a filed return and W-2 naming the covered person"
+        : householdSize === 3
         ? "Form 8962 two dependents need filed returns and interest forms naming each covered person"
         : "Form 8962 dependent needs a filed return and interest forms naming the covered person",
     );
   }
-  if (householdSize === 3) {
-    const documentIds = claimed.flatMap((dependent) => {
-      const source = dependent.ptc_tax_return;
-      return source?.filing === "required"
-        ? [
-          source.filed_form1040.source_document_id,
-          ...source.interest_forms1099.map((form) => form.source_document_id),
-        ]
-        : [];
-    });
-    if (new Set(documentIds).size !== documentIds.length) {
-      throw new Error(
-        "Form 8962 two dependents need distinct filed-return and interest source documents",
-      );
-    }
+  const documentIds = claimed.flatMap((dependent) => {
+    const source = dependent.ptc_tax_return;
+    return source?.filing === "required"
+      ? [
+        source.filed_form1040.source_document_id,
+        ...source.interest_forms1099.map((form) => form.source_document_id),
+        ...(source.wage_forms_w2?.map((form) => form.source_document_id) ?? []),
+      ]
+      : [];
+  });
+  if (new Set(documentIds).size !== documentIds.length) {
+    const hasWages = claimed.some((dependent) =>
+      dependent.ptc_tax_return?.filing === "required" &&
+      dependent.ptc_tax_return.wage_forms_w2 !== undefined
+    );
+    throw new Error(
+      hasWages
+        ? "Form 8962 dependent needs distinct filed-return and W-2 source documents"
+        : "Form 8962 two dependents need distinct filed-return and interest source documents",
+    );
   }
-  // The required-filing source is limited to a filed, interest-only single
-  // return. Other income/adjustments, Form 2555, and Social Security cannot
-  // enter this bounded Worksheet 1-2 route by assertion.
+  // The required-filing source is limited to interest-only, one W-2 wage-only,
+  // or one W-2 plus one 1099-INT on a single return. Other income/adjustments,
+  // Form 2555, and Social Security
+  // cannot enter this bounded Worksheet 1-2 route by assertion.
   const magi = ptcDependentsModifiedAgi(claimed);
   if (reportedMagi !== magi) {
     throw new Error(

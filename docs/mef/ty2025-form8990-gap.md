@@ -7,6 +7,29 @@ checked-in TY2025 v5.4 `Shared/IRS8990/IRS8990.xsd`.
 Status: Form 8990 filing is deliberately blocked. No test, local XSD,
 filled-PDF, IRS business-rule, or ATS validation has been run for it.
 
+## Complete traced-proceeds source for bounded Schedule C debt (written, unrun)
+
+The one-business two-pass calculation now requires each interest payment to
+identify its debt account and a structured proceeds trace. The trace states the
+debt disbursement date and gross proceeds, plus dated, document-referenced uses
+whose amounts account for every dollar of those proceeds in the same Schedule C
+business. The uses cannot precede the disbursement, fall after 2025, duplicate
+an expenditure reference, or change between payments on one debt account.
+Distinct accounts cannot claim one tracing record or the same expenditure
+document. The debtor SSN, lender EIN,
+business ID, payment amounts, and aggregate Schedule C line 16b reconciliation
+remain required. A mixed-use loan cannot enter this wholly business-allocated
+slice. Positive two-expenditure and changed amount, date, business, account,
+and document-reference fixtures are authored for the deferred validation batch.
+
+The [2025 Schedule C instructions](https://www.irs.gov/instructions/i1040sc)
+require interest to be allocated to its proper use; the [2025 Form 8990
+instructions](https://www.irs.gov/instructions/i8990) apply the section 163(j)
+limit to business interest expense. These entered loan and expenditure
+references do not authenticate bank or vendor documents. The active return
+remains unfileable pending the accepted-filing carryforward contract and the
+full validation gates below.
+
 The first source-backed staging step now parses actual Schedule C input for
 exactly one identified business before Schedule C profit is calculated. It
 derives current-year interest expense from that business's lines 16a and 16b,
@@ -315,6 +338,28 @@ document references are review leads, not verified source documents; actual
 debt-tracing review and authenticity remain open. The related cases are written
 but unrun under the build-first hold, and filing stays blocked.
 
+Each traced payment now also requires the debtor's nine-digit SSN, lender EIN,
+and debt-account reference. The debtor must match the current taxpayer, using
+the same identity as the reviewed 2024 Form 8990. Multiple interest payments
+may share a debt, but a lender/account pair must map to one debt-proceeds
+workpaper and a workpaper may identify only one lender/account pair. The
+calculated projection retains these fields, and native/PDF replay compares the
+supplied projection with the finalized pending source so an account or lender
+change after calculation rejects even if the amount is unchanged. Positive
+two-payment, wrong-owner, and conflicting account/workpaper fixtures are
+authored but unrun. This is a source-consistency prerequisite under the
+[2025 Form 8990 interest categorization instructions](https://www.irs.gov/pub/irs-prior/i8990--2025.pdf),
+not authentication of lender statements, debt tracing, or an accepted filing.
+
+The three reviewed filed 2022–2024 Schedule C receipts records now each require
+the current taxpayer's SSN. Their identities are compared with the filed 2024
+Form 8990 taxpayer already checked against the current return, and each Schedule
+C document reference must differ from that Form 8990 reference. The two-pass
+calculation and native/PDF source replay reject a swapped taxpayer or reused
+record. This ties the gross-receipts lower bound to the same taxpayer; the
+references still do not authenticate actual filed documents. Focused positive
+and owner-tampering fixtures are authored but unrun.
+
 The CLI return store now has an explicit `persistCalculatedForm8990Workpaper`
 operation. It writes a typed `calculated-unfiled` record inside that return's
 existing `return.json`, not as a side effect of a preview or export. The record
@@ -341,3 +386,25 @@ accepted ledger entry before putting 2025 line 31 on 2026 line 2. Until those
 direct joins exist, the calculated record stays `unfiled`, the executor error
 continues to block finalized TY2025 export, and no 2026 carryforward is treated
 as filed. A reference string or locally written XML cannot clear this gate.
+
+The outbound half of that contract now has a read-only prerequisite:
+`readA2aArchivedSubmission` reopens the hash-checked Send record, the outer
+container, and the unique Submission ZIP. It checks the Send body's Submission
+IDs, the inner manifest's 2025/1040/IRS Submission ID and taxpayer TIN, and the
+return XML's primary SSN against a caller-supplied expected identity and exact
+prepared XML SHA-256. It returns container, inner archive, and manifest digests
+for a future accepted ledger. Focused exact-byte and wrong-identity fixtures are
+authored but unrun. The expected XML digest must itself come from a trusted
+prepared return; this reader does not assert transmission, parse an IRS
+acknowledgment, authenticate IRS status, or permit a Form 8990 export.
+
+The accepted-year ledger must be an immutable entry written only after reading
+the archived outbound Submission ZIP and a parsed IRS **accepted**
+acknowledgment for its unique Submission ID. Its key must include return ID,
+TY2025, taxpayer SSN, and business reference; its payload must bind the source
+record digest, exact submitted Form 8990 XML digest, Submission ID and archive
+digest, acknowledgment record ID and payload digest, and line 31. A TY2026
+line-2 importer must re-read that accepted entry, verify those digests and
+identities, and consume exactly its line-31 amount once. The current A2A archive
+stores acknowledgment bytes as opaque payloads and has no trusted accepted
+status parser, so it cannot create this entry or clear the TY2025 export gate.

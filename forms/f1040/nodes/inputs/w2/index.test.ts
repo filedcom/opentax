@@ -211,6 +211,8 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
   const result = compute([
     minimalItem({
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
       box1_wages: 30_000,
       box7_ss_tips: 5_000,
       box14b_tipped_code: "102",
@@ -218,7 +220,12 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
     employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
     amount: 5_000,
+    box5_medicare_wages: undefined,
+    occupation_code: "102",
+    source_type: "w2_box7",
   }]);
 });
 
@@ -229,16 +236,81 @@ Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
 });
 
+Deno.test("reviewed W-2 box 14 tips replace box 7 for one employer", () => {
+  const item = {
+    ...minimalItem(),
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
+    box1_wages: 200_000,
+    box5_medicare_wages: 200_000,
+    box7_ss_tips: 15_000,
+    box14_entries: [{
+      description: "Employer reported tips",
+      amount: 20_000,
+      is_state_sdi_pfml: false,
+    }],
+    qualified_tips_box14_review: {
+      box14_description: "Employer reported tips",
+      occupation_code: "102",
+      occupation_review_reference: "2025 employer occupation record",
+      tips_included_in_box1: true,
+      source_reference: "2025 W-2 box 14 employer tip accounting",
+    },
+  };
+  const result = compute([item]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
+    amount: 20_000,
+    box5_medicare_wages: 200_000,
+    occupation_code: "102",
+    source_type: "w2_box14",
+  }]);
+  const excessive = {
+    ...item,
+    box14_entries: [{ ...item.box14_entries[0], amount: 200_001 }],
+  };
+  assertThrows(
+    () => compute([excessive]),
+    Error,
+    "one positive included tip entry",
+  );
+  const conflicting = { ...item, box14b_tipped_code: "103" };
+  assertThrows(
+    () => compute([conflicting]),
+    Error,
+    "matching occupation",
+  );
+});
+
+Deno.test("box7 tips with a three-digit code outside the IRS occupation list do not route", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 30_000,
+      box7_ss_tips: 5_000,
+      box14b_tipped_code: "999",
+    }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
 Deno.test("qualified tips are summed across eligible W-2s only", () => {
   const result = compute([
     minimalItem({
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
       box1_wages: 20_000,
       box7_ss_tips: 2_000,
       box14b_tipped_code: "102",
     }),
     minimalItem({
       employee_ssn: "444556666",
+      employer_ein: "987654321",
+      employer_name: "Second Restaurant",
       box1_wages: 20_000,
       box7_ss_tips: 3_000,
       box14b_tipped_code: "203",
@@ -246,8 +318,24 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
     minimalItem({ box1_wages: 20_000, box7_ss_tips: 4_000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [
-    { employee_ssn: "111223333", amount: 2_000 },
-    { employee_ssn: "444556666", amount: 3_000 },
+    {
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
+      amount: 2_000,
+      box5_medicare_wages: undefined,
+      occupation_code: "102",
+      source_type: "w2_box7",
+    },
+    {
+      employee_ssn: "444556666",
+      employer_ein: "987654321",
+      employer_name: "Second Restaurant",
+      amount: 3_000,
+      box5_medicare_wages: undefined,
+      occupation_code: "203",
+      source_type: "w2_box7",
+    },
   ]);
 });
 
@@ -276,6 +364,126 @@ Deno.test("qualified tips need the W-2 employee SSN for filer attribution", () =
       ]),
     Error,
     "qualified tips need a nine-digit employee SSN",
+  );
+});
+
+Deno.test("reviewed W-2 box 14 FLSA overtime premium routes to Schedule 1-A", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount: 4_000,
+      is_state_sdi_pfml: false,
+    }],
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "2025 employer payroll statement",
+    },
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_w2_overtime, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    amount: 4_000,
+    box1_wages: 80_000,
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "2025 employer payroll statement",
+  }]);
+});
+
+Deno.test("unreviewed W-2 box 14 overtime premium does not claim Schedule 1-A", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount: 4_000,
+      is_state_sdi_pfml: false,
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
+Deno.test("furnished 2025 employer statement supplies FLSA overtime without box 14", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "FLSA coverage and wage inclusion review",
+      employer_statement: {
+        tax_year: 2025,
+        employee_ssn: "111-22-3333",
+        employer_ein: "12-3456789",
+        qualified_overtime_premium: 4_000,
+        statement_reference: "Employer furnished 2025 premium statement",
+        furnished_to_employee: true,
+      },
+    },
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_w2_overtime, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    amount: 4_000,
+    box1_wages: 80_000,
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and wage inclusion review",
+    employer_statement_reference: "Employer furnished 2025 premium statement",
+  }]);
+});
+
+Deno.test("employer statement overtime rejects a different employee or duplicate box 14 premium", () => {
+  const reviewed = {
+    covered_nonexempt_employee: true as const,
+    premium_included_in_box1: true as const,
+    source_reference: "FLSA coverage and wage inclusion review",
+    employer_statement: {
+      tax_year: 2025 as const,
+      employee_ssn: "999887777",
+      employer_ein: "123456789",
+      qualified_overtime_premium: 4_000,
+      statement_reference: "Employer furnished 2025 premium statement",
+      furnished_to_employee: true as const,
+    },
+  };
+  assertThrows(() => compute([minimalItem({
+    employee_ssn: "111223333", employer_ein: "123456789",
+    box1_wages: 80_000, flsa_overtime_review: reviewed,
+  })]), Error, "matching source identities");
+  assertThrows(() => compute([minimalItem({
+    employee_ssn: "999887777", employer_ein: "123456789",
+    box1_wages: 80_000, flsa_overtime_review: reviewed,
+    box14_entries: [{ description: "FLSA Overtime Premium", amount: 4_000 }],
+  })]), Error, "one positive box 14 or employer-statement premium");
+});
+
+Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        box1_wages: 3_000,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+          is_state_sdi_pfml: false,
+        }],
+        flsa_overtime_review: {
+          covered_nonexempt_employee: true,
+          premium_included_in_box1: true,
+          source_reference: "2025 employer payroll statement",
+        },
+      })]),
+    Error,
+    "premium included in box 1",
   );
 });
 

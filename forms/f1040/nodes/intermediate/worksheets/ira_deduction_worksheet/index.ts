@@ -7,7 +7,13 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
-import { form8606 } from "../../forms/form8606/index.ts";
+import {
+  currentContributionSourceSchema,
+  filingDetailsSchema,
+  form8606,
+  IraOwner,
+  zeroBasisSourceSchema,
+} from "../../forms/form8606/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -35,6 +41,10 @@ export const inputSchema = z.object({
   age_50_or_older: z.boolean().optional(),
   // Whether the spouse is covered by an employer plan (MFJ only)
   spouse_active_participant: z.boolean().optional(),
+  form8606_filing_details: filingDetailsSchema.optional(),
+  form8606_zero_basis_source: zeroBasisSourceSchema.optional(),
+  form8606_current_contribution_source: currentContributionSourceSchema
+    .optional(),
 });
 
 type IraDeductionInput = z.infer<typeof inputSchema>;
@@ -207,7 +217,9 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
     if (capped > 0) {
       outputs.push(
         this.outputNodes.output(form8880, {
-          ira_contributions_taxpayer: capped,
+          ...(input.form8606_filing_details?.owner === IraOwner.Spouse
+            ? { ira_contributions_spouse: capped }
+            : { ira_contributions_taxpayer: capped }),
         }),
       );
     }
@@ -218,6 +230,12 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
       outputs.push(
         this.outputNodes.output(form8606, {
           nondeductible_contributions: nonDeductible,
+          ...(input.form8606_current_contribution_source
+            ? {}
+            : { filing_details: input.form8606_filing_details }),
+          zero_basis_source: input.form8606_zero_basis_source,
+          current_contribution_source:
+            input.form8606_current_contribution_source,
         }),
       );
     }

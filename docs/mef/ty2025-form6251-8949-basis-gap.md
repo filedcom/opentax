@@ -5,6 +5,20 @@ written. Tests are written but have not been run in the agreed full batch. IRS
 XSD validation, filled-PDF visual review, business-rule checks, and ATS
 acceptance are still pending.
 
+The native and PDF Form 6251 exporters now replay every line 2k basis row
+against the retained raw Form 8949 input. The row set must be exact, with
+distinct source IDs and matching part, proceeds, regular/AMT bases, and gains;
+adjusted or extra source rows reject. The direct replay fixture is authored but
+awaits the agreed bulk validation. This binds the two in-memory form routes, not
+the underlying broker document bytes.
+
+One qualifying full-lot sale of a 2024 ISO exercise is now linked to this replay
+through a distinct reviewed prior-year Form 3921/Form 6251 source, 2025 broker
+transaction reference, and the exact regular and AMT share bases. It can coexist
+with a separate retained 2025 Form 3921 line 2i adjustment. See the
+[ISO source note](ty2025-form6251-iso-source-gap.md) for that bounded route and
+its unauthenticated prior-filing limitation.
+
 The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require refiguring Form 8949 and Schedule D for AMT when a disposition has a
 different AMT basis. The difference between the AMT and regular-tax gain or loss
@@ -109,5 +123,121 @@ the **$300 difference**, not the $2,300 AMT net amount, and Part III gets no
 capital gain. A zero difference remains zero. Mixed terms, a zero or negative
 net on either side, an item changing sign between bases, dividends, Form 4952,
 Form 2555, special-rate gain, source-audit mismatch, and other capital activity
-remain rejected. This does not calculate any carryover or expand the long-term
-mixed-sign route. The shared test, XSD, filled-PDF and ATS gates remain open.
+remain rejected. This does not calculate any carryover. The shared test, XSD,
+filled-PDF and ATS gates remain open.
+
+A parallel long-term-only mixed-sign net-gain slice is now staged. Every
+identified Part II gain and loss must retain its sign under both regular and AMT
+bases; the complete Schedule D audit contains exactly those rows and no other
+capital activity. The regular and AMT long-term net totals must each be
+positive. Form 6251 line 2k receives their signed difference, and Part III uses
+the AMT net as preferential gain while retaining the regular net for its
+regular-tax worksheet base. For $3,000 regular gain less $1,000 regular loss,
+and $3,500 AMT gain less $1,200 AMT loss, the line 2k adjustment is $300 and
+Part III lines 13/15 use $2,300. The source, calculation, native/PDF, and
+rejection fixtures are authored for the deferred bulk pass. Mixed terms,
+qualified dividends, special-rate gain, Form 4952 elections, Form 2555, net loss
+or zero under either basis, and carryovers remain closed. See the
+[2025 Schedule D instructions](https://www.irs.gov/pub/irs-prior/i1040sd--2025.pdf)
+and [2025 Form 6251](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).
+
+## One long-term regular gain that becomes an AMT loss (staged, unrun)
+
+A single audited, unadjusted 2025 Form 8949 Part II sale may have a positive
+regular gain and a negative AMT gain when its AMT basis is higher. This route
+requires the AMT loss to fit within the separate $3,000 Schedule D limit
+($1,500 for married filing separately), no other capital activity or carryover,
+and no qualified dividends, Form 4952 election, or special-rate gains. The
+regular gain stays on Form 1040 line 7; the signed AMT-minus-regular difference
+goes to Form 6251 line 2k. Because the AMT side has a loss, no preferential AMT
+capital gain enters Part III. Native and PDF export replay the exact dated Form
+8949 row and match Schedule 2 line 2, Form 1040 lines 7/15, and the Form 1040
+line 17 tax total. The positive and changed-basis, tax, capital-gain, and limit
+fixtures are authored for the deferred batch. The underlying broker-copy bytes
+and basis workpaper are not independently authenticated. See the
+[2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
+for the separate AMT Schedule D loss limitation.
+
+The same route now accepts exactly two long-term lots when one changes from
+regular gain to AMT loss and the other is a loss under both bases. The combined
+regular result must remain a gain, and the combined AMT result must be a fully
+deductible loss under the separate filing-status limit. For example, a $2,000
+regular gain becoming a $500 AMT loss plus a $500 regular/$700 AMT loss yields
+$1,500 regular net gain, $1,200 AMT net loss, and a negative $2,700 line 2k. The
+exact two broker rows, Schedule 2 tax, Form 1040 capital gain and taxable
+income, native element, and PDF line are joined. A changed second basis,
+capital-gain total, Schedule 2 tax, or AMT loss crossing the limit rejects.
+Mixed terms, capital-loss carryovers, and adjusted transactions remain
+unsupported in that same-term route. The two-lot fixtures await the same final
+validation batch.
+
+The same audited long-term route now accepts one gain changing to an AMT loss
+and two additional losses under both bases. Three identified unadjusted Form
+8949 rows must be the complete Schedule D activity; the combined regular net
+must remain positive and the AMT net loss must fit the separate $3,000/$1,500
+deduction limit. A $2,000 regular gain changing to a $500 AMT loss, plus
+$500/$700 and $400/$600 regular/AMT losses, gives $1,100 regular gain,
+$1,800 deductible AMT loss, and negative $2,900 on Form 6251 line 2k. The
+authored native/PDF case replays all three dated rows and Schedule 2/Form 1040
+totals; a changed third AMT basis or return gain rejects. The complete audit
+now allows additional long-term loss rows under the same one sign-changing
+gain, positive regular net, and separately deductible AMT net rules. These
+fixtures are unrun pending the final bulk batch. Carryovers, source-byte
+authentication, IRS business rules, and ATS remain open.
+
+A separate two-lot mixed-term route accepts one short-term loss under both bases
+and one long-term regular gain that becomes an AMT loss. The short loss offsets
+the regular long gain for Schedule D's preferential net capital gain; both AMT
+lots are losses, so AMT has no preferential gain and Form 6251 Part III stays
+empty. The regular aggregate must be a gain, while the AMT aggregate must fit
+within the separate $3,000/$1,500 loss limit. In the authored case, regular
+short −$500 and long +$2,000 produce a $1,500 regular preferential gain;
+AMT short −$700 and long −$500 produce a deductible −$1,200 loss. Line 2k is
+negative $2,700. Native and PDF export require exact dated short/long Form 8949
+rows, Schedule 2 line 2, Form 1040 lines 7/15, and sufficient line 17 tax.
+Changed source basis, return gain, Schedule 2 tax, or AMT loss beyond the
+deduction ceiling rejects. Other mixed-term sign changes and capital-loss
+carryovers remain closed. Fixtures await the final validation batch.
+
+The complete Schedule D audit now allows any number of separately identified
+short-term loss rows under both bases beside that one long-term gain changing to
+an AMT loss. The audited regular net must stay positive, and the separate AMT
+net loss must fit the filing-status loss limit. A four-lot case with three
+short-term losses nets $1,800 regular gain and $1,750 AMT loss, producing
+negative $3,550 on line 2k with no AMT preferential gain. Native and PDF
+replay all dated rows and final tax/capital-gain totals; changing one source AMT
+basis or Form 1040 gain rejects. The four-lot fixtures are authored but unrun.
+Other gain/loss sign patterns, carryovers, source-byte authentication, IRS
+business rules, and ATS remain open.
+
+The same complete-audit rule now accepts one short-term regular gain that
+becomes an AMT loss with any number of other short-term losses under both
+bases. The regular net must stay positive, while the separate AMT loss remains
+within its filing-status deduction limit. The authored three-lot case yields
+$1,500 regular Schedule D gain, $1,100 deductible AMT loss, and negative
+$2,600 on Form 6251 line 2k. Short-term gain is not preferential income, so
+Part III stays empty. Native and PDF export replay every dated lot, Schedule 2,
+and Form 1040 line 7/15/17; changing one AMT basis, omitting a lot, or changing
+the return gain rejects. The fixtures are unrun. Other term mixes and
+sign-changing patterns, carryovers, broker-copy authentication, IRS business
+rules, and ATS remain open.
+
+## Same-term loss crossing the separate Schedule D limit (staged, unrun)
+
+The complete-audit Form 8949 route now computes the regular and AMT current-year
+capital-loss deductions separately for identified, unadjusted short-term-only
+or long-term-only rows when both net totals are losses and at least one crosses
+the filing-status $3,000/$1,500 deduction limit. Form 6251 line 2k receives
+the difference between deductible amounts, not the raw difference between
+the two basis totals. For one reviewed 2025 broker row with a $2,000 regular
+loss and a $5,000 AMT loss, Form 1040 line 7 remains -$2,000 while the AMT
+Schedule D deduction is capped at -$3,000, making line 2k -$1,000. The
+remaining $2,000 is an AMT capital-loss carryover for 2026; this route does
+not yet file or import that later-year carryover. Native and PDF export replay
+the exact dated broker row and reconcile line 2k, Schedule 2 line 2, Form 1040
+capital loss, taxable income, and additional tax. Changed basis, printed line,
+or return totals reject. The positive and tamper fixtures are authored for the
+requested final batch. Prior-year capital-loss carryovers, mixed short/long
+terms, adjusted broker rows, and unauthenticated issued-copy bytes remain
+outside this route. The [2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
+require the regular and AMT capital-loss limits to be applied separately.

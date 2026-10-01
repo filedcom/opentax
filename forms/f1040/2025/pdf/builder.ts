@@ -3,10 +3,31 @@ import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
-import type { FilerIdentity } from "../../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import {
+  assertEitcChildSources,
+  assertF1040FinalHeader,
+  assertKIncomeClassification,
+  assertKPersonalSaleSources,
+  assertKReportedErrorSources,
+  assertKWithholdingSourceIdentity,
+  assertSchedule1Box3SourceIdentity,
+  assertSchedule1KSourceIdentity,
+  assertSchedule1NecSourceIdentity,
+  assertScheduleCReceiptSourceIdentity,
+  assertScheduleFFarmSourceIdentity,
+} from "../filer-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
+import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
+import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
+import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 
 async function fetchWithCache(
   url: string,
@@ -242,13 +263,66 @@ export async function buildPdfBytes(
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
 ): Promise<Uint8Array> {
+  await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
+  if (normalized.f1040) {
+    assertF1040FinalHeader(normalized.f1040, filer);
+  }
+  assertForm8915FSourceLinks(normalized);
+  assertKIncomeClassification(normalized);
+  if (filer) {
+    assertEitcChildSources(pending, filer);
+    assertKReportedErrorSources(normalized, filer);
+    assertScheduleCReceiptSourceIdentity(normalized, filer);
+    assertKWithholdingSourceIdentity(normalized, filer);
+    assertKPersonalSaleSources(pending, filer);
+    assertSchedule1Box3SourceIdentity(normalized, filer);
+    assertSchedule1NecSourceIdentity(normalized, filer);
+    assertSchedule1KSourceIdentity(normalized, filer);
+    assertScheduleFFarmSourceIdentity(normalized, filer);
+  }
+  const k1Recipients = filer
+    ? [
+      filer.primarySSN,
+      ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+          filer.spouse?.ssn
+        ? [filer.spouse.ssn]
+        : []),
+    ]
+    : [];
+  assertBox11CodeJSources(normalized, k1Recipients);
+  assertBox11CodeESources(normalized, k1Recipients);
+  assertBox11CodeKSources(normalized, k1Recipients);
+  assertBox11CodeSSources(normalized, k1Recipients);
+  assertBox11Line10Sources(normalized, k1Recipients);
   if (
     preparedBundle &&
-    await preparedSourceSha256(normalized, filer) !==
+    await preparedSourceSha256(pending, filer) !==
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  // The prepared MeF return stores canonical Form 8949 rows as an array;
+  // the existing PDF projector consumes them through its transaction field.
+  if (Array.isArray(pending.form8949)) {
+    normalized.form8949 = { transaction: pending.form8949 };
+  }
+  const form8949Rows = normalized.form8949?.transaction;
+  if (
+    form8949Rows !== undefined &&
+    (!Array.isArray(form8949Rows) || form8949Rows.length > 0) &&
+    !normalized.schedule_d
+  ) {
+    throw new Error("Form 8949 PDF needs its Schedule D");
+  }
+  if (normalized.schedule_d) {
+    if (form8949Rows !== undefined && !Array.isArray(form8949Rows)) {
+      throw new Error("Form 8949 PDF needs prepared transaction rows");
+    }
+    assertScheduleDSalesMatchPrepared(
+      normalized.schedule_d.transaction,
+      form8949Rows ?? [],
+    );
   }
   if (
     preparedBundle?.form3800Parts &&
@@ -304,7 +378,13 @@ export async function buildPdfBytes(
       for (const page of copiedPages) {
         merged.addPage(page);
       }
-      await descriptor.appendSupplementalPages?.(merged, instance, filer);
+      await descriptor.appendSupplementalPages?.(
+        merged,
+        instance,
+        filer,
+        normalized,
+        preparedBundle?.form3800Parts,
+      );
     }
   }
 

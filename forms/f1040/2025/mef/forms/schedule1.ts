@@ -1,8 +1,14 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
+import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
+import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
 
 export interface Fields {
+  form1099k_reported_error_or_loss?: number | null;
   line1_state_refund?: number | null;
   line3_schedule_c?: number | null;
   line4_other_gains?: number | null;
@@ -16,6 +22,9 @@ export interface Fields {
   line8f_hsa_income?: number | null;
   line8i_prizes_awards?: number | null;
   line8j_f1099k_hobby_income?: number | null;
+  line8l_personal_property_rent?: number | null;
+  line8n_section951a_inclusion?: number | null;
+  line8o_section951aa_inclusion?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
   line8z_taxable_grants?: number | null;
@@ -27,7 +36,6 @@ export interface Fields {
   line8z_form8621_qef?: number | null;
   line8z_form8621_mtm?: number | null;
   line8z_form8621_section1291?: number | null;
-  line8z_f1099nec_nonbusiness?: number | null;
   line8z_f1098_interest_recovery?: number | null;
   line8z_k1_s_corp_tax_benefit_recovery?: number | null;
   line8z_form8814?: number | null;
@@ -52,12 +60,16 @@ export interface Fields {
   line20_ira_deduction?: number | null;
   line23_archer_msa_deduction?: number | null;
   line24f_501c18d?: number | null;
+  line24b_personal_property_expenses?: number | null;
+  line24k_section67e_excess_deduction?: number | null;
+  line25_total_other_adjustments?: number | null;
   line26_total_adjustments?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
+  ["form1099k_reported_error_or_loss", "Form1099KRptErrorOrLossAmt"],
   ["line1_state_refund", "StateLocalIncomeTaxRefundAmt"],
   ["line3_schedule_c", "BusinessIncomeLossAmt"],
   ["line4_other_gains", "OtherGainLossAmt"],
@@ -72,6 +84,9 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8f_hsa_income", "TotHSADistriHDHPAmt"],
   ["line8i_prizes_awards", "PrizesAwardsAmt"],
   ["line8j_f1099k_hobby_income", "ActivityNotForProfitIncmAmt"],
+  ["line8l_personal_property_rent", "RentalIncomePersonalPropAmt"],
+  ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
+  ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
   ["line8z_nqdc", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
@@ -88,7 +103,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line20_ira_deduction", "IRADeductionAmt"],
   ["line21_student_loan_interest", "StudentLoanInterestDedAmt"],
   ["line23_archer_msa_deduction", "ArcherMSADeductionAmt"],
+  ["line24b_personal_property_expenses", "RntlIncmPrsnlPropExpnssDedAmt"],
   ["line24f_501c18d", "Sect501c18DContriDedAmt"],
+  ["line24k_section67e_excess_deduction", "Section67eExcessDeductionAmt"],
+  ["line25_total_other_adjustments", "TotalOtherAdjustmentsAmt"],
   ["line26_total_adjustments", "TotalAdjustmentsAmt"],
 ];
 
@@ -124,6 +142,10 @@ function buildIRS1040Schedule1(
           }
           : undefined,
       );
+    }
+    if (key === "line8j_f1099k_hobby_income") {
+      const amount = schedule1ActivityNotForProfitTotal(fields);
+      return amount > 0 ? element(tag, amount) : "";
     }
     if (typeof value !== "number") return "";
     if (key === "line8a_nol_deduction") return element(tag, -value);
@@ -179,6 +201,88 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (
+      (fields.line8n_section951a_inclusion ?? 0) > 0 ||
+      (fields.line8o_section951aa_inclusion ?? 0) > 0
+    ) {
+      throw new Error(
+        "Schedule 1 lines 8n/8o need the complete native Form 5471 schedules and Form 8992 with Schedule A before MeF export",
+      );
+    }
+    assertPersonalPropertyRentalSource(
+      fields,
+      context?.pending,
+      context?.filer,
+    );
+    if (
+      context?.pending?.f1098 !== undefined ||
+      (fields.line8z_f1098_interest_recovery ?? 0) > 0
+    ) {
+      const filer = context?.filer;
+      if (!filer) {
+        throw new Error("Schedule 1 Form 1098 box 4 needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertForm1098Box4Sources(
+        context?.pending?.f1098,
+        recipients,
+        fields.line8z_f1098_interest_recovery ?? 0,
+      );
+    }
+    if (
+      fields.line25_total_other_adjustments !== undefined &&
+      fields.line25_total_other_adjustments !== null &&
+      fields.line25_total_other_adjustments !==
+        (fields.line24f_501c18d ?? 0) +
+          (fields.line24b_personal_property_expenses ?? 0) +
+          (fields.line24k_section67e_excess_deduction ?? 0)
+    ) {
+      throw new Error(
+        "Schedule 1 line 25 must equal supported line 24 adjustments",
+      );
+    }
+    const k1Source = context?.pending?.k1_trust;
+    const parsedK1 = k1Source === undefined
+      ? undefined
+      : trustK1InputSchema.parse(k1Source);
+    const codeAItems =
+      parsedK1?.k1_trusts.filter((item) =>
+        item.box11_code_a_section67e_excess_deduction !== undefined
+      ) ?? [];
+    if (
+      codeAItems.length > 0 ||
+      (fields.line24k_section67e_excess_deduction ?? 0) > 0
+    ) {
+      const amount = codeAItems.reduce(
+        (sum, item) =>
+          sum + (item.box11_code_a_section67e_excess_deduction ?? 0),
+        0,
+      );
+      const filerSsns = [
+        context?.filer?.primarySSN,
+        context?.filer?.spouse?.ssn,
+      ]
+        .filter((ssn): ssn is string => ssn !== undefined)
+        .map((ssn) => ssn.replaceAll("-", ""));
+      const keys = codeAItems.map((item) =>
+        `${item.estate_trust_ein}:${item.source_document_reference}`
+      );
+      if (
+        amount === 0 || amount !== fields.line24k_section67e_excess_deduction ||
+        new Set(keys).size !== keys.length ||
+        codeAItems.some((item) => !filerSsns.includes(item.beneficiary_ssn!))
+      ) {
+        throw new Error(
+          "Schedule 1 line 24k needs distinct final trust K-1 code A sources owned by this return",
+        );
+      }
+    }
     const unsupported = [
       "line2a_alimony_received",
       "line8g_child_interest_dividends",

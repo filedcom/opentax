@@ -19,6 +19,10 @@ import {
   form8582,
   priorYear8582SourceSchema,
 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  filed2024Form8582RecordSchema,
+  reconcileFiled2024Form8582Record,
+} from "../../intermediate/forms/form8582/prior_year_import.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
   form4797,
@@ -64,6 +68,9 @@ export const itemSchema = z.object({
   // --- Required identification fields ---
   tsj: tsjSchema,
   activity_id: z.string().trim().min(1).max(64).optional(),
+  // Retained evidence for a positive passive net-income amount used in the
+  // Form 8582-CR line 6 tax-without-passive-income worksheet.
+  passive_income_source_document_reference: z.string().trim().min(1).optional(),
   property_description: z.string().min(1),
   property_type: z.number().int().min(1).max(8),
   activity_type: z.enum(["A", "B", "C", "D"]),
@@ -99,10 +106,26 @@ export const itemSchema = z.object({
   // Dated sales of property in this rental activity. Form 4797 calculates
   // the gain from these same canonical rows and Form 8582 allocates its PAL.
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
+  // Filed five-year section 1231 loss history for a direct Part I sale.
+  section_1231_lookback_source: z.object({
+    source_document_reference: z.string().trim().min(1),
+    nonrecaptured_loss: z.literal(0),
+  }).strict().optional(),
   // Evidence that an entire-disposition activity first existed in TY2025.
   // A property acquired in 2025 alone does not prove it was not grouped with
   // an older passive activity.
   first_year_activity_source: firstYearActivitySourceSchema.optional(),
+  // Pre-2025 rental history for a long-held direct Part I entire sale.
+  // References identify the evidence but do not authenticate the filed return.
+  pre2025_part1_entire_disposition_source: z.object({
+    activity_id: z.string().trim().min(1).max(64),
+    activity_name: z.string().trim().min(1),
+    activity_acquired_on: z.string().date(),
+    acquisition_document_reference: z.string().trim().min(1),
+    prior_year_schedule_e_document_reference: z.string().trim().min(1),
+    prior_year_unallowed_passive_loss: z.literal(0),
+    not_grouped_with_other_activity: z.literal(true),
+  }).strict().optional(),
   carry_to_8960: z.boolean().optional(),
   main_home_or_second_home: z.boolean().optional(),
   occupancy_percent: z.number().min(0).max(100).optional(),
@@ -139,12 +162,20 @@ export const itemSchema = z.object({
 
   // --- Income fields ---
   royalties_income: z.number().nonnegative().optional(),
+  // Required to identify the filed, ownership-adjusted share of line 20
+  // expenses related to royalties when rent and royalties share one property.
+  eic_royalty_expense_allocation: z.object({
+    amount: z.number().int().nonnegative(),
+    workpaper_reference: z.string().trim().min(1),
+    all_property_expenses_allocated_once: z.literal(true),
+  }).strict().optional(),
   k1_royalty_source: z.object({
     partnership_ein: z.string().regex(/^\d{9}$/),
     source_document_reference: z.string().trim().min(1),
     box7_gross_royalties: z.number().positive(),
     box13_code_i_allowed_deduction: z.number().nonnegative().optional(),
     box13_code_i_statement_reference: z.string().trim().min(1).optional(),
+    issuer_expense_item_id: z.string().trim().min(1).optional(),
   }).strict().optional(),
   // One reviewed 1099-MISC box 2 mapped to this royalty property. The
   // passthrough amount is the same income, not a second Schedule E receipt.
@@ -186,6 +217,23 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_es: z.array(itemSchema).optional().default([]),
+  // Reviewed filed-year record, joined to every positive 2025 prior PAL by
+  // durable activity ID and reporting character. Acceptance is verified by
+  // the export boundary, not inferred from this entered reference.
+  filed_2024_form8582_record: filed2024Form8582RecordSchema.optional(),
+  estate_trust_rows: z.array(
+    z.object({
+      estate_trust_name: z.string().trim().min(1),
+      estate_trust_ein: z.string().regex(/^\d{9}$/),
+      source_document_reference: z.string().trim().min(1),
+      other_income: z.number().int().positive().optional(),
+      passive_income: z.number().int().positive().optional(),
+    }).strict().refine(
+      (row) =>
+        row.other_income !== undefined || row.passive_income !== undefined,
+      { message: "Schedule E estate/trust row needs income" },
+    ),
+  ).optional(),
   // Passthrough mortgage interest from 1098 Box 1 routed to Schedule E
   mortgage_interest: z.number().nonnegative().optional(),
   // Auto/travel expense from auto_expense worksheet (AUTO screen)
@@ -223,6 +271,29 @@ export function qualifiedEntireDispositionLoss(
   item: EItem,
 ): number | undefined {
   const sale = item.passive_property_sales?.[0];
+  const priorOperating = item.prior_unallowed_passive_operating ?? 0;
+  const firstYear = item.first_year_activity_source;
+  const priorSource = item.prior_year_8582_source;
+  const sourcedPriorLoss = firstYear === undefined && priorOperating > 0 &&
+    priorSource !== undefined &&
+    priorSource.activity_id === item.activity_id &&
+    priorSource.filed_part_vii_column_c === priorOperating &&
+    priorSource.filed_part_ix_rows === undefined &&
+    priorSource.filed_part_viii_row === undefined;
+  const sourcedFirstYear = firstYear !== undefined && sale !== undefined &&
+    firstYear.activity_id === item.activity_id &&
+    firstYear.activity_name === item.property_description &&
+    firstYear.activity_acquired_on === sale.acquired_on &&
+    firstYear.activity_acquired_on >= "2025-01-01" &&
+    firstYear.activity_acquired_on <= "2025-12-31" &&
+    item.prior_unallowed_passive_operating === undefined &&
+    item.prior_year_8582_source === undefined &&
+    item.prior_unallowed_passive_4797_part1 === undefined &&
+    item.prior_unallowed_passive_4797_part2 === undefined &&
+    item.prior_unallowed_at_risk === undefined &&
+    item.operating_expenses_carryover === undefined &&
+    item.disallowed_mortgage_interest_8990 === undefined &&
+    item.disallowed_other_interest_8990 === undefined;
   if (
     item.activity_type !== "B" || item.disposed_of !== true ||
     !item.activity_id || item.passive_property_sales?.length !== 1 ||
@@ -231,19 +302,14 @@ export function qualifiedEntireDispositionLoss(
     sale.activity_name !== item.property_description ||
     (item.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
     (item.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
-    (item.prior_unallowed_passive_operating ?? 0) <= 0 ||
-    item.prior_year_8582_source?.activity_id !== item.activity_id ||
-    item.prior_year_8582_source.filed_part_vii_column_c !==
-      item.prior_unallowed_passive_operating ||
-    item.prior_year_8582_source.filed_part_ix_rows !== undefined ||
-    item.prior_year_8582_source.filed_part_viii_row !== undefined ||
+    (!sourcedPriorLoss && !sourcedFirstYear) ||
     (item.ownership_percent ?? 100) !== 100 ||
     (item.section_1231_gain_loss ?? 0) !== 0
   ) return undefined;
   const currentNet = computePropertyNet(item);
   if (!Number.isSafeInteger(currentNet)) return undefined;
   const currentLoss = Math.max(0, -currentNet);
-  const totalLoss = currentLoss + item.prior_unallowed_passive_operating;
+  const totalLoss = currentLoss + priorOperating;
   return currentLoss > 0 && totalLoss > passiveSaleGain(sale)
     ? totalLoss
     : undefined;
@@ -263,7 +329,8 @@ export function qualifiedEntireDispositionGain(
     item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
     item.prior_year_8582_source.filed_part_ix_rows === undefined &&
     item.prior_year_8582_source.filed_part_viii_row === undefined;
-  const sourcedFirstYear = item.activity_type === "B" &&
+  const sourcedFirstYear = (item.activity_type === "B" ||
+    (item.activity_type === "A" && item.property_type !== 6)) &&
     firstYear !== undefined && sale !== undefined &&
     firstYear.activity_id === item.activity_id &&
     firstYear.activity_name === item.property_description &&
@@ -284,7 +351,8 @@ export function qualifiedEntireDispositionGain(
     (item.activity_type !== "B" &&
       !(item.activity_type === "A" &&
         item.property_type !== 6 &&
-        item.prior_passive_losses_active_when_incurred === true)) ||
+        (sourcedFirstYear ||
+          item.prior_passive_losses_active_when_incurred === true))) ||
     item.disposed_of !== true ||
     !item.activity_id || item.passive_property_sales?.length !== 1 ||
     !sale || sale.part !== "II" || !isQualifiedEntireSale(sale) ||
@@ -297,23 +365,28 @@ export function qualifiedEntireDispositionGain(
     (item.section_1231_gain_loss ?? 0) !== 0
   ) return undefined;
   const currentNet = computePropertyNet(item);
-  if (!Number.isSafeInteger(currentNet) || currentNet >= 0) return undefined;
+  if (
+    !Number.isSafeInteger(currentNet) || currentNet > 0 ||
+    (currentNet === 0 &&
+      (item.activity_type !== "B" || !sourcedPriorLoss))
+  ) return undefined;
   const loss = -currentNet + priorOperating;
   return Number.isSafeInteger(loss) && passiveSaleGain(sale) > loss
     ? loss
     : undefined;
 }
 
-/** A retained rental's short-held property gain remains passive activity
+/** A retained rental's direct property gain remains passive activity
  * income; it does not release every prior operating PAL under §469(g). */
-export function qualifiedRetainedPartIISale(item: EItem): boolean {
+export function qualifiedRetainedPropertySale(item: EItem): boolean {
   const sale = item.passive_property_sales?.[0];
   if (
     (item.activity_type !== "A" && item.activity_type !== "B") ||
     !sale || item.disposed_of !== true ||
     !item.activity_id ||
     item.passive_property_sales?.length !== 1 ||
-    sale.part !== "II" ||
+    (sale.part === "I" &&
+      item.section_1231_lookback_source?.nonrecaptured_loss !== 0) ||
     sale.entire_activity_interest_disposed !== false ||
     sale.activity_id !== item.activity_id ||
     sale.activity_name !== item.property_description ||
@@ -341,9 +414,68 @@ export function qualifiedRetainedPartIISale(item: EItem): boolean {
         (item.prior_unallowed_passive_operating ?? 0);
 }
 
+/** Review a direct Part I entire-gain candidate without authorizing filing.
+ * Accepted prior-year activity and zero-PAL evidence is not yet authenticated. */
+export function reviewPre2025PartIEntireGainCandidate(item: EItem): {
+  activity_id: string;
+  part: "I";
+  sale_gain: number;
+  current_schedule_e_loss: number;
+  overall_gain: number;
+} | undefined {
+  const sale = item.passive_property_sales?.[0];
+  if (
+    !sale || sale.part !== "I" ||
+    sale.entire_activity_interest_disposed !== true
+  ) return undefined;
+  const source = item.pre2025_part1_entire_disposition_source;
+  const currentNet = computePropertyNet(item);
+  const saleGain = passiveSaleGain(sale);
+  if (
+    !source || item.passive_property_sales?.length !== 1 ||
+    (item.activity_type !== "A" && item.activity_type !== "B") ||
+    item.disposed_of !== true || !item.activity_id ||
+    item.activity_id !== source.activity_id ||
+    item.property_description !== source.activity_name ||
+    source.activity_acquired_on !== sale.acquired_on ||
+    source.activity_acquired_on >= "2025-01-01" ||
+    sale.activity_id !== item.activity_id ||
+    sale.activity_name !== item.property_description ||
+    !isQualifiedEntireSale(sale) ||
+    item.section_1231_lookback_source?.nonrecaptured_loss !== 0 ||
+    !Number.isSafeInteger(currentNet) || currentNet >= 0 ||
+    !Number.isSafeInteger(saleGain) || saleGain <= -currentNet ||
+    item.first_year_activity_source !== undefined ||
+    item.prior_unallowed_passive_operating !== undefined ||
+    item.prior_unallowed_passive_4797_part1 !== undefined ||
+    item.prior_unallowed_passive_4797_part2 !== undefined ||
+    item.prior_unallowed_at_risk !== undefined ||
+    item.operating_expenses_carryover !== undefined ||
+    item.prior_year_8582_source !== undefined ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    (item.section_1231_gain_loss ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Schedule E long-held Part I entire gain needs matching purchase, closing, filed prior activity, zero-PAL, section 1231 lookback, and loss-character sources",
+    );
+  }
+  return {
+    activity_id: item.activity_id,
+    part: "I",
+    sale_gain: saleGain,
+    current_schedule_e_loss: -currentNet,
+    overall_gain: saleGain + currentNet,
+  };
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 function validateItem(item: EItem): void {
+  if (reviewPre2025PartIEntireGainCandidate(item)) {
+    throw new Error(
+      "Schedule E long-held Part I entire disposition needs executor-owned authentication of the accepted prior-year activity and zero passive-loss balance",
+    );
+  }
   const k1Royalty = item.k1_royalty_source;
   const miscRoyalty = item.f1099m_royalty_source;
   if (
@@ -422,7 +554,7 @@ function validateItem(item: EItem): void {
     item.disposed_of === true &&
     qualifiedEntireDispositionLoss(item) === undefined &&
     qualifiedEntireDispositionGain(item) === undefined &&
-    !qualifiedRetainedPartIISale(item)
+    !qualifiedRetainedPropertySale(item)
   ) {
     throw new Error(
       "Schedule E prior passive loss with current disposition needs section 469(g) review",
@@ -453,6 +585,64 @@ export function computeExpenses(item: EItem): number {
     (item.expense_depletion ?? 0) +
     otherLinesTotal +
     (item.operating_expenses_carryover ?? 0);
+}
+
+const eicFiledExpenseKeys = [
+  "expense_advertising",
+  "expense_auto_travel",
+  "expense_cleaning",
+  "expense_commissions",
+  "expense_insurance",
+  "expense_legal_professional",
+  "expense_management",
+  "expense_mortgage_interest",
+  "expense_other_interest",
+  "expense_repairs",
+  "expense_supplies",
+  "expense_taxes",
+  "expense_utilities",
+] as const satisfies ReadonlyArray<keyof EItem>;
+
+/** Pub. 596 Worksheet 1 lines 8–9 from filed Schedule E property rows. */
+export function scheduleERoyaltyEicAmounts(rawInput: unknown): {
+  income: number;
+  expenses: number;
+} {
+  const input = inputSchema.parse(rawInput);
+  let income = 0;
+  let expenses = 0;
+  for (const item of input.schedule_es) {
+    if ((item.royalties_income ?? 0) === 0 || isVacationHomeExcluded(item)) {
+      continue;
+    }
+    const fraction = (item.ownership_percent ?? 100) / 100;
+    const allocated = (amount: number) => Math.round(amount * fraction);
+    const filedExpenses = eicFiledExpenseKeys.reduce(
+      (sum, key) => sum + allocated(item[key] ?? 0),
+      0,
+    ) + allocated(
+      (item.expense_depreciation ?? 0) + (item.expense_depletion ?? 0),
+    ) + (item.expense_other_lines ?? []).reduce(
+      (sum, line) => sum + allocated(line.amount),
+      0,
+    );
+    const allocation = item.eic_royalty_expense_allocation;
+    const mixed = item.rent_income > 0 && filedExpenses > 0;
+    if (
+      (mixed && allocation === undefined) ||
+      (allocation !== undefined &&
+        (allocation.amount > filedExpenses ||
+          (!mixed && allocation.amount !== filedExpenses)))
+    ) {
+      throw new Error(
+        "Schedule E EIC royalty expenses need a reviewed allocation of filed property expenses",
+      );
+    }
+    income += allocated(item.royalties_income ?? 0);
+    expenses += allocation?.amount ?? filedExpenses;
+  }
+  if (input.schedule_es.length === 0) income += input.royalty_income ?? 0;
+  return { income, expenses };
 }
 
 export function isVacationHomeExcluded(item: EItem): boolean {
@@ -567,6 +757,29 @@ function farmCurrentLoss(farms: readonly FarmActivity[]): number {
 
 function farmCurrentIncome(farms: readonly FarmActivity[]): number {
   return farms.reduce((sum, farm) => sum + Math.max(0, farm.current_net), 0);
+}
+
+/** Positive passive rental/farm income on Pub. 596 Worksheet 1 line 11.
+ * Royalty rows are handled on lines 8–10, so their net is excluded here. */
+export function scheduleEPassiveEicIncome(rawInput: unknown): number {
+  const input = inputSchema.parse(rawInput);
+  const rentalIncome = input.schedule_es.filter(isPassive).reduce(
+    (sum, item) => {
+      const net = computePropertyNet(item);
+      if ((item.royalties_income ?? 0) === 0) return sum + Math.max(0, net);
+      const fraction = (item.ownership_percent ?? 100) / 100;
+      const royaltyGross = Math.round(item.royalties_income! * fraction);
+      const royaltyExpense = item.eic_royalty_expense_allocation?.amount ??
+        Math.round(computeExpenses(item) * fraction);
+      return sum + Math.max(0, net - (royaltyGross - royaltyExpense));
+    },
+    0,
+  );
+  return rentalIncome + farmCurrentIncome(input.farm_rental_activities ?? []) +
+    (input.estate_trust_rows ?? []).reduce(
+      (sum, row) => sum + (row.passive_income ?? 0),
+      0,
+    );
 }
 
 function hasPassiveLoss(
@@ -876,6 +1089,11 @@ function form4797Outputs(
       item.activity_id ? [item.activity_id] : []
     ),
     ...(sales.length ? { passive_property_sales: sales } : {}),
+    ...(sales.some((sale) => sale.part === "I") &&
+        items.length === 1 &&
+        items[0].section_1231_lookback_source
+      ? { nonrecaptured_1231_loss: 0 }
+      : {}),
     ...(activities ? { passive_activity_sources: activities } : {}),
   })];
 }
@@ -940,8 +1158,13 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const { schedule_es, rental_income, royalty_income, farm_rental_net } =
-      parsed;
+    const {
+      schedule_es,
+      rental_income,
+      royalty_income,
+      farm_rental_net,
+      estate_trust_rows,
+    } = parsed;
     const linkedMiscRoyalty = schedule_es.length === 1 &&
       schedule_es[0].f1099m_royalty_source !== undefined &&
       royalty_income ===
@@ -982,7 +1205,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     if (
       schedule_es.length === 0 && passthroughRental === 0 &&
       passthroughRoyalty === 0 &&
-      farm_rental_net === undefined
+      farm_rental_net === undefined && (estate_trust_rows?.length ?? 0) === 0
     ) {
       return { outputs: [] };
     }
@@ -1003,8 +1226,14 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       (sum, item) => sum + computePropertyNet(item),
       0,
     );
+    const eicRoyalty = scheduleERoyaltyEicAmounts(parsed);
+    const eicPassiveIncome = scheduleEPassiveEicIncome(parsed);
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty +
-      (farm_rental_net ?? 0);
+      (farm_rental_net ?? 0) +
+      (estate_trust_rows ?? []).reduce(
+        (sum, row) => sum + (row.other_income ?? 0) + (row.passive_income ?? 0),
+        0,
+      );
     // Schedule E line 26 carries income plus DEDUCTIBLE losses: a passive loss is held
     // back here and the part Form 8582 allows comes back on Schedule 1 (IRC §469(a)).
     const entireLoss = schedule_es.length === 1 && farms.length === 0
@@ -1013,13 +1242,33 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     const deductibleNet = entireLoss === undefined
       ? totalNet + passiveCurrentLoss(schedule_es) + farmCurrentLoss(farms)
       : totalNet - (schedule_es[0].prior_unallowed_passive_operating ?? 0);
+    const passiveLossOutputs = entireLoss === undefined
+      ? form8582Outputs(schedule_es, farms)
+      : [];
+    if (parsed.filed_2024_form8582_record) {
+      const form8582Input = passiveLossOutputs.find((item) =>
+        item.nodeType === "form8582"
+      )?.fields;
+      if (!form8582Input) {
+        throw new Error(
+          "Filed 2024 Form 8582 record needs a linked 2025 passive-loss activity",
+        );
+      }
+      reconcileFiled2024Form8582Record(
+        parsed.filed_2024_form8582_record,
+        form8582Input,
+      );
+    }
     const outputs: NodeOutput[] = [
       output(schedule1, { line5_schedule_e: deductibleNet }),
       this.outputNodes.output(agi_aggregator, {
         line5_schedule_e: deductibleNet,
+        eic_royalty_income: eicRoyalty.income,
+        eic_royalty_expenses: eicRoyalty.expenses,
+        eic_passive_schedule_e_income: eicPassiveIncome,
         ...(entireLoss === undefined ? palFields(schedule_es, farms) : {}),
       }),
-      ...(entireLoss === undefined ? form8582Outputs(schedule_es, farms) : []),
+      ...passiveLossOutputs,
       ...form8960Outputs(schedule_es),
       ...scheduleAOutputs(schedule_es),
       ...form8995Outputs(schedule_es),

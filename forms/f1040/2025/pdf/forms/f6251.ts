@@ -1,5 +1,24 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
+import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
+import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import {
+  assertPriorIsoSaleExport,
+  assertPriorIsoSaleRetention,
+} from "../../form6251_prior_iso_sale.ts";
+import { assertForm6251Form4952Line2c } from "../../form6251_4952_reconciliation.ts";
+import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
+import { assertForm6251MiningSource } from "../../../nodes/inputs/schedule_c/mining.ts";
+import { assertForm6251LongTermContractSource } from "../../../nodes/inputs/schedule_c/long_term_contract.ts";
+import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
+import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
+import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
+import { assertForm6251PrivateActivityBondSource } from "../../form6251_pab_source.ts";
+import { assertForm6251RefundSource } from "../../form6251_refund_source.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
+import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
 // Verified against the cached TY2025 IRS AcroForm field tree and widget
 // positions: f1_1/f1_2 are name/SSN, f1_3..f1_33 are lines 1a..11,
@@ -33,6 +52,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("line2k_disposition", 1, 15),
   textField("depreciation_adjustment", 1, 16),
   textField("line2o_circulation_costs", 1, 19),
+  textField("line2p_long_term_contracts", 1, 20),
+  textField("line2q_mining_costs", 1, 21),
   textField("amti", 1, 26),
   textField("exemption", 1, 27),
   textField("taxable_excess", 1, 28, true),
@@ -75,10 +96,22 @@ export const form6251Pdf: PdfFormDescriptor = {
       );
     }
     assertForm6251Line8(fields);
+    assertForm6251Form8949Source(fields, allPending);
+    assertForm6251Form4952Line2c(fields, allPending);
+    assertPriorIsoSaleRetention(fields, allPending);
+    assertForm6251CirculationSource(fields, allPending);
+    assertForm6251MiningSource(fields, allPending);
+    assertForm6251LongTermContractSource(fields, allPending);
+    assertForm6251DepletionSource(fields, allPending);
+    assertForm6251DepreciationSource(fields);
+    assertForm6251TrustSource(fields, allPending);
+    assertForm6251PrivateActivityBondSource(fields, allPending);
+    assertForm6251RefundSource(fields, allPending);
+    assertForm6251QualifiedDividendSource(fields, allPending);
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;
     const agi = form1040?.line11_agi;
-    const senior = allPending.schedule1a?.line37_senior ?? 0;
+    const senior = form1040?.schedule1a_line37_senior_deduction ?? 0;
     if (
       typeof line14 !== "number" || typeof agi !== "number" ||
       typeof senior !== "number" ||
@@ -87,6 +120,14 @@ export const form6251Pdf: PdfFormDescriptor = {
       throw new Error(
         "Form 6251 PDF line 1a needs finalized Form 1040 lines 11b/14 and Schedule 1-A line 37",
       );
+    }
+    if (senior > 0) {
+      const source = schedule1aInputSchema.parse(allPending.schedule1a);
+      if (!schedule1a.build(source, { pending: allPending })) {
+        throw new Error(
+          "Form 6251 PDF senior deduction needs a reconciled Schedule 1-A source",
+        );
+      }
     }
     const line1a = line14 - senior;
     if (Math.round(agi - line1a) !== Math.round(fields.regular_tax_income)) {
@@ -100,6 +141,33 @@ export const form6251Pdf: PdfFormDescriptor = {
       line1a_less_senior_deduction: line1a,
       ...(typeof nol === "number" ? { nol_adjustment: -nol } : {}),
     };
+  },
+  instances(fields, filer, allPending) {
+    assertForm6251MiningSource(fields, allPending);
+    assertForm6251LongTermContractSource(fields, allPending);
+    assertForm6251Form4952Line2c(fields, allPending, filer?.primarySSN, true);
+    assertPriorIsoSaleExport(
+      fields,
+      allPending,
+      filer?.primarySSN,
+      filer?.filingStatus === FilingStatus.Single,
+    );
+    if ((Number(fields.iso_adjustment ?? 0)) > 0) {
+      if (!filer) {
+        throw new Error("Form 6251 line 2i PDF needs final filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertForm3921IsoSource(
+        allPending?.f3921,
+        Number(fields.iso_adjustment),
+        recipients,
+      );
+    }
+    return [fields];
   },
   includeWhen: (fields) =>
     (typeof fields.tentative_tax === "number" &&

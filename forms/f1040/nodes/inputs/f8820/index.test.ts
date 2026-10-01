@@ -23,6 +23,26 @@ function source(overrides: Record<string, unknown> = {}) {
   });
 }
 
+Deno.test("Form 8820 input rejects estate and trust K-1 orphan-drug claims", () => {
+  for (const source_type of ["estate", "trust"]) {
+    assertThrows(
+      () =>
+        source({
+          f8820s: [],
+          pass_through_credits: [{
+            source_type,
+            entity_ein: "123456789",
+            source_document_reference: "2025 fiduciary K-1",
+            credit_amount: 500,
+            subject_to_passive_activity_limit: false,
+          }],
+        }),
+      Error,
+      "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed source route",
+    );
+  }
+});
+
 Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
   const lines = calculateForm8820(source());
   assertEquals(lines, {

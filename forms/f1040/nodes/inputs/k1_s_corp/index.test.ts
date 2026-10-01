@@ -237,15 +237,46 @@ Deno.test("nonpassive S corporation K-1 code K reaches source-backed Form 3800",
 
 Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
   const result = compute([
-    minimalItem({ corporation_name: "Corp One", box9_net_1231: 3_000 }),
-    minimalItem({ corporation_name: "Corp Two", box9_net_1231: 4_000 }),
+    minimalItem({
+      corporation_name: "Corp One",
+      corporation_ein: "123456789",
+      source_document_reference: "K-1 C1",
+      recipient_tin: "111223333",
+      box9_net_1231: 3_000,
+    }),
+    minimalItem({
+      corporation_name: "Corp Two",
+      corporation_ein: "987654321",
+      source_document_reference: "K-1 C2",
+      recipient_tin: "111223333",
+      box9_net_1231: 4_000,
+    }),
   ]);
   const fields = findOutput(result, "form4797")?.fields;
   assertEquals(fields?.section_1231_gain, 7_000);
   assertEquals(fields?.k1_1231_rows, [
-    { source: "s_corp", entity_name: "Corp One", gain_loss: 3_000 },
-    { source: "s_corp", entity_name: "Corp Two", gain_loss: 4_000 },
+    {
+      source: "s_corp",
+      entity_name: "Corp One",
+      source_ein: "123456789",
+      source_document_reference: "K-1 C1",
+      recipient_tin: "111223333",
+      gain_loss: 3_000,
+    },
+    {
+      source: "s_corp",
+      entity_name: "Corp Two",
+      source_ein: "987654321",
+      source_document_reference: "K-1 C2",
+      recipient_tin: "111223333",
+      gain_loss: 4_000,
+    },
   ]);
+  assertThrows(
+    () => compute([minimalItem({ box9_net_1231: 1_000 })]),
+    Error,
+    "box 9 needs EIN",
+  );
 });
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
@@ -677,6 +708,34 @@ Deno.test("ordinary-loss ledger EIN must match the issued K-1", () => {
     Error,
     "reviewed stock-only beginning basis",
   );
+});
+
+Deno.test("S corporation K-1 routes a reviewed no-shares cash capital contribution to Form 7203", () => {
+  const contribution = {
+    amount: 500,
+    contributed_date: "2025-06-01",
+    shareholder_ssn: "123456789",
+    corporation_ein: "123456789",
+    bank_transfer_reference: "Bank transfer TX-2025-500",
+    corporate_capital_account_reference: "Corporate capital ledger-500",
+    cash_received_by_corporation_confirmed: true,
+    no_shares_issued_confirmed: true,
+    not_a_shareholder_loan_confirmed: true,
+  };
+  const source = reviewedLossItem(3000, {
+    box1_ordinary_business: -4000,
+    form7203_stock_loss_ledger: {
+      ...stockLossLedger(3000), cash_capital_contribution: contribution,
+    },
+  });
+  const fields = findOutput(compute([source]), "form7203")?.fields;
+  assertEquals(fields?.stock_basis_beginning, 3_000);
+  assertEquals(fields?.additional_contributions, 500);
+  assertEquals(fields?.ordinary_loss, 4_000);
+  assertThrows(() => compute([{ ...source, form7203_stock_loss_ledger: {
+    ...stockLossLedger(3000),
+    cash_capital_contribution: { ...contribution, corporation_ein: "999999999" },
+  } }]));
 });
 
 Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {

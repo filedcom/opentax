@@ -1,5 +1,10 @@
 import { normalizeAllPending } from "../../pending.ts";
 import {
+  calculateSingleScheduleCForm7206,
+  reconcileSingleScheduleCGraphSource,
+  singleScheduleCPlanSchema,
+} from "../../../nodes/intermediate/forms/form7206/index.ts";
+import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
   itemSchema as scheduleCItemSchema,
@@ -12,6 +17,7 @@ import {
   reconcileFarmSources,
   wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
+import { inputSchema as form1099DivInputSchema } from "../../../nodes/inputs/f1099div/index.ts";
 
 const lineNumbers = [
   2,
@@ -32,6 +38,40 @@ const lineNumbers = [
   17,
 ] as const;
 
+/** A zero deduction cannot discard a required loss carryforward workpaper. */
+export function assertNoUnfiled8995Loss(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const currentReit = fields.line6_sec199a_dividends;
+  const prior = fields.reit_loss_carryforward;
+  if (
+    currentReit !== undefined &&
+      !(typeof currentReit === "number" && Number.isFinite(currentReit)) &&
+      !(Array.isArray(currentReit) &&
+        currentReit.every((value) =>
+          typeof value === "number" && Number.isFinite(value)
+        )) ||
+    prior !== undefined &&
+      (typeof prior !== "number" || !Number.isFinite(prior))
+  ) {
+    throw new Error("Form 8995 loss carryforward source must be numeric");
+  }
+  const current = currentReit === undefined
+    ? 0
+    : Array.isArray(currentReit)
+    ? currentReit.reduce((sum: number, value: number) => sum + value, 0)
+    : currentReit as number;
+  if (
+    (typeof prior === "number" && current + prior < 0) ||
+    (typeof fields.line17 === "number" && fields.line17 > 0) ||
+    (typeof fields.line16 === "number" && fields.line16 > 0)
+  ) {
+    throw new Error(
+      "Form 8995 zero deduction cannot omit an unfiled QBI or REIT/PTP loss carryforward",
+    );
+  }
+}
+
 export type OneBusiness8995 = {
   readonly businessName: string;
   readonly tin: { readonly kind: "ein" | "ssn"; readonly value: string };
@@ -39,29 +79,40 @@ export type OneBusiness8995 = {
   readonly lines: Readonly<Record<(typeof lineNumbers)[number], number>>;
 };
 
+export type Filed8995 = OneBusiness8995 | {
+  readonly businessName: undefined;
+  readonly tin: undefined;
+  readonly qbi: 0;
+  readonly lines: OneBusiness8995["lines"];
+};
+
 function assertFiledLines(
   fields: Record<string, unknown>,
   f1040: Record<string, unknown>,
+  reit: number = 0,
+  qualifiedDividends: number = 0,
 ): OneBusiness8995["lines"] {
   const qbi = fields.line1_qbi as number;
   const line11 = fields.line11 as number;
   const line5 = Math.round(qbi * 0.2);
-  const line14 = Math.round(line11 * 0.2);
+  const line9 = Math.round(reit * 0.2);
+  const line13 = Math.max(0, line11 - qualifiedDividends);
+  const line14 = Math.round(line13 * 0.2);
   const expected = {
     2: qbi,
     3: 0,
     4: qbi,
     5: line5,
-    6: 0,
+    6: reit,
     7: 0,
-    8: 0,
-    9: 0,
-    10: line5,
+    8: reit,
+    9: line9,
+    10: line5 + line9,
     11: line11,
-    12: 0,
-    13: line11,
+    12: qualifiedDividends,
+    13: line13,
     14: line14,
-    15: Math.min(line5, line14),
+    15: Math.min(line5 + line9, line14),
     16: 0,
     17: 0,
   } as const;
@@ -81,6 +132,199 @@ function assertFiledLines(
 
 function zeroOrAbsent(value: unknown): boolean {
   return value === undefined || value === 0;
+}
+
+/** One issued, nonnominee dividend record without other 1099-DIV components. */
+function qualifiedDividendSource(source: unknown, reitAnchors: unknown): {
+  ordinary: number;
+  qualified: number;
+} {
+  const parsed = form1099DivInputSchema.safeParse(source);
+  const copies = parsed.success ? parsed.data.f1099divs : [];
+  const item = copies.length <= 2
+    ? copies.find((copy) => (copy.box1b ?? 0) > 0)
+    : undefined;
+  const other = copies.find((copy) => copy !== item);
+  if (
+    !item || (copies.length !== 1 && copies.length !== 2) ||
+    (other !== undefined &&
+      (reitAnchors === undefined || (other.box5 ?? 0) <= 0 ||
+        other.source_document_reference === item.source_document_reference ||
+        other.payerName?.trim().toLowerCase() ===
+          item.payerName?.trim().toLowerCase() ||
+        item.box1a + other.box1a > 1_500)) ||
+    !item.payerName?.trim() || !item.source_document_reference?.trim() ||
+    item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
+    !Number.isSafeInteger(item.box1a) || item.box1a <= 0 ||
+    item.box1a > 1_500 || !Number.isSafeInteger(item.box1b) ||
+    (item.box1b ?? 0) <= 0 || (item.box1b ?? 0) > item.box1a ||
+    [
+      item.box2a,
+      item.box2b,
+      item.box2c,
+      item.box2d,
+      item.box2e,
+      item.box2f,
+      item.box3,
+      item.box4,
+      item.box5,
+      item.box6,
+      item.box7,
+      item.box9,
+      item.box10,
+      item.box12,
+      item.box13,
+      item.box16,
+    ].some((amount) => !zeroOrAbsent(amount)) ||
+    item.box8 !== undefined || item.box14 !== undefined ||
+    item.box15 !== undefined ||
+    item.foreign_source_dividends_usd !== undefined ||
+    item.foreign_source_qualified_dividends_usd !== undefined ||
+    item.foreign_tax_irs_country_code !== undefined ||
+    item.foreign_tax_holding_review !== undefined ||
+    item.section199a_holding_review !== undefined ||
+    item.investment_property_for_form4952 === true
+  ) {
+    throw new Error(
+      "Form 8995 qualified-dividend route needs one identified issued copy, optionally alongside one distinct REIT copy, without other dividend components or Schedule B threshold",
+    );
+  }
+  return { ordinary: item.box1a, qualified: item.box1b! };
+}
+
+function qualifiedReitDividends(
+  source: unknown,
+  anchors: unknown,
+  qualifiedDividends: number,
+): number {
+  if (source === undefined) {
+    if (anchors !== undefined) {
+      throw new Error(
+        "Form 8995 retained REIT sources lack issued 1099-DIV copies",
+      );
+    }
+    return 0;
+  }
+  const parsed = form1099DivInputSchema.safeParse(source);
+  const allItems = parsed.success ? parsed.data.f1099divs : [];
+  const items = allItems.filter((item) => (item.box5 ?? 0) > 0);
+  const other = allItems.filter((item) => (item.box5 ?? 0) <= 0);
+  const validDate = (date: string | undefined) =>
+    !!date && !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
+    new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
+  const sourceReferences = new Set<string>();
+  const payerNames = new Set<string>();
+  const reviewReferences = new Set<string>();
+  const maximumReitCopies = qualifiedDividends > 0 ? 1 : 3;
+  const maximumIssuedCopies = qualifiedDividends > 0 ? 2 : 3;
+  if (
+    items.length < 1 || items.length > maximumReitCopies ||
+    allItems.length > maximumIssuedCopies ||
+    other.length !== (qualifiedDividends > 0 ? 1 : 0) ||
+    (other.length === 1 &&
+      (!other[0].box1b || other[0].box1b !== qualifiedDividends ||
+        allItems.reduce((sum, item) => sum + item.box1a, 0) > 1_500))
+  ) {
+    throw new Error(
+      "Form 8995 REIT component needs at most three identified box 5 copies, or one alongside a distinct qualified-dividend copy",
+    );
+  }
+  if (!Array.isArray(anchors) || anchors.length !== items.length) {
+    throw new Error(
+      "Form 8995 retained REIT sources do not match issued 1099-DIV copies",
+    );
+  }
+  const anchoredByReference = new Map<string, Record<string, unknown>>();
+  for (const anchor of anchors) {
+    if (
+      typeof anchor !== "object" || anchor === null ||
+      Array.isArray(anchor) ||
+      typeof (anchor as Record<string, unknown>).source_document_reference !==
+        "string" ||
+      anchoredByReference.has(
+        (anchor as Record<string, string>).source_document_reference,
+      )
+    ) {
+      throw new Error("Form 8995 retained REIT source identity is invalid");
+    }
+    const reference = (anchor as Record<string, string>)
+      .source_document_reference;
+    anchoredByReference.set(reference, anchor as Record<string, unknown>);
+  }
+  let total = 0;
+  for (const item of items) {
+    const review = item.section199a_holding_review;
+    const sourceReference = item.source_document_reference?.trim();
+    const payerName = item.payerName?.trim().toLowerCase();
+    const reviewReference = review?.review_reference.trim();
+    const anchor = sourceReference
+      ? anchoredByReference.get(sourceReference)
+      : undefined;
+    if (
+      !sourceReference || !payerName || !reviewReference || !anchor ||
+      anchor.payer_name !== item.payerName ||
+      anchor.box1a !== item.box1a || anchor.box5 !== item.box5 ||
+      anchor.ex_dividend_date !== review?.ex_dividend_date ||
+      anchor.qualified_held_days_in_91_day_window !==
+        review?.qualified_held_days_in_91_day_window ||
+      anchor.diminished_risk_days_excluded !==
+        review?.diminished_risk_days_excluded ||
+      anchor.no_related_payment_obligation_confirmed !==
+        review?.no_related_payment_obligation_confirmed ||
+      anchor.review_reference !== review?.review_reference ||
+      anchor.reviewed_on !== review?.reviewed_on ||
+      sourceReferences.has(sourceReference) || payerNames.has(payerName) ||
+      reviewReferences.has(reviewReference) ||
+      item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
+      !Number.isSafeInteger(item.box5) || (item.box5 ?? 0) <= 0 ||
+      item.box1a !== item.box5 ||
+      !review || !validDate(review.ex_dividend_date) ||
+      !validDate(review.reviewed_on) ||
+      review.qualified_held_days_in_91_day_window <= 45 ||
+      review.qualified_held_days_in_91_day_window +
+            review.diminished_risk_days_excluded > 91 ||
+      (item.holdingPeriodDays ?? 0) <
+        review.qualified_held_days_in_91_day_window +
+          review.diminished_risk_days_excluded ||
+      [
+        item.box1b,
+        item.box2a,
+        item.box2b,
+        item.box2c,
+        item.box2d,
+        item.box2e,
+        item.box2f,
+        item.box3,
+        item.box4,
+        item.box6,
+        item.box7,
+        item.box9,
+        item.box10,
+        item.box12,
+        item.box13,
+        item.box16,
+      ].some((amount) => !zeroOrAbsent(amount)) ||
+      item.investment_property_for_form4952 === true ||
+      item.box8 !== undefined || item.box14 !== undefined ||
+      item.box15 !== undefined ||
+      item.foreign_source_dividends_usd !== undefined ||
+      item.foreign_source_qualified_dividends_usd !== undefined
+    ) {
+      throw new Error(
+        "Form 8995 REIT component needs one identified box 5 Form 1099-DIV with reviewed 91-day qualified holding and no related-payment obligation",
+      );
+    }
+    sourceReferences.add(sourceReference);
+    payerNames.add(payerName);
+    reviewReferences.add(reviewReference);
+    total += item.box5!;
+  }
+  if (total > 1_500) {
+    throw new Error(
+      "Form 8995 REIT component above $1,500 needs Schedule B source reconciliation",
+    );
+  }
+  return total;
 }
 
 /** Only the fully reconciled, one-business positive route can leave the guard. */
@@ -112,14 +356,51 @@ export function assertOneScheduleC8995(
     "schedule_e",
     "k1_partnership",
     "k1_s_corp",
-    "f1099div",
     "f1099patr",
     "schedule_d",
     "f1099b",
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
+  const qualifiedDividends = !zeroOrAbsent(fields.net_capital_gain)
+    ? qualifiedDividendSource(
+      pending.f1099div,
+      fields.reit_dividend_sources,
+    )
+    : { ordinary: 0, qualified: 0 };
+  const reit = fields.reit_dividend_sources === undefined
+    ? 0
+    : qualifiedReitDividends(
+      pending.f1099div,
+      fields.reit_dividend_sources,
+      qualifiedDividends.qualified,
+    );
+  if (
+    pending.f1099div !== undefined &&
+    fields.reit_dividend_sources === undefined &&
+    zeroOrAbsent(fields.net_capital_gain)
+  ) {
+    throw new Error(
+      "Form 8995 Schedule C source cannot silently omit Form 1099-DIV activity",
+    );
+  }
   const seDeduction = fields.se_tax_deduction ?? 0;
+  const healthField = fields.se_health_insurance_deduction;
+  const healthDeduction = typeof healthField === "number" ? healthField : 0;
+  const hasHealthDeduction = healthDeduction > 0;
+  const healthPlan = hasHealthDeduction
+    ? singleScheduleCPlanSchema.safeParse(form7206?.single_schedule_c_plan)
+    : undefined;
+  if (hasHealthDeduction) {
+    if (!healthPlan?.success || !form7206 || typeof seDeduction !== "number") {
+      throw new Error("Form 8995 health deduction needs Form 7206 source");
+    }
+    reconcileSingleScheduleCGraphSource(
+      form7206,
+      healthPlan.data,
+      seDeduction,
+    );
+  }
   const rawQbi = sourceBusiness ? computeNetProfit(sourceBusiness) : 0;
   const hasSeDeduction = typeof seDeduction === "number" && seDeduction > 0;
   const ein = typeof fields.line1_ein === "string"
@@ -155,11 +436,23 @@ export function assertOneScheduleC8995(
   if (
     businesses.length !== 1 || !sourceBusiness || !row || !f1040 ||
     !schedule1 || pending.form8995a !== undefined ||
+    (healthField !== undefined &&
+      (typeof healthField !== "number" || !Number.isFinite(healthField) ||
+        healthField < 0)) ||
     otherSourceKeys.some((key) => pending[key] !== undefined) ||
-    (form7206 !== undefined &&
+    (!hasHealthDeduction && form7206 !== undefined &&
       Object.keys(form7206).some((key) =>
         key !== "schedule_c_source" && key !== "schedule_se_source"
       )) ||
+    (hasHealthDeduction &&
+      (!healthPlan?.success ||
+        healthPlan.data.business_reference !==
+          sourceBusiness?.business_reference ||
+        healthPlan.data.schedule_c_line31_net_profit !== rawQbi ||
+        calculateSingleScheduleCForm7206(healthPlan.data).line14 !==
+          healthDeduction ||
+        form7206?.line14 !== healthDeduction ||
+        form7206?.marketplace_ptc_premium_overlap !== false)) ||
     general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
@@ -190,7 +483,7 @@ export function assertOneScheduleC8995(
     row.qbi !== rawQbi ||
     fields.qbi_from_schedule_c !== rawQbi ||
     typeof seDeduction !== "number" ||
-    Math.round(rawQbi - seDeduction) !== fields.line1_qbi ||
+    Math.round(rawQbi - seDeduction - healthDeduction) !== fields.line1_qbi ||
     (hasSeDeduction
       ? scheduleSe?.net_profit_schedule_c !== rawQbi ||
         !zeroOrAbsent(scheduleSe?.net_profit_schedule_f) ||
@@ -206,18 +499,23 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(fields.qbi_from_schedule_f) ||
     !zeroOrAbsent(fields.qbi) ||
     !zeroOrAbsent(fields.sstb_qbi) ||
-    !zeroOrAbsent(fields.line6_sec199a_dividends) ||
+    (fields.line6_sec199a_dividends ?? 0) !== reit ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
-    !zeroOrAbsent(fields.se_health_insurance_deduction) ||
+    (hasHealthDeduction
+      ? schedule1.line17_se_health_insurance !== healthDeduction
+      : !zeroOrAbsent(schedule1.line17_se_health_insurance)) ||
     !zeroOrAbsent(fields.retirement_plan_deduction) ||
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
-    !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
     schedule1.line3_schedule_c !== rawQbi ||
-    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    (f1040.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends.qualified ||
+    (f1040.line3b_ordinary_dividends ?? 0) !==
+      reit + qualifiedDividends.ordinary ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
-    !zeroOrAbsent(fields.net_capital_gain) ||
+    (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
+    reit + qualifiedDividends.ordinary > 1_500 ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
@@ -229,7 +527,12 @@ export function assertOneScheduleC8995(
     );
   }
   const qbi = fields.line1_qbi as number;
-  const expected = assertFiledLines(fields, f1040);
+  const expected = assertFiledLines(
+    fields,
+    f1040,
+    reit,
+    qualifiedDividends.qualified,
+  );
   return {
     businessName: sourceBusiness.line_c_business_name,
     tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
@@ -265,6 +568,10 @@ export function assertOneScheduleF8995(
   const scheduleSe = pending.schedule_se;
   const form7206 = pending.form7206;
   const seDeduction = fields.se_tax_deduction ?? 0;
+  const qualifiedDividends = pending.f1099div !== undefined ||
+      !zeroOrAbsent(fields.net_capital_gain)
+    ? qualifiedDividendSource(pending.f1099div, undefined)
+    : { ordinary: 0, qualified: 0 };
   const rawQbi = farm && source.success
     ? computeFarmNetProfit(
       farm,
@@ -283,7 +590,6 @@ export function assertOneScheduleF8995(
     "schedule_e",
     "k1_partnership",
     "k1_s_corp",
-    "f1099div",
     "f1099patr",
     "schedule_d",
     "f1099b",
@@ -345,6 +651,7 @@ export function assertOneScheduleF8995(
     !zeroOrAbsent(fields.qbi_from_schedule_c) ||
     !zeroOrAbsent(fields.qbi) || !zeroOrAbsent(fields.sstb_qbi) ||
     !zeroOrAbsent(fields.line6_sec199a_dividends) ||
+    fields.reit_dividend_sources !== undefined ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
     !zeroOrAbsent(fields.se_health_insurance_deduction) ||
@@ -352,10 +659,13 @@ export function assertOneScheduleF8995(
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
     !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
     schedule1.line6_schedule_f !== rawQbi ||
-    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    (f1040.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends.qualified ||
+    (f1040.line3b_ordinary_dividends ?? 0) !==
+      qualifiedDividends.ordinary ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
-    !zeroOrAbsent(fields.net_capital_gain) ||
+    (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
@@ -370,16 +680,122 @@ export function assertOneScheduleF8995(
     businessName: farm.line_c_farm_name,
     tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
     qbi: fields.line1_qbi as number,
-    lines: assertFiledLines(fields, f1040),
+    lines: assertFiledLines(fields, f1040, 0, qualifiedDividends.qualified),
   };
 }
 
-export function assertOneBusiness8995(
+function assertReitOnly8995(
+  fields: Record<string, unknown>,
+  rawPending: Readonly<Record<string, unknown>> | undefined,
+): Filed8995 {
+  if (!rawPending) {
+    throw new Error(
+      "Form 8995 REIT-only filing needs its complete pending return",
+    );
+  }
+  const pending = normalizeAllPending(rawPending as Record<string, unknown>);
+  const f1040 = pending.f1040;
+  const general = pending.general;
+  const schedule1 = pending.schedule1;
+  const otherSourceKeys = [
+    "schedule_c",
+    "schedule_f",
+    "schedule_e",
+    "k1_partnership",
+    "k1_s_corp",
+    "f1099patr",
+    "schedule_d",
+    "f1099b",
+    "sep_retirement",
+  ] as const;
+  const scheduleSe = pending.schedule_se;
+  const seSource = pending.form7206?.schedule_se_source;
+  const zeroSeSource = seSource !== null && typeof seSource === "object" &&
+    !Array.isArray(seSource) &&
+    Object.keys(seSource).every((key) =>
+      [
+        "net_profit_schedule_c",
+        "net_profit_schedule_f",
+        "farm_optional_method_elected",
+        "line13_deduction",
+      ].includes(key)
+    ) &&
+    zeroOrAbsent((seSource as Record<string, unknown>).net_profit_schedule_c) &&
+    zeroOrAbsent((seSource as Record<string, unknown>).net_profit_schedule_f) &&
+    (seSource as Record<string, unknown>).farm_optional_method_elected ===
+      false &&
+    zeroOrAbsent((seSource as Record<string, unknown>).line13_deduction);
+  const hasBusinessSe = scheduleSe !== undefined &&
+    Object.keys(scheduleSe).some((key) => key !== "w2_ss_wages");
+  const hasBusiness7206 = pending.form7206 !== undefined &&
+    (Object.keys(pending.form7206).some((key) =>
+      key !== "schedule_se_source"
+    ) ||
+      !zeroSeSource);
+  const reit = qualifiedReitDividends(
+    pending.f1099div,
+    fields.reit_dividend_sources,
+    0,
+  );
+  if (
+    !f1040 || !general || pending.form8995a !== undefined ||
+    otherSourceKeys.some((key) => pending[key] !== undefined) ||
+    hasBusinessSe || hasBusiness7206 ||
+    !Array.isArray(fields.reit_dividend_sources) ||
+    fields.reit_dividend_sources.length !== 1 ||
+    general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    fields.schedule_c_qbi_businesses !== undefined ||
+    fields.schedule_f_qbi_businesses !== undefined ||
+    !zeroOrAbsent(fields.qbi_from_schedule_c) ||
+    !zeroOrAbsent(fields.qbi_from_schedule_f) ||
+    !zeroOrAbsent(fields.qbi) || !zeroOrAbsent(fields.sstb_qbi) ||
+    !zeroOrAbsent(fields.se_tax_deduction) ||
+    !zeroOrAbsent(fields.se_health_insurance_deduction) ||
+    !zeroOrAbsent(fields.retirement_plan_deduction) ||
+    !zeroOrAbsent(fields.qbi_loss_carryforward) ||
+    !zeroOrAbsent(fields.reit_loss_carryforward) ||
+    !zeroOrAbsent(fields.net_capital_gain) ||
+    fields.line1_qbi !== 0 ||
+    fields.line6_sec199a_dividends !== reit ||
+    !zeroOrAbsent(schedule1?.line3_schedule_c) ||
+    !zeroOrAbsent(schedule1?.line6_schedule_f) ||
+    !zeroOrAbsent(schedule1?.line15_se_deduction) ||
+    !zeroOrAbsent(schedule1?.line16_sep_simple) ||
+    !zeroOrAbsent(schedule1?.line17_se_health_insurance) ||
+    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    f1040.line3b_ordinary_dividends !== reit ||
+    !zeroOrAbsent(f1040.line7_capital_gain) ||
+    !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
+    !zeroOrAbsent(f1040.line13b_additional_deductions) ||
+    typeof f1040.line11_agi !== "number" ||
+    typeof f1040.line12c_deduction_total !== "number" ||
+    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+      fields.line11
+  ) {
+    throw new Error(
+      "Form 8995 REIT-only filing needs one reviewed issued 1099-DIV and exact Form 1040 source reconciliation",
+    );
+  }
+  return {
+    businessName: undefined,
+    tin: undefined,
+    qbi: 0,
+    lines: assertFiledLines(fields, f1040, reit, 0),
+  };
+}
+
+export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
-): OneBusiness8995 {
+): Filed8995 {
   if (fields.schedule_f_qbi_businesses !== undefined) {
     return assertOneScheduleF8995(fields, pending);
   }
-  return assertOneScheduleC8995(fields, pending);
+  if (fields.schedule_c_qbi_businesses !== undefined) {
+    return assertOneScheduleC8995(fields, pending);
+  }
+  return assertReitOnly8995(fields, pending);
 }

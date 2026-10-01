@@ -124,6 +124,9 @@ function electedDeferral(ids: string[] = ["stock"]) {
 }
 
 function input(overrides: Record<string, unknown> = {}) {
+  const priorTax =
+    (overrides.prior_year_us_income_tax_less_foreign_tax_credit ??
+      priorYearTax(0)) as Record<string, number>;
   return {
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
@@ -146,7 +149,17 @@ function input(overrides: Record<string, unknown> = {}) {
     },
     exception_facts: { dual_citizen: null, minor: null },
     significant_asset_liability_changes_prior_5_years: false,
-    prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
+    prior_year_us_income_tax_less_foreign_tax_credit: priorTax,
+    prior_year_filed_return_sources: [2020, 2021, 2022, 2023, 2024].map(
+      (year) => ({
+        tax_year: year,
+        filed_form1040_document_id: `filed-${year}-form1040`,
+        filed_form1040_sha256: String(year).repeat(16),
+        form1040_line24_total_tax: priorTax[`year_${year}`],
+        schedule3_line1_foreign_tax_credit: 0,
+        irs_acceptance_reference: `irs-accepted-${year}`,
+      }),
+    ),
     balance_sheet: balanceSheetWithNetWorth(0),
     section_c: null,
     section_d: { elect_deferral: false },
@@ -194,6 +207,71 @@ function dualCitizenPartI() {
     ],
   };
 }
+
+Deno.test("Form 8854 Section A binds five filed Form 1040 tax lines and Schedule 3 foreign credits", () => {
+  const sources = input().prior_year_filed_return_sources;
+  const filed = input({
+    prior_year_us_income_tax_less_foreign_tax_credit: {
+      ...priorYearTax(0),
+      year_2024: 80,
+    },
+    prior_year_filed_return_sources: sources.map((source) =>
+      source.tax_year === 2024
+        ? {
+          ...source,
+          form1040_line24_total_tax: 100,
+          schedule3_line1_foreign_tax_credit: 20,
+        }
+        : source
+    ),
+  });
+  const parsed = inputSchema.parse(filed);
+  assertEquals(
+    parsed.prior_year_us_income_tax_less_foreign_tax_credit.year_2024,
+    80,
+  );
+  assertEquals(isCoveredExpatriate(parsed), false);
+  assertEquals(
+    inputSchema.safeParse({
+      ...filed,
+      prior_year_filed_return_sources: filed.prior_year_filed_return_sources
+        .map(
+          (source) =>
+            source.tax_year === 2024
+              ? { ...source, schedule3_line1_foreign_tax_credit: 19 }
+              : source,
+        ),
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...filed,
+      prior_year_filed_return_sources: filed.prior_year_filed_return_sources
+        .map(
+          (source) =>
+            source.tax_year === 2024 ? { ...source, tax_year: 2023 } : source,
+        ),
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...filed,
+      prior_year_filed_return_sources: filed.prior_year_filed_return_sources
+        .map(
+          (source) =>
+            source.tax_year === 2024
+              ? {
+                ...source,
+                filed_form1040_sha256: sources[0].filed_form1040_sha256,
+              }
+              : source,
+        ),
+    }).success,
+    false,
+  );
+});
 
 Deno.test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
   assertEquals(AVG_ANNUAL_TAX_THRESHOLD_2025, 206_000);

@@ -81,6 +81,7 @@ const cashIncomeKeys = [
 export const itemSchema = z.object({
   // Header / identification
   farm_id: z.string().min(1).optional(),
+  proprietor_recipient: z.enum(["T", "S"]).optional(),
   line_a_principal_crop_activity: z.string().min(1),
   line_b_agricultural_activity_code: z.enum([
     "111100",
@@ -208,11 +209,15 @@ export const farmSourceSchema = z.object({
     "1099g_agriculture",
     "1099g_ccc_market_gain",
     "1099m_crop_insurance",
+    "1099m_box3_other_income",
     "1099nec_farm_income",
     "1099patr_cooperative",
     "auto_expense",
   ]),
   amount: z.number().nonnegative(),
+  payer_name: z.string().trim().min(1).optional(),
+  payer_tin: z.string().regex(/^\d{9}$/).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   taxable_amount: z.number().nonnegative().optional(),
   deferred: z.boolean().optional(),
 }).strict().superRefine((source, ctx) => {
@@ -231,6 +236,16 @@ export const farmSourceSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Taxable amount is only allowed for 1099-PATR farm sources",
+    });
+  }
+  if (
+    (source.kind === "1099m_box3_other_income" ||
+      source.kind === "1099nec_farm_income") &&
+    (!source.payer_name || !source.payer_tin || !source.recipient_tin)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "1099 farm source needs payer and recipient identity",
     });
   }
 });
@@ -317,15 +332,26 @@ export function reconcileFarmSources(
     }
   >();
   for (const source of sources) {
-    if (!farms.has(source.farm_id)) {
+    const farm = farms.get(source.farm_id);
+    if (!farm) {
       throw new Error(
         `Schedule F source references unknown farm_id ${source.farm_id}`,
+      );
+    }
+    if (
+      (source.kind === "1099m_box3_other_income" ||
+        source.kind === "1099nec_farm_income") &&
+      !farm.proprietor_recipient
+    ) {
+      throw new Error(
+        "1099 farm source needs a named Schedule F proprietor",
       );
     }
     const current = totals.get(source.farm_id) ?? {
       "1099g_agriculture": 0,
       "1099g_ccc_market_gain": 0,
       "1099m_crop_insurance": 0,
+      "1099m_box3_other_income": 0,
       "1099nec_farm_income": 0,
       "1099patr_cooperative": 0,
       auto_expense: 0,
@@ -365,7 +391,11 @@ export function reconcileFarmSources(
           farm.line6a_crop_insurance ?? 0,
           source["1099m_crop_insurance"],
         ],
-        ["line 8", farm.line8_other_income ?? 0, source["1099nec_farm_income"]],
+        [
+          "line 8",
+          farm.line8_other_income ?? 0,
+          source["1099nec_farm_income"] + source["1099m_box3_other_income"],
+        ],
         ["line 10", farm.line10_car_truck ?? 0, source.auto_expense],
       ] as const
       : [
@@ -392,7 +422,7 @@ export function reconcileFarmSources(
         [
           "line 43",
           accrual?.line43_other_income ?? 0,
-          source["1099nec_farm_income"],
+          source["1099nec_farm_income"] + source["1099m_box3_other_income"],
         ],
         ["line 10", farm.line10_car_truck ?? 0, source.auto_expense],
       ] as const;
@@ -629,18 +659,12 @@ export function calculateScheduleFAtRiskNet(
   return calculateSimplifiedAtRiskLoss(preliminaryNet, item.at_risk_simplified);
 }
 
-// Per-item routing outputs (SE, QBI, passive, at-risk)
+// Per-item routing outputs (QBI, passive, at-risk)
 function perItemOutputs(
   item: ScheduleFItem,
   netProfit: number,
-  farmOptionalMethodElected: boolean,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
-
-  // Schedule SE Part I line 1a is replaced by Part II line 15 when elected.
-  if (!farmOptionalMethodElected && netProfit >= SE_TAX_THRESHOLD) {
-    outputs.push(output(schedule_se, { net_profit_schedule_f: netProfit }));
-  }
 
   // Form 8995 (QBI): only when net profit > 0
   if (netProfit > 0) {
@@ -725,6 +749,9 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     );
     outputs.push(this.outputNodes.output(schedule_j_calculation, {
       farm_net_profit: totalNetProfit,
+      farm_activity_count: input.schedule_fs.length,
+      farm_positive_activity_count: netProfits.filter((profit) => profit > 0)
+        .length,
     }));
 
     // Per-item downstream routing
@@ -732,7 +759,6 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       outputs.push(...perItemOutputs(
         input.schedule_fs[i],
         netProfits[i],
-        input.farm_optional_method_elected === true,
       ));
     }
 
@@ -752,6 +778,11 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         farm_optional_method_elected: true,
         gross_farm_income: Math.max(0, grossFarmIncome),
         net_profit_schedule_f: line34NetFarmProfit,
+      }));
+    } else if (totalNetProfit >= SE_TAX_THRESHOLD) {
+      // Schedule SE line 1a takes the net of all Schedule F activities.
+      outputs.push(this.outputNodes.output(schedule_se, {
+        net_profit_schedule_f: totalNetProfit,
       }));
     }
 

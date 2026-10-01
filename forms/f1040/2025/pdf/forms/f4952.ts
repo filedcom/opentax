@@ -6,6 +6,13 @@ import { reconcileForm4952PartnershipPath } from "../../form4952_partnership_rec
 import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_1099int_reconciliation.ts";
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
+import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
+import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
+import {
+  hasForm4952PriorCarryforward,
+  reconcileForm4952PriorCarryforward,
+} from "../../form4952_prior_carryforward_reconciliation.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -44,20 +51,33 @@ export const form4952Pdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
+    if (hasForm4952PriorCarryforward(fields, allPending)) {
+      reconcileForm4952PriorCarryforward(fields, allPending);
+      throw new Error(
+        "Form 4952 prior carryforward PDF needs authenticated accepted 2024 filing and verified source bytes",
+      );
+    }
+    if (
+      fields.direct_debt_trace !== undefined ||
+      (allPending.form4952 as Record<string, unknown> | undefined)
+          ?.direct_debt_trace !== undefined
+    ) {
+      reconcileForm4952DirectDebtExport(fields, allPending);
+    }
     if (
       fields.source_1099_royalties !== undefined
     ) {
       reconcileForm4952MiscRoyaltyPath(fields, allPending);
     } else if (
       fields.source_1099_dividends !== undefined &&
-      fields.source_1099_interest !== undefined
-    ) {
-      reconcileForm4952CombinedPath(fields, allPending);
-    } else if (
-      fields.source_1099_dividends !== undefined &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099DivPath(fields, allPending);
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_1099_interest !== undefined
+    ) {
+      reconcileForm4952CombinedPath(fields, allPending);
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, allPending);
     } else if (
@@ -80,6 +100,40 @@ export const form4952Pdf: PdfFormDescriptor = {
     return fields;
   },
   instances(fields, filer, allPending) {
+    if (hasForm4952PriorCarryforward(fields, allPending ?? {})) {
+      if (!filer || !allPending) {
+        throw new Error(
+          "Form 4952 PDF prior carryforward needs final filer identity",
+        );
+      }
+      reconcileForm4952PriorCarryforward(fields, allPending, filer.primarySSN);
+      throw new Error(
+        "Form 4952 prior carryforward PDF needs authenticated accepted 2024 filing and verified source bytes",
+      );
+    }
+    if (
+      fields.direct_debt_trace !== undefined ||
+      (allPending?.form4952 as Record<string, unknown> | undefined)
+          ?.direct_debt_trace !== undefined
+    ) {
+      if (!filer || !allPending) {
+        throw new Error("Form 4952 PDF direct debt needs final filer identity");
+      }
+      reconcileForm4952DirectDebtExport(
+        fields,
+        allPending,
+        filer.primarySSN,
+        filer.filingStatus === FilingStatus.MarriedFilingJointly
+          ? filer.spouse?.ssn
+          : undefined,
+      );
+    }
+    if (fields.source_k1_investment_interest !== undefined) {
+      if (!filer || !allPending) {
+        throw new Error("Form 4952 PDF K-1 source needs final filer identity");
+      }
+      assertForm4952K1Recipients(allPending, filer);
+    }
     if (fields.source_1099_royalties !== undefined) {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF linked royalty needs filer identity");

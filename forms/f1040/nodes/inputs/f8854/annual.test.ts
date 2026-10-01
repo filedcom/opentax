@@ -11,6 +11,29 @@ import { ExpatriateType } from "./index.ts";
 import { ReportedFormCode } from "./section-c.ts";
 
 function annualInput(overrides: Record<string, unknown> = {}) {
+  const deferred = (overrides.deferred_properties ?? []) as Array<{
+    item_id: string;
+    description: string;
+    prior_mark_to_market_gain_or_loss_amount: number;
+    prior_deferred_tax_amount: number;
+  }>;
+  const eligible = (overrides.eligible_deferred_compensation_items ?? [{
+    item_id: "plan",
+    description: "Deferred plan",
+    prior_form8854_document_id: "DOC-PRIOR",
+    irrevocable_treaty_reduction_waiver_confirmed: true,
+    distributions: [],
+  }]) as Array<{
+    item_id: string;
+    description: string;
+    irrevocable_treaty_reduction_waiver_confirmed: boolean;
+  }>;
+  const trusts = (overrides.nongrantor_trust_interests ?? []) as Array<{
+    item_id: string;
+    description: string;
+    no_prior_full_value_election_confirmed: boolean;
+    treaty_reduction_waiver_confirmed: boolean;
+  }>;
   return {
     expatriation_date: "2020-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
@@ -32,18 +55,39 @@ function annualInput(overrides: Record<string, unknown> = {}) {
     },
     tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     prior_form8854_obligations_confirmed_complete: true,
+    prior_form8854_obligation_ledger: {
+      source_document_id: "DOC-PRIOR",
+      source_sha256: "c".repeat(64),
+      filed_tax_year: 2024,
+      irs_acceptance_reference: "irs-accepted-2024-form8854",
+      deferred_properties: deferred.map((item) => ({
+        item_id: item.item_id,
+        description: item.description,
+        mark_to_market_gain_or_loss_amount:
+          item.prior_mark_to_market_gain_or_loss_amount,
+        deferred_tax_amount: item.prior_deferred_tax_amount,
+      })),
+      eligible_deferred_compensation_items: eligible.map((item) => ({
+        item_id: item.item_id,
+        description: item.description,
+        irrevocable_treaty_reduction_waiver_confirmed:
+          item.irrevocable_treaty_reduction_waiver_confirmed,
+      })),
+      nongrantor_trust_interests: trusts.map((item) => ({
+        item_id: item.item_id,
+        description: item.description,
+        no_prior_full_value_election_confirmed:
+          item.no_prior_full_value_election_confirmed,
+        treaty_reduction_waiver_confirmed:
+          item.treaty_reduction_waiver_confirmed,
+      })),
+    },
     original_form8854_mailed_confirmed: true,
     attached_form8854_copy_marked_copy_confirmed: true,
     source_1042s: [],
     deferred_properties: [],
-    eligible_deferred_compensation_items: [{
-      item_id: "plan",
-      description: "Deferred plan",
-      prior_form8854_document_id: "DOC-PRIOR",
-      irrevocable_treaty_reduction_waiver_confirmed: true,
-      distributions: [],
-    }],
-    nongrantor_trust_interests: [],
+    eligible_deferred_compensation_items: eligible,
+    nongrantor_trust_interests: trusts,
     ...overrides,
   };
 }
@@ -96,6 +140,52 @@ Deno.test("annual Form 8854 certifies no distributions from a remaining eligible
   );
   assertEquals(xml.includes("ExpatriationInformationGrp"), false);
   assertEquals(xml.includes("InitialExptrtStmtSpcfdYrInd"), false);
+});
+
+Deno.test("annual Form 8854 binds every current obligation to the prior filed inventory", () => {
+  const stock = {
+    item_id: "stock",
+    description: "Stock holding",
+    prior_form8854_document_id: "DOC-PRIOR",
+    prior_mark_to_market_gain_or_loss_amount: 111_000,
+    prior_deferred_tax_amount: 50_000,
+    disposition: { disposed_in_2025: false },
+  };
+  const candidate = annualInput({
+    deferred_properties: [stock],
+  });
+  const parsed = annualInputSchema.parse(candidate);
+  assertEquals(
+    parsed.prior_form8854_obligation_ledger.deferred_properties.length,
+    1,
+  );
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...candidate,
+      deferred_properties: [],
+    }).success,
+    false,
+  );
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...candidate,
+      deferred_properties: [{
+        ...stock,
+        prior_deferred_tax_amount: 49_999,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...candidate,
+      prior_form8854_obligation_ledger: {
+        ...candidate.prior_form8854_obligation_ledger,
+        source_document_id: "WRONG-PRIOR",
+      },
+    }).success,
+    false,
+  );
 });
 
 Deno.test("annual Form 8854 emits separate eligible-item and trust waiver statements", () => {

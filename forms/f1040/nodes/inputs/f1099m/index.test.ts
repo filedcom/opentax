@@ -28,6 +28,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     payer_tin: "123456789",
     recipient_tin: "987654321",
     farm_id: "farm-1",
+    schedule_c_business_reference: "business-1",
     ...overrides,
   };
 }
@@ -41,6 +42,57 @@ function compute(items: z.infer<typeof itemSchema>[]) {
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+function miscReceiptTotal(result: ReturnType<typeof compute>): number {
+  return (fieldsOf(result.outputs, scheduleC)?.f1099m_receipt_sources ?? [])
+    .reduce((sum, source) => sum + source.amount, 0);
+}
+
+Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
+  const review = {
+    amount: 4_000,
+    occupation_code: "102",
+    occupation_review_reference: "occupation record",
+    tip_records_reference: "2025 POS ledger",
+    included_in_box3: true,
+    no_other_allocable_deductions: true,
+    no_other_allocable_deductions_review_reference: "Schedule 1 review",
+  };
+  const source = minimalItem({
+    box3_other_income: 5_000,
+    box3_other_income_routing: "schedule_c",
+    qualified_tips_box3_review: review,
+  });
+  const result = compute([source]);
+  assertEquals(
+    findOutput(result, "schedule1a")?.fields.qualified_trade_business_tips,
+    [{
+      source_form: "1099misc",
+      business_reference: "business-1",
+      recipient_ssn: "987654321",
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      source_amount: 5_000,
+      amount: 4_000,
+      occupation_code: "102",
+      occupation_review_reference: "occupation record",
+      tip_records_reference: "2025 POS ledger",
+      included_in_source_amount: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference: "Schedule 1 review",
+    }],
+  );
+  assertThrows(
+    () => compute([{ ...source, box3_other_income: 3_999 }]),
+    Error,
+    "qualified tips need non-NIIT Schedule C income included in box 3",
+  );
+  assertThrows(
+    () => compute([{ ...source, box3_other_income_routing: "other_income" }]),
+    Error,
+    "qualified tips need non-NIIT Schedule C income included in box 3",
+  );
+});
 
 // ---------------------------------------------------------------------------
 // 1. Input schema validation
@@ -198,7 +250,7 @@ Deno.test("f1099m.compute: box1_rents with schedule_c routing routes to schedule
     minimalItem({ box1_rents: 30000, box1_rents_routing: "schedule_c" }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     30000,
   );
 });
@@ -309,7 +361,7 @@ Deno.test("f1099m.compute: box2_royalties with schedule_c routing routes to sche
   const result = compute([
     minimalItem({ box2_royalties: 8000, box2_royalties_routing: "schedule_c" }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
+  assertEquals(miscReceiptTotal(result), 8000);
 });
 
 // Box 2 — zero value produces no Schedule E output
@@ -353,9 +405,66 @@ Deno.test("f1099m.compute: box3_other_income with other_income routing routes to
     minimalItem({
       box3_other_income: 2000,
       box3_other_income_routing: "other_income",
+      box3_other_income_description: "Taxable settlement",
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.f1099m_box3_other_income_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Taxable settlement",
+      amount: 2000,
+    }],
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    2000,
+  );
+});
+
+Deno.test("f1099m.compute: box 3 other income needs a payment description", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box3_other_income: 2000,
+        box3_other_income_routing: "other_income",
+      })]),
+    Error,
+    "reviewed payment description",
+  );
+});
+
+Deno.test("f1099m.compute: box 3 business income links to one Schedule C", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2500,
+    box3_other_income_routing: "schedule_c",
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)?.f1099m_receipt_sources, [{
+    business_reference: "business-1",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    box: "box3_other_income",
+    amount: 2500,
+  }]);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, undefined);
+});
+
+Deno.test("f1099m.compute: box 3 farm income links to a Schedule F farm", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2500,
+    box3_other_income_routing: "schedule_f",
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule_f)?.farm_sources, [{
+    farm_id: "farm-1",
+    kind: "1099m_box3_other_income",
+    amount: 2500,
+    payer_name: "Test Payer",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+  }]);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, undefined);
 });
 
 Deno.test("f1099m.compute: misclassified box 3 wages route to Form 8919 only", () => {
@@ -403,7 +512,7 @@ Deno.test("f1099m.compute: box5_fishing_boat routes to schedule_c line1_gross_re
   const result = compute([minimalItem({ box5_fishing_boat: 8000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
+  assertEquals(miscReceiptTotal(result), 8000);
 });
 
 // Box 5 — zero value produces no Schedule C output
@@ -416,7 +525,7 @@ Deno.test("f1099m.compute: box5_fishing_boat = 0 produces no schedule_c output",
 Deno.test("f1099m.compute: box6_medical_payments routes to schedule_c line1_gross_receipts", () => {
   const result = compute([minimalItem({ box6_medical_payments: 25000 })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     25000,
   );
 });
@@ -460,12 +569,52 @@ Deno.test("f1099m.compute: box9_crop_insurance = 0 produces no schedule_f output
   assertEquals(findOutput(result, "schedule_f"), undefined);
 });
 
-// Box 10 — Attorney proceeds → Schedule 1 Line 8z (taxable, default)
-Deno.test("f1099m.compute: box10_attorney_proceeds routes to schedule1 line8z_attorney_proceeds", () => {
-  const result = compute([minimalItem({ box10_attorney_proceeds: 15000 })]);
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds,
-    15000,
+// Box 10 gross proceeds include client funds, so only retained fees reach Schedule C.
+Deno.test("f1099m.compute: box10 retained fees route to Schedule C once", () => {
+  const result = compute([minimalItem({
+    box10_attorney_proceeds: 15000,
+    box10_attorney_fee_receipts: 5000,
+    box10_attorney_client_funds: 10000,
+    box10_attorney_business_reference: "law-office",
+    box10_allocation_review_reference: "2025 settlement ledger",
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.attorney_fee_sources, [{
+    business_reference: "law-office",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    amount: 5000,
+    allocation_review_reference: "2025 settlement ledger",
+  }]);
+  assertEquals(findOutput(result, "schedule1"), undefined);
+});
+
+Deno.test("f1099m.compute: box10 rejects an unallocated or unequal gross amount", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box10_attorney_proceeds: 15000 })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 9000,
+      box10_attorney_business_reference: "law-office",
+      box10_allocation_review_reference: "2025 settlement ledger",
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 10000,
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 10000,
+      box10_attorney_business_reference: "law-office",
+    })])
   );
 });
 
@@ -478,7 +627,7 @@ Deno.test("f1099m.compute: box10_attorney_proceeds = 0 produces no schedule1 out
 // Box 11 — Fish purchased → Schedule C
 Deno.test("f1099m.compute: box11_fish_purchased routes to schedule_c line1_gross_receipts", () => {
   const result = compute([minimalItem({ box11_fish_purchased: 4000 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 4000);
+  assertEquals(miscReceiptTotal(result), 4000);
 });
 
 // Box 11 — zero value produces no Schedule C output
@@ -641,7 +790,7 @@ Deno.test("f1099m.compute: box8_substitute_payments at $10 threshold routes to s
 
 Deno.test("f1099m.compute: box5_fishing_boat at $600 threshold routes to schedule_c", () => {
   const result = compute([minimalItem({ box5_fishing_boat: 600 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 600);
+  assertEquals(miscReceiptTotal(result), 600);
 });
 
 Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to schedule_f", () => {
@@ -665,9 +814,18 @@ Deno.test("f1099m.compute: multiple schedule_c sources aggregate to single line1
     box11_fish_purchased: 2000,
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     12000,
   );
+});
+
+Deno.test("f1099m: Schedule C income needs a named business", () => {
+  const item = minimalItem({
+    box6_medical_payments: 5_000,
+    schedule_c_business_reference: undefined,
+  });
+  assertEquals(itemSchema.safeParse(item).success, false);
+  assertThrows(() => compute([item]));
 });
 
 // ---------------------------------------------------------------------------
@@ -715,12 +873,14 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election does not t
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusion does not throw", () => {
+Deno.test("f1099m.compute: box10 client funds do not become income", () => {
   const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: [{
       ...minimalItem(),
       box10_attorney_proceeds: 20000,
-      box10_attorney_taxable: false,
+      box10_attorney_fee_receipts: 0,
+      box10_attorney_client_funds: 20000,
+      box10_allocation_review_reference: "2025 client trust ledger",
     }],
   });
   assertEquals(Array.isArray(result.outputs), true);
@@ -796,12 +956,14 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election retains it
   ]);
 });
 
-// Box 10 — Physical injury exclusion: does NOT route to schedule1
-Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusion does not route to schedule1", () => {
+// Box 10 — Client funds do not become the attorney's income.
+Deno.test("f1099m.compute: box10 client funds do not route to Schedule 1 or C", () => {
   const result = compute([
     minimalItem({
       box10_attorney_proceeds: 20000,
-      box10_attorney_taxable: false,
+      box10_attorney_fee_receipts: 0,
+      box10_attorney_client_funds: 20000,
+      box10_allocation_review_reference: "2025 client trust ledger",
     }),
   ]);
   const out = findOutput(result, "schedule1");
@@ -809,6 +971,7 @@ Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusio
     ? (out.fields as Record<string, unknown>).line8z_attorney_proceeds
     : undefined;
   assertEquals(!atty, true);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
 // Box 3 — Physical injury exclusion does not route
@@ -875,7 +1038,7 @@ Deno.test("f1099m.compute: omitting box1_rents_routing defaults to schedule_e (t
   assertEquals(schedE !== undefined, true);
   // Should not also route to schedule_c for rents without substantial services flag
   const schedCRentalIncome = schedC
-    ? (schedC.fields as Record<string, unknown>).line1_gross_receipts
+    ? (schedC.fields as Record<string, unknown>).f1099m_receipt_sources
     : undefined;
   assertEquals((schedE!.fields as Record<string, unknown>).rental_income, 9600);
   assertEquals(!schedCRentalIncome, true);
@@ -943,6 +1106,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       payer_tin: "123456789",
       recipient_tin: "987654321",
       farm_id: "farm-1",
+      schedule_c_business_reference: "business-1",
       account_number: "ACC-001",
       box1_rents: 18000,
       box2_royalties: 3600,
@@ -955,6 +1119,10 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       box8_substitute_payments: 250,
       box9_crop_insurance: 8000,
       box10_attorney_proceeds: 6000,
+      box10_attorney_fee_receipts: 2000,
+      box10_attorney_client_funds: 4000,
+      box10_attorney_business_reference: "law-office",
+      box10_allocation_review_reference: "2025 settlement ledger",
       box11_fish_purchased: 4500,
       box12_section_409a_deferrals: 10000, // informational only
       box13_fatca: false,
@@ -992,7 +1160,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
   assertEquals(schedC !== undefined, true);
   // All three flow to schedule_c line1_gross_receipts (sum: 5000+12000+4500 = 21500)
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     21500,
   );
 
@@ -1009,11 +1177,14 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
     { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 8000 },
   ]);
 
-  // box10_attorney_proceeds → schedule1 line8z_attorney_proceeds
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds,
-    6000,
-  );
+  // Box 10's $2,000 fee is linked to a specific Schedule C business.
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.attorney_fee_sources, [{
+    business_reference: "law-office",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    amount: 2000,
+    allocation_review_reference: "2025 settlement ledger",
+  }]);
 
   // box15_nqdc → schedule1 line8z_nqdc + schedule2 line17h_nqdc_tax
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 25000);

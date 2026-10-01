@@ -7,9 +7,15 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { SCENARIO_1040_02_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
 import {
+  f8283,
   FMVMethod,
+  inputSchema as form8283InputSchema,
   SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
+import {
+  inputSchema as scheduleAInputSchema,
+  scheduleA as scheduleANode,
+} from "../../../nodes/inputs/schedule_a/index.ts";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { testFiler } from "../test-filer.ts";
 import { form8283 } from "./f8283.ts";
@@ -296,7 +302,7 @@ Deno.test("Form 8283 Section B does not file an unexplained reduction below appr
         }],
       }),
     Error,
-    "needs a sourced FMV-reduction computation and statement",
+    "needs a supported reviewed FMV-reduction computation and statement",
   );
 });
 
@@ -349,7 +355,7 @@ Deno.test("Form 8283 similar books across three donees need three Section B docu
   }
 });
 
-Deno.test("Form 8283 similar equipment above $500,000 shares a full group appraisal attachment", () => {
+Deno.test("Form 8283 unreduced equipment group needs separately supported Section B sources", () => {
   const base = sectionBHighValueEquipmentGift();
   const sectionB = [1, 2].map((index) => ({
     ...base,
@@ -370,7 +376,7 @@ Deno.test("Form 8283 similar equipment above $500,000 shares a full group apprai
       signature_attachment_file_name: `Donee-${index}.pdf`,
     },
   }));
-  const documents = form8283.build({ section_b_items: sectionB }, {
+  assertThrows(() => form8283.build({ section_b_items: sectionB }, {
     attachmentDescriptionsByFileName: {
       "Form8283AppraiserSignature.pdf":
         "Form 8283 appraiser signature document",
@@ -385,11 +391,7 @@ Deno.test("Form 8283 similar equipment above $500,000 shares a full group apprai
       "Donee-2.pdf": "PDF-DONEE2",
       "QualifiedAppraisal-EquipmentGroup.pdf": "PDF-GROUP",
     },
-  });
-  assertEquals(documents.length, 2);
-  for (const document of documents) {
-    assertStringIncludes(document, "PDF-GROUP");
-  }
+  }), Error, "distinct signed/appraised similar-art sources and donees or reduced equipment sources");
 });
 
 Deno.test("Form 8283 combined $500,000 group threshold rejects missing full appraisal even when each item is below it", () => {
@@ -602,54 +604,36 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     },
   };
   const docs = form8283.build({
-    section_b_items: [
-      {
-        ...gift,
-        signed_form_attachment_file_name: "SignedDesk8283.pdf",
-        signed_form_source_review: {
-          reviewed_by: "Test reviewer",
-          reviewed_on: "2025-09-01",
-          pdf_sha256: "a".repeat(64),
-          appraiser_signature_present: true,
-          donee_signature_present: true,
-          matches_electronic_form_confirmed: true,
-        },
+    section_b_items: [{
+      ...gift,
+      signed_form_attachment_file_name: "SignedDesk8283.pdf",
+      signed_form_source_review: {
+        reviewed_by: "Test reviewer",
+        reviewed_on: "2025-09-01",
+        pdf_sha256: "a".repeat(64),
+        appraiser_signature_present: true,
+        donee_signature_present: true,
+        matches_electronic_form_confirmed: true,
       },
-      {
-        ...gift,
-        property_description: "Antique chair",
-        signed_form_attachment_file_name: "SignedChair8283.pdf",
-        signed_form_source_review: {
-          reviewed_by: "Test reviewer",
-          reviewed_on: "2025-09-01",
-          pdf_sha256: "b".repeat(64),
-          appraiser_signature_present: true,
-          donee_signature_present: true,
-          matches_electronic_form_confirmed: true,
-        },
-      },
-    ],
+    }],
   }, {
     attachmentDescriptionsByFileName: {
       "Form8283AppraiserSignature.pdf":
         "Form 8283 appraiser signature document",
       "Form8283DoneeSignature.pdf": "Form 8283 Donee signature document",
       "SignedDesk8283.pdf": "Form 8283 completed signed Section B",
-      "SignedChair8283.pdf": "Form 8283 completed signed Section B",
     },
     documentIdsByAttachmentFileName: {
       "Form8283AppraiserSignature.pdf": "BinaryAttachmentAppraiser",
       "Form8283DoneeSignature.pdf": "BinaryAttachmentDonee",
       "SignedDesk8283.pdf": "SignedDesk",
-      "SignedChair8283.pdf": "SignedChair",
     },
     attachmentSha256ByFileName: {
       "SignedDesk8283.pdf": "a".repeat(64),
-      "SignedChair8283.pdf": "b".repeat(64),
     },
     documentIdsByPendingKey: {},
   });
-  assertEquals(docs.length, 2);
+  assertEquals(docs.length, 1);
   assertStringIncludes(docs[0], "<CollectiblesInd>X</CollectiblesInd>");
   assertStringIncludes(docs[0], "<DonorAcquiredDt>2018-05</DonorAcquiredDt>");
   assertStringIncludes(
@@ -665,11 +649,6 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     docs[0],
     'referenceDocumentId="SignedDesk BinaryAttachmentAppraiser BinaryAttachmentDonee"',
   );
-  assertStringIncludes(docs[1], "Antique chair");
-  assertStringIncludes(
-    docs[1],
-    'referenceDocumentId="SignedChair BinaryAttachmentAppraiser BinaryAttachmentDonee"',
-  );
   assertThrows(
     () =>
       form8283.build({
@@ -681,7 +660,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
         }],
       }),
     Error,
-    "linked appraisal or vehicle acknowledgment attachment",
+    "reviewed complete signed appraisal PDF",
   );
 });
 
@@ -1501,53 +1480,71 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
 });
 
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {
-  const bundle = await buildMefBundle({
-    f8283: {
-      section_a_items: [{
-        property_description: "2020 Honda Civic, good condition, 60,000 miles",
-        donee_organization_name: "City Charity",
-        donee_organization_us_address: {
+  const form = form8283InputSchema.parse({
+    section_a_items: [{
+      property_description: "2020 Honda Civic, good condition, 60,000 miles",
+      donee_organization_name: "City Charity",
+      donee_organization_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      is_vehicle: true,
+      vehicle_vin: "1HGBH41JXMN109186",
+      vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
+      date_contributed: "2025-06-01",
+      date_acquired: "2020-01-01",
+      donor_acquisition_description: "Purchase",
+      fmv: 20_000,
+      deduction_claimed: 15_000,
+      cost_or_adjusted_basis: 25_000,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+      fmv_method: FMVMethod.ComparableSales,
+      vehicle_sale_acknowledgment: {
+        copy_received_from_donee: true,
+        donee_certified: true,
+        donee_name: "City Charity",
+        donee_ein: "987654321",
+        donee_us_address: {
           line1: "1 Main St",
           city: "Austin",
           state: "TX",
           zip: "78701",
         },
-        is_vehicle: true,
-        vehicle_vin: "1HGBH41JXMN109186",
-        vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
-        date_contributed: "2025-06-01",
-        date_acquired: "2020-01-01",
-        donor_acquisition_description: "Purchase",
-        fmv: 20_000,
-        deduction_claimed: 15_000,
-        cost_or_adjusted_basis: 25_000,
-        charitable_limit_category: "noncash_50",
-        is_capital_gain_property: false,
-        fmv_method: FMVMethod.ComparableSales,
-        vehicle_sale_acknowledgment: {
-          copy_received_from_donee: true,
-          donee_certified: true,
-          donee_name: "City Charity",
-          donee_ein: "987654321",
-          donee_us_address: {
-            line1: "1 Main St",
-            city: "Austin",
-            state: "TX",
-            zip: "78701",
-          },
-          acknowledgment_received_date: "2025-07-15",
-          sale_to_unrelated_party: true,
-          sale_date: "2025-07-01",
-          gross_proceeds: 15_000,
-          vehicle_year: 2020,
-          vehicle_make: "Honda",
-          vehicle_model: "Civic",
-          vehicle_condition: "Good condition",
-          odometer_miles: 60_000,
-          goods_or_services_received: false,
-        },
-      }],
-    },
+        acknowledgment_received_date: "2025-07-15",
+        sale_to_unrelated_party: true,
+        sale_date: "2025-07-01",
+        gross_proceeds: 15_000,
+        vehicle_year: 2020,
+        vehicle_make: "Honda",
+        vehicle_model: "Civic",
+        vehicle_condition: "Good condition",
+        odometer_miles: 60_000,
+        goods_or_services_received: false,
+      },
+    }],
+  });
+  const giftItems = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form,
+  ).outputs[0].fields.noncash_contribution_items;
+  const scheduleSource = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: giftItems,
+  };
+  const scheduleFinal = scheduleANode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(scheduleSource),
+  ).finalizations![0].fields;
+  const bundle = await buildMefBundle({
+    f8283: form,
+    schedule_a: { ...scheduleSource, ...scheduleFinal },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 15_000 },
   }, {
     filer: testFiler(),
     attachments: [{

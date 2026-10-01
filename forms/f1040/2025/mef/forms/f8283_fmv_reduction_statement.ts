@@ -1,10 +1,14 @@
 import { inputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import {
+  assertCreatorReductionSource,
+  assertInventoryReductionSource,
   assertShortTermReductionSource,
+  assertUnrelatedUseReductionSource,
   buildFmvReductionStatement,
   needsFmvReductionStatement,
 } from "./f8283.ts";
+import { assertOrdinarySectionAReconciled } from "./f8283_election.ts";
 import { assertElectedSectionAReconciled } from "./f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -55,11 +59,22 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       )
     ) {
       assertElectedSectionAReconciled(context);
+    } else if (
+      (parsed.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled(context);
     }
     const reduced = (parsed.section_a_items ?? []).filter(
       needsFmvReductionStatement,
     );
-    for (const item of reduced) assertShortTermReductionSource(item);
+    for (const item of reduced) {
+      assertShortTermReductionSource(item);
+      assertInventoryReductionSource(item);
+      assertCreatorReductionSource(item);
+      assertUnrelatedUseReductionSource(item);
+    }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey
         .form8283_fmv_reduction_statement ?? [];

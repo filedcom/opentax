@@ -1,9 +1,13 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { inputSchema } from "../../../nodes/inputs/f8862/index.ts";
+import {
+  type F8862Input,
+  inputSchema,
+} from "../../../nodes/inputs/f8862/index.ts";
 import { form8862 as nativeForm8862 } from "../../mef/forms/f8862.ts";
+import { StandardFonts } from "pdf-lib";
 
 // Dec. 2025 three-page AcroForm. The IRS prints four CTC/ODC rows and three
-// AOTC rows; larger claims require a separate statement, not silent truncation.
+// AOTC rows; larger claims get numbered continuation pages.
 const p1 = "topmostSubform[0].Page1[0]";
 const p2 = "topmostSubform[0].Page2[0]";
 const p3 = "topmostSubform[0].Page3[0]";
@@ -35,6 +39,50 @@ const answer = (
     whenValue: "no",
   },
 ];
+
+interface OverflowRow {
+  readonly heading: string;
+  readonly answers: string;
+}
+
+export function form8862OverflowRows(source: F8862Input): OverflowRow[] {
+  const rows: OverflowRow[] = [];
+  source.ctc_children?.slice(4).forEach((child, i) => {
+    rows.push({
+      heading: `12. Child ${i + 5}: ${child.first_name} ${child.last_name}`,
+      answers:
+        `14 lived with filer: ${yesNo(child.lived_with_over_half_year)}; ` +
+        `15 qualifying child: ${yesNo(child.qualifying_child)}; ` +
+        `16 dependent: ${yesNo(child.dependent)}; ` +
+        `17 US citizen/national/resident: ${
+          yesNo(child.us_citizen_national_or_resident)
+        }`,
+    });
+  });
+  source.other_dependents?.slice(4).forEach((person, i) => {
+    rows.push({
+      heading: `13. Other dependent ${
+        i + 5
+      }: ${person.first_name} ${person.last_name}`,
+      answers: `16 dependent: ${yesNo(person.dependent)}; ` +
+        `17 US citizen/national/resident: ${
+          yesNo(person.us_citizen_national_or_resident)
+        }`,
+    });
+  });
+  source.aotc_students?.slice(3).forEach((student, i) => {
+    rows.push({
+      heading: `18. Student ${
+        i + 4
+      }: ${student.first_name} ${student.last_name}`,
+      answers: `19a eligible student: ${yesNo(student.eligible)}; ` +
+        `19b credit claimed four prior years: ${
+          yesNo(student.credit_claimed_four_prior_years)
+        }`,
+    });
+  });
+  return rows;
+}
 
 export const form8862Pdf: PdfFormDescriptor = {
   pendingKey: "f8862",
@@ -118,15 +166,8 @@ export const form8862Pdf: PdfFormDescriptor = {
         "Form 8862 PDF needs filer identity and finalized Form 1040 credit lines",
       );
     }
-    if (!nativeForm8862.build(source, { pending: allPending })) return [];
-    if (
-      (source.ctc_children?.length ?? 0) > 4 ||
-      (source.other_dependents?.length ?? 0) > 4 ||
-      (source.aotc_students?.length ?? 0) > 3
-    ) {
-      throw new Error(
-        "Form 8862 PDF needs an additional statement for overflow CTC, ODC, or AOTC rows",
-      );
+    if (!nativeForm8862.build(source, { pending: allPending, filer })) {
+      return [];
     }
     const projected: Record<string, unknown> = {
       tax_year: 2025,
@@ -151,6 +192,7 @@ export const form8862Pdf: PdfFormDescriptor = {
       spouse_dependent: yesNo(
         source.eitc_without_child?.spouse?.claimed_as_dependent,
       ),
+      print_overflow_rows: form8862OverflowRows(source),
     };
     source.eitc_children?.forEach((child, i) => {
       projected[`eitc_child_${i}_name`] =
@@ -193,6 +235,57 @@ export const form8862Pdf: PdfFormDescriptor = {
       );
     });
     return [projected];
+  },
+  async appendSupplementalPages(document, fields, filer) {
+    const rows = fields.print_overflow_rows as OverflowRow[] | undefined;
+    if (!rows?.length) return;
+    if (!filer) {
+      throw new Error("Form 8862 continuation needs filer identity");
+    }
+    const regular = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    let page = document.addPage([612, 792]);
+    let y = 744;
+    const newPage = () => {
+      page = document.addPage([612, 792]);
+      y = 744;
+    };
+    const header = () => {
+      page.drawText("Form 8862 (2025) - continuation of Parts III and IV", {
+        x: 40,
+        y,
+        size: 13,
+        font: bold,
+      });
+      y -= 24;
+      page.drawText(`Filer: ${filer.nameLine1}    SSN: ${filer.primarySSN}`, {
+        x: 40,
+        y,
+        size: 10,
+        font: regular,
+      });
+      y -= 32;
+    };
+    header();
+    for (const row of rows) {
+      if (y < 85) {
+        newPage();
+        header();
+      }
+      page.drawText(row.heading, { x: 40, y, size: 10, font: bold });
+      y -= 16;
+      const answerParts = row.answers.split("; ");
+      for (let i = 0; i < answerParts.length; i += 2) {
+        page.drawText(answerParts.slice(i, i + 2).join("; "), {
+          x: 52,
+          y,
+          size: 9,
+          font: regular,
+        });
+        y -= 14;
+      }
+      y -= 12;
+    }
   },
 };
 

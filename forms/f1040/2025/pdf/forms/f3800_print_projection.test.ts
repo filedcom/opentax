@@ -26,6 +26,8 @@ const parts = buildForm3800NonpassiveParts({
     tentativeMinimumTax: 0,
     standardCredit: 100,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   },
   passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
   passiveApplied: { standard: 0, specified: 0 },
@@ -92,7 +94,7 @@ Deno.test("Form 3800 printable header rejects missing filer, unbound transfer an
         lines: { ...parts.lines, line4: 1 },
       }, testFiler()),
     Error,
-    "revised carryforward answer lacks a typed source",
+    "carryforward computation totals do not reconcile",
   );
 });
 

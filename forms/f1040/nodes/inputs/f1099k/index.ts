@@ -9,6 +9,11 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  form8949,
+  Form8949Part,
+} from "../../intermediate/forms/form8949/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 issuer reporting threshold. This does not limit the recipient's
@@ -20,6 +25,17 @@ export const itemSchema = z.object({
   // Filer identification
   pse_name: z.string(),
   pse_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^(\d{3}-?\d{2}-?\d{4}|\d{2}-?\d{7})$/)
+    .optional(),
+  recipient_identity_review: z.object({
+    recipient_name: z.string().trim().min(1),
+    address_line1: z.string().trim().min(1),
+    address_line2: z.string().trim().optional(),
+    address_city: z.string().trim().min(1),
+    address_state: z.string().trim().length(2),
+    address_zip: z.string().trim().min(5),
+    source_reference: z.string().trim().min(1),
+  }).strict().optional(),
 
   // Filer type checkboxes (PSE = Payment Settlement Entity; EPF = Electronic Payment Facilitator)
   filer_type_pse: z.boolean().optional(),
@@ -55,8 +71,101 @@ export const itemSchema = z.object({
   // When omitted, the gross information-return amount is not presumed taxable.
   //   "schedule_c"       → business income (Schedule C line 1)
   //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
-  // Personal-item sales and erroneous Forms 1099-K need their own sources.
-  for_routing: z.enum(["schedule_c", "schedule_1_line_8j"]).optional(),
+  //   "mixed_schedule_c_personal_item_sales" → reviewed business receipts
+  //     and separately identified personal-item sales on one payer report.
+  //   "reported_in_error" → reviewed personal payments reported by the PSE
+  //     in error, disclosed in the entry space at the top of Schedule 1.
+  // Personal-item sales require item-level basis review. Other mixed-purpose
+  // combinations and fee/refund adjustments still need disposition.
+  for_routing: z.enum([
+    "schedule_c",
+    "schedule_1_line_8j",
+    "personal_item_sales",
+    "mixed_schedule_c_personal_item_sales",
+    "reported_in_error",
+  ]).optional(),
+  reported_error_review: z.object({
+    payments: z.array(
+      z.object({
+        transaction_id: z.string().trim().min(1),
+        amount: z.number().int().positive(),
+        kind: z.enum(["personal_gift", "expense_reimbursement"]),
+        sender_name: z.string().trim().min(1),
+        payment_record_reference: z.string().trim().min(1),
+        no_goods_or_services: z.literal(true),
+      }).strict(),
+    ).min(1),
+    correction_request_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  personal_item_sales_review: z.array(
+    z.object({
+      transaction_id: z.string().trim().min(1),
+      description: z.string().trim().min(1).max(100),
+      date_acquired: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      date_sold: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      proceeds: z.number().int().positive(),
+      cost_basis: z.number().int().nonnegative(),
+      selling_expenses_review: z.object({
+        amount: z.number().int().positive(),
+        expense_record_reference: z.string().trim().min(1),
+        not_in_cost_basis_or_other_deduction: z.literal(true),
+      }).strict().optional(),
+      acquired_by_purchase: z.literal(true),
+      acquisition_record_reference: z.string().trim().min(1),
+      sale_record_reference: z.string().trim().min(1),
+      personal_use_only: z.literal(true),
+      not_main_home: z.literal(true),
+      not_collectible: z.literal(true),
+      no_other_information_return_for_sale: z.literal(true),
+    }).strict(),
+  ).min(1).optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
+  schedule_c_receipts_review: z.object({
+    included_in_schedule_c_gross_receipts: z.number().int().positive(),
+    not_included_in_schedule_c_receipts: z.number().int().nonnegative(),
+    customer_refunds_review: z.array(
+      z.object({
+        original_payment_transaction_id: z.string().trim().min(1),
+        refund_transaction_id: z.string().trim().min(1),
+        amount: z.number().int().positive(),
+        refund_record_reference: z.string().trim().min(1),
+        issued_in_2025: z.literal(true),
+        same_business_sale: z.literal(true),
+        not_claimed_elsewhere: z.literal(true),
+      }).strict(),
+    ).min(1).optional(),
+    processor_fees_review: z.object({
+      amount: z.number().int().positive(),
+      fee_record_reference: z.string().trim().min(1),
+      for_service_payments_only: z.literal(true),
+      not_capitalized_or_deducted_elsewhere: z.literal(true),
+    }).strict().optional(),
+    allocation_reference: z.string().trim().min(1),
+    no_overlap_with_other_1099s: z.literal(true),
+    overlap_review_reference: z.string().trim().min(1),
+    duplicate_1099_review: z.object({
+      source_form: z.enum(["1099nec", "1099misc"]),
+      payer_tin: z.string().regex(/^\d{2}-?\d{7}$/),
+      amount: z.number().int().positive(),
+      transaction_review_reference: z.string().trim().min(1),
+    }).strict().optional(),
+  }).strict().optional(),
+  nonbusiness_activity_review: z.object({
+    activity_description: z.string().trim().min(1).max(100),
+    included_in_line8j: z.number().int().positive(),
+    allocation_reference: z.string().trim().min(1),
+    no_overlap_with_other_1099s: z.literal(true),
+    overlap_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  qualified_tips_box1a_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box1a: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
 
   // Boxes 5a–5l — Monthly gross payment amounts
   box5a_january: z.number().nonnegative().optional(),
@@ -80,6 +189,179 @@ export const itemSchema = z.object({
 
   // Box 8 — State Income Tax Withheld (flows to state return only)
   box8_state_withheld: z.number().nonnegative().optional(),
+}).superRefine((item, ctx) => {
+  const gross = item.box1a_gross_payments ?? 0;
+  if (
+    (item.schedule_c_receipts_review &&
+      !["schedule_c", "mixed_schedule_c_personal_item_sales"].includes(
+        item.for_routing ?? "",
+      )) ||
+    (item.nonbusiness_activity_review &&
+      (item.for_routing !== "schedule_1_line_8j" || gross <= 0)) ||
+    (item.personal_item_sales_review &&
+      !["personal_item_sales", "mixed_schedule_c_personal_item_sales"].includes(
+        item.for_routing ?? "",
+      )) ||
+    (item.reported_error_review && ![
+      "schedule_c",
+      "schedule_1_line_8j",
+      "personal_item_sales",
+      "mixed_schedule_c_personal_item_sales",
+      "reported_in_error",
+    ].includes(item.for_routing ?? ""))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["for_routing"],
+      message: "1099-K receipt review must match its income route",
+    });
+  }
+  const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
+  const errorAmount = (item.reported_error_review?.payments ?? []).reduce(
+    (sum, payment) => sum + payment.amount,
+    0,
+  );
+  if (
+    item.personal_item_sales_review && item.reported_error_review &&
+    item.personal_item_sales_review.some((sale) =>
+      item.reported_error_review!.payments.some((payment) =>
+        payment.transaction_id === sale.transaction_id
+      )
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reported_error_review"],
+      message:
+        "1099-K personal sale and reported error cannot share a transaction ID",
+    });
+  }
+  if (item.for_routing === "reported_in_error" || item.reported_error_review) {
+    const review = item.reported_error_review;
+    const payments = review?.payments ?? [];
+    if (
+      gross <= 0 || !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      (!item.recipient_tin && !item.recipient_identity_review) ||
+      payments.length === 0 ||
+      new Set(payments.map((payment) => payment.transaction_id)).size !==
+        payments.length ||
+      (item.for_routing === "reported_in_error"
+        ? errorAmount !== gross
+        : errorAmount >= gross)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reported_error_review"],
+        message:
+          "1099-K reported error needs identified payer, recipient, correction request, and payments equal to box 1a",
+      });
+    }
+  }
+  if ((item.for_routing === "schedule_c" || mixed) && gross > 0) {
+    const review = item.schedule_c_receipts_review;
+    const refunds = review?.customer_refunds_review ?? [];
+    const personal = mixed
+      ? (item.personal_item_sales_review ?? []).reduce(
+        (sum, sale) => sum + sale.proceeds,
+        0,
+      )
+      : 0;
+    if (
+      !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      !item.recipient_tin || !item.schedule_c_business_reference ||
+      !review ||
+      refunds.reduce((sum, refund) => sum + refund.amount, 0) >
+        review.included_in_schedule_c_gross_receipts ||
+      (review.processor_fees_review?.amount ?? 0) >
+        review.included_in_schedule_c_gross_receipts ||
+      new Set(refunds.map((refund) => refund.refund_transaction_id)).size !==
+        refunds.length ||
+      review.included_in_schedule_c_gross_receipts +
+            review.not_included_in_schedule_c_receipts + personal +
+            errorAmount !== gross ||
+      (mixed && personal <= 0) ||
+      (review.not_included_in_schedule_c_receipts > 0 &&
+        (!review.duplicate_1099_review ||
+          review.duplicate_1099_review.amount !==
+            review.not_included_in_schedule_c_receipts)) ||
+      (review.not_included_in_schedule_c_receipts === 0 &&
+        review.duplicate_1099_review !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["schedule_c_receipts_review"],
+        message:
+          "1099-K Schedule C income needs identified payer, recipient, business, and a complete box 1a allocation",
+      });
+    }
+  }
+  if (item.for_routing === "schedule_1_line_8j" && gross > 0) {
+    const review = item.nonbusiness_activity_review;
+    if (
+      !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      (!item.recipient_tin && !item.recipient_identity_review) || !review ||
+      review.included_in_line8j + errorAmount !== gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["nonbusiness_activity_review"],
+        message:
+          "1099-K nonbusiness income needs identified payer, recipient, activity, and a complete box 1a allocation",
+      });
+    }
+  }
+  if (item.for_routing === "personal_item_sales" || mixed) {
+    const sales = item.personal_item_sales_review ?? [];
+    const ids = sales.map((sale) => sale.transaction_id);
+    if (
+      gross <= 0 || !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      (!item.recipient_tin && !item.recipient_identity_review) ||
+      sales.length === 0 || new Set(ids).size !== ids.length ||
+      (mixed
+        ? sales.reduce((sum, sale) => sum + sale.proceeds, 0) + errorAmount >=
+          gross
+        : sales.reduce((sum, sale) => sum + sale.proceeds, 0) + errorAmount !==
+          gross) ||
+      sales.some((sale) => {
+        const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
+        const sold = new Date(`${sale.date_sold}T00:00:00Z`);
+        return Number.isNaN(acquired.getTime()) ||
+          acquired.toISOString().slice(0, 10) !== sale.date_acquired ||
+          Number.isNaN(sold.getTime()) ||
+          sold.toISOString().slice(0, 10) !== sale.date_sold ||
+          acquired >= sold ||
+          (sale.selling_expenses_review?.amount ?? 0) > sale.proceeds;
+      })
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["personal_item_sales_review"],
+        message:
+          "1099-K personal-item sales need identified recipient, valid dated items, and proceeds equal to box 1a",
+      });
+    }
+  }
+  if (
+    item.qualified_tips_box1a_review &&
+    (![
+      "schedule_c",
+      "mixed_schedule_c_personal_item_sales",
+    ].includes(item.for_routing ?? "") ||
+      !item.schedule_c_receipts_review ||
+      item.qualified_tips_box1a_review.amount >
+        item.schedule_c_receipts_review.included_in_schedule_c_gross_receipts)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_box1a_review"],
+      message:
+        "1099-K qualified tips need reviewed box 1a payments included in Schedule C receipts",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -138,6 +420,7 @@ function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
       item,
     ) => (output(f1040, {
       line25b_withheld_1099: item.box4_federal_withheld!,
+      line25b_f1099k_withheld: item.box4_federal_withheld!,
     })));
 }
 
@@ -150,25 +433,90 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     if (gross <= 0) return [];
     switch (item.for_routing) {
       case "schedule_c":
+      case "mixed_schedule_c_personal_item_sales":
         return [output(schedule_c, {
-          schedule_cs: [{
-            line_a_principal_business: item.pse_name ??
-              "Payment network income",
-            line_b_business_code: "999999",
-            line_f_accounting_method: "cash",
-            line_g_material_participation: true,
-            line_1_gross_receipts: gross,
+          f1099k_receipt_sources: [{
+            business_reference: item.schedule_c_business_reference!,
+            pse_name: item.pse_name,
+            pse_tin: item.pse_tin!.replaceAll("-", ""),
+            recipient_tin: item.recipient_tin!.replaceAll("-", ""),
+            box1a_gross_payments: gross,
+            ...(item.reported_error_review
+              ? {
+                reported_error_gross: item.reported_error_review.payments
+                  .reduce((sum, payment) => sum + payment.amount, 0),
+              }
+              : {}),
+            ...(item.for_routing === "mixed_schedule_c_personal_item_sales"
+              ? {
+                personal_item_sales_gross: item.personal_item_sales_review!
+                  .reduce(
+                    (sum, sale) => sum + sale.proceeds,
+                    0,
+                  ),
+              }
+              : {}),
+            amount: item.schedule_c_receipts_review!
+              .included_in_schedule_c_gross_receipts,
+            ...(item.schedule_c_receipts_review!.customer_refunds_review
+              ? {
+                customer_refunds_review:
+                  item.schedule_c_receipts_review!.customer_refunds_review,
+              }
+              : {}),
+            ...(item.schedule_c_receipts_review!.processor_fees_review
+              ? {
+                processor_fees_review:
+                  item.schedule_c_receipts_review!.processor_fees_review,
+              }
+              : {}),
+            not_included_in_schedule_c_receipts:
+              item.schedule_c_receipts_review!
+                .not_included_in_schedule_c_receipts,
+            allocation_reference: item.schedule_c_receipts_review!
+              .allocation_reference,
+            no_overlap_with_other_1099s: true,
+            overlap_review_reference: item.schedule_c_receipts_review!
+              .overlap_review_reference,
+            ...(item.schedule_c_receipts_review!.duplicate_1099_review
+              ? {
+                duplicate_1099_review: {
+                  ...item.schedule_c_receipts_review!.duplicate_1099_review,
+                  payer_tin: item.schedule_c_receipts_review!
+                    .duplicate_1099_review!.payer_tin.replaceAll("-", ""),
+                },
+              }
+              : {}),
           }],
         })];
       case "schedule_1_line_8j":
         return [];
+      case "personal_item_sales":
+        return [];
+      case "reported_in_error":
+        return [];
     }
   });
   const hobbyIncome = k99s.filter((item) =>
-    item.for_routing === "schedule_1_line_8j"
-  ).reduce((sum, item) => sum + (item.box1a_gross_payments ?? 0), 0);
+    item.for_routing === "schedule_1_line_8j" &&
+    (item.box1a_gross_payments ?? 0) > 0
+  ).reduce(
+    (sum, item) => sum + item.nonbusiness_activity_review!.included_in_line8j,
+    0,
+  );
+  const reportedError = k99s.reduce(
+    (sum, item) =>
+      sum + (item.reported_error_review?.payments ?? []).reduce(
+        (paymentSum, payment) => paymentSum + payment.amount,
+        0,
+      ),
+    0,
+  );
   return [
     ...businessOutputs,
+    ...(reportedError > 0
+      ? [output(schedule1, { form1099k_reported_error_or_loss: reportedError })]
+      : []),
     ...(hobbyIncome > 0
       ? [
         output(schedule1, { line8j_f1099k_hobby_income: hobbyIncome }),
@@ -189,6 +537,8 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     schedule_c,
+    schedule1a,
+    form8949,
     schedule1,
     agi_aggregator,
   ]);
@@ -204,6 +554,74 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
       ...federalWithholdingOutputs(parsed.f1099ks),
       ...incomeOutputs(parsed.f1099ks),
     ];
+    for (const item of parsed.f1099ks) {
+      if (
+        item.for_routing !== "personal_item_sales" &&
+        item.for_routing !== "mixed_schedule_c_personal_item_sales"
+      ) continue;
+      for (const sale of item.personal_item_sales_review!) {
+        const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
+        const sold = new Date(`${sale.date_sold}T00:00:00Z`);
+        const anniversary = new Date(acquired);
+        anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
+        if (
+          acquired.getUTCMonth() === 1 && acquired.getUTCDate() === 29 &&
+          anniversary.getUTCMonth() === 2
+        ) anniversary.setUTCDate(0);
+        const longTerm = sold > anniversary;
+        const netProceeds = sale.proceeds -
+          (sale.selling_expenses_review?.amount ?? 0);
+        const loss = Math.max(0, sale.cost_basis - netProceeds);
+        outputs.push(output(form8949, {
+          transaction: {
+            part: longTerm ? Form8949Part.F : Form8949Part.C,
+            description: sale.description,
+            source_transaction_id: `1099k:${
+              item.pse_tin!.replaceAll("-", "")
+            }:${sale.transaction_id}`,
+            date_acquired: sale.date_acquired,
+            date_sold: sale.date_sold,
+            proceeds: netProceeds,
+            cost_basis: sale.cost_basis,
+            ...(loss > 0
+              ? { adjustment_codes: "L", adjustment_amount: loss }
+              : {}),
+            gain_loss: Math.max(0, netProceeds - sale.cost_basis),
+            is_long_term: longTerm,
+          },
+        }));
+      }
+    }
+    const qualifiedTips = parsed.f1099ks.flatMap((item) =>
+      item.qualified_tips_box1a_review
+        ? [{
+          source_form: "1099k" as const,
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_tin!,
+          payer_name: item.pse_name,
+          payer_tin: item.pse_tin!.replaceAll("-", ""),
+          source_amount: item.box1a_gross_payments!,
+          amount: item.qualified_tips_box1a_review.amount,
+          occupation_code: item.qualified_tips_box1a_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_box1a_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_box1a_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_box1a_review.included_in_box1a,
+          no_other_allocable_deductions:
+            item.qualified_tips_box1a_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_box1a_review
+              .no_other_allocable_deductions_review_reference,
+        }]
+        : []
+    );
+    if (qualifiedTips.length > 0) {
+      outputs.push(
+        output(schedule1a, { qualified_trade_business_tips: qualifiedTips }),
+      );
+    }
 
     return { outputs };
   }

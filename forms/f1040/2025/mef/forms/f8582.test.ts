@@ -711,6 +711,16 @@ Deno.test("Form 8582: rental classification alone is insufficient", () => {
 });
 
 Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 allowance", () => {
+  const mfsLivedApartSource = {
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      taxpayer_residence: "1 Taxpayer Street",
+      spouse_residence: "2 Spouse Avenue",
+      taxpayer_residence_record_reference: `Taxpayer month ${index + 1}`,
+      spouse_residence_record_reference: `Spouse month ${index + 1}`,
+      no_shared_residence_any_day: true as const,
+    })),
+  };
   const input = {
     activities: [{
       activity_id: "id-Rental home",
@@ -729,6 +739,7 @@ Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 all
     active_participation: true,
     filing_status: "mfs" as const,
     mfs_lived_apart_all_year: true,
+    mfs_lived_apart_source: mfsLivedApartSource,
     modified_agi: 60_000,
   };
   const context = {
@@ -736,6 +747,7 @@ Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 all
       general: {
         filing_status: "mfs",
         mfs_spouse_lived_with_taxpayer: false,
+        mfs_lived_apart_source: mfsLivedApartSource,
       },
       schedule_e: {
         schedule_es: [{
@@ -765,6 +777,22 @@ Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 all
   assertStringIncludes(
     xml,
     "<AllowedRentalRealtyLossAmt>7500</AllowedRentalRealtyLossAmt>",
+  );
+  const oddDollarPhaseout = form8582.build({
+    ...input,
+    modified_agi: 60_003,
+  }, context);
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<ModifiedAGIDifferenceAmt>14997</ModifiedAGIDifferenceAmt>",
+  );
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<PercentNetSpecialAllowanceAmt>7499</PercentNetSpecialAllowanceAmt>",
+  );
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<AllowedRentalRealtyLossAmt>7499</AllowedRentalRealtyLossAmt>",
   );
   const belowPhaseout = form8582.build({
     ...input,

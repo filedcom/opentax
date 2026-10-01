@@ -4,6 +4,8 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
 import { form8874, reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
+import { appendForm8874InvestmentStatement } from "./f8874_overflow_statement.ts";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 // Form 8874 (Rev. November 2021) has six investment rows on its only form
 // page. Pages 2 and 3 in the IRS PDF are instructions, not return pages.
@@ -21,6 +23,10 @@ const rowColumns = [
   "rate",
   "credit",
 ] as const;
+const cdeFont = await (await PDFDocument.create()).embedFont(
+  StandardFonts.Helvetica,
+);
+const CDE_PRINT_WIDTH = 176;
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   ...Array.from(
@@ -48,6 +54,18 @@ function printedEin(ein: string): string {
   return `${ein.slice(0, 2)}-${ein.slice(2)}`;
 }
 
+function printedCdeAddress(investment: {
+  cde_address: { line1: string; city: string; state: string; zip: string };
+}): string {
+  return `${investment.cde_address.line1}, ${investment.cde_address.city}, ${investment.cde_address.state} ${investment.cde_address.zip}`;
+}
+
+function fitsCdeField(name: string, address: string): boolean {
+  return !/[\r\n]/.test(name + address) &&
+    cdeFont.widthOfTextAtSize(name, 8) <= CDE_PRINT_WIDTH &&
+    cdeFont.widthOfTextAtSize(address, 8) <= CDE_PRINT_WIDTH;
+}
+
 export const form8874Pdf: PdfFormDescriptor = {
   pendingKey: "f8874",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8874--2021.pdf",
@@ -62,11 +80,6 @@ export const form8874Pdf: PdfFormDescriptor = {
     if (!Object.hasOwn(allPending, "f8874")) return {};
     const input = inputSchema.parse(raw);
     const lines = calculateForm8874(input);
-    if (lines.rows.length > 6) {
-      throw new Error(
-        "Form 8874 PDF has six investment rows; an overflow statement is not supported",
-      );
-    }
     for (const row of lines.rows) {
       if (
         !Number.isSafeInteger(
@@ -90,14 +103,26 @@ export const form8874Pdf: PdfFormDescriptor = {
       throw new Error("Form 8874 PDF line 3 exceeds whole-dollar precision");
     }
 
+    const printable = lines.rows.filter((row) =>
+      fitsCdeField(
+        row.investment.cde_name,
+        printedCdeAddress(row.investment),
+      )
+    );
+    const needsStatement = printable.length !== lines.rows.length ||
+      lines.rows.length > 6;
+    const directRows = printable.slice(0, needsStatement ? 5 : 6);
+    const directInvestments = new Set(directRows.map((row) => row.investment));
+    const attachedRows = lines.rows.filter((row) =>
+      !directInvestments.has(row.investment)
+    );
     const printed: Record<string, unknown> = { line2, line3 };
-    lines.rows.forEach((row, index) => {
+    directRows.forEach((row, index) => {
       const prefix = `row_${index + 1}_`;
       const { investment } = row;
       printed[`${prefix}cde`] = [
         investment.cde_name,
-        investment.cde_address.line1,
-        `${investment.cde_address.city}, ${investment.cde_address.state} ${investment.cde_address.zip}`,
+        printedCdeAddress(investment),
       ].join("\n");
       printed[`${prefix}ein`] = printedEin(investment.cde_ein);
       printed[`${prefix}date`] = printedDate(
@@ -108,7 +133,26 @@ export const form8874Pdf: PdfFormDescriptor = {
       printed[`${prefix}rate`] = row.rate;
       printed[`${prefix}credit`] = row.creditAmount;
     });
+    if (needsStatement) {
+      printed.row_6_cde = "See attached";
+      printed.row_6_credit = attachedRows.reduce(
+        (sum, row) => sum + row.creditAmount,
+        0,
+      );
+      printed.print_overflow_rows = attachedRows.map((
+        { investment, rate, creditAmount },
+      ) => ({
+        cdeName: investment.cde_name,
+        address: printedCdeAddress(investment),
+        ein: printedEin(investment.cde_ein),
+        initialDate: printedDate(investment.initial_investment_date),
+        investmentAmount: investment.qualified_equity_investment_amount,
+        rate,
+        creditAmount,
+      }));
+    }
     return printed;
   },
   pageIndices: () => [0],
+  appendSupplementalPages: appendForm8874InvestmentStatement,
 };

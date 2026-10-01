@@ -95,9 +95,13 @@ const beneficiaryInputSchema = z.object({
   // Carryover is sourced from the filed 2024 Form 5329, not inferred from
   // the 2025 HSA balance. A zero prior-year line 49 stops the carryover.
   prior_year_hsa_excess: z.object({
+    tax_year: z.literal(2024),
+    filed_form5329_reference: z.string().trim().min(1),
+    filed_return_reviewed: z.literal(true),
+    owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     form5329_line48: z.number().nonnegative(),
     form5329_line49: z.number().nonnegative(),
-  }).optional(),
+  }).strict().optional(),
   // Line 10: one direct IRA-to-HSA transfer, or a second in a later month of
   // this year after self-only coverage changes to family coverage.
   qualified_hsa_funding_distributions: z.object({
@@ -133,6 +137,9 @@ const beneficiaryInputSchema = z.object({
       box2_earnings_on_excess: z.number().nonnegative().optional(),
       box3_distribution_code: z.enum(["1", "2", "3"]),
       source_reference: z.string().trim().min(1),
+      // Required by the two-copy single-owner route: both issued copies must
+      // identify the same HSA, rather than two separately filed accounts.
+      hsa_account_reference: z.string().trim().min(1).optional(),
     }).strict().superRefine((row, ctx) => {
       if (
         row.box3_distribution_code === "2"
@@ -156,6 +163,7 @@ const beneficiaryInputSchema = z.object({
       distribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       distribution_source_reference: z.string().trim().min(1),
+      form1099_sa_source_reference: z.string().trim().min(1),
       contribution_source_reference: z.string().trim().min(1),
       same_beneficiary: z.literal(true),
       receiving_hsa_no_other_rollover_in_preceding_12_months: z.literal(true),
@@ -215,6 +223,8 @@ const beneficiaryInputSchema = z.object({
         distribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         gross_amount: z.number().positive(),
         qualified_medical_amount: z.number().nonnegative(),
+        // Required on every dated row when a line-14b rollover coexists.
+        rollover_excluded_amount: z.number().nonnegative().optional(),
         source_reference: z.string().trim().min(1),
         form1099_sa_source_reference: z.string().trim().min(1),
       }).strict(),
@@ -338,20 +348,24 @@ function verifyPriorYearSpouseFacts(
   }
   // December family coverage makes elected line 3 the $8,300 family limit.
   // With December self-only coverage and earlier family months, the filed
-  // line 3 is the greater of the 2024 monthly worksheet and $4,150. The
-  // age-55 mixed-coverage worksheet also affects line 7 and remains out of
-  // scope here.
+  // line 3 is the greater of the 2024 monthly worksheet and $4,150.
+  // For an age-55 owner the self-only months include the catch-up in that
+  // worksheet, while eligible family months put their catch-up on line 7.
   const december = evidence.eligible_hdhp_coverage_by_month[11];
   const selfOnly = december === CoverageType.SelfOnly;
   const mixedToSelfOnly = selfOnly &&
     evidence.eligible_hdhp_coverage_by_month.includes(CoverageType.Family);
-  if (mixedToSelfOnly && evidence.age_55_or_older) {
-    throw new Error(
-      "Form 8889 married 2024 age-55 mixed-coverage recapture needs the filed additional-contribution worksheet",
-    );
-  }
   const baseLimit = selfOnly ? 4_150 : 8_300;
   const catchup = evidence.age_55_or_older ? 1_000 : 0;
+  const familyMonths =
+    evidence.eligible_hdhp_coverage_by_month.filter((month) =>
+      month === CoverageType.Family
+    ).length;
+  const line7Catchup = !selfOnly
+    ? catchup
+    : evidence.age_55_or_older && familyMonths > 0
+    ? Math.round(familyMonths * 1_000 / 12)
+    : 0;
   const monthlyWorksheet = Math.round(
     evidence.eligible_hdhp_coverage_by_month.reduce(
       (sum, coverage) =>
@@ -359,7 +373,7 @@ function verifyPriorYearSpouseFacts(
         (coverage === CoverageType.Family
           ? 8_300
           : coverage === CoverageType.SelfOnly
-          ? 4_150
+          ? 4_150 + (evidence.age_55_or_older ? 1_000 : 0)
           : 0),
       0,
     ) / 12,
@@ -373,9 +387,8 @@ function verifyPriorYearSpouseFacts(
     evidence.filed_form8889_line3 !== electedLine3 ||
     evidence.filed_form8889_line5 !== electedLine3 ||
     evidence.filed_form8889_line6 !== electedLine3 ||
-    evidence.filed_form8889_line7 !== (selfOnly ? 0 : catchup) ||
-    evidence.filed_form8889_line8 !== electedLine3 +
-        (selfOnly ? 0 : catchup)
+    evidence.filed_form8889_line7 !== line7Catchup ||
+    evidence.filed_form8889_line8 !== electedLine3 + line7Catchup
   ) {
     throw new Error(
       "Form 8889 married 2024 recapture needs filed lines 3-8 showing the December coverage limit and catch-up without spouse allocation",
@@ -427,17 +440,34 @@ function lastMonthRuleIncome(
     priorCoverage.reduce((sum, coverage) => sum + annualLimit(coverage), 0) /
       12,
   );
+  const redeterminedAge55MixedLimit =
+    evidence.married_at_year_end && evidence.age_55_or_older &&
+      priorCoverage.includes(CoverageType.Family)
+      ? Math.round(
+        priorCoverage.reduce(
+          (sum, coverage) =>
+            sum + (coverage === CoverageType.Family
+              ? 8_300
+              : coverage === CoverageType.SelfOnly
+              ? 5_150
+              : 0),
+          0,
+        ) / 12,
+      ) + Math.round(
+        priorCoverage.filter((coverage) => coverage === CoverageType.Family)
+          .length * 1_000 / 12,
+      )
+      : redeterminedFamilyLimit;
   const enhancedLimit = pairedPriorYear
     ? 4_150
     : evidence.married_at_year_end &&
         december === CoverageType.SelfOnly &&
-        priorCoverage.includes(CoverageType.Family) &&
-        !evidence.age_55_or_older
-    ? Math.max(4_150, redeterminedFamilyLimit)
+        priorCoverage.includes(CoverageType.Family)
+    ? evidence.filed_form8889_line3! + evidence.filed_form8889_line7!
     : annualLimit(december);
   const redeterminedLimit = pairedPriorYear
     ? redeterminedFamilyLimit / 2
-    : redeterminedFamilyLimit;
+    : redeterminedAge55MixedLimit;
   const contributed = evidence.filed_form8889_line2 +
     evidence.filed_form8889_line9;
   if (
@@ -847,6 +877,22 @@ function verifyDistributionSources(
       );
     }
   }
+  const rollover = input.hsa_excluded_distributions?.rollover;
+  if (rollover) {
+    const form = records?.find((record) =>
+      record.source_reference === rollover.form1099_sa_source_reference
+    );
+    if (
+      !form || form.box3_distribution_code !== "1" ||
+      form.box1_gross_distribution < rollover.amount ||
+      rollover.form1099_sa_source_reference ===
+        rollover.contribution_source_reference
+    ) {
+      throw new Error(
+        "Form 8889 rollover needs a linked code-1 Form 1099-SA with box 1 covering the excluded amount",
+      );
+    }
+  }
   const timely = input.hsa_excluded_distributions?.timely_excess_withdrawal;
   const employerTimely = input.employer_excess_treatment?.timely_withdrawal;
   const employerCode2 = employerTimely?.withdrawal_tax_year === 2025
@@ -937,9 +983,121 @@ function nonQualifiedPenalty(
     );
   }
   if (input.age_65_exception_evidence && disability) {
-    throw new Error(
-      "Form 8889 combined age-65 and disability exceptions need separate allocation",
+    const age = input.age_65_exception_evidence;
+    const ageRows = age.distributions;
+    const disabilityRows = disability.distributions;
+    const rows = [...ageRows, ...disabilityRows];
+    const exclusions = input.hsa_excluded_distributions;
+    const rollover = exclusions?.rollover;
+    const forms = input.form1099_sa_distributions ?? [];
+    const validDate = (value: string): boolean => {
+      const date = new Date(`${value}T00:00:00.000Z`);
+      return !Number.isNaN(date.valueOf()) &&
+        date.toISOString().slice(0, 10) === value;
+    };
+    if (
+      !validDate(age.date_of_birth) || !validDate(disability.disability_date)
+    ) {
+      throw new Error("Form 8889 combined exceptions need valid event dates");
+    }
+    const age65 = new Date(Date.UTC(
+      Number(age.date_of_birth.slice(0, 4)) + 65,
+      Number(age.date_of_birth.slice(5, 7)) - 1,
+      Number(age.date_of_birth.slice(8, 10)) - 1,
+    )).toISOString().slice(0, 10);
+    const grossByForm = new Map<string, number>();
+    for (const row of rows) {
+      grossByForm.set(
+        row.form1099_sa_source_reference,
+        (grossByForm.get(row.form1099_sa_source_reference) ?? 0) +
+          row.gross_amount,
+      );
+    }
+    const exceptedFromDates = ageRows.reduce(
+      (sum, row) =>
+        sum +
+        (row.distribution_date >= age65
+          ? row.gross_amount - row.qualified_medical_amount -
+            (row.rollover_excluded_amount ?? 0)
+          : 0),
+      0,
+    ) + disabilityRows.reduce(
+      (sum, row) =>
+        sum +
+        (row.distribution_date >= disability.disability_date
+          ? row.gross_amount - row.qualified_medical_amount -
+            (row.rollover_excluded_amount ?? 0)
+          : 0),
+      0,
     );
+    const rolloverRows = rows.filter((row) =>
+      (row.rollover_excluded_amount ?? 0) > 0
+    );
+    if (
+      !validDate(age65) || age65 === disability.disability_date ||
+      (exclusions !== undefined &&
+        (!rollover || exclusions.timely_excess_withdrawal !== undefined)) ||
+      (rollover !== undefined &&
+        (rows.some((row) => row.rollover_excluded_amount === undefined) ||
+          rolloverRows.length !== 1 ||
+          !ageRows.some((row) => row === rolloverRows[0]) ||
+          rolloverRows[0]?.rollover_excluded_amount !== rollover.amount ||
+          rolloverRows[0]?.distribution_date !==
+            rollover.distribution_date ||
+          rolloverRows[0]?.source_reference !==
+            rollover.distribution_source_reference ||
+          rolloverRows[0]?.form1099_sa_source_reference !==
+            rollover.form1099_sa_source_reference ||
+          rows.some((row) =>
+            row.source_reference === rollover.contribution_source_reference ||
+            row.form1099_sa_source_reference ===
+              rollover.contribution_source_reference
+          ))) ||
+      input.employer_excess_treatment?.timely_withdrawal !== undefined ||
+      age.birth_date_source_reference ===
+        disability.disability_source_reference ||
+      !ageRows.length || !disabilityRows.length || !forms.length ||
+      new Set(rows.map((row) => row.source_reference)).size !== rows.length ||
+      rows.some((row) =>
+        !validDate(row.distribution_date) ||
+        row.distribution_date.slice(0, 4) !== String(taxYear) ||
+        row.qualified_medical_amount +
+              (row.rollover_excluded_amount ?? 0) > row.gross_amount ||
+        (rollover === undefined && row.rollover_excluded_amount !== undefined)
+      ) ||
+      ageRows.some((row) =>
+        row.distribution_date >= disability.disability_date
+      ) ||
+      disabilityRows.some((row) =>
+        row.distribution_date < disability.disability_date
+      ) ||
+      forms.some((form) =>
+        grossByForm.get(form.source_reference) !==
+          form.box1_gross_distribution ||
+        form.box3_distribution_code !==
+          (disabilityRows.some((row) =>
+              row.form1099_sa_source_reference === form.source_reference
+            )
+            ? "3"
+            : "1") ||
+        (ageRows.some((row) =>
+          row.form1099_sa_source_reference === form.source_reference
+        ) && disabilityRows.some((row) =>
+          row.form1099_sa_source_reference === form.source_reference
+        ))
+      ) ||
+      grossByForm.size !== forms.length ||
+      rows.reduce((sum, row) => sum + row.gross_amount, 0) !==
+        (input.hsa_distributions ?? 0) ||
+      rows.reduce((sum, row) => sum + row.qualified_medical_amount, 0) !==
+        (input.qualified_medical_expenses ?? 0) ||
+      exceptedFromDates !== excepted
+    ) {
+      throw new Error(
+        "Form 8889 combined age-65 and disability evidence does not reconcile to dated Form 1099-SA sources",
+      );
+    }
+    return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
   }
   if (taxable <= 0 && !disability) return 0;
   if (taxable > 0 && excepted === undefined) {
@@ -1050,9 +1208,16 @@ function nonQualifiedPenalty(
     }
   }
   if (disability) {
-    if (input.hsa_excluded_distributions) {
+    const exclusions = input.hsa_excluded_distributions;
+    const rollover = exclusions?.rollover;
+    if (
+      (exclusions && !rollover) ||
+      exclusions?.timely_excess_withdrawal ||
+      input.employer_excess_treatment?.timely_withdrawal
+          ?.withdrawal_tax_year === 2025
+    ) {
       throw new Error(
-        "Form 8889 disability exception with line 14b exclusions needs transaction allocation",
+        "Form 8889 disability exception supports line 14b only for a sourced rollover allocation",
       );
     }
     const validDate = (value: string): boolean => {
@@ -1061,6 +1226,29 @@ function nonQualifiedPenalty(
         date.toISOString().slice(0, 10) === value;
     };
     const records = disability.distributions;
+    if (rollover) {
+      const allocated = records.filter((row) =>
+        (row.rollover_excluded_amount ?? 0) > 0
+      );
+      if (
+        records.some((row) => row.rollover_excluded_amount === undefined) ||
+        allocated.length !== 1 ||
+        allocated[0]?.source_reference !==
+          rollover.distribution_source_reference ||
+        allocated[0]?.distribution_date !== rollover.distribution_date ||
+        allocated[0]?.rollover_excluded_amount !== rollover.amount
+      ) {
+        throw new Error(
+          "Form 8889 disability rollover needs one dated transaction matching the excluded amount, date, and source",
+        );
+      }
+    } else if (
+      records.some((row) => row.rollover_excluded_amount !== undefined)
+    ) {
+      throw new Error(
+        "Form 8889 disability transaction cannot claim rollover exclusion without line 14b rollover source",
+      );
+    }
     const forms = input.form1099_sa_distributions ?? [];
     const grossByForm = new Map<string, number>();
     for (const row of records) {
@@ -1078,7 +1266,8 @@ function nonQualifiedPenalty(
       records.some((row) =>
         !validDate(row.distribution_date) ||
         row.distribution_date.slice(0, 4) !== String(taxYear) ||
-        row.qualified_medical_amount > row.gross_amount
+        row.qualified_medical_amount +
+              (row.rollover_excluded_amount ?? 0) > row.gross_amount
       ) ||
       forms.some((form) =>
         grossByForm.get(form.source_reference) !==
@@ -1096,7 +1285,8 @@ function nonQualifiedPenalty(
           (sum, row) =>
             sum +
             (row.distribution_date >= disability.disability_date
-              ? row.gross_amount - row.qualified_medical_amount
+              ? row.gross_amount - row.qualified_medical_amount -
+                (row.rollover_excluded_amount ?? 0)
               : 0),
           0,
         ) !== excepted
@@ -1159,6 +1349,7 @@ function excessOutput(
       owner,
       hsa_part_vii: {
         line42_prior_excess: priorExcess,
+        ...(priorExcess > 0 ? { prior_year_source: prior } : {}),
         line43_unused_contribution_room: Math.max(
           0,
           line12 - (input.taxpayer_hsa_contributions ?? 0),
@@ -1237,6 +1428,19 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     }
     verifyDistributionSources(input, ctx.taxYear);
     verifyFundingTestingPeriod(input, ctx.taxYear);
+    const priorSource = input.prior_year_hsa_excess;
+    if (
+      priorSource && (
+        priorSource.owner_ssn.replaceAll("-", "") !==
+          input.beneficiary_identity.ssn.replaceAll("-", "") ||
+        priorSource.form5329_line49 >
+          Math.round(priorSource.form5329_line48 * 0.06)
+      )
+    ) {
+      throw new Error(
+        "Form 8889 prior-year Form 5329 source must belong to this HSA owner and reconcile its excess tax",
+      );
+    }
     if (
       (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0 &&
       (input.prior_year_hsa_excess?.form5329_line48 ?? 0) === 0
@@ -1679,6 +1883,25 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         spouse.family_allocation_source_reference &&
       (primary.allocated_family_limit ?? 0) +
             (spouse.allocated_family_limit ?? 0) === medicareSharedLimit;
+    const oneSelfOnlyMedicareSpouse = medicareOwnerIndex >= 0 &&
+      paired.filter((owner) => owner.medicare_enrollment).length === 1 &&
+      medicareOwner?.eligible_hdhp_coverage_by_month?.every((month, index) =>
+          index < sharedMedicareMonths
+            ? month === CoverageType.SelfOnly
+            : month === null
+        ) === true &&
+      continuingOwner?.eligible_hdhp_coverage_by_month?.every((month) =>
+          month === CoverageType.SelfOnly
+        ) === true &&
+      paired.every((owner) =>
+        owner.married_at_year_end === true &&
+        owner.spouse_has_separate_hsa === true &&
+        owner.last_month_rule_elected === false &&
+        owner.allocated_family_limit === undefined &&
+        owner.family_allocation_source_reference === undefined &&
+        (owner.archer_msa_distributions ?? 0) === 0 &&
+        owner.testing_period_failure === undefined
+      );
     const otherCoverageOwnerIndex = paired.findIndex((owner) =>
       owner.other_disqualifying_coverage !== undefined
     );
@@ -1750,9 +1973,12 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       (primary.allocated_family_limit ?? 0) +
             (spouse.allocated_family_limit ?? 0) ===
         Math.round(cfg.hsaFamilyLimit * deemedFamilyMonths / 12);
-    if (medicareOwnerIndex >= 0 && !oneMedicareSpouse) {
+    if (
+      medicareOwnerIndex >= 0 && !oneMedicareSpouse &&
+      !oneSelfOnlyMedicareSpouse
+    ) {
       throw new Error(
-        "Form 8889 Medicare enrollment needs one sourced onset and the continuing spouse's full-year family coverage",
+        "Form 8889 Medicare enrollment needs one sourced onset and the continuing spouse's full-year matching HDHP coverage",
       );
     }
     if (otherCoverageOwnerIndex >= 0 && !oneOtherCoverageSpouse) {
@@ -1763,6 +1989,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     if (
       !separateSelfOnlyMonths && !matchingFamilyAllocation &&
       !fullYearDeemedAllocation && !oneMedicareSpouse &&
+      !oneSelfOnlyMedicareSpouse &&
       !oneOtherCoverageSpouse
     ) {
       throw new Error(

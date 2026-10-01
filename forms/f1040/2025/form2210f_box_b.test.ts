@@ -1,5 +1,7 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { calculateForm2210FBoxB } from "./form2210f_box_b.ts";
+import { sha256Hex } from "./prepared-source.ts";
+import { bindForm2210FBoxBSettlement } from "./form2210f_settlement.ts";
 
 function sourcedBoxB() {
   return {
@@ -73,6 +75,62 @@ Deno.test("Form 2210-F box B uses full-payment date for one complete settlement"
   assertEquals(lines.line16, 40);
 });
 
+Deno.test("Form 2210-F box B binds one full settlement to retained payment bytes", async () => {
+  const source = {
+    ...sourcedBoxB(),
+    full_underpayment_paid_on: "2026-02-14",
+  };
+  const bytes = new TextEncoder().encode(
+    "%PDF-1.7 IRS payment confirmation fixture",
+  );
+  const payment = {
+    tax_year_applied: 2025,
+    taxpayer_ssn: "123-45-6789",
+    irs_payment_confirmation_reference: "IRS-confirmation-1",
+    payment_source_reference: "retained-payment-copy-1",
+    payment_source_sha256: await sha256Hex(bytes),
+    effective_payment_date: "2026-02-14",
+    applied_to_form2210f_underpayment: 7_000,
+    no_other_post_january_15_settlement: true,
+  };
+  assertEquals(
+    await bindForm2210FBoxBSettlement(source, payment, bytes, "123456789"),
+    calculateForm2210FBoxB(source),
+  );
+  await assertRejects(() =>
+    bindForm2210FBoxBSettlement(
+      source,
+      { ...payment, effective_payment_date: "2026-02-15" },
+      bytes,
+      "123456789",
+    )
+  );
+  await assertRejects(() =>
+    bindForm2210FBoxBSettlement(
+      source,
+      { ...payment, applied_to_form2210f_underpayment: 6_999 },
+      bytes,
+      "123456789",
+    )
+  );
+  await assertRejects(() =>
+    bindForm2210FBoxBSettlement(
+      source,
+      payment,
+      new TextEncoder().encode("%PDF-1.7 changed payment copy"),
+      "123456789",
+    )
+  );
+  await assertRejects(() =>
+    bindForm2210FBoxBSettlement(
+      source,
+      payment,
+      bytes,
+      "987654321",
+    )
+  );
+});
+
 Deno.test("Form 2210-F box B still attaches when withholding clears the required payment", () => {
   const lines = calculateForm2210FBoxB({
     ...sourcedBoxB(),
@@ -85,40 +143,56 @@ Deno.test("Form 2210-F box B still attaches when withholding clears the required
 
 Deno.test("Form 2210-F box B rejects unproven farmer status and duplicate prior returns", () => {
   const source = sourcedBoxB();
-  assertThrows(() => calculateForm2210FBoxB({
-    ...source,
-    gross_income_years: [
-      { ...source.gross_income_years[0], farming_fishing_gross_income: 60_000 },
-      source.gross_income_years[1],
-    ],
-  }));
-  assertThrows(() => calculateForm2210FBoxB({
-    ...source,
-    prior_separate_returns: [
-      source.prior_separate_returns[0],
-      {
-        ...source.prior_separate_returns[1],
-        filed_return_reference: "filed-2024-taxpayer",
-      },
-    ],
-  }));
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      gross_income_years: [
+        {
+          ...source.gross_income_years[0],
+          farming_fishing_gross_income: 60_000,
+        },
+        source.gross_income_years[1],
+      ],
+    })
+  );
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      prior_separate_returns: [
+        source.prior_separate_returns[0],
+        {
+          ...source.prior_separate_returns[1],
+          filed_return_reference: "filed-2024-taxpayer",
+        },
+      ],
+    })
+  );
 });
 
 Deno.test("Form 2210-F box B rejects when its filing reason or settlement is absent", () => {
   const source = sourcedBoxB();
-  assertThrows(() => calculateForm2210FBoxB({
-    ...source,
-    prior_separate_returns: [
-      { ...source.prior_separate_returns[0], line22_tax_after_credits: 20_000 },
-      source.prior_separate_returns[1],
-    ],
-  }));
-  assertThrows(() => calculateForm2210FBoxB({
-    ...source,
-    full_underpayment_paid_on: "2026-02-30",
-  }));
-  assertThrows(() => calculateForm2210FBoxB({
-    ...source,
-    full_underpayment_paid_on: "2026-01-15",
-  }));
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      prior_separate_returns: [
+        {
+          ...source.prior_separate_returns[0],
+          line22_tax_after_credits: 20_000,
+        },
+        source.prior_separate_returns[1],
+      ],
+    })
+  );
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      full_underpayment_paid_on: "2026-02-30",
+    })
+  );
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      full_underpayment_paid_on: "2026-01-15",
+    })
+  );
 });

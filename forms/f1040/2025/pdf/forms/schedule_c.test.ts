@@ -1,6 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
+import { testFiler } from "../../mef/test-filer.ts";
 import { scheduleCPdf } from "./schedule_c.ts";
+import { fillFormPdf } from "../builder.ts";
 
 const pending = {
   general: {
@@ -38,6 +42,106 @@ Deno.test("Schedule C PDF prints EIN as nine digits in the IRS comb field", () =
     schedule_cs: [business({ line_d_ein: "12-3456789" })],
   });
   assertEquals(copy.line_d_ein, "123456789");
+});
+
+Deno.test("Schedule C PDF reconciles Form 5884 labor and prints the reduced profit", () => {
+  const wageSource = {
+    subject_to_passive_activity_limit: false,
+    f5884s: [{
+      employee_reference: "EMP-001",
+      target_group: "1",
+      hired_on: "2025-01-15",
+      certification: {
+        path: "certified_by_start",
+        swa_certification_reference: "SWA-001",
+        certification_received_on: "2025-01-15",
+        certification_received_before_claim_confirmed: true,
+        revocation: { status: "no_notice_received" },
+      },
+      qualified_wages_confirmed: true,
+      not_prior_employee_confirmed: true,
+      not_related_or_dependent_confirmed: true,
+      more_than_half_wages_for_trade_or_business_confirmed: true,
+      excluded_wages_removed_confirmed: true,
+      wage_records: [{
+        payroll_record_reference: "PAY-001",
+        deduction_location: {
+          kind: "schedule_c",
+          business_reference: "shop",
+        },
+        service_period_start_on: "2025-02-01",
+        service_period_end_on: "2025-02-28",
+        paid_or_incurred_on: "2025-02-28",
+        qualified_wages: 6_000,
+      }],
+      hours_worked: 400,
+    }],
+  };
+  const raw = {
+    schedule_cs: [
+      business({ line_1_gross_receipts: 6_000, line_26_wages: 6_000 }),
+    ],
+    wotc_wage_reductions: [{
+      business_reference: "shop",
+      credit_amount: 2_400,
+    }],
+  };
+  const [copy] = copies(raw, { ...pending, f5884: wageSource });
+  assertEquals(copy.line_26_wages, 3_600);
+  assertEquals(copy.line28, 3_600);
+  assertEquals(copy.line31, 2_400);
+  assertThrows(
+    () => copies(raw, { ...pending, f5884: { ...wageSource, f5884s: [] } }),
+  );
+  assertThrows(
+    () =>
+      copies({
+        ...raw,
+        wotc_wage_reductions: [{
+          business_reference: "shop",
+          credit_amount: 2_300,
+        }],
+      }, { ...pending, f5884: wageSource }),
+    Error,
+    "needs matching Form 5884 line 2",
+  );
+});
+
+Deno.test("Schedule C PDF carries excess Part V descriptions on a statement", async () => {
+  const other = Array.from({ length: 11 }, (_, index) => ({
+    description: `BUSINESS EXPENSE ${index + 1}`,
+    amount: (index + 1) * 10,
+  }));
+  const [copy] = copies({
+    schedule_cs: [business({ part_v_other_expenses: other })],
+  });
+  const printed = copy.part_v_other_expenses as Array<{
+    description: string;
+    amount: number;
+  }>;
+  assertEquals(printed.length, 9);
+  assertEquals(printed[7], other[7]);
+  assertEquals(printed[8], { description: "SEE ATTACHED", amount: 300 });
+  assertEquals(copy.part_v_statement_rows, other.slice(8));
+  assertEquals(copy.line48, 660);
+  assertEquals(copy.line27b, 660);
+  assertEquals(copy.line31, 99_340);
+  const bytes = await fillFormPdf(scheduleCPdf, copy, undefined, ".pdf-cache");
+  assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
+  const continuation = await PDFDocument.create();
+  await scheduleCPdf.appendSupplementalPages!(continuation, copy, undefined);
+  assertEquals(continuation.getPageCount(), 1);
+
+  const many = Array.from({ length: 90 }, (_, index) => ({
+    description: `LONG BUSINESS EXPENSE ${index + 1}`,
+    amount: 1,
+  }));
+  const [manyCopy] = copies({
+    schedule_cs: [business({ part_v_other_expenses: many })],
+  });
+  const morePages = await PDFDocument.create();
+  await scheduleCPdf.appendSupplementalPages!(morePages, manyCopy, undefined);
+  assertEquals(morePages.getPageCount() > 1, true);
 });
 
 Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Part V rows", () => {
@@ -146,6 +250,56 @@ Deno.test("Schedule C PDF resolves an omitted owner only on a known nonjoint ret
   );
 });
 
+Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse identity", () => {
+  const raw = { schedule_cs: [business({ proprietor_recipient: "S" })] };
+  const general = {
+    ...pending.general,
+    filing_status: FilingStatus.MFJ,
+    spouse_first_name: "June",
+    spouse_last_name: "Example",
+    spouse_ssn: "111223333",
+  };
+  const [copy] = copies(raw, { general });
+  assertEquals(copy.proprietor_name, "June Example");
+  assertEquals(copy.proprietor_ssn, "111223333");
+  const projected = scheduleCPdf.projectFields!({
+    schedule_cs: [business({ proprietor_recipient: "S" })],
+  }, { general });
+  const filer = {
+    ...testFiler(),
+    filingStatus: MefFilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "June",
+      lastName: "Example",
+      nameControl: "EXAM",
+    },
+  };
+  assertEquals(scheduleCPdf.instances!(projected, filer).length, 1);
+  assertThrows(
+    () =>
+      scheduleCPdf.instances!(projected, {
+        ...filer,
+        spouse: { ...filer.spouse, ssn: "999887777" },
+      }),
+    Error,
+    "proprietor SSN differs from filer",
+  );
+  assertThrows(
+    () => copies(raw, { general: { ...general, spouse_ssn: undefined } }),
+    Error,
+    "needs spouse name and SSN",
+  );
+  assertThrows(
+    () =>
+      copies(raw, {
+        general: { ...general, filing_status: FilingStatus.Single },
+      }),
+    Error,
+    "spouse proprietor needs a joint return",
+  );
+});
+
 Deno.test("2025 Schedule C PDF places home-office Form 8829 deduction on the linked business", () => {
   const [result] = copies({
     schedule_cs: [business()],
@@ -204,7 +358,6 @@ Deno.test("2025 Schedule C PDF maps required business and vehicle boxes to print
 
 Deno.test("2025 Schedule C PDF refuses source details that cannot be printed faithfully", () => {
   const unsupported = [
-    business({ proprietor_recipient: "S" }),
     business({ line_f_accounting_method: "other" }),
     business({ line_33_inventory_method: "other" }),
     business({ line_34_inventory_change: true }),
@@ -239,8 +392,6 @@ Deno.test("2025 Schedule C PDF refuses source details that cannot be printed fai
           credit_amount: 1_000,
         }],
       }),
-    Error,
-    "matching Form 5884 source",
   );
   assertThrows(
     () => copies({ schedule_cs: [business({ line_16b_interest_other: 100 })] }),

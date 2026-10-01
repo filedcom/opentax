@@ -19,6 +19,8 @@ const tax = {
   tentativeMinimumTax: 0,
   standardCredit: 100,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 const lines = calculateForm3800Nonpassive(
@@ -47,6 +49,7 @@ Deno.test("Form 3800 document orders all six parts with filed tax-use reconcilia
   const xml = buildIRS3800Document({
     lines,
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows,
     currentAmounts,
     carryoverRows: [],
@@ -78,6 +81,7 @@ Deno.test("Form 3800 document accepts a passive carryover without a current-year
   const xml = buildIRS3800Document({
     lines: carryoverLines,
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows: [],
     currentAmounts: [],
     carryoverRows: [{
@@ -125,6 +129,7 @@ Deno.test("Form 3800 document emits all Part V sources only for an aggregate lin
   const xml = buildIRS3800Document({
     lines,
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows: [{
       line: "1h",
       metadata: aggregateMetadata,
@@ -155,6 +160,7 @@ Deno.test("Form 3800 document emits all Part V sources only for an aggregate lin
       buildIRS3800Document({
         lines,
         transferStatementIds: [],
+        carryforwardSources: [],
         currentRows: [{
           line: "1h",
           metadata: aggregateMetadata,
@@ -180,6 +186,7 @@ Deno.test("Form 3800 document rejects missing source rows or unreconciled tax us
   const parts = {
     lines,
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows,
     currentAmounts,
     carryoverRows: [],

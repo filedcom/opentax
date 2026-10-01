@@ -20,6 +20,8 @@ const source = {
     taxpayer_authorized_attached_request_confirmed: true,
   },
   final_1040_line37_amount_owed: 7_201,
+  home_phone_number: "5125550140",
+  best_time_to_call_at_home: "MORNINGS",
   proposed_monthly_payment: 101,
   payment_due_day: 15,
   payment_method: "manual_monthly_payment",
@@ -48,6 +50,8 @@ Deno.test("Form 9465 staged PDF maps page-one balance, terms, and return identit
     street: "123 Main St",
     apartment: undefined,
     city_state_zip: "Austin, TX 78701",
+    home_phone_number: "5125550140",
+    best_time_to_call_at_home: "MORNINGS",
     line5_tax_due: 7_201,
     line7_total_balance: 7_201,
     line9_amount_owed: 7_201,
@@ -55,10 +59,10 @@ Deno.test("Form 9465 staged PDF maps page-one balance, terms, and return identit
     line11a_proposed_monthly: 101,
     line12_due_day: 15,
   }]);
-  assertEquals(form9465AttachedPdf.fields.length, 14);
+  assertEquals(form9465AttachedPdf.fields.length, 16);
   assertEquals(
     form9465AttachedPdf.fields.map((field) => field.pdfField),
-    [1, 2, 3, 4, 5, 9, 10, 11, 22, 24, 26, 27, 28, 30].map(
+    [1, 2, 3, 4, 5, 9, 10, 11, 17, 18, 22, 24, 26, 27, 28, 30].map(
       (number) => `topmostSubform[0].Page1[0].f1_${number}[0]`,
     ),
   );
@@ -76,5 +80,11 @@ Deno.test("Form 9465 staged PDF rejects return mismatch and foreign address", ()
       ...filer,
       address: { ...filer.address, foreignCountry: "SE" },
     }, pending)
+  );
+  assertThrows(() =>
+    form9465AttachedPdf.instances?.(source, filer, {
+      ...pending,
+      f9465: { ...source, home_phone_number: "5125550141" },
+    })
   );
 });

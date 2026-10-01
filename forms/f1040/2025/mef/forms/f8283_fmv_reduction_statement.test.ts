@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { z } from "zod";
 import {
   f8283,
   FMVMethod,
@@ -313,6 +314,294 @@ function electedReturn() {
   return { form, schedule, pending };
 }
 
+function nonElectionReturn(
+  form: { section_a_items: readonly Record<string, unknown>[] },
+) {
+  const parsed = inputSchema.parse(form);
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsed,
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleANode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  const line12 = z.number().parse(finalized.line_12_noncash_contributions);
+  return {
+    f8283: parsed,
+    schedule_a: {
+      ...source,
+      ...finalized,
+      line_12_noncash_contributions: line12,
+    },
+    f1040: {
+      line11_agi: 100_000,
+      line12e_itemized_deductions: line12,
+    },
+  };
+}
+
+const inventoryGift = {
+  property_description: "Purchased retail books held for sale",
+  donee_organization_name: "Community Library",
+  donee_organization_us_address: {
+    line1: "7 Library Lane",
+    city: "Albany",
+    state: "NY",
+    zip: "12201",
+  },
+  date_acquired: "2023-03-01",
+  date_contributed: "2025-06-01",
+  donor_acquisition_description: "Purchase",
+  fmv: 1_000,
+  deduction_claimed: 600,
+  cost_or_adjusted_basis: 600,
+  is_capital_gain_property: false,
+  charitable_limit_category: "noncash_50" as const,
+  fmv_method: FMVMethod.ComparableSales,
+  inventory_ordinary_income_reduction: {
+    purchase_invoice_reference: "Invoice INV-102",
+    inventory_cost_record_reference: "Inventory ledger LOT-102",
+    property_held_for_sale_to_customers_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const creatorGift = {
+  ...inventoryGift,
+  property_description: "Donor-created watercolor painting",
+  date_acquired: "2024-09-01",
+  donor_acquisition_description: "Created",
+  deduction_claimed: 250,
+  cost_or_adjusted_basis: 250,
+  inventory_ordinary_income_reduction: undefined,
+  creator_ordinary_income_reduction: {
+    creation_record_reference: "Studio log ART-17",
+    capitalized_cost_record_reference: "Undeducted materials ledger ART-17",
+    taxpayer_created_artwork_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const manuscriptGift = {
+  ...creatorGift,
+  property_description: "Donor-prepared historical manuscript",
+  date_acquired: "2025-02-01",
+  deduction_claimed: 300,
+  cost_or_adjusted_basis: 300,
+  creator_ordinary_income_reduction: undefined,
+  manuscript_ordinary_income_reduction: {
+    manuscript_preparation_record_reference: "Draft ledger MS-17",
+    capitalized_cost_record_reference: "Undeducted research ledger MS-17",
+    taxpayer_prepared_manuscript_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const unrelatedUseGift = {
+  ...electedCapitalGift,
+  capital_gain_reduction_election_confirmed: undefined,
+  unrelated_use_capital_gain_reduction: {
+    purchase_record_reference: "Coin purchase receipt COIN-17",
+    donee_unrelated_use_statement_reference: "Museum sale-plan letter USE-17",
+    tangible_personal_property_verified: true as const,
+    donee_use_unrelated_to_exempt_purpose_verified: true as const,
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+Deno.test("Form 8283 unrelated-use tangible property links reduced FMV to Schedule A", () => {
+  const form = { section_a_items: [unrelatedUseGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(statement, "unrelated to the donee&apos;s exempt purpose");
+  assertStringIncludes(statement, "Museum sale-plan letter USE-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["unrelated-use-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="unrelated-use-reduction"');
+  assertStringIncludes(xml, ">3000</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 3_000);
+  const scheduleXml = scheduleAMef.build(pending.schedule_a, { pending });
+  assertStringIncludes(scheduleXml, ">3000</OtherThanByCashOrCheckAmt>");
+  const mismatchedPending = {
+    ...pending,
+    schedule_a: {
+      ...pending.schedule_a,
+      line_12_noncash_contributions: 2_999,
+    },
+  };
+  assertThrows(
+    () => form8283.build(form, { pending: mismatchedPending }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      form8283FmvReductionStatement.build([], {
+        pending: mismatchedPending,
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build(pending.schedule_a, {
+        pending: { ...pending, f8283: undefined },
+      }),
+    Error,
+    "needs its linked Form 8283 source",
+  );
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...unrelatedUseGift,
+          donor_acquisition_description: "Gift",
+        }],
+      }),
+    Error,
+    "purchased long-term tangible property",
+  );
+});
+
+Deno.test("Form 8283 donor-created art links ordinary-gain statement and basis claim", () => {
+  const form = { section_a_items: [creatorGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(
+    statement,
+    "Donor-created artwork substantially completed",
+  );
+  assertStringIncludes(statement, "hypothetical sale gain of $750.00");
+  assertStringIncludes(statement, "Undeducted materials ledger ART-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["creator-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="creator-reduction"');
+  assertStringIncludes(xml, ">250</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 250);
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...creatorGift,
+          donor_acquisition_description: "Purchase",
+        }],
+      }),
+    Error,
+    "donor-created Section A art",
+  );
+});
+
+Deno.test("Form 8283 donor-prepared manuscript links ordinary-gain statement and Schedule A claim", () => {
+  const form = { section_a_items: [manuscriptGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(
+    statement,
+    "Donor-prepared manuscript substantially completed",
+  );
+  assertStringIncludes(statement, "hypothetical sale gain of $700.00");
+  assertStringIncludes(statement, "Undeducted research ledger MS-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["manuscript-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="manuscript-reduction"');
+  assertStringIncludes(xml, ">300</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 300);
+  assertEquals(pending.f1040.line12e_itemized_deductions, 300);
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...manuscriptGift,
+          manuscript_ordinary_income_reduction: {
+            ...manuscriptGift.manuscript_ordinary_income_reduction,
+            basis_costs_not_previously_deducted_verified: false,
+          },
+        }],
+      }),
+  );
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...manuscriptGift,
+          creator_ordinary_income_reduction:
+            creatorGift.creator_ordinary_income_reduction,
+        }],
+      }),
+  );
+});
+
+Deno.test("Form 8283 purchased inventory reduction links ordinary-gain statement and reconciles claim", () => {
+  const form = { section_a_items: [inventoryGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(
+    statement,
+    "Purchased inventory held for sale to customers",
+  );
+  assertStringIncludes(statement, "hypothetical sale gain of $400.00");
+  assertStringIncludes(statement, "Invoice INV-102");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["inventory-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="inventory-reduction"');
+  assertStringIncludes(xml, ">600</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 600);
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{ ...inventoryGift, cost_or_adjusted_basis: 700 }],
+      }),
+    Error,
+    "source cost equal to claim",
+  );
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...inventoryGift,
+          inventory_ordinary_income_reduction: {
+            ...inventoryGift.inventory_ordinary_income_reduction,
+            purchase_invoice_reference: "",
+          },
+        }],
+      }),
+    Error,
+    "purchase_invoice_reference",
+  );
+});
+
 Deno.test("elected Section A links native statement and reconciles Schedule A line 12", () => {
   const { form, schedule, pending } = electedReturn();
   const statements = form8283FmvReductionStatement.build([], {
@@ -411,7 +700,7 @@ Deno.test("Form 8283 non-election reductions require distinct statement IDs", ()
       { ...shortTerm, property_description: "Second purchased art print" },
     ],
   };
-  const pending = { f8283: form };
+  const pending = nonElectionReturn(form);
   assertEquals(
     form8283FmvReductionStatement.build([], { pending }).length,
     2,
@@ -425,6 +714,26 @@ Deno.test("Form 8283 non-election reductions require distinct statement IDs", ()
   assertStringIncludes(linked[0], 'referenceDocumentId="reduction1"');
   assertStringIncludes(linked[0], 'referenceDocumentId="reduction2"');
   assertStringIncludes(linked[0], ">700</FairMarketValueAmt>");
+  assertThrows(
+    () =>
+      form8283.build(form, {
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line12e_itemized_deductions: 1_399 },
+        },
+      }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 1_399,
+      }, { pending }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
   assertThrows(
     () =>
       form8283FmvReductionStatement.build([], {

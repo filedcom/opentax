@@ -1,5 +1,100 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
 import { scheduleA } from "./schedule_a.ts";
+import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+
+Deno.test("Schedule A native replays purchase points and the second mortgage", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const source = {
+    f1098s: fixture.f1098,
+    ...fixture.f1098_purchase_points_cross_loan_review,
+  };
+  const fields = { line_8a_mortgage_interest_1098: 21_000 };
+  const context = {
+    filer: pointsFiler,
+    pending: { f1098: source, f1040: { line12e_itemized_deductions: 21_000 } },
+  };
+  assertStringIncludes(
+    scheduleA.build(fields, context),
+    "<RptHomeMortgIntAndPointsAmt>21000</RptHomeMortgIntAndPointsAmt>",
+  );
+  assertThrows(
+    () => scheduleA.build({ line_8a_mortgage_interest_1098: 21_001 }, context),
+    Error,
+    "exact sourced line 8a",
+  );
+  assertThrows(
+    () =>
+      scheduleA.build(fields, {
+        ...context,
+        pending: {
+          ...context.pending,
+          f1098: {
+            ...source,
+            f1098s: [source.f1098s[0], {
+              ...source.f1098s[1],
+              recipient_tin: "999-88-7777",
+            }],
+          },
+        },
+      }),
+    Error,
+    "same single filer",
+  );
+});
+
+const pointsFiler = {
+  primarySSN: "111223333",
+  nameLine1: "Test Taxpayer",
+  nameControl: "TAXP",
+  address: {
+    line1: "1 Test Way",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  },
+  filingStatus: FilingStatus.Single,
+};
+const pointsSource = {
+  f1098s: [{
+    lender_name: "Home Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: "2025 Form 1098 copy",
+    box1_mortgage_interest: 18_000,
+    box1_current_year_deductible_interest: 18_000,
+    box1_deduction_workpaper_reference: "2025 interest workpaper",
+    box6_points_paid: 2_400,
+    box6_current_year_deductible_points: 2_400,
+    box6_deduction_workpaper_reference: "2025 points workpaper",
+  }],
+};
+
+Deno.test("Schedule A native box 6 points require matching recipient and filed amount", () => {
+  const fields = { line_8a_mortgage_interest_1098: 20_400 };
+  const context = { filer: pointsFiler, pending: { f1098: pointsSource } };
+  assertStringIncludes(
+    scheduleA.build(fields, context),
+    "<RptHomeMortgIntAndPointsAmt>20400</RptHomeMortgIntAndPointsAmt>",
+  );
+  assertThrows(
+    () => scheduleA.build({ line_8a_mortgage_interest_1098: 2_399 }, context),
+    Error,
+    "less than sourced Form 1098 box 6",
+  );
+  assertThrows(
+    () =>
+      scheduleA.build(fields, {
+        filer: pointsFiler,
+        pending: {
+          f1098: {
+            f1098s: [{ ...pointsSource.f1098s[0], recipient_tin: "999887777" }],
+          },
+        },
+      }),
+    Error,
+    "recipient must match",
+  );
+});
 
 const itemized = { line_5a_state_income_tax: 8_000 };
 
@@ -51,14 +146,21 @@ Deno.test("Schedule A refuses a prior noncash carryover without its carryover-ye
     capital_gain_election_finalized: true,
   };
   assertThrows(
-    () => scheduleA.build({ ...fields, capital_gain_property_carryovers: carryovers }),
+    () =>
+      scheduleA.build({
+        ...fields,
+        capital_gain_property_carryovers: carryovers,
+      }),
     Error,
     "completed previous-year Form 8283 copy",
   );
   assertThrows(
-    () => scheduleA.build(fields, {
-      pending: { schedule_a: { capital_gain_property_carryovers: carryovers } },
-    }),
+    () =>
+      scheduleA.build(fields, {
+        pending: {
+          schedule_a: { capital_gain_property_carryovers: carryovers },
+        },
+      }),
     Error,
     "any previously required appraisal",
   );

@@ -71,22 +71,50 @@ export const inputSchema = z.object({
   // Part III election: apply 10-year averaging using 1986 rate schedule
   elect_10yr_averaging: z.boolean().optional(),
 
-  // Part III, Line 10: death benefit exclusion (pre-1984 plans, max $5,000)
+  // Part III, line 9: death benefit exclusion (participant died before August 21, 1996).
   death_benefit_exclusion: z.number().nonnegative().optional(),
-  // For a partial-share Part-III-only beneficiary, line 9 uses the full
-  // allowable exclusion, not just this recipient's allocated share.
+  // For a partial-share beneficiary, line 9 uses the full allowable ordinary
+  // exclusion; Part II first removes this recipient's capital allocation.
   death_benefit_exclusion_source_reference: z.string().trim().min(1).optional(),
   death_benefit_recipient_allocated_amount: z.number().int().nonnegative()
     .optional(),
+  // The plan administrator's participant-wide allocation. One row identifies
+  // the elected recipient; the other rows account for the rest of the benefit.
+  death_benefit_allocation: z.object({
+    participant_ssn: z.string().regex(/^\d{9}$/),
+    elected_recipient_ssn: z.string().regex(/^\d{9}$/),
+    recipients: z.array(
+      z.object({
+        recipient_ssn: z.string().regex(/^\d{9}$/),
+        share_pct: z.number().positive().max(100),
+        excluded_amount: z.number().int().nonnegative(),
+      }).strict(),
+    ).min(2),
+  }).strict().optional(),
   // Form 4972 lines 11 and 18.
   annuity_actuarial_value: z.number().nonnegative().optional(),
   // Form 1099-R box 8 percentage, distinct from the box 9a distribution share.
   annuity_share_pct: z.number().positive().max(100).optional(),
   federal_estate_tax: z.number().nonnegative().optional(),
+  partial_estate_tax_source: z.object({
+    administrator_statement_reference: z.string().trim().min(1),
+    estate_tax_return_reference: z.string().trim().min(1),
+    full_distribution_taxable_amount: z.number().int().positive(),
+    full_distribution_federal_estate_tax: z.number().int().positive(),
+    recipient_allocated_federal_estate_tax: z.number().int().nonnegative(),
+  }).strict().optional(),
   // Recipient's Form 1099-R box 9a percentage. Part III grosses up the
   // ordinary amount; Part-II-only uses the recipient's own distribution.
   recipient_share_pct: z.number().positive().max(100).optional(),
   recipient: tsSchema.optional(),
+  multiple_1099r: z.object({
+    participant_name: z.string().trim().min(1),
+    participant_ssn: z.string().regex(/^\d{9}$/),
+    plan_reference: z.string().trim().min(1),
+    full_balance_statement_reference: z.string().trim().min(1),
+    all_qualified_distributions_included: z.literal(true),
+    source_document_references: z.array(z.string().trim().min(1)).min(2),
+  }).strict().optional(),
 });
 
 // The public election supplies only facts not printed in the elected 1099-R.
@@ -100,6 +128,7 @@ export const publicElectionSchema = inputSchema.omit({
   annuity_share_pct: true,
   recipient_share_pct: true,
   recipient: true,
+  multiple_1099r: true,
 }).strict();
 
 type Form4972Input = z.infer<typeof inputSchema>;
@@ -107,6 +136,38 @@ type Form4972Input = z.infer<typeof inputSchema>;
 // ─── Cross-field validation ────────────────────────────────────────────────────
 
 function validateInput(input: Form4972Input, deathBenefitMax: number): void {
+  if (input.multiple_1099r) {
+    const refs = input.multiple_1099r.source_document_references;
+    if (
+      new Set(refs).size !== refs.length ||
+      (input.recipient !== "T" && input.recipient !== "S") ||
+      input.beneficiary_distribution !== false ||
+      input.participant_five_year_member !== true ||
+      input.elect_10yr_averaging !== true ||
+      (input.elect_capital_gain === true &&
+        (input.capital_gain_amount ?? 0) <= 0) ||
+      ((input.box6_nua ?? 0) > 0 &&
+        (refs.length !== 2 || input.elect_include_nua !== true ||
+          input.elect_capital_gain !== true ||
+          !Number.isSafeInteger(input.lump_sum_amount) ||
+          !Number.isSafeInteger(input.capital_gain_amount ?? 0) ||
+          !Number.isSafeInteger(input.box6_nua ?? 0) ||
+          !Number.isSafeInteger(
+            (input.box6_nua ?? 0) * (input.capital_gain_amount ?? 0) /
+              input.lump_sum_amount,
+          ))) ||
+      ((input.box6_nua ?? 0) === 0 &&
+        input.elect_include_nua === true) ||
+      (input.annuity_actuarial_value ?? 0) !== 0 ||
+      (input.death_benefit_exclusion ?? 0) !== 0 ||
+      (input.federal_estate_tax ?? 0) !== 0 ||
+      (input.recipient_share_pct ?? 100) !== 100
+    ) {
+      throw new Error(
+        "form4972: multiple Form 1099-R sources require one identified participant and a full-share Part-III election, with matching Part II capital gain if elected",
+      );
+    }
+  }
   if (!input.recipient) {
     throw new Error(
       "form4972: elected distribution needs a taxpayer or spouse recipient",
@@ -119,7 +180,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (
     !partialDeathBenefit &&
     (input.death_benefit_exclusion_source_reference !== undefined ||
-      input.death_benefit_recipient_allocated_amount !== undefined)
+      input.death_benefit_recipient_allocated_amount !== undefined ||
+      input.death_benefit_allocation !== undefined)
   ) {
     throw new Error(
       "form4972: partial-share death-benefit source facts need a positive full allowable exclusion",
@@ -127,8 +189,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   }
   if (
     partialDeathBenefit &&
-    (input.elect_10yr_averaging !== true ||
-      (input.box6_nua ?? 0) > 0 || input.elect_include_nua === true ||
+    ((input.elect_10yr_averaging !== true &&
+      input.elect_capital_gain !== true) ||
       (input.annuity_actuarial_value ?? 0) > 0 ||
       (input.federal_estate_tax ?? 0) > 0 ||
       !input.death_benefit_exclusion_source_reference ||
@@ -137,8 +199,34 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         deathBenefit * recipientShare)
   ) {
     throw new Error(
-      "form4972: partial-share death benefit needs Part III and an administrator source matching the full exclusion and recipient allocation, without NUA, annuity, or estate tax",
+      "form4972: partial-share death benefit needs Part II or III and an administrator source matching the full exclusion and recipient allocation, without annuity or estate tax",
     );
+  }
+  if (partialDeathBenefit) {
+    const allocation = input.death_benefit_allocation;
+    const rows = allocation?.recipients ?? [];
+    const elected = rows.filter((row) =>
+      row.recipient_ssn === allocation?.elected_recipient_ssn
+    );
+    if (
+      !allocation || new Set(rows.map((row) => row.recipient_ssn)).size !==
+        rows.length ||
+      rows.reduce((sum, row) => sum + row.share_pct, 0) !== 100 ||
+      rows.reduce((sum, row) => sum + row.excluded_amount, 0) !==
+        deathBenefit ||
+      rows.some((row) =>
+        !Number.isSafeInteger(deathBenefit * row.share_pct / 100) ||
+        row.excluded_amount !== deathBenefit * row.share_pct / 100
+      ) ||
+      elected.length !== 1 || elected[0].share_pct !==
+        input.recipient_share_pct ||
+      elected[0].excluded_amount !==
+        input.death_benefit_recipient_allocated_amount
+    ) {
+      throw new Error(
+        "form4972: partial-share death benefit needs a complete participant-wide recipient percentage and exclusion allocation",
+      );
+    }
   }
   if (
     partialShare &&
@@ -151,14 +239,94 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         (input.elect_10yr_averaging !== true ||
           input.annuity_share_pct === undefined)) ||
       ((input.federal_estate_tax ?? 0) > 0 &&
-        (input.elect_10yr_averaging !== true ||
-          input.elect_capital_gain === true ||
-          (input.box6_nua ?? 0) > 0 ||
-          (input.annuity_actuarial_value ?? 0) > 0)))
+        ((input.elect_10yr_averaging !== true &&
+          input.elect_capital_gain !== true) ||
+          (input.elect_10yr_averaging === true &&
+            input.elect_capital_gain === true &&
+            !(input.elect_include_nua === true &&
+              (input.box6_nua ?? 0) > 0 &&
+              (input.capital_gain_amount ?? 0) > 0)) ||
+          (input.annuity_actuarial_value ?? 0) > 0 ||
+          deathBenefit > 0)))
   ) {
     throw new Error(
-      "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced Part-III-only death benefit or estate tax; other combinations remain unsupported",
+      "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced beneficiary death benefit or estate tax in the bounded election; other combinations remain unsupported",
     );
+  }
+  const estateSource = input.partial_estate_tax_source;
+  if (partialShare && (input.federal_estate_tax ?? 0) > 0) {
+    if (
+      !estateSource ||
+      estateSource.administrator_statement_reference ===
+        estateSource.estate_tax_return_reference ||
+      estateSource.full_distribution_taxable_amount !==
+        (input.lump_sum_amount +
+            (input.elect_include_nua === true ? (input.box6_nua ?? 0) : 0)) /
+          recipientShare ||
+      estateSource.full_distribution_federal_estate_tax !==
+        input.federal_estate_tax ||
+      !Number.isSafeInteger(input.federal_estate_tax! * recipientShare) ||
+      estateSource.recipient_allocated_federal_estate_tax !==
+        input.federal_estate_tax! * recipientShare
+    ) {
+      throw new Error(
+        "form4972: partial-share estate tax needs distinct administrator and estate-return sources matching the full distribution, tax, and recipient allocation",
+      );
+    }
+  } else if (estateSource !== undefined) {
+    throw new Error(
+      "form4972: partial-share estate source requires a positive shared estate-tax adjustment",
+    );
+  }
+  if (
+    partialShare && (input.federal_estate_tax ?? 0) > 0 &&
+    input.elect_capital_gain === true &&
+    input.elect_10yr_averaging === true
+  ) {
+    const taxable = input.lump_sum_amount;
+    const gain = input.capital_gain_amount ?? 0;
+    const nua = input.box6_nua ?? 0;
+    const recipientTaxable = taxable + nua;
+    const capital = gain + nua * gain / taxable;
+    if (
+      !Number.isSafeInteger(taxable) || !Number.isSafeInteger(gain) ||
+      !Number.isSafeInteger(nua) ||
+      !Number.isSafeInteger(input.federal_estate_tax!) ||
+      !Number.isSafeInteger(nua * gain / taxable) ||
+      !Number.isSafeInteger(capital) ||
+      !Number.isSafeInteger(
+        estateSource!.recipient_allocated_federal_estate_tax * capital /
+          recipientTaxable,
+      ) ||
+      !Number.isSafeInteger(
+        input.federal_estate_tax! * capital / recipientTaxable,
+      )
+    ) {
+      throw new Error(
+        "form4972: combined partial-share NUA and estate elections need exact whole-dollar capital allocations",
+      );
+    }
+  }
+  if (partialDeathBenefit && input.elect_include_nua === true) {
+    const taxable = input.lump_sum_amount;
+    const gain = input.capital_gain_amount ?? 0;
+    const nua = input.box6_nua ?? 0;
+    const capital = gain + nua * gain / taxable;
+    const recipientTotal = taxable + nua;
+    if (
+      !Number.isSafeInteger(taxable) || !Number.isSafeInteger(gain) ||
+      !Number.isSafeInteger(nua) ||
+      !Number.isSafeInteger(nua * gain / taxable) ||
+      !Number.isSafeInteger(
+        input.death_benefit_recipient_allocated_amount! * capital /
+          recipientTotal,
+      ) ||
+      !Number.isSafeInteger(deathBenefit * capital / recipientTotal)
+    ) {
+      throw new Error(
+        "form4972: partial-share NUA and death benefit need exact whole-dollar worksheet allocations",
+      );
+    }
   }
   if (input.alternate_payee_distribution === true) {
     throw new Error(
@@ -197,7 +365,9 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     );
   }
   const taxableDistributionForDeathBenefit = partialDeathBenefit
-    ? input.lump_sum_amount / recipientShare
+    ? (input.lump_sum_amount +
+      (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0)) /
+      recipientShare
     : input.lump_sum_amount +
       (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0);
   if (deathBenefit > taxableDistributionForDeathBenefit) {
@@ -358,19 +528,40 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     // instead starts with the full allowable exclusion before line 29 prorates
     // Part III tax. Its capital fraction uses this recipient's box 3 / box 2a.
     const fullDeathBenefitCapitalShare = partialShare && electCapGain &&
-        box2aTaxable > 0
-      ? Math.round(deathBenefit * box3CapitalGain / box2aTaxable)
+        box2aTaxable + includedNua > 0
+      ? Math.round(
+        deathBenefit * capitalGain / (box2aTaxable + includedNua),
+      )
       : deathBenefitCapitalShare;
     const ordinaryDeathBenefit = deathBenefit - fullDeathBenefitCapitalShare;
     const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);
+    const partialCapitalEstate = partialShare && electCapGain &&
+      federalEstateTax > 0;
+    const estateTaxForCapital = partialCapitalEstate
+      ? input.partial_estate_tax_source!.recipient_allocated_federal_estate_tax
+      : federalEstateTax;
     const estateTaxCapitalShare = electCapGain && taxableAmount > 0
-      ? Math.round(federalEstateTax * capitalGain / taxableAmount)
+      ? Math.round(
+        estateTaxForCapital * capitalGain /
+          (partialCapitalEstate ? box2aTaxable + includedNua : taxableAmount),
+      )
       : 0;
-    const ordinaryEstateTax = federalEstateTax - estateTaxCapitalShare;
+    const fullEstateCapitalShare = partialCapitalEstate && elect10yr
+      ? Math.round(
+        federalEstateTax * capitalGain / (box2aTaxable + includedNua),
+      )
+      : estateTaxCapitalShare;
+    const ordinaryEstateTax =
+      (partialCapitalEstate && !elect10yr
+        ? estateTaxForCapital
+        : federalEstateTax) - fullEstateCapitalShare;
     if (
       deathBenefitCapitalShare + estateTaxCapitalShare > capitalGain ||
       ordinaryDeathBenefit + ordinaryEstateTax >
-        taxableAmount - (electCapGain ? capitalGain : 0)
+        (partialCapitalEstate && !elect10yr
+            ? box2aTaxable + includedNua
+            : taxableAmount) -
+          (electCapGain ? capitalGain : 0)
     ) {
       throw new Error(
         "form4972: death benefit and estate tax exceed their allocated distribution portions",
@@ -395,9 +586,12 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       ? box2aTaxable - (electCapGain ? box3CapitalGain : 0) +
         includedNua - (electCapGain ? nuaCapitalGain : 0)
       : taxableAmount - (electCapGain ? capitalGain : 0);
+    const recipientOrdinaryDeathBenefit = partialShare && !elect10yr
+      ? deathBenefit * recipientShare - deathBenefitCapitalShare
+      : ordinaryDeathBenefit;
     const ordinaryIncomeOn1040 = Math.max(
       0,
-      ordinaryIncome - ordinaryDeathBenefit,
+      ordinaryIncome - recipientOrdinaryDeathBenefit,
     );
     const partIII = elect10yr
       ? partIIILines(

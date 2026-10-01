@@ -5,21 +5,23 @@ import { form4797 } from "./f4797.ts";
 import { form8949 } from "./f8949.ts";
 
 Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form 8949 row", () => {
-  const fields = { investment_1245_dispositions: [{
-    property_id: "investment-1245-1",
-    property_description: "Investment equipment",
-    acquired_on: "2022-05-01",
-    sold_on: "2025-06-01",
-    gross_sales_price: 15_000,
-    cost_or_other_basis_plus_sale_expense: 12_000,
-    depreciation_allowed_or_allowable: 5_000,
-    property_held_for_investment_not_business: true as const,
-    section_1245_classification_reviewed: true as const,
-    direct_cash_sale_no_special_recapture_exception: true as const,
-    sale_document_reference: "SALE-2025-1",
-    basis_document_reference: "BASIS-2022-1",
-    depreciation_schedule_reference: "DEPR-2025-1",
-  }] };
+  const fields = {
+    investment_1245_dispositions: [{
+      property_id: "investment-1245-1",
+      property_description: "Investment equipment",
+      acquired_on: "2022-05-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 15_000,
+      cost_or_other_basis_plus_sale_expense: 12_000,
+      depreciation_allowed_or_allowable: 5_000,
+      property_held_for_investment_not_business: true as const,
+      section_1245_classification_reviewed: true as const,
+      direct_cash_sale_no_special_recapture_exception: true as const,
+      sale_document_reference: "SALE-2025-1",
+      basis_document_reference: "BASIS-2022-1",
+      depreciation_schedule_reference: "DEPR-2025-1",
+    }],
+  };
   const row = {
     part: "F",
     description: "From Form 4797",
@@ -33,33 +35,57 @@ Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form
     gain_loss: 3_000,
     is_long_term: true,
   };
-  const context = { pending: {
-    form4797: fields,
-    form8949: [row],
-    schedule1: { line4_other_gains: 5_000 },
-  } };
+  const context = {
+    pending: {
+      form4797: fields,
+      form8949: [row],
+      schedule1: { line4_other_gains: 5_000 },
+    },
+  };
   const xml = form4797.build(fields, context);
-  assertStringIncludes(xml, "<Section1245PropertyAmt>5000</Section1245PropertyAmt>");
+  assertStringIncludes(
+    xml,
+    "<Section1245PropertyAmt>5000</Section1245PropertyAmt>",
+  );
   assertStringIncludes(xml, "<NetGainAmt>3000</NetGainAmt>");
   const assetXml = form8949.build([row], context);
   assertStringIncludes(assetXml, "<PropertyDesc>From Form 4797</PropertyDesc>");
   assertEquals(assetXml.includes("<AcquiredDt>"), false);
   assertEquals(assetXml.includes("<CostOrOtherBasisAmt>"), false);
-  assertThrows(() => form4797.build(fields, { pending: {
-    ...context.pending,
-    form8949: [{ ...row, proceeds: 2_999, gain_loss: 2_999 }],
-  } }), Error, "matching Form 8949 row");
-  assertThrows(() => form4797.build(fields, { pending: {
-    ...context.pending,
-    schedule1: { line4_other_gains: 5_001 },
-  } }), Error, "finalized Schedule 1 line 4");
-  assertThrows(() => form4797.build({
-    ...fields,
-    investment_1245_dispositions: [{
-      ...fields.investment_1245_dispositions[0],
-      property_description: "Rental property longer",
-    }],
-  }, context), Error, "20-character MeF limit");
+  assertThrows(
+    () =>
+      form4797.build(fields, {
+        pending: {
+          ...context.pending,
+          form8949: [{ ...row, proceeds: 2_999, gain_loss: 2_999 }],
+        },
+      }),
+    Error,
+    "matching Form 8949 row",
+  );
+  assertThrows(
+    () =>
+      form4797.build(fields, {
+        pending: {
+          ...context.pending,
+          schedule1: { line4_other_gains: 5_001 },
+        },
+      }),
+    Error,
+    "finalized Schedule 1 line 4",
+  );
+  assertThrows(
+    () =>
+      form4797.build({
+        ...fields,
+        investment_1245_dispositions: [{
+          ...fields.investment_1245_dispositions[0],
+          property_description: "Rental property longer",
+        }],
+      }, context),
+    Error,
+    "20",
+  );
 });
 
 Deno.test("Form 4797: no gain or loss does not emit a document", () => {
@@ -432,12 +458,29 @@ Deno.test("Form 4797: partnership and S-corp K-1 amounts retain line 2 source ro
   const xml = form4797.build({
     section_1231_gain: 7_000,
     k1_1231_rows: [
-      { source: "partnership", entity_name: "Partner One", gain_loss: 10_000 },
-      { source: "s_corp", entity_name: "Corp Two", gain_loss: -3_000 },
+      {
+        source: "partnership",
+        entity_name: "Partner One",
+        source_ein: "123456789",
+        source_document_reference: "K-1 P1",
+        recipient_tin: "111223333",
+        gain_loss: 10_000,
+      },
+      {
+        source: "s_corp",
+        entity_name: "Corp Two",
+        source_ein: "987654321",
+        source_document_reference: "K-1 C2",
+        recipient_tin: "111223333",
+        gain_loss: -3_000,
+      },
     ],
   });
-  assertStringIncludes(xml, "<PropertyDesc>K-1 Form 1065</PropertyDesc>");
-  assertStringIncludes(xml, "<PropertyDesc>K-1 Form 1120-S</PropertyDesc>");
+  assertStringIncludes(xml, "<PropertyDesc>K-1 1065 123456789</PropertyDesc>");
+  assertStringIncludes(
+    xml,
+    "<PropertyDesc>K-1 1120-S 987654321</PropertyDesc>",
+  );
   assertStringIncludes(
     xml,
     "<DateAcquiredInheritedCd>FROM SCHEDULE K-1 F1120S</DateAcquiredInheritedCd>",

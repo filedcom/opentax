@@ -57,6 +57,7 @@ export type Form3800PassiveRowXml = {
   readonly partIV: readonly Form3800CarryoverRow[];
   readonly partV: readonly Form3800PassiveDetailRow[];
   readonly partVI: readonly Form3800PassiveDetailRow[];
+  readonly carryoverSources: readonly Form3800PassiveTaxUseVintage[];
 };
 
 export type Form3800PassiveSourceDocument = {
@@ -375,5 +376,8 @@ export function buildForm3800PassiveRowXml(
     partIV,
     partV: currentDetail,
     partVI,
+    carryoverSources: vintages.filter((source) =>
+      source.originatingTaxYear < 2025
+    ),
   };
 }

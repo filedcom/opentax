@@ -437,6 +437,8 @@ Deno.test("Form 3800 source-use bridge handles nonpassive-only credits", () => {
     tentativeMinimumTax: 0,
     standardCredit: 100.25,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   }, ZERO_FORM3800_PASSIVE_ACTIVITY);
   const result = allocateForm3800SourceTaxUse([], [{
     sourceKey: "nonpassive:8826",
@@ -560,6 +562,8 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     tentativeMinimumTax: 0,
     standardCredit: 100,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   }, classifyForm3800PassiveCredits([source]));
   const otherSources = [{
     sourceKey: "disabled-access",
@@ -626,6 +630,8 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     tentativeMinimumTax: 0,
     standardCredit: 100.25,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   }, classifyForm3800PassiveCredits([source]));
   assertEquals(
     allocateForm3800SourceTaxUse([reconciledSource], [{
@@ -653,9 +659,28 @@ function input(overrides: Record<string, number> = {}) {
     tentativeMinimumTax: 20_000,
     standardCredit: 0,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
     ...overrides,
   };
 }
+
+Deno.test("Form 3800 carryforwards enter Part I line 4 and Part II line 34", () => {
+  const lines = calculateForm3800Nonpassive(
+    input({
+      standardCarryforward: 600,
+      specifiedCarryforward: 300,
+    }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
+  assertEquals(lines.line4, 600);
+  assertEquals(lines.line6, 600);
+  assertEquals(lines.line34, 300);
+  assertEquals(lines.line36, 300);
+  assertEquals(lines.line17, 600);
+  assertEquals(lines.line37, 300);
+  assertEquals(lines.line38, 900);
+});
 
 const returnLines = {
   filingStatus: FilingStatus.Single,
@@ -687,7 +712,11 @@ Deno.test("Form 3800: derives Part II tax and prior credits from finalized retur
     transfer_out_amount: 0,
     subject_to_passive_activity_limit: false,
   }]);
-  const derived = deriveForm3800NonpassiveInput(returnLines, credits);
+  const derived = deriveForm3800NonpassiveInput(returnLines, {
+    ...credits,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
+  });
   assertEquals(derived.regularTax, 43_500);
   assertEquals(derived.alternativeMinimumTax, 2_000);
   assertEquals(derived.foreignTaxCredit, 1_000);
@@ -708,7 +737,11 @@ Deno.test("Form 3800: rejects exclusions that exceed their source lines", () => 
       deriveForm3800NonpassiveInput({
         ...returnLines,
         schedule3Line6aGbc: 6_000,
-      }, credits),
+      }, {
+        ...credits,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
+      }),
     Error,
     "do not reconcile",
   );
@@ -717,7 +750,11 @@ Deno.test("Form 3800: rejects exclusions that exceed their source lines", () => 
       deriveForm3800NonpassiveInput({
         ...returnLines,
         filingStatus: FilingStatus.MFS,
-      }, credits),
+      }, {
+        ...credits,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
+      }),
     Error,
     "spouse business-credit answer",
   );
@@ -757,6 +794,8 @@ Deno.test("Form 3800 Part II: specified credit reaches section C after ordinary 
     input({
       standardCredit: 30_000,
       specifiedCredit: 15_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     }),
     ZERO_FORM3800_PASSIVE_ACTIVITY,
   );
@@ -792,6 +831,8 @@ Deno.test("Form 3800 Part II: no net income tax allows no business credit", () =
       tentativeMinimumTax: 0,
       standardCredit: 4_000,
       specifiedCredit: 3_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     }),
     ZERO_FORM3800_PASSIVE_ACTIVITY,
   );
@@ -809,6 +850,8 @@ Deno.test("Form 3800 Part II: AMT and TMT are distinct inputs", () => {
       tentativeMinimumTax: 25_000,
       standardCredit: 1_000,
       specifiedCredit: 1_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     }),
     ZERO_FORM3800_PASSIVE_ACTIVITY,
   );
@@ -823,6 +866,8 @@ Deno.test("Form 3800 Part II: passive standard, empowerment, and specified credi
     input({
       standardCredit: 1_000,
       specifiedCredit: 3_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     }),
     {
       line2: 4_000,

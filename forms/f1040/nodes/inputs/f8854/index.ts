@@ -113,6 +113,20 @@ export const priorYearTaxSchema = z.object({
   year_2020: moneySchema,
 });
 
+const priorFiledReturnSchema = z.object({
+  tax_year: z.number().int().min(2020).max(2024),
+  filed_form1040_document_id: z.string().trim().min(1),
+  filed_form1040_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  form1040_line24_total_tax: moneySchema,
+  schedule3_line1_foreign_tax_credit: moneySchema,
+  irs_acceptance_reference: z.string().trim().min(1),
+}).strict().refine(
+  (source) =>
+    source.schedule3_line1_foreign_tax_credit <=
+      source.form1040_line24_total_tax,
+  "Form 8854 prior-year foreign tax credit cannot exceed total tax",
+);
+
 export const inputSchema = z.object({
   expatriation_date: dateSchema.refine(
     (date) => date.startsWith("2025-"),
@@ -122,6 +136,7 @@ export const inputSchema = z.object({
   tax_status_2025: taxStatus2025Schema,
   part_i: partISchema,
   prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
+  prior_year_filed_return_sources: z.array(priorFiledReturnSchema).length(5),
   balance_sheet: balanceSheetSchema,
   certified_tax_compliance: z.boolean(),
   exception_facts: exceptionFactsSchema,
@@ -130,6 +145,48 @@ export const inputSchema = z.object({
   section_c: sectionCSchema.nullable(),
   section_d: sectionDSchema,
 }).strict().superRefine((input, ctx) => {
+  const priorYears = [2020, 2021, 2022, 2023, 2024] as const;
+  const sourceYears = input.prior_year_filed_return_sources.map((row) =>
+    row.tax_year
+  );
+  const sourceIds = input.prior_year_filed_return_sources.map((row) =>
+    row.filed_form1040_document_id
+  );
+  const acceptanceRefs = input.prior_year_filed_return_sources.map((row) =>
+    row.irs_acceptance_reference
+  );
+  const sourceDigests = input.prior_year_filed_return_sources.map((row) =>
+    row.filed_form1040_sha256
+  );
+  if (
+    new Set(sourceYears).size !== 5 ||
+    priorYears.some((year) => !sourceYears.includes(year)) ||
+    new Set(sourceIds).size !== 5 ||
+    new Set(acceptanceRefs).size !== 5 ||
+    new Set(sourceDigests).size !== 5
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Form 8854 needs five distinct filed 2020-2024 return sources",
+      path: ["prior_year_filed_return_sources"],
+    });
+  }
+  for (const source of input.prior_year_filed_return_sources) {
+    const reported = input.prior_year_us_income_tax_less_foreign_tax_credit[
+      `year_${source.tax_year}` as keyof typeof input.prior_year_us_income_tax_less_foreign_tax_credit
+    ];
+    if (
+      reported !== source.form1040_line24_total_tax -
+          source.schedule3_line1_foreign_tax_credit
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          `Form 8854 ${source.tax_year} net tax differs from filed Form 1040 and Schedule 3`,
+        path: ["prior_year_us_income_tax_less_foreign_tax_credit"],
+      });
+    }
+  }
   const partI = input.part_i;
   const citizen = input.expatriate_type === ExpatriateType.CITIZEN;
   if (

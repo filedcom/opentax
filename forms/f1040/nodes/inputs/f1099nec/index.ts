@@ -10,6 +10,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -23,9 +24,96 @@ export const itemSchema = z.object({
   box3_golden_parachute: z.number().nonnegative().optional(),
   box4_federal_withheld: z.number().nonnegative().optional(),
   for_routing: z
-    .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8z"])
+    .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8j"])
+    .optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
+  qualified_tips_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box1: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  nonbusiness_activity_description: z.string().trim().min(1).max(100)
     .optional(),
   farm_id: z.string().min(1).optional(),
+}).superRefine((item, ctx) => {
+  if (
+    item.qualified_tips_review &&
+    (item.for_routing !== "schedule_c" ||
+      item.qualified_tips_review.amount > (item.box1_nec ?? 0))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_review"],
+      message:
+        "1099-NEC qualified tips need Schedule C income included in box 1",
+    });
+  }
+  if ((item.box3_golden_parachute ?? 0) > (item.box1_nec ?? 0)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_golden_parachute"],
+      message: "1099-NEC box 3 excess must be included in box 1 compensation",
+    });
+  }
+  if ((item.box1_nec ?? 0) <= 0) return;
+  if (!item.for_routing) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["for_routing"],
+      message: "Positive 1099-NEC box 1 needs an explicit income route",
+    });
+  }
+  if (
+    item.for_routing === "schedule_c" &&
+    (!item.schedule_c_business_reference || !item.recipient_ssn)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["schedule_c_business_reference"],
+      message: "1099-NEC Schedule C income needs a business and recipient TIN",
+    });
+  }
+  if (
+    item.for_routing === "schedule_f" &&
+    (!item.farm_id || !item.recipient_ssn || !item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["farm_id"],
+      message:
+        "1099-NEC farm income needs a farm, payer, and recipient identity",
+    });
+  }
+  if (
+    item.for_routing === "schedule_1_line_8j" &&
+    (!item.recipient_ssn || !item.nonbusiness_activity_description ||
+      !item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["nonbusiness_activity_description"],
+      message:
+        "1099-NEC nonbusiness activity needs a description, recipient, and payer identity",
+    });
+  }
+  if (
+    item.for_routing === "schedule_c" &&
+    (!item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payer_tin"],
+      message:
+        "1099-NEC Schedule C income needs a payer name and nine-digit TIN",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -34,23 +122,36 @@ export const inputSchema = z.object({
 
 type NECItem = z.infer<typeof itemSchema>;
 
+export function necBox3ExciseFromSources(
+  source: unknown,
+  recipientSsns: readonly string[],
+): number {
+  if (source === undefined) {
+    throw new Error("Schedule 2 1099-NEC box 3 needs its payer source");
+  }
+  const items = inputSchema.parse(source).f1099necs;
+  const allowed = new Set(recipientSsns.map((ssn) => ssn.replaceAll("-", "")));
+  return items.reduce((tax, item) => {
+    const excess = item.box3_golden_parachute ?? 0;
+    if (excess <= 0) return tax;
+    if (
+      !item.recipient_ssn ||
+      !allowed.has(item.recipient_ssn.replaceAll("-", ""))
+    ) {
+      throw new Error(
+        "Schedule 2 1099-NEC box 3 recipient must match the taxpayer or joint-filing spouse",
+      );
+    }
+    return tax + excess * 0.20;
+  }, 0);
+}
+
 function necIncomeOutput(item: NECItem): NodeOutput[] {
   const box1 = item.box1_nec ?? 0;
   if (box1 <= 0) return [];
-  switch (item.for_routing ?? "schedule_c") {
+  switch (item.for_routing) {
     case "schedule_c":
-      // Synthesize a minimal schedule_c item so the schedule_c node can compute SE tax
-      // and QBI. Required header fields are defaulted for NEC-sourced entries.
-      return [output(schedule_c, {
-        schedule_cs: [{
-          line_a_principal_business: item.payer_name ??
-            "Self-employment income",
-          line_b_business_code: "999999",
-          line_f_accounting_method: "cash",
-          line_g_material_participation: true,
-          line_1_gross_receipts: box1,
-        }],
-      })];
+      return [];
     case "schedule_f": {
       if (!item.farm_id) {
         throw new Error("1099-NEC farm income requires farm_id");
@@ -60,6 +161,9 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           farm_id: item.farm_id,
           kind: "1099nec_farm_income",
           amount: box1,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
         }],
       })];
     }
@@ -76,7 +180,7 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           amount: box1,
         }],
       })];
-    case "schedule_1_line_8z":
+    case "schedule_1_line_8j":
       return [];
     default:
       return [];
@@ -84,7 +188,7 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
 }
 
 function nonbusinessOtherIncome(items: readonly NECItem[]): number {
-  return items.filter((item) => item.for_routing === "schedule_1_line_8z")
+  return items.filter((item) => item.for_routing === "schedule_1_line_8j")
     .reduce((sum, item) => sum + (item.box1_nec ?? 0), 0);
 }
 
@@ -93,6 +197,7 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_c,
+    schedule1a,
     schedule_f,
     form8919,
     schedule1,
@@ -108,7 +213,6 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
       ...necIncomeOutput(item),
       ...(box3 > 0
         ? [
-          output(schedule1, { line8z_golden_parachute: box3 }),
           output(schedule2, { line17k_golden_parachute_excise: box3 * 0.20 }),
         ]
         : []),
@@ -119,16 +223,74 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const nonbusinessIncome = nonbusinessOtherIncome(parsed.f1099necs);
+    const nonbusinessSources = parsed.f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_1_line_8j" &&
+        (item.box1_nec ?? 0) > 0
+        ? [{
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          description: item.nonbusiness_activity_description!,
+          amount: item.box1_nec!,
+        }]
+        : []
+    );
+    const scheduleCSources = parsed.f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_c" && (item.box1_nec ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          amount: item.box1_nec!,
+        }]
+        : []
+    );
+    const qualifiedTips = parsed.f1099necs.flatMap((item) =>
+      item.qualified_tips_review
+        ? [{
+          source_form: "1099nec" as const,
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_ssn!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          source_amount: item.box1_nec!,
+          amount: item.qualified_tips_review.amount,
+          occupation_code: item.qualified_tips_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_review.included_in_box1,
+          no_other_allocable_deductions:
+            item.qualified_tips_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_review
+              .no_other_allocable_deductions_review_reference,
+        }]
+        : []
+    );
     return {
       outputs: [
         ...parsed.f1099necs.flatMap((item) => this.processItem(item)),
+        ...(scheduleCSources.length > 0
+          ? [output(schedule_c, { f1099nec_receipt_sources: scheduleCSources })]
+          : []),
+        ...(qualifiedTips.length > 0
+          ? [
+            output(schedule1a, {
+              qualified_trade_business_tips: qualifiedTips,
+            }),
+          ]
+          : []),
         ...(nonbusinessIncome > 0
           ? [
             output(schedule1, {
-              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+              f1099nec_nonbusiness_sources: nonbusinessSources,
             }),
             output(agi_aggregator, {
-              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+              line8j_f1099nec_nonbusiness: nonbusinessIncome,
             }),
           ]
           : []),

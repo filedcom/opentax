@@ -8,10 +8,33 @@ import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 // TY2025 Form 4255 Part I row facts. The former original-credit × year
 // shortcut could not distinguish carryover, gross EPE, net EPE, or an EP.
 const dollars = z.number().int().nonnegative();
+const digest = z.string().regex(/^[a-f0-9]{64}$/);
+
+const priorCreditEvidenceSchema = z.object({
+  tax_year: z.number().int().min(2000).max(2024),
+  original_form: z.enum(["3468_part_iv", "8933"]),
+  filed_return_reference: z.string().trim().min(1),
+  filed_return_sha256: digest,
+  prior_credit_claimed: dollars,
+  gross_epe: dollars,
+  gross_epe_applied_regular_tax: dollars,
+  non_epe_applied_regular_tax: dollars,
+}).strict();
+
+const excessivePaymentNoticeSchema = z.object({
+  determination_tax_year: z.literal(2025),
+  notice_reference: z.string().trim().min(1),
+  notice_sha256: digest,
+  determined_excessive_payment: dollars,
+  net_epe_portion: dollars,
+  reasonable_cause_accepted: z.boolean(),
+}).strict();
 
 export const rowSchema = z.object({
   source_document_reference: z.string().trim().min(1),
   credit_line: z.enum(["1d", "2a"]),
+  prior_credit_evidence: priorCreditEvidenceSchema,
+  excessive_payment_notice: excessivePaymentNoticeSchema.optional(),
   prior_credit_claimed: dollars, // column (a)
   gross_epe: dollars, // column (b)
   gross_epe_applied_regular_tax: dollars, // column (c)
@@ -26,6 +49,39 @@ export const rowSchema = z.object({
   excessive_payment_20_percent: dollars, // column (n)(3)
 }).superRefine((row, ctx) => {
   const fail = (message: string) => ctx.addIssue({ code: "custom", message });
+  const prior = row.prior_credit_evidence;
+  if (
+    prior.original_form !==
+      (row.credit_line === "1d" ? "3468_part_iv" : "8933") ||
+    prior.prior_credit_claimed !== row.prior_credit_claimed ||
+    prior.gross_epe !== row.gross_epe ||
+    prior.gross_epe_applied_regular_tax !==
+      row.gross_epe_applied_regular_tax ||
+    prior.non_epe_applied_regular_tax !== row.non_epe_applied_regular_tax
+  ) {
+    fail("Form 4255 prior-credit row differs from the filed-return source");
+  }
+  const notice = row.excessive_payment_notice;
+  if (
+    (row.excessive_payment_net_epe > 0 ||
+      row.excessive_payment_20_percent > 0) && !notice
+  ) {
+    fail("Form 4255 excessive payment needs an IRS determination notice");
+  }
+  if (
+    notice && (
+      notice.determined_excessive_payment !== notice.net_epe_portion ||
+      notice.net_epe_portion !== row.excessive_payment_net_epe ||
+      row.excessive_payment_20_percent !==
+        (notice.reasonable_cause_accepted
+          ? 0
+          : Math.round(notice.determined_excessive_payment * 0.2)) ||
+      notice.notice_reference === prior.filed_return_reference ||
+      notice.notice_sha256 === prior.filed_return_sha256
+    )
+  ) {
+    fail("Form 4255 EP and 20% amount differ from the determination notice");
+  }
   if (row.gross_epe > row.prior_credit_claimed) {
     fail("Form 4255 column (b) exceeds column (a)");
   }

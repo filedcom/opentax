@@ -29,6 +29,17 @@ export function reconcileForm4972MultipleRecipients(
   }
   const item = elected[0];
   if (
+    item && typeof fields.federal_estate_tax === "number" &&
+    fields.federal_estate_tax > 0 &&
+    item.box1_gross_distribution !==
+      (item.box2a_taxable_amount ?? 0) +
+        (fields.elect_include_nua === true ? (item.box6_nua ?? 0) : 0)
+  ) {
+    throw new Error(
+      "Form 4972 partial-share estate allocation needs a wholly taxable source distribution",
+    );
+  }
+  if (
     !item || item.box9a_pct_total === undefined ||
     item.box9a_pct_total <= 0 || item.box9a_pct_total >= 100 ||
     item.box9a_pct_total !== fields.recipient_share_pct ||
@@ -42,6 +53,26 @@ export function reconcileForm4972MultipleRecipients(
     throw new Error(
       "Form 4972 partial share differs from Form 1099-R boxes 2a, 3, 6, 8 amount/percentage, or 9a",
     );
+  }
+  if (
+    typeof fields.death_benefit_exclusion === "number" &&
+    fields.death_benefit_exclusion > 0
+  ) {
+    const allocation = fields.death_benefit_allocation as
+      | { participant_ssn: string; elected_recipient_ssn: string }
+      | undefined;
+    if (
+      !allocation || !item.recipient_ssn || !item.form4972_plan ||
+      allocation.elected_recipient_ssn !==
+        item.recipient_ssn.replaceAll("-", "") ||
+      allocation.participant_ssn !== item.form4972_plan.participant_ssn ||
+      !item.source_document_reference ||
+      item.form4972_plan.all_qualified_distributions_included !== true
+    ) {
+      throw new Error(
+        "Form 4972 partial-share death benefit allocation needs elected Form 1099-R recipient, participant, plan, and issued-copy identity",
+      );
+    }
   }
   const parsed = form4972Schema.parse(fields);
   const computed = form4972.compute(

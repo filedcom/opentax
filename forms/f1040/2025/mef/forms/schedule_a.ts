@@ -1,10 +1,26 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import {
+  assertForm1098Box6Sources,
+  assertForm1098MortgageLimitSources,
+  assertPurchasePointsCrossLoanSources,
+} from "../../../nodes/inputs/f1098/index.ts";
+import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertOrdinarySectionAReconciled,
+  assertOrdinarySectionBReconciled,
+  hasSectionAShortTermReduction,
+  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAVehicleSale,
+  isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
-import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
+import {
+  inputSchema as form8283InputSchema,
+  SectionBPropertyType,
+} from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 
 export interface Fields {
@@ -75,6 +91,61 @@ function buildIRS1040ScheduleA(
   ) {
     return "";
   }
+  if (context?.pending?.f1098 !== undefined) {
+    const filer = context.filer;
+    if (!filer) {
+      throw new Error("Schedule A Form 1098 box 6 needs filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) {
+      recipients.push(filer.spouse.ssn);
+    }
+    assertForm1098Box6Sources(
+      context.pending.f1098,
+      recipients,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
+    assertForm1098MortgageLimitSources(
+      context.pending.f1098,
+      recipients,
+      filer.filingStatus === FilingStatus.Single,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+      fields.line_8b_mortgage_interest_no_1098 ?? 0,
+      fields.line_8c_points_no_1098 ?? 0,
+      context.pending.mortgage_refinance_points !== undefined,
+      context.pending.form8396 !== undefined,
+    );
+    assertPurchasePointsCrossLoanSources(
+      context.pending.f1098,
+      recipients,
+      filer.filingStatus === FilingStatus.Single,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+      fields.line_8b_mortgage_interest_no_1098 ?? 0,
+      fields.line_8c_points_no_1098 ?? 0,
+      context.pending.mortgage_refinance_points !== undefined,
+      context.pending.form8396 !== undefined,
+    );
+  }
+  if (context?.pending?.mortgage_refinance_points !== undefined) {
+    const filer = context.filer;
+    if (!filer) {
+      throw new Error("Schedule A refinance points need filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) recipients.push(filer.spouse.ssn);
+    assertRefinancePointsSource(
+      context.pending.mortgage_refinance_points,
+      context.pending.f1098,
+      recipients,
+      fields.line_8c_points_no_1098 ?? 0,
+    );
+  }
   // A section 170(d) noncash carryover needs Form 8283 in the carryover year.
   // The 2025 instructions also require a completed copy from the previous
   // year, plus any appraisal that had to accompany that earlier return. The
@@ -82,6 +153,18 @@ function buildIRS1040ScheduleA(
   const sourceScheduleA = context?.pending?.schedule_a as
     | Record<string, unknown>
     | undefined;
+  const noncashItems = sourceScheduleA?.noncash_contribution_items;
+  const unrelatedUseGift = Array.isArray(noncashItems) &&
+    noncashItems.some((item) =>
+      item !== null && typeof item === "object" &&
+      (item as Record<string, unknown>)
+          .unrelated_use_capital_gain_reduction_confirmed === true
+    );
+  if (unrelatedUseGift && context?.pending?.f8283 === undefined) {
+    throw new Error(
+      "Schedule A unrelated-use capital-gain reduction needs its linked Form 8283 source",
+    );
+  }
   const hasPriorCapitalGainProperty = [
     fields.capital_gain_property_carryovers,
     sourceScheduleA?.capital_gain_property_carryovers,
@@ -99,8 +182,48 @@ function buildIRS1040ScheduleA(
       fields,
     );
   }
-  if (fields.capital_gain_election_finalized === true &&
-    !hasPriorCapitalGainProperty) {
+  if (context?.pending?.f8283 !== undefined) {
+    const form = form8283InputSchema.parse(context.pending.f8283);
+    if (
+      isSingleSectionAVehicleSale(form) ||
+      hasSectionAShortTermReduction(form) ||
+      isSingleSectionANeedyVehicleUnreduced(form) ||
+      (form.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled(context, fields);
+    }
+    if (
+      (form.section_a_items ?? []).length === 0 &&
+      ((form.section_b_items ?? []).length === 1 ||
+        isTwoSectionBSimilarArtGroup(form)) &&
+      form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
+        true
+    ) {
+      const propertyType = form.section_b_items?.[0]?.property_type;
+      if (
+        propertyType && new Set<SectionBPropertyType>([
+          SectionBPropertyType.ArtUnder20000,
+          SectionBPropertyType.ArtAtLeast20000,
+          SectionBPropertyType.Vehicle,
+          SectionBPropertyType.Equipment,
+          ...(form.section_b_items?.[0]?.ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.Securities]
+            : []),
+          SectionBPropertyType.Collectibles,
+          SectionBPropertyType.ClothingHousehold,
+          ...(form.section_b_items?.[0]?.ordinary_income_reduction !== undefined
+            ? [SectionBPropertyType.OtherRealEstate]
+            : []),
+        ]).has(propertyType)
+      ) assertOrdinarySectionBReconciled(context, propertyType, fields);
+    }
+  }
+  if (
+    fields.capital_gain_election_finalized === true &&
+    !hasPriorCapitalGainProperty
+  ) {
     const form8283 = context?.pending?.f8283 as
       | {
         section_b_items?: readonly {

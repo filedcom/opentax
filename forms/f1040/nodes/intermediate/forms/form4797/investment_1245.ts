@@ -5,7 +5,7 @@ import { z } from "zod";
 // need separate property-level source and are not inferred from this row.
 export const investment1245DispositionSchema = z.object({
   property_id: z.string().trim().min(1),
-  property_description: z.string().trim().min(1).max(40),
+  property_description: z.string().trim().min(1).max(20),
   acquired_on: z.string().date(),
   sold_on: z.string().date(),
   gross_sales_price: z.number().int().nonnegative(),
@@ -74,7 +74,9 @@ export function calculateInvestment1245Disposition(
 }
 
 export function assertInvestment1245FilingLinks(
-  calculated: ReadonlyArray<ReturnType<typeof calculateInvestment1245Disposition>>,
+  calculated: ReadonlyArray<
+    ReturnType<typeof calculateInvestment1245Disposition>
+  >,
   rows: readonly {
     from_form4797_investment_1245?: true;
     form4797_property_id?: string;
@@ -113,6 +115,38 @@ export function assertInvestment1245FilingLinks(
   ) {
     throw new Error(
       "Form 4797 investment excess gain needs one matching Form 8949 row per property",
+    );
+  }
+}
+
+/** One fully recaptured investment sale has no capital-gain remainder. */
+export function assertFullyRecapturedInvestment1245Return(
+  calculated: ReadonlyArray<
+    ReturnType<typeof calculateInvestment1245Disposition>
+  >,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (calculated.length !== 1 || calculated[0].excessCapitalGain !== 0) {
+    return;
+  }
+  const ordinary = calculated[0].ordinaryRecapture;
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const form1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const additionalIncome = schedule1?.line10_total_additional_income;
+  const totalIncome = form1040?.line9_total_income;
+  const adjustments = form1040?.line10_adjustments ?? 0;
+  if (
+    !schedule1 || !form1040 ||
+    schedule1.line4_other_gains !== ordinary ||
+    typeof additionalIncome !== "number" ||
+    !Number.isSafeInteger(additionalIncome) ||
+    form1040.line8_additional_income !== additionalIncome ||
+    typeof totalIncome !== "number" || !Number.isSafeInteger(totalIncome) ||
+    typeof adjustments !== "number" || !Number.isSafeInteger(adjustments) ||
+    form1040.line11_agi !== totalIncome - adjustments
+  ) {
+    throw new Error(
+      "Form 4797 fully recaptured investment sale needs an exact Schedule 1/Form 1040 ordinary-income join",
     );
   }
 }

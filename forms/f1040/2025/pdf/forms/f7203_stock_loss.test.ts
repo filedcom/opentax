@@ -90,10 +90,56 @@ Deno.test("staged Form 7203 PDF skips zero-basis stock allowance", () => {
   assertEquals(instance?.line35_carryover, 4_000);
 });
 
+Deno.test("Form 7203 PDF prints a sourced cash capital contribution on line 2", () => {
+  const previous = pending(3_000, -3_500);
+  const contribution = {
+    amount: 500,
+    contributed_date: "2025-06-01",
+    shareholder_ssn: "123456789",
+    corporation_ein: "987654321",
+    bank_transfer_reference: "Bank transfer TX-2025-500",
+    corporate_capital_account_reference: "Corporate ledger capital-500",
+    cash_received_by_corporation_confirmed: true,
+    no_shares_issued_confirmed: true,
+    not_a_shareholder_loan_confirmed: true,
+  };
+  const contributed = {
+    ...previous,
+    k1_s_corp: { k1_s_corps: [{
+      ...previous.k1_s_corp.k1_s_corps[0],
+      form7203_stock_loss_ledger: { ...ledger, cash_capital_contribution: contribution },
+    }] },
+  };
+  const instance = form7203StockLossPdf.instances?.(
+    { stock_basis_beginning: 3_000, additional_contributions: 500, ordinary_loss: 4_000 },
+    filer,
+    contributed,
+  )?.[0];
+  assertEquals(instance?.line2_cash_capital_contribution, 500);
+  assertEquals(instance?.line5_basis_before_distributions, 3_500);
+  assertEquals(instance?.line35_allowed_stock, 3_500);
+  assertEquals(instance?.line47_carryover, 500);
+  assertEquals(form7203StockLossPdf.fields.find((field) =>
+    field.domainKey === "line2_cash_capital_contribution"
+  )?.pdfField, "topmostSubform[0].Page1[0].f1_08[0]");
+});
+
 Deno.test("staged Form 7203 PDF rejects Schedule 1 printed-line mismatch", () => {
   assertThrows(() => form7203StockLossPdf.instances?.(
     { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
     filer,
     pending(3_000, -4_000),
   ), Error, "must match Schedule 1 line 5");
+});
+
+Deno.test("staged Form 7203 PDF rejects an unreviewed debt-supported loss", () => {
+  assertThrows(
+    () => form7203StockLossPdf.instances?.(
+      { stock_basis_beginning: 3_000, ordinary_loss: 4_000, debt_basis_beginning: 1_000 },
+      filer,
+      pending(),
+    ),
+    Error,
+    "does not accept unreviewed basis fields",
+  );
 });

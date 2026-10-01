@@ -1,6 +1,20 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
+import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import { assertPriorIsoSaleExport } from "../../form6251_prior_iso_sale.ts";
+import { assertForm6251Form4952Line2c } from "../../form6251_4952_reconciliation.ts";
+import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
+import { assertForm6251MiningSource } from "../../../nodes/inputs/schedule_c/mining.ts";
+import { assertForm6251LongTermContractSource } from "../../../nodes/inputs/schedule_c/long_term_contract.ts";
+import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
+import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
+import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
+import { assertForm6251PrivateActivityBondSource } from "../../form6251_pab_source.ts";
+import { assertForm6251RefundSource } from "../../form6251_refund_source.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   regular_tax_income?: number | null;
@@ -17,6 +31,8 @@ export interface Fields {
   line2j_estates_and_trusts?: number | null;
   line2k_disposition?: number | null;
   line2o_circulation_costs?: number | null;
+  line2p_long_term_contracts?: number | null;
+  line2q_mining_costs?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
   amti?: number | null;
@@ -86,6 +102,8 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line2k_disposition", "PropertyDispositionAmt"],
   ["depreciation_adjustment", "DepreciationAmt"],
   ["line2o_circulation_costs", "CirculationCostAmt"],
+  ["line2p_long_term_contracts", "LongTermContractAmt"],
+  ["line2q_mining_costs", "MiningCostsAmt"],
   ["amti", "AlternativeMinTaxableIncomeAmt"],
   ["exemption", "AlternativeMinimumTaxExemptAmt"],
   ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
@@ -124,7 +142,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line40", "TaxOnAlternativeMinimumGainAmt"],
 ];
 
-function buildIRS6251(fields: Input): string {
+function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   if (
     typeof fields.nol_adjustment === "number" &&
     fields.nol_adjustment !== 0
@@ -142,6 +160,44 @@ function buildIRS6251(fields: Input): string {
     );
   }
   assertForm6251Line8(fields);
+  assertForm6251Form8949Source(fields, context?.pending);
+  assertForm6251Form4952Line2c(
+    fields,
+    context?.pending,
+    context?.filer?.primarySSN,
+    true,
+  );
+  assertPriorIsoSaleExport(
+    fields,
+    context?.pending,
+    context?.filer?.primarySSN,
+    context?.filer?.filingStatus === FilingStatus.Single,
+  );
+  assertForm6251CirculationSource(fields, context?.pending);
+  assertForm6251MiningSource(fields, context?.pending);
+  assertForm6251LongTermContractSource(fields, context?.pending);
+  assertForm6251DepletionSource(fields, context?.pending);
+  assertForm6251DepreciationSource(fields);
+  assertForm6251TrustSource(fields, context?.pending);
+  assertForm6251PrivateActivityBondSource(fields, context?.pending);
+  assertForm6251RefundSource(fields, context?.pending);
+  assertForm6251QualifiedDividendSource(fields, context?.pending);
+  if ((fields.iso_adjustment ?? 0) > 0) {
+    const filer = context?.filer;
+    if (!filer) {
+      throw new Error("Form 6251 line 2i needs final filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) recipients.push(filer.spouse.ssn);
+    assertForm3921IsoSource(
+      context?.pending?.f3921,
+      fields.iso_adjustment!,
+      recipients,
+    );
+  }
   const line7ExceedsLine10 = typeof fields.tentative_tax === "number" &&
     typeof fields.regular_tax === "number" &&
     fields.tentative_tax > fields.regular_tax;
@@ -170,7 +226,7 @@ export const form6251: MefFormDescriptor<"form6251", Input> = {
   pendingKey: "form6251",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6251.pdf",
-  build(fields) {
-    return buildIRS6251(fields);
+  build(fields, context) {
+    return buildIRS6251(fields, context);
   },
 };

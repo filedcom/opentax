@@ -13,7 +13,8 @@ import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
 
 const schedule1Schema = z.object({
   line5_schedule_e: z.number(),
-  line9_total_other_income: z.number(),
+  line9_total_other_income: z.number().optional(),
+  line10_total_additional_income: z.number(),
 });
 const scheduleASchema = z.object({
   line_9_investment_interest: z.number().nonnegative(),
@@ -44,6 +45,7 @@ const permittedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
+  "recipient_tin",
   "investment_property_for_form4952",
   "box5_interest",
   "box7_royalties",
@@ -100,7 +102,7 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   if (
     k1s.length !== 1 || rows.length !== 1 || !k1 || !row || !codeB ||
     !codeI || !royalty || !source || !k1.partnership_ein ||
-    !k1.source_document_reference ||
+    !k1.source_document_reference || !k1.recipient_tin ||
     k1.investment_property_for_form4952 !== true ||
     gross <= 0 || interest <= 0 || expense <= 0 ||
     codeI.reported_amount !== codeB.reported_amount ||
@@ -110,6 +112,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
     codeB.issuer_crosswalk.issuer_reported_amount !== codeB.reported_amount ||
     codeB.issuer_crosswalk.box13_code_i_statement_reference !==
       codeI.statement_reference ||
+    codeB.issuer_crosswalk.issuer_expense_item_id !==
+      codeI.issuer_expense_item_id ||
     codeB.issuer_crosswalk.royalty_property_description !==
       royalty.property_description ||
     Object.keys(k1).some((key) => !permittedPartnershipFields.has(key)) ||
@@ -130,7 +134,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
     source.source_document_reference !== k1.source_document_reference ||
     source.box7_gross_royalties !== gross ||
     source.box13_code_i_allowed_deduction !== expense ||
-    source.box13_code_i_statement_reference !== codeI.statement_reference
+    source.box13_code_i_statement_reference !== codeI.statement_reference ||
+    source.issuer_expense_item_id !== codeI.issuer_expense_item_id
   ) {
     throw new Error(
       "Form 4952 code B must identify the same allowed code I expense deducted once on its K-1 Schedule E royalty row",
@@ -189,7 +194,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   }
   if (
     schedule1.data.line5_schedule_e !== netRoyalty ||
-    schedule1.data.line9_total_other_income !== netRoyalty ||
+    (schedule1.data.line9_total_other_income ?? 0) !== 0 ||
+    schedule1.data.line10_total_additional_income !== netRoyalty ||
     form1040.data.line8_additional_income !== netRoyalty ||
     (form1040.data.line2b_taxable_interest ?? 0) !== box5 ||
     scheduleA.data.line_9_investment_interest !== lines.line8 ||

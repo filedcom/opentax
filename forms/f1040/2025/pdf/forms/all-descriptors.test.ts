@@ -3,8 +3,8 @@
  *
  * These tests verify that each descriptor:
  *   1. Has a non-empty pendingKey string.
- *   2. Uses the archived applicable IRS revision, except Form 8911 Schedule A
- *      while its December 2025 PDF has no archive URL.
+ *   2. Uses the archived applicable IRS revision, except exact IRS PDFs whose
+ *      current revision has no archive URL.
  *   3. Has renderable fields or an explicit guard that rejects positive input.
  *   4. Every field entry has a valid kind ("text" | "checkbox" | "radio").
  *   5. Every field entry has non-empty domainKey and pdfField.
@@ -28,7 +28,11 @@ const ARCHIVED_REVISIONS: Readonly<Record<string, number>> = {
   f5884: 2021,
   f7217: 2024,
   f8820: 2018,
+  f8826: 2017,
+  f8611: 2021,
+  f965a: 2021,
   f8874: 2021,
+  f8582cr: 2024,
   f8912: 2024,
   f8978: 2023,
   f8978sa: 2023,
@@ -37,6 +41,14 @@ const ARCHIVED_REVISIONS: Readonly<Record<string, number>> = {
   f8995ad: 2022,
   f982: 2018,
   f8834: 2024,
+  fw2g: 2023,
+  f5471se: 2021,
+  f5471sh: 2021,
+  f5471si1: 2021,
+  f5471sm: 2021,
+  f5471sq: 2024,
+  f8992: 2022,
+  f8992sa: 2022,
 };
 
 for (const descriptor of ALL_PDF_FORMS) {
@@ -48,6 +60,20 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   Deno.test(`${label}: pdfUrl uses the applicable IRS revision`, () => {
+    const currentOnly2020: Readonly<Record<string, string>> = {
+      f5471_schedule_j: "f5471sj",
+      f5471_schedule_p: "f5471sp",
+      f5471_schedule_r: "f5471sr",
+    };
+    const currentOnlyFilename = currentOnly2020[label];
+    if (currentOnlyFilename) {
+      // IRS publishes these December 2020 revisions only at their current URLs.
+      assertEquals(
+        descriptor.pdfUrl,
+        `https://www.irs.gov/pub/irs-pdf/${currentOnlyFilename}.pdf`,
+      );
+      return;
+    }
     if (label === "f8911_schedule_a") {
       // The December 2025 PDF is current; IRS has no 2025 archive URL yet.
       assertEquals(

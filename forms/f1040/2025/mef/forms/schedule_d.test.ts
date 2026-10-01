@@ -1,6 +1,162 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { scheduleD } from "./schedule_d.ts";
 
+Deno.test("Schedule D native groups match prepared Form 8949 category totals", () => {
+  const sale = (part: string, proceeds: number, cost_basis: number, adjustment_amount?: number) => ({
+    part,
+    description: `${part} shares`,
+    date_acquired: part === "A" || part === "B" || part === "H"
+      ? "2025-01-10"
+      : "2022-01-10",
+    date_sold: "2025-06-20",
+    proceeds,
+    cost_basis,
+    adjustment_codes: adjustment_amount === undefined ? undefined : "W",
+    adjustment_amount,
+    gain_loss: proceeds - cost_basis + (adjustment_amount ?? 0),
+    is_long_term: !(part === "A" || part === "B" || part === "H"),
+  });
+  const sales = [
+    sale("A", 2_000, 1_000, 100),
+    sale("B", 3_000, 2_000),
+    sale("H", 4_000, 3_000),
+    sale("E", 5_000, 2_000),
+    sale("K", 6_000, 4_000),
+  ];
+  const xml = scheduleD.build({ transaction: sales }, {
+    pending: { form8949: sales },
+  });
+  assertStringIncludes(xml,
+    "<TotalSTCGL1099ShowsBasisGrp><TotalProceedsSalesPriceAmt>2000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>1000</TotalCostOrOtherBasisAmt><TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt><TotalGainOrLossAmt>1100</TotalGainOrLossAmt></TotalSTCGL1099ShowsBasisGrp>");
+  assertStringIncludes(xml,
+    "<TotalSTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>5000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>2000</TotalGainOrLossAmt></TotalSTCGL1099NotShowBasisGrp>");
+  assertStringIncludes(xml,
+    "<TotalLTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>11000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>6000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>5000</TotalGainOrLossAmt></TotalLTCGL1099NotShowBasisGrp>");
+  const direct = sale("A", 2_000, 1_000);
+  assertThrows(() => scheduleD.build({ transaction: direct }, {
+    pending: { form8949: [direct] },
+  }), Error, "direct sale must not also file");
+});
+
+Deno.test("Schedule D rejects prepared Form 8949 rows changed from calculated sales", () => {
+  const calculated = {
+    part: "B",
+    description: "Broker shares",
+    source_transaction_id: "broker-sale-1",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    gain_loss: 1_000,
+    is_long_term: false,
+  };
+  const fields = { transaction: calculated };
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [] },
+  }), Error, "differ from calculated sales");
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [{ ...calculated, description: "Changed sale" }] },
+  }), Error, "differ from calculated sales");
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [calculated, calculated] },
+  }), Error, "differ from calculated sales");
+});
+
+Deno.test("Schedule D code C final trust loss reconciles source and owner", () => {
+  const item = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "Final K-1",
+    box11_code_c_short_term_capital_loss_carryover: 700,
+    box11_code_c_statement_reference: "Final capital loss statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [item] } },
+  };
+  const xml = scheduleD.build({ line_5_k1_st: -700 }, context);
+  assertStringIncludes(
+    xml,
+    "<NetSTGainOrLossFromSchK1Amt>-700</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() => scheduleD.build({ line_5_k1_st: -699 }, context));
+  assertThrows(() =>
+    scheduleD.build({ line_5_k1_st: -700 }, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+  assertThrows(() =>
+    scheduleD.build({ line_5_k1_st: -700 }, {
+      ...context,
+      pending: { k1_trust: { k1_trusts: [item, item] } },
+    })
+  );
+  const mixedContext = {
+    ...context,
+    pending: {
+      ...context.pending,
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Example Partnership",
+          box8_net_st_cap_gain: 900,
+        }],
+      },
+    },
+  };
+  assertStringIncludes(
+    scheduleD.build({ line_5_k1_st: 200 }, mixedContext),
+    "<NetSTGainOrLossFromSchK1Amt>200</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() => scheduleD.build({ line_5_k1_st: 900 }, mixedContext));
+});
+
+Deno.test("Schedule D code D final trust loss reconciles line 12 and owner", () => {
+  const item = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "Final K-1",
+    box11_code_d_long_term_capital_loss_carryover: 900,
+    box11_code_d_statement_reference: "Final capital loss statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [item] } },
+  };
+  const fields = {
+    line_12_k1_lt: -900,
+    trust_k1_code_d_loss: 900,
+    print_line16_combined: -900,
+  };
+  assertStringIncludes(
+    scheduleD.build(fields, context),
+    "<NetLTGainOrLossFromSchK1Amt>-900</NetLTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() =>
+    scheduleD.build({ ...fields, line_12_k1_lt: -899 }, context)
+  );
+  assertThrows(() =>
+    scheduleD.build({ ...fields, print_line16_combined: 100 }, context)
+  );
+  assertThrows(
+    () => scheduleD.build(fields),
+    Error,
+    "needs its final trust K-1 source",
+  );
+  assertThrows(() =>
+    scheduleD.build(fields, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+});
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),
@@ -124,13 +280,13 @@ Deno.test("line_12_cap_gain_dist maps to CapitalGainDistributionsAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test(
-  "line_1a_proceeds + line_1a_cost emit TotalSTCGL1099BBssRptNoAdjGrp with child elements",
+  "line_1a_proceeds + line_1a_cost emit TotalSTCGL1099BssRptNoAdjGrp with child elements",
   () => {
     const result = scheduleD.build({
       line_1a_proceeds: 10000,
       line_1a_cost: 8000,
     });
-    assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
     assertStringIncludes(
       result,
       "<TotalProceedsSalesPriceAmt>10000</TotalProceedsSalesPriceAmt>",
@@ -143,7 +299,7 @@ Deno.test(
       result,
       "<TotalGainOrLossAmt>2000</TotalGainOrLossAmt>",
     );
-    assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
   },
 );
 
@@ -163,13 +319,13 @@ Deno.test("line_1a group emits loss when cost > proceeds", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test(
-  "line_8a_proceeds + line_8a_cost emit TotalLTCGL1099BBssRptNoAdjGrp with child elements",
+  "line_8a_proceeds + line_8a_cost emit TotalLTCGL1099BssRptNoAdjGrp with child elements",
   () => {
     const result = scheduleD.build({
       line_8a_proceeds: 20000,
       line_8a_cost: 15000,
     });
-    assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
     assertStringIncludes(
       result,
       "<TotalProceedsSalesPriceAmt>20000</TotalProceedsSalesPriceAmt>",
@@ -182,7 +338,7 @@ Deno.test(
       result,
       "<TotalGainOrLossAmt>5000</TotalGainOrLossAmt>",
     );
-    assertStringIncludes(result, "</TotalLTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "</TotalLTCGL1099BssRptNoAdjGrp>");
   },
 );
 
@@ -192,24 +348,24 @@ Deno.test(
 
 Deno.test("line_1a with only proceeds emits group with just TotalProceedsSalesPriceAmt", () => {
   const result = scheduleD.build({ line_1a_proceeds: 5000 });
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>5000</TotalProceedsSalesPriceAmt>",
   );
   assertNotIncludes(result, "<TotalCostOrOtherBasisAmt>");
-  assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
 });
 
 Deno.test("line_1a with only cost emits group with just TotalCostOrOtherBasisAmt", () => {
   const result = scheduleD.build({ line_1a_cost: 3000 });
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalCostOrOtherBasisAmt>3000</TotalCostOrOtherBasisAmt>",
   );
   assertNotIncludes(result, "<TotalProceedsSalesPriceAmt>");
-  assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
 });
 
 // ---------------------------------------------------------------------------
@@ -224,8 +380,8 @@ Deno.test("single known scalar field: only that element emitted, absent fields o
   );
   assertNotIncludes(result, "<NetSTGainOrLossFromSchK1Amt>");
   assertNotIncludes(result, "<STCapitalLossCarryoverAmt>");
-  assertNotIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
-  assertNotIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
+  assertNotIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
+  assertNotIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
 });
 
 // ---------------------------------------------------------------------------
@@ -256,7 +412,7 @@ Deno.test("all fields present: output wrapped in IRS1040ScheduleD tag", () => {
 
 Deno.test("all fields present: line 1a nested group emitted", () => {
   const result = scheduleD.build(allFields);
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>100</TotalProceedsSalesPriceAmt>",
@@ -273,8 +429,8 @@ Deno.test("all fields present: line 1a nested group emitted", () => {
 
 Deno.test("all fields present: line 8a nested group emitted", () => {
   const result = scheduleD.build(allFields);
-  assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
-  assertStringIncludes(result, "</TotalLTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalLTCGL1099BssRptNoAdjGrp>");
 });
 
 Deno.test("all fields present: scalar fields emitted correctly", () => {

@@ -119,6 +119,7 @@ Deno.test("Form 8880 limit subtracts every higher-priority Schedule 3 worksheet 
     },
     return: {
       filing_status: FilingStatus.Single,
+      taxpayer_age_65_or_older: true,
       line11_agi: 20_000,
       line16_income_tax: 1_000,
     },

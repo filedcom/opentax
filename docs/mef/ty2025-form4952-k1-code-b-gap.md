@@ -21,11 +21,22 @@ now checks the one K-1 and Schedule E royalty row, the Form 4952 numbered
 lines, and the finalized Schedule 1, Schedule A, and Form 1040 amounts.
 The export guard remains closed pending the product's source-document
 verification standard and verification of that reconciliation in the full batch.
+The standalone reconciliation now checks the royalty on Schedule 1 line 5 and
+the resulting total on line 10, rather than incorrectly expecting it on line 9;
+its four focused cases pass. This does not open code B export.
 
 Box 20 code B remains **blocked for export**. The typed issuer crosswalk now
 names the same box 13 code I expense, character and royalty property and checks
 their reported/allowed amounts, but it is a supplied review assertion, not
 authenticated K-1 supplement bytes or proof of the finalized Schedule E row.
+The source model now also requires one issuer expense-item ID on the code B
+crosswalk and the corresponding code I deduction. The K-1 node copies that ID
+to the Schedule E royalty source row, rejects a different ID between codes B
+and I, and rejects reuse of the same ID across K-1s from one partnership,
+including a second document reference. The standalone return reconciliation
+requires the Schedule E row to retain the same ID. This closes an ambiguous
+equal-amount match within the model; the ID still needs verification against
+issued supplement bytes before it can authorize export.
 The return-level join is written as a standalone guard but is not wired into
 XML/PDF export; the chosen evidence standard and full-batch verification must
 pass before Form 4952 line 5 can be filed. Other code I losses, multiple royalty properties, mixed
@@ -67,8 +78,9 @@ following for the same 2025 partnership, partner, and expense:
    breakdown, identifying the investment asset/activity, expense type, and
    amount represented by the code-B entry.
 2. The separately stated deduction source (for example, the specific box 13
-   code I statement if that is what the issuer identifies), with a stable item
-   reference that ties the same amount and character to code B. The source must
+   code I statement if that is what the issuer identifies), with the modeled
+   issuer expense-item ID verified against issued bytes and tied to the same
+   amount and character as code B. The source must
    distinguish any code AE or other expense that is not an allowed 2025
    individual deduction.
 3. The partner-level basis, at-risk, passive/nonpassive, and other limitation

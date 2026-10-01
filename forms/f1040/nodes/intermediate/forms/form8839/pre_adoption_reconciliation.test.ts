@@ -41,6 +41,13 @@ const childReview = {
     child_origin: "US",
     taxpayer_named_as_adoptive_parent_confirmed: true,
   },
+  birth_record: {
+    source_document_id: "birth-1",
+    document_sha256: "d".repeat(64),
+    child_first_name: "Ada",
+    child_last_name: "Taxpayer",
+    date_of_birth: "2020-02-01",
+  },
   reviewed_facts: {
     child_us_citizen_or_resident_when_effort_began_confirmed: true,
     child_under_18_on_2025_12_31_confirmed: true,
@@ -48,7 +55,7 @@ const childReview = {
     no_other_nonspouse_taxpayer_claim_confirmed: true,
     no_prior_form8839_claim_for_child_confirmed: true,
     no_employer_adoption_benefits_confirmed: true,
-    no_government_or_other_reimbursement_confirmed: true,
+    all_reimbursements_disclosed_confirmed: true,
     no_other_federal_credit_or_deduction_for_expenses_confirmed: true,
     no_surrogacy_or_illegal_expenses_confirmed: true,
   },

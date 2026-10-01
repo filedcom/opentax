@@ -39,6 +39,10 @@ export const form8839Page1FieldMap = {
   noPriorForm:
     "topmostSubform[0].Page1[0].Line3_ReadOrder[0].Line3Checkboxes_ReadOrder[0].c1_13[0]",
   noPhaseout: "topmostSubform[0].Page1[0].Line8_ReadOrder[0].c1_14[0]",
+  phaseoutYes: "topmostSubform[0].Page1[0].Line8_ReadOrder[0].c1_14[1]",
+  line8: "topmostSubform[0].Page1[0].f1_31[0]",
+  line9Whole: "topmostSubform[0].Page1[0].f1_32[0]",
+  line9Fraction: "topmostSubform[0].Page1[0].f1_33[0]",
   line2: "topmostSubform[0].Page1[0].Child1[0].f1_15[0]",
   line3: "topmostSubform[0].Page1[0].f1_18[0]",
   line4: "topmostSubform[0].Page1[0].f1_21[0]",
@@ -109,9 +113,9 @@ export function projectStagedForm8839Documents(
     filer.filingStatus !== FilingStatus.Single ||
     !filer.nameLine1?.trim() || !/^\d{9}$/.test(filer.primarySSN) ||
     canonicalValue(pending.form8839) !== canonicalValue(source) ||
-    credit.magi < 0 || credit.magi > 259_190 ||
+    credit.magi < 0 || credit.magi >= 299_190 ||
     credit.line18 <= 0 ||
-    perChild.line3 !== 0 || perChild.line10 !== 0 ||
+    perChild.line3 !== 0 ||
     credit.line14 !== credit.line18 ||
     final1040.line11_agi !== pre1040.line11_agi ||
     final1040.line18_total_tax_before_credits !==
@@ -151,6 +155,18 @@ export function projectStagedForm8839Documents(
       "Form 8839 staged native/PDF projection needs whole-dollar lines",
     );
   }
+  const phased = credit.magi > 259_190;
+  const line8 = phased ? credit.magi - 259_190 : undefined;
+  const fraction = phased ? credit.fraction.toFixed(3) : undefined;
+  if (
+    (phased && (line8 === undefined || line8 <= 0 ||
+      credit.fraction <= 0 || credit.fraction >= 1 ||
+      perChild.line10 !==
+        Math.round(perChild.line6 * credit.fraction * 100) / 100)) ||
+    (!phased && (credit.fraction !== 0 || perChild.line10 !== 0))
+  ) {
+    throw new Error("Form 8839 staged phaseout lines do not reconcile");
+  }
 
   const xml = elements("IRS8839", [
     elements("AdoptedChild", [
@@ -169,6 +185,13 @@ export function projectStagedForm8839Documents(
       element("NetCalculatedAdoptionCrAdjAmt", perChild.line11b),
     ]),
     element("AdoptionCreditModifiedAGIAmt", credit.magi),
+    ...(phased
+      ? [
+        element("AdoptionCreditModifAGILimitAmt", line8),
+        element("AdoptionCrModifAGIGrtrAmtInd", "true"),
+        element("AdoptionCreditAdjModifAGIPct", fraction),
+      ]
+      : []),
     element("RefundableAdoptionCreditAmt", credit.line11c),
     element("NetAdoptionCreditExclCfwdAmt", credit.line12),
     element("RefundableAdptnCrCfwdExclAmt", credit.line14),
@@ -186,14 +209,22 @@ export function projectStagedForm8839Documents(
     childSSN: child.ssn,
     adoptionFinal: true,
     noPriorForm: true,
-    noPhaseout: true,
+    noPhaseout: !phased,
+    phaseoutYes: phased,
+    ...(phased
+      ? {
+        line8,
+        line9Whole: fraction!.split(".")[0],
+        line9Fraction: fraction!.split(".")[1],
+      }
+      : {}),
     line2: perChild.line2,
     line3: 0,
     line4: perChild.line4,
     line5: perChild.line5,
     line6: perChild.line6,
     line7: credit.magi,
-    line10: 0,
+    line10: perChild.line10,
     line11a: perChild.line11a,
     line11b: perChild.line11b,
     line11c: credit.line11c,

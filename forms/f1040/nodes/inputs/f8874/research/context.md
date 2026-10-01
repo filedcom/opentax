@@ -22,13 +22,14 @@ a self-earned passive amount through Form 8582-CR activity and tax facts. One
 IRS8874 source document carries all the QEI rows. Form 3800 Part III line 1i and
 Part V carry the resulting current-year source amounts. The MeF builders
 cross-check the filed Form 8874, Form 8582-CR activity sources, and Form 3800.
-Source and XML cases are written but have not run in the deferred full batch.
+Source and XML cases passed in the latest recorded local full batch; external
+filing acceptance remains open.
 
 Nonpassive partnership box 15 code AD and S-corporation box 13 code AD amounts
 go directly from identified K-1 sources to Form 3800 Part III line 1i. A
 pass-through-only filer does not get an invented IRS8874 attachment. Multiple
 same-line sources need explicit Part V use amounts if the tax limit only uses
-some of their combined credit. These cases are written but unrun. Estate/trust
+some of their combined credit. These cases have local test coverage. Estate/trust
 box 13 code ZZ amounts additionally require a source statement identifying the
 New Markets Credit and route directly to the same line 1i. Passive K-1 code
 AD/ZZ credits require matching Form 8582-CR activity facts and are checked again
@@ -40,9 +41,12 @@ Line 2 does not include estate/trust code ZZ credits because the source form
 labels it for partnerships and S corporations.
 
 Open work: cent-bearing passive credit and shared XML rounding; carryovers and
-carrybacks; recapture and sale events; leap-day anniversary rules; filled PDF
-output; IRS business rules and ATS acceptance. The current route is not
-filing-ready.
+carrybacks; recapture and sale events; leap-day anniversary rules; broader
+filled PDF combinations; IRS business rules and ATS acceptance. The current
+route is not filing-ready. The input enforces the native TY2025 XSD's
+75-character CDE name line and 35-character street line 1 limits. A schema-valid
+long CDE name/address has a visually reviewed wrapped six-column PDF statement
+with a $500 Form 8874-to-Form 3800-to-Form 1040 reconciliation.
 
 Recapture must be a separate source-backed path, including when no current-year
 Form 8874 is filed. Form 8874-B identifies the CDE, investment, event date and

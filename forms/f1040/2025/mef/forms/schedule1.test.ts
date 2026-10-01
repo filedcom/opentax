@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule1 } from "./schedule1.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(actual.includes(expected), false, `Unexpected XML: ${expected}`);
@@ -51,6 +52,68 @@ Deno.test("Schedule 1 omits absent values and ignores unknown fields", () => {
   assertNotIncludes(xml, "StateLocalIncomeTaxRefundAmt");
   assertNotIncludes(xml, "junk");
   assertNotIncludes(xml, "999");
+});
+
+Deno.test("Schedule 1 line 8n/8o XML stays closed until required foreign corporation forms are native", () => {
+  assertThrows(
+    () => schedule1.build({ line8n_section951a_inclusion: 11_000 }),
+    Error,
+    "complete native Form 5471 schedules",
+  );
+  assertThrows(
+    () => schedule1.build({ line8o_section951aa_inclusion: 42_000 }),
+    Error,
+    "Form 8992 with Schedule A",
+  );
+});
+
+Deno.test("Schedule 1 native rejects Form 1098 box 4 recovery without its payer source", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  assertThrows(
+    () => schedule1.build({ line8z_f1098_interest_recovery: 1_200 }, { filer }),
+    Error,
+    "needs payer source rows",
+  );
+  const source = {
+    f1098s: [{
+      box1_mortgage_interest: 0,
+      box4_refund_overpaid: 2_000,
+      box4_prior_year_refund: true,
+      box4_taxable_recovery_verified_amount: 1_200,
+      box4_recovery_workpaper_reference: "Pub. 525 review",
+      lender_name: "Home Lender",
+      recipient_tin: "999887777",
+      source_document_reference: "issued 1098",
+    }],
+  };
+  assertThrows(
+    () =>
+      schedule1.build({ line8z_f1098_interest_recovery: 1_200 }, {
+        filer,
+        pending: { f1098: source },
+      }),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () =>
+      schedule1.build({ line8z_f1098_interest_recovery: 1_199 }, {
+        filer,
+        pending: {
+          f1098: {
+            f1098s: [{ ...source.f1098s[0], recipient_tin: filer.primarySSN }],
+          },
+        },
+      }),
+    Error,
+    "must match sourced taxable recovery",
+  );
 });
 
 Deno.test("Schedule 1 emits zero and signed source values", () => {
@@ -162,7 +225,13 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     line8z_form8621_qef: 200,
     line8z_form8621_mtm: -100,
     line8z_form8621_section1291: 25,
-    line8z_f1099nec_nonbusiness: 300,
+    f1099nec_nonbusiness_sources: [{
+      payer_name: "Occasional Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Occasional service",
+      amount: 300,
+    }],
   };
   const xml = schedule1.build(fields, {
     documentIdsByPendingKey: {
@@ -171,7 +240,11 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">4025</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3725</OtherIncomeTotalAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<ActivityNotForProfitIncmAmt>300</ActivityNotForProfitIncmAmt>",
   );
   assertEquals(xml.match(/<OtherIncomeTotalAmt /g)?.length, 1);
   for (
@@ -256,4 +329,50 @@ Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
       `${ordered[i - 1]} must precede ${ordered[i]}`,
     );
   }
+});
+
+Deno.test("Schedule 1 line 24k reconciles distinct final trust K-1 sources and beneficiary", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K-1 A",
+    box11_code_a_section67e_excess_deduction: 500,
+    box11_code_a_statement_reference: "Final deduction statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [source] } },
+  };
+  const xml = schedule1.build({
+    line24k_section67e_excess_deduction: 500,
+    line26_total_adjustments: 500,
+  }, context);
+  assertStringIncludes(
+    xml,
+    "<Section67eExcessDeductionAmt>500</Section67eExcessDeductionAmt>",
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 499 }, context)
+  );
+  assertThrows(() =>
+    schedule1.build({
+      line24k_section67e_excess_deduction: 500,
+      line25_total_other_adjustments: 499,
+    }, context)
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 500 }, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 500 }, {
+      ...context,
+      pending: { k1_trust: { k1_trusts: [source, source] } },
+    })
+  );
 });

@@ -14,6 +14,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
@@ -30,6 +31,8 @@ const ROYALTIES_ROUTING = ["schedule_e", "schedule_c"] as const;
 const OTHER_INCOME_ROUTING = [
   "prizes_awards",
   "other_income",
+  "schedule_c",
+  "schedule_f",
   "form_8919",
   "excluded",
 ] as const;
@@ -70,6 +73,16 @@ export const itemSchema = z.object({
   // Box 3 — Other income
   box3_other_income: z.number().nonnegative().optional(),
   box3_other_income_routing: z.enum(OTHER_INCOME_ROUTING).optional(),
+  box3_other_income_description: z.string().trim().min(1).max(100).optional(),
+  qualified_tips_box3_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box3: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   // When true, box3_other_income is also investment income subject to NIIT (IRC §1411).
   // Use for brokerage-sourced income (e.g., income from terminated investment accounts).
   // Defaults false — prizes, settlements, and other non-investment income are not NII.
@@ -88,9 +101,13 @@ export const itemSchema = z.object({
   box9_crop_insurance: z.number().nonnegative().optional(),
   box9_crop_insurance_deferred: z.boolean().optional(),
   farm_id: z.string().min(1).optional(),
-  // Box 10 — Attorney proceeds → Schedule 1 Line 8z (unless physical injury IRC §104)
+  // Box 10 reports gross proceeds paid to an attorney, including client funds.
   box10_attorney_proceeds: z.number().nonnegative().optional(),
-  box10_attorney_taxable: z.boolean().optional(), // defaults true; false = excluded
+  box10_attorney_fee_receipts: z.number().nonnegative().optional(),
+  box10_attorney_client_funds: z.number().nonnegative().optional(),
+  box10_attorney_business_reference: z.string().trim().min(1).optional(),
+  box10_allocation_review_reference: z.string().trim().min(1).optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
   // Box 11 — Fish purchased → Schedule C
   box11_fish_purchased: z.number().nonnegative().optional(),
   // Box 12 — §409A deferrals (informational only — no current-year income if plan compliant)
@@ -105,12 +122,103 @@ export const itemSchema = z.object({
   box17_state_payer_id: z.string().optional(),
   box18_state_income: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.qualified_tips_box3_review &&
+    (item.box3_other_income_routing !== "schedule_c" ||
+      !item.schedule_c_business_reference ||
+      item.box3_niit_applicable === true ||
+      item.qualified_tips_box3_review.amount > (item.box3_other_income ?? 0))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_box3_review"],
+      message:
+        "1099-MISC qualified tips need non-NIIT Schedule C income included in box 3",
+    });
+  }
   if ((item.box3_other_income ?? 0) > 0 && !item.box3_other_income_routing) {
     ctx.addIssue({
       code: "custom",
       path: ["box3_other_income_routing"],
       message:
         "Positive 1099-MISC box 3 income requires an explicit income classification",
+    });
+  }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "other_income" &&
+    !item.box3_other_income_description
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_other_income_description"],
+      message:
+        "1099-MISC box 3 other income needs a reviewed payment description",
+    });
+  }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "schedule_f" && !item.farm_id
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["farm_id"],
+      message: "1099-MISC box 3 farm income needs a Schedule F farm reference",
+    });
+  }
+  const grossAttorneyProceeds = item.box10_attorney_proceeds ?? 0;
+  if (
+    (grossAttorneyProceeds > 0 ||
+      item.box10_attorney_fee_receipts !== undefined ||
+      item.box10_attorney_client_funds !== undefined) &&
+    (grossAttorneyProceeds <= 0 ||
+      item.box10_attorney_fee_receipts === undefined ||
+      item.box10_attorney_client_funds === undefined ||
+      item.box10_attorney_fee_receipts + item.box10_attorney_client_funds !==
+        grossAttorneyProceeds)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_attorney_proceeds"],
+      message:
+        "1099-MISC box 10 needs reviewed fee and client-fund amounts that equal gross proceeds",
+    });
+  }
+  if (
+    (item.box10_attorney_fee_receipts ?? 0) > 0 &&
+    !item.box10_attorney_business_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_attorney_business_reference"],
+      message:
+        "1099-MISC box 10 retained fees need a Schedule C business reference",
+    });
+  }
+  if (grossAttorneyProceeds > 0 && !item.box10_allocation_review_reference) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_allocation_review_reference"],
+      message: "1099-MISC box 10 allocation needs a reviewed source reference",
+    });
+  }
+  if (
+    ((item.box3_other_income_routing === "schedule_c" &&
+      (item.box3_other_income ?? 0) > 0) ||
+      (item.box1_rents_routing === "schedule_c" &&
+        (item.box1_rents ?? 0) > 0) ||
+      (item.box2_royalties_routing === "schedule_c" &&
+        (item.box2_royalties ?? 0) > 0) ||
+      (item.box5_fishing_boat ?? 0) > 0 ||
+      (item.box6_medical_payments ?? 0) > 0 ||
+      (item.box11_fish_purchased ?? 0) > 0) &&
+    !item.schedule_c_business_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["schedule_c_business_reference"],
+      message:
+        "1099-MISC business receipts need a Schedule C business reference",
     });
   }
 });
@@ -141,21 +249,9 @@ function rentalIncomeForScheduleE(items: M99Item[]): number {
     .reduce((s, i) => s + (i.box1_rents ?? 0), 0);
 }
 
-function rentalIncomeForScheduleC(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box1_rents_routing === "schedule_c")
-    .reduce((s, i) => s + (i.box1_rents ?? 0), 0);
-}
-
 function royaltiesForScheduleE(items: M99Item[]): number {
   return items
     .filter((i) => (i.box2_royalties_routing ?? "schedule_e") === "schedule_e")
-    .reduce((s, i) => s + (i.box2_royalties ?? 0), 0);
-}
-
-function royaltiesForScheduleC(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box2_royalties_routing === "schedule_c")
     .reduce((s, i) => s + (i.box2_royalties ?? 0), 0);
 }
 
@@ -171,20 +267,39 @@ function otherIncomeTotal(items: M99Item[]): number {
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
-function taxableAttorneyTotal(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box10_attorney_taxable !== false)
-    .reduce((s, i) => s + (i.box10_attorney_proceeds ?? 0), 0);
-}
-
-function scheduleCGrossReceipts(items: M99Item[]): number {
-  return (
-    totalOf(items, "box5_fishing_boat") +
-    totalOf(items, "box6_medical_payments") +
-    totalOf(items, "box11_fish_purchased") +
-    rentalIncomeForScheduleC(items) +
-    royaltiesForScheduleC(items)
-  );
+function scheduleCReceiptSources(items: M99Item[]) {
+  return items.flatMap((item) => {
+    const amounts = [
+      [
+        "box3_other_income",
+        item.box3_other_income_routing === "schedule_c"
+          ? item.box3_other_income
+          : 0,
+      ],
+      [
+        "box1_rents",
+        item.box1_rents_routing === "schedule_c" ? item.box1_rents : 0,
+      ],
+      [
+        "box2_royalties",
+        item.box2_royalties_routing === "schedule_c" ? item.box2_royalties : 0,
+      ],
+      ["box5_fishing_boat", item.box5_fishing_boat],
+      ["box6_medical_payments", item.box6_medical_payments],
+      ["box11_fish_purchased", item.box11_fish_purchased],
+    ] as const;
+    return amounts.flatMap(([box, amount]) =>
+      (amount ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference!,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          box,
+          amount: amount!,
+        }]
+        : []
+    );
+  });
 }
 
 function scheduleEOutput(items: M99Item[]): NodeOutput | null {
@@ -213,14 +328,25 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   const prizes = prizesAwardsTotal(items);
   const other = otherIncomeTotal(items);
   const substitute = totalOf(items, "box8_substitute_payments");
-  const attorney = taxableAttorneyTotal(items);
   const nqdc = totalOf(items, "box15_nqdc");
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (prizes > 0) s1Input.line8i_prizes_awards = prizes;
-  if (other > 0) s1Input.line8z_other = other;
+  if (other > 0) {
+    s1Input.f1099m_box3_other_income_sources = items.flatMap((item) =>
+      item.box3_other_income_routing === "other_income" &&
+        (item.box3_other_income ?? 0) > 0
+        ? [{
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          description: item.box3_other_income_description!,
+          amount: item.box3_other_income!,
+        }]
+        : []
+    );
+  }
   if (substitute > 0) s1Input.line8z_substitute_payments = substitute;
-  if (attorney > 0) s1Input.line8z_attorney_proceeds = attorney;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
   return output(
@@ -238,6 +364,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_c,
+    schedule1a,
     schedule_e,
     schedule_f,
     schedule1,
@@ -250,7 +377,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(_ctx: NodeContext, input: M99Input): NodeResult {
-    const { f1099ms: m99s } = input;
+    const { f1099ms: m99s } = inputSchema.parse(input);
     if (m99s.length === 0) return { outputs: [] };
 
     // Direct node callers can bypass inputSchema, so do not silently turn an
@@ -327,16 +454,60 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (schedE) outputs.push(schedE);
 
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
-    const totalScheduleC = scheduleCGrossReceipts(m99s);
-    if (totalScheduleC > 0) {
-      outputs.push(
-        this.outputNodes.output(schedule_c, {
-          line1_gross_receipts: totalScheduleC,
+    const miscReceiptSources = scheduleCReceiptSources(m99s);
+    const attorneyFeeSources = m99s.flatMap((item) =>
+      (item.box10_attorney_fee_receipts ?? 0) > 0
+        ? [{
+          business_reference: item.box10_attorney_business_reference!,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          amount: item.box10_attorney_fee_receipts!,
+          allocation_review_reference: item.box10_allocation_review_reference!,
+        }]
+        : []
+    );
+    if (miscReceiptSources.length > 0 || attorneyFeeSources.length > 0) {
+      outputs.push(this.outputNodes.output(schedule_c, {
+        ...(miscReceiptSources.length > 0 && {
+          f1099m_receipt_sources: miscReceiptSources,
         }),
-      );
+        ...(attorneyFeeSources.length > 0 && {
+          attorney_fee_sources: attorneyFeeSources,
+        }),
+      } as AtLeastOne<z.infer<typeof schedule_c.inputSchema>>));
+    }
+    const qualifiedTips = m99s.flatMap((item) =>
+      item.qualified_tips_box3_review
+        ? [{
+          source_form: "1099misc" as const,
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_tin,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          source_amount: item.box3_other_income!,
+          amount: item.qualified_tips_box3_review.amount,
+          occupation_code: item.qualified_tips_box3_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_box3_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_box3_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_box3_review.included_in_box3,
+          no_other_allocable_deductions:
+            item.qualified_tips_box3_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_box3_review
+              .no_other_allocable_deductions_review_reference,
+        }]
+        : []
+    );
+    if (qualifiedTips.length > 0) {
+      outputs.push(this.outputNodes.output(schedule1a, {
+        qualified_trade_business_tips: qualifiedTips,
+      }));
     }
 
-    // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
+    // schedule1 — prizes, other income, substitute payments, NQDC ordinary income
     const sched1 = schedule1Output(m99s);
     if (sched1) outputs.push(sched1);
 
@@ -345,12 +516,12 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     const prizes = prizesAwardsTotal(m99s);
     const substitute = totalOf(m99s, "box8_substitute_payments");
     const nqdc = totalOf(m99s, "box15_nqdc");
-    const other = otherIncomeTotal(m99s) + taxableAttorneyTotal(m99s);
+    const other = otherIncomeTotal(m99s);
     const agiIncome = {
       ...(prizes > 0 ? { line8i_prizes_awards: prizes } : {}),
       ...(substitute > 0 ? { line8z_substitute_payments: substitute } : {}),
       ...(nqdc > 0 ? { line8z_nqdc: nqdc } : {}),
-      ...(other > 0 ? { line8z_other: other } : {}),
+      ...(other > 0 ? { line8z_f1099m_box3_other: other } : {}),
     };
     if (prizes > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
@@ -369,7 +540,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       }));
     } else if (other > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
-        line8z_other: other,
+        line8z_f1099m_box3_other: other,
       }));
     }
 
@@ -389,9 +560,24 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
           : {}),
       }];
     });
-    if (farmCropSources.length > 0) {
+    const farmBox3Sources = m99s.flatMap((item) =>
+      item.box3_other_income_routing === "schedule_f" &&
+        (item.box3_other_income ?? 0) > 0
+        ? [{
+          farm_id: item.farm_id!,
+          kind: "1099m_box3_other_income" as const,
+          amount: item.box3_other_income!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+        }]
+        : []
+    );
+    if (farmCropSources.length > 0 || farmBox3Sources.length > 0) {
       outputs.push(
-        this.outputNodes.output(schedule_f, { farm_sources: farmCropSources }),
+        this.outputNodes.output(schedule_f, {
+          farm_sources: [...farmCropSources, ...farmBox3Sources],
+        }),
       );
     }
 

@@ -9,6 +9,10 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { form8919 } from "../form8919/index.ts";
+import {
+  isQualifiedTipsOccupationCode,
+  schedule1a,
+} from "../schedule1a/index.ts";
 
 const employerSchema = z.object({
   name: z.string().min(1),
@@ -16,6 +20,8 @@ const employerSchema = z.object({
   applied_for_ein: z.literal(true).optional(),
   tips_received: z.number().nonnegative(),
   tips_reported: z.number().nonnegative(),
+  tipped_occupation_code: z.string().regex(/^\d{3}$/).optional(),
+  occupation_review_reference: z.string().trim().min(1).optional(),
 }).strict().superRefine((employer, ctx) => {
   if ((employer.ein === undefined) === (employer.applied_for_ein !== true)) {
     ctx.addIssue({
@@ -27,6 +33,16 @@ const employerSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 4137 reported tips exceed received tips",
+    });
+  }
+  if (
+    (employer.tipped_occupation_code !== undefined) !==
+      (employer.occupation_review_reference !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 4137 reviewed occupation needs a code and source reference",
     });
   }
 });
@@ -129,6 +145,8 @@ const w2TipSourceSchema = z.object({
     z.literal("Applied For"),
   ]).optional(),
   allocated_tips: z.number().nonnegative(),
+  tipped_occupation_code: z.string().regex(/^\d{3}$/).optional(),
+  statutory_employee: z.literal(true).optional(),
   rrta_compensation: z.number().nonnegative().optional(),
   ss_wages_and_tips: z.number().nonnegative().optional(),
 }).strict();
@@ -447,6 +465,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     form8959,
     form8919,
+    schedule1a,
   ]);
 
   compute(ctx: NodeContext, rawInput: Form4137Input): NodeResult {
@@ -460,8 +479,58 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
       0,
     );
     const tipTax = forms.reduce((sum, form) => sum + form.totalTax, 0);
+    const qualifiedForm4137Tips = forms.flatMap((form) => {
+      const ssn = form.recipient === "taxpayer"
+        ? input.taxpayer_ssn
+        : input.spouse_ssn;
+      if (!ssn) return [];
+      return form.employers.flatMap((employer) => {
+        if (!employer.ein || employer.tips_received <= 0) return [];
+        const sources = (input.w2_tip_sources ?? []).filter((source) =>
+          source.employee_ssn?.replaceAll("-", "") ===
+            ssn.replaceAll("-", "") &&
+          source.employer_ein?.replaceAll("-", "") ===
+            employer.ein?.replaceAll("-", "") &&
+          source.employer_name === employer.name &&
+          source.statutory_employee !== true
+        );
+        if (sources.length > 1) {
+          throw new Error(
+            "Schedule 1-A Form 4137 tips need one qualifying W-2 per employer",
+          );
+        }
+        if (sources.length === 0) return [];
+        const sourceCode = sources[0].tipped_occupation_code;
+        const reviewedCode = employer.tipped_occupation_code;
+        if (
+          sourceCode !== undefined && reviewedCode !== undefined &&
+          sourceCode !== reviewedCode
+        ) {
+          throw new Error(
+            "Schedule 1-A Form 4137 occupation disagrees with W-2 box 14b",
+          );
+        }
+        const occupationCode = reviewedCode ?? sourceCode;
+        if (
+          occupationCode === undefined ||
+          !isQualifiedTipsOccupationCode(occupationCode)
+        ) return [];
+        return [{
+          employee_ssn: ssn,
+          employer_ein: employer.ein,
+          employer_name: employer.name,
+          amount: employer.tips_received,
+          occupation_code: occupationCode,
+        }];
+      });
+    });
     return {
       outputs: [
+        ...(qualifiedForm4137Tips.length > 0
+          ? [output(schedule1a, {
+            qualified_form4137_tips: qualifiedForm4137Tips,
+          })]
+          : []),
         ...(tipIncome > 0
           ? [output(f1040, { line1c_unreported_tips: tipIncome })]
           : []),

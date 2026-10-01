@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
-import { form8862Pdf } from "./f8862.ts";
+import { form8862OverflowRows, form8862Pdf } from "./f8862.ts";
 
 const filer = {
   primarySSN: "123456789",
@@ -10,6 +10,37 @@ const filer = {
   lastName: "Doe",
   address: { line1: "1 Main St", city: "Anywhere", state: "CA", zip: "90001" },
   filingStatus: FilingStatus.Single,
+};
+
+const priorEicEvidence = {
+  credit_disallowance_ban_active: false,
+  eitc_disallowed_year: 2023,
+  eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+};
+const noticeReviews = {
+  filing_status: "single",
+  taxpayer_ssn: "123456789",
+  prior_eic_disallowance_review: {
+    status: "requires_8862",
+    disallowed_year: 2023,
+    disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  },
+  prior_ctc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS CTC notice",
+    notice_copy_reference: "Retained synthetic CTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+  prior_aotc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS AOTC notice",
+    notice_copy_reference: "Retained synthetic AOTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
 };
 
 Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", () => {
@@ -43,10 +74,13 @@ Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", (
 Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
   const source = {
     claim_eitc: true,
+    ...priorEicEvidence,
     eitc_income_reporting_only: false,
     eitc_qualifying_child_of_other: false,
     eitc_children: [{ first_name: "Alice", last_name: "Doe", days_in_us: 300 }],
     claim_ctc: true,
+    ctc_disallowed_year: 2023,
+    ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
     ctc_children: [{
       first_name: "Alice",
       last_name: "Doe",
@@ -56,21 +90,36 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
       us_citizen_national_or_resident: true,
     }],
   };
-  const instances = form8862Pdf.instances?.(source, filer, {
-    f1040: { line27_eitc: 500, line19_child_tax_credit: 2200 },
-  }) ?? [];
-  assertEquals(instances.length, 1);
-  assertEquals(instances[0].tax_year, 2025);
-  assertEquals(instances[0].eitc_child_0_name, "Alice Doe");
-  assertEquals(instances[0].eitc_child_0_days, 300);
-  assertEquals(instances[0].eitc_has_child, "yes");
-  assertEquals(instances[0].ctc_child_0_name, "Alice Doe");
-  assertEquals(instances[0].ctc_child_0_citizen, "yes");
+  assertThrows(
+    () =>
+      form8862Pdf.instances?.(source, filer, {
+        general: noticeReviews,
+        f1040: {
+          taxpayer_ssn: "123456789",
+          line27_eitc: 500,
+          line19_child_tax_credit: 2200,
+          dependent_details: [{
+            first_name: "Alice",
+            last_name: "Doe",
+            credit_category: "ctc",
+          }],
+        },
+        eitc: {
+          credit_amount: 500,
+          qualifying_children: 1,
+          qualifying_child_details: [{ first_name: "Alice", last_name: "Doe" }],
+        },
+      }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
 });
 
-Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
+Deno.test("Form 8862 retains numbered continuation rows without exporting CTC", () => {
   const ctc = {
     claim_ctc: true,
+    ctc_disallowed_year: 2023,
+    ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
     ctc_children: ["Alice", "Betty", "Carol", "David", "Ellen"].map((name) => ({
       first_name: name,
       last_name: "Doe",
@@ -80,19 +129,45 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
       us_citizen_national_or_resident: true,
     })),
   };
-  assertThrows(
-    () =>
-      form8862Pdf.instances?.(ctc, filer, {
-        f1040: { line19_child_tax_credit: 500 },
-      }),
-    Error,
-    "additional statement",
-  );
+  assertEquals(form8862OverflowRows(ctc), [{
+    heading: "12. Child 5: Ellen Doe",
+    answers: "14 lived with filer: yes; 15 qualifying child: yes; " +
+      "16 dependent: yes; 17 US citizen/national/resident: yes",
+  }]);
+});
+
+Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
+  const rows = form8862OverflowRows({
+    other_dependents: Array.from({ length: 5 }, (_, i) => ({
+      first_name: `Other${i}`,
+      last_name: "Doe",
+      dependent: true,
+      us_citizen_national_or_resident: true,
+    })),
+    aotc_students: Array.from({ length: 4 }, (_, i) => ({
+      first_name: `Student${i}`,
+      last_name: "Doe",
+      eligible: true,
+      credit_claimed_four_prior_years: false,
+    })),
+  });
+  assertEquals(rows, [{
+    heading: "13. Other dependent 5: Other4 Doe",
+    answers: "16 dependent: yes; 17 US citizen/national/resident: yes",
+  }, {
+    heading: "18. Student 4: Student3 Doe",
+    answers:
+      "19a eligible student: yes; 19b credit claimed four prior years: no",
+  }]);
+});
+
+Deno.test("Form 8862 PDF rejects a claim missing from the finalized return", () => {
   assertThrows(
     () =>
       form8862Pdf.instances?.(
         {
           claim_eitc: true,
+          ...priorEicEvidence,
           eitc_income_reporting_only: true,
         },
         filer,
@@ -106,6 +181,8 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
 Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
   const aotc = {
     claim_aotc: true,
+    aotc_disallowed_year: 2023,
+    aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
     aotc_students: [{
       first_name: "Alice",
       last_name: "Doe",
@@ -114,12 +191,14 @@ Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
     }],
   };
   const pending = {
+    general: noticeReviews,
     f1040: { line29_refundable_aoc: 1000 },
     f8863: { f8863s: [{ credit_type: "aoc", student_name: "Alice Doe" }] },
   };
-  assertEquals(
-    form8862Pdf.instances?.(aotc, filer, pending)?.[0].aotc_student_0_name,
-    "Alice Doe",
+  assertThrows(
+    () => form8862Pdf.instances?.(aotc, filer, pending),
+    Error,
+    "standalone AOTC source, Form 8863, Schedule 3, and Form 1040 amounts do not reconcile",
   );
   assertThrows(
     () =>

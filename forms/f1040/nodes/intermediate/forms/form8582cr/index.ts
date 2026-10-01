@@ -6,6 +6,7 @@ import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { f3800 } from "../../../inputs/f3800/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { PassiveCreditReportingRoute } from "./credit-route.ts";
+import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 import {
   creditSourceSchema,
   PassiveCreditCategory,
@@ -204,11 +205,12 @@ export const inputSchema = z.object({
 
   // Regular tax computed on all income including passive net income
   // Part I, Line 6 (full tax side)
-  regular_tax_all_income: z.number().nonnegative(),
+  regular_tax_all_income: z.number().int().nonnegative(),
 
   // Regular tax computed on income excluding net passive income
   // Part I, Line 6 (ex-passive side)
-  regular_tax_without_passive: z.number().nonnegative(),
+  regular_tax_without_passive: z.number().int().nonnegative(),
+  line6_ordinary_worksheet: line6OrdinaryWorksheetSchema.optional(),
 
   // MAGI for Part II rental real estate phase-out calculation
   // IRC §469(i)(3)
@@ -235,6 +237,38 @@ export const inputSchema = z.object({
   // MFS filers who lived with their spouse cannot use Parts II-IV.
   filing_status: filingStatusSchema.optional(),
 }).superRefine((input, ctx) => {
+  input.credit_sources.forEach((source, index) => {
+    if (
+      source.form3800_credit_line === "1h" &&
+      (source.source_origin.kind === PassiveCreditSourceOrigin.Estate ||
+        source.source_origin.kind === PassiveCreditSourceOrigin.Trust)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["credit_sources", index],
+        message:
+          "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed passive source route",
+      });
+    }
+  });
+  input.required_orphan_drug_k1_credits?.forEach((source, index) => {
+    if (source.source_type === "estate" || source.source_type === "trust") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_orphan_drug_k1_credits", index],
+        message:
+          "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed passive source route",
+      });
+    }
+  });
+  if (input.regular_tax_without_passive > input.regular_tax_all_income) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["regular_tax_without_passive"],
+      message:
+        "Form 8582-CR line 6 tax without passive income cannot exceed tax on all income",
+    });
+  }
   const k1Keys = new Set<string>();
   input.required_orphan_drug_k1_credits?.forEach((evidence, index) => {
     const key = [

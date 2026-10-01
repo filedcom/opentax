@@ -1,10 +1,19 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../nodes/inputs/f8621/index.ts";
+import { calculateExcessEvents } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
-function explain(line: Form8621Lines): string {
+export function explainForm8621ExcessStatement(line: Form8621Lines): string {
+  const derived = (line.item.excess_events ?? []).flatMap(
+    calculateExcessEvents,
+  );
+  if (JSON.stringify(line.excessEvents) !== JSON.stringify(derived)) {
+    throw new Error(
+      "Form 8621 excess-distribution statement differs from source events",
+    );
+  }
   const allocations = line.excessEvents.map((result, index) => {
     const years = result.allocations.map((year) =>
       `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
@@ -33,6 +42,46 @@ function explain(line: Form8621Lines): string {
     : allocations;
 }
 
+/** A distinct line 16a statement for one printed Part V event. */
+export function explainForm8621ExcessEvent(
+  line: Form8621Lines,
+  eventIndex: number,
+): string {
+  explainForm8621ExcessStatement(line);
+  const result = line.excessEvents[eventIndex];
+  if (!result || result.amount_usd <= 0) {
+    throw new Error("Form 8621 Part V statement needs a positive source event");
+  }
+  const source = (line.item.excess_events ?? []).flatMap((event) => {
+    const results = calculateExcessEvents(event);
+    return results.map((_, index) => ({ event, index }));
+  })[eventIndex];
+  if (!source) throw new Error("Form 8621 Part V statement lacks source event");
+  const years = result.allocations.map((year) =>
+    `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
+      year.pfic_year ? "yes" : "no"
+    }; foreign tax credit ${year.foreign_tax_credit}; section 6621 interest ${year.interest_charge}`
+  ).join(". ");
+  let spot = "";
+  if (
+    source.event.kind === "distribution" &&
+    "currency_code" in source.event
+  ) {
+    const distribution = source.event.current_year_distributions[source.index];
+    spot =
+      ` Distribution-date spot rate: ${distribution.date}: ${distribution.spot_usd_per_unit} USD per ${source.event.currency_code} (${distribution.spot_rate_source}).`;
+  } else if (
+    source.event.kind === "disposition" &&
+    "net_proceeds_foreign" in source.event
+  ) {
+    spot =
+      ` Disposition-date spot rate: ${source.event.event_date}: ${source.event.spot_usd_per_unit} USD per ${source.event.currency_code} (${source.event.spot_rate_source}); ${source.event.net_proceeds_foreign} ${source.event.currency_code} net proceeds less ${source.event.adjusted_basis_usd} USD adjusted basis.`;
+  }
+  return `${result.kind} ${
+    eventIndex + 1
+  }, ${result.amount_usd} USD on ${result.event_date}. Holding period ${result.holding_period_start} through ${result.event_date}; first PFIC tax year ${result.first_pfic_tax_year}. Holding-period allocation: ${years}.${spot}`;
+}
+
 export const form8621ExcessStatement: MefFormDescriptor<
   "form8621_excess_statement",
   Input,
@@ -48,7 +97,7 @@ export const form8621ExcessStatement: MefFormDescriptor<
       .filter((line) => line.excessEvents.some((event) => event.amount_usd > 0))
       .map((line) =>
         elements("TaxationOfExcessDistriStmt", [
-          element("ExplanationTxt", explain(line)),
+          element("ExplanationTxt", explainForm8621ExcessStatement(line)),
         ])
       );
   },

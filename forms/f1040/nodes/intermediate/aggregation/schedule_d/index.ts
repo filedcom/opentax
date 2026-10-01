@@ -16,6 +16,7 @@ import { form8960 } from "../../forms/form8960/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { box11CodeSSourceSchema } from "../../../inputs/k1_partnership/box11_code_s.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -110,9 +111,14 @@ export const inputSchema = z.object({
   line_4_other_st: accumulable(z.number()).optional(),
   gain_form6252_st: z.number().nonnegative().optional(),
   // K-1 short-term capital gains/losses — Line 5
-  line_5_k1_st: z.number().optional(),
+  line_5_k1_st: accumulable(z.number()).optional(),
   // K-1 long-term capital gains/losses — Line 12
-  line_12_k1_lt: z.number().optional(),
+  line_12_k1_lt: accumulable(z.number()).optional(),
+  k1_partnership_box11_code_s_sources: z.array(box11CodeSSourceSchema)
+    .optional(),
+  k1_partnership_line5_source_total: z.number().int().optional(),
+  k1_partnership_line12_source_total: z.number().int().optional(),
+  trust_k1_code_d_loss: z.number().int().positive().optional(),
   // Form 8621 QEF net capital gain is long-term gain, not Schedule 1 income.
   line_11_qef_lt: z.number().nonnegative().optional(),
   // d_screen-style individual transactions (proceeds/cost/adjustment; gain_loss computed here)
@@ -150,8 +156,8 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     (input.line_12_cap_gain_dist ?? 0) !== 0 ||
     sumAmounts(input.line_11_form2439) !== 0 ||
     sumAmounts(input.line_4_other_st) !== 0 ||
-    (input.line_5_k1_st ?? 0) !== 0 ||
-    (input.line_12_k1_lt ?? 0) !== 0 ||
+    input.line_5_k1_st !== undefined ||
+    input.line_12_k1_lt !== undefined ||
     (input.line_11_qef_lt ?? 0) !== 0;
 
   return (
@@ -197,6 +203,10 @@ function hasOtherAmtBasisCapitalActivity(input: ScheduleDInput): boolean {
 // Form 1040 line 7a may report capital gain distributions directly when they
 // are the only capital activity. In that case Schedule D is not filed.
 function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
+  if (
+    input.line_5_k1_st !== undefined ||
+    input.line_12_k1_lt !== undefined
+  ) return false;
   const distributions = (input.line13_cap_gain_distrib ?? 0) +
     (input.line13_form8814 ?? 0) +
     (input.line_12_cap_gain_dist ?? 0);
@@ -214,8 +224,6 @@ function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
     input.line_14_carryover,
     sumAmounts(input.line_11_form2439),
     sumAmounts(input.line_4_other_st),
-    input.line_5_k1_st,
-    input.line_12_k1_lt,
     input.line_11_qef_lt,
     input.line19_unrecaptured_1250,
     input.collectibles_gain_form2439,
@@ -266,7 +274,7 @@ function computeDScreenStNet(input: ScheduleDInput): number {
     (input.line_1a_proceeds ?? 0) -
     (input.line_1a_cost ?? 0) +
     sumAmounts(input.line_4_other_st) +
-    (input.line_5_k1_st ?? 0) -
+    sumAmounts(input.line_5_k1_st) -
     (input.line_6_carryover ?? 0)
   );
 }
@@ -279,7 +287,7 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
     sumAmounts(input.line_11_form2439) +
     (input.line_11_qef_lt ?? 0) +
     (input.line_12_cap_gain_dist ?? 0) +
-    (input.line_12_k1_lt ?? 0) -
+    sumAmounts(input.line_12_k1_lt) -
     (input.line_14_carryover ?? 0)
   );
 }
@@ -335,6 +343,28 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.k1_partnership_box11_code_s_sources?.length) {
+      const hasContribution = (
+        line: number | number[] | undefined,
+        total: number | undefined,
+      ) =>
+        total === 0 && line === undefined ||
+        total !== undefined && normalizeArray(line).includes(total);
+      if (
+        !hasContribution(
+          input.line_5_k1_st,
+          input.k1_partnership_line5_source_total,
+        ) ||
+        !hasContribution(
+          input.line_12_k1_lt,
+          input.k1_partnership_line12_source_total,
+        )
+      ) {
+        throw new Error(
+          "Schedule D code S source totals must contribute to lines 5 and 12",
+        );
+      }
+    }
 
     if (
       (input.box2c_qsbs ?? 0) > 0 ||
@@ -428,6 +458,11 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     // Line 16: combined net capital gain or loss
     const line16 = line7 + line15;
+    if (input.trust_k1_code_d_loss !== undefined && line16 > 0) {
+      throw new Error(
+        "Final trust K-1 code D with net capital gain needs 28% and unrecaptured section 1250 worksheet reconciliation",
+      );
+    }
 
     // Line 17: are lines 15 and 16 both gains?
     const line17Yes = line15 > 0 && line16 > 0;
@@ -516,33 +551,37 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // qualify for direct reporting on lines 1a/8a without Form 8949
     // (Schedule D instructions, "Exception 1"). All other transactions remain
     // on the Form 8949 path and aggregate into lines 1b/2/3 and 8b/9/10.
-    const isDirect = (part: string, codes: string | undefined): boolean =>
-      (part === "A" || part === "D") && !(codes ?? "").length;
+    const isDirect = (
+      part: string,
+      codes: string | undefined,
+      adjustment: number | undefined,
+    ): boolean =>
+      (part === "A" || part === "D") && !(codes ?? "").length &&
+      adjustment === undefined;
 
-    const direct = { stP: 0, stC: 0, stG: 0, ltP: 0, ltC: 0, ltG: 0 };
+    const direct = { stP: 0, stC: 0, ltP: 0, ltC: 0 };
     for (const tx of dScreenTxs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
-      const gl = dScreenGainLoss(tx);
+      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+        continue;
+      }
       if (LONG_TERM_PARTS.has(tx.part)) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
-        direct.ltG += gl;
       } else {
         direct.stP += tx.proceeds;
         direct.stC += tx.cost_basis;
-        direct.stG += gl;
       }
     }
     for (const tx of f8949Txs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+        continue;
+      }
       if (tx.is_long_term) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
-        direct.ltG += tx.gain_loss;
       } else {
         direct.stP += tx.proceeds;
         direct.stC += tx.cost_basis;
-        direct.stG += tx.gain_loss;
       }
     }
 
@@ -554,6 +593,12 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       // engine, so it is always answered "No".
       print_qof_disposition: false,
     };
+    if (Array.isArray(input.line_5_k1_st)) {
+      printFields.line_5_k1_st = sumAmounts(input.line_5_k1_st);
+    }
+    if (Array.isArray(input.line_12_k1_lt)) {
+      printFields.line_12_k1_lt = sumAmounts(input.line_12_k1_lt);
+    }
     // Multiple source nodes can contribute to these Form 6252/4797 lines.
     // Replace the executor's accumulated array with the exact line total for
     // both the pending MeF document and the calculation above.
@@ -568,15 +613,23 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     if (line16 > 0) {
       printFields.print_line17_both_gains = line17Yes;
     }
-    if (direct.stP > 0 || direct.stC > 0) {
-      printFields.print_line1a_proceeds = direct.stP;
-      printFields.print_line1a_cost = direct.stC;
-      printFields.print_line1a_gain = direct.stG;
+    const directStProceeds = (input.line_1a_proceeds ?? 0) + direct.stP;
+    const directStCost = (input.line_1a_cost ?? 0) + direct.stC;
+    if (directStProceeds > 0 || directStCost > 0) {
+      printFields.line_1a_proceeds = directStProceeds;
+      printFields.line_1a_cost = directStCost;
+      printFields.print_line1a_proceeds = directStProceeds;
+      printFields.print_line1a_cost = directStCost;
+      printFields.print_line1a_gain = directStProceeds - directStCost;
     }
-    if (direct.ltP > 0 || direct.ltC > 0) {
-      printFields.print_line8a_proceeds = direct.ltP;
-      printFields.print_line8a_cost = direct.ltC;
-      printFields.print_line8a_gain = direct.ltG;
+    const directLtProceeds = (input.line_8a_proceeds ?? 0) + direct.ltP;
+    const directLtCost = (input.line_8a_cost ?? 0) + direct.ltC;
+    if (directLtProceeds > 0 || directLtCost > 0) {
+      printFields.line_8a_proceeds = directLtProceeds;
+      printFields.line_8a_cost = directLtCost;
+      printFields.print_line8a_proceeds = directLtProceeds;
+      printFields.print_line8a_cost = directLtCost;
+      printFields.print_line8a_gain = directLtProceeds - directLtCost;
     }
     if (
       line13F1099div > 0 || line13Form8814 > 0 ||

@@ -1,16 +1,20 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
+  assertMfsSstbOwner,
   assertPatron1099PATRSource,
   calculateOneSstb8995ALines,
   calculateScheduleCLossLines,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import {
+  assertNoFiledForm8995,
   assertScheduleCLossSources,
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
 // Official TY2025 Form 8995-A: one identified business occupies column A.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -67,7 +71,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ).padStart(2, "0")
     }[0]`,
   })),
-  ...([27, 32, 33, 34, 35, 36, 37, 39] as const).map(
+  ...([27, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
       domainKey: `line${line}`,
@@ -120,14 +124,15 @@ export function projectOneBusiness8995A(
     if (
       !companion.success ||
       JSON.stringify(companion.data) !== JSON.stringify(input) ||
-      allPending.form8995 !== undefined ||
       allPending.form8995a_schedule_a !== undefined ||
+      allPending.form8995a_schedule_b !== undefined ||
       allPending.form8995a_schedule_d !== undefined
     ) {
       throw new Error(
         "Form 8995-A PDF Schedule C needs matching parent and no other QBI companion",
       );
     }
+    assertNoFiledForm8995(allPending);
     assertScheduleCLossSources(input, allPending);
     const lines = calculateScheduleCLossLines(input);
     if (allPending.f1040?.line13_qbi_deduction !== lines.parent.line39) {
@@ -164,14 +169,12 @@ export function projectOneBusiness8995A(
         "Form 8995-A PDF needs matching Schedule A companion source",
       );
     }
-    if (
-      allPending.form8995 !== undefined ||
-      allPending.form8995a_schedule_d !== undefined
-    ) {
+    if (allPending.form8995a_schedule_d !== undefined) {
       throw new Error(
-        "Form 8995-A PDF Schedule A cannot accompany Form 8995 or Schedule D",
+        "Form 8995-A PDF Schedule A cannot accompany Schedule D",
       );
     }
+    assertNoFiledForm8995(allPending);
     const lines = calculateOneSstb8995ALines(input);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
       throw new Error(
@@ -186,9 +189,9 @@ export function projectOneBusiness8995A(
       line17: lines.line3,
       line18: lines.line10,
       line20: lines.line33,
-      line21: 197_300,
-      line22: lines.line33 - 197_300,
-      line23: 50_000,
+      line21: lines.threshold,
+      line22: lines.line33 - lines.threshold,
+      line23: lines.phaseInRange,
       line24: lines.phaseIn * 100,
       line27: lines.line16,
     };
@@ -197,9 +200,7 @@ export function projectOneBusiness8995A(
   if (allPending.form8995a_schedule_a !== undefined) {
     throw new Error("Form 8995-A PDF has Schedule A without an SSTB parent");
   }
-  if (allPending.form8995 !== undefined) {
-    throw new Error("Form 8995-A PDF cannot accompany Form 8995");
-  }
+  assertNoFiledForm8995(allPending);
   if (input.patron_of_specified_cooperative === true) {
     assertPatron1099PATRSource(input, allPending.f1099patr);
     const companion = inputSchema.strict().safeParse(
@@ -240,6 +241,35 @@ export const form8995aPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(raw);
+    if (
+      (input.patron_filing_details?.source_1099patr
+          .box6_section199ag_deduction ?? 0) > 0 &&
+      input.patron_filing_details?.source_1099patr.recipient_tin !==
+        filer?.primarySSN.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8995-A PDF cooperative box 6 recipient differs from the final filer",
+      );
+    }
+    if (input.filing_status === NodeFilingStatus.MFS) {
+      if (
+        !filer ||
+        filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately
+      ) {
+        throw new Error(
+          "Form 8995-A PDF MFS status differs from the final filer",
+        );
+      }
+      assertMfsSstbOwner(input, filer.primarySSN);
+    }
+    if (
+      input.filing_status === NodeFilingStatus.QSS &&
+      filer?.filingStatus !== HeaderFilingStatus.QualifyingSurvivingSpouse
+    ) {
+      throw new Error(
+        "Form 8995-A PDF surviving-spouse status differs from the final filer",
+      );
+    }
     if (
       input.aggregation_filing_details ||
       (input.aggregation_groups ?? []).length > 0

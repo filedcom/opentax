@@ -93,3 +93,9 @@ benefits producing line 4; line 4 below/equal/above bond proceeds; prior-year
 interest adjustment; missing source facts causing a diagnostic; native XSD
 serialization; Schedule B line 3 equality; and filled PDF line and
 beneficiary/institution checks. No such pass is recorded here.
+
+The PDF instance path now also checks the final filer's status and Schedule B
+line 2 interest and line 3 exclusion against its Form 8815 source and printed
+line 14, matching the native MeF gate. Positive and mismatch cases are authored
+but unrun. Return-wide MAGI and underlying bond/tuition document authentication
+remain open.

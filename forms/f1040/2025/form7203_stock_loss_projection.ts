@@ -3,6 +3,11 @@ import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { inputSchema as form7203InputSchema } from "../nodes/intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../nodes/intermediate/forms/form7203/stock-ledger.ts";
+import {
+  reconcileCashCapitalAndNewNote,
+  reconcileNewFormalNotes,
+  sumPrincipalRepayments,
+} from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 
@@ -14,10 +19,14 @@ export function projectReviewedStockLoss7203(
   filer: FilerIdentity | undefined,
 ) {
   if (!filer) {
-    throw new Error("Form 7203 stock-loss projection needs the identified filer");
+    throw new Error(
+      "Form 7203 stock-loss projection needs the identified filer",
+    );
   }
   if (!allPending.k1_s_corp) {
-    throw new Error("Form 7203 stock-loss projection needs a reviewed S-corporation K-1");
+    throw new Error(
+      "Form 7203 stock-loss projection needs a reviewed S-corporation K-1",
+    );
   }
   const k1Sources = k1SCorpInputSchema.parse(allPending.k1_s_corp).k1_s_corps;
   if (k1Sources.length !== 1) {
@@ -26,12 +35,31 @@ export function projectReviewedStockLoss7203(
     );
   }
   const source = k1Sources[0];
+  if (
+    source.form7203_debt_evidence?.kind ===
+      "prior_reduced_formal_note_repayment"
+  ) {
+    throw new Error(
+      "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before native or PDF export",
+    );
+  }
+  const note = source.form7203_debt_evidence
+    ? reconcileNewFormalNotes(
+      source.form7203_debt_evidence,
+      source,
+    ).note
+    : undefined;
   const ledger = reviewedStockLossLedgerSchema.parse(
     source.form7203_stock_loss_ledger,
   );
-  if (Object.keys(rawFields).some((key) =>
-    key !== "stock_basis_beginning" && key !== "ordinary_loss"
-  )) {
+  if (
+    Object.keys(rawFields).some((key) =>
+      key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
+      key !== "additional_contributions" &&
+      key !== "reviewed_stock_loss_ledger" &&
+      !(note && (key === "new_loans" || key === "reviewed_debt_evidence"))
+    )
+  ) {
     throw new Error(
       "Form 7203 stock-loss projection does not accept unreviewed basis fields",
     );
@@ -39,6 +67,43 @@ export function projectReviewedStockLoss7203(
   const fields = form7203InputSchema.parse(rawFields);
   const currentLoss = -(source.box1_ordinary_business ?? 0);
   const basis = ledger.beginning_stock_basis;
+  const contribution = ledger.cash_capital_contribution?.amount ?? 0;
+  if (note && contribution > 0) {
+    reconcileCashCapitalAndNewNote(ledger, note);
+    if (
+      currentLoss <= basis + contribution ||
+      JSON.stringify(fields.reviewed_stock_loss_ledger) !==
+        JSON.stringify(ledger)
+    ) {
+      throw new Error(
+        "Form 7203 combined capital-and-debt projection needs exact stock evidence and loss reaching the note",
+      );
+    }
+  } else if (fields.reviewed_stock_loss_ledger !== undefined) {
+    throw new Error(
+      "Form 7203 debt projection only retains a stock ledger for a cash capital contribution",
+    );
+  }
+  if (
+    note
+      ? ledger.no_shareholder_debt_or_repayments ||
+        ledger.beginning_stock_basis !== note.beginning_stock_basis ||
+        ledger.beginning_basis_workpaper_reference !==
+          note.beginning_stock_basis_workpaper_reference ||
+        ledger.shareholder_ssn !== note.shareholder_ssn ||
+        ledger.corporation_ein !== note.corporation_ein ||
+        fields.new_loans !== note.cash_advance_amount +
+            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        JSON.stringify(fields.reviewed_debt_evidence) !== JSON.stringify(note)
+      : !ledger.no_shareholder_debt_or_repayments ||
+        fields.new_loans !== undefined ||
+        fields.reviewed_debt_evidence !== undefined
+  ) {
+    throw new Error(
+      "Form 7203 formal-note and stock basis source must reconcile",
+    );
+  }
+  const availableBasis = basis + contribution;
   const normalizedName = (value: string) =>
     value.trim().toUpperCase().replace(/\s+/g, " ");
   const validBusinessName = /^([A-Za-z0-9#\-()&'] ?)*[A-Za-z0-9#\-()&']$/;
@@ -54,6 +119,7 @@ export function projectReviewedStockLoss7203(
     normalizedName(ledger.shareholder_name_as_on_k1) !==
       normalizedName(filer.fullName ?? filer.nameLine1) ||
     fields.stock_basis_beginning !== basis ||
+    (fields.additional_contributions ?? 0) !== contribution ||
     fields.ordinary_loss !== currentLoss ||
     [
       source.box2_rental_re,
@@ -79,7 +145,29 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  const allowed = Math.min(currentLoss, basis);
+  const allowedStock = Math.min(currentLoss, availableBasis);
+  const firstDebtBasis = note
+    ? note.cash_advance_amount -
+      sumPrincipalRepayments(note.principal_repayments)
+    : 0;
+  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ?? 0) -
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+  const allowedDebt = note
+    ? Math.min(
+      currentLoss - allowedStock,
+      firstDebtBasis + secondDebtBasis,
+    )
+    : 0;
+  const allowedDebt1 = secondDebtBasis > 0
+    ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
+    : allowedDebt;
+  if (!Number.isSafeInteger(allowedDebt1)) {
+    throw new Error(
+      "Form 7203 two-note loss does not allocate in exact whole dollars",
+    );
+  }
+  const allowedDebt2 = allowedDebt - allowedDebt1;
+  const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
@@ -96,5 +184,19 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  return { source, ledger, basis, currentLoss, allowed, carryover };
+  return {
+    source,
+    ledger,
+    basis,
+    contribution,
+    availableBasis,
+    note,
+    currentLoss,
+    allowedStock,
+    allowedDebt,
+    allowedDebt1,
+    allowedDebt2,
+    allowed,
+    carryover,
+  };
 }

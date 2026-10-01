@@ -29,6 +29,16 @@ Deno.test("form7203 — rejects negative additional_contributions", () => {
   assertThrows(() => compute({ additional_contributions: -100 }));
 });
 
+Deno.test("form7203 — a $500 cash contribution increases stock loss capacity", () => {
+  const result = compute({
+    stock_basis_beginning: 3_000,
+    additional_contributions: 500,
+    ordinary_loss: 4_000,
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.basis_disallowed_add_back, 500);
+  assertEquals(result.carryforwards?.suspended_scorp_loss_7203, 500);
+});
+
 Deno.test("form7203 — rejects negative ordinary_income", () => {
   assertThrows(() => compute({ ordinary_income: -500 }));
 });
@@ -105,25 +115,18 @@ Deno.test("form7203 — loss less than stock basis: fully allowed, no output", (
 
 // ─── 5. Loss exceeds stock basis but within debt basis ───────────────────────
 
-Deno.test("form7203 — loss exceeds stock, covered by debt: no disallowance", () => {
-  // stock_basis = 3_000, debt_basis = 5_000, loss = 7_000
-  // allowed_from_stock = 3_000, remaining = 4_000, allowed_from_debt = 4_000 → disallowed = 0
-  const result = compute({
-    stock_basis_beginning: 3_000,
-    debt_basis_beginning: 5_000,
-    ordinary_loss: 7_000,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("form7203 — loss exactly equal to combined stock + debt basis: no output", () => {
-  // stock = 4_000, debt = 2_000 → total basis = 6_000, loss = 6_000 → disallowed = 0
-  const result = compute({
-    stock_basis_beginning: 4_000,
-    debt_basis_beginning: 2_000,
-    ordinary_loss: 6_000,
-  });
-  assertEquals(result.outputs.length, 0);
+Deno.test("form7203 — debt cannot allow an ordinary loss without Part II source and filing review", () => {
+  for (const input of [
+    { stock_basis_beginning: 3_000, debt_basis_beginning: 5_000, ordinary_loss: 7_000 },
+    { stock_basis_beginning: 4_000, debt_basis_beginning: 2_000, ordinary_loss: 6_000 },
+    { stock_basis_beginning: 0, new_loans: 3_000, ordinary_loss: 4_000 },
+  ]) {
+    assertThrows(
+      () => compute(input),
+      Error,
+      "debt-supported loss needs identified formal-note source",
+    );
+  }
 });
 
 // ─── 6. Loss exceeds total basis — partial disallowance ──────────────────────
@@ -137,15 +140,12 @@ Deno.test("form7203 — loss exceeds stock only, no debt: routes basis_disallowe
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
-Deno.test("form7203 — loss exceeds combined stock and debt: disallows correct amount", () => {
-  // stock = 2_000, debt = 1_000, loss = 5_000
-  // allowed_from_stock = 2_000, remaining = 3_000, allowed_from_debt = 1_000, disallowed = 2_000
-  const result = compute({
-    stock_basis_beginning: 2_000,
-    debt_basis_beginning: 1_000,
-    ordinary_loss: 5_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
+Deno.test("form7203 — partial debt-supported loss cannot post a reduced Schedule 1 add-back", () => {
+  assertThrows(
+    () => compute({ stock_basis_beginning: 2_000, debt_basis_beginning: 1_000, ordinary_loss: 5_000 }),
+    Error,
+    "debt-supported loss needs identified formal-note source",
+  );
 });
 
 // ─── 7. Zero basis — full disallowance ───────────────────────────────────────
@@ -249,16 +249,12 @@ Deno.test("form7203 — contributions increase stock basis, saving loss from dis
 
 // ─── 13. New loans increase debt basis ───────────────────────────────────────
 
-Deno.test("form7203 — new loans increase debt basis available for losses", () => {
-  // stock = 0, debt_beginning = 0, new_loans = 3_000, loss = 4_000
-  // allowed_from_stock = 0, allowed_from_debt = 3_000, disallowed = 1_000
-  const result = compute({
-    stock_basis_beginning: 0,
-    debt_basis_beginning: 0,
-    new_loans: 3_000,
-    ordinary_loss: 4_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 1_000);
+Deno.test("form7203 — unsourced new loan cannot increase loss basis", () => {
+  assertThrows(
+    () => compute({ stock_basis_beginning: 0, new_loans: 3_000, ordinary_loss: 4_000 }),
+    Error,
+    "debt-supported loss needs identified formal-note source",
+  );
 });
 
 // ─── 14. Output routing ──────────────────────────────────────────────────────
@@ -296,15 +292,12 @@ Deno.test("form7203 — tax_exempt_income increases stock basis before loss limi
 
 // ─── Spec scenario: stock=$5k, debt=$3k, loss=$9k ────────────────────────────
 
-Deno.test("form7203 — spec: stock_basis=5000, debt_basis=3000, loss=9000 → deductible=8000, suspended=1000", () => {
-  // allowed_from_stock = min(9000, 5000) = 5000, remaining = 4000
-  // allowed_from_debt = min(4000, 3000) = 3000, disallowed = 1000
-  const result = compute({
-    stock_basis_beginning: 5_000,
-    debt_basis_beginning: 3_000,
-    ordinary_loss: 9_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 1_000);
+Deno.test("form7203 — positive debt basis still stops before mixed stock/debt loss allocation", () => {
+  assertThrows(
+    () => compute({ stock_basis_beginning: 5_000, debt_basis_beginning: 3_000, ordinary_loss: 9_000 }),
+    Error,
+    "debt-supported loss needs identified formal-note source",
+  );
 });
 
 // ─── 16. Smoke test ───────────────────────────────────────────────────────────

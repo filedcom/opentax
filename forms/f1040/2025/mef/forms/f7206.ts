@@ -2,6 +2,7 @@ import {
   calculateSingleScheduleCForm7206,
   type Form7206Lines,
   form7206LinesSchema,
+  reconcileSingleScheduleCGraphSource,
   type SingleScheduleCPlan,
   singleScheduleCPlanSchema,
 } from "../../../nodes/intermediate/forms/form7206/index.ts";
@@ -22,6 +23,10 @@ type Input = Partial<
     single_schedule_c_plan: SingleScheduleCPlan;
     recipient_name: string;
     recipient_ssn: string;
+    schedule_c_source: unknown;
+    schedule_se_source: unknown;
+    schedule1_line16_source: unknown;
+    marketplace_ptc_premium_overlap: unknown;
   }
 >;
 
@@ -49,6 +54,10 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     "single_schedule_c_plan",
     "recipient_name",
     "recipient_ssn",
+    "schedule_c_source",
+    "schedule_se_source",
+    "schedule1_line16_source",
+    "marketplace_ptc_premium_overlap",
     ...FIELD_MAP.map(([key]) => key),
   ]);
   const unsupported = Object.keys(fields).filter((key) => !allowed.has(key));
@@ -113,11 +122,14 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     line8d_foreign_earned_income_exclusion: z.number().optional(),
   }).passthrough().parse(pending?.schedule1);
   const scheduleSE = scheduleSEInputSchema.parse(pending?.schedule_se);
-  const computedSELine13 = schedule_se.compute(
-    { taxYear: 2025, formType: "f1040" },
-    scheduleSE,
-  ).outputs.find((row) => row.nodeType === "schedule1")?.fields
-    .line15_se_deduction ?? 0;
+  const computedSELine13 = z.number().parse(
+    schedule_se.compute(
+      { taxYear: 2025, formType: "f1040" },
+      scheduleSE,
+    ).outputs.find((row) => row.nodeType === "schedule1")?.fields
+      .line15_se_deduction ?? 0,
+  );
+  reconcileSingleScheduleCGraphSource(fields, source, computedSELine13);
   const form1040 = z.object({
     line10_adjustments: z.number(),
   }).passthrough().parse(pending?.f1040);

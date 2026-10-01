@@ -57,11 +57,19 @@ Deno.test("pass-through-only disabled-access credit reaches Form 3800 without se
         subject_to_passive_activity_limit: false,
       }],
     },
+    k1_s_corp: [{
+      corporation_name: "Access Corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
+      box13_code_k_disabled_access_credit: 1_250,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
   }, { taxYear: 2025, formType: "f1040" });
 
   assertEquals(result.pending.f3800?.f8826_credit_entries, [{
     source_type: "s_corporation",
     source_ein: "987654321",
+    source_document_reference: "2025 disabled-access K-1",
     credit_amount: 1_250,
     subject_to_passive_activity_limit: false,
   }]);

@@ -16,6 +16,7 @@ import {
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,
 } from "./investment_1245.ts";
+import { box11Line10SourceSchema } from "../../../inputs/k1_partnership/box11_line10.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,9 @@ import {
 export const k1Section1231RowSchema = z.object({
   source: z.enum(["partnership", "s_corp"]),
   entity_name: z.string().min(1),
+  source_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  recipient_tin: z.string().regex(/^\d{9}$/),
   gain_loss: z.number(),
 }).strict();
 export type K1Section1231Row = z.infer<typeof k1Section1231RowSchema>;
@@ -60,6 +64,17 @@ export const passivePropertySaleSchema = z.object({
     acquired.getUTCDate(),
   ));
   const sold = new Date(`${sale.sold_on}T00:00:00Z`);
+  if (
+    sale.part === "I" && sale.acquired_on >= "2025-01-01" &&
+    sale.sold_on <= "2025-12-31"
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 4797 Part I section 1231 sale acquired and sold in 2025 cannot meet the more-than-one-year holding period",
+    });
+    return;
+  }
   if (
     sale.sold_on < "2025-01-01" || sale.sold_on > "2025-12-31" ||
     sold <= acquired ||
@@ -129,6 +144,7 @@ export const inputSchema = z.object({
   gain_form8824: z.number().nonnegative().optional(),
   // Form 4797 Part I line 2, one source row per Schedule K-1.
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
+  k1_box11_line10_rows: z.array(box11Line10SourceSchema).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
   passive_disposed_activity_ids: z.array(z.string().trim().min(1).max(64))
@@ -271,6 +287,43 @@ function totalSection1231(input: Form4797Input): number {
   ).reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
 }
 
+/** Pub. 596 Worksheet 1 line 6: Form 4797 line 9 when §1231 recapture applies. */
+export function form4797EicCapitalExclusion(
+  rawInput: unknown,
+  activeRentalAllowedPartI?: number,
+): number {
+  const input = inputSchema.parse(rawInput);
+  if (input.investment_1245_dispositions !== undefined) return 0;
+  const activeRental = activeRentalMixedSale(input);
+  if (activeRental && activeRentalAllowedPartI === undefined) {
+    throw new Error("EIC Form 4797 exclusion needs finalized rental PAL");
+  }
+  const allocation = activeRental ? undefined : mixedPassiveAllocation(input);
+  const gross = totalSection1231(input) -
+    (allocation?.allowedPartI ?? 0) - (activeRentalAllowedPartI ?? 0);
+  return netSection1231GainForScheduleD(
+    gross,
+    input.nonrecaptured_1231_loss ?? 0,
+  );
+}
+
+/** Pub. 596 Worksheet 1 line 11/12: ordinary passive Part II sale gain,
+ * net of the prior PAL applied to that Form 4797 line. */
+export function form4797EicPassiveOrdinary(
+  rawInput: unknown,
+  activeRentalAllowedPartII?: number,
+): number {
+  const input = inputSchema.parse(rawInput);
+  const gross = (input.passive_property_sales ?? [])
+    .filter((sale) => sale.part === "II")
+    .reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
+  const allocation = activeRentalMixedSale(input)
+    ? undefined
+    : mixedPassiveAllocation(input);
+  return gross - (allocation?.allowedPartII ?? 0) -
+    (activeRentalAllowedPartII ?? 0);
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Returns true if the input contains any computable sale data.
@@ -279,6 +332,7 @@ function hasSaleData(input: Form4797Input): boolean {
     totalSection1231(input) !== 0 ||
     (input.passive_property_sales?.length ?? 0) > 0 ||
     (input.k1_1231_rows?.length ?? 0) > 0 ||
+    (input.k1_box11_line10_rows?.length ?? 0) > 0 ||
     (input.ordinary_gain !== undefined && input.ordinary_gain !== 0) ||
     (input.ordinary_gain_form4684 !== undefined &&
       input.ordinary_gain_form4684 !== 0) ||
@@ -460,6 +514,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     if (
       (input.passive_property_sales ?? []).some((sale) => sale.part === "II") &&
       (input.ordinary_gain !== undefined ||
+        (input.k1_box11_line10_rows?.length ?? 0) > 0 ||
         input.ordinary_gain_form4684 !== undefined ||
         input.recapture_form6252 !== undefined)
     ) {
@@ -493,11 +548,16 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       (allocation?.allowedPartI ?? 0);
     const priorLoss = input.nonrecaptured_1231_loss ?? 0;
     const partIIOrdinaryGain = (input.ordinary_gain ?? 0) +
+      (input.k1_box11_line10_rows ?? []).reduce(
+        (sum, row) => sum + row.gain_loss,
+        0,
+      ) +
       (input.ordinary_gain_form4684 ?? 0) +
       (input.recapture_form6252 ?? 0) +
       (input.passive_property_sales ?? []).filter((sale) => sale.part === "II")
         .reduce((sum, sale) => sum + passiveSaleGain(sale), 0) -
       (allocation?.allowedPartII ?? 0);
+    const eicPassiveOrdinary = form4797EicPassiveOrdinary(input);
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
@@ -512,15 +572,23 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       }));
       outputs.push(output(agi_aggregator, {
         pal_pending_active_4797: true,
+        form4797_1231_capital_gain: netSection1231GainForScheduleD(
+          grossGain,
+          priorLoss,
+        ),
         pal_current_4797_gain: saleGains.reduce(
           (sum, sale) => sum + sale.gain,
           0,
         ),
         line4_other_gains: partIIOrdinaryGain,
+        eic_passive_4797_ordinary: eicPassiveOrdinary,
       }));
       return { outputs };
     }
-    if (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1) {
+    if (
+      saleGains.length > 0 &&
+      (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1)
+    ) {
       outputs.push(output(form8582, {
         has_current_4797_transaction: true,
         ...(saleGains.length > 0 ? { current_4797_sale_gains: saleGains } : {}),
@@ -543,10 +611,23 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
           : {}),
       }));
     }
+    if (eicPassiveOrdinary !== 0) {
+      outputs.push(output(agi_aggregator, {
+        eic_passive_4797_ordinary: eicPassiveOrdinary,
+      }));
+    }
 
     // Schedule D: §1231 net gain → LT capital gain (line 11)
     const sdOut = scheduleDOutput(grossGain, priorLoss);
-    if (sdOut !== null) outputs.push(sdOut);
+    if (sdOut !== null) {
+      outputs.push(sdOut);
+      outputs.push(output(agi_aggregator, {
+        form4797_1231_capital_gain: netSection1231GainForScheduleD(
+          grossGain,
+          priorLoss,
+        ),
+      }));
+    }
 
     // Schedule 1 / AGI: §1231 net loss (ordinary) + recaptured gain + Part II
     const ordinary = ordinaryAmount(grossGain, priorLoss, partIIOrdinaryGain);

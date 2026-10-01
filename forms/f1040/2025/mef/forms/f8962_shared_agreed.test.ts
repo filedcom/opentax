@@ -159,7 +159,7 @@ Deno.test("shared-policy filing rejects allocation and covered-person drift", ()
         },
       }),
     Error,
-    "both covered taxpayers",
+    "covered family member",
   );
 });
 

@@ -303,3 +303,55 @@ Deno.test("PDF projection uses computed lines and beneficiary fields", () => {
   assertEquals(projected?.line14, 2_000);
   assertEquals(form8815Pdf.pageIndices?.(fields), [0]);
 });
+
+Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as MeF", () => {
+  const result = lines();
+  const projected = form8815Pdf.projectFields?.(
+    { ...source, ...result.form },
+    {},
+  );
+  const filer = {
+    primarySSN: "123456789",
+    nameLine1: "ALEX EXAMPLE",
+    nameControl: "EXAM",
+    address: {
+      line1: "1 Main St",
+      city: "Boston",
+      state: "MA",
+      zip: "02108",
+    },
+    filingStatus: MefFilingStatus.Single,
+  };
+  const pending = {
+    schedule_b: {
+      ee_bond_exclusion: result.form?.line14,
+      print_line2_total: source.line9_worksheet.schedule_b_line2_interest,
+    },
+  };
+  assertEquals(
+    form8815Pdf.instances?.(projected ?? {}, filer, pending)?.length,
+    1,
+  );
+  assertThrows(
+    () => form8815Pdf.instances?.(projected ?? {}, filer),
+    Error,
+    "final filer and Schedule B",
+  );
+  assertThrows(
+    () =>
+      form8815Pdf.instances?.(projected ?? {}, {
+        ...filer,
+        filingStatus: MefFilingStatus.MarriedFilingJointly,
+      }, pending),
+    Error,
+    "differs from the final return",
+  );
+  assertThrows(
+    () =>
+      form8815Pdf.instances?.(projected ?? {}, filer, {
+        schedule_b: { ...pending.schedule_b, ee_bond_exclusion: 1 },
+      }),
+    Error,
+    "differs from the final return",
+  );
+});

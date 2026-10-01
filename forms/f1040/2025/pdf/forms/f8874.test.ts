@@ -1,4 +1,6 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form8874Pdf } from "./f8874.ts";
 
 const source = {
@@ -36,7 +38,7 @@ Deno.test("Form 8874 PDF projects the six-column investment row and direct Form 
   });
   assertEquals(
     fields.row_1_cde,
-    "Community Development Entity\n10 Main Street\nWilmington, DE 19801",
+    "Community Development Entity\n10 Main Street, Wilmington, DE 19801",
   );
   assertEquals(fields.row_1_ein, "12-3456789");
   assertEquals(fields.row_1_date, "04/15/2023");
@@ -163,7 +165,7 @@ Deno.test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () =>
   );
 });
 
-Deno.test("Form 8874 PDF rejects overflow, cents and a missing final credit join", () => {
+Deno.test("Form 8874 PDF prints the IRS last-row attachment total for seven investments", () => {
   const overflow = {
     investments: Array.from({ length: 7 }, (_, index) => ({
       ...source.investments[0],
@@ -171,15 +173,119 @@ Deno.test("Form 8874 PDF rejects overflow, cents and a missing final credit join
       designation_notice_reference: `QEI notice ${index}`,
     })),
   };
-  assertThrows(
-    () =>
-      form8874Pdf.projectFields!(overflow, {
-        f8874: overflow,
-        f3800: directClaim,
-      }),
-    Error,
-    "six investment rows",
+  const fields = form8874Pdf.projectFields!(overflow, {
+    f8874: overflow,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 350_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  assertEquals(fields.row_5_credit, 50_000);
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 100_000);
+  assertEquals(fields.row_6_investment, undefined);
+  assertEquals(fields.line3, 350_000);
+  assertEquals((fields.print_overflow_rows as unknown[]).length, 2);
+});
+
+Deno.test("Form 8874 PDF attaches long CDE identity instead of clipping its form row", async () => {
+  const long = {
+    investments: [{
+      ...source.investments[0],
+      cde_name:
+        "Greater Wilmington Community Development And Neighborhood Equity Fund",
+      cde_address: {
+        ...source.investments[0].cde_address,
+        line1: "12345 Community Boulevard Ste 5",
+      },
+    }],
+  };
+  const fields = form8874Pdf.projectFields!(long, {
+    f8874: long,
+    f3800: directClaim,
+  });
+  assertEquals(fields.row_1_cde, undefined);
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 50_000);
+  assertEquals((fields.print_overflow_rows as unknown[]).length, 1);
+  const document = await PDFDocument.create();
+  await form8874Pdf.appendSupplementalPages!(
+    document,
+    fields,
+    pdfReviewFixtures[0].filer,
   );
+  assertEquals(document.getPageCount(), 1);
+});
+
+Deno.test("Form 8874 attachment keeps long and excess investments exactly once", () => {
+  const investments = Array.from({ length: 7 }, (_, index) => ({
+    ...source.investments[0],
+    cde_name: index === 0
+      ? "Greater Wilmington Community Development And Neighborhood Equity Fund"
+      : `Community Entity ${index + 1}`,
+    cde_ein: String(123456780 + index),
+    designation_notice_reference: `QEI notice ${index + 1}`,
+  }));
+  const filing = { investments };
+  const fields = form8874Pdf.projectFields!(filing, {
+    f8874: filing,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 350_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  assertEquals(
+    fields.row_1_cde,
+    "Community Entity 2\n10 Main Street, Wilmington, DE 19801",
+  );
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 100_000);
+  assertEquals(
+    (fields.print_overflow_rows as Array<{ cdeName: string }>).map(
+      (row) => row.cdeName,
+    ),
+    [investments[0].cde_name, investments[6].cde_name],
+  );
+});
+
+Deno.test("Form 8874 overflow statement spans pages and rejects a changed last-row total", async () => {
+  const overflow = {
+    investments: Array.from({ length: 24 }, (_, index) => ({
+      ...source.investments[0],
+      cde_ein: String(123456780 + index),
+      designation_notice_reference: `QEI notice ${index}`,
+    })),
+  };
+  const fields = form8874Pdf.projectFields!(overflow, {
+    f8874: overflow,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 1_200_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  const filer = pdfReviewFixtures[0].filer;
+  const document = await PDFDocument.create();
+  await form8874Pdf.appendSupplementalPages!(document, fields, filer);
+  assertEquals(document.getPageCount(), 2);
+  await assertRejects(
+    async () =>
+      await form8874Pdf.appendSupplementalPages!(
+        await PDFDocument.create(),
+        { ...fields, row_6_credit: 1 },
+        filer,
+      ),
+    Error,
+    "does not reconcile to line 1",
+  );
+});
+
+Deno.test("Form 8874 PDF rejects cents and a missing final credit join", () => {
   const cents = {
     investments: [{
       ...source.investments[0],

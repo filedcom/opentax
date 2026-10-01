@@ -1,5 +1,12 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
+import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import {
+  assertForm8949TransactionMath,
+  transactionSchema,
+} from "../../../nodes/intermediate/forms/form8949/index.ts";
 
 export interface Fields {
   line_1a_proceeds?: number | null;
@@ -69,7 +76,91 @@ function buildBasisRptNoAdjGroup(
   return elements(groupTag, children);
 }
 
-function buildIRS1040ScheduleD(fields: Input): string {
+const TRANSACTION_GROUPS = [
+  { parts: ["A", "G"], tag: "TotalSTCGL1099ShowsBasisGrp" },
+  { parts: ["B", "H"], tag: "TotalSTCGL1099NotShowBasisGrp" },
+  { parts: ["C", "I"], tag: "TotalSTCGL1099NotReceivedGrp" },
+  { parts: ["D", "J"], tag: "TotalLTCGL1099ShowsBasisGrp" },
+  { parts: ["E", "K"], tag: "TotalLTCGL1099NotShowBasisGrp" },
+  { parts: ["F", "L"], tag: "TotalLTCGL1099NotReceivedGrp" },
+] as const;
+
+type PreparedSale = ReturnType<typeof transactionSchema.parse>;
+
+function isDirectSale(sale: PreparedSale): boolean {
+  return (sale.part === "A" || sale.part === "D") &&
+    !sale.adjustment_codes && sale.adjustment_amount === undefined;
+}
+
+function saleKey(sale: PreparedSale): string {
+  return JSON.stringify([
+    sale.part,
+    sale.description,
+    sale.source_transaction_id ?? null,
+    sale.date_acquired,
+    sale.date_sold,
+    sale.proceeds,
+    sale.cost_basis,
+    sale.adjustment_codes ?? null,
+    sale.adjustment_amount ?? null,
+    sale.gain_loss,
+    sale.is_long_term,
+    sale.from_form4797_investment_1245 ?? false,
+    sale.form4797_property_id ?? null,
+  ]);
+}
+
+export function assertScheduleDSalesMatchPrepared(
+  raw: unknown,
+  rawPrepared: readonly unknown[],
+): PreparedSale[] {
+  const preparedSales = rawPrepared.map((row) => transactionSchema.parse(row));
+  for (const sale of preparedSales) {
+    assertForm8949TransactionMath(sale);
+    if (isDirectSale(sale)) {
+      throw new Error("Schedule D direct sale must not also file on Form 8949");
+    }
+  }
+  const calculatedSales =
+    (raw === undefined ? [] : Array.isArray(raw) ? raw : [raw])
+      .map((row) => transactionSchema.parse(row));
+  for (const sale of calculatedSales) assertForm8949TransactionMath(sale);
+  const expected = calculatedSales.filter((sale) => !isDirectSale(sale))
+    .map(saleKey).sort();
+  const actual = preparedSales.map(saleKey).sort();
+  if (JSON.stringify(expected) !== JSON.stringify(actual)) {
+    throw new Error(
+      "Schedule D prepared Form 8949 rows differ from calculated sales",
+    );
+  }
+  return preparedSales;
+}
+
+function buildTransactionGroup(
+  group: (typeof TRANSACTION_GROUPS)[number],
+  rows: readonly PreparedSale[],
+): string {
+  const selected = rows.filter((row) =>
+    group.parts.some((part) => part === row.part)
+  );
+  if (selected.length === 0) return "";
+  const sum = (
+    key: "proceeds" | "cost_basis" | "adjustment_amount" | "gain_loss",
+  ) => selected.reduce((total, row) => total + (row[key] ?? 0), 0);
+  return elements(group.tag, [
+    element("TotalProceedsSalesPriceAmt", sum("proceeds")),
+    element("TotalCostOrOtherBasisAmt", sum("cost_basis")),
+    selected.some((row) => row.adjustment_amount !== undefined)
+      ? element("TotAdjustmentsToGainOrLossAmt", sum("adjustment_amount"))
+      : "",
+    element("TotalGainOrLossAmt", sum("gain_loss")),
+  ]);
+}
+
+function buildIRS1040ScheduleD(
+  fields: Input,
+  preparedSales: readonly PreparedSale[],
+): string {
   const f = fields as Fields;
   // The intermediate node reports a distribution-only return directly on
   // Form 1040 line 7a. It emits print_line16_combined only when Schedule D is
@@ -81,19 +172,17 @@ function buildIRS1040ScheduleD(fields: Input): string {
   ) return "";
   const children: string[] = [];
 
-  // Nested groups first (XSD order: line 1a before line 8a)
+  // Part I: direct line 1a, Form 8949 lines 1b/2/3, then scalar lines 4–6.
   children.push(
     buildBasisRptNoAdjGroup(
-      "TotalSTCGL1099BBssRptNoAdjGrp",
+      "TotalSTCGL1099BssRptNoAdjGrp",
       f.line_1a_proceeds,
       f.line_1a_cost,
     ),
   );
   children.push(
-    buildBasisRptNoAdjGroup(
-      "TotalLTCGL1099BBssRptNoAdjGrp",
-      f.line_8a_proceeds,
-      f.line_8a_cost,
+    ...TRANSACTION_GROUPS.slice(0, 3).map((group) =>
+      buildTransactionGroup(group, preparedSales)
     ),
   );
 
@@ -108,9 +197,27 @@ function buildIRS1040ScheduleD(fields: Input): string {
       mappedAmounts.set(tag, (mappedAmounts.get(tag) ?? 0) + amount);
     }
   }
-  for (const [tag, value] of mappedAmounts) {
-    children.push(element(tag, value));
-  }
+  const mapped = (tag: string) =>
+    mappedAmounts.has(tag) ? element(tag, mappedAmounts.get(tag)!) : "";
+  children.push(mapped("STGainOrLossFromFormsAmt"));
+  children.push(mapped("NetSTGainOrLossFromSchK1Amt"));
+  children.push(mapped("STCapitalLossCarryoverAmt"));
+
+  // Part II: direct line 8a, Form 8949 lines 8b/9/10, then scalar lines.
+  children.push(
+    buildBasisRptNoAdjGroup(
+      "TotalLTCGL1099BssRptNoAdjGrp",
+      f.line_8a_proceeds,
+      f.line_8a_cost,
+    ),
+  );
+  children.push(
+    ...TRANSACTION_GROUPS.slice(3).map((group) =>
+      buildTransactionGroup(group, preparedSales)
+    ),
+  );
+  children.push(mapped("LTGainOrLossFromFormsAmt"));
+  children.push(mapped("NetLTGainOrLossFromSchK1Amt"));
 
   // Aggregated capital gain distributions (line 13 from two possible sources)
   const capGainValues = AGGREGATED_CAP_GAIN_DIST
@@ -120,6 +227,8 @@ function buildIRS1040ScheduleD(fields: Input): string {
     const sum = capGainValues.reduce((a, b) => a + b, 0);
     children.push(element("CapitalGainDistributionsAmt", sum));
   }
+  children.push(mapped("LTCapitalLossCarryoverAmt"));
+  children.push(mapped("UnrcptrSect1250GainWrkshtAmt"));
 
   return elements("IRS1040ScheduleD", children);
 }
@@ -148,6 +257,98 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
   build(fields, context) {
+    const trustSource = context?.pending?.k1_trust;
+    if (
+      trustSource === undefined &&
+      typeof fields.trust_k1_code_d_loss === "number"
+    ) {
+      throw new Error(
+        "Schedule D code D loss needs its final trust K-1 source",
+      );
+    }
+    if (trustSource !== undefined) {
+      const trusts = trustK1InputSchema.parse(trustSource).k1_trusts;
+      const finalLossItems = trusts.filter((item) =>
+        item.box11_code_c_short_term_capital_loss_carryover !== undefined ||
+        item.box11_code_d_long_term_capital_loss_carryover !== undefined
+      );
+      if (finalLossItems.length > 0) {
+        const ownerSsns = [
+          context?.filer?.primarySSN,
+          context?.filer?.spouse?.ssn,
+        ].filter((ssn): ssn is string => ssn !== undefined)
+          .map((ssn) => ssn.replaceAll("-", ""));
+        const keys = finalLossItems.map((item) =>
+          `${item.estate_trust_ein}:${item.source_document_reference}`
+        );
+        if (
+          new Set(keys).size !== keys.length ||
+          finalLossItems.some((item) =>
+            !ownerSsns.includes(item.beneficiary_ssn!)
+          )
+        ) {
+          throw new Error(
+            "Schedule D needs distinct final trust K-1 capital loss sources owned by this return",
+          );
+        }
+        const partnerships = context?.pending?.k1_partnership === undefined
+          ? []
+          : partnershipK1InputSchema.parse(context.pending.k1_partnership)
+            .k1_partnerships;
+        const sCorps = context?.pending?.k1_s_corp === undefined
+          ? []
+          : sCorpK1InputSchema.parse(context.pending.k1_s_corp).k1_s_corps;
+        const expectedSt = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box3_net_st_cap_gain ?? 0) -
+            (item.box11_code_c_short_term_capital_loss_carryover ?? 0),
+          0,
+        ) + partnerships.reduce(
+          (sum, item) => sum + (item.box8_net_st_cap_gain ?? 0),
+          0,
+        ) + sCorps.reduce(
+          (sum, item) => sum + (item.box7_net_st_cap_gain ?? 0),
+          0,
+        );
+        if (
+          finalLossItems.some((item) =>
+            item.box11_code_c_short_term_capital_loss_carryover !== undefined
+          ) && fields.line_5_k1_st !== expectedSt
+        ) {
+          throw new Error(
+            "Schedule D line 5 must reconcile to issued K-1 capital amounts",
+          );
+        }
+        const expectedLt = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box4a_net_lt_cap_gain ?? 0) -
+            (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
+          0,
+        ) + partnerships.reduce(
+          (sum, item) => sum + (item.box9a_net_lt_cap_gain ?? 0),
+          0,
+        ) + sCorps.reduce(
+          (sum, item) => sum + (item.box8a_net_lt_cap_gain ?? 0),
+          0,
+        );
+        const codeDLoss = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
+          0,
+        );
+        if (
+          codeDLoss > 0 &&
+          (fields.line_12_k1_lt !== expectedLt ||
+            fields.trust_k1_code_d_loss !== codeDLoss ||
+            (typeof fields.print_line16_combined === "number" &&
+              fields.print_line16_combined > 0))
+        ) {
+          throw new Error(
+            "Schedule D line 12 needs reconciled final trust K-1 code D loss without unhandled special-rate gain",
+          );
+        }
+      }
+    }
     if (
       (typeof fields.box2c_qsbs === "number" && fields.box2c_qsbs > 0) ||
       hasUnsupportedQsbsTransaction(fields)
@@ -168,6 +369,14 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
       );
     }
     if (fields.active_4797_final_no_schedule_d === true) return "";
-    return buildIRS1040ScheduleD(fields);
+    const rawSales = context?.pending?.form8949;
+    if (rawSales !== undefined && !Array.isArray(rawSales)) {
+      throw new Error("Schedule D needs prepared Form 8949 transaction rows");
+    }
+    const preparedSales = assertScheduleDSalesMatchPrepared(
+      fields.transaction,
+      rawSales ?? [],
+    );
+    return buildIRS1040ScheduleD(fields, preparedSales);
   },
 };

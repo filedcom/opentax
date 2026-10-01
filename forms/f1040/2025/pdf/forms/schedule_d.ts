@@ -22,6 +22,27 @@ import { form8814ParentPrintAmounts } from "./f8814.ts";
 //
 // print_* keys are self-emitted by the schedule_d node.
 
+const transactionRows = [
+  { line: "1b", parts: ["A", "G"], table: "PartI", row: "Row1b", first: 7 },
+  { line: "2", parts: ["B", "H"], table: "PartI", row: "Row2", first: 11 },
+  { line: "3", parts: ["C", "I"], table: "PartI", row: "Row3", first: 15 },
+  { line: "8b", parts: ["D", "J"], table: "PartII", row: "Row8b", first: 27 },
+  { line: "9", parts: ["E", "K"], table: "PartII", row: "Row9", first: 31 },
+  { line: "10", parts: ["F", "L"], table: "PartII", row: "Row10", first: 35 },
+] as const;
+const transactionFields: PdfFieldEntry[] = transactionRows.flatMap((row) =>
+  (["proceeds", "cost", "adjustment", "gain"] as const).map(
+    (column, index) => ({
+      kind: "text" as const,
+      domainKey: `print_line${row.line}_${column}`,
+      pdfField:
+        `topmostSubform[0].Page1[0].Table_${row.table}[0].${row.row}[0].f1_${
+          row.first + index
+        }[0]`,
+    }),
+  )
+);
+
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── QOF disposition question (top of page 1) ─────────────────────────────────
   {
@@ -53,6 +74,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_line1a_gain",
     pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_6[0]",
   },
+  ...transactionFields.filter((field) =>
+    field.domainKey.startsWith("print_line1b_") ||
+    field.domainKey.startsWith("print_line2_") ||
+    field.domainKey.startsWith("print_line3_")
+  ),
   {
     kind: "text",
     domainKey: "line_4_other_st",
@@ -90,6 +116,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_line8a_gain",
     pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_26[0]",
   },
+  ...transactionFields.filter((field) =>
+    field.domainKey.startsWith("print_line8b_") ||
+    field.domainKey.startsWith("print_line9_") ||
+    field.domainKey.startsWith("print_line10_")
+  ),
   {
     kind: "text",
     domainKey: "line_11_form2439",
@@ -170,7 +201,9 @@ export const scheduleDPdf: PdfFormDescriptor = {
     const rows = [
       ...(Array.isArray(fields.transaction)
         ? fields.transaction
-        : fields.transaction ? [fields.transaction] : []),
+        : fields.transaction
+        ? [fields.transaction]
+        : []),
       ...(Array.isArray(fields.transactions) ? fields.transactions : []),
     ];
     const hasQsbsRow = rows.some((row) =>
@@ -190,8 +223,46 @@ export const scheduleDPdf: PdfFormDescriptor = {
       );
     }
     const child = form8814ParentPrintAmounts(allPending);
+    const form8949Rows = allPending.form8949?.transaction;
+    const saleRows = (Array.isArray(form8949Rows) ? form8949Rows : [])
+      .filter((row): row is Record<string, unknown> =>
+        typeof row === "object" && row !== null
+      );
+    const saleTotals: Record<string, number> = {};
+    for (const group of transactionRows) {
+      const selected = saleRows.filter((row) =>
+        group.parts.some((part) => part === row.part) &&
+        // Unadjusted broker-basis rows already print on lines 1a/8a.
+        !((row.part === "A" || row.part === "D") &&
+          !row.adjustment_codes && row.adjustment_amount === undefined)
+      );
+      if (selected.length === 0) continue;
+      for (
+        const [column, key] of [
+          ["proceeds", "proceeds"],
+          ["cost", "cost_basis"],
+          ["adjustment", "adjustment_amount"],
+          ["gain", "gain_loss"],
+        ] as const
+      ) {
+        saleTotals[`print_line${group.line}_${column}`] = selected.reduce(
+          (total, row) => {
+            const value = row[key];
+            if (value === undefined && key === "adjustment_amount") {
+              return total;
+            }
+            if (typeof value !== "number") {
+              throw new Error(`Schedule D PDF needs numeric Form 8949 ${key}`);
+            }
+            return total + value;
+          },
+          0,
+        );
+      }
+    }
     return {
       ...fields,
+      ...saleTotals,
       print_form8814_line13_note: child.capitalGain > 0 &&
           typeof fields.print_line13_cap_gain_distrib === "number"
         ? `Form 8814 $${child.capitalGain}`

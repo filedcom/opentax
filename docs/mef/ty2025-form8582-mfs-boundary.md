@@ -23,7 +23,30 @@ the stored ledger read recomputes against the original source. Focused ledger
 cases are written but unrun. This covers one identified Schedule E active
 rental with no prior PAL or sale.
 
+The sourced, lived-apart MFS rental path now also handles odd-dollar modified
+AGI in the phaseout. The 50% calculation may end in 50 cents; the shared loss
+limit and native Part II line 8 round that final amount to a whole dollar under
+the [2025 Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi).
+For $20,000 of current rental loss and $60,003 MAGI, Part II lines 5–9 are
+$75,000, $60,003, $14,997, $7,499, and $7,499, leaving $12,501 suspended.
+The Form 8582 PDF descriptor projects those same native lines and Parts VI–VIII
+allocations. Focused source/calculation, MeF, and PDF projection cases are
+written but unrun.
+
+The positive Part II MFS branch now requires twelve ordered monthly residence
+records with separate taxpayer and spouse addresses, a reference for each
+residence, and confirmation that no residence was shared on any day of the
+month. General intake passes that record to Form 8582; the calculation rejects
+missing months or matching addresses, and native/PDF projection requires the
+same record in the filed general source. A $20,000 active-rental loss at $60,000
+MAGI has an authored full-return fixture for the $7,500 allowance, Schedule 1,
+Form 1040, native XML, and PDF projection. A changed residence and an omitted
+month have authored rejection fixtures. These fixtures are unrun. The
+[2025 instructions](https://www.irs.gov/instructions/i8582) require spouses
+filing separately to have lived apart at all times during the year for this
+special allowance. References and monthly assertions are not authenticated
+residence-document bytes.
+
 This does not complete GAP-8582. Per-activity source allocation, prior passive
 loss character, dispositions, complex Part IX rows, filled PDF inspection, local
-XSD, and IRS ATS acceptance remain their separate gates. The PDF descriptor
-still lacks a complete computed Part II mapping for this case.
+XSD, and IRS ATS acceptance remain their separate gates.

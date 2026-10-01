@@ -1,4 +1,7 @@
-import { inputSchema as fecInputSchema } from "../../../nodes/inputs/fec/index.ts";
+import {
+  alternativeCompensationWorldwideTotal,
+  inputSchema as fecInputSchema,
+} from "../../../nodes/inputs/fec/index.ts";
 import {
   type CategorySummary,
   ForeignTaxCreditMethod,
@@ -37,8 +40,16 @@ export function assertAlternativeCompensationSources(
   const sourceItems = fec.data.fecs.filter((item) =>
     item.alternative_compensation_sourcing !== undefined
   );
+  const general = context?.pending?.general;
+  const taxpayerSsn = context?.filer?.primarySSN ??
+    (general && typeof general === "object" &&
+        "taxpayer_ssn" in general &&
+        typeof general.taxpayer_ssn === "string"
+      ? general.taxpayer_ssn
+      : undefined);
   if (
     sourceItems.length !== items.length ||
+    (fec.data.fecs.length > 1 && !taxpayerSsn) ||
     items.some((item) => {
       const alternative = item.alternative_compensation_sourcing;
       const matching = sourceItems.filter((source) =>
@@ -79,7 +90,11 @@ export function assertAlternativeCompensationSources(
         (source.foreign_earned_income_exclusion_usd ?? 0) !== 0 ||
         Math.round(currency.amount * currency.usd_per_foreign_unit * 100) !==
           Math.round((source.foreign_tax_paid_usd ?? 0) * 100) ||
-        source.compensation_usd < 250_000 ||
+        alternativeCompensationWorldwideTotal(
+            fec.data.fecs,
+            source,
+            taxpayerSsn,
+          ) < 250_000 ||
         Math.round(source.compensation_usd * 100) !==
           Math.round(alternative.compensation_item_total_usd * 100) ||
         Math.round(foreignServices * 100) !==
@@ -95,7 +110,7 @@ export function assertAlternativeCompensationSources(
     })
   ) {
     throw new Error(
-      "Form 1116 line 1b source amounts must match each identified foreign-employer wage item and prove that item's $250,000 threshold",
+      "Form 1116 line 1b source amounts must match each identified foreign-employer wage item and prove the employee's $250,000 threshold",
     );
   }
 }
@@ -115,6 +130,7 @@ export function alternativeCompensationStatementId(
     }
     return undefined;
   }
+  if (context?.phase === "discovery") return undefined;
   if (ids.length !== 1 || !ids[0]?.trim()) {
     throw new Error(
       "Form 1116 line 1b needs one linked alternative compensation statement",

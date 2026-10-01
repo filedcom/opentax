@@ -21,10 +21,12 @@ function run(
 
 const baseW2 = {
   employee_ssn: "111-22-3333",
+  employer_ein: "12-3456789",
+  employer_name: "Example Restaurant",
   box1_wages: 30_000,
   box2_fed_withheld: 2_500,
-  box3_ss_wages: 30_000,
-  box4_ss_withheld: 1_860,
+  box3_ss_wages: 25_000,
+  box4_ss_withheld: 1_550,
   box5_medicare_wages: 30_000,
   box6_medicare_withheld: 435,
   box7_ss_tips: 5_000,
@@ -48,7 +50,15 @@ Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund
     [],
   );
   assertEquals(result.pending.schedule1a?.qualified_employee_tips, [
-    { employee_ssn: "111-22-3333", amount: 5_000 },
+    {
+      employee_ssn: "111-22-3333",
+      employer_ein: "12-3456789",
+      employer_name: "Example Restaurant",
+      amount: 5_000,
+      box5_medicare_wages: 30_000,
+      occupation_code: "102",
+      source_type: "w2_box7",
+    },
   ]);
   assertEquals(f1040.line13b_additional_deductions, 5_000);
   assertEquals(f1040.line14_deductions_qbi_total, 20_750);

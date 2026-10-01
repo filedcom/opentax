@@ -23,6 +23,7 @@ const mockFiler: FilerIdentity = {
   nameControl: "DOE",
   firstName: "John",
   lastName: "Doe",
+  firstNameWithInitial: "John",
   address: {
     line1: "123 Main St",
     city: "Anytown",
@@ -31,6 +32,138 @@ const mockFiler: FilerIdentity = {
   },
   filingStatus: FilingStatus.Single,
 };
+
+Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-assets answer", async () => {
+  const complete = {
+    f1040: {
+      line1a_wages: 75_000,
+      filing_status: "single",
+      digital_assets: false,
+    },
+  };
+  await assertRejects(
+    () =>
+      buildPdfBytes(complete, {
+        ...mockFiler,
+        firstNameWithInitial: undefined,
+      }),
+    Error,
+    "identified taxpayer's SSN, first-name field, and last name",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        { f1040: { ...complete.f1040, filing_status: "mfj" } },
+        mockFiler,
+      ),
+    Error,
+    "filing status must match",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1040: { line1a_wages: 75_000, filing_status: "single" },
+      }, mockFiler),
+    Error,
+    "needs the digital-assets answer",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async () => {
+  const fields = {
+    filing_status: "single",
+    digital_assets: false,
+  };
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        { f1040: { ...fields, taxpayer_ssn: "987-65-4321" } },
+        mockFiler,
+      ),
+    Error,
+    "taxpayer source TIN differs from the filer",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        { f1040: { ...fields, spouse_ssn: "987-65-4321" } },
+        mockFiler,
+      ),
+    Error,
+    "spouse source TIN differs from the filer",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1040: {
+          filing_status: "single",
+          digital_assets: false,
+          dual_status_return_2025: true,
+        },
+      }, mockFiler),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects positive 1099-K with no income classification", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1099k: {
+          f1099ks: [{
+            pse_name: "Example Processor",
+            pse_tin: "123456789",
+            recipient_tin: "123456789",
+            box1a_gross_payments: 5_000,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "needs a reviewed income classification",
+  );
+});
+
+Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
+  await assertRejects(
+    () => buildPdfBytes({ form8949: [{ part: "B" }] }, undefined),
+    Error,
+    "needs its Schedule D",
+  );
+});
+
+Deno.test("Form 8949 PDF rows must match calculated Schedule D sales", async () => {
+  const sale = {
+    part: "B",
+    description: "Broker shares",
+    date_acquired: "2025-01-15",
+    date_sold: "2025-06-01",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    gain_loss: 1_000,
+    is_long_term: false,
+  };
+  for (
+    const prepared of [
+      [],
+      [{ ...sale, description: "Different shares" }],
+      [sale, sale],
+    ]
+  ) {
+    await assertRejects(
+      () =>
+        buildPdfBytes({
+          schedule_d: { transaction: sale },
+          form8949: prepared,
+        }, undefined),
+      Error,
+      "prepared Form 8949 rows differ from calculated sales",
+    );
+  }
+});
 
 Deno.test("PDF export rejects active attachments without complete PDF maps", () => {
   const active: Array<[Record<string, Record<string, unknown>>, string]> = [
@@ -79,6 +212,11 @@ function cacheSlug(url: string): string {
 
 const F1040_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf";
 const F1116_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf";
+const printable1040 = (fields: Record<string, unknown>) => ({
+  filing_status: "single",
+  digital_assets: false,
+  ...fields,
+});
 
 /**
  * Create a minimal AcroForm PDF that contains the subset of f1040 AcroForm
@@ -98,9 +236,19 @@ async function makeMinimalF1040Pdf(
   for (const name of fields) if (!names.has(name)) names.set(name, "text");
   for (const [name, kind] of names) {
     if (kind === "checkbox" || kind === "checkboxWhen") {
-      form.createCheckBox(name).addToPage(page, { x: 10, y: 700, width: 20, height: 20 });
+      form.createCheckBox(name).addToPage(page, {
+        x: 10,
+        y: 700,
+        width: 20,
+        height: 20,
+      });
     } else if (kind === "text") {
-      form.createTextField(name).addToPage(page, { x: 10, y: 700, width: 200, height: 20 });
+      form.createTextField(name).addToPage(page, {
+        x: 10,
+        y: 700,
+        width: 200,
+        height: 20,
+      });
     }
   }
   return doc.save();
@@ -128,7 +276,7 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
     const pending = {
-      f1040: { line1a_wages: 75000 },
+      f1040: printable1040({ line1a_wages: 75000 }),
     };
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
 
@@ -151,9 +299,13 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
     );
     await assertRejects(
       () =>
-        buildPdfBytes({ f1040: { line1a_wages: 75_000 } }, mockFiler, tmpDir),
+        buildPdfBytes(
+          { f1040: printable1040({ line1a_wages: 75_000 }) },
+          mockFiler,
+          tmpDir,
+        ),
       Error,
-      'failed to fill field "topmostSubform[0].Page1[0].f1_47[0]"',
+      'failed to fill field "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[0]"',
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -262,7 +414,7 @@ Deno.test("buildPdfBytes: filled wage value is readable from output PDF", async 
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
-    const pending = { f1040: { line1a_wages: 75000 } };
+    const pending = { f1040: printable1040({ line1a_wages: 75000 }) };
 
     // Use non-flattened path: create a stub builder that skips flatten so we
     // can read the field back. Since builder.ts always flattens, verify via
@@ -286,7 +438,7 @@ Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
 
     // f1040 has data; hypothetical other form has none — builder should still succeed
     const pending = {
-      f1040: { line1a_wages: 50000 },
+      f1040: printable1040({ line1a_wages: 50000 }),
       schedule_b: undefined,
     };
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
@@ -304,7 +456,7 @@ Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
     // The builder flattens, so we verify the output PDF is valid and non-empty
-    const pending = { f1040: { line1a_wages: 75000.75 } };
+    const pending = { f1040: printable1040({ line1a_wages: 75000.75 }) };
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 100);
   } finally {
@@ -333,7 +485,7 @@ Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
-    const pending = { f1040: { line1a_wages: 75000 } };
+    const pending = { f1040: printable1040({ line1a_wages: 75000 }) };
 
     // First call
     await buildPdfBytes(pending, mockFiler, tmpDir);
@@ -358,29 +510,30 @@ Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source
     ]);
     await seedCache(tmpDir, F1116_PDF_URL, stubPdf);
 
-    await assertRejects(() => buildPdfBytes(
-      {
-        form_1116: {
-          foreign_tax_paid: 1_400,
-          total_income: 85_000,
-          us_tax_before_credits: 13_000,
-          category_summaries: [
-            {
-              category: "passive",
-              foreignTaxPaid: 500,
-              foreignGrossIncome: 1_000,
-            },
-            {
-              category: "general",
-              foreignTaxPaid: 900,
-              foreignGrossIncome: 8_000,
-            },
-          ],
+    await assertRejects(() =>
+      buildPdfBytes(
+        {
+          form_1116: {
+            foreign_tax_paid: 1_400,
+            total_income: 85_000,
+            us_tax_before_credits: 13_000,
+            category_summaries: [
+              {
+                category: "passive",
+                foreignTaxPaid: 500,
+                foreignGrossIncome: 1_000,
+              },
+              {
+                category: "general",
+                foreignTaxPaid: 900,
+                foreignGrossIncome: 8_000,
+              },
+            ],
+          },
         },
-      },
-      mockFiler,
-      tmpDir,
-    ), Error);
+        mockFiler,
+        tmpDir,
+      ), Error);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

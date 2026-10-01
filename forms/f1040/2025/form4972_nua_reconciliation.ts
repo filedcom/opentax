@@ -7,7 +7,9 @@ import {
 // The 2025 Form 4972 NUA worksheet uses 1099-R boxes 3 / 2a × box 6.
 // One elected distribution is required. Death-benefit and estate-tax
 // allocations are supported for a full-share beneficiary, including a
-// Part III annuity. Partial-share allocations remain outside this route.
+// Part III annuity. A sourced partial-share Part-II-only estate allocation
+// and Part-III-only estate allocations are also supported. A separate
+// partial-share beneficiary route combines NUA with a sourced death benefit.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -19,6 +21,10 @@ export function reconcileForm4972Nua(
     !(typeof fields.line8_nua_included === "number" &&
       fields.line8_nua_included > 0)
   ) return;
+
+  // The full-share multi-copy path independently sums all three NUA worksheet
+  // boxes and replays the calculation after matching each plan source.
+  if (fields.multiple_1099r !== undefined) return;
 
   const source = f1099rSchema.safeParse(pending?.f1099r);
   if (!source.success) {
@@ -36,6 +42,12 @@ export function reconcileForm4972Nua(
     fields.death_benefit_exclusion > 0) ||
     (typeof fields.federal_estate_tax === "number" &&
       fields.federal_estate_tax > 0);
+  const partialDeath = sharePct < 100 &&
+    typeof fields.death_benefit_exclusion === "number" &&
+    fields.death_benefit_exclusion > 0;
+  const partialEstate = sharePct < 100 &&
+    typeof fields.federal_estate_tax === "number" &&
+    fields.federal_estate_tax > 0;
   if (
     !item || item.ts !== fields.recipient ||
     sharePct <= 0 || sharePct > 100 ||
@@ -50,7 +62,17 @@ export function reconcileForm4972Nua(
     (fields.elect_10yr_averaging !== true &&
       fields.elect_capital_gain !== true) ||
     (hasAllocation &&
-      (sharePct !== 100 || fields.beneficiary_distribution !== true ||
+      (fields.beneficiary_distribution !== true ||
+        (sharePct !== 100 &&
+          ((partialDeath && partialEstate) ||
+            (!partialDeath && !partialEstate) ||
+            (item.box8_other ?? 0) > 0 ||
+            (partialEstate && fields.elect_capital_gain === true &&
+              fields.elect_10yr_averaging === true &&
+              (typeof fields.capital_gain_amount !== "number" ||
+                fields.capital_gain_amount <= 0)) ||
+            item.box1_gross_distribution !==
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0))) ||
         ((item.box8_other ?? 0) > 0 &&
           fields.elect_10yr_averaging !== true))) ||
     (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
@@ -58,7 +80,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; death/estate allocation needs a full-share beneficiary and Part III when an annuity is present",
+      "Form 4972 NUA requires a sourced Part II or III; partial-share beneficiary allocation needs a single death-benefit or estate adjustment without an annuity",
     );
   }
   if (

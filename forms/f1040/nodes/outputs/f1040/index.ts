@@ -57,6 +57,9 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  taxpayer_age_65_or_older: z.boolean().optional(),
+  spouse_age_65_or_older: z.boolean().optional(),
+  schedule_r_disability_qualified: z.literal(true).optional(),
   spouse_has_business_credit: z.boolean().optional(),
   // ── Part I — Income ───────────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
@@ -80,7 +83,8 @@ const inputSchema = z.object({
   // Line 1z — Total wages (sum of 1a–1h)
   line1z_total_wages: z.number().optional(),
   // Line 2a — Tax-exempt interest
-  line2a_tax_exempt: z.number().nonnegative().optional(),
+  line2a_tax_exempt: accumulable(z.number().nonnegative()).transform(sumField)
+    .optional(),
   // Line 2b — Taxable interest
   line2b_taxable_interest: z.number().optional(),
   // Line 3a — Qualified dividends (accumulable: k1_partnership + f1099div both route here)
@@ -91,6 +95,8 @@ const inputSchema = z.object({
   line4a_ira_gross: z.number().nonnegative().optional(),
   // Line 4b — IRA distributions, taxable amount
   line4b_ira_taxable: z.number().optional(),
+  // Line 4c(1) — source-confirmed IRA rollover
+  line4c_ira_rollover: z.boolean().optional(),
   // Line 5a — Pensions and annuities, gross
   line5a_pension_gross: z.number().nonnegative().optional(),
   // Line 5b — Pensions and annuities, taxable amount
@@ -103,6 +109,7 @@ const inputSchema = z.object({
   // Line 6b — Social security benefits, taxable amount
   line6b_ss_taxable: z.number().nonnegative().optional(),
   mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
+  mfs_eitc_separation_rule: z.boolean().optional(),
   // Line 7 — Capital gain or (loss) (Schedule D)
   line7_capital_gain: z.number().optional(),
   // Line 7a — Capital gain distributions (no Schedule D required)
@@ -172,6 +179,8 @@ const inputSchema = z.object({
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     specifiedCredit: z.number().finite().nonnegative(),
+    standardCarryforward: z.number().finite().nonnegative(),
+    specifiedCarryforward: z.number().finite().nonnegative(),
     passiveLines: form3800PassiveActivityLinesSchema,
   }).optional(),
   credit_limit_form6251_line9: z.number().finite().nonnegative().optional(),
@@ -219,6 +228,7 @@ const inputSchema = z.object({
   line25a_w2_withheld: z.number().nonnegative().optional(),
   // Line 25b — Federal tax withheld (1099 forms) (accumulable: multiple 1099s route here)
   line25b_withheld_1099: accumulable(z.number().nonnegative()).optional(),
+  line25b_f1099k_withheld: accumulable(z.number().nonnegative()).optional(),
   // Line 25c — Additional Medicare Tax withheld (Form 8959 line 24)
   line25c_additional_medicare_withheld: z.number().nonnegative().optional(),
   // Line 25c — other federal income tax withheld, including Form 8805.
@@ -992,6 +1002,10 @@ function assembleReturn(
     input.line25b_withheld_1099 as number | number[] | undefined,
   );
   if (line25b > 0) result.line25b_withheld_1099 = line25b;
+  const kWithheld = sumField(
+    input.line25b_f1099k_withheld as number | number[] | undefined,
+  );
+  if (kWithheld > 0) result.line25b_f1099k_withheld = kWithheld;
 
   if (
     computed_line38 > 0 &&
@@ -1087,6 +1101,37 @@ class F1040Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const schedule3 = input.credit_limit_schedule3_lines;
+    const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
+    if (schedule3 && elderlyCredit > 0) {
+      if (
+        input.taxpayer_age_65_or_older !== true &&
+        !(input.filing_status === FilingStatus.MFJ &&
+          input.spouse_age_65_or_older === true) &&
+        input.schedule_r_disability_qualified !== true
+      ) {
+        throw new Error(
+          "Schedule R credit needs matching Form 1040 age indicators or reviewed disability evidence",
+        );
+      }
+      if (
+        input.filing_status === FilingStatus.MFS &&
+        input.mfs_spouse_lived_with_taxpayer !== false
+      ) {
+        throw new Error(
+          "Schedule R MFS credit needs spouses who lived apart all year",
+        );
+      }
+      const limit = Math.max(
+        0,
+        totalTaxBeforeCredits(input) - schedule3.line1 - schedule3.line2 -
+          (schedule3.line6lForm8978 ?? 0),
+      );
+      if (elderlyCredit > limit) {
+        throw new Error(
+          "Schedule R line 22 exceeds the 2025 credit-limit worksheet from Form 1040 line 18 and Schedule 3 lines 1, 2, and 6l",
+        );
+      }
+    }
     if (!input.form8880_source && (schedule3?.line4 ?? 0) > 0) {
       throw new Error(
         "Schedule 3 line 4 needs the Form 8880 contribution source",
@@ -1174,6 +1219,9 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
       ...numericLines,
+      ...(effectiveInput.line4c_ira_rollover === true
+        ? { line4c_ira_rollover: true }
+        : {}),
       ...(effectiveInput.line5c_pension_rollover === true
         ? { line5c_pension_rollover: true }
         : {}),

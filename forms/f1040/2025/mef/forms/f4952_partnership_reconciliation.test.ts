@@ -7,11 +7,18 @@ import {
 } from "../../../nodes/intermediate/forms/form4952/index.ts";
 import { form4952Pdf } from "../../pdf/forms/f4952.ts";
 import { form4952 } from "./f4952.ts";
+import { testFiler } from "../test-filer.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+
+const filer = testFiler();
+const build: typeof form4952.build = (fields, context) =>
+  form4952.build(fields, { ...context, filer });
 
 const partnership = {
   partnership_name: "Portfolio Partnership",
   partnership_ein: "123456789",
   source_document_reference: "filed-2025-k1-portfolio",
+  recipient_tin: "123456789",
   investment_property_for_form4952: true,
   box5_interest: 500,
   box13_code_h_investment_interest: 300,
@@ -65,21 +72,73 @@ Deno.test("Form 4952 reconciles one K-1's box 5 interest and box 13 code H inves
     300,
   );
   assertStringIncludes(
-    form4952.build(fields, { pending }),
+    build(fields, { pending }),
     "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
+  assertEquals(form4952Pdf.instances?.(fields, filer, pending), [fields]);
+});
+
+Deno.test("Form 4952 K-1 filing rejects an unrelated recipient", () => {
+  const unrelated = {
+    ...pending,
+    k1_partnership: {
+      k1_partnerships: [{ ...partnership, recipient_tin: "999999999" }],
+    },
+  };
+  assertThrows(
+    () => build(fields, { pending: unrelated }),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () => form4952Pdf.instances?.(fields, filer, unrelated),
+    Error,
+    "recipient must match",
+  );
+  const missing = {
+    ...pending,
+    k1_partnership: {
+      k1_partnerships: [{ ...partnership, recipient_tin: undefined }],
+    },
+  };
+  assertThrows(() => build(fields, { pending: missing }));
+  assertThrows(() => form4952Pdf.projectFields?.(fields, missing));
+});
+
+Deno.test("Form 4952 K-1 allows the joint spouse recipient", () => {
+  const joint = {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "999999999",
+      firstName: "Joint",
+      lastName: "Spouse",
+      nameControl: "SPOU",
+    },
+  };
+  const spouseSource = {
+    ...pending,
+    k1_partnership: {
+      k1_partnerships: [{ ...partnership, recipient_tin: "999999999" }],
+    },
+  };
+  assertStringIncludes(
+    form4952.build(fields, { pending: spouseSource, filer: joint }),
+    "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(form4952Pdf.instances?.(fields, joint, spouseSource), [fields]);
 });
 
 Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () => {
   assertThrows(
-    () => form4952.build(fields),
+    () => build(fields),
     Error,
-    "needs its K-1",
+    "needs its issued partnership K-1 recipients",
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           k1_partnership: {
@@ -101,7 +160,7 @@ Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () =
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           f1040: { ...pending.f1040, line2b_taxable_interest: 400 },
@@ -112,7 +171,7 @@ Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () =
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           income_tax_calculation: { taking_standard_deduction: true },
@@ -132,7 +191,7 @@ Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () =
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           standard_deduction: { itemized_deductions: 19_000 },
@@ -168,7 +227,7 @@ Deno.test("Form 4952 reconciles several distinct partnership K-1s by source amou
     },
   };
   assertStringIncludes(
-    form4952.build(multiFields, { pending: multiPending }),
+    build(multiFields, { pending: multiPending }),
     "<InvestmentInterestExpDeductAmt>450</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(
@@ -177,7 +236,7 @@ Deno.test("Form 4952 reconciles several distinct partnership K-1s by source amou
   );
   assertThrows(
     () =>
-      form4952.build(multiFields, {
+      build(multiFields, {
         pending: {
           ...multiPending,
           k1_partnership: {
@@ -193,7 +252,7 @@ Deno.test("Form 4952 reconciles several distinct partnership K-1s by source amou
   );
   assertThrows(
     () =>
-      form4952.build(multiFields, {
+      build(multiFields, {
         pending: {
           ...multiPending,
           k1_partnership: {
@@ -232,6 +291,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
       reported_amount: 350,
       allowed_amount: 350,
       statement_reference: "2025 code I statement",
+      issuer_expense_item_id: "mineral-property-depreciation-1",
       expense_kind: "depreciation" as const,
       basis_workpaper_reference: "2025 basis review",
       at_risk_workpaper_reference: "2025 at-risk review",
@@ -243,6 +303,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
       nonpassive_investment_property: true as const,
       issuer_crosswalk: {
         issuer_supplement_reference: "2025 K-1 investment supplement",
+        issuer_expense_item_id: "mineral-property-depreciation-1",
         issuer_reported_amount: 350,
         same_expense_as_box13_code_i_confirmed: true as const,
         box13_code_i_statement_reference: "2025 code I statement",
@@ -277,7 +338,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
   assertEquals(codeBFields.line5, 350);
   assertEquals(codeBFields.line8, 300);
   assertThrows(
-    () => form4952.build(codeBFields, { pending: codeBPending }),
+    () => build(codeBFields, { pending: codeBPending }),
     Error,
     "needs a source-linked deduction on the filed return",
   );
@@ -288,7 +349,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
   );
   assertThrows(
     () =>
-      form4952.build(
+      build(
         { ...codeBFields, source_k1_allowed_investment_expenses: 300 },
         { pending: codeBPending },
       ),
@@ -314,7 +375,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
   );
   assertThrows(
     () =>
-      form4952.build({ ...codeBFields, line5: 400 }, {
+      build({ ...codeBFields, line5: 400 }, {
         pending: codeBPending,
       }),
     Error,

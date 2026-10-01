@@ -25,6 +25,117 @@ export const itemSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
   kwh_produced: z.number().int().nonnegative(),
   kwh_sold: z.number().int().nonnegative(),
+  closed_loop_biomass_source: z.object({
+    facility_description: z.string().trim().min(1),
+    planting_record_reference: z.string().trim().min(1),
+    planted_exclusively_for_facility_verified: z.literal(true),
+    original_facility_not_cofired_verified: z.literal(true),
+    production_meter_record_reference: z.string().trim().min(1),
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+    no_investment_credit_election_verified: z.literal(true),
+    no_section1603_grant_verified: z.literal(true),
+  }).strict().optional(),
+  open_loop_cellulosic_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    solid_nonhazardous_cellulosic_waste_verified: z.literal(true),
+    original_facility_not_expanded_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
+  open_loop_livestock_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    agricultural_livestock_waste_nutrients_verified: z.literal(true),
+    original_facility_not_expanded_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    nameplate_capacity_record_reference: z.string().trim().min(1),
+    nameplate_capacity_kw: z.number().int().min(150),
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
+  solar_production_source: z.object({
+    facility_description: z.string().trim().min(1),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+    section48_energy_credit_not_claimed_verified: z.literal(true),
+  }).strict().optional(),
+  landfill_gas_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    municipal_solid_waste_landfill_gas_verified: z.literal(true),
+    original_facility_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    section45k_nonclaim_record_reference: z.string().trim().min(1),
+    section45k_credit_not_allowed_verified: z.literal(true),
+    section48_biogas_nonclaim_record_reference: z.string().trim().min(1),
+    section48_biogas_credit_not_allowed_this_or_prior_year_verified: z.literal(
+      true,
+    ),
+    investment_election_nonclaim_record_reference: z.string().trim().min(1),
+    no_section48_election_or_section1603_grant_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
+  trash_combustion_source: z.object({
+    facility_description: z.string().trim().min(1),
+    facility_address_line1: z.string().trim().min(1),
+    facility_latitude: z.number().min(-90).max(90),
+    facility_longitude: z.number().min(-180).max(180),
+    municipal_waste_record_reference: z.string().trim().min(1),
+    municipal_solid_waste_excluding_segregated_recyclable_paper_verified: z
+      .literal(true),
+    original_trash_combustion_facility_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    election_grant_nonclaim_record_reference: z.string().trim().min(1),
+    no_section48_election_or_section1603_grant_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
   facility_description: z.string().min(1).max(50).optional(),
   facility_us_address: z.object({
     line1: z.string().min(1),
@@ -168,7 +279,28 @@ function increaseFactor(item: F8835Item): number {
     }
     return 1;
   }
-  if (reason === "none") return 1;
+  if (reason === "none") {
+    if (item.facility_construction_start_date < "2023-01-29") {
+      throw new Error(
+        "Form 8835 construction before January 29, 2023 needs increased-credit and continuity review",
+      );
+    }
+    if (
+      item.maximum_net_output_mw === undefined ||
+      item.maximum_net_output_mw < 1 ||
+      (item.ac_nameplate_kw !== undefined && item.ac_nameplate_kw < 1_000)
+    ) {
+      throw new Error(
+        "Form 8835 no-increase claim needs reviewed maximum net output of at least 1 MW and consistent AC capacity",
+      );
+    }
+    if (item.meets_prevailing_wage && item.meets_apprenticeship) {
+      throw new Error(
+        "Form 8835 prevailing wage and apprenticeship facts qualify for the fivefold increase",
+      );
+    }
+    return 1;
+  }
   if (
     reason === "under_one_mw" &&
     (item.maximum_net_output_mw === undefined ||
@@ -226,6 +358,13 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
       "Form 8835 production period must be a valid 2025 period after service",
     );
   }
+  const creditEnd = new Date(service);
+  creditEnd.setUTCFullYear(creditEnd.getUTCFullYear() + 10);
+  if (end >= creditEnd) {
+    throw new Error(
+      "Form 8835 electricity sold after the 10-year credit period cannot be claimed",
+    );
+  }
   const fourthAnniversary = new Date(service);
   fourthAnniversary.setUTCFullYear(fourthAnniversary.getUTCFullYear() + 4);
   if (start < fourthAnniversary && end >= fourthAnniversary) {
@@ -237,6 +376,272 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  item = itemSchema.parse(item);
+  if (item.energy_type === EnergyType.Solar) {
+    const source = item.solar_production_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      !source ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 3 ||
+      (item.solar_dc_nameplate_kw ?? 0) <= 0 ||
+      (item.ac_nameplate_kw ?? 0) <= 0
+    ) {
+      throw new Error(
+        "Form 8835 solar facility needs pre-2025 construction, positive DC capacity, and distinct construction, meter, and unrelated-sale sources matching kWh",
+      );
+    }
+  } else if (item.solar_production_source !== undefined) {
+    throw new Error(
+      "Form 8835 solar source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.Landfill) {
+    const source = item.landfill_gas_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit || item.is_fiscal_year ||
+      item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined || !source ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.section45k_nonclaim_record_reference,
+          source.section48_biogas_nonclaim_record_reference,
+          source.investment_election_nonclaim_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 7
+    ) {
+      throw new Error(
+        "Form 8835 landfill gas needs original filer-owned municipal-solid-waste production, no section 45K, section 48, or section 1603 overlap, and seven distinct feedstock, nonclaim, construction, meter, and unrelated-sale records matching dates and kWh",
+      );
+    }
+  } else if (item.landfill_gas_source !== undefined) {
+    throw new Error(
+      "Form 8835 landfill gas source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.Trash) {
+    const source = item.trash_combustion_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit || item.is_fiscal_year ||
+      item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined || !source ||
+      source.facility_description !== item.facility_description ||
+      source.facility_address_line1 !== item.facility_us_address?.line1 ||
+      source.facility_latitude !== item.facility_latitude ||
+      source.facility_longitude !== item.facility_longitude ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.municipal_waste_record_reference,
+          source.election_grant_nonclaim_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 5
+    ) {
+      throw new Error(
+        "Form 8835 trash combustion needs a matching filer-owned facility identity, construction, 2025 meter and unrelated sale, five distinct source records, and no investment-credit election or grant",
+      );
+    }
+  } else if (item.trash_combustion_source !== undefined) {
+    throw new Error(
+      "Form 8835 trash-combustion source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.BiomassClosed) {
+    const source = item.closed_loop_biomass_source;
+    if (item.facility_construction_start_date >= "2025-01-01") {
+      throw new Error(
+        "Form 8835 closed-loop biomass construction must begin before 2025",
+      );
+    }
+    if (
+      !source ||
+      source.facility_description !== item.facility_description ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      source.planting_record_reference ===
+        source.production_meter_record_reference ||
+      source.planting_record_reference ===
+        source.unrelated_sale_invoice_reference ||
+      source.production_meter_record_reference ===
+        source.unrelated_sale_invoice_reference
+    ) {
+      throw new Error(
+        "Form 8835 closed-loop biomass needs facility-matched planting, meter, and unrelated-sale sources matching kWh",
+      );
+    }
+  } else if (item.closed_loop_biomass_source !== undefined) {
+    throw new Error(
+      "Form 8835 closed-loop biomass source cannot classify another energy type",
+    );
+  }
+  if (
+    item.open_loop_cellulosic_source !== undefined &&
+    item.open_loop_livestock_source !== undefined
+  ) {
+    throw new Error(
+      "Form 8835 open-loop biomass needs exactly one qualifying feedstock source",
+    );
+  }
+  if (
+    item.energy_type === EnergyType.BiomassOpen &&
+    item.open_loop_cellulosic_source !== undefined
+  ) {
+    const source = item.open_loop_cellulosic_source;
+    if (
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      !source ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 4
+    ) {
+      throw new Error(
+        "Form 8835 open-loop cellulosic facility needs original filer-owned production, qualifying feedstock, and distinct feedstock, construction, meter, and unrelated-sale sources matching dates and kWh",
+      );
+    }
+  } else if (
+    item.energy_type === EnergyType.BiomassOpen &&
+    item.open_loop_livestock_source !== undefined
+  ) {
+    const source = item.open_loop_livestock_source;
+    if (
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.nameplate_capacity_kw !== item.ac_nameplate_kw ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.construction_record_reference,
+          source.nameplate_capacity_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 5
+    ) {
+      throw new Error(
+        "Form 8835 livestock-waste facility needs at least 150 kW and distinct nutrient feedstock, construction, capacity, meter, and unrelated-sale sources matching dates and kWh",
+      );
+    }
+  } else if (item.energy_type === EnergyType.BiomassOpen) {
+    throw new Error(
+      "Form 8835 open-loop biomass needs a qualifying cellulosic or livestock-waste source",
+    );
+  } else if (
+    item.open_loop_cellulosic_source !== undefined ||
+    item.open_loop_livestock_source !== undefined
+  ) {
+    throw new Error(
+      "Form 8835 open-loop source cannot classify another energy type",
+    );
+  }
+  if (
+    parsedDate(item.facility_construction_start_date) >
+      parsedDate(item.facility_placed_in_service_date)
+  ) {
+    throw new Error(
+      "Form 8835 construction cannot begin after the facility was placed in service",
+    );
+  }
   if (item.kwh_sold > item.kwh_produced) {
     throw new Error("Form 8835 kWh sold cannot exceed kWh produced");
   }

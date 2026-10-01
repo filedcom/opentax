@@ -64,14 +64,19 @@ Deno.test("schedule_se: net_profit_schedule_c maps to NetNonFarmProfitLossAmt", 
   );
 });
 
-Deno.test("schedule_se: ministerial loss offsets Schedule C on line 2", () => {
-  const result = scheduleSE.build({
-    net_profit_schedule_c: 10_000,
-    ministerial_se_earnings: -1_000,
-  });
+Deno.test("schedule_se: regular computed lines reach native tax and deduction", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 50_000 });
   assertStringIncludes(
     result,
-    "<NetNonFarmProfitLossAmt>9000</NetNonFarmProfitLossAmt>",
+    "<SETotalNetEarningsOrLossAmt>50000</SETotalNetEarningsOrLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<SelfEmploymentTaxAmt>7065</SelfEmploymentTaxAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<DeductibleSelfEmploymentTaxAmt>3532</DeductibleSelfEmploymentTaxAmt>",
   );
 });
 

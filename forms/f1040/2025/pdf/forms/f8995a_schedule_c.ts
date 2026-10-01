@@ -64,6 +64,11 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
         "Form 8995-A Schedule C PDF needs matching parent pending source",
       );
     }
+    if (allPending.form8995a_schedule_b !== undefined) {
+      throw new Error(
+        "Form 8995-A Schedule C PDF cannot accompany Schedule B aggregation",
+      );
+    }
     assertScheduleCLossSources(input, allPending);
     const parentProjection = projectOneBusiness8995A(
       allPending.form8995a,

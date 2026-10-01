@@ -30,8 +30,20 @@ const filer: FilerIdentity = {
 Deno.test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 schema order", () => {
   const source = {
     requests: [
-      { person: "taxpayer" as const, language_preference_code: LanguagePreferenceCode.Spanish },
-      { person: "spouse" as const, language_preference_code: LanguagePreferenceCode.Cancel },
+      {
+        person: "taxpayer" as const,
+        language_preference_code: LanguagePreferenceCode.Spanish,
+        request_confirmed_by_person: true as const,
+        request_record_reference: "Ada 2025 language request",
+      },
+      {
+        person: "spouse" as const,
+        language_preference_code: LanguagePreferenceCode.Cancel,
+        request_confirmed_by_person: true as const,
+        request_record_reference: "Grace 2025 cancellation request",
+        prior_language_preference_code: LanguagePreferenceCode.French,
+        prior_election_record_reference: "Grace filed 2024 Schedule LEP",
+      },
     ],
   };
   const xml = buildScheduleLep(source, { filer });
@@ -61,17 +73,38 @@ Deno.test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 sc
 
 Deno.test("Schedule LEP rejects duplicate persons, invalid codes, and spouse on a nonjoint return", () => {
   assertEquals(inputSchema.safeParse({ requests: [
-    { person: "taxpayer", language_preference_code: "001" },
-    { person: "taxpayer", language_preference_code: "002" },
+    { person: "taxpayer", language_preference_code: "001", request_confirmed_by_person: true, request_record_reference: "request 1" },
+    { person: "taxpayer", language_preference_code: "002", request_confirmed_by_person: true, request_record_reference: "request 2" },
   ] }).success, false);
   assertEquals(inputSchema.safeParse({ requests: [
-    { person: "taxpayer", language_preference_code: "999" },
+    { person: "taxpayer", language_preference_code: "999", request_confirmed_by_person: true, request_record_reference: "request" },
   ] }).success, false);
   assertThrows(() => buildScheduleLep({ requests: [
-    { person: "spouse", language_preference_code: LanguagePreferenceCode.French },
+    { person: "spouse", language_preference_code: LanguagePreferenceCode.French, request_confirmed_by_person: true, request_record_reference: "Grace request" },
   ] }, { filer: { ...filer, filingStatus: FilingStatus.Single } }), Error,
   "joint Form 1040");
   assertThrows(() => buildScheduleLep({ requests: [
-    { person: "taxpayer", language_preference_code: LanguagePreferenceCode.French },
+    { person: "taxpayer", language_preference_code: LanguagePreferenceCode.French, request_confirmed_by_person: true, request_record_reference: "Ada request" },
   ] }, {}), Error, "filed Form 1040 identity");
+});
+
+Deno.test("Schedule LEP cancellation requires a confirmed request and prior election record", () => {
+  assertEquals(inputSchema.safeParse({ requests: [{
+    person: "taxpayer",
+    language_preference_code: LanguagePreferenceCode.Cancel,
+    request_confirmed_by_person: true,
+    request_record_reference: "Ada cancellation request",
+  }] }).success, false);
+  assertEquals(inputSchema.safeParse({ requests: [{
+    person: "taxpayer",
+    language_preference_code: LanguagePreferenceCode.Cancel,
+    request_confirmed_by_person: true,
+    request_record_reference: "Ada cancellation request",
+    prior_language_preference_code: LanguagePreferenceCode.Spanish,
+    prior_election_record_reference: "Ada filed 2024 Schedule LEP",
+  }] }).success, true);
+  assertEquals(inputSchema.safeParse({ requests: [{
+    person: "taxpayer",
+    language_preference_code: LanguagePreferenceCode.Spanish,
+  }] }).success, false);
 });

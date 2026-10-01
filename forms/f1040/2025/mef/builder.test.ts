@@ -20,6 +20,7 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { buildIsoAmtBasisLedger } from "../../nodes/inputs/f3921/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -217,6 +218,7 @@ const qualifiedForm4972Source = {
     f1099rs: [{
       payer_name: "Qualified Plan",
       payer_ein: "123456789",
+      source_document_reference: "qualified-4972-source",
       box1_gross_distribution: 30_000,
       box2a_taxable_amount: 30_000,
       box3_capital_gain: 5_000,
@@ -533,6 +535,76 @@ Deno.test("ReturnHeader present", () => {
 Deno.test("ReturnType is 1040", () => {
   const xml = buildMefXml({});
   assertStringIncludes(xml, "<ReturnTypeCd>1040</ReturnTypeCd>");
+});
+
+Deno.test("TY2025 Form 1040 builder rejects other return types and years", () => {
+  for (const returnType of ["1040NR", "1040SS", "4868"]) {
+    assertThrows(
+      () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2025, returnType),
+      Error,
+      "requires year 2025 and return type 1040",
+    );
+  }
+  assertThrows(
+    () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2024, "1040"),
+    Error,
+    "requires year 2025 and return type 1040",
+  );
+});
+
+Deno.test("TY2025 MeF rejects an explicitly dual-status Form 1040", () => {
+  assertThrows(
+    () =>
+      rawBuildMefXml(
+        { f1040: { dual_status_return_2025: true } },
+        sampleFiler(),
+      ),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
+Deno.test("TY2025 MeF bundle rejects a non-1040 export", async () => {
+  await assertRejects(
+    () =>
+      buildMefBundle({}, {
+        filer: sampleFiler(),
+        attachments: [],
+        returnType: "1040NR",
+      }),
+    Error,
+    "requires year 2025 and return type 1040",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects source TINs that differ from the filer", () => {
+  assertThrows(
+    () =>
+      rawBuildMefXml({ f1040: { taxpayer_ssn: "987-65-4321" } }, sampleFiler()),
+    Error,
+    "taxpayer source TIN differs from the filer",
+  );
+  assertThrows(
+    () =>
+      rawBuildMefXml({ f1040: { spouse_ssn: "987-65-4321" } }, sampleFiler()),
+    Error,
+    "spouse source TIN differs from the filer",
+  );
+  const filer = {
+    ...sampleFiler(),
+    spouse: {
+      ssn: "987654321",
+      firstName: "Jane",
+      lastName: "Smith",
+      nameControl: "SMIT",
+    },
+  };
+  assertStringIncludes(
+    rawBuildMefXml({
+      f1040: { taxpayer_ssn: "123-45-6789", spouse_ssn: "987-65-4321" },
+    }, filer),
+    "<IRS1040 ",
+  );
 });
 
 Deno.test("TaxPeriodBeginDate is 2025-01-01", () => {
@@ -967,18 +1039,21 @@ Deno.test("IRS2441 absent when form2441 missing from pending", () => {
   assertNotIncludes(xml, "<IRS2441>");
 });
 
+const bundledSale = {
+  part: "B",
+  description: "AAPL",
+  date_acquired: "2025-01-15",
+  date_sold: "2025-06-01",
+  proceeds: 5000,
+  cost_basis: 3000,
+  gain_loss: 2000,
+  is_long_term: false,
+};
+
 Deno.test("IRS8949 present when form8949 has transactions", () => {
   const xml = buildMefXml({
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    schedule_d: { transaction: bundledSale },
+    form8949: [bundledSale],
   });
   assertStringIncludes(xml, "<IRS8949 ");
 });
@@ -986,6 +1061,14 @@ Deno.test("IRS8949 present when form8949 has transactions", () => {
 Deno.test("IRS8949 absent when form8949 is empty array", () => {
   const xml = buildMefXml({ form8949: [] });
   assertNotIncludes(xml, "<IRS8949>");
+});
+
+Deno.test("Form 8949 cannot export without a reconciled Schedule D", () => {
+  assertThrows(
+    () => buildMefXml({ form8949: [bundledSale] }),
+    Error,
+    "needs its reconciled Schedule D",
+  );
 });
 
 Deno.test("IRS8949 absent when form8949 missing from pending", () => {
@@ -1025,19 +1108,10 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
-    schedule_d: { line_4_other_st: 1000 },
+    schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });
@@ -1050,19 +1124,10 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
-    schedule_d: { line_4_other_st: 1000 },
+    schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });
@@ -1193,7 +1258,29 @@ Deno.test("IRS8919 absent when form8919 missing from pending", () => {
 Deno.test("IRS4972 present when form4972 has data", () => {
   const xml = buildMefXml({
     ...qualifiedForm4972Source,
-    form4972: qualifiedForm4972,
+    form4972: {
+      forms: [{
+        ...qualifiedForm4972,
+        source_document_references: ["qualified-4972-source"],
+      }],
+      elections: [{
+        source_document_references: ["qualified-4972-source"],
+        born_before_1936: true,
+        beneficiary_distribution: false,
+        entire_balance_distributed: true,
+        rolled_over_any: false,
+        participant_five_year_member: true,
+        prior_election_after_1986: false,
+        elect_capital_gain: true,
+        elect_10yr_averaging: true,
+      }],
+      source_forms: [{
+        source_document_references: ["qualified-4972-source"],
+        recipient: TS.T,
+        lump_sum_amount: 30_000,
+        capital_gain_amount: 5_000,
+      }],
+    },
   });
   assertStringIncludes(xml, "<IRS4972 ");
 });
@@ -1374,7 +1461,7 @@ Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
   assertThrows(
     () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
     Error,
-    "needs one identified Schedule C business and exact Schedule 1/1040 source reconciliation",
+    "REIT-only filing needs one reviewed issued 1099-DIV",
   );
 });
 
@@ -1418,13 +1505,32 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
 });
 
 Deno.test("IRS6251 present when calculated AMT is positive", () => {
+  const f3921s = [{
+    source_document_reference: "Issued Form 3921 test copy",
+    corporation_name: "Option Corporation",
+    corporation_ein: "12-3456789",
+    employee_tin: "123456789",
+    box1_date_option_granted: "2022-06-01",
+    box2_date_option_exercised: "2025-06-02",
+    box3_exercise_price_per_share: 0,
+    box4_fmv_per_share: 5000,
+    box5_shares_transferred: 1,
+    rights_transferable_and_not_subject_to_substantial_risk_on_exercise:
+      true as const,
+    shares_disposed_during_exercise_year: 0 as const,
+    amount_paid_for_option: 0 as const,
+  }];
   const xml = buildMefXml({
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
-  });
+    f3921: {
+      f3921s,
+      iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }),
+    },
+  }, sampleFiler());
   assertStringIncludes(xml, "<IRS6251 ");
 });
 

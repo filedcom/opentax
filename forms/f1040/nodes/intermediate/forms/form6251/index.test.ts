@@ -1,6 +1,168 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
+
+function basisSourcePending(
+  fields: Record<string, unknown>,
+): Record<string, Record<string, unknown>> {
+  const total = typeof fields.private_activity_bond_interest === "number"
+    ? fields.private_activity_bond_interest
+    : 0;
+  const rawInterest = fields.line2g_pab_interest;
+  const interest = Array.isArray(rawInterest)
+    ? rawInterest.reduce((sum: number, value: number) => sum + value, 0)
+    : typeof rawInterest === "number"
+    ? rawInterest
+    : 0;
+  const pab = {
+    ...(interest > 0
+      ? {
+        f1099int: {
+          f1099ints: [{
+            payer_name: "Bond Payer",
+            box8: interest,
+            box9: interest,
+          }],
+        },
+      }
+      : {}),
+    ...(total > interest
+      ? {
+        f1099div: {
+          f1099divs: [{
+            payerName: "Bond Fund",
+            isNominee: false,
+            box11: false,
+            box1a: 0,
+            box12: total - interest,
+            box13: total - interest,
+          }],
+        },
+      }
+      : {}),
+  };
+  const raw = fields.line2k_8949_basis_dispositions;
+  const circulation = fields.line2o_circulation_costs;
+  const depletion = fields.line2d_depletion;
+  const trustAmount = fields.line2j_estates_and_trusts;
+  const trust = typeof trustAmount === "number" && trustAmount !== 0
+    ? {
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Synthetic Trust",
+          estate_trust_ein: "123456789",
+          source_document_reference: "synthetic issued trust K-1",
+          box12_code_a_amt_adjustment: trustAmount,
+          box12_codes_b_through_f_absent: true,
+          box12_codes_g_through_i_absent: true,
+        }],
+      },
+    }
+    : {};
+  const scheduleC = typeof depletion === "number" && depletion !== 0
+    ? {
+      schedule_c: {
+        schedule_cs: [{
+          line_a_principal_business: "Synthetic mining",
+          line_b_business_code: "212000",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: 50_000,
+          line_12_depletion: Math.max(depletion, 0),
+          amt_depletion_worksheet: {
+            source_reference: "synthetic depletion review",
+            all_property_income_and_basis_limits_applied_verified: true,
+            no_at_risk_or_basis_limitation_verified: true,
+            properties: [{
+              property_reference: "mine-1",
+              regular_allowed_depletion: Math.max(depletion, 0),
+              amt_allowed_depletion: Math.max(-depletion, 0),
+            }],
+          },
+        }],
+      },
+    }
+    : {};
+  const f59e = typeof circulation === "number" && circulation !== 0
+    ? {
+      f59e: {
+        f59es: [{
+          expenditure_type: "circulation",
+          amortization_period_start: "2025-01-01",
+          original_amount: Math.abs(circulation),
+          remaining_unamortized: 0,
+          regular_tax_deduction: Math.max(circulation, 0),
+          amt_deduction: Math.max(-circulation, 0),
+          regular_three_year_writeoff_elected: false,
+          circulation_reviewed_workpaper_reference:
+            "synthetic circulation review",
+          circulation_no_unamortized_property_loss: true,
+        }],
+      },
+    }
+    : {};
+  const pending: Record<string, Record<string, unknown>> = {};
+  Object.assign(pending, f59e, scheduleC, trust, pab);
+  if (raw === undefined) return pending;
+  const rows = Array.isArray(raw) ? raw : [raw];
+  pending.f8949 = {
+    f8949s: rows.map((row: {
+      source_transaction_id: string;
+      part: string;
+      proceeds: number;
+      regular_basis: number;
+      amt_basis: number;
+    }) => ({
+      source_transaction_id: row.source_transaction_id,
+      part: row.part,
+      description: "Synthetic AMT basis disposition",
+      date_acquired: ["A", "B", "C"].includes(row.part)
+        ? "2025-01-10"
+        : "2022-01-10",
+      date_sold: "2025-06-20",
+      proceeds: row.proceeds,
+      cost_basis: row.regular_basis,
+      amt_cost_basis: row.amt_basis,
+    })),
+  };
+  return pending;
+}
+
+function basisDividendPending(
+  fields: Record<string, unknown>,
+  qualified: number,
+  ordinary: number,
+): Record<string, Record<string, unknown>> {
+  const rows = Array.isArray(fields.line2k_8949_basis_dispositions)
+    ? fields.line2k_8949_basis_dispositions
+    : [fields.line2k_8949_basis_dispositions];
+  const regularCapitalGain = rows.reduce(
+    (sum: number, row: { regular_gain: number }) => sum + row.regular_gain,
+    0,
+  );
+  return {
+    ...basisSourcePending(fields),
+    f1099div: {
+      f1099divs: [{
+        payerName: "Audited dividend payer",
+        source_document_reference: "issued-2025-dividend-payer",
+        isNominee: false,
+        box11: false,
+        box1a: ordinary,
+        box1b: qualified,
+      }],
+    },
+    f1040: {
+      line3a_qualified_dividends: qualified,
+      line3b_ordinary_dividends: ordinary,
+      line7_capital_gain: regularCapitalGain,
+      line11_agi: 200_000,
+      line14_deductions_qbi_total: 0,
+      line15_taxable_income: fields.regular_taxable_income,
+    },
+  };
+}
+
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
@@ -52,6 +214,47 @@ Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part 
   assertEquals(filed?.fields.line13, 40_000);
   assertEquals(filed?.fields.line20, 150_000);
   assertEquals(filed?.fields.line27, 150_000);
+});
+
+Deno.test("form6251: audited long-term basis gain and 1099-DIV qualified dividends share Part III", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 10_000,
+    qualified_dividends: 10_000,
+    net_capital_gain: 50_000,
+    line2k_8949_capital_audit: amtBasisCapitalAudit,
+    line2k_8949_basis_dispositions: {
+      source_transaction_id: "broker-2025-1",
+      part: "D",
+      proceeds: 75_000,
+      regular_basis: 25_000,
+      amt_basis: 35_000,
+      regular_gain: 50_000,
+      amt_gain: 40_000,
+    },
+  });
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line13, 50_000);
+  const pending = basisDividendPending(filed!.fields, 10_000, 12_000);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, { pending }),
+    "<CapitalGainsWorksheetAmt>50000</CapitalGainsWorksheetAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, pending)?.line13,
+    50_000,
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(filed!.fields, {
+        ...pending,
+        f1040: { ...pending.f1040, line3a_qualified_dividends: 9_999 },
+      }),
+    Error,
+    "reconciled 1099-DIV",
+  );
 });
 
 Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedule D reconciliation", () => {
@@ -177,17 +380,122 @@ Deno.test("form6251: audited short-term basis loss below both deduction limits r
   assertEquals(filed?.fields.amti, 199_500);
   assertEquals(filed?.fields.line13, undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: {
         line11_agi: 200_000,
         line14_deductions_qbi_total: 0,
       },
     })?.line2k_disposition,
     -500,
+  );
+});
+
+Deno.test("form6251: audited short- and long-term losses within both deduction limits reach line 2k", () => {
+  const input = {
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 0,
+    net_capital_gain: 0,
+    line2k_8949_capital_audit: {
+      transactions: [
+        {
+          source_transaction_id: "broker-st-mixed-loss",
+          part: "A",
+          proceeds: 5_000,
+          cost_basis: 5_500,
+          gain_loss: -500,
+        },
+        {
+          source_transaction_id: "broker-lt-mixed-loss",
+          part: "D",
+          proceeds: 5_000,
+          cost_basis: 6_000,
+          gain_loss: -1_000,
+        },
+      ],
+      has_other_capital_activity: false,
+    },
+    line2k_8949_basis_dispositions: [
+      {
+        source_transaction_id: "broker-st-mixed-loss",
+        part: "A",
+        proceeds: 5_000,
+        regular_basis: 5_500,
+        amt_basis: 5_700,
+        regular_gain: -500,
+        amt_gain: -700,
+      },
+      {
+        source_transaction_id: "broker-lt-mixed-loss",
+        part: "D",
+        proceeds: 5_000,
+        regular_basis: 6_000,
+        amt_basis: 5_900,
+        regular_gain: -1_000,
+        amt_gain: -900,
+      },
+    ],
+  };
+  const result = compute(input);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -100);
+  assertEquals(filed?.fields.amti, 199_900);
+  assertEquals(filed?.fields.line13, undefined);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
+    "<PropertyDispositionAmt>-100</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
+      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+    })?.line2k_disposition,
+    -100,
+  );
+  const source = basisSourcePending(filed!.fields);
+  if (!("f8949" in source)) throw new Error("Missing Form 8949 fixture");
+  const sourceRows = source.f8949.f8949s;
+  if (!Array.isArray(sourceRows)) throw new Error("Missing Form 8949 rows");
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: {
+          ...source,
+          f8949: {
+            f8949s: [{
+              ...sourceRows[0],
+              date_acquired: "2022-01-10",
+            }, ...sourceRows.slice(1)],
+          },
+        },
+      }),
+    Error,
+    "holding period",
+  );
+  const separatelyCapped = compute({
+    ...input,
+    line2k_8949_basis_dispositions: [
+      input.line2k_8949_basis_dispositions[0],
+      {
+        ...input.line2k_8949_basis_dispositions[1],
+        amt_basis: 8_500,
+        amt_gain: -3_500,
+      },
+    ],
+  });
+  assertEquals(
+    separatelyCapped.outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_500,
   );
 });
 
@@ -222,11 +530,14 @@ Deno.test("form6251: audited long-term basis loss below both deduction limits re
   assertEquals(filed?.fields.amti, 199_500);
   assertEquals(filed?.fields.line13, undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line2k_disposition,
     -500,
@@ -259,15 +570,16 @@ Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
       amt_gain: -3_100,
     },
   };
-  assertThrows(
-    () => compute(base),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute(base).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_000,
   );
-  assertThrows(
-    () => compute({ ...base, filing_status: "mfs" }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute({ ...base, filing_status: "mfs" }).outputs.find((row) =>
+      row.nodeType === "form6251"
+    )?.fields.line2k_disposition,
+    0,
   );
   assertThrows(
     () =>
@@ -279,54 +591,53 @@ Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
         },
       }),
     Error,
-    "within both regular and AMT Schedule D deduction limits",
+    "complete Schedule D source audit",
   );
-  assertThrows(
-    () =>
-      compute({
-        ...base,
-        line2k_8949_capital_audit: {
-          transactions: [
-            {
-              source_transaction_id: "broker-lt-loss",
-              part: "D",
-              proceeds: 5_000,
-              cost_basis: 6_000,
-              gain_loss: -1_000,
-            },
-            {
-              source_transaction_id: "broker-st-loss",
-              part: "A",
-              proceeds: 1_000,
-              cost_basis: 1_500,
-              gain_loss: -500,
-            },
-          ],
-          has_other_capital_activity: false,
-        },
-        line2k_8949_basis_dispositions: [
+  assertEquals(
+    compute({
+      ...base,
+      line2k_8949_capital_audit: {
+        transactions: [
           {
             source_transaction_id: "broker-lt-loss",
             part: "D",
             proceeds: 5_000,
-            regular_basis: 6_000,
-            amt_basis: 6_500,
-            regular_gain: -1_000,
-            amt_gain: -1_500,
+            cost_basis: 6_000,
+            gain_loss: -1_000,
           },
           {
             source_transaction_id: "broker-st-loss",
             part: "A",
             proceeds: 1_000,
-            regular_basis: 1_500,
-            amt_basis: 1_500,
-            regular_gain: -500,
-            amt_gain: -500,
+            cost_basis: 1_500,
+            gain_loss: -500,
           },
         ],
-      }),
-    Error,
-    "one term of identified losses",
+        has_other_capital_activity: false,
+      },
+      line2k_8949_basis_dispositions: [
+        {
+          source_transaction_id: "broker-lt-loss",
+          part: "D",
+          proceeds: 5_000,
+          regular_basis: 6_000,
+          amt_basis: 6_500,
+          regular_gain: -1_000,
+          amt_gain: -1_500,
+        },
+        {
+          source_transaction_id: "broker-st-loss",
+          part: "A",
+          proceeds: 1_000,
+          regular_basis: 1_500,
+          amt_basis: 1_500,
+          regular_gain: -500,
+          amt_gain: -500,
+        },
+      ],
+    }).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -500,
   );
 });
 
@@ -356,24 +667,23 @@ Deno.test("form6251: short-term AMT losses crossing either Schedule D limit stop
       amt_gain: -3_100,
     },
   };
-  assertThrows(
-    () => compute(base),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute(base).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    -1_000,
   );
-  assertThrows(
-    () =>
-      compute({
-        ...base,
-        filing_status: "mfs",
-        line2k_8949_basis_dispositions: {
-          ...base.line2k_8949_basis_dispositions,
-          amt_basis: 7_500,
-          amt_gain: -2_500,
-        },
-      }),
-    Error,
-    "within both regular and AMT Schedule D deduction limits",
+  assertEquals(
+    compute({
+      ...base,
+      filing_status: "mfs",
+      line2k_8949_basis_dispositions: {
+        ...base.line2k_8949_basis_dispositions,
+        amt_basis: 7_500,
+        amt_gain: -2_500,
+      },
+    }).outputs.find((row) => row.nodeType === "form6251")
+      ?.fields.line2k_disposition,
+    0,
   );
   assertThrows(
     () =>
@@ -464,24 +774,26 @@ Deno.test("form6251: audited short-term AMT basis and qualified dividends use Pa
   assertEquals(filed?.fields.line20, 190_000);
   assertEquals(filed?.fields.line27, 190_000);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisDividendPending(filed!.fields, 10_000, 12_000),
+    }),
     "<CapitalGainsWorksheetAmt>10000</CapitalGainsWorksheetAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
-      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+      ...basisDividendPending(filed!.fields, 10_000, 12_000),
     })?.line13,
     10_000,
   );
   assertThrows(
     () => compute({ ...base, regular_taxable_income: 9_999 }),
     Error,
-    "dividend amount within regular and AMT taxable income",
+    "preferential amount within regular and AMT taxable income",
   );
   assertThrows(
     () => compute({ ...base, regular_tax_income: 90_000 }),
     Error,
-    "dividend amount within regular and AMT taxable income",
+    "preferential amount within regular and AMT taxable income",
   );
 });
 
@@ -539,14 +851,188 @@ Deno.test("form6251: audited mixed Form 8949 basis gains keep short-term gain ou
   assertEquals(filed?.fields.line20, 150_000);
   assertEquals(filed?.fields.line27, 150_000);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-15000</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line13,
     40_000,
+  );
+});
+
+Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part III", () => {
+  const input = {
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 0,
+    qualified_dividends: 10_000,
+    net_capital_gain: 40_000,
+    line2k_8949_capital_audit: {
+      transactions: [
+        {
+          source_transaction_id: "broker-st-offset",
+          part: "A",
+          proceeds: 20_000,
+          cost_basis: 30_000,
+          gain_loss: -10_000,
+        },
+        {
+          source_transaction_id: "broker-lt-offset",
+          part: "D",
+          proceeds: 80_000,
+          cost_basis: 30_000,
+          gain_loss: 50_000,
+        },
+      ],
+      has_other_capital_activity: false,
+    },
+    line2k_8949_basis_dispositions: [
+      {
+        source_transaction_id: "broker-st-offset",
+        part: "A",
+        proceeds: 20_000,
+        regular_basis: 30_000,
+        amt_basis: 28_000,
+        regular_gain: -10_000,
+        amt_gain: -8_000,
+      },
+      {
+        source_transaction_id: "broker-lt-offset",
+        part: "D",
+        proceeds: 80_000,
+        regular_basis: 30_000,
+        amt_basis: 40_000,
+        regular_gain: 50_000,
+        amt_gain: 40_000,
+      },
+    ],
+  };
+  const result = compute(input);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -8_000);
+  assertEquals(filed?.fields.amti, 192_000);
+  assertEquals(filed?.fields.line13, 42_000);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, {
+      pending: basisDividendPending(filed!.fields, 10_000, 12_000),
+    }),
+    "<PropertyDispositionAmt>-8000</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisDividendPending(filed!.fields, 10_000, 12_000),
+    })?.line13,
+    42_000,
+  );
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: basisSourcePending(filed!.fields),
+      }),
+    Error,
+    "reconciled 1099-DIV",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(filed!.fields, {
+        ...basisDividendPending(filed!.fields, 9_999, 12_000),
+      }),
+    Error,
+    "reconciled 1099-DIV",
+  );
+  const sourced = basisDividendPending(filed!.fields, 10_000, 12_000);
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: {
+          ...sourced,
+          f1040: { ...sourced.f1040, line7_capital_gain: 40_001 },
+        },
+      }),
+    Error,
+    "finalized Form 1040",
+  );
+  assertThrows(
+    () => compute({ ...input, net_capital_gain: 50_000 }),
+    Error,
+    "reconcile with regular Schedule D net capital gain",
+  );
+});
+
+Deno.test("form6251: audited long-term losses offset short-term gain without Part III", () => {
+  const input = {
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 0,
+    net_capital_gain: 0,
+    line2k_8949_capital_audit: {
+      transactions: [
+        {
+          source_transaction_id: "broker-st-net",
+          part: "A",
+          proceeds: 80_000,
+          cost_basis: 30_000,
+          gain_loss: 50_000,
+        },
+        {
+          source_transaction_id: "broker-lt-loss",
+          part: "D",
+          proceeds: 20_000,
+          cost_basis: 30_000,
+          gain_loss: -10_000,
+        },
+      ],
+      has_other_capital_activity: false,
+    },
+    line2k_8949_basis_dispositions: [
+      {
+        source_transaction_id: "broker-st-net",
+        part: "A",
+        proceeds: 80_000,
+        regular_basis: 30_000,
+        amt_basis: 40_000,
+        regular_gain: 50_000,
+        amt_gain: 40_000,
+      },
+      {
+        source_transaction_id: "broker-lt-loss",
+        part: "D",
+        proceeds: 20_000,
+        regular_basis: 30_000,
+        amt_basis: 28_000,
+        regular_gain: -10_000,
+        amt_gain: -8_000,
+      },
+    ],
+  };
+  const result = compute(input);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -8_000);
+  assertEquals(filed?.fields.amti, 192_000);
+  assertEquals(filed?.fields.line13, undefined);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
+    "<PropertyDispositionAmt>-8000</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
+      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+    })?.line13,
+    undefined,
+  );
+  assertThrows(
+    () => compute({ ...input, net_capital_gain: 40_000 }),
+    Error,
+    "reconcile with regular Schedule D net capital gain",
   );
 });
 
@@ -674,10 +1160,13 @@ Deno.test("form6251: negative trust K-1 code A with qualified dividends refigure
   assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<EstatesAndTrustsAmt>-20000</EstatesAndTrustsAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 120_000, line14_deductions_qbi_total: 20_000 },
   });
   assertEquals(pdf?.line2j_estates_and_trusts, -20_000);
@@ -760,7 +1249,9 @@ Deno.test("form6251: Schedule C AMT depletion difference enters line 2d and AMTI
     fieldsOf(result.outputs, schedule2)?.line2_amt,
     filed?.fields.line11_amt,
   );
-  const xml = mef6251.build(filed!.fields);
+  const xml = mef6251.build(filed!.fields, {
+    pending: basisSourcePending(filed!.fields),
+  });
   assertEquals(xml.includes("<DepletionAmt>400</DepletionAmt>"), true);
 });
 
@@ -956,10 +1447,13 @@ Deno.test("form6251: negative circulation costs with qualified dividends retain 
   assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<CirculationCostAmt>-20000</CirculationCostAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 120_000, line14_deductions_qbi_total: 20_000 },
   });
   assertEquals(pdf?.line2o_circulation_costs, -20_000);
@@ -1405,10 +1899,10 @@ Deno.test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", ()
   );
   assertEquals(filed?.fields.amti, 199_700);
   assertEquals(filed?.fields.line2c_investment_interest, -300);
-  assertEquals(
-    mef6251.build({ line11_amt: 1, line2c_investment_interest: -300 })
-      .includes("<InvestmentInterestAmt>-300</InvestmentInterestAmt>"),
-    true,
+  assertThrows(
+    () => mef6251.build({ line11_amt: 1, line2c_investment_interest: -300 }),
+    Error,
+    "final filer identity",
   );
   const standard = compute({
     filing_status: "single",
@@ -1724,7 +2218,9 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
   assertEquals(filed?.fields.line13, 200);
   assertEquals(filed?.fields.line20, 399_800);
   assertEquals(filed?.fields.line27, 399_800);
-  const xml = mef6251.build(filed!.fields);
+  const xml = mef6251.build(filed!.fields, {
+    pending: basisSourcePending(filed!.fields),
+  });
   assertStringIncludes(
     xml,
     "<CapitalGainsWorksheetAmt>200</CapitalGainsWorksheetAmt>",
@@ -1734,6 +2230,7 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
     "<IncomeAboveThresholdWorkshtAmt>399800</IncomeAboveThresholdWorkshtAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 315_000, line14_deductions_qbi_total: 15_000 },
   });
   assertEquals(pdf?.line13, 200);
@@ -1983,9 +2480,10 @@ Deno.test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () 
   assertEquals(filed?.fields.taxable_excess, 925_350);
   assertEquals(filed?.fields.tentative_tax, 256_707);
   assertEquals(
-    mef6251.build(filed!.fields).includes(
-      "<AlternativeMinTaxableIncomeAmt>925350</AlternativeMinTaxableIncomeAmt>",
-    ),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes(
+        "<AlternativeMinTaxableIncomeAmt>925350</AlternativeMinTaxableIncomeAmt>",
+      ),
     true,
   );
 });
@@ -2077,9 +2575,10 @@ Deno.test("form6251: files when line 7 exceeds line 10 despite zero AMT after AM
   assertEquals(filed?.fields.regular_tax, 10_000);
   assertEquals(filed?.fields.line11_amt, 0);
   assertEquals(
-    mef6251.build(filed!.fields).includes(
-      "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
-    ),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes(
+        "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+      ),
     true,
   );
 });
@@ -2109,7 +2608,8 @@ Deno.test("form6251: required zero-AMT form leaves line 8 blank when line 10 rea
   assertEquals(filed?.fields.net_tmt, 29_094);
   assertEquals(filed?.fields.line11_amt, 0);
   assertEquals(
-    mef6251.build(filed!.fields).includes("<AMTForeignTaxCreditAmt>"),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes("<AMTForeignTaxCreditAmt>"),
     false,
   );
 });

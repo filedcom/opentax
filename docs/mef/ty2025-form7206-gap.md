@@ -1,9 +1,9 @@
 # TY2025 Form 7206 source-to-filing gap
 
 Status: a narrow taxpayer-owned one-Schedule-C, one-non-Marketplace-plan path is
-coded, 2026-09-28, but remains unverified. No full-batch test, local XSD
-validation, filled-PDF inspection, IRS business-rule check, or ATS acceptance
-proves this path.
+coded and verified in a full TY2025 return with local v5.4 XSD validation and
+a 12-page filled-PDF inspection, 2026-09-30. Source document bytes, the full
+bulk regression, IRS business rules, and ATS acceptance remain unverified.
 
 The [2025 Form 7206](https://www.irs.gov/pub/irs-pdf/f7206.pdf) and
 [instructions](https://www.irs.gov/instructions/i7206) require a separate form
@@ -46,7 +46,11 @@ shareholder wages use line 11. The 2025 native `IRS7206` XSD requires
   includes native lines 16 and 17, which were previously omitted.
 - The PDF descriptor maps the sourced recipient and line 6 as `100%`, checks the
   core Schedule C/Schedule 1 reconciliation and overlap exclusions, then
-  projects the official fields. A filled-page visual review is still pending.
+  projects the official fields. The one-plan full-return PDF was inspected on
+  Form 1040, Schedule 1, Schedule C, Schedule SE, Form 7206, and Form 8995
+  pages. Schedule SE's previously blank computed lines 3-13 now print from the
+  same calculation as Schedule 1 line 15 and Schedule 2 line 4; native XML
+  carries the corresponding tax and deduction elements.
 - The existing Publication 974 single-business calculator remains a separate
   Marketplace-overlap route. It does not emit a Form 7206 document; its
   worksheet and return reconciliation still needs end-to-end review.
@@ -70,6 +74,14 @@ attribution steps to final Form 8962 and does not subtract total PTC from
 specified premiums or infer monthly PTC from annual Form 1095-A totals.
 Multiple policies, within-month partial specified premiums, other SE income
 sources, Form 2555, and special adjustment ordering remain unsupported here.
+Worksheet W's establishing Schedule C reference, net profit, all-positive-
+business total, Schedule 1 line 15 self-employment tax deduction, and line 16
+retirement deduction must now match the one taxpayer-owned Schedule C,
+computed Schedule SE, and retirement source deposited in the return graph.
+Absent or changed business records reject before the iterative PTC calculation.
+Positive and tampered graph-source fixtures are authored but unrun. This is a
+source prerequisite for the existing Publication 974 worksheet route; it does
+not emit a Form 7206 native/PDF document for Marketplace premiums.
 The records are source references, not authenticated insurer/payment records;
 the full batch, native XSD, and filled-PDF visual review remain unrun.
 

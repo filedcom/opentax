@@ -5,6 +5,12 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  reconcileCashCapitalAndNewNote,
+  reviewedForm7203DebtEvidenceSchema,
+  sumPrincipalRepayments,
+} from "./debt-note.ts";
+import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +42,7 @@ export const inputSchema = z.object({
 
   // Line 2 — Capital contributions and stock acquisitions during year
   additional_contributions: z.number().nonnegative().optional(),
+  reviewed_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
 
   // Line 3 — Ordinary business income from K-1 Box 1 (positive only)
   // Increases stock basis under IRC §1367(a)(1)(A)
@@ -59,6 +66,7 @@ export const inputSchema = z.object({
 
   // Line 22 — New loans from shareholder to S-corp during the year
   new_loans: z.number().nonnegative().optional(),
+  reviewed_debt_evidence: reviewedForm7203DebtEvidenceSchema.optional(),
 
   // ── Part III: Loss Items ──────────────────────────────────────────────────
   // Column (a) — Current year ordinary business loss from K-1 (positive amount)
@@ -86,27 +94,44 @@ function stockBasisAfterIncreases(input: Form7203Input): number {
 
 // Step 2: Stock basis after distributions (Part I Line 7)
 // IRC §1367(a)(2)(A) — floored at zero; excess distribution = capital gain (IRC §1368(b)(2))
-function stockBasisAfterDistributions(basisAfterIncreases: number, input: Form7203Input): number {
+function stockBasisAfterDistributions(
+  basisAfterIncreases: number,
+  input: Form7203Input,
+): number {
   return Math.max(0, basisAfterIncreases - (input.distributions ?? 0));
 }
 
 // Excess distributions over stock basis = capital gain under IRC §1368(b)(2)
 // Requires an identified Form 8949 transaction; this node currently rejects
 // excess gain rather than routing it to an unrelated Schedule D line.
-function excessDistributionGain(basisAfterIncreases: number, input: Form7203Input): number {
+function excessDistributionGain(
+  basisAfterIncreases: number,
+  input: Form7203Input,
+): number {
   return Math.max(0, (input.distributions ?? 0) - basisAfterIncreases);
 }
 
 // Step 3: Tentative stock basis for loss allocation (Part I Line 10)
 // Reg. 1.1367-1(f) — nondeductible expenses applied after distributions, before losses
-function tentativeStockBasis(basisAfterDistributions: number, input: Form7203Input): number {
-  return Math.max(0, basisAfterDistributions - (input.nondeductible_expenses ?? 0));
+function tentativeStockBasis(
+  basisAfterDistributions: number,
+  input: Form7203Input,
+): number {
+  return Math.max(
+    0,
+    basisAfterDistributions - (input.nondeductible_expenses ?? 0),
+  );
 }
 
-// Step 4: Tentative debt basis for loss allocation (Part II Line 29 simplified)
-// IRC §1367(b)(2) — beginning debt basis + new loans
+// Step 4: Tentative debt basis for loss allocation (Part II line 29).
+// A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
-  return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0);
+  const note = input.reviewed_debt_evidence?.kind === "new_2025_formal_notes"
+    ? input.reviewed_debt_evidence
+    : undefined;
+  return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
+    sumPrincipalRepayments(note?.principal_repayments) -
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)
@@ -117,7 +142,11 @@ function totalLossPool(input: Form7203Input): number {
 
 // Step 6: Disallowed loss = pool - allowed from stock - allowed from debt (Part III Column e)
 // IRC §1366(d)(1): losses limited to aggregate adjusted basis (stock first, then debt)
-function disallowedLoss(pool: number, stockBasis: number, debtBasis: number): number {
+function disallowedLoss(
+  pool: number,
+  stockBasis: number,
+  debtBasis: number,
+): number {
   const allowedFromStock = Math.min(pool, stockBasis);
   const remaining = pool - allowedFromStock;
   const allowedFromDebt = Math.min(remaining, debtBasis);
@@ -137,10 +166,84 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    if (
+      input.reviewed_debt_evidence?.kind ===
+        "prior_reduced_formal_note_repayment"
+    ) {
+      throw new Error(
+        "Form 7203 prior reduced note needs executor-owned prior filing and current payment bytes before tax posting",
+      );
+    }
+
     if ((input.prior_year_unallowed_loss ?? 0) > 0) {
       throw new Error(
         "Form 7203 prior-year basis carryover needs a source-linked current/prior loss allocation before Schedule 1 adjustment",
       );
+    }
+
+    const note = input.reviewed_debt_evidence;
+    if (
+      note?.kind === "new_2025_formal_notes" &&
+      (input.additional_contributions ?? 0) > 0
+    ) {
+      const ledger = input.reviewed_stock_loss_ledger;
+      if (
+        !ledger ||
+        reconcileCashCapitalAndNewNote(ledger, note) !==
+          input.additional_contributions ||
+        ledger.no_shareholder_debt_or_repayments ||
+        (input.ordinary_loss ?? 0) <=
+          ledger.beginning_stock_basis + input.additional_contributions
+      ) {
+        throw new Error(
+          "Form 7203 capital-and-debt loss needs reconciled capital and note source with loss reaching debt basis",
+        );
+      }
+    } else if (input.reviewed_stock_loss_ledger !== undefined) {
+      throw new Error(
+        "Form 7203 reviewed stock ledger in debt calculation requires the sourced capital-and-debt route",
+      );
+    }
+    if (
+      ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
+        note) &&
+      (!note || input.debt_basis_beginning !== undefined ||
+        input.new_loans !== note.cash_advance_amount +
+            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        input.stock_basis_beginning !== note.beginning_stock_basis ||
+        input.ordinary_loss !== note.current_box1_ordinary_loss ||
+        ((input.additional_contributions ?? 0) !== 0 &&
+          !input.reviewed_stock_loss_ledger) ||
+        (input.ordinary_income ?? 0) !== 0 ||
+        (input.tax_exempt_income ?? 0) !== 0 ||
+        (input.distributions ?? 0) !== 0 ||
+        (input.nondeductible_expenses ?? 0) !== 0 ||
+        (input.prior_year_unallowed_loss ?? 0) !== 0)
+    ) {
+      throw new Error(
+        "Form 7203 debt-supported loss needs identified formal-note source and matching current K-1 loss without other basis items",
+      );
+    }
+    if (note?.second_formal_note) {
+      const stock = input.stock_basis_beginning ?? 0;
+      const firstDebtBasis = note.cash_advance_amount -
+        sumPrincipalRepayments(note.principal_repayments);
+      const totalDebtBasis = firstDebtBasis +
+        note.second_formal_note.cash_advance_amount -
+        (note.second_formal_note.principal_repayment?.amount ?? 0);
+      const debtLoss = Math.min(
+        (input.ordinary_loss ?? 0) - stock,
+        totalDebtBasis,
+      );
+      if (
+        debtLoss <= 0 || !Number.isSafeInteger(
+          debtLoss * firstDebtBasis / totalDebtBasis,
+        )
+      ) {
+        throw new Error(
+          "Form 7203 two-note loss needs exact whole-dollar pro rata debt allocation",
+        );
+      }
     }
 
     const pool = totalLossPool(input);
@@ -158,7 +261,10 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const stockAfterDistrib = stockBasisAfterDistributions(stockAfterIncreases, input);
+    const stockAfterDistrib = stockBasisAfterDistributions(
+      stockAfterIncreases,
+      input,
+    );
     const stockBasis = tentativeStockBasis(stockAfterDistrib, input);
     const debtBasis = tentativeDebtBasis(input);
     const disallowed = disallowedLoss(pool, stockBasis, debtBasis);
@@ -172,8 +278,12 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     // (reduces the net S-corp loss already posted by the k1_s_corp upstream node)
     return {
       outputs: [
-        this.outputNodes.output(schedule1, { basis_disallowed_add_back: disallowed }),
-        this.outputNodes.output(agi_aggregator, { basis_disallowed_add_back: disallowed }),
+        this.outputNodes.output(schedule1, {
+          basis_disallowed_add_back: disallowed,
+        }),
+        this.outputNodes.output(agi_aggregator, {
+          basis_disallowed_add_back: disallowed,
+        }),
       ],
       carryforwards: { suspended_scorp_loss_7203: disallowed },
     };

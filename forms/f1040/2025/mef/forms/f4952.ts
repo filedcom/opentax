@@ -6,7 +6,14 @@ import { reconcileForm4952PartnershipPath } from "../../form4952_partnership_rec
 import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_1099int_reconciliation.ts";
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
+import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
+import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
+import {
+  hasForm4952PriorCarryforward,
+  reconcileForm4952PriorCarryforward,
+} from "../../form4952_prior_carryforward_reconciliation.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
 
 export interface Fields {
   line1?: number | null;
@@ -52,6 +59,46 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4952--2025.pdf",
   build(fields, context) {
+    if (hasForm4952PriorCarryforward(fields, context?.pending ?? {})) {
+      reconcileForm4952PriorCarryforward(
+        fields,
+        context?.pending ?? {},
+        context?.filer?.primarySSN,
+      );
+      if (!context?.filer) {
+        throw new Error(
+          "Form 4952 prior carryforward needs final filer identity",
+        );
+      }
+      throw new Error(
+        "Form 4952 prior carryforward export needs authenticated accepted 2024 filing and verified source bytes",
+      );
+    }
+    if (
+      fields.direct_debt_trace !== undefined ||
+      (context?.pending?.form4952 as Record<string, unknown> | undefined)
+          ?.direct_debt_trace !== undefined
+    ) {
+      reconcileForm4952DirectDebtExport(
+        fields,
+        context?.pending ?? {},
+        context?.filer?.primarySSN,
+        context?.filer?.filingStatus === FilingStatus.MarriedFilingJointly
+          ? context.filer.spouse?.ssn
+          : undefined,
+      );
+      if (!context?.filer) {
+        throw new Error(
+          "Form 4952 direct debt export needs final filer identity",
+        );
+      }
+    }
+    if (fields.source_k1_investment_interest !== undefined) {
+      if (!context?.filer) {
+        throw new Error("Form 4952 K-1 source needs final filer identity");
+      }
+      assertForm4952K1Recipients(context.pending ?? {}, context.filer);
+    }
     if (
       fields.source_1099_royalties !== undefined
     ) {
@@ -65,17 +112,17 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       );
     } else if (
       fields.source_1099_dividends !== undefined &&
-      fields.source_1099_interest !== undefined
-    ) {
-      reconcileForm4952CombinedPath(fields, context?.pending ?? {});
-    } else if (
-      fields.source_1099_dividends !== undefined &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099DivPath(
         fields,
         context?.pending ?? {},
       );
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_1099_interest !== undefined
+    ) {
+      reconcileForm4952CombinedPath(fields, context?.pending ?? {});
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, context?.pending ?? {});
     } else if (

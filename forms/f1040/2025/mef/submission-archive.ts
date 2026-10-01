@@ -1,8 +1,13 @@
-import { zipSync } from "fflate";
+import { unzipSync, zipSync } from "fflate";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
+import {
+  assertFilingResidencyReview,
+  type FilingResidencyReview,
+} from "./residency-review.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -11,14 +16,17 @@ export interface MefSubmissionArchiveOptions {
   readonly filer: FilerIdentity;
   readonly submissionId: string;
   readonly processingDate: Date;
+  readonly residencyReview: FilingResidencyReview;
 }
 
 export interface MefSubmissionArchive {
   readonly submissionId: string;
   readonly fileName: string;
+  readonly processingDate: Date;
   readonly bytes: Uint8Array;
   readonly manifestXml: string;
   readonly bundle: MefBundle;
+  readonly residencyReview: FilingResidencyReview;
 }
 
 export interface MefTransmissionSubmission {
@@ -29,6 +37,76 @@ export interface MefTransmissionSubmission {
 export interface MefTransmissionPackage {
   readonly sendSubmissionsRequestXml: string;
   readonly containerZipBytes: Uint8Array;
+}
+
+function sameBytes(
+  actual: Uint8Array | undefined,
+  expected: Uint8Array,
+): boolean {
+  return actual !== undefined && actual.length === expected.length &&
+    actual.every((byte, index) => byte === expected[index]);
+}
+
+function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+  let entries: Record<string, Uint8Array>;
+  try {
+    entries = unzipSync(archive.bytes);
+  } catch {
+    throw new Error("MeF transmission submission ZIP is unreadable");
+  }
+  const expectedFiles = [
+    "manifest/manifest.xml",
+    "xml/submission.xml",
+    ...archive.bundle.attachments.map((attachment) =>
+      `attachment/${attachment.fileName}`
+    ),
+  ];
+  if (
+    expectedFiles.length !== new Set(expectedFiles).size ||
+    Object.keys(entries).sort().join("\n") !==
+      expectedFiles.sort().join("\n") ||
+    !sameBytes(
+      entries["manifest/manifest.xml"],
+      encoder.encode(archive.manifestXml),
+    ) ||
+    !sameBytes(
+      entries["xml/submission.xml"],
+      encoder.encode(XML_DECLARATION + archive.bundle.xml),
+    ) ||
+    archive.bundle.attachments.some((attachment) =>
+      !sameBytes(entries[`attachment/${attachment.fileName}`], attachment.bytes)
+    )
+  ) {
+    throw new Error(
+      "MeF transmission submission ZIP differs from its prepared return",
+    );
+  }
+  const efin = /<EFIN>(\d{6})<\/EFIN>/.exec(archive.manifestXml)?.[1];
+  const tin = /<TIN>(\d{9})<\/TIN>/.exec(archive.manifestXml)?.[1];
+  const returnEfin = /<EFIN>(\d{6})<\/EFIN>/.exec(archive.bundle.xml)?.[1];
+  const returnTin = /<PrimarySSN>(\d{9})<\/PrimarySSN>/.exec(archive.bundle.xml)
+    ?.[1];
+  if (
+    !efin || !tin || efin !== returnEfin || tin !== returnTin ||
+    archive.manifestXml !== buildManifestXml(archive.submissionId, efin, tin)
+  ) {
+    throw new Error(
+      "MeF transmission submission manifest differs from its ID or prepared return",
+    );
+  }
+  const spouseTin = /<SpouseSSN>(\d{9})<\/SpouseSSN>/.exec(archive.bundle.xml)
+    ?.[1];
+  const statusCode =
+    /<IndividualReturnFilingStatusCd>([1-5])<\/IndividualReturnFilingStatusCd>/
+      .exec(archive.bundle.xml)?.[1];
+  assertFilingResidencyReview(
+    archive.residencyReview,
+    tin,
+    spouseTin,
+    Number(statusCode),
+    archive.processingDate,
+    archive.bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
+  );
 }
 
 function dayOfYear(date: Date): number {
@@ -112,6 +190,15 @@ export async function buildMefSubmissionArchive(
   ) {
     throw new Error("MeF submission differs from its prepared return");
   }
+  assertF1040FinalHeader(bundle.pending.f1040 ?? {}, options.filer);
+  const residencyReview = assertFilingResidencyReview(
+    options.residencyReview,
+    tin,
+    options.filer.spouse?.ssn.replaceAll("-", ""),
+    options.filer.filingStatus,
+    options.processingDate,
+    bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
+  );
   const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (
@@ -144,9 +231,11 @@ export async function buildMefSubmissionArchive(
   return {
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
+    processingDate: options.processingDate,
     bytes: zipSync(files, { level: 6 }),
     manifestXml,
     bundle,
+    residencyReview,
   };
 }
 
@@ -176,6 +265,7 @@ export function buildMefTransmissionPackage(
     if (Number.isNaN(electronicPostmark.getTime())) {
       throw new Error("MeF transmission needs a valid electronic postmark");
     }
+    assertPreparedArchiveContents(submission);
     files[submission.fileName] = submission.bytes;
     requestEntries.push(elements("SubmissionData", [
       element("SubmissionId", submission.submissionId),

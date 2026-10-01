@@ -1,5 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { assertOneBusiness8995 } from "../../mef/forms/f8995-route.ts";
+import {
+  assertNoUnfiled8995Loss,
+  assertPositive8995,
+} from "../../mef/forms/f8995-route.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -46,6 +49,7 @@ export const form8995Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     const deduction = fields.qbi_deduction;
     if (deduction === undefined || deduction === null || deduction === 0) {
+      assertNoUnfiled8995Loss(fields);
       return {};
     }
     if (
@@ -54,14 +58,18 @@ export const form8995Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8995 PDF needs a valid nonnegative QBI deduction");
     }
-    const { businessName, tin, qbi, lines } = assertOneBusiness8995(
+    const { businessName, tin, qbi, lines } = assertPositive8995(
       fields,
       allPending,
     );
     return {
-      line1_business_name: businessName,
-      line1_ein: tin.value,
-      line1_qbi: qbi,
+      ...(businessName && tin
+        ? {
+          line1_business_name: businessName,
+          line1_ein: tin.value,
+          line1_qbi: qbi,
+        }
+        : {}),
       ...Object.fromEntries(
         Object.entries(lines).map(([line, amount]) => [`line${line}`, amount]),
       ),

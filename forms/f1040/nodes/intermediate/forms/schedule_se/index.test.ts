@@ -150,13 +150,13 @@ Deno.test("calc_combined_c_and_f: schedule_c + schedule_f profits are summed", (
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
-Deno.test("calc_ministerial_loss_offsets_schedule_c_profit", () => {
+Deno.test("unsourced ministerial loss cannot offset Schedule C SE profit", () => {
   const result = compute({
     net_profit_schedule_c: 10_000,
     ministerial_se_earnings: -1_000,
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line4_se_tax, computeExpectedSeTax(9_000).seTax);
+  assertEquals(s2?.fields.line4_se_tax, computeExpectedSeTax(10_000).seTax);
 });
 
 Deno.test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE tax computed", () => {
@@ -346,9 +346,14 @@ Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_
   );
 });
 
-Deno.test("routing_includes_form7206_source_and_five_tax_outputs", () => {
+Deno.test("routing_includes_form7206_source_and_six_tax_outputs", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
-  assertEquals(result.outputs.length, 6);
+  assertEquals(result.outputs.length, 8);
+  const { seDeduction } = computeExpectedSeTax(10_000);
+  assertEquals(
+    round2(findOutput(result, "eitc")!.fields.se_tax_deduction as number),
+    round2(seDeduction),
+  );
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
@@ -426,7 +431,7 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_s
     round2(s1!.fields.line15_se_deduction as number),
     round2(expectedDeduction),
   );
-  assertEquals(result.outputs.length, 6);
+  assertEquals(result.outputs.length, 8);
 });
 
 // ── TY2025 Part II farm optional method ──────────────────────────────────────

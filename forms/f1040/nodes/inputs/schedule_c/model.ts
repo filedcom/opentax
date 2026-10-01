@@ -25,6 +25,12 @@ export const itemSchema = z.object({
   line_b_business_code: z.string(),
   line_c_business_name: z.string().optional(),
   business_reference: z.string().trim().min(1).optional(),
+  schedule_j_fishing_evidence: z.object({
+    business_reference: z.string().trim().min(1),
+    catch_sales_record_reference: z.string().trim().min(1),
+    harvested_fish_entered_commerce_verified: z.literal(true),
+    scientific_research_vessel: z.literal(false),
+  }).strict().optional(),
   // The bounded Form 8829 route checks taxpayer ownership separately.
   proprietor_recipient: z.nativeEnum(TS).optional(),
   line_d_ein: z.string().optional(),
@@ -149,6 +155,35 @@ export const itemSchema = z.object({
 
   // Part V: Other Expenses detail
   part_v_other_expenses: z.array(otherExpenseSchema).optional(),
+  // One current-year mining expense deducted in Part V and amortized over
+  // ten years for AMT. Earlier vintages and property-loss limits need their
+  // own basis workpapers.
+  amt_mining_cost_workpaper: z.object({
+    property_reference: z.string().trim().min(1),
+    reviewed_workpaper_reference: z.string().trim().min(1),
+    expense_description: z.string().trim().min(1),
+    paid_or_incurred_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    mining_exploration_or_development_verified: z.literal(true),
+    regular_ten_year_writeoff_not_elected: z.literal(true),
+    no_unamortized_property_loss: z.literal(true),
+  }).strict().optional(),
+  // One first-year, uncompleted non-home long-term contract excepted from
+  // percentage-of-completion for regular tax but refigured for AMT.
+  amt_long_term_contract_workpaper: z.object({
+    contract_reference: z.string().trim().min(1),
+    signed_contract_reference: z.string().trim().min(1),
+    cost_records_reference: z.string().trim().min(1),
+    cost_estimate_review_reference: z.string().trim().min(1),
+    fixed_contract_price: z.number().int().finite().positive(),
+    amt_allocable_costs_incurred_2025: z.number().int().finite().positive(),
+    amt_estimated_total_allocable_costs: z.number().int().finite().positive(),
+    began_in_2025: z.literal(true),
+    uncompleted_at_2025_year_end: z.literal(true),
+    non_home_construction_contract_verified: z.literal(true),
+    regular_section_460_e_1_exception_verified: z.literal(true),
+    regular_receipts_and_costs_deferred_verified: z.literal(true),
+    amt_cost_allocation_reviewed: z.literal(true),
+  }).strict().optional(),
 });
 
 export const inputSchema = z.object({
@@ -181,6 +216,79 @@ export const inputSchema = z.object({
   // Line 1 — Gross receipts or sales (from 1099-MISC, 1099-NEC, etc.)
   // Passthrough from upstream nodes routing to Schedule C
   line1_gross_receipts: z.number().nonnegative().optional(),
+  f1099m_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      box: z.enum([
+        "box1_rents",
+        "box2_royalties",
+        "box3_other_income",
+        "box5_fishing_boat",
+        "box6_medical_payments",
+        "box11_fish_purchased",
+      ]),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
+  f1099nec_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
+  f1099k_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      pse_name: z.string().trim().min(1),
+      pse_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      box1a_gross_payments: z.number().positive(),
+      personal_item_sales_gross: z.number().int().positive().optional(),
+      reported_error_gross: z.number().int().positive().optional(),
+      amount: z.number().positive(),
+      customer_refunds_review: z.array(
+        z.object({
+          original_payment_transaction_id: z.string().trim().min(1),
+          refund_transaction_id: z.string().trim().min(1),
+          amount: z.number().int().positive(),
+          refund_record_reference: z.string().trim().min(1),
+          issued_in_2025: z.literal(true),
+          same_business_sale: z.literal(true),
+          not_claimed_elsewhere: z.literal(true),
+        }).strict(),
+      ).min(1).optional(),
+      processor_fees_review: z.object({
+        amount: z.number().int().positive(),
+        fee_record_reference: z.string().trim().min(1),
+        for_service_payments_only: z.literal(true),
+        not_capitalized_or_deducted_elsewhere: z.literal(true),
+      }).strict().optional(),
+      not_included_in_schedule_c_receipts: z.number().nonnegative(),
+      allocation_reference: z.string().trim().min(1),
+      no_overlap_with_other_1099s: z.literal(true),
+      overlap_review_reference: z.string().trim().min(1),
+      duplicate_1099_review: z.object({
+        source_form: z.enum(["1099nec", "1099misc"]),
+        payer_tin: z.string().regex(/^\d{9}$/),
+        amount: z.number().int().positive(),
+        transaction_review_reference: z.string().trim().min(1),
+      }).strict().optional(),
+    }).strict(),
+  ).optional(),
+  attorney_fee_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().positive(),
+      allocation_review_reference: z.string().trim().min(1),
+    }).strict(),
+  ).optional(),
   // Statutory employee wages (from W-2 Box 13)
   // IRC §3121(d)(3); W-2 box 13 statutory employee checkbox
   statutory_wages: z.number().nonnegative().optional(),

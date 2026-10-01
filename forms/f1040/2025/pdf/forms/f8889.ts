@@ -2,9 +2,13 @@ import { z } from "zod";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   reconcileCode2Form8889,
+  reconcileDatedExceptionForm8889,
   reconcilePairedForm8889,
+  reconcilePrimaryLastMonthRuleForm8889,
+  reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
+import { reconcilePrimaryMixedMedicalForm8889 } from "../../form8889_mixed_medical_reconciliation.ts";
 
 // IRS Form 8889 (2025) AcroForm field names.
 // Verified against the f8889--2025.pdf AcroForm field dump (single page,
@@ -209,8 +213,12 @@ export const form8889Pdf: PdfFormDescriptor = {
       }
     }
     reconcileSpouseOnlyForm8889(forms, allPending, filer);
+    reconcileDatedExceptionForm8889(forms, allPending, filer);
     reconcileCode2Form8889(forms, allPending, filer);
+    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer);
+    reconcileRolloverForm8889(forms, allPending, filer);
     reconcilePairedForm8889(forms, allPending, filer);
+    reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer);
     return forms;
   },
   fields,

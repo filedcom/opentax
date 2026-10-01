@@ -34,17 +34,22 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const parts = ["A", "B", "C", "G", "H", "I", "D", "E", "F", "J", "K", "L"];
+  const transactions = parts.map((part, index) => ({
+    part,
+    description: `Asset ${part}`,
+    date_acquired: index < 6 ? "2025-01-01" : "2023-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 1000 + index,
+    cost_basis: 500,
+    gain_loss: 500 + index,
+    is_long_term: index >= 6,
+    ...(["A", "D"].includes(part)
+      ? { adjustment_codes: "O", adjustment_amount: 0 }
+      : {}),
+  }));
   const xml = buildMefXml({
-    form8949: parts.map((part, index) => ({
-      part,
-      description: `Asset ${part}`,
-      date_acquired: index < 6 ? "2025-01-01" : "2023-01-01",
-      date_sold: "2025-06-01",
-      proceeds: 1000 + index,
-      cost_basis: 500,
-      gain_loss: 500 + index,
-      is_long_term: index >= 6,
-    })),
+    schedule_d: { transaction: transactions },
+    form8949: transactions,
   }, filer);
   assertStringIncludes(
     xml,

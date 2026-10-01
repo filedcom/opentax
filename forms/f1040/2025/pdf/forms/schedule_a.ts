@@ -1,5 +1,15 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import {
+  assertForm1098Box6Sources,
+  assertForm1098MortgageLimitSources,
+  assertPurchasePointsCrossLoanSources,
+} from "../../../nodes/inputs/f1098/index.ts";
+import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
+import {
+  assertElectedSectionAReconciled,
+  assertOrdinarySectionAReconciled,
+} from "../../mef/forms/f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
 import {
@@ -167,6 +177,59 @@ export const scheduleAPdf: PdfFormDescriptor = {
     if (!(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0)) {
       return [];
     }
+    if (all?.f1098 !== undefined) {
+      if (!filer) {
+        throw new Error("Schedule A PDF Form 1098 box 6 needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertForm1098Box6Sources(
+        all.f1098,
+        recipients,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
+      assertForm1098MortgageLimitSources(
+        all.f1098,
+        recipients,
+        filer.filingStatus === FilingStatus.Single,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+        Number(input.line_8b_mortgage_interest_no_1098 ?? 0),
+        Number(input.line_8c_points_no_1098 ?? 0),
+        all.mortgage_refinance_points !== undefined,
+        all.form8396 !== undefined,
+      );
+      assertPurchasePointsCrossLoanSources(
+        all.f1098,
+        recipients,
+        filer.filingStatus === FilingStatus.Single,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+        Number(input.line_8b_mortgage_interest_no_1098 ?? 0),
+        Number(input.line_8c_points_no_1098 ?? 0),
+        all.mortgage_refinance_points !== undefined,
+        all.form8396 !== undefined,
+      );
+    }
+    if (all?.mortgage_refinance_points !== undefined) {
+      if (!filer) {
+        throw new Error("Schedule A refinance points PDF needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertRefinancePointsSource(
+        all.mortgage_refinance_points,
+        all.f1098,
+        recipients,
+        Number(input.line_8c_points_no_1098 ?? 0),
+      );
+    }
     const hasPriorCarryover = [
       input.capital_gain_property_carryovers,
       all?.schedule_a?.capital_gain_property_carryovers,
@@ -253,6 +316,28 @@ export const scheduleAPdf: PdfFormDescriptor = {
       !hasPriorCarryover
     ) {
       assertElectedSectionAReconciled({ pending: all }, input);
+    }
+    const noncashItems = all?.schedule_a?.noncash_contribution_items;
+    const hasUnrelatedUseGift = Array.isArray(noncashItems) &&
+      noncashItems.some((item) =>
+        item !== null && typeof item === "object" &&
+        (item as Record<string, unknown>)
+            .unrelated_use_capital_gain_reduction_confirmed === true
+      );
+    if (hasUnrelatedUseGift && !all?.f8283) {
+      throw new Error(
+        "Schedule A unrelated-use capital-gain reduction PDF needs its linked Form 8283 source",
+      );
+    }
+    const form8283Source = all?.f8283
+      ? form8283InputSchema.parse(all.f8283)
+      : undefined;
+    if (
+      (form8283Source?.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled({ pending: all }, input);
     }
     const amount = (key: string) => Number(input[key] ?? 0);
     if (

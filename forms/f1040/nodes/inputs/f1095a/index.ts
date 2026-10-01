@@ -8,6 +8,7 @@ import {
   sharedPolicyAllocationSchema,
 } from "../../intermediate/forms/form8962/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { roundForm8962Amounts } from "../../../2025/form8962-money.ts";
 
 // Form 1095-A — Health Insurance Marketplace Statement
 // IRS Form 1095-A, Parts I–III
@@ -62,6 +63,35 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     basis: z.literal("other_agreed"),
     situations_1_to_3_reviewed_and_inapplicable: z.literal(true),
     other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    // Situation 4 can allocate with a taxpayer who is not enrolled. The
+    // covered person belongs to that taxpayer's 2025 tax family instead.
+    other_family_claim_review: z.object({
+      covered_individual_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      policy_number: z.string().trim().min(1),
+      tax_year: z.literal(2025),
+      other_taxpayer_claims_covered_individual: z.literal(true),
+      marketplace_enrollment_reference: z.string().trim().min(1),
+      tax_family_review_reference: z.string().trim().min(1),
+      tax_family_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      allocation_agreement_reference: z.string().trim().min(1),
+      allocation_agreement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      filer_allocation_pct: allocationPctSchema,
+    }).strict().optional(),
+    // Reviewed period-specific agreement when a policy's Situation 4
+    // percentage changes during the year.
+    agreement_review: z.object({
+      tax_year: z.literal(2025),
+      policy_number: z.string().trim().min(1),
+      filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      start_month: z.number().int().min(1).max(12),
+      end_month: z.number().int().min(1).max(12),
+      filer_allocation_pct: allocationPctSchema,
+      both_taxpayers_agreed: z.literal(true),
+      agreement_reference: z.string().trim().min(1),
+      agreement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    }).strict().optional(),
     start_month: z.number().int().min(1).max(12),
     end_month: z.number().int().min(1).max(12),
     allocation_pct: allocationPctSchema,
@@ -89,6 +119,9 @@ export const itemSchema = z.object({
   // Part I — Issuer / Marketplace information
   issuer_name: z.string().trim().min(1),
   policy_number: z.string().trim().min(1).optional(),
+  // Form 1095-A Part I line 5 recipient, who may be different from a covered
+  // enrollee. For the bounded Situation 4 route, this is the filing taxpayer.
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   // The Marketplace checked CORRECTED on this source statement. When both
   // versions are retained, only this statement supplies Form 8962 amounts.
   corrected_box_checked: z.literal(true).optional(),
@@ -134,6 +167,10 @@ export const itemSchema = z.object({
         "marketplace_tool",
         "marketplace_contact",
       ]),
+      determination_reference: z.string().trim().min(1).optional(),
+      determination_record_sha256: z.string().regex(/^[a-f0-9]{64}$/)
+        .optional(),
+      determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }).strict(),
   ).min(1).optional(),
   // Separate source records for a no-APTC positive PTC claim. The Marketplace
@@ -147,10 +184,52 @@ export const itemSchema = z.object({
       marketplace_reference: z.string().trim().min(1),
       marketplace_determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       marketplace_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      premium_paid: z.number().nonnegative(),
-      premium_paid_in_full_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      premium_payment_reference: z.string().trim().min(1),
-      premium_payment_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      premium_payment: z.discriminatedUnion("status", [
+        z.object({
+          status: z.literal("paid_in_full"),
+          amount: z.number().nonnegative(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
+        z.object({
+          status: z.literal("protected_partial"),
+          amount: z.number().positive(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          protection_basis: z.literal("premium_payment_threshold"),
+          minimum_payment_to_avoid_termination: z.number().positive(),
+          issuer_coverage_provided: z.literal(true),
+          issuer_confirmation_reference: z.string().trim().min(1),
+          issuer_confirmation_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
+        z.object({
+          status: z.literal("emergency_order_partial"),
+          amount: z.number().positive(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          order_state: z.string().regex(/^[A-Z]{2}$/),
+          emergency_state: z.string().regex(/^[A-Z]{2}$/),
+          emergency_declaration_reference: z.string().trim().min(1),
+          emergency_declaration_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          emergency_declared_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          emergency_expires_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_identifier: z.string().trim().min(1),
+          order_issuing_authority: z.literal("state_insurance_department"),
+          order_issued_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_effective_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_effective_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_prohibits_termination: z.literal(true),
+          order_protected_month: z.number().int().min(1).max(12),
+          order_reference: z.string().trim().min(1),
+          order_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          issuer_coverage_provided: z.literal(true),
+          issuer_confirmation_reference: z.string().trim().min(1),
+          issuer_confirmation_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
+      ]),
     }).strict(),
   ).min(1).max(12).optional(),
   // Known changes that can make reported column B inaccurate. A change not
@@ -322,6 +401,12 @@ function hasNonZero(arr: number[]): boolean {
   return arr.some((v) => v > 0);
 }
 
+function validIsoDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
 class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1095a";
   readonly inputSchema = inputSchema;
@@ -335,6 +420,50 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       .parse(input);
     const f1095as = current1095AStatements(sourceStatements);
     verifyPolicyCoverageIdentities(f1095as);
+    const hasProtectedPartial = f1095as.some((item) =>
+      item.no_aptc_monthly_evidence?.some((evidence) =>
+        evidence.premium_payment.status !== "paid_in_full"
+      )
+    );
+    const sequentialNoAptcPartial = f1095as.length >= 2 &&
+      f1095as.length <= 12 &&
+      f1095as.every((item) => {
+        const covered = item.monthly_premiums?.flatMap((premium, index) =>
+          premium > 0 ? [index] : []
+        ) ?? [];
+        return !!item.coverage_state &&
+          item.coverage_state === f1095as[0].coverage_state &&
+          item.covered_individual_ssns?.length === 1 &&
+          !!item.covered_individual_ssns?.[0] &&
+          item.covered_individual_ssns?.[0] ===
+            f1095as[0].covered_individual_ssns?.[0] &&
+          item.monthly_aptcs?.every((amount) =>
+            amount === 0
+          ) &&
+          item.no_aptc_monthly_evidence !== undefined &&
+          item.shared_policy_periods === undefined &&
+          item.alternative_marriage_owner === undefined &&
+          covered.length > 0 && covered.every((month, index) =>
+            index === 0 || month === covered[index - 1] + 1
+          );
+      }) &&
+      Array.from(
+        { length: 12 },
+        (_, month) =>
+          f1095as.filter((item) => (item.monthly_premiums?.[month] ?? 0) > 0)
+            .length <= 1,
+      ).every(Boolean);
+    if (
+      hasProtectedPartial && !sequentialNoAptcPartial &&
+      (f1095as.length !== 1 ||
+        f1095as[0].shared_policy_periods !== undefined ||
+        !f1095as[0].monthly_premiums || !f1095as[0].monthly_aptcs ||
+        f1095as[0].monthly_aptcs.some((amount) => amount !== 0))
+    ) {
+      throw new Error(
+        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
+      );
+    }
     const hasMarriageOwner = f1095as.some((item) =>
       item.alternative_marriage_owner !== undefined
     );
@@ -517,9 +646,64 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
           "Form 1095-A missing column B needs corrected SLCSP for every covered month",
         );
       }
+      const adjustedPremiums = [...item.monthly_premiums];
+      let hasProtectedPartial = false;
+      for (const proof of item.no_aptc_monthly_evidence ?? []) {
+        const payment = proof.premium_payment;
+        if (payment.status === "paid_in_full") continue;
+        const reportedPremium = item.monthly_premiums[proof.month - 1];
+        const monthStart = `2025-${String(proof.month).padStart(2, "0")}-01`;
+        const monthEnd = new Date(Date.UTC(2025, proof.month, 0))
+          .toISOString().slice(0, 10);
+        if (
+          reportedPremium <= 0 || payment.amount >= reportedPremium ||
+          !validIsoDate(payment.paid_on) ||
+          payment.paid_on > "2026-04-15" ||
+          (payment.status === "protected_partial" &&
+            payment.amount < payment.minimum_payment_to_avoid_termination) ||
+          (payment.status === "emergency_order_partial" &&
+            (payment.order_state !== item.coverage_state ||
+              payment.emergency_state !== item.coverage_state ||
+              payment.order_protected_month !== proof.month ||
+              !validIsoDate(payment.order_effective_start) ||
+              !validIsoDate(payment.order_effective_end) ||
+              !validIsoDate(payment.emergency_declared_on) ||
+              !validIsoDate(payment.emergency_expires_on) ||
+              !validIsoDate(payment.order_issued_on) ||
+              payment.emergency_declared_on > payment.order_issued_on ||
+              payment.emergency_expires_on < payment.order_issued_on ||
+              payment.order_effective_start > payment.order_effective_end ||
+              payment.order_effective_start > monthEnd ||
+              payment.order_effective_end < monthStart))
+        ) {
+          throw new Error(
+            `Form 1095-A protected partial payment for month ${proof.month} does not establish a covered paid premium`,
+          );
+        }
+        adjustedPremiums[proof.month - 1] = payment.amount;
+        hasProtectedPartial = true;
+      }
+      const noAptcMonthlyClaim = (f1095as.length === 1 ||
+        sequentialNoAptcPartial) &&
+        item.no_aptc_monthly_evidence !== undefined &&
+        item.monthly_aptcs.every((amount) => amount === 0) &&
+        item.shared_policy_periods === undefined &&
+        (hasProtectedPartial || sequentialNoAptcPartial ||
+          adjustedPremiums.some((amount) => amount !== adjustedPremiums[0]) ||
+          slcsps.some((amount) => amount !== slcsps[0]));
       return {
         ...item,
-        monthly_slcsps: slcsps,
+        // Form 8962 electronic entries are whole dollars. Keep the original
+        // 1095-A and payment amounts in the source record for filing checks.
+        monthly_premiums: noAptcMonthlyClaim
+          ? adjustedPremiums.map(Math.round)
+          : hasProtectedPartial
+          ? adjustedPremiums
+          : item.monthly_premiums,
+        annual_premium: noAptcMonthlyClaim || hasProtectedPartial
+          ? undefined
+          : item.annual_premium,
+        monthly_slcsps: noAptcMonthlyClaim ? slcsps.map(Math.round) : slcsps,
         // The reported annual column B was checked against the reported
         // monthly column above; it does not total the corrected SLCSP series.
         annual_slcsp: undefined,
@@ -817,7 +1001,23 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       activePremiums[0] > 0 && activeSlcsps[0] > 0 &&
       activePremiums.every((amount) => amount === activePremiums[0]) &&
       activeSlcsps.every((amount) => amount === activeSlcsps[0]) &&
+      f1095as.every((item) =>
+        !item.no_aptc_monthly_evidence ||
+        (item.monthly_premiums?.every((amount) =>
+          amount === item.monthly_premiums![0]
+        ) &&
+          item.slcsp_corrections?.every((correction) =>
+            correction.corrected_slcsp ===
+              item.slcsp_corrections![0].corrected_slcsp
+          ) &&
+          item.no_aptc_monthly_evidence.every((proof) =>
+            proof.premium_payment.status === "paid_in_full"
+          ))
+      ) &&
       allocatedItems.every((item) =>
+        !item.no_aptc_monthly_evidence?.some((proof) =>
+          proof.premium_payment.status !== "paid_in_full"
+        ) &&
         !item.shared_policy_periods &&
         item.monthly_premiums && item.monthly_slcsps && item.monthly_aptcs &&
         item.monthly_premiums[0] > 0 && item.monthly_slcsps[0] > 0 &&
@@ -830,6 +1030,156 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       )
     ) {
       form8962Fields.annual_line11_eligible = true;
+    }
+    const annualCentsPolicy = allocatedItems.length === 1 &&
+      form8962Fields.annual_line11_eligible === true &&
+      allocatedItems[0].no_aptc_monthly_evidence !== undefined &&
+      allocatedItems[0].monthly_aptcs?.every((amount) => amount === 0) &&
+      allocatedItems[0].annual_premium !== undefined &&
+      (allocatedItems[0].monthly_premiums!.some((amount) =>
+        !Number.isInteger(amount)
+      ) || allocatedItems[0].monthly_slcsps!.some((amount) =>
+        !Number.isInteger(amount)
+      ));
+    if (annualCentsPolicy) {
+      // Line 11 uses the annual 1095-A totals, rounded once. The source
+      // monthly rows remain available for independent filing reconciliation.
+      form8962Fields.annual_premium = Math.round(
+        allocatedItems[0].annual_premium!,
+      );
+      form8962Fields.annual_slcsp = Math.round(
+        allocatedItems[0].monthly_slcsps!.reduce(
+          (sum, amount) => sum + amount,
+          0,
+        ),
+      );
+      form8962Fields.annual_aptc = 0;
+      delete form8962Fields.monthly_premiums;
+      delete form8962Fields.monthly_slcsps;
+      delete form8962Fields.monthly_aptcs;
+    }
+    const twoNoAptcCentsPolicies = allocatedItems.length === 2 &&
+      allocatedItems.every((item) =>
+        item.no_aptc_monthly_evidence !== undefined &&
+        item.monthly_premiums !== undefined &&
+        item.monthly_slcsps !== undefined &&
+        item.monthly_aptcs?.every((amount) => amount === 0) &&
+        item.shared_policy_periods === undefined &&
+        item.slcsp_review_periods === undefined &&
+        item.alternative_marriage_owner === undefined
+      ) &&
+      allocatedItems.some((item) =>
+        [
+          ...item.monthly_premiums!,
+          ...item.monthly_slcsps!,
+          item.annual_premium,
+        ].some((amount) => amount !== undefined && !Number.isInteger(amount))
+      );
+    if (twoNoAptcCentsPolicies) {
+      if (form8962Fields.annual_line11_eligible === true) {
+        if (allocatedItems.some((item) => item.annual_premium === undefined)) {
+          throw new Error(
+            "Form 8962 two-policy annual no-APTC cents need both Form 1095-A line 33 premiums",
+          );
+        }
+        form8962Fields.annual_premium = roundForm8962Amounts(
+          allocatedItems.map((item) => item.annual_premium!),
+        );
+        form8962Fields.annual_slcsp = roundForm8962Amounts(activeSlcsps!);
+        form8962Fields.annual_aptc = 0;
+        delete form8962Fields.monthly_premiums;
+        delete form8962Fields.monthly_slcsps;
+        delete form8962Fields.monthly_aptcs;
+      } else {
+        form8962Fields.monthly_premiums = activePremiums!.map((_, month) =>
+          roundForm8962Amounts(
+            allocatedItems.map((item) => item.monthly_premiums![month]),
+          )
+        );
+        form8962Fields.monthly_slcsps = activeSlcsps!.map((slcsp) =>
+          roundForm8962Amounts([slcsp])
+        );
+        form8962Fields.monthly_aptcs = Array(12).fill(0);
+        delete form8962Fields.annual_premium;
+        delete form8962Fields.annual_slcsp;
+        delete form8962Fields.annual_aptc;
+      }
+    }
+    const aptcCentsPolicies = allocatedItems.length > 0 &&
+      allocatedItems.every((policy) =>
+        policy.monthly_premiums !== undefined &&
+        policy.monthly_slcsps !== undefined &&
+        policy.monthly_aptcs?.some((amount) => amount > 0) &&
+        policy.shared_policy_periods === undefined &&
+        policy.slcsp_corrections === undefined &&
+        policy.slcsp_review_periods === undefined &&
+        policy.alternative_marriage_owner === undefined
+      ) &&
+      allocatedItems.some((policy) =>
+        [
+          ...policy.monthly_premiums!,
+          ...policy.monthly_slcsps!,
+          ...policy.monthly_aptcs!,
+          policy.annual_premium,
+          policy.annual_slcsp,
+          policy.annual_aptc,
+        ].some((amount) => amount !== undefined && !Number.isInteger(amount))
+      );
+    if (aptcCentsPolicies) {
+      const slcspByState = (month?: number) => {
+        const amounts = new Map<string, number>();
+        for (const policy of allocatedItems) {
+          const amount = month === undefined
+            ? policy.annual_slcsp!
+            : policy.monthly_slcsps![month];
+          if (amount > 0 && !amounts.has(policy.coverage_state ?? "")) {
+            amounts.set(policy.coverage_state ?? "", amount);
+          }
+        }
+        return [...amounts.values()];
+      };
+      if (form8962Fields.annual_line11_eligible === true) {
+        if (
+          allocatedItems.some((policy) =>
+            policy.annual_premium === undefined ||
+            policy.annual_slcsp === undefined ||
+            policy.annual_aptc === undefined
+          )
+        ) {
+          throw new Error(
+            "Form 8962 annual APTC cents need all three Form 1095-A line 33 totals",
+          );
+        }
+        form8962Fields.annual_premium = roundForm8962Amounts(
+          allocatedItems.map((policy) => policy.annual_premium!),
+        );
+        form8962Fields.annual_slcsp = roundForm8962Amounts(
+          slcspByState(),
+        );
+        form8962Fields.annual_aptc = roundForm8962Amounts(
+          allocatedItems.map((policy) => policy.annual_aptc!),
+        );
+        delete form8962Fields.monthly_premiums;
+        delete form8962Fields.monthly_slcsps;
+        delete form8962Fields.monthly_aptcs;
+      } else {
+        form8962Fields.monthly_premiums = activePremiums!.map((_, month) =>
+          roundForm8962Amounts(
+            allocatedItems.map((policy) => policy.monthly_premiums![month]),
+          )
+        );
+        form8962Fields.monthly_slcsps = activeSlcsps!.map((_, month) =>
+          roundForm8962Amounts(slcspByState(month))
+        );
+        form8962Fields.monthly_aptcs = activeAptcs!.map((_, month) =>
+          roundForm8962Amounts(
+            allocatedItems.map((policy) => policy.monthly_aptcs![month]),
+          )
+        );
+        delete form8962Fields.annual_premium;
+        delete form8962Fields.annual_slcsp;
+        delete form8962Fields.annual_aptc;
+      }
     }
     if (sharedAllocations.length > 0) {
       form8962Fields.shared_policy_allocations = sharedAllocations;

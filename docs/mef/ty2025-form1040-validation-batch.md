@@ -111,6 +111,136 @@ ignored tests reported, in 14m11s. Deno was 2.7.7, `xmllint` used libxml
 `.state/research/ty2025-full-test-15d5430d.log`. Wider source and ATS gates
 remain open.
 
+The next synthetic review adds a wind facility and a geothermal facility on
+separate Form 8835 copies. Wind uses line 1a and geothermal line 1c; each
+contributes $600 to a separate Form 3800 Part V row and the $1,200 return-wide
+credit. The mixed return passes local TY2025 v5.4 XSD, the canonical IRS
+Form 8835 field-name check, and focused source/PDF cases. Its 20-page PDF was
+rendered; both Form 8835 copies and the Form 3800 Part V page were inspected.
+The corrected 2026-09-29-v20 directory holds 20 PDFs (155 pages) and 20 XML
+files. Its geothermal and wind sources have reviewed 1.5 MW maximum net output,
+1,500 kW AC capacity, and post-January-2023 construction dates consistent with
+their no-increase answers. This set supersedes the earlier Form 8835 samples
+whose pre-cutoff construction dates and sub-1-MW AC capacities conflicted with
+those answers; the earlier generated packets remain diagnostic artifacts.
+The fixed-source `deno task test` run on `08786417` completed at 2026-09-29
+11:04 UTC: 8,860/8,860 passed, zero failed, no ignored tests reported, in
+15m48s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is `.state/research/ty2025-full-test-08786417.log`.
+The final release batch still follows the unresolved source and ATS gates.
+
+The next fully synthetic nonpassive New Markets case supplies a $10,000
+qualified equity investment and computes $500 on Form 8874. The same amount
+prints on Form 3800 Part III line 1i and line 38, Schedule 3 line 6a, and
+Form 1040 line 20. Its native `IRS8874` and parent return pass the local
+TY2025 v5.4 XSD; focused Form 8874 projection and prepared-return checks pass.
+The first filled Form 8874 render exposed a three-line CDE address that crossed
+the row boundary. The corrected two-line name/address field was rendered and
+visually checked with Form 3800 Part III. The corrected
+`2026-09-29-v23` directory holds 21 PDFs (170 pages) and 21 XML files. Longer
+CDE text, multiple investments, other credit combinations, and the final
+release batch remain open.
+
+The fixed-source `deno task test` run on `5eeb5e6b` completed at
+2026-09-29 12:05 UTC: 8,862/8,862 passed, zero failed, no ignored tests
+reported, in 20m21s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
+Poppler was 26.03.0. Its retained log is
+`.state/research/ty2025-full-test-5eeb5e6b.log`.
+
+The next two New Markets review cases use two and six direct investments.
+The two-row case prints a first-year 5% $500 credit and fourth-year 6% $600
+credit; the full-capacity case prints six $500 rows. Their $1,100 and $3,000
+totals reach Form 3800 Part III line 1i and line 38, Schedule 3 line 6a,
+and Form 1040 line 20. The focused prepared-return and 23-fixture local
+TY2025 v5.4 XSD suite passed 30/30. Both Form 8874 pages and the parent
+Part III page were rendered and visually checked, including row 6. The
+`2026-09-29-v25` review directory holds 23 PDFs (200 pages) and 23 XML files.
+Long CDE text, passive combinations, source authentication, and the final
+release batch remain open.
+
+The fixed-source `deno task test` run on `f0839295` completed at
+2026-09-29 12:39 UTC: 8,866/8,866 passed, zero failed, no ignored tests
+reported, in 20m30s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
+Poppler was 26.03.0. Its retained log is
+`.state/research/ty2025-full-test-f0839295.log`.
+
+One further synthetic return combines a $600 geothermal Form 8835 and a
+$500 New Markets Form 8874 on separate prepared Form 3800 Part III lines 4e
+and 1i. The prior Form 8835 PDF guard incorrectly equated its source amount
+with the whole return credit; it now requires exact prepared line 4e source
+and applied amounts and checks the parent total separately. A changed
+prepared line 4e test rejects the packet. Local TY2025 v5.4 XML validation
+and focused PDF tests pass. The 18-page packet's Form 3800 Part III, Form
+8835, and Form 8874 pages were rendered and reviewed; Schedule 3 line 6a
+and Form 1040 line 20 each print $1,100. The
+`2026-09-29-v26` review directory holds 24 PDFs (218 pages) and 24 XML files.
+The fixed-source `deno task test` run on `81a2c713` completed at 2026-09-29
+13:37 UTC: 8,869/8,869 passed, zero failed, no ignored tests reported, in
+20m35s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-81a2c713.log`. The final release batch
+remains open.
+
+The 25th synthetic return has seven $10,000 New Markets investments. Its
+Form 8874 last row points to a supplemental page listing the sixth and
+seventh investments; the $1,000 attached subtotal joins five direct $500
+credits to make $3,500 on Form 8874, Form 3800, Schedule 3, and Form 1040.
+The Form 8874 and statement pages were rendered and reviewed, its 16-page
+PDF has SHA-256
+`7d277794aea0a0e8667f6020a28083f653cb0eea3d97b3cb6565c2884a0824cd`,
+and all 25 review fixtures pass local TY2025 v5.4 XSD. The
+`2026-09-29-v27` review directory holds 25 PDFs (234 pages) and 25 XML files.
+The final all-routes PDF and release batch gates remain open.
+
+The fixed-source `deno task test` run on `bc556b01` completed at 2026-09-29
+14:05 UTC: 8,873/8,873 passed, zero failed, no ignored tests reported, in
+16m39s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-bc556b01.log`.
+
+The 26th synthetic return has 24 New Markets investments and a two-page
+Form 8874 continuation statement. Five $500 credits print on the form, a
+$9,500 last-row total covers the remaining nineteen, and $12,000 joins Form
+8874, Form 3800, Schedule 3, and Form 1040. Its native XML passes the local
+TY2025 v5.4 XSD; Form 8874 and both continuation pages in the 21-page
+packet were rendered and reviewed. The PDF SHA-256 is
+`f34eb17b6b92ad02294e788c792950082f5ef3a40e633b60bf42d3a8fa5de602`.
+The `2026-09-29-v28` directory holds 26 PDFs (255 pages) and 26 XML files.
+The broader filled-PDF and release gates remain open.
+
+The 27th synthetic return has one New Markets investment with a schema-valid
+long CDE name and address. Form 8874 row 6 says "See attached" with the $500
+credit, and the appended six-column statement wraps the complete CDE identity.
+Form 3800, Schedule 3, and Form 1040 each reconcile to $500. The native return
+passes the local TY2025 v5.4 XSD; the Form 8874 and statement pages in the
+16-page packet were rendered and visually reviewed. Its PDF SHA-256 is
+`6cf8c2689fb337831cb0ade1a187e37f5b1f8d4514d23a09408958ebaa4d97c6`.
+The `2026-09-29-v29` directory holds 27 PDFs (271 pages) and 27 XML files.
+The broader filled-PDF and release gates remain open.
+
+The fixed-source `deno task test` run on `7318ed47` completed at 2026-09-29
+15:04 UTC: 8,880/8,880 passed, zero failed, no ignored tests reported, in
+16m42s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-7318ed47.log`.
+
+A separate Form 3800 carryover-history diagnostic now renders nine checked
+synthetic credit vintages over two letter-size pages. Both pages were visually
+inspected, and text extraction finds all nine source headings. It is a
+standalone statement proof, not one of the 27 prepared return packets; a
+carryover return still needs source binding, native Part IV/VI rows, and a
+linked attachment. The fixed-source `deno task test` run on `500bd115`
+completed at 2026-09-29 16:48 UTC: 8,886/8,886 passed, zero failed, no
+ignored tests reported, in 15m51s. Its retained log is
+`.state/research/ty2025-full-test-500bd115.log`. The later type-only import
+correction on `1087f488` passed focused lint and the two statement tests.
+
+The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
+14:29 UTC: 8,875/8,875 passed, zero failed, no ignored tests reported, in
+15m57s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-9175f7c1.log`.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,
@@ -133,8 +263,9 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-sixteen synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
-run them through the real return graph and PDF builder. On 2026-09-29, all sixteen
+sixty synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+can run them through the real return graph and PDF builder. Earlier on
+2026-09-29, the first sixteen
 generated 94 pages successfully under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v10/`
 and all sixteen source returns passed TY2025 v5.4 XSD validation. The earlier
@@ -161,10 +292,30 @@ coverage of all registered PDF descriptors:
 | `single-w2-refund`                       | Two 1040 pages, Single and digital-assets No checkboxes, wages, withholding and refund                             |
 | `single-child-unearned-income`           | 1040, Schedule B, and Form 8615; parent MFJ status and the $412 Form 8615/1040 line 16 join                         |
 | `single-high-wage-no-niit`               | Form 8960 filed above the MAGI threshold with zero NIIT; Form 8959 and Schedule 2 carry $180 Additional Medicare Tax |
+| `single-two-partnership-code-j-recoveries` | Two K-1 code J recoveries, separate native type rows, Schedule 1 line 8z and Form 1040 line 8/AGI                  |
+| `single-two-partnership-code-e-cod` | Two fully taxable K-1 code E debts, Schedule 1 line 8c and Form 1040 line 8/AGI; no Form 982 or Form 1099-C |
+| `single-partnership-code-k-and-w2g` | Two nonbusiness K-1 code K winnings and a distinct W-2G combine on Schedule 1 line 8b; W-2G withholding reaches Form 1040 |
+| `single-two-partnership-code-s-capital` | Two reviewed nonpassive K-1 code S amounts reach Schedule D lines 5/12 and Form 1040 line 7a/AGI |
+| `single-partnership-code-l-r-ordinary` | Two K-1 code L/R ordinary rows reach Form 4797 line 10, Schedule 1 line 4, and Form 1040 line 8/AGI |
+| `single-six-partnership-code-l-r-continuation` | Six reviewed K-1 code L/R rows reach Form 4797 line 10; three print directly and three on a numbered continuation, with Schedule 1 and Form 1040 reconciled |
+| `single-sourced-collectibles-gain`        | Form 8949 Part II box E and Schedule D lines 9/18 carry a sourced $3,000 collectible gain to Form 1040              |
+| `single-short-and-long-form8949-sales`   | Form 8949 boxes B/F, Schedule D lines 2/10 and short/long totals, and Form 1040 capital gain                        |
+| `single-direct-broker-basis-sales`        | Unadjusted basis-reported sales on Schedule D lines 1a/8a with no Form 8949 document or PDF page                    |
+| `single-direct-and-adjusted-broker-sales` | Direct Schedule D line 1a and adjusted Form 8949 box A/line 1b in the same source-backed return                    |
 | `joint-two-w2s`                          | MFJ and spouse identity, combined W-2 amounts without duplicate pages                                              |
+| `joint-two-w2s-schedule-lep`             | Two separately owned language requests, native LEP documents, and one printable page per spouse                    |
+| `single-reviewed-car-loan-schedule1a`   | Reviewed VIN and loan interest to Schedule 1-A Part IV lines 22–30/38 and Form 1040 line 13b                     |
+| `single-three-car-loan-schedule1a` | Three reviewed VINs, a line 22 continuation, and $4,000 reconciled on Schedule 1-A and Form 1040 |
+| `single-two-w2-flsa-overtime-schedule1a` | Two reviewed W-2 box 14 premiums to Schedule 1-A Part III lines 14a/14c/15/21/38 and Form 1040 line 13b       |
+| `single-w2-qualified-tips-schedule1a`   | W-2 box 7 and TTOC 102 to Schedule 1-A Part II lines 4a/4c/6/7/13/38 and Form 1040 line 13b                      |
+| `single-two-w2-qualified-tips-schedule1a` | Two employer-identified box 7 tip sources reach line 4c through a printed worksheet, then Form 1040 line 13b |
+| `joint-senior-schedule1a`                | Two senior owners, Schedule 1-A Parts I/V/VI and Form 1040 line 13b; four-page identity and amount review          |
 | `single-schedule-c`                      | Schedule C page order and business boxes, Schedule SE/1/2, Form 8995, Form 1040 amount owed                        |
 | `single-two-at-risk-business-losses`     | Two source-backed Form 6198 pages, three Schedule C activities, and $1,600 on Schedule 1 line 3                  |
 | `single-direct-pension-rollover`         | 1040 lines 5a/5b and affirmative line 5c rollover box, with no inferred QCD                                        |
+| `single-ira-rollover`                    | 1040 lines 4a/4b and affirmative line 4c(1) rollover box from dated IRA-to-IRA evidence; pension line 5c blank    |
+| `single-ira-qualified-plan-rollover`     | Form 1040 line 4c(1), linked native IRA statement, and a matching qualified-plan explanation page in the PDF      |
+| `single-ira-2026-rollover`               | Form 1040 line 4c(1), linked native IRA statement, and a matching 2026-completion explanation page in the PDF      |
 | `single-hsa-code2-excess`                | Form 8889 lines 14a/14b/14c, Schedule 1 line 8z earnings, and Form 1040 line 8                                     |
 | `joint-two-hsa-owners`                   | Two separately identified Form 8889 pages, Schedule 1 and Form 1040 deduction reconciliation                       |
 | `single-marketplace-aptc-repayment`      | Form 8962 two-page monthly PTC calculation, one 1095-A policy, capped excess APTC through Schedule 2 and Form 1040 |
@@ -174,6 +325,18 @@ coverage of all registered PDF descriptors:
 | `single-nonparticipating-rental-loss`    | Schedule E loss, Form 8582 Part V/worksheet rows, three-page order and no unsupported current loss deduction       |
 | `single-elected-lump-sum-part-ii`        | Form 4972 Part-II-only capital-gain election from a matching 1099-R; ordinary share and special tax on Form 1040   |
 | `single-foreign-interest-current-excess` | Source-joined 1099-INT, standard-deduction Form 1116 Part I/III/IV, current-year excess Schedule B, Schedule 3     |
+
+The 2026-09-30 direct-pension-rollover review found a missing Form 1040 line
+5a amount in the earlier generated packet. The source Form 1099-R had a $20,000
+code-G distribution, while both Form 1040 PDF and native XML omitted its gross
+amount. The corrected graph reports $20,000 on line 5a and zero taxable on
+line 5b. The PDF now prints the `0` required for a full rollover, checks line
+5c(1), and leaves QCD unchecked. Both rendered Form 1040 pages were inspected
+against the source and native XML from the regenerated 27-case
+`2026-09-29-v31` batch. The PDF SHA-256 is
+`d2e69dee162e15bab26376a8b3e38ca3277494cbf25d257841777643c8d5c435`.
+The focused Form 1099-R, Form 1040 PDF and 27-case XML checks pass 115/115 and
+101/101 in separate runs. Other cases still need per-page comparison.
 
 The first eleven cases were rendered into page contact sheets for the first visual
 pass. The new Form 8615 and Form 8960 pages were rendered and checked at higher resolution.

@@ -62,9 +62,9 @@ fields.
 | box1_nec (→ Schedule C)         | Schedule C Line 1 (Gross receipts or sales) → Schedule C Line 31 (net profit) → Form 1040 Schedule 1 Line 3 (business income) → Form 1040 Line 8 | Box 1 amount added to Schedule C Line 1. Net profit (Line 31) flows to Schedule 1 Line 3, then to Form 1040 Line 8 as total income component.                               | Schedule SE (if net profit > $400); Form 8995 QBI deduction (Form 1040 Line 13a) | None on Box 1 itself. SE tax applies on net profit × 92.35% up to SS wage base of $176,100 for SS portion | i1040sc Line 1, i1040sse                       | https://www.irs.gov/instructions/i1040sc       |
 | box1_nec (→ Schedule F)         | Schedule F Line 8 (Other income) → Schedule F net profit → Schedule 1 Line 6 (farm income) → Form 1040 Line 8                                    | Added to Schedule F as other farm income                                                                                                                                    | Schedule SE (if net profit > $400); Form 8995                                    | Same SE tax limits apply                                                                                  | i1040sf                                        | https://www.irs.gov/instructions/i1040sf       |
 | box1_nec (→ Form 8919)          | Form 8919 Lines 1–5 (employer name, wages) → Line 6 (total wages) → Form 1040 Line 1g (wages); Form 8919 Line 13 → Schedule 2 Line 6             | Wages treated as misclassified employee wages. Line 6 total enters Form 1040 Line 1g as wages. SS + Medicare tax on Line 13 flows to Schedule 2 Line 6 → Form 1040 Line 17. | Form 8959 (Additional Medicare Tax) if Line 6 wages exceed $200,000              | SS tax capped at $176,100 wage base; Medicare uncapped                                                    | Form 8919 instructions; Schedule 2             | https://www.irs.gov/forms-pubs/about-form-8919 |
-| box1_nec (→ Schedule 1 Line 8z) | Schedule 1 Line 8z (Other income) → Schedule 1 Line 10 (total additional income) → Form 1040 Line 8                                              | Non-business NEC (e.g., isolated director's fees). Not subject to SE tax.                                                                                                   | None                                                                             | None                                                                                                      | i1040s1                                        | https://www.irs.gov/instructions/i1040gi       |
+| box1_nec (→ Schedule 1 Line 8j) | Schedule 1 Line 8j (not-for-profit activity income) → Schedule 1 Line 10 → Form 1040 Line 8                                              | Reviewed not-for-profit activity receipts; box 1 income is reported once.                                                                                                   | None                                                                             | None                                                                                                      | i1040s1                                        | https://www.irs.gov/instructions/i1040gi       |
 | box2_direct_sales               | Informational only — no 1040 line                                                                                                                | Checkbox only; no computation, no routing to any form                                                                                                                       | —                                                                                | None                                                                                                      | i1099mec Box 2                                 | https://www.irs.gov/instructions/i1099mec      |
-| box3_golden_parachute           | (1) Schedule 1 Line 8z → Form 1040 Line 8 (ordinary income); (2) Schedule 2 Line 17k ("Tax on golden parachute payments") → Form 1040 Line 17    | Box 3 amount included in ordinary income (Schedule 1 Line 8z). Additionally subject to 20% nondeductible excise tax under IRC §4999 reported on Schedule 2 Line 17k.        | Schedule 2 Line 17k (excise)                                                     | 20% excise on excess amount; no cap on income inclusion                                                   | i1099mec Box 3; IRC §4999; Schedule 2 Line 17k | https://www.irs.gov/instructions/i1099mec      |
+| box3_golden_parachute           | Schedule 2 Line 17k (20% excise tax); box 1 already carries the full income amount | Box 3 identifies the excess portion included in box 1. It must not be added to Schedule 1 again. Require 0 < box 3 <= box 1 when positive. | Schedule 2 Line 17k (excise) | 20% of excess amount | 2025 Form 1099-NEC and Form 1040 instructions | https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf |
 | box4_federal_withheld           | Form 1040 Line 25b (Federal income tax withheld — Form(s) 1099)                                                                                  | Credits dollar-for-dollar against total tax liability                                                                                                                       | —                                                                                | None                                                                                                      | 1040 Instructions Line 25b                     | https://www.irs.gov/instructions/i1040gi       |
 | box5_state_withheld             | State return (varies by state)                                                                                                                   | Credited against state income tax liability                                                                                                                                 | —                                                                                | None                                                                                                      | State-specific                                 | —                                              |
 | box6_state_id                   | State e-file schema                                                                                                                              | Payer identification for state reconciliation                                                                                                                               | —                                                                                | None                                                                                                      | State-specific                                 | —                                              |
@@ -315,19 +315,25 @@ No Schedule SE. No QBI deduction. Treated as ordinary income only.
 ### Step 9 — Box 3 path (Excess Golden Parachute Payments — TY2025 new)
 
 ```
-Schedule 1 Line 8z += box3_golden_parachute   [ordinary income inclusion]
+Box 1 already includes the full golden parachute payment. Its reviewed income
+route reports that amount once. Box 3 must be no greater than box 1 and adds no
+separate Schedule 1 income.
 ```
 
-Additionally, a 20% excise tax under IRC §4999 applies to the excess amount:
+A 20% excise tax under IRC §4999 applies to the box 3 excess:
 
 ```
 Excise tax = box3_golden_parachute × 0.20
 → Schedule 2 Line 17k ("Tax on golden parachute payments") → Form 1040 Line 17
 ```
 
-> **Source:** i1099mec Box 3 — https://www.irs.gov/instructions/i1099mec; IRC
-> §4999; Schedule 2 (Form 1040) 2025 Line 17k —
-> https://taxinstructions.net/schedule-2-form-1040/
+Native and PDF Schedule 2 export compare line 17k's nonemployee portion to the
+underlying 1099-NEC box 3 rows and require each recipient SSN to match the
+taxpayer or joint-filing spouse. An absent or changed payer source rejects.
+
+> **Source:** [2025 Form 1099-NEC payer instructions](https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf)
+> (boxes 1 and 3) and [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+> (Schedule 2 line 17k).
 
 ---
 
@@ -384,15 +390,14 @@ flowchart LR
     SCH_C["Schedule C Line 1\n(Gross receipts)"]
     SCH_F["Schedule F Line 8\n(Other farm income)"]
     F8919["Form 8919 Lines 1-5\n(Misclassified wages)"]
-    SCH1_8Z["Schedule 1 Line 8z\n(Other income)"]
+    SCH1_8J["Schedule 1 Line 8j\n(Not-for-profit income)"]
     SCH_SE["Schedule SE\n(SE tax computation)"]
     F8995["Form 8995\n(QBI deduction)"]
     F8919_1040["Form 1040 Line 1g\n(Wages — 8919 path)"]
     SCH2_L6["Schedule 2 Line 6\n(Uncollected FICA — 8919)"]
     F1040_L25B["Form 1040 Line 25b\n(Withholding — 1099s)"]
     STATE_RETURN["State Return\n(State withholding)"]
-    SCH1_8Z_BOX3["Schedule 1 Line 8z\n(Box 3 ordinary income)"]
-    EXCISE["IRC §4999 Excise Tax\n(20% on Box 3 excess)\n[NEEDS SOURCE: exact line]"]
+    EXCISE["Schedule 2 Line 17k\n(20% on Box 3 excess)"]
   end
 
   PAYER --> BOX1
@@ -408,15 +413,13 @@ flowchart LR
   BOX1 -->|"for_routing = schedule_c"| SCH_C
   BOX1 -->|"for_routing = schedule_f"| SCH_F
   BOX1 -->|"for_routing = form_8919"| F8919
-  BOX1 -->|"for_routing = schedule_1_line_8z"| SCH1_8Z
+  BOX1 -->|"for_routing = schedule_1_line_8j"| SCH1_8J
   SCH_C -->|"net profit > $400"| SCH_SE
   SCH_C -->|"QBI eligible"| F8995
   SCH_F -->|"net profit > $400"| SCH_SE
   SCH_F -->|"QBI eligible"| F8995
   F8919 --> F8919_1040
   F8919 --> SCH2_L6
-  BOX2 -->|"informational only"| SCH1_8Z
-  BOX3 --> SCH1_8Z_BOX3
   BOX3 --> EXCISE
   BOX4 --> F1040_L25B
   BOX5 --> STATE_RETURN
@@ -499,16 +502,10 @@ Effective TY2025, excess parachute payments are reported in Box 3 of Form
 excess over the "base amount" (average annual compensation for most recent 5 tax
 years, per IRC §280G). The total parachute payment is reported in Box 1.
 
-Two tax consequences for the recipient:
-
-1. **Ordinary income**: Box 3 amount included in gross income → Schedule 1 Line
-   8z → Form 1040 Line 8
-2. **20% excise tax** under IRC §4999: A nondeductible excise tax of 20% × Box 3
-   amount → Schedule 2 Line 17k ("Tax on golden parachute payments") → Form 1040
-   Line 17
-
-The base amount calculation is performed by the employer/payer, not the
-recipient. The recipient simply reports the Box 3 amount as instructed.
+Box 1 carries the full payment through its reviewed income route. Box 3 is
+only the excess portion and must not be reported as income a second time. The
+recipient owes a 20% excise tax on box 3, reported on Schedule 2 line 17k.
+A positive box 3 with absent or smaller box 1 needs correction before filing.
 
 > **Source:** i1099mec Box 3 — https://www.irs.gov/instructions/i1099mec; IRC
 > §§280G, 4999

@@ -1,7 +1,6 @@
 import type { F8820Input } from "../../../nodes/inputs/f8820/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
-import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 
 type OrphanDrugK1Credit = NonNullable<
   F8820Input["pass_through_credits"]
@@ -19,9 +18,6 @@ export function reconcileOrphanDrugK1Credits(
   const sCorporations = pending.k1_s_corp === undefined
     ? []
     : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
-  const estatesAndTrusts = pending.k1_trust === undefined
-    ? []
-    : trustK1InputSchema.parse(pending.k1_trust).k1_trusts;
   const seen = new Set<string>();
   for (const credit of credits) {
     const key = [
@@ -64,21 +60,9 @@ export function reconcileOrphanDrugK1Credits(
         );
       }
     } else {
-      const matches = estatesAndTrusts.filter((k1) =>
-        k1.entity_type === credit.source_type &&
-        k1.estate_trust_ein === credit.entity_ein &&
-        k1.source_document_reference === credit.source_document_reference
+      throw new Error(
+        "Form 8820 estate/trust K-1 box 13 code M orphan-drug credit needs reviewed source evidence",
       );
-      if (
-        matches.length !== 1 ||
-        matches[0].box13_code_m_orphan_drug_credit !== credit.credit_amount ||
-        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
-          credit.subject_to_passive_activity_limit
-      ) {
-        throw new Error(
-          "Form 8820 estate/trust credit does not reconcile to K-1 box 13 code M",
-        );
-      }
     }
   }
 }

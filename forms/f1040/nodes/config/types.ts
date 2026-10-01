@@ -67,10 +67,6 @@ export interface F1040Config {
   qbiPhaseInRange: number;
 
   // ── EITC ──────────────────────────────────────────────────────────────────
-  eitcMaxCredit: Record<number, number>;
-  eitcPhaseInEnd: Record<number, number>;
-  eitcPhaseoutStart: Record<number, [number, number]>;
-  eitcIncomeLimit: Record<number, [number, number]>;
   eitcInvestmentIncomeLimit: number;
 
   // ── CTC / ACTC ────────────────────────────────────────────────────────────
@@ -84,8 +80,8 @@ export interface F1040Config {
   // ── Saver's Credit ────────────────────────────────────────────────────────
   saversCreditContributionCap: number;
   saversCreditAgiSingle: { rate50: number; rate20: number; rate10: number };
-  saversCreditAgiHoh:    { rate50: number; rate20: number; rate10: number };
-  saversCreditAgiMfj:    { rate50: number; rate20: number; rate10: number };
+  saversCreditAgiHoh: { rate50: number; rate20: number; rate10: number };
+  saversCreditAgiMfj: { rate50: number; rate20: number; rate10: number };
 
   // ── Savings Bonds (8815) ──────────────────────────────────────────────────
   savingsBondPhaseoutStartMfj: number;
@@ -175,7 +171,9 @@ export interface F1040Config {
   f2106PerformingArtistAgiLimit: number;
 
   // ── LTC Premium Limits (ltc_premium, 7206) ────────────────────────────────
-  ltcPremiumLimits: ReadonlyArray<{ readonly maxAge: number; readonly limit: number }>;
+  ltcPremiumLimits: ReadonlyArray<
+    { readonly maxAge: number; readonly limit: number }
+  >;
 
   // ── Mortgage Interest Credit (8396) ──────────────────────────────────────
   mccMaxCreditHighRate: number;

@@ -1,9 +1,12 @@
 import {
+  assertMfsSstbOwner,
   calculateOneSstb8995ALines,
   type Form8995AInput,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Form8995AInput | readonly [];
@@ -27,6 +30,21 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
     );
   }
   const lines = calculateOneSstb8995ALines(fields);
+  const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
+    ? HeaderFilingStatus.MarriedFilingJointly
+    : fields.filing_status === NodeFilingStatus.MFS
+    ? HeaderFilingStatus.MarriedFilingSeparately
+    : fields.filing_status === NodeFilingStatus.HOH
+    ? HeaderFilingStatus.HeadOfHousehold
+    : fields.filing_status === NodeFilingStatus.QSS
+    ? HeaderFilingStatus.QualifyingSurvivingSpouse
+    : HeaderFilingStatus.Single;
+  if (context?.filer?.filingStatus !== expectedStatus) {
+    throw new Error(
+      "Form 8995-A Schedule A filing status differs from the return header",
+    );
+  }
+  assertMfsSstbOwner(fields, context.filer.primarySSN);
   const filed1040 = context?.pending?.f1040;
   if (
     !filed1040 || typeof filed1040 !== "object" ||
@@ -40,9 +58,9 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
   return elements("IRS8995AScheduleA", [
     elements("NonPTPSSTBGrp", [
       element("TaxableIncomeBeforeQBIDedAmt", lines.line33),
-      element("FilingStatusThresholdCd", 197_300),
-      element("TXIBfrQBIDedLessThresholdAmt", lines.line33 - 197_300),
-      element("FilingStatusPhaseInRangeCd", 50_000),
+      element("FilingStatusThresholdCd", lines.threshold),
+      element("TXIBfrQBIDedLessThresholdAmt", lines.line33 - lines.threshold),
+      element("FilingStatusPhaseInRangeCd", lines.phaseInRange),
       element("PhaseInPct", lines.phaseIn.toFixed(5)),
       element("ApplicablePct", lines.applicable.toFixed(5)),
       elements("NonPTPSSTBDtlGrp", [

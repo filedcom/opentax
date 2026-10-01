@@ -18,6 +18,57 @@ function sameAmtFacts(priorYearDisallowedInterest = 0) {
   };
 }
 
+function reviewedPriorCarryforward(line7: number, amtLine7 = line7) {
+  return {
+    tax_year: 2024 as const,
+    filed_return_reference: "filed-2024-return",
+    completed_form_reference: "filed-2024-form4952",
+    filed_primary_ssn: "123456789",
+    reviewed_by: "Tax Reviewer",
+    reviewed_on: "2026-09-30",
+    filed_2024_form4952: {
+      line1: line7 + 500,
+      line2: 0,
+      line3: line7 + 500,
+      line6: 500,
+      line7,
+      line8: 500,
+    },
+    filed_2024_schedule_a_line9: 500,
+    prior_interest_entirely_schedule_a_confirmed: true as const,
+    prior_no_form6198_allocation_confirmed: true as const,
+    reviewed_2024_amt_form4952_line7: amtLine7,
+    accepted_2024_filing: {
+      filed_return_pdf: {
+        source_document_reference: "filed-2024-return",
+        file_name: "filed-2024-return.pdf",
+        sha256: "a".repeat(64),
+      },
+      completed_form4952_pdf: {
+        source_document_reference: "filed-2024-form4952",
+        file_name: "filed-2024-form4952.pdf",
+        sha256: "b".repeat(64),
+      },
+      amt_form4952_workpaper_pdf: {
+        source_document_reference: "2024-amt-workpaper",
+        file_name: "amt-2024-form4952.pdf",
+        sha256: "c".repeat(64),
+      },
+      acknowledgment_xml: {
+        source_document_reference: "2024-acknowledgment",
+        file_name: "accepted-2024.xml",
+        sha256: "d".repeat(64),
+      },
+      filed_tax_year: 2024 as const,
+      filed_primary_ssn: "123456789",
+      submission_id: "2024-submission-1",
+      accepted_status_reviewed: true as const,
+      regular_line7_reviewed: line7,
+      amt_line7_reviewed: amtLine7,
+    },
+  };
+}
+
 Deno.test("Form 4952 has no attachment without interest expense", () => {
   assertEquals(
     compute({ other_investment_property_gross_income: 5_000 }).outputs,
@@ -55,6 +106,7 @@ Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
   const result = compute({
     investment_interest_expense: 7_000,
     prior_year_carryforward: 1_000,
+    prior_year_carryforward_source: reviewedPriorCarryforward(1_000),
     amt_refigure: sameAmtFacts(1_000),
     other_investment_property_gross_income: 5_000,
     other_investment_property_qualified_dividends: 500,
@@ -240,6 +292,7 @@ Deno.test("Form 4952 requires and calculates a separate AMT interest refigure", 
   const input = {
     investment_interest_expense: 1_000,
     prior_year_carryforward: 500,
+    prior_year_carryforward_source: reviewedPriorCarryforward(500, 800),
     other_investment_property_gross_income: 100,
     source_private_activity_bond_interest: 300,
     amt_refigure: {

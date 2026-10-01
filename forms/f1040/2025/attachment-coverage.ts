@@ -3,9 +3,9 @@
  * cannot yet produce. This is a filing boundary, not a document skip list.
  */
 import {
-  calculateForm8826,
-  inputSchema as form8826InputSchema,
-} from "../nodes/inputs/f8826/index.ts";
+  casualtyLossLines,
+  inputSchema as form4684InputSchema,
+} from "../nodes/intermediate/forms/form4684/index.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -23,6 +23,13 @@ const positive = (value: unknown): boolean =>
   typeof value === "number" && value > 0;
 
 const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
+  {
+    pendingKey: "clergy",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Clergy income needs matched W-2, housing designation, taxable excess, parsonage/SE, and Form 4361 evidence",
+    isActive: (fields) => nonempty(fields.clergys),
+  },
   {
     pendingKey: "f8862",
     exportKinds: ["mef", "pdf"],
@@ -202,20 +209,47 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f5471",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 5471 foreign-corporation reporting needs native schedules",
+    reason:
+      "Form 5471 Schedule R all-zero treatment and parent reference linkage need current MeF evidence",
     isActive: (fields) => nonempty(fields.f5471s),
   },
   {
     pendingKey: "form7203",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 7203 basis paths outside the reviewed stock-only ordinary loss require further filing work",
+      "Form 7203 basis paths outside the reviewed stock loss or one new formal note require further filing work",
     isActive: (fields) => {
       const keys = Object.keys(fields);
+      const allowedKeys = new Set([
+        "stock_basis_beginning",
+        "ordinary_loss",
+        "additional_contributions",
+        "reviewed_stock_loss_ledger",
+        "new_loans",
+        "reviewed_debt_evidence",
+      ]);
       return keys.length > 0 && (
-        keys.length !== 2 ||
+        keys.some((key) => !allowedKeys.has(key)) ||
         !keys.includes("stock_basis_beginning") ||
         !keys.includes("ordinary_loss") ||
+        (keys.includes("new_loans") !==
+          keys.includes("reviewed_debt_evidence")) ||
+        (keys.includes("new_loans") && (
+          typeof fields.new_loans !== "number" ||
+          !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
+          !fields.reviewed_debt_evidence ||
+          typeof fields.reviewed_debt_evidence !== "object"
+        )) ||
+        (keys.includes("additional_contributions") && (
+          typeof fields.additional_contributions !== "number" ||
+          !Number.isSafeInteger(fields.additional_contributions) ||
+          fields.additional_contributions <= 0
+        )) ||
+        (keys.includes("reviewed_stock_loss_ledger") && (
+          !keys.includes("additional_contributions") ||
+          !fields.reviewed_stock_loss_ledger ||
+          typeof fields.reviewed_stock_loss_ledger !== "object"
+        )) ||
         typeof fields.stock_basis_beginning !== "number" ||
         !Number.isSafeInteger(fields.stock_basis_beginning) ||
         fields.stock_basis_beginning < 0 ||
@@ -229,7 +263,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f9465",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 9465 requires a native filing document for the installment request",
+      "Form 9465 attached installment request remains blocked until IRS guidance establishes how its separate third-party disclosure authorization is signed with a Form 1040 e-file and linked native/PDF filing review is complete",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
@@ -295,19 +329,40 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f965",
     exportKinds: ["pdf"],
-    reason: "Form 965-A has a native filing but no source-backed PDF",
+    reason:
+      "Form 965-A prior-filed liabilities and actual installment payments need verification before printable filing",
     isActive: (fields) => nonempty(fields.f965s),
+  },
+  {
+    pendingKey: "form8582",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8582 prior PAL needs authenticated accepted-2024 return and activity ledger before export",
+    isActive: (fields) =>
+      positive(fields.prior_unallowed) ||
+      (Array.isArray(fields.activities) && fields.activities.some((row) =>
+        row !== null && typeof row === "object" &&
+        (positive((row as Record<string, unknown>).prior_unallowed_operating) ||
+          positive(
+            (row as Record<string, unknown>).prior_unallowed_4797_part1,
+          ) ||
+          positive((row as Record<string, unknown>).prior_unallowed_4797_part2))
+      )),
   },
   {
     pendingKey: "form8582cr",
     exportKinds: ["pdf"],
-    reason: "Form 8582-CR has a native filing but no source-backed PDF",
-    isActive: (fields) => nonempty(fields.credit_sources),
+    reason:
+      "Form 8582-CR PDF needs a filed-return ordinary line 6 source worksheet",
+    isActive: (fields) =>
+      nonempty(fields.credit_sources) &&
+      fields.line6_ordinary_worksheet === undefined,
   },
   {
     pendingKey: "f4255",
     exportKinds: ["pdf"],
-    reason: "Form 4255 has a native filing but no source-backed PDF",
+    reason:
+      "Form 4255 PDF needs authenticated prior-return and IRS determination bytes before positive filing",
     isActive: (fields) => nonempty(fields.rows),
   },
   {
@@ -319,29 +374,22 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8611",
     exportKinds: ["pdf"],
-    reason: "Form 8611 has a native filing but no source-backed PDF",
+    reason:
+      "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
     isActive: (fields) => nonempty(fields.f8611s),
-  },
-  {
-    pendingKey: "f8826",
-    exportKinds: ["pdf"],
-    reason: "Form 8826 has a native filing but no source-backed PDF",
-    isActive: (fields) => {
-      if (fields.eligible_expenditures === undefined) return false;
-      const source = form8826InputSchema.safeParse(fields);
-      return !source.success || calculateForm8826(source.data).line6 > 0;
-    },
   },
   {
     pendingKey: "f8854",
     exportKinds: ["pdf"],
-    reason: "Initial Form 8854 has a native filing but no source-backed PDF",
+    reason:
+      "Initial Form 8854 PDF needs authenticated prior-return, tax-compliance, and balance-sheet evidence before positive filing",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
     pendingKey: "f8854_annual",
     exportKinds: ["pdf"],
-    reason: "Annual Form 8854 has a native filing but no source-backed PDF",
+    reason:
+      "Annual Form 8854 PDF needs authenticated prior-filed obligation history before positive filing",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
 ];
@@ -363,6 +411,48 @@ export function assertAttachmentCoverage(
       ? form8949.transaction
       : [form8949.transaction]
     : [];
+  // A single large disposition is a Form 8886 loss-transaction review signal.
+  // Screen source basis and proceeds before netting with other sales or Form
+  // 8949 adjustments. This does not determine section 165 character or a
+  // published exception; Form 8886 has no supported filing route yet.
+  const dispositionRows = [
+    ...((byKey.f8949 as { f8949s?: unknown[] } | undefined)?.f8949s ?? []),
+    ...((byKey.f1099b as { f1099bs?: unknown[] } | undefined)?.f1099bs ?? []),
+    ...qofRows,
+  ];
+  if (
+    dispositionRows.some((raw) => {
+      if (raw === null || typeof raw !== "object") return false;
+      const row = raw as Record<string, unknown>;
+      return typeof row.cost_basis === "number" &&
+        Number.isFinite(row.cost_basis) &&
+        typeof row.proceeds === "number" &&
+        Number.isFinite(row.proceeds) &&
+        row.cost_basis - row.proceeds >= 2_000_000;
+    })
+  ) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; no disclosure route is registered; export blocked`,
+    );
+  }
+  const rawCasualty = byKey.form4684;
+  if (
+    rawCasualty !== null && typeof rawCasualty === "object" &&
+    !Array.isArray(rawCasualty)
+  ) {
+    const casualty = form4684InputSchema.parse(rawCasualty);
+    const businessLoss = casualtyLossLines(
+      casualty.business_fmv_before ?? 0,
+      casualty.business_fmv_after ?? 0,
+      casualty.business_basis ?? 0,
+      casualty.business_insurance ?? 0,
+    ).loss;
+    if (businessLoss >= 2_000_000) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8886 review required for a Form 4684 business casualty with at least $2 million loss after insurance; no disclosure route is registered; export blocked`,
+      );
+    }
+  }
   if (
     qofRows.some((row) =>
       row !== null && typeof row === "object" &&

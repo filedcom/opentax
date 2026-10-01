@@ -1,5 +1,82 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## One-person, one-month same-state policy transition (staged, unrun)
+
+The [2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962)
+say to add columns A and C from multiple Forms 1095-A affecting a month and
+count the agreed same-state column B once. A bounded single-filer route now
+accepts two identified policies for that same covered person when the first
+covers January through one transition month, the second covers that month
+through December, and the only simultaneous month is the transition. Both
+policies must name the filer's SSN, report monthly positive premiums/APTC,
+agree on the transition-month SLCSP, and have no shared allocation or SLCSP
+correction. The native and PDF routes reconcile the $900/$600/$350 June
+premium/SLCSP/APTC row, all other months, $1,446 excess repayment, Schedule 2
+line 1a, and Form 1040 line 17. The full-return positive and two-overlap-month,
+SLCSP, APTC, and return-tamper fixtures are authored but unrun. A longer overlap,
+different covered people, corrected SLCSP, interstate transition, and external
+Marketplace-statement authentication remain outside this route. Publication
+[974](https://www.irs.gov/publications/p974) still governs special coverage
+and eligibility cases, which this narrow route does not infer.
+
+## One-policy corrected SLCSP month (build-first, unrun)
+
+The monthly single-filer route now accepts one identified, nonshared,
+same-state Form 1095-A policy with exactly one independently determined
+`marketplace_error` SLCSP correction on a covered APTC month. The original
+column B and annual statement total stay in the source record; calculation
+uses the corrected month while native MeF checks the dated Marketplace
+tool/contact determination, reference, record SHA-256, positive original and
+corrected amounts, all twelve monthly rows, Schedule 2/3, and Form 1040. PDF
+projection invokes the same native check for a corrected monthly claim. This
+follows the [2025 Form 8962 line 10 and lines 12–23
+instructions](https://www.irs.gov/instructions/i8962) for a wrong reported
+SLCSP. Positive source/calculation/native/PDF and source/amount tampering
+fixtures are authored but unrun. Multiple corrected months, no-APTC months,
+changes in coverage family, moves, shared policies, and authentication of the
+underlying Marketplace record bytes remain outside this route.
+
+## One-person sequential policies at 100%-399% FPL (staged, unrun)
+
+The below-400% income check now admits multiple identified same-state policies
+for one covered filer on the monthly route when the existing policy checks prove
+at most one active policy each month. It applies the 2025 Table 2 contribution
+and single-filer Table 5 repayment limit to the merged monthly credit and APTC,
+requires the sourced single-filer SSN and a reviewed fact that the taxpayer
+cannot be claimed as a dependent, then reconciles Schedule 2/3 and Form 1040.
+A two-policy six-month switch at
+200% FPL has $7,800 PTC, $9,000 APTC, $1,200 excess, and a $975 limited
+repayment. Source, calculation, native, PDF, and cap-tampering fixtures are
+authored but unrun. The below-100% exception remains limited to one verified
+policy; shared-policy cases retain separate boundaries.
+
+## One verified dependent on two same-state policies at 100%-399% FPL (staged, unrun)
+
+A single filer with one claimed dependent can now use the monthly two-policy
+route below 400% FPL when the existing filed dependent Form 1040 and Forms
+1099-INT establish Worksheet 1-2 MAGI and each policy names a distinct
+tax-family SSN. The poverty table uses both family members, while the 2025
+Table 5 limit remains the **single filing-status** amount. At 200% FPL, a
+source case with overlapping policies in January–June and only the taxpayer's
+policy in July–December computes $6,792 PTC, $9,000 APTC, $2,208 excess, and
+$975 repayment. Source, calculation, native, PDF, and cap-tampering fixtures
+are authored but unrun. Other dependent income sources, more than two
+policies, unmatched covered people, and corrected SLCSP remain outside this
+route.
+
+## Two verified dependents on three same-state policies at 100%-399% FPL (staged, unrun)
+
+The three-policy monthly route now also accepts a single filer and two claimed
+dependents below 400% FPL when their filed returns and interest forms establish
+Worksheet 1-2 MAGI, each policy identifies one distinct tax-family member, and
+all three policies are active together in every covered month. The 2025 Table 2
+contribution uses the three-person poverty line; Table 5 uses the single filing
+status cap. A 200%-FPL case with $13,968 PTC and $18,000 APTC limits its $4,032
+excess to $975. Source aggregation, calculation, native MeF, PDF projection,
+and cap-tampering fixtures are authored but unrun. Partial-family months and
+corrected SLCSP still require separate coverage-family evidence and remain
+closed.
+
 ## One-person below-400%-FPL filing route (build-first, unrun)
 
 The native MeF and PDF projections now accept a bounded one-person, one-policy
@@ -15,7 +92,8 @@ the same source-to-final-return reconciliation for below-400% returns before
 rendering. Source, annual, monthly, all three cap tiers, and tamper cases are
 written but not run.
 
-This does not extend the under-400% filing route to multiple people or policies,
+The one-person sequential monthly extension above covers multiple policies;
+this one-policy route still does not cover multiple people,
 below-100% exception cases, shared coverage, self-employed insurance, Form
 2555, or other eligibility exceptions. The sourced Form 1095-A, policy identity,
 and finalized-return checks still apply. External Marketplace authenticity,
@@ -43,7 +121,86 @@ send net PTC on line 26 to Schedule 3 line 9 and excess APTC repayment on line
 29 to Schedule 2 line 1a. The checked-in TY2025 v5.4 schema has the native
 `MonthlyPTCCalculationGrp` and those total fields.
 
-## No-APTC positive PTC: bounded monthly route written, unrun
+## Ordinary APTC cents
+
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+require whole-dollar electronic entries. For a single ordinary APTC policy
+without shared allocation, SLCSP correction, move review, or marriage
+worksheet, the source graph now rounds the monthly Form 1095-A columns A/B/C
+before calculating lines 12–23. A full-year policy with unchanged premium and
+SLCSP instead uses and rounds each annual line 33 total once for line 11. Raw
+Marketplace values remain in the pending source record. Native MeF independently
+reconciles the raw annual/monthly totals, then checks the filed whole-dollar
+rows or line 11, total PTC and APTC, Schedule 2 or 3, and Form 1040.
+
+Seven full-return cents cases pass local TY2025 v5.4 XSD: monthly net PTC,
+annual line 11 net PTC, monthly excess-APTC repayment, below-100% APTC-only
+repayment, MFS APTC-only annual repayment, and corrected-copy versions of the
+ordinary monthly and annual paths. Five build PDF packets; a raw premium
+changed across a rounding boundary is rejected at native export. The
+corrected-copy cases keep both Marketplace statements in the source record and
+use only the identified corrected version for calculation, MeF, and PDF. The
+monthly $800.51/$700.49/$300.51 source yields $8,400 PTC, $3,612 APTC, and
+$4,788 net PTC. Replacing monthly APTC with $750.51 yields $612 excess
+repayment. Cents handling for other multi-policy combinations, shared
+allocations, marriage, QSEHRA, and Pub. 974 remains open, as do source
+authenticity, PDF visual
+review, the final bulk test, IRS business-rule results, and ATS acceptance.
+
+For multiple ordinary APTC policies, the [Form 8962
+instructions](https://www.irs.gov/instructions/i8962) combine source amounts
+that belong on the same monthly or annual line. The [2025 Form 1040 rounding
+rule](https://www.irs.gov/instructions/i1040gi) says to retain cents while
+adding amounts for one line and round the total. Applying that general rule
+to the Form 8962 combination instructions, the graph now merges raw
+monthly premiums and APTC, selects one same-state SLCSP or adds distinct-state
+SLCSPs, and rounds each resulting Form 8962 line using integer cents. For annual
+line 11, it adds
+the raw policy line 33 A and C totals, selects one same-state line 33 B (or
+adds different-state B amounts), then rounds those line totals. Native MeF
+recomputes the same amounts from each original policy and checks Schedule 2/3
+and Form 1040.
+
+Full-return cents cases cover a chronological two-policy single-filer switch,
+two simultaneous same-state taxpayer/dependent policies on monthly and annual
+lines, and simultaneous policies in Texas and Oklahoma on monthly lines.
+$500.26 plus $300.26 premiums file as $801 for the month. The different-state
+$600.26 plus $400.26 SLCSPs file as $1,001; rounding the source forms
+separately would give a different value. All four variations pass local
+TY2025 v5.4 XSD and build PDF packets. A three-amount half-dollar case guards
+against binary floating-point addition losing the rounding threshold; source
+amounts beyond cent precision reject. The affected source, calculation, MeF,
+corrected-copy, and full-return suite passes 162 cases. Other no-APTC
+multi-policy routes, special allocations, marriage, QSEHRA, Pub. 974, and other policy
+combinations still need source-to-filed cents reconciliation.
+
+## No-APTC positive PTC: bounded monthly route
+
+The one-filer, one-policy 200%-FPL monthly path now has a full-return source
+case. A $30,120 W-2 and twelve covered zero-APTC months with separately
+determined SLCSP and timely full-payment records produce $8,400 of credit on
+Form 8962, Schedule 3 line 9, and Form 1040 line 31. The complete native
+return passes local TY2025 v5.4 XSD, the PDF packet builds, and 149 focused
+cases across this route pass. PDF visual review and the final bulk regression
+remain open. The broader boundaries below still apply.
+
+The same no-APTC source path now files for one lawfully present enrollee below
+100% FPL when the existing reviewed source status establishes lawful presence,
+Medicaid ineligibility due to immigration status, Marketplace coverage, and
+otherwise applicable-taxpayer facts. A $10,000 W-2 gives 66% FPL and $9,000
+monthly or $8,400 annual PTC in separate full-return cases. Both local TY2025
+v5.4 XSD checks and PDF builds pass; deleting the status stops native export.
+The external eligibility records and filled PDF pages remain unreviewed.
+
+The one-policy monthly path also reduces a month with an issuer-confirmed
+protected partial payment by the unpaid premium at the unextended filing due
+date. In a full return, an $800 reported January premium with $500 paid above a
+$450 documented issuer threshold produces $500 on Form 8962 column (a) and
+$8,250 total credit. A separate Texas January emergency-order case with $400
+paid yields $8,150 annually. The original $800 remains in the Form 1095-A
+source; MeF recomputes each claimed premium, and both full returns pass local
+TY2025 v5.4 XSD. Source-record authentication remains open. See the
+[no-APTC gap](ty2025-form8962-no-aptc-below400.md).
 
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require Form 8962 when the taxpayer claims a PTC even if no APTC was paid. They
@@ -53,17 +210,37 @@ covered month's credit additionally depends on the taxpayer's share of the
 enrollment premium being paid by the return due date (subject to the stated
 exceptions). Zero APTC is therefore not evidence of zero PTC.
 
+The two- or three-policy same-state no-APTC monthly route now also admits all
+possible uncovered-month counts for sequential nonoverlapping policies: at most
+ten gaps for two policies and nine for three. A bounded two-policy case has one gap in
+each policy period (April and September). Both 1095-A statements report zero
+premium, SLCSP, and APTC in the corresponding gap; neither gap has a
+Marketplace SLCSP determination or payment record. The ten covered months have
+policy-specific determinations and timely full-payment records. At 401% FPL,
+the ten monthly credits total $2,170 on Schedule 3 line 9 and Form 1040 line
+31; native MeF omits both uncovered month groups and PDF leaves both rows
+blank, including contribution. Source, credit, ghost-evidence, and final-return
+tamper fixtures are authored for the deferred batch. The IRS instructions for
+lines 12–23 direct monthly entries for partial-year enrollment and a blank
+column (c) when both premium and SLCSP are blank. Two-policy overlap with more
+than two gaps, Marketplace source-byte authentication, and wider families remain
+open. The maximum-gap examples are documented in the
+[no-APTC gap](ty2025-form8962-no-aptc-below400.md).
+
 The `f1095a.slcsp_corrections` amounts alone remain insufficient. A bounded
 one-policy monthly filing route now also requires one `no_aptc_monthly_evidence`
 record per covered month: the Marketplace determination amount, method, date,
-reference, and source-record SHA-256, plus the premium amount paid in full,
-payment date, reference, and source-record SHA-256 for each covered month. The
+reference, and source-record SHA-256, plus a dated payment record with amount,
+reference, and source-record SHA-256 for each covered month. The payment is
+explicitly `paid_in_full`, `protected_partial` under an issuer threshold, or
+`emergency_order_partial` under a state order. The protected records also need
+issuer coverage confirmation and the applicable threshold or order facts. The
 policy must cover only the identified single filer in one state, have positive
 reported column A in each covered month, zero APTC, no shared allocation or
 unreported coverage change, and an applicable SLCSP correction for every covered
 month. Uncovered months require zero reported columns A/B/C and zero Form 8962
 monthly policy and credit amounts. The recorded determination must equal the
-corrected SLCSP; full premium payment must be dated no later than April 15,
+corrected SLCSP; the qualifying payment must be dated no later than April 15,
 2026, the ordinary
 [TY2025 Form 1040 due date](https://www.irs.gov/instructions/i1040gi). The route
 reconciles the raw 1095-A A/C columns and line 33 totals, each monthly Form 8962
@@ -76,9 +253,11 @@ blank. Focused positive and tamper cases are written but unrun.
 References and hashes identify the separate source records for preparer review.
 The application has not authenticated the Marketplace or payment documents or
 compared hashes to their actual bytes; that external source review remains
-required. No-APTC multiple policies, shared policies, changes in coverage family
-or state, less-than-full-payment exceptions, nonstandard due dates,
-below-400%-FPL returns, and MEC/coverage eligibility proof remain outside this
+required. No-APTC policies outside the bounded four-policy route, shared
+policies, changes in coverage family
+or state, protected partial payments outside the documented issuer-threshold
+and state emergency-order routes, nonstandard due dates,
+other below-400%-FPL multi-person returns, and MEC/coverage eligibility proof remain outside this
 bounded route. The entered evidence is not submitted as an invented IRS
 attachment.
 
@@ -211,10 +390,10 @@ mismatch cases are written but unrun. See the
 
 This is deliberately narrower than the calculation node. The descriptor does not
 yet independently reconcile annual line 11 across other multiple-policy
-configurations, other overlapping or alternating monthly policies, more than
+configurations, other overlapping monthly policies, multi-person cases beyond
 three policies, multiple policies in different states beyond the bounded
 two-state annual family and sequential move routes, SLCSP corrections,
-shared-policy Part IV, marriage Part V, QSEHRA, below-400%-FPL repayment caps,
+shared-policy Part IV, marriage Part V, QSEHRA, other below-400%-FPL multi-person repayment caps,
 wider Alaska/Hawaii moves, or self-employed insurance worksheets to raw source
 documents and the finalized return. Most dependent MAGI routes remain rejected.
 A later bounded annual-policy path now accepts one claimed dependent with a
@@ -299,12 +478,71 @@ pending form and matches repayment or credit to finalized Schedule 2/3 and
 Form 1040. The PDF descriptor invokes the same reconciliation. Source, XML, PDF,
 tampering, and return-drift cases are written but not run.
 
-This does not yet cover shared policies where the other taxpayer is not a
-covered enrollee, multiple allocation periods or policies, a claimed dependent
-in either tax family, no-APTC Situation 3, divorce, corrected SLCSP, or
-inter-state shared coverage. Those routes still need tax-family membership and
-coverage-family facts, month-by-month source allocation, and their own
-final-return checks before native filing.
+The [TY2025 Situation 4 instructions](https://www.irs.gov/instructions/i8962)
+also allow the other allocating taxpayer to be absent from the 1095-A covered
+list. The IRS Joe/Alice/Jane example allocates to Alice, who claims covered
+Jane but is not enrolled. A bounded one-policy, full-year, one-person-filer
+route now records the [1095-A Part I line 5 recipient SSN](https://www.irs.gov/instructions/i1095a)
+and a reviewed other-family
+claim packet. The packet identifies the covered person's SSN, other taxpayer's
+SSN, policy number, tax year, Marketplace enrollment reference, tax-family
+review reference/hash, and allocation agreement reference/hash and percentage.
+The filing boundary requires the filer to be the 1095-A recipient and a covered
+person, the other taxpayer to be absent from the covered list, the claimed
+person to be the second covered person, and the packet's taxpayer, policy, and
+percentage to match the Part IV allocation. The same percentage allocates
+each month's premium, SLCSP, and APTC. Calculation and the shared native/PDF
+reconciliation carry the resulting credit to Schedule 3 line 9 and Form 1040
+line 31. A full-return fixture and packet, recipient, and final-return tamper
+cases are authored but unrun. Packet hashes are reviewed metadata; this route
+does not authenticate the underlying Marketplace, claim, or agreement bytes.
+
+Other non-enrolled-taxpayer combinations, multiple policies, wider tax
+families, unmatched agreement periods, corrected SLCSP, and interstate shared
+coverage remain closed pending their own source and final-return checks.
+
+## Two agreed Situation 4 periods on one policy (build-first, unrun)
+
+The [TY2025 Form 8962 Situation 4 instructions](https://www.irs.gov/instructions/i8962)
+allow two tax families to agree on a different allocation percentage for
+different months, while requiring the same percentage for premiums, SLCSP, and
+APTC within each month. A bounded full-year source case now uses one identified
+1095-A policy covering two taxpayers from separate families and reviewed
+20%-for-January-through-June and 80%-for-July-through-December agreements.
+Each source period carries its own 2025 policy, filer and other-taxpayer SSNs,
+month range, percentage, agreement reference, and SHA-256. The native filing
+boundary requires exact matches to the Part IV rows, the 1095-A recipient to
+be the filer, and distinct reviewed references and hashes when percentages
+change. Source aggregation applies each period's percentage to all three
+monthly columns; the Form 8962 calculation produces $7,200 credit and $4,800
+allocated APTC, with $2,400 reaching Schedule 3 line 9 and Form 1040 line 31.
+The PDF descriptor invokes the same native reconciliation. Full-return,
+native/PDF, changed-percentage, changed-identity, duplicate-agreement, and
+final-return-drift fixtures are authored but unrun. A higher-income, larger
+APTC source variant also exercises excess repayment through Schedule 2 line 1a
+and Form 1040 line 17. Agreement hashes are
+reviewed metadata; agreement and Marketplace bytes are not authenticated.
+
+The source gate also requires distinct agreements for any previously supported
+five-period Situation 4 allocation whose percentages change. Wider tax
+families, multiple policies, mixed allocation situations, and independent
+source-byte authentication remain open.
+
+### One claimed dependent on an agreed shared policy (build-first, unrun)
+
+The single-return Situation 4 route now also accepts one policy covering the
+filer, one claimed dependent, and one other enrolled taxpayer. The filer must
+be the 1095-A recipient. The dependent must have a source-backed required
+2025 return and matching income form; Worksheet 1-2 MAGI is rederived from
+those records. Each allocation period needs a reviewed agreement naming the
+policy, both taxpayers, months, and percentage. The source's three enrolled
+SSNs must match the filer, claimed dependent, and other Part IV taxpayer.
+Form 1095-A allocation is recomputed by month, then Form 8962, Schedule 2/3,
+and Form 1040 amounts are reconciled in the native and PDF builders. A positive
+credit fixture and dependent, agreement, covered-person, and finalized-return
+tampering fixtures are written but unrun. Agreement hashes and dependent
+document identifiers are source metadata; independent authentication of the
+underlying Marketplace, agreement, and dependent-return bytes remains open.
 
 ## One full-year MFS spouse policy
 
@@ -335,3 +573,25 @@ values are `52ace6d59ea348495a71c3b55134b3400382b22758481e0d836206ebf71fecd2`
 (repayment) and `bfaa9881069286e5143caedc813050dcbf441f0e8d87ecb621dfa52b72b1b845`
 (exception). These focused artifacts do not establish other MFS scenarios or
 the release PDF gate.
+
+## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (2026-10-01, unrun)
+
+The bounded two-person monthly family-policy route now accepts one full-year
+taxpayer policy in Alaska or Hawaii and a simultaneous policy in a contiguous
+state covering the filer's one claimed dependent. The single filer must have
+an explicit one-state residence record for all twelve months in the filing
+state; this is not an interstate move. Each policy names only its own covered
+SSN, and the dependent's required 2025 return and Forms 1099-INT source its
+modified AGI. The [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+add the monthly column B benchmarks from policies in different states, while
+line 4 uses the Alaska/Hawaii poverty table for the filer's verified residence.
+For the authored Alaska/Texas case, the $25,540 two-person Alaska poverty line,
+$150,000 household income, and two $500 monthly premiums produce $1,900 or
+$2,000 combined monthly SLCSP, $10,644 annual PTC, and $8,244 net PTC after
+$2,400 APTC. That amount reconciles through Schedule 3 line 9 and Form 1040
+line 31, native Form 8962, and the PDF projection. Residence, covered-person,
+SLCSP, and final-return tamper fixtures are authored but unrun. The path still
+rejects a second Alaska/Hawaii policy, a shared policy, taxpayer moves,
+unsupported dependent-income sources, and Marketplace corrections. Source-byte
+authentication, XSD/business-rule checks, filled-PDF review, and ATS remain
+open.

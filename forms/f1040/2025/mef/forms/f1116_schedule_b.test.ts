@@ -118,6 +118,7 @@ Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 exces
   const [formXml] = form1116.build(formFields, {
     pending: {
       form1116_schedule_b: scheduleB,
+      form1116_prior_carryover: { carryovers: [priorSource] },
       schedule3: { line1_foreign_tax_credit: 450 },
     },
   });
@@ -321,6 +322,7 @@ Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1
   const [formXml] = form1116.build(formFields, {
     pending: {
       form1116_schedule_b: fields,
+      form1116_prior_carryover: { carryovers: [source] },
       schedule3: { line1_foreign_tax_credit: 500 },
     },
   });
@@ -597,11 +599,172 @@ Deno.test("Form 1116 Schedule B carries an originated-2020 credit into the fifth
         prior_year_carryover_source: {
           ...source,
           vintages: [{
-            vintage_tax_year: 2019,
+            vintage_tax_year: 2014,
             prior_year_schedule_b_line8_vintage_amount: 300,
           }],
         },
       }),
     Error,
   );
+});
+
+Deno.test("Form 1116 Schedule B carries 2019 and 2020 origins through sixth/fifth columns oldest first", () => {
+  const source = {
+    income_category: IncomeCategory.Passive,
+    vintages: [
+      { vintage_tax_year: 2020 as const, prior_year_schedule_b_line8_vintage_amount: 200 },
+      { vintage_tax_year: 2019 as const, prior_year_schedule_b_line8_vintage_amount: 100 },
+    ],
+    prior_year_schedule_b_line8_total: 300,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: ["Filed 2024 passive Schedule B line 8, original 2019 and 2020 vintages"],
+  };
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 300,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 150,
+    prior_year_carryover_source: source,
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovPrTYGrp><SixthPrecedingTYAmt>100</SixthPrecedingTYAmt><FifthPrecedingTYAmt>200</FifthPrecedingTYAmt><TotalAmt>300</TotalAmt></ForeignTxCyovPrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp><SixthPrecedingTYAmt>-100</SixthPrecedingTYAmt><FifthPrecedingTYAmt>-50</FifthPrecedingTYAmt><TotalAmt>-150</TotalAmt></ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><SixthPrecedingTYAmt>0</SixthPrecedingTYAmt><FifthPrecedingTYAmt>150</FifthPrecedingTYAmt><TotalAmt>150</TotalAmt></ForeignTxCyovFollowingTYGrp>");
+});
+
+Deno.test("Form 1116 Schedule B carries a 2018 origin through the seventh-preceding column", () => {
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.General,
+    prior_year_carryover: 300,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 150,
+    prior_year_carryover_source: {
+      income_category: IncomeCategory.General,
+      vintages: [
+        { vintage_tax_year: 2020, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2018, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2019, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 300,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: ["Filed 2024 general Schedule B line 8, original 2018-2020 vintages"],
+    },
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovPrTYGrp><SeventhPrecedingTYAmt>100</SeventhPrecedingTYAmt><SixthPrecedingTYAmt>100</SixthPrecedingTYAmt><FifthPrecedingTYAmt>100</FifthPrecedingTYAmt><TotalAmt>300</TotalAmt></ForeignTxCyovPrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp><SeventhPrecedingTYAmt>-100</SeventhPrecedingTYAmt><SixthPrecedingTYAmt>-50</SixthPrecedingTYAmt><TotalAmt>-150</TotalAmt></ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><SeventhPrecedingTYAmt>0</SeventhPrecedingTYAmt><SixthPrecedingTYAmt>50</SixthPrecedingTYAmt><FifthPrecedingTYAmt>100</FifthPrecedingTYAmt><TotalAmt>150</TotalAmt></ForeignTxCyovFollowingTYGrp>");
+});
+
+Deno.test("Form 1116 Schedule B carries passive 2017 origin through the eighth-preceding column", () => {
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 400,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 250,
+    prior_year_carryover_source: {
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        { vintage_tax_year: 2020, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2017, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2019, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2018, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 400,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2017-2020 vintages"],
+    },
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovPrTYGrp><EighthPrecedingTYAmt>100</EighthPrecedingTYAmt><SeventhPrecedingTYAmt>100</SeventhPrecedingTYAmt><SixthPrecedingTYAmt>100</SixthPrecedingTYAmt><FifthPrecedingTYAmt>100</FifthPrecedingTYAmt><TotalAmt>400</TotalAmt></ForeignTxCyovPrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp><EighthPrecedingTYAmt>-100</EighthPrecedingTYAmt><SeventhPrecedingTYAmt>-50</SeventhPrecedingTYAmt><TotalAmt>-150</TotalAmt></ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><EighthPrecedingTYAmt>0</EighthPrecedingTYAmt><SeventhPrecedingTYAmt>50</SeventhPrecedingTYAmt><SixthPrecedingTYAmt>100</SixthPrecedingTYAmt><FifthPrecedingTYAmt>100</FifthPrecedingTYAmt><TotalAmt>250</TotalAmt></ForeignTxCyovFollowingTYGrp>");
+});
+
+Deno.test("Form 1116 Schedule B carries passive 2016 origin through the ninth-preceding column", () => {
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 300,
+    used_prior_year_carryover: 150,
+    remaining_prior_year_carryover: 150,
+    prior_year_carryover_source: {
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        { vintage_tax_year: 2018, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2016, prior_year_schedule_b_line8_vintage_amount: 100 },
+        { vintage_tax_year: 2017, prior_year_schedule_b_line8_vintage_amount: 100 },
+      ],
+      prior_year_schedule_b_line8_total: 300,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2016-2018 vintages"],
+    },
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovPrTYGrp><NinthPrecedingTYAmt>100</NinthPrecedingTYAmt><EighthPrecedingTYAmt>100</EighthPrecedingTYAmt><SeventhPrecedingTYAmt>100</SeventhPrecedingTYAmt><TotalAmt>300</TotalAmt></ForeignTxCyovPrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp><NinthPrecedingTYAmt>-100</NinthPrecedingTYAmt><EighthPrecedingTYAmt>-50</EighthPrecedingTYAmt><TotalAmt>-150</TotalAmt></ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><NinthPrecedingTYAmt>0</NinthPrecedingTYAmt><EighthPrecedingTYAmt>50</EighthPrecedingTYAmt><SeventhPrecedingTYAmt>100</SeventhPrecedingTYAmt><TotalAmt>150</TotalAmt></ForeignTxCyovFollowingTYGrp>");
+});
+
+Deno.test("Form 1116 Schedule B expires unused 2015 passive tax on line 5 and excludes it from line 8", () => {
+  const source = {
+    income_category: IncomeCategory.Passive,
+    vintages: [
+      { vintage_tax_year: 2016 as const, prior_year_schedule_b_line8_vintage_amount: 200 },
+      { vintage_tax_year: 2015 as const, prior_year_schedule_b_line8_vintage_amount: 400 },
+    ],
+    prior_year_schedule_b_line8_total: 600,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: ["Filed 2024 passive Schedule B line 8, original 2015 and 2016 vintages"],
+  };
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 600,
+    used_prior_year_carryover: 300,
+    remaining_prior_year_carryover: 200,
+    prior_year_carryover_source: source,
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovPrTYGrp><TenthPrecedingTYAmt>400</TenthPrecedingTYAmt><NinthPrecedingTYAmt>200</NinthPrecedingTYAmt><TotalAmt>600</TotalAmt></ForeignTxCyovPrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp><TenthPrecedingTYAmt>-300</TenthPrecedingTYAmt><TotalAmt>-300</TotalAmt></ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovExprUnsdCurrTYGrp><TenthPrecedingTYAmt>-100</TenthPrecedingTYAmt><SubtotalAmt>-100</SubtotalAmt><TotalAmt>-100</TotalAmt></ForeignTxCyovExprUnsdCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><TenthPrecedingTYAmt>0</TenthPrecedingTYAmt><NinthPrecedingTYAmt>200</NinthPrecedingTYAmt><TotalAmt>200</TotalAmt></ForeignTxCyovFollowingTYGrp>");
+  assertThrows(() => form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.Passive,
+    prior_year_carryover: 600,
+    used_prior_year_carryover: 300,
+    remaining_prior_year_carryover: 300,
+    prior_year_carryover_source: source,
+  }), Error, "balance, use, and expiry do not reconcile");
+});
+
+Deno.test("Form 1116 Schedule B expires 2015 balance even when 2025 creates new excess", () => {
+  const xml = form1116ScheduleB.build({
+    case: "combined_current_excess_prior_balance",
+    category: IncomeCategory.Passive,
+    current_year_excess_tax: 50,
+    prior_year_review: {
+      ...priorYearReview,
+      prior_year_schedule_b_line8_balance: 100,
+    },
+    prior_year_carryover: 100,
+    used_prior_year_carryover: 0,
+    remaining_prior_year_carryover: 0,
+    prior_year_carryover_source: {
+      income_category: IncomeCategory.Passive,
+      vintages: [{ vintage_tax_year: 2015, prior_year_schedule_b_line8_vintage_amount: 100 }],
+      prior_year_schedule_b_line8_total: 100,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2015 vintage"],
+    },
+  });
+  assertStringIncludes(xml, "<ForeignTxCyovExprUnsdCurrTYGrp><TenthPrecedingTYAmt>-100</TenthPrecedingTYAmt><SubtotalAmt>-100</SubtotalAmt><TotalAmt>-100</TotalAmt></ForeignTxCyovExprUnsdCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovGenCurrTYGrp><CurrentTaxYearAmt>50</CurrentTaxYearAmt><TotalAmt>50</TotalAmt></ForeignTxCyovGenCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp><TenthPrecedingTYAmt>0</TenthPrecedingTYAmt><CurrentTaxYearAmt>50</CurrentTaxYearAmt><TotalAmt>50</TotalAmt></ForeignTxCyovFollowingTYGrp>");
 });

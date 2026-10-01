@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8814,
   f8814,
+  form8814EicLine4,
   type F8814Item,
   type Form8814Lines,
 } from "./index.ts";
@@ -131,6 +132,23 @@ Deno.test("f8814: Alaska PFD share is excluded from Form 8960 line 7", () => {
     field(result, "form4952", "form8814_line12_investment_income"),
     2200,
   );
+});
+
+Deno.test("f8814: Pub. 596 Worksheet 2 removes only the Alaska PFD share of line 12", () => {
+  const line = calculateForm8814({
+    ...child,
+    interest_income: 9_000,
+    alaska_pfd: 2_000,
+    tax_exempt_interest: 5_159,
+  });
+  assertEquals(line.line12, 8_300);
+  assertEquals(form8814EicLine4(line), 6_791);
+  const result = compute([line.item]);
+  assertEquals(
+    field(result, "agi_aggregator", "form8814_eic_tax_exempt_interest"),
+    5_159,
+  );
+  assertEquals(field(result, "agi_aggregator", "form8814_eic_line4"), 6_791);
 });
 
 Deno.test("f8814: $13,500 income must use a child return", () => {

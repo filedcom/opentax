@@ -2,11 +2,17 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { scheduleCLedger } from "../../../nodes/inputs/form1116_schedule_c_source/test-fixture.ts";
 import type { ScheduleCFiledYearEvidence } from "./f1116_schedule_c.ts";
+import type { FilerIdentity } from "../types.ts";
+import { form1116ScheduleCPdfCandidate } from "../../pdf/forms/f1116_schedule_c_candidate.ts";
 import {
-  reviewScheduleCDocuments,
+  reviewScheduleCDocuments as reviewWithFiler,
   type ScheduleCDocumentIntake,
   ScheduleCDocumentRole,
 } from "./f1116_schedule_c_documents.ts";
+
+const FILER_SSN = "123456789";
+const reviewScheduleCDocuments = (input: ScheduleCDocumentIntake) =>
+  reviewWithFiler(input, FILER_SSN);
 
 function reviewedCase() {
   const original = scheduleCLedger();
@@ -124,10 +130,25 @@ async function reviewedPdf(reference: string) {
 
 async function intake(): Promise<ScheduleCDocumentIntake> {
   const { ledger, evidence } = reviewedCase();
+  const amendedLine = (column_a: number, column_c: number) => ({
+    column_a,
+    column_b: column_c - column_a,
+    column_c,
+  });
+  const prepared_amendment = {
+    tax_year: 2024 as const,
+    prepared_form1040x_document_reference: "prepared-1040x-2024",
+    line6_tax: amendedLine(5_000, 5_000),
+    line7_nonrefundable_credits: amendedLine(100, 80),
+    line8_tax_after_credits: amendedLine(4_900, 4_920),
+    line10_other_taxes: amendedLine(0, 0),
+    line11_total_tax: amendedLine(4_900, 4_920),
+  };
   const references = [
     [ScheduleCDocumentRole.FiledForm1116, "filed-1116-2024"],
     [ScheduleCDocumentRole.FiledSchedule3, "filed-schedule3-2024"],
     [ScheduleCDocumentRole.FiledForm1040, "filed-1040-2024"],
+    [ScheduleCDocumentRole.PreparedForm1040X, "prepared-1040x-2024"],
     [ScheduleCDocumentRole.ForeignRedetermination, "foreign-refund-notice"],
     [ScheduleCDocumentRole.RevisedCalculation, "revised-1116-workpaper"],
     [ScheduleCDocumentRole.AffectedYearRecalculation, "recomputed-1040-2024"],
@@ -137,20 +158,30 @@ async function intake(): Promise<ScheduleCDocumentIntake> {
     references.map(async ([role, reference]) => ({
       role,
       source_reference: reference,
+      ...(role === ScheduleCDocumentRole.ForeignRedetermination
+        ? { foreign_tax_owner_reference: "reviewed-taxpayer-foreign-account" }
+        : { reviewed_subject_ssn: FILER_SSN }),
       ...await reviewedPdf(reference),
       reviewed_by: "Tax reviewer",
     })),
   );
-  return { ledger, filed_year_evidence: evidence, documents };
+  return {
+    ledger,
+    filed_year_evidence: evidence,
+    prepared_amendment,
+    documents,
+  };
 }
 
-Deno.test("Schedule C intake binds seven reviewed PDF byte streams and flags amended 2024 return", async () => {
+Deno.test("Schedule C intake binds eight reviewed PDF byte streams and flags amended 2024 return", async () => {
   const input = await intake();
   const reviewed = await reviewScheduleCDocuments(input);
-  assertEquals(reviewed.documents.length, 7);
+  assertEquals(reviewed.documents.length, 8);
   assertEquals(reviewed.documents.every((doc) => doc.page_count === 1), true);
+  assertEquals(reviewed.filer_ssn, FILER_SSN);
   assertEquals(reviewed.amended_return_required, true);
   assertEquals(reviewed.affected_year_amendment_status, "required_unverified");
+  assertEquals(reviewed.prepared_amendment_reviewed, true);
   assertEquals(reviewed.filed_us_tax_liability, 4_900);
   assertEquals(reviewed.redetermined_us_tax_liability, 4_920);
   assertEquals(reviewed.relation_back_year_unused_foreign_tax_before, 0);
@@ -160,6 +191,48 @@ Deno.test("Schedule C intake binds seven reviewed PDF byte streams and flags ame
   assertEquals(reviewed.pdf_fields_candidate.part2_row1_col10, 20);
   assertEquals(reviewed.pdf_fields_candidate.part3_col5, 80);
   assertEquals(reviewed.pdf_fields_candidate.part4_col4, 20);
+  const pdfFiler = {
+    primarySSN: FILER_SSN,
+    fullName: "Taxpayer Test",
+  } as FilerIdentity;
+  assertEquals(
+    form1116ScheduleCPdfCandidate.instances?.(
+      reviewed.pdf_fields_candidate,
+      pdfFiler,
+    )?.[0].filer_ssn,
+    FILER_SSN,
+  );
+  await assertRejects(
+    async () =>
+      form1116ScheduleCPdfCandidate.instances?.(
+        reviewed.pdf_fields_candidate,
+        { ...pdfFiler, primarySSN: "111223333" },
+      ),
+    Error,
+    "owner differs from reviewed documents",
+  );
+});
+
+Deno.test("Schedule C intake binds filed documents to the current filer and foreign records to that taxpayer", async () => {
+  const input = await intake();
+  await assertRejects(
+    () => reviewWithFiler(input, "111223333"),
+    Error,
+    "owner differs from the current filer",
+  );
+  await assertRejects(
+    () =>
+      reviewScheduleCDocuments({
+        ...input,
+        documents: input.documents.map((document) =>
+          document.role === ScheduleCDocumentRole.ForeignRedetermination
+            ? { ...document, foreign_tax_owner_reference: undefined }
+            : document
+        ),
+      }),
+    Error,
+    "foreign record needs a reviewed taxpayer ownership link",
+  );
 });
 
 Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF", async () => {
@@ -237,20 +310,76 @@ Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF
   const secondDocument = {
     role: ScheduleCDocumentRole.ForeignRedetermination,
     source_reference: "foreign-refund-notice-2",
+    foreign_tax_owner_reference: "reviewed-taxpayer-second-foreign-account",
     ...await reviewedPdf("foreign-refund-notice-2"),
     reviewed_by: "Tax reviewer",
   };
   const reviewed = await reviewScheduleCDocuments({
     ledger,
     filed_year_evidence: evidence,
+    prepared_amendment: {
+      ...input.prepared_amendment!,
+      line7_nonrefundable_credits: {
+        column_a: 150,
+        column_b: -40,
+        column_c: 110,
+      },
+      line8_tax_after_credits: {
+        column_a: 4_850,
+        column_b: 40,
+        column_c: 4_890,
+      },
+      line11_total_tax: {
+        column_a: 4_850,
+        column_b: 40,
+        column_c: 4_890,
+      },
+    },
     documents: [...input.documents, secondDocument],
   });
-  assertEquals(reviewed.documents.length, 8);
+  assertEquals(reviewed.documents.length, 9);
   assertEquals(reviewed.pdf_fields_candidate.part2_row2_col2b, "BANK2");
   assertEquals(reviewed.pdf_fields_candidate.part2_subtotal_col12, 110);
   assertStringIncludes(
     reviewed.native_xml_candidate,
     "<ForeignEntityReferenceIdNum>BANK2</ForeignEntityReferenceIdNum>",
+  );
+});
+
+Deno.test("Schedule C intake rejects a missing or changed prepared affected-year Form 1040-X", async () => {
+  const input = await intake();
+  await assertRejects(
+    () => reviewScheduleCDocuments({ ...input, prepared_amendment: undefined }),
+    Error,
+    "needs a reviewed prepared Form 1040-X",
+  );
+  await assertRejects(
+    () =>
+      reviewScheduleCDocuments({
+        ...input,
+        prepared_amendment: {
+          ...input.prepared_amendment!,
+          line7_nonrefundable_credits: {
+            ...input.prepared_amendment!.line7_nonrefundable_credits,
+            column_c: 81,
+          },
+        },
+      }),
+    Error,
+    "line7_nonrefundable_credits disagrees",
+  );
+  await assertRejects(
+    () =>
+      reviewScheduleCDocuments({
+        ...input,
+        documents: input.documents.map((document) =>
+          document.role === ScheduleCDocumentRole.PreparedForm1040X
+            ? { ...document, bytes: new Uint8Array([1, 2, 3]) }
+            : document
+        ),
+      }),
+    Error,
+    "differ from the reviewed SHA-256",
   );
 });
 

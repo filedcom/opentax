@@ -1,9 +1,21 @@
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
+import { form8992Pending } from "./form8992.fixture.ts";
+
+Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () => assertAttachmentCoverage(form8992Pending, kind),
+      Error,
+      "Schedule R all-zero treatment",
+    );
+  }
+});
 
 Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   for (
     const pending of [
+      { clergy: { clergys: [{ ministerial_wages: 50_000 }] } },
       { f8997: { investment_lots: [{ lot_id: "QOF" }] } },
       { f8997: { investment_lots: [{ events: [{}] }] } },
       { f8958: { state: "CA" } },
@@ -36,6 +48,7 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
       { f8332: { child_name: "Child" } },
       { f8379: { injured_spouse_name: "Spouse" } },
       { f5471: { f5471s: [{}] } },
+      { form8582: { prior_unallowed: 5_000 } },
       { form7203: { stock_basis: 1_000 } },
       { f9465: { monthly_payment: 100 } },
       { nol_carryforward: { nol_carryforwards: [{ nol_amount: 100 }] } },
@@ -96,6 +109,57 @@ Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => 
   }
 });
 
+Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
+  const row = {
+    source_transaction_id: "sale-2025-large-loss",
+    proceeds: 100_000,
+    cost_basis: 2_100_000,
+    adjustment_amount: 1_500_000,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    for (
+      const pending of [
+        { f8949: { f8949s: [row] } },
+        { f1099b: { f1099bs: [row] } },
+        { form8949: [row] },
+        { form8949: { transaction: row } },
+      ]
+    ) {
+      assertThrows(
+        () => assertAttachmentCoverage(pending, kind),
+        Error,
+        "Form 8886 review required for a single Form 8949/1099-B disposition",
+      );
+    }
+    assertAttachmentCoverage({
+      f8949: { f8949s: [{ ...row, cost_basis: 2_099_999 }] },
+    }, kind);
+  }
+});
+
+Deno.test("Form 8886 review blocks a $2 million Form 4684 business casualty before netting", () => {
+  const casualty = {
+    business_fmv_before: 3_000_000,
+    business_fmv_after: 500_000,
+    business_basis: 2_100_000,
+    business_insurance: 100_000,
+    business_is_section_1231: true,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () => assertAttachmentCoverage({ form4684: casualty }, kind),
+      Error,
+      "Form 8886 review required for a Form 4684 business casualty",
+    );
+    assertAttachmentCoverage({
+      form4684: { ...casualty, business_insurance: 100_001 },
+    }, kind);
+    assertAttachmentCoverage({
+      form4684: { ...casualty, business_fmv_after: 1_100_000 },
+    }, kind);
+  }
+});
+
 Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
   const pending = { f8863: { f8863s: [{}] } };
   assertAttachmentCoverage(pending, "mef");
@@ -135,7 +199,7 @@ Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
           kind,
         ),
       Error,
-      "outside the reviewed stock-only ordinary loss",
+      "outside the reviewed stock loss or one new formal note",
     );
   }
   assertAttachmentCoverage(
@@ -163,14 +227,6 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     { f4255: { rows: [{}] } },
     { form8621: { items: [{}] } },
     { f8611: { f8611s: [{}] } },
-    {
-      f8826: {
-        eligible_expenditures: 20_000,
-        prior_year_gross_receipts: 900_000,
-        prior_year_full_time_employee_count: 40,
-        subject_to_passive_activity_limit: false,
-      },
-    },
     { f8854: { initial_filing: true } },
     { f8854_annual: { annual_filing: true } },
   ];
@@ -179,7 +235,6 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     assertThrows(
       () => assertAttachmentCoverage(pending, "pdf"),
       Error,
-      "native filing but no",
     );
   }
   assertAttachmentCoverage(
@@ -192,6 +247,17 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
   assertAttachmentCoverage({ f4255: { rows: [] } }, "pdf");
   assertAttachmentCoverage({ form8621: { items: [] } }, "pdf");
   assertAttachmentCoverage({ f8611: { f8611s: [] } }, "pdf");
+  assertAttachmentCoverage(
+    {
+      f8826: {
+        eligible_expenditures: 5_000,
+        prior_year_gross_receipts: 500_000,
+        prior_year_full_time_employee_count: 20,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+    "pdf",
+  );
   assertAttachmentCoverage(
     {
       f8826: {

@@ -30,6 +30,18 @@ function item(overrides: Partial<ScheduleCItem> = {}): ScheduleCItem {
   };
 }
 
+Deno.test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
+  const fields = {
+    schedule_cs: [item()],
+    line1_gross_receipts: 5_000,
+  };
+  assertThrows(
+    () => scheduleC.build(fields, { filer }),
+    Error,
+    "top-level gross receipts need business-linked source rows",
+  );
+});
+
 Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [

@@ -56,25 +56,26 @@ Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field"
   assertEquals(actual.size, expected.size);
 });
 
-Deno.test("Form 8889 PDF retains separate rollover and age-65 exception print lines", () => {
-  const [owner] = form8889Pdf.instances?.({
+Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", () => {
+  const pending = {
     forms: [{
       owner: "primary",
       beneficiary_name: "Alex Taxpayer",
       beneficiary_ssn: "123456789",
       print_line14a_distributions: 2000,
-      print_line14b_excluded_distributions: 1000,
+      print_line14b_excluded_distributions: 0,
       print_line14c: 1000,
       print_line15_qualified: 100,
       print_line16_taxable: 900,
       print_line17a_exception: true,
       print_line17b_penalty: 80,
     }],
-  }) ?? [];
-  assertEquals(owner?.print_line14b_excluded_distributions, 1000);
-  assertEquals(owner?.print_line16_taxable, 900);
-  assertEquals(owner?.print_line17a_exception, true);
-  assertEquals(owner?.print_line17b_penalty, 80);
+  };
+  assertThrows(
+    () => form8889Pdf.instances?.(pending),
+    Error,
+    "needs dated owner source",
+  );
   for (
     const [key, expected] of [
       ["print_line14b_excluded_distributions", "f1_16[0]"],

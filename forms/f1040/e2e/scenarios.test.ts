@@ -620,10 +620,24 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $11,094", ()
 // Total tax = $0 (income tax $838 − CTC $838)
 // Refund = $12,264 − $0 = $12,264
 
-Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,264", () => {
+Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,225", () => {
   const result = runReturn({
     general: {
       ...hohGeneral(),
+      child_eic_filer_review: {
+        not_qualifying_child_of_another_taxpayer_verified: true,
+        relationship_age_residence_record_reference:
+          "2025 taxpayer family and residence review",
+      },
+      prior_eic_disallowance_review: {
+        status: "none",
+        irs_account_record_reference: "2025 IRS account transcript review",
+        no_nonclerical_disallowance_since_1996_verified: true,
+      },
+      eic_tax_residency_review: {
+        status: "all_year_resident",
+        taxpayer_status_record_reference: "2025 resident status review",
+      },
       dependents: [
         {
           first_name: "Child1",
@@ -668,7 +682,7 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
     }],
   });
 
-  // EITC should be $5,364
+  // The 2025 IRS EIC table assigns $5,325 at $32,000 with two children.
   assertEquals(
     result.pending["eitc"]?.["qualifying_children"],
     2,
@@ -681,10 +695,10 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
   assertEquals(f["line24_total_tax"], 0, "total tax = $0 after CTC");
   assertEquals(
     f["line33_total_payments"],
-    12_264,
+    12_225,
     "total payments = withheld + EITC + ACTC",
   );
-  assertEquals(f["line35a_refund"], 12_264, "refund = $12,264");
+  assertEquals(f["line35a_refund"], 12_225, "refund = $12,225");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
@@ -949,5 +963,36 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
     149_148.18,
     "taxable income = $161,435.23 pre-QBI − $12,287.05",
+  );
+});
+
+Deno.test("age derived from birth date limits Form 8995 deduction across the return", () => {
+  const result = runReturn({
+    general: {
+      ...singleGeneral(),
+      taxpayer_dob: "1960-06-15",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    f1099div: [{
+      payerName: "Fund",
+      isNominee: false,
+      box11: false,
+      box1a: 26_000,
+      box5: 15_000,
+    }],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  });
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending["f1040"]?.["line12a_standard_deduction"], 17_750);
+  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 1_650);
+  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 1_650);
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    600,
   );
 });

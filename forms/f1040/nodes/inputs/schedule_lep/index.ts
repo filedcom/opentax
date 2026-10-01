@@ -32,7 +32,30 @@ export enum LanguagePreferenceCode {
 export const itemSchema = z.object({
   person: z.enum(["taxpayer", "spouse"]),
   language_preference_code: z.nativeEnum(LanguagePreferenceCode),
-}).strict();
+  request_confirmed_by_person: z.literal(true),
+  request_record_reference: z.string().trim().min(1),
+  prior_language_preference_code: z.nativeEnum(LanguagePreferenceCode)
+    .refine((code) => code !== LanguagePreferenceCode.Cancel).optional(),
+  prior_election_record_reference: z.string().trim().min(1).optional(),
+}).strict().superRefine((request, context) => {
+  const hasPrior = request.prior_language_preference_code !== undefined &&
+    request.prior_election_record_reference !== undefined;
+  if (request.language_preference_code === LanguagePreferenceCode.Cancel &&
+    !hasPrior) {
+    context.addIssue({
+      code: "custom",
+      message: "Schedule LEP cancellation needs the previous election code and record",
+    });
+  }
+  if (request.language_preference_code !== LanguagePreferenceCode.Cancel &&
+    (request.prior_language_preference_code !== undefined ||
+      request.prior_election_record_reference !== undefined)) {
+    context.addIssue({
+      code: "custom",
+      message: "Schedule LEP prior election facts belong only to cancellation",
+    });
+  }
+});
 
 export const inputSchema = z.object({
   requests: z.array(itemSchema).min(1).max(2),

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { internalForm8990ScheduleCPass } from "../../intermediate/forms/form8990/schedule-c-pass.ts";
 import { sameStagedScheduleCSource } from "../../intermediate/forms/form8990/two-stage.ts";
@@ -17,6 +18,10 @@ import { form461 } from "../../intermediate/forms/form461/index.ts";
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
+import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
+import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
+import { miningCostAdjustment } from "./mining.ts";
+import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
@@ -117,6 +122,18 @@ function deductionOutputs(
   netProfit: number,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [...amtDepletionOutputs(item)];
+  const miningAdjustment = miningCostAdjustment(item);
+  if (miningAdjustment > 0) {
+    outputs.push(output(form6251, {
+      line2q_mining_costs: miningAdjustment,
+    }));
+  }
+  const contractAdjustment = longTermContractAdjustment(item);
+  if (contractAdjustment > 0) {
+    outputs.push(output(form6251, {
+      line2p_long_term_contracts: contractAdjustment,
+    }));
+  }
   if (item.line_g_material_participation === false) {
     outputs.push(output(form8582, { passive_schedule_c: netProfit }));
   }
@@ -132,6 +149,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     schedule1,
     agi_aggregator,
     schedule_se,
+    schedule1a,
     form8995,
     form8582,
     form6251,
@@ -139,6 +157,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     eitc,
     f8812,
     form7206,
+    schedule_j_calculation,
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -146,6 +165,91 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+    if ((input.line1_gross_receipts ?? 0) > 0) {
+      throw new Error(
+        "Schedule C top-level gross receipts need business-linked source rows",
+      );
+    }
+    const receiptsByBusiness = new Map<string, number>();
+    for (
+      const source of [
+        ...(input.attorney_fee_sources ?? []),
+        ...(input.f1099m_receipt_sources ?? []),
+        ...(input.f1099nec_receipt_sources ?? []),
+        ...(input.f1099k_receipt_sources ?? []),
+      ]
+    ) {
+      receiptsByBusiness.set(
+        source.business_reference,
+        (receiptsByBusiness.get(source.business_reference) ?? 0) +
+          source.amount,
+      );
+    }
+    for (const [reference, receipts] of receiptsByBusiness) {
+      const matches = input.schedule_cs.filter((item) =>
+        item.business_reference === reference
+      );
+      if (
+        matches.length !== 1 ||
+        !matches[0].proprietor_recipient ||
+        matches[0].line_f_accounting_method !== "cash" ||
+        matches[0].line_1_gross_receipts < receipts
+      ) {
+        throw new Error(
+          "1099 receipts need one matching Schedule C business with cash-basis accounting whose gross receipts include them",
+        );
+      }
+    }
+    const refundsByBusiness = new Map<string, number>();
+    const processorFeesByBusiness = new Map<string, number>();
+    for (const source of input.f1099k_receipt_sources ?? []) {
+      const refunds = source.customer_refunds_review ?? [];
+      if (
+        new Set(refunds.map((refund) => refund.refund_transaction_id)).size !==
+          refunds.length
+      ) {
+        throw new Error(
+          "1099-K customer refund transaction IDs must be unique",
+        );
+      }
+      const total = refunds.reduce((sum, refund) => sum + refund.amount, 0);
+      if (total > source.amount) {
+        throw new Error("1099-K customer refunds exceed business receipts");
+      }
+      if (total > 0) {
+        refundsByBusiness.set(
+          source.business_reference,
+          (refundsByBusiness.get(source.business_reference) ?? 0) + total,
+        );
+      }
+      const processorFees = source.processor_fees_review?.amount ?? 0;
+      if (processorFees > source.amount) {
+        throw new Error("1099-K processor fees exceed business receipts");
+      }
+      if (processorFees > 0) {
+        processorFeesByBusiness.set(
+          source.business_reference,
+          (processorFeesByBusiness.get(source.business_reference) ?? 0) +
+            processorFees,
+        );
+      }
+    }
+    for (const [reference, refunds] of refundsByBusiness) {
+      const business = input.schedule_cs.find((item) =>
+        item.business_reference === reference
+      );
+      if (business?.line_2_returns_allowances !== refunds) {
+        throw new Error("1099-K customer refunds must equal Schedule C line 2");
+      }
+    }
+    for (const [reference, fees] of processorFeesByBusiness) {
+      const business = input.schedule_cs.find((item) =>
+        item.business_reference === reference
+      );
+      if (business?.line_10_commissions_fees !== fees) {
+        throw new Error("1099-K processor fees must equal Schedule C line 10");
+      }
+    }
     if ((input.line_12_depletion ?? 0) > 0) {
       throw new Error(
         "Unlinked depletion worksheet amount needs a Schedule C business and property-level AMT refigure",
@@ -191,6 +295,41 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       )
     );
     const netProfits = atRisk.map((result) => result.atRiskNet);
+    const fishingEvidenceItems = items.filter((item) =>
+      item.schedule_j_fishing_evidence !== undefined
+    );
+    if (fishingEvidenceItems.length > 0) {
+      const evidence = fishingEvidenceItems[0].schedule_j_fishing_evidence!;
+      if (
+        items.length !== 1 ||
+        items[0].business_reference !== evidence.business_reference
+      ) {
+        throw new Error(
+          "Schedule J fishing evidence needs exactly one matching Schedule C business",
+        );
+      }
+      const source = scheduleJFishingScheduleCSource(items[0], {
+        catch_sales_record_reference: evidence.catch_sales_record_reference,
+        harvested_fish_entered_commerce_verified:
+          evidence.harvested_fish_entered_commerce_verified,
+        scientific_research_vessel: evidence.scientific_research_vessel,
+      });
+      if (source.at_risk_net !== netProfits[0]) {
+        throw new Error(
+          "Schedule J fishing profit needs reconciled employment-credit reductions",
+        );
+      }
+      outputs.push(this.outputNodes.output(schedule_j_calculation, {
+        fishing_net_profit: source.at_risk_net,
+      }));
+    }
+    outputs.push(this.outputNodes.output(schedule1a, {
+      qualified_tips_schedule_c_businesses: items.map((item, index) => ({
+        business_reference: item.business_reference,
+        proprietor_recipient: item.proprietor_recipient,
+        line31_net_profit: netProfits[index],
+      })),
+    }));
     outputs.push(this.outputNodes.output(form7206, {
       schedule_c_source: {
         unadjusted_source: Object.keys(input).every((key) =>

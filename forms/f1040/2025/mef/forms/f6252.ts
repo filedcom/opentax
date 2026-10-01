@@ -8,6 +8,7 @@ import {
   type F6252Input,
   type F6252Item,
   inputSchema,
+  validatePriorYearForm6252Source,
 } from "../../../nodes/intermediate/forms/form6252/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -37,15 +38,8 @@ export function validateFiledForm6252(input: F6252Item) {
     );
   }
   const sold = installmentSaleDate(input.date_sold, "sale date");
-  if (
-    sold.getUTCFullYear() < 2025 &&
-    input.payments_received_prior_years === undefined
-  ) {
-    throw new Error(
-      "Form 6252 later-year sale needs prior-year payment history",
-    );
-  }
   const lines = calculateInstallmentSale(input);
+  validatePriorYearForm6252Source(input, lines);
   if (sold.getUTCFullYear() === 2025) {
     if (lines.line23 !== 0) {
       throw new Error(

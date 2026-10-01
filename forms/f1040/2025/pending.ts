@@ -2,12 +2,20 @@
  * Format-neutral normalization of the raw executor pending dict.
  *
  * The executor promotes a pending value to an array when multiple nodes write
- * to the same key. Both MEF and PDF builders expect scalar values, so this
- * module resolves all-numeric arrays to their last element (the most recently
- * computed value).
+ * to the same key. Both MEF and PDF builders expect scalar calculated lines,
+ * so this module resolves most all-numeric arrays to their last element (the
+ * most recently computed value). Independent Schedule E sources are additive.
+ * Form 4952 source arrays retain their per-payer amounts for export review.
  */
+const additiveNumericKeys = new Set([
+  "line2g_pab_interest",
+  "line5_schedule_e",
+  "eic_passive_k1_income",
+]);
+
 export function normalizePendingDict(
   raw: unknown,
+  nodeType: string,
 ): Record<string, unknown> | undefined {
   if (raw == null || typeof raw !== "object" || Array.isArray(raw)) {
     return undefined;
@@ -19,7 +27,11 @@ export function normalizePendingDict(
       value.length > 0 &&
       value.every((v) => typeof v === "number")
     ) {
-      result[key] = value[value.length - 1];
+      result[key] = nodeType === "form4952" && key.startsWith("source_")
+        ? value
+        : additiveNumericKeys.has(key)
+        ? value.reduce((sum, amount) => sum + amount, 0)
+        : value[value.length - 1];
     } else {
       result[key] = value;
     }
@@ -33,7 +45,7 @@ export function normalizeAllPending(
 ): Record<string, Record<string, unknown>> {
   const result: Record<string, Record<string, unknown>> = {};
   for (const key of Object.keys(pending)) {
-    const normalized = normalizePendingDict(pending[key]);
+    const normalized = normalizePendingDict(pending[key], key);
     if (normalized !== undefined) {
       result[key] = normalized;
     }

@@ -33,6 +33,30 @@ import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_li
 import { scheduleE } from "../schedule_e/index.ts";
 import { tsjSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  k1PassiveEicReviewSchema,
+  reviewedK1PassiveIncome,
+} from "../k1_passive_eic.ts";
+import {
+  box11CodeJReviewSchema,
+  box11CodeJSourceRows,
+} from "./box11_code_j.ts";
+import {
+  box11CodeEReviewSchema,
+  box11CodeESourceRows,
+} from "./box11_code_e.ts";
+import {
+  box11CodeKReviewSchema,
+  box11CodeKSourceRows,
+} from "./box11_code_k.ts";
+import {
+  box11CodeSReviewSchema,
+  box11CodeSSourceRows,
+} from "./box11_code_s.ts";
+import {
+  box11Line10ReviewSchema,
+  box11Line10SourceRows,
+} from "./box11_line10.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
 //
@@ -49,6 +73,7 @@ export const itemSchema = z.object({
   partnership_name: z.string().min(1),
   partnership_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   // Box 15 code Z is the partner's orphan-drug credit, not a generic credit.
   box15_code_z_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
@@ -74,6 +99,7 @@ export const itemSchema = z.object({
 
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
+  eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
 
   // Box 4a — Guaranteed payments for services → Schedule E + Schedule SE
   box4a_guaranteed_services: z.number().optional(),
@@ -114,6 +140,7 @@ export const itemSchema = z.object({
     reported_amount: z.number().positive(),
     allowed_amount: z.number().nonnegative(),
     statement_reference: z.string().trim().min(1),
+    issuer_expense_item_id: z.string().trim().min(1).optional(),
     expense_kind: z.enum([
       "depreciation",
       "depletion",
@@ -150,10 +177,15 @@ export const itemSchema = z.object({
     "Box 10 — Net section 1231 gain (loss)",
   ),
 
-  // Box 11 — Other income (loss) → Schedule 1 line 8z (various codes A–J)
+  // Uncoded box 11 cannot establish a Form 1040 destination.
   box11_other_income: z.number().optional().describe(
     "Box 11 — Other income (loss)",
   ),
+  box11_code_j_recovery: box11CodeJReviewSchema.optional(),
+  box11_code_e_cod: box11CodeEReviewSchema.optional(),
+  box11_code_k_gambling: box11CodeKReviewSchema.optional(),
+  box11_code_s_nonportfolio_capital: box11CodeSReviewSchema.optional(),
+  box11_line10_ordinary: z.array(box11Line10ReviewSchema).min(1).optional(),
 
   // Box 12 — Section 179 deduction → Form 4562
   box12_section_179: z.number().nonnegative().optional().describe(
@@ -205,6 +237,7 @@ export const itemSchema = z.object({
     nonpassive_investment_property: z.literal(true),
     issuer_crosswalk: z.object({
       issuer_supplement_reference: z.string().trim().min(1),
+      issuer_expense_item_id: z.string().trim().min(1),
       issuer_reported_amount: z.number().positive(),
       same_expense_as_box13_code_i_confirmed: z.literal(true),
       box13_code_i_statement_reference: z.string().trim().min(1),
@@ -306,6 +339,47 @@ export const itemSchema = z.object({
   // Pre-2018 other losses suspended under at-risk rules
   pre2018_atrisk_other_loss: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (item.eic_passive_activity_review) {
+    for (
+      const key of ["partnership_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 passive activity review needs ${key}`,
+        });
+      }
+    }
+    for (
+      const [reviewKey, amountKey] of [
+        ["box1", "box1_ordinary_business"],
+        ["box2", "box2_rental_re"],
+        ["box3", "box3_other_rental"],
+      ] as const
+    ) {
+      if (
+        (item[amountKey] ?? 0) > 0 &&
+        !item.eic_passive_activity_review[reviewKey]
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eic_passive_activity_review", reviewKey],
+          message: `K-1 ${reviewKey} needs passive activity classification`,
+        });
+      }
+    }
+    if (
+      item.eic_passive_activity_review.box1 === "passive" &&
+      (item.box14a_se_earnings ?? 0) > 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eic_passive_activity_review", "box1"],
+        message: "K-1 passive box 1 conflicts with self-employment earnings",
+      });
+    }
+  }
   if (
     (item.box7_royalties ?? 0) > 0 || item.box7_royalty_reporting ||
     item.box13_code_i_royalty_deduction
@@ -421,6 +495,8 @@ export const itemSchema = z.object({
       codeB.issuer_crosswalk.issuer_reported_amount !== codeB.reported_amount ||
       codeB.issuer_crosswalk.box13_code_i_statement_reference !==
         codeI.statement_reference ||
+      codeB.issuer_crosswalk.issuer_expense_item_id !==
+        codeI.issuer_expense_item_id ||
       codeB.issuer_crosswalk.royalty_property_description !==
         royalty.property_description
     ) {
@@ -448,7 +524,23 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  k1_partnerships: z.array(itemSchema).min(1),
+  k1_partnerships: z.array(itemSchema).min(1).superRefine((items, ctx) => {
+    const seen = new Set<string>();
+    for (const [index, item] of items.entries()) {
+      const id = item.box20_code_b_investment_expenses?.issuer_crosswalk
+        .issuer_expense_item_id;
+      if (!id) continue;
+      const key = `${item.partnership_ein}:${id}`;
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [index, "box20_code_b_investment_expenses"],
+          message: "K-1 code B issuer expense item ID must be unique within its partnership",
+        });
+      }
+      seen.add(key);
+    }
+  }),
 });
 
 type K1PartnershipItem = z.infer<typeof itemSchema>;
@@ -470,7 +562,10 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
   if (total === 0) return [];
   return [
     output(schedule1, { line5_schedule_e: total }),
-    output(agi_aggregator, { line5_schedule_e: total }),
+    output(agi_aggregator, {
+      line5_schedule_e: total,
+      eic_passive_k1_income: reviewedK1PassiveIncome(items),
+    }),
   ];
 }
 
@@ -505,6 +600,9 @@ function royaltyScheduleEOutputs(items: K1PartnershipItems): NodeOutput[] {
             ? {
               box13_code_i_allowed_deduction: deduction.allowed_amount,
               box13_code_i_statement_reference: deduction.statement_reference,
+              ...(deduction.issuer_expense_item_id
+                ? { issuer_expense_item_id: deduction.issuer_expense_item_id }
+                : {}),
             }
             : {}),
         },
@@ -569,27 +667,38 @@ function f1040QualDivOutput(items: K1PartnershipItems): NodeOutput[] {
 
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1PartnershipItems): NodeOutput[] {
+  const codeS = box11CodeSSourceRows(items);
   const totalSt = items.reduce(
     (sum, item) => sum + (item.box8_net_st_cap_gain ?? 0),
     0,
-  );
+  ) + codeS.reduce((sum, row) => sum + row.short_term_gain_loss, 0);
   const totalLt = items.reduce(
     (sum, item) => sum + (item.box9a_net_lt_cap_gain ?? 0),
     0,
-  );
-  const hasSt = totalSt !== 0;
-  const hasLt = totalLt !== 0;
+  ) + codeS.reduce((sum, row) => sum + row.long_term_gain_loss, 0);
+  const hasSt = totalSt !== 0 ||
+    codeS.some((row) => row.short_term_gain_loss !== 0);
+  const hasLt = totalLt !== 0 ||
+    codeS.some((row) => row.long_term_gain_loss !== 0);
   if (!hasSt && !hasLt) return [];
-
+  const sourceFields = codeS.length > 0
+    ? {
+      k1_partnership_box11_code_s_sources: codeS,
+      k1_partnership_line5_source_total: totalSt,
+      k1_partnership_line12_source_total: totalLt,
+    }
+    : {};
   if (hasSt && hasLt) {
-    return [
-      output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt }),
-    ];
+    return [output(schedule_d, {
+      line_5_k1_st: totalSt,
+      line_12_k1_lt: totalLt,
+      ...sourceFields,
+    })];
   }
   if (hasSt) {
-    return [output(schedule_d, { line_5_k1_st: totalSt })];
+    return [output(schedule_d, { line_5_k1_st: totalSt, ...sourceFields })];
   }
-  return [output(schedule_d, { line_12_k1_lt: totalLt })];
+  return [output(schedule_d, { line_12_k1_lt: totalLt, ...sourceFields })];
 }
 
 // NIIT routing: K-1 partnership income → Form 8960 lines 2 and 4a.
@@ -704,29 +813,61 @@ function box9bCollectiblesOutputs(items: K1PartnershipItems): NodeOutput[] {
 function box10Net1231Outputs(items: K1PartnershipItems): NodeOutput[] {
   const rows = items
     .filter((item) => (item.box10_net_1231 ?? 0) !== 0)
-    .map((item) => ({
-      source: "partnership" as const,
-      entity_name: item.partnership_name,
-      gain_loss: item.box10_net_1231 ?? 0,
-    }));
+    .map((item) => {
+      if (
+        !item.partnership_ein || !item.source_document_reference ||
+        !item.recipient_tin
+      ) {
+        throw new Error(
+          "Partnership K-1 box 10 needs EIN, issued K-1 reference, and recipient TIN",
+        );
+      }
+      return {
+        source: "partnership" as const,
+        entity_name: item.partnership_name,
+        source_ein: item.partnership_ein,
+        source_document_reference: item.source_document_reference,
+        recipient_tin: item.recipient_tin,
+        gain_loss: item.box10_net_1231 ?? 0,
+      };
+    });
   if (rows.length === 0) return [];
   const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
   return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
 }
 
-// Box 11 — Other income (loss) → Schedule 1 line 8z + agi_aggregator
-// Various codes A–J (e.g., code A: other portfolio income, code C: §1256 contracts).
-// Routed to the generic line8z_other bucket on Schedule 1 and the AGI aggregator.
+// Box 11 code J: reviewed tax-benefit recovery → Schedule 1 line 8z.
 function box11OtherIncomeOutputs(items: K1PartnershipItems): NodeOutput[] {
-  const total = items.reduce(
-    (sum, item) => sum + (item.box11_other_income ?? 0),
-    0,
-  );
-  if (total === 0) return [];
+  const rows = box11CodeJSourceRows(items);
+  if (rows.length === 0) return [];
   return [
-    output(schedule1, { line8z_other: total }),
-    output(agi_aggregator, { line8z_other: total }),
+    output(schedule1, { k1_partnership_box11_code_j_sources: rows }),
+    output(agi_aggregator, { k1_partnership_box11_code_j_sources: rows }),
   ];
+}
+
+function box11CodeECodOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const rows = box11CodeESourceRows(items);
+  if (rows.length === 0) return [];
+  return [
+    output(schedule1, { k1_partnership_box11_code_e_sources: rows }),
+    output(agi_aggregator, { k1_partnership_box11_code_e_sources: rows }),
+  ];
+}
+
+function box11CodeKGamblingOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const rows = box11CodeKSourceRows(items);
+  if (rows.length === 0) return [];
+  return [
+    output(schedule1, { k1_partnership_box11_code_k_sources: rows }),
+    output(agi_aggregator, { k1_partnership_box11_code_k_sources: rows }),
+  ];
+}
+
+function box11Line10OrdinaryOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const rows = box11Line10SourceRows(items);
+  if (rows.length === 0) return [];
+  return [output(form4797, { k1_box11_line10_rows: rows })];
 }
 
 // Box 12 — Section 179 deduction → Form 4562
@@ -880,8 +1021,11 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...unrecaptured1250Outputs(k1_partnerships),
       // box10_net_1231 → form4797 Part I (§1231 gain/loss)
       ...box10Net1231Outputs(k1_partnerships),
-      // box11_other_income → Schedule 1 line 8z + agi_aggregator
+      // Reviewed box 11 code J sources → Schedule 1 line 8z + AGI.
       ...box11OtherIncomeOutputs(k1_partnerships),
+      ...box11CodeECodOutputs(k1_partnerships),
+      ...box11CodeKGamblingOutputs(k1_partnerships),
+      ...box11Line10OrdinaryOutputs(k1_partnerships),
       // box12_section_179 → form4562 (partner-level §179 limitation applies)
       ...box12Section179Outputs(k1_partnerships),
       ...box13DeductionOutputs(k1_partnerships),

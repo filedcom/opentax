@@ -68,6 +68,21 @@ export const itemSchema = z.object({
   selling_expenses: z.number().nonnegative().optional(),
   excluded_gain: z.number().nonnegative().optional(),
   payments_received_prior_years: z.number().nonnegative().optional(),
+  // The 2024 filed Form 6252 supplies the ratio and payment history reused
+  // on a 2025 later-year return. A bare prior-payment amount is insufficient.
+  prior_year_form6252_source: z.object({
+    filed_form_reference: z.string().min(1),
+    property_description: z.string().min(1),
+    date_acquired: z.string(),
+    date_sold: z.string(),
+    line16_gross_profit: z.number().int().nonnegative(),
+    line18_contract_price: z.number().int().positive(),
+    line19_gross_profit_ratio: z.number().min(0).max(1),
+    line20_year_of_sale_payment: z.number().int().nonnegative(),
+    line22_total_payments: z.number().int().nonnegative(),
+    line23_prior_payments: z.number().int().nonnegative(),
+    line26_gain: z.number().int().nonnegative(),
+  }).optional(),
 });
 
 export const inputSchema = z.object({ f6252s: z.array(itemSchema).min(1) });
@@ -106,6 +121,7 @@ function saleContributions(input: F6252Item): {
     input.date_acquired !== undefined || input.date_sold !== undefined ||
     input.cost_basis !== undefined;
   const lines = hasSaleFacts ? calculateInstallmentSale(input) : undefined;
+  if (lines) validatePriorYearForm6252Source(input, lines);
   if (lines && (input.depreciation_allowed ?? 0) > 0) {
     throw new Error(
       "Form 6252 depreciated property needs section 1245/1250 and unrecaptured gain treatment",
@@ -153,6 +169,51 @@ function saleContributions(input: F6252Item): {
     shortTerm: isLongTerm ? 0 : income,
     section1231: 0,
   };
+}
+
+/** Reconcile a 2025 payment with the actual ratio and payments reported in 2024. */
+export function validatePriorYearForm6252Source(
+  input: F6252Item,
+  lines: ReturnType<typeof calculateInstallmentSale>,
+): void {
+  if (!input.date_sold || input.date_sold >= "2025-01-01") {
+    if (input.prior_year_form6252_source !== undefined) {
+      throw new Error(
+        "Form 6252 sale-year filing cannot use a prior-year filed form",
+      );
+    }
+    return;
+  }
+  if (input.date_sold < "2024-01-01") {
+    throw new Error(
+      "Form 6252 sales before 2024 need longer filed-payment history",
+    );
+  }
+  const prior = input.prior_year_form6252_source;
+  if (!prior || input.payments_received_prior_years === undefined) {
+    throw new Error(
+      "Form 6252 later-year sale needs the filed 2024 Form 6252 and prior-year payment history",
+    );
+  }
+  if (
+    prior.property_description !== input.property_description ||
+    prior.date_acquired !== input.date_acquired ||
+    prior.date_sold !== input.date_sold ||
+    prior.line16_gross_profit !== lines.line16 ||
+    prior.line18_contract_price !== lines.line18 ||
+    prior.line19_gross_profit_ratio !== lines.line19 ||
+    prior.line20_year_of_sale_payment !==
+      Math.max(0, lines.line6 - lines.line13) ||
+    prior.line23_prior_payments !== 0 ||
+    prior.line22_total_payments < prior.line20_year_of_sale_payment ||
+    prior.line22_total_payments !== input.payments_received_prior_years ||
+    prior.line26_gain !==
+      Math.round(prior.line22_total_payments * lines.line19)
+  ) {
+    throw new Error(
+      "Form 6252 filed 2024 source conflicts with sale, ratio, or prior payments",
+    );
+  }
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

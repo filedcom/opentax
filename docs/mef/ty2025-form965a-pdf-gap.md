@@ -1,8 +1,8 @@
 # TY2025 Form 965-A printable-return gap
 
-Static source, native, and blank-PDF audit on 2026-09-28. No PDF descriptor was
-added, no filled artifact was created, and no test, typecheck, XSD, or ATS run
-was performed. Form 965-A remains the
+Static source, native, and blank-PDF audit began on 2026-09-28. A bounded PDF
+descriptor and direct parity fixtures are now authored; no filled artifact,
+test, typecheck, XSD, or ATS run was performed. Form 965-A remains the
 [IRS January 2021 three-page form](https://www.irs.gov/pub/irs-pdf/f965a.pdf)
 used with the reporting-year return; its
 [instructions](https://www.irs.gov/instructions/i965a) require the historical
@@ -33,12 +33,19 @@ amended, and overflow branches need separate row placement and source review.
 The blank form explicitly calls for additional sheets when the printed rows are
 insufficient.
 
-**Decision for this build slice:** leave PDF export unsupported rather than
-print caller assertions as a sourced Form 965-A. Before adding a descriptor,
-require a versioned prior-filed-return/liability record and payment evidence
-linked to each installment and reporting year; reconcile these to the current
-`f965` ledger and Schedule 2; classify one bounded row/part layout and overflow
-behavior; then write native/PDF parity cases and run the deferred XSD and
-filled-PDF visual batch. A current-year payment of zero is not, by itself, a
-no-file decision when a section 965 liability exists or was unpaid during the
-year.
+The PDF descriptor now projects one unadjusted original 2017–2020 installment
+liability to its matching preprinted Part I and II row across pages 1 and 2,
+including all eight actual installment payments, unpaid liability, and the
+reporting-year payment. It retains the official third page, blank when no
+S-corporation deferral exists. Its source calculation and native/PDF projection
+use the same parsed `f965` ledger and compare the payment to finalized Schedule
+2 line 20. Amended returns, transfers, S-corporation rows, and multiple
+liabilities reject in this bounded PDF projection; authored positive/tamper
+fixtures remain unrun. The PDF export gate stays active.
+
+**Remaining evidence prerequisite:** require a versioned prior-filed-return
+liability record and payment evidence linked to each installment and reporting
+year; reconcile them to the current `f965` ledger. Then expand row placement and
+overflow behavior, and run the deferred XSD and filled-PDF visual batch. A
+current-year payment of zero is not, by itself, a no-file decision when a
+section 965 liability exists or was unpaid during the year.

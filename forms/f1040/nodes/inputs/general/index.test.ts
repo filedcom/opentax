@@ -42,6 +42,18 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("general rejects an explicitly dual-status 2025 e-file", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dual_status_return_2025: true,
+      }),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
 Deno.test("general gives Form 8880 filing status and both return SSNs", () => {
   const result = compute({ filing_status: FilingStatus.MFJ });
   assertEquals(findOutput(result, "form8880")?.fields, {
@@ -137,13 +149,28 @@ Deno.test("general passes Form 461 filing status and documented C/F scope review
 });
 
 Deno.test("general passes MFS lived-apart proof to Form 8582", () => {
+  const residenceSource = {
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      taxpayer_residence: "1 Taxpayer Street",
+      spouse_residence: "2 Spouse Avenue",
+      taxpayer_residence_record_reference: `Taxpayer month ${index + 1}`,
+      spouse_residence_record_reference: `Spouse month ${index + 1}`,
+      no_shared_residence_any_day: true as const,
+    })),
+  };
   const apart = compute({
     filing_status: FilingStatus.MFS,
     mfs_spouse_lived_with_taxpayer: false,
+    mfs_lived_apart_source: residenceSource,
   });
   assertEquals(
     findOutput(apart, "form8582")?.fields.mfs_lived_apart_all_year,
     true,
+  );
+  assertEquals(
+    findOutput(apart, "form8582")?.fields.mfs_lived_apart_source,
+    residenceSource,
   );
   const together = compute({
     filing_status: FilingStatus.MFS,
@@ -996,24 +1023,66 @@ Deno.test("date of birth derives age-65 eligibility for standard and senior dedu
     findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older,
     true,
   );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.taxpayer_age_65_or_older,
+    true,
+  );
 });
 
-Deno.test("explicit age-65 flag takes precedence over the derived date-of-birth value", () => {
-  const result = compute({
+Deno.test("age-65 answers must agree with taxpayer and spouse dates of birth", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxpayer_dob: "1955-06-01",
+        taxpayer_age_65_or_older: false,
+      }),
+    Error,
+    "taxpayer age-65 answer conflicts",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_dob: "1961-01-02",
+        taxpayer_age_65_or_older: true,
+        spouse_dob: "1960-06-01",
+        spouse_age_65_or_older: true,
+      }),
+    Error,
+    "taxpayer age-65 answer conflicts",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_dob: "1960-06-01",
+        spouse_dob: "1961-01-02",
+        spouse_age_65_or_older: true,
+      }),
+    Error,
+    "spouse age-65 answer conflicts",
+  );
+  const boundary = compute({
     filing_status: FilingStatus.Single,
-    taxpayer_ssn: "111-22-3333",
-    taxpayer_dob: "1955-06-01",
-    taxpayer_age_65_or_older: false,
+    taxpayer_dob: "1961-01-01",
+    taxpayer_age_65_or_older: true,
   });
+  assertEquals(
+    findOutput(boundary, "standard_deduction")?.fields
+      .taxpayer_age_65_or_older,
+    true,
+  );
+});
 
-  assertEquals(
-    findOutput(result, "standard_deduction")?.fields.taxpayer_age_65_or_older,
-    false,
-  );
-  assertEquals(
-    findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older,
-    false,
-  );
+Deno.test("malformed or future dates of birth cannot drive Form 1040 age boxes", () => {
+  for (const dob of ["1960-02-30", "1960/02/01", "2026-01-01"]) {
+    assertThrows(
+      () => compute({ filing_status: FilingStatus.Single, taxpayer_dob: dob }),
+      Error,
+      "taxpayer date of birth",
+    );
+  }
 });
 
 Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all outputs correct", () => {
@@ -1157,6 +1226,96 @@ Deno.test("dependent_on_another_return: true → excluded from dependent_count",
   // Only the one without dependent_on_another_return counts
   assertEquals(input?.dependent_count, 1);
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
+});
+
+Deno.test("custodial Form 8332 release keeps child in EIC but off Form 1040 dependent rows", () => {
+  const release = {
+    form8332_source_reference: "signed 2025 Form 8332",
+    custody_record_reference: "2025 nights ledger",
+    custodial_parent_for_2025: true,
+    valid_2025_release_to_noncustodial_parent: true,
+    no_competing_eitc_claim_verified: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [qualifyingChildDep({
+      dependent_on_another_return: true,
+      custodial_eitc_release_review: release,
+    })],
+  });
+  const f1040Input = findOutput(result, "f1040")?.fields as Record<
+    string,
+    unknown
+  >;
+  const eitcInput = findOutput(result, "eitc")?.fields as Record<
+    string,
+    unknown
+  >;
+  assertEquals(f1040Input.dependent_count, 0);
+  assertEquals(f1040Input.qualifying_child_tax_credit_count, 0);
+  assertEquals(eitcInput.qualifying_children, 1);
+  assertEquals(
+    (eitcInput.qualifying_child_details as Array<Record<string, unknown>>)[0]
+      .ssn,
+    "123-45-6789",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dependents: [qualifyingChildDep({
+          custodial_eitc_release_review: release,
+        })],
+      }),
+    Error,
+    "requires a child claimed on the other parent's return",
+  );
+});
+
+// ============================================================
+// Separated-spouse EIC special rule
+// ============================================================
+
+Deno.test("reviewed MFS separation reaches EIC and Form 1040 special-rule mark", () => {
+  const review = {
+    basis: "last_six_months_apart",
+    separate_residence_record_reference: "2025 residence ledger",
+    child_residence_record_reference: "2025 school address record",
+    no_competing_eitc_claim_verified: true,
+    not_qualifying_child_of_another_taxpayer_verified: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_eitc_separation_review: review,
+    dependents: [qualifyingChildDep()],
+  });
+  assertEquals(
+    findOutput(result, "eitc")?.fields.mfs_separation_reviewed,
+    true,
+  );
+  assertEquals(
+    findOutput(result, "f1040")?.fields.mfs_eitc_separation_rule,
+    true,
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFS,
+        mfs_eitc_separation_review: review,
+      }),
+    Error,
+    "needs a qualifying child",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        mfs_eitc_separation_review: review,
+        dependents: [qualifyingChildDep()],
+      }),
+    Error,
+    "requires MFS filing status",
+  );
 });
 
 // ============================================================

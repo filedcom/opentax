@@ -1,5 +1,26 @@
 # TY2025 Form 8839 coverage gap
 
+## Staged 2025 income phaseout and credit ordering (2026-10-01, unrun)
+
+The existing one-child, reviewed domestic-expense candidate now carries a
+partial income phaseout through the pure pre-adoption Form 1040 sink, adoption
+credit settlement, staged final Form 1040/Schedule 3, and unregistered native
+and PDF projections. The [2025 Form 8839](https://www.irs.gov/pub/irs-pdf/f8839.pdf)
+directs line 8 to subtract $259,190 from MAGI, line 9 to divide by $40,000,
+and line 10 to reduce each child's line 6 by that ratio. For the authored
+$269,190 MAGI/$12,000 unreimbursed expense case, lines 8/9/10 are
+$10,000/0.250/$3,000; $5,000 reaches Form 1040 line 30 and $4,000 reaches
+Schedule 3 line 6c/Form 1040 line 20. The staged native fields follow the
+checked-in TY2025 v5.4 `IRS8839` element order; PDF field names for the yes
+checkbox and lines 8/9 were inspected in the cached canonical 2025 form.
+Positive and credit/source/final-line tamper fixtures are authored but unrun.
+This remains limited to whole-dollar line amounts, a positive nonrefundable
+credit with no new carryforward, and MAGI below $299,190. The active node and
+registered exporters still reject every positive claim because reviewed
+document bytes and return-wide nonapplicability findings are not authenticated
+and bound to the executor. No XSD validation, filled-PDF review, or ATS result
+has run.
+
 Status: **active filing fails closed** in the tax node, MeF descriptor, and PDF
 descriptor. The pure Part II calculation helper remains for future source-backed
 work, but it does not emit Form 1040, Schedule 3, IRS8839 XML, or a filled PDF.
@@ -40,10 +61,10 @@ prior-year claim, and no employer benefits, it cross-checks the child's name,
 SSN, decree date/jurisdiction/document ID, and every receipt's document ID,
 payment date, category, payee and whole-dollar amount against a structured
 review record. Each expense needs a distinct payment-proof document, and
-duplicate/missing/mismatched records, reimbursements, and unsupported facts
+duplicate/missing/mismatched records, undocumented reimbursements, and unsupported facts
 reject. Review facts explicitly cover U.S. status when adoption efforts began,
 under-18 status, adoptive-parent identity, spouse-child/other-claimant
-exclusions, government/employer/other reimbursement, duplicate federal tax
+exclusions, full reimbursement disclosure, duplicate federal tax
 benefits, and surrogacy/illegal expenses. This narrows the
 [2025 qualified-expense and eligible-child rules](https://www.irs.gov/instructions/i8839)
 to a deliberately smaller path. Focused preflight, arithmetic, and rejection
@@ -54,6 +75,20 @@ underlying document bytes**. No document ingestion or independent reviewer
 workflow is connected, so the gate is not invoked by the active node; node, MeF,
 and PDF positive claims still fail closed. The preflight does not supply MAGI or
 prove tax capacity.
+
+The staged preflight now also accepts one or more explicitly documented
+nonemployer, nonpublic reimbursements. Each reimbursement has a distinct
+document ID and SHA-256-shaped value, payer, date, and whole-dollar amount;
+the expense ledger must identify the same document and amount. Reimbursement
+dates must be in 2025, follow payment, and precede review. The review now asserts that all
+reimbursements were disclosed, while the source calculation subtracts the
+documented amount from qualified expenses. A staged one-child positive fixture
+carries a $12,000 attorney invoice, $2,000 private reimbursement, $10,000
+qualified expense, $5,000 refundable credit, and $5,000 nonrefundable credit
+through the pre-adoption return, final Schedule 3/Form 1040 comparison, and
+candidate native XML/PDF values. Altered reimbursement amounts reject. These
+fixtures are written but unrun; none authenticates the document bytes or opens
+the active filing route.
 
 `nodes/intermediate/forms/form8839/pre_adoption_reconciliation.ts` now stages a
 separate **pure, unrun** final-return arithmetic join for this same narrow
@@ -91,7 +126,7 @@ one-child `IRS8839` XML in the TY2025 XSD order and a field-value map for page 1
 of the
 [canonical 2025 Form 8839 PDF](https://www.irs.gov/pub/irs-pdf/f8839.pdf). This
 is deliberately narrower than the arithmetic helper: single filer, nonnegative
-whole-dollar MAGI no higher than $259,190, no phaseout, no prior child claim or
+whole-dollar MAGI below $299,190, no prior child claim or
 carryforward, no employer benefits, positive nonrefundable credit, and no unused
 nonrefundable adoption amount that would create a later carryforward. Focused
 projection and mismatch cases are written but unrun. The function does **not**
@@ -370,3 +405,38 @@ AcroForm field map and visual filled-PDF check. Separate routes remain for
 employer benefits, multiple children, foreign adoptions, carryforwards, ATIN,
 and MFS exceptions. Do not restore the old flat XML or add an asserted-facts
 bypass.
+
+## Reviewed document byte binding (2026-10-01)
+
+The staged one-child domestic candidate now has a strict byte preflight for
+every referenced decree, expense receipt, payment proof, and separate private
+reimbursement document. It first reconciles the reviewed transcription with
+the child ledger, then requires the exact set of unique nonempty source bytes
+and computes SHA-256 over each document. Missing, duplicate, extra, or changed
+bytes reject. Focused synthetic positive and tamper fixtures are authored but
+unrun. This is a concrete source prerequisite only: the active executor does
+not yet own these bytes or the post-tax Form 8839 deposit, and the registered
+MeF/PDF exporters remain fail-closed. A caller invoking this preflight cannot
+activate a filing, and no taxpayer decree or expense document has been reviewed
+in this workspace.
+
+## Reviewed birth-record prerequisite (written, unrun)
+
+The one-child domestic preflight now requires a separate reviewed birth record,
+with its own unique document ID, SHA-256 digest, child's first and last name,
+and actual date of birth. The date must agree with the existing source-ledger
+birth year, precede the final decree, and establish that the child was under 18
+at the end of 2025. The document-byte binder requires this distinct file
+alongside the decree, receipt, payment proof, and any reimbursement record;
+missing, changed, or duplicate bytes reject. Synthetic positive, age/name/ID,
+and changed-byte cases are authored but unrun. This narrows the
+[2025 instructions' eligible-child rule](https://www.irs.gov/instructions/i8839)
+for the already bounded under-18 route. The IRS also permits a child who turned
+18 during 2025 or an individual unable to care for themselves; those cases
+remain outside this staged route.
+
+A matching transcription and digest establish internal source consistency, not
+authenticity of the birth record or independent reviewer approval. The executor
+still does not own the reviewed bytes or final adoption-credit deposit. Active
+Form 8839, native MeF, and PDF positive filing remain closed, pending those
+joins and the return-wide MAGI and credit-ordering evidence above.
