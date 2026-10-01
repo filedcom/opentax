@@ -394,8 +394,8 @@ user-approved exclusion or a fail-closed boundary.
 
 ### Outstanding INV-01 decisions and evidence
 
-The [211-root census](ty2025-xsd-document-root-census.md) records 100 `IRS...`
-source literals and 111 without a literal. Its `No` rows identify absent source
+The [211-root census](ty2025-xsd-document-root-census.md) records 112 `IRS...`
+source literals and 99 without a literal. Its `No` rows identify absent source
 literals, **not** an unsupported-form verdict, an exclusion, or proof that a
 document must accompany every return. The
 [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md) is a
