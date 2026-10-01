@@ -57,6 +57,9 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  bank_routing_number: z.string().length(9).optional(),
+  bank_account_number: z.string().min(4).max(17).optional(),
+  bank_account_type: z.enum(["checking", "savings"]).optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
   schedule_r_disability_qualified: z.literal(true).optional(),
@@ -1220,6 +1223,15 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
       ...numericLines,
+      ...(effectiveInput.bank_routing_number === undefined ? {} : {
+        bank_routing_number: effectiveInput.bank_routing_number,
+      }),
+      ...(effectiveInput.bank_account_number === undefined ? {} : {
+        bank_account_number: effectiveInput.bank_account_number,
+      }),
+      ...(effectiveInput.bank_account_type === undefined ? {} : {
+        bank_account_type: effectiveInput.bank_account_type,
+      }),
       ...(effectiveInput.line4c_ira_rollover === true
         ? { line4c_ira_rollover: true }
         : {}),

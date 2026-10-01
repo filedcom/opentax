@@ -1,4 +1,8 @@
-import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import {
+  AccountType,
+  type FilerIdentity,
+  FilingStatus,
+} from "../mef/header.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -1152,6 +1156,56 @@ export function assertGeneral1040DependentSource(
   ) {
     throw new Error(
       "Form 1040 dependent counts differ from the retained general source",
+    );
+  }
+}
+
+/** Match the bank instruction retained on the general input to the filed refund. */
+export function assertGeneral1040DepositSource(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+): void {
+  const general = pending.general as Record<string, unknown> | undefined;
+  const routing = general?.bank_routing_number;
+  const account = general?.bank_account_number;
+  const type = general?.bank_account_type;
+  if (routing === undefined && account === undefined && type === undefined) {
+    if (filer?.bankAccount) {
+      throw new Error(
+        "Form 1040 direct deposit needs the retained general bank source",
+      );
+    }
+    return;
+  }
+  const filed = pending.f1040 as Record<string, unknown> | undefined;
+  const expectedType = type === "checking"
+    ? AccountType.Checking
+    : type === "savings"
+    ? AccountType.Savings
+    : undefined;
+  if (
+    typeof routing !== "string" || typeof account !== "string" ||
+    expectedType === undefined || !filer?.bankAccount ||
+    routing !== filer.bankAccount.routingNumber ||
+    account !== filer.bankAccount.accountNumber ||
+    expectedType !== filer.bankAccount.accountType ||
+    routing !== filed?.bank_routing_number ||
+    account !== filed?.bank_account_number ||
+    type !== filed?.bank_account_type
+  ) {
+    throw new Error(
+      "Form 1040 direct-deposit account differs from the retained general source",
+    );
+  }
+  if (
+    !filed || typeof filed.line35a_refund !== "number" ||
+    filed.line35a_refund <= 0 ||
+    (typeof filed.line37_amount_owed === "number" &&
+      filed.line37_amount_owed > 0) ||
+    pending.f8888 !== undefined
+  ) {
+    throw new Error(
+      "Form 1040 direct deposit needs a positive refund without Form 8888 or amount owed",
     );
   }
 }

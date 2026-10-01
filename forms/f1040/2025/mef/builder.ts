@@ -12,6 +12,7 @@ import {
   assertEitcChildSources,
   assertF1040SourceIdentity,
   assertGeneral1040DependentSource,
+  assertGeneral1040DepositSource,
   assertGeneral1040HeaderSource,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
@@ -246,6 +247,7 @@ function buildReturnXml(
   }
   assertGeneral1040HeaderSource(pending);
   assertGeneral1040DependentSource(pending);
+  assertGeneral1040DepositSource(pending, filer);
   assert1099RRecipientOwner(pending.f1099r, filer);
   assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);

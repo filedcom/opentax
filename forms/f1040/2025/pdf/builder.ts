@@ -12,6 +12,7 @@ import {
   assertEitcChildSources,
   assertF1040FinalHeader,
   assertGeneral1040DependentSource,
+  assertGeneral1040DepositSource,
   assertGeneral1040HeaderSource,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
@@ -290,6 +291,7 @@ export async function buildPdfBytes(
   }
   assertGeneral1040HeaderSource(normalized);
   assertGeneral1040DependentSource(normalized);
+  assertGeneral1040DepositSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
   assert1099RRecipientOwner(normalized.f1099r, filer);
   assertPositiveW2GRecipient(normalized.w2g, filer);
