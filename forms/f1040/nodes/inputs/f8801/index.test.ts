@@ -16,7 +16,14 @@ function reviewedSources(input: Record<string, unknown>) {
           tax_year: 2024,
           filed_document_reference: "filed-2024-form6251",
           filed_taxpayer_ssn: "123456789",
+          filed_line1_amt: 100_000,
+          filed_line2e_amt: -1_000,
+          filed_line10_amt: 15_000,
           filed_line11_amt: amt,
+        },
+        exclusion_part1_reconciliation: {
+          form8801_line1_amt: 99_000,
+          form8801_line14_amt: 15_000,
         },
       }
       : {}),
@@ -89,6 +96,33 @@ Deno.test("Form 8801 staged credit needs exact reviewed prior Form 6251 and 8801
             ...claim.prior_year_evidence.form6251,
             filed_line11_amt: 4_999,
           },
+        },
+      },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          form6251: {
+            ...claim.prior_year_evidence.form6251,
+            filed_line2e_amt: -2_000,
+          },
+        },
+      },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          form6251: {
+            ...claim.prior_year_evidence.form6251,
+            filed_line10_amt: 15_001,
+          },
+        },
+      },
+      {
+        ...claim,
+        prior_year_evidence: {
+          ...claim.prior_year_evidence,
+          exclusion_part1_reconciliation: undefined,
         },
       },
       {
