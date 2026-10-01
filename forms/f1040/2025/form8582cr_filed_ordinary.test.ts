@@ -90,6 +90,16 @@ const general = {
   address_state: "TX",
   address_zip: "78701",
 };
+const wage = {
+  box1_wages: 100_000,
+  box2_fed_withheld: 16_000,
+  employer_ein: "12-3456789",
+  employer_name: "Austin Services Inc",
+  employer_address_line1: "100 Commerce St",
+  employer_address_city: "Austin",
+  employer_address_state: "TX",
+  employer_address_zip: "78701",
+};
 
 function filedReturn(
   investmentAmount = 10_000,
@@ -110,7 +120,7 @@ function filedReturn(
   );
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    w2: [wage],
     ...(interestAmount > 0
       ? {
         f1099int: interestBoxes.map((box1, index) => ({
@@ -219,7 +229,7 @@ function filedReturn(
 function filedPartnershipReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    w2: [wage],
     schedule_e: [{
       tsj: "T",
       activity_id: "rental-1",
@@ -267,7 +277,7 @@ function filedPartnershipReturn() {
 function filedSCorpReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    w2: [wage],
     schedule_e: [{
       tsj: "T",
       activity_id: "rental-1",
@@ -356,7 +366,7 @@ function filedMixedK1Return(
   ];
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    w2: [wage],
     schedule_e: [{
       tsj: "T",
       activity_id: "rental-1",
@@ -462,7 +472,7 @@ function filedSelfAndK1Return(
   };
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    w2: [wage],
     schedule_e: [{
       tsj: "T",
       activity_id: "rental-1",
@@ -1189,7 +1199,7 @@ Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 li
   assertEquals(amount.passiveBeforeLimit, 500);
   assertEquals(amount.passiveAfterLimit, 500);
   assertEquals(amount.appliedCredit, 800);
-  assertStringIncludes(prepared.bundle.xml, "<IRS8874>");
+  assertStringIncludes(prepared.bundle.xml, "<IRS8874 ");
   assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
   assertStringIncludes(prepared.bundle.xml, "<Form8874CYCreditsGrp");
   assertEquals(
@@ -1339,10 +1349,10 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
       form8582crPdf.projectFields!(pending.form8582cr, {
         ...pending,
         f8874: {
-          investments: [investments[0], {
-            ...investments[1],
+          investments: [{
+            ...investments[0],
             passive_activity_reference: "wrong-activity",
-          }],
+          }, investments[1]],
         },
       }),
     Error,
@@ -1644,18 +1654,25 @@ Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth r
   assert(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
   );
-  const originalSources = form8582crInputSchema.parse(pending.form8582cr)
-    .credit_sources;
-  const manySources = Array.from({ length: 16 }, (_, index) => ({
-    ...originalSources[index % 15],
-    activity_reference: `too-many-activities-${index}`,
-    source_document_reference: `too-many-notices-${index}`,
-  }));
+  const original = form8582crInputSchema.parse(pending.form8582cr);
+  const sixteenth = {
+    ...original.credit_sources[0],
+    activity_reference: "sixteenth-activity",
+    source_document_reference: "sixteenth-notice",
+  };
   assertThrows(
     () =>
       form8582crPdf.projectFields!({
         ...pending.form8582cr,
-        credit_sources: manySources,
+        credit_sources: [...original.credit_sources, sixteenth],
+        required_new_markets_self_credits: [
+          ...(original.required_new_markets_self_credits ?? []),
+          {
+            activity_reference: sixteenth.activity_reference,
+            source_document_reference: sixteenth.source_document_reference,
+            credit_amount: sixteenth.current_year_credit,
+          },
+        ],
       }, pending),
     Error,
     "within Form 3800 Part V capacity",
@@ -1972,17 +1989,18 @@ Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinar
     form8582cr: {
       ...pending.form8582cr,
       credit_sources: [priorOnly],
+      required_new_markets_self_credits: [],
     },
   };
   assertThrows(
     () => form8582cr.build(changed.form8582cr, { pending: changed }),
     Error,
-    "one current-year Form 8874 or credit-only K-1 code AD credit",
+    "needs current-year self-earned Form 8874",
   );
   assertThrows(
     () => form8582crPdf.projectFields!(changed.form8582cr, changed),
     Error,
-    "one current-year Form 8874 or credit-only K-1 code AD credit",
+    "needs current-year self-earned Form 8874",
   );
 });
 
