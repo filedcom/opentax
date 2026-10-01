@@ -26,7 +26,7 @@ const premiumMonthSchema = z.object({
   paid_premium: money,
   policy_source_reference: z.string().trim().min(1),
   payment_source_reference: z.string().trim().min(1),
-  // The bounded plan covers one identified person for all twelve months.
+  // Each month identifies the person covered by this one policy.
   covered_person: z.enum(["taxpayer", "spouse"]),
   eligible_for_subsidized_employer_plan: z.boolean(),
   employer_plan_review_reference: z.string().trim().min(1),
@@ -62,12 +62,11 @@ export const singleScheduleCPlanSchema = z.object({
   no_schedule_se_optional_method: z.literal(true),
   no_other_earned_income: z.literal(true),
 }).strict().superRefine((plan, ctx) => {
-  const covered = new Set(
-    plan.premium_months.map((month) => month.covered_person),
+  const coversSpouse = plan.premium_months.some((month) =>
+    month.covered_person === "spouse"
   );
   if (
-    covered.size !== 1 ||
-    (covered.has("spouse")
+    (coversSpouse
       ? !plan.spouse_identity ||
         plan.spouse_identity.ssn.replaceAll("-", "") ===
           plan.taxpayer_identity.ssn.replaceAll("-", "")
@@ -77,7 +76,7 @@ export const singleScheduleCPlanSchema = z.object({
       code: "custom",
       path: ["premium_months"],
       message:
-        "Form 7206 one-plan coverage needs one identified taxpayer or spouse for every month",
+        "Form 7206 one-plan coverage needs an identified spouse for each spouse-covered month",
     });
   }
 });

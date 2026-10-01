@@ -66,9 +66,13 @@ matches the return header spouse. The deduction still belongs to the
 taxpayer-owned establishing business and uses the same Schedule C, Schedule SE,
 Schedule 1, QBI, and Form 1040 reconciliation. A positive full-return fixture
 and identity/month-coverage tamper cases are authored but unrun pending the
-agreed bulk test. Mixed taxpayer-and-spouse months, separate spouse business
-ownership, dependents, and multiple policies remain outside this slice. The
-policy and payment references are source claims, not authenticated records.
+agreed bulk test. The same identified policy can now switch between taxpayer
+and spouse coverage months on a joint return; any spouse-covered month needs
+the spouse identity check at MeF and PDF projection. A full-return positive
+fixture and spouse identity, missing identity, and premium tamper cases are
+authored but unrun pending the bulk test. Separate spouse business ownership,
+dependents, and multiple policies remain outside this slice. The policy and
+payment references are source claims, not authenticated records.
 
 ### Publication 974 mixed-month boundary
 

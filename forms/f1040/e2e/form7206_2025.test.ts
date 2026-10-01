@@ -242,10 +242,101 @@ Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects iden
     Error,
   );
   plan.spouse_identity.ssn = "222334444";
-  plan.premium_months[0].covered_person = "taxpayer";
+  for (const month of plan.premium_months) {
+    month.covered_person = "taxpayer";
+  }
   assertThrows(() => buildMefXml(changedPlan, filer), Error);
   assertThrows(
     () => form7206Pdf.projectFields!(changedPlan.form7206!, changedPlan),
+    Error,
+  );
+});
+
+Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joint return", () => {
+  const mixedSources = {
+    ...sources,
+    general: {
+      ...sources.general,
+      filing_status: "mfj",
+      spouse_first_name: "Casey",
+      spouse_last_name: "Example",
+      spouse_ssn: "222-33-4444",
+      spouse_dob: "1986-05-01",
+    },
+    form7206: {
+      ...sources.form7206,
+      single_schedule_c_plan: {
+        ...sources.form7206.single_schedule_c_plan,
+        spouse_identity: { name: "Casey Example", ssn: "222334444" },
+        premium_months: sources.form7206.single_schedule_c_plan.premium_months
+          .map((month) => ({
+            ...month,
+            policy_source_reference: "2025 joint policy statement",
+            covered_person: month.month <= 6 ? "taxpayer" : "spouse",
+            employer_plan_review_reference: month.month <= 6
+              ? "2025 taxpayer employer eligibility review"
+              : "2025 spouse employer eligibility review",
+          })),
+      },
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    mixedSources,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form7206?.line1, 12_000);
+  assertEquals(result.pending.form7206?.line14, 12_000);
+  assertEquals(result.pending.schedule1?.line17_se_health_insurance, 12_000);
+  assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 12_000);
+  assertEquals(result.pending.form8995?.line1_qbi, 34_468);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  assertStringIncludes(
+    buildMefXml(result.pending, filer),
+    "<IRS7206 documentId=",
+  );
+  assertEquals(
+    form7206Pdf.projectFields!(result.pending.form7206!, result.pending)
+      .line14,
+    12_000,
+  );
+
+  const changedSpouse = structuredClone(result.pending);
+  changedSpouse.general!.spouse_ssn = "999-88-7777";
+  assertThrows(() => buildMefXml(changedSpouse, filer), Error);
+  assertThrows(
+    () =>
+      form7206Pdf.projectFields!(
+        changedSpouse.form7206!,
+        changedSpouse,
+      ),
+    Error,
+  );
+  const missingSpouseIdentity = structuredClone(result.pending);
+  const plan = missingSpouseIdentity.form7206!.single_schedule_c_plan as {
+    spouse_identity?: { name: string; ssn: string };
+    premium_months: Array<{ paid_premium: number }>;
+  };
+  delete plan.spouse_identity;
+  assertThrows(() => buildMefXml(missingSpouseIdentity, filer), Error);
+  assertThrows(
+    () =>
+      form7206Pdf.projectFields!(
+        missingSpouseIdentity.form7206!,
+        missingSpouseIdentity,
+      ),
+    Error,
+  );
+  const changedMonth = structuredClone(result.pending);
+  const changedPlan = changedMonth.form7206!.single_schedule_c_plan as {
+    premium_months: Array<{ paid_premium: number }>;
+  };
+  changedPlan.premium_months[6].paid_premium = 1_001;
+  assertThrows(() => buildMefXml(changedMonth, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedMonth.form7206!, changedMonth),
     Error,
   );
 });

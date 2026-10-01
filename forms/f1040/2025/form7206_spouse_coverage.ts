@@ -12,7 +12,9 @@ export function assertForm7206SpouseCoverage(
   pending: Record<string, Record<string, unknown>> | undefined,
   filer?: FilerIdentity,
 ): void {
-  if (plan.premium_months[0].covered_person !== "spouse") return;
+  if (!plan.premium_months.some((month) => month.covered_person === "spouse")) {
+    return;
+  }
   const spouse = plan.spouse_identity;
   const general = pending?.general;
   const return1040 = pending?.f1040;
