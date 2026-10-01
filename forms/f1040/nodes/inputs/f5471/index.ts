@@ -233,6 +233,35 @@ export const scheduleESchema = z.object({
   "Schedule E local tax and conversion rate must reconcile to U.S. dollars",
 );
 
+// Schedule G questions for the reviewed CFC with no listed transactions or
+// arrangements. A Yes answer needs the related amounts, statements, or forms.
+export const scheduleGSchema = z.object({
+  q1_foreign_partnership: z.literal(false),
+  q2_trust: z.literal(false),
+  q3a_foreign_entity_or_branch: z.literal(false),
+  q3b_different_currency_qbu: z.literal(false),
+  q4a_base_erosion: z.literal(false),
+  q5a_disallowed_267a: z.literal(false),
+  q6a_fdii: z.literal(false),
+  q7_cost_sharing: z.literal(false),
+  q8_triangular_stock: z.literal(false),
+  q9a_intangible_property: z.literal(false),
+  q10_expatriated_subsidiary: z.literal(false),
+  q11_reportable_transaction: z.literal(false),
+  q12_disqualified_901m_tax: z.literal(false),
+  q13_section909_tax: z.literal(false),
+  q14_special_exceptions: z.literal(false),
+  q15_disallowed_interest: z.literal(false),
+  q16_interest_carryforward: z.literal(false),
+  q17a_extraordinary_reduction: z.literal(false),
+  q18a_safe_haven_rate: z.literal(false),
+  q18b_outside_safe_haven_rate: z.literal(false),
+  q19a_covered_debt: z.literal(false),
+  q20a_top_up_tax: z.literal(false),
+  q21a_section304_ep: z.literal(false),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -293,6 +322,7 @@ export const itemSchema = z.object({
   schedule_i1: testedIncomeSchema,
   schedule_h: scheduleHSchema,
   schedule_e: scheduleESchema,
+  schedule_g: scheduleGSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;

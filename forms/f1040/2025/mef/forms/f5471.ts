@@ -42,6 +42,7 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
     );
     const id = cfc.form5471_identity;
     const i = cfc.schedule_i;
+    const g = cfc.schedule_g;
     const cfcAddress = id.foreign_address;
     return elements("IRS5471", [
       element("TaxYearBeginDt", id.cfc_tax_year_begin),
@@ -105,6 +106,64 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
             element("AnnualAcctPeriodEndShareCnt", id.direct_shares_end),
           ]),
         ]),
+      ]),
+      elements("IRS5471ScheduleG", [
+        element(
+          "Owns10PctOrMoreFrgnPrtshpInd",
+          String(g.q1_foreign_partnership),
+        ),
+        element("FrgnCorpOwnsInterestInTrustInd", String(g.q2_trust)),
+        element(
+          "FrgnCorpOwnsForeignEntityInd",
+          String(g.q3a_foreign_entity_or_branch),
+        ),
+        element("OneOrMoreQBUInd", String(g.q3b_different_currency_qbu)),
+        element("BaseErosionPaymentBenefitInd", String(g.q4a_base_erosion)),
+        element(
+          "NondedIntRoyaltyUndSect267AInd",
+          String(g.q5a_disallowed_267a),
+        ),
+        element("FDIIBenefitsClaimInd", String(g.q6a_fdii)),
+        element("FrgnCorpPartcpCostShrInd", String(g.q7_cost_sharing)),
+        element("PurchaseStockOrSecuritiesInd", String(g.q8_triangular_stock)),
+        element(
+          "IntangiblePropertyReceivedInd",
+          String(g.q9a_intangible_property),
+        ),
+        element(
+          "ExpatriatedFrgnSubsidiaryInd",
+          String(g.q10_expatriated_subsidiary),
+        ),
+        element(
+          "ReportableTransactionPrtcptInd",
+          String(g.q11_reportable_transaction),
+        ),
+        element(
+          "FrgnTaxDisqualifiedSec901mInd",
+          String(g.q12_disqualified_901m_tax),
+        ),
+        element("ForeignTaxSection909Ind", String(g.q13_section909_tax)),
+        element("AnswerYesAnyQuestionInd", String(g.q14_special_exceptions)),
+        element(
+          "DisallowedInterestExpenseInd",
+          String(g.q15_disallowed_interest),
+        ),
+        element(
+          "CfwdPrevDsallwIntExpenseInd",
+          String(g.q16_interest_carryforward),
+        ),
+        element(
+          "ExtraordinaryReductionInd",
+          String(g.q17a_extraordinary_reduction),
+        ),
+        element("SafeHavenRtRegsRtIntAFRInd", String(g.q18a_safe_haven_rate)),
+        element(
+          "RtIntSafeHavenRegsAFRInd",
+          String(g.q18b_outside_safe_haven_rate),
+        ),
+        element("RltdPrtyLoansFnddDistriInd", String(g.q19a_covered_debt)),
+        element("PayOrAccrueTopUpTaxInd", String(g.q20a_top_up_tax)),
+        element("EarningsProfitsSect304Ind", String(g.q21a_section304_ep)),
       ]),
       elements("IRS5471ScheduleI", [
         elements("ShareholderInformation", [

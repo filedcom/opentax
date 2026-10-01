@@ -25,12 +25,37 @@ const fullDate = (date: string) =>
   date.slice(5).replace("-", "/") +
   "/" + date.slice(0, 4);
 
+const scheduleGQuestions = [
+  ["q1_foreign_partnership", 4, 1],
+  ["q2_trust", 4, 2],
+  ["q3a_foreign_entity_or_branch", 4, 3],
+  ["q3b_different_currency_qbu", 4, 4],
+  ["q4a_base_erosion", 4, 5],
+  ["q5a_disallowed_267a", 5, 1],
+  ["q6a_fdii", 5, 2],
+  ["q7_cost_sharing", 5, 3],
+  ["q8_triangular_stock", 5, 4],
+  ["q9a_intangible_property", 5, 5],
+  ["q10_expatriated_subsidiary", 5, 6],
+  ["q11_reportable_transaction", 5, 7],
+  ["q12_disqualified_901m_tax", 5, 8],
+  ["q13_section909_tax", 5, 9],
+  ["q14_special_exceptions", 5, 10],
+  ["q15_disallowed_interest", 5, 11],
+  ["q16_interest_carryforward", 5, 12],
+  ["q17a_extraordinary_reduction", 5, 13],
+  ["q18a_safe_haven_rate", 5, 15],
+  ["q18b_outside_safe_haven_rate", 5, 16],
+  ["q19a_covered_debt", 5, 17],
+  ["q20a_top_up_tax", 6, 1],
+  ["q21a_section304_ep", 6, 2],
+] as const;
+
 export const form5471Pdf: PdfFormDescriptor = {
   pendingKey: "f5471_parent",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471.pdf",
-  // Category 5a needs page 1, Schedule B Part II, and Schedule I. Schedule G
-  // on intervening pages remains a separate blocked source/filing task.
-  pageIndices: () => [0, 1, 5],
+  // Category 5a uses page 1, Schedule B Part II, Schedule G, and Schedule I.
+  pageIndices: () => [0, 1, 3, 4, 5],
   fields: [
     field("cfc_begin_md", 1, "PgHeader[0].f1_1[0]"),
     field("cfc_begin_year", 1, "PgHeader[0].f1_2[0]"),
@@ -68,6 +93,12 @@ export const form5471Pdf: PdfFormDescriptor = {
     partII("stock_class", "Row1b[0].f2_73[0]"),
     partII("shares_begin", "Row1c[0].f2_77[0]"),
     partII("shares_end", "Row1d[0].f2_81[0]"),
+    ...scheduleGQuestions.map(([domainKey, pdfPage, question]) => ({
+      kind: "checkboxWhen" as const,
+      domainKey,
+      pdfField: `${page(pdfPage)}c${pdfPage}_${question}[1]`,
+      whenValue: "false",
+    })),
     p6("shareholder_name", 8),
     p6("shareholder_tin", 9),
     p6("line1a", 10),
@@ -160,6 +191,9 @@ export const form5471Pdf: PdfFormDescriptor = {
       stock_class: id.stock_class_description,
       shares_begin: id.direct_shares_begin,
       shares_end: id.direct_shares_end,
+      ...Object.fromEntries(
+        scheduleGQuestions.map(([key]) => [key, cfc.schedule_g[key]]),
+      ),
       line1a: i.line1a,
       line1b: i.line1b,
       line1c: i.line1c,

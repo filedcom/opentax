@@ -2,17 +2,24 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../form8992.fixture.ts";
 import { form5471Pdf } from "./f5471.ts";
 
-Deno.test("Form 5471 PDF maps page 1, B Part II, and Schedule I", () => {
+Deno.test("Form 5471 PDF maps page 1, B Part II, G, and I", () => {
   const [fields] = form5471Pdf.instances?.(
     {},
     form8992Filer,
     form8992Pending,
   ) ?? [];
-  assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 5]);
+  assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 3, 4, 5]);
   assertEquals(fields?.category5a, true);
   assertEquals(fields?.shares_end, 100);
   assertEquals(fields?.line1e, 8_000);
   assertEquals(fields?.line2, 1_000);
+  assertEquals(fields?.q7_cost_sharing, false);
+  assertEquals(fields?.q21a_section304_ep, false);
+  assertEquals(
+    form5471Pdf.fields.find((entry) => entry.domainKey === "q7_cost_sharing")
+      ?.pdfField,
+    "topmostSubform[0].Page5[0].c5_3[1]",
+  );
   assertEquals(
     form5471Pdf.fields.find((entry) => entry.domainKey === "shares_end")
       ?.pdfField,

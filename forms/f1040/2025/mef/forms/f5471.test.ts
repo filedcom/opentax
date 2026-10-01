@@ -17,7 +17,7 @@ try {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Category 5a Form 5471 parent joins page 1, B Part II, and Schedule I", () => {
+Deno.test("Category 5a Form 5471 parent joins page 1, B Part II, G, and I", () => {
   const xml = form5471.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -40,7 +40,15 @@ Deno.test("Category 5a Form 5471 parent joins page 1, B Part II, and Schedule I"
     xml,
     "<EarningsInvestedInUSPropAmt>1000</EarningsInvestedInUSPropAmt>",
   );
-  assertEquals(xml.includes("IRS5471ScheduleG"), false);
+  assertStringIncludes(xml, "<IRS5471ScheduleG>");
+  assertStringIncludes(
+    xml,
+    "<FrgnCorpPartcpCostShrInd>false</FrgnCorpPartcpCostShrInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PayOrAccrueTopUpTaxInd>false</PayOrAccrueTopUpTaxInd>",
+  );
 });
 
 Deno.test("Form 5471 parent rejects unreviewed stock and Schedule I facts", () => {
@@ -65,6 +73,25 @@ Deno.test("Form 5471 parent rejects unreviewed stock and Schedule I facts", () =
       pending: source({
         ...form8992Cfc,
         schedule_i: { ...form8992Cfc.schedule_i, line5a_eligible_dividends: 1 },
+      }),
+    }), Error);
+  assertThrows(() =>
+    form5471.build({}, {
+      filer: form8992Filer,
+      pending: source({
+        ...form8992Cfc,
+        schedule_g: { ...form8992Cfc.schedule_g, q7_cost_sharing: true },
+      }),
+    }), Error);
+  assertThrows(() =>
+    form5471.build({}, {
+      filer: form8992Filer,
+      pending: source({
+        ...form8992Cfc,
+        schedule_g: {
+          ...form8992Cfc.schedule_g,
+          source_workpaper_reference: "",
+        },
       }),
     }), Error);
 });

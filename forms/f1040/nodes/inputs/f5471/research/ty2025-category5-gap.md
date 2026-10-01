@@ -36,24 +36,30 @@ The remaining categories and foreign tax histories stay outside this branch.
 
 The bounded parent Form 5471 now has reviewed CFC tax-year, foreign address,
 incorporation, activity, stock-register and books-custodian facts. Its page 1,
-Schedule B Part II single direct shareholder, and embedded Schedule I lines
-1a–9 have native/PDF projections. The direct shareholder name, SSN and U.S.
+Schedule B Part II single direct shareholder, embedded Schedule G questions
+1–21a, and embedded Schedule I lines 1a–9 have native/PDF projections. The
+Schedule G source answers each applicable question No and requires a reviewed
+question workpaper; a Yes answer rejects until related amounts, statements,
+and forms are sourced. The direct shareholder name, SSN and U.S.
 address come from the final return filer; the stock counts come from the
 reviewed CFC register. Schedule I additional dividends, exchange gains,
 blocked income, extraordinary-disposition accounts and hybrid-deduction
 accounts are explicitly zero or false in this route. The parent projection
-omits Schedule G and does not by itself constitute a complete filing.
+does not by itself constitute a complete filing.
 The current country source is narrowed to the `EI` Ireland code enumerated by
 the TY2025 MeF `CountryType` (including the Schedule E tax country), and the
 direct shares equal total outstanding shares at both year ends.
 
 **Filing remains closed.** Form 5471 Category 5a requires the full corporation
 identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
-G-1, H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
+H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. Form 5471 page 1,
-Schedule B Part II, and Schedule I, plus Form 8992, its Schedule A, and separate
+Schedule B Part II, G, and I, plus Form 8992, its Schedule A, and separate
 Form 5471 Schedules E/E-1, H and I-1 now have source-reconciled native MeF/PDF
-descriptors, but Schedule G/G-1, J, P, Q, R and conditional attachments remain.
+descriptors, but Schedules J, P, Q, R and conditional attachments remain.
+Schedule G-1 is required for each cost sharing arrangement in which the CFC
+was a controlled participant; this branch requires Schedule G line 7 No, so
+G-1 is not present.
 The full Form 5471
 packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a
@@ -68,7 +74,7 @@ Sources:
 - [2025 Form 5471 and Schedule I](https://www.irs.gov/pub/irs-pdf/f5471.pdf)
 - [Form 5471 instructions and required Category 5 schedules](https://www.irs.gov/instructions/i5471)
 - Checked-in TY2025 v5.4 `IRS5471.xsd` parent model, including embedded
-  Schedule B Part II and Schedule I.
+  Schedule B Part II, G, and I.
 - [Form 8992](https://www.irs.gov/pub/irs-pdf/f8992.pdf) and
   [Schedule A](https://www.irs.gov/pub/irs-pdf/f8992sa.pdf)
 - Checked-in TY2025 v5.4 MeF schemas for IRS1040Schedule1, IRS5471, IRS8992, and
