@@ -155,6 +155,21 @@ function buildIRS1040ScheduleH(
     );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
+  const ficaOnlyMinor = source.fica_only_payroll?.employee_wages[0]
+    ?.nonstudent_minor_fica_inclusion;
+  if (ficaOnlyMinor) {
+    const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    if (
+      JSON.stringify(retained.fica_only_payroll) !==
+        JSON.stringify(source.fica_only_payroll) ||
+      (context.pending?.schedule2 as Record<string, unknown> | undefined)
+          ?.line9_household_employment !== amounts.totalTax
+    ) {
+      throw new Error(
+        "Schedule H FICA-only minor source and tax must reconcile to retained payroll and Schedule 2 line 9",
+      );
+    }
+  }
   if (source.family_withholding_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
     if (

@@ -85,7 +85,7 @@ export const inputSchema = z.object({
   // Must withhold only if employee requests it (Form W-4)
   federal_income_tax_withheld: z.number().nonnegative().optional(),
 
-  // One unrelated adult employee can owe FICA without reaching the FUTA
+  // One unrelated qualifying worker can owe FICA without reaching the FUTA
   // quarterly threshold in either year. Both years' quarter facts are sourced.
   fica_only_payroll: z.object({
     all_household_employees_included: z.literal(true),
@@ -254,9 +254,11 @@ export function computeScheduleHAmounts(
   }
   if (ficaOnly) {
     const employee = ficaOnly.employee_wages[0]!;
+    const workingMinor = employee.nonstudent_minor_fica_inclusion;
     if (
       unemployment || taxYear !== 2025 ||
-      employee.age_18_or_older_for_fica !== true ||
+      (employee.age_18_or_older_for_fica !== true && !workingMinor) ||
+      (employee.age_18_or_older_for_fica === true && !!workingMinor) ||
       employee.student_minor_fica_exclusion !== undefined ||
       input.cash_wages_over_2025_limit !== true ||
       input.cash_wages_over_quarter_limit !== false ||
@@ -269,6 +271,25 @@ export function computeScheduleHAmounts(
       throw new Error(
         "Schedule H FICA-only source needs one qualifying worker and both years below the FUTA quarter threshold",
       );
+    }
+    if (workingMinor) {
+      const references = [
+        employee.payroll_source_reference,
+        workingMinor.birth_date_source_reference,
+        workingMinor.education_status_source_reference,
+        workingMinor.principal_occupation_source_reference,
+        employee.w2?.source_reference,
+        ficaOnly.prior_year_payroll_source_reference,
+      ];
+      if (
+        workingMinor.birth_date < "2007-01-02" ||
+        workingMinor.birth_date > "2024-12-31" ||
+        new Set(references).size !== references.length
+      ) {
+        throw new Error(
+          "Schedule H FICA-only minor needs distinct age, nonstudent, principal-occupation, current/prior payroll, and W-2 sources",
+        );
+      }
     }
     if (
       !employee.w2 ||

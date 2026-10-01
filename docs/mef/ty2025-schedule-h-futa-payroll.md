@@ -103,3 +103,21 @@ The synthetic $5,000 wage/$250 withholding and tamper fixtures are authored
 for the deferred test batch. Source references are reviewed assertions, not
 authenticated document bytes. Spouse/parent cases, multiple workers, mixed
 family/unrelated payroll, and other ages remain open.
+
+## One nonstudent minor with FICA and no FUTA (written, unrun)
+
+The 2025 instructions include a worker under 18 in FICA wages when the worker
+is not a student and household services are their principal occupation. The
+existing one-worker `fica_only_payroll` source now accepts that classification
+when both 2024 and 2025 payroll quarters stay below $1,000. Distinct age,
+nonstudent, principal-occupation, prior/current payroll, and W-2 references
+support the classification and amounts. Annual cash wages must meet the $2,800
+FICA threshold, reconcile to four 2025 quarters and W-2 boxes 3/5, and match
+Schedule H taxable wages. The bounded $3,100 case yields $474 FICA, no FUTA,
+and $474 on Schedule 2 line 9. Native MeF and PDF require the retained payroll
+and Schedule 2 total. Positive and source/age/quarter/tax tamper fixtures are
+authored for the deferred batch.
+
+The referenced records are reviewed assertions, not authenticated bytes.
+Multiple workers, family employees, other minor classifications, and prior or
+current FUTA-qualifying quarters remain outside this FICA-only route.
