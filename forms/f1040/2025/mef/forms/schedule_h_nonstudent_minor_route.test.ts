@@ -91,7 +91,7 @@ Deno.test("Schedule H nonstudent minor principal-work route joins calculation, n
     xml,
     "<CombinedFUTATaxPlusNetTaxesAmt>636</CombinedFUTATaxPlusNetTaxesAmt>",
   );
-  const projected = scheduleHPdf.projectFields!(filedSource);
+  const projected = scheduleHPdf.projectFields!(filedSource, {});
   assertEquals(projected.line8_fica_and_withholding, 612);
   assertEquals(projected.section_a_futa_tax, 24);
   assertEquals(projected.line26_total_tax, 636);

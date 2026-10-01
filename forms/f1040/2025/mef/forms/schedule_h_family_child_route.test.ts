@@ -88,7 +88,7 @@ Deno.test("Schedule H sourced child withholding joins Schedule 2, native, and PD
   );
   assertEquals(xml.includes("<FUTATaxAmt>"), false);
   assertEquals(xml.includes("<SocialSecurityTaxAmt>"), false);
-  const projected = scheduleHPdf.projectFields!(filedSource);
+  const projected = scheduleHPdf.projectFields!(filedSource, {});
   assertEquals(projected.line8_fica_and_withholding, 250);
   assertEquals(projected.cash_wages_over_quarter_limit, false);
   assertEquals(scheduleHPdf.instances?.(projected, filer, pending)?.length, 1);
@@ -155,7 +155,7 @@ Deno.test("Schedule H child source and export reject age, W-2, owner, and return
   );
   assertThrows(() =>
     scheduleHPdf.instances?.(
-      scheduleHPdf.projectFields!(filedSource),
+      scheduleHPdf.projectFields!(filedSource, {}),
       filer,
       { ...pending, schedule2: { line9_household_employment: 249 } },
     )

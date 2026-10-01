@@ -8,6 +8,7 @@ import { form8582 } from "./mef/forms/f8582.ts";
 import { form8582Pdf } from "./pdf/forms/f8582.ts";
 import { form4797Pdf } from "./pdf/forms/f4797.ts";
 import { scheduleEPdf } from "./pdf/forms/schedule_e.ts";
+import { normalizeAllPending } from "./pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -93,17 +94,24 @@ Deno.test("Form 8582 releases a sourced prior operating PAL on an entire sale wi
     xml,
     "<AdjustedGrossIncomeAmt>55000</AdjustedGrossIncomeAmt>",
   );
-  const projected = form8582Pdf.projectFields!(pending.form8582!, pending);
+  const projected = form8582Pdf.projectFields!(
+    pending.form8582!,
+    normalizeAllPending(pending),
+  );
   assertEquals(projected.part5_1_income, "8000");
   assertEquals(projected.part5_1_prior, "3000");
   assertEquals(projected.part5_1_gain, "5000");
   assertEquals(
-    scheduleEPdf.projectFields!(pending.schedule_e!, pending)
+    scheduleEPdf.projectFields!(
+      pending.schedule_e!,
+      normalizeAllPending(pending),
+    )
       .property_0_line22,
     3_000,
   );
   assertEquals(
-    form4797Pdf.projectFields!(pending.form4797!, pending).ordinary_gain,
+    form4797Pdf.projectFields!(pending.form4797!, normalizeAllPending(pending))
+      .ordinary_gain,
     8_000,
   );
 });
@@ -131,9 +139,9 @@ Deno.test("zero-current entire-gain route rejects prior balance, buyer, sale ide
   assertThrows(() =>
     form8582Pdf.projectFields!(
       fields,
-      changed({
+      normalizeAllPending(changed({
         passive_property_sales: [{ ...sale, buyer_unrelated: false }],
-      }),
+      })),
     ), Error);
   assertThrows(
     () =>

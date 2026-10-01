@@ -11,12 +11,12 @@ const source = {
   activity_reference: "new-markets-investment-2025",
   source_form: "Form 8874",
   source_document_reference: "8874-investment-2025",
-  source_origin: { kind: PassiveCreditSourceOrigin.Self },
+  source_origin: { kind: PassiveCreditSourceOrigin.Self as const },
   category: PassiveCreditCategory.Other,
   current_year_credit: 1_000,
   prior_unallowed_credits: [],
   publicly_traded_partnership: false,
-  reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+  reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
   form3800_credit_line: "1i" as const,
 };
 
@@ -78,11 +78,11 @@ Deno.test("Form 8582-CR 2026 opening replays filed 2025 Worksheet 9 source and c
   const accepted = "accepted-2025-return-1";
   const filed = { accepted_return_reference: accepted, ledger };
   const opening = {
-    tax_year: 2026,
+    tax_year: 2026 as const,
     prior_accepted_return_reference: accepted,
     rows: [{
       source,
-      originating_tax_year: 2025,
+      originating_tax_year: 2025 as const,
       prior_unallowed_credit: 500,
     }],
   };

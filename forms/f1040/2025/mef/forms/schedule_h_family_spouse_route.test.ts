@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
@@ -81,7 +86,7 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
   const filed = inputSchema.parse(source);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
-    w2: { w2s: [w2] },
+    w2: [w2],
     schedule_h: filed,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
@@ -90,6 +95,7 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
   assertEquals(result.pending.f1040?.line25a_w2_withheld, 250);
   assertEquals(result.pending.f1040?.line23_other_taxes, 250);
   const filer = extractFilerIdentity(general);
+  assert(filer?.spouse);
   const xml = scheduleH.build(filed, { filer, pending: result.pending });
   assertStringIncludes(
     xml,
@@ -115,7 +121,7 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
     fullReturnXml,
     "<FormW2WithheldTaxAmt>250</FormW2WithheldTaxAmt>",
   );
-  const projected = scheduleHPdf.projectFields!(filed);
+  const projected = scheduleHPdf.projectFields!(filed, {});
   assertEquals(projected.line8_fica_and_withholding, 250);
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, result.pending)?.length,
@@ -127,10 +133,11 @@ Deno.test("Schedule H spouse source and export reject marriage, W-2, spouse iden
   const filed = inputSchema.parse(source);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
-    w2: { w2s: [w2] },
+    w2: [w2],
     schedule_h: filed,
   }, { taxYear: 2025, formType: "f1040" });
   const filer = extractFilerIdentity(general);
+  assert(filer?.spouse);
   const employee = source.family_withholding_only_payroll.employee;
   assertThrows(() =>
     schedule_h.compute(
@@ -173,7 +180,7 @@ Deno.test("Schedule H spouse source and export reject marriage, W-2, spouse iden
   );
   assertThrows(() =>
     scheduleHPdf.instances?.(
-      scheduleHPdf.projectFields!(filed),
+      scheduleHPdf.projectFields!(filed, {}),
       filer,
       { ...result.pending, schedule2: { line9_household_employment: 249 } },
     )

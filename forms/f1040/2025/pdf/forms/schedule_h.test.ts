@@ -84,7 +84,7 @@ const filer: FilerIdentity = {
 };
 
 Deno.test("synthetic student minor Schedule H PDF reconciles FUTA without FICA", () => {
-  const projected = scheduleHPdf.projectFields!(sourcedStudentMinor);
+  const projected = scheduleHPdf.projectFields!(sourcedStudentMinor, {});
   assertEquals(projected.cash_wages_over_2025_limit, false);
   assertEquals(projected.line8_fica_and_withholding, 0);
   assertEquals(projected.section_a_taxable_wages, 4_000);
@@ -160,7 +160,7 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
   assertThrows(
     () =>
       scheduleHPdf.instances?.(
-        scheduleHPdf.projectFields!(sourcedFicaOnly),
+        scheduleHPdf.projectFields!(sourcedFicaOnly, {}),
         filer,
         {
           schedule_h: sourcedFicaOnly,
@@ -173,7 +173,7 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
 });
 
 Deno.test("synthetic sourced FICA-only Schedule H PDF reconciles its worker and Schedule 2", () => {
-  const projected = scheduleHPdf.projectFields!(sourcedFicaOnly);
+  const projected = scheduleHPdf.projectFields!(sourcedFicaOnly, {});
   assertEquals(projected.line8_fica_and_withholding, 474);
   assertEquals(projected.cash_wages_over_quarter_limit, false);
   assertEquals(

@@ -8,6 +8,7 @@ import { form8582 } from "./mef/forms/f8582.ts";
 import { form4797 } from "./mef/forms/f4797.ts";
 import { form8582Pdf } from "./pdf/forms/f8582.ts";
 import { form4797Pdf } from "./pdf/forms/f4797.ts";
+import { normalizeAllPending } from "./pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -75,7 +76,13 @@ function filedReturn() {
 
 Deno.test("retained long-held sale keeps section 1231 gain on Schedule D and allocates PAL on Form 8582", () => {
   const pending = filedReturn();
-  assertEquals(pending.form8582?.current_4797_sale_gains?.[0]?.part, "I");
+  assertEquals(
+    (pending.form8582?.current_4797_sale_gains as
+      | { part: string }[]
+      | undefined)
+      ?.[0]?.part,
+    "I",
+  );
   assertEquals(pending.schedule1?.line5_schedule_e, -7_000);
   assertEquals(pending.schedule_d?.line_11_form2439, 7_000);
   assertEquals(pending.f1040?.line11_agi, 50_000);
@@ -92,9 +99,15 @@ Deno.test("retained long-held sale keeps section 1231 gain on Schedule D and all
     xml,
     "<AdjustedGrossIncomeAmt>50000</AdjustedGrossIncomeAmt>",
   );
-  const worksheet = form8582Pdf.projectFields!(pending.form8582!, pending);
+  const worksheet = form8582Pdf.projectFields!(
+    pending.form8582!,
+    normalizeAllPending(pending),
+  );
   assertEquals(worksheet.part5_1_income, "7000");
-  const partI = form4797Pdf.projectFields!(pending.form4797!, pending);
+  const partI = form4797Pdf.projectFields!(
+    pending.form4797!,
+    normalizeAllPending(pending),
+  );
   assertEquals(partI.pdf_k1_line2_1_gain, 7_000);
   assertEquals(partI.pdf_section_1231_line9, 7_000);
 });
@@ -127,9 +140,15 @@ Deno.test("retained Part I filing rejects changed sale, lookback, and PAL amount
         },
       },
     }), Error);
-  assertThrows(() =>
-    form4797Pdf.projectFields!(pending.form4797!, {
-      ...pending,
-      form8582: { ...pending.form8582, prior_unallowed: 2_999 },
-    }), Error);
+  assertThrows(
+    () =>
+      form4797Pdf.projectFields!(
+        pending.form4797!,
+        normalizeAllPending({
+          ...pending,
+          form8582: { ...pending.form8582, prior_unallowed: 2_999 },
+        }),
+      ),
+    Error,
+  );
 });

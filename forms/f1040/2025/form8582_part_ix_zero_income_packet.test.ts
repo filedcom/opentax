@@ -171,11 +171,11 @@ Deno.test("Form 8582 Part IX packet rejects changed character, final return, and
     }]
   ) {
     assertThrows(
-      () => form8582.build(changed.form8582, { pending: changed }),
+      () => form8582.build(pending.form8582, { pending: changed }),
       Error,
     );
     assertThrows(
-      () => form8582Pdf.projectFields!(changed.form8582, changed),
+      () => form8582Pdf.projectFields!(pending.form8582, changed),
       Error,
     );
   }

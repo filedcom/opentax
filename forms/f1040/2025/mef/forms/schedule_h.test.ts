@@ -250,12 +250,12 @@ Deno.test("Schedule H Section B computes state-rate credit and CA credit reducti
     cash_wages_over_2025_limit: false,
     cash_wages_over_quarter_limit: true,
     federal_unemployment: {
-      paid_only_one_state: false,
-      all_contributions_paid_on_time: true,
-      all_futa_wages_state_taxable: true,
+      paid_only_one_state: false as const,
+      all_contributions_paid_on_time: true as const,
+      all_futa_wages_state_taxable: true as const,
       taxable_futa_wages: 7_000,
-      all_household_employees_included: true,
-      prior_year_quarter_threshold_met: false,
+      all_household_employees_included: true as const,
+      prior_year_quarter_threshold_met: false as const,
       employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
         employee_id: `worker-${index + 1}`,
         payroll_source_reference: `2025-household-payroll-${index + 1}`,
@@ -392,7 +392,7 @@ Deno.test("Schedule H does not infer required employer or unemployment facts", (
         filer,
       }),
     Error,
-    "Part II",
+    "employee payroll source",
   );
   assertThrows(
     () =>
@@ -412,12 +412,12 @@ Deno.test("Schedule H refuses contradictory Section B source facts", () => {
     cash_wages_over_2025_limit: false,
     cash_wages_over_quarter_limit: true,
     federal_unemployment: {
-      paid_only_one_state: false,
-      all_contributions_paid_on_time: true,
-      all_futa_wages_state_taxable: true,
+      paid_only_one_state: false as const,
+      all_contributions_paid_on_time: true as const,
+      all_futa_wages_state_taxable: true as const,
       taxable_futa_wages: 7_000,
-      all_household_employees_included: true,
-      prior_year_quarter_threshold_met: false,
+      all_household_employees_included: true as const,
+      prior_year_quarter_threshold_met: false as const,
       employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
         employee_id: `worker-${index + 1}`,
         payroll_source_reference: `2025-household-payroll-${index + 1}`,

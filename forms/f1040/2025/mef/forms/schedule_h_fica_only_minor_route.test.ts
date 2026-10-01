@@ -87,7 +87,7 @@ Deno.test("Schedule H FICA-only nonstudent minor joins Schedule 2, native and PD
     "<CombinedFUTATaxPlusNetTaxesAmt>474</CombinedFUTATaxPlusNetTaxesAmt>",
   );
   assertEquals(xml.includes("<FUTATaxAmt>"), false);
-  const projected = scheduleHPdf.projectFields!(filed);
+  const projected = scheduleHPdf.projectFields!(filed, {});
   assertEquals(projected.line8_fica_and_withholding, 474);
   assertEquals(projected.cash_wages_over_quarter_limit, false);
   assertEquals(scheduleHPdf.instances?.(projected, filer, pending)?.length, 1);
@@ -171,7 +171,7 @@ Deno.test("Schedule H FICA-only minor rejects unsupported age, student, source, 
   );
   assertThrows(() =>
     scheduleHPdf.instances?.(
-      scheduleHPdf.projectFields!(filed),
+      scheduleHPdf.projectFields!(filed, {}),
       filer,
       { ...pending, schedule2: { line9_household_employment: 473 } },
     )

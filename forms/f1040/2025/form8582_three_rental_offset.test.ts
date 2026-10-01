@@ -123,11 +123,11 @@ Deno.test("three-rental passive offset rejects changed source and final return",
   ];
   for (const changed of altered) {
     assertThrows(
-      () => form8582.build(changed.form8582, { pending: changed }),
+      () => form8582.build(pending.form8582, { pending: changed }),
       Error,
     );
     assertThrows(
-      () => form8582Pdf.projectFields!(changed.form8582, changed),
+      () => form8582Pdf.projectFields!(pending.form8582, changed),
       Error,
     );
   }
@@ -266,11 +266,11 @@ Deno.test("two-loss rental packet rejects changed activity and final return", ()
     }]
   ) {
     assertThrows(
-      () => form8582.build(changed.form8582, { pending: changed }),
+      () => form8582.build(pending.form8582, { pending: changed }),
       Error,
     );
     assertThrows(
-      () => form8582Pdf.projectFields!(changed.form8582, changed),
+      () => form8582Pdf.projectFields!(pending.form8582, changed),
       Error,
     );
   }
