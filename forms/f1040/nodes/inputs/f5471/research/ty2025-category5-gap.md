@@ -19,11 +19,17 @@ DTIR, and line 5 is the nonnegative GILTI inclusion. That last amount goes to
 Schedule 1 line 8o. The AGI aggregator and Form 1040 income see the same 8n/8o
 amounts. The 2025 Schedule 1 MeF tags and PDF fields are mapped separately.
 
+The reviewed Schedule H branch requires explicit zero values for every
+book-to-tax adjustment on lines 2a–2i, no DASTM gain/loss, and general-category
+E&P only. Its line 5d U.S.-dollar amount ties to the functional-currency E&P
+and a reviewed divide-by exchange rate. Other adjustments, passive or section
+901(j) allocations, and DASTM remain outside this branch.
+
 **Filing remains closed.** Form 5471 Category 5a requires the full corporation
 identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
 G-1, H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. This source contract does not yet contain or emit
-those schedules. Form 8992, Schedule A, and separate Form 5471 Schedule I-1
+those schedules. Form 8992, Schedule A, and separate Form 5471 Schedules H and I-1
 now have source-reconciled native MeF/PDF descriptors, but the full Form 5471
 packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a

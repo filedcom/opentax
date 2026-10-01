@@ -156,6 +156,45 @@ export const testedIncomeSchema = z.object({
   }
 });
 
+const scheduleHAdjustmentsSchema = z.object({
+  capital_gain_add: z.literal(0),
+  capital_gain_subtract: z.literal(0),
+  depreciation_add: z.literal(0),
+  depreciation_subtract: z.literal(0),
+  depletion_add: z.literal(0),
+  depletion_subtract: z.literal(0),
+  investment_allowance_add: z.literal(0),
+  investment_allowance_subtract: z.literal(0),
+  statutory_reserves_add: z.literal(0),
+  statutory_reserves_subtract: z.literal(0),
+  inventory_add: z.literal(0),
+  inventory_subtract: z.literal(0),
+  income_taxes_add: z.literal(0),
+  income_taxes_subtract: z.literal(0),
+  foreign_currency_add: z.literal(0),
+  foreign_currency_subtract: z.literal(0),
+  other_add: z.literal(0),
+  other_subtract: z.literal(0),
+}).strict();
+
+export const scheduleHSchema = z.object({
+  book_net_income_functional: z.number().int(),
+  adjustments: scheduleHAdjustmentsSchema,
+  dastm_gain_or_loss: z.literal(0),
+  passive_category_ep: z.literal(0),
+  section901j_category_ep: z.literal(0),
+  current_ep_usd: z.number().int(),
+  average_exchange_rate: z.string().regex(/^\d{1,10}(\.\d{1,12})?$/)
+    .refine((rate) => Number(rate) > 0),
+  source_workpaper_reference: sourceReference,
+}).strict().refine(
+  (value) =>
+    Math.round(
+      value.book_net_income_functional / Number(value.average_exchange_rate),
+    ) === value.current_ep_usd,
+  "Schedule H general-category E&P must reconcile from functional currency to U.S. dollars",
+);
+
 export const itemSchema = z.object({
   foreign_corp_name: z.string().trim().min(1).max(75)
     .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
@@ -171,6 +210,7 @@ export const itemSchema = z.object({
   reviewed_form5471_source_reference: sourceReference,
   schedule_i: scheduleISchema,
   schedule_i1: testedIncomeSchema,
+  schedule_h: scheduleHSchema,
 }).strict().refine(
   (value) =>
     (value.foreign_corp_ein === undefined) !==

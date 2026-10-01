@@ -39,6 +39,7 @@ import { form4835Pdf } from "./f4835.ts";
 import { form4952Pdf } from "./f4952.ts";
 import { form4972Pdf } from "./f4972.ts";
 import { form5329Pdf } from "./f5329.ts";
+import { form5471ScheduleHPdf } from "./f5471_schedule_h.ts";
 import { form5471ScheduleI1Pdf } from "./f5471_schedule_i1.ts";
 import { form5695Pdf } from "./f5695.ts";
 import { form5884Pdf } from "./f5884.ts";
@@ -136,6 +137,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form4952Pdf,
   form4972Pdf,
   form5329Pdf,
+  form5471ScheduleHPdf,
   form5471ScheduleI1Pdf,
   form5695Pdf,
   form5884Pdf,

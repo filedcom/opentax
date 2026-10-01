@@ -4,7 +4,7 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **130 native descriptors and 94 PDF
+exclusion. The indexes currently hold **131 native descriptors and 95 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
 
@@ -40,9 +40,11 @@ the issued-copy bytes and any required signature remain separate evidence
 gates. This does not change the parent taxpayer-form priority-1 list.
 
 Form 3468's bounded trust-owned Part V route now has both registered
-descriptors. Form 8992, its Schedule A, and Form 5471 Schedule I-1 also have
+descriptors. Form 8992, its Schedule A, and Form 5471 Schedules H and I-1 also have
 native and PDF descriptors for one wholly owned Category 5a CFC. Their
-source/return checks and fixtures are written but unrun. The Form 5471 parent
+source/return checks and fixtures are written but unrun. The Schedule H route
+requires explicit zero book-to-tax adjustments and general-category E&P only.
+The Form 5471 parent
 and other mandatory Category 5a schedules are still missing, so the
 attachment-coverage and Schedule 1 export guards continue to reject positive
 filing. Registry parity for those three documents does not imply a complete

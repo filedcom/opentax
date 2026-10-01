@@ -36,6 +36,7 @@ import { form4835 } from "./f4835.ts";
 import { form4952 } from "./f4952.ts";
 import { form4972 } from "./f4972.ts";
 import { form5329 } from "./f5329.ts";
+import { form5471ScheduleH } from "./f5471_schedule_h.ts";
 import { form5471ScheduleI1 } from "./f5471_schedule_i1.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
@@ -207,6 +208,8 @@ export const ALL_MEF_FORMS = [
   form4972,
   // Form 5329
   form5329,
+  // Form 5471's separate Schedule H precedes Schedule I-1 in ReturnData1040.
+  form5471ScheduleH,
   // The Category 5a CFC's separate Schedule I-1 follows Form 5471 in MeF.
   form5471ScheduleI1,
   // Form 5695

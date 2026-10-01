@@ -57,6 +57,35 @@ const item: F5471Item = {
     pro_rata_tested_interest_expense: 3_000,
     schedule_i1_source_reference: "2025 Schedule I-1",
   },
+  schedule_h: {
+    book_net_income_functional: 50_000,
+    adjustments: {
+      capital_gain_add: 0,
+      capital_gain_subtract: 0,
+      depreciation_add: 0,
+      depreciation_subtract: 0,
+      depletion_add: 0,
+      depletion_subtract: 0,
+      investment_allowance_add: 0,
+      investment_allowance_subtract: 0,
+      statutory_reserves_add: 0,
+      statutory_reserves_subtract: 0,
+      inventory_add: 0,
+      inventory_subtract: 0,
+      income_taxes_add: 0,
+      income_taxes_subtract: 0,
+      foreign_currency_add: 0,
+      foreign_currency_subtract: 0,
+      other_add: 0,
+      other_subtract: 0,
+    },
+    dastm_gain_or_loss: 0,
+    passive_category_ep: 0,
+    section901j_category_ep: 0,
+    current_ep_usd: 50_000,
+    average_exchange_rate: "1.0000",
+    source_workpaper_reference: "2025 Schedule H workpaper",
+  },
 };
 const ctx = { taxYear: 2025, formType: "f1040" };
 
@@ -101,6 +130,17 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
     {
       ...item,
       schedule_i1: { ...item.schedule_i1, qbai_functional: 99_999 },
+    },
+    {
+      ...item,
+      schedule_h: {
+        ...item.schedule_h,
+        adjustments: { ...item.schedule_h.adjustments, other_add: 1 },
+      },
+    },
+    {
+      ...item,
+      schedule_h: { ...item.schedule_h, current_ep_usd: 49_999 },
     },
     { ...item, gilti_inclusion: 42_000 },
     { ...item, ownership_percent: 80 },
