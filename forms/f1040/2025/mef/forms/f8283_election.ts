@@ -106,7 +106,7 @@ export function hasSectionAShortTermReduction(form: F8283Input): boolean {
     );
 }
 
-/** Reconcile up to five current Section A gifts without a capital-gain election. */
+/** Reconcile up to eight current Section A gifts without a capital-gain election. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
@@ -127,7 +127,7 @@ export function assertOrdinarySectionAReconciled(
   }
   const form = form8283InputSchema.parse(pending.f8283);
   const sectionA = form.section_a_items ?? [];
-  const fivePlainGifts = sectionA.length === 5 &&
+  const repeatedPagePlainGifts = sectionA.length > 4 &&
     sectionA.every((item) =>
       item.is_vehicle !== true && item.is_capital_gain_property === false &&
       item.charitable_limit_category === "noncash_50" &&
@@ -144,15 +144,15 @@ export function assertOrdinarySectionAReconciled(
     ) &&
     new Set(
         sectionA.map((item) => item.similar_item_group!.trim().toLowerCase()),
-      ).size === 5;
+      ).size === sectionA.length;
   if (
-    sectionA.length < 1 || sectionA.length > 5 ||
+    sectionA.length < 1 || sectionA.length > 8 ||
     (form.section_b_items ?? []).length !== 0 ||
     sectionA.some((item) => !hasCompleteSectionAColumns(item)) ||
-    (sectionA.length === 5 && !fivePlainGifts)
+    (sectionA.length > 4 && !repeatedPagePlainGifts)
   ) {
     throw new Error(
-      "Form 8283 ordinary Section A needs one to four sourced gifts, or five unreduced nonvehicle gifts",
+      "Form 8283 ordinary Section A needs one to four sourced gifts, or five to eight distinct unreduced nonvehicle gifts",
     );
   }
   if (

@@ -278,7 +278,7 @@ appraisal threshold. Native MeF and the preview reconcile the complete Form
 MeF rejects a changed item against the pending source. The authored four-row
 fixture totals $5,500 and includes changed return, changed native source, and
 changed group fixtures for the deferred bulk pass. The route does not cover
-mixed Section A/B, more than five Section A rows, capital-gain property, or
+mixed Section A/B, more than eight Section A rows, capital-gain property, or
 actual source authentication.
 
 ## Five distinct unreduced Section A gifts (2026-10-01, unrun)
@@ -294,8 +294,23 @@ document. The PDF preview fills two official first-page copies: rows A–D on th
 first and the fifth item in row A on the second. The source inventory is
 recomputed against Schedule A line 12 and itemized Form 1040 line 12e before
 either projection. A $6,400 case and changed fifth item, return total, and
-sixth-row rejection cases are authored but unrun pending bulk validation.
-Reduced, capital-gain, vehicle, mixed Section B, carryover, and larger Section A
-sets remain closed. These records are preparer-entered facts rather than
+duplicate-sixth-group rejection cases are authored but unrun pending bulk validation.
+Reduced, capital-gain, vehicle, mixed Section B, carryover, and more than eight
+Section A gifts remain closed. These records are preparer-entered facts rather than
 authenticated donor/donee source bytes; PDF appearance, XSD/business rules,
 and IRS ATS acceptance are pending.
+
+## Eight distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The same direct current-year route now allows five through eight distinct
+purchased, noncapital, nonvehicle Section A gifts with separate similar-item
+groups and each item claimed at its unreduced FMV. TY2025 `IRS8283.xsd`
+permits unbounded `InformationOnDonatedProperty` entries, so native MeF keeps
+the complete A–H source inventory on one form. The PDF preview repeats the
+official first page, placing A–D on its first copy and E–H in the four rows
+on its second copy. The source inventory, Schedule A line 12, and itemized
+Form 1040 line 12e must reconcile before export. A $9,600 eight-gift case and
+changed eighth item, repeated group, return-total, and ninth-item rejection
+fixtures are authored for the deferred bulk pass. Reduced gifts, vehicles,
+capital-gain property, mixed Section B, carryovers, source-byte authentication,
+and more than eight Section A gifts remain outside this bounded route.
