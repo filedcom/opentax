@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **323 completed bounded items**, with
+and no completed checklist items. The **324 completed bounded items**, with
 their source and validation limits, are in the
 [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -16,7 +16,7 @@ form or a release gate.
 | Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
 | Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
 | Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 307 | Extend bounded routes to every retained form branch and source combination. |
+| Named tax-form gaps | 20 | 308 | Extend bounded routes to every retained form branch and source combination. |
 | Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
 | Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
 | IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
@@ -75,6 +75,8 @@ Form 7203 now traces two principal repayments on one shareholder note through
 the remaining debt basis, allowed loss, and joint return.
 A sourced agricultural livestock waste facility now carries its production
 credit through Form 8835, Form 3800, Schedule 3, and Form 1040.
+The Form 8862 EITC-only route also closes at native/PDF export until its
+prior-disallowance notice can be authenticated.
 A purchased short-term nonpublic stock gift now carries its basis-limited
 Form 8283 claim and reviewed issuer details through native and PDF output.
 One traced Form 4952 securities loan now reconciles four separate interest
