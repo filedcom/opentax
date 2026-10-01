@@ -659,18 +659,12 @@ export function calculateScheduleFAtRiskNet(
   return calculateSimplifiedAtRiskLoss(preliminaryNet, item.at_risk_simplified);
 }
 
-// Per-item routing outputs (SE, QBI, passive, at-risk)
+// Per-item routing outputs (QBI, passive, at-risk)
 function perItemOutputs(
   item: ScheduleFItem,
   netProfit: number,
-  farmOptionalMethodElected: boolean,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
-
-  // Schedule SE Part I line 1a is replaced by Part II line 15 when elected.
-  if (!farmOptionalMethodElected && netProfit >= SE_TAX_THRESHOLD) {
-    outputs.push(output(schedule_se, { net_profit_schedule_f: netProfit }));
-  }
 
   // Form 8995 (QBI): only when net profit > 0
   if (netProfit > 0) {
@@ -765,7 +759,6 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       outputs.push(...perItemOutputs(
         input.schedule_fs[i],
         netProfits[i],
-        input.farm_optional_method_elected === true,
       ));
     }
 
@@ -785,6 +778,11 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         farm_optional_method_elected: true,
         gross_farm_income: Math.max(0, grossFarmIncome),
         net_profit_schedule_f: line34NetFarmProfit,
+      }));
+    } else if (totalNetProfit >= SE_TAX_THRESHOLD) {
+      // Schedule SE line 1a takes the net of all Schedule F activities.
+      outputs.push(this.outputNodes.output(schedule_se, {
+        net_profit_schedule_f: totalNetProfit,
       }));
     }
 

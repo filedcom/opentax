@@ -114,8 +114,7 @@ Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI
 Deno.test("Schedule J names fishing Schedule C as a blocked attribution source", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...inputs(),
-    schedule_c: {
-      schedule_cs: [{
+    schedule_c: [{
         business_reference: "fishing-a",
         line_a_principal_business: "Commercial fishing",
         line_b_business_code: "114110",
@@ -123,8 +122,7 @@ Deno.test("Schedule J names fishing Schedule C as a blocked attribution source",
         line_g_material_participation: true,
         line_1_gross_receipts: 80_000,
         line_22_supplies: 20_000,
-      }],
-    },
+    }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(
     result.diagnostics.some((entry) =>
@@ -141,8 +139,7 @@ function fishingInputs() {
   const { schedule_f: _scheduleF, ...rest } = inputs();
   return {
     ...rest,
-    schedule_c: {
-      schedule_cs: [{
+    schedule_c: [{
         business_reference: "fishing-a",
         line_a_principal_business: "Commercial fishing",
         line_b_business_code: "114110",
@@ -150,14 +147,13 @@ function fishingInputs() {
         line_g_material_participation: true,
         line_1_gross_receipts: 80_000,
         line_22_supplies: 20_000,
-      }],
       schedule_j_fishing_evidence: {
         business_reference: "fishing-a",
         catch_sales_record_reference: "catch-ledger-2025",
         harvested_fish_entered_commerce_verified: true as const,
         scientific_research_vessel: false as const,
       },
-    },
+    }],
   };
 }
 
@@ -186,15 +182,15 @@ Deno.test("Schedule J fishing evidence cannot be swapped onto another business",
   const input = fishingInputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
-    schedule_c: {
-      ...input.schedule_c,
+    schedule_c: [{
+      ...input.schedule_c[0],
       schedule_j_fishing_evidence: {
-        ...input.schedule_c.schedule_j_fishing_evidence,
+        ...input.schedule_c[0].schedule_j_fishing_evidence,
         business_reference: "other-business",
       },
-    },
+    }],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.pending.schedule_j?.line23, undefined);
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_c" &&
@@ -207,12 +203,12 @@ Deno.test("Schedule J fishing evidence cannot be swapped onto another business",
 Deno.test("Schedule J one-business fishing profit without catch evidence stays closed", () => {
   const input = fishingInputs();
   const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
-    input.schedule_c;
+    input.schedule_c[0];
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
-    schedule_c: scheduleC,
+    schedule_c: [scheduleC],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.pending.schedule_j?.line23, undefined);
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_j_calculation" &&
@@ -284,7 +280,7 @@ Deno.test("Schedule J mixed two-farm route rejects a loss hidden by the other fa
       ],
     },
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.pending.schedule_j?.line23, undefined);
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_j_calculation" &&
@@ -322,12 +318,12 @@ Deno.test("Schedule J combines one farm and one sourced fishing business into Fo
 Deno.test("Schedule J mixed election rejects an unclassified fishing source", () => {
   const input = mixedInputs();
   const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
-    input.schedule_c;
+    input.schedule_c[0];
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
-    schedule_c: scheduleC,
+    schedule_c: [scheduleC],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.pending.schedule_j?.line23, undefined);
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_j_calculation" &&
@@ -347,7 +343,7 @@ Deno.test("Schedule J mixed election rejects unrelated AGI", () => {
       box1: 100,
     }],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_j, undefined);
+  assertEquals(result.pending.schedule_j?.line23, undefined);
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_j_calculation" &&

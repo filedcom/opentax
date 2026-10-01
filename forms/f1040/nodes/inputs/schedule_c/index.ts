@@ -295,8 +295,11 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       )
     );
     const netProfits = atRisk.map((result) => result.atRiskNet);
-    if (input.schedule_j_fishing_evidence) {
-      const evidence = input.schedule_j_fishing_evidence;
+    const fishingEvidenceItems = items.filter((item) =>
+      item.schedule_j_fishing_evidence !== undefined
+    );
+    if (fishingEvidenceItems.length > 0) {
+      const evidence = fishingEvidenceItems[0].schedule_j_fishing_evidence!;
       if (
         items.length !== 1 ||
         items[0].business_reference !== evidence.business_reference

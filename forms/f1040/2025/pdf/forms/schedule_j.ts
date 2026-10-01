@@ -60,9 +60,14 @@ export const scheduleJPdf: PdfFormDescriptor = {
       }
     }
     const form1040 = allPending.f1040;
-    if (!form1040 ||
-        raw.line1 !== form1040.line15_taxable_income ||
-        raw.line23 !== form1040.line16_income_tax) {
+    const line15 = form1040?.line15_taxable_income;
+    const line16 = form1040?.line16_income_tax;
+    if (
+      typeof line15 !== "number" || !Number.isFinite(line15) ||
+      typeof line16 !== "number" || !Number.isFinite(line16) ||
+      raw.line1 !== Math.round(line15) ||
+      raw.line23 !== Math.round(line16)
+    ) {
       throw new Error(
         "Schedule J PDF needs lines 1 and 23 to match finalized Form 1040 lines 15 and 16",
       );

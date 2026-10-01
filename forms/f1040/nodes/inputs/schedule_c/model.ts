@@ -25,6 +25,12 @@ export const itemSchema = z.object({
   line_b_business_code: z.string(),
   line_c_business_name: z.string().optional(),
   business_reference: z.string().trim().min(1).optional(),
+  schedule_j_fishing_evidence: z.object({
+    business_reference: z.string().trim().min(1),
+    catch_sales_record_reference: z.string().trim().min(1),
+    harvested_fish_entered_commerce_verified: z.literal(true),
+    scientific_research_vessel: z.literal(false),
+  }).strict().optional(),
   // The bounded Form 8829 route checks taxpayer ownership separately.
   proprietor_recipient: z.nativeEnum(TS).optional(),
   line_d_ein: z.string().optional(),
@@ -182,12 +188,6 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_cs: z.array(itemSchema),
-  schedule_j_fishing_evidence: z.object({
-    business_reference: z.string().trim().min(1),
-    catch_sales_record_reference: z.string().trim().min(1),
-    harvested_fish_entered_commerce_verified: z.literal(true),
-    scientific_research_vessel: z.literal(false),
-  }).strict().optional(),
   section481a_adjustments: z.array(
     z.object({
       business_reference: z.string().trim().min(1),
