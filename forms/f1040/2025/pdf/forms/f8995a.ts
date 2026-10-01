@@ -70,7 +70,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ).padStart(2, "0")
     }[0]`,
   })),
-  ...([27, 32, 33, 34, 35, 36, 37, 39] as const).map(
+  ...([27, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
       domainKey: `line${line}`,
@@ -243,9 +243,24 @@ export const form8995aPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(raw);
+    if (
+      (input.patron_filing_details?.source_1099patr
+          .box6_section199ag_deduction ?? 0) > 0 &&
+      input.patron_filing_details?.source_1099patr.recipient_tin !==
+        filer?.primarySSN.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8995-A PDF cooperative box 6 recipient differs from the final filer",
+      );
+    }
     if (input.filing_status === NodeFilingStatus.MFS) {
-      if (!filer || filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately) {
-        throw new Error("Form 8995-A PDF MFS status differs from the final filer");
+      if (
+        !filer ||
+        filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately
+      ) {
+        throw new Error(
+          "Form 8995-A PDF MFS status differs from the final filer",
+        );
       }
       assertMfsSstbOwner(input, filer.primarySSN);
     }

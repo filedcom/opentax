@@ -210,6 +210,16 @@ function reconcileReturn(
     throw new Error("Form 8995-A filing status differs from the return header");
   }
   assertMfsSstbOwner(fields, context.filer.primarySSN);
+  if (
+    (fields.patron_filing_details?.source_1099patr
+        .box6_section199ag_deduction ?? 0) > 0 &&
+    fields.patron_filing_details?.source_1099patr.recipient_tin !==
+      context.filer.primarySSN.replaceAll("-", "")
+  ) {
+    throw new Error(
+      "Form 8995-A cooperative box 6 recipient differs from the final filer",
+    );
+  }
   if (context.pending.form8995 !== undefined) {
     throw new Error(
       "Form 8995-A and Form 8995 cannot both be pending for one return",
@@ -427,7 +437,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     element("AdjustedTaxableIncomeAmt", lines.line35),
     element("IncomeLimitationAmt", lines.line36),
     element("QBIDedBeforeDPADSect199AgAmt", lines.line37),
-    element("DPADSect199AgAllocAgricHortAmt", 0),
+    element("DPADSect199AgAllocAgricHortAmt", lines.line38),
     element("QualifiedBusinessIncomeDedAmt", lines.line39),
     element("TotQlfyREITDivPTPLossCfwdAmt", 0),
   ]);

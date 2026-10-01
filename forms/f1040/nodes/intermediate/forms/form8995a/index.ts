@@ -139,6 +139,14 @@ export const patronFilingDetailsSchema = z.object({
   allocation_worksheet_reference: z.string().trim().min(1),
   allocation_worksheet_reviewed_by: z.string().trim().min(1),
   allocation_worksheet_review_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  box6_written_notice_review: z.object({
+    notice_reference: z.string().trim().min(1),
+    recipient_tin: z.string().regex(/^\d{9}$/),
+    designated_199ag_amount: z.number().int().positive(),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    recipient_and_amount_match_confirmed: z.literal(true),
+  }).strict().optional(),
 });
 
 export const scheduleCQbiBusinessSchema = z.object({
@@ -680,11 +688,21 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     !/^\d{9}$/.test(patr.payer_tin ?? "") ||
     !Number.isInteger(patr.box7_qualified_payments) ||
     (patr.box7_qualified_payments ?? 0) <= 0 ||
-    patr.box6_section199ag_deduction !== 0 ||
+    typeof patr.box6_section199ag_deduction !== "number" ||
+    !Number.isInteger(patr.box6_section199ag_deduction) ||
+    ((patr.box6_section199ag_deduction ?? 0) > 0 &&
+      (!/^\d{9}$/.test(patr.recipient_tin ?? "") ||
+        !source.box6_written_notice_review ||
+        source.box6_written_notice_review.recipient_tin !==
+          patr.recipient_tin ||
+        source.box6_written_notice_review.designated_199ag_amount !==
+          patr.box6_section199ag_deduction)) ||
+    ((patr.box6_section199ag_deduction ?? 0) === 0 &&
+      source.box6_written_notice_review !== undefined) ||
     (patr.box9_section199aa_sstb_items ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8995-A Schedule D needs a sourced business 1099-PATR with box 7 payments, zero box 6 section 199A(g) deduction, specified-cooperative box 13, and no box 9 SSTB items",
+      "Form 8995-A Schedule D needs a sourced business 1099-PATR with box 7 payments, reviewed box 6 notice when present, specified-cooperative box 13, and no box 9 SSTB items",
     );
   }
   if (
@@ -734,7 +752,16 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line35 = Math.max(0, line33 - line34);
   const line36 = line35 * QBI_RATE;
   const line37 = Math.min(line32, line36);
-  const line39 = line37;
+  const line38 = input.patron_of_specified_cooperative === true
+    ? input.patron_filing_details?.source_1099patr
+      .box6_section199ag_deduction ?? 0
+    : 0;
+  if (line38 > line33 - line37) {
+    throw new Error(
+      "Form 8995-A cooperative box 6 exceeds the line 38 taxable-income limit",
+    );
+  }
+  const line39 = line37 + line38;
   return {
     line2,
     line3,
@@ -756,6 +783,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     line35,
     line36,
     line37,
+    line38,
     line39,
   };
 }
