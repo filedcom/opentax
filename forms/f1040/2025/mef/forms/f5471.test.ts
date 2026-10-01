@@ -34,7 +34,7 @@ Deno.test("Category 5a Form 5471 parent joins page 1, B Part II, G, and I", () =
   );
   assertStringIncludes(
     xml,
-    "<SubpartFPHCIncomeAmt>8000</SubpartFPHCIncomeAmt>",
+    "<SubpartFPHCIncomeAmt>10000</SubpartFPHCIncomeAmt>",
   );
   assertStringIncludes(
     xml,

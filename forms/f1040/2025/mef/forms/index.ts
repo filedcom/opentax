@@ -40,6 +40,7 @@ import { form5471 } from "./f5471.ts";
 import { form5471ScheduleE } from "./f5471_schedule_e.ts";
 import { form5471ScheduleH } from "./f5471_schedule_h.ts";
 import { form5471ScheduleI1 } from "./f5471_schedule_i1.ts";
+import { form5471ScheduleJ } from "./f5471_schedule_j.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
 import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
@@ -210,12 +211,12 @@ export const ALL_MEF_FORMS = [
   form4972,
   // Form 5329
   form5329,
-  // Form 5471 and separate Schedules E, H and I-1 follow ReturnData1040 order.
+  // Form 5471 and its separate schedules follow ReturnData1040 order.
   form5471,
   form5471ScheduleE,
   form5471ScheduleH,
-  // The Category 5a CFC's separate Schedule I-1 follows Form 5471 in MeF.
   form5471ScheduleI1,
+  form5471ScheduleJ,
   // Form 5695
   form5695,
   // Form 5884

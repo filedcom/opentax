@@ -262,6 +262,36 @@ export const scheduleGSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// One general-category Schedule J. Prior-year PTEP and other E&P categories,
+// distributions, and nonrecognition or tax-splitting adjustments are absent.
+export const scheduleJSchema = z.object({
+  opening_post2017_untaxed_ep_functional: dollars,
+  opening_other_untaxed_ep_functional: z.literal(0),
+  opening_hovering_deficit_or_suspended_tax_functional: z.literal(0),
+  opening_prior_ptep_functional: z.literal(0),
+  opening_other_separate_category_ep_functional: z.literal(0),
+  beginning_balance_adjustments_functional: z.literal(0),
+  current_tax_splitting_adjustments_functional: z.literal(0),
+  lower_tier_ptep_distributions_functional: z.literal(0),
+  nonrecognition_ep_functional: z.literal(0),
+  other_pre_inclusion_adjustments_functional: z.literal(0),
+  actual_distributions_functional: z.literal(0),
+  other_post_inclusion_adjustments_functional: z.literal(0),
+  hovering_deficit_offset_functional: z.literal(0),
+  part_ii_beginning_recapture_balance_functional: z.literal(0),
+  part_ii_future_recapture_functional: z.literal(0),
+  part_ii_current_recapture_functional: z.literal(0),
+  subpart_f_inclusion_functional: dollars,
+  section951a_inclusion_functional: dollars,
+  section956_inclusion_functional: dollars,
+  section956_ptep_reclassified_functional: dollars,
+  section956_year_end_spot_rate: z.string()
+    .regex(/^\d{1,10}(\.\d{1,12})?$/)
+    .refine((rate) => Number(rate) > 0),
+  prior_year_schedule_j_reference: sourceReference,
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -323,6 +353,7 @@ export const itemSchema = z.object({
   schedule_h: scheduleHSchema,
   schedule_e: scheduleESchema,
   schedule_g: scheduleGSchema,
+  schedule_j: scheduleJSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
@@ -351,6 +382,41 @@ export const itemSchema = z.object({
       path: ["form5471_identity"],
       message:
         "Form 5471 CFC jurisdiction and U.S. tax year must reconcile to Schedule E",
+    });
+  }
+  const j = value.schedule_j;
+  const subpartF = value.schedule_i.line1a + value.schedule_i.line1b +
+    value.schedule_i.line1c + value.schedule_i.line1d +
+    value.schedule_i.line1e +
+    value.schedule_i.line1f + value.schedule_i.line1g + value.schedule_i.line1h;
+  const { gilti } = calculateCategory5Inclusions(value);
+  if (
+    Math.round(
+        j.subpart_f_inclusion_functional /
+          Number(value.schedule_i1.average_exchange_rate),
+      ) !== subpartF ||
+    Math.round(
+        j.section951a_inclusion_functional /
+          Number(value.schedule_i1.average_exchange_rate),
+      ) !== gilti ||
+    Math.round(
+        j.section956_inclusion_functional /
+          Number(j.section956_year_end_spot_rate),
+      ) !==
+      value.schedule_i.line2_us_property ||
+    j.section956_ptep_reclassified_functional !==
+      j.subpart_f_inclusion_functional + j.section951a_inclusion_functional ||
+    j.subpart_f_inclusion_functional +
+          j.section951a_inclusion_functional +
+          j.section956_inclusion_functional >
+      j.opening_post2017_untaxed_ep_functional +
+        value.schedule_h.book_net_income_functional
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_j"],
+      message:
+        "Schedule J functional-currency inclusions must reconcile to Schedule I, Form 8992, and available general-category E&P",
     });
   }
 }).refine(
