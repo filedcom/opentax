@@ -4,11 +4,26 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return ext.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return ext.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function schedule3Fields(result: ReturnType<typeof compute>) {
   return fieldsOf(result.outputs, schedule3);
+}
+
+function paymentEvidence(amount: number) {
+  return {
+    tax_year: 2025,
+    primary_ssn: "123456789",
+    payment_date: "2026-04-15",
+    amount,
+    payment_confirmation_reference: `payment-${amount}`,
+    extension_request_reference: "accepted-extension-request",
+    extension_request_accepted_confirmed: true,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -29,13 +44,35 @@ Deno.test("ext.inputSchema: rejects negative line_7_amount_paying", () => {
   );
 });
 
+Deno.test("ext.compute: positive payment requires matching reviewed evidence", () => {
+  assertThrows(
+    () => compute({ produce_4868: "X", line_7_amount_paying: 1500 }),
+    Error,
+    "matching reviewed 2025 payment evidence",
+  );
+  assertThrows(
+    () =>
+      compute({
+        produce_4868: "X",
+        line_7_amount_paying: 1500,
+        payment_evidence: paymentEvidence(1499),
+      }),
+    Error,
+    "matching reviewed 2025 payment evidence",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Master Switch: produce_4868 must be "X" to emit any output
 // ---------------------------------------------------------------------------
 
 Deno.test("ext.compute: produce_4868 absent — no outputs even with payment", () => {
   assertEquals(
-    compute({ line_4_total_tax: 10000, line_5_total_payments: 7000, line_7_amount_paying: 1500 }).outputs,
+    compute({
+      line_4_total_tax: 10000,
+      line_5_total_payments: 7000,
+      line_7_amount_paying: 1500,
+    }).outputs,
     [],
   );
 });
@@ -57,6 +94,7 @@ Deno.test("ext.compute: payment > 0 routes to schedule3 line10_amount_paid_exten
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 1500,
+    payment_evidence: paymentEvidence(1500),
   });
   assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 1500);
 });
@@ -87,6 +125,7 @@ Deno.test("ext.compute: overpayment (line_7 > balance) routes full amount — no
     line_4_total_tax: 10000,
     line_5_total_payments: 2000,
     line_7_amount_paying: 15000,
+    payment_evidence: paymentEvidence(15000),
   });
   assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 15000);
 });
@@ -112,6 +151,7 @@ Deno.test("ext.compute: amount_on_1040v does NOT affect schedule3 — uses line_
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 500,
+    payment_evidence: paymentEvidence(500),
     amount_on_1040v: 999,
   });
   // schedule3 must use line_7 (500), not the 1040-V override (999)
@@ -122,11 +162,13 @@ Deno.test("ext.compute: informational flags do not add outputs", () => {
   const baseCount = compute({
     produce_4868: "X",
     line_7_amount_paying: 500,
+    payment_evidence: paymentEvidence(500),
   }).outputs.length;
 
   const withFlags = compute({
     produce_4868: "X",
     line_7_amount_paying: 500,
+    payment_evidence: paymentEvidence(500),
     line_8_out_of_country: true,
     line_9_1040nr_no_wages: true,
     extension_previously_filed: true,
@@ -146,8 +188,12 @@ Deno.test("ext.compute: emits exactly one schedule3 output when payment present"
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 1500,
+    payment_evidence: paymentEvidence(1500),
   });
-  assertEquals(result.outputs.filter((o) => o.nodeType === "schedule3").length, 1);
+  assertEquals(
+    result.outputs.filter((o) => o.nodeType === "schedule3").length,
+    1,
+  );
   assertEquals(result.outputs.length, 1);
 });
 
@@ -161,6 +207,7 @@ Deno.test("ext.compute: smoke — all fields populated, schedule3 gets line_7 am
     line_4_total_tax: 25000,
     line_5_total_payments: 18000,
     line_7_amount_paying: 5000,
+    payment_evidence: paymentEvidence(5000),
     line_8_out_of_country: true,
     line_9_1040nr_no_wages: false,
     extension_previously_filed: false,

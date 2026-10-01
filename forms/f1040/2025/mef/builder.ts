@@ -30,6 +30,7 @@ import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box1
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
+import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -225,6 +226,7 @@ function buildReturnXml(
   if (pending.f1040) {
     assertF1040SourceIdentity(pending.f1040, filer);
   }
+  assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);
   assertEitcChildSources(pending, filer);

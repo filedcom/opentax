@@ -23,6 +23,7 @@ import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index
 import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a/index.ts";
 import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
+import type { inputSchema as extInputSchema } from "../../nodes/inputs/ext/index.ts";
 import type { inputSchema as f8812InputSchema } from "../../nodes/inputs/f8812/index.ts";
 import type { inputSchema as f8863InputSchema } from "../../nodes/inputs/f8863/index.ts";
 import type { inputSchema as generalInputSchema } from "../../nodes/inputs/general/index.ts";
@@ -59,6 +60,8 @@ export type MefFormsPending =
     // Payer statements remain available for Form 6251 AMT interest replay.
     f1099int?: z.infer<typeof f1099intInputSchema>;
     f1099oid?: z.infer<typeof f1099oidInputSchema>;
+    // Reviewed payment details support Schedule 3 line 10 on the final return.
+    ext?: z.infer<typeof extInputSchema>;
     // Filing and dependent source facts are retained for native cross-form
     // checks even when their input nodes do not emit standalone XML forms.
     general?: z.infer<typeof generalInputSchema>;
