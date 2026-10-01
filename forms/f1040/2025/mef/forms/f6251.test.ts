@@ -56,6 +56,13 @@ function filed(fields: Parameters<typeof form6251.build>[0]): string {
           trustCopy(fields.line2j_estates_and_trusts),
         ],
       },
+      schedule2: { line2_amt: 1 },
+      f1040: {
+        taxpayer_ssn: "111223333",
+        line16_income_tax: 1,
+        line17_additional_taxes: 1,
+        line18_total_tax_before_credits: 2,
+      },
     }
     : {};
   return form6251.build(
@@ -131,6 +138,7 @@ function trustCopy(amount: number) {
     estate_trust_name: "Synthetic Trust",
     estate_trust_ein: "123456789",
     source_document_reference: "synthetic issued trust K-1",
+    beneficiary_ssn: "111223333",
     box12_code_a_amt_adjustment: amount,
     box12_codes_b_through_f_absent: true,
     box12_codes_g_through_i_absent: true,
@@ -359,6 +367,13 @@ Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order
   }, {
     pending: {
       k1_trust: { k1_trusts: [trustCopy(100)] },
+      schedule2: { line2_amt: 1 },
+      f1040: {
+        taxpayer_ssn: "111223333",
+        line16_income_tax: 1,
+        line17_additional_taxes: 1,
+        line18_total_tax_before_credits: 2,
+      },
       f8949: {
         f8949s: [{
           source_transaction_id: "basis-sale",

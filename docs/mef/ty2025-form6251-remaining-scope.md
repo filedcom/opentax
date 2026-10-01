@@ -270,9 +270,13 @@ and full XSD/PDF/IRS filing gates remain open.
 
 Native and PDF Form 6251 line 2j now replays the signed total from distinct
 retained trust K-1 box 12 code A sources. Each source must name its trust,
-issued-copy reference and EIN, and affirm that other box 12 AMT codes are
-absent. Omitting or changing a source rejects; the focused fixtures await the
-bulk pass. This does not authenticate issued K-1 bytes or model codes B–I.
+issued-copy reference, EIN and matching Form 1040 beneficiary SSN, and affirm
+that other box 12 AMT codes are absent. A mixed positive and negative two-copy
+case now checks the signed line 2j sum and joins positive AMT to Schedule 2 and
+Form 1040 at native and PDF export. The [2025 beneficiary K-1 instructions](https://www.irs.gov/instructions/i1041sk1)
+assign code A to Form 6251 line 2j. Omitting or changing a source rejects; the
+focused fixtures await the bulk pass. This does not authenticate issued K-1
+bytes or model codes B–I or zero-AMT filings.
 
 # Private-activity-bond replay (staged, unrun)
 
