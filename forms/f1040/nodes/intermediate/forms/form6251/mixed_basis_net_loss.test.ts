@@ -253,3 +253,78 @@ Deno.test("Form 6251 rejects a cross-term offset once the AMT loss exceeds the c
     "one term of identified losses",
   );
 });
+
+Deno.test("Form 6251 reconciles four audited cross-term gain and loss lots inside both capital-loss limits", () => {
+  const longGain = {
+    source_transaction_id: "broker-lt-gain",
+    part: "D" as const,
+    proceeds: 2_000,
+    regular_basis: 1_700,
+    amt_basis: 1_800,
+    regular_gain: 300,
+    amt_gain: 200,
+  };
+  const longLoss = {
+    source_transaction_id: "broker-lt-loss",
+    part: "D" as const,
+    proceeds: 3_000,
+    regular_basis: 3_500,
+    amt_basis: 3_600,
+    regular_gain: -500,
+    amt_gain: -600,
+  };
+  const rows = [gain, loss, longGain, longLoss];
+  const caseInput = {
+    ...input,
+    line2k_8949_basis_dispositions: rows,
+    line2k_8949_capital_audit: {
+      transactions: rows.map((row) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        gain_loss: row.regular_gain,
+      })),
+      has_other_capital_activity: false,
+    },
+  };
+  const result = compute(caseInput);
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line2k_disposition, -500);
+  assertEquals(filed?.fields.line13, undefined);
+  const pending = {
+    ...basisSourcePending(filed!.fields),
+    schedule2: { line2_amt: filed!.fields.line11_amt },
+    f1040: {
+      line2a_tax_exempt: 0,
+      line7_capital_gain: -1_700,
+      line11_agi: 200_000,
+      line14_deductions_qbi_total: 0,
+      line17_additional_taxes: filed!.fields.line11_amt,
+    },
+  };
+  assertStringIncludes(
+    mef6251.build(filed!.fields, { pending }),
+    "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, pending)?.line2k_disposition,
+    -500,
+  );
+  assertThrows(
+    () => compute({ ...caseInput, filing_status: "mfs" }),
+    Error,
+    "within both regular and AMT Schedule D deduction limits",
+  );
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line7_capital_gain: -1_699 },
+        },
+      }),
+    Error,
+    "cross-term basis loss",
+  );
+});

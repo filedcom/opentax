@@ -49,3 +49,14 @@ Short-loss/long-gain and long-loss/short-gain positive fixtures, return
 tampering, and an over-limit rejection are authored for the deferred batch.
 Wider mixed capital activity, special-rate gain, carryovers, and authenticated
 broker-copy bytes remain open.
+
+The cross-term fully deductible-loss route now accepts multiple audited gain
+and loss lots in both short- and long-term buckets when every lot keeps its
+gain/loss sign under regular and AMT bases, the complete Form 8949 audit has no
+other capital activity, and both independently netted losses stay within their
+respective Schedule D limits. Four identified lots net to a $1,700 regular
+loss and a $2,200 AMT loss, giving a negative $500 line-2k adjustment without
+preferential gain. Native and PDF source replay, a mismatched Form 1040 line 7,
+and an MFS over-limit rejection are authored for the deferred bulk run. Sign
+changes, capital-loss carryovers, special-rate gains, issuer-byte proof, and
+final XSD/filled-output/ATS validation remain open.

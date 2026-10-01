@@ -109,14 +109,16 @@ export function assertForm6251Form8949Source(
     regularNet > 0 && amtNet < 0;
   const shortLosses = rows.filter((row) => ["A", "B", "C"].includes(row.part));
   const longRows = rows.filter((row) => ["D", "E", "F"].includes(row.part));
-  const crossTermDeductibleLoss = rows.length === 2 &&
-    shortLosses.length === 1 && longRows.length === 1 &&
+  const crossTermDeductibleLoss = shortLosses.length > 0 &&
+    longRows.length > 0 &&
     regularNet < 0 && regularNet >= lossLimit &&
     amtNet < 0 && amtNet >= lossLimit &&
-    rows.filter((row) => row.regular_gain > 0 && row.amt_gain > 0)
-        .length === 1 &&
-    rows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
-        .length === 1;
+    rows.some((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
+    rows.some((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
+    rows.every((row) =>
+      (row.regular_gain > 0 && row.amt_gain > 0) ||
+      (row.regular_gain < 0 && row.amt_gain < 0)
+    );
   const mixedTermGainToAmtLoss = shortLosses.length > 0 &&
     longRows.length === 1 &&
     shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
