@@ -328,7 +328,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f965",
     exportKinds: ["pdf"],
-    reason: "Form 965-A has a native filing but no source-backed PDF",
+    reason:
+      "Form 965-A prior-filed liabilities and actual installment payments need verification before printable filing",
     isActive: (fields) => nonempty(fields.f965s),
   },
   {
