@@ -6,6 +6,65 @@ import {
   assertReturnWideArithmetic,
 } from "./return-wide-arithmetic.ts";
 
+Deno.test("Form 1040 export replays retained wage and total-income components", () => {
+  const income = {
+    line1a_wages: 40_000,
+    line1b_household_wages: 2_000,
+    line1i_combat_pay: 3_000,
+    line1z_total_wages: 42_000,
+    line2a_tax_exempt: 200,
+    line2b_taxable_interest: 500,
+    line3a_qualified_dividends: 100,
+    line3b_ordinary_dividends: 300,
+    line9_total_income: 42_800,
+  };
+  assertReturnWideArithmetic(income);
+  assertStringIncludes(
+    irs1040.build(income, { pending: {} }),
+    "<TotalIncomeAmt>42800</TotalIncomeAmt>",
+  );
+  irs1040Pdf.projectFields?.(income, {});
+
+  for (
+    const [change, reason] of [
+      [{ line1z_total_wages: 42_001 }, "line 1z"],
+      [{ line9_total_income: 42_801 }, "line 9"],
+    ] as const
+  ) {
+    const changed = { ...income, ...change };
+    assertThrows(() => assertReturnWideArithmetic(changed), Error, reason);
+    assertThrows(
+      () => irs1040.build(changed, { pending: {} }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(changed, {}),
+      Error,
+      reason,
+    );
+  }
+
+  // Sparse direct descriptor calls have no complete income-component record.
+  assertReturnWideArithmetic({ line1z_total_wages: 42_000 });
+  assertReturnWideArithmetic({ line9_total_income: 42_800 });
+  assertThrows(
+    () =>
+      assertReturnWideArithmetic({
+        line1a_wages: 40_000,
+        line1z_total_wages: 40_000,
+        line9_total_income: 40_001,
+      }),
+    Error,
+    "line 9",
+  );
+  assertReturnWideArithmetic({
+    line1a_wages: [20_000, 20_000],
+    line1z_total_wages: 40_000,
+    line9_total_income: 40_000,
+  });
+});
+
 Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
   const income = {
     line9_total_income: 70_000,

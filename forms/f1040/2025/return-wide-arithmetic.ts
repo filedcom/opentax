@@ -13,7 +13,75 @@ export function assertReturnWideArithmetic(
   const matches = (filed: number, expected: number): boolean =>
     Math.abs(filed - expected) < 0.01;
 
+  // A direct descriptor call may provide only a subtotal. Replay the filed
+  // components when at least one component row accompanies that subtotal.
+  const components = (keys: readonly string[]): number | undefined => {
+    let present = false;
+    let total = 0;
+    for (const key of keys) {
+      const value = fields[key];
+      if (value === undefined || value === null) continue;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        total += value;
+      } else if (
+        Array.isArray(value) &&
+        value.every((item) => typeof item === "number" && Number.isFinite(item))
+      ) {
+        total += value.reduce((sum: number, item: number) => sum + item, 0);
+      } else {
+        return undefined;
+      }
+      present = true;
+    }
+    return present ? total : undefined;
+  };
+
+  const line1z = amount("line1z_total_wages");
+  const wages = components([
+    "line1a_wages",
+    "line1b_household_wages",
+    "line1c_unreported_tips",
+    "line1d_medicaid_waiver",
+    "line1e_taxable_dep_care",
+    "line1f_taxable_adoption_benefits",
+    "line1g_wages_8919",
+    "line1h_other_earned",
+  ]);
+  if (line1z !== undefined && wages !== undefined && !matches(line1z, wages)) {
+    throw new Error("Form 1040 line 1z differs from lines 1a through 1h");
+  }
+
+  const income = components([
+    "line1z_total_wages",
+    "line2b_taxable_interest",
+    "line3b_ordinary_dividends",
+    "line4b_ira_taxable",
+    "line5b_pension_taxable",
+    "line6b_ss_taxable",
+    "line7_capital_gain",
+    "line7a_cap_gain_distrib",
+    "line8_additional_income",
+  ]);
+  const incomeComponents = components([
+    "line2b_taxable_interest",
+    "line3b_ordinary_dividends",
+    "line4b_ira_taxable",
+    "line5b_pension_taxable",
+    "line6b_ss_taxable",
+    "line7_capital_gain",
+    "line7a_cap_gain_distrib",
+    "line8_additional_income",
+  ]);
   const line9 = amount("line9_total_income");
+  if (
+    line9 !== undefined && line1z !== undefined &&
+    (wages !== undefined || incomeComponents !== undefined) &&
+    income !== undefined &&
+    !matches(line9, income)
+  ) {
+    throw new Error("Form 1040 line 9 differs from its income lines");
+  }
+
   const line10 = amount("line10_adjustments");
   const line11 = amount("line11_agi");
   if (

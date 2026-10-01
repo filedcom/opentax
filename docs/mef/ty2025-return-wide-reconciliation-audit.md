@@ -16,6 +16,14 @@ subtotal, including a changed Schedule 3 deposit on line 20 or line 31 when the
 final 1040 component is present. It accepts unsupplied optional line components
 as zero, matching the sink's arithmetic. Positive and per-subtotal tamper
 fixtures are authored for the bulk test gate.
+It also replays line 1z from retained wage lines 1a–1h when a wage component is
+present, and line 9 from retained taxable income components when line 1z has a
+retained wage component or another taxable income component is present. Line 1i
+nontaxable combat pay, line 2a tax-exempt interest, and line 3a qualified
+dividends are excluded from these sums as directed by the
+[official 2025 Form 1040](https://www.irs.gov/pub/irs-prior/f1040--2025.pdf).
+Sparse direct descriptor calls that supply only a subtotal remain outside this
+component replay. Source identity and completeness remain open.
 Lines 34 and 37 use the filed whole-dollar difference of lines 33 and 24;
 line 37 includes a reported line 38 penalty, including when that penalty
 exceeds an overpayment. This does not establish a 2026 application election
@@ -131,7 +139,7 @@ and cross-source duplicate/period checks remain before the credit is verified.
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 9, 11, and 15. Final export now replays line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14 when the component lines are present. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |
+| Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 1z, 9, 11, and 15. Final export replays line 1z and line 9 from retained components when enough rows are present, line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |
 | Schedule 1 and 1-A             | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040.                                                                                        | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open.                                                                                     |
 | Schedule 2 and 3               | Schedule 2 Parts I and II and Schedule 3 nonrefundable/payment totals now reconcile to Form 1040, including the retained Form 8978 line 17z reduction; several credits are finalized in the Form 1040 sink after tax is known. | Authenticate child sources, including the Form 8978 partner audit and corrected return facts. The official 2025 Schedule 2 also has installment-sale interest on lines 14 and 15, which lack a sourced graph route and printable projection. |
 | Withholding and payments       | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines.                                                                                                    | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31.                                                                                                |
