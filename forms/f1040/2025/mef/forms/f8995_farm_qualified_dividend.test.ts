@@ -92,7 +92,13 @@ Deno.test("farm QBI export rejects altered qualified-dividend source and return"
   assertThrows(() => form8995.build(fields, { pending: changedReturn }), Error);
   assertThrows(() => form8995Pdf.projectFields?.(fields, changedReturn), Error);
   assertThrows(
-    () => form8995.build({ ...fields, line12: 599 }, { pending }),
+    () =>
+      form8995.build(
+        Object.assign({}, fields, { line12: 599 }) as Parameters<
+          typeof form8995.build
+        >[0],
+        { pending },
+      ),
     Error,
   );
 });

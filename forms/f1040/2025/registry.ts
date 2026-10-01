@@ -384,7 +384,7 @@ export const registry: NodeRegistry = {
   form4952,
   form4797,
   form8824,
-  form4972Elections,
+  form4972: form4972Elections,
   form5329,
   form5695,
   jointOccupancyStatementNode,

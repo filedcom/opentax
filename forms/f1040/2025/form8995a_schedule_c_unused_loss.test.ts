@@ -6,6 +6,7 @@ import { form8995a } from "./mef/forms/f8995a.ts";
 import { form8995aScheduleC } from "./mef/forms/f8995a_schedule_c.ts";
 import { form8995aPdf } from "./pdf/forms/f8995a.ts";
 import { form8995aScheduleCPdf } from "./pdf/forms/f8995a_schedule_c.ts";
+import { inputSchema as form8995aInputSchema } from "../nodes/intermediate/forms/form8995a/index.ts";
 
 const gain = {
   line_a_principal_business: "Repairs",
@@ -59,13 +60,16 @@ function preparedReturn() {
       address_zip: "78701",
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
+      form461_scope_review: {
+        only_schedule_c_and_f_business_items: true,
+        other_part_i_lines_zero: true,
+        part_ii_adjustments_zero: true,
+        post_at_risk_and_passive_limits_confirmed: true,
+        source_document_refs: ["synthetic 2025 Schedule C source pair"],
+      },
     },
     w2: [{ box1_wages: 300_000, box2_fed_withheld: 60_000 }],
-    schedule_c: {
-      schedule_cs: [gain, loss],
-      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
-      qbi_not_patron_of_specified_cooperative_confirmed: true,
-    },
+    schedule_c: [gain, loss],
   });
   assertEquals(result.diagnostics, []);
   return result;
@@ -76,8 +80,8 @@ Deno.test("Form 8995-A Schedule C carries unused current QBI loss with zero dedu
   assertEquals(result.pending.f1040.line13_qbi_deduction, 0);
   assertEquals(result.carryforwards.qbi_loss_carryforward_8995a, 200);
   const pending = normalizeAllPending(result.pending);
-  const parent = pending.form8995a;
-  const companion = pending.form8995a_schedule_c;
+  const parent = form8995aInputSchema.parse(pending.form8995a);
+  const companion = form8995aInputSchema.parse(pending.form8995a_schedule_c);
   assertEquals(parent.qbi, -200);
   const parentXml = form8995a.build(parent, { filer, pending });
   const scheduleXml = form8995aScheduleC.build(companion, { filer, pending });
@@ -99,7 +103,7 @@ Deno.test("Form 8995-A Schedule C carries unused current QBI loss with zero dedu
 
 Deno.test("unused Schedule C loss packet rejects changed source, companion, and final deduction", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
-  const altered = [{
+  const altered: Record<string, Record<string, unknown>>[] = [{
     ...pending,
     schedule_c: {
       ...pending.schedule_c,
@@ -117,7 +121,11 @@ Deno.test("unused Schedule C loss packet rejects changed source, companion, and 
   }];
   for (const changed of altered) {
     assertThrows(
-      () => form8995a.build(changed.form8995a, { filer, pending: changed }),
+      () =>
+        form8995a.build(form8995aInputSchema.parse(changed.form8995a), {
+          filer,
+          pending: changed,
+        }),
       Error,
     );
     assertThrows(

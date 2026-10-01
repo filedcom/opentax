@@ -61,7 +61,7 @@ const filer = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 const general = {
-  filing_status: FilingStatus.Single,
+  filing_status: "single",
   taxpayer_first_name: "Ada",
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "123456789",

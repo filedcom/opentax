@@ -43,9 +43,11 @@ export function reconcileForm4972Nua(
     (typeof fields.federal_estate_tax === "number" &&
       fields.federal_estate_tax > 0);
   const partialDeath = sharePct < 100 &&
-    (fields.death_benefit_exclusion ?? 0) > 0;
+    typeof fields.death_benefit_exclusion === "number" &&
+    fields.death_benefit_exclusion > 0;
   const partialEstate = sharePct < 100 &&
-    (fields.federal_estate_tax ?? 0) > 0;
+    typeof fields.federal_estate_tax === "number" &&
+    fields.federal_estate_tax > 0;
   if (
     !item || item.ts !== fields.recipient ||
     sharePct <= 0 || sharePct > 100 ||
@@ -67,7 +69,8 @@ export function reconcileForm4972Nua(
             (item.box8_other ?? 0) > 0 ||
             (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
-              (fields.capital_gain_amount ?? 0) <= 0) ||
+              (typeof fields.capital_gain_amount !== "number" ||
+                fields.capital_gain_amount <= 0)) ||
             item.box1_gross_distribution !==
               (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0))) ||
         ((item.box8_other ?? 0) > 0 &&

@@ -8,6 +8,7 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import {
+  assertNoFiledForm8995,
   assertScheduleCLossSources,
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
@@ -123,7 +124,6 @@ export function projectOneBusiness8995A(
     if (
       !companion.success ||
       JSON.stringify(companion.data) !== JSON.stringify(input) ||
-      allPending.form8995 !== undefined ||
       allPending.form8995a_schedule_a !== undefined ||
       allPending.form8995a_schedule_b !== undefined ||
       allPending.form8995a_schedule_d !== undefined
@@ -132,6 +132,7 @@ export function projectOneBusiness8995A(
         "Form 8995-A PDF Schedule C needs matching parent and no other QBI companion",
       );
     }
+    assertNoFiledForm8995(allPending);
     assertScheduleCLossSources(input, allPending);
     const lines = calculateScheduleCLossLines(input);
     if (allPending.f1040?.line13_qbi_deduction !== lines.parent.line39) {
@@ -168,14 +169,12 @@ export function projectOneBusiness8995A(
         "Form 8995-A PDF needs matching Schedule A companion source",
       );
     }
-    if (
-      allPending.form8995 !== undefined ||
-      allPending.form8995a_schedule_d !== undefined
-    ) {
+    if (allPending.form8995a_schedule_d !== undefined) {
       throw new Error(
-        "Form 8995-A PDF Schedule A cannot accompany Form 8995 or Schedule D",
+        "Form 8995-A PDF Schedule A cannot accompany Schedule D",
       );
     }
+    assertNoFiledForm8995(allPending);
     const lines = calculateOneSstb8995ALines(input);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
       throw new Error(
@@ -201,9 +200,7 @@ export function projectOneBusiness8995A(
   if (allPending.form8995a_schedule_a !== undefined) {
     throw new Error("Form 8995-A PDF has Schedule A without an SSTB parent");
   }
-  if (allPending.form8995 !== undefined) {
-    throw new Error("Form 8995-A PDF cannot accompany Form 8995");
-  }
+  assertNoFiledForm8995(allPending);
   if (input.patron_of_specified_cooperative === true) {
     assertPatron1099PATRSource(input, allPending.f1099patr);
     const companion = inputSchema.strict().safeParse(

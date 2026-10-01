@@ -64,7 +64,7 @@ const election = {
 function finalized() {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
-      filing_status: FilingStatus.Single,
+      filing_status: "single",
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",

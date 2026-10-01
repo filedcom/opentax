@@ -9,7 +9,7 @@ import { form4972Pdf } from "./pdf/forms/f4972.ts";
 
 const plan = buildExecutionPlan(registry);
 const general = {
-  filing_status: FilingStatus.MarriedFilingJointly,
+  filing_status: "mfj",
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "123456789",
@@ -24,7 +24,12 @@ const filer = {
   fullName: "Alex Taxpayer",
   nameLine1: "Alex Taxpayer",
   nameControl: "TAXP",
-  spouse: { firstName: "Blair", lastName: "Taxpayer", ssn: "987654321" },
+  spouse: {
+    firstName: "Blair",
+    lastName: "Taxpayer",
+    ssn: "987654321",
+    nameControl: "TAXP",
+  },
   filingStatus: FilingStatus.MarriedFilingJointly,
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };

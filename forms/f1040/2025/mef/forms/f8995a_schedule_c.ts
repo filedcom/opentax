@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { assertScheduleCLossSources } from "./f8995a.ts";
+import { assertNoFiledForm8995, assertScheduleCLossSources } from "./f8995a.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -24,15 +24,15 @@ function buildScheduleC(rawFields: Input, context?: MefBuildContext): string {
     );
   }
   if (
-    context?.pending?.form8995 !== undefined ||
     context?.pending?.form8995a_schedule_a !== undefined ||
     context?.pending?.form8995a_schedule_b !== undefined ||
     context?.pending?.form8995a_schedule_d !== undefined
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route cannot accompany Form 8995 or Schedules A/B/D",
+      "Form 8995-A Schedule C bounded route cannot accompany Schedules A/B/D",
     );
   }
+  assertNoFiledForm8995(context?.pending);
   assertScheduleCLossSources(fields, context?.pending);
   const lines = calculateScheduleCLossLines(fields);
   const form1040 = z.object({ line13_qbi_deduction: z.number() })

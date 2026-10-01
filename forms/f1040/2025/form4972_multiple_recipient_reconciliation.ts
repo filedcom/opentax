@@ -54,7 +54,10 @@ export function reconcileForm4972MultipleRecipients(
       "Form 4972 partial share differs from Form 1099-R boxes 2a, 3, 6, 8 amount/percentage, or 9a",
     );
   }
-  if ((fields.death_benefit_exclusion ?? 0) > 0) {
+  if (
+    typeof fields.death_benefit_exclusion === "number" &&
+    fields.death_benefit_exclusion > 0
+  ) {
     const allocation = fields.death_benefit_allocation as
       | { participant_ssn: string; elected_recipient_ssn: string }
       | undefined;

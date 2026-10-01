@@ -147,7 +147,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
         pending: pending(fields.line30 as number, 4_999),
       }),
     Error,
-    "death/estate allocation needs a full-share beneficiary",
+    "partial-share beneficiary allocation needs a single death-benefit or estate adjustment",
   );
   assertThrows(
     () =>
@@ -171,7 +171,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
         },
       ),
     Error,
-    "Part III when an annuity is present",
+    "partial-share beneficiary allocation needs a single death-benefit or estate adjustment without an annuity",
   );
   const fractional = calculated({ ...beneficiary, capital_gain_amount: 9_999 });
   const fractionalPending = pending(fractional.line30 as number);

@@ -10,8 +10,8 @@ import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { registry } from "../../registry.ts";
 import { buildMefXml } from "../builder.ts";
-import { testFiler } from "../test-filer.ts";
 import { form8995 } from "./f8995.ts";
+import { inputSchema as form8995InputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 
 function reit(
   name: string,
@@ -62,13 +62,20 @@ Deno.test("three separately reviewed REIT issuers reconcile Form 8995, Form 1040
   const pending = filedReturn();
   const fields = pending.form8995;
   assert(fields);
-  assertEquals(fields.reit_dividend_sources?.length, 3);
+  assertEquals(
+    form8995InputSchema.parse(fields).reit_dividend_sources?.length,
+    3,
+  );
   assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_300);
   assertEquals(fields.line6, 1_300);
   assertEquals(fields.line8, 1_300);
   assertEquals(fields.line9, 260);
   assertEquals(fields.line15, pending.f1040?.line13_qbi_deduction);
-  const xml = buildMefXml(pending, testFiler());
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const xml = buildMefXml(pending, fixture.filer);
   assertStringIncludes(xml, "<IRS8995 documentId=");
   assertStringIncludes(
     xml,
@@ -129,13 +136,23 @@ Deno.test("three-issuer Form 8995 route rejects changed copies, identity, holdin
   const wrongSource = {
     ...fields,
     reit_dividend_sources: [
-      ...fields.reit_dividend_sources.slice(0, 2),
-      { ...fields.reit_dividend_sources[2], box5: 499 },
+      ...form8995InputSchema.parse(fields).reit_dividend_sources!.slice(0, 2),
+      {
+        ...form8995InputSchema.parse(fields).reit_dividend_sources![2],
+        box5: 499,
+      },
     ],
   };
   assertThrows(() => form8995.build(wrongSource, { pending }));
   assertThrows(() => form8995Pdf.projectFields!(wrongSource, pending));
-  assertThrows(() => form8995.build({ ...fields, line9: 259 }, { pending }));
+  assertThrows(() =>
+    form8995.build(
+      Object.assign({}, fields, { line9: 259 }) as Parameters<
+        typeof form8995.build
+      >[0],
+      { pending },
+    )
+  );
   assertThrows(() =>
     form8995Pdf.projectFields!({ ...fields, line9: 259 }, pending)
   );

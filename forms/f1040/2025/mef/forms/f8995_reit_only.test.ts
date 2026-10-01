@@ -5,7 +5,6 @@ import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { registry } from "../../registry.ts";
 import { buildMefXml } from "../builder.ts";
-import { testFiler } from "../test-filer.ts";
 import { form8995 } from "./f8995.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
@@ -32,7 +31,7 @@ function filedReturn() {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
     general: {
-      ...base.inputs.general,
+      ...(base.inputs.general as Record<string, unknown>),
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
@@ -61,7 +60,7 @@ Deno.test("one reviewed REIT dividend without business QBI reaches Form 8995, Fo
     native,
     "<QualifiedBusinessIncomeDedAmt>200</QualifiedBusinessIncomeDedAmt>",
   );
-  const xml = buildMefXml(pending, testFiler());
+  const xml = buildMefXml(pending, base.filer);
   assertStringIncludes(xml, "<IRS8995 documentId=");
   const pdf = form8995Pdf.projectFields!(fields, pending);
   assertEquals(pdf.line1_business_name, undefined);
@@ -98,7 +97,13 @@ Deno.test("REIT-only Form 8995 rejects changed issued copy, holding, other QBI a
     assertThrows(() => form8995Pdf.projectFields!(fields, changed), Error);
   }
   assertThrows(
-    () => form8995.build({ ...fields, line6: 999 }, { pending }),
+    () =>
+      form8995.build(
+        Object.assign({}, fields, { line6: 999 }) as Parameters<
+          typeof form8995.build
+        >[0],
+        { pending },
+      ),
     Error,
   );
   assertThrows(

@@ -6,6 +6,7 @@ import { form8995a } from "./mef/forms/f8995a.ts";
 import { form8995aScheduleC } from "./mef/forms/f8995a_schedule_c.ts";
 import { form8995aPdf } from "./pdf/forms/f8995a.ts";
 import { form8995aScheduleCPdf } from "./pdf/forms/f8995a_schedule_c.ts";
+import { inputSchema as form8995aInputSchema } from "../nodes/intermediate/forms/form8995a/index.ts";
 
 const gain = {
   line_a_principal_business: "Repairs",
@@ -61,11 +62,7 @@ function preparedReturn() {
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: [{ box1_wages: 300_000, box2_fed_withheld: 60_000 }],
-    schedule_c: {
-      schedule_cs: [gain, loss],
-      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
-      qbi_not_patron_of_specified_cooperative_confirmed: true,
-    },
+    schedule_c: [gain, loss],
   });
   assertEquals(result.diagnostics, []);
   return result;
@@ -76,8 +73,8 @@ Deno.test("Form 8995-A Schedule C nets two businesses to a positive limited dedu
   assertEquals(result.pending.f1040.line13_qbi_deduction, 50);
   assertEquals(result.carryforwards.qbi_loss_carryforward_8995a, undefined);
   const pending = normalizeAllPending(result.pending);
-  const parent = pending.form8995a;
-  const companion = pending.form8995a_schedule_c;
+  const parent = form8995aInputSchema.parse(pending.form8995a);
+  const companion = form8995aInputSchema.parse(pending.form8995a_schedule_c);
   assertEquals(parent.qbi, 300);
   const parentXml = form8995a.build(parent, { filer, pending });
   const scheduleXml = form8995aScheduleC.build(companion, { filer, pending });
@@ -111,25 +108,31 @@ Deno.test("Form 8995-A Schedule C nets two businesses to a positive limited dedu
 
 Deno.test("positive Schedule C loss-netting packet rejects extra Schedule B and changed final deduction", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
-  for (
-    const changed of [{
-      ...pending,
-      form8995a_schedule_b: pending.form8995a,
-    }, {
-      ...pending,
-      f1040: { ...pending.f1040, line13_qbi_deduction: 51 },
-    }]
-  ) {
+  const altered: Record<string, Record<string, unknown>>[] = [{
+    ...pending,
+    form8995a_schedule_b: pending.form8995a,
+  }, {
+    ...pending,
+    f1040: { ...pending.f1040, line13_qbi_deduction: 51 },
+  }];
+  for (const changed of altered) {
     assertThrows(
-      () => form8995a.build(changed.form8995a, { filer, pending: changed }),
+      () =>
+        form8995a.build(form8995aInputSchema.parse(changed.form8995a), {
+          filer,
+          pending: changed,
+        }),
       Error,
     );
     assertThrows(
       () =>
-        form8995aScheduleC.build(changed.form8995a_schedule_c, {
-          filer,
-          pending: changed,
-        }),
+        form8995aScheduleC.build(
+          form8995aInputSchema.parse(changed.form8995a_schedule_c),
+          {
+            filer,
+            pending: changed,
+          },
+        ),
       Error,
     );
     assertThrows(
@@ -139,7 +142,7 @@ Deno.test("positive Schedule C loss-netting packet rejects extra Schedule B and 
     assertThrows(
       () =>
         form8995aScheduleCPdf.projectFields!(
-          changed.form8995a_schedule_c,
+          form8995aInputSchema.parse(changed.form8995a_schedule_c),
           changed,
         ),
       Error,

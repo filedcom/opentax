@@ -171,7 +171,7 @@ Deno.test("Form 4972 combines two box 3 gains under Part II and Part III", () =>
         },
       }, owner),
     Error,
-    "summed boxes 2a and 3",
+    "summed boxes 2a, 3, and 6",
   );
   assertThrows(
     () => reconcileForm4972FullShare({ ...fields, line7: 1 }, pending, owner),

@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { form8995 } from "./f8995.ts";
+import { inputSchema as form8995InputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
@@ -102,7 +103,7 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
   assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
   const xml = form8995.build(fields, { pending });
   assertStringIncludes(xml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
-  const returnXml = buildMefXml(pending, testFiler());
+  const returnXml = buildMefXml(pending, fixture.filer);
   assertStringIncludes(returnXml, "<IRS8995 documentId=");
   assertStringIncludes(returnXml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
   const pdf = form8995Pdf.projectFields?.(fields, pending);
@@ -134,7 +135,13 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
     assertThrows(() => form8995Pdf.projectFields?.(fields, changed), Error);
   }
   assertThrows(
-    () => form8995.build({ ...fields, line12: 500 }, { pending }),
+    () =>
+      form8995.build(
+        Object.assign({}, fields, { line12: 500 }) as Parameters<
+          typeof form8995.build
+        >[0],
+        { pending },
+      ),
     Error,
   );
 });
@@ -188,7 +195,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
     "<QlfyREITDivPTPIncomeLossAmt>600</QlfyREITDivPTPIncomeLossAmt>",
   );
   assertStringIncludes(xml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
-  const returnXml = buildMefXml(pending, testFiler());
+  const returnXml = buildMefXml(pending, fixture.filer);
   assertStringIncludes(returnXml, "<IRS8995 documentId=");
   assertStringIncludes(returnXml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
   const pdf = form8995Pdf.projectFields?.(fields, pending);
@@ -374,13 +381,16 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
   assertEquals(result.diagnostics, []);
   const { pending } = result;
   const fields = pending.form8995;
-  assertEquals(fields?.reit_dividend_sources?.length, 2);
+  assertEquals(
+    form8995InputSchema.parse(fields).reit_dividend_sources?.length,
+    2,
+  );
   assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
   assertEquals(fields?.line6, 1_000);
   assertEquals(fields?.line8, 1_000);
   assertEquals(fields?.line9, 200);
   assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
-  const xml = buildMefXml(pending, testFiler());
+  const xml = buildMefXml(pending, fixture.filer);
   assertStringIncludes(xml, "<IRS8995 documentId=");
   assertStringIncludes(
     xml,
@@ -772,12 +782,12 @@ Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports
   assertThrows(
     () => form8995.build(fields),
     Error,
-    "needs its complete source and final return pending graph",
+    "needs its complete pending return",
   );
   assertThrows(
     () => form8995Pdf.projectFields?.(fields, {}),
     Error,
-    "needs one identified Schedule C business",
+    "needs one reviewed issued 1099-DIV",
   );
 });
 
@@ -785,12 +795,12 @@ Deno.test("Form 8995 rejects a positive deduction even without other source fiel
   assertThrows(
     () => form8995.build({ qbi_deduction: 1 }),
     Error,
-    "needs its complete source and final return pending graph",
+    "needs its complete pending return",
   );
   assertThrows(
     () => form8995Pdf.projectFields?.({ qbi_deduction: 1 }, {}),
     Error,
-    "needs one identified Schedule C business",
+    "needs one reviewed issued 1099-DIV",
   );
 });
 

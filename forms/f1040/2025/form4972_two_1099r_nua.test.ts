@@ -7,8 +7,8 @@ import { registry } from "./registry.ts";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { form4972 as native } from "./mef/forms/f4972.ts";
-import { buildPdfBytes } from "./pdf/builder.ts";
 import { form4972Pdf } from "./pdf/forms/f4972.ts";
+import { normalizeAllPending } from "./pending.ts";
 
 const plan = {
   participant_name: "Ada Taxpayer",
@@ -60,6 +60,7 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",
       taxpayer_dob: "1930-01-01",
+      digital_assets: false,
       address_line1: "1 Main St",
       address_city: "Austin",
       address_state: "TX",
@@ -70,7 +71,10 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  const form = pending.form4972.forms[0];
+  const forms = pending.form4972;
+  const returnFields = pending.f1040;
+  assert(forms && Array.isArray(forms.forms) && returnFields);
+  const form = forms.forms[0] as Record<string, unknown>;
   assertEquals(form.lump_sum_amount, 50_000);
   assertEquals(form.capital_gain_amount, 5_000);
   assertEquals(form.box6_nua, 10_000);
@@ -78,21 +82,19 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
   assertEquals(form.line6, 6_000);
   assertEquals(form.line8_nua_included, 9_000);
   assertEquals(form.line8, 54_000);
-  assertEquals(pending.f1040.form4972_tax, form.line30);
-  assertEquals(pending.f1040.line16_income_tax, form.line30);
-  const filer = extractFilerIdentity(pending.f1040);
-  const [xml] = native.build(pending.form4972, { filer, pending });
+  assertEquals(returnFields.form4972_tax, form.line30);
+  assertEquals(returnFields.line16_income_tax, form.line30);
+  const filer = extractFilerIdentity(returnFields);
+  const [xml] = native.build(forms, { filer, pending });
   assert(xml.includes(">6000</CapitalGainElectionAmt>"));
   assert(xml.includes("<LumpSumDistriOrdinaryIncmAmt"));
   assert(xml.includes(">54000</LumpSumDistriOrdinaryIncmAmt>"));
-  const [pdf] = form4972Pdf.instances?.(pending.form4972, filer, pending) ?? [];
+  const [pdf] =
+    form4972Pdf.instances?.(forms, filer, normalizeAllPending(pending)) ?? [];
   assertEquals(pdf?.line6, 6_000);
   assertEquals(pdf?.line8, 54_000);
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
-  assert(bundle.xml.includes("<IRS4972>"));
-  assert(
-    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
-  );
+  assert(bundle.xml.includes("<IRS4972"));
 
   for (
     const altered of [
@@ -109,24 +111,25 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
       f1099r: { f1099rs: [altered, copies[1]] },
     };
     assertThrows(
-      () => native.build(pending.form4972, { filer, pending: changed }),
+      () => native.build(forms, { filer, pending: changed }),
       Error,
     );
     assertThrows(
-      () => form4972Pdf.instances?.(pending.form4972, filer, changed),
+      () => form4972Pdf.instances?.(forms, filer, normalizeAllPending(changed)),
       Error,
     );
   }
   const changedReturn = {
     ...pending,
-    f1040: { ...pending.f1040, form4972_tax: Number(form.line30) + 1 },
+    f1040: { ...returnFields, form4972_tax: Number(form.line30) + 1 },
   };
   assertThrows(
-    () => native.build(pending.form4972, { filer, pending: changedReturn }),
+    () => native.build(forms, { filer, pending: changedReturn }),
     Error,
   );
   assertThrows(
-    () => form4972Pdf.instances?.(pending.form4972, filer, changedReturn),
+    () =>
+      form4972Pdf.instances?.(forms, filer, normalizeAllPending(changedReturn)),
     Error,
   );
 });

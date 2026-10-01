@@ -92,7 +92,7 @@ function recipientIdentity(
 export function projectedFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
-) {
+): Record<string, unknown> {
   if (typeof fields.line6 !== "number" && typeof fields.line8 !== "number") {
     if (Object.keys(fields).length > 0) {
       throw new Error(

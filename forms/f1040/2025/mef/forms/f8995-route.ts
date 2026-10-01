@@ -375,6 +375,15 @@ export function assertOneScheduleC8995(
       fields.reit_dividend_sources,
       qualifiedDividends.qualified,
     );
+  if (
+    pending.f1099div !== undefined &&
+    fields.reit_dividend_sources === undefined &&
+    zeroOrAbsent(fields.net_capital_gain)
+  ) {
+    throw new Error(
+      "Form 8995 Schedule C source cannot silently omit Form 1099-DIV activity",
+    );
+  }
   const seDeduction = fields.se_tax_deduction ?? 0;
   const healthField = fields.se_health_insurance_deduction;
   const healthDeduction = typeof healthField === "number" ? healthField : 0;
@@ -698,9 +707,31 @@ function assertReitOnly8995(
     "schedule_d",
     "f1099b",
     "sep_retirement",
-    "form7206",
-    "schedule_se",
   ] as const;
+  const scheduleSe = pending.schedule_se;
+  const seSource = pending.form7206?.schedule_se_source;
+  const zeroSeSource = seSource !== null && typeof seSource === "object" &&
+    !Array.isArray(seSource) &&
+    Object.keys(seSource).every((key) =>
+      [
+        "net_profit_schedule_c",
+        "net_profit_schedule_f",
+        "farm_optional_method_elected",
+        "line13_deduction",
+      ].includes(key)
+    ) &&
+    zeroOrAbsent((seSource as Record<string, unknown>).net_profit_schedule_c) &&
+    zeroOrAbsent((seSource as Record<string, unknown>).net_profit_schedule_f) &&
+    (seSource as Record<string, unknown>).farm_optional_method_elected ===
+      false &&
+    zeroOrAbsent((seSource as Record<string, unknown>).line13_deduction);
+  const hasBusinessSe = scheduleSe !== undefined &&
+    Object.keys(scheduleSe).some((key) => key !== "w2_ss_wages");
+  const hasBusiness7206 = pending.form7206 !== undefined &&
+    (Object.keys(pending.form7206).some((key) =>
+      key !== "schedule_se_source"
+    ) ||
+      !zeroSeSource);
   const reit = qualifiedReitDividends(
     pending.f1099div,
     fields.reit_dividend_sources,
@@ -709,6 +740,7 @@ function assertReitOnly8995(
   if (
     !f1040 || !general || pending.form8995a !== undefined ||
     otherSourceKeys.some((key) => pending[key] !== undefined) ||
+    hasBusinessSe || hasBusiness7206 ||
     !Array.isArray(fields.reit_dividend_sources) ||
     fields.reit_dividend_sources.length !== 1 ||
     general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||

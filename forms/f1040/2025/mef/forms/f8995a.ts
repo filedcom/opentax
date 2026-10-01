@@ -23,6 +23,20 @@ type Input = Form8995AInput | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
+export function assertNoFiledForm8995(
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  const source = pending?.form8995;
+  if (
+    source && typeof source === "object" &&
+    (Object.hasOwn(source, "qbi_deduction") || Object.hasOwn(source, "line15"))
+  ) {
+    throw new Error(
+      "Form 8995-A and a filed Form 8995 cannot both be pending for one return",
+    );
+  }
+}
+
 // Native parent projection for the single bounded aggregation.
 export function buildStagedAggregatedIRS8995A(
   raw: unknown,
@@ -150,7 +164,9 @@ export function assertScheduleCLossSources(
   if (
     !source.success || !source.data.schedule_cs ||
     source.data.schedule_cs.length !== 2 ||
-    source.data.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    (pending?.general as Record<string, unknown> | undefined)
+        ?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     pending?.form8829 !== undefined || pending?.form5884 !== undefined
   ) {
     throw new Error(
@@ -220,11 +236,7 @@ function reconcileReturn(
       "Form 8995-A cooperative box 6 recipient differs from the final filer",
     );
   }
-  if (context.pending.form8995 !== undefined) {
-    throw new Error(
-      "Form 8995-A and Form 8995 cannot both be pending for one return",
-    );
-  }
+  assertNoFiledForm8995(context.pending);
   const companion = context.pending.form8995a_schedule_d;
   const sstbCompanion = context.pending.form8995a_schedule_a;
   const aggregationCompanion = context.pending.form8995a_schedule_b;

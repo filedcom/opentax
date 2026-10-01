@@ -130,7 +130,7 @@ Deno.test("Form 4972 partial NUA/death source copy and election join on the fina
   const source = pending.f1099r.f1099rs[0];
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
-      filing_status: FilingStatus.Single,
+      filing_status: "single",
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",

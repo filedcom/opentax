@@ -722,7 +722,7 @@ Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", ()
   assertThrows(
     () => projectedFields(partII, {}),
     Error,
-    "one matching Form 1099-R source and recipient share",
+    "needs the selected recipient name and SSN",
   );
   assertThrows(
     () => projectedFields(partII, pending("T", 100_000, 31_000)),
