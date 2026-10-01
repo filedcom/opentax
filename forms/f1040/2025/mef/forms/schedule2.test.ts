@@ -50,6 +50,14 @@ Deno.test("empty object returns empty string", () => {
   assertEquals(schedule2.build({}), "");
 });
 
+Deno.test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
+  assertThrows(
+    () => schedule2.build({ line10_homebuyer_credit_repayment: 500 }),
+    Error,
+    "line 10 is reserved",
+  );
+});
+
 Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
   const source = {
     rows: [{

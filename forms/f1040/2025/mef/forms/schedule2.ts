@@ -8,6 +8,7 @@ import {
   calculateForm4255Routes,
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
+import { assertNo2025Schedule2Line10 } from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -125,6 +126,7 @@ function buildIRS1040Schedule2(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertNo2025Schedule2Line10(fields);
   const childrenByTag = new Map<string, string>();
 
   const necExcise = fields.line17k_golden_parachute_excise ?? 0;

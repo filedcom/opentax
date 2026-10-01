@@ -30,7 +30,7 @@ export const inputSchema = z.object({
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
-  // Pre-2025 Form 5405 repayment posted to Schedule 2 line 10.
+  // Pre-2025 Form 5405 repayment posted to Schedule 2 line 10; 2025 reserves it.
   line10_homebuyer_credit_repayment: z.number().nonnegative().optional(),
   // Only Form 5329 Parts I/II are chapter 1 taxes. The later parts include
   // several different excise-tax sections, not just section 4973, and cannot
@@ -156,13 +156,28 @@ function part1Total(input: Schedule2Input): number {
 }
 
 export function schedule2Part1Total(raw: unknown): number {
-  return part1Total(inputSchema.parse(raw));
+  const input = inputSchema.parse(raw);
+  assertNo2025Schedule2Line10(input);
+  return part1Total(input);
+}
+
+export function assertNo2025Schedule2Line10(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  if (
+    typeof fields.line10_homebuyer_credit_repayment === "number" &&
+    fields.line10_homebuyer_credit_repayment > 0
+  ) {
+    throw new Error(
+      "2025 Schedule 2 line 10 is reserved; Form 5405 repayment ended in 2024",
+    );
+  }
 }
 
 function part2Total(input: Schedule2Input): number {
+  assertNo2025Schedule2Line10(input);
   return (input.line4_se_tax ?? 0) +
     (input.line5_unreported_tip_tax ?? 0) +
-    (input.line10_homebuyer_credit_repayment ?? 0) +
     line8(input) +
     line13(input) +
     line17h(input) +

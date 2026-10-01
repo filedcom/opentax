@@ -7,6 +7,7 @@ import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.t
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
+import { assertNo2025Schedule2Line10 } from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
@@ -233,6 +234,7 @@ export const schedule2Pdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields(fields, allPending) {
+    assertNo2025Schedule2Line10(fields);
     const necExcise = typeof fields.line17k_golden_parachute_excise === "number"
       ? fields.line17k_golden_parachute_excise
       : 0;

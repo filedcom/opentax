@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { schedule2 } from "./index.ts";
+import { schedule2, schedule2Part1Total } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form8978_reporting_year } from "../../worksheets/form8978_reporting_year/index.ts";
@@ -17,6 +17,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("validation: empty input (no fields) produces no output", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("2025 Schedule 2 reserved line 10 rejects stale Form 5405 repayment", () => {
+  const stale = { line10_homebuyer_credit_repayment: 500 };
+  assertThrows(() => compute(stale), Error, "line 10 is reserved");
+  assertThrows(() => schedule2Part1Total(stale), Error, "line 10 is reserved");
 });
 
 Deno.test("validation: all-zero fields produce no output", () => {

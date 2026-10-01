@@ -8,6 +8,17 @@ Deno.test("Schedule 2 PDF includes filer identity on page 1", () => {
   ]);
 });
 
+Deno.test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.({
+        line10_homebuyer_credit_repayment: 500,
+      }, {}),
+    Error,
+    "line 10 is reserved",
+  );
+});
+
 Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
   const source = {
     rows: [{
