@@ -7,6 +7,29 @@ checked-in TY2025 v5.4 `Shared/IRS8990/IRS8990.xsd`.
 Status: Form 8990 filing is deliberately blocked. No test, local XSD,
 filled-PDF, IRS business-rule, or ATS validation has been run for it.
 
+## Complete traced-proceeds source for bounded Schedule C debt (written, unrun)
+
+The one-business two-pass calculation now requires each interest payment to
+identify its debt account and a structured proceeds trace. The trace states the
+debt disbursement date and gross proceeds, plus dated, document-referenced uses
+whose amounts account for every dollar of those proceeds in the same Schedule C
+business. The uses cannot precede the disbursement, fall after 2025, duplicate
+an expenditure reference, or change between payments on one debt account.
+Distinct accounts cannot claim one tracing record or the same expenditure
+document. The debtor SSN, lender EIN,
+business ID, payment amounts, and aggregate Schedule C line 16b reconciliation
+remain required. A mixed-use loan cannot enter this wholly business-allocated
+slice. Positive two-expenditure and changed amount, date, business, account,
+and document-reference fixtures are authored for the deferred validation batch.
+
+The [2025 Schedule C instructions](https://www.irs.gov/instructions/i1040sc)
+require interest to be allocated to its proper use; the [2025 Form 8990
+instructions](https://www.irs.gov/instructions/i8990) apply the section 163(j)
+limit to business interest expense. These entered loan and expenditure
+references do not authenticate bank or vendor documents. The active return
+remains unfileable pending the accepted-filing carryforward contract and the
+full validation gates below.
+
 The first source-backed staging step now parses actual Schedule C input for
 exactly one identified business before Schedule C profit is calculated. It
 derives current-year interest expense from that business's lines 16a and 16b,
