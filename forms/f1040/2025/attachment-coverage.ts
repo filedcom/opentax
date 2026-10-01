@@ -8,6 +8,7 @@ import {
 } from "../nodes/intermediate/forms/form4684/index.ts";
 import { isSupportedForm2106Route } from "./form2106_staged.ts";
 import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
+import { reconcileForm8941DocumentSource } from "./mef/forms/f8941_source.ts";
 import {
   calculateForm8881,
   inputSchema as f8881InputSchema,
@@ -428,6 +429,21 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  const form3800 = byKey.f3800;
+  const hasForm8941Credit = form3800 !== null &&
+    typeof form3800 === "object" &&
+    ("f8941_direct_employer_credit" in form3800 ||
+      "form8941_applied_credit" in form3800);
+  if (byKey.f8941 !== undefined || hasForm8941Credit) {
+    try {
+      reconcileForm8941DocumentSource(byKey.f8941, byKey);
+    } catch (cause) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8941 needs a reconciled direct Schedule C source, Form 3800 allocation, and premium deduction; export blocked`,
+        { cause },
+      );
+    }
+  }
   // MeF's canonical pending projection stores Form 8949 rows as an array;
   // PDF uses the raw executor's transaction field. Neither may file a QOF
   // deferral or inclusion while the annual Form 8997 is unregistered.
