@@ -9,6 +9,7 @@ import {
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import {
   assertNoFiledForm8995,
+  assertOneBusinessReitSource,
   assertScheduleCLossSources,
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
@@ -71,7 +72,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ).padStart(2, "0")
     }[0]`,
   })),
-  ...([27, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
+  ...([27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
       domainKey: `line${line}`,
@@ -197,6 +198,7 @@ export function projectOneBusiness8995A(
     };
   }
   const { details, lines } = validateOneBusiness(input);
+  assertOneBusinessReitSource(input, allPending);
   if (allPending.form8995a_schedule_a !== undefined) {
     throw new Error("Form 8995-A PDF has Schedule A without an SSTB parent");
   }
@@ -226,6 +228,10 @@ export function projectOneBusiness8995A(
     patron: input.patron_of_specified_cooperative === true,
     ...lines,
     line27: lines.line16,
+    line28: lines.line28,
+    line29: lines.line29,
+    line30: lines.line30,
+    line31: lines.line31,
   };
 }
 

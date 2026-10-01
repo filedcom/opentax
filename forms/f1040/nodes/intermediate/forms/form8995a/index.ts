@@ -108,7 +108,7 @@ export const businessFilingDetailsSchema = z.object({
   business_ubia: z.number().nonnegative(),
   one_non_sstb_business_confirmed: z.literal(true),
   no_aggregation_confirmed: z.literal(true),
-  no_reit_ptp_or_loss_carryforward_confirmed: z.literal(true),
+  no_ptp_or_loss_carryforward_confirmed: z.literal(true),
   qualified_dividends_zero_confirmed: z.literal(true),
   qbi_wages_ubia_sources_confirmed: z.literal(true),
   taxable_income_before_qbi_confirmed: z.literal(true),
@@ -184,6 +184,20 @@ export const inputSchema = z.object({
 
   // Section 199A dividends from REITs (Form 1099-DIV box 5)
   line6_sec199a_dividends: z.number().nonnegative().optional(),
+  reit_dividend_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      source_document_reference: z.string().trim().min(1),
+      box1a: z.number().positive().int(),
+      box5: z.number().positive().int(),
+      ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
+      diminished_risk_days_excluded: z.number().int().nonnegative(),
+      no_related_payment_obligation_confirmed: z.literal(true),
+      review_reference: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    }).strict(),
+  ).length(1).optional(),
 
   // Prior-year QBI net loss carryforward (zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
@@ -748,7 +762,11 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line14 = patronReduction;
   const line15 = Math.max(0, line13 - line14);
   const line16 = line15;
-  const line32 = line16;
+  const line28 = input.line6_sec199a_dividends ?? 0;
+  const line29 = 0;
+  const line30 = line28 + line29;
+  const line31 = line30 * QBI_RATE;
+  const line32 = line16 + line31;
   const line33 = input.taxable_income;
   const line34 = input.net_capital_gain ?? 0;
   const line35 = Math.max(0, line33 - line34);
@@ -779,6 +797,10 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     line14,
     line15,
     line16,
+    line28,
+    line29,
+    line30,
+    line31,
     line32,
     line33,
     line34,
@@ -928,6 +950,21 @@ function hasQbiActivity(input: Form8995AInput): boolean {
 
 /** Reject required Schedules A-D before a deduction reaches Form 1040. */
 function assertSupportedSchedulePath(input: Form8995AInput): void {
+  const reit = input.line6_sec199a_dividends ?? 0;
+  if (
+    reit > 0 &&
+      (!input.business_filing_details ||
+        input.patron_of_specified_cooperative === true ||
+        reit > 1_500 ||
+        input.reit_dividend_sources?.length !== 1 ||
+        input.reit_dividend_sources[0].box5 !== reit ||
+        input.reit_dividend_sources[0].box1a !== reit) ||
+    reit === 0 && input.reit_dividend_sources !== undefined
+  ) {
+    throw new Error(
+      "Form 8995-A REIT line 28 needs one identified business and one matching reviewed 1099-DIV source",
+    );
+  }
   if (
     (input.sstb_qbi ?? 0) !== 0 ||
     (input.sstb_w2_wages ?? 0) !== 0 ||

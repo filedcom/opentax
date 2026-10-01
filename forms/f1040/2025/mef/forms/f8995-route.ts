@@ -192,7 +192,7 @@ function qualifiedDividendSource(source: unknown, reitAnchors: unknown): {
   return { ordinary: item.box1a, qualified: item.box1b! };
 }
 
-function qualifiedReitDividends(
+export function qualifiedReitDividends(
   source: unknown,
   anchors: unknown,
   qualifiedDividends: number,

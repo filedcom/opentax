@@ -18,6 +18,7 @@ import {
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
+import { qualifiedReitDividends } from "./f8995-route.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -102,14 +103,13 @@ export function validateOneBusiness(fields: Form8995AInput) {
     (fields.sstb_qbi ?? 0) !== 0 ||
     (fields.sstb_w2_wages ?? 0) !== 0 ||
     (fields.sstb_unadjusted_basis ?? 0) !== 0 ||
-    (fields.line6_sec199a_dividends ?? 0) !== 0 ||
     (fields.qbi_loss_carryforward ?? 0) !== 0 ||
     (fields.reit_loss_carryforward ?? 0) !== 0 ||
     (fields.aggregation_groups ?? []).length !== 0 ||
     fields.net_capital_gain !== 0
   ) {
     throw new Error(
-      "Form 8995-A MeF does not yet support SSTB, aggregation, REIT/PTP, loss, or capital-gain paths",
+      "Form 8995-A MeF does not yet support SSTB, aggregation, loss, or capital-gain paths",
     );
   }
   if (
@@ -153,6 +153,41 @@ export function validateOneBusiness(fields: Form8995AInput) {
     );
   }
   return { details, lines };
+}
+
+export function assertOneBusinessReitSource(
+  fields: Form8995AInput,
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  const amount = fields.line6_sec199a_dividends ?? 0;
+  if (amount === 0) {
+    if (fields.reit_dividend_sources !== undefined) {
+      throw new Error("Form 8995-A REIT source needs a positive line 28");
+    }
+    return;
+  }
+  const issued = pending?.f1099div as
+    | { f1099divs?: unknown[] }
+    | undefined;
+  if (
+    fields.patron_of_specified_cooperative === true ||
+    !fields.reit_dividend_sources ||
+    fields.reit_dividend_sources.length !== 1 ||
+    issued?.f1099divs?.length !== 1 ||
+    amount !== qualifiedReitDividends(
+        pending?.f1099div,
+        fields.reit_dividend_sources,
+        0,
+      ) ||
+    (pending?.f1040 as Record<string, unknown> | undefined)
+        ?.line3b_ordinary_dividends !== amount ||
+    ((pending?.f1040 as Record<string, unknown> | undefined)
+        ?.line3a_qualified_dividends ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 8995-A REIT line 28 needs one reviewed issued 1099-DIV and matching Form 1040 ordinary dividends",
+    );
+  }
 }
 
 export function assertScheduleCLossSources(
@@ -418,6 +453,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     ]);
   }
   const { details, lines } = validateOneBusiness(fields);
+  assertOneBusinessReitSource(fields, context?.pending);
   reconcileReturn(context, lines.line39, fields);
   return elements("IRS8995A", [
     elements("QBIDeductionInformationGrp", [
@@ -445,10 +481,10 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("QBIComponentAmt", lines.line15),
     ]),
     element("TotalQBIComponentAmt", lines.line16),
-    element("QlfyREITDivPTPIncomeLossAmt", 0),
-    element("PYQlfyREITDivPTPLossCfwdAmt", 0),
-    element("TotQlfyREITDivPTPIncomeAmt", 0),
-    element("REITPTPComponentAmt", 0),
+    element("QlfyREITDivPTPIncomeLossAmt", lines.line28),
+    element("PYQlfyREITDivPTPLossCfwdAmt", lines.line29),
+    element("TotQlfyREITDivPTPIncomeAmt", lines.line30),
+    element("REITPTPComponentAmt", lines.line31),
     element("QBIDedBfrIncomeLimitationAmt", lines.line32),
     element("TaxableIncomeBeforeQBIDedAmt", lines.line33),
     element("NetCapitalGainAmt", lines.line34),

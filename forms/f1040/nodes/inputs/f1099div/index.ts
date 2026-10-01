@@ -489,6 +489,24 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       )
       .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
     if (totalBox5 > 0) {
+      const reitSources = div1099s
+        .filter((item) => (item.box5 ?? 0) > 0)
+        .map((item) => ({
+          payer_name: item.payerName ?? "",
+          source_document_reference: item.source_document_reference ?? "",
+          box1a: item.box1a,
+          box5: item.box5 ?? 0,
+          ex_dividend_date: item.section199a_holding_review?.ex_dividend_date,
+          qualified_held_days_in_91_day_window: item
+            .section199a_holding_review?.qualified_held_days_in_91_day_window,
+          diminished_risk_days_excluded: item.section199a_holding_review
+            ?.diminished_risk_days_excluded,
+          no_related_payment_obligation_confirmed: item
+            .section199a_holding_review
+            ?.no_related_payment_obligation_confirmed,
+          review_reference: item.section199a_holding_review?.review_reference,
+          reviewed_on: item.section199a_holding_review?.reviewed_on,
+        }));
       const useForm8995a = isAbove199AThreshold(
         taxableIncome,
         filingStatus,
@@ -498,30 +516,14 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       if (useForm8995a) {
         outputs.push({
           nodeType: form8995a.nodeType,
-          fields: { line6_sec199a_dividends: totalBox5 },
+          fields: {
+            line6_sec199a_dividends: totalBox5,
+            reit_dividend_sources: reitSources,
+          },
         });
       } else {
         form8995Fields.line6_sec199a_dividends = totalBox5;
-        form8995Fields.reit_dividend_sources = div1099s
-          .filter((item) => (item.box5 ?? 0) > 0)
-          .map((item) => ({
-            payer_name: item.payerName ?? "",
-            source_document_reference: item.source_document_reference ?? "",
-            box1a: item.box1a,
-            box5: item.box5 ?? 0,
-            ex_dividend_date: item.section199a_holding_review
-              ?.ex_dividend_date,
-            qualified_held_days_in_91_day_window: item
-              .section199a_holding_review
-              ?.qualified_held_days_in_91_day_window,
-            diminished_risk_days_excluded: item.section199a_holding_review
-              ?.diminished_risk_days_excluded,
-            no_related_payment_obligation_confirmed: item
-              .section199a_holding_review
-              ?.no_related_payment_obligation_confirmed,
-            review_reference: item.section199a_holding_review?.review_reference,
-            reviewed_on: item.section199a_holding_review?.reviewed_on,
-          }));
+        form8995Fields.reit_dividend_sources = reitSources;
       }
     }
     if (Object.keys(form8995Fields).length > 0) {
