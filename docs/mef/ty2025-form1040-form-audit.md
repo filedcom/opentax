@@ -12,12 +12,14 @@ which proposed workflow boundaries still need the user's approval. The
 [TY2025 schema-root census](ty2025-xsd-document-root-census.md) lists all 211
 IRS document roots permitted by the checked-in Form 1040 return schema,
 including unregistered roots awaiting applicability review. The current worktree
-has since had a fixed-source repository-wide `deno task test` pass on the
-`11d5047d` source snapshot (8,897/8,897). That pass does not prove each
-row's positive source route, filled PDF, IRS business rule, or ATS acceptance.
+had an earlier fixed-source repository-wide `deno task test` pass on the
+`11d5047d` source snapshot (8,897/8,897). The later PR #59 bulk run recorded
+10,168 passed and 174 failed cases, so there is no current full-suite pass.
+Neither run proves each row's positive source route, filled PDF, IRS business
+rule, or ATS acceptance.
 A written case is not a passing case.
 
-The registered-descriptor evidence census is now **139/139 statically accounted
+The registered-descriptor evidence census is now **145/145 statically accounted
 for** in this matrix against the current MeF registry. The linked
 [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
@@ -84,7 +86,7 @@ six-page parent PDF and XSD fixtures await execution. Schedule R all-zero
 business-rule treatment and applicable conditional attachments remain.
 
 The [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md)
-groups the historical review, now 111 roots without a MeF source literal, into
+groups the historical review, now 89 roots without a MeF source literal, into
 applicable candidates, undecided individual paths, and possible separate-entity
 or payment workflows. Those groupings are triage, not user-approved exclusions
 or completed form-by-form coverage decisions.
@@ -204,7 +206,7 @@ its seven-page packet shows two states on line 17 plus a legible continuation
 for the third. Per-employee payroll sourcing, W-2/W-3 duties, wider state/rate
 combinations, and IRS acceptance remain open.
 
-### Numbered forms and distinct registered schedules (83 descriptors)
+### Numbered forms and distinct registered schedules (97 descriptors)
 
 | Document              | S/C                                                                                                                                                                                                                                | MeF                      | PDF | Tests | Disposition / known gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -306,9 +308,23 @@ qualified expenses need distinct unreimbursed receipt references matching line
 additional tax; other distribution codes, rollovers, and excess withdrawals
 remain closed for this paired subpath. See the linked gap audit above.
 
+The seven registered numbered-form rows omitted from the earlier matrix are
+listed here. Their registration is a static fact; the cited guards and missing
+evidence still govern positive export.
+
+| Document | Source/calculation boundary | Native | PDF | Cases | Remaining disposition |
+| --- | --- | --- | --- | --- | --- |
+| 2106 | One sourced employee fee-basis job; P | `f2106.ts` R | Y | W | Bounded expense/deduction route only. Other employee occupations and expenses, issued-source bytes, final batch, business rules, and ATS remain open; see [gap](ty2025-form2106-gap.md). |
+| 8844 | One direct Schedule C employer credit; P | `f8844.ts` R | Y | W | Form 3800 Part III line 3 and final-credit joins are staged. Other employer and pass-through branches, source authentication, final batch, and ATS remain open; see [gap](ty2025-form8844-gap.md). |
+| 8864 | One small agri-biodiesel producer route; P | `f8864.ts` R | Y | W | Form 3800 line 1l and AMT joins are bounded; expired or transferred credits and wider producers reject. Final XSD/PDF/business-rule/ATS evidence remains open; see [gap](ty2025-form8864-gap.md). |
+| 8881 | One direct Schedule C employer route; P | `f8881.ts` R | Y | W | Bounded startup/auto-enrollment credit joins Form 3800. Other plans, employer structures, source authentication, and final validation remain open; see [gap](ty2025-form8881-gap.md). |
+| 8882 | One direct Schedule C employer route; P | `f8882.ts` R | Y | W | Bounded employer childcare credit joins Form 3800 line 1k. Other costs, employers, source authentication, and final validation remain open; see [gap](ty2025-form8882-source-gap.md). |
+| 8941 | One bounded direct Schedule C small employer; P | `f8941.ts` R | Y | W | Reviewed SHOP area/premium and employer contribution facts join Form 3800. Other rating areas, employers, external source authentication, and final validation remain open; see [gap](ty2025-form8941-gap.md). |
+| 8994 | One direct Schedule C paid-family-leave employer; P | `f8994.ts` R | Y | W | Positive export requires reviewed evidence bound to prepared bundle attachment bytes; wider sources and stand-alone export remain guarded. Final validation and ATS remain open; see [gap](ty2025-form8994-gap.md). |
+
 ### Registered wage and supporting descriptors (29)
 
-These are included in the 133 MeF registry entries, but are not 29 additional
+These are included in the 145 MeF registry entries, but are not 29 additional
 tax forms. `R` still means registered, not validated; `P` means a bounded
 parent-source route is coded. Every row's current-run XSD, source-to-document,
 attachment/reference, business-rule, and ATS status is **open**. The file named
@@ -400,8 +416,8 @@ user-approved exclusion or a fail-closed boundary.
 
 ### Outstanding INV-01 decisions and evidence
 
-The [211-root census](ty2025-xsd-document-root-census.md) records 112 `IRS...`
-source literals and 99 without a literal. Its `No` rows identify absent source
+The [211-root census](ty2025-xsd-document-root-census.md) records 122 `IRS...`
+source literals and 89 without a literal. Its `No` rows identify absent source
 literals, **not** an unsupported-form verdict, an exclusion, or proof that a
 document must accompany every return. The
 [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md) is a
@@ -412,7 +428,7 @@ triage queue. The ordered reviews for
 [76–100](ty2025-unregistered-roots-76-100.md), and
 [101–128](ty2025-unregistered-roots-101-128.md) record per-root schema,
 official-rule and local evidence for the historical 128-root review. After new
-source files, 111 roots still lack a source literal. This completes the
+source files, 89 roots still lack a source literal. This completes the
 **per-root census review**, not INV-01's product disposition or acceptance work:
 many individual applicability, source-owner, attachment/workflow, calculation
 and support decisions remain open, and no form is excluded by inventory silence.
@@ -422,19 +438,19 @@ builder rejects positive claims.
 
 | Decision still required                                                   | Current concrete boundary                                                                                                                                                                                                                                                                           | Evidence needed before a disposition                                                                                                                                                                                                                       |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Which of the 111 current nonliteral roots applies to a Form 1040 taxpayer | The historical 128 have ordered per-root reviews; seventeen now have a source literal, including the staged but unregistered Form 9465 builder. This is evidence-gathering, not an approved disposition. No root is silently excluded.                                                               | Resolve **each current row's** 2025 filing trigger, source owner, native attachment versus source-only record versus separate workflow, and approved support/fail-closed decision. Then verify implementation and acceptance evidence per applicable form. |
+| Which of the 89 current nonliteral roots applies to a Form 1040 taxpayer | The historical 128 have ordered per-root reviews; thirty-nine now have a source literal, including the staged but unregistered Form 9465 builder. This is evidence-gathering, not an approved disposition. No root is silently excluded.                                                               | Resolve **each current row's** 2025 filing trigger, source owner, native attachment versus source-only record versus separate workflow, and approved support/fail-closed decision. Then verify implementation and acceptance evidence per applicable form. |
 | Conditional companion schedules                                           | Form 8995-A Schedules A/B/C/D have bounded native routes; Form 1116 Schedule C still lacks a registered filing route and has a staged source/XML projection only. The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names positive triggers and current parent guards. | Source each remaining business/category and event, attach the native schedule and reconcile it to the parent, or reject the triggered route. An absent input does not prove no obligation.                                                                 |
 | Known public inputs without complete native/PDF paths                     | Form 7203 has one bounded stock-only loss route with focused XSD/PDF checks; its other shareholder-basis paths remain guarded. Form 9465 has staged native/PDF projections but no live output document. Forms 8888 and Schedule R also have focused XSD/PDF checks for bounded routes; Schedule J and 2210-F remain unvalidated.                | Confirm each trigger against filed 1040 values, complete required document/PDF paths or a reviewed separate workflow, and check rejection from start node through export. See the [source-only audit](ty2025-source-only-and-sparse-map-gap.md).           |
-| Registered but bounded or blocked calculations                            | The matrix names limited routes; Form 7206 has a narrow sole-Schedule-C/non-Marketplace route, while positive Form 8839 and nonexempt Form 8990 currently reject active claims.                                                                                                                     | Enumerate supported and rejected branches per form against 2025 instructions, preserve source identity and cross-form amounts, and verify neither a required form nor statement is silently omitted.                                                       |
+| Registered but bounded or blocked calculations                            | The matrix names limited routes; Form 7206 has a narrow sole-Schedule-C/non-Marketplace route, Form 8839 has a strict reviewed one-child prepared-bundle route, and nonexempt Form 8990 remains blocked. | Enumerate supported and rejected branches per form against 2025 instructions, preserve source identity and cross-form amounts, and verify neither a required form nor statement is silently omitted. |
 | Output and acceptance evidence for every registered descriptor            | MeF/PDF registration and written tests are inventory facts only. Some bounded Form 7203, Form 8888, and Schedule R cases now have local XSD and filled-PDF evidence; final release-batch, complete per-route XSD/PDF, IRS business-rule, and ATS results are not recorded.                                                                                                                                          | Run the deferred source-to-return/XML/XSD/PDF batch, inspect filled artifacts, resolve failures, then verify IRS business rules and applicable ATS scenarios. Record pass/fail per form and attachment rather than promoting a whole row from one case.    |
 
 ## Inventory totals and release implications
 
 | Static measure                               |                                      Count | What it means                                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        139 | Registration only: 110 main-return/numbered/schedule entries plus 29 wage/supporting entries.                                                 |
-| Main-return/numbered/schedule descriptors    |                                        110 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
-| Registered PDF descriptors                   |                                        109 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        145 | Registration only: 116 main-return/numbered/schedule entries plus 29 wage/supporting entries.                                                 |
+| Main-return/numbered/schedule descriptors    |                                        116 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
+| Registered PDF descriptors                   |                                        115 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |
 | Whole-form verified on the current worktree  |                0 established by this audit | No deferred full batch, complete instruction matrix, IRS business rules or ATS acceptance is recorded.                                        |
 

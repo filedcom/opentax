@@ -5,7 +5,13 @@ Build-stage triage updated 2026-10-01. The source is the checked-in
 [`ty2025-xsd-document-root-census.md`](ty2025-xsd-document-root-census.md),
 compared with public inputs in `forms/f1040/2025/inputs.ts`, the node registry,
 and `ALL_MEF_FORMS`. The historical unregistered-root review is grouped below;
-the current census has 99 `No` rows. Schedules 1-A, J, LEP and R, Forms 2210-F, 8915-F,
+the current census has 89 `No` rows. Of the 122 `Yes` rows, 116 have a literal in
+a file imported by `ALL_MEF_FORMS`; `IRS2210`, `IRS8828`, `IRS8908`,
+`IRS8938`, `IRS8997`, and `IRS9465` have literals only in unregistered files.
+`IRS1116ScheduleC` is a seventh unregistered root builder, although its token
+also occurs in the registered Form 1116 parent file as a quoted reference.
+This file also retains historical review rows for roots registered after that
+review. Schedules 1-A, J, LEP and R, Forms 2210-F, 8915-F,
 2439/8888, W-2G, and Form 8995-A Schedules C/D are now-registered status notes,
 not missing native roots. This is a **disposition queue**, not a completed
 form-by-form coverage inventory. Neither a root's presence in the schema nor a
@@ -59,16 +65,17 @@ throws for unsupported artifacts. The cases are written but unrun; see
 
 ### Public-input attachment coverage: resolved rules, open implementation
 
-The following rows distinguish the tax graph from the _filed_ return. There is
-no native descriptor for any root in this table; that is not an exclusion or a
-claim that the source can be dropped. The Form 8997, 8958, 2106, 2210
-mandatory-form, 3115, 3903, 3468, 6765, 7207, 8801, 8275, 8833, 8938, 8828,
-8844, 8881, 8882, 8908, 8994, 1310, 2120, 8332, 8379, 5471 and NOL-carryforward
-paths now fail closed through the shared `attachment-coverage.ts` registry on
-both MeF and PDF export. Focused source-to-export and registry cases are written
-but unrun in `forms/f1040/e2e/unregistered_attachment_export.test.ts` and
-`forms/f1040/2025/attachment-coverage.test.ts`. These guards do not create or
-validate the missing native documents.
+The following rows distinguish the tax graph from the _filed_ return. They are
+historical trigger reviews, not a current list of absent native descriptors:
+Forms 2106, 3468, 8844, 8864, 8881, 8882, 8941 and 8994 now have bounded
+native/PDF registrations, while Forms 2210, 8828, 8908, 8938, 8997 and 9465
+have unregistered source literals. Other positive branches in the table still
+need a verified route or an explicit fail-closed disposition. The shared
+`attachment-coverage.ts` guards are branch-specific and cannot be inferred
+from a historical form name. Focused source-to-export and registry cases are
+written in `forms/f1040/e2e/unregistered_attachment_export.test.ts` and
+`forms/f1040/2025/attachment-coverage.test.ts`; they do not establish a
+current full-suite pass.
 
 Form 1099-B source correction, unrun:
 [2025 Form 1099-B](https://www.irs.gov/pub/irs-pdf/f1099b--2025.pdf) box 12
