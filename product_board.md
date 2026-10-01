@@ -77,8 +77,11 @@ passed 8,951/8,951 at `44282e25`; its
 work. The merge-check `deno task test` attempt on 2026-10-01 stopped at
 TypeScript checking with 484 errors before executing tests; the
 [local log](.state/research/ty2025-pr56-merge-check-2026-10-01.log) records
-the initial failure. The branch is being repaired and must rerun the same
-full command. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
+the initial failure. A second full attempt after repairs stopped at 108
+TypeScript errors before executing tests; its
+[local log](.state/research/ty2025-pr56-merge-check-rerun-2026-10-01.log)
+records the remaining clusters. The branch is being repaired and must rerun
+the same full command. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
 checks at `9effd20b`. No current complete test, filled-PDF,
 business-rule, or IRS ATS acceptance is claimed. After implementation and
 scope decisions, run one full test batch, source-backed XSD/business-rule
