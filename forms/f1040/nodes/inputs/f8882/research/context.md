@@ -1,97 +1,36 @@
-# Form 8882 — Credit for Employer-Provided Child Care Facilities and Services
+# Form 8882 — TY2025 direct Schedule C employer
 
-## Overview
-Computes the IRC §45F credit for employers who provide or contract for qualified child care facilities or resource/referral services for employees. Credit = 25% of qualified child care expenses + 10% of resource/referral expenses, capped at $150,000/year. Routes to Schedule 3 line 6z.
+Authority:
+[Form 8882 (Rev. December 2017)](https://www.irs.gov/pub/irs-pdf/f8882.pdf),
+[IRS TY2025 employer-provided childcare credit guidance](https://www.irs.gov/businesses/small-businesses-self-employed/employer-provided-child-care-credit-tax-year-2025-and-earlier),
+and the locally cached TY2025 IMF v5.4 `IRS8882.xsd`.
 
-**IRS Form:** 8882
-**Drake Screen:** 8882
-**Node Type:** input
-**Tax Year:** 2025
-**Drake Reference:** https://kb.drakesoftware.com/Site/Browse/14036
+The prior public input accepted two asserted expense totals and immediately sent
+the resulting 25%/10% estimate to Schedule 3. The replacement input is a bounded
+source for one taxpayer-owned, materially participating Schedule C business. It
+accepts one current-year contract with a qualified childcare facility, one
+childcare resource/referral contract, or both. Each contract identifies the
+provider, EIN, contract, payment-ledger row, date, gross expense, and the exact
+Schedule C Part V expense description. Facility contracts also record licensing,
+principal use, employee access, fair-market-value and noncapital expenditure
+evidence. Both paths require nondiscrimination and confirmation that the
+credited portion is not deducted or used for another credit. The two
+contract/expense identities must be distinct.
 
----
+`calculateForm8882` derives official lines 1–7: line 2 is 25% of facility
+expense, line 4 is 10% of referral expense, line 5 is zero for this direct
+employer, line 6 is the sum, and line 7 is the smaller of line 6 and $150,000.
+The bounded route requires whole-dollar line credits and excludes a source above
+the cap until the deduction-reduction allocation is sourced. The Schedule C
+crosswalk requires an exact net Part V row for each contract: gross expenditure
+less that contract's credit. It binds the business reference, taxpayer SSN and
+material participation to the prepared return.
 
-## Input Fields
-
-| Field | Type | Required | Source / Label | Description | IRS Reference | URL |
-| ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| qualified_childcare_expenses | number (≥0) | No | Child care expenses | Amounts paid or incurred for qualified child care facility (Lines 1–3) | Form 8882 Lines 1–3; IRC §45F(b) | https://www.irs.gov/pub/irs-pdf/i8882.pdf |
-| resource_referral_expenses | number (≥0) | No | Resource/referral expenses | Amounts paid to qualified child care resource and referral organizations (Line 4) | Form 8882 Line 4; IRC §45F(c) | https://www.irs.gov/pub/irs-pdf/i8882.pdf |
-
----
-
-## Calculation Logic
-
-### Step 1 — Facility credit
-`facilityCredit = qualified_childcare_expenses × 25%`
-Source: IRC §45F(a)(1); Form 8882 Line 5 — https://www.irs.gov/pub/irs-pdf/i8882.pdf
-
-### Step 2 — Resource/referral credit
-`referralCredit = resource_referral_expenses × 10%`
-Source: IRC §45F(a)(2); Form 8882 Line 6 — https://www.irs.gov/pub/irs-pdf/i8882.pdf
-
-### Step 3 — Total credit (capped)
-`total = min(facilityCredit + referralCredit, $150,000)`
-Source: IRC §45F(b)(2); Form 8882 Line 7 — https://www.irs.gov/pub/irs-pdf/i8882.pdf
-
----
-
-## Output Routing
-
-| Output Field | Destination Node | Condition | IRS Reference | URL |
-| ------------ | ---------------- | --------- | ------------- | --- |
-| line6z_general_business_credit | schedule3 | total > 0 | Form 8882 → Schedule 3 Line 6z | https://www.irs.gov/pub/irs-pdf/f1040s3.pdf |
-
----
-
-## Constants & Thresholds (Tax Year 2025)
-
-| Constant | Value | Source | URL |
-| -------- | ----- | ------ | --- |
-| Child care facility credit rate | 25% | IRC §45F(a)(1); statutory | https://www.law.cornell.edu/uscode/text/26/45F |
-| Resource/referral credit rate | 10% | IRC §45F(a)(2); statutory | https://www.law.cornell.edu/uscode/text/26/45F |
-| Annual credit cap | $150,000 | IRC §45F(b)(2); statutory | https://www.law.cornell.edu/uscode/text/26/45F |
-| Recapture period | 10 years | IRC §45F(d)(2); statutory | https://www.law.cornell.edu/uscode/text/26/45F |
-
----
-
-## Data Flow Diagram
-
-flowchart LR
-  subgraph inputs["Data Entry"]
-    cc["qualified_childcare_expenses"]
-    rr["resource_referral_expenses"]
-  end
-  subgraph node["f8882 (Employer Child Care Credit)"]
-    fc["facilityCredit = expenses × 25%"]
-    rc["referralCredit = expenses × 10%"]
-    tot["min(fc + rc, $150,000)"]
-  end
-  subgraph outputs["Downstream Nodes"]
-    s3["schedule3\nline6z_general_business_credit"]
-  end
-  cc --> fc --> tot
-  rr --> rc --> tot
-  tot --> s3
-
----
-
-## Edge Cases & Special Rules
-
-1. **$150,000 annual cap**: The combined facility + referral credit cannot exceed $150,000 per year regardless of expenses.
-2. **Qualified child care facility**: Must be primarily used for providing child care to employees' children; cannot be used predominantly by highly-compensated employees (IRC §45F(c)(1)).
-3. **10-year recapture**: If the facility ceases to be a qualified child care facility within 10 years, the credit is recaptured on a sliding scale. Not tracked by this node.
-4. **Wage deduction reduction**: The employer's wage/expense deduction must be reduced by the credit amount taken (IRC §280C(a) analogy — see IRC §45F(f)).
-5. **Contracted facility**: Amounts paid to contract with a third-party child care facility also qualify (not just employer-operated facilities).
-6. **Qualified resource/referral organizations**: Must be organizations that provide information about child care to employees. The 10% rate applies only to these organizations, not to child care facilities.
-7. **Non-refundable**: Excess carries forward via Form 3800.
-
----
-
-## Sources
-
-| Document | Year | Section | URL | Saved as |
-| -------- | ---- | ------- | --- | -------- |
-| Form 8882 Instructions | 2024 | All | https://www.irs.gov/pub/irs-pdf/i8882.pdf | .research/docs/i8882.pdf |
-| IRC §45F — Employer-Provided Child Care Credit | current | §45F(a–f) | https://www.law.cornell.edu/uscode/text/26/45F | N/A |
-| Rev Proc 2024-40 (TY2025 adjustments) | 2024 | §3 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf | .research/docs/rp-24-40.pdf |
+The node emits no Schedule 3 output. Form 8882's line 7 belongs on Form 3800
+Part III line 1k, subject to the general-business-credit limitation. The current
+Form 3800 graph has no typed Form 8882 direct-employer source, so the MeF and
+PDF descriptors are staged and unregistered. The shared attachment guard must
+recognize these new contract fields before this source shape is merged. Capital
+facility property, employer-operated facilities, controlled groups, pass-through
+line 5, cap allocation, prior facility recapture, and spouse-owned Schedule C
+businesses need separate source and return joins.
