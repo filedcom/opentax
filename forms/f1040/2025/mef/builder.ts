@@ -33,6 +33,10 @@ import { reconciledForm8908Source } from "./forms/f8908_source_reconciliation.ts
 import { assertForm8908PwaSubmittedPdfs } from "./forms/f8908_pwa.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
+import {
+  hasForm8994Claim,
+  reconcileForm8994EvidenceBytes,
+} from "../../nodes/inputs/f8994/evidence_bytes.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -371,6 +375,11 @@ export function buildMefXml(
   year = 2025,
   returnType = "1040",
 ): string {
+  if (hasForm8994Claim(pending)) {
+    throw new Error(
+      "MeF Form 8994 requires validated policy and payroll attachment bytes; use buildMefBundle",
+    );
+  }
   return buildReturnXml(pending, filer, schemaVersion, year, returnType, [])
     .xml;
 }
@@ -395,6 +404,9 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  if (hasForm8994Claim(pending)) {
+    await reconcileForm8994EvidenceBytes(pending.f8994, attachments);
+  }
   if (pending.f8908) {
     const { source } = reconciledForm8908Source(pending.f8908, pending.f3800);
     await assertForm8908PwaSubmittedPdfs(source, attachments);

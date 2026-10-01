@@ -4,6 +4,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
+import { form8994EvidenceSchema } from "./evidence_schema.ts";
 
 // January 2021 Form 8994 and December 2024 instructions apply to TY2025.
 // This source covers one direct Schedule C employer, not a K-1 credit.
@@ -84,6 +85,7 @@ export const inputSchema = z.object({
   schedule_c_wage_ledger_reference: reference,
   other_schedule_c_wages: dollars,
   employees: z.array(employeeSchema).min(1),
+  reviewed_evidence: form8994EvidenceSchema,
 }).strict().superRefine((source, ctx) => {
   const policyStart = source.policy_adopted_date > source.policy_effective_date
     ? source.policy_adopted_date

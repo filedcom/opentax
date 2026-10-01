@@ -26,6 +26,7 @@ Deno.test("Form 8994 rejects unsupported or tampered policy and payroll facts", 
   const [employee] = form8994DirectEmployer.employees;
   for (
     const candidate of [
+      { ...form8994DirectEmployer, reviewed_evidence: undefined },
       { ...form8994DirectEmployer, employees: [] },
       { ...form8994DirectEmployer, full_time_annual_leave_weeks: 1 },
       { ...form8994DirectEmployer, policy_effective_date: "2025-05-01" },

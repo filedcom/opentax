@@ -30,6 +30,10 @@ import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box1
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
+import {
+  hasForm8994Claim,
+  reconcileForm8994EvidenceBytes,
+} from "../../nodes/inputs/f8994/evidence_bytes.ts";
 
 async function fetchWithCache(
   url: string,
@@ -305,6 +309,17 @@ export async function buildPdfBytes(
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  if (hasForm8994Claim(pending)) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form 8994 PDF requires a prepared MeF bundle with validated policy and payroll attachments",
+      );
+    }
+    await reconcileForm8994EvidenceBytes(
+      pending.f8994,
+      preparedBundle.attachments,
+    );
   }
   // The prepared MeF return stores canonical Form 8949 rows as an array;
   // the existing PDF projector consumes them through its transaction field.

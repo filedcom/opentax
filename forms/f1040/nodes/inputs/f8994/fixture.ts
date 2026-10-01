@@ -1,6 +1,6 @@
 import { inputSchema } from "./index.ts";
 
-export const form8994DirectEmployer = inputSchema.parse({
+const sourceWithoutEvidence = {
   source_type: "direct_schedule_c",
   schedule_c_business_reference: "boise-design-2025",
   proprietor_ssn: "123456789",
@@ -58,6 +58,99 @@ export const form8994DirectEmployer = inputSchema.parse({
     no_other_general_business_credit_wage_overlap_confirmed: true,
     no_other_leave_purpose_wages_included_confirmed: true,
   }],
+};
+
+const documentBytes = (reference: string) =>
+  new TextEncoder().encode(
+    `Synthetic reviewed Form 8994 document: ${reference}`,
+  );
+const documentSha256 = async (reference: string) =>
+  Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", documentBytes(reference)),
+    ),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+const document = async (reference: string) => ({
+  document_reference: reference,
+  attachment_file_name: `${reference}.pdf`,
+  sha256: await documentSha256(reference),
+});
+
+/** Synthetic bytes match these hashes; public export requires validated PDFs. */
+export const form8994EvidenceFixtureDocuments = [
+  sourceWithoutEvidence.written_policy_reference,
+  sourceWithoutEvidence.schedule_c_wage_ledger_reference,
+  ...sourceWithoutEvidence.employees.flatMap((employee) => [
+    employee.payroll_ledger_reference,
+    employee.prior_2024_compensation_record_reference,
+  ]),
+].map((reference) => ({
+  fileName: `${reference}.pdf`,
+  bytes: documentBytes(reference),
+}));
+const paidWages = sourceWithoutEvidence.employees.reduce(
+  (sum, employee) => sum + employee.employer_paid_qualifying_leave_wages,
+  0,
+);
+export const form8994DirectEmployer = inputSchema.parse({
+  ...sourceWithoutEvidence,
+  reviewed_evidence: {
+    written_policy: {
+      ...await document(sourceWithoutEvidence.written_policy_reference),
+      employer_ein: sourceWithoutEvidence.employer_ein,
+      policy_adopted_date: sourceWithoutEvidence.policy_adopted_date,
+      policy_effective_date: sourceWithoutEvidence.policy_effective_date,
+      full_time_annual_leave_weeks:
+        sourceWithoutEvidence.full_time_annual_leave_weeks,
+      full_time_usual_weekly_hours:
+        sourceWithoutEvidence.full_time_usual_weekly_hours,
+      all_qualifying_employee_classes_covered_confirmed: true,
+      policy_leave_specifically_designated_for_fmla_confirmed: true,
+      noninterference_language_and_compliance_confirmed: true,
+      employee_terms: sourceWithoutEvidence.employees.map((employee) => ({
+        employee_ssn: employee.employee_ssn,
+        policy_annual_leave_weeks_for_employee:
+          employee.policy_annual_leave_weeks_for_employee,
+        policy_wage_replacement_rate: employee.policy_wage_replacement_rate,
+      })),
+    },
+    schedule_c_wage_ledger: {
+      ...await document(sourceWithoutEvidence.schedule_c_wage_ledger_reference),
+      employer_ein: sourceWithoutEvidence.employer_ein,
+      schedule_c_business_reference:
+        sourceWithoutEvidence.schedule_c_business_reference,
+      other_schedule_c_wages: sourceWithoutEvidence.other_schedule_c_wages,
+      employer_paid_qualifying_leave_wages: paidWages,
+      gross_schedule_c_wages: sourceWithoutEvidence.other_schedule_c_wages +
+        paidWages,
+    },
+    employee_records: await Promise.all(
+      sourceWithoutEvidence.employees.map(async (employee) => ({
+        leave_payroll: {
+          ...await document(employee.payroll_ledger_reference),
+          employer_ein: sourceWithoutEvidence.employer_ein,
+          employee_name: employee.employee_name,
+          employee_ssn: employee.employee_ssn,
+          leave_start_date: employee.leave_start_date,
+          leave_end_date: employee.leave_end_date,
+          normal_hourly_wage: employee.normal_hourly_wage,
+          usual_weekly_hours: employee.usual_weekly_hours,
+          leave_hours: employee.leave_hours,
+          leave_weeks: employee.leave_weeks,
+          policy_wage_replacement_rate: employee.policy_wage_replacement_rate,
+          employer_paid_qualifying_leave_wages:
+            employee.employer_paid_qualifying_leave_wages,
+        },
+        prior_2024_compensation: {
+          ...await document(employee.prior_2024_compensation_record_reference),
+          employer_ein: sourceWithoutEvidence.employer_ein,
+          employee_ssn: employee.employee_ssn,
+          compensation_amount: employee.prior_2024_compensation,
+        },
+      })),
+    ),
+  },
 });
 
 export const form8994MatchedPending = {

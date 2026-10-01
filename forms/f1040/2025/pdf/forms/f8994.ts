@@ -34,6 +34,7 @@ export const form8994Pdf: PdfFormDescriptor = {
     text("primarySSN", "f1_02[0]"),
   ],
   projectFields(raw, allPending) {
+    if (allPending.f8994 === undefined) return {};
     const { lines } = reconcileForm8994DocumentSource(raw, allPending);
     return {
       line_a_yes: true,

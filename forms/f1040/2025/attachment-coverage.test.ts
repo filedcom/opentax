@@ -3,7 +3,6 @@ import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 import { form8992Pending } from "./form8992.fixture.ts";
 import { form8882Fixture } from "../nodes/inputs/f8882/fixture.ts";
 import { form8941FiledFixture } from "../nodes/inputs/f8941/fixture.ts";
-import { form8994MatchedPending } from "../nodes/inputs/f8994/fixture.ts";
 
 Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
   for (const kind of ["mef", "pdf"] as const) {
@@ -48,7 +47,6 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
       { f8882: { facility_contract: {} } },
       { f8941: {} },
       { f8908: { f8908s: [{}] } },
-      { f8994: { employees: [{}] } },
       { f1310: { claimant_type: "other" } },
       { f2120: { support_amount: 100 } },
       { f8332: { child_name: "Child" } },
@@ -100,23 +98,6 @@ Deno.test("Form 8941 guard binds source, allowed credit, and Schedule C", () => 
   const pending = form8941FiledFixture();
   for (const kind of ["mef", "pdf"] as const) {
     assertAttachmentCoverage(pending, kind);
-    assertThrows(() =>
-      assertAttachmentCoverage({ f3800: pending.f3800 }, kind)
-    );
-    assertThrows(() =>
-      assertAttachmentCoverage({ ...pending, schedule_c: undefined }, kind)
-    );
-  }
-});
-
-Deno.test("Form 8994 guard blocks a valid claim until reviewed bytes are bound", () => {
-  const pending = form8994MatchedPending;
-  for (const kind of ["mef", "pdf"] as const) {
-    assertThrows(
-      () => assertAttachmentCoverage(pending, kind),
-      Error,
-      "requires a reviewed byte-bound written policy and payroll evidence packet",
-    );
     assertThrows(() =>
       assertAttachmentCoverage({ f3800: pending.f3800 }, kind)
     );

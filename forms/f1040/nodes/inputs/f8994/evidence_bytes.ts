@@ -1,66 +1,17 @@
-import { z } from "zod";
 import { inputSchema } from "./index.ts";
+import { form8994EvidenceSchema } from "./evidence_schema.ts";
+export { form8994EvidenceSchema } from "./evidence_schema.ts";
 
-const reference = z.string().trim().min(1);
-const sha256 = z.string().regex(/^[a-f0-9]{64}$/);
-const money = z.number().finite().nonnegative().refine((amount) =>
-  Number.isSafeInteger(Math.round(amount * 100)) &&
-  Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
-);
-const document = z.object({
-  document_reference: reference,
-  sha256,
-}).strict();
-
-/** Reviewed written policy, employer wage ledger and employee payroll copies. */
-export const form8994EvidenceSchema = z.object({
-  written_policy: document.extend({
-    employer_ein: z.string().regex(/^\d{9}$/),
-    policy_adopted_date: reference,
-    policy_effective_date: reference,
-    full_time_annual_leave_weeks: z.number().finite().positive(),
-    full_time_usual_weekly_hours: z.number().finite().positive(),
-    all_qualifying_employee_classes_covered_confirmed: z.literal(true),
-    policy_leave_specifically_designated_for_fmla_confirmed: z.literal(true),
-    noninterference_language_and_compliance_confirmed: z.literal(true),
-    employee_terms: z.array(
-      z.object({
-        employee_ssn: z.string().regex(/^\d{9}$/),
-        policy_annual_leave_weeks_for_employee: z.number().finite().positive(),
-        policy_wage_replacement_rate: z.number().finite().min(0.5).max(1),
-      }).strict(),
-    ).min(1),
-  }).strict(),
-  schedule_c_wage_ledger: document.extend({
-    employer_ein: z.string().regex(/^\d{9}$/),
-    schedule_c_business_reference: reference,
-    other_schedule_c_wages: money,
-    employer_paid_qualifying_leave_wages: money,
-    gross_schedule_c_wages: money,
-  }).strict(),
-  employee_records: z.array(
-    z.object({
-      leave_payroll: document.extend({
-        employer_ein: z.string().regex(/^\d{9}$/),
-        employee_name: reference,
-        employee_ssn: z.string().regex(/^\d{9}$/),
-        leave_start_date: reference,
-        leave_end_date: reference,
-        normal_hourly_wage: money,
-        usual_weekly_hours: z.number().finite().positive(),
-        leave_hours: z.number().finite().positive(),
-        leave_weeks: z.number().finite().positive(),
-        policy_wage_replacement_rate: z.number().finite().min(0.5).max(1),
-        employer_paid_qualifying_leave_wages: money,
-      }).strict(),
-      prior_2024_compensation: document.extend({
-        employer_ein: z.string().regex(/^\d{9}$/),
-        employee_ssn: z.string().regex(/^\d{9}$/),
-        compensation_amount: money,
-      }).strict(),
-    }).strict(),
-  ).min(1),
-}).strict();
+/** A direct Form 8994 source or its Form 3800 allocation needs evidence bytes. */
+export function hasForm8994Claim(
+  pending: { readonly f8994?: unknown; readonly f3800?: unknown },
+): boolean {
+  const form3800 = pending.f3800;
+  return pending.f8994 !== undefined ||
+    (form3800 !== null && typeof form3800 === "object" &&
+      ("f8994_direct_employer_credit" in form3800 ||
+        "form8994_applied_credit" in form3800));
+}
 
 async function hash(bytes: Uint8Array): Promise<string> {
   if (bytes.byteLength === 0) {
@@ -75,14 +26,13 @@ async function hash(bytes: Uint8Array): Promise<string> {
 /** Verify reviewed facts and hashes against one direct Schedule C source. */
 export async function reconcileForm8994EvidenceBytes(
   rawSource: unknown,
-  rawEvidence: unknown,
-  uploadedDocuments: readonly {
-    readonly document_reference: string;
+  validatedAttachments: readonly {
+    readonly fileName: string;
     readonly bytes: Uint8Array;
   }[],
 ) {
   const source = inputSchema.parse(rawSource);
-  const evidence = form8994EvidenceSchema.parse(rawEvidence);
+  const evidence = form8994EvidenceSchema.parse(source.reviewed_evidence);
   const policy = evidence.written_policy;
   const ledger = evidence.schedule_c_wage_ledger;
   const paidWages = source.employees.reduce(
@@ -178,21 +128,22 @@ export async function reconcileForm8994EvidenceBytes(
     ) => [row.leave_payroll, row.prior_2024_compensation]),
   ];
   const references = reviewedDocuments.map((row) => row.document_reference);
+  const fileNames = reviewedDocuments.map((row) => row.attachment_file_name);
   const digests = reviewedDocuments.map((row) => row.sha256);
   if (
     new Set(references).size !== references.length ||
+    new Set(fileNames).size !== fileNames.length ||
     new Set(digests).size !== digests.length ||
-    uploadedDocuments.length !== reviewedDocuments.length ||
-    new Set(uploadedDocuments.map((row) => row.document_reference)).size !==
-      uploadedDocuments.length
+    new Set(validatedAttachments.map((row) => row.fileName)).size !==
+      validatedAttachments.length
   ) {
     throw new Error(
       "Form 8994 evidence documents need distinct references and bytes",
     );
   }
   for (const reviewed of reviewedDocuments) {
-    const uploaded = uploadedDocuments.find((row) =>
-      row.document_reference === reviewed.document_reference
+    const uploaded = validatedAttachments.find((row) =>
+      row.fileName === reviewed.attachment_file_name
     );
     if (!uploaded || await hash(uploaded.bytes) !== reviewed.sha256) {
       throw new Error(

@@ -9,7 +9,6 @@ import {
 import { isSupportedForm2106Route } from "./form2106_staged.ts";
 import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
 import { reconcileForm8941DocumentSource } from "./mef/forms/f8941_source.ts";
-import { reconcileForm8994DocumentSource } from "./form8994_source.ts";
 import {
   calculateForm8881,
   inputSchema as f8881InputSchema,
@@ -445,23 +444,6 @@ export function assertAttachmentCoverage(
         { cause },
       );
     }
-  }
-  const hasForm8994Credit = form3800 !== null &&
-    typeof form3800 === "object" &&
-    ("f8994_direct_employer_credit" in form3800 ||
-      "form8994_applied_credit" in form3800);
-  if (byKey.f8994 !== undefined || hasForm8994Credit) {
-    try {
-      reconcileForm8994DocumentSource(byKey.f8994, byKey);
-    } catch (cause) {
-      throw new Error(
-        `[${exportKind.toUpperCase()}] Form 8994 needs a reconciled direct Schedule C source, Form 3800 allocation, and wage deduction; export blocked`,
-        { cause },
-      );
-    }
-    throw new Error(
-      `[${exportKind.toUpperCase()}] Form 8994 requires a reviewed byte-bound written policy and payroll evidence packet; export blocked`,
-    );
   }
   // MeF's canonical pending projection stores Form 8949 rows as an array;
   // PDF uses the raw executor's transaction field. Neither may file a QOF

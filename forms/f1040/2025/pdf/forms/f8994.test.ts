@@ -24,6 +24,10 @@ Deno.test("Form 8994 PDF maps official yes boxes and the direct credit", () => {
   assertEquals(projected?.line3, 1_250);
 });
 
+Deno.test("Form 8994 PDF skips unrelated returns", () => {
+  assertEquals(form8994Pdf.projectFields?.({}, {}), {});
+});
+
 Deno.test("Form 8994 PDF rejects a mismatched Schedule C wage reduction", () => {
   const business = form8994MatchedPending.schedule_c.schedule_cs[0];
   assertThrows(
