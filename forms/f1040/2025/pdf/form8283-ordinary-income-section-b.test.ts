@@ -1,10 +1,12 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { SectionBPropertyType } from "../../nodes/inputs/f8283/index.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
+import type { MefFormsPending } from "../mef/types.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8283Pdf } from "./forms/f8283.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
@@ -36,18 +38,43 @@ async function sha256(bytes: Uint8Array): Promise<string> {
 
 for (
   const [propertyType, appraisedFmv, basis, reason] of [
-    ["equipment", 18_000, 12_000, "purchased_short_term_capital_asset"],
-    ["art_under_20000", 18_000, 12_000, "purchased_short_term_capital_asset"],
     [
-      "art_at_least_20000",
+      SectionBPropertyType.Equipment,
+      18_000,
+      12_000,
+      "purchased_short_term_capital_asset",
+    ],
+    [
+      SectionBPropertyType.ArtUnder20000,
+      18_000,
+      12_000,
+      "purchased_short_term_capital_asset",
+    ],
+    [
+      SectionBPropertyType.ArtAtLeast20000,
       25_000,
       22_000,
       "purchased_short_term_capital_asset",
     ],
-    ["collectibles", 18_000, 12_000, "purchased_short_term_capital_asset"],
-    ["securities", 18_000, 12_000, "purchased_short_term_capital_asset"],
-    ["other_real_estate", 18_000, 12_000, "purchased_short_term_capital_asset"],
-    ["equipment", 18_000, 12_000, "purchased_inventory"],
+    [
+      SectionBPropertyType.Collectibles,
+      18_000,
+      12_000,
+      "purchased_short_term_capital_asset",
+    ],
+    [
+      SectionBPropertyType.Securities,
+      18_000,
+      12_000,
+      "purchased_short_term_capital_asset",
+    ],
+    [
+      SectionBPropertyType.OtherRealEstate,
+      18_000,
+      12_000,
+      "purchased_short_term_capital_asset",
+    ],
+    [SectionBPropertyType.Equipment, 18_000, 12_000, "purchased_inventory"],
   ] as const
 ) {
   Deno.test(`Section B ${reason} ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
@@ -204,7 +231,7 @@ for (
           reduced_claim_matches_confirmed: true,
         },
       },
-    };
+    } as const;
     const result = execute(buildExecutionPlan(registry), registry, {
       ...base.inputs,
       schedule_a: {
@@ -226,6 +253,16 @@ for (
       36_000 + basis,
     );
     const pending = buildPending(result.pending);
+    const pdfPending = {
+      f8283: pending.f8283!,
+      schedule_a: pending.schedule_a!,
+      f1040: pending.f1040!,
+    };
+    // These negative cases deliberately violate the parsed Form 8283 input.
+    const invalidGift = (gift: unknown): MefFormsPending => ({
+      ...pending,
+      f8283: { section_b_items: [gift] },
+    } as MefFormsPending);
     const attachments = [
       {
         fileName: "PurchaseRecord.pdf",
@@ -289,9 +326,9 @@ for (
         : "<CollectiblesInd>X</CollectiblesInd>",
     );
     const [projected] = form8283Pdf.instances!(
-      pending.f8283,
+      pending.f8283!,
       base.filer,
-      pending,
+      pdfPending,
     );
     assertEquals(
       projected.section_b_collectibles,
@@ -369,29 +406,25 @@ for (
     if (propertyType === "other_real_estate") {
       await assertRejects(
         () =>
-          buildMefBundle({
-            ...pending,
-            f8283: {
-              section_b_items: [{
-                ...item,
-                investment_land_unimproved_confirmed: undefined,
-              }],
-            },
-          }, { filer: base.filer, attachments }),
+          buildMefBundle(
+            invalidGift({
+              ...item,
+              investment_land_unimproved_confirmed: undefined,
+            }),
+            { filer: base.filer, attachments },
+          ),
         Error,
         "short-term unimproved land",
       );
       await assertRejects(
         () =>
-          buildMefBundle({
-            ...pending,
-            f8283: {
-              section_b_items: [{
-                ...item,
-                date_acquired: "2023-01-15",
-              }],
-            },
-          }, { filer: base.filer, attachments }),
+          buildMefBundle(
+            invalidGift({
+              ...item,
+              date_acquired: "2023-01-15",
+            }),
+            { filer: base.filer, attachments },
+          ),
         Error,
         "short-term unimproved land",
       );
@@ -399,50 +432,44 @@ for (
     if (propertyType === "securities") {
       await assertRejects(
         () =>
-          buildMefBundle({
-            ...pending,
-            f8283: {
-              section_b_items: [{
-                ...item,
-                ordinary_income_reduction: {
-                  ...item.ordinary_income_reduction,
-                  purchase_record_review: {
-                    ...item.ordinary_income_reduction.purchase_record_review,
-                    security_issuer_and_lot_match_confirmed: undefined,
-                  },
+          buildMefBundle(
+            invalidGift({
+              ...item,
+              ordinary_income_reduction: {
+                ...item.ordinary_income_reduction,
+                purchase_record_review: {
+                  ...item.ordinary_income_reduction.purchase_record_review,
+                  security_issuer_and_lot_match_confirmed: undefined,
                 },
-              }],
-            },
-          }, { filer: base.filer, attachments }),
+              },
+            }),
+            { filer: base.filer, attachments },
+          ),
         Error,
       );
       await assertRejects(
         () =>
-          buildMefBundle({
-            ...pending,
-            f8283: {
-              section_b_items: [{
-                ...item,
-                nonpublic_security: {
-                  ...item.nonpublic_security,
-                  nonpublicly_traded_confirmed: false,
-                },
-              }],
-            },
-          }, { filer: base.filer, attachments }),
+          buildMefBundle(
+            invalidGift({
+              ...item,
+              nonpublic_security: {
+                ...item.nonpublic_security,
+                nonpublicly_traded_confirmed: false,
+              },
+            }),
+            { filer: base.filer, attachments },
+          ),
         Error,
       );
       await assertRejects(
         () =>
-          buildMefBundle({
-            ...pending,
-            f8283: {
-              section_b_items: [{
-                ...item,
-                property_description: "100 Preferred shares of Cedar Grove Inc",
-              }],
-            },
-          }, { filer: base.filer, attachments }),
+          buildMefBundle(
+            invalidGift({
+              ...item,
+              property_description: "100 Preferred shares of Cedar Grove Inc",
+            }),
+            { filer: base.filer, attachments },
+          ),
         Error,
       );
     }

@@ -20,6 +20,11 @@ export interface F8949Transaction {
 import type { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { z } from "zod";
 import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index.ts";
+import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a/index.ts";
+import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
+import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
+import type { inputSchema as f8812InputSchema } from "../../nodes/inputs/f8812/index.ts";
+import type { inputSchema as generalInputSchema } from "../../nodes/inputs/general/index.ts";
 import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099patr/index.ts";
 import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
 import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_corp/index.ts";
@@ -46,6 +51,16 @@ export type MefFormsPending =
     // Form 1116 line 1b needs the source compensation record for a filing check.
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;
+    // Marketplace statements remain available for Form 8962 month-by-month
+    // reconciliation even though they are not themselves native attachments.
+    f1095a?: z.infer<typeof f1095aInputSchema>;
+    // Payer statements remain available for Form 6251 AMT interest replay.
+    f1099int?: z.infer<typeof f1099intInputSchema>;
+    f1099oid?: z.infer<typeof f1099oidInputSchema>;
+    // Filing and dependent source facts are retained for native cross-form
+    // checks even when their input nodes do not emit standalone XML forms.
+    general?: z.infer<typeof generalInputSchema>;
+    f8812?: z.infer<typeof f8812InputSchema>;
     // Retained 1099-PATR source for the Form 8995-A Schedule D filing check.
     f1099patr?: z.infer<typeof patrInputSchema>;
     // K-1 source records are retained for downstream credit reconciliation.

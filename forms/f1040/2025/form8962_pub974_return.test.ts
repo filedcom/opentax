@@ -3,7 +3,10 @@ import { FilingStatus as MeFilingStatus } from "../mef/header.ts";
 import { TS } from "../nodes/types.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { form7206 } from "../nodes/intermediate/forms/form7206/index.ts";
-import { form8962 } from "../nodes/intermediate/forms/form8962/index.ts";
+import {
+  form8962,
+  inputSchema as form8962InputSchema,
+} from "../nodes/intermediate/forms/form8962/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
 import { form8962 as form8962Mef } from "./mef/forms/f8962.ts";
 import { form8962Pdf } from "./pdf/forms/f8962.ts";
@@ -12,6 +15,7 @@ import { assertForm8962Pub974Return } from "./form8962_pub974_return.ts";
 const context = { taxYear: 2025, formType: "f1040" as const };
 const premiums = Array<number>(12).fill(1_000);
 const aptcs = Array<number>(12).fill(500);
+const slcsps = Array<number>(12).fill(1_200);
 const policyMonths = Array.from({ length: 12 }, (_, index) => ({
   form1095a_policy_number: "MARKETPLACE-A",
   month: index + 1,
@@ -48,7 +52,7 @@ const pub974Source = {
     required_filing_dependents_modified_agi: 0,
     household_size: 1,
     fpl_region: "contiguous" as const,
-    filing_status: FilingStatus.Single,
+    filing_status: FilingStatus.Single as const,
   },
   form1095a_policy_months: policyMonths,
   no_other_se_income_sources_verified: true as const,
@@ -104,29 +108,32 @@ function filing(monthlySlcsp = 1_200) {
   const reconciliation = insurance.outputs.find((row) =>
     row.nodeType === "form8962"
   )?.fields.pub974_reconciliation;
-  const calculated = form8962.compute(context, {
-    ...source.form8962_source,
-    pub974_form1095a_policy_months: policyMonths,
-    pub974_income_audit: {
-      schedule1_line3_schedule_c: 50_000,
-      form1040_line9_total_income: 50_000,
-      form1040_line2a_tax_exempt_interest: 0,
-      form1040_nontaxable_social_security: 0,
-      form2555_lines45_and_50: 0,
-      schedule1_adjustments_except_line17: 7_000,
-      schedule1_line15_se_tax_deduction: 5_000,
-      schedule1_line16_retirement_deduction: 2_000,
-      schedule1_line17_se_health_insurance: deduction,
-      unsupported_adjustments_present: false,
-    },
-    pub974_reconciliation: reconciliation,
-    taxpayer_modified_agi: 43_000 - deduction,
-    dependents_modified_agi: 0,
-    dependent_income_complete: true,
-    household_size: 1,
-    fpl_region: "contiguous",
-    filing_status: FilingStatus.Single,
-  });
+  const calculated = form8962.compute(
+    context,
+    form8962InputSchema.parse({
+      ...source.form8962_source,
+      pub974_form1095a_policy_months: policyMonths,
+      pub974_income_audit: {
+        schedule1_line3_schedule_c: 50_000,
+        form1040_line9_total_income: 50_000,
+        form1040_line2a_tax_exempt_interest: 0,
+        form1040_nontaxable_social_security: 0,
+        form2555_lines45_and_50: 0,
+        schedule1_adjustments_except_line17: 7_000,
+        schedule1_line15_se_tax_deduction: 5_000,
+        schedule1_line16_retirement_deduction: 2_000,
+        schedule1_line17_se_health_insurance: deduction,
+        unsupported_adjustments_present: false,
+      },
+      pub974_reconciliation: reconciliation,
+      taxpayer_modified_agi: 43_000 - deduction,
+      dependents_modified_agi: 0,
+      dependent_income_complete: true,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: FilingStatus.Single as const,
+    }),
+  );
   const fields = calculated.outputs.find((row) => row.nodeType === "form8962")!
     .fields;
   const credit = fields.net_premium_tax_credit as number;

@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { z } from "zod";
 import { FilingStatus } from "../../../mef/header.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
 import {
@@ -1086,9 +1087,12 @@ Deno.test("Form 8962 partial-year A-B-A policies leave a sourced gap month blank
     gapPending.f1095a,
   )
     .outputs.find((item) => item.nodeType === "form8962");
-  assertEquals(output?.fields.monthly_premiums?.[5], 0);
-  assertEquals(output?.fields.monthly_slcsps?.[5], 0);
-  assertEquals(output?.fields.monthly_aptcs?.[5], 0);
+  assertEquals(
+    z.array(z.number()).parse(output?.fields.monthly_premiums)[5],
+    0,
+  );
+  assertEquals(z.array(z.number()).parse(output?.fields.monthly_slcsps)[5], 0);
+  assertEquals(z.array(z.number()).parse(output?.fields.monthly_aptcs)[5], 0);
   const calculated = form8962Calculation.compute(
     { taxYear: 2025, formType: "f1040" },
     form8962InputSchema.parse({
@@ -1101,7 +1105,12 @@ Deno.test("Form 8962 partial-year A-B-A policies leave a sourced gap month blank
       dependent_income_complete: true,
     }),
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
-  assertEquals(calculated?.monthly_ptc_rows?.[5].allowed_credit, 0);
+  assertEquals(
+    z.array(z.object({ allowed_credit: z.number() })).parse(
+      calculated?.monthly_ptc_rows,
+    )[5].allowed_credit,
+    0,
+  );
   assertEquals(calculated?.total_premium_tax_credit, 737);
   assertEquals(calculated?.excess_advance_premium, 1_463);
   const xml = form8962.build(gapFields, { filer, pending: gapPending });

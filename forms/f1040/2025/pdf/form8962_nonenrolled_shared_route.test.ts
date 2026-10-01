@@ -5,6 +5,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
+import type { MefFormsPending } from "../mef/types.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8962Pdf } from "./forms/f8962.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
@@ -48,7 +49,12 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>2880</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+  const projected = form8962Pdf.projectFields?.(pending.form8962!, {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule3: pending.schedule3!,
+  }) ??
     {};
   assertEquals(
     (projected as Record<string, unknown>).pdf_allocation_1_other_taxpayer_ssn,
@@ -57,7 +63,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
   const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
-  const policy = (pending.f1095a?.f1095as as Record<string, unknown>[])[0];
+  const policy = pending.f1095a!.f1095as[0];
   const period = (policy.shared_policy_periods as Record<string, unknown>[])[0];
   const review = period.other_family_claim_review as Record<string, unknown>;
   for (
@@ -68,6 +74,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
       { ...review, policy_number: "WRONG-POLICY" },
     ]
   ) {
+    // Each changed source below intentionally violates the validated policy.
     const drift = {
       ...pending,
       f1095a: {
@@ -79,7 +86,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
           }],
         }],
       },
-    };
+    } as MefFormsPending;
     await assertRejects(
       () => buildMefBundle(drift, { filer: fixture.filer, attachments: [] }),
       Error,
@@ -96,7 +103,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
       buildMefBundle({
         ...pending,
         f1095a: { f1095as: [{ ...policy, recipient_ssn: "999887777" }] },
-      }, { filer: fixture.filer, attachments: [] }),
+      } as MefFormsPending, { filer: fixture.filer, attachments: [] }),
     Error,
     "covered family member",
   );
@@ -113,7 +120,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
             }],
           }],
         },
-      }, { filer: fixture.filer, attachments: [] }),
+      } as MefFormsPending, { filer: fixture.filer, attachments: [] }),
     Error,
     "covered family member",
   );

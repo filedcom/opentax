@@ -6,7 +6,7 @@ import {
   scheduleA,
 } from "../schedule_a/index.ts";
 
-const amount = z.number().int().nonnegative().refine(Number.isSafeInteger);
+const amount = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const usAddress = z.object({
   line1: z.string().trim().min(1),
   line2: z.string().trim().min(1).optional(),

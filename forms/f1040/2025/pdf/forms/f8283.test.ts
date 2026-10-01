@@ -316,9 +316,10 @@ function currentSectionAPending(form: {
     capital_gain_property_carryovers: [],
     noncash_contribution_items: items,
   };
+  const parsedSource = scheduleAInputSchema.parse(source);
   const calculated = scheduleA.compute(
     { taxYear: 2025, formType: "f1040" },
-    scheduleAInputSchema.parse(source),
+    parsedSource,
   );
   const finalized = calculated.finalizations![0].fields;
   const itemized = calculated.outputs.find((output) =>
@@ -326,7 +327,7 @@ function currentSectionAPending(form: {
   )?.fields.itemized_deductions;
   return {
     f8283: parsedForm,
-    schedule_a: { ...source, ...finalized },
+    schedule_a: { ...parsedSource, ...finalized },
     f1040: {
       line11_agi: 100_000,
       line12e_itemized_deductions: itemized,
@@ -904,18 +905,15 @@ Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statem
     "section 170(e)(1)(B)(i) reduction",
   );
   assertEquals(scheduleAPdf.includeWhen?.(pending.schedule_a, pending), true);
+  const { f8283: _omitted, ...missingForm } = pending;
   assertThrows(
-    () =>
-      scheduleAPdf.includeWhen?.(pending.schedule_a, {
-        ...pending,
-        f8283: undefined,
-      }),
+    () => scheduleAPdf.includeWhen?.(pending.schedule_a, missingForm),
     Error,
     "needs its linked Form 8283 source",
   );
   const changedSchedule = {
     ...pending.schedule_a,
-    noncash_contribution_items: pending.schedule_a.noncash_contribution_items
+    noncash_contribution_items: pending.schedule_a.noncash_contribution_items!
       .map((item) => ({
         ...item,
         unrelated_use_capital_gain_reduction_confirmed: undefined,

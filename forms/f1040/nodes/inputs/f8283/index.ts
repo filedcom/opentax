@@ -1481,7 +1481,7 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
       unrelated_use_capital_gain_reduction_confirmed:
         item.unrelated_use_capital_gain_reduction === undefined
           ? undefined
-          : true,
+          : true as const,
     }];
   });
   if (items.length === 0) return [];

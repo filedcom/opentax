@@ -4,7 +4,7 @@ import { general } from "../../../nodes/inputs/general/index.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
 import {
   form8962 as form8962Calculation,
-  form8962InputSchema,
+  inputSchema as form8962InputSchema,
 } from "../../../nodes/intermediate/forms/form8962/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";
@@ -297,36 +297,48 @@ Deno.test("Form 8962 unreported interstate move uses evidenced arrival SLCSP cor
     filer,
     pending: correctedPending,
   });
-  assertStringIncludes(xml, "<MonthlyPremiumSLCSPAmt>650</MonthlyPremiumSLCSPAmt>");
-  const pdf = form8962Pdf.projectFields?.(correctedFields, correctedPending) ?? {};
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>650</MonthlyPremiumSLCSPAmt>",
+  );
+  const pdf = form8962Pdf.projectFields?.(correctedFields, correctedPending) ??
+    {};
   assertEquals(
     form8962Pdf.instances?.(pdf, filer, correctedPending)?.length,
     1,
   );
   assertThrows(
-    () => form8962.build(correctedFields, {
-      filer,
-      pending: {
-        ...correctedPending,
-        f1095a: { f1095as: [correctedPolicies[0], {
-          ...correctedPolicies[1],
-          slcsp_corrections: corrections.slice(0, 5),
-        }] },
-      },
-    }),
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [correctedPolicies[0], {
+              ...correctedPolicies[1],
+              slcsp_corrections: corrections.slice(0, 5),
+            }],
+          },
+        },
+      }),
     Error,
     "complete sourced Marketplace SLCSP correction",
   );
   assertThrows(
-    () => form8962Pdf.instances?.(pdf, filer, {
-      ...correctedPending,
-      f1095a: { f1095as: [correctedPolicies[0], {
-        ...correctedPolicies[1],
-        slcsp_corrections: corrections.map((item, index) =>
-          index === 0 ? { ...item, determination_reference: undefined } : item
-        ),
-      }] },
-    }),
+    () =>
+      form8962Pdf.instances?.(pdf, filer, {
+        ...correctedPending,
+        f1095a: {
+          f1095as: [correctedPolicies[0], {
+            ...correctedPolicies[1],
+            slcsp_corrections: corrections.map((item, index) =>
+              index === 0
+                ? { ...item, determination_reference: undefined }
+                : item
+            ),
+          }],
+        },
+      }),
     Error,
     "complete sourced Marketplace SLCSP correction",
   );

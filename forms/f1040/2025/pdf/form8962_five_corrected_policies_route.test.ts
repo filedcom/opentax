@@ -5,6 +5,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
+import type { MefFormsPending } from "../mef/types.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8962Pdf } from "./forms/f8962.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
@@ -46,10 +47,19 @@ Deno.test("five independently corrected sequential policies reconcile through Fo
     bundle.xml,
     "<PremiumTaxCreditTaxLiabAmt>1346</PremiumTaxCreditTaxLiabAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+  const pdfPending = {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule2: pending.schedule2!,
+  };
+  const projected = form8962Pdf.projectFields?.(
+    pending.form8962!,
+    pdfPending,
+  ) ??
     {};
   assertEquals(
-    form8962Pdf.instances?.(projected, fixture.filer, pending)?.length,
+    form8962Pdf.instances?.(projected, fixture.filer, pdfPending)?.length,
     1,
   );
   const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
@@ -64,6 +74,7 @@ Deno.test("five independently corrected sequential policies reconcile through Fo
       { ...correction, month: 8 },
     ]
   ) {
+    // Missing source proof is intentionally outside the validated input type.
     const drift = {
       ...pending,
       f1095a: {
@@ -72,7 +83,7 @@ Deno.test("five independently corrected sequential policies reconcile through Fo
           slcsp_corrections: [tamperedCorrection],
         }],
       },
-    };
+    } as MefFormsPending;
     await assertRejects(
       () => buildMefBundle(drift, { filer: fixture.filer, attachments: [] }),
       Error,

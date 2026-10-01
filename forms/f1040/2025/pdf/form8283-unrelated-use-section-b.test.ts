@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { inputSchema as form8283InputSchema } from "../../nodes/inputs/f8283/index.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -210,9 +211,13 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
     "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
   );
   const [projected] = form8283Pdf.instances!(
-    pending.f8283,
+    pending.f8283!,
     base.filer,
-    pending,
+    {
+      f8283: pending.f8283!,
+      schedule_a: pending.schedule_a!,
+      f1040: pending.f1040!,
+    },
   );
   assertEquals(projected.section_b_claim, 12_000);
   assertEquals(projected.section_b_unrelated_use_yes, true);
@@ -222,6 +227,8 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
   );
   const filled = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(filled)).getPageCount() > 0, true);
+  const typedItem = form8283InputSchema.parse({ section_b_items: [item] })
+    .section_b_items![0];
   await assertRejects(
     () =>
       buildMefBundle(pending, {
@@ -240,9 +247,9 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
       ...pending,
       f8283: {
         section_b_items: [{
-          ...item,
+          ...typedItem,
           donee_acknowledgment: {
-            ...item.donee_acknowledgment,
+            ...typedItem.donee_acknowledgment!,
             unrelated_use: false,
           },
         }],
@@ -251,7 +258,9 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
   await assertRejects(() =>
     buildMefBundle({
       ...pending,
-      f8283: { section_b_items: [{ ...item, deduction_claimed: 18_000 }] },
+      f8283: {
+        section_b_items: [{ ...typedItem, deduction_claimed: 18_000 }],
+      },
     }, { filer: base.filer, attachments }), Error);
   await assertRejects(
     () =>

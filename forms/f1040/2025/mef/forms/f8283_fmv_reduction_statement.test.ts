@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { z } from "zod";
 import {
   f8283,
   FMVMethod,
@@ -332,12 +333,17 @@ function nonElectionReturn(
     { taxYear: 2025, formType: "f1040" },
     scheduleAInputSchema.parse(source),
   ).finalizations![0].fields;
+  const line12 = z.number().parse(finalized.line_12_noncash_contributions);
   return {
     f8283: parsed,
-    schedule_a: { ...source, ...finalized },
+    schedule_a: {
+      ...source,
+      ...finalized,
+      line_12_noncash_contributions: line12,
+    },
     f1040: {
       line11_agi: 100_000,
-      line12e_itemized_deductions: finalized.line_12_noncash_contributions,
+      line12e_itemized_deductions: line12,
     },
   };
 }

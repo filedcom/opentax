@@ -4,7 +4,7 @@ import { general } from "../../../nodes/inputs/general/index.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
 import {
   form8962 as form8962Calculation,
-  form8962InputSchema,
+  inputSchema as form8962InputSchema,
 } from "../../../nodes/intermediate/forms/form8962/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";

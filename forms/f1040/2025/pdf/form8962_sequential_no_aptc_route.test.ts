@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { z } from "zod";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { inputSchema as form1095aSchema } from "../../nodes/inputs/f1095a/index.ts";
@@ -34,12 +35,23 @@ Deno.test("two sequential no-APTC policies reduce one protected partial premium 
     { taxYear: 2025, formType: "f1040" },
   );
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.form8962.monthly_ptc_rows[0].premium, 401);
-  assertEquals(result.pending.form8962.monthly_ptc_rows[0].allowed_credit, 401);
+  const monthlyRows = z.array(z.object({
+    premium: z.number(),
+    allowed_credit: z.number(),
+  })).parse(result.pending.form8962.monthly_ptc_rows);
+  assertEquals(monthlyRows[0].premium, 401);
+  assertEquals(monthlyRows[0].allowed_credit, 401);
   assertEquals(result.pending.form8962.total_premium_tax_credit, 7_051);
   assertEquals(result.pending.schedule3.line9_premium_tax_credit, 7_051);
   assertEquals(result.pending.f1040.line31_additional_payments, 7_051);
   const pending = buildPending(result.pending);
+  const pdfPending = {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule2: pending.schedule2!,
+    schedule3: pending.schedule3!,
+  };
   const bundle = await buildMefBundle(pending, {
     filer: partialPolicyFixture.filer,
     attachments: [],
@@ -52,11 +64,12 @@ Deno.test("two sequential no-APTC policies reduce one protected partial premium 
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>7051</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-    {};
+  const projected =
+    form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+      {};
   assertEquals(projected.pdf_month_1_premium, 401);
   assertEquals(
-    form8962Pdf.instances?.(projected, partialPolicyFixture.filer, pending)
+    form8962Pdf.instances?.(projected, partialPolicyFixture.filer, pdfPending)
       ?.length,
     1,
   );
@@ -99,7 +112,7 @@ Deno.test("two sequential no-APTC policies reduce one protected partial premium 
       form8962Pdf.instances?.(
         projected,
         partialPolicyFixture.filer,
-        belowThreshold,
+        { ...pdfPending, f1095a: belowThreshold.f1095a },
       );
     },
     Error,
@@ -162,6 +175,13 @@ for (
       variant.credit,
     );
     const pending = buildPending(result.pending);
+    const pdfPending = {
+      general: pending.general!,
+      f1095a: pending.f1095a!,
+      f1040: pending.f1040!,
+      schedule2: pending.schedule2!,
+      schedule3: pending.schedule3!,
+    };
     const bundle = await buildMefBundle(pending, {
       filer: policyFixture.filer,
       attachments: [],
@@ -174,10 +194,12 @@ for (
       bundle.xml,
       `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
     );
-    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-      {};
+    const projected =
+      form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+        {};
     assertEquals(
-      form8962Pdf.instances?.(projected, policyFixture.filer, pending)?.length,
+      form8962Pdf.instances?.(projected, policyFixture.filer, pdfPending)
+        ?.length,
       1,
     );
     for (const month of variant.gaps) {
@@ -254,7 +276,10 @@ for (
     );
     await assertRejects(
       async () => {
-        form8962Pdf.instances?.(projected, policyFixture.filer, wrongOwner);
+        form8962Pdf.instances?.(projected, policyFixture.filer, {
+          ...pdfPending,
+          f1095a: wrongOwner.f1095a,
+        });
       },
       Error,
       "four-policy monthly PTC needs distinct same-state nonshared policies",
@@ -357,6 +382,13 @@ for (
       variant.credit,
     );
     const pending = buildPending(result.pending);
+    const pdfPending = {
+      general: pending.general!,
+      f1095a: pending.f1095a!,
+      f1040: pending.f1040!,
+      schedule2: pending.schedule2!,
+      schedule3: pending.schedule3!,
+    };
     const bundle = await buildMefBundle(pending, {
       filer: policyFixture.filer,
       attachments: [],
@@ -369,10 +401,12 @@ for (
       bundle.xml,
       `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
     );
-    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-      {};
+    const projected =
+      form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+        {};
     assertEquals(
-      form8962Pdf.instances?.(projected, policyFixture.filer, pending)?.length,
+      form8962Pdf.instances?.(projected, policyFixture.filer, pdfPending)
+        ?.length,
       1,
     );
     const pdf = await buildPdfBytes(
@@ -481,6 +515,13 @@ for (
       variant.credit,
     );
     const pending = buildPending(result.pending);
+    const pdfPending = {
+      general: pending.general!,
+      f1095a: pending.f1095a!,
+      f1040: pending.f1040!,
+      schedule2: pending.schedule2!,
+      schedule3: pending.schedule3!,
+    };
     const bundle = await buildMefBundle(pending, {
       filer: sparseFixture.filer,
       attachments: [],
@@ -493,10 +534,12 @@ for (
       bundle.xml,
       `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
     );
-    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-      {};
+    const projected =
+      form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+        {};
     assertEquals(
-      form8962Pdf.instances?.(projected, sparseFixture.filer, pending)?.length,
+      form8962Pdf.instances?.(projected, sparseFixture.filer, pdfPending)
+        ?.length,
       1,
     );
     for (let month = 1; month <= 12; month++) {
@@ -565,7 +608,10 @@ for (
     );
     await assertRejects(
       async () => {
-        form8962Pdf.instances?.(projected, sparseFixture.filer, unsupported);
+        form8962Pdf.instances?.(projected, sparseFixture.filer, {
+          ...pdfPending,
+          f1095a: unsupported.f1095a,
+        });
       },
       Error,
       "monthly PTC needs distinct same-state nonshared policies",
@@ -600,6 +646,13 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
   assertEquals(result.pending.schedule3.line9_premium_tax_credit, 5_200);
   assertEquals(result.pending.f1040.line31_additional_payments, 5_200);
   const pending = buildPending(result.pending);
+  const pdfPending = {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule2: pending.schedule2!,
+    schedule3: pending.schedule3!,
+  };
   const bundle = await buildMefBundle(pending, {
     filer: fourGapFixture.filer,
     attachments: [],
@@ -615,10 +668,12 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>5200</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-    {};
+  const projected =
+    form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+      {};
   assertEquals(
-    form8962Pdf.instances?.(projected, fourGapFixture.filer, pending)?.length,
+    form8962Pdf.instances?.(projected, fourGapFixture.filer, pdfPending)
+      ?.length,
     1,
   );
   for (const month of [4, 7, 8, 12]) {
@@ -666,7 +721,10 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
   );
   await assertRejects(
     async () => {
-      form8962Pdf.instances?.(projected, fourGapFixture.filer, fifthGap);
+      form8962Pdf.instances?.(projected, fourGapFixture.filer, {
+        ...pdfPending,
+        f1095a: fifthGap.f1095a,
+      });
     },
     Error,
     "uncovered month 11 must have zero policy and credit amounts",
@@ -700,6 +758,13 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
   assertEquals(result.pending.schedule3.line9_premium_tax_credit, 5_850);
   assertEquals(result.pending.f1040.line31_additional_payments, 5_850);
   const pending = buildPending(result.pending);
+  const pdfPending = {
+    general: pending.general!,
+    f1095a: pending.f1095a!,
+    f1040: pending.f1040!,
+    schedule2: pending.schedule2!,
+    schedule3: pending.schedule3!,
+  };
   const bundle = await buildMefBundle(pending, {
     filer: threeGapFixture.filer,
     attachments: [],
@@ -715,10 +780,12 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>5850</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-    {};
+  const projected =
+    form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+      {};
   assertEquals(
-    form8962Pdf.instances?.(projected, threeGapFixture.filer, pending)?.length,
+    form8962Pdf.instances?.(projected, threeGapFixture.filer, pdfPending)
+      ?.length,
     1,
   );
   for (const month of [4, 8, 12]) {
@@ -778,7 +845,10 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
   );
   await assertRejects(
     async () => {
-      form8962Pdf.instances?.(projected, threeGapFixture.filer, fifthGap);
+      form8962Pdf.instances?.(projected, threeGapFixture.filer, {
+        ...pdfPending,
+        f1095a: fifthGap.f1095a,
+      });
     },
     Error,
     "uncovered month 7 must have zero policy and credit amounts",
@@ -841,6 +911,13 @@ for (
       variant.credit,
     );
     const pending = buildPending(result.pending);
+    const pdfPending = {
+      general: pending.general!,
+      f1095a: pending.f1095a!,
+      f1040: pending.f1040!,
+      schedule2: pending.schedule2!,
+      schedule3: pending.schedule3!,
+    };
     const bundle = await buildMefBundle(pending, {
       filer: gapFixture.filer,
       attachments: [],
@@ -855,8 +932,9 @@ for (
       bundle.xml,
       `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
     );
-    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
-      {};
+    const projected =
+      form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
+        {};
     assertEquals(
       (projected as Record<string, unknown>)[
         `pdf_month_${variant.uncoveredMonth}_premium`

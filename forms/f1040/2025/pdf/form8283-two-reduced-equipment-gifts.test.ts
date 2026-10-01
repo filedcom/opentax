@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { inputSchema as form8283InputSchema } from "../../nodes/inputs/f8283/index.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -46,7 +47,12 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     description: string;
     bytes: Uint8Array;
   }[] = [];
-  const items = [];
+  const items: Array<
+    Record<string, unknown> & {
+      donee_acknowledgment: Record<string, unknown>;
+      ordinary_income_reduction: Record<string, unknown>;
+    }
+  > = [];
   for (
     const [index, fmv, basis, doneeEin] of [
       [1, 18_000, 12_000, "987654321"],
@@ -177,6 +183,8 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
       },
     });
   }
+  const typedItems = form8283InputSchema.parse({ section_b_items: items })
+    .section_b_items!;
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
     schedule_a: {
@@ -205,7 +213,11 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     bundle.xml,
     "<OtherThanByCashOrCheckAmt>25000</OtherThanByCashOrCheckAmt>",
   );
-  const projected = form8283Pdf.instances!(pending.f8283, base.filer, pending);
+  const projected = form8283Pdf.instances!(pending.f8283!, base.filer, {
+    f8283: pending.f8283!,
+    schedule_a: pending.schedule_a!,
+    f1040: pending.f1040!,
+  });
   assertEquals(projected.length, 2);
   assertEquals(projected.map((item) => item.section_b_appraised_fmv), [
     18_000,
@@ -233,10 +245,10 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
       buildMefBundle({
         ...pending,
         f8283: {
-          section_b_items: [items[0], {
-            ...items[1],
+          section_b_items: [typedItems[0], {
+            ...typedItems[1],
             donee_acknowledgment: {
-              ...items[1].donee_acknowledgment,
+              ...typedItems[1].donee_acknowledgment!,
               ein: "987654321",
             },
           }],
