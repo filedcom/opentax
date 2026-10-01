@@ -764,14 +764,13 @@ export const form8283Pdf: PdfFormDescriptor = {
       needsFmvReductionStatement(item)
     );
     if (
-      !elected &&
-      !shortTermReduction && !inventoryReduction && !creatorReduction &&
-      !manuscriptReduction &&
+      !elected && !shortTermReduction && !inventoryReduction &&
+      !creatorReduction && !manuscriptReduction &&
       !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
-      sectionA.length !== 1
+      sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
-        "Form 8283 PDF needs a reconciled Section A election, sourced ordinary-income reduction, or one ordinary gift",
+        "Form 8283 PDF needs a sourced reduction for each reduced Section A gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });

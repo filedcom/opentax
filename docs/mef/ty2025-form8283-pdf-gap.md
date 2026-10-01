@@ -266,3 +266,17 @@ every supplemental page is visually correct. Other AcroForm data, page
 appearance, and complete returns must be checked in the agreed PDF/full-test
 batch; local XSD, IRS
 business rules, and ATS acceptance remain separate gates.
+
+## Four distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The preview now projects up to four current-year purchased, noncapital gifts
+claimed at their unreduced FMV, one per official Section A row. Each row needs
+complete donee, acquisition, contribution, basis, and valuation-method facts;
+distinct declared similar-item groups must remain below the Section B
+appraisal threshold. Native MeF and the preview reconcile the complete Form
+8283 inventory with finalized Schedule A and itemized Form 1040, and native
+MeF rejects a changed item against the pending source. The authored four-row
+fixture totals $5,500 and includes changed return, changed native source, and
+changed group fixtures for the deferred bulk pass. The route does not cover
+mixed Section A/B, more than four Section A rows, capital-gain property, or
+actual source authentication.

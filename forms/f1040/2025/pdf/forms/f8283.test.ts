@@ -815,6 +815,79 @@ Deno.test("Form 8283 PDF prints one reconciled ordinary Section A gift", () => {
   );
 });
 
+Deno.test("Form 8283 carries four distinct unreduced Section A gifts through Schedule A, MeF, and PDF", () => {
+  const base = ordinaryPending().f8283.section_a_items[0];
+  const amounts = [700, 1_200, 1_500, 2_100];
+  const form = {
+    section_a_items: amounts.map((amount, index) => ({
+      ...base,
+      property_description: `Purchased used property lot ${index + 1}`,
+      donee_organization_name: `Community charity ${index + 1}`,
+      donee_organization_us_address: {
+        ...base.donee_organization_us_address,
+        line1: `${index + 1} Charity Lane`,
+      },
+      similar_item_group: `distinct property class ${index + 1}`,
+      fmv: amount,
+      deduction_claimed: amount,
+      cost_or_adjusted_basis: amount + 300,
+    })),
+  };
+  const pending = currentSectionAPending(form);
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 5_500);
+  const [instance] = form8283Pdf.instances?.(form, filer, pending) ?? [];
+  assertEquals(instance?.row1_claim, 700);
+  assertEquals(instance?.row2_claim, 1_200);
+  assertEquals(instance?.row3_claim, 1_500);
+  assertEquals(instance?.row4_claim, 2_100);
+  assertEquals(instance?.reduction_statements, []);
+  const [xml] = form8283.build(form, { pending });
+  for (const propertyId of ["A", "B", "C", "D"]) {
+    assertStringIncludes(xml, `<PropertyId>${propertyId}</PropertyId>`);
+  }
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(form, filer, {
+        ...pending,
+        f1040: {
+          ...pending.f1040,
+          line12e_itemized_deductions:
+            pending.f1040.line12e_itemized_deductions + 1,
+        },
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      form8283.build({
+        section_a_items: [
+          ...form.section_a_items.slice(0, 3),
+          { ...form.section_a_items[3], fmv: 2_000, deduction_claimed: 2_000 },
+        ],
+      }, { pending }),
+    Error,
+    "differ from the pending source",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(
+        {
+          section_a_items: [
+            ...form.section_a_items.slice(0, 3),
+            {
+              ...form.section_a_items[3],
+              similar_item_group: "distinct property class 1",
+            },
+          ],
+        },
+        filer,
+        pending,
+      ),
+    Error,
+  );
+});
+
 Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", () => {
   const form = {
     section_a_items: [

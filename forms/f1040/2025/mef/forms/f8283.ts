@@ -573,10 +573,12 @@ function requiredSignatureAttachment(
   if (!fileName) {
     throw new Error(`Form 8283 needs ${description} PDF`);
   }
-  if (!matchesAttachmentDescription(
-    context.attachmentDescriptionsByFileName?.[fileName],
-    description,
-  )) {
+  if (
+    !matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[fileName],
+      description,
+    )
+  ) {
     throw new Error(
       `Form 8283 needs a matching PDF described exactly as ${description}`,
     );
@@ -725,10 +727,12 @@ function requiredOrdinaryIncomeAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (!matchesAttachmentDescription(
-      context.attachmentDescriptionsByFileName?.[name],
-      description,
-    )) {
+    if (
+      !matchesAttachmentDescription(
+        context.attachmentDescriptionsByFileName?.[name],
+        description,
+      )
+    ) {
       throw new Error(
         `Form 8283 ordinary-income Section B gift needs ${description}`,
       );
@@ -812,10 +816,12 @@ function requiredUnrelatedUseAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (!matchesAttachmentDescription(
-      context.attachmentDescriptionsByFileName?.[name],
-      description,
-    )) {
+    if (
+      !matchesAttachmentDescription(
+        context.attachmentDescriptionsByFileName?.[name],
+        description,
+      )
+    ) {
       throw new Error(
         `Form 8283 unrelated-use Section B art needs ${description}`,
       );
@@ -1180,6 +1186,21 @@ export const form8283: MefFormDescriptor<
       );
     }
     const sectionA = parsed.section_a_items ?? [];
+    if (
+      sectionA.length > 1 && !elected &&
+      sectionA.every((item) => !needsFmvReductionStatement(item)) &&
+      context.pending?.f8283 !== undefined
+    ) {
+      if (
+        JSON.stringify(parsed) !==
+          JSON.stringify(inputSchema.parse(context.pending.f8283))
+      ) {
+        throw new Error(
+          "Form 8283 multiple ordinary Section A gifts differ from the pending source",
+        );
+      }
+      assertOrdinarySectionAReconciled(context);
+    }
     if (isSingleSectionANeedyVehicleUnreduced(parsed)) {
       assertNeedyVehicleUnreducedSource(parsed);
     }
