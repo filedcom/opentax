@@ -676,6 +676,14 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       input.filing_status === FilingStatus.Single &&
       regularBasisNet < 0 && regularBasisNet >= lossLimit &&
       amtBasisNet > 0;
+    const twoShortLotsLossToGain = basisRows.length === 2 &&
+      shortTermBasisRows.length === 2 &&
+      input.filing_status === FilingStatus.Single &&
+      basisRows.filter((row) => row.regular_gain < 0 && row.amt_gain > 0)
+          .length === 1 &&
+      basisRows.filter((row) => row.regular_gain > 0 && row.amt_gain > 0)
+          .length === 1 &&
+      regularBasisNet > 0 && amtBasisNet > 0;
     if (lossBasisRows.length > 0) {
       // With no other capital activity, same-term gains offset losses before
       // Schedule D line 21 applies its separate regular and AMT limits.
@@ -729,17 +737,19 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           !shortLossOffsetLongGain &&
           !longLossOffsetShortGain && !shortLossLongGainToAmtLoss &&
           !shortGainLongLossToAmtLoss &&
-          !shortLossLongGainToAmtLossStable && !singleShortLossToAmtGain) ||
+          !shortLossLongGainToAmtLossStable && !singleShortLossToAmtGain &&
+          !twoShortLotsLossToGain) ||
         (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
         ) && !sameTermGainToAmtLoss && !shortLossLongGainToAmtLoss &&
-          !singleShortLossToAmtGain) ||
+          !singleShortLossToAmtGain && !twoShortLotsLossToGain) ||
         !(fullyDeductibleNetLoss || cappedAuditedNetLoss ||
           positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
           longLossOffsetShortGain || sameTermGainToAmtLoss ||
           shortLossLongGainToAmtLoss || shortGainLongLossToAmtLoss ||
-          shortLossLongGainToAmtLossStable || singleShortLossToAmtGain) ||
+          shortLossLongGainToAmtLossStable || singleShortLossToAmtGain ||
+          twoShortLotsLossToGain) ||
         ((input.qualified_dividends ?? 0) > 0 &&
           !shortLossOffsetLongGain) ||
         (input.form4952_regular_election ?? 0) !== 0 ||
