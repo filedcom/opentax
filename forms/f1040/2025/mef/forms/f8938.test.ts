@@ -37,7 +37,36 @@ Deno.test("staged Form 8938 MeF projects Parts I-VI and Part IV exception", () =
   );
   assertStringIncludes(xml, "<ForeignFinclAccountGrp>");
   assertStringIncludes(xml, "<OtherForeignAssetGrp>");
+  assertStringIncludes(
+    xml,
+    "<ForeignAddress><AddressLine1Txt>10 Bankstrasse</AddressLine1Txt>",
+  );
+  assertStringIncludes(xml, "<CountryCd>CH</CountryCd>");
+  assertStringIncludes(xml, "<AddressLine1Txt>20 Market St</AddressLine1Txt>");
+  assertStringIncludes(xml, "<CorporationInd>true</CorporationInd>");
   assertEquals(xml.includes("PFIC-1"), false); // Part IV only, not repeated detail
+});
+
+Deno.test("staged Form 8938 MeF classifies a nonentity counterparty", () => {
+  const source = form8938Fixture();
+  const xml = form8938.build({
+    ...source,
+    assets: source.assets.map((asset, index) =>
+      index === 1
+        ? {
+          ...asset,
+          asset_type: "foreign_security_not_in_account",
+          foreign_entity_type: undefined,
+          issuer_or_counterparty_role: "counterparty",
+          issuer_or_counterparty_type: "corporation",
+          issuer_or_counterparty_is_us_person: false,
+        }
+        : asset
+    ),
+  });
+  assertStringIncludes(xml, "<AssetNotStockOfForeignEntGrp>");
+  assertStringIncludes(xml, "<CounterpartyInd>true</CounterpartyInd>");
+  assertStringIncludes(xml, "<ForeignPersonInd>true</ForeignPersonInd>");
 });
 
 Deno.test("staged Form 8938 MeF rejects tampered source and mismatched return status", () => {
@@ -51,9 +80,28 @@ Deno.test("staged Form 8938 MeF rejects tampered source and mismatched return st
     form8938.build({
       ...source,
       assets: source.assets.map((asset, index) =>
+        index === 0
+          ? {
+            ...asset,
+            institution_or_issuer_address: { line1: "10 Bankstrasse" },
+          }
+          : asset
+      ),
+    }), Error);
+  assertThrows(() =>
+    form8938.build({
+      ...source,
+      assets: source.assets.map((asset, index) =>
         index === 2
           ? { ...asset, filed_exception_form_reference: undefined }
           : asset
+      ),
+    }), Error);
+  assertThrows(() =>
+    form8938.build({
+      ...source,
+      assets: source.assets.map((asset, index) =>
+        index === 1 ? { ...asset, foreign_entity_type: undefined } : asset
       ),
     }), Error);
   assertThrows(() =>

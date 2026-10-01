@@ -51,6 +51,8 @@ const partIIIRows: readonly PdfFieldEntry[] = [13, 14].flatMap(
 );
 
 const summaryFields: readonly PdfFieldEntry[] = [
+  checked("hasAdditionalStatements", `${page1}.c1_1[0]`),
+  text("additionalStatementCount", `${page1}.f1_06[0]`),
   checked("specifiedIndividual", `${page1}.c1_2[0]`),
   text("depositAccountCount", `${page1}.f1_11[0]`, true),
   text("depositMaximumValueUsd", `${page1}.f1_12[0]`, true),
@@ -81,6 +83,7 @@ const accountFields: readonly PdfFieldEntry[] = [
   text("accountExchangeSource", `${page2}.f2_05[0]`),
   text("accountInstitution", `${page2}.f2_06[0]`),
   text("accountInstitutionAddress", `${page2}.f2_11[0]`),
+  text("accountInstitutionCityCountry", `${page2}.f2_12[0]`),
 ];
 
 const otherFields: readonly PdfFieldEntry[] = [
@@ -101,11 +104,24 @@ const otherFields: readonly PdfFieldEntry[] = [
   text("otherExchangeRate", `${page2}.f2_19[0]`),
   text("otherExchangeSource", `${page2}.f2_20[0]`),
   text("otherEntityName", `${page2}.f2_21[0]`),
+  checked("otherPartnership", `${page2}.c2_11[0]`),
   checked("otherCorporation", `${page2}.c2_11[1]`),
+  checked("otherTrust", `${page2}.c2_11[2]`),
+  checked("otherEstate", `${page2}.c2_11[3]`),
   text("otherEntityAddress", `${page2}.f2_26[0]`),
+  text("otherEntityCityCountry", `${page2}.f2_27[0]`),
   checked("otherIssuer", `${page2}.c2_12[0]`),
-  text("otherIssuerName", `${page2}.f2_29[0]`),
-  text("otherIssuerAddress", `${page2}.f2_30[0]`),
+  checked("otherCounterparty", `${page2}.c2_12[1]`),
+  checked("otherIndividual", `${page2}.c2_13[0]`),
+  checked("otherIssuerPartnership", `${page2}.c2_13[1]`),
+  checked("otherIssuerCorporation", `${page2}.c2_13[2]`),
+  checked("otherIssuerTrust", `${page2}.c2_13[3]`),
+  checked("otherIssuerEstate", `${page2}.c2_13[4]`),
+  checked("otherUSPerson", `${page2}.c2_14[0]`),
+  checked("otherForeignPerson", `${page2}.c2_14[1]`),
+  text("otherIssuerName", `${page2}.f2_28[0]`),
+  text("otherIssuerAddress", `${page2}.f2_29[0]`),
+  text("otherIssuerCityCountry", `${page2}.f2_30[0]`),
 ];
 
 function putTaxRows(
@@ -125,15 +141,123 @@ function putTaxRows(
   }
 }
 
-/** Staged Form 8938 PDF projection, limited to one Part V and one Part VI row. */
+type ProjectedAsset = ReturnType<
+  typeof projectForm8938
+>["input"]["assets"][number];
+function addressLines(
+  address: ProjectedAsset["institution_or_issuer_address"],
+) {
+  return {
+    street: [address.line1, address.line2].filter(Boolean).join(" "),
+    cityCountry: [
+      address.city,
+      address.province_or_state,
+      address.country,
+      address.postal_code,
+    ].filter(Boolean).join(", "),
+  };
+}
+
+function detailFields(
+  account: ProjectedAsset | undefined,
+  other: ProjectedAsset | undefined,
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (account) {
+    const address = addressLines(account.institution_or_issuer_address);
+    Object.assign(fields, {
+      accountDeposit: account.asset_type === ForeignAssetType.DepositAccount,
+      accountCustodial:
+        account.asset_type === ForeignAssetType.CustodialAccount,
+      accountIdentifier: account.asset_identifier,
+      accountOpened: !!account.opened_or_acquired_date?.startsWith("2025-"),
+      accountClosed: !!account.closed_or_disposed_date,
+      accountJointSpouse: account.owner === "joint_with_spouse",
+      accountNoTaxItem: account.tax_items.length === 0,
+      accountMaximumValueUsd: account.maximum_value_usd,
+      accountUsedFx: account.currency_code !== "USD",
+      accountCurrency: account.currency_code === "USD"
+        ? undefined
+        : account.currency_code,
+      accountExchangeRate: account.currency_code === "USD"
+        ? undefined
+        : String(account.year_end_exchange_rate_usd_per_unit),
+      accountExchangeSource: account.currency_code === "USD" ||
+          /U\.S\. Treasury|Fiscal Service/i.test(account.exchange_rate_source)
+        ? undefined
+        : account.exchange_rate_source,
+      accountInstitution: account.institution_or_issuer_name,
+      accountInstitutionAddress: address.street,
+      accountInstitutionCityCountry: address.cityCountry,
+    });
+  }
+  if (other) {
+    const address = addressLines(other.institution_or_issuer_address);
+    const isEntity = other.asset_type === ForeignAssetType.ForeignStock ||
+      other.asset_type === ForeignAssetType.ForeignEntityInterest ||
+      other.asset_type === ForeignAssetType.ForeignTrustInterest;
+    const value = other.maximum_value_usd;
+    Object.assign(fields, {
+      otherDescription: other.description,
+      otherIdentifier: other.asset_identifier,
+      otherAcquired: other.opened_or_acquired_date?.startsWith("2025-")
+        ? other.opened_or_acquired_date
+        : undefined,
+      otherDisposed: other.closed_or_disposed_date,
+      otherJointSpouse: other.owner === "joint_with_spouse",
+      otherNoTaxItem: other.tax_items.length === 0,
+      otherValueBand1: value <= 50_000,
+      otherValueBand2: value > 50_000 && value <= 100_000,
+      otherValueBand3: value > 100_000 && value <= 150_000,
+      otherValueBand4: value > 150_000 && value <= 200_000,
+      otherMaximumOver200000: value > 200_000 ? value : undefined,
+      otherUsedFx: other.currency_code !== "USD",
+      otherCurrency: other.currency_code === "USD"
+        ? undefined
+        : other.currency_code,
+      otherExchangeRate: other.currency_code === "USD"
+        ? undefined
+        : String(other.year_end_exchange_rate_usd_per_unit),
+      otherExchangeSource: other.currency_code === "USD" ||
+          /U\.S\. Treasury|Fiscal Service/i.test(other.exchange_rate_source)
+        ? undefined
+        : other.exchange_rate_source,
+      otherEntityName: isEntity ? other.institution_or_issuer_name : undefined,
+      otherPartnership: other.foreign_entity_type === "partnership",
+      otherCorporation: other.foreign_entity_type === "corporation",
+      otherTrust: other.foreign_entity_type === "trust",
+      otherEstate: other.foreign_entity_type === "estate",
+      otherEntityAddress: isEntity ? address.street : undefined,
+      otherEntityCityCountry: isEntity ? address.cityCountry : undefined,
+      otherIssuer: other.issuer_or_counterparty_role === "issuer",
+      otherCounterparty: other.issuer_or_counterparty_role === "counterparty",
+      otherIndividual: other.issuer_or_counterparty_type === "individual",
+      otherIssuerPartnership:
+        other.issuer_or_counterparty_type === "partnership",
+      otherIssuerCorporation:
+        other.issuer_or_counterparty_type === "corporation",
+      otherIssuerTrust: other.issuer_or_counterparty_type === "trust",
+      otherIssuerEstate: other.issuer_or_counterparty_type === "estate",
+      otherUSPerson: other.issuer_or_counterparty_is_us_person === true,
+      otherForeignPerson: other.issuer_or_counterparty_is_us_person === false,
+      otherIssuerName: !isEntity ? other.institution_or_issuer_name : undefined,
+      otherIssuerAddress: !isEntity ? address.street : undefined,
+      otherIssuerCityCountry: !isEntity ? address.cityCountry : undefined,
+    });
+  }
+  return fields;
+}
+
+/** Staged Form 8938 PDF with one Part V and one Part VI asset per detail page. */
 export const form8938Pdf: PdfFormDescriptor = {
   pendingKey: "f8938",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8938.pdf",
   pageIndices(fields) {
-    const projected = projectForm8938(fields);
-    return projected.accounts.length + projected.otherAssets.length
-      ? [0, 1]
-      : [0];
+    return fields.__form8938Page === "continuation"
+      ? [1]
+      : fields.__form8938Page === "partIVOnly"
+      ? [0]
+      : [0, 1];
   },
   fields: [
     text("calendarYearSuffix", `${page1}.Pg1Header[0].f1_01[0]`),
@@ -148,11 +272,34 @@ export const form8938Pdf: PdfFormDescriptor = {
   includeWhen(fields) {
     return Array.isArray(fields.assets) && fields.assets.length > 0;
   },
+  instances(fields) {
+    const projected = projectForm8938(fields);
+    const copies = Math.max(
+      projected.accounts.length,
+      projected.otherAssets.length,
+      1,
+    );
+    return Array.from({ length: copies }, (_, index) => ({
+      ...fields,
+      ...(index === 0
+        ? {
+          hasAdditionalStatements: copies > 1,
+          additionalStatementCount: copies > 1 ? copies - 1 : undefined,
+        }
+        : {}),
+      ...detailFields(
+        projected.accounts[index],
+        projected.otherAssets[index],
+      ),
+      __form8938Page: index > 0
+        ? "continuation"
+        : projected.accounts.length + projected.otherAssets.length === 0
+        ? "partIVOnly"
+        : "main",
+    }));
+  },
   projectFields(raw) {
     const projected = projectForm8938(raw);
-    if (projected.accounts.length > 1 || projected.otherAssets.length > 1) {
-      throw new Error("Form 8938 PDF needs Part V/VI continuation pages");
-    }
     const { summary } = projected;
     const fields: Record<string, unknown> = {
       calendarYearSuffix: "25",
@@ -171,80 +318,6 @@ export const form8938Pdf: PdfFormDescriptor = {
     }
     putTaxRows(fields, 13, projected.taxItems.account);
     putTaxRows(fields, 14, projected.taxItems.other);
-    const account = projected.accounts[0];
-    if (account) {
-      Object.assign(fields, {
-        accountDeposit: account.asset_type === ForeignAssetType.DepositAccount,
-        accountCustodial:
-          account.asset_type === ForeignAssetType.CustodialAccount,
-        accountIdentifier: account.asset_identifier,
-        accountOpened: !!account.opened_or_acquired_date?.startsWith("2025-"),
-        accountClosed: !!account.closed_or_disposed_date,
-        accountJointSpouse: account.owner === "joint_with_spouse",
-        accountNoTaxItem: account.tax_items.length === 0,
-        accountMaximumValueUsd: account.maximum_value_usd,
-        accountUsedFx: account.currency_code !== "USD",
-        accountCurrency: account.currency_code === "USD"
-          ? undefined
-          : account.currency_code,
-        accountExchangeRate: account.currency_code === "USD"
-          ? undefined
-          : account.year_end_exchange_rate_usd_per_unit,
-        accountExchangeSource: account.currency_code === "USD" ||
-            /U\.S\. Treasury|Fiscal Service/i.test(account.exchange_rate_source)
-          ? undefined
-          : account.exchange_rate_source,
-        accountInstitution: account.institution_or_issuer_name,
-        accountInstitutionAddress: account.institution_or_issuer_address,
-      });
-    }
-    const other = projected.otherAssets[0];
-    if (other) {
-      const isEntity = other.asset_type === ForeignAssetType.ForeignStock ||
-        other.asset_type === ForeignAssetType.ForeignEntityInterest ||
-        other.asset_type === ForeignAssetType.ForeignTrustInterest;
-      const value = other.maximum_value_usd;
-      Object.assign(fields, {
-        otherDescription: other.description,
-        otherIdentifier: other.asset_identifier,
-        otherAcquired: other.opened_or_acquired_date?.startsWith("2025-")
-          ? other.opened_or_acquired_date
-          : undefined,
-        otherDisposed: other.closed_or_disposed_date,
-        otherJointSpouse: other.owner === "joint_with_spouse",
-        otherNoTaxItem: other.tax_items.length === 0,
-        otherValueBand1: value <= 50_000,
-        otherValueBand2: value > 50_000 && value <= 100_000,
-        otherValueBand3: value > 100_000 && value <= 150_000,
-        otherValueBand4: value > 150_000 && value <= 200_000,
-        otherMaximumOver200000: value > 200_000 ? value : undefined,
-        otherUsedFx: other.currency_code !== "USD",
-        otherCurrency: other.currency_code === "USD"
-          ? undefined
-          : other.currency_code,
-        otherExchangeRate: other.currency_code === "USD"
-          ? undefined
-          : other.year_end_exchange_rate_usd_per_unit,
-        otherExchangeSource: other.currency_code === "USD" ||
-            /U\.S\. Treasury|Fiscal Service/i.test(other.exchange_rate_source)
-          ? undefined
-          : other.exchange_rate_source,
-        otherEntityName: isEntity
-          ? other.institution_or_issuer_name
-          : undefined,
-        otherCorporation: other.asset_type === ForeignAssetType.ForeignStock,
-        otherEntityAddress: isEntity
-          ? other.institution_or_issuer_address
-          : undefined,
-        otherIssuer: !isEntity,
-        otherIssuerName: !isEntity
-          ? other.institution_or_issuer_name
-          : undefined,
-        otherIssuerAddress: !isEntity
-          ? other.institution_or_issuer_address
-          : undefined,
-      });
-    }
-    return fields;
+    return { ...raw, ...fields };
   },
 };

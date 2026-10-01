@@ -17,14 +17,16 @@ of TY2025 or at least 330 full foreign days in an identified 12-month period
 ending in TY2025; a bare `lives_abroad` flag is insufficient.
 
 Each ledger row identifies the account/asset and taxpayer/spouse/joint
-ownership; institution or issuer and country; year-end and maximum values in
-original currency and USD; the December 31 exchange rate and its source; a Part
-IV exception with an actual filed-form reference, if applicable; and tax items
-with their filed form and line. The source contract rejects valuation
-mismatches, duplicate identities, missing MFS spouse status for joint assets,
-and an aggregate outside the possible peak range. The maximum contemporaneous
-aggregate remains sourced separately because summing the maximum values of
-several assets can overstate the value held at any one time.
+ownership; institution or issuer and structured foreign address; year-end and
+maximum values in original currency and USD; the December 31 exchange rate and
+its source; Part VI foreign entity type or issuer/counterparty role, type and
+U.S./foreign person status; a Part IV exception with an actual filed-form
+reference, if applicable; and tax items with their filed form and line. The
+source contract rejects valuation mismatches, duplicate identities, missing MFS
+spouse status for joint assets, and an aggregate outside the possible peak
+range. The maximum contemporaneous aggregate remains sourced separately because
+summing the maximum values of several assets can overstate the value held at any
+one time.
 
 For the **threshold**, an MFS asset jointly owned by two specified spouses is
 counted at half value, whereas its complete value remains in the asset ledger
@@ -44,10 +46,10 @@ output.
 ## Filing boundary
 
 **MeF and PDF export remain guarded** for nonempty asset lists or positive
-aggregate values. The new source contract does not produce a native Form 8938.
-Before opening export, build Parts I–VI and continuation pages, join return
-identity/status and tax-item lines, reconcile Part IV forms to actually filed
-attachments, and verify statement/FX source bytes and selected MeF/XSD/business
-rules. Asset inclusion, exceptions, foreign trusts/pensions, possession
-residents and partial-year dual-resident scenarios need full rules. A positive
-threshold decision alone is not a filed Form 8938.
+aggregate values. Unregistered MeF/PDF projections now include Parts I–VI
+details, foreign addresses and repeated PDF detail pages. Before opening export,
+join return identity/status and tax-item lines, reconcile Part IV forms to
+actually filed attachments, and verify statement/FX source bytes and selected
+MeF/XSD/business rules. Asset inclusion, exceptions, foreign trusts/pensions,
+possession residents and partial-year dual-resident scenarios need full rules. A
+positive threshold decision alone is not a filed Form 8938.

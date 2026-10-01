@@ -50,6 +50,17 @@ const check = (tag: string, value: boolean) =>
   value ? element(tag, "true") : "";
 const businessName = (value: string) =>
   elements("BusinessName", [element("BusinessNameLine1Txt", value)]);
+const foreignAddress = (
+  address: ProjectedAsset["institution_or_issuer_address"],
+) =>
+  elements("ForeignAddress", [
+    element("AddressLine1Txt", address.line1),
+    element("AddressLine2Txt", address.line2),
+    element("CityNm", address.city),
+    element("ProvinceOrStateNm", address.province_or_state),
+    element("CountryCd", address.country),
+    element("ForeignPostalCd", address.postal_code),
+  ]);
 const exchangeRate = (asset: ProjectedAsset): string[] => [
   element(
     "ExchangeRateUsedInd",
@@ -95,8 +106,7 @@ function accountGroup(asset: ProjectedAsset): string {
     element("MaxAccountValueDurTYAmt", asset.maximum_value_usd),
     ...exchangeRate(asset),
     businessName(asset.institution_or_issuer_name),
-    // The source currently has one unstructured address; native XSD needs a
-    // parsed ForeignAddress/USAddress before this staged form can be registered.
+    foreignAddress(asset.institution_or_issuer_address),
   ]);
 }
 
@@ -132,11 +142,42 @@ function otherGroup(asset: ProjectedAsset): string {
         element("BusinessNameLine1Txt", asset.institution_or_issuer_name),
       ])
       : "",
-    check("CorporationInd", asset.asset_type === ForeignAssetType.ForeignStock),
+    check("PartnershipInd", asset.foreign_entity_type === "partnership"),
+    check("CorporationInd", asset.foreign_entity_type === "corporation"),
+    check("TrustInd", asset.foreign_entity_type === "trust"),
+    check("EstateInd", asset.foreign_entity_type === "estate"),
+    isEntity ? foreignAddress(asset.institution_or_issuer_address) : "",
     !isEntity
       ? elements("AssetNotStockOfForeignEntGrp", [
         businessName(asset.institution_or_issuer_name),
-        check("IssuerInd", true),
+        check("IssuerInd", asset.issuer_or_counterparty_role === "issuer"),
+        check(
+          "CounterpartyInd",
+          asset.issuer_or_counterparty_role === "counterparty",
+        ),
+        check(
+          "IndividualInd",
+          asset.issuer_or_counterparty_type === "individual",
+        ),
+        check(
+          "PartnershipInd",
+          asset.issuer_or_counterparty_type === "partnership",
+        ),
+        check(
+          "CorporationInd",
+          asset.issuer_or_counterparty_type === "corporation",
+        ),
+        check("TrustInd", asset.issuer_or_counterparty_type === "trust"),
+        check("EstateInd", asset.issuer_or_counterparty_type === "estate"),
+        check(
+          "USPersonInd",
+          asset.issuer_or_counterparty_is_us_person === true,
+        ),
+        check(
+          "ForeignPersonInd",
+          asset.issuer_or_counterparty_is_us_person === false,
+        ),
+        foreignAddress(asset.institution_or_issuer_address),
       ])
       : "",
   ]);

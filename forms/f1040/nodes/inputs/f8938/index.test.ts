@@ -14,7 +14,12 @@ function asset(overrides: Record<string, unknown> = {}) {
     asset_identifier: "CH-1001",
     country: "CH",
     institution_or_issuer_name: "Example Swiss Bank",
-    institution_or_issuer_address: "Zurich, Switzerland",
+    institution_or_issuer_address: {
+      line1: "10 Bankstrasse",
+      city: "Zurich",
+      country: "CH",
+      postal_code: "8001",
+    },
     owner: "taxpayer",
     currency_code: "CHF",
     year_end_exchange_rate_usd_per_unit: 1.25,
@@ -151,6 +156,7 @@ Deno.test("f8938: excepted Part IV asset still counts toward individual threshol
   const value = parsed(input({
     assets: [asset({
       asset_type: ForeignAssetType.ForeignStock,
+      foreign_entity_type: "corporation",
       excepted_on_form: "8621",
       filed_exception_form_reference: "Form 8621, PFIC A, tax year 2025",
     })],
@@ -170,6 +176,7 @@ Deno.test("f8938: multi-asset peak is contemporaneous, not the sum of per-asset 
         asset_id: "stock-1",
         asset_identifier: "DE-STOCK-1",
         asset_type: ForeignAssetType.ForeignStock,
+        foreign_entity_type: "corporation",
         country: "DE",
         currency_code: "USD",
         year_end_exchange_rate_usd_per_unit: 1,
@@ -193,6 +200,12 @@ Deno.test("f8938: rejects tampered currency, aggregate, ownership and Part IV ev
       { maximum_value_usd: 70_000 },
       { exchange_rate_date: "2025-06-30" },
       { country: "CHE" },
+      {
+        institution_or_issuer_address: {
+          line1: "10 Bankstrasse",
+          country: "CH",
+        },
+      },
       { excepted_on_form: "8621" },
       { closed_or_disposed_date: "2025-05-01" },
     ]

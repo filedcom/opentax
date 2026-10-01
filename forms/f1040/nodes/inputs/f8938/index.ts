@@ -19,6 +19,15 @@ export enum ForeignAssetType {
 }
 
 const money = z.number().finite().nonnegative();
+const foreignAddress = z.object({
+  line1: z.string().max(35).regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
+  line2: z.string().max(35).regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/)
+    .optional(),
+  city: z.string().max(50).regex(/^[A-Za-z]( ?[A-Za-z])*$/),
+  province_or_state: z.string().min(1).max(17).optional(),
+  country: z.string().regex(/^[A-Z]{2}$/),
+  postal_code: z.string().min(1).max(16).optional(),
+});
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
   (value) => {
     const parsed = Date.parse(`${value}T00:00:00Z`);
@@ -35,7 +44,19 @@ const assetSchema = z.object({
   asset_identifier: z.string().min(1), // account number or asset identifier
   country: z.string().regex(/^[A-Z]{2}$/),
   institution_or_issuer_name: z.string().min(1),
-  institution_or_issuer_address: z.string().min(1),
+  institution_or_issuer_address: foreignAddress,
+  // Form 8938 Part VI lines 35c and 36a-c, when the asset is reported there.
+  foreign_entity_type: z.enum(["partnership", "corporation", "trust", "estate"])
+    .optional(),
+  issuer_or_counterparty_role: z.enum(["issuer", "counterparty"]).optional(),
+  issuer_or_counterparty_type: z.enum([
+    "individual",
+    "partnership",
+    "corporation",
+    "trust",
+    "estate",
+  ]).optional(),
+  issuer_or_counterparty_is_us_person: z.boolean().optional(),
   owner: z.enum([
     "taxpayer",
     "spouse",
@@ -72,6 +93,49 @@ const assetSchema = z.object({
     filed_form_and_line: z.string().min(1),
   })),
 }).superRefine((asset, ctx) => {
+  const partV = asset.asset_type === ForeignAssetType.DepositAccount ||
+    asset.asset_type === ForeignAssetType.CustodialAccount;
+  const entity = asset.asset_type === ForeignAssetType.ForeignStock ||
+    asset.asset_type === ForeignAssetType.ForeignEntityInterest ||
+    asset.asset_type === ForeignAssetType.ForeignTrustInterest;
+  if (!partV && entity && !asset.foreign_entity_type) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["foreign_entity_type"],
+      message: "Part VI foreign entity type is required",
+    });
+  }
+  if (
+    asset.asset_type === ForeignAssetType.ForeignStock &&
+    asset.foreign_entity_type !== "corporation"
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["foreign_entity_type"],
+      message: "Foreign stock must identify a corporation",
+    });
+  }
+  if (
+    asset.asset_type === ForeignAssetType.ForeignTrustInterest &&
+    asset.foreign_entity_type !== "trust"
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["foreign_entity_type"],
+      message: "Foreign trust interest must identify a trust",
+    });
+  }
+  if (
+    !partV && !entity &&
+    (!asset.issuer_or_counterparty_role || !asset.issuer_or_counterparty_type ||
+      asset.issuer_or_counterparty_is_us_person === undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["issuer_or_counterparty_role"],
+      message: "Part VI issuer or counterparty classification is required",
+    });
+  }
   if (
     asset.currency_code === "USD" &&
     asset.year_end_exchange_rate_usd_per_unit !== 1
