@@ -277,7 +277,8 @@ function simplePolicyIncomeAmounts(
       householdSize !== 1 &&
       !(verifiedFamilyPolicies &&
         ((householdSize === 2 && policyCount <= 2) ||
-          (householdSize === 3 && policyCount === 3))))
+          (householdSize === 3 &&
+            (policyCount === 1 || policyCount === 3)))))
   ) {
     throw new Error(
       "Form 8962 below-400%-FPL filing needs a verified one-person or family-policy route",
@@ -1766,6 +1767,8 @@ function reconcileSimplePolicyMonths(
     policies.length === 2;
   const threePersonPolicies = fields.household_size === 3 &&
     policies.length === 3;
+  const onePolicyThreePerson = fields.household_size === 3 &&
+    policies.length === 1;
   const twoStateFamilyPolicies = twoPersonPolicies &&
     new Set(policies.map((policy) => policy.coverage_state)).size === 2;
   const dependentMagi = reconcileDependentMagi(
@@ -1776,7 +1779,7 @@ function reconcileSimplePolicyMonths(
   const householdIncome = form1040.data.line11_agi + dependentMagi;
   const povertyLine = reconcilePovertyTable(fields, context);
   if (
-    policies.length > 1 &&
+    (policies.length > 1 || onePolicyThreePerson) &&
     householdIncome < 4 * povertyLine &&
     (!general.success ||
       general.data.filing_status !== SourceFilingStatus.Single ||
@@ -1799,7 +1802,7 @@ function reconcileSimplePolicyMonths(
       general.data.ptc_below_100_fpl_status?.basis ===
         "marketplace_estimate" &&
       (fields.total_advance_ptc ?? 0) > 0,
-    twoPersonPolicies || threePersonPolicies,
+    twoPersonPolicies || threePersonPolicies || onePolicyThreePerson,
   );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
@@ -1833,7 +1836,8 @@ function reconcileSimplePolicyMonths(
     rows == null || rows.length !== 12 ||
     (fields.household_size !== 1 && fields.household_size !== 2 &&
       fields.household_size !== 3) ||
-    (fields.household_size === 3 && !threePersonPolicies) ||
+    (fields.household_size === 3 &&
+      !threePersonPolicies && !onePolicyThreePerson) ||
     fields.annual_premium !== undefined ||
     fields.annual_slcsp !== undefined ||
     fields.annual_aptc !== undefined ||

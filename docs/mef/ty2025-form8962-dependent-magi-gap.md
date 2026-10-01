@@ -1,5 +1,25 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One policy covering three family members for part of the year (2026-10-01, unrun)
+
+The monthly positive-APTC route now accepts one same-state Form 1095-A policy
+covering a single filer and two distinct claimed dependents for fewer than
+twelve months. The two dependents' identified filed returns and Forms 1099-INT
+establish Worksheet 1-2 modified AGI, and all three covered SSNs must match the
+tax family. At 200% of the three-person poverty line, a January–June policy with
+$500 monthly premium, $1,200 SLCSP, and $100 APTC computes $3,000 credit, $600
+APTC, and $2,400 on Schedule 3 line 9 and Form 1040 line 31. Uncovered months
+have zero 1095-A amounts, no native monthly group, and blank PDF rows. Native
+and PDF export independently reconcile the issued policy, dependent source
+returns, monthly Form 8962 rows, and final return. Positive and
+policy/dependent/return tampering fixtures are authored for the deferred bulk
+test. This follows the
+[2025 Form 8962 line 10 and lines 12–23
+instructions](https://www.irs.gov/instructions/i8962): fewer than twelve covered
+months use the monthly calculation. Changed coverage-family membership within a
+covered policy, other dependent income patterns, and source-document
+authentication remain open.
+
 ## One monthly no-APTC policy covering filer and required-filing dependent (2026-10-01, unrun)
 
 A single filer and one claimed dependent can now use monthly Form 8962 lines
@@ -36,8 +56,7 @@ dependents. Native Form 8962 checks the three-person poverty line, annual
 credit or repayment, Schedule 3/2, and final Form 1040; PDF projection replays
 the same source and return checks. Net-credit, excess-APTC, threshold,
 identity, duplicate-reference, policy-family, and final-return fixtures are
-authored but unrun. Dependent source bytes, other income patterns, partial-year
-or multiple policies, and below-400%-FPL one-policy family cases remain open.
+authored but unrun. Dependent source bytes, other income patterns, and wider policy combinations remain open.
 
 ## One W-2 plus one Form 1099-INT (2026-10-01, unrun)
 
