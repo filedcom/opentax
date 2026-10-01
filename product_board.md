@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **349 completed bounded items** and their exact limits live in the
+The **350 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 34 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 294 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 295 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -38,12 +38,11 @@ Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
-**Current implementation batch.** Form 1098 Copy B evidence binding, Form 1116
-Schedule C current-year reconciliation, Form 8582 prior-year rental PAL import,
-and Form 8962 self-employed health-insurance deduction/PTC ordering are in
-progress. These are not counted as completed until their changes and bounded
-limits are recorded in the ledger. The agreed full test batch remains deferred
-until implementation is finished.
+**Current implementation batch.** Form 1116 Schedule C current-year
+reconciliation is recorded in the ledger as staged and export-gated. Form 1098
+Copy B evidence binding, Form 8582 prior-year rental PAL import, and Form 8962
+self-employed health-insurance deduction/PTC ordering remain in progress.
+The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
