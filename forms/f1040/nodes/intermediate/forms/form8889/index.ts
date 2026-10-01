@@ -1863,6 +1863,25 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         spouse.family_allocation_source_reference &&
       (primary.allocated_family_limit ?? 0) +
             (spouse.allocated_family_limit ?? 0) === medicareSharedLimit;
+    const oneSelfOnlyMedicareSpouse = medicareOwnerIndex >= 0 &&
+      paired.filter((owner) => owner.medicare_enrollment).length === 1 &&
+      medicareOwner?.eligible_hdhp_coverage_by_month?.every((month, index) =>
+          index < sharedMedicareMonths
+            ? month === CoverageType.SelfOnly
+            : month === null
+        ) === true &&
+      continuingOwner?.eligible_hdhp_coverage_by_month?.every((month) =>
+          month === CoverageType.SelfOnly
+        ) === true &&
+      paired.every((owner) =>
+        owner.married_at_year_end === true &&
+        owner.spouse_has_separate_hsa === true &&
+        owner.last_month_rule_elected === false &&
+        owner.allocated_family_limit === undefined &&
+        owner.family_allocation_source_reference === undefined &&
+        (owner.archer_msa_distributions ?? 0) === 0 &&
+        owner.testing_period_failure === undefined
+      );
     const otherCoverageOwnerIndex = paired.findIndex((owner) =>
       owner.other_disqualifying_coverage !== undefined
     );
@@ -1934,9 +1953,12 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       (primary.allocated_family_limit ?? 0) +
             (spouse.allocated_family_limit ?? 0) ===
         Math.round(cfg.hsaFamilyLimit * deemedFamilyMonths / 12);
-    if (medicareOwnerIndex >= 0 && !oneMedicareSpouse) {
+    if (
+      medicareOwnerIndex >= 0 && !oneMedicareSpouse &&
+      !oneSelfOnlyMedicareSpouse
+    ) {
       throw new Error(
-        "Form 8889 Medicare enrollment needs one sourced onset and the continuing spouse's full-year family coverage",
+        "Form 8889 Medicare enrollment needs one sourced onset and the continuing spouse's full-year matching HDHP coverage",
       );
     }
     if (otherCoverageOwnerIndex >= 0 && !oneOtherCoverageSpouse) {
@@ -1947,6 +1969,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     if (
       !separateSelfOnlyMonths && !matchingFamilyAllocation &&
       !fullYearDeemedAllocation && !oneMedicareSpouse &&
+      !oneSelfOnlyMedicareSpouse &&
       !oneOtherCoverageSpouse
     ) {
       throw new Error(

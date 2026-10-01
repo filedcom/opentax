@@ -616,6 +616,40 @@ export function reconcilePairedForm8889(
     (source.allocated_family_limit ?? 0) +
           (source.spouse_hsa.allocated_family_limit ?? 0) ===
       Math.round(8_550 * (firstIneligible - 1) / 12);
+  const medicareSelfOnlyMonths = firstIneligible !== undefined &&
+    owners.filter((owner) => owner.medicare_enrollment).length === 1 &&
+    medicareOwner?.eligible_hdhp_coverage_by_month?.every((month, index) =>
+        index < firstIneligible - 1 ? month === "self_only" : month === null
+      ) === true &&
+    fullYearCoverage(
+      continuingOwner?.eligible_hdhp_coverage_by_month,
+      "self_only",
+    ) &&
+    owners.every((owner) =>
+      owner.married_at_year_end === true &&
+      owner.spouse_has_separate_hsa === true &&
+      owner.last_month_rule_elected === false &&
+      owner.age_55_or_older === false &&
+      owner.allocated_family_limit === undefined &&
+      owner.family_allocation_source_reference === undefined &&
+      (owner.archer_msa_distributions ?? 0) === 0 &&
+      (owner.taxpayer_hsa_contributions ?? 0) > 0 &&
+      owner.employer_hsa_contributions === undefined &&
+      owner.employer_contribution_years === undefined &&
+      owner.employer_excess_treatment === undefined &&
+      owner.prior_year_hsa_excess === undefined &&
+      owner.post_year_personal_excess_withdrawal === undefined &&
+      owner.qualified_hsa_funding_distributions === undefined &&
+      owner.hsa_excluded_distributions === undefined &&
+      owner.testing_period_failure === undefined &&
+      (owner.hsa_distributions ?? 0) === 0 &&
+      owner.age_65_exception_evidence === undefined &&
+      owner.disability_exception_evidence === undefined
+    ) &&
+    (medicareOwner?.taxpayer_hsa_contributions ?? 0) <=
+      Math.round(4_300 * (firstIneligible - 1) / 12) &&
+    (continuingOwner?.taxpayer_hsa_contributions ?? 0) <= 4_300 &&
+    !source.w2_code_w_entries?.length;
   const otherCoverageOwner = owners.find((owner) =>
     owner.other_disqualifying_coverage
   );
@@ -658,6 +692,7 @@ export function reconcilePairedForm8889(
         .length === 1;
   if (
     !selfOnly && !family && !deemed && !medicareMixedMonths &&
+    !medicareSelfOnlyMonths &&
     !otherCoverageMixedMonths &&
     !pairedPriorRecapture
   ) {

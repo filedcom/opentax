@@ -1,5 +1,27 @@
 # TY2025 Form 8889 paired Medicare mixed months (build pass, unrun)
 
+## One self-only owner enrolls in Medicare midyear (2026-10-01 build pass, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+put zero in the line 3 limitation worksheet for a Medicare-enrolled month and
+direct separate Forms 8889 for spouses with separate HSAs. A bounded paired
+self-only route now accepts either owner's sourced July Medicare onset, six
+self-only eligible months followed by six ineligible months, and the other
+owner's full-year self-only eligibility. Each owner supplies a separate
+twelve-month array; no family limit is allocated. The Medicare owner's limit
+is $2,150 and the continuing owner's is $4,300. Their permitted personal
+contributions produce separate Form 8889 deductions that sum once on Schedule
+1 line 13 and Form 1040 line 10. Native MeF and PDF recompute both copies,
+verify owner identity and printed limits, and reconcile the filed adjustment.
+Primary/spouse positive and onset, contribution, printed-limit, and return
+tamper fixtures are authored but unrun.
+
+This path is limited to age-under-55 personal contributions within both
+owners' limits, no last-month election, family month, distribution, employer
+funding, prior excess, or testing-period event. No Form 5329 excess is created.
+The Medicare notice reference is entered evidence, not authenticated bytes;
+current excess and other mixed-event routes remain open.
+
 The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
 assign zero to a month of Medicare enrollment in the line 3 worksheet. Line 6
 allocates family-coverage months between spouses with separate HSAs and adds
