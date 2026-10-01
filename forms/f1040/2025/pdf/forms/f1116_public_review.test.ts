@@ -259,29 +259,40 @@ Deno.test("Form 1116 apportions standard deduction across foreign box 1 and dome
     { pending: result.pending },
   );
   assert(xml.includes("<GrossIncomeAmt>60000</GrossIncomeAmt>"));
-  assert(xml.includes("<ProRataDeductionsNotRelatedAmt>13125</ProRataDeductionsNotRelatedAmt>"));
-  assertThrows(() => form1116.build(
-    parent as Parameters<typeof form1116.build>[0],
-    {
-      pending: {
-        ...result.pending,
-        f1099int: {
-          ...result.pending.f1099int,
-          f1099ints: [{
-            ...(result.pending.f1099int?.f1099ints as Record<string, unknown>[])[0],
-            box3: 9_000,
-          }],
+  assert(
+    xml.includes(
+      "<ProRataDeductionsNotRelatedAmt>13125</ProRataDeductionsNotRelatedAmt>",
+    ),
+  );
+  assertThrows(() =>
+    form1116.build(
+      parent as Parameters<typeof form1116.build>[0],
+      {
+        pending: {
+          ...result.pending,
+          f1099int: {
+            ...result.pending.f1099int,
+            f1099ints: [{
+              ...(result.pending.f1099int?.f1099ints as Record<
+                string,
+                unknown
+              >[])[0],
+              box3: 9_000,
+            }],
+          },
         },
       },
-    },
-  ));
-  assertThrows(() => form1116Pdf.projectFields?.(parent, {
-    ...result.pending,
-    f1040: {
-      ...result.pending.f1040,
-      line2b_taxable_interest: 59_000,
-    },
-  }));
+    )
+  );
+  assertThrows(() =>
+    form1116Pdf.projectFields?.(parent, {
+      ...result.pending,
+      f1040: {
+        ...result.pending.f1040,
+        line2b_taxable_interest: 59_000,
+      },
+    })
+  );
 });
 
 Deno.test("Form 1116 public PDF route rejects mixed income, wrong worldwide gross, and other deductions", () => {
@@ -474,5 +485,164 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
       }, result.pending),
     Error,
     "carryover review",
+  );
+});
+
+Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const filedScheduleB = {
+    income_category: "passive",
+    vintages: [
+      {
+        vintage_tax_year: 2024,
+        prior_year_schedule_b_line8_vintage_amount: 9_000,
+      },
+      {
+        vintage_tax_year: 2023,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+    ],
+    prior_year_schedule_b_line8_total: 9_100,
+    prior_year_schedule_b_line8_other_vintages_total: 0,
+    no_intervening_adjustments: true,
+    source_document_references: [
+      "Filed 2024 passive Schedule B (Form 1116), line 8 2023 and 2024 columns and total",
+    ],
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: { carryovers: [filedScheduleB] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  const schedule3 = result.pending.schedule3;
+  const return1040 = result.pending.f1040;
+  assert(parent && scheduleB && schedule3 && return1040);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assertEquals(summary.priorYearCarryover, 9_100);
+  assert(summary.usedPriorYearCarryover > 100);
+  assert(summary.usedPriorYearCarryover < 9_100);
+  assertEquals(summary.allowedCredit, 100 + summary.usedPriorYearCarryover);
+  assertEquals(scheduleB.case, "prior_year_use");
+  assertEquals(
+    scheduleB.remaining_prior_year_carryover,
+    9_100 - summary.usedPriorYearCarryover,
+  );
+  assertEquals(schedule3.line1_foreign_tax_credit, summary.allowedCredit);
+  assertEquals(return1040.line20_nonrefundable_credits, schedule3.line8_total);
+  const parentPdf = form1116Pdf.projectFields?.(parent, result.pending) ?? {};
+  const schedulePdf = form1116ScheduleBPdf.projectFields?.(
+    scheduleB,
+    result.pending,
+  ) ?? {};
+  assertEquals(parentPdf.pdf_line10, 9_100);
+  assertEquals(parentPdf.pdf_line24, summary.allowedCredit);
+  assertEquals(parentPdf.pdf_line35, summary.allowedCredit);
+  assertEquals(schedulePdf.line1_2023, 100);
+  assertEquals(schedulePdf.line1_2024, 9_000);
+  assertEquals(schedulePdf.line4_2023, -100);
+  assertEquals(schedulePdf.line4_2024, -(summary.usedPriorYearCarryover - 100));
+  assertEquals(schedulePdf.line8_2023, 0);
+  assertEquals(schedulePdf.line8_2024, 9_100 - summary.usedPriorYearCarryover);
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(
+    bundle.xml,
+    "<ForeignTaxCrCarrybackOrOverAmt>9100</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<SecondPrecedingTYAmt>100</SecondPrecedingTYAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<FirstPrecedingTYAmt>9000</FirstPrecedingTYAmt>",
+  );
+  assert(
+    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
+  );
+
+  for (
+    const altered of [
+      {
+        ...pending,
+        form1116_schedule_b: {
+          ...pending.form1116_schedule_b,
+          used_prior_year_carryover: summary.usedPriorYearCarryover - 1,
+        },
+      },
+      {
+        ...pending,
+        form1116_schedule_b: {
+          ...pending.form1116_schedule_b,
+          prior_year_carryover_source: {
+            ...filedScheduleB,
+            vintages: [
+              filedScheduleB.vintages[0],
+              {
+                ...filedScheduleB.vintages[1],
+                prior_year_schedule_b_line8_vintage_amount: 101,
+              },
+            ],
+          },
+        },
+      },
+    ]
+  ) {
+    await assertRejects(() =>
+      buildMefBundle(altered, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+    );
+  }
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(parent, {
+        ...result.pending,
+        form1116_schedule_b: {
+          ...scheduleB,
+          prior_year_carryover_source: {
+            ...filedScheduleB,
+            vintages: [
+              {
+                vintage_tax_year: 2023,
+                prior_year_schedule_b_line8_vintage_amount: 200,
+              },
+              {
+                vintage_tax_year: 2024,
+                prior_year_schedule_b_line8_vintage_amount: 8_900,
+              },
+            ],
+          },
+        },
+      }),
+    Error,
+    "filed source",
+  );
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(parent, {
+        ...result.pending,
+        f1040: {
+          ...return1040,
+          line20_nonrefundable_credits: summary.allowedCredit - 1,
+        },
+      }),
+    Error,
+    "Form 1040",
   );
 });

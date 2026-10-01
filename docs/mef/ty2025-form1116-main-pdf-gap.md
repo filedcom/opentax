@@ -204,6 +204,21 @@ slice. [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
 and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
 govern oldest-first use and expiration.
 
+**Two unexpired prior-year vintages (written, unrun):** A reviewed filed 2024
+passive Schedule B line 8 can supply separate 2023 and 2024 balances to a
+single-source 2025 interest return. The 2025 limitation first consumes the
+2023 balance and then part of the 2024 balance. Parent Form 1116 line 10 and
+the allowed credit, Schedule B lines 1/4/8 in both vintage columns, Schedule 3
+line 1, and Form 1040 line 20 are joined in the full-return fixture. Native
+MeF and the two PDFs are authored for this same case. The parent PDF now
+compares the Schedule B vintage source to the filed prior-year intake, so a
+changed vintage split with an unchanged total is rejected; it also checks
+Form 1040 line 20 against Schedule 3 line 8. Changed utilization, vintage
+sum, vintage split, and return-credit fixtures are authored for the deferred
+batch. The filed Schedule B remains a reviewed transcription rather than
+authenticated filing bytes. See the [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb).
+
 Build-first public intake and standard-deduction route (2026-09-29):
 `form1116_review` now carries the typed affirmative single-source PDF review
 directly into the Form 1116 calculation. One documented Form 1099-INT can be the

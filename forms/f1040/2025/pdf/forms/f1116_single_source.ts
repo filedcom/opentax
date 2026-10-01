@@ -12,6 +12,7 @@ import {
   twoCountryTreasuryPdfReviewSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { inputSchema as f1099intInputSchema } from "../../../nodes/inputs/f1099int/index.ts";
+import { inputSchema as priorCarryoverInputSchema } from "../../../nodes/inputs/form1116_prior_carryover/index.ts";
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
@@ -535,7 +536,16 @@ export function projectSingleSourceForm1116Pdf(
   }
   if (priorCarryover > 0) {
     const scheduleB = scheduleBPresentation(pending.form1116_schedule_b);
+    const filedCarryover = priorCarryoverInputSchema.safeParse(
+      pending.form1116_prior_carryover,
+    );
+    const scheduleBSource = pending.form1116_schedule_b
+      ?.prior_year_carryover_source;
     if (
+      !filedCarryover.success ||
+      filedCarryover.data.carryovers.length !== 1 ||
+      JSON.stringify(filedCarryover.data.carryovers[0]) !==
+        JSON.stringify(scheduleBSource) ||
       scheduleB.case !==
         (currentExcess > 0
           ? "combined_current_excess_prior_balance"
@@ -546,7 +556,7 @@ export function projectSingleSourceForm1116Pdf(
       (currentExcess > 0 && scheduleB.amount !== currentExcess)
     ) {
       throw new Error(
-        "Form 1116 PDF prior-year credit needs the matching sourced Schedule B",
+        "Form 1116 PDF prior-year credit needs the filed source and matching sourced Schedule B",
       );
     }
   }
@@ -573,11 +583,14 @@ export function projectSingleSourceForm1116Pdf(
   if (
     summary.allowedCredit !== line24 ||
     schedule3.line1_foreign_tax_credit !== line33 ||
+    (priorCarryover > 0 &&
+      (f1040.line20_nonrefundable_credits !== schedule3.line8_total ||
+        f1040.line20_nonrefundable_credits < line33)) ||
     fields.foreign_tax_paid !== item.foreign_tax_paid ||
     fields.foreign_income !== item.foreign_gross_income
   ) {
     throw new Error(
-      "Form 1116 PDF category limitation and Part IV credit differ from MeF or Schedule 3",
+      "Form 1116 PDF category limitation and Part IV credit differ from MeF, Schedule 3, or Form 1040",
     );
   }
   const date = item.tax_paid_or_accrued_date;
