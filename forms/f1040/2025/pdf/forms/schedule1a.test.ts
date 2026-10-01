@@ -124,6 +124,37 @@ Deno.test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and F
     Error,
     "do not match the filed employer",
   );
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line1c_unreported_tips: 2_499 },
+      }),
+    Error,
+    "tip income and tax do not reconcile",
+  );
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        schedule2: { ...pending.schedule2, line5_unreported_tip_tax: 190 },
+      }),
+    Error,
+    "tip income and tax do not reconcile",
+  );
+  const w2Rows = pending.w2.w2s as Array<Record<string, unknown>>;
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        w2: {
+          ...pending.w2,
+          w2s: [w2Rows[0], { ...w2Rows[1], box7_ss_tips: 1_999 }],
+        },
+      }),
+    Error,
+    "W-2 tip sources disagree",
+  );
 });
 
 Deno.test("2025 two-employer Form 4137 tips build one prepared filled return PDF", async () => {

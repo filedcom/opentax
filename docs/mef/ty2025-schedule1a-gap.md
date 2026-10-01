@@ -217,8 +217,11 @@ the employer worksheet selects the greater of W-2/4070 and Form 4137 tips
 per employer. The staged native and PDF assertions expect $6,500 and $3,000
 in its two rows, zero on lines 4a/4b, $9,500 on line 4c and Form 1040 line
 13b, and $2,500 of unreported tips on Form 1040 line 1c. They also reject
-an omitted Schedule 1-A employer or changed Form 4137 amount. A prepared
-MeF/PDF bundle assertion is authored but awaits the bulk test gate and
+an omitted Schedule 1-A employer or changed Form 4137 amount. The filled
+Form 4137 PDF projector also rechecks all W-2 tip sources and its calculated
+unreported income and tax against Form 1040 line 1c and Schedule 2 line 5
+when the return is present. A prepared MeF/PDF bundle assertion is authored
+but awaits the bulk test gate and
 visual PDF review; no acceptance or source-byte authentication is claimed.
 
 The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
