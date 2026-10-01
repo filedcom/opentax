@@ -2616,6 +2616,10 @@ function reconcileAgreedSharedPolicy(
     );
   }
   const policies = current1095AStatements(source.data.f1095as);
+  if (policies.length === 2) {
+    reconcileSequentialAgreedSharedPolicies(fields, context, policies);
+    return;
+  }
   const policy = policies[0];
   const filerSsn = context.filer.primarySSN.replaceAll("-", "");
   const covered = policy?.covered_individual_ssns?.map((ssn) =>
@@ -2795,6 +2799,187 @@ function reconcileAgreedSharedPolicy(
   ) {
     throw new Error(
       "Form 8962 shared policy credit or repayment differs from finalized return",
+    );
+  }
+}
+
+function reconcileSequentialAgreedSharedPolicies(
+  fields: Input,
+  context: MefBuildContext | undefined,
+  policies: ReturnType<typeof current1095AStatements>,
+): void {
+  const pending = context?.pending;
+  const general = generalSchema.parse(pending?.general);
+  const form1040 = returnSchema.parse(pending?.f1040);
+  const source = form1095aSchema.parse(pending?.f1095a);
+  const allocations = fields.shared_policy_allocations ?? [];
+  const filerSsn = context!.filer!.primarySSN.replaceAll("-", "");
+  if (
+    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    (general.dependents?.length ?? 0) !== 0 ||
+    policies.length !== 2 || allocations.length !== 2 ||
+    policies.some((policy) =>
+      !policy.policy_number || !policy.recipient_ssn ||
+      policy.recipient_ssn.replaceAll("-", "") !== filerSsn ||
+      policy.coverage_state !== context!.filer!.address.state ||
+      policy.alternative_marriage_owner !== undefined ||
+      policy.slcsp_corrections !== undefined ||
+      policy.slcsp_review_periods !== undefined ||
+      policy.no_aptc_monthly_evidence !== undefined ||
+      !policy.monthly_premiums || !policy.monthly_slcsps ||
+      !policy.monthly_aptcs ||
+      policy.covered_individual_ssns?.length !== 2 ||
+      !policy.covered_individual_ssns.some((ssn) =>
+        ssn.replaceAll("-", "") === filerSsn
+      ) ||
+      policy.shared_policy_periods?.length !== 1
+    ) ||
+    allocations.some((allocation) =>
+      allocation.basis !== "other_agreed" ||
+      allocation.premium_pct === undefined ||
+      allocation.premium_pct <= 0 ||
+      allocation.premium_pct !== allocation.slcsp_pct ||
+      allocation.premium_pct !== allocation.aptc_pct
+    )
+  ) {
+    throw new Error(
+      "Form 8962 sequential shared policies need two reviewed same-state policies and one-person return",
+    );
+  }
+  const otherSsn = allocations[0].other_taxpayer_ssn;
+  if (
+    allocations[1].other_taxpayer_ssn !== otherSsn ||
+    otherSsn === filerSsn ||
+    allocations[0].start_month !== 1 ||
+    allocations[1].end_month !== 12 ||
+    allocations[0].end_month + 1 !== allocations[1].start_month
+  ) {
+    throw new Error(
+      "Form 8962 sequential shared policies need contiguous nonoverlapping months and one other taxpayer",
+    );
+  }
+  const agreementReferences = new Set<string>();
+  const agreementHashes = new Set<string>();
+  for (const allocation of allocations) {
+    const matches = policies.filter((policy) =>
+      policy.policy_number!.slice(-15) === allocation.policy_number
+    );
+    const policy = matches.length === 1 ? matches[0] : undefined;
+    const period = policy?.shared_policy_periods?.[0];
+    if (
+      !policy || !period || period.basis !== "other_agreed" ||
+      period.other_family_claim_review !== undefined ||
+      period.other_taxpayer_ssn.replaceAll("-", "") !== otherSsn ||
+      !period.situations_1_to_3_reviewed_and_inapplicable ||
+      period.start_month !== allocation.start_month ||
+      period.end_month !== allocation.end_month ||
+      period.allocation_pct !== allocation.premium_pct ||
+      policy.covered_individual_ssns?.filter((ssn) =>
+          ssn.replaceAll("-", "") === otherSsn
+        ).length !== 1 ||
+      !period.agreement_review ||
+      period.agreement_review.policy_number !== policy.policy_number ||
+      period.agreement_review.filer_ssn.replaceAll("-", "") !== filerSsn ||
+      period.agreement_review.other_taxpayer_ssn.replaceAll("-", "") !==
+        otherSsn ||
+      period.agreement_review.start_month !== allocation.start_month ||
+      period.agreement_review.end_month !== allocation.end_month ||
+      period.agreement_review.filer_allocation_pct !==
+        allocation.premium_pct ||
+      policy.monthly_premiums!.some((premium, index) => {
+        const month = index + 1;
+        const inPeriod = month >= allocation.start_month &&
+          month <= allocation.end_month;
+        return inPeriod
+          ? premium <= 0 || policy.monthly_slcsps![index] <= 0 ||
+            policy.monthly_aptcs![index] <= 0
+          : premium !== 0 || policy.monthly_slcsps![index] !== 0 ||
+            policy.monthly_aptcs![index] !== 0;
+      })
+    ) {
+      throw new Error(
+        "Form 8962 sequential shared allocation differs from its identified policy, agreement, or coverage months",
+      );
+    }
+    agreementReferences.add(period.agreement_review.agreement_reference);
+    agreementHashes.add(period.agreement_review.agreement_sha256);
+  }
+  if (agreementReferences.size !== 2 || agreementHashes.size !== 2) {
+    throw new Error(
+      "Form 8962 sequential shared policies need distinct reviewed agreements",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const income = form1040.line11_agi + sourcedTaxExemptInterest(
+    pending,
+    form1040.line2a_tax_exempt ?? 0,
+  );
+  if (
+    (form1040.line6a_ss_gross ?? 0) !==
+      (form1040.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== income ||
+    fields.household_income !== income
+  ) {
+    throw new Error(
+      "Form 8962 sequential shared income differs from finalized Form 1040",
+    );
+  }
+  const derivedSource = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (!derivedSource) {
+    throw new Error("Form 8962 sequential shared policies lack source amounts");
+  }
+  const derivedInput = form8962InputSchema.parse({
+    ...derivedSource,
+    taxpayer_modified_agi: income,
+    dependents_modified_agi: 0,
+    household_size: 1,
+    fpl_region: fields.fpl_region,
+    filing_status: SourceFilingStatus.Single,
+    dependent_income_complete: true,
+  });
+  const expected = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    derivedInput,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (
+    !expected || fields.federal_poverty_line !== povertyLine ||
+    Object.entries(expected).some(([key, value]) =>
+      JSON.stringify(fields[key]) !== JSON.stringify(value)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 sequential shared amounts differ from source and calculated credit",
+    );
+  }
+  const net = typeof expected.net_premium_tax_credit === "number"
+    ? expected.net_premium_tax_credit
+    : 0;
+  const excess = typeof expected.excess_advance_premium === "number"
+    ? expected.excess_advance_premium
+    : 0;
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (net > 0 && (!schedule3.success ||
+      schedule3.data.line9_premium_tax_credit !== net ||
+      form1040.line31_additional_payments !== net)) ||
+    (excess > 0 && (!schedule2.success ||
+      schedule2.data.line1a_excess_advance_premium !== excess ||
+      form1040.line17_additional_taxes !== excess)) ||
+    (net === 0 &&
+      (schedule3.success
+        ? (schedule3.data.line9_premium_tax_credit ?? 0) !== 0
+        : pending?.schedule3 !== undefined)) ||
+    (excess === 0 &&
+      (schedule2.success
+        ? (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0
+        : pending?.schedule2 !== undefined))
+  ) {
+    throw new Error(
+      "Form 8962 sequential shared credit or repayment differs from finalized return",
     );
   }
 }
