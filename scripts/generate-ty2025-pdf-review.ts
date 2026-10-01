@@ -1,5 +1,5 @@
 /** Generate only synthetic filled PDFs for the held, single full validation batch. */
-import { join } from "@std/path";
+import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../core/runtime/planner.ts";
 import { execute } from "../core/runtime/executor.ts";
@@ -11,11 +11,37 @@ import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 
-const outputDir = Deno.args[0];
-if (!outputDir || Deno.args.length !== 1) {
+const [outputDir, xsdArg] = Deno.args;
+if (!outputDir || !xsdArg || Deno.args.length !== 2) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory",
+    "Usage: deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd",
   );
+}
+const xsdPath = resolve(xsdArg);
+if (!(await Deno.stat(xsdPath)).isFile) {
+  throw new Error(`TY2025 XSD is not a file: ${xsdPath}`);
+}
+const xsdSha256 = await sha256Hex(await Deno.readFile(xsdPath));
+
+async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
+  const xmlPath = await Deno.makeTempFile({ dir: outputDir, suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    if (!result.success) {
+      throw new Error(
+        `${fixtureId}: TY2025 XSD validation failed: ${
+          new TextDecoder().decode(result.stderr).trim()
+        }`,
+      );
+    }
+  } finally {
+    await Deno.remove(xmlPath);
+  }
 }
 
 // Deliberately refuse an existing directory so a prior review is never replaced.
@@ -58,6 +84,7 @@ for (const fixture of pdfReviewFixtures) {
     filer: fixture.filer,
     attachments: [],
   });
+  await validateXmlAgainstXsd(bundle.xml, fixture.id);
   const pdf = await buildPdfBytes(
     bundle.pending,
     fixture.filer,
@@ -87,6 +114,7 @@ for (const fixture of pdfReviewFixtures) {
     pdfSha256: await sha256Hex(pdf),
     xmlFile: `${fixture.id}.xml`,
     xmlSha256: await sha256Hex(new TextEncoder().encode(xmlFileContents)),
+    xsdValidated: true,
     sourceFile: `${fixture.id}.json`,
     sourceSha256: await sha256Hex(new TextEncoder().encode(sourceFileContents)),
     expectedPdfForms: fixture.expectedPdfForms,
@@ -137,6 +165,7 @@ await Deno.writeTextFile(
     {
       synthetic: true,
       taxYear: 2025,
+      xsdSha256,
       fixtureCount: reviewManifest.length,
       cases: reviewManifest,
     },
