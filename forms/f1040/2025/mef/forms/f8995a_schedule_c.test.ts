@@ -67,6 +67,7 @@ const filer = {
   filingStatus: HeaderFilingStatus.Single,
 };
 const pending = {
+  general: { qbi_no_prior_loss_or_suspended_loss_confirmed: true },
   form8995a: input,
   form8995a_schedule_c: input,
   schedule_c: { schedule_cs: [gainSource, lossSource],

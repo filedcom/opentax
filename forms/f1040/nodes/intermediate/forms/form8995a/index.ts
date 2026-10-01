@@ -914,6 +914,8 @@ function incomeCap(input: Form8995AInput): number {
 
 function hasQbiActivity(input: Form8995AInput): boolean {
   return (
+    input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) ===
+      true ||
     input.patron_of_specified_cooperative === true ||
     input.business_filing_details !== undefined ||
     (input.qbi ?? 0) !== 0 ||
