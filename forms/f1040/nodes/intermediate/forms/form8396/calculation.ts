@@ -99,6 +99,42 @@ const interestEvidenceSchema = z.object({
   },
 );
 
+const reviewedReissuedMccSchema = z.object({
+  original_certificate_reference: z.string().trim().min(1),
+  reissued_certificate_reference: z.string().trim().min(1),
+  refinance_settlement_reference: z.string().trim().min(1),
+  issuer_compliance_reference: z.string().trim().min(1),
+  original_amortization_schedule_reference: z.string().trim().min(1),
+  original_certificate_number: z.string().trim().min(1).max(22),
+  reissued_certificate_number: z.string().trim().min(1).max(22),
+  original_certificate_issue_date: date,
+  original_loan_closing_date: date,
+  refinance_date: date,
+  reissued_certificate_effective_date: date,
+  issuer_name: z.string().trim().min(1),
+  property_address: qualifiedHomeAddressSchema,
+  same_original_certificate_holders_confirmed: z.literal(true),
+  original_certificate_replaced_entirely_confirmed: z.literal(true),
+  issuer_no_annual_credit_increase_confirmed: z.literal(true),
+  original_mortgage_amount: z.number().finite().positive(),
+  original_certified_indebtedness_amount: z.number().finite().positive(),
+  original_certificate_outstanding_debt_at_refinance: z.number().finite()
+    .positive(),
+  replacement_mortgage_amount: z.number().finite().positive(),
+  replacement_certified_indebtedness_amount: z.number().finite().positive(),
+  original_certificate_credit_rate: z.number().finite().min(0.1).max(0.5),
+  replacement_certificate_credit_rate: z.number().finite().min(0.1).max(0.5),
+  scheduled_original_loan_interest_2025: wholeDollars,
+}).strict();
+
+function sameQualifiedHomeAddress(
+  a: z.infer<typeof qualifiedHomeAddressSchema>,
+  b: z.infer<typeof qualifiedHomeAddressSchema>,
+): boolean {
+  return a.line1 === b.line1 && (a.line2 ?? "") === (b.line2 ?? "") &&
+    a.city === b.city && a.state === b.state && a.zip === b.zip;
+}
+
 /** Source facts for the 2025 Form 8396, not a precomputed Schedule 3 credit. */
 export const form8396SourceSchema = z.object({
   qualified_home_address_if_different: qualifiedHomeAddressSchema.optional(),
@@ -115,6 +151,7 @@ export const form8396SourceSchema = z.object({
   home_in_issuer_jurisdiction: z.boolean().optional(),
   interest_paid_to_related_person: z.boolean().optional(),
   certificate_is_reissued: z.boolean().optional(),
+  reviewed_reissued_mcc: reviewedReissuedMccSchema.optional(),
   nonspouse_coowner: z.boolean().optional(),
   nonspouse_coowner_share: z.number().finite().positive().lt(1).optional(),
   prior_2024_form8396: z.object({
@@ -146,7 +183,7 @@ export const form8396SourceSchema = z.object({
       source.home_is_main_residence !== true ||
       source.home_in_issuer_jurisdiction !== true ||
       source.interest_paid_to_related_person !== false ||
-      source.certificate_is_reissued !== false ||
+      typeof source.certificate_is_reissued !== "boolean" ||
       typeof source.nonspouse_coowner !== "boolean"
     ) {
       ctx.addIssue({
@@ -162,6 +199,58 @@ export const form8396SourceSchema = z.object({
       path: ["interest_evidence"],
       message:
         "Carryforward-only Form 8396 cannot include current-year interest",
+    });
+  }
+  const reissue = source.reviewed_reissued_mcc;
+  if (source.certificate_is_reissued === true) {
+    const evidence = source.interest_evidence;
+    const address = source.qualified_home_address_if_different;
+    if (
+      !source.current_year_claim || !reissue || !evidence ||
+      source.nonspouse_coowner !== false ||
+      reissue.original_certificate_number ===
+        reissue.reissued_certificate_number ||
+      reissue.reissued_certificate_number !== source.certificate_number ||
+      reissue.issuer_name !== source.certificate_issuer_name ||
+      reissue.reissued_certificate_effective_date !== reissue.refinance_date ||
+      reissue.refinance_date >= "2025-01-01" ||
+      reissue.original_certificate_issue_date >
+        reissue.original_loan_closing_date ||
+      reissue.original_loan_closing_date >= reissue.refinance_date ||
+      reissue.refinance_date !== source.certificate_issue_date ||
+      reissue.original_certified_indebtedness_amount !==
+        reissue.original_mortgage_amount ||
+      reissue.original_certificate_outstanding_debt_at_refinance >
+        reissue.original_mortgage_amount ||
+      reissue.replacement_mortgage_amount >
+        reissue.original_certificate_outstanding_debt_at_refinance ||
+      reissue.replacement_certified_indebtedness_amount >
+        reissue.original_certificate_outstanding_debt_at_refinance ||
+      reissue.replacement_certified_indebtedness_amount >
+        reissue.replacement_mortgage_amount ||
+      reissue.replacement_mortgage_amount !==
+        evidence.original_mortgage_amount ||
+      reissue.replacement_certified_indebtedness_amount !==
+        evidence.certified_indebtedness_amount ||
+      reissue.replacement_certificate_credit_rate !== source.mcc_rate ||
+      reissue.replacement_certificate_credit_rate >
+        reissue.original_certificate_credit_rate ||
+      (address !== undefined &&
+        !sameQualifiedHomeAddress(address, reissue.property_address))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["reviewed_reissued_mcc"],
+        message:
+          "Reissued MCC needs exact certificate lineage, original schedule, same holders/property, and no increase in debt, rate or allowable credit",
+      });
+    }
+  } else if (reissue !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["reviewed_reissued_mcc"],
+      message:
+        "Only a current-year reissued MCC claim may include reissue evidence",
     });
   }
   if (
@@ -205,7 +294,18 @@ export function calculateForm8396Line3(raw: Form8396Source): number {
   const cap = rate > 0.2
     ? Math.round(2_000 * (source.nonspouse_coowner_share ?? 1))
     : Number.MAX_SAFE_INTEGER;
-  return Math.min(tentative, cap);
+  const originalCeiling = source.reviewed_reissued_mcc
+    ? Math.min(
+      Math.round(
+        source.reviewed_reissued_mcc.scheduled_original_loan_interest_2025 *
+          source.reviewed_reissued_mcc.original_certificate_credit_rate,
+      ),
+      source.reviewed_reissued_mcc.original_certificate_credit_rate > 0.2
+        ? 2_000
+        : Number.MAX_SAFE_INTEGER,
+    )
+    : Number.MAX_SAFE_INTEGER;
+  return Math.min(tentative, cap, originalCeiling);
 }
 
 /** Printed 2025 Form 8396 lines 1-17 after its Credit Limit Worksheet. */
