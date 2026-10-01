@@ -27,6 +27,66 @@ const money = z.number().finite().nonnegative().refine(
   },
 );
 
+const sourceReference = z.string().trim().min(1);
+const selfSourceEvidenceSchema = z.object({
+  business_reference: sourceReference,
+  prior_year_gross_receipts_source_reference: sourceReference,
+  prior_year_gross_receipts: money,
+  prior_year_full_time_employee_count_source_reference: sourceReference,
+  prior_year_full_time_employee_count: z.number().int().nonnegative(),
+  no_predecessor_or_common_control_confirmed: z.literal(true),
+  interpreter_expenditures: z.array(z.object({
+    expense_record_reference: sourceReference,
+    invoice_reference: sourceReference,
+    payment_reference: sourceReference,
+    paid_or_incurred_on: z.string().date().refine((date) =>
+      date >= "2025-01-01" && date <= "2025-12-31"
+    ),
+    amount: money.refine((amount) => amount > 0),
+    hearing_impaired_service_confirmed: z.literal(true),
+    ada_compliance_confirmed: z.literal(true),
+    reasonable_and_necessary_confirmed: z.literal(true),
+  })).min(1),
+  schedule_c_line27b: z.object({
+    amount_before_credit_reduction: money,
+    credit_reduction_amount: money.refine((amount) => amount > 0),
+    amount_after_credit_reduction: money,
+    not_deducted_elsewhere_confirmed: z.literal(true),
+    not_capitalized_or_used_for_other_credit_confirmed: z.literal(true),
+  }),
+}).superRefine((evidence, ctx) => {
+  for (
+    const key of [
+      "expense_record_reference",
+      "invoice_reference",
+      "payment_reference",
+    ] as const
+  ) {
+    const values = evidence.interpreter_expenditures.map((entry) => entry[key]);
+    if (new Set(values).size !== values.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["interpreter_expenditures"],
+        message: `Form 8826 ${key} must identify a distinct source`,
+      });
+    }
+  }
+  const deduction = evidence.schedule_c_line27b;
+  if (
+    Math.round(
+      (deduction.amount_before_credit_reduction -
+        deduction.credit_reduction_amount) * 100,
+    ) !==
+      Math.round(deduction.amount_after_credit_reduction * 100)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_c_line27b"],
+      message: "Form 8826 Schedule C expense reduction must reconcile",
+    });
+  }
+});
+
 export const inputSchema = z.object({
   // Eligible access expenditures paid or incurred during the year (Line 1)
   eligible_expenditures: money,
@@ -36,6 +96,7 @@ export const inputSchema = z.object({
   // This is a headcount, not a full-time-equivalent calculation.
   prior_year_full_time_employee_count: z.number().int().nonnegative()
     .optional(),
+  self_source_evidence: selfSourceEvidenceSchema.optional(),
   subject_to_passive_activity_limit: z.boolean(),
   // Identifies this self-earned credit in the public Form 8582-CR activity rows.
   source_document_reference: z.string().trim().min(1).optional(),

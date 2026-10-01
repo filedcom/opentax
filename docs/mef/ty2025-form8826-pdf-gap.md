@@ -1,9 +1,10 @@
-# TY2025 Form 8826 PDF boundary
+# TY2025 Form 8826 PDF gap
 
-Status: no Form 8826 PDF descriptor is registered. This is an open source and
-print-coverage gap, not an approved exclusion. The current native `IRS8826`
-route and downstream Form 3800 cap ledger do not independently establish a
-source-backed positive paper form.
+Status: a one-page PDF descriptor is registered for one self-earned,
+nonpassive interpreter-service claim with a linked Schedule C line 27b expense
+reduction. Other direct-claim and mixed routes remain open. The native
+`IRS8826` and Form 3800 cap ledger alone do not establish expense eligibility;
+the bounded positive export now requires typed source evidence as well.
 
 The [official Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) is the
 September 2017 continuous-use form. Its first page prints eligible access
@@ -15,29 +16,35 @@ controlled-group treatment where applicable, and a line 6 denial of double
 benefit: credited expenditures cannot also be deducted, capitalized, or used
 to calculate another credit.
 
-The direct-claim `f8826` input has only an aggregate
-`eligible_expenditures` amount, prior-year gross receipts and employee count,
-and a passive-activity flag. It does not identify each expenditure, payment
-record, ADA purpose, facility in-service date where relevant, controlled-group
-share, or the corresponding deduction/capitalization/other-credit location.
-The node calculates lines 1, 3, 5, 6 and 8 from that entered aggregate. The
-native builder repeats those arithmetic lines; the gross
+The `f8826` input retains its aggregate `eligible_expenditures`, prior-year
+gross receipts and employee count, and passive-activity flag. For positive
+self-earned export, it now also takes identified 2025 interpreter invoices,
+payment and expense records, ADA-purpose and necessity confirmations, prior-
+year receipt/payroll references, an explicit no-predecessor/common-control
+assertion, and a Schedule C business/line 27b reduction from the gross
+expense by the full Form 8826 line 6 credit. A shared verifier checks each
+source amount, unique identity, the prior-year figures, and the filed Schedule
+C amount. The native builder and PDF use it; the gross
 `disabled_access_limit` ledger checks the capped Form 3800 entry, and Form 3800
 checks its allowed amount against Schedule 3 line 6a and finalized tax
-context. These downstream equalities prove arithmetic propagation, not that
-line 1 is eligible or that the line 6 expense was removed from other tax
-benefits. A blank official AcroForm was inspected; field mapping is not the
-blocking step.
+context. The source records and prior-year references remain unauthenticated
+until their external bytes are reviewed.
 
-A bounded direct-claim PDF path needs a typed expenditure-level source with
-stable evidence identity and eligibility facts, prior-year business facts
-including any predecessor/common-control members, and a source-to-return
-reconciliation of the line 6 double-benefit adjustment. Recompute the
-Form 8826 lines from those facts, then join the printed line 8 to the capped
-Form 3800 source and Schedule 3/final Form 1040. Keep passive, mixed
-pass-through, and controlled-group claims closed until their specific
-allocation and statement routes are proven. Pass-through-only recipients do
-not attach Form 8826 under the official instructions.
+The registered PDF maps the official September 2017 form's two identity fields
+and separate dollar/cent boxes for lines 1, 3, 5, 6, 7, and 8. It retains only
+the first page; page 2 is instructions. The self-only route checks line 8
+against the Form 3800 source and Form 3800 line 38 through Schedule 3 and
+Form 1040. A $5,000 interpreter expense, $2,375 credit, and $2,625 filed
+Schedule C expense have source/native/PDF/final-tax and tamper fixtures
+authored for the deferred bulk run. Pass-through-only recipients do not
+attach Form 8826 under the official instructions.
 
-No PDF descriptor, registration or focused print test was added. No tests,
-typecheck, XSD validation or filled-PDF rendering was run in this audit.
+Positive passive, mixed self/pass-through, barrier-removal, equipment,
+controlled-group, predecessor, capitalization/basis, and other deduction
+locations remain open. For a mixed self/S-corporation credit, official line 7
+must include the K-1 credit. Both the current Form 8826 input node and K-1
+node send that source to `disabled_access_limit`, which rejects the duplicate;
+one canonical source owner still needs to be established. Expenditure and K-1
+source bytes, local XSD/business rules, filled-PDF visual review, and ATS
+acceptance are also open. No test, typecheck, XSD, or filled-PDF run was made
+for this implementation; validation is deferred to the shared bulk phase.

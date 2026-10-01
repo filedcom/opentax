@@ -3,10 +3,6 @@
  * cannot yet produce. This is a filing boundary, not a document skip list.
  */
 import {
-  calculateForm8826,
-  inputSchema as form8826InputSchema,
-} from "../nodes/inputs/f8826/index.ts";
-import {
   casualtyLossLines,
   inputSchema as form4684InputSchema,
 } from "../nodes/intermediate/forms/form4684/index.ts";
@@ -359,16 +355,6 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     reason:
       "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
     isActive: (fields) => nonempty(fields.f8611s),
-  },
-  {
-    pendingKey: "f8826",
-    exportKinds: ["pdf"],
-    reason: "Form 8826 has a native filing but no source-backed PDF",
-    isActive: (fields) => {
-      if (fields.eligible_expenditures === undefined) return false;
-      const source = form8826InputSchema.safeParse(fields);
-      return !source.success || calculateForm8826(source.data).line6 > 0;
-    },
   },
   {
     pendingKey: "f8854",

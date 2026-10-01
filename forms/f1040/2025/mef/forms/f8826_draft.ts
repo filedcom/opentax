@@ -8,6 +8,7 @@ import {
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
+import { reconcileForm8826SelfSource } from "./f8826_source.ts";
 
 /**
  * TY2025 Form 8826 source document. Pass-through-only recipients report the
@@ -53,6 +54,12 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     if (fields.eligible_expenditures === undefined) return "";
     const source = inputSchema.parse(fields);
     const lines = calculateForm8826(source);
+    if (
+      lines.line6 > 0 && !source.subject_to_passive_activity_limit &&
+      (source.pass_through_credits?.length ?? 0) === 0
+    ) {
+      reconcileForm8826SelfSource(source, context?.pending ?? {});
+    }
     if (context?.documentIdsByPendingKey) {
       if (
         (source.subject_to_passive_activity_limit && lines.line6 > 0 ||

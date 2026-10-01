@@ -56,16 +56,68 @@ Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", (
 });
 
 Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 bundle", () => {
+  const sourced = {
+    ...source,
+    self_source_evidence: {
+      business_reference: "ACCESS-BUSINESS",
+      prior_year_gross_receipts_source_reference: "2024 business return",
+      prior_year_gross_receipts: 900_000,
+      prior_year_full_time_employee_count_source_reference:
+        "2024 payroll roster",
+      prior_year_full_time_employee_count: 40,
+      no_predecessor_or_common_control_confirmed: true as const,
+      interpreter_expenditures: [{
+        expense_record_reference: "ACCESS-EXPENSE-1",
+        invoice_reference: "ACCESS-INVOICE-1",
+        payment_reference: "ACCESS-PAYMENT-1",
+        paid_or_incurred_on: "2025-06-01",
+        amount: 20_000,
+        hearing_impaired_service_confirmed: true as const,
+        ada_compliance_confirmed: true as const,
+        reasonable_and_necessary_confirmed: true as const,
+      }],
+      schedule_c_line27b: {
+        amount_before_credit_reduction: 20_000,
+        credit_reduction_amount: 5_000,
+        amount_after_credit_reduction: 15_000,
+        not_deducted_elsewhere_confirmed: true as const,
+        not_capitalized_or_used_for_other_credit_confirmed: true as const,
+      },
+    },
+  };
+  const pending = {
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "ACCESS-BUSINESS",
+        line_a_principal_business: "Interpreter services",
+        line_b_business_code: "541930",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 100_000,
+        line_27b_other_expenses: 15_000,
+      }],
+    },
+  };
   assertThrows(
-    () => form8826.build(source, { documentIdsByPendingKey: {} }),
+    () => form8826.build(sourced, { documentIdsByPendingKey: {}, pending }),
     Error,
     "attached Form 3800",
   );
   assertStringIncludes(
-    form8826.build(source, {
+    form8826.build(sourced, {
       documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      pending,
     }),
     "<IRS8826>",
+  );
+  assertThrows(
+    () =>
+      form8826.build(source, {
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+        pending,
+      }),
+    Error,
+    "expenditure and deduction source evidence",
   );
   assertEquals(
     form8826.build({

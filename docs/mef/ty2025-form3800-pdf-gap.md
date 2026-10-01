@@ -35,8 +35,9 @@ source. It checks the filed Form 8826 calculation and pass-through EIN against
 both pending and raw Form 3800 entries, the prepared Part III aggregate, two
 Part V rows and distinct document/EIN links. A $3,625 native/PDF/Schedule 3/
 Form 1040 positive case and source, raw-entry, prepared-detail, and final-tax
-tamper cases are authored for the deferred bulk run. The Form 8826 source
-document still has no registered PDF descriptor, and issuer-copy byte
+tamper cases are authored for the deferred bulk run. A separate Form 8826 PDF
+now covers a sourced self-earned-only claim; the mixed Form 8826 source still
+needs its own complete printable line 7/8 route. Issuer-copy byte
 authentication, wider source combinations, passive allocations, and external
 acceptance remain open.
 

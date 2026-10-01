@@ -28,6 +28,7 @@ const ARCHIVED_REVISIONS: Readonly<Record<string, number>> = {
   f5884: 2021,
   f7217: 2024,
   f8820: 2018,
+  f8826: 2017,
   f8611: 2021,
   f965a: 2021,
   f8874: 2021,

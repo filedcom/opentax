@@ -215,14 +215,6 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     { f4255: { rows: [{}] } },
     { form8621: { items: [{}] } },
     { f8611: { f8611s: [{}] } },
-    {
-      f8826: {
-        eligible_expenditures: 20_000,
-        prior_year_gross_receipts: 900_000,
-        prior_year_full_time_employee_count: 40,
-        subject_to_passive_activity_limit: false,
-      },
-    },
     { f8854: { initial_filing: true } },
     { f8854_annual: { annual_filing: true } },
   ];
@@ -244,6 +236,17 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
   assertAttachmentCoverage({ f4255: { rows: [] } }, "pdf");
   assertAttachmentCoverage({ form8621: { items: [] } }, "pdf");
   assertAttachmentCoverage({ f8611: { f8611s: [] } }, "pdf");
+  assertAttachmentCoverage(
+    {
+      f8826: {
+        eligible_expenditures: 5_000,
+        prior_year_gross_receipts: 500_000,
+        prior_year_full_time_employee_count: 20,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+    "pdf",
+  );
   assertAttachmentCoverage(
     {
       f8826: {

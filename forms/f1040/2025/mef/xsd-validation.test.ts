@@ -1968,6 +1968,55 @@ Deno.test({
   await validateXsd(xml, "passive Form 8582-CR and Form 3800");
 });
 
+function sourcedForm8826Interpreter(expense: number, credit: number) {
+  return {
+    eligible_expenditures: expense,
+    prior_year_gross_receipts: 500_000,
+    prior_year_full_time_employee_count: 20,
+    subject_to_passive_activity_limit: false,
+    self_source_evidence: {
+      business_reference: "ACCESS-BUSINESS",
+      prior_year_gross_receipts_source_reference: "2024 business return",
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count_source_reference:
+        "2024 payroll roster",
+      prior_year_full_time_employee_count: 20,
+      no_predecessor_or_common_control_confirmed: true as const,
+      interpreter_expenditures: [{
+        expense_record_reference: "ACCESS-EXPENSE-1",
+        invoice_reference: "ACCESS-INVOICE-1",
+        payment_reference: "ACCESS-PAYMENT-1",
+        paid_or_incurred_on: "2025-06-01",
+        amount: expense,
+        hearing_impaired_service_confirmed: true as const,
+        ada_compliance_confirmed: true as const,
+        reasonable_and_necessary_confirmed: true as const,
+      }],
+      schedule_c_line27b: {
+        amount_before_credit_reduction: expense,
+        credit_reduction_amount: credit,
+        amount_after_credit_reduction: expense - credit,
+        not_deducted_elsewhere_confirmed: true as const,
+        not_capitalized_or_used_for_other_credit_confirmed: true as const,
+      },
+    },
+  };
+}
+
+function sourcedForm8826ScheduleC(amountAfterCredit: number) {
+  return {
+    schedule_cs: [{
+      business_reference: "ACCESS-BUSINESS",
+      line_a_principal_business: "Interpreter services",
+      line_b_business_code: "541930",
+      line_f_accounting_method: "cash" as const,
+      line_g_material_participation: true,
+      line_1_gross_receipts: 100_000,
+      line_27b_other_expenses: amountAfterCredit,
+    }],
+  };
+}
+
 Deno.test({
   name: "XSD: passive carryover and current Form 8826 share Form 3800 tax use",
   sanitizeOps: false,
@@ -2013,12 +2062,8 @@ Deno.test({
           orphan_drug_credit_subject_to_passive_activity_limit: true,
         }],
       },
-      f8826: {
-        eligible_expenditures: 450,
-        prior_year_gross_receipts: 500_000,
-        prior_year_full_time_employee_count: 20,
-        subject_to_passive_activity_limit: false,
-      },
+      f8826: sourcedForm8826Interpreter(450, 100),
+      schedule_c: sourcedForm8826ScheduleC(350),
       f3800: {
         passive_source_allocations: [{
           ...source,
@@ -2096,12 +2141,8 @@ Deno.test({
           disabled_access_credit_subject_to_passive_activity_limit: true,
         }],
       },
-      f8826: {
-        eligible_expenditures: 450,
-        prior_year_gross_receipts: 500_000,
-        prior_year_full_time_employee_count: 20,
-        subject_to_passive_activity_limit: false,
-      },
+      f8826: sourcedForm8826Interpreter(450, 100),
+      schedule_c: sourcedForm8826ScheduleC(350),
       f3800: {
         passive_source_allocations: [{
           ...source,
