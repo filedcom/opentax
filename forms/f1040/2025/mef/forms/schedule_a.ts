@@ -13,7 +13,7 @@ import {
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
   isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
@@ -196,7 +196,7 @@ function buildIRS1040ScheduleA(
     if (
       isSingleSectionAVehicleSale(form) ||
       hasSectionAShortTermReduction(form) ||
-      isSingleSectionANeedyVehicleUnreduced(form) ||
+      isSingleSectionAExceptionVehicleUnreduced(form) ||
       (form.section_a_items ?? []).some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
         item.private_foundation_capital_gain_reduction !== undefined ||

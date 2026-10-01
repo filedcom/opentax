@@ -23,10 +23,10 @@ import {
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
-  assertNeedyVehicleUnreducedSource,
+  assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
   isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
@@ -741,13 +741,13 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     if (sectionA.length === 0) return [];
     const soldVehicle = isSingleSectionAVehicleSale(source);
-    const needyVehicle = isSingleSectionANeedyVehicleUnreduced(source);
+    const exceptionVehicle = isSingleSectionAExceptionVehicleUnreduced(source);
     if (
       sectionA.some((item) => item.is_vehicle === true) &&
-      !soldVehicle && !needyVehicle
+      !soldVehicle && !exceptionVehicle
     ) {
       throw new Error(
-        "Form 8283 PDF supports only one reconciled certified-sale or unreduced needy-transfer Section A vehicle",
+        "Form 8283 PDF supports only one reconciled certified-sale or unreduced exception Section A vehicle",
       );
     }
     const elected = sectionA.some((item) =>
@@ -788,7 +788,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction &&
-      !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
+      !unrelatedUseReduction && !soldVehicle && !exceptionVehicle &&
       !privateFoundationReduction && !taxidermyReduction &&
       !intellectualPropertyReduction &&
       sectionA.some((item) => needsFmvReductionStatement(item))
@@ -804,16 +804,16 @@ export const form8283Pdf: PdfFormDescriptor = {
       !privateFoundationReduction && !taxidermyReduction &&
       !intellectualPropertyReduction &&
       !soldVehicle &&
-      !needyVehicle
+      !exceptionVehicle
     ) {
       assertUnreducedSectionACompanion(sectionA[0]);
     }
     if (soldVehicle) {
       assertVehicleSaleReductionSource(sectionA[0]);
     }
-    if (needyVehicle) assertNeedyVehicleUnreducedSource(source);
+    if (exceptionVehicle) assertExceptionVehicleUnreducedSource(source);
     for (const item of sectionA) {
-      if (soldVehicle || needyVehicle) continue;
+      if (soldVehicle || exceptionVehicle) continue;
       if (!elected && !needsFmvReductionStatement(item)) {
         assertUnreducedSectionACompanion(item);
       } else {

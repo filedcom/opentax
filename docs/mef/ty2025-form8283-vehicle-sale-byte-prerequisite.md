@@ -1,5 +1,21 @@
 # TY2025 Form 8283 vehicle acknowledgment byte prerequisites
 
+## Section A box 5a final-return join (2026-10-01, unrun)
+
+The [2025 Form 1098-C instructions](https://www.irs.gov/instructions/i1098c)
+require box 5a and a detailed box 5c description for significant intervening
+use or material improvement. The prior source and native byte-review paths
+still met an older Form 8283 PDF guard that accepted only sale and needy-transfer
+vehicles. The Section A PDF route and both native Form 8283 and Schedule A
+reconciliation now accept one unreduced box 5a vehicle when the same complete
+purchased-vehicle, donee, VIN, original FMV, basis, and current-year facts
+match. Native and PDF preparation continue to require the exact linked,
+reviewed acknowledgment bytes. Existing $4,000 significant-use and material-
+improvement full-return positive and altered-byte/description fixtures now
+exercise this join in the deferred bulk pass. Source review still does not
+extract printed PDF fields or authenticate a donee signature; claims over
+$5,000 require the separate Section B appraisal route.
+
 ## Section A material improvement, boxes 5a and 5c (2026-10-01, unrun)
 
 The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)

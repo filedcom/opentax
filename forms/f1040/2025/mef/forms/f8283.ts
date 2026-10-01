@@ -13,11 +13,11 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
-  assertNeedyVehicleUnreducedSource,
+  assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
   isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
@@ -1385,13 +1385,13 @@ export const form8283: MefFormDescriptor<
       }
       assertOrdinarySectionAReconciled(context);
     }
-    if (isSingleSectionANeedyVehicleUnreduced(parsed)) {
-      assertNeedyVehicleUnreducedSource(parsed);
+    if (isSingleSectionAExceptionVehicleUnreduced(parsed)) {
+      assertExceptionVehicleUnreducedSource(parsed);
     }
     if (
       isSingleSectionAVehicleSale(parsed) ||
       hasSectionAShortTermReduction(parsed) ||
-      isSingleSectionANeedyVehicleUnreduced(parsed) ||
+      isSingleSectionAExceptionVehicleUnreduced(parsed) ||
       sectionA.some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
         item.private_foundation_capital_gain_reduction !== undefined ||

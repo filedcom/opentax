@@ -1514,7 +1514,7 @@ Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale 
         pending,
       ),
     Error,
-    "only one reconciled certified-sale or unreduced needy-transfer",
+    "only one reconciled certified-sale or unreduced exception",
   );
 });
 

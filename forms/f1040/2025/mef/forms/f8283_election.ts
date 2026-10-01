@@ -38,25 +38,29 @@ export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
 }
 
-export function isSingleSectionANeedyVehicleUnreduced(
+export function isSingleSectionAExceptionVehicleUnreduced(
   form: F8283Input,
 ): boolean {
   const sectionA = form.section_a_items ?? [];
   const item = sectionA[0];
   return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
     item.is_vehicle === true &&
-    item.vehicle_needy_transfer_acknowledgment !== undefined &&
+    (item.vehicle_needy_transfer_acknowledgment !== undefined ||
+      item.vehicle_significant_use_acknowledgment !== undefined ||
+      item.vehicle_material_improvement_acknowledgment !== undefined) &&
     item.fmv !== undefined && item.deduction_claimed === item.fmv;
 }
 
-export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
-  if (!isSingleSectionANeedyVehicleUnreduced(form)) {
+export function assertExceptionVehicleUnreducedSource(form: F8283Input): void {
+  if (!isSingleSectionAExceptionVehicleUnreduced(form)) {
     throw new Error(
-      "Form 8283 needy-transfer Section A route needs one vehicle claimed at original FMV",
+      "Form 8283 exception Section A route needs one vehicle claimed at original FMV",
     );
   }
   const item = form.section_a_items![0];
-  const acknowledgment = item.vehicle_needy_transfer_acknowledgment!;
+  const acknowledgment = item.vehicle_needy_transfer_acknowledgment ??
+    item.vehicle_significant_use_acknowledgment ??
+    item.vehicle_material_improvement_acknowledgment!;
   const address = item.donee_organization_us_address;
   const certifiedAddress = acknowledgment.donee_us_address;
   const description = item.property_description?.toLowerCase() ?? "";
@@ -90,7 +94,7 @@ export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
     address.zip.trim() !== certifiedAddress.zip.trim()
   ) {
     throw new Error(
-      "Form 8283 needy-transfer Section A route needs complete purchased vehicle and matching donee facts",
+      "Form 8283 exception Section A route needs complete purchased vehicle and matching donee facts",
     );
   }
 }

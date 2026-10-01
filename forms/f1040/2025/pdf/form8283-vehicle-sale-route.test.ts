@@ -448,6 +448,21 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
   await assertRejects(
     () =>
+      buildMefBundle({
+        ...pending,
+        f8283: {
+          ...pending.f8283,
+          section_a_items: [{
+            ...pending.f8283!.section_a_items![0],
+            cost_or_adjusted_basis: 3_000,
+          }],
+        },
+      }, { filer: base.filer, attachments: [attachment] }),
+    Error,
+    "complete purchased vehicle",
+  );
+  await assertRejects(
+    () =>
       buildMefBundle(pending, {
         filer: base.filer,
         attachments: [{
