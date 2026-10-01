@@ -280,11 +280,21 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
         "f8881",
         {
           plan_type: "401k",
-          non_hce_count: 5,
-          employee_count: 5,
-          startup_costs: 1_000,
+          startup: {
+            plan_effective_on: "2025-01-01",
+            first_credit_year: 2025,
+            preceding_first_credit_year_qualified_employee_count: 5,
+            eligible_non_hce_count: 5,
+            startup_costs: 1_000,
+            cost_record_reference: "plan-invoice-1",
+            costs_paid_or_incurred_on: "2025-02-15",
+            eligible_plan_confirmed: true,
+            no_substantially_same_employee_plan_in_prior_three_years_confirmed:
+              true,
+            startup_cost_deduction_reduced_by_credit_confirmed: true,
+          },
         },
-        "Form 8881 startup or auto-enrollment credit needs a native attachment",
+        "Form 8881 pension-plan credit needs native attachment and Form 3800 source reconciliation",
       ],
       [
         "f8882",

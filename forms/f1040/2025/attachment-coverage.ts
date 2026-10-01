@@ -160,9 +160,18 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f8881",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 8881 startup or auto-enrollment credit needs a native attachment",
+      "Form 8881 pension-plan credit needs native attachment and Form 3800 source reconciliation",
     isActive: (fields) =>
-      positive(fields.startup_costs) || fields.has_auto_enrollment === true,
+      fields.startup !== undefined || fields.contributions !== undefined ||
+      fields.auto_enrollment !== undefined ||
+      fields.military_spouses !== undefined,
+  },
+  {
+    pendingKey: "f3800",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8881 source credit needs registered Form 3800 Part III lines and a native attachment",
+    isActive: (fields) => fields.f8881_credit !== undefined,
   },
   {
     pendingKey: "f8882",

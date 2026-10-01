@@ -46,6 +46,41 @@ const carriedCredit: Form3800CarryoverVintage = {
   original_reported_balance_carried_to_2025: 600,
 };
 
+Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Schedule 3 credit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8881_credit: {
+      part_i_credit: 1_550,
+      part_ii_credit: 500,
+      part_iii_credit: 500,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 2_550,
+    specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule3), {
+    form3800_source_credit_pending: true,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251), {
+    must_file_for_gbc: true,
+  });
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8881_credit: {
+        part_i_credit: 1_550,
+        part_ii_credit: 500,
+        part_iii_credit: 500,
+        subject_to_passive_activity_limit: true,
+      },
+    }).success,
+    false,
+  );
+});
+
 Deno.test("f3800: reconciled nonpassive vintages reach their separate tax limits", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     carryforward_vintages: [{

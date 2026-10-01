@@ -120,6 +120,17 @@ const f5884CreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const f8881CreditSchema = z.object({
+  part_i_credit: z.number().int().nonnegative(),
+  part_ii_credit: z.number().int().nonnegative(),
+  part_iii_credit: z.number().int().nonnegative(),
+  subject_to_passive_activity_limit: z.literal(false),
+}).strict().refine(
+  (credit) =>
+    credit.part_i_credit + credit.part_ii_credit + credit.part_iii_credit > 0,
+  { message: "Form 8881 needs a positive Part I, II, or III credit" },
+);
+
 const f8820CreditSchema = z.object({
   credit_amount: z.number().finite().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
@@ -200,6 +211,7 @@ export const inputSchema = z.object({
   f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
+  f8881_credit: f8881CreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
   f8874_credit: f8874CreditSchema.optional(),
   f8874_k1_credit_entries: z.array(f8874K1CreditSchema).min(1).optional(),
@@ -233,6 +245,7 @@ export const inputSchema = z.object({
     input.carryforward_vintages !== undefined ||
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
+    input.f8881_credit !== undefined ||
     input.f8820_credit !== undefined ||
     input.f8874_credit !== undefined ||
     input.f8874_k1_credit_entries !== undefined ||
@@ -323,6 +336,7 @@ function schedule3Output(
   f8835Entries: z.infer<typeof f8835CreditEntrySchema>[],
   f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
+  f8881Credit: z.infer<typeof f8881CreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
   f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
   f8874K1Credits: readonly z.infer<typeof f8874K1CreditSchema>[],
@@ -454,6 +468,10 @@ function schedule3Output(
     (f8835Credit?.standardCredit ?? 0) > 0 ||
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
+    (f8881Credit
+        ? f8881Credit.part_i_credit + f8881Credit.part_ii_credit +
+          f8881Credit.part_iii_credit
+        : 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8874Credit?.credit_amount ?? 0) > 0 ||
     newMarketsK1Credit > 0 ||
@@ -479,6 +497,10 @@ function schedule3Output(
             partVTrustCredit +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
+            (f8881Credit
+              ? f8881Credit.part_i_credit + f8881Credit.part_ii_credit +
+                f8881Credit.part_iii_credit
+              : 0) +
             (f8835Credit?.standardCredit ?? 0),
           specifiedCredit: (f8835Credit?.specifiedCredit ?? 0) +
             (f5884Credit?.credit_amount ?? 0),
@@ -509,6 +531,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8835_credit_entries ?? [],
         parsed.f8826_credit_entries ?? [],
         parsed.f5884_credit,
+        parsed.f8881_credit,
         parsed.f8820_credit,
         parsed.f8874_credit,
         parsed.f8874_k1_credit_entries ?? [],
