@@ -212,24 +212,31 @@ acknowledgment evidence. There is no durable store or 2026 engine importer;
 prior-year Worksheet 9 credits that originated before 2025 remain closed.
 The bounded 2025 PDF route does not create an authenticated 2026 opening.
 
-## Reviewed 2024 single-activity opening candidate (2026-10-01, unrun)
+## Reviewed 2023/2024 activity-vintage opening candidate (2026-10-01, unrun)
 
 The [2024 Form 8582-CR instructions](https://www.irs.gov/pub/irs-prior/i8582cr--2024.pdf)
-allow a single credit type from one passive activity to derive its unallowed
-credit by subtracting prior Form 8582-CR line 37 from line 5; other mixes use
-Worksheet 9 column (b). A new standalone candidate reconciles reviewed 2024
-Form 1040/Form 8582-CR copy references and their taxpayer TIN, one self-earned
-Form 8874 New Markets credit, prior lines 5/37, and the same activity, source,
-route, document reference, origin year, and dollar amount in the 2025 Form
-8582-CR input. It also previews 2025 Part I lines 4b/5/37 and that source's
-Form 3800 passive allocation. The candidate requires an explicit review that
-no recapture or bankruptcy transfer changed the credit. Positive and
-taxpayer, amount, activity, year, and source-copy tamper fixtures are authored.
+derive the unallowed credit for a single activity/type from prior lines 5 less
+37; multiple activities use prior Worksheet 9 column (b), with column (a)
+equal to allowed column (c) plus unallowed column (b). The standalone candidate
+now follows one self-earned Form 8874 New Markets credit originating in 2023
+through the 2024 Worksheet 9 beside a distinct 2024-origin Form 8874 activity.
+It requires a reviewed single activity/type for 2023, binds that year's line
+5/37 difference to the 2024 carried row, reconciles
+both 2024 rows' columns (a)/(b)/(c) to prior lines 5/37, and requires exactly
+those two activity, source, document, reporting-route, origin-year, and dollar
+amount rows in the 2025 Form 8582-CR input. It previews 2025 Part I lines
+4b/5/37 and per-source Form 3800 passive allocations. The packet retains
+reviewed 2023/2024 return and Form 8582-CR copy references, taxpayer TIN, and
+an explicit no-recapture/bankruptcy-transfer review. Positive and tamper
+fixtures for both vintages, Worksheet 9, return totals, activity, and taxpayer
+are authored.
 
-These copy references and review assertions do not prove that the IRS accepted
-the 2024 return or that the copies match accepted bytes. No authenticated
-acknowledgment/status parser or accepted prior-return import exists, so the
-candidate is not passed to the 2025 native or PDF exporter and does not open a
-Form 3800, Schedule 3, or Form 1040 carryforward claim. The existing PDF
-ordinary route still rejects prior credits; its general native-only shape
-remains an audit gap rather than evidence of complete filing support.
+This replaces the earlier one-activity candidate shape. Copy references and
+review assertions do not establish accepted IRS returns or match the copies
+to accepted bytes. No authenticated acknowledgment/status parser or accepted
+prior-return importer exists, so the candidate is not passed to native or PDF
+export and does not open a Form 3800, Schedule 3, or Form 1040 claim. The
+bounded ordinary PDF route still rejects prior credits; the general native-only
+shape remains an audit gap, not evidence of complete filing support. Same-
+activity mixed vintages and other credit categories remain outside this
+candidate.
