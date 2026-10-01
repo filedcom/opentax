@@ -1,5 +1,25 @@
 # TY2025 Form 8582 durable activity identity
 
+## Current-year retained Part I sale without prior PAL (written, unrun)
+
+A single type-B rental with a $9,000 current loss and one $7,000 long-held,
+no-depreciation property gain retains its activity interest. The gain is current
+passive income under the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) for a disposition of less
+than an entire interest. Form 8582 Part V allows $7,000 of the rental loss and
+retains $2,000 by activity ID. Form 4797 Part I carries the gain to Schedule D;
+the allowed rental loss reaches Schedule E and Schedule 1. The native Form 8582
+builder now checks that the linked one-property source, Form 4797 sale,
+Schedule D, Schedule 1, Form 1040, and loss allocation agree; its PDF replays
+the same guard. Full-return positive and source/final-return tamper fixtures
+are authored but unrun.
+
+The bound excludes prior PALs, recapture, multiple activities or sales,
+installment and entire-interest dispositions, and nonzero section 1231
+lookback. A closing-document reference and lookback workpaper are reviewed
+inputs, not authenticated bytes. XSD, filled-PDF, business-rule and acceptance
+checks remain pending.
+
 ## One farm profit allocated across two rental losses (written, unrun)
 
 One type-B Form 4835 farm's $3,000 current profit may offset two distinct

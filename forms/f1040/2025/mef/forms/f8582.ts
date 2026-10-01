@@ -493,6 +493,70 @@ function buildOtherPassive(
       );
     }
   }
+  // A retained rental's current Part I property gain remains passive income.
+  // Match the loss it releases to Schedule E and the separate section 1231
+  // gain carried through Schedule D to the settled individual return.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net < 0 &&
+    activities[0].prior_unallowed_operating === 0 &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 1 && saleGains[0].part === "I" &&
+    saleGains[0].entire_activity_interest_disposed === false &&
+    saleGains[0].gain > 0 &&
+    saleGains[0].gain < -activities[0].current_net
+  ) {
+    const pending = context?.pending;
+    const scheduleE = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const scheduleD = pending?.schedule_d as
+      | Record<string, unknown>
+      | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const gain = saleGains[0].gain;
+    const property = scheduleE.success &&
+        scheduleE.data.schedule_es.length === 1
+      ? scheduleE.data.schedule_es[0]
+      : undefined;
+    const sourceSale = property?.passive_property_sales?.[0];
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !property || property.activity_type !== "B" ||
+      property.passive_property_sales?.length !== 1 ||
+      !sourceSale || sourceSale.part !== "I" ||
+      sourceSale.depreciation_allowed !== 0 ||
+      sourceSale.entire_activity_interest_disposed !== false ||
+      sourceSale.buyer_unrelated !== true ||
+      sourceSale.fully_taxable !== true ||
+      sourceSale.installment_method !== false ||
+      !sourceSale.disposition_document_reference ||
+      property.section_1231_lookback_source?.nonrecaptured_loss !== 0 ||
+      !w2.success || wages === undefined || !scheduleD || !schedule1 ||
+      !f1040 || pending?.f4835 !== undefined ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      limit.allowed !== gain ||
+      limit.suspended !== -activities[0].current_net - gain ||
+      scheduleD.line_11_form2439 !== gain ||
+      schedule1.line5_schedule_e !== -gain ||
+      (schedule1.line10_total_additional_income ?? 0) !== -gain ||
+      f1040.line7_capital_gain !== gain ||
+      f1040.line8_additional_income !== -gain ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 retained Part I sale must reconcile the rental, Schedule D, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   // One current Form 4835 loss offset by one unrelated Schedule E passive
   // rental profit must reach the finalized return exactly once. This narrow
   // no-prior, no-sale route has no special rental allowance.
