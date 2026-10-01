@@ -343,6 +343,96 @@ Deno.test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 3
     Error,
     "Form 1040 line 13",
   );
+  const cappedBox6 = {
+    ...withBox6,
+    patron_filing_details: {
+      ...withBox6.patron_filing_details,
+      source_1099patr: {
+        ...withBox6.patron_filing_details.source_1099patr,
+        box6_section199ag_deduction: 5_400,
+      },
+      box6_written_notice_review: {
+        ...withBox6.patron_filing_details.box6_written_notice_review,
+        designated_199ag_amount: 5_400,
+      },
+    },
+  };
+  const cappedPending = {
+    ...retained,
+    form8995a: cappedBox6,
+    form8995a_schedule_d: cappedBox6,
+    f1099patr: {
+      f1099patrs: [cappedBox6.patron_filing_details.source_1099patr],
+    },
+    f1040: { line13_qbi_deduction: 20_900 },
+  };
+  assertEquals(
+    calculateOneBusiness8995ALines(inputSchema.parse(cappedBox6)).line39,
+    20_900,
+  );
+  assertStringIncludes(
+    form8995a.build(cappedBox6, { filer, pending: cappedPending }),
+    "<DPADSect199AgAllocAgricHortAmt>5400</DPADSect199AgAllocAgricHortAmt>",
+  );
+  assertEquals(
+    form8995aPdf.projectFields!(cappedBox6, cappedPending).line38,
+    5_400,
+  );
+  assertStringIncludes(
+    form8995aScheduleD.build(cappedBox6, { filer, pending: cappedPending }),
+    "<PatronReductionAmt>4500</PatronReductionAmt>",
+  );
+  assertEquals(
+    form8995aScheduleDPdf.projectFields!(cappedBox6, cappedPending).line6,
+    4_500,
+  );
+  const overQualifiedPaymentCap = {
+    ...cappedBox6,
+    patron_filing_details: {
+      ...cappedBox6.patron_filing_details,
+      source_1099patr: {
+        ...cappedBox6.patron_filing_details.source_1099patr,
+        box6_section199ag_deduction: 5_401,
+      },
+      box6_written_notice_review: {
+        ...cappedBox6.patron_filing_details.box6_written_notice_review,
+        designated_199ag_amount: 5_401,
+      },
+    },
+  };
+  const overCapPending = {
+    ...cappedPending,
+    form8995a: overQualifiedPaymentCap,
+    form8995a_schedule_d: overQualifiedPaymentCap,
+    f1099patr: {
+      f1099patrs: [
+        overQualifiedPaymentCap.patron_filing_details.source_1099patr,
+      ],
+    },
+    f1040: { line13_qbi_deduction: 20_901 },
+  };
+  assertThrows(
+    () =>
+      calculateOneBusiness8995ALines(
+        inputSchema.parse(overQualifiedPaymentCap),
+      ),
+    Error,
+    "9% of box 7",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(overQualifiedPaymentCap, {
+        filer,
+        pending: overCapPending,
+      }),
+    Error,
+    "9% of box 7",
+  );
+  assertThrows(
+    () => form8995aPdf.projectFields!(overQualifiedPaymentCap, overCapPending),
+    Error,
+    "9% of box 7",
+  );
   const excessBox6 = {
     ...withBox6,
     patron_filing_details: {
@@ -360,6 +450,6 @@ Deno.test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 3
   assertThrows(
     () => calculateOneBusiness8995ALines(inputSchema.parse(excessBox6)),
     Error,
-    "line 38 taxable-income limit",
+    "9% of box 7",
   );
 });

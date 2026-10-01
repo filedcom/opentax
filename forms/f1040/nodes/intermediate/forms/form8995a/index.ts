@@ -695,6 +695,14 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
   }
   const patr = source.source_1099patr;
   if (
+    (patr.box6_section199ag_deduction ?? 0) * 100 >
+      (patr.box7_qualified_payments ?? 0) * 9
+  ) {
+    throw new Error(
+      "Form 8995-A cooperative box 6 exceeds 9% of box 7 qualified payments",
+    );
+  }
+  if (
     patr.trade_or_business !== true ||
     patr.box13_specified_cooperative !== true ||
     !patr.payer_name ||

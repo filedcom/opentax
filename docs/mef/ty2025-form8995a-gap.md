@@ -299,15 +299,17 @@ positive Form 1099-PATR box 6 section 199A(g) deduction when the retained
 source item names the primary recipient TIN and a reviewed cooperative written-notice
 reference confirms that recipient and amount. Box 7 and the reviewed QBI/W-2
 allocation still calculate Schedule D line 6 and parent line 14. Parent line
-38 then imports the exact box 6 amount, provided it does not exceed line 33
-less line 37; line 39 and Form 1040 line 13a add it to the limited QBI
+38 then imports the exact box 6 amount, provided it does not exceed 9% of box
+7 qualified payments or line 33 less line 37; line 39 and Form 1040 line 13a add it to the limited QBI
 component. Native Form 8995-A, Schedule D, and both PDF projections use that
 single retained source; parent and companion reject a changed recipient,
 source item, missing notice, or return amount. The [2025 Form 1099-PATR](https://www.irs.gov/pub/irs-prior/f1099ptr--2025.pdf)
 requires the cooperative to designate box 6 in a written notice, and the
 [2025 Form 8995-A](https://www.irs.gov/pub/irs-prior/f8995a--2025.pdf)
-caps line 38 at line 33 less line 37. A $2,000 box 6 positive and source,
-owner, notice, cap, and return tamper cases are authored for the bulk pass.
+caps line 38 at line 33 less line 37. The [2025 Form 1099-PATR instructions](https://www.irs.gov/instructions/i1099ptr)
+also cap box 6 at 9% of box 7. The exact $5,400 boundary on $60,000 of
+qualified payments and a $5,401 rejection join the existing $2,000 positive,
+source, owner, notice, and return tamper cases for the bulk pass.
 Issued-copy and written-notice bytes, multiple cooperatives, excess box 6
 carryover treatment, filled PDF, XSD, and IRS acceptance remain open.
 
