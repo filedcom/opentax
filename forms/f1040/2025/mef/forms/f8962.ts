@@ -2847,12 +2847,18 @@ function reconcileSequentialAgreedSharedPolicies(
   context: MefBuildContext | undefined,
   policies: ReturnType<typeof current1095AStatements>,
 ): void {
+  if (!context?.filer) {
+    throw new Error(
+      "Form 8962 sequential shared policies need filer identity and return context",
+    );
+  }
+  const filer = context.filer;
   const pending = context?.pending;
   const general = generalSchema.parse(pending?.general);
   const form1040 = returnSchema.parse(pending?.f1040);
   const source = form1095aSchema.parse(pending?.f1095a);
   const allocations = fields.shared_policy_allocations ?? [];
-  const filerSsn = context!.filer!.primarySSN.replaceAll("-", "");
+  const filerSsn = filer.primarySSN.replaceAll("-", "");
   if (
     fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
     (general.dependents?.length ?? 0) !== 0 ||
@@ -2860,7 +2866,7 @@ function reconcileSequentialAgreedSharedPolicies(
     policies.some((policy) =>
       !policy.policy_number || !policy.recipient_ssn ||
       policy.recipient_ssn.replaceAll("-", "") !== filerSsn ||
-      policy.coverage_state !== context!.filer!.address.state ||
+      policy.coverage_state !== filer.address.state ||
       policy.alternative_marriage_owner !== undefined ||
       policy.slcsp_corrections !== undefined ||
       policy.slcsp_review_periods !== undefined ||

@@ -10,6 +10,7 @@ import {
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { FilingStatus as InputFilingStatus } from "../../../nodes/types.ts";
 import { form1116 } from "./f1116.ts";
 import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
@@ -484,7 +485,7 @@ Deno.test({
   assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
   const xml = buildMefXml({
     general: {
-      filing_status: FilingStatus.Single,
+      filing_status: InputFilingStatus.Single,
       taxpayer_ssn: "123456789",
     },
     form1116_prior_carryover: { carryovers: [carryover] },

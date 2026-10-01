@@ -892,7 +892,11 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
       buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     assertThrows(
-      () => form1116ScheduleBPdf.projectFields!(scheduleB, altered),
+      () =>
+        form1116ScheduleBPdf.projectFields!(
+          scheduleB,
+          altered as unknown as Record<string, Record<string, unknown>>,
+        ),
       Error,
     );
   }
@@ -912,7 +916,11 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
     buildMefBundle(buildPending(extraYear), { filer, attachments: [] })
   );
   assertThrows(
-    () => form1116ScheduleBPdf.projectFields!(scheduleB, extraYear),
+    () =>
+      form1116ScheduleBPdf.projectFields!(
+        scheduleB,
+        extraYear as unknown as Record<string, Record<string, unknown>>,
+      ),
     Error,
   );
 });

@@ -10,11 +10,15 @@ import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { form8962Pdf } from "./forms/f8962.ts";
+import type { MefFormsPending } from "../mef/types.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-alternating-three-no-aptc-policies-200-fpl"
 )!;
+
+const pdfContext = (pending: MefFormsPending) =>
+  pending as unknown as Record<string, Record<string, unknown>>;
 
 function calculate(inputs: Record<string, unknown>) {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
@@ -42,12 +46,13 @@ Deno.test("three no-APTC policies alternate A-B-A-C through Form 1040, MeF and P
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>7800</ReconciledPremiumTaxCreditAmt>",
   );
-  const fields = form8962Pdf.projectFields?.(pending.form8962!, pending) ?? {};
+  const fields =
+    form8962Pdf.projectFields?.(pending.form8962!, pdfContext(pending)) ?? {};
   assertEquals(fields.pdf_month_7_slcsp, "600");
   assertEquals(fields.pdf_month_6_slcsp, "700");
   assertEquals(fields.pdf_month_9_slcsp, "800");
   assertEquals(
-    form8962Pdf.instances?.(fields, fixture.filer, pending)?.length,
+    form8962Pdf.instances?.(fields, fixture.filer, pdfContext(pending))?.length,
     1,
   );
 
@@ -63,7 +68,7 @@ Deno.test("three no-APTC policies alternate A-B-A-C through Form 1040, MeF and P
       attachments: [],
     }), Error);
   assertThrows(() =>
-    form8962Pdf.instances?.(fields, fixture.filer, missingPayment)
+    form8962Pdf.instances?.(fields, fixture.filer, pdfContext(missingPayment))
   );
 
   const wrongOwner = structuredClone(pending);
@@ -113,10 +118,11 @@ Deno.test("protected partial payment on a returning policy month reduces only th
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>7601</ReconciledPremiumTaxCreditAmt>",
   );
-  const fields = form8962Pdf.projectFields?.(pending.form8962!, pending) ?? {};
+  const fields =
+    form8962Pdf.projectFields?.(pending.form8962!, pdfContext(pending)) ?? {};
   assertEquals(fields.pdf_month_7_premium, "401");
   assertEquals(
-    form8962Pdf.instances?.(fields, fixture.filer, pending)?.length,
+    form8962Pdf.instances?.(fields, fixture.filer, pdfContext(pending))?.length,
     1,
   );
 
@@ -136,6 +142,6 @@ Deno.test("protected partial payment on a returning policy month reduces only th
       attachments: [],
     }), Error);
   assertThrows(() =>
-    form8962Pdf.instances?.(fields, fixture.filer, belowThreshold)
+    form8962Pdf.instances?.(fields, fixture.filer, pdfContext(belowThreshold))
   );
 });

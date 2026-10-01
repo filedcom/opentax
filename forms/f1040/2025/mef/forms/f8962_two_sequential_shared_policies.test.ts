@@ -135,7 +135,10 @@ Deno.test("two sequential Situation 4 policies reconcile repayment and reject so
     f1095a: {
       f1095as: [
         policies[0],
-        { ...policies[1], monthly_premiums: [...policies[1].monthly_premiums] },
+        {
+          ...policies[1],
+          monthly_premiums: policies[1].monthly_premiums.map(Number),
+        },
       ],
     },
   };

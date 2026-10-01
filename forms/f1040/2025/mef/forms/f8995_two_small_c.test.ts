@@ -132,7 +132,13 @@ Deno.test("two small Schedule C businesses occupy distinct Form 8995 native and 
       [changedRows, pending],
     ] as const
   ) {
-    assertThrows(() => form8995.build(claim, { pending: graph }), Error);
+    assertThrows(
+      () =>
+        form8995.build(claim as Parameters<typeof form8995.build>[0], {
+          pending: graph,
+        }),
+      Error,
+    );
     assertThrows(() => form8995Pdf.projectFields?.(claim, graph), Error);
   }
 });

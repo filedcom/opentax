@@ -8,6 +8,7 @@ import { buildPending } from "../mef/pending.ts";
 import type { MefFormsPending } from "../mef/types.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8962Pdf } from "./forms/f8962.ts";
+import type { Fields as Form8962Fields } from "../mef/forms/f8962.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const agreed = pdfReviewFixtures.find((item) =>
@@ -50,9 +51,11 @@ Deno.test("Situation 4 no-agreement enrollee ratio reaches final return, native,
     { taxYear: 2025, formType: "f1040" },
   );
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.form8962.monthly_ptc_rows[0].premium, 250);
-  assertEquals(result.pending.form8962.monthly_ptc_rows[0].slcsp, 300);
-  assertEquals(result.pending.form8962.monthly_ptc_rows[0].aptc, 100);
+  const monthlyRows = (result.pending.form8962 as Form8962Fields)
+    .monthly_ptc_rows;
+  assertEquals(monthlyRows?.[0].premium, 250);
+  assertEquals(monthlyRows?.[0].slcsp, 300);
+  assertEquals(monthlyRows?.[0].aptc, 100);
   assertEquals(result.pending.form8962.net_premium_tax_credit, 1_800);
   assertEquals(result.pending.schedule3.line9_premium_tax_credit, 1_800);
   assertEquals(result.pending.f1040.line31_additional_payments, 1_800);
@@ -69,7 +72,10 @@ Deno.test("Situation 4 no-agreement enrollee ratio reaches final return, native,
     bundle.xml,
     "<ReconciledPremiumTaxCreditAmt>1800</ReconciledPremiumTaxCreditAmt>",
   );
-  const projected = form8962Pdf.projectFields?.(pending.form8962!, pending) ??
+  const projected = form8962Pdf.projectFields?.(
+    pending.form8962!,
+    pending as unknown as Record<string, Record<string, unknown>>,
+  ) ??
     {};
   assertEquals(
     (projected as Record<string, unknown>).pdf_allocation_1_premium_pct,

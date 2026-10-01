@@ -260,8 +260,8 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
       us_service_days: 60,
       foreign_service_days: 40,
       workday_ledger_document_reference: "2025 employee workday ledger",
-      salary_only_no_fringe_benefits_confirmed: true,
-      single_2025_compensation_period_confirmed: true,
+      salary_only_no_fringe_benefits_confirmed: true as const,
+      single_2025_compensation_period_confirmed: true as const,
     },
     source_document_reference: "2025 employer project ledger",
   };

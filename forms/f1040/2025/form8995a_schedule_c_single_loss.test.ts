@@ -93,7 +93,7 @@ Deno.test("one sourced QBI loss files Schedule C and carries it forward with no 
 
 Deno.test("one-business QBI loss rejects changed source, return, and companion", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
-  const changed = [{
+  const changed: Array<typeof pending> = [{
     ...pending,
     schedule_c: {
       ...pending.schedule_c,

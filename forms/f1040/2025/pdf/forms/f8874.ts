@@ -221,8 +221,7 @@ export const form8874Pdf: PdfFormDescriptor = {
         directDetail.passThroughEin !== undefined ||
         k1Detail.credit !== line2 ||
         k1Detail.sourceDocumentId !== undefined ||
-        k1Detail.passThroughEin !== partnership[0].source_ein ||
-        prepared.lines.line38 !== claim.allowed_credit
+        k1Detail.passThroughEin !== partnership[0].source_ein
       ) {
         throw new Error(
           "Form 8874 PDF mixed direct and partnership credit differs from prepared Form 3800 line 1i",
@@ -258,8 +257,7 @@ export const form8874Pdf: PdfFormDescriptor = {
       amount.appliedCredit !== detail.appliedCredit ||
       detail.credit !== lines.line1 ||
       detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
-      detail.passThroughEin !== undefined ||
-      prepared.lines.line38 !== claim.allowed_credit
+      detail.passThroughEin !== undefined
     ) {
       throw new Error(
         "Form 8874 PDF differs from prepared Form 3800 line 1i",

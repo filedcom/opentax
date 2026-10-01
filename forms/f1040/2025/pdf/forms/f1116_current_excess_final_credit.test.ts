@@ -5,6 +5,12 @@ import { registry } from "../../registry.ts";
 import { form1116 as form1116Mef } from "../../mef/forms/f1116.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form1116Pdf } from "./f1116.ts";
+import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
+
+function requiredNumber(value: unknown): number {
+  if (typeof value !== "number") throw new Error("Expected computed amount");
+  return value;
+}
 
 Deno.test("current-year excess Form 1116 parent checks final Schedule 3 and Form 1040 credit", () => {
   const fixture = pdfReviewFixtures.find((item) =>
@@ -17,7 +23,8 @@ Deno.test("current-year excess Form 1116 parent checks final Schedule 3 and Form
   assertEquals(result.diagnostics, []);
   const { pending } = result;
   const fields = pending.form_1116;
-  const summary = fields?.category_summaries?.[0];
+  const summary =
+    categorySummarySchema.array().parse(fields?.category_summaries)[0];
   assertEquals(pending.form1116_schedule_b?.case, "current_year_excess");
   assertEquals(
     pending.schedule3?.line1_foreign_tax_credit,
@@ -45,14 +52,14 @@ Deno.test("current-year excess Form 1116 parent checks final Schedule 3 and Form
         f1040: {
           ...pending.f1040,
           line20_nonrefundable_credits:
-            (pending.f1040?.line20_nonrefundable_credits ?? 0) - 1,
+            requiredNumber(pending.f1040?.line20_nonrefundable_credits) - 1,
         },
       },
       {
         ...pending,
         schedule3: {
           ...pending.schedule3,
-          line8_total: (pending.schedule3?.line8_total ?? 0) + 1,
+          line8_total: requiredNumber(pending.schedule3?.line8_total) + 1,
         },
       },
     ]

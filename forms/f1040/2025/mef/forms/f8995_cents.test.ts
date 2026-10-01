@@ -2,7 +2,10 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { form8995 as form8995Node } from "../../../nodes/intermediate/forms/form8995/index.ts";
+import {
+  form8995 as form8995Node,
+  inputSchema as form8995InputSchema,
+} from "../../../nodes/intermediate/forms/form8995/index.ts";
 import { registry } from "../../registry.ts";
 import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
@@ -75,10 +78,17 @@ Deno.test("Schedule C cents survive the source graph and reconcile to both Form 
   const fields = pending.form8995;
   assertEquals(pending.schedule1?.line3_schedule_c, 80_000.49);
   assertEquals(fields?.qbi_from_schedule_c, 80_000.49);
-  assertEquals(fields?.schedule_c_qbi_businesses?.[0].qbi, 80_000.49);
+  assertEquals(
+    form8995InputSchema.parse(fields).schedule_c_qbi_businesses?.[0].qbi,
+    80_000.49,
+  );
+  const seDeduction = pending.schedule1?.line15_se_deduction;
+  if (typeof seDeduction !== "number") {
+    throw new Error("Schedule 1 needs a computed self-employment deduction");
+  }
   assertEquals(
     fields?.line1_qbi,
-    Math.round(80_000.49 - (pending.schedule1?.line15_se_deduction ?? 0)),
+    Math.round(80_000.49 - seDeduction),
   );
   assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
   const xml = form8995.build(fields, { pending });

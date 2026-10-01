@@ -698,11 +698,11 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         hasProtectedPartial = true;
       }
       const noAptcMonthlyClaim = (f1095as.length === 1 ||
-        sequentialNoAptcPartial) &&
+        nonoverlappingNoAptcPartial) &&
         item.no_aptc_monthly_evidence !== undefined &&
         item.monthly_aptcs.every((amount) => amount === 0) &&
         item.shared_policy_periods === undefined &&
-        (hasProtectedPartial || sequentialNoAptcPartial ||
+        (hasProtectedPartial || nonoverlappingNoAptcPartial ||
           adjustedPremiums.some((amount) => amount !== adjustedPremiums[0]) ||
           slcsps.some((amount) => amount !== slcsps[0]));
       return {

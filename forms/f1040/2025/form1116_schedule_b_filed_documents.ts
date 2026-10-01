@@ -181,7 +181,7 @@ export async function reviewForm1116ScheduleBFiledDocuments(
       "Form 1116 filed Schedule B category differs from the carryover source",
     );
   }
-  const expected = new Map(source.vintages.map((vintage) => [
+  const expected = new Map<number, number>(source.vintages.map((vintage) => [
     vintage.vintage_tax_year,
     vintage.prior_year_schedule_b_line8_vintage_amount,
   ]));

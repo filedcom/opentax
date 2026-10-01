@@ -4,6 +4,12 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
+import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
+
+function requiredNumber(value: unknown): number {
+  if (typeof value !== "number") throw new Error("Expected computed amount");
+  return value;
+}
 
 Deno.test("Form 1116 Schedule B PDF ties one-category credit to parent and final return", () => {
   const fixture = pdfReviewFixtures.find((item) =>
@@ -15,7 +21,9 @@ Deno.test("Form 1116 Schedule B PDF ties one-category credit to parent and final
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const { pending } = result;
-  const summary = pending.form_1116?.category_summaries?.[0];
+  const summary = categorySummarySchema.array().parse(
+    pending.form_1116?.category_summaries,
+  )[0];
   assertEquals(
     pending.schedule3?.line1_foreign_tax_credit,
     summary?.allowedCredit,
@@ -33,7 +41,7 @@ Deno.test("Form 1116 Schedule B PDF ties one-category credit to parent and final
     schedule3: {
       ...pending.schedule3,
       line1_foreign_tax_credit:
-        (pending.schedule3?.line1_foreign_tax_credit ?? 0) - 1,
+        requiredNumber(pending.schedule3?.line1_foreign_tax_credit) - 1,
     },
   };
   assertThrows(

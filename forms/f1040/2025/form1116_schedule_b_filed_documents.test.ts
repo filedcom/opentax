@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { sha256Hex } from "./prepared-source.ts";
 import { reviewForm1116ScheduleBFiledDocuments } from "./form1116_schedule_b_filed_documents.ts";
+import { IncomeCategory } from "../nodes/intermediate/forms/form_1116/index.ts";
 
 const form1040Id = "filed-2024-form1040-alex";
 const scheduleBId = "filed-2024-passive-schedule-b-alex";
@@ -74,18 +75,22 @@ async function scheduleBBytes(
   return await pdf.save();
 }
 
-async function document(source_document_id: string, bytes: Uint8Array) {
+async function document(
+  source_document_id: string,
+  bytes: Uint8Array,
+) {
+  const ownedBytes = new Uint8Array(bytes);
   return {
     source_document_id,
-    bytes,
-    reviewed_sha256: await sha256Hex(bytes),
+    bytes: ownedBytes,
+    reviewed_sha256: await sha256Hex(ownedBytes),
     reviewed_by: "Alex Reviewer",
     reviewed_on: "2026-04-01",
   };
 }
 
 const carryoverSource = {
-  income_category: "passive" as const,
+  income_category: IncomeCategory.Passive,
   vintages: [
     {
       vintage_tax_year: 2023 as const,
@@ -103,7 +108,7 @@ const carryoverSource = {
   filed_2024_schedule_b: {
     taxpayer_ssn: "111223333",
     tax_year: 2024 as const,
-    income_category: "passive" as const,
+    income_category: IncomeCategory.Passive,
     form1040_source_document_id: form1040Id,
     schedule_b_source_document_id: scheduleBId,
     line8_2023_first_preceding_amount: 100,
@@ -113,13 +118,19 @@ const carryoverSource = {
 };
 
 async function intake(
-  form1040 = await form1040Bytes(),
-  scheduleB = await scheduleBBytes(),
+  form1040?: Uint8Array,
+  scheduleB?: Uint8Array,
 ) {
   return {
     carryover_source: carryoverSource,
-    filed_form1040: await document(form1040Id, form1040),
-    filed_schedule_b: await document(scheduleBId, scheduleB),
+    filed_form1040: await document(
+      form1040Id,
+      form1040 ?? await form1040Bytes(),
+    ),
+    filed_schedule_b: await document(
+      scheduleBId,
+      scheduleB ?? await scheduleBBytes(),
+    ),
   };
 }
 
@@ -153,7 +164,7 @@ Deno.test("Form 1116 reviewed 2024 PDFs reject changed bytes and printed source 
         ...reviewed,
         filed_schedule_b: {
           ...reviewed.filed_schedule_b,
-          bytes: await scheduleBBytes({ prior2023: "101" }),
+          bytes: new Uint8Array(await scheduleBBytes({ prior2023: "101" })),
         },
       },
       await intake(await form1040Bytes("999999999")),
