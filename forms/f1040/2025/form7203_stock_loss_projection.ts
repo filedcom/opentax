@@ -3,7 +3,10 @@ import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { inputSchema as form7203InputSchema } from "../nodes/intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../nodes/intermediate/forms/form7203/stock-ledger.ts";
-import { reconcileNewFormalNotes } from "../nodes/intermediate/forms/form7203/debt-note.ts";
+import {
+  reconcileCashCapitalAndNewNote,
+  reconcileNewFormalNotes,
+} from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 
@@ -52,6 +55,7 @@ export function projectReviewedStockLoss7203(
     Object.keys(rawFields).some((key) =>
       key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
       key !== "additional_contributions" &&
+      key !== "reviewed_stock_loss_ledger" &&
       !(note && (key === "new_loans" || key === "reviewed_debt_evidence"))
     )
   ) {
@@ -63,9 +67,25 @@ export function projectReviewedStockLoss7203(
   const currentLoss = -(source.box1_ordinary_business ?? 0);
   const basis = ledger.beginning_stock_basis;
   const contribution = ledger.cash_capital_contribution?.amount ?? 0;
+  if (note && contribution > 0) {
+    reconcileCashCapitalAndNewNote(ledger, note);
+    if (
+      currentLoss <= basis + contribution ||
+      JSON.stringify(fields.reviewed_stock_loss_ledger) !==
+        JSON.stringify(ledger)
+    ) {
+      throw new Error(
+        "Form 7203 combined capital-and-debt projection needs exact stock evidence and loss reaching the note",
+      );
+    }
+  } else if (fields.reviewed_stock_loss_ledger !== undefined) {
+    throw new Error(
+      "Form 7203 debt projection only retains a stock ledger for a cash capital contribution",
+    );
+  }
   if (
     note
-      ? ledger.no_shareholder_debt_or_repayments || contribution !== 0 ||
+      ? ledger.no_shareholder_debt_or_repayments ||
         ledger.beginning_stock_basis !== note.beginning_stock_basis ||
         ledger.beginning_basis_workpaper_reference !==
           note.beginning_stock_basis_workpaper_reference ||

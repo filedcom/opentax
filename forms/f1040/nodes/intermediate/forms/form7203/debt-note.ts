@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { reviewedPriorReducedNoteSchema } from "./prior-reduced-note.ts";
+import type { ReviewedStockLossLedger } from "./stock-ledger.ts";
 
 const sourceReference = z.string().trim().min(1);
 const ty2025Date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
@@ -131,6 +132,40 @@ export const reviewedForm7203DebtEvidenceSchema = z.union([
 export type ReviewedNewFormalNotes = z.infer<
   typeof reviewedNewFormalNotesSchema
 >;
+
+export function reconcileCashCapitalAndNewNote(
+  ledger: ReviewedStockLossLedger,
+  note: ReviewedNewFormalNotes,
+): number {
+  const contribution = ledger.cash_capital_contribution;
+  if (!contribution || note.second_formal_note || note.principal_repayment) {
+    throw new Error(
+      "Form 7203 combined capital-and-debt route needs one new formal note without repayment",
+    );
+  }
+  const references = [
+    ledger.beginning_basis_workpaper_reference,
+    contribution.bank_transfer_reference,
+    contribution.corporate_capital_account_reference,
+    note.k1_source_document_reference,
+    note.formal_note_id,
+    note.signed_note_document_reference,
+    note.bank_transfer_reference,
+  ];
+  if (
+    ledger.shareholder_ssn !== note.shareholder_ssn ||
+    ledger.corporation_ein !== note.corporation_ein ||
+    ledger.beginning_stock_basis !== note.beginning_stock_basis ||
+    ledger.beginning_basis_workpaper_reference !==
+      note.beginning_stock_basis_workpaper_reference ||
+    new Set(references).size !== references.length
+  ) {
+    throw new Error(
+      "Form 7203 cash capital and formal note need one owner/corporation and distinct capital, debt, K-1, and opening-basis records",
+    );
+  }
+  return contribution.amount;
+}
 
 export function reconcileNewFormalNotes(
   raw: unknown,

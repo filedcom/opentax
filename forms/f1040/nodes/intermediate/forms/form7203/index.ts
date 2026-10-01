@@ -5,7 +5,11 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { reviewedForm7203DebtEvidenceSchema } from "./debt-note.ts";
+import {
+  reconcileCashCapitalAndNewNote,
+  reviewedForm7203DebtEvidenceSchema,
+} from "./debt-note.ts";
+import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +41,7 @@ export const inputSchema = z.object({
 
   // Line 2 — Capital contributions and stock acquisitions during year
   additional_contributions: z.number().nonnegative().optional(),
+  reviewed_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
 
   // Line 3 — Ordinary business income from K-1 Box 1 (positive only)
   // Increases stock basis under IRC §1367(a)(1)(A)
@@ -177,6 +182,28 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
     const note = input.reviewed_debt_evidence;
     if (
+      note?.kind === "new_2025_formal_notes" &&
+      (input.additional_contributions ?? 0) > 0
+    ) {
+      const ledger = input.reviewed_stock_loss_ledger;
+      if (
+        !ledger ||
+        reconcileCashCapitalAndNewNote(ledger, note) !==
+          input.additional_contributions ||
+        ledger.no_shareholder_debt_or_repayments ||
+        (input.ordinary_loss ?? 0) <=
+          ledger.beginning_stock_basis + input.additional_contributions
+      ) {
+        throw new Error(
+          "Form 7203 capital-and-debt loss needs reconciled capital and note source with loss reaching debt basis",
+        );
+      }
+    } else if (input.reviewed_stock_loss_ledger !== undefined) {
+      throw new Error(
+        "Form 7203 reviewed stock ledger in debt calculation requires the sourced capital-and-debt route",
+      );
+    }
+    if (
       ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
         note) &&
       (!note || input.debt_basis_beginning !== undefined ||
@@ -184,7 +211,8 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
             (note.second_formal_note?.cash_advance_amount ?? 0) ||
         input.stock_basis_beginning !== note.beginning_stock_basis ||
         input.ordinary_loss !== note.current_box1_ordinary_loss ||
-        (input.additional_contributions ?? 0) !== 0 ||
+        ((input.additional_contributions ?? 0) !== 0 &&
+          !input.reviewed_stock_loss_ledger) ||
         (input.ordinary_income ?? 0) !== 0 ||
         (input.tax_exempt_income ?? 0) !== 0 ||
         (input.distributions ?? 0) !== 0 ||

@@ -25,6 +25,7 @@ import {
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
 import {
+  reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   reviewedForm7203DebtEvidenceSchema,
 } from "../../intermediate/forms/form7203/debt-note.ts";
@@ -577,6 +578,9 @@ function buildForm7203Fields(
       ? {
         additional_contributions:
           item.form7203_stock_loss_ledger.cash_capital_contribution.amount,
+        ...(item.form7203_debt_evidence
+          ? { reviewed_stock_loss_ledger: item.form7203_stock_loss_ledger }
+          : {}),
       }
       : {}),
     ...(item.debt_basis_beginning !== undefined
@@ -765,7 +769,6 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
         const ledger = item.form7203_stock_loss_ledger;
         if (
           !ledger || ledger.no_shareholder_debt_or_repayments ||
-          ledger.cash_capital_contribution ||
           ledger.shareholder_ssn !== note.shareholder_ssn ||
           ledger.corporation_ein !== note.corporation_ein ||
           ledger.beginning_stock_basis !== note.beginning_stock_basis ||
@@ -778,6 +781,18 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           throw new Error(
             "Form 7203 formal note and reviewed stock ledger must reconcile",
           );
+        }
+        if (ledger.cash_capital_contribution) {
+          reconcileCashCapitalAndNewNote(ledger, note);
+          if (
+            note.current_box1_ordinary_loss <=
+              ledger.beginning_stock_basis +
+                ledger.cash_capital_contribution.amount
+          ) {
+            throw new Error(
+              "Form 7203 combined capital-and-debt route needs a loss reaching the reviewed note basis",
+            );
+          }
         }
       } else if (
         (item.box16_code_e_loan_repayment ?? 0) > 0

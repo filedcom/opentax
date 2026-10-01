@@ -1,5 +1,30 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## One cash capital contribution and one new formal note (2026-10-01, unrun)
+
+A single S-corporation K-1 box-1 loss can now use both one 2025 cash capital
+contribution and one new, directly funded shareholder formal note. The
+reviewed stock ledger binds the contribution to the shareholder and corporation
+through a dated bank transfer and a separate corporate capital-account record;
+the note has its own signed instrument, note ID, and bank transfer. The two
+transfers and all other source references must be distinct. Beginning stock
+basis and its workpaper must agree across the ledger and note source. The
+current loss must exceed opening stock basis plus the contribution, so the
+bounded route actually reaches the note. It excludes a second note, repayment,
+prior reduced debt basis, other K-1 basis changes, and suspended losses.
+
+Form 7203 Part I line 2 increases stock basis for the cash contribution, then
+Part III applies the ordinary loss first to stock. Part II line 22 reports the
+separate note advance and line 30 its share of the remaining loss. The allowed
+stock and debt loss joins Schedule E, Schedule 1 line 5, and Form 1040 line 8;
+native MeF and PDF replay the same source and final amounts. Positive
+full-return and source/export tamper fixtures are authored for the deferred
+validation pass. The bank, corporate ledger, signed-note, and K-1 records are
+reviewed references rather than authenticated bytes. This follows the
+[Form 7203 instructions](https://www.irs.gov/instructions/i7203), which assign
+capital contributions to line 2, exclude shareholder loans from that line,
+and track formal shareholder debt separately in Part II.
+
 ## Prior reduced formal-note basis and taxable repayment prerequisite (2026-10-01, unrun)
 
 The executor now has an async `executeWithSourceDocuments` entry point. It
