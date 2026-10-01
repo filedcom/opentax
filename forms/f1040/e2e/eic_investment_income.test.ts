@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "../2025/registry.ts";
@@ -711,7 +711,7 @@ Deno.test("EIC allocates two Form 4835 farm losses beside passive rent", async (
   );
 });
 
-Deno.test("prior Form 4835 passive loss prints PAL and reconciles EIC", async () => {
+Deno.test("prior Form 4835 passive loss reconciles EIC but blocks unauthenticated exports", async () => {
   const runPriorFarm = (rent: number) =>
     execute(plan, registry, {
       general,
@@ -756,42 +756,11 @@ Deno.test("prior Form 4835 passive loss prints PAL and reconciles EIC", async ()
   assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
   assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
   const filer = extractFilerIdentity(atLimit.pending.f1040);
-  const xml = buildMefXml(buildPending(atLimit.pending), filer);
-  assertEquals(
-    xml.includes(
-      "<PriorYearUnallowedOtherLossAmt>1500</PriorYearUnallowedOtherLossAmt>",
-    ),
-    true,
+  assertThrows(
+    () => buildMefXml(buildPending(atLimit.pending), filer),
+    Error,
+    "authenticated accepted-2024 return",
   );
-  assertEquals(
-    xml.includes(
-      "<FarmRentalDeductibleLossAmt>500</FarmRentalDeductibleLossAmt>",
-    ),
-    true,
-  );
-  assertEquals(
-    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
-    true,
-  );
-  const xsd = new URL(
-    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsd, xmlPath],
-      stderr: "piped",
-    }).output();
-    assertEquals(
-      validation.code,
-      0,
-      new TextDecoder().decode(validation.stderr),
-    );
-  } finally {
-    await Deno.remove(xmlPath);
-  }
   const farmFields = form4835Pdf.projectFields?.(
     atLimit.pending.f4835,
     atLimit.pending,
@@ -808,8 +777,11 @@ Deno.test("prior Form 4835 passive loss prints PAL and reconciles EIC", async ()
   );
   assertEquals(scheduleFields?.farm_line40, 0);
   assertEquals(scheduleFields?.trust_line41, 11_950);
-  const pdf = await buildPdfBytes(atLimit.pending, filer);
-  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  await assertRejects(
+    () => buildPdfBytes(atLimit.pending, filer),
+    Error,
+    "authenticated accepted-2024 return",
+  );
 });
 
 Deno.test("active rental special allowance nets passive farm income", async () => {
