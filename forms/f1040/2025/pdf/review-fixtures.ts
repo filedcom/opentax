@@ -855,11 +855,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "eitc", "f8812"],
+    expectedPdfForms: ["f1040", "eitc"],
     reviewFocus: [
       "Form 1040 line 28 checks the do-not-claim-ACTC box and leaves its credit amount blank",
       "Native IRS1040 emits DoNotClaimACTCInd without AdditionalChildTaxCreditAmt",
-      "Schedule 8812 identifies Ada as a qualifying child and leaves refundable ACTC at zero by election",
+      "The retained Form 8812 source has one qualifying child, but its zero-credit page is not printed",
     ],
   },
   {
