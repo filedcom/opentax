@@ -13,6 +13,36 @@ export function assertReturnWideArithmetic(
   const matches = (filed: number, expected: number): boolean =>
     Math.abs(filed - expected) < 0.01;
 
+  const line9 = amount("line9_total_income");
+  const line10 = amount("line10_adjustments");
+  const line11 = amount("line11_agi");
+  if (
+    line9 !== undefined && line10 !== undefined && line11 !== undefined &&
+    !matches(line11, line9 - line10)
+  ) {
+    throw new Error("Form 1040 line 11 differs from lines 9 and 10");
+  }
+
+  const line12 = amount("line12c_deduction_total");
+  const line14 = amount("line14_deductions_qbi_total");
+  if (
+    line12 !== undefined && line14 !== undefined &&
+    !matches(
+      line14,
+      line12 + (amount("line13_qbi_deduction") ?? 0) +
+        (amount("line13b_additional_deductions") ?? 0),
+    )
+  ) {
+    throw new Error("Form 1040 line 14 differs from lines 12 and 13");
+  }
+  const line15 = amount("line15_taxable_income");
+  if (
+    line11 !== undefined && line14 !== undefined && line15 !== undefined &&
+    !matches(line15, Math.max(0, line11 - line14))
+  ) {
+    throw new Error("Form 1040 line 15 differs from lines 11 and 14");
+  }
+
   const line18 = amount("line18_total_tax_before_credits");
   const line16 = amount("line16_income_tax");
   if (

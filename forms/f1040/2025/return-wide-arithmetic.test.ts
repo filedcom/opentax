@@ -18,6 +18,11 @@ Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => 
     line15_taxable_income: 51_500,
   };
   assertReturnWideArithmetic(income);
+  assertStringIncludes(
+    irs1040.build(income, { pending: {} }),
+    "<TaxableIncomeAmt>51500</TaxableIncomeAmt>",
+  );
+  irs1040Pdf.projectFields?.(income, {});
   for (
     const [key, reason] of [
       ["line11_agi", "line 11"],
@@ -27,6 +32,20 @@ Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => 
   ) {
     assertThrows(
       () => assertReturnWideArithmetic({ ...income, [key]: income[key] + 1 }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () =>
+        irs1040.build({ ...income, [key]: income[key] + 1 }, {
+          pending: {},
+        }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () =>
+        irs1040Pdf.projectFields?.({ ...income, [key]: income[key] + 1 }, {}),
       Error,
       reason,
     );
