@@ -371,7 +371,11 @@ export function validatePassiveActivityLink(
       | undefined)?.passive_property_sales;
     const pendingSale = passivePropertySaleSchema.safeParse(pendingSales?.[0]);
     if (
-      context?.pending?.form8582 !== undefined || !sale ||
+      (context?.pending?.form8582 !== undefined &&
+        context.pending.form8582 !== null &&
+        Object.keys(context.pending.form8582).some((key) =>
+          key !== "filing_status"
+        )) || !sale ||
       pendingSales?.length !== 1 ||
       !pendingSale.success || !samePassiveSale(pendingSale.data, sale)
     ) {

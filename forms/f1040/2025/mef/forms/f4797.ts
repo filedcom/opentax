@@ -284,7 +284,8 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       if (
-        entireLoss !== undefined && passiveLedger !== undefined
+        entireLoss !== undefined && passiveLedger !== undefined &&
+        Object.keys(passiveLedger).some((key) => key !== "filing_status")
       ) {
         throw new Error(
           "Form 4797 overall-loss entire disposition must bypass Form 8582",

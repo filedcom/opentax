@@ -358,7 +358,11 @@ export const form4797Pdf: PdfFormDescriptor = {
       if (
         scheduleE.schedule_es.length !== 1 || !activity ||
         (entireLoss === undefined && entireGain === undefined) ||
-        (entireLoss !== undefined && allPending.form8582 !== undefined) ||
+        (entireLoss !== undefined && allPending.form8582 !== undefined &&
+          allPending.form8582 !== null &&
+          Object.keys(allPending.form8582).some((key) =>
+            key !== "filing_status"
+          )) ||
         (entireGain !== undefined &&
           (!gainLedger?.success ||
             gainLedger.data.activities?.length !== 1 ||

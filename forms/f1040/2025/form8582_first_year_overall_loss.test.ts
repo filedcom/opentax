@@ -14,6 +14,7 @@ import { scheduleEPdf } from "./pdf/forms/schedule_e.ts";
 import { form4797Pdf } from "./pdf/forms/f4797.ts";
 
 const general = {
+  digital_assets: false,
   filing_status: FilingStatus.Single,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Taxpayer",
@@ -28,7 +29,7 @@ const sale = {
   activity_id: "first-year-loss-rental",
   activity_name: "First year loss rental",
   part: "II" as const,
-  property_description: "Short-held rental equipment",
+  property_description: "Rental equipment",
   acquired_on: "2025-01-01",
   sold_on: "2025-06-01",
   gross_sales_price: 9_000,
@@ -69,7 +70,16 @@ const property = {
 function returnWithFirstYearLoss() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
+    w2: [{
+      employer_ein: "987654321",
+      employer_name: "Austin Employer",
+      employer_address_line1: "2 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 50_000,
+      box2_fed_withheld: 8_000,
+    }],
     schedule_e: [property],
   });
   assertEquals(result.diagnostics, []);
@@ -78,7 +88,7 @@ function returnWithFirstYearLoss() {
 
 Deno.test("first-year entire passive disposition releases overall loss on Schedule E and Form 4797", async () => {
   const pending = returnWithFirstYearLoss();
-  assertEquals(pending.form8582, undefined);
+  assertEquals(pending.form8582, { filing_status: "single" });
   assertEquals(pending.schedule1?.line5_schedule_e, -5_000);
   assertEquals(pending.schedule1?.line4_other_gains, 2_000);
   assertEquals(pending.f1040?.line8_additional_income, -3_000);
