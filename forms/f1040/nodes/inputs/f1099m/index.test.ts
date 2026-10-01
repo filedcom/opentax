@@ -48,6 +48,33 @@ function miscReceiptTotal(result: ReturnType<typeof compute>): number {
     .reduce((sum, source) => sum + source.amount, 0);
 }
 
+Deno.test("1099-MISC repeated identified copy cannot double income or withholding", () => {
+  const issued = minimalItem({
+    account_number: "ACCT-1",
+    box3_other_income: 300,
+    box3_other_income_routing: "prizes_awards",
+    box4_federal_withheld: 20,
+  });
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        box3_other_income_description: "Changed review description",
+      }]),
+    Error,
+    "repeats the same payer, recipient, account",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, account_number: "ACCT-2" },
+  ]);
+  assertEquals(
+    fieldsOf(distinct.outputs, schedule1)?.line8i_prizes_awards,
+    600,
+  );
+  assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
+});
+
 Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
   const review = {
     amount: 4_000,

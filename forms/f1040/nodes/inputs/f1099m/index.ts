@@ -230,6 +230,46 @@ export const inputSchema = z.object({
 type M99Item = z.infer<typeof itemSchema>;
 type M99Input = z.infer<typeof inputSchema>;
 
+const issuedCopyFields = [
+  "box1_rents",
+  "box2_royalties",
+  "box3_other_income",
+  "box4_federal_withheld",
+  "box5_fishing_boat",
+  "box6_medical_payments",
+  "box7_direct_sales",
+  "box8_substitute_payments",
+  "box9_crop_insurance",
+  "box10_attorney_proceeds",
+  "box11_fish_purchased",
+  "box12_section_409a_deferrals",
+  "box13_fatca",
+  "box15_nqdc",
+  "box16_state_tax_withheld",
+  "box17_state_payer_id",
+  "box18_state_income",
+] as const satisfies readonly (keyof M99Item)[];
+
+function assertDistinctIssuedCopies(items: readonly M99Item[]): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.account_number) continue;
+    const key = JSON.stringify([
+      item.payer_tin,
+      item.recipient_tin,
+      item.account_number,
+      item.multi_form_code ?? null,
+      ...issuedCopyFields.map((field) => item[field] ?? null),
+    ]);
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-MISC repeats the same payer, recipient, account, and issued box amounts",
+      );
+    }
+    seen.add(key);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Pure helper functions
 // ---------------------------------------------------------------------------
@@ -390,6 +430,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: M99Input): NodeResult {
     const { f1099ms: m99s } = inputSchema.parse(input);
+    assertDistinctIssuedCopies(m99s);
     if (m99s.length === 0) return { outputs: [] };
 
     // Direct node callers can bypass inputSchema, so do not silently turn an
