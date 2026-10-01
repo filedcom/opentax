@@ -229,6 +229,19 @@ Part I/II character. An absent row, duplicate character, altered amount, current
 sale, and active-rental combination reject. Source, node and native XML cases
 are written but unrun.
 
+A bounded no-income 2025 packet now carries a reviewed three-line 2024 Part IX
+record ($2,000 Schedule E, $6,000 Form 4797 Part I, and $2,000 Form 4797 Part
+II) without treating any suspended amount as a current deduction. The native
+Form 8582 Part V/VII/IX worksheet and the single printed PDF Part IX block
+retain each character. The native builder checks zero Schedule 1 income and
+the finalized wages-only Form 1040 for this route. A full-return fixture
+reconciles the three retained balances to the in-memory carryforward ledger
+and a complete three-row 2026 opening contract, with changed character,
+return, and opening-row rejection cases. The fixture's acceptance references
+are synthetic. Filing remains gated on authenticating the accepted 2024
+return; the 2026 import remains a contract, not an enabled engine route. These
+cases are written but unrun pending the full implementation batch.
+
 This only proves an entered reference and row reconciliation, not that the filed
 2024 return has been fetched or authenticated. A prior single-form Part VIII
 loss has only the separate bounded route below; active-rental prior Form 4797

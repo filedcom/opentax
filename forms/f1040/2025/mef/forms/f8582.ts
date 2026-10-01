@@ -421,6 +421,42 @@ function buildOtherPassive(
     activeParticipation: false,
     filingStatus: input.filing_status,
   });
+  // A filed Part IX source with no current passive activity income must carry
+  // each reporting character intact. Reconcile the zero-deduction result to
+  // the finalized return before printing the three-line Part IX workpaper.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net === 0 &&
+    activities[0].prior_year_8582_source?.filed_part_ix_rows?.length === 3 &&
+    activities[0].prior_unallowed_operating > 0 &&
+    activities[0].prior_unallowed_4797_part1 > 0 &&
+    activities[0].prior_unallowed_4797_part2 > 0 &&
+    currentIncome === 0 && currentLoss === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      wages === undefined || !f1040 ||
+      limit.allowed !== 0 || limit.suspended !== priorLoss ||
+      (schedule1?.line5_schedule_e ?? 0) !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 Part IX zero-income carryover must reconcile its source, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   // A prior operating PAL used against the same rental's current profit must
   // cancel that profit on Schedule E, while leaving the remainder suspended.
   if (
