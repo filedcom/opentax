@@ -567,6 +567,20 @@ claimed.
 
 ## Remaining multiple-recipient implementation
 
+A narrowly combined Part-III-only partial-share beneficiary route now carries
+the full pre-1996 death-benefit exclusion, a separately percentaged box 8
+annuity, and administrator-sourced estate tax. The [2025 Form 4972
+instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) direct box
+2a divided by box 9a to line 8, the full allowable exclusion to line 9,
+box 8 divided by its own percentage to line 11, attributable estate tax to
+line 18, and box 9a proration at line 29. The existing participant-wide death
+allocation and estate administrator/return workpaper must independently match
+the same recipient share, with three distinct references. Native and PDF
+replay the one elected 1099-R, calculated lines, and Form 1040 special tax.
+Positive and source/allocation/printed-line/return-tax tamper fixtures are
+authored but unrun. Part II, NUA, multiple copies, source-byte authentication,
+filled PDF, XSD, business rules, and ATS acceptance remain open.
+
 Another bounded Part-III-only partial-share beneficiary route combines a
 participant-wide death-benefit exclusion and a box 8 annuity, without Part II,
 NUA, or estate tax. The [2025 Form 4972 multiple-recipient and line 9
