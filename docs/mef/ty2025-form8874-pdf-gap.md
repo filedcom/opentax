@@ -79,6 +79,27 @@ the credit's continuing QEI status and recapture history need later CDE
 evidence. A 2023 issuance notice alone cannot prove conditions on a 2025
 anniversary.
 
+A Form 8874-B reported-event helper now requires reviewed signed notice fields,
+including the CDE and investor identity, original QEI, event date and reason,
+seven annual credit decreases, CDE awareness date, signature, and delivery date.
+It checks the signed-notice delivery deadline against the
+[official Form 8874-B instructions](https://www.irs.gov/pub/irs-pdf/f8874b.pdf),
+joins the event to the Form 8874-A issuance, matches one `f8874_recapture`
+source, and checks the computed recapture against Schedule 2 line 17a. The
+notice amount is not treated as the taxpayer's recapture tax; the existing
+prior-return recomputation and interest calculation supplies that tax. Positive
+and tamper fixtures await the bulk pass. This helper is staged; the current-year
+Form 8874 source still requires `recapture_notice_received: false` and does not
+use a 2025 event notice to claim another credit.
+
+Form 8874-B is issued **when a recapture event occurs**. An absent notice cannot
+establish that no event occurred, and the return graph has no authenticated CDE
+status or notice-history record covering every day through December 31, 2025.
+The no-event branch therefore remains unsupported. A direct QEI still needs
+affirmative CDE status/history evidence before its recapture status can be
+considered proven; a taxpayer's unchecked "no notice received" assertion is
+insufficient.
+
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date. It
 computes a $500 credit, prints the CDE identity and address on two lines within
