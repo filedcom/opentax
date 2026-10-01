@@ -167,10 +167,17 @@ otherwise valid expiring vintage. A 2015-origin passive credit that is only
 partly used therefore reaches the parent native/PDF, Schedule B native/PDF,
 and Schedule 3 without carrying the expired dollars forward. Focused public
 graph, projection, native, and tamper cases are authored for the deferred batch.
-The filed 2024 Schedule B source remains a reviewed transcription; issued
-return bytes are not authenticated. Current-year excess combined with a prior
-balance, other baskets, mixed income, and multiple parent PDF items remain
-closed in this slice. [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+The same one-source passive boundary now admits a reviewed 2015 balance while
+2025 foreign tax exceeds the category limit. Parent Form 1116 Part III uses
+current tax only, Schedule 3/Form 1040 claim the limited credit, and Schedule B
+line 5 expires the entire unused 2015 amount while lines 6/8 carry only new
+2025 excess. The parent PDF checks the companion's combined case, source
+category, balance, zero prior use, and current excess; native MeF and the
+two-page Schedule B PDF replay those amounts. A full-return and balance/excess
+tamper fixture is authored but unrun. The filed 2024 Schedule B source remains
+a reviewed transcription; issued return bytes are not authenticated. Other
+baskets, mixed income, and multiple parent PDF items remain closed in this
+slice. [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
 and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
 govern oldest-first use and expiration.
 

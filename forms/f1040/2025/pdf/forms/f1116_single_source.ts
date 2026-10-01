@@ -520,11 +520,14 @@ export function projectSingleSourceForm1116Pdf(
   if (priorCarryover > 0) {
     const scheduleB = scheduleBPresentation(pending.form1116_schedule_b);
     if (
-      currentExcess > 0 ||
-      scheduleB.case !== "prior_year_use" ||
+      scheduleB.case !==
+        (currentExcess > 0
+          ? "combined_current_excess_prior_balance"
+          : "prior_year_use") ||
       scheduleB.category !== summary.category ||
       scheduleB.balance !== priorCarryover ||
-      scheduleB.used !== usedPriorCarryover
+      scheduleB.used !== usedPriorCarryover ||
+      (currentExcess > 0 && scheduleB.amount !== currentExcess)
     ) {
       throw new Error(
         "Form 1116 PDF prior-year credit needs the matching sourced Schedule B",
@@ -539,7 +542,10 @@ export function projectSingleSourceForm1116Pdf(
     }
     const scheduleB = scheduleBPresentation(pending.form1116_schedule_b);
     if (
-      scheduleB.case !== "current_year_excess" ||
+      scheduleB.case !==
+        (priorCarryover > 0
+          ? "combined_current_excess_prior_balance"
+          : "current_year_excess") ||
       scheduleB.category !== summary.category ||
       scheduleB.amount !== currentExcess
     ) {

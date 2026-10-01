@@ -1,7 +1,17 @@
-import { assert, assertEquals, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
+import { buildMefBundle } from "../../mef/builder.ts";
+import { buildPending } from "../../mef/pending.ts";
+import { buildPdfBytes } from "../builder.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form1116Pdf } from "./f1116.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import { form1116 } from "../../mef/forms/f1116.ts";
@@ -116,6 +126,112 @@ Deno.test("Form 1116 public review joins one sourced interest tax, standard dedu
     scheduleProjection.line8_current,
     scheduleProjection.line6_current,
   );
+});
+
+Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native and PDF", async () => {
+  const source = inputs();
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_carryover_review: {
+      reviews: [{
+        ...source.form1116_carryover_review.reviews[0],
+        prior_year_schedule_b_line8_balance: 100,
+      }],
+    },
+    form1116_prior_carryover: {
+      carryovers: [{
+        income_category: "passive",
+        vintages: [{
+          vintage_tax_year: 2015,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        }],
+        prior_year_schedule_b_line8_total: 100,
+        prior_year_schedule_b_line8_other_vintages_total: 0,
+        no_intervening_adjustments: true,
+        source_document_references: [
+          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+        ],
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent);
+  assert(scheduleB);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assert(summary);
+  assert(result.pending.schedule3);
+  assert(summary.currentYearExcessTax > 0);
+  assertEquals(summary.priorYearCarryover, 100);
+  assertEquals(summary.usedPriorYearCarryover, 0);
+  assertEquals(scheduleB.case, "combined_current_excess_prior_balance");
+  assertEquals(scheduleB.remaining_prior_year_carryover, 0);
+  assertEquals(
+    result.pending.schedule3.line1_foreign_tax_credit,
+    summary.allowedCredit,
+  );
+  const parentPdf = form1116Pdf.projectFields?.(parent, result.pending) ?? {};
+  const schedulePdf = form1116ScheduleBPdf.projectFields?.(
+    scheduleB,
+    result.pending,
+  ) ?? {};
+  assertEquals(parentPdf.pdf_line24, summary.allowedCredit);
+  assertEquals(parentPdf.pdf_line35, summary.allowedCredit);
+  assertEquals(schedulePdf.line5_2015, -100);
+  assertEquals(schedulePdf.line8_2015, 0);
+  assertEquals(schedulePdf.line6_current, summary.currentYearExcessTax);
+  assertEquals(schedulePdf.line8_current, summary.currentYearExcessTax);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<ForeignTxCyovExprUnsdCurrTYGrp>");
+  assertStringIncludes(
+    bundle.xml,
+    "<TenthPrecedingTYAmt>-100</TenthPrecedingTYAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    `<CurrentTaxYearAmt>${summary.currentYearExcessTax}</CurrentTaxYearAmt>`,
+  );
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assert(pdf.length > 0);
+
+  for (
+    const altered of [
+      {
+        ...pending,
+        form1116_schedule_b: {
+          ...pending.form1116_schedule_b,
+          remaining_prior_year_carryover: 100,
+        },
+      },
+      {
+        ...pending,
+        form1116_schedule_b: {
+          ...pending.form1116_schedule_b,
+          current_year_excess_tax: summary.currentYearExcessTax + 1,
+        },
+      },
+    ]
+  ) {
+    await assertRejects(() =>
+      buildMefBundle(altered, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+    );
+  }
 });
 
 Deno.test("Form 1116 apportions standard deduction across foreign box 1 and domestic Treasury box 3", () => {
