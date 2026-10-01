@@ -162,7 +162,6 @@ export function reconcileForm4972Collection(
     if (
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||
-      scoped.filter(({ fields }) => (fields.box6_nua ?? 0) > 0).length > 1 ||
       scoped.some(({ fields, sources }) =>
         (sources.length !== 1 && sources.length !== 2) ||
         (fields.elect_10yr_averaging !== true &&

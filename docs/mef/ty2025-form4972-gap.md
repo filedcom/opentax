@@ -639,8 +639,24 @@ separate. The two line 30 taxes add once on Form 1040 line 16, and neither
 Part III distribution reaches line 5b. The source groups retain distinct
 participant and plan identities. Native MeF and PDF replay each scoped source,
 calculated line, and combined tax. A positive fixture plus altered box 6,
-printed line, and Form 1040 tax fixtures are authored but unrun. Both-spouse
-NUA, capital-gain elections with NUA, shared annuities, beneficiaries, partial
+printed line, and Form 1040 tax fixtures are authored but unrun. Capital-gain
+elections with NUA, shared annuities, beneficiaries, partial
 shares, and multiple copies for either NUA plan remain outside this path.
 The underlying source documents, prior-election history, filled PDF, local
 XSD, business rules, and ATS acceptance still need verification.
+
+## Separate NUA elections for both spouses (2026-10-01, unrun)
+
+One joint return can now carry a full-share Part-III-only NUA election for each
+spouse when each has exactly one elected Form 1099-R from a distinct, identified
+plan. Each source's box 2a and box 6 determine only its own Form 4972 line 8
+and dotted-line NUA amount. The separate line 30 taxes add once to Form 1040
+line 16, with no Form 4972 pension amount on line 5b. Native MeF emits two
+owner-matched `IRS4972` documents; PDF projects the same separate forms. The
+authored positive and source/plan/printed-line/combined-tax tamper fixtures are
+reserved for the bulk validation pass. This follows the [2025 Form 4972
+instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf), which direct
+joint-filing spouses to attach separate forms and add their tax to Form 1040.
+Part II, annuities, beneficiaries, partial shares, multiple copies per plan,
+administrator source bytes, filled PDF, XSD, business rules, and ATS acceptance
+remain open for this pair.
