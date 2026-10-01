@@ -68,11 +68,16 @@ const general = {
   taxpayer_dob: "1930-01-01",
 };
 const executionPlan = buildExecutionPlan(registry);
-function filedReturn(sourceCopies = copies) {
+function filedReturn(
+  sourceCopies = copies,
+  references = election.source_document_references,
+) {
   return execute(executionPlan, registry, {
     general,
     f1099r: sourceCopies,
-    form4972: { elections: [election] },
+    form4972: {
+      elections: [{ ...election, source_document_references: references }],
+    },
   }, { taxYear: 2025, formType: "f1040" });
 }
 
@@ -129,5 +134,28 @@ Deno.test("four-copy Form 4972 rejects a missing or changed source and final tax
   );
   assertThrows(() =>
     form4972Pdf.instances?.(pending.form4972!, filer, wrongTax)
+  );
+});
+
+Deno.test("five same-plan copies remain outside the reviewed printable Form 4972 collection", () => {
+  const fifth = {
+    ...copies[3],
+    source_document_reference: "1099-R-A-5",
+    box1_gross_distribution: 10_000,
+    box2a_taxable_amount: 10_000,
+    box3_capital_gain: 1_000,
+  };
+  const result = filedReturn(
+    [...copies, fifth],
+    [...election.source_document_references, "1099-R-A-5"],
+  );
+  assertEquals(result.diagnostics, []);
+  assertThrows(
+    () =>
+      mef.build(result.pending.form4972!, { filer, pending: result.pending }),
+  );
+  assertThrows(
+    () =>
+      form4972Pdf.instances?.(result.pending.form4972!, filer, result.pending),
   );
 });

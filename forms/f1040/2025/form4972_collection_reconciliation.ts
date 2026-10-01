@@ -5,7 +5,7 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 const formSchema = z.record(z.string(), z.unknown()).refine((form) =>
   Array.isArray(form.source_document_references) &&
   form.source_document_references.length >= 1 &&
-  form.source_document_references.length <= 3 &&
+  form.source_document_references.length <= 4 &&
   form.source_document_references.every((ref: unknown) =>
     typeof ref === "string" && ref.trim().length > 0
   )

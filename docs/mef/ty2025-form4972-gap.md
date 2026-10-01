@@ -48,6 +48,16 @@ ATS acceptance remain open.
 
 ## Four full-share copies from one participant's plan (2026-10-01, unrun)
 
+The shared native/PDF collection validator now accepts the fourth exact
+issued-copy reference from that one participant. It previously stopped at
+three before the four-copy source and tax reconciliation could run. The
+existing four-copy positive and missing, changed-box, changed-plan, and
+final-tax tamper fixtures now reach the intended collection route. A fifth
+same-plan copy remains outside this reviewed export bound and has a rejection
+fixture; the IRS rule is to combine **all** qualified 2025 distributions for
+one participant, so an actual five-copy return needs a later complete-source
+extension rather than dropping the fifth copy. This change is unrun.
+
 The same-plan source collection no longer imposes a three-copy limit: each
 additional full-share Form 1099-R must have a distinct issued-copy reference
 and the same participant, payer, plan, and complete-balance statement. The
