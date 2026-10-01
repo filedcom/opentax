@@ -548,11 +548,20 @@ Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () =
 
 Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations pending allocation evidence", () => {
   for (
-    const extra of [
-      { elect_capital_gain: true },
-      { elect_include_nua: true, box6_nua: 2_000 },
-      { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
-    ]
+    const [extra, message] of [
+      [
+        { elect_capital_gain: true },
+        "partial box 9a share supports Part II or III",
+      ],
+      [
+        { elect_include_nua: true, box6_nua: 2_000 },
+        "partial-share estate tax needs",
+      ],
+      [
+        { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
+        "partial box 9a share supports Part II or III",
+      ],
+    ] as const
   ) {
     assertThrows(
       () =>
@@ -568,7 +577,7 @@ Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations 
           ...extra,
         }),
       Error,
-      "partial box 9a share supports Part II or III",
+      message,
     );
   }
 });
