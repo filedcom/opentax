@@ -142,6 +142,10 @@ general record marks as claimed on another return.
 The source-only Social Security lump-sum node now retains the full reported
 benefit on line 6a and rejects a claimed prior-year election until its
 Publication 915 worksheets and line 6b/6c route can be verified.
+The core PDF audit still needs a source-reconciled line 1h income-type label
+for foreign employer and other earned-income combinations, plus a final
+projection of the retained ACTC opt-out election on line 28; those are open
+within the Form 1040 core-return and PDF parents below.
 Form 8288-A withholding now deposits to Form 1040 line 25c, with a retained
 source lower-bound check at final native/PDF export.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
