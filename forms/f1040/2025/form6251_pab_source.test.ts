@@ -96,4 +96,18 @@ Deno.test("Form 6251 line 2g reconciles all four PAB source channels", () => {
     Error,
     "retained 1099-INT/OID/DIV",
   );
+  assertThrows(
+    () =>
+      assertForm6251PrivateActivityBondSource(fields, {
+        ...pending,
+        f1099oid: {
+          f1099oids: [{
+            payer_name: "OID Payer",
+            box11_tax_exempt_oid: 250,
+          }],
+        },
+      }),
+    Error,
+    "retained 1099-INT/OID/DIV",
+  );
 });

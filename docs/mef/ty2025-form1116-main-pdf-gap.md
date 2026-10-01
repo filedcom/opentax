@@ -1,5 +1,20 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Sole 1099-INT source inventory (staged, unrun):** The bounded passive-interest
+PDF route now rejects another positive monetary box or interest adjustment on
+its sole identified Form 1099-INT. Its existing affirmative review and return
+join say box 1 is the entire worldwide income, box 6 is the only foreign tax,
+and Form 1040 lines 2a, 2b, 9, and 11 reconcile to that one item. U.S. Treasury
+interest, tax-exempt interest, withholding, early-withdrawal penalty, bond
+premium, nominee interest, and similar amounts on the same statement require a
+separate source-to-return calculation before this PDF can truthfully print a
+one-income-source Form 1116. The ordinary box-1/box-6 positive fixture and
+box-3/box-8/box-4/box-11 tamper fixtures are authored for deferred validation.
+The broader native source model is unchanged; mixed 1099-INT payer content
+remains outside this narrow PDF projection. See the [2025 Form 1116 Part I
+instructions](https://www.irs.gov/instructions/i1116) for worldwide gross
+income and the standard-deduction allocation.
+
 **Reviewed prior-year passive use (staged, unrun):** The one-source 1099-INT
 standard-deduction PDF route now accepts one reviewed Schedule B prior-year
 balance when current-year tax is below the category limit. The public PDF

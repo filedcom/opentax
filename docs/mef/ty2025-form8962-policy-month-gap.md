@@ -1,5 +1,22 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## One-policy corrected SLCSP month (build-first, unrun)
+
+The monthly single-filer route now accepts one identified, nonshared,
+same-state Form 1095-A policy with exactly one independently determined
+`marketplace_error` SLCSP correction on a covered APTC month. The original
+column B and annual statement total stay in the source record; calculation
+uses the corrected month while native MeF checks the dated Marketplace
+tool/contact determination, reference, record SHA-256, positive original and
+corrected amounts, all twelve monthly rows, Schedule 2/3, and Form 1040. PDF
+projection invokes the same native check for a corrected monthly claim. This
+follows the [2025 Form 8962 line 10 and lines 12–23
+instructions](https://www.irs.gov/instructions/i8962) for a wrong reported
+SLCSP. Positive source/calculation/native/PDF and source/amount tampering
+fixtures are authored but unrun. Multiple corrected months, no-APTC months,
+changes in coverage family, moves, shared policies, and authentication of the
+underlying Marketplace record bytes remain outside this route.
+
 ## One-person sequential policies at 100%-399% FPL (staged, unrun)
 
 The below-400% income check now admits multiple identified same-state policies

@@ -629,9 +629,14 @@ Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt"
 });
 
 Deno.test("private-activity-bond interest cannot export without its retained source", () => {
+  const fields = { line11_amt: 1, private_activity_bond_interest: 800 };
   assertThrows(
-    () =>
-      form6251.build({ line11_amt: 1, private_activity_bond_interest: 800 }),
+    () => form6251.build(fields),
+    Error,
+    "retained 1099-INT/OID/DIV",
+  );
+  assertThrows(
+    () => form6251Pdf.projectFields!(fields, {}),
     Error,
     "retained 1099-INT/OID/DIV",
   );

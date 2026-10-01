@@ -41,6 +41,8 @@ export function assertForm6251PrivateActivityBondSource(
     div?.success === false || child?.success === false ||
     ints.some((item) => (item.box9 ?? 0) > (item.box8 ?? 0)) ||
     oids.some((item) =>
+      ((item.box11_tax_exempt_oid ?? 0) > 0 &&
+        item.box11_pab_oid === undefined) ||
       (item.box11_pab_oid ?? 0) >
         (item.box11_tax_exempt_oid ?? 0) -
           (item.box6_applies_to === "tax_exempt_oid"

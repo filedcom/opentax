@@ -101,3 +101,18 @@ property dispositions, and other passive sources, or persist accepted-return
 Worksheet 9 activity/year balances. Preferential tax methods, special
 allowances, PTPs, and Part VI remain closed. Native/PDF registration must call
 the worksheet only after those source and carryforward joins are established.
+
+## 2026 opening credit prerequisite
+
+The current-year-only Worksheet 9 ledger now has a strict, standalone 2026
+opening contract. `reconcileForm8582CRNextYearOpening` re-derives the 2025
+ledger from its original Form 8582-CR input, compares it to the recorded filed
+ledger and accepted-return reference, then requires every positive unallowed
+credit to appear exactly once with the same activity, source document, credit
+route, 2025 origin, and amount. Missing, duplicate, changed, or extra rows
+reject. Positive and tamper fixtures are authored for the deferred batch.
+
+The accepted-return reference is still a supplied identifier, not verified IRS
+acknowledgment evidence. There is no durable store or 2026 engine importer;
+prior-year Worksheet 9 credits that originated before 2025 remain closed.
+The current native route and absent PDF descriptor are unchanged.

@@ -60,3 +60,23 @@ their distinct native Form 8283, statement, and prior-PDF references. The
 single full test batch and filled-PDF visual check have not run. XSD success
 does not establish that the synthetic blank prior PDFs represent actually
 filed 2024 forms.
+
+## Prior Section B artwork and appraisal prerequisite
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+require the completed previous-year Form 8283 for a noncash carryover and a
+copy of any appraisal that had to accompany that return. A distinct standalone
+source check now covers one purchased long-held artwork gift made in 2024,
+originally claimed at its $20,000-or-more appraised FMV, with a partial 2024
+deduction and a 2025 30%-category capital-gain-property carryover. It joins the
+gift ID, year, FMV, basis, previous deduction, and taxpayer to the Schedule A
+carryover row; requires reviewed prior Section B signatures and an appraisal
+recorded as attached to the 2024 return; and hashes the two distinct retained
+PDF copies separately. Positive, changed-byte, changed-amount, ownership, and
+missing-appraisal-review fixtures are authored for the deferred batch.
+
+This is an evidence prerequisite, not an active Section B carryover filing
+route. The reviewed fields and purported 2024 attachment are assertions; the
+PDF contents, appraiser qualification, 2024 filing, and amount previously
+deducted are not independently authenticated. Native Form 8283 and PDF export
+remain limited to the bounded Section A securities carryover route above.

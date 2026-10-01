@@ -1710,7 +1710,7 @@ function reconcileSimplePolicyMonths(
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || policy.shared_policy_periods ||
       (!interstateMove && policy.slcsp_corrections &&
-        !(fields.household_size === 1 && policies.length === 2)) ||
+        !(fields.household_size === 1 && policies.length <= 2)) ||
       (!interstateMove && policy.slcsp_review_periods)
     ) ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
@@ -1854,8 +1854,13 @@ function reconcileSimplePolicyMonths(
       );
     }
     if (correctedMove) {
-      const correctedMonths = new Set(arrivalCorrections.map((item) => item.month));
-      const coveredMonths = arrivalPolicy!.monthly_premiums!.flatMap((amount, index) =>
+      const correctedMonths = new Set(
+        arrivalCorrections.map((item) => item.month),
+      );
+      const coveredMonths = arrivalPolicy!.monthly_premiums!.flatMap((
+        amount,
+        index,
+      ) =>
         amount > 0 || arrivalPolicy!.monthly_aptcs![index] > 0
           ? [index + 1]
           : []
@@ -1871,7 +1876,8 @@ function reconcileSimplePolicyMonths(
           !item.determination_reference ||
           !item.determination_record_sha256 ||
           !item.determined_on || !validIsoDate(item.determined_on) ||
-          item.determined_on < `2025-${String(item.month).padStart(2, "0")}-01` ||
+          item.determined_on <
+            `2025-${String(item.month).padStart(2, "0")}-01` ||
           item.determined_on > "2026-04-15"
         )
       ) {
@@ -1890,7 +1896,8 @@ function reconcileSimplePolicyMonths(
       const correction = policy?.slcsp_corrections?.[0];
       const index = (correction?.month ?? 0) - 1;
       if (
-        fields.household_size !== 1 || policies.length !== 2 ||
+        fields.household_size !== 1 || policies.length < 1 ||
+        policies.length > 2 ||
         correctedPolicies.length !== 1 ||
         policy?.slcsp_corrections?.length !== 1 ||
         correction?.basis !== "marketplace_error" ||

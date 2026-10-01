@@ -443,6 +443,8 @@ export const form8962Pdf: PdfFormDescriptor = {
         (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
       ((projected.annual_premium !== undefined ||
         Array.isArray(projected.monthly_ptc_rows)) && policies.length > 1) ||
+      (Array.isArray(projected.monthly_ptc_rows) &&
+        policies.some((policy) => policy.slcsp_corrections !== undefined)) ||
       ((projected.household_size === 2 || projected.household_size === 3) &&
         Array.isArray(projected.monthly_ptc_rows)) ||
       (typeof projected.federal_poverty_pct === "number" &&

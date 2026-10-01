@@ -195,6 +195,35 @@ Deno.test("Form 1116 public PDF route rejects unreviewed or mismatched interest 
   );
 });
 
+Deno.test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradict the sole-income review", () => {
+  const result = calculated();
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const source = result.pending.f1099int;
+  assert(parent);
+  assert(source);
+  const row = (source.f1099ints as Array<Record<string, unknown>>)[0];
+  assert(row);
+  for (
+    const extra of [
+      { box3: 200 },
+      { box8: 100 },
+      { box4: 25 },
+      { box11: 50, elect_bond_premium_amortization: true },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        form1116Pdf.projectFields?.(parent, {
+          ...result.pending,
+          f1099int: { ...source, f1099ints: [{ ...row, ...extra }] },
+        }),
+      Error,
+      "must match the identified source",
+    );
+  }
+});
+
 Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -228,8 +257,8 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent);
   assert(scheduleB);
-  const summary = (parent.category_summaries as Array<Record<string, number>>)
-    [0];
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
   assert(summary);
   const projected = form1116Pdf.projectFields?.(parent, result.pending) ?? {};
   const scheduleProjection = form1116ScheduleBPdf.projectFields?.(
@@ -261,15 +290,21 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
   );
   assert(scheduleXml.includes("ForeignTxCyovExprUnsdCurrTYGrp"));
 
-  assertThrows(() => form1116Pdf.projectFields?.(parent, {
-    ...result.pending,
-    form1116_schedule_b: {
-      ...scheduleB,
-      remaining_prior_year_carryover: 1,
-    },
-  }), Error);
-  assertThrows(() => form1116Pdf.projectFields?.({
-    ...parent,
-    single_source_pdf_review: singleSourceReview,
-  }, result.pending), Error, "carryover review");
+  assertThrows(() =>
+    form1116Pdf.projectFields?.(parent, {
+      ...result.pending,
+      form1116_schedule_b: {
+        ...scheduleB,
+        remaining_prior_year_carryover: 1,
+      },
+    }), Error);
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.({
+        ...parent,
+        single_source_pdf_review: singleSourceReview,
+      }, result.pending),
+    Error,
+    "carryover review",
+  );
 });

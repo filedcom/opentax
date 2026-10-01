@@ -1,5 +1,26 @@
 # TY2025 paired Form 8889 boundary
 
+## One owner's prior HSA excess on paired self-only returns (2026-10-01, unrun)
+
+The bounded two-HSA self-only route now accepts one owner's reviewed filed
+2024 Form 5329 Part VII excess when the other owner has no carryover. That
+owner's 2024 line 48, positive line 49, return reference, and SSN must match
+the existing owner source contract; the 2025 calculator uses available line 12
+contribution room to deduct the absorbed portion and carries the taxable
+remainder to owner Form 5329 lines 42–49. This positive route requires a 2025
+HSA value and remaining 6% tax. It excludes current-year excess, distributions,
+testing-period events, rollovers, employer funding, and other HSA events.
+
+Paired Form 8889 native and PDF export now recompute both owners, compare the
+exact pending Form 5329 source and printed owner copy to the calculation, and
+run Form 5329's owner/SSN and Form 8889 line-12/13/16 reconciliation. They
+match the two deductions to Schedule 1 and Form 1040, and the one owner tax to
+Schedule 2 line 8 and Form 1040 line 23. Form 5329's native and PDF exporters
+then independently verify the same source and Schedule 2 tax. Positive and
+source/tax tamper fixtures are authored but unrun. The filed 2024 return is
+referenced and reviewed, not authenticated by retained bytes; both-owner
+carryovers, other coverage patterns and mixed HSA events remain open.
+
 ## One spouse loses eligibility to nonpermitted other coverage (written, unrun)
 
 The [2025 Publication 969](https://www.irs.gov/publications/p969) says the

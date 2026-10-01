@@ -236,8 +236,30 @@ export function projectSingleSourceForm1116Pdf(
   if (reportedOn1099) {
     const source = f1099intInputSchema.safeParse(pending.f1099int);
     const rows = source.success ? source.data.f1099ints : [];
+    // This PDF route treats box 1 as the sole worldwide income source and
+    // box 6 as the sole foreign tax. Other monetary boxes or interest
+    // adjustments require their own Form 1040 and Part I reconciliation.
+    const otherMonetaryBoxes = [
+      "box2",
+      "box3",
+      "box4",
+      "box5",
+      "box8",
+      "box9",
+      "box10",
+      "box11",
+      "box12",
+      "box13",
+      "box17",
+      "nominee_interest",
+      "accrued_interest_paid",
+      "non_taxable_oid_adjustment",
+    ] as const;
     if (
       rows.length !== 1 ||
+      otherMonetaryBoxes.some((key) => (rows[0][key] ?? 0) !== 0) ||
+      rows[0].seller_financed === true ||
+      rows[0].elect_bond_premium_amortization === true ||
       rows[0].foreign_tax_source_document_reference !==
         review.data.source_document_reference ||
       rows[0].box1 !== item.foreign_gross_income ||
