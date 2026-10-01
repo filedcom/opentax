@@ -402,14 +402,32 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
     item.qualified_appraisal?.attachment_file_name,
     item.qualified_appraisal?.signature_attachment_file_name,
     item.donee_acknowledgment?.signature_attachment_file_name,
+    ...(item.ordinary_income_reduction
+      ? [
+        item.ordinary_income_reduction.purchase_record_attachment_file_name,
+        item.ordinary_income_reduction
+          .reduction_statement_attachment_file_name,
+      ]
+      : []),
   ]);
+  const reduced = items.filter((item) =>
+    item.ordinary_income_reduction !== undefined
+  );
   return !!group &&
+    reduced.length <= 1 &&
     items.every((item) =>
       item.similar_item_group?.trim().toLowerCase() === group &&
       item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
       item.fmv >= 20_000 && item.fmv <= 500_000 &&
-      item.deduction_claimed === item.fmv &&
-      item.cost_or_adjusted_basis === item.fmv &&
+      (item.ordinary_income_reduction
+        ? item.ordinary_income_reduction.reason ===
+            "purchased_short_term_capital_asset" &&
+          item.deduction_claimed >= 20_000 &&
+          item.deduction_claimed === item.cost_or_adjusted_basis &&
+          item.ordinary_income_reduction.gain_removed ===
+            item.fmv - item.deduction_claimed
+        : item.deduction_claimed === item.fmv &&
+          item.cost_or_adjusted_basis === item.fmv) &&
       item.charitable_limit_category === "noncash_50" &&
       item.is_capital_gain_property === false &&
       item.donor_acquisition_description?.trim().toLowerCase() ===
@@ -418,7 +436,7 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
       item.date_contributed?.startsWith("2025-") &&
       item.date_acquired < item.date_contributed &&
       item.capital_gain_reduction_election_confirmed !== true &&
-      item.ordinary_income_reduction === undefined &&
+      item.reduction_statement_attachment_file_name === undefined &&
       item.qualified_appraisal?.full_appraisal_source_review !== undefined &&
       item.signed_form_source_review !== undefined &&
       item.donee_acknowledgment?.signed_by_donee === true &&
@@ -426,7 +444,8 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
     ) &&
     items[0]!.donee_acknowledgment!.ein !==
       items[1]!.donee_acknowledgment!.ein &&
-    documents.length === 8 && documents.every(Boolean) &&
+    documents.length === 8 + 2 * reduced.length &&
+    documents.every(Boolean) &&
     new Set(documents).size === documents.length;
 }
 

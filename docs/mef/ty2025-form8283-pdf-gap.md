@@ -2,6 +2,16 @@
 
 ## Two similar Section B art gifts (2026-10-01 build pass, unrun)
 
+The same two-copy path now also permits exactly one artwork to have a
+sourced purchased-short-term ordinary-income reduction. That item's original
+appraised FMV remains on its Section B copy while its basis-limited claim is
+summed with the other artwork's unreduced claim on Schedule A and Form 1040.
+The reduced item requires a distinct reviewed purchase/basis PDF and FMV
+reduction statement PDF in addition to its signed form, appraisal, and
+signature documents. A positive mixed-claim fixture and reduction-statement
+byte tamper case are authored for the deferred batch. Other reduction reasons
+and two reduced items remain outside this bounded route.
+
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
 require a separate Section B form for each item given to different donees,
 while similar-property categories aggregate across donees for the $5,000
