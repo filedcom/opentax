@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
 
 type Input = Partial<
   Form7206Lines & {
@@ -90,6 +91,11 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 7206 recipient must match the taxpayer");
   }
   const pending = context?.pending;
+  assertForm7206SpouseCoverage(
+    source,
+    pending as Record<string, Record<string, unknown>>,
+    filer,
+  );
   const scheduleC = scheduleCInputSchema.parse(pending?.schedule_c);
   if (
     scheduleC.schedule_cs.length !== 1 ||

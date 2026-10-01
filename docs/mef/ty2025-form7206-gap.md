@@ -25,7 +25,7 @@ shareholder wages use line 11. The 2025 native `IRS7206` XSD requires
   retirement source and plan both show zero line 16. The prior aggregate
   `eligible_health_premiums` and eligibility flag were replaced with twelve
   ordered premium-month records. Each has policy/payment references, a
-  taxpayer-only covered-person fact, an employer-plan eligibility review
+  one taxpayer-or-spouse covered-person fact, an employer-plan eligibility review
   reference, Marketplace/LTC classification, and any public-safety-officer
   exclusion. The helper excludes employer-eligible months and the sourced
   public-safety-officer amount; a positive exclusion needs its own source
@@ -54,6 +54,21 @@ shareholder wages use line 11. The 2025 native `IRS7206` XSD requires
 - The existing Publication 974 single-business calculator remains a separate
   Marketplace-overlap route. It does not emit a Form 7206 document; its
   worksheet and return reconciliation still needs end-to-end review.
+
+### Joint-return spouse-only policy slice
+
+The one-Schedule-C route now also accepts a non-Marketplace policy covering
+only the taxpayer's spouse for all twelve months. The plan identifies the
+spouse and every monthly premium record identifies that covered person. MeF
+and PDF projection require a joint return and match the spouse's name and SSN
+to both general source facts and the finalized Form 1040; MeF additionally
+matches the return header spouse. The deduction still belongs to the
+taxpayer-owned establishing business and uses the same Schedule C, Schedule SE,
+Schedule 1, QBI, and Form 1040 reconciliation. A positive full-return fixture
+and identity/month-coverage tamper cases are authored but unrun pending the
+agreed bulk test. Mixed taxpayer-and-spouse months, separate spouse business
+ownership, dependents, and multiple policies remain outside this slice. The
+policy and payment references are source claims, not authenticated records.
 
 ### Publication 974 mixed-month boundary
 
@@ -92,7 +107,7 @@ owner; it also rejects a second Schedule C, Schedule F, Form 2555,
 Marketplace/PTC overlap, Schedule E/4835/4797, and LTC. The current return-wide
 exclusion check is only as complete as the listed source fields and must be
 challenged in the full batch. It does not establish broader plan or
-covered-person support.
+covered-person support beyond the single taxpayer or spouse policy.
 
 ## Required build boundary
 

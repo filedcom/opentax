@@ -15,6 +15,7 @@ import {
 } from "../../../nodes/intermediate/forms/schedule_se/index.ts";
 import { z } from "zod";
 import { form7206 as nativeForm7206 } from "../../mef/forms/f7206.ts";
+import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
 
 // TY2025 AcroForm has two identity fields followed by printed lines 1-14.
 // Line 11 is blank for this Schedule C route, and line 6 prints a percentage.
@@ -66,6 +67,7 @@ function projectFields(
     );
   }
   const source = singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
+  assertForm7206SpouseCoverage(source, allPending);
   const lines = form7206LinesSchema.parse(fields);
   const expected = calculateSingleScheduleCForm7206(source);
   if (

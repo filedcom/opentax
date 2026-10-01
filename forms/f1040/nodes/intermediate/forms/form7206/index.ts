@@ -26,9 +26,8 @@ const premiumMonthSchema = z.object({
   paid_premium: money,
   policy_source_reference: z.string().trim().min(1),
   payment_source_reference: z.string().trim().min(1),
-  // The bounded path covers only the taxpayer. Other covered people require
-  // separate employer-plan eligibility facts for each person.
-  covered_person: z.literal("taxpayer"),
+  // The bounded plan covers one identified person for all twelve months.
+  covered_person: z.enum(["taxpayer", "spouse"]),
   eligible_for_subsidized_employer_plan: z.boolean(),
   employer_plan_review_reference: z.string().trim().min(1),
   marketplace_policy: z.boolean(),
@@ -46,6 +45,10 @@ export const singleScheduleCPlanSchema = z.object({
     name: z.string().trim().min(1),
     ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   }).strict(),
+  spouse_identity: z.object({
+    name: z.string().trim().min(1),
+    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  }).strict().optional(),
   premium_months: z.array(premiumMonthSchema).length(12).refine(
     (months) => months.every((record, index) => record.month === index + 1),
     "Form 7206 needs January through December premium records in order",
@@ -58,7 +61,26 @@ export const singleScheduleCPlanSchema = z.object({
   no_form2555: z.literal(true),
   no_schedule_se_optional_method: z.literal(true),
   no_other_earned_income: z.literal(true),
-}).strict();
+}).strict().superRefine((plan, ctx) => {
+  const covered = new Set(
+    plan.premium_months.map((month) => month.covered_person),
+  );
+  if (
+    covered.size !== 1 ||
+    (covered.has("spouse")
+      ? !plan.spouse_identity ||
+        plan.spouse_identity.ssn.replaceAll("-", "") ===
+          plan.taxpayer_identity.ssn.replaceAll("-", "")
+      : plan.spouse_identity !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["premium_months"],
+      message:
+        "Form 7206 one-plan coverage needs one identified taxpayer or spouse for every month",
+    });
+  }
+});
 
 export type SingleScheduleCPlan = z.infer<typeof singleScheduleCPlanSchema>;
 

@@ -8,6 +8,7 @@ import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { schedule_se } from "../nodes/intermediate/forms/schedule_se/index.ts";
 import { TS } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
+import { form7206Pdf } from "../2025/pdf/forms/f7206.ts";
 
 const seDeduction = schedule_se.compute(
   { taxYear: 2025, formType: "f1040" },
@@ -150,4 +151,101 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   const changedQbi = structuredClone(result.pending);
   changedQbi.form8995!.se_health_insurance_deduction = 0;
   assertThrows(() => buildMefXml(changedQbi, filer), Error);
+});
+
+Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects identity changes", () => {
+  const spouseSources = {
+    ...sources,
+    general: {
+      ...sources.general,
+      filing_status: "mfj",
+      spouse_first_name: "Casey",
+      spouse_last_name: "Example",
+      spouse_ssn: "222-33-4444",
+      spouse_dob: "1986-05-01",
+    },
+    form7206: {
+      ...sources.form7206,
+      single_schedule_c_plan: {
+        ...sources.form7206.single_schedule_c_plan,
+        spouse_identity: { name: "Casey Example", ssn: "222334444" },
+        premium_months: sources.form7206.single_schedule_c_plan.premium_months
+          .map(
+            (month) => ({
+              ...month,
+              policy_source_reference: "2025 spouse-only policy statement",
+              covered_person: "spouse",
+              employer_plan_review_reference:
+                "2025 spouse employer eligibility review",
+            }),
+          ),
+      },
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    spouseSources,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form7206?.line14, 12_000);
+  assertEquals(result.pending.schedule1?.line17_se_health_insurance, 12_000);
+  assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 12_000);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<IRS7206 documentId=");
+  assertStringIncludes(
+    xml,
+    "<SelfEmpldHealthInsDedAmt>12000</SelfEmpldHealthInsDedAmt>",
+  );
+  const projected = form7206Pdf.projectFields!(
+    result.pending.form7206!,
+    result.pending,
+  );
+  assertEquals(projected.line14, 12_000);
+  assertEquals(projected.recipient_name, "Alex Example");
+
+  const changedGeneral = structuredClone(result.pending);
+  changedGeneral.general!.spouse_ssn = "999-88-7777";
+  assertThrows(() => buildMefXml(changedGeneral, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedGeneral.form7206!, changedGeneral),
+    Error,
+  );
+  const changedReturn = structuredClone(result.pending);
+  changedReturn.f1040!.spouse_first_name = "Other";
+  assertThrows(() => buildMefXml(changedReturn, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedReturn.form7206!, changedReturn),
+    Error,
+  );
+  const changedStatus = structuredClone(result.pending);
+  changedStatus.general!.filing_status = "single";
+  assertThrows(() => buildMefXml(changedStatus, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedStatus.form7206!, changedStatus),
+    Error,
+  );
+  const changedPlan = structuredClone(result.pending);
+  const plan = changedPlan.form7206!.single_schedule_c_plan as {
+    spouse_identity: { ssn: string };
+    premium_months: Array<{ covered_person: string }>;
+  };
+  plan.spouse_identity.ssn = "999887777";
+  assertThrows(() => buildMefXml(changedPlan, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedPlan.form7206!, changedPlan),
+    Error,
+  );
+  plan.spouse_identity.ssn = "222334444";
+  plan.premium_months[0].covered_person = "taxpayer";
+  assertThrows(() => buildMefXml(changedPlan, filer), Error);
+  assertThrows(
+    () => form7206Pdf.projectFields!(changedPlan.form7206!, changedPlan),
+    Error,
+  );
 });
