@@ -258,6 +258,33 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
           "Form 7206 Publication 974 filed route needs one Schedule C business",
         );
       }
+      const scheduleCBusinesses = input.schedule_c_source?.businesses;
+      const scheduleCBusiness = scheduleCBusinesses?.[0];
+      const scheduleSE = input.schedule_se_source;
+      if (
+        input.schedule_c_source?.unadjusted_source !== true ||
+        scheduleCBusinesses?.length !== 1 || !scheduleCBusiness ||
+        scheduleCBusiness.business_reference !==
+          business.establishing_business_reference ||
+        scheduleCBusiness.proprietor_recipient !== TS.T ||
+        scheduleCBusiness.line31_net_profit !==
+          business.establishing_business_earned_income ||
+        scheduleCBusiness.line31_net_profit !==
+          business.all_profitable_business_earned_income ||
+        !scheduleSE ||
+        scheduleSE.net_profit_schedule_c !==
+          scheduleCBusiness.line31_net_profit ||
+        scheduleSE.net_profit_schedule_f !== 0 ||
+        scheduleSE.farm_optional_method_elected ||
+        scheduleSE.line13_deduction !==
+          business.schedule1_line15_se_tax_deduction ||
+        (input.schedule1_line16_source ?? 0) !==
+          business.establishing_business_schedule1_line16_retirement_deduction
+      ) {
+        throw new Error(
+          "Publication 974 Worksheet W business income and deductions must match the identified Schedule C, Schedule SE, and retirement source",
+        );
+      }
       const result = calculatePub974SingleBusinessIterative(source);
       const f = source.form8962_source;
       return {

@@ -30,6 +30,7 @@ const wSource: WorksheetWSource = {
   one_establishing_business_verified: true,
   business: {
     kind: "self_employed",
+    establishing_business_reference: "SCHEDULE-C-A",
     establishing_business_earned_income: 30_000,
     all_profitable_business_earned_income: 50_000,
     schedule1_line15_se_tax_deduction: 5_000,
@@ -142,6 +143,7 @@ Deno.test("Pub 974 Steps 1-6 converge on reconciled full-year policy rows", () =
       nonspecified_premium_deduction: 0,
       business: {
         kind: "self_employed",
+        establishing_business_reference: "SCHEDULE-C-A",
         establishing_business_earned_income: 50_000,
         all_profitable_business_earned_income: 50_000,
         schedule1_line15_se_tax_deduction: 5_000,
@@ -186,6 +188,7 @@ Deno.test("Pub 974 single-business route rejects non-reconciled policy months", 
           nonspecified_premium_deduction: 0,
           business: {
             kind: "self_employed",
+            establishing_business_reference: "SCHEDULE-C-A",
             establishing_business_earned_income: 50_000,
             all_profitable_business_earned_income: 50_000,
             schedule1_line15_se_tax_deduction: 5_000,
@@ -221,6 +224,7 @@ Deno.test("Pub 974 partial-year iteration rejects a persistent dollar oscillatio
           nonspecified_premium_deduction: 0,
           business: {
             kind: "self_employed",
+            establishing_business_reference: "SCHEDULE-C-A",
             establishing_business_earned_income: 50_000,
             all_profitable_business_earned_income: 50_000,
             schedule1_line15_se_tax_deduction: 5_000,
@@ -260,6 +264,7 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
       nonspecified_premium_deduction: 0,
       business: {
         kind: "self_employed" as const,
+        establishing_business_reference: "SCHEDULE-C-A",
         establishing_business_earned_income: 50_000,
         all_profitable_business_earned_income: 50_000,
         schedule1_line15_se_tax_deduction: 5_000,
@@ -326,6 +331,7 @@ Deno.test("Pub 974 mixed coverage rejects a persistent dollar oscillation", () =
           nonspecified_premium_deduction: 0,
           business: {
             kind: "self_employed",
+            establishing_business_reference: "SCHEDULE-C-A",
             establishing_business_earned_income: 50_000,
             all_profitable_business_earned_income: 50_000,
             schedule1_line15_se_tax_deduction: 5_000,

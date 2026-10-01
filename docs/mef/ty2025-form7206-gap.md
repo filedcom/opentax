@@ -74,6 +74,14 @@ attribution steps to final Form 8962 and does not subtract total PTC from
 specified premiums or infer monthly PTC from annual Form 1095-A totals.
 Multiple policies, within-month partial specified premiums, other SE income
 sources, Form 2555, and special adjustment ordering remain unsupported here.
+Worksheet W's establishing Schedule C reference, net profit, all-positive-
+business total, Schedule 1 line 15 self-employment tax deduction, and line 16
+retirement deduction must now match the one taxpayer-owned Schedule C,
+computed Schedule SE, and retirement source deposited in the return graph.
+Absent or changed business records reject before the iterative PTC calculation.
+Positive and tampered graph-source fixtures are authored but unrun. This is a
+source prerequisite for the existing Publication 974 worksheet route; it does
+not emit a Form 7206 native/PDF document for Marketplace premiums.
 The records are source references, not authenticated insurer/payment records;
 the full batch, native XSD, and filled-PDF visual review remain unrun.
 

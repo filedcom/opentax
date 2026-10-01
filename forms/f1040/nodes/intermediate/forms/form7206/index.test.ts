@@ -527,3 +527,109 @@ Deno.test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", 
     "unreviewed fields",
   );
 });
+
+Deno.test("Publication 974 Marketplace deduction uses the identified Schedule C and Schedule SE values", () => {
+  const pub974 = {
+    worksheet_w: {
+      specified_policy_months: Array.from({ length: 12 }, (_, index) => ({
+        form1095a_policy_number: "MARKETPLACE-A",
+        month: index + 1,
+        specified_premium: 1_000,
+        attributable_aptc: 500,
+      })),
+      nonspecified_premium_deduction: 0,
+      business: {
+        kind: "self_employed" as const,
+        establishing_business_reference: "SCHEDULE-C-A",
+        establishing_business_earned_income: 50_000,
+        all_profitable_business_earned_income: 50_000,
+        schedule1_line15_se_tax_deduction: 5_000,
+        establishing_business_schedule1_line16_retirement_deduction: 2_000,
+        form2555_attributable_exclusion: 0,
+      },
+      one_establishing_business_verified: true as const,
+    },
+    worksheet_x: {
+      special_adjustment_cases_reviewed_absent: true as const,
+      form1040_line9_total_income: 50_000,
+      form1040_line2a_tax_exempt_interest: 0,
+      form1040_nontaxable_social_security: 0,
+      form2555_lines45_and_50: 0,
+      schedule1_adjustments_except_line17: 5_000,
+      required_filing_dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous" as const,
+      filing_status: FilingStatus.Single,
+    },
+    form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
+      form1095a_policy_number: "MARKETPLACE-A",
+      month: index + 1,
+      premium: 1_000,
+      aptc: 500,
+    })),
+    no_other_se_income_sources_verified: true as const,
+    form8962_source: {
+      monthly_premiums: Array(12).fill(1_000),
+      monthly_slcsps: Array(12).fill(1_200),
+      monthly_aptcs: Array(12).fill(500),
+    },
+  };
+  const graph = {
+    marketplace_ptc_premium_overlap: true,
+    schedule_c_source: {
+      unadjusted_source: true,
+      businesses: [{
+        business_reference: "SCHEDULE-C-A",
+        proprietor_recipient: TS.T,
+        line31_net_profit: 50_000,
+      }],
+    },
+    schedule_se_source: {
+      net_profit_schedule_c: 50_000,
+      net_profit_schedule_f: 0,
+      farm_optional_method_elected: false,
+      line13_deduction: 5_000,
+    },
+    schedule1_line16_source: 2_000,
+  };
+  const result = form7206.compute({ taxYear: 2025, formType: "f1040" }, {
+    ...graph,
+    pub974_single_business: pub974,
+  });
+  const deduction = result.outputs.find((row) => row.nodeType === "schedule1")
+    ?.fields.line17_se_health_insurance;
+  assertEquals(typeof deduction, "number");
+  assertEquals(
+    result.outputs.some((row) => row.nodeType === "form8962"),
+    true,
+  );
+  assertThrows(
+    () =>
+      form7206.compute({ taxYear: 2025, formType: "f1040" }, {
+        ...graph,
+        schedule_c_source: {
+          ...graph.schedule_c_source,
+          businesses: [{
+            ...graph.schedule_c_source.businesses[0],
+            line31_net_profit: 49_999,
+          }],
+        },
+        pub974_single_business: pub974,
+      }),
+    Error,
+    "must match the identified Schedule C",
+  );
+  assertThrows(
+    () =>
+      form7206.compute({ taxYear: 2025, formType: "f1040" }, {
+        ...graph,
+        schedule_se_source: {
+          ...graph.schedule_se_source,
+          line13_deduction: 4_999,
+        },
+        pub974_single_business: pub974,
+      }),
+    Error,
+    "must match the identified Schedule C",
+  );
+});
