@@ -34,6 +34,7 @@ import {
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
+import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -8804,6 +8805,33 @@ Deno.test({
     "<Form1098PointsNotReportedAmt>133</Form1098PointsNotReportedAmt>",
   );
   await validateXsd(xml, "2023 refinance points on 2025 full return");
+});
+
+Deno.test({
+  name:
+    "XSD: 2025 purchase points and an existing mortgage reach Schedule A and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
+  const result = runReturn({ general, ...fixture });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    21_000,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 21_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>21000</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "purchase points plus existing mortgage full return");
 });
 
 Deno.test({

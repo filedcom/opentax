@@ -162,6 +162,35 @@ the lender statements, and this slice does not cover grandfathered debt,
 mixed-use debt, second homes, part-year loans, joint/MFS limits, points,
 Form 8396 interaction, or other mortgage sources.
 
+## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
+
+The public `f1098_purchase_points_cross_loan_review` joins one 2025
+principal-residence purchase Form 1098 with box 6 points and one full-year
+post-2017 acquisition mortgage. The single-filer source identifies both payer
+copies, the purchase closing disclosure, a Publication 936 points workpaper,
+12 monthly lender statements for each loan, and a lender-certified maximum
+balance covering every day of 2025 for each loan. The purchase loan has zero
+balance before its origination month; its Form 1098 box 2 must match the
+reviewed maximum original principal. The sum of the two daily maxima must not
+exceed $750,000. Reviewed facts affirm that these are all qualified home
+mortgages, that the purchase is a principal residence, and that the points
+meet the immediate-deduction conditions. The two box 1 deductions and box 6
+deduction must exactly equal their reported amounts. Native and PDF Schedule A
+replay the two source identities and exact line 8a total and reject competing
+line 8b/8c, refinance points, and Form 8396 claims. The synthetic $6,000 and
+$12,000 interest plus $3,000 purchase points reaches $21,000 on Schedule A
+and Form 1040; positive and tamper source/export fixtures are authored but
+unrun under the implementation-first workflow.
+
+This structured review does not authenticate lender-issued Form 1098 copies,
+closing disclosure, lender maximum-balance certificates, or proof of direct
+points payment. Cash-out debt, daily balances above $750,000, additional
+mortgages, MFJ/MFS, and partial points deductions remain outside this route.
+The [2025 Publication 936](https://www.irs.gov/publications/p936) combines
+mortgages under the acquisition-debt limit, and the
+[2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca)
+place deductible Form 1098 interest and points on line 8a.
+
 ## Box 4 recovery audited with the points route
 
 [2025 Publication 525](https://www.irs.gov/publications/p525) says Form 1098 box 4 is a 2025 refund of mortgage interest paid in an earlier year. It does not reduce current-year box 1 interest. Taxable recovery depends on the earlier deduction and tax benefit. A positive box 4 now requires personal Schedule A routing, an identified lender, recipient TIN, distinct payer-copy reference, `box4_prior_year_refund: true`, a reviewed Pub. 525 recovery workpaper reference, and `box4_taxable_recovery_verified_amount` from zero through box 4. Duplicate copies reject. Current box 1 interest stays on Schedule A line 8a; only the reviewed taxable recovery routes to Schedule 1 line 8z and AGI. Native and PDF Schedule 1 exports require the taxpayer or joint-filing spouse as recipient and an exact match to the sourced recovery. Same-year netting, business/rental recovery without its own route, and unsourced full-refund taxation reject. A synthetic $2,000 prior-year refund with $1,200 reviewed taxable recovery and $18,000 current interest passes local TY2025 v5.4 full-return XSD; all five filled PDF pages were inspected in the [v58 review](ty2025-filled-pdf-review-2026-09-29.md). Payer-issued bytes, the actual Pub. 525 calculation, IRS business rules, ATS, and the final bulk regression remain open.

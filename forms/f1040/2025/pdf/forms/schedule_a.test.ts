@@ -5,6 +5,61 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
+import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+
+Deno.test("Schedule A PDF replays purchase points and the second mortgage", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const source = {
+    f1098s: fixture.f1098,
+    ...fixture.f1098_purchase_points_cross_loan_review,
+  };
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const pending = {
+    f1040: { line12e_itemized_deductions: 21_000 },
+    f1098: source,
+  };
+  const [instance] = scheduleAPdf.instances?.(
+    { line_8a_mortgage_interest_1098: 21_000 },
+    filer,
+    pending,
+  ) ?? [];
+  assertEquals(instance?.line_8a_mortgage_interest_1098, 21_000);
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 21_001 },
+        filer,
+        pending,
+      ),
+    Error,
+    "exact sourced line 8a",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 21_000 },
+        filer,
+        {
+          ...pending,
+          f1098: {
+            ...source,
+            f1098s: [source.f1098s[0], {
+              ...source.f1098s[1],
+              recipient_tin: "999-88-7777",
+            }],
+          },
+        },
+      ),
+    Error,
+    "same single filer",
+  );
+});
 
 Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed amount", () => {
   const filer = {

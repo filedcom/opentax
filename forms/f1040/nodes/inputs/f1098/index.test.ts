@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertForm1098Box4Sources,
   assertForm1098MortgageLimitSources,
+  assertPurchasePointsCrossLoanSources,
   f1098,
   ForRouting,
   inputSchema,
@@ -9,6 +10,7 @@ import {
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,6 +106,67 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("f1098.schema: empty array accepted — zero items produces empty outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("2025 purchase points and existing acquisition loan share the $750,000 limit", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const source = inputSchema.parse({
+    f1098s: fixture.f1098,
+    ...fixture.f1098_purchase_points_cross_loan_review,
+  });
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, source);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    21_000,
+  );
+  assertPurchasePointsCrossLoanSources(
+    source,
+    ["111223333"],
+    true,
+    21_000,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertPurchasePointsCrossLoanSources(
+        source,
+        ["111223333"],
+        true,
+        20_999,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "exact sourced line 8a",
+  );
+  const review = fixture.f1098_purchase_points_cross_loan_review
+    .purchase_points_cross_loan_review;
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_loan: {
+          ...review.existing_loan,
+          maximum_2025_balance: 500_001,
+        },
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: review,
+      mortgage_limit_review: { loans: [] },
+    }).success,
+    false,
+  );
 });
 
 Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () => {
