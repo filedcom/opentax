@@ -49,6 +49,9 @@ export function assertForm6251PrivateActivityBondSource(
   const oneOidOnly = oids.length === 1 &&
     (oids[0].box11_pab_oid ?? 0) > 0 &&
     ints.length === 0 && divs.length === 0 && children.length === 0;
+  const oneIntOneOid = ints.length === 1 && oids.length === 1 &&
+    (ints[0].box9 ?? 0) > 0 && (oids[0].box11_pab_oid ?? 0) > 0 &&
+    divs.length === 0 && children.length === 0;
   const hasOidPab = oids.some((item) => (item.box11_pab_oid ?? 0) > 0);
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
@@ -91,7 +94,7 @@ export function assertForm6251PrivateActivityBondSource(
     ) ||
     claimedInterest !== interest ||
     (fields.private_activity_bond_interest ?? 0) !== total ||
-    (hasOidPab && !oneOidOnly) ||
+    (hasOidPab && !oneOidOnly && !oneIntOneOid) ||
     (twoIntOnly && (
       ints.some((item) =>
         !item.source_document_reference || !item.payer_tin ||
@@ -128,6 +131,73 @@ export function assertForm6251PrivateActivityBondSource(
       form1040?.line2a_tax_exempt !== oneOidTaxExempt ||
       amt === undefined ||
       (schedule2?.line2_amt ?? 0) !== amt ||
+      (amt > 0 &&
+        (typeof form1040?.line17_additional_taxes !== "number" ||
+          Number(form1040.line17_additional_taxes) < amt))
+    )) ||
+    (oneIntOneOid && (
+      !/^[0-9]{9}$/.test(ints[0].payer_tin ?? "") ||
+      !/^[0-9]{9}$/.test(oids[0].payer_tin ?? "") ||
+      ints[0].payer_tin === oids[0].payer_tin ||
+      !ints[0].payer_name?.trim() || !oids[0].payer_name?.trim() ||
+      ints[0].payer_name === oids[0].payer_name ||
+      !ints[0].source_document_reference ||
+      !oids[0].source_document_reference ||
+      ints[0].source_document_reference ===
+        oids[0].source_document_reference ||
+      !ints[0].pab_review_reference || !oids[0].pab_review_reference ||
+      ints[0].pab_review_reference === oids[0].pab_review_reference ||
+      ints[0].pab_eligible_bonds_reviewed !== true ||
+      ints[0].pab_no_allocable_deduction_reviewed !== true ||
+      oids[0].pab_eligible_bonds_reviewed !== true ||
+      oids[0].pab_no_allocable_deduction_reviewed !== true ||
+      ints[0].box9 !== ints[0].box8 ||
+      oids[0].box11_pab_oid !==
+        (oids[0].box11_tax_exempt_oid ?? 0) -
+          (oids[0].box6_applies_to === "tax_exempt_oid"
+            ? oids[0].box6_acquisition_premium ?? 0
+            : 0) -
+          (oids[0].box10_applies_to === "tax_exempt_oid"
+            ? oids[0].box10_bond_premium ?? 0
+            : 0) ||
+      [
+        ints[0].box1,
+        ints[0].box2,
+        ints[0].box3,
+        ints[0].box4,
+        ints[0].box5,
+        ints[0].box6,
+        ints[0].box10,
+        ints[0].box11,
+        ints[0].box12,
+        ints[0].box13,
+        ints[0].box17,
+        ints[0].nominee_interest,
+        ints[0].accrued_interest_paid,
+        ints[0].non_taxable_oid_adjustment,
+        oids[0].box1_oid,
+        oids[0].box2_other_interest,
+        oids[0].box3_early_withdrawal_penalty,
+        oids[0].box4_federal_withheld,
+        oids[0].box5_market_discount,
+        oids[0].box8_oid_treasury,
+        oids[0].box9_investment_expenses,
+        oids[0].box12_state_tax,
+        oids[0].nominee_oid,
+      ].some((value) => (value ?? 0) !== 0) ||
+      ints[0].box7 !== undefined || ints[0].box14 !== undefined ||
+      ints[0].box15 !== undefined || ints[0].box16 !== undefined ||
+      ints[0].box17 !== undefined ||
+      ints[0].foreign_source_interest_usd !== undefined ||
+      ints[0].foreign_tax_irs_country_code !== undefined ||
+      ints[0].foreign_tax_source_document_reference !== undefined ||
+      ints[0].seller_financed === true ||
+      ints[0].investment_property_for_form4952 === true ||
+      oids[0].investment_property_for_form4952 === true ||
+      oids[0].box13_fatca === true ||
+      form1040?.line2a_tax_exempt !==
+        (ints[0].box8 ?? 0) + (oids[0].box11_pab_oid ?? 0) ||
+      amt === undefined || schedule2?.line2_amt !== amt ||
       (amt > 0 &&
         (typeof form1040?.line17_additional_taxes !== "number" ||
           Number(form1040.line17_additional_taxes) < amt))
