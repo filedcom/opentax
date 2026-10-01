@@ -134,3 +134,51 @@ for (const pairOwner of ["T", "S"] as const) {
     );
   });
 }
+
+Deno.test("Form 4972 joint return combines two copies for each spouse", () => {
+  const result = execute(plan, registry, {
+    general,
+    f1099r: [
+      source("T", 1, 20_000),
+      source("T", 2, 25_000),
+      source("S", 1, 30_000),
+      source("S", 2, 35_000),
+    ],
+    form4972: {
+      elections: [
+        election("T", ["1099-R-T-1", "1099-R-T-2"]),
+        election("S", ["1099-R-S-1", "1099-R-S-2"]),
+      ],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const forms = pending.form4972?.forms as Record<string, unknown>[];
+  assertEquals(forms.length, 2);
+  assertEquals(forms.map((form) => form.lump_sum_amount), [45_000, 65_000]);
+  assertEquals(
+    pending.f1040?.form4972_tax,
+    forms.reduce((sum, form) => sum + (form.line30 as number), 0),
+  );
+  assertEquals(mef.build(pending.form4972!, { filer, pending }).length, 2);
+  assertEquals(
+    form4972Pdf.instances?.(pending.form4972!, filer, pending)?.length,
+    2,
+  );
+  assertThrows(() =>
+    mef.build(pending.form4972!, {
+      filer,
+      pending: {
+        ...pending,
+        f1099r: {
+          f1099rs: (pending.f1099r?.f1099rs as Record<string, unknown>[])
+            .map((item) =>
+              item.source_document_reference === "1099-R-S-2"
+                ? { ...item, form4972_plan: planFacts("T") }
+                : item
+            ),
+        },
+      },
+    })
+  );
+});

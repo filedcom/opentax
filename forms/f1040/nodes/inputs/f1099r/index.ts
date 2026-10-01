@@ -1056,12 +1056,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
-  if (lumpItems.length === 3) {
+  if (lumpItems.length === 3 || lumpItems.length === 4) {
     const taxpayer = lumpItems.filter((item) => item.ts === "T");
     const spouse = lumpItems.filter((item) => item.ts === "S");
     const groups = [taxpayer, spouse];
     const pair = groups.find((group) => group.length === 2);
-    const single = groups.find((group) => group.length === 1);
     const refs = lumpItems.map((item) => item.source_document_reference);
     const sourceValid = lumpItems.every((item) =>
       !!item.source_document_reference && !!item.form4972_plan &&
@@ -1073,28 +1072,29 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       (item.box6_nua ?? 0) === 0 && (item.box8_other ?? 0) === 0 &&
       item.box8_pct_total === undefined
     );
-    const samePlan = !!pair &&
-      pair.every((item) =>
+    const samePlan = groups.every((group) =>
+      group[0] && group.every((item) =>
         item.form4972_plan?.participant_name ===
-          pair[0].form4972_plan?.participant_name &&
+          group[0].form4972_plan?.participant_name &&
         item.form4972_plan?.participant_ssn ===
-          pair[0].form4972_plan?.participant_ssn &&
+          group[0].form4972_plan?.participant_ssn &&
         item.form4972_plan?.plan_reference ===
-          pair[0].form4972_plan?.plan_reference &&
+          group[0].form4972_plan?.plan_reference &&
         item.form4972_plan?.full_balance_statement_reference ===
-          pair[0].form4972_plan?.full_balance_statement_reference &&
-        item.payer_ein === pair[0].payer_ein &&
-        item.payer_name === pair[0].payer_name
-      );
+          group[0].form4972_plan?.full_balance_statement_reference &&
+        item.payer_ein === group[0].payer_ein &&
+        item.payer_name === group[0].payer_name
+      ) && group[0].payer_ein.trim().length > 0 &&
+      group[0].payer_name.trim().length > 0
+    );
     if (
-      !pair || !single || !sourceValid || !samePlan ||
-      pair[0].payer_ein.trim().length === 0 ||
-      pair[0].payer_name.trim().length === 0 ||
-      new Set(refs).size !== 3 ||
-      pair[0].form4972_plan?.participant_ssn ===
-        single[0].form4972_plan?.participant_ssn ||
-      pair[0].form4972_plan?.plan_reference ===
-        single[0].form4972_plan?.plan_reference ||
+      !pair || groups.some((group) => group.length < 1 || group.length > 2) ||
+      !sourceValid || !samePlan ||
+      new Set(refs).size !== lumpItems.length ||
+      taxpayer[0]?.form4972_plan?.participant_ssn ===
+        spouse[0]?.form4972_plan?.participant_ssn ||
+      taxpayer[0]?.form4972_plan?.plan_reference ===
+        spouse[0]?.form4972_plan?.plan_reference ||
       items.some((item) =>
         item.exclude_4972 !== true &&
         groups.some((group) =>
@@ -1104,7 +1104,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       )
     ) {
       throw new Error(
-        "Form 4972 joint three-source election needs two complete same-plan copies for one spouse and one distinct full-share plan for the other",
+        "Form 4972 joint multi-source election needs one or two complete same-plan copies per spouse and distinct full-share plans",
       );
     }
     const sourceForms = groups.map((group) => {
