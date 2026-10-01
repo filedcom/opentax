@@ -1,6 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { withReviewedForm8874A } from "./issuance_fixture.ts";
 import { calculateForm8874Recapture } from "./recapture_node.ts";
+import { schedule2 } from "../../../2025/mef/forms/schedule2.ts";
+import { schedule2Pdf } from "../../../2025/pdf/forms/schedule2.ts";
 import {
   form8874BNoticeSchema,
   reconcileForm8874BReportedEvent,
@@ -36,6 +38,8 @@ const notice = form8874BNoticeSchema.parse({
   notice_provided_to_investor_date: "2025-06-20",
 });
 const recapture = {
+  reviewed_form8874a: issuance,
+  reviewed_form8874b: notice,
   notice_reference: notice.notice_document_reference,
   investment_reference: issuance.notice_document_reference,
   cde_name: notice.cde_name,
@@ -93,6 +97,48 @@ Deno.test("Form 8874-B event joins issuance, recapture source and Schedule 2", (
   );
 });
 
+Deno.test("Form 8874-B native and PDF Schedule 2 preflight the reviewed event", () => {
+  const fields = {
+    line17a_new_markets_credit_recapture:
+      pending.schedule2.line17a_new_markets_credit_recapture,
+  };
+  const native = schedule2.build(fields, { pending });
+  assertEquals(native.includes("<OtherCreditsCd>NMCR</OtherCreditsCd>"), true);
+  const printed = schedule2Pdf.projectFields!(fields, pending);
+  assertEquals(printed.line17a_description, "NMCR");
+  for (
+    const changedPending of [
+      { ...pending, f1040: { ...pending.f1040, taxpayer_ssn: "222334444" } },
+      {
+        ...pending,
+        f8874_recapture: {
+          recaptures: [{
+            ...recapture,
+            reviewed_form8874b: { ...notice, cde_ein: "999999999" },
+          }],
+        },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => schedule2.build(fields, { pending: changedPending }),
+      Error,
+    );
+    assertThrows(
+      () => schedule2Pdf.projectFields!(fields, changedPending),
+      Error,
+    );
+  }
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields!(
+        { line17a_new_markets_credit_recapture: 1 },
+        pending,
+      ),
+    Error,
+  );
+});
+
 Deno.test("Form 8874-B rejects absent, late or tampered event evidence", () => {
   for (
     const changed of [
@@ -126,6 +172,26 @@ Deno.test("Form 8874-B rejects absent, late or tampered event evidence", () => {
   );
   assertThrows(
     () =>
+      calculateForm8874Recapture({
+        recaptures: [{
+          ...recapture,
+          reviewed_form8874b: { ...notice, investor_tin: "222334444" },
+        }],
+      }),
+    Error,
+  );
+  assertThrows(
+    () =>
+      calculateForm8874Recapture({
+        recaptures: [{
+          ...recapture,
+          reviewed_form8874a: { ...issuance, cde_ein: "999999999" },
+        }],
+      }),
+    Error,
+  );
+  assertThrows(
+    () =>
       reconcileForm8874BReportedEvent(notice, issuance, {
         ...pending,
         f8874_recapture: {
@@ -133,7 +199,6 @@ Deno.test("Form 8874-B rejects absent, late or tampered event evidence", () => {
         },
       }),
     Error,
-    "one exact",
   );
   assertThrows(
     () =>

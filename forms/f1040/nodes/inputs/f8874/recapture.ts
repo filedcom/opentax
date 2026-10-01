@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { form8874AIssuanceSchema } from "./issuance_schema.ts";
+import { form8874BNoticeSchema } from "./recapture_notice_schema.ts";
 
 // IRC 45D(g)(2) recaptures the decrease in Section 38 credit actually allowed,
 // plus Section 6621 interest. A Form 8874-B notice is evidence of the event,
@@ -11,6 +13,8 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
 const dollars = z.number().finite().nonnegative().refine(Number.isSafeInteger);
 
 export const recaptureSchema = z.object({
+  reviewed_form8874a: form8874AIssuanceSchema,
+  reviewed_form8874b: form8874BNoticeSchema,
   notice_reference: z.string().trim().min(1),
   investment_reference: z.string().trim().min(1),
   cde_name: z.string().trim().min(1),
@@ -55,6 +59,38 @@ export const recaptureSchema = z.object({
     }).strict(),
   ),
 }).strict().superRefine((input, ctx) => {
+  const issuance = input.reviewed_form8874a;
+  const notice = input.reviewed_form8874b;
+  if (
+    input.investment_reference !== issuance.notice_document_reference ||
+    input.notice_reference !== notice.notice_document_reference ||
+    input.cde_name !== issuance.cde_name ||
+    input.cde_name !== notice.cde_name ||
+    input.cde_ein !== issuance.cde_ein ||
+    input.cde_ein !== notice.cde_ein ||
+    input.notice_taxpayer_tin !== issuance.investor_tin ||
+    input.notice_taxpayer_tin !== notice.investor_tin ||
+    issuance.investor_name !== notice.investor_name ||
+    input.initial_investment_date !== issuance.initial_investment_date ||
+    input.initial_investment_date !== notice.initial_investment_date ||
+    input.qualified_equity_investment_amount !==
+      issuance.qualified_equity_investment_amount ||
+    input.qualified_equity_investment_amount !==
+      notice.qualified_equity_investment_amount ||
+    input.notice_credit_amount !== notice.notice_credit_amount ||
+    input.recapture_event_date !== notice.recapture_event_date ||
+    input.recapture_event !== notice.recapture_event ||
+    notice.aggregate_decrease_by_credit_year.some((amount, index) =>
+      amount > issuance.annual_credit_amounts[index]
+    )
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["reviewed_form8874b"],
+      message:
+        "Form 8874-B and Form 8874-A must match the recapture source and QEI",
+    });
+  }
   if (input.recapture_event_date.slice(0, 4) !== "2025") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

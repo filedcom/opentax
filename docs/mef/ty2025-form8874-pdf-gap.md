@@ -79,18 +79,22 @@ the credit's continuing QEI status and recapture history need later CDE
 evidence. A 2023 issuance notice alone cannot prove conditions on a 2025
 anniversary.
 
-A Form 8874-B reported-event helper now requires reviewed signed notice fields,
-including the CDE and investor identity, original QEI, event date and reason,
-seven annual credit decreases, CDE awareness date, signature, and delivery date.
-It checks the signed-notice delivery deadline against the
+The public `f8874_recapture` source now requires a reviewed Form 8874-A issuance
+record and a reviewed signed Form 8874-B event notice for every recapture row.
+The reported-event helper requires notice fields, including the CDE and investor
+identity, original QEI, event date and reason, seven annual credit decreases,
+CDE awareness date, signature, and delivery date. It checks the signed-notice
+delivery deadline against the
 [official Form 8874-B instructions](https://www.irs.gov/pub/irs-pdf/f8874b.pdf),
 joins the event to the Form 8874-A issuance, matches one `f8874_recapture`
 source, and checks the computed recapture against Schedule 2 line 17a. The
 notice amount is not treated as the taxpayer's recapture tax; the existing
-prior-return recomputation and interest calculation supplies that tax. Positive
-and tamper fixtures await the bulk pass. This helper is staged; the current-year
-Form 8874 source still requires `recapture_notice_received: false` and does not
-use a 2025 event notice to claim another credit.
+prior-return recomputation and interest calculation supplies that tax. Native
+and PDF Schedule 2 construction replay the source calculation, check line 17a
+exactly, and match each notice holder to the prepared Form 1040. Positive and
+tamper fixtures await the bulk pass. The current-year Form 8874 source still
+requires `recapture_notice_received: false` and does not use a 2025 event notice
+to claim another credit.
 
 Form 8874-B is issued **when a recapture event occurs**. An absent notice cannot
 establish that no event occurred, and the return graph has no authenticated CDE

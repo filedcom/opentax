@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
 import {
   calculateForm4255Routes,
   type F4255Input,
@@ -317,6 +318,7 @@ function buildIRS1040Schedule2(
     const calculated = calculateForm8874Recapture(
       newMarketsSource as F8874RecaptureInput,
     );
+    assertForm8874RecaptureOwners(newMarketsSource, context!.pending!);
     if (calculated !== (newMarketsRecapture ?? 0)) {
       throw new Error("Schedule 2 NMCR does not match its recapture source");
     }

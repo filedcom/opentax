@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../../nodes/inputs/f8874/recapture_fixture.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 
@@ -335,7 +336,7 @@ Deno.test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 cr
 
 Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   const source = {
-    recaptures: [{
+    recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
       investment_reference: "2022 QEI designation",
       cde_name: "Community Development Entity",
@@ -345,7 +346,7 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
       qualified_equity_investment_amount: 100_000,
       notice_credit_amount: 25_000,
       recapture_event_date: "2025-07-01",
-      recapture_event: "cde_redeemed_investment",
+      recapture_event: "cde_redeemed_investment" as const,
       prior_years: [{
         tax_year: 2024,
         original_return_due_date: "2025-04-15",
@@ -355,8 +356,8 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
       }],
       carryover_ledger_reference: "2024 QEI carryover ledger",
       carryover_vintages: [],
-    }],
-  } as const;
+    }, "Test Taxpayer")],
+  };
   const nmcr = calculateForm8874Recapture({
     recaptures: source.recaptures.map((recapture) => ({
       ...recapture,
@@ -366,7 +367,16 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   });
   const result = schedule2.build({
     line17a_new_markets_credit_recapture: nmcr,
-  }, { pending: { f8874_recapture: source } });
+  }, {
+    pending: {
+      f8874_recapture: source,
+      f1040: {
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+      },
+    },
+  });
   assertStringIncludes(
     result,
     `<RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>${nmcr}</OtherCreditsAmt></RecaptureOtherCreditsGrp>`,
@@ -384,7 +394,16 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
     () =>
       schedule2.build(
         { line17a_new_markets_credit_recapture: nmcr + 1 },
-        { pending: { f8874_recapture: source } },
+        {
+          pending: {
+            f8874_recapture: source,
+            f1040: {
+              taxpayer_first_name: "Test",
+              taxpayer_last_name: "Taxpayer",
+              taxpayer_ssn: "111223333",
+            },
+          },
+        },
       ),
     Error,
     "does not match",

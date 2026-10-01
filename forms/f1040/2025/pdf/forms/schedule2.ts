@@ -4,6 +4,9 @@ import {
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
+import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
@@ -317,6 +320,23 @@ export const schedule2Pdf: PdfFormDescriptor = {
       typeof fields.line17a_new_markets_credit_recapture === "number"
         ? fields.line17a_new_markets_credit_recapture
         : 0;
+    const newMarketsSource = allPending.f8874_recapture;
+    if (newMarketsSource !== undefined || newMarketsRecapture > 0) {
+      if (newMarketsSource === undefined) {
+        throw new Error(
+          "Schedule 2 PDF NMCR needs a Form 8874-B recapture source",
+        );
+      }
+      const calculated = calculateForm8874Recapture(
+        newMarketsSource as F8874RecaptureInput,
+      );
+      assertForm8874RecaptureOwners(newMarketsSource, allPending);
+      if (calculated !== newMarketsRecapture) {
+        throw new Error(
+          "Schedule 2 PDF NMCR differs from Form 8874-B recapture source",
+        );
+      }
+    }
     const recaptureCodes = [
       ...(investmentRecapture > 0 ? ["3468"] : []),
       ...(newMarketsRecapture > 0 ? ["NMCR"] : []),

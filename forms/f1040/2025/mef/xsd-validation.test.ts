@@ -26,6 +26,7 @@ import {
 } from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/f8874/recapture_fixture.ts";
 import {
   calculateForm8396,
   CertifiedInterestDocumentKind,
@@ -145,7 +146,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const source = {
-    recaptures: [{
+    recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
       investment_reference: "2022 QEI designation",
       cde_name: "Community Development Entity",
@@ -155,7 +156,7 @@ Deno.test({
       qualified_equity_investment_amount: 100_000,
       notice_credit_amount: 25_000,
       recapture_event_date: "2025-07-01",
-      recapture_event: "cde_redeemed_investment",
+      recapture_event: "cde_redeemed_investment" as const,
       prior_years: [{
         tax_year: 2024,
         original_return_due_date: "2025-04-15",
@@ -165,8 +166,8 @@ Deno.test({
       }],
       carryover_ledger_reference: "2024 QEI carryover ledger",
       carryover_vintages: [],
-    }],
-  } as const;
+    }, "Test Taxpayer")],
+  };
   const nmcr = calculateForm8874Recapture({
     recaptures: source.recaptures.map((recapture) => ({
       ...recapture,
@@ -175,7 +176,12 @@ Deno.test({
     })),
   });
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: nmcr },
+    f1040: {
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+      line23_other_taxes: nmcr,
+    },
     schedule2: { line17a_new_markets_credit_recapture: nmcr },
     f8874_recapture: source,
   } as MefFormsPending, extractFilerIdentity(singleGeneral()));
