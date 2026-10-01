@@ -2,7 +2,22 @@ import { element, elements } from "../../../mef/xml.ts";
 
 /** One nonpassive current-year source retained for Part V and print mapping. */
 export type Form3800NonpassiveDetailRow = {
-  readonly line: "1e" | "1f" | "1h" | "1i" | "1v" | "1y" | "1aa" | "4b" | "4e";
+  readonly line:
+    | "1e"
+    | "1f"
+    | "1h"
+    | "1i"
+    | "1j"
+    | "1k"
+    | "1p"
+    | "1v"
+    | "1y"
+    | "1aa"
+    | "1dd"
+    | "1ee"
+    | "3"
+    | "4b"
+    | "4e";
   readonly credit: number;
   readonly appliedCredit: number;
   readonly passThroughEin?: string;
@@ -16,9 +31,15 @@ const detailTag: Record<Form3800NonpassiveDetailRow["line"], string> = {
   "1f": "Frm8835PartIICYAggrgtAmtGrp",
   "1h": "Frm8820CYAggrgtAmtGrp",
   "1i": "Frm8874CYAggrgtAmtGrp",
+  "1j": "Frm8881PartICYAggrgtAmtGrp",
+  "1k": "Frm8882CYAggrgtAmtGrp",
+  "1p": "Frm8908CYAggrgtAmtGrp",
   "1v": "Frm3468PartVCYAggrgtAmtGrp",
   "1y": "Frm8936PartIICYAggrgtAmtGrp",
   "1aa": "Frm8936PartVCYAggrgtAmtGrp",
+  "1dd": "Frm8881PartIICYAggrgtAmtGrp",
+  "1ee": "Frm8881PartIIICYAggrgtAmtGrp",
+  "3": "Frm8844CYAggrgtAmtGrp",
   "4b": "Frm5884CYAggrgtAmtGrp",
   "4e": "Frm8835PartIICYSpcfdAmtGrp",
 };
@@ -29,9 +50,15 @@ const sourceDocumentName: Record<Form3800NonpassiveDetailRow["line"], string> =
     "1f": "IRS8835",
     "1h": "IRS8820",
     "1i": "IRS8874",
+    "1j": "IRS8881",
+    "1k": "IRS8882",
+    "1p": "IRS8908",
     "1v": "IRS3468 BinaryAttachment",
     "1y": "IRS8936",
     "1aa": "IRS8936",
+    "1dd": "IRS8881",
+    "1ee": "IRS8881",
+    "3": "IRS8844",
     "4b": "IRS5884",
     "4e": "IRS8835 BinaryAttachment",
   };

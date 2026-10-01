@@ -1,8 +1,12 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import {
+  type NodeResult,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { f3800 } from "../f3800/index.ts";
 
 // Form 8882 (Rev. 12/2017) remains the TY2025 direct-employer form. This
 // bounded source covers one non-group Schedule C employer's current-year
@@ -129,11 +133,19 @@ export function calculateForm8882(raw: F8882Input) {
 class F8882Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8882";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8882Input): NodeResult {
-    inputSchema.parse(rawInput);
-    return { outputs: [] }; // Form 3800 integration is required before a tax output.
+    const source = inputSchema.parse(rawInput);
+    return {
+      outputs: [output(f3800, {
+        f8882_direct_employer_credit: {
+          credit_amount: calculateForm8882(source).line7,
+          schedule_c_business_reference: source.schedule_c_business_reference,
+          subject_to_passive_activity_limit: false,
+        },
+      })],
+    };
   }
 }
 

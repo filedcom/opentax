@@ -2,15 +2,18 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { reconcileForm8882DirectEmployer } from "./f8882_source.ts";
 
-/** Staged TY2025 IRS8882.xsd projection, absent from the public registry. */
+/** TY2025 IRS8882.xsd direct-employer projection. */
 export const form8882: MefFormDescriptor<"f8882", unknown> = {
   pendingKey: "f8882",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8882.pdf",
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
-    if (!context?.pending) {
-      throw new Error("Form 8882 needs a linked Schedule C return source");
+    if (
+      !context?.pending ||
+      context.documentIdsByPendingKey?.f3800?.length !== 1
+    ) {
+      throw new Error("Form 8882 needs one linked Form 3800 and Schedule C");
     }
     const { source, lines } = reconcileForm8882DirectEmployer(
       raw,

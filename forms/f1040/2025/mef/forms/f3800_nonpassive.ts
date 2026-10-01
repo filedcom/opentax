@@ -23,6 +23,7 @@ function nontransferableCurrentRow(
     | "1h"
     | "1i"
     | "1j"
+    | "1k"
     | "1p"
     | "1v"
     | "1y"
@@ -124,6 +125,11 @@ export type Form3800NonpassiveXmlInput = {
     }[];
   };
   readonly form8908?: {
+    readonly credit: number;
+    readonly documentId: string;
+    readonly appliedCredit: number;
+  };
+  readonly form8882?: {
     readonly credit: number;
     readonly documentId: string;
     readonly appliedCredit: number;
@@ -243,6 +249,7 @@ export function buildForm3800NonpassiveParts(
   if (
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
     !input.form8844 && !input.form8881 && !input.form8908 &&
+    !input.form8882 &&
     !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
     !input.form8936Commercial &&
@@ -256,6 +263,16 @@ export function buildForm3800NonpassiveParts(
   const form8844Credit = input.form8844?.credit ?? 0;
   const form8881Parts = input.form8881?.parts ?? [];
   const form8908Credit = input.form8908?.credit ?? 0;
+  const form8882Credit = input.form8882?.credit ?? 0;
+  if (
+    input.form8882 && (
+      !input.form8882.documentId || !Number.isInteger(form8882Credit) ||
+      form8882Credit <= 0 ||
+      !Number.isInteger(input.form8882.appliedCredit) ||
+      input.form8882.appliedCredit < 0 ||
+      input.form8882.appliedCredit > form8882Credit
+    )
+  ) throw new Error("Form 3800 has an invalid Form 8882 line 1k allocation");
   if (
     input.form8908 && (
       !input.form8908.documentId || !Number.isInteger(form8908Credit) ||
@@ -504,7 +521,7 @@ export function buildForm3800NonpassiveParts(
   if (
     credits.standardCredit +
           form8881Parts.reduce((sum, part) => sum + part.credit, 0) +
-          form8908Credit + form8826Credit + form8820Credit +
+          form8908Credit + form8882Credit + form8826Credit + form8820Credit +
           form8874Credit + form3468PartVCredit + form8936Credit +
           form8936CommercialCredit !==
       input.tax.standardCredit ||
@@ -642,6 +659,7 @@ export function buildForm3800NonpassiveParts(
     (sum, facility, index) =>
       sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
     form8826Applied + (input.form8908?.appliedCredit ?? 0) +
+      (input.form8882?.appliedCredit ?? 0) +
       form8881Parts.reduce((sum, part) => sum + part.appliedCredit, 0) +
       (input.form8820?.appliedCredit ?? 0) +
       (input.form8874?.appliedCredit ?? 0) +
@@ -738,6 +756,14 @@ export function buildForm3800NonpassiveParts(
       credit: form8908Credit,
       appliedCredit: input.form8908.appliedCredit,
       sourceDocumentId: input.form8908.documentId,
+    }]
+    : [];
+  const form8882PartVGroups: Form3800NonpassiveDetailRow[] = input.form8882
+    ? [{
+      line: "1k",
+      credit: form8882Credit,
+      appliedCredit: input.form8882.appliedCredit,
+      sourceDocumentId: input.form8882.documentId,
     }]
     : [];
   const form3468PartVGroups: Form3800NonpassiveDetailRow[] =
@@ -928,6 +954,19 @@ export function buildForm3800NonpassiveParts(
         referenceDocumentName: "IRS8881",
       }, [])
     ),
+    ...(input.form8882
+      ? [nontransferableCurrentRow(
+        "1k",
+        form8882Credit,
+        input.form8882.appliedCredit,
+        {
+          sourceCount: 1,
+          referenceDocumentId: input.form8882.documentId,
+          referenceDocumentName: "IRS8882",
+        },
+        [],
+      )]
+      : []),
     ...(input.form8908
       ? [
         nontransferableCurrentRow(
@@ -1068,6 +1107,14 @@ export function buildForm3800NonpassiveParts(
       transferOutCredit: 0,
       appliedCredit: part.appliedCredit,
     })),
+    ...(input.form8882
+      ? [{
+        line: "1k" as const,
+        grossCredit: form8882Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8882.appliedCredit,
+      }]
+      : []),
     ...(input.form8908
       ? [{
         line: "1p" as const,
@@ -1156,6 +1203,7 @@ export function buildForm3800NonpassiveParts(
       ...form8844PartVGroups,
       ...form8881PartVGroups,
       ...form8908PartVGroups,
+      ...form8882PartVGroups,
     ],
     carryoverDetails: [],
     passiveCurrentDetails: [],

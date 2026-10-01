@@ -3,8 +3,9 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8882/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/model.ts";
+import { inputSchema as form3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 
-/** Bounded direct sole-proprietor source; Form 3800 join is still unavailable. */
+/** Bounded direct sole-proprietor source and its filed Form 3800 claim. */
 export function reconcileForm8882DirectEmployer(
   raw: unknown,
   pending: Readonly<Record<string, unknown>>,
@@ -16,6 +17,15 @@ export function reconcileForm8882DirectEmployer(
     throw new Error("Form 8882 source differs from the prepared return");
   }
   const lines = calculateForm8882(source);
+  const credit = form3800InputSchema.parse(pending.f3800)
+    .f8882_direct_employer_credit;
+  if (
+    !credit || credit.credit_amount !== lines.line7 ||
+    credit.schedule_c_business_reference !==
+      source.schedule_c_business_reference
+  ) {
+    throw new Error("Form 8882 line 7 differs from Form 3800 line 1k source");
+  }
   const form1040 = pending.f1040 as Record<string, unknown> | undefined;
   if (
     typeof form1040?.taxpayer_ssn !== "string" ||

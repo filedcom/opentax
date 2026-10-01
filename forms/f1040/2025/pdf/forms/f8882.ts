@@ -10,7 +10,7 @@ const text = (domainKey: string, number: number): PdfFieldEntry => ({
   pdfField: `${page}.p1-t${number}[0]`,
 });
 
-/** Staged Form 8882 PDF projection, absent from the public registry. */
+/** Form 8882 PDF projection with the filed Form 3800 claim. */
 export const form8882Pdf: PdfFormDescriptor = {
   pendingKey: "f8882",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8882.pdf",

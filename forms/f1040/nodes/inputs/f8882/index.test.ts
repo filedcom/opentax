@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { form8882Fixture } from "./fixture.ts";
 import { calculateForm8882, f8882, inputSchema } from "./index.ts";
 
-Deno.test("f8882: direct Schedule C contract source calculates official lines without Schedule 3 leak", () => {
+Deno.test("f8882: direct Schedule C credit routes to typed Form 3800", () => {
   const source = inputSchema.parse(form8882Fixture());
   assertEquals(calculateForm8882(source), {
     line1: 40_000,
@@ -13,10 +13,16 @@ Deno.test("f8882: direct Schedule C contract source calculates official lines wi
     line6: 11_000,
     line7: 11_000,
   });
-  assertEquals(
-    f8882.compute({ taxYear: 2025, formType: "f1040" }, source).outputs,
-    [],
-  );
+  const [credit] = f8882.compute({ taxYear: 2025, formType: "f1040" }, source)
+    .outputs;
+  assertEquals(credit?.nodeType, "f3800");
+  assertEquals(credit?.fields, {
+    f8882_direct_employer_credit: {
+      credit_amount: 11_000,
+      schedule_c_business_reference: "SHOP-CHILDCARE-2025",
+      subject_to_passive_activity_limit: false,
+    },
+  });
 });
 
 Deno.test("f8882: referral-only direct route calculates 10 percent", () => {

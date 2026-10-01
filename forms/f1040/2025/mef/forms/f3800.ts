@@ -66,6 +66,7 @@ import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
 import { reconcileForm8881DirectEmployer } from "./f8881.ts";
+import { reconcileForm8882DirectEmployer } from "./f8882_source.ts";
 import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
 import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
 
@@ -728,6 +729,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     (fields.f8844_direct_employer_credit?.credit_amount ?? 0) > 0 ||
     fields.f8881_credit !== undefined ||
     fields.f8908_credit !== undefined ||
+    fields.f8882_direct_employer_credit !== undefined ||
     fields.f8874_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8820_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
@@ -800,6 +802,29 @@ export function prepareForm3800DocumentParts(
   const form8908 = parsed.f8908_credit
     ? reconciledForm8908Source(context.pending?.f8908, parsed)
     : undefined;
+  const form8882 = parsed.f8882_direct_employer_credit
+    ? reconcileForm8882DirectEmployer(
+      context.pending?.f8882,
+      context.pending ?? {},
+    )
+    : undefined;
+  if (
+    form8882 && (
+      parsed.f8882_direct_employer_credit?.credit_amount !==
+        form8882.lines.line7 ||
+      parsed.f8882_direct_employer_credit?.schedule_c_business_reference !==
+        form8882.source.schedule_c_business_reference
+    )
+  ) {
+    throw new Error("Form 3800 line 1k differs from its filed Form 8882");
+  }
+  if (
+    form8882 && context.filer &&
+    form8882.source.proprietor_ssn !==
+      context.filer.primarySSN.replaceAll("-", "")
+  ) {
+    throw new Error("Form 3800 line 1k owner differs from filed taxpayer");
+  }
   if (form8908) reconcileForm8908PwaAttachments(form8908.source, context);
   if (
     form8908 && context.filer &&
@@ -942,6 +967,7 @@ export function prepareForm3800DocumentParts(
     form8881PartIICredit: form8881?.line11,
     form8881PartIIICredit: form8881?.line15,
     form8908Credit: form8908?.lines.line8,
+    form8882Credit: form8882?.lines.line7,
     form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
     form5884Credit: form5884?.credit,
@@ -1019,6 +1045,7 @@ export function prepareForm3800DocumentParts(
     iii: applied("nonpassive:8881:iii"),
   };
   const form8908Applied = applied("nonpassive:8908");
+  const form8882Applied = applied("nonpassive:8882");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
     "nonpassive:3468-part-v",
@@ -1071,6 +1098,10 @@ export function prepareForm3800DocumentParts(
   const form8908Ids = context.documentIdsByPendingKey.f8908 ?? [];
   if (form8908Ids.length !== (form8908 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8908 document count differs from source");
+  }
+  const form8882Ids = context.documentIdsByPendingKey.f8882 ?? [];
+  if (form8882Ids.length !== (form8882 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8882 document count differs from source");
   }
   const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
   if (form8835Ids.length !== facilities.length) {
@@ -1202,6 +1233,13 @@ export function prepareForm3800DocumentParts(
           credit: form8908.lines.line8,
           documentId: form8908Ids[0],
           appliedCredit: form8908Applied,
+        }
+        : undefined,
+      form8882: form8882
+        ? {
+          credit: form8882.lines.line7,
+          documentId: form8882Ids[0],
+          appliedCredit: form8882Applied,
         }
         : undefined,
       form3468PartV: form3468PartVCredit > 0

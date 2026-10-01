@@ -10,7 +10,11 @@ const filer = {
 
 Deno.test("staged Form 8882 native XML projects direct employer lines 1-7", () => {
   const { source, pending } = form8882PreparedFixture();
-  const xml = form8882.build(source, { pending, filer });
+  const xml = form8882.build(source, {
+    pending,
+    filer,
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
   assertStringIncludes(
     xml,
     "<QlfyChldCareFcltyExpendAmt>40000</QlfyChldCareFcltyExpendAmt>",
@@ -65,18 +69,21 @@ Deno.test("staged Form 8882 refuses tampered Schedule C deduction and owner", ()
         },
       },
       filer,
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
     })
   );
   assertThrows(() =>
     form8882.build(source, {
       pending,
       filer: { ...filer, primarySSN: "999999999" },
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
     })
   );
   assertThrows(() =>
     form8882.build(source, {
       pending: { ...pending, f1040: { taxpayer_ssn: "999999999" } },
       filer,
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
     })
   );
 });
