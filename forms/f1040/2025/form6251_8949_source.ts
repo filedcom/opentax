@@ -156,7 +156,7 @@ export function assertForm6251Form8949Source(
     const amt = fields.line11_amt;
     if (
       amtNet < lossLimit ||
-      fields.net_capital_gain !==
+      (fields.net_capital_gain ?? 0) !==
         (rows.every((row) => ["D", "E", "F"].includes(row.part)) ||
             mixedTermGainToAmtLoss || shortLossLongGainToAmtLossStable
           ? regularNet

@@ -125,11 +125,15 @@ function reconcileActiveBusinessIncome(
     "form4797",
     "form6252",
     "form8824",
-    "form7206",
     "form8829",
-    "form461",
   ] as const;
-  if (unsupportedSources.some((key) => pending[key] !== undefined)) {
+  if (
+    unsupportedSources.some((key) => pending[key] !== undefined) ||
+    (pending.form7206 as Record<string, unknown> | undefined)?.line13 !==
+      undefined ||
+    (pending.form461 as Record<string, unknown> | undefined)
+        ?.line16_excess_business_loss !== undefined
+  ) {
     throw new Error(
       "Form 4562 active-business limit cannot include another business-income or deduction source",
     );

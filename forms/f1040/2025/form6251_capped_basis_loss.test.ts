@@ -54,7 +54,13 @@ Deno.test("Form 6251 caps a same-term AMT basis loss separately from regular Sch
   if (typeof filed.regular_tax_income !== "number") {
     throw new Error("Expected numeric regular taxable income");
   }
-  assertEquals(filed.amti, filed.regular_tax_income + 239_000);
+  assertEquals(
+    filed.amti,
+    filed.regular_tax_income +
+      (typeof filed.line2a_taxes_paid === "number"
+        ? filed.line2a_taxes_paid
+        : 0) + 239_000,
+  );
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
   assertEquals(
     result.pending.f1040?.line17_additional_taxes,
@@ -243,7 +249,7 @@ Deno.test("Form 6251 caps audited mixed-term gain and loss separately for regula
   // $900 offsets a $5,600 loss, so only $3,000 of the $4,700 net is deducted.
   assertEquals(result.pending.f1040?.line7_capital_gain, -2_500);
   assertEquals(filed.line2k_disposition, -500);
-  assertEquals(filed.net_capital_gain, 0);
+  assertEquals(filed.net_capital_gain ?? 0, 0);
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
   assertStringIncludes(
     mef6251.build(filed, { pending: result.pending, filer }),

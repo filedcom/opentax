@@ -61,6 +61,7 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-01",
+      digital_assets: false,
       address_line1: "123 Main St",
       address_city: "Springfield",
       address_state: "IL",
@@ -102,6 +103,7 @@ Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-01",
+      digital_assets: false,
       address_line1: "123 Main St",
       address_city: "Springfield",
       address_state: "IL",
@@ -161,7 +163,7 @@ Deno.test("exportMefCommand rejects an empty draft without fabricating XML", asy
           draft: true,
         }),
       Error,
-      "requires a real filer identity",
+      "needs the identified taxpayer's SSN",
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -274,6 +276,7 @@ Deno.test("exportMefCommand preserves business-rule force override after clean c
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
+      digital_assets: false,
       address_line1: "123 Main St",
       address_city: "Springfield",
       address_state: "IL",

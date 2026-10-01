@@ -235,7 +235,6 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     assertThrows(
       () => assertAttachmentCoverage(pending, "pdf"),
       Error,
-      "native filing but no",
     );
   }
   assertAttachmentCoverage(

@@ -15,7 +15,7 @@ const asset = {
   placed_in_service_date: "2025-03-01",
   cost: 30_000,
   elected_cost: 30_000,
-  taxpayer_active_business_income: 32_000,
+  taxpayer_active_business_income: 60_000,
   taxpayer_active_business_income_source_ref:
     "2025 Schedule C and employee W-2 income workpaper",
   prior_year_carryover: 0,
@@ -44,6 +44,8 @@ const w2 = {
 const filer = {
   primarySSN: "123456789",
   fullName: "Alex Taxpayer",
+  firstNameWithInitial: "Alex",
+  lastName: "Taxpayer",
   nameLine1: "Alex Taxpayer",
   nameControl: "TAXP",
   filingStatus: MefFilingStatus.Single,
@@ -63,6 +65,7 @@ function filedReturn() {
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1985-06-15",
+      digital_assets: false,
       address_line1: "1 Main St",
       address_city: "Wilmington",
       address_state: "DE",
@@ -75,8 +78,9 @@ function filedReturn() {
       line_b_business_code: "541511",
       line_f_accounting_method: "cash",
       line_g_material_participation: true,
+      line_i_made_1099_payments: false,
       line_32_at_risk: "a",
-      line_1_gross_receipts: 2_000,
+      line_1_gross_receipts: 30_000,
       line_13_depreciation: 30_000,
     }],
     form4562: { asset },
@@ -89,11 +93,12 @@ Deno.test("Form 4562 includes one sourced employee W-2 in line 11 and joins Sche
   const pending = normalizeAllPending(result.pending);
   const filed = filedForm4562Schema.parse(pending.form4562);
   assertEquals(pending.form4562.line11_business_income_limitation, 30_000);
+  assertEquals(pending.form4562.taxpayer_active_business_income, 60_000);
   assertEquals(pending.form4562.line12_section179_expense_deduction, 30_000);
-  assertEquals(pending.schedule1.line3_schedule_c, -28_000);
+  assertEquals(pending.schedule1.line3_schedule_c, 0);
   assertEquals(pending.f1040.line1a_wages, 30_000);
   assertEquals(pending.f1040.line1z_total_wages, 30_000);
-  assertEquals(pending.f1040.line11_agi, 2_000);
+  assertEquals(pending.f1040.line11_agi, 30_000);
   const xml = form4562.build(filed, { pending });
   assertStringIncludes(
     xml,

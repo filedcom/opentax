@@ -3,7 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
-import { normalizeAllPending } from "../pending.ts";
+import { normalizeAllPending } from "../../pending.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import {
   form3800PartIAndIIFields,
@@ -141,8 +141,14 @@ Deno.test("self-earned orphan-drug and work-opportunity credits share Form 3800,
   const result = mixedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
-  assertEquals(pending.f3800.f8820_credit.credit_amount, 1_975);
-  assertEquals(pending.f3800.f5884_credit.credit_amount, 2_400);
+  assertEquals(
+    (pending.f3800.f8820_credit as { credit_amount: number }).credit_amount,
+    1_975,
+  );
+  assertEquals(
+    (pending.f3800.f5884_credit as { credit_amount: number }).credit_amount,
+    2_400,
+  );
   assertEquals(pending.f3800.allowed_credit, 4_375);
   assertEquals(pending.schedule3.line6a_total, 4_375);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 4_375);
@@ -239,12 +245,19 @@ Deno.test("three distinct self-earned credits reconcile to Form 3800, Form 1040,
   const result = mixedReturn(true);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
-  assertEquals(pending.f3800.f8820_credit.credit_amount, 1_975);
   assertEquals(
-    pending.f3800.f8936_commercial_vehicle_credit.credit_amount,
+    (pending.f3800.f8820_credit as { credit_amount: number }).credit_amount,
+    1_975,
+  );
+  assertEquals(
+    (pending.f3800.f8936_commercial_vehicle_credit as { credit_amount: number })
+      .credit_amount,
     3_000,
   );
-  assertEquals(pending.f3800.f5884_credit.credit_amount, 2_400);
+  assertEquals(
+    (pending.f3800.f5884_credit as { credit_amount: number }).credit_amount,
+    2_400,
+  );
   assertEquals(pending.f3800.allowed_credit, 7_375);
   assertEquals(pending.schedule3.line6a_total, 7_375);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 7_375);

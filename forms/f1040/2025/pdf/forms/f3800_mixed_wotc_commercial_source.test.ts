@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
-import { normalizeAllPending } from "../pending.ts";
+import { normalizeAllPending } from "../../pending.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import {
   form3800PartIAndIIFields,
@@ -125,9 +125,13 @@ Deno.test("mixed work opportunity and commercial vehicle credits reach both Form
   const result = mixedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
-  assertEquals(pending.f3800.f5884_credit.credit_amount, 2_400);
   assertEquals(
-    pending.f3800.f8936_commercial_vehicle_credit.credit_amount,
+    (pending.f3800.f5884_credit as { credit_amount: number }).credit_amount,
+    2_400,
+  );
+  assertEquals(
+    (pending.f3800.f8936_commercial_vehicle_credit as { credit_amount: number })
+      .credit_amount,
     3_000,
   );
   assertEquals(pending.f3800.allowed_credit, 5_400);

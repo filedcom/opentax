@@ -53,7 +53,7 @@ Deno.test("CLI force and draft cannot export an empty return with invented ident
     );
     assertStringIncludes(
       new TextDecoder().decode(draft.stderr),
-      "requires a real filer identity",
+      "needs the identified taxpayer's SSN",
     );
   } finally {
     await Deno.remove(cwd, { recursive: true });

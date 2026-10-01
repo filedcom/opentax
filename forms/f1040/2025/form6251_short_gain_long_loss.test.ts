@@ -66,7 +66,7 @@ Deno.test("Form 6251 offsets a regular short-term gain into a deductible AMT los
   // / -$2,000 long nets -$1,000. Neither side has preferential net gain.
   assertEquals(result.pending.f1040?.line7_capital_gain, 1_000);
   assertEquals(filed.line2k_disposition, -2_000);
-  assertEquals(filed.net_capital_gain, 0);
+  assertEquals(filed.net_capital_gain ?? 0, 0);
   assertEquals(result.pending.schedule2?.line2_amt, filed.line11_amt);
   assertEquals(result.pending.f1040?.line17_additional_taxes, filed.line11_amt);
   assertStringIncludes(

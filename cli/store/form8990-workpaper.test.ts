@@ -43,7 +43,17 @@ async function makeBoundedReturn(baseDir: string) {
     receipts: [{ source_reference: "sale-1", kind: "sale", amount: 200_000 }],
     interestExpenseRecords: [{
       interest_payment_reference: "interest-statement-1",
-      debt_proceeds_tracing_reference: "business-loan-ledger-1",
+      debt_proceeds_trace: {
+        source_reference: "business-loan-ledger-1",
+        debt_disbursed_on: "2024-01-15",
+        gross_proceeds: 250_000,
+        business_uses: [{
+          expenditure_document_reference: "C-1-equipment-invoice",
+          spent_on: "2024-01-20",
+          amount: 250_000,
+          business_reference: "C-1",
+        }],
+      },
       debtor_taxpayer_ssn: "123456789",
       lender_ein: "987654321",
       debt_account_reference: "BUSINESS-LOAN-1",

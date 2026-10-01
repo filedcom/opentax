@@ -21,6 +21,7 @@ Deno.test("explicit draft XML remains labeled after clean calculation", async ()
       taxpayer_first_name: "Synthetic",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111-22-3333",
+      digital_assets: false,
       address_line1: "1 Test Way",
       address_city: "Austin",
       address_state: "TX",
