@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -8,7 +11,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // TY2025 — Form 8288/8288-A: FIRPTA Withholding
 // Under IRC §1445, when a foreign person disposes of US real property, the buyer must
 // withhold a percentage of the gross sales price. The foreign seller claims the withheld
-// amount as a credit against US tax liability (Form 1040 Line 25b).
+// amount as a credit against US tax liability (Form 1040 Line 25c).
 // Reg. §1.1445-1; Rev. Proc. 2000-35.
 
 // FIRPTA withholding rates:
@@ -53,8 +56,8 @@ function totalWithheld(items: F8288Items): number {
 function f1040Output(items: F8288Items): NodeOutput[] {
   const withheld = totalWithheld(items);
   if (withheld === 0) return [];
-  // FIRPTA withholding is a payment credit against tax — flows to Form 1040 Line 25b
-  return [output(f1040, { line25b_withheld_1099: withheld })];
+  // Form 8288-A is an "other form" for 2025 Form 1040 line 25c.
+  return [output(f1040, { line25c_other_withheld: withheld })];
 }
 
 class F8288Node extends TaxNode<typeof inputSchema> {

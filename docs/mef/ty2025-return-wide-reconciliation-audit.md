@@ -118,6 +118,15 @@ does not authenticate that these dollars were paid, credited to 2025, or owned
 by the filer. Those receipt/ownership joins remain before line 26 can be
 treated as externally verified.
 
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+put withholding shown on Form 8288-A in line 25c (other forms), not line 25b
+(Forms 1099). The existing `f8288` graph deposit now uses the line 25c input;
+final native/PDF export checks that its retained sum does not exceed filed line
+25c. This is a bucket and lower-bound reconciliation, not complete Form
+8288-A filing support: the raw `f8288` source has no seller taxpayer identity,
+issued certificate byte binding, or filed Form 8288-A attachment. Those facts
+and cross-source duplicate/period checks remain before the credit is verified.
+
 ## Remaining return-wide work
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |

@@ -36,9 +36,9 @@ Sum `amount_withheld` across all Form 8288-A items. Each property sold produces 
 Source: Form 8288-A instructions; each 8288-A is a separate withholding certificate.
 
 ### Step 2 — Route to f1040 as withholding credit
-The total withheld flows to Form 1040 Line 25b (federal tax withheld from 1099 forms / other withholding). FIRPTA withholding is a credit against tax liability.
+The total withheld flows to Form 1040 Line 25c (federal tax withheld from other forms, including Form 8288-A). FIRPTA withholding is a credit against tax liability.
 
-Source: Form 1040 instructions, Line 25b — "Federal income tax withheld from Form 1099 and other forms"; Rev. Proc. 2000-35; IRC §1445(e).
+Source: [2025 Form 1040 instructions, Line 25c](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf) — tax withheld shown on Form 8288-A belongs on line 25c, not the Form 1099-only line 25b; Rev. Proc. 2000-35; IRC §1445(e).
 
 ---
 
@@ -46,7 +46,7 @@ Source: Form 1040 instructions, Line 25b — "Federal income tax withheld from F
 
 | Output Field | Destination Node | Condition | IRS Reference | URL |
 | ------------ | ---------------- | --------- | ------------- | --- |
-| line25b_withheld_1099 | f1040 | amount_withheld > 0 (total across items) | IRC §1445; Form 1040 Line 25b | https://www.irs.gov/instructions/i1040gi |
+| line25c_other_withheld | f1040 | amount_withheld > 0 (total across items) | IRC §1445; Form 1040 Line 25c | https://www.irs.gov/instructions/i1040gi |
 
 ---
 
@@ -71,7 +71,7 @@ flowchart LR
     sum["Sum amount_withheld across all items"]
   end
   subgraph outputs["Downstream Nodes"]
-    f1040["f1040 (line25b_withheld_1099)"]
+    f1040["f1040 (line25c_other_withheld)"]
   end
   inputs --> node --> f1040
 ```
