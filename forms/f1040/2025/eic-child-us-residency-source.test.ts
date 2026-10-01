@@ -28,9 +28,7 @@ Deno.test("Schedule EIC US residency survives calculation and both export prefli
   const pending = buildPending(result.pending);
   const credit = pending.f1040?.line27_eitc;
   assertEquals(typeof credit === "number" && credit > 0, true);
-  const [child] = pending.eitc?.qualifying_child_details as Array<
-    Record<string, unknown>
-  >;
+  const child = pending.eitc?.qualifying_child_details?.[0];
   if (!child) throw new Error("Missing calculated EIC child");
   assertEquals(child.ssn, "111-22-3334");
   assertEquals(child.months_in_home, 12);
@@ -74,9 +72,7 @@ Deno.test("Schedule EIC line 6 uses exact U.S. months through calculation, nativ
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  const [child] = pending.eitc?.qualifying_child_details as Array<
-    Record<string, unknown>
-  >;
+  const child = pending.eitc?.qualifying_child_details?.[0];
   if (!child) throw new Error("Missing calculated EIC child");
   assertEquals(child.months_in_home, 12);
   assertEquals(child.months_lived_with_you_in_us, 8);
@@ -85,7 +81,10 @@ Deno.test("Schedule EIC line 6 uses exact U.S. months through calculation, nativ
     "<MonthsChildLivedWithYouCnt>08</MonthsChildLivedWithYouCnt>",
   );
   assertEquals(
-    eitcPdf.projectFields?.(pending.eitc!, pending)?.child1_us_months,
+    eitcPdf.projectFields?.(
+      pending.eitc!,
+      pending as unknown as Record<string, Record<string, unknown>>,
+    )?.child1_us_months,
     8,
   );
   const tampered = {

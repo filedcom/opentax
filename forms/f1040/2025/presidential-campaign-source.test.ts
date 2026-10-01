@@ -33,8 +33,14 @@ function filedElection(
 
 Deno.test("presidential campaign answers reach final Form 1040, MeF, and TY2025 PDF boxes", () => {
   const { source, final } = filedElection("mfj", true, true);
-  assertEquals(final.presidential_campaign_fund_taxpayer, true);
-  assertEquals(final.presidential_campaign_fund_spouse, true);
+  assertEquals(
+    (final as Record<string, unknown>).presidential_campaign_fund_taxpayer,
+    true,
+  );
+  assertEquals(
+    (final as Record<string, unknown>).presidential_campaign_fund_spouse,
+    true,
+  );
 
   const xml = irs1040.build(final, { pending: { general: source } });
   assertStringIncludes(xml, "<PECFPrimaryInd>X</PECFPrimaryInd>");

@@ -33,7 +33,7 @@ const issued = [{
   box10_code_j_recovery: 500,
   box10_code_j_taxable_recovery: 400,
   box10_code_j_tax_benefit_workpaper_reference: "2024 benefit review A",
-  box10_code_j_prior_year_tax_benefit_reviewed: true,
+  box10_code_j_prior_year_tax_benefit_reviewed: true as const,
 }, {
   corporation_name: "Second S Corp",
   corporation_ein: "987654321",
@@ -42,7 +42,7 @@ const issued = [{
   box10_code_j_recovery: 700,
   box10_code_j_taxable_recovery: 600,
   box10_code_j_tax_benefit_workpaper_reference: "2024 benefit review B",
-  box10_code_j_prior_year_tax_benefit_reviewed: true,
+  box10_code_j_prior_year_tax_benefit_reviewed: true as const,
 }];
 
 function filing(k1_s_corps: Record<string, unknown>[] = issued) {
@@ -80,7 +80,7 @@ Deno.test("two S corporation code J sources reach line 8z, 1040, native statemen
   const [projected] = schedule1Pdf.instances!(
     pending.schedule1!,
     filer,
-    pending,
+    pending as unknown as Record<string, Record<string, unknown>>,
   );
   assertEquals(projected.line8z_other, 1_000);
   assertStringIncludes(String(projected.line8z_description), "123456789");
@@ -134,7 +134,12 @@ Deno.test("S corporation code J rejects changed rows, K-1 copy, total and owner"
       Error,
     );
     assertThrows(
-      () => schedule1Pdf.instances!(altered.schedule1!, filer, altered),
+      () =>
+        schedule1Pdf.instances!(
+          altered.schedule1!,
+          filer,
+          altered as unknown as Record<string, Record<string, unknown>>,
+        ),
       Error,
     );
   }

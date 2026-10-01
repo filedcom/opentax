@@ -5,7 +5,9 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return { farm_id: "farm-1", ...overrides };
 }
 

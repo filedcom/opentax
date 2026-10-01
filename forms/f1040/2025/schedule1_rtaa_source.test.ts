@@ -68,7 +68,7 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
   const [projected] = schedule1Pdf.instances!(
     pending.schedule1!,
     filer,
-    pending,
+    pending as unknown as Record<string, Record<string, unknown>>,
   );
   assertEquals(projected.line8z_other, 1_000);
   assertStringIncludes(String(projected.line8z_description), "123456789");
@@ -122,7 +122,12 @@ Deno.test("RTAA export rejects changed rows, source copies, line total and recip
       Error,
     );
     assertThrows(
-      () => schedule1Pdf.instances!(changed.schedule1!, filer, changed),
+      () =>
+        schedule1Pdf.instances!(
+          changed.schedule1!,
+          filer,
+          changed as unknown as Record<string, Record<string, unknown>>,
+        ),
       Error,
     );
   }

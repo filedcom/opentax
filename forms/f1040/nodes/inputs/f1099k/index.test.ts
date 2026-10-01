@@ -718,7 +718,10 @@ Deno.test("1099-K rejects an exact duplicate source row before doubling income o
   );
   assertThrows(
     () =>
-      compute([issued, Object.fromEntries(Object.entries(issued).reverse())]),
+      compute([
+        issued,
+        Object.fromEntries(Object.entries(issued).reverse()) as typeof issued,
+      ]),
     Error,
     "same Form 1099-K source row cannot be entered twice",
   );

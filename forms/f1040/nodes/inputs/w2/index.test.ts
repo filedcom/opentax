@@ -41,7 +41,8 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 }
 
 function reviewedCodeDW2(ein: string, amount: number) {
-  return minimalItem({
+  return {
+    ...minimalItem(),
     employer_ein: ein,
     employee_ssn: "123-45-6789",
     box1_wages: 50_000,
@@ -54,7 +55,7 @@ function reviewedCodeDW2(ein: string, amount: number) {
       birth_date_source_reference: "2025 identity review",
       w2_source_reference: `w2-${ein}`,
     },
-  });
+  };
 }
 
 Deno.test("distinct reviewed code D W-2s deposit only their 2025 excess on line 1h and AGI", () => {
