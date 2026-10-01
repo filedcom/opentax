@@ -17,7 +17,8 @@ const mine = {
   business_reference: "mine-2025",
   line_f_accounting_method: "cash",
   line_g_material_participation: true,
-  line_1_gross_receipts: 400_000,
+  line_i_made_1099_payments: false,
+  line_1_gross_receipts: 100_000,
   qbi_no_other_adjustments_confirmed: true,
   part_v_other_expenses: [{
     description: "2025 mine exploration",
@@ -42,10 +43,26 @@ function filing() {
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
+      digital_assets: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
-    schedule_c: { schedule_cs: [mine] },
+    w2: [{
+      box1_wages: 300_000,
+      box2_fed_withheld: 60_000,
+      box3_ss_wages: 176_100,
+      box4_ss_withheld: 10_918.20,
+      box5_medicare_wages: 300_000,
+      box6_medicare_withheld: 4_350,
+      employer_ein: "12-3456789",
+      employer_name: "ACME Mining",
+      employer_address_line1: "10 Payroll Way",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box12_entries: [],
+    }],
+    schedule_c: [mine],
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       fincen_form114_required: false,
@@ -58,7 +75,8 @@ Deno.test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, n
   const result = filing();
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form6251!;
-  assertEquals(result.pending.schedule1?.line3_schedule_c, 300_000);
+  assertEquals(result.pending.schedule1?.line3_schedule_c, 0);
+  assertEquals(result.pending.form8995a, undefined);
   assertEquals(fields.line2q_mining_costs, 90_000);
   assertEquals(
     typeof fields.line11_amt === "number" && fields.line11_amt > 0,
@@ -89,12 +107,17 @@ Deno.test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, n
     1,
   );
   const pending = buildPending(result.pending);
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
   const bundle = await buildMefBundle(pending, {
-    filer: testFiler(),
+    filer: finalFiler,
     attachments: [],
   });
   assertStringIncludes(bundle.xml, "<MiningCostsAmt>90000</MiningCostsAmt>");
-  const pdf = await buildPdfBytes(pending, testFiler(), ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
   const changedExpense = {
