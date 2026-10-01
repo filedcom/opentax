@@ -98,6 +98,28 @@ case, a January $650 determination on policy A plus May–August determinations
 of $650, $700, $750, and $800 on policy B yield $1,354 PTC and $1,046 excess
 APTC from $2,400 advances. Source/calculation/native/PDF, full-return,
 missing-hash, and wrong-policy-month fixtures are authored but unrun. Two
-policies with overlapping coverage, three or more corrected policies, and
+policies with overlapping coverage and
 other covered-family variants remain closed; Marketplace source-byte
 authentication remains open.
+
+## Three sequential corrected policies (implementation staged)
+
+The same one-person, same-state route now accepts three distinct nonoverlapping
+Form 1095-A policies when each has its own `marketplace_error` SLCSP correction
+on a covered APTC month. The native and PDF guards replay each active month
+against that policy's original premium/APTC and its dated Marketplace
+determination reference and reviewed record hash. The existing source node
+computes the corrected monthly SLCSP before Form 8962's contribution, credit,
+and excess-APTC calculation. This follows the
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) for
+correct applicable SLCSP on monthly lines 12–23.
+
+An authored January–April, May–August, September–December source graph has
+$500 monthly premiums, $200 monthly APTC, and a $600 reported SLCSP on each
+policy, with one independently determined $650 month on each. The expected
+$954 credit and $1,446 excess APTC flow to Schedule 2 and Form 1040; native
+monthly rows and PDF fields identify all three corrected months. Wrong-policy
+month, missing hash, and changed Form 1040 tax fixtures are authored for the
+deferred batch. Overlapping coverage, four or more corrected policies,
+mixed-family ownership, authenticated Marketplace bytes, IRS acceptance, and
+bulk test/XSD/PDF review remain open.
