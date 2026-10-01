@@ -25,6 +25,7 @@ import {
   assertOrdinarySectionBReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
+  isTwoSectionBSimilarArtGroup,
 } from "../../mef/forms/f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -620,6 +621,28 @@ export const form8283Pdf: PdfFormDescriptor = {
     const sectionA = source.section_a_items ?? [];
     const sectionB = source.section_b_items ?? [];
     if (sectionB.length > 0) {
+      if (sectionB.length === 2) {
+        if (!isTwoSectionBSimilarArtGroup(source)) {
+          throw new Error(
+            "Form 8283 PDF two Section B gifts need distinct signed/appraised similar-art sources and donees",
+          );
+        }
+        assertOrdinarySectionBReconciled(
+          { pending: allPending },
+          SectionBPropertyType.ArtAtLeast20000,
+        );
+        if (
+          JSON.stringify(source) !==
+            JSON.stringify(inputSchema.parse(allPending?.f8283))
+        ) {
+          throw new Error(
+            "Form 8283 PDF source differs from the pending return",
+          );
+        }
+        return sectionB.map((item) =>
+          sectionBOrdinaryTangibleInstance(item, filer)
+        );
+      }
       if (sectionA.length > 0 || sectionB.length !== 1) {
         throw new Error(
           "Form 8283 PDF Section B supports one standalone item without Section A",

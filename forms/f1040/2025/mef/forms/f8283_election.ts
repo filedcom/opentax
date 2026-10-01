@@ -353,7 +353,7 @@ export function assertElectedSectionBReconciled(
   assertSectionBReconciled(context, filedScheduleA);
 }
 
-/** Reconcile one current-year ordinary Section B gift against the return. */
+/** Reconcile a current-year Section B gift or the paired similar-art group. */
 export function assertOrdinarySectionBReconciled(
   context: MefBuildContext | undefined,
   propertyType: SectionBPropertyType,
@@ -390,6 +390,46 @@ export function assertOrdinarySectionBReconciled(
   assertSectionBReconciled(context, filedScheduleA, propertyType);
 }
 
+/** Two separate Section B copies for one sourced similar-art group. */
+export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
+  const items = form.section_b_items ?? [];
+  if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
+    return false;
+  }
+  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const documents = items.flatMap((item) => [
+    item.signed_form_attachment_file_name,
+    item.qualified_appraisal?.attachment_file_name,
+    item.qualified_appraisal?.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+  ]);
+  return !!group &&
+    items.every((item) =>
+      item.similar_item_group?.trim().toLowerCase() === group &&
+      item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+      item.fmv >= 20_000 && item.fmv <= 500_000 &&
+      item.deduction_claimed === item.fmv &&
+      item.cost_or_adjusted_basis === item.fmv &&
+      item.charitable_limit_category === "noncash_50" &&
+      item.is_capital_gain_property === false &&
+      item.donor_acquisition_description?.trim().toLowerCase() ===
+        "purchase" &&
+      item.date_acquired?.startsWith("2025-") &&
+      item.date_contributed?.startsWith("2025-") &&
+      item.date_acquired < item.date_contributed &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      item.ordinary_income_reduction === undefined &&
+      item.qualified_appraisal?.full_appraisal_source_review !== undefined &&
+      item.signed_form_source_review !== undefined &&
+      item.donee_acknowledgment?.signed_by_donee === true &&
+      item.donee_acknowledgment.unrelated_use === false
+    ) &&
+    items[0]!.donee_acknowledgment!.ein !==
+      items[1]!.donee_acknowledgment!.ein &&
+    documents.length === 8 && documents.every(Boolean) &&
+    new Set(documents).size === documents.length;
+}
+
 function assertSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA: Readonly<Record<string, unknown>> | undefined,
@@ -418,19 +458,23 @@ function assertSectionBReconciled(
     );
   }
   const form = form8283InputSchema.parse(source8283);
+  const pairedArt = ordinary &&
+    ordinaryPropertyType === SectionBPropertyType.ArtAtLeast20000 &&
+    isTwoSectionBSimilarArtGroup(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
-    (form.section_b_items ?? []).length !== 1 ||
+    (!pairedArt && (form.section_b_items ?? []).length !== 1) ||
     (ordinary
-      ? form.section_b_items?.[0]?.property_type !== ordinaryPropertyType ||
-        form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed ===
-          true
+      ? form.section_b_items?.some((item) =>
+        item.property_type !== ordinaryPropertyType ||
+        item.capital_gain_reduction_election_confirmed === true
+      )
       : form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
         true)
   ) {
     throw new Error(
       ordinary
-        ? `Form 8283 Section B ${route} is bounded to one current-year ${route} gift`
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar art gifts`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }

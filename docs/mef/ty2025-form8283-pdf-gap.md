@@ -1,5 +1,22 @@
 # TY2025 Form 8283 PDF boundary
 
+## Two similar Section B art gifts (2026-10-01 build pass, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+require a separate Section B form for each item given to different donees,
+while similar-property categories aggregate across donees for the $5,000
+threshold. A bounded route now accepts two purchased, unreduced artwork gifts
+in one declared similar-item group, each appraised and claimed at $20,000 or
+more, with different donee EINs. Each gift has its own completed signed Form
+8283, full qualified appraisal, appraiser signature, and donee signature PDF.
+The native export verifies distinct document names and reviewed signed-form
+and appraisal hashes before linking each electronic Section B copy. Schedule A
+and Form 1040 reconcile the combined deduction; PDF export makes one filled
+Form 8283 instance per item. A full-return positive fixture and changed
+appraisal-byte, donee, and Form 1040 fixtures are authored for deferred bulk
+validation. Source review records and synthetic signatures do not authenticate
+real-world documents. Other multi-item patterns and reductions remain open.
+
 The purchased Section B ordinary-income reduction now distinguishes short-term
 capital assets from purchased inventory in a single source reason record. The
 inventory route prints the same official Section B FMV and basis-claim fields,

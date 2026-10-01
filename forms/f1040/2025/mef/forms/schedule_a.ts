@@ -15,6 +15,7 @@ import {
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
+  isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
 import {
   inputSchema as form8283InputSchema,
@@ -195,7 +196,8 @@ function buildIRS1040ScheduleA(
     }
     if (
       (form.section_a_items ?? []).length === 0 &&
-      (form.section_b_items ?? []).length === 1 &&
+      ((form.section_b_items ?? []).length === 1 ||
+        isTwoSectionBSimilarArtGroup(form)) &&
       form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
         true
     ) {
