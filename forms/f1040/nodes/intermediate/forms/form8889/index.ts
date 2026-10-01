@@ -963,9 +963,89 @@ function nonQualifiedPenalty(
     );
   }
   if (input.age_65_exception_evidence && disability) {
-    throw new Error(
-      "Form 8889 combined age-65 and disability exceptions need separate allocation",
+    const age = input.age_65_exception_evidence;
+    const ageRows = age.distributions;
+    const disabilityRows = disability.distributions;
+    const rows = [...ageRows, ...disabilityRows];
+    const forms = input.form1099_sa_distributions ?? [];
+    const validDate = (value: string): boolean => {
+      const date = new Date(`${value}T00:00:00.000Z`);
+      return !Number.isNaN(date.valueOf()) &&
+        date.toISOString().slice(0, 10) === value;
+    };
+    if (
+      !validDate(age.date_of_birth) || !validDate(disability.disability_date)
+    ) {
+      throw new Error("Form 8889 combined exceptions need valid event dates");
+    }
+    const age65 = new Date(Date.UTC(
+      Number(age.date_of_birth.slice(0, 4)) + 65,
+      Number(age.date_of_birth.slice(5, 7)) - 1,
+      Number(age.date_of_birth.slice(8, 10)) - 1,
+    )).toISOString().slice(0, 10);
+    const grossByForm = new Map<string, number>();
+    for (const row of rows) {
+      grossByForm.set(
+        row.form1099_sa_source_reference,
+        (grossByForm.get(row.form1099_sa_source_reference) ?? 0) +
+          row.gross_amount,
+      );
+    }
+    const exceptedFromDates = rows.reduce(
+      (sum, row) =>
+        sum +
+        (row.distribution_date >= age65
+          ? row.gross_amount - row.qualified_medical_amount
+          : 0),
+      0,
     );
+    if (
+      !validDate(age65) || age65 > disability.disability_date ||
+      input.hsa_excluded_distributions !== undefined ||
+      input.employer_excess_treatment?.timely_withdrawal !== undefined ||
+      age.birth_date_source_reference ===
+        disability.disability_source_reference ||
+      !ageRows.length || !disabilityRows.length || !forms.length ||
+      new Set(rows.map((row) => row.source_reference)).size !== rows.length ||
+      rows.some((row) =>
+        !validDate(row.distribution_date) ||
+        row.distribution_date.slice(0, 4) !== String(taxYear) ||
+        row.qualified_medical_amount > row.gross_amount ||
+        row.rollover_excluded_amount !== undefined
+      ) ||
+      ageRows.some((row) =>
+        row.distribution_date >= disability.disability_date
+      ) ||
+      disabilityRows.some((row) =>
+        row.distribution_date < disability.disability_date
+      ) ||
+      forms.some((form) =>
+        grossByForm.get(form.source_reference) !==
+          form.box1_gross_distribution ||
+        form.box3_distribution_code !==
+          (disabilityRows.some((row) =>
+              row.form1099_sa_source_reference === form.source_reference
+            )
+            ? "3"
+            : "1") ||
+        (ageRows.some((row) =>
+          row.form1099_sa_source_reference === form.source_reference
+        ) && disabilityRows.some((row) =>
+          row.form1099_sa_source_reference === form.source_reference
+        ))
+      ) ||
+      grossByForm.size !== forms.length ||
+      rows.reduce((sum, row) => sum + row.gross_amount, 0) !==
+        (input.hsa_distributions ?? 0) ||
+      rows.reduce((sum, row) => sum + row.qualified_medical_amount, 0) !==
+        (input.qualified_medical_expenses ?? 0) ||
+      exceptedFromDates !== excepted
+    ) {
+      throw new Error(
+        "Form 8889 combined age-65 and disability evidence does not reconcile to dated Form 1099-SA sources",
+      );
+    }
+    return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
   }
   if (taxable <= 0 && !disability) return 0;
   if (taxable > 0 && excepted === undefined) {
@@ -1135,7 +1215,7 @@ function nonQualifiedPenalty(
         !validDate(row.distribution_date) ||
         row.distribution_date.slice(0, 4) !== String(taxYear) ||
         row.qualified_medical_amount +
-          (row.rollover_excluded_amount ?? 0) > row.gross_amount
+              (row.rollover_excluded_amount ?? 0) > row.gross_amount
       ) ||
       forms.some((form) =>
         grossByForm.get(form.source_reference) !==
