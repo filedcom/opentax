@@ -1,5 +1,23 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Three-country 1099-INT passive interest (written, unrun):** Three separately
+issued 2025 Forms 1099-INT, one each from Canada, France, and Germany, now
+carry positive foreign box 1 interest and box 6 U.S.-dollar tax through one
+passive Form 1116. The explicit `three_country_interest_pdf_review` binds
+each document reference and IRS country code to Part I columns A/B/C and
+Part II tax rows A/B/C. Its source guard checks distinct payers and countries,
+all source boxes, the three five-decimal standard-deduction allocations,
+Schedule 3 line 1, Form 1040 interest/taxable income/tax, and the matching
+current-year excess on Schedule B. Native MeF groups each country separately;
+the parent PDF writes all three columns and rows. Full-return positive and
+source, review, Schedule B, and return-tamper fixtures are authored for the
+deferred bulk gate. Column C and row C field paths were checked against the
+canonical blank 2025 AcroForm. The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+require country-by-country columns and lines and an additional attachment only
+for more than three countries. Domestic income, multiple payers in one country,
+mixed income categories, source bytes, and filled-output/XSD inspection remain
+open.
+
 **Two-country interest and ordinary dividends (written, unrun):** One issued
 Canadian Form 1099-INT with foreign box 1/box 6 and one issued French
 corporation Form 1099-DIV with nonqualified foreign box 1a/box 7 and France
@@ -69,8 +87,8 @@ standard-deduction allocation, their aggregate limitation, Form 1040 line
 2b/9/11/12a/15/16, and Schedule 3 line 1. The parent PDF populates Part I
 columns A/B and Part II U.S.-dollar interest-tax rows A/B from the same
 ledger. A full-return positive case and payer, country, tax, review and
-return tamper cases are authored for deferred validation. A third country,
-multiple payers per country, domestic income, other tax kinds, source bytes,
+return tamper cases are authored for deferred validation. Multiple payers per
+country, domestic income, other tax kinds, source bytes,
 and filled-output/XSD review remain open. See the [2025 Form 1116
 instructions](https://www.irs.gov/instructions/i1116).
 

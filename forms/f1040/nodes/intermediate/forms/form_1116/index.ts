@@ -95,6 +95,12 @@ export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
     column_b_irs_country_code: z.string().length(2),
   }).strict();
 
+export const threeCountryInterestPdfReviewSchema =
+  twoCountryInterestPdfReviewSchema.extend({
+    column_c_source_document_reference: z.string().trim().min(1),
+    column_c_irs_country_code: z.string().length(2),
+  }).strict();
+
 export const twoCountryTreasuryPdfReviewSchema =
   twoCountryInterestPdfReviewSchema
     .extend({
@@ -593,6 +599,8 @@ export const inputSchema = z.object({
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
+    .optional(),
+  three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
   two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
   two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
@@ -1164,6 +1172,8 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         mixed_interest_dividend_pdf_review:
           input.mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review: input.two_country_interest_pdf_review,
+        three_country_interest_pdf_review:
+          input.three_country_interest_pdf_review,
         two_country_mixed_pdf_review: input.two_country_mixed_pdf_review,
         two_country_treasury_pdf_review: input.two_country_treasury_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
