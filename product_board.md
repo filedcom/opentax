@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **239 completed bounded items** are preserved
+and the full progress summary. The **240 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -55,9 +55,9 @@ full-year and four-gap case reaches Form 8962, Schedule 3, Form 1040, and the
 PDF packet.
 One- and two-lot long-term and mixed-term Form 8949 regular gains changing
 to limited AMT losses now reconcile Form 6251 line 2k and the finalized return.
-The Form 5471/8992 positive export remains closed pending Schedule Q, the
-overlapping Category 4 packet, conditional attachments, and all-zero-schedule
-business-rule treatment.
+The Form 5471 Schedule Q general-category attachment is authored; positive
+Form 5471/8992 export remains closed pending the overlapping Category 4 packet,
+conditional attachments, and all-zero-schedule business-rule treatment.
 
 **Evidence and validation state.** The last complete `deno task test` baseline
 passed 8,951/8,951 on `44282e25`; its
@@ -72,8 +72,8 @@ ATS acceptance result is claimed.
 
 **Remaining implementation.** Resolve the named workflow and evidence choices,
 then complete or obtain an approved, named fail-closed boundary for each
-applicable Form 1040 path. Reconcile the 136 registered MeF descriptors, 100 PDF
-descriptors, and 211 TY2025 IRS schema roots (110 source literals, 101 without)
+applicable Form 1040 path. Reconcile the 137 registered MeF descriptors, 101 PDF
+descriptors, and 211 TY2025 IRS schema roots (111 source literals, 100 without)
 with public inputs, source proof,
 calculations, owner identity, Form 1040 joins, native XML, printable output,
 statements, and attachments. The open rows below identify current gaps; the
@@ -84,7 +84,7 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 227 | Bounded child routes exist; full form-family coverage remains open. |
+| Named tax-form gaps | 20 | 228 | Bounded child routes exist; full form-family coverage remains open. |
 | Native MeF and PDF parity | 3 | 8 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |

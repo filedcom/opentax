@@ -14,13 +14,13 @@ likewise does not prove a form is required. The
 [registered-document audit](ty2025-form1040-form-audit.md) covers the
 registered-descriptor `INV-01` evidence inventory. The five
 [ordered unregistered-root reviews](ty2025-unregistered-roots-01-25.md) cover
-the former 128-`No` snapshot; twenty-seven roots have since gained source literals,
-leaving 101 current `No` rows. Their ordinal labels are historical, not current
+the former 128-`No` snapshot; twenty-eight roots have since gained source literals,
+leaving 100 current `No` rows. Their ordinal labels are historical, not current
 missing-root counts. A per-root review is not approval to exclude a filing
 situation, and product applicability decisions for these roots remain open
 separately from `INV-01`.
 
-Counts: 211 schema roots; 110 with a MeF source literal; 101 without one.
+Counts: 211 schema roots; 111 with a MeF source literal; 100 without one.
 
 | IRS root              | Source literal | Applicability / coverage disposition                                                                                                                                                                                                                                                                                                                     |
 | --------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,7 +92,7 @@ Counts: 211 schema roots; 110 with a MeF source literal; 101 without one.
 | `IRS5471ScheduleM`    | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS5471ScheduleO`    | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS5471ScheduleP` | Yes | A bounded sole-shareholder Category 5a CFC general-category PTEP and USD basis rollforward has native/PDF descriptors and authored fixtures; wider histories and full Form 5471 packet remain open. |
-| `IRS5471ScheduleQ`    | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS5471ScheduleQ` | Yes | One CFC general-category sales/tested-income source has a bounded native/four-page PDF attachment with authored fixtures; wider categories, Category 4 packet, business rules, and full validation remain open. |
 | `IRS5471ScheduleR` | Yes | A reviewed no-distribution CFC has a bounded identity-only native/PDF attachment with authored fixtures; all-zero schedule business rules, actual distributions, and the complete Category 4/5a packet remain open. |
 | `IRS5695`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS5713`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
