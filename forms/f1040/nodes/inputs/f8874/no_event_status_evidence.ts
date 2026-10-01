@@ -69,7 +69,7 @@ async function digest(bytes: Uint8Array): Promise<string> {
   if (bytes.byteLength === 0) {
     throw new Error("Form 8874 evidence bytes are empty");
   }
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  const hash = await crypto.subtle.digest("SHA-256", new Uint8Array(bytes));
   return Array.from(
     new Uint8Array(hash),
     (byte) => byte.toString(16).padStart(2, "0"),

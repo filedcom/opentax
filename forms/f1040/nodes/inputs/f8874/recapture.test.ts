@@ -25,7 +25,7 @@ const source: NewMarketsRecaptureInput = withReviewedForm8874RecaptureEvidence({
   qualified_equity_investment_amount: 100_000,
   notice_credit_amount: 25_000,
   recapture_event_date: "2025-06-01",
-  recapture_event: "cde_redeemed_investment",
+  recapture_event: "cde_redeemed_investment" as const,
   prior_years: [{
     tax_year: 2024,
     original_return_due_date: "2025-04-15",

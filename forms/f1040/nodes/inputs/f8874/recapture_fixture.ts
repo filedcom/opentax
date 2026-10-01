@@ -54,7 +54,7 @@ export function withReviewedForm8874RecaptureEvidence<
       notice_credit_amount: source.notice_credit_amount,
       recapture_event: source.recapture_event,
       aggregate_decrease_by_credit_year: decreases,
-      cde_official_signed_notice_confirmed: true,
+      cde_official_signed_notice_confirmed: true as const,
       cde_awareness_date: after(1),
       cde_signature_date: after(2),
       notice_provided_to_investor_date: after(15),

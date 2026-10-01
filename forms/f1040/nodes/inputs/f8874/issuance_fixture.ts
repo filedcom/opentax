@@ -29,7 +29,7 @@ export function withReviewedForm8874A<
       qualified_equity_investment_amount: amount,
       total_allowable_credit: annual.reduce((sum, credit) => sum + credit, 0),
       annual_credit_amounts: annual,
-      cde_official_signed_notice_confirmed: true,
+      cde_official_signed_notice_confirmed: true as const,
       cde_signature_date: signed,
       notice_provided_to_investor_date: provided,
     },
