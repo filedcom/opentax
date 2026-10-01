@@ -98,6 +98,8 @@ import { form8978ScheduleA } from "./f8978_schedule_a.ts";
 import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 import { form8990 } from "./f8990.ts";
+import { form8992 } from "./f8992.ts";
+import { form8992ScheduleA } from "./f8992_schedule_a.ts";
 import { form8995 } from "./f8995.ts";
 import { form8995a } from "./f8995a.ts";
 import { form8995aScheduleA } from "./f8995a_schedule_a.ts";
@@ -295,6 +297,9 @@ export const ALL_MEF_FORMS = [
   form8978ScheduleA,
   // Form 8990
   form8990,
+  // One Category 5a shareholder Form 8992 and its single-CFC Schedule A.
+  form8992,
+  form8992ScheduleA,
   // Form 8995
   form8995,
   // Form 8995A

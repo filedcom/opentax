@@ -63,10 +63,11 @@ pass-through-only K-1 recipient does not create its own Form 8874, but still
 needs the Form 3800 parent in the print packet.
 
 Form 8582-CR now has a bounded two-page descriptor for one current-year
-self-earned passive Form 8874 credit plus one separately sourced Schedule E
+passive New Markets credit from self-earned Form 8874 or a credit-only
+partnership K-1 code AD, plus one separately sourced Schedule E
 rental income activity with an ordinary-tax line 6 worksheet. Other native-only
 source, category, carryover, and tax-method branches reject PDF export; the
-precise list is in `ty2025-form8582cr-pdf-gap.md`. The full-return fixture is
+precise list is in `ty2025-form8582cr-pdf-gap.md`. Full-return fixtures are
 authored but unrun.
 
 ## Priority 2: conditional roots with no complete trigger-to-attachment route

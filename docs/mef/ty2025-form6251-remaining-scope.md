@@ -157,3 +157,27 @@ other dividend classes, capital-gain-excess worksheets, and issued-copy bytes
 remain open. See the
 [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
 and [2025 Schedule D instructions](https://www.irs.gov/instructions/i1040sd).
+
+# Bounded AMT Form 4952 line 2c replay (implementation written; untested)
+
+The Form 4952 calculator already refigures the regular and AMT line 8
+investment-interest deductions and sends regular minus AMT line 8 to Form 6251
+line 2c. A new native/PDF Form 6251 guard replays that difference against one
+reviewed 2024 Form 4952 carryforward with a distinct AMT carryforward, one
+owner-owned direct-use taxable-securities loan and its 2025 payment records,
+and one investment Form 1099-INT payer. It recalculates both Form 4952 line 8
+amounts, matches Schedule A line 9, Form 1040 taxable interest and selected
+itemized deductions, and requires the positive AMT to match Schedule 2.
+Removing or altering the printed Form 6251 line 2c now rejects even when the
+retained Form 4952 source remains. Unbacked direct line 2c exports reject.
+The synthetic reviewed case has $22,000 regular and $23,000 AMT deductions,
+so line 2c is negative $1,000; a separate retained ISO exercise triggers an
+attached Form 6251. Positive and tamper native/PDF and full-return fixtures
+are authored but unrun under the implementation-first workflow.
+
+This route excludes Form 4952 elections, private-activity-bond interest,
+other AMT income/expense refigures, multiple investment payers, standard
+deduction filing, Form 1116 allocation, and zero-AMT counterfactual filings.
+Reviewed prior-return, lender/payment, and payer-copy references are not
+authenticated bytes. The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+direct the line 2c regular-versus-AMT Form 4952 line 8 comparison.

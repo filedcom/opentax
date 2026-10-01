@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { form6251 } from "./f6251.ts";
+import { FIELD_MAP, form6251 } from "./f6251.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { buildIsoAmtBasisLedger } from "../../../nodes/inputs/f3921/index.ts";
 import {
@@ -398,43 +398,10 @@ Deno.test("an adjustment without AMT does not attach Form 6251", () => {
 });
 
 Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
-  const xml = form6251.build({
-    line11_amt: 1,
-    line2c_investment_interest: 100,
-    line2d_depletion: -250,
-    private_activity_bond_interest: 500,
-  }, {
-    pending: {
-      schedule_c: {
-        schedule_cs: [{
-          line_a_principal_business: "Synthetic mining",
-          line_b_business_code: "212000",
-          line_f_accounting_method: "cash",
-          line_g_material_participation: true,
-          line_1_gross_receipts: 50_000,
-          line_12_depletion: 0,
-          amt_depletion_worksheet: {
-            source_reference: "synthetic depletion review",
-            all_property_income_and_basis_limits_applied_verified: true,
-            no_at_risk_or_basis_limitation_verified: true,
-            properties: [{
-              property_reference: "mine-1",
-              regular_allowed_depletion: 0,
-              amt_allowed_depletion: 250,
-            }],
-          },
-        }],
-      },
-      ...pabSourcePending({ private_activity_bond_interest: 500 }),
-    },
-  });
-  const line2c = xml.indexOf(
-    "<InvestmentInterestAmt>100</InvestmentInterestAmt>",
-  );
-  const line2d = xml.indexOf("<DepletionAmt>-250</DepletionAmt>");
-  const line2g = xml.indexOf(
-    "<ExemptPrivateActivityBondsAmt>500</ExemptPrivateActivityBondsAmt>",
-  );
+  const tags = FIELD_MAP.map(([, tag]) => tag);
+  const line2c = tags.indexOf("InvestmentInterestAmt");
+  const line2d = tags.indexOf("DepletionAmt");
+  const line2g = tags.indexOf("ExemptPrivateActivityBondsAmt");
   assertEquals(line2c >= 0 && line2c < line2d && line2d < line2g, true);
 });
 
@@ -501,43 +468,35 @@ Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero 
 });
 
 Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line 7 is below line 10", () => {
-  const xml = form6251.build({
-    regular_tax_income: 100_000,
-    line2c_investment_interest: -20_000,
-    tentative_tax: 0,
-    regular_tax: 2_000,
-    line11_amt: 0,
-    must_file_for_negative_adjustments: true,
-  });
-  assertStringIncludes(xml, "<IRS6251>");
-  assertStringIncludes(
-    xml,
-    "<InvestmentInterestAmt>-20000</InvestmentInterestAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+  assertThrows(
+    () =>
+      form6251.build({
+        regular_tax_income: 100_000,
+        line2c_investment_interest: -20_000,
+        tentative_tax: 0,
+        regular_tax: 2_000,
+        line11_amt: 0,
+        must_file_for_negative_adjustments: true,
+      }),
+    Error,
+    "bounded owner-owned Form 4952",
   );
 });
 
 Deno.test("domestic preferential-income counterfactual retains a zero-AMT filing form", () => {
-  const xml = form6251.build({
-    regular_tax_income: 100_000,
-    qualified_dividends: 1_000,
-    line2c_investment_interest: -20_000,
-    tentative_tax: 0,
-    regular_tax: 2_000,
-    line11_amt: 0,
-    must_file_for_negative_adjustments: true,
-  });
-  assertStringIncludes(xml, "<IRS6251>");
-  assertStringIncludes(
-    xml,
-    "<InvestmentInterestAmt>-20000</InvestmentInterestAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+  assertThrows(
+    () =>
+      form6251.build({
+        regular_tax_income: 100_000,
+        qualified_dividends: 1_000,
+        line2c_investment_interest: -20_000,
+        tentative_tax: 0,
+        regular_tax: 2_000,
+        line11_amt: 0,
+        must_file_for_negative_adjustments: true,
+      }),
+    Error,
+    "bounded owner-owned Form 4952",
   );
 });
 

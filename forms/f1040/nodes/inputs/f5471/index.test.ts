@@ -8,7 +8,7 @@ import {
 
 const item: F5471Item = {
   foreign_corp_name: "Example Foreign Corp",
-  foreign_corp_ein_or_reference_id: "FC-001",
+  foreign_corp_reference_id: "FC001",
   country_of_incorporation: "Ireland",
   functional_currency: "EUR",
   filing_category: FilingCategory.Category5a,
@@ -75,6 +75,8 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
     { ...item, ownership_percent: 80 },
     { ...item, section_962_election: true },
     { ...item, schedule_i: { ...item.schedule_i, line4_factoring: 500 } },
+    { ...item, foreign_corp_reference_id: undefined },
+    { ...item, foreign_corp_ein: "123456789" },
   ];
   for (const source of invalid) {
     assertThrows(() =>

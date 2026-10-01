@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **198 completed bounded items** are preserved
+and the full progress summary. The **201 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -19,7 +19,10 @@ MeF, PDF projection, and positive/tamper fixtures. The completed ledger
 records each route's exact boundary and links to its gap note. The latest
 bounded additions cover three- and four-source spouse Form 4972 elections,
 prior-year ISO basis on Form 6251, distinct section 951(a)/951A income on
-Schedule 1, and one ordinary-tax Form 8582-CR PDF route.
+Schedule 1, a reviewed Form 6251 investment-interest AMT difference, a partnership
+K-1 Form 8582-CR PDF route, and native/PDF Form 8992 with Schedule A.
+The Form 5471/8992 positive export remains closed until mandatory attachments
+are built.
 
 **Evidence and validation state.** The last complete `deno task test` baseline
 passed 8,951/8,951 on `44282e25`; its
@@ -34,7 +37,7 @@ ATS acceptance result is claimed.
 
 **Remaining implementation.** Resolve the named workflow and evidence choices,
 then complete or obtain an approved, named fail-closed boundary for each
-applicable Form 1040 path. Reconcile the 126 registered MeF descriptors, 90 PDF
+applicable Form 1040 path. Reconcile the 128 registered MeF descriptors, 92 PDF
 descriptors, and 211 TY2025 IRS schema roots with public inputs, source proof,
 calculations, owner identity, Form 1040 joins, native XML, printable output,
 statements, and attachments. The open rows below identify current gaps; the
@@ -68,7 +71,7 @@ own evidence exists.
 
 ## Coverage inventory and decisions
 
-- [ ] Resolve the unsupported-path disposition in **each of the 126 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
+- [ ] Resolve the unsupported-path disposition in **each of the 128 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
 - [ ] Review the **211 TY2025 IRS schema document roots** in the [root census](docs/mef/ty2025-xsd-document-root-census.md) against actual Form 1040 applicability. Resolve every still-unregistered or source-literal-only root in the [applicability crosswalk](docs/mef/ty2025-unregistered-root-applicability.md); neither a source literal nor absence from a registry is a support/exclusion decision.
 - [ ] Reconcile the registered-document audit, root crosswalk, [conditional-schedule audit](docs/mef/ty2025-conditional-schedule-applicability.md), [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md), and actual registries after implementation so their counts, triggers, and unsupported branches agree.
 - [ ] Decide, with the user, which current-return paths are separate workflows: amended Form 1040-X; payment/account roots (1062, 965, estimated tax, Form T, payment); recipient copies of RRB-1042-S and SSA-1042-S; and optional Forms 4547 and 9000. Preserve any income, withholding, tax, election, or amendment consequences on Form 1040.

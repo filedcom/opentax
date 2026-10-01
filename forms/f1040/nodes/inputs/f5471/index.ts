@@ -65,8 +65,11 @@ export const testedIncomeSchema = z.object({
 );
 
 export const itemSchema = z.object({
-  foreign_corp_name: z.string().trim().min(1),
-  foreign_corp_ein_or_reference_id: z.string().trim().min(1),
+  foreign_corp_name: z.string().trim().min(1).max(75)
+    .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
+  foreign_corp_ein: z.string().regex(/^\d{9}$/).optional(),
+  foreign_corp_reference_id: z.string().trim().regex(/^[A-Za-z0-9]+$/)
+    .max(50).optional(),
   country_of_incorporation: z.string().trim().min(1),
   functional_currency: z.string().trim().min(1),
   filing_category: z.literal(FilingCategory.Category5a),
@@ -76,7 +79,12 @@ export const itemSchema = z.object({
   reviewed_form5471_source_reference: sourceReference,
   schedule_i: scheduleISchema,
   schedule_i1: testedIncomeSchema,
-}).strict();
+}).strict().refine(
+  (value) =>
+    (value.foreign_corp_ein === undefined) !==
+      (value.foreign_corp_reference_id === undefined),
+  "CFC needs exactly one EIN or foreign reference ID",
+);
 
 export const inputSchema = z.object({
   f5471s: z.tuple([itemSchema]),

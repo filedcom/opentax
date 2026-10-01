@@ -36,6 +36,7 @@ import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
+import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -8252,6 +8253,29 @@ Deno.test({
     "<IncentiveStockOptionsAmt>240000</IncentiveStockOptionsAmt>",
   );
   await validateXsd(xml, "identified ISO Form 3921 full return");
+});
+
+Deno.test({
+  name:
+    "XSD: reviewed regular and AMT Form 4952 carryforwards reach Form 6251 line 2c",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = runReturn(form6251Form4952Fixture());
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form6251?.line2c_investment_interest, -1_000);
+  assertEquals(result.pending.form4952?.line8, 22_000);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 22_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(form6251Form4952Fixture().general),
+  );
+  assertStringIncludes(
+    xml,
+    "<InvestmentInterestAmt>-1000</InvestmentInterestAmt>",
+  );
+  await validateXsd(xml, "distinct regular and AMT Form 4952 carryforwards");
 });
 
 Deno.test({

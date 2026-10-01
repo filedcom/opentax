@@ -7,6 +7,7 @@ import {
   assertPriorIsoSaleExport,
   assertPriorIsoSaleRetention,
 } from "../../form6251_prior_iso_sale.ts";
+import { assertForm6251Form4952Line2c } from "../../form6251_4952_reconciliation.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
@@ -92,6 +93,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     }
     assertForm6251Line8(fields);
     assertForm6251Form8949Source(fields, allPending);
+    assertForm6251Form4952Line2c(fields, allPending);
     assertPriorIsoSaleRetention(fields, allPending);
     assertForm6251CirculationSource(fields, allPending);
     assertForm6251DepletionSource(fields, allPending);
@@ -135,6 +137,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     };
   },
   instances(fields, filer, allPending) {
+    assertForm6251Form4952Line2c(fields, allPending, filer?.primarySSN, true);
     assertPriorIsoSaleExport(
       fields,
       allPending,
