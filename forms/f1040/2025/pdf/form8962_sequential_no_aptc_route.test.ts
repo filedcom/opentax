@@ -67,7 +67,7 @@ Deno.test("two sequential no-APTC policies reduce one protected partial premium 
   const projected =
     form8962Pdf.projectFields?.(pending.form8962!, pdfPending) ??
       {};
-  assertEquals(projected.pdf_month_1_premium, 401);
+  assertEquals(projected.pdf_month_1_premium, "401");
   assertEquals(
     form8962Pdf.instances?.(projected, partialPolicyFixture.filer, pdfPending)
       ?.length,
@@ -455,7 +455,9 @@ for (
           attachments: [],
         }),
       Error,
-      `${variant.policyCount}-policy monthly PTC needs a determination and payment for every policy-covered month`,
+      variant.policyCount === 12
+        ? "positive monthly filing needs Form 1095-A and finalized Form 1040 facts"
+        : "needs a determination and payment for every policy-covered month",
     );
     await assertRejects(
       () =>
@@ -984,7 +986,7 @@ for (
           bundle,
         ),
       Error,
-      "determination and payment for every policy-covered month",
+      "PDF source differs from the prepared MeF return",
     );
     const lastPolicyIndex = variant.policyCount - 1;
     const lastPolicy = source.f1095as[lastPolicyIndex];
@@ -1077,7 +1079,7 @@ Deno.test("two sequential no-APTC policies at 200% FPL reconcile every paid mont
         bundle,
       ),
     Error,
-    "determination and payment for every policy-covered month",
+    "PDF source differs from the prepared MeF return",
   );
   const lateJulyPayment = {
     ...pending,
@@ -1183,7 +1185,7 @@ Deno.test("three sequential no-APTC policies at 200% FPL reconcile their own rev
         bundle,
       ),
     Error,
-    "three-policy monthly PTC needs a determination and payment for every policy-covered month",
+    "PDF source differs from the prepared MeF return",
   );
   const overlappingThirdPolicy = {
     ...pending,

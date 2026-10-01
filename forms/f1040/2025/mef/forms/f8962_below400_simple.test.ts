@@ -138,6 +138,6 @@ Deno.test("Form 8962 below-400% route rejects altered cap, filing amount, and wi
         },
       }),
     Error,
-    "one filer and one identified policy",
+    "annual two-policy route needs distinct taxpayer/dependent covered people",
   );
 });

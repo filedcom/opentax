@@ -129,7 +129,7 @@ Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV,
     await assertRejects(
       () => buildPdfBytes(drift, fixture.filer, ".pdf-cache", bundle),
       Error,
-      "distinct source agreements",
+      "PDF source differs from the prepared MeF return",
     );
   }
   await assertRejects(

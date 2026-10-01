@@ -1534,6 +1534,6 @@ Deno.test("protected partial no-APTC premium adjusts only its covered month", ()
         minimalItem({ ...sourceFields, policy_number: "POLICY-2" }),
       ]),
     Error,
-    "one nonshared zero-APTC monthly policy",
+    "one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
   );
 });

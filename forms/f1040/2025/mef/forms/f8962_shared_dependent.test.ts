@@ -23,7 +23,7 @@ const filer = {
 
 function sharedFamilyCase() {
   const generalSource = {
-    filing_status: FilingStatus.Single,
+    filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     taxpayer_can_be_claimed_as_dependent: false,
     address_state: "TX",
@@ -110,7 +110,7 @@ function sharedFamilyCase() {
       dependent_income_complete: dependentFields?.dependent_income_complete,
       household_size: 2,
       fpl_region: "contiguous",
-      filing_status: FilingStatus.Single,
+      filing_status: "single" as const,
     }),
   ).outputs.find((row) => row.nodeType === "form8962")!.fields;
   const credit = fields.net_premium_tax_credit as number;

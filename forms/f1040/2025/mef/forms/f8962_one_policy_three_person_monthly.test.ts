@@ -80,7 +80,7 @@ function dependent(
 
 function monthlyFamily() {
   const generalSource = {
-    filing_status: FilingStatus.Single,
+    filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     taxpayer_can_be_claimed_as_dependent: false,
     dependents: [
@@ -120,7 +120,7 @@ function monthlyFamily() {
       dependents_modified_agi: dependentFields?.dependents_modified_agi,
       dependent_income_complete: dependentFields?.dependent_income_complete,
       fpl_region: "contiguous",
-      filing_status: FilingStatus.Single,
+      filing_status: "single" as const,
     }),
   ).outputs;
   const fields = calculated.find((row) => row.nodeType === "form8962")!.fields;

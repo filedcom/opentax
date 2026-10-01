@@ -95,7 +95,7 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
     await assertRejects(
       () => buildPdfBytes(drift, fixture.filer, ".pdf-cache", bundle),
       Error,
-      "covered family member",
+      "PDF source differs from the prepared MeF return",
     );
   }
   await assertRejects(

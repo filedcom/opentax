@@ -383,7 +383,7 @@ Deno.test("Form 8962 monthly different-state family overlap adds both Marketplac
         },
       }),
     Error,
-    "taxpayer policy in the filing state",
+    "taxpayer policy in the verified filing state",
   );
   assertThrows(
     () =>
@@ -400,7 +400,7 @@ Deno.test("Form 8962 monthly different-state family overlap adds both Marketplac
         },
       }),
     Error,
-    "contiguous poverty table",
+    "supported poverty region",
   );
   assertThrows(
     () =>
