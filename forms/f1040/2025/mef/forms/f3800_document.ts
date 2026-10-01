@@ -36,6 +36,8 @@ export type Form3800DocumentParts = {
   readonly form3468DocumentIds?: readonly string[];
   /** Reserved IRS5884 ID for the filed direct-employer child copy. */
   readonly form5884DocumentIds?: readonly string[];
+  /** Reserved IRS8874 ID for a filed direct qualified-equity investment. */
+  readonly form8874DocumentIds?: readonly string[];
   /** Reserved IRS8835 IDs in the same order as the filed facility copies. */
   readonly form8835DocumentIds?: readonly string[];
   readonly transferStatementIds: readonly string[];

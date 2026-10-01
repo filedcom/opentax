@@ -22,6 +22,7 @@ import {
   inputSchema as f8936InputSchema,
 } from "../../../nodes/inputs/f8936/index.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
+import { reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
 import { reconcileDisabledAccessK1Credits } from "../../mef/forms/f8826_credit_evidence.ts";
 import { reconcileForm8826SelfSource } from "../../mef/forms/f8826_source.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
@@ -1583,6 +1584,67 @@ export const form3800Pdf: PdfFormDescriptor = {
       ) {
         throw new Error(
           "Form 3800 PDF mixed self-earned and partnership orphan-drug line 1h differs from filed sources",
+        );
+      }
+    }
+    const mixedNewMarketsK1 = source.f8874_k1_credit_entries ?? [];
+    if (
+      source.f8874_credit && mixedNewMarketsK1.length === 1 &&
+      mixedNewMarketsK1[0].source_type === "partnership" &&
+      !mixedNewMarketsK1[0].subject_to_passive_activity_limit
+    ) {
+      const direct = calculateForm8874(f8874InputSchema.parse(all.f8874));
+      const k1 = reconciledForm8874K1Line2({ pending: all });
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1i");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [directDetail, k1Detail] = details;
+      const documentId = prepared.form8874DocumentIds?.[0];
+      const total = direct.line1 + k1;
+      if (
+        direct.line1 <= 0 || direct.nonpassiveCredit !== direct.line1 ||
+        direct.rows.some((item) =>
+          item.investment.subject_to_passive_activity_limit
+        ) ||
+        k1 !== mixedNewMarketsK1[0].credit_amount ||
+        source.f8874_credit.credit_amount !== direct.line1 ||
+        source.f8874_credit.subject_to_passive_activity_limit !== false ||
+        JSON.stringify(rawSource.f8874_credit) !==
+          JSON.stringify(source.f8874_credit) ||
+        JSON.stringify(rawSource.f8874_k1_credit_entries) !==
+          JSON.stringify(mixedNewMarketsK1) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        prepared.form8874DocumentIds?.length !== 1 ||
+        row.metadata.sourceCount !== 2 ||
+        row.metadata.referenceDocumentName !== "IRS8874" ||
+        row.metadata.referenceDocumentId !== documentId ||
+        !(row.metadata.entity && "ein" in row.metadata.entity) ||
+        row.metadata.entity.ein !== mixedNewMarketsK1[0].source_ein ||
+        row.entityCredits.length !== 1 ||
+        !("ein" in row.entityCredits[0].entity) ||
+        row.entityCredits[0].entity.ein !== mixedNewMarketsK1[0].source_ein ||
+        row.entityCredits[0].credit !== k1 ||
+        amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
+        amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !==
+          directDetail.appliedCredit + k1Detail.appliedCredit ||
+        directDetail.credit !== direct.line1 ||
+        directDetail.sourceDocumentId !== documentId ||
+        directDetail.passThroughEin !== undefined ||
+        k1Detail.credit !== k1 ||
+        k1Detail.sourceDocumentId !== undefined ||
+        k1Detail.passThroughEin !== mixedNewMarketsK1[0].source_ein
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed direct and partnership Form 8874 line 1i differs from filed sources",
         );
       }
     }

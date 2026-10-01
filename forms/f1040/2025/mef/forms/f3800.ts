@@ -1469,6 +1469,7 @@ export function prepareForm3800DocumentParts(
     form3468DocumentIds: form3468Ids,
     form5884DocumentIds: form5884Ids,
     form8835DocumentIds: form8835Ids,
+    form8874DocumentIds: form8874Ids,
   };
 }
 

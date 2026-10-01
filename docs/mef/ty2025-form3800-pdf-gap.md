@@ -400,9 +400,22 @@ replays its printed investment and line 3, then binds the claimed credit to
 the prepared Form 3800 Part III line 1i IRS8874 document ID, amount, Part V
 detail, line 38, Schedule 3, and Form 1040. The $500 return and altered
 source, print, claim, document ID, amount, detail, and final-credit fixtures
-await the bulk run. Mixed K-1 and passive Form 8874 routes retain their
-existing parent and Form 8582-CR checks; this child parity check covers the
-bounded direct nonpassive source.
+await the bulk run. Passive Form 8874 routes retain their existing Form
+8582-CR checks; this child parity check covers the bounded direct nonpassive
+source.
+
+The Form 8874 child PDF now also checks one nonpassive direct QEI alongside
+one nonpassive partnership Schedule K-1 box 15 code AD amount printed on line
+2. It requires one Form 3800 Part III line 1i aggregate, two ordered Part V
+source details, the partnership EIN, exact reserved `IRS8874` document ID for
+the direct investment, applied tax use, and the final Schedule 3/Form 1040
+credit. An authored $500 + $1,250 full-return positive and changed line 2,
+Part V EIN, document ID, and final-tax fixtures await the bulk run. The
+[2025 partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+allow code AD on Form 8874 or Form 3800 line 1i; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+describe the aggregate Part V breakdown. Passive and multiple-K-1 routes
+retain their existing distinct evidence checks.
 
 The next two Form 8874 returns print two and six qualified equity investments
 on one source form each, with $1,100 and $3,000 on Part III line 1i and
