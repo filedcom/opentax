@@ -185,6 +185,14 @@ function sequentialNoAptcPolicy(
     { length: endMonth - startMonth + 1 },
     (_, index) => startMonth + index,
   );
+  return noAptcPolicyForMonths(policyNumber, coveredMonths, slcsp);
+}
+
+function noAptcPolicyForMonths(
+  policyNumber: string,
+  coveredMonths: readonly number[],
+  slcsp: number,
+) {
   return {
     issuer_name: "Texas Marketplace",
     policy_number: policyNumber,
@@ -192,7 +200,7 @@ function sequentialNoAptcPolicy(
     covered_individual_ssns: ["111223333"],
     monthly_premiums: Array.from(
       { length: 12 },
-      (_, index) => index + 1 >= startMonth && index + 1 <= endMonth ? 900 : 0,
+      (_, index) => coveredMonths.includes(index + 1) ? 900 : 0,
     ),
     monthly_slcsps: Array(12).fill(0),
     monthly_aptcs: Array(12).fill(0),
@@ -4368,6 +4376,28 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Three distinct 1095-A policies retain their original zero columns B and C, with four independent SLCSP and paid-premium records per policy",
       "Monthly Form 8962 rows use $600, $700, and $800 SLCSP for successive four-month policy periods, totaling $7,800 PTC",
       "Schedule 3 line 9 and Form 1040 line 31 each show $7,800 once",
+    ],
+  },
+  {
+    id: "single-alternating-three-no-aptc-policies-200-fpl",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        noAptcPolicyForMonths("TX-NO-APTC-A", [1, 2, 7, 8], 600),
+        noAptcPolicyForMonths("TX-NO-APTC-B", [3, 4, 5, 6], 700),
+        noAptcPolicyForMonths("TX-NO-APTC-C", [9, 10, 11, 12], 800),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Policy A returns in July and August without overlapping policy B or C; every covered month has its own Marketplace determination and paid premium",
+      "Form 8962 monthly rows total $7,800 PTC across A-B-A-C coverage while original Form 1095-A columns B and C remain zero",
+      "Schedule 3 line 9 and Form 1040 line 31 each carry $7,800 once",
     ],
   },
   {

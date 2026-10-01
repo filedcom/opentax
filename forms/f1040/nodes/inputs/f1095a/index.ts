@@ -425,7 +425,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         evidence.premium_payment.status !== "paid_in_full"
       )
     );
-    const sequentialNoAptcPartial = f1095as.length >= 2 &&
+    const nonoverlappingNoAptcPartial = f1095as.length >= 2 &&
       f1095as.length <= 12 &&
       f1095as.every((item) => {
         const covered = item.monthly_premiums?.flatMap((premium, index) =>
@@ -443,9 +443,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
           item.no_aptc_monthly_evidence !== undefined &&
           item.shared_policy_periods === undefined &&
           item.alternative_marriage_owner === undefined &&
-          covered.length > 0 && covered.every((month, index) =>
-            index === 0 || month === covered[index - 1] + 1
-          );
+          covered.length > 0;
       }) &&
       Array.from(
         { length: 12 },
@@ -454,14 +452,14 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
             .length <= 1,
       ).every(Boolean);
     if (
-      hasProtectedPartial && !sequentialNoAptcPartial &&
+      hasProtectedPartial && !nonoverlappingNoAptcPartial &&
       (f1095as.length !== 1 ||
         f1095as[0].shared_policy_periods !== undefined ||
         !f1095as[0].monthly_premiums || !f1095as[0].monthly_aptcs ||
         f1095as[0].monthly_aptcs.some((amount) => amount !== 0))
     ) {
       throw new Error(
-        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
+        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct nonoverlapping same-enrollee policies",
       );
     }
     const hasMarriageOwner = f1095as.some((item) =>
