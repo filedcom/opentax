@@ -4,7 +4,7 @@ import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
   IncomeCategory,
-  twoCountryInterestPdfReviewSchema,
+  twoCountryTreasuryPdfReviewSchema,
 } from "../nodes/intermediate/forms/form_1116/index.ts";
 
 type Pending = Readonly<Record<string, Record<string, unknown>>>;
@@ -15,10 +15,8 @@ type CountryColumn = {
   tax: number;
   allocatedDeduction: number;
 };
-
 const unrelatedBoxes = [
   "box2",
-  "box3",
   "box4",
   "box5",
   "box8",
@@ -55,11 +53,9 @@ const otherReturnIncomeLines = [
   "line7a_cap_gain_distrib",
   "line8_additional_income",
 ] as const;
-
 function zero(value: unknown): boolean {
   return value === undefined || value === null || value === 0;
 }
-
 function ratio(numerator: number, denominator: number): number {
   return Math.round(
     Math.min(1, Math.max(0, numerator / denominator)) * 100_000,
@@ -67,64 +63,67 @@ function ratio(numerator: number, denominator: number): number {
     100_000;
 }
 
-export function reconcileForm1116TwoCountryInterest(
+export function reconcileForm1116TwoCountryTreasury(
   fields: Readonly<Record<string, unknown>>,
   pending: Pending,
 ): {
   a: CountryColumn;
   b: CountryColumn;
   foreignGross: number;
+  worldwideGross: number;
   foreignTax: number;
   allocatedDeduction: number;
 } | undefined {
-  if (fields.two_country_treasury_pdf_review !== undefined) return undefined;
   const raw = fields.category_summaries;
   const parsed = Array.isArray(raw) && raw.length === 1
     ? categorySummarySchema.safeParse(raw[0])
     : undefined;
   const summary = parsed?.success ? parsed.data : undefined;
-  const sources = interestInputSchema.safeParse(pending.f1099int);
-  const rows = sources.success ? sources.data.f1099ints : [];
-  const countryCodes = new Set(
-    summary?.items.map((item) => item.irs_country_code),
-  );
-  const hasTwoCountryItems = summary?.category === IncomeCategory.Passive &&
-    summary.items.length === 2 && countryCodes.size === 2 &&
-    summary.items.every((item) => item.tax_kind === ForeignTaxKind.Interest);
-  const hasTwoCountrySources = rows.length === 2 &&
-    rows.every((row) => (row.box6 ?? 0) > 0) &&
-    new Set(rows.map((row) => row.foreign_tax_irs_country_code)).size === 2;
+  const source = interestInputSchema.safeParse(pending.f1099int);
+  const rows = source.success ? source.data.f1099ints : [];
+  const foreignRows = rows.filter((row) => (row.box6 ?? 0) > 0);
+  const treasuryRows = rows.filter((row) => (row.box3 ?? 0) > 0);
+  const hasThreeSources = rows.length === 3 && foreignRows.length === 2 &&
+    treasuryRows.length === 1 &&
+    new Set(foreignRows.map((row) => row.foreign_tax_irs_country_code)).size ===
+      2;
   if (
-    !hasTwoCountryItems && !hasTwoCountrySources &&
-    fields.two_country_interest_pdf_review === undefined
-  ) return undefined;
-  const review = twoCountryInterestPdfReviewSchema.safeParse(
-    fields.two_country_interest_pdf_review,
+    !hasThreeSources && fields.two_country_treasury_pdf_review === undefined
+  ) {
+    return undefined;
+  }
+  const review = twoCountryTreasuryPdfReviewSchema.safeParse(
+    fields.two_country_treasury_pdf_review,
   );
-  const preferential = fields.foreign_preferential_income_review as
-    | { source_document_references?: unknown }
-    | undefined;
-  const reviewedRefs = preferential?.source_document_references;
-  const a = rows.find((row) =>
+  const a = foreignRows.find((row) =>
     row.foreign_tax_source_document_reference ===
       (review.success
         ? review.data.column_a_source_document_reference
         : undefined)
   );
-  const b = rows.find((row) =>
+  const b = foreignRows.find((row) =>
     row.foreign_tax_source_document_reference ===
       (review.success
         ? review.data.column_b_source_document_reference
         : undefined)
   );
+  const treasury = treasuryRows[0];
+  const preferential = fields.foreign_preferential_income_review as
+    | { source_document_references?: unknown }
+    | undefined;
+  const reviewedRefs = preferential?.source_document_references;
+  const foreignGross = foreignRows.reduce(
+    (sum, row) => sum + (row.box1 ?? 0),
+    0,
+  );
+  const foreignTax = foreignRows.reduce((sum, row) => sum + (row.box6 ?? 0), 0);
+  const worldwideGross = foreignGross + (treasury?.box3 ?? 0);
   const deduction = fields.standard_or_itemized_deduction;
-  const foreignGross = rows.reduce((sum, row) => sum + (row.box1 ?? 0), 0);
-  const foreignTax = rows.reduce((sum, row) => sum + (row.box6 ?? 0), 0);
-  const allocatedA = typeof deduction === "number" && foreignGross > 0 && a
-    ? Math.round(deduction * ratio(a.box1 ?? 0, foreignGross))
+  const allocatedA = typeof deduction === "number" && worldwideGross > 0 && a
+    ? Math.round(deduction * ratio(a.box1 ?? 0, worldwideGross))
     : NaN;
-  const allocatedB = typeof deduction === "number" && foreignGross > 0 && b
-    ? Math.round(deduction * ratio(b.box1 ?? 0, foreignGross))
+  const allocatedB = typeof deduction === "number" && worldwideGross > 0 && b
+    ? Math.round(deduction * ratio(b.box1 ?? 0, worldwideGross))
     : NaN;
   const allocatedDeduction = allocatedA + allocatedB;
   const f1040 = pending.f1040;
@@ -159,34 +158,52 @@ export function reconcileForm1116TwoCountryInterest(
     fields.single_source_pdf_review !== undefined ||
     fields.multi_source_pdf_review !== undefined ||
     fields.mixed_interest_dividend_pdf_review !== undefined ||
-    rows.length !== 2 || !a || !b || a === b ||
+    fields.two_country_interest_pdf_review !== undefined ||
+    rows.length !== 3 || foreignRows.length !== 2 ||
+    treasuryRows.length !== 1 || !a || !b || a === b || !treasury ||
     review.data.column_a_irs_country_code !== a.foreign_tax_irs_country_code ||
     review.data.column_b_irs_country_code !== b.foreign_tax_irs_country_code ||
     !a.foreign_tax_irs_country_code || !b.foreign_tax_irs_country_code ||
     a.foreign_tax_irs_country_code === b.foreign_tax_irs_country_code ||
     !a.foreign_tax_source_document_reference ||
     !b.foreign_tax_source_document_reference ||
-    !a.payer_name || !b.payer_name || a.payer_name === b.payer_name ||
-    !Array.isArray(reviewedRefs) || reviewedRefs.length !== 2 ||
+    !treasury.source_document_reference ||
+    review.data.domestic_treasury_source_document_reference !==
+      treasury.source_document_reference ||
+    new Set(rows.map((row) => row.payer_name)).size !== 3 ||
+    rows.some((row) => !row.payer_name) ||
+    !Array.isArray(reviewedRefs) || reviewedRefs.length !== 3 ||
     JSON.stringify([...reviewedRefs].sort()) !== JSON.stringify([
         a.foreign_tax_source_document_reference,
         b.foreign_tax_source_document_reference,
+        treasury.source_document_reference,
       ].sort()) ||
-    rows.some((row) =>
+    foreignRows.some((row) =>
       !Number.isSafeInteger(row.box1) || (row.box1 ?? 0) <= 0 ||
       !Number.isSafeInteger(row.box6) || (row.box6 ?? 0) <= 0 ||
+      (row.box3 ?? 0) !== 0 ||
       row.foreign_source_interest_usd !== row.box1 ||
       unrelatedBoxes.some((key) => (row[key] ?? 0) !== 0) ||
       row.seller_financed === true ||
       row.elect_bond_premium_amortization === true ||
       !itemMatches(row)
     ) ||
+    !Number.isSafeInteger(treasury.box3) || (treasury.box3 ?? 0) <= 0 ||
+    (treasury.box1 ?? 0) !== 0 || (treasury.box6 ?? 0) !== 0 ||
+    treasury.box7 !== undefined || treasury.box14 !== undefined ||
+    treasury.box15 !== undefined || treasury.box16 !== undefined ||
+    treasury.foreign_source_interest_usd !== undefined ||
+    treasury.foreign_tax_irs_country_code !== undefined ||
+    treasury.foreign_tax_source_document_reference !== undefined ||
+    unrelatedBoxes.some((key) => (treasury[key] ?? 0) !== 0) ||
+    treasury.seller_financed === true ||
+    treasury.elect_bond_premium_amortization === true ||
     typeof deduction !== "number" || !Number.isSafeInteger(deduction) ||
-    deduction < 0 || foreignGross <= deduction ||
+    deduction < 0 || foreignGross <= allocatedDeduction ||
     !Number.isSafeInteger(allocatedA) || !Number.isSafeInteger(allocatedB) ||
-    fields.worldwide_gross_income !== foreignGross ||
+    fields.worldwide_gross_income !== worldwideGross ||
     fields.general_deductions !== deduction ||
-    fields.total_income !== foreignGross - deduction ||
+    fields.total_income !== worldwideGross - deduction ||
     fields.foreign_income !== foreignGross ||
     fields.foreign_tax_paid !== foreignTax ||
     (fields.other_deductions ?? 0) !== 0 ||
@@ -197,23 +214,23 @@ export function reconcileForm1116TwoCountryInterest(
     summary.foreignTaxableIncome !== foreignGross - allocatedDeduction ||
     (summary.foreignTaxReduction ?? 0) !== 0 ||
     !f1040 || !schedule3 ||
-    f1040.line2b_taxable_interest !== foreignGross ||
+    f1040.line2b_taxable_interest !== worldwideGross ||
     otherReturnIncomeLines.some((key) => !zero(f1040[key])) ||
-    f1040.line9_total_income !== foreignGross ||
+    f1040.line9_total_income !== worldwideGross ||
     !zero(f1040.line10_adjustments) ||
-    f1040.line11_agi !== foreignGross ||
+    f1040.line11_agi !== worldwideGross ||
     f1040.line12a_standard_deduction !== deduction ||
     !zero(f1040.line12e_itemized_deductions) ||
     f1040.line14_deductions_qbi_total !== deduction ||
     !zero(f1040.line13b_additional_deductions) ||
-    f1040.line15_taxable_income !== foreignGross - deduction ||
+    f1040.line15_taxable_income !== worldwideGross - deduction ||
     f1040.line16_income_tax !== fields.us_tax_before_credits ||
     schedule3.line1_foreign_tax_credit !== summary.allowedCredit ||
     pending.f1099div !== undefined || pending.f1099oid !== undefined ||
     pending.schedule1a?.senior_zero_exclusions_review === true
   ) {
     throw new Error(
-      "Form 1116 two-country interest needs two separately reviewed 1099-INT sources and the finalized return",
+      "Form 1116 two-country Treasury route needs two foreign 1099-INT payers, one domestic box-3 payer, and the finalized return",
     );
   }
   return {
@@ -232,6 +249,7 @@ export function reconcileForm1116TwoCountryInterest(
       allocatedDeduction: allocatedB,
     },
     foreignGross,
+    worldwideGross,
     foreignTax,
     allocatedDeduction,
   };

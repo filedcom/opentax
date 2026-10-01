@@ -8,6 +8,7 @@ import {
   singleSourceK3PdfReviewSchema,
   singleSourcePdfReviewSchema,
   twoCountryInterestPdfReviewSchema,
+  twoCountryTreasuryPdfReviewSchema,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { inputSchema as f1099intInputSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
@@ -18,6 +19,7 @@ import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_fore
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
+import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -47,7 +49,12 @@ export function projectSingleSourceForm1116Pdf(
     throw new Error("Form 1116 PDF supports one reviewed passive category");
   }
   const summary = categorySummarySchema.parse(raw[0]);
-  const twoCountry = reconcileForm1116TwoCountryInterest(fields, pending);
+  const twoCountryTreasury = reconcileForm1116TwoCountryTreasury(
+    fields,
+    pending,
+  );
+  const twoCountry = reconcileForm1116TwoCountryInterest(fields, pending) ??
+    twoCountryTreasury;
   const mixed = reconcileForm1116MixedInterestDividend(fields, pending);
   const dividend = reconcileForm1116ForeignDividend(fields, pending);
   const multi = reconcileForm1116MultiForeignInterest(fields, pending);
@@ -82,7 +89,9 @@ export function projectSingleSourceForm1116Pdf(
   const sCorpK3 = item.s_corp_k3_passive_interest;
   const review =
     (twoCountry
-      ? twoCountryInterestPdfReviewSchema
+      ? twoCountryTreasury
+        ? twoCountryTreasuryPdfReviewSchema
+        : twoCountryInterestPdfReviewSchema
       : mixed
       ? mixedInterestDividendPdfReviewSchema
       : multi
@@ -92,7 +101,9 @@ export function projectSingleSourceForm1116Pdf(
       : singleSourcePdfReviewSchema)
       .safeParse(
         twoCountry
-          ? fields.two_country_interest_pdf_review
+          ? twoCountryTreasury
+            ? fields.two_country_treasury_pdf_review
+            : fields.two_country_interest_pdf_review
           : mixed
           ? fields.mixed_interest_dividend_pdf_review
           : multi
@@ -350,7 +361,8 @@ export function projectSingleSourceForm1116Pdf(
     !Number.isSafeInteger(line18) ||
     !Number.isSafeInteger(line20) ||
     (twoCountry
-      ? twoCountry.foreignGross !== worldwideGross
+      ? (twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) !==
+        worldwideGross
       : treasury
       ? treasury.worldwideGross !== worldwideGross
       : item.foreign_gross_income !== worldwideGross) ||
@@ -445,7 +457,8 @@ export function projectSingleSourceForm1116Pdf(
   if (
     !f1040 || !schedule3 ||
     (twoCountry
-      ? f1040.line2b_taxable_interest !== twoCountry.foreignGross
+      ? f1040.line2b_taxable_interest !==
+        (twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross)
       : mixed
       ? f1040.line2b_taxable_interest !==
           summary.items.find((row) => row.tax_kind === ForeignTaxKind.Interest)

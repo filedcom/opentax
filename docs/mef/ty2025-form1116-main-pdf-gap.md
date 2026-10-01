@@ -1,5 +1,22 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Two foreign countries plus a distinct domestic Treasury payer (written,
+unrun):** One foreign box-1/box-6 Form 1099-INT payer in each of two countries
+and one Treasury-only box-3 payer can share a passive Form 1116. The explicit
+`two_country_treasury_pdf_review` records the two country-column sources and
+the domestic Treasury source separately. The calculation uses all three
+issued payers for worldwide gross income and allocates the standard deduction
+to each foreign country at its five-decimal share of that denominator. Native
+country sources and parent PDF columns A/B retain only the two foreign gross
+and tax amounts; Part I line 3e uses worldwide interest including Treasury.
+The shared export guard reconciles all three source references, boxes,
+country codes, Form 1040 line 2b/9/11/12a/15/16 and Schedule 3 line 1.
+Positive and domestic/foreign payer, country, review, and return tamper
+fixtures are authored for deferred validation. Multiple Treasury or foreign
+payers per column, source bytes, and filled-output/XSD review remain open.
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+govern Part I's worldwide-gross allocation.
+
 **Two-country 1099-INT passive interest (written, unrun):** Two distinct
 issued Form 1099-INT payers may occupy Form 1116 country columns A and B when
 each reports only foreign box 1 interest and box 6 tax, their IRS country
