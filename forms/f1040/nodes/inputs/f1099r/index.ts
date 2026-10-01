@@ -833,6 +833,30 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  if (
+    item.box7_distribution_code === DistributionCode.Code8 &&
+    item.box7_ira_simple_indicator !== true &&
+    item.no_distribution_received !== true &&
+    (
+      item.box7_code2 !== undefined ||
+      !item.recipient_ssn || !item.ts ||
+      !item.source_document_reference ||
+      !/^\d{2}-?\d{7}$/.test(item.payer_ein) ||
+      !Number.isSafeInteger(item.box2a_taxable_amount) ||
+      (item.box2a_taxable_amount ?? 0) <= 0 ||
+      (item.box2a_taxable_amount ?? 0) > item.box1_gross_distribution ||
+      item.disability_as_wages === true ||
+      item.rollover_code !== undefined ||
+      item.exclude_4972 === true ||
+      item.exclude_8606_roth === true ||
+      item.simplified_method_flag === true ||
+      (item.pso_premium ?? 0) > 0
+    )
+  ) {
+    throw new Error(
+      "Non-IRA code 8 corrective distribution needs one identified 2025 Form 1099-R, owner, payer and positive taxable box 2a",
+    );
+  }
   validateIraRolloverEvidence(item);
   if (
     item.exclude_8606_roth === true ||
@@ -935,7 +959,18 @@ function iraItems(items: R1099Items): R1099Items {
 
 // Pension/annuity items: box7_ira_simple_indicator !== true
 function pensionItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_simple_indicator !== true);
+  return items.filter((item) =>
+    item.box7_ira_simple_indicator !== true &&
+    item.box7_distribution_code !== DistributionCode.Code8
+  );
+}
+
+/** Current-year corrective plan distributions shown on non-IRA code-8 copies. */
+export function correctivePlanItems(items: R1099Items): R1099Items {
+  return activeItems(items).filter((item) =>
+    item.box7_distribution_code === DistributionCode.Code8 &&
+    item.box7_ira_simple_indicator !== true
+  );
 }
 
 // Disability-as-wages items: disability routing to line1a
@@ -1086,6 +1121,14 @@ function disabilityWagesF1040Fields(
   );
   if (total <= 0) return {};
   return { line1a_wages: total };
+}
+
+function correctivePlanF1040Fields(items: R1099Items): Record<string, number> {
+  const amount = correctivePlanItems(items).reduce(
+    (sum, item) => sum + item.box2a_taxable_amount!,
+    0,
+  );
+  return amount > 0 ? { line1h_other_earned: amount } : {};
 }
 
 // Build f1040 withholding output (line25b)
@@ -1444,6 +1487,17 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     for (const item of r1099s) {
       validateItem(item);
     }
+    const corrective = correctivePlanItems(r1099s);
+    if (
+      corrective.length > 0 &&
+      (ctx.taxYear !== 2025 ||
+        new Set(corrective.map((item) => item.source_document_reference))
+            .size !== corrective.length)
+    ) {
+      throw new Error(
+        "TY2025 corrective plan distributions need distinct Form 1099-R source references",
+      );
+    }
     assertIraRolloverEvidence(r1099s);
 
     const outputs: NodeOutput[] = [];
@@ -1466,6 +1520,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       cfg.qcdAnnualLimit,
       cfg.psoExclusionLimit,
     );
+    const correctiveFields = correctivePlanF1040Fields(r1099s);
     // Withholding fields
     const withholdingFields = withholdingF1040Fields(r1099s);
 
@@ -1474,6 +1529,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...iraFields,
       ...pensionFields,
       ...disWagesFields,
+      ...correctiveFields,
       ...withholdingFields,
     };
     if (r1099s.some(isPensionDirectRollover)) {
@@ -1505,6 +1561,9 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
     if ((disWagesFields.line1a_wages ?? 0) > 0) {
       agiFields.line1a_wages = disWagesFields.line1a_wages;
+    }
+    if ((correctiveFields.line1h_other_earned ?? 0) > 0) {
+      agiFields.line1h_other_earned = correctiveFields.line1h_other_earned;
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(

@@ -8,6 +8,11 @@ import {
   nativeFecItemSchema,
 } from "../../../nodes/inputs/fec/index.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import {
+  correctivePlanItems,
+  inputSchema as f1099rInputSchema,
+} from "../../../nodes/inputs/f1099r/index.ts";
+import { assert1099RRecipientOwner } from "../../f1099r-recipient-owner.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import type { z } from "zod";
 
@@ -70,7 +75,9 @@ function standaloneFec(context?: MefBuildContext): readonly NativeFecItem[] {
   }
   const amount = items.reduce((sum, item) => sum + item.compensation_usd, 0);
   if (!Number.isSafeInteger(amount) || amount <= 0) {
-    throw new Error("Standalone FEC wages need a positive safe whole-dollar total");
+    throw new Error(
+      "Standalone FEC wages need a positive safe whole-dollar total",
+    );
   }
   const line1h =
     (context?.pending?.f1040 as Record<string, unknown> | undefined)
@@ -90,6 +97,59 @@ function standaloneFec(context?: MefBuildContext): readonly NativeFecItem[] {
     );
   }
   return items;
+}
+
+function correctivePlanAmount(context?: MefBuildContext): number {
+  const raw = context?.pending?.f1099r;
+  if (raw === undefined) return 0;
+  const items = correctivePlanItems(f1099rInputSchema.parse(raw).f1099rs);
+  if (items.length === 0) return 0;
+  if (context?.pending?.fec !== undefined || filingDetails(context)) {
+    throw new Error(
+      "Corrective plan distributions need a separate line 1h source reconciliation from FEC or Form 2555 wages",
+    );
+  }
+  assert1099RRecipientOwner(raw, context?.filer);
+  const references = items.map((item) => item.source_document_reference);
+  if (
+    new Set(references).size !== items.length ||
+    items.some((item) =>
+      !item.recipient_ssn || !item.ts || !item.source_document_reference ||
+      !/^\d{2}-?\d{7}$/.test(item.payer_ein) ||
+      item.box7_code2 !== undefined ||
+      !Number.isSafeInteger(item.box2a_taxable_amount) ||
+      (item.box2a_taxable_amount ?? 0) <= 0 ||
+      (item.box2a_taxable_amount ?? 0) > item.box1_gross_distribution
+    )
+  ) {
+    throw new Error(
+      "Corrective plan wages need distinct identified 1099-R copies and positive taxable box 2a amounts",
+    );
+  }
+  const amount = items.reduce(
+    (sum, item) => sum + item.box2a_taxable_amount!,
+    0,
+  );
+  const line1h =
+    (context?.pending?.f1040 as Record<string, unknown> | undefined)
+      ?.line1h_other_earned;
+  const agiWages = (context?.pending?.agi_aggregator as
+    | Record<string, unknown>
+    | undefined)?.line1h_other_earned;
+  const agiTotal = typeof agiWages === "number"
+    ? agiWages
+    : Array.isArray(agiWages) &&
+        agiWages.every((value) => typeof value === "number")
+    ? (agiWages as number[]).reduce((sum, value) => sum + value, 0)
+    : undefined;
+  if (
+    !Number.isSafeInteger(amount) || line1h !== amount || agiTotal !== amount
+  ) {
+    throw new Error(
+      "Corrective plan wages must equal Form 1040 and AGI line 1h without other wage sources",
+    );
+  }
+  return amount;
 }
 
 function fecEmployee(item: NativeFecItem, context?: MefBuildContext) {
@@ -186,12 +246,21 @@ export const wagesNotShownSchedule: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "wages_not_shown_schedule",
-  sourcePendingKeys: ["form2555", "fec"],
+  sourcePendingKeys: ["form2555", "fec", "f1099r"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/p4164.pdf",
   build(_fields, context) {
     const filing = filingDetails(context);
     const fecItems = standaloneFec(context);
+    const correctiveAmount = correctivePlanAmount(context);
+    if (correctiveAmount > 0) {
+      return elements("WagesNotShownSchedule", [
+        elements("WagesNotShownSch", [
+          element("OtherWagesNotShownTxt", "CORRECTIVE DISTRIBUTION"),
+          element("WagesNotShownAmt", correctiveAmount),
+        ]),
+      ]);
+    }
     const amount = fecItems.length > 0
       ? fecItems.reduce((sum, item) => sum + item.compensation_usd, 0)
       : filing?.foreign_wages;
