@@ -197,14 +197,16 @@ Deno.test("Form 8839 reviewed source rejects excluded claims and missing evidenc
   );
 });
 
-Deno.test("Form 8839 preflight does not reopen the active filing node", () => {
+Deno.test("Form 8839 reviewed metadata alone does not open the base node", () => {
   assertReviewedDomestic8839Source(input, review);
-  // The reviewed metadata cannot replace finalized MAGI and credit capacity.
-  assertThrows(() =>
-    form8839.compute(
-      { taxYear: 2025, formType: "f1040" },
-      input,
-    )
+  assertThrows(
+    () =>
+      form8839.compute(
+        { taxYear: 2025, formType: "f1040" },
+        input,
+      ),
+    Error,
+    "reviewed adoption evidence",
   );
 });
 
@@ -436,7 +438,9 @@ Deno.test("Form 8839 reviewed decree, payment and reimbursement bytes settle one
     Error,
     "one distinct nonempty byte document",
   );
-  assertThrows(() =>
-    form8839.compute({ taxYear: 2025, formType: "f1040" }, sourced)
+  assertThrows(
+    () => form8839.compute({ taxYear: 2025, formType: "f1040" }, sourced),
+    Error,
+    "reviewed adoption evidence",
   );
 });

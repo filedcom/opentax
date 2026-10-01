@@ -12,7 +12,7 @@ const finalPendingSchema = z.object({
   f1040: z.object({
     line11_agi: z.number().finite(),
     line18_total_tax_before_credits: wholeDollar,
-    line19_child_tax_credit: wholeDollar,
+    line19_child_tax_credit: wholeDollar.optional(),
     line20_nonrefundable_credits: wholeDollar,
     line30_refundable_adoption: wholeDollar,
   }).passthrough(),
@@ -120,7 +120,7 @@ export function projectStagedForm8839Documents(
     final1040.line11_agi !== pre1040.line11_agi ||
     final1040.line18_total_tax_before_credits !==
       pre1040.line18_total_tax_before_credits ||
-    final1040.line19_child_tax_credit !==
+    (final1040.line19_child_tax_credit ?? 0) !==
       reconciled.context.child_credit_priority.amount ||
     final1040.line20_nonrefundable_credits !== preLine20 + credit.line18 ||
     final1040.line30_refundable_adoption !== credit.line13 ||

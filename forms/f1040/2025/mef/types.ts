@@ -37,6 +37,7 @@ import type { inputSchema as form8949SourceInputSchema } from "../../nodes/input
 import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs/f59e/index.ts";
 import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/form1116_prior_carryover/index.ts";
 import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
+import type { PublicForm8839Source } from "../../nodes/intermediate/forms/form8839/public_source.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
 
@@ -88,4 +89,10 @@ export type MefFormsPending =
     form1116_prior_carryover?: z.infer<
       typeof form1116PriorCarryoverInputSchema
     >;
+    /** Internal replay record from the one public Form 8839 source. */
+    form8839_route?: {
+      public_source: PublicForm8839Source;
+      pre_adoption_sink_input: Record<string, unknown>;
+      pre_adoption_schedule3: Record<string, unknown>;
+    };
   };

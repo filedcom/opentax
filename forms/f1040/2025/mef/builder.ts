@@ -37,6 +37,10 @@ import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
 } from "../../nodes/inputs/f8994/evidence_bytes.ts";
+import {
+  assertPublicForm8839Attachments,
+  hasForm8839Claim,
+} from "../../nodes/intermediate/forms/form8839/public_source.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -375,6 +379,11 @@ export function buildMefXml(
   year = 2025,
   returnType = "1040",
 ): string {
+  if (hasForm8839Claim(pending)) {
+    throw new Error(
+      "MeF Form 8839 requires reviewed PDF attachment bytes; use buildMefBundle",
+    );
+  }
   if (hasForm8994Claim(pending)) {
     throw new Error(
       "MeF Form 8994 requires validated policy and payroll attachment bytes; use buildMefBundle",
@@ -404,6 +413,15 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  if (hasForm8839Claim(pending)) {
+    const route = pending.form8839_route as
+      | { public_source?: unknown }
+      | undefined;
+    if (!route) {
+      throw new Error("Form 8839 needs a reviewed executor route");
+    }
+    await assertPublicForm8839Attachments(route.public_source, attachments);
+  }
   if (hasForm8994Claim(pending)) {
     await reconcileForm8994EvidenceBytes(pending.f8994, attachments);
   }

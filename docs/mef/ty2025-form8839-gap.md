@@ -458,3 +458,40 @@ document bytes, cannot deposit this credit into its pending graph, and the
 registered MeF/PDF Form 8839 guards remain closed. The fixture demonstrates
 internal consistency of synthetic evidence; it does not authenticate a real
 adoption decree, receipt, birth record, reimbursement, or MAGI findings.
+
+## Bounded public one-child route (written, bulk validation pending)
+
+The public `form8839` input now has one direct shape: adoption ledger, reviewed
+decree/birth/expense facts, MAGI nonapplicability review, and a distinct PDF
+manifest for each source document. It contains document identifiers, file names,
+descriptions, and SHA-256 digests, never raw bytes. The base Form 8839 node
+remains closed; the public return executor computes a zero-credit Schedule 3
+marker internally when no other Schedule 3 source is active. It then uses its
+own pre-adoption Form 1040 sink to settle the credit once and records the final
+Schedule 3 and Form 1040 values. Native and PDF projection replay that same
+source and pre-credit sink. An unused nonrefundable line 14 balance is rejected
+because the active return does not carry a filed adoption-credit carryforward
+ledger.
+
+`buildMefBundle` requires the exact reviewed PDF bytes through its existing
+`attachments` option. It validates every PDF, matches its unique file name and
+description to the manifest, and recomputes every reviewed SHA-256 digest.
+Prepared PDF rendering requires that bundle, its source digest, its native
+IRS8839 document, and the same attached bytes. Synchronous XML and standalone
+PDF reject positive claims because they cannot receive those bytes. The
+convenience `f1040_2025.prepareReturn` currently passes an empty attachment
+list, so it also fails closed for a positive Form 8839 claim. The supported
+prepared path is the existing `buildMefBundle` API with attachments followed by
+`buildPdfBytes` with that exact bundle.
+
+The route remains limited to a reviewed, single-filer, one-child domestic 2025
+final decree, no employer exclusion or prior adoption claim, no Form 2555 or
+Form 4563, and a positive fully used nonrefundable credit. It does not
+authenticate the human reviewer or verify that a PDF's visible contents match
+the review transcription. The exporters replay the entire final Form 1040 and
+Schedule 3 against the retained pre-credit snapshot, but a standalone caller
+that fabricates an entire pending graph can also fabricate that snapshot; the
+repository does not sign executor output. Those evidentiary limits require
+operational review before a real taxpayer filing. The implementation and
+fixtures have not yet passed the requested final bulk test, XSD, or PDF render
+pass.

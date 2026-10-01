@@ -15,6 +15,8 @@ import {
 } from "../nodes/inputs/f8881/index.ts";
 import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
 import { inputSchema as f8882InputSchema } from "../nodes/inputs/f8882/index.ts";
+import { hasForm8839Claim } from "../nodes/intermediate/forms/form8839/public_source.ts";
+import { reconcilePublicForm8839Pending } from "../nodes/intermediate/forms/form8839/pending_reconciliation.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -430,6 +432,16 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (hasForm8839Claim(byKey)) {
+    try {
+      reconcilePublicForm8839Pending(byKey);
+    } catch (cause) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8839 needs its reviewed one-child source and settled return; export blocked`,
+        { cause },
+      );
+    }
+  }
   const form3800 = byKey.f3800;
   const hasForm8941Credit = form3800 !== null &&
     typeof form3800 === "object" &&

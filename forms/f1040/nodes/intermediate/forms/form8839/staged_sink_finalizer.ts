@@ -8,16 +8,16 @@ type F1040SinkInput = z.infer<typeof f1040.inputSchema>;
 const finalOutputSchema = z.object({
   line11_agi: z.number().finite(),
   line18_total_tax_before_credits: z.number().finite().nonnegative(),
-  line19_child_tax_credit: z.number().finite().nonnegative(),
+  line19_child_tax_credit: z.number().finite().nonnegative().optional(),
   line20_nonrefundable_credits: z.number().finite().nonnegative(),
   line21_credits_total: z.number().finite().nonnegative(),
   line30_refundable_adoption: z.number().finite().nonnegative(),
 }).passthrough();
 
 /**
- * Staged direct sink calculation, not an active return route. A future executor
- * integration must supply its own settled f1040 input and reviewed evidence;
- * callers cannot supply asserted pre/post Form 1040 or Schedule 3 snapshots.
+ * Settle the bounded adoption credit from the executor's pre-credit Form 1040
+ * input. The public two-pass route retains that input for export replay;
+ * callers cannot supply asserted pre/post return snapshots.
  */
 export function finalizeStagedForm8839Sink(
   source: Form8839Input,
@@ -74,7 +74,7 @@ export function finalizeStagedForm8839Sink(
     final1040.line11_agi !== pre.preAdoptionForm1040.line11_agi ||
     final1040.line18_total_tax_before_credits !==
       pre.preAdoptionForm1040.line18_total_tax_before_credits ||
-    final1040.line19_child_tax_credit !==
+    (final1040.line19_child_tax_credit ?? 0) !==
       pre.context.child_credit_priority.amount ||
     final1040.line20_nonrefundable_credits !== finalSchedule3.line8_total ||
     final1040.line21_credits_total !==

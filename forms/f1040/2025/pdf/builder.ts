@@ -34,6 +34,10 @@ import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
 } from "../../nodes/inputs/f8994/evidence_bytes.ts";
+import {
+  assertPublicForm8839Attachments,
+  hasForm8839Claim,
+} from "../../nodes/intermediate/forms/form8839/public_source.ts";
 
 async function fetchWithCache(
   url: string,
@@ -320,6 +324,29 @@ export async function buildPdfBytes(
       pending.f8994,
       preparedBundle.attachments,
     );
+  }
+  if (hasForm8839Claim(pending)) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form 8839 PDF requires a prepared MeF bundle with reviewed attachment bytes",
+      );
+    }
+    const route = pending.form8839_route as
+      | { public_source?: unknown }
+      | undefined;
+    if (!route || !/<IRS8839\b/.test(preparedBundle.xml)) {
+      throw new Error("Form 8839 PDF needs its prepared native document");
+    }
+    await assertPublicForm8839Attachments(
+      route.public_source,
+      preparedBundle.attachments,
+    );
+    if (
+      await sha256Hex(new TextEncoder().encode(preparedBundle.xml)) !==
+        preparedBundle.xmlSha256
+    ) {
+      throw new Error("Form 8839 prepared MeF XML digest differs");
+    }
   }
   // The prepared MeF return stores canonical Form 8949 rows as an array;
   // the existing PDF projector consumes them through its transaction field.
