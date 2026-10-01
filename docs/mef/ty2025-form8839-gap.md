@@ -477,16 +477,21 @@ carry a filed adoption-credit carryforward ledger.
 `attachments` option. It validates every PDF, matches its unique file name and
 description to the manifest, and recomputes every reviewed SHA-256 digest.
 
-Form 8839 is deliberately absent from `inputNodes`, so the CLI stored-input path
-cannot currently accept this claim. The convenience `f1040_2025.prepareReturn`
-also passes no external attachments and fails closed for a positive claim. This
-is a programmatic prepared-bundle route, not general CLI filing support.
+The same strict reviewed Form 8839 shape is now a singleton CLI stored input.
+For CLI MeF and PDF export, the manifest's exact PDF file names are loaded from
+`<return directory>/attachments/` and passed to `prepareReturn` through its
+optional existing-bundle attachment argument. The loader requires regular files
+under a real attachments directory and rejects symlinks, oversized files, and
+unsafe names. Missing or altered files fail the exact-byte bundle review. The
+CLI and programmatic prepared-bundle paths therefore share one source shape and
+one attachment validator.
 
 Prepared PDF rendering requires that bundle, its source digest, its native
 IRS8839 document, and the same attached bytes. Synchronous XML and standalone
-PDF reject positive claims because they cannot receive those bytes. The
-supported prepared path is the existing `buildMefBundle` API with attachments
-followed by `buildPdfBytes` with that exact bundle.
+PDF reject positive claims because they cannot receive those bytes. The prepared
+path is the existing `buildMefBundle` API with attachments followed by
+`buildPdfBytes` with that exact bundle. CLI MeF and PDF export both use this
+prepared path.
 
 The route remains limited to a reviewed, single-filer, one-child domestic 2025
 final decree, no employer exclusion or prior adoption claim, no Form 2555 or

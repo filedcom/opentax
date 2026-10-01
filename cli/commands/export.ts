@@ -10,6 +10,7 @@ import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
+import { loadForm8839Attachments } from "./form8839-attachments.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -270,7 +271,11 @@ export async function exportMefCommand(
   const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
     args,
   );
-  const prepared = await def.prepareReturn(pending, filer);
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
+  const prepared = await def.prepareReturn(pending, filer, attachments);
   const xml = prepared.bundle.xml;
   validateBusinessRules(
     pending,
@@ -292,10 +297,14 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
   const prepared = args.draft && !filer
     ? undefined
-    : await def.prepareReturn(pending, filer);
+    : await def.prepareReturn(pending, filer, attachments);
   validateBusinessRules(
     pending,
     filer,
