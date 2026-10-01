@@ -1,28 +1,14 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
-import { inputSchema as form8283SourceSchema } from "../../../nodes/inputs/f8283/index.ts";
+import type { MefPdfAttachment } from "../form-descriptor.ts";
+import {
+  inputSchema as form8283SourceSchema,
+  vehicleSalePdfReviewSchema,
+} from "../../../nodes/inputs/f8283/index.ts";
 
 type SectionAItem = NonNullable<
   z.infer<typeof form8283SourceSchema>["section_a_items"]
 >[number];
-
-export const vehicleSalePdfReviewSchema = z.object({
-  reviewed_by: z.string().trim().min(1),
-  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  taxpayer_ssn: z.string().regex(/^\d{9}$/),
-  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-  donee_name: z.string().trim().min(1),
-  donee_ein: z.string().regex(/^\d{9}$/),
-  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
-  sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  gross_proceeds: z.number().positive(),
-  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  copy_b_or_equivalent_confirmed: z.literal(true),
-  unrelated_sale_certification_confirmed: z.literal(true),
-  deduction_limited_to_gross_proceeds_stated: z.literal(true),
-  no_goods_or_services_confirmed: z.literal(true),
-  reviewed_pdf_matches_source_confirmed: z.literal(true),
-}).strict();
 
 export type VehicleSalePdfReview = z.infer<typeof vehicleSalePdfReviewSchema>;
 
@@ -117,6 +103,41 @@ export async function verifyVehicleSaleAcknowledgmentEvidence(
   if (actualSha256 !== review.pdf_sha256) {
     throw new Error(
       "Form 8283 vehicle acknowledgment PDF differs from the exact reviewed bytes",
+    );
+  }
+}
+
+/** Verify every Section A sale against the exact PDF linked by the prepared XML. */
+export async function assertPreparedVehicleSaleAcknowledgments(
+  sourceInput: unknown,
+  attachments: ReadonlyArray<MefPdfAttachment>,
+  preparedXml: string,
+  filerSsn: string,
+): Promise<void> {
+  if (!sourceInput) return;
+  const source = form8283SourceSchema.parse(sourceInput);
+  const linked = [...preparedXml.matchAll(
+    /<BinaryAttachment documentId="([^"]+)">([\s\S]*?)<\/BinaryAttachment>/g,
+  )];
+  for (const item of source.section_a_items ?? []) {
+    if (!item.vehicle_sale_acknowledgment) continue;
+    const fileName = item.vehicle_acknowledgment_attachment_file_name;
+    const attachment = attachments.find((row) => row.fileName === fileName);
+    const reference = linked.find((match) =>
+      match[2].includes(
+        `<AttachmentLocationTxt>${fileName}</AttachmentLocationTxt>`,
+      )
+    );
+    if (!attachment || !reference || !fileName) {
+      throw new Error(
+        "Form 8283 vehicle sale PDF lacks an exact prepared MeF attachment link",
+      );
+    }
+    await verifyVehicleSaleAcknowledgmentEvidence(
+      item,
+      item.vehicle_sale_pdf_review,
+      { ...attachment, documentId: reference[1] },
+      filerSsn,
     );
   }
 }

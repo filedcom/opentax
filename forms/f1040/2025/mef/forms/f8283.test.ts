@@ -376,22 +376,27 @@ Deno.test("Form 8283 unreduced equipment group needs separately supported Sectio
       signature_attachment_file_name: `Donee-${index}.pdf`,
     },
   }));
-  assertThrows(() => form8283.build({ section_b_items: sectionB }, {
-    attachmentDescriptionsByFileName: {
-      "Form8283AppraiserSignature.pdf":
-        "Form 8283 appraiser signature document",
-      "Donee-1.pdf": "Form 8283 Donee signature document",
-      "Donee-2.pdf": "Form 8283 Donee signature document",
-      "QualifiedAppraisal-EquipmentGroup.pdf":
-        "Qualified Appraisal industrial equipment group",
-    },
-    documentIdsByAttachmentFileName: {
-      "Form8283AppraiserSignature.pdf": "PDF-APPRAISER",
-      "Donee-1.pdf": "PDF-DONEE1",
-      "Donee-2.pdf": "PDF-DONEE2",
-      "QualifiedAppraisal-EquipmentGroup.pdf": "PDF-GROUP",
-    },
-  }), Error, "distinct signed/appraised similar-art sources and donees or reduced equipment sources");
+  assertThrows(
+    () =>
+      form8283.build({ section_b_items: sectionB }, {
+        attachmentDescriptionsByFileName: {
+          "Form8283AppraiserSignature.pdf":
+            "Form 8283 appraiser signature document",
+          "Donee-1.pdf": "Form 8283 Donee signature document",
+          "Donee-2.pdf": "Form 8283 Donee signature document",
+          "QualifiedAppraisal-EquipmentGroup.pdf":
+            "Qualified Appraisal industrial equipment group",
+        },
+        documentIdsByAttachmentFileName: {
+          "Form8283AppraiserSignature.pdf": "PDF-APPRAISER",
+          "Donee-1.pdf": "PDF-DONEE1",
+          "Donee-2.pdf": "PDF-DONEE2",
+          "QualifiedAppraisal-EquipmentGroup.pdf": "PDF-GROUP",
+        },
+      }),
+    Error,
+    "distinct signed/appraised similar-art sources and donees or reduced equipment sources",
+  );
 });
 
 Deno.test("Form 8283 combined $500,000 group threshold rejects missing full appraisal even when each item is below it", () => {
@@ -1480,6 +1485,11 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
 });
 
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {
+  const vehiclePdfBytes = await acknowledgmentPdf();
+  const vehiclePdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", vehiclePdfBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
   const form = form8283InputSchema.parse({
     section_a_items: [{
       property_description: "2020 Honda Civic, good condition, 60,000 miles",
@@ -1524,6 +1534,23 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
         odometer_miles: 60_000,
         goods_or_services_received: false,
       },
+      vehicle_sale_pdf_review: {
+        reviewed_by: "Pat Preparer",
+        reviewed_on: "2026-02-01",
+        taxpayer_ssn: testFiler().primarySSN.replaceAll("-", ""),
+        pdf_sha256: vehiclePdfSha256,
+        donee_name: "City Charity",
+        donee_ein: "987654321",
+        vehicle_vin: "1HGBH41JXMN109186",
+        sale_date: "2025-07-01",
+        gross_proceeds: 15_000,
+        acknowledgment_furnished_date: "2025-07-15",
+        copy_b_or_equivalent_confirmed: true,
+        unrelated_sale_certification_confirmed: true,
+        deduction_limited_to_gross_proceeds_stated: true,
+        no_goods_or_services_confirmed: true,
+        reviewed_pdf_matches_source_confirmed: true,
+      },
     }],
   });
   const giftItems = f8283.compute(
@@ -1550,7 +1577,7 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
     attachments: [{
       fileName: "Form1098C-Civic.pdf",
       description: "Form1098C Civic acknowledgment from City Charity",
-      bytes: await acknowledgmentPdf(),
+      bytes: vehiclePdfBytes,
     }],
   });
   const xml = bundle.xml;

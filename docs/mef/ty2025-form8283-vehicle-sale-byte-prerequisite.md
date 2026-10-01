@@ -19,10 +19,14 @@ acknowledgment furnished more than 30 days after sale. Positive and
 changed-byte, zero-page, identifier-length, amount, owner, and document fixtures
 are authored for the bulk test pass.
 
-This is a **staged prerequisite**, not a current export gate. The helper does
-not extract text from the PDF or authenticate its issuer or signature; a
-reviewer must inspect the actual Copy B or equivalent before asserting that its
-contents match. The current native/PDF vehicle route continues to use its
-existing source and attachment checks. Wiring the byte review into both exports
-requires one direct public source slot and the validated attachment byte
-carrier; that broader change remains open.
+The Section A unrelated-sale route now requires `vehicle_sale_pdf_review`.
+Native preparation links the actual PDF document ID and its SHA-256 to that
+review, then verifies its readable bytes, owner, donee, vehicle identifier,
+sale date, furnished date, and proceeds. PDF projection repeats the check
+against the prepared MeF attachment and XML digest. A changed source, XML, or
+PDF therefore cannot be projected as the same prepared return.
+
+The review is still a human assertion. This code does not extract printed
+content from Form 1098-C or authenticate the donee's issuer or signature. A
+preparer must establish those facts by inspecting Copy B or its equivalent;
+the reviewed source alone cannot prove IRS acceptance or issuer authenticity.

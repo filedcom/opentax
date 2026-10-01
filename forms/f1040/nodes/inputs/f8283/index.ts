@@ -65,6 +65,24 @@ const vehicleSaleAcknowledgmentSchema = z.object({
   goods_or_services_received: z.literal(false),
 });
 
+export const vehicleSalePdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  gross_proceeds: z.number().positive(),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  unrelated_sale_certification_confirmed: z.literal(true),
+  deduction_limited_to_gross_proceeds_stated: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
 // Form 1098-C box 5b: the donee certifies a below-FMV transfer to a needy
 // person in direct furtherance of its charitable transportation purpose.
 const vehicleNeedyTransferAcknowledgmentSchema = z.object({
@@ -225,6 +243,7 @@ const sectionAItemSchema = z.object({
   is_vehicle: z.boolean().optional(),
   vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/).optional(),
   vehicle_sale_acknowledgment: vehicleSaleAcknowledgmentSchema.optional(),
+  vehicle_sale_pdf_review: vehicleSalePdfReviewSchema.optional(),
   vehicle_needy_transfer_acknowledgment:
     vehicleNeedyTransferAcknowledgmentSchema.optional(),
   vehicle_significant_use_acknowledgment:

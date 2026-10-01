@@ -22,6 +22,8 @@ import {
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
+import { assertPreparedVehicleSaleAcknowledgments } from "../mef/forms/f8283_vehicle_sale_evidence.ts";
+import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/f8283/index.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
@@ -313,6 +315,32 @@ export async function buildPdfBytes(
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  const form8283Source = normalized.f8283
+    ? form8283SourceSchema.parse(normalized.f8283)
+    : undefined;
+  if (
+    form8283Source?.section_a_items?.some((item) =>
+      item.vehicle_sale_acknowledgment !== undefined
+    )
+  ) {
+    if (!preparedBundle || !filer) {
+      throw new Error(
+        "Form 8283 vehicle sale PDF needs its prepared MeF return and reviewed acknowledgment bytes",
+      );
+    }
+    if (
+      await sha256Hex(new TextEncoder().encode(preparedBundle.xml)) !==
+        preparedBundle.xmlSha256
+    ) {
+      throw new Error("Form 8283 vehicle sale prepared MeF XML digest differs");
+    }
+    await assertPreparedVehicleSaleAcknowledgments(
+      form8283Source,
+      preparedBundle.attachments,
+      preparedBundle.xml,
+      filer.primarySSN,
+    );
   }
   if (hasForm8994Claim(pending)) {
     if (!preparedBundle) {

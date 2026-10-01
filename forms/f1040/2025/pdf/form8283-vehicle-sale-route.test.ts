@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -97,6 +97,31 @@ async function assertLocalXsd(xml: string): Promise<void> {
 }
 
 Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and filled PDF", async () => {
+  const acknowledgmentBytes = await syntheticDoneeAcknowledgment();
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const reviewedVehicle = {
+    ...vehicle,
+    vehicle_sale_pdf_review: {
+      reviewed_by: "Pat Preparer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: base.filer.primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      vehicle_vin: "1HGBH41JXMN109186",
+      sale_date: "2025-07-01",
+      gross_proceeds: 15_000,
+      acknowledgment_furnished_date: "2025-07-15",
+      copy_b_or_equivalent_confirmed: true,
+      unrelated_sale_certification_confirmed: true,
+      deduction_limited_to_gross_proceeds_stated: true,
+      no_goods_or_services_confirmed: true,
+      reviewed_pdf_matches_source_confirmed: true,
+    },
+  };
   const inputs = {
     ...base.inputs,
     schedule_a: {
@@ -106,7 +131,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
     },
-    f8283: { section_a_items: [vehicle] },
+    f8283: { section_a_items: [reviewedVehicle] },
   };
   const result = execute(plan, registry, inputs, {
     taxYear: 2025,
@@ -122,7 +147,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
       fileName: vehicle.vehicle_acknowledgment_attachment_file_name,
       description:
         "DoneeOrganizationContemporaneousWrittenAcknowledgment vehicle sale",
-      bytes: await syntheticDoneeAcknowledgment(),
+      bytes: acknowledgmentBytes,
     }],
   });
   assertStringIncludes(
@@ -143,6 +168,35 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   const filled = await PDFDocument.load(pdf);
   assertEquals(filled.getPageCount(), 5);
+  const changedAcknowledgmentBytes = await syntheticDoneeAcknowledgment([
+    "Changed proceeds",
+  ]);
+  await assertRejects(
+    () =>
+      buildMefBundle(pending, {
+        filer: base.filer,
+        attachments: [{
+          fileName: vehicle.vehicle_acknowledgment_attachment_file_name,
+          description:
+            "DoneeOrganizationContemporaneousWrittenAcknowledgment vehicle sale",
+          bytes: changedAcknowledgmentBytes,
+        }],
+      }),
+    Error,
+    "reviewed PDF",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(pending, base.filer, ".pdf-cache", {
+        ...bundle,
+        attachments: [{
+          ...bundle.attachments[0],
+          bytes: new Uint8Array(acknowledgmentBytes).reverse(),
+        }],
+      }),
+    Error,
+    "readable PDF",
+  );
 });
 
 Deno.test("unreduced needy-transfer vehicle joins certification, native XML and filled PDF", async () => {
