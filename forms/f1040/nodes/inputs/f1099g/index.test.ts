@@ -488,16 +488,15 @@ Deno.test("f1099g.compute: fully repaid current-year unemployment emits zero lin
   assertEquals(fieldsOf(result.outputs, schedule1)?.line7_unemployment, 0);
 });
 
-Deno.test("f1099g.compute: repaid exceeds unemployment — net floors at $0, no line7 output", () => {
-  const result = compute([
-    minimalItem({ box_1_unemployment: 2000, box_1_repaid: 3000 }),
-  ]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line7_unemployment !== undefined,
+Deno.test("f1099g.compute: same-year repayment above retained benefits rejects", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ box_1_unemployment: 2000, box_1_repaid: 3000 }),
+      ]),
+    Error,
+    "same-year unemployment repayment exceeds retained current-year benefits",
   );
-  assertEquals(out, undefined);
 });
 
 Deno.test("f1099g.compute: positive state refund without tax-benefit workpaper fails closed", () => {

@@ -59,6 +59,20 @@ Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repay
     Error,
     "line 7 differs from retained unemployment sources",
   );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line7_unemployment: 0 },
+        filer,
+        {
+          f1099g: {
+            f1099gs: [{ box_1_unemployment: 2_000, box_1_repaid: 3_000 }],
+          },
+        },
+      ),
+    Error,
+    "same-year unemployment repayment exceeds retained current-year benefits",
+  );
 });
 
 Deno.test("fully repaid unemployment alone still creates Schedule 1 and its PDF repayment annotation", () => {

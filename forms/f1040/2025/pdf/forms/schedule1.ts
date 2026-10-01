@@ -282,9 +282,14 @@ export const schedule1Pdf: PdfFormDescriptor = {
       (sum, row) => sum + (row.box_1_repaid ?? 0),
       0,
     );
+    if (repaid > received) {
+      throw new Error(
+        "Schedule 1 PDF same-year unemployment repayment exceeds retained current-year benefits",
+      );
+    }
     if (
       (received > 0 || repaid > 0) &&
-      (fields.line7_unemployment ?? 0) !== Math.max(0, received - repaid)
+      (fields.line7_unemployment ?? 0) !== received - repaid
     ) {
       throw new Error(
         "Schedule 1 PDF line 7 differs from retained unemployment sources",

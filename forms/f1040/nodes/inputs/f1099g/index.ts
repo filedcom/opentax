@@ -156,7 +156,12 @@ function netUnemployment(g99s: G99Items): number {
     (sum, item) => sum + (item.box_1_repaid ?? 0),
     0,
   );
-  return Math.max(0, totalReceived - totalRepaid);
+  if (totalRepaid > totalReceived) {
+    throw new Error(
+      "Form 1099-G same-year unemployment repayment exceeds retained current-year benefits",
+    );
+  }
+  return totalReceived - totalRepaid;
 }
 
 function totalStateRefundTaxable(g99s: G99Items): number {
