@@ -18,6 +18,7 @@ import {
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
+import { assertZeroReductionScheduleAReturn } from "./f8995a_schedule_a.ts";
 import { qualifiedReitDividends } from "./f8995-route.ts";
 
 type Input = Form8995AInput | readonly [];
@@ -431,6 +432,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
   ) {
     const lines = calculateOneSstb8995ALines(fields);
     reconcileReturn(context, lines.line39, fields);
+    assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
     return elements("IRS8995A", [
       elements("QBIDeductionInformationGrp", [
         elements("TradeOrBusinessName", [
@@ -450,13 +452,9 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         element("W2WageQlfyPropLimitationAmt", lines.line11),
         element("QBIDedBeforePatronReductionAmt", lines.line13),
         element("QBIComponentAmt", lines.line15),
-        ...(lines.line19 > 0
-          ? [
-            element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
-            element("TotalPhaseInReductionAmt", lines.line25),
-            element("QBIAfterPhaseInReductionAmt", lines.line26),
-          ]
-          : []),
+        element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
+        element("TotalPhaseInReductionAmt", lines.line25),
+        element("QBIAfterPhaseInReductionAmt", lines.line26),
       ]),
       element("TotalQBIComponentAmt", lines.line16),
       element(

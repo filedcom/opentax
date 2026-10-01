@@ -14,6 +14,7 @@ import {
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
+import { assertZeroReductionScheduleAReturn } from "../../mef/forms/f8995a_schedule_a.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
@@ -62,6 +63,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
         ({ 17: 1, 18: 4, 19: 7, 25: 30, 26: 33 } as const)[line],
       ).padStart(2, "0")
     }[0]`,
+    printZero: line === 19 || line === 25,
   })),
   ...([20, 21, 22, 23, 24] as const).map((line): PdfFieldEntry => ({
     kind: "text",
@@ -181,6 +183,7 @@ export function projectOneBusiness8995A(
     }
     assertNoFiledForm8995(allPending);
     const lines = calculateOneSstb8995ALines(input);
+    assertZeroReductionScheduleAReturn(input, lines, allPending);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
       throw new Error(
         "Form 8995-A PDF Schedule A line 39 differs from Form 1040 line 13",

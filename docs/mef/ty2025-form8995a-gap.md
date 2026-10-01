@@ -189,6 +189,21 @@ loss, and prior-loss combinations. The asserted business source has not been
 independently authenticated. Focused cases are written but unrun; local XSD,
 filled-PDF inspection, IRS business rules, and ATS acceptance remain open.
 
+The same one-SSTB Schedule A source now admits the narrow case in which the
+applicable W-2 wage limit is at least 20% of applicable QBI. Schedule A is
+still required within the income phase-in range under the
+[2025 IRS instructions](https://www.irs.gov/instructions/i8995a). Form 8995-A
+Part III therefore shows zero excess and zero phase-in reduction on lines 19
+and 25, and carries the full applicable 20% QBI amount on line 26. The native
+parent writes all three values; parent and companion PDFs project the same
+amounts. For this branch, both exporters also reconcile Form 1040 AGI,
+deductions, QBI deduction, and taxable income to the source's pre-QBI taxable
+income. A single-filer, one-SSTB positive case with $100,000 QBI and $40,000
+W-2 wages and source/companion/final-return tamper cases are authored but
+unrun. The K-1 statement is identified by a reviewed source reference; its
+issued bytes and the upstream income source are not authenticated by this
+bounded route. The bulk test, XSD, filled-PDF, and IRS acceptance gates remain.
+
 ## Build-first Schedule C current-loss route (written, unrun)
 
 One identified Schedule C business with a current qualified loss now also

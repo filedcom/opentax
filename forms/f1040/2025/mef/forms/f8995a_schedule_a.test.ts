@@ -83,8 +83,8 @@ Deno.test("Form 8995-A Schedule A: thresholds, extra business, unsourced amounts
   assertThrows(() => parent.build({
     ...input,
     sstb_w2_wages: 100_000,
-    sstb_filing_details: { ...input.sstb_filing_details, business_w2_wages: 100_000 },
-  }, context), Error, "requires a phased-in wage-limit reduction");
+    sstb_filing_details: { ...input.sstb_filing_details, business_w2_wages: 99_999 },
+  }, context), Error, "only business");
 });
 
 Deno.test("Form 8995-A Schedule A: absent pending emits no document", () => {

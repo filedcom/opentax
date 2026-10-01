@@ -582,11 +582,6 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
   const line19 = Math.max(0, line3 - line10);
-  if (line19 === 0) {
-    throw new Error(
-      "Form 8995-A Schedule A bounded route requires a phased-in wage-limit reduction",
-    );
-  }
   const line25 = line19 * phaseIn;
   const line26 = line3 - line25;
   const line13 = Math.max(line11, line26);
