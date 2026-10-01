@@ -49,7 +49,16 @@ place. Before opening export:
    carry these two legal determinations.
 2. Review any supplementary issuer statement and build prepared-document
    identity joins for Forms 3520, 3520-A and 8865, and other Form 5471 filing
-   categories beyond the bounded Category 5a route.
+   categories beyond the bounded Category 5a route. The TY2025 return graph has
+   no Form 8865, 3520 or 3520-A source node, MeF descriptor or stable prepared
+   document ID. Its Form 8865 validation-rule file does not prepare an
+   attachment. A generic binary PDF filename/description cannot prove the
+   asset's owner or foreign entity identity.
+   [Form 3520](https://www.irs.gov/instructions/i3520) is filed separately from
+   the income return; [Form 3520-A](https://www.irs.gov/instructions/i3520a)
+   requires its own filing evidence or a substitute attached to Form 3520. The
+   staged Part IV helper rejects these categories until the source and filing
+   evidence exist.
 3. Extend Part III filed-line joins beyond Schedule B interest and ordinary
    dividends to gains, other income, deductions and credits without computing
    them twice.

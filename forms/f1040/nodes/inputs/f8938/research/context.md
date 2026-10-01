@@ -61,4 +61,10 @@ identity. It also joins a bounded Category 5a CFC stock asset to a prepared
 IRS5471 document, shareholder TIN, issuer identifier, jurisdiction and address.
 Unsupported Part III destinations and other Part IV forms fail closed. The graph
 still lacks verified citizenship/residency and the legal return-required
-determination; those are not inferred from the presence of a prepared return.
+determination; those are not inferred from the presence of a prepared return. In
+particular, Form 8865, 3520 and 3520-A have no TY2025 source node or prepared
+MeF descriptor/document ID in this return graph. The Form 8865 rule catalog is
+validation data only, and generic PDF attachment metadata cannot establish owner
+and foreign entity identity. Form 3520 needs its separate filing evidence; Form
+3520-A needs evidence of its own filing or a substitute attached to Form 3520.
+No Part IV join for these forms is opened.
