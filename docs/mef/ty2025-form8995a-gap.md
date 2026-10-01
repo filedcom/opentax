@@ -191,6 +191,22 @@ filled-PDF inspection, IRS business rules, and ATS acceptance remain open.
 
 ## Build-first Schedule C current-loss route (written, unrun)
 
+One identified Schedule C business with a current qualified loss now also
+files the bounded parent Form 8995-A and Schedule C companion without a
+positive offsetting business. Its single source row must match the retained
+Schedule C net loss, material participation, at-risk classification, zero
+W-2 wages/UBIA, and the final Schedule 1 business loss. Schedule C line 3 and
+line 6 retain the entire loss, parent line 39 and Form 1040 line 13 are zero,
+and the graph records that amount as an in-memory next-year QBI loss
+carryforward. Native MeF prints the one loss row; PDF leaves its second row
+empty. The [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+require Schedule C for a current qualified business loss and send line 6 to
+the next tax year. A $1,200 loss full-return/native/PDF fixture and altered
+business, Schedule 1, companion, and final-deduction fixtures are written but
+unrun. Importing the loss into a later filing still needs accepted-return
+provenance; prior suspended losses, SSTBs, other activities, and nonzero
+business-level QBI adjustments remain guarded.
+
 One single filer above the full 2025 wage-limit phase-in with exactly two
 distinct, identified Schedule C businesses can now produce a registered
 `IRS8995AScheduleC`. One business has positive QBI and one has negative QBI; the

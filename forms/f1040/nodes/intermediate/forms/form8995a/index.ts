@@ -372,12 +372,14 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
 export function calculateScheduleCLossLines(input: Form8995AInput) {
   const businesses = input.schedule_c_qbi_businesses;
   if (
-    !businesses || businesses.length !== 2 ||
-    businesses.filter((business) => business.qbi > 0).length !== 1 ||
+    !businesses ||
+    (businesses.length !== 1 && businesses.length !== 2) ||
+    businesses.filter((business) => business.qbi > 0).length !==
+      (businesses.length === 2 ? 1 : 0) ||
     businesses.filter((business) => business.qbi < 0).length !== 1
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs one positive and one negative identified Schedule C business",
+      "Form 8995-A Schedule C bounded route needs one identified loss business, with at most one positive business",
     );
   }
   if (
@@ -400,9 +402,9 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     );
   }
   const refs = businesses.map((business) => business.business_reference);
-  if (refs.some((ref) => !ref) || new Set(refs).size !== 2) {
+  if (refs.some((ref) => !ref) || new Set(refs).size !== businesses.length) {
     throw new Error(
-      "Form 8995-A Schedule C needs two distinct business references",
+      "Form 8995-A Schedule C needs distinct business references",
     );
   }
   for (const business of businesses) {
@@ -426,19 +428,19 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       );
     }
   }
-  const positive = businesses.find((business) => business.qbi > 0)!;
+  const positive = businesses.find((business) => business.qbi > 0);
   const negative = businesses.find((business) => business.qbi < 0)!;
   const line3 = -negative.qbi;
-  const line4 = positive.qbi;
+  const line4 = positive?.qbi ?? 0;
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
     adjustedQbi >= 400 ||
-    (input.qbi ?? 0) !== positive.qbi + negative.qbi ||
-    (input.w2_wages ?? 0) !== positive.w2_wages + negative.w2_wages ||
-    (input.unadjusted_basis ?? 0) !== positive.ubia + negative.ubia ||
-    positive.w2_wages < 0 || negative.w2_wages !== 0 ||
+    (input.qbi ?? 0) !== line4 + negative.qbi ||
+    (input.w2_wages ?? 0) !== (positive?.w2_wages ?? 0) + negative.w2_wages ||
+    (input.unadjusted_basis ?? 0) !== (positive?.ubia ?? 0) + negative.ubia ||
+    negative.w2_wages !== 0 ||
     negative.ubia !== 0
   ) {
     throw new Error(
@@ -449,10 +451,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const line3Parent = line2 * QBI_RATE;
   // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
   // amounts on the parent; those limits cannot create a deduction by themselves.
-  const line4Parent = adjustedQbi > 0 ? positive.w2_wages : 0;
+  const line4Parent = adjustedQbi > 0 ? positive!.w2_wages : 0;
   const line5Parent = line4Parent * W2_LIMIT_A_RATE;
   const line6Parent = line4Parent * W2_LIMIT_B_WAGE_RATE;
-  const line7Parent = adjustedQbi > 0 ? positive.ubia : 0;
+  const line7Parent = adjustedQbi > 0 ? positive!.ubia : 0;
   const line8Parent = line7Parent * UBIA_RATE;
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);

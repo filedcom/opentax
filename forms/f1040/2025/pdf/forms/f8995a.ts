@@ -142,10 +142,14 @@ export function projectOneBusiness8995A(
       );
     }
     return {
-      business_name: lines.positive.business_name,
-      business_ein: lines.positive.ein,
-      business_name_b: lines.negative.business_name,
-      business_ein_b: lines.negative.ein,
+      business_name: (lines.positive ?? lines.negative).business_name,
+      business_ein: (lines.positive ?? lines.negative).ein,
+      ...(lines.positive
+        ? {
+          business_name_b: lines.negative.business_name,
+          business_ein_b: lines.negative.ein,
+        }
+        : {}),
       ...lines.parent,
       ...Object.fromEntries(
         [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]

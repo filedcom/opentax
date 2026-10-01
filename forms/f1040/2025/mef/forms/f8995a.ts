@@ -198,14 +198,14 @@ export function assertScheduleCLossSources(
   const source = scheduleCInputSchema.safeParse(pending?.schedule_c);
   if (
     !source.success || !source.data.schedule_cs ||
-    source.data.schedule_cs.length !== 2 ||
+    source.data.schedule_cs.length !== lines.businesses.length ||
     (pending?.general as Record<string, unknown> | undefined)
         ?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     pending?.form8829 !== undefined || pending?.form5884 !== undefined
   ) {
     throw new Error(
-      "Form 8995-A Schedule C needs exactly two retained unadjusted Schedule C source items",
+      "Form 8995-A Schedule C needs all retained unadjusted Schedule C source items",
     );
   }
   for (const business of lines.businesses) {
