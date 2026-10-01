@@ -1,5 +1,23 @@
 # TY2025 Form 8283 vehicle acknowledgment byte prerequisites
 
+## Section A material improvement, boxes 5a and 5c (2026-10-01, unrun)
+
+The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)
+uses box 5a for the donee's promise not to transfer the vehicle before a
+material improvement, and box 5c for its intended improvement description.
+The [IRS instructions](https://www.irs.gov/instructions/i1098c) require the
+acknowledgment within 30 days of contribution and describe a material
+improvement as a major repair or addition significantly increasing value,
+without additional donor payment. The bounded Section A route now requires
+an exact-byte PDF review that identifies the donor, donee, VIN, contribution
+and furnishing dates, intended improvement, no-transfer certification, no
+additional donor payment, and no goods or services. Native MeF and PDF
+preparation check the same linked document ID, SHA-256, and readable PDF page.
+A $4,000 full-return case reaches Schedule A and Form 1040; changed bytes
+and changed improvement description reject in authored fixtures for the
+deferred batch. These remain human assertions about the document. Code does
+not extract its printed contents or authenticate the donee signature.
+
 ## Section A significant charitable use, boxes 5a and 5c (2026-10-01, unrun)
 
 The [2025 Form 1098-C](https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf)
@@ -14,8 +32,7 @@ PDF preparation check the same prepared attachment link, SHA-256 and readable
 PDF page. A $4,000 full-return case reaches Schedule A and Form 1040; changed
 bytes and use duration reject in authored fixtures for the deferred batch.
 The review facts are human assertions; code does not parse the printed
-certification or authenticate the donee signature. Material improvement under
-box 5a remains a separate evidence case.
+certification or authenticate the donee signature.
 
 ## Section A needy-transfer certification (2026-10-01, unrun)
 

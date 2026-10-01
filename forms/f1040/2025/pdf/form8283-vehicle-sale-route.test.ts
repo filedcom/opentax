@@ -476,3 +476,130 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
     Error,
   );
 });
+
+Deno.test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF through final return", async () => {
+  const acknowledgmentBytes = await syntheticDoneeAcknowledgment([
+    "Synthetic donee written acknowledgment - test fixture only",
+    "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",
+    "2020 Honda Civic VIN 1HGBH41JXMN109186, donated 2025-06-01",
+    "Box 5a: no transfer before material improvement",
+    "Box 5c: replace failed engine with new engine; major repair raises value",
+    "No additional donor payment; furnished 2025-06-20; no goods or services",
+  ]);
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const improvement = {
+    ...vehicle,
+    fmv: 4_000,
+    deduction_claimed: 4_000,
+    cost_or_adjusted_basis: 5_000,
+    vehicle_sale_acknowledgment: undefined,
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: vehicle.donee_organization_us_address,
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_improvement_description: "Replace failed engine with new engine",
+      major_repair_or_addition_confirmed: true,
+      significant_value_increase_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      vehicle_year: 2020,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Good condition",
+      odometer_miles: 60_000,
+      goods_or_services_received: false,
+    },
+    vehicle_material_improvement_pdf_review: {
+      reviewed_by: "Pat Preparer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: base.filer.primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      vehicle_vin: "1HGBH41JXMN109186",
+      contribution_date: "2025-06-01",
+      acknowledgment_furnished_date: "2025-06-20",
+      intended_improvement_description: "Replace failed engine with new engine",
+      copy_b_or_equivalent_confirmed: true,
+      no_transfer_before_improvement_box5a_confirmed: true,
+      material_improvement_box5c_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      no_goods_or_services_confirmed: true,
+      reviewed_pdf_matches_source_confirmed: true,
+    },
+  };
+  const result = execute(plan, registry, {
+    ...base.inputs,
+    schedule_a: {
+      line_5a_state_income_tax: 24_000,
+      line_8a_mortgage_interest_1098: 12_000,
+      current_noncash_gift_inventory_complete_confirmed: true,
+      other_prior_charitable_carryovers_absent_confirmed: true,
+      capital_gain_property_carryovers: [],
+    },
+    f8283: { section_a_items: [improvement] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 4_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 40_000);
+  const pending = buildPending(result.pending);
+  const attachment = {
+    fileName: improvement.vehicle_acknowledgment_attachment_file_name,
+    description:
+      "DoneeOrganizationContemporaneousWrittenAcknowledgment material improvement",
+    bytes: acknowledgmentBytes,
+  };
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [attachment],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesVehicleNotTrnsfrInd>X</CertifiesVehicleNotTrnsfrInd>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesDetailedImprvDesc>Replace failed engine with new engine</CertifiesDetailedImprvDesc>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OtherThanByCashOrCheckAmt>4000</OtherThanByCashOrCheckAmt>",
+  );
+  const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+  await assertRejects(
+    () =>
+      buildMefBundle(pending, {
+        filer: base.filer,
+        attachments: [{
+          ...attachment,
+          bytes: new Uint8Array(acknowledgmentBytes).reverse(),
+        }],
+      }),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        f8283: {
+          ...pending.f8283,
+          section_a_items: [{
+            ...pending.f8283!.section_a_items![0],
+            vehicle_material_improvement_pdf_review: {
+              ...pending.f8283!.section_a_items![0]
+                .vehicle_material_improvement_pdf_review!,
+              intended_improvement_description: "Routine oil change",
+            },
+          }],
+        },
+      }, { filer: base.filer, attachments: [attachment] }),
+    Error,
+  );
+});

@@ -323,7 +323,8 @@ export async function buildPdfBytes(
     form8283Source?.section_a_items?.some((item) =>
       item.vehicle_sale_acknowledgment !== undefined ||
       item.vehicle_needy_transfer_acknowledgment !== undefined ||
-      item.vehicle_significant_use_acknowledgment !== undefined
+      item.vehicle_significant_use_acknowledgment !== undefined ||
+      item.vehicle_material_improvement_acknowledgment !== undefined
     )
   ) {
     if (!preparedBundle || !filer) {

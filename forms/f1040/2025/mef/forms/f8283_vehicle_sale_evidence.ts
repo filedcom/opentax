@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { MefPdfAttachment } from "../form-descriptor.ts";
 import {
   inputSchema as form8283SourceSchema,
+  vehicleMaterialImprovementPdfReviewSchema,
   vehicleNeedyPdfReviewSchema,
   vehicleSalePdfReviewSchema,
   vehicleSignificantUsePdfReviewSchema,
@@ -166,6 +167,85 @@ export async function verifyVehicleSignificantUseAcknowledgmentEvidence(
   }
 }
 
+/** Check a box-5a/5c material-improvement certification against its PDF bytes. */
+export async function verifyVehicleMaterialImprovementAcknowledgmentEvidence(
+  item: SectionAItem,
+  reviewInput: unknown,
+  attachment: VehicleSaleAttachment,
+  filerSsn: string,
+): Promise<void> {
+  const review = vehicleMaterialImprovementPdfReviewSchema.parse(reviewInput);
+  const ack = item.vehicle_material_improvement_acknowledgment;
+  if (
+    item.is_vehicle !== true || !ack || !item.vehicle_vin ||
+    !item.date_contributed ||
+    !item.vehicle_acknowledgment_attachment_file_name ||
+    item.deduction_claimed === undefined || item.deduction_claimed <= 500 ||
+    item.fmv === undefined || item.deduction_claimed > item.fmv ||
+    !validIsoDate(item.date_contributed) || !validIsoDate(review.reviewed_on) ||
+    !validIsoDate(ack.acknowledgment_furnished_date) ||
+    ack.acknowledgment_furnished_date < item.date_contributed ||
+    review.reviewed_on < ack.acknowledgment_furnished_date ||
+    (Date.parse(`${ack.acknowledgment_furnished_date}T00:00:00Z`) -
+            Date.parse(`${item.date_contributed}T00:00:00Z`)) / 86_400_000 >
+      30 ||
+    filerSsn.replaceAll("-", "") !== review.taxpayer_ssn ||
+    attachment.fileName !== item.vehicle_acknowledgment_attachment_file_name ||
+    !/^(?:Form1098C|DoneeOrganizationContemporaneousWrittenAcknowledgment)/
+      .test(attachment.description) ||
+    !attachment.documentId.trim() ||
+    review.donee_name !== ack.donee_name ||
+    review.donee_ein !== ack.donee_ein ||
+    item.donee_organization_name !== ack.donee_name ||
+    item.donee_organization_us_address?.line1 !== ack.donee_us_address.line1 ||
+    (item.donee_organization_us_address?.line2 ?? "") !==
+      (ack.donee_us_address.line2 ?? "") ||
+    item.donee_organization_us_address?.city !== ack.donee_us_address.city ||
+    item.donee_organization_us_address?.state !== ack.donee_us_address.state ||
+    item.donee_organization_us_address?.zip !== ack.donee_us_address.zip ||
+    review.vehicle_vin !== item.vehicle_vin ||
+    review.contribution_date !== item.date_contributed ||
+    review.acknowledgment_furnished_date !==
+      ack.acknowledgment_furnished_date ||
+    review.intended_improvement_description !==
+      ack.intended_improvement_description ||
+    ack.no_transfer_before_completion_confirmed !== true ||
+    ack.major_repair_or_addition_confirmed !== true ||
+    ack.significant_value_increase_confirmed !== true ||
+    ack.no_additional_donor_payment_confirmed !== true ||
+    ack.goods_or_services_received !== false
+  ) {
+    throw new Error(
+      "Form 8283 material-improvement acknowledgment review differs from owner, donee, VIN, date, box 5a/5c improvement, or prepared attachment",
+    );
+  }
+  let pdf: PDFDocument;
+  try {
+    pdf = await PDFDocument.load(attachment.bytes);
+  } catch {
+    throw new Error(
+      "Form 8283 material-improvement acknowledgment is not a readable PDF",
+    );
+  }
+  if (pdf.getPageCount() === 0) {
+    throw new Error(
+      "Form 8283 material-improvement acknowledgment needs a PDF page",
+    );
+  }
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", attachment.bytes),
+  );
+  const actualSha256 = Array.from(
+    digest,
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  if (actualSha256 !== review.pdf_sha256) {
+    throw new Error(
+      "Form 8283 material-improvement acknowledgment PDF differs from the exact reviewed bytes",
+    );
+  }
+}
+
 export interface VehicleSaleAttachment {
   readonly fileName: string;
   readonly description: string;
@@ -277,7 +357,8 @@ export async function assertPreparedVehicleAcknowledgments(
     if (
       !item.vehicle_sale_acknowledgment &&
       !item.vehicle_needy_transfer_acknowledgment &&
-      !item.vehicle_significant_use_acknowledgment
+      !item.vehicle_significant_use_acknowledgment &&
+      !item.vehicle_material_improvement_acknowledgment
     ) continue;
     const fileName = item.vehicle_acknowledgment_attachment_file_name;
     const attachment = attachments.find((row) => row.fileName === fileName);
@@ -305,10 +386,17 @@ export async function assertPreparedVehicleAcknowledgments(
         { ...attachment, documentId: reference[1] },
         filerSsn,
       );
-    } else {
+    } else if (item.vehicle_significant_use_acknowledgment) {
       await verifyVehicleSignificantUseAcknowledgmentEvidence(
         item,
         item.vehicle_significant_use_pdf_review,
+        { ...attachment, documentId: reference[1] },
+        filerSsn,
+      );
+    } else {
+      await verifyVehicleMaterialImprovementAcknowledgmentEvidence(
+        item,
+        item.vehicle_material_improvement_pdf_review,
         { ...attachment, documentId: reference[1] },
         filerSsn,
       );

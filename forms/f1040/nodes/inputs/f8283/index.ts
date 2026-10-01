@@ -118,6 +118,25 @@ export const vehicleSignificantUsePdfReviewSchema = z.object({
   reviewed_pdf_matches_source_confirmed: z.literal(true),
 }).strict();
 
+export const vehicleMaterialImprovementPdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  intended_improvement_description: z.string().trim().min(1),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  no_transfer_before_improvement_box5a_confirmed: z.literal(true),
+  material_improvement_box5c_confirmed: z.literal(true),
+  no_additional_donor_payment_confirmed: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
 // Form 1098-C box 5b: the donee certifies a below-FMV transfer to a needy
 // person in direct furtherance of its charitable transportation purpose.
 const vehicleNeedyTransferAcknowledgmentSchema = z.object({
@@ -288,6 +307,8 @@ const sectionAItemSchema = z.object({
     .optional(),
   vehicle_material_improvement_acknowledgment:
     vehicleMaterialImprovementAcknowledgmentSchema.optional(),
+  vehicle_material_improvement_pdf_review:
+    vehicleMaterialImprovementPdfReviewSchema.optional(),
   // Name of the actual donee-issued Form 1098-C or contemporaneous written
   // acknowledgment PDF supplied to the MeF bundle. The native statement is
   // not a substitute for this binary attachment under F8283-029/031/032/033.

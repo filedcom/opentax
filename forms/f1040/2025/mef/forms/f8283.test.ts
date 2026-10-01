@@ -1513,9 +1513,15 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
 });
 
 Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", async () => {
+  const bytes = await acknowledgmentPdf();
+  const pdfSha256 = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
   const item = {
     ...needyTransferVehicle(),
     vehicle_needy_transfer_acknowledgment: undefined,
+    donee_organization_name: "Repair Charity",
     vehicle_material_improvement_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -1540,6 +1546,24 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
       odometer_miles: 60_000,
       goods_or_services_received: false,
     },
+    vehicle_material_improvement_pdf_review: {
+      reviewed_by: "Test reviewer",
+      reviewed_on: "2026-02-01",
+      taxpayer_ssn: testFiler().primarySSN.replaceAll("-", ""),
+      pdf_sha256: pdfSha256,
+      donee_name: "Repair Charity",
+      donee_ein: "987654321",
+      vehicle_vin: "1HGBH41JXMN109186",
+      contribution_date: "2025-06-01",
+      acknowledgment_furnished_date: "2025-06-20",
+      intended_improvement_description: "Replace failed engine with new engine",
+      copy_b_or_equivalent_confirmed: true,
+      no_transfer_before_improvement_box5a_confirmed: true,
+      material_improvement_box5c_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      no_goods_or_services_confirmed: true,
+      reviewed_pdf_matches_source_confirmed: true,
+    },
   } as const;
   const bundle = await buildMefBundle({
     f8283: { section_a_items: [item] },
@@ -1548,7 +1572,7 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
     attachments: [{
       fileName: "Form1098C-Civic.pdf",
       description: "Form1098C Civic material improvement certification",
-      bytes: await acknowledgmentPdf(),
+      bytes,
     }],
   });
   assertStringIncludes(
