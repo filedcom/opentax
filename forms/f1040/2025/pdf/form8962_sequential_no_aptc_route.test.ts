@@ -23,6 +23,153 @@ const fourGapFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-three-no-aptc-policies-four-uncovered-months"
 )!;
 
+for (
+  const variant of [
+    {
+      id: "single-two-no-aptc-policies-ten-uncovered-months",
+      coveredMonths: [1, 12],
+      credit: 1_200,
+      policyCount: 2,
+    },
+    {
+      id: "single-three-no-aptc-policies-nine-uncovered-months",
+      coveredMonths: [1, 6, 12],
+      credit: 1_950,
+      policyCount: 3,
+    },
+  ] as const
+) {
+  Deno.test(`${variant.policyCount} sequential no-APTC policies support every possible uncovered-month count`, async () => {
+    const sparseFixture = pdfReviewFixtures.find((item) =>
+      item.id === variant.id
+    )!;
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      sparseFixture.inputs,
+      { taxYear: 2025, formType: "f1040" },
+    );
+    assertEquals(result.diagnostics, []);
+    assertEquals(
+      result.pending.form8962.total_premium_tax_credit,
+      variant.credit,
+    );
+    assertEquals(
+      result.pending.schedule3.line9_premium_tax_credit,
+      variant.credit,
+    );
+    assertEquals(
+      result.pending.f1040.line31_additional_payments,
+      variant.credit,
+    );
+    const pending = buildPending(result.pending);
+    const bundle = await buildMefBundle(pending, {
+      filer: sparseFixture.filer,
+      attachments: [],
+    });
+    assertEquals(
+      (bundle.xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length,
+      variant.policyCount,
+    );
+    assertStringIncludes(
+      bundle.xml,
+      `<ReconciledPremiumTaxCreditAmt>${variant.credit}</ReconciledPremiumTaxCreditAmt>`,
+    );
+    const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+      {};
+    assertEquals(
+      form8962Pdf.instances?.(projected, sparseFixture.filer, pending)?.length,
+      1,
+    );
+    for (let month = 1; month <= 12; month++) {
+      if (variant.coveredMonths.some((covered) => covered === month)) continue;
+      const name = [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER",
+      ][month - 1];
+      assertEquals(bundle.xml.includes(`<MonthCd>${name}</MonthCd>`), false);
+      assertEquals(
+        (projected as Record<string, unknown>)[`pdf_month_${month}_premium`],
+        undefined,
+      );
+    }
+    const pdf = await buildPdfBytes(
+      pending,
+      sparseFixture.filer,
+      ".pdf-cache",
+      bundle,
+    );
+    assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+
+    const source = form1095aSchema.parse(pending.f1095a);
+    const changedPolicy = source.f1095as[variant.policyCount - 1];
+    const unsupportedCoverage = variant.policyCount === 2
+      ? {
+        ...changedPolicy,
+        monthly_premiums: changedPolicy.monthly_premiums!.map((amount, index) =>
+          index === 0 ? 900 : index === 11 ? 0 : amount
+        ),
+      }
+      : {
+        ...source.f1095as[0],
+        monthly_premiums: source.f1095as[0].monthly_premiums!.map((
+          amount,
+          index,
+        ) => index === 2 ? 900 : amount),
+        annual_premium: 1_800,
+      };
+    const unsupported = {
+      ...pending,
+      f1095a: {
+        f1095as: variant.policyCount === 2
+          ? [source.f1095as[0], unsupportedCoverage]
+          : [unsupportedCoverage, ...source.f1095as.slice(1)],
+      },
+    };
+    await assertRejects(
+      () =>
+        buildMefBundle(unsupported, {
+          filer: sparseFixture.filer,
+          attachments: [],
+        }),
+      Error,
+      "monthly PTC needs distinct same-state nonshared policies",
+    );
+    await assertRejects(
+      async () => {
+        form8962Pdf.instances?.(projected, sparseFixture.filer, unsupported);
+      },
+      Error,
+      "monthly PTC needs distinct same-state nonshared policies",
+    );
+    await assertRejects(
+      () =>
+        buildMefBundle({
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line9_premium_tax_credit: variant.credit - 1,
+          },
+        }, {
+          filer: sparseFixture.filer,
+          attachments: [],
+        }),
+      Error,
+      "monthly credit differs from finalized return",
+    );
+  });
+}
+
 Deno.test("three sequential no-APTC policies leave four sourced months uncovered at 200% FPL", async () => {
   const result = execute(
     buildExecutionPlan(registry),
@@ -97,14 +244,14 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
         attachments: [],
       }),
     Error,
-    "monthly PTC needs distinct same-state nonshared policies",
+    "uncovered month 11 must have zero policy and credit amounts",
   );
   await assertRejects(
     async () => {
       form8962Pdf.instances?.(projected, fourGapFixture.filer, fifthGap);
     },
     Error,
-    "monthly PTC needs distinct same-state nonshared policies",
+    "uncovered month 11 must have zero policy and credit amounts",
   );
   await assertRejects(
     () =>
@@ -209,14 +356,14 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
         attachments: [],
       }),
     Error,
-    "monthly PTC needs distinct same-state nonshared policies",
+    "uncovered month 7 must have zero policy and credit amounts",
   );
   await assertRejects(
     async () => {
       form8962Pdf.instances?.(projected, threeGapFixture.filer, fifthGap);
     },
     Error,
-    "monthly PTC needs distinct same-state nonshared policies",
+    "uncovered month 7 must have zero policy and credit amounts",
   );
   await assertRejects(
     () =>

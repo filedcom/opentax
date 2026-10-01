@@ -1126,6 +1126,11 @@ function reconcileMultiNoAptcPolicyMonths(
       policies.filter((policy) => (policy.monthly_premiums?.[month] ?? 0) > 0)
         .length,
   );
+  const uncoveredMonths = activePolicyCounts.filter((count) => count === 0)
+    .length;
+  // Preserve the existing two-policy overlap route for zero, one, or two
+  // uncovered months. Wider gaps use one contiguous block per policy.
+  const sequentialOnly = policies.length === 3 || uncoveredMonths > 2;
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
@@ -1136,10 +1141,8 @@ function reconcileMultiNoAptcPolicyMonths(
     (policies.length !== 2 && policies.length !== 3) ||
     new Set(policies.map((policy) => policy.policy_number)).size !==
       policies.length ||
-    activePolicyCounts.filter((count) => count === 0).length >
-      (policies.length === 3 ? 4 : 2) ||
-    (policies.length === 3 && activePolicyCounts.some((count) => count > 1)) ||
-    (policies.length === 3 && policies.some((policy) => {
+    (sequentialOnly && activePolicyCounts.some((count) => count > 1)) ||
+    (sequentialOnly && policies.some((policy) => {
       const coveredMonths = policy.monthly_premiums?.flatMap((premium, index) =>
         premium > 0 ? [index] : []
       ) ?? [];

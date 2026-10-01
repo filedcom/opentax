@@ -21,10 +21,10 @@ $600/$700 determined SLCSPs produce $7,200 PTC at $30,120 household income.
 Missing second-policy July payment evidence and a payment after April 15,
 2026, reject at native filing; missing evidence also rejects PDF projection.
 The fixtures are authored but unrun. Overlapping policies continue through
-the existing same-SLCSP two-policy checks. Three or more uncovered months for
-two policies, five or more for three policies, more than three policies, partial
-payments across policies, other covered people, and
-authentication of Marketplace/payment document bytes remain open.
+the existing same-SLCSP two-policy checks. Sequential nonoverlapping policy
+blocks now cover all possible gap counts; two-policy overlap with more than two
+gaps, more than three policies, partial payments across policies, other covered
+people, and authentication of Marketplace/payment document bytes remain open.
 
 ## Three sequential no-APTC policies (staged, unrun)
 
@@ -44,9 +44,8 @@ $900 paid premium and a Marketplace-determined $600, $700, or $800 SLCSP for
 its policy period. The twelve monthly credits total $7,800. Full-return,
 native/PDF, missing-third-policy-payment, overlapping-coverage, and
 returning-policy fixtures are authored but unrun. Four or more policies, other
-covered people, five or more uncovered months, partial payments across policies,
-and external source-byte authentication
-remain open.
+covered people, partial payments across policies, and external source-byte
+authentication remain open.
 
 ## One uncovered month between two or three policies (staged, unrun)
 
@@ -68,9 +67,8 @@ Marketplace/payment evidence for the uncovered month and a second-coverage-gap
 tamper case. The [2025 Form 8962 monthly
 instructions](https://www.irs.gov/instructions/i8962) use the amounts from
 Forms 1095-A only for months with coverage and allow a zero monthly row when no
-premium is eligible. Five or more uncovered months, overlapping three-policy
-coverage, wider households, partial payments across policies, and source-byte
-authentication remain open.
+premium is eligible. Overlapping three-policy coverage, wider households,
+partial payments across policies, and source-byte authentication remain open.
 
 ## Three uncovered months across three sequential policies (staged, unrun)
 
@@ -82,11 +80,12 @@ its policy period; each covered month has its own Marketplace SLCSP
 determination and timely full-payment evidence. Nine monthly credits total
 $5,850 on Form 8962, Schedule 3 line 9, and Form 1040 line 31. Native MeF omits
 the three uncovered monthly groups, and the PDF leaves their entries blank. A
-fifth uncovered month and changed Schedule 3 credit reject in the authored
-fixtures. The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+source change creating a fifth uncovered month without recalculating the filed
+rows and a changed Schedule 3 credit reject in the authored fixtures. The
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require monthly lines for fewer than twelve enrollment months and applicable
-SLCSP determinations for covered months without APTC. Five or more uncovered
-months, other tax families, and source-byte authentication remain open.
+SLCSP determinations for covered months without APTC. Other tax families and
+source-byte authentication remain open.
 
 ## Four uncovered months across three sequential policies (staged, unrun)
 
@@ -97,11 +96,29 @@ determination and timely full-payment record; the original Forms 1095-A report
 zero A/B/C columns for all other months. At 200% FPL, the eight monthly credits
 total $5,200 on Form 8962, Schedule 3 line 9, and Form 1040 line 31. Native
 MeF omits the four uncovered monthly groups, and the PDF leaves those entries
-blank. The authored fixtures reject a fifth uncovered month and changed
-Schedule 3 credit. The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
-direct lines 12–23 for enrollment fewer than twelve months. Five or more
-uncovered months, wider tax families, and source-byte authentication remain
-open.
+blank. The authored fixtures reject a source change creating a fifth uncovered
+month without recalculating the filed rows and a changed Schedule 3 credit. The
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+direct lines 12–23 for enrollment fewer than twelve months. Wider tax
+families and source-byte authentication remain open.
+
+## All sequential-policy gap counts (staged, unrun)
+
+The native/PDF source guard now accepts any number of genuinely uncovered months
+within the same one-filer, same-state, no-APTC scope when two or three distinct
+policies each cover one contiguous nonoverlapping block. A two-policy year can
+therefore have at most ten uncovered months; a three-policy year at most nine,
+since each policy must cover at least one month. The authored maximum-gap cases
+cover January/December on two policies ($1,200 PTC) and January/June/December
+on three ($1,950 PTC), each at 200% FPL. Covered months retain the original
+Form 1095-A columns, Marketplace SLCSP determinations, and timely full-payment
+evidence. Every uncovered row stays zero in Form 8962; native MeF omits it and
+the PDF leaves it blank. The calculated credit reaches Schedule 3 line 9 and
+Form 1040 line 31 once. Overlap or returning policy source changes and finalized
+credit drift reject in the authored fixtures. Prior two-policy overlap cases
+with at most two gaps remain under their existing guard. Wider households,
+shared policies, other payment arrangements, and external source-byte
+authentication remain open.
 
 The existing zero-APTC, one-person, one-policy route now reconciles the
 applicable figure from the TY2025 Form 8962 Table 2 at 100%-399% of the federal

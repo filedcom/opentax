@@ -4458,6 +4458,47 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-no-aptc-policies-ten-uncovered-months",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-TEN-GAPS-JAN", 1, 1, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-TEN-GAPS-DEC", 12, 12, 700),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Only January and December have sourced coverage; ten uncovered months have zero Form 8962 amounts and blank native/PDF rows",
+      "The two covered months yield $1,200 PTC on Schedule 3 line 9 and Form 1040 line 31",
+    ],
+  },
+  {
+    id: "single-three-no-aptc-policies-nine-uncovered-months",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        sequentialNoAptcPolicy("TX-NO-APTC-NINE-GAPS-JAN", 1, 1, 600),
+        sequentialNoAptcPolicy("TX-NO-APTC-NINE-GAPS-JUN", 6, 6, 700),
+        sequentialNoAptcPolicy("TX-NO-APTC-NINE-GAPS-DEC", 12, 12, 800),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Only January, June, and December have sourced coverage; nine uncovered months have zero Form 8962 amounts and blank native/PDF rows",
+      "The three covered months yield $1,950 PTC on Schedule 3 line 9 and Form 1040 line 31",
+    ],
+  },
+  {
     id: "single-marketplace-aptc-repayment",
     inputs: {
       general: singleGeneral,

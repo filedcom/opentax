@@ -191,8 +191,9 @@ covered month's credit additionally depends on the taxpayer's share of the
 enrollment premium being paid by the return due date (subject to the stated
 exceptions). Zero APTC is therefore not evidence of zero PTC.
 
-The two- or three-policy same-state no-APTC monthly route now also admits up to
-two uncovered months for two policies and up to four for three policies. A bounded two-policy case has one gap in
+The two- or three-policy same-state no-APTC monthly route now also admits all
+possible uncovered-month counts for sequential nonoverlapping policies: at most
+ten gaps for two policies and nine for three. A bounded two-policy case has one gap in
 each policy period (April and September). Both 1095-A statements report zero
 premium, SLCSP, and APTC in the corresponding gap; neither gap has a
 Marketplace SLCSP determination or payment record. The ten covered months have
@@ -202,8 +203,10 @@ the ten monthly credits total $2,170 on Schedule 3 line 9 and Form 1040 line
 blank, including contribution. Source, credit, ghost-evidence, and final-return
 tamper fixtures are authored for the deferred batch. The IRS instructions for
 lines 12–23 direct monthly entries for partial-year enrollment and a blank
-column (c) when both premium and SLCSP are blank. Five or more uncovered
-months, Marketplace source-byte authentication, and wider families remain open.
+column (c) when both premium and SLCSP are blank. Two-policy overlap with more
+than two gaps, Marketplace source-byte authentication, and wider families remain
+open. The maximum-gap examples are documented in the
+[no-APTC gap](ty2025-form8962-no-aptc-below400.md).
 
 The `f1095a.slcsp_corrections` amounts alone remain insufficient. A bounded
 one-policy monthly filing route now also requires one `no_aptc_monthly_evidence`
