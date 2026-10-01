@@ -745,8 +745,12 @@ function buildIRS1116(
       context?.pending,
       companion.data.prior_year_carryover_source,
     );
-    const schedule3 = context?.pending?.schedule3;
-    const return1040 = context?.pending?.f1040;
+    const schedule3 = context?.pending?.schedule3 as
+      | Record<string, unknown>
+      | undefined;
+    const return1040 = context?.pending?.f1040 as
+      | Record<string, unknown>
+      | undefined;
     if (
       return1040 &&
       (typeof schedule3?.line8_total !== "number" ||

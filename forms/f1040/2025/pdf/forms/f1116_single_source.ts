@@ -594,7 +594,8 @@ export function projectSingleSourceForm1116Pdf(
     summary.allowedCredit !== line24 ||
     schedule3.line1_foreign_tax_credit !== line33 ||
     (priorCarryover > 0 &&
-      (f1040.line20_nonrefundable_credits !== schedule3.line8_total ||
+      (typeof f1040.line20_nonrefundable_credits !== "number" ||
+        f1040.line20_nonrefundable_credits !== schedule3.line8_total ||
         f1040.line20_nonrefundable_credits < line33)) ||
     fields.foreign_tax_paid !== item.foreign_tax_paid ||
     fields.foreign_income !== item.foreign_gross_income

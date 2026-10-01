@@ -77,6 +77,7 @@ export const form8826Pdf: PdfFormDescriptor = {
       }], allPending);
     }
     const parent = form3800InputSchema.parse(allPending.f3800);
+    const allowedCredit = allPending.f3800?.allowed_credit;
     const entries = parent.f8826_credit_entries ?? [];
     if (
       entries.length !== (k1 ? 2 : 1) ||
@@ -93,11 +94,11 @@ export const form8826Pdf: PdfFormDescriptor = {
       )) ||
       entries.reduce((sum, entry) => sum + entry.credit_amount, 0) !==
         lines.line8 ||
-      parent.allowed_credit === undefined
+      typeof allowedCredit !== "number"
     ) {
       throw new Error("Form 8826 PDF line 8 differs from Form 3800 source");
     }
-    assertForm3800FinalCreditJoin(parent.allowed_credit, allPending);
+    assertForm3800FinalCreditJoin(allowedCredit, allPending);
     return {
       ...moneyFields(1, lines.line1),
       ...moneyFields(3, lines.line3),

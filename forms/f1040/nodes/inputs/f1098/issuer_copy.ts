@@ -36,7 +36,10 @@ export async function verifyForm1098IssuerCopy(
   const item = itemSchema.parse(rawItem);
   const review = form1098IssuerCopyReviewSchema.parse(rawReview);
   const digest = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(await crypto.subtle.digest(
+      "SHA-256",
+      Uint8Array.from(bytes),
+    )),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   if (

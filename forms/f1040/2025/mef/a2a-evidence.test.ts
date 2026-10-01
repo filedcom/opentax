@@ -1,8 +1,8 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { zipSync } from "fflate";
 import {
-  readA2aInboundPayload,
   readA2aArchivedSubmission,
+  readA2aInboundPayload,
   readA2aSendRecord,
   recordA2aInboundPayload,
   recordA2aSendPackage,
@@ -13,8 +13,15 @@ const messageId = "00123202626900000001";
 const encoder = new TextEncoder();
 
 async function digest(bytes: Uint8Array): Promise<string> {
-  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-    (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(bytes),
+      ),
+    ),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 function packageFor(id = submissionId) {
@@ -57,23 +64,29 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
     assertEquals(evidence.submissionArchiveSha256, await digest(archive));
     assertEquals(evidence.manifestSha256, await digest(manifest));
     await assertRejects(
-      () => readA2aArchivedSubmission(root, messageId, {
-        ...expected, submissionXmlSha256: "0".repeat(64),
-      }),
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          ...expected,
+          submissionXmlSha256: "0".repeat(64),
+        }),
       Error,
       "XML digest differs from expected return",
     );
     await assertRejects(
-      () => readA2aArchivedSubmission(root, messageId, {
-        ...expected, taxpayerSsn: "999887777",
-      }),
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          ...expected,
+          taxpayerSsn: "999887777",
+        }),
       Error,
       "taxpayer, or XML digest differs",
     );
     const key = await digest(encoder.encode(messageId));
     await Deno.writeFile(
       `${root}/requests/${key}/container.zip`,
-      zipSync({ [`${submissionId}.zip`]: encoder.encode("substituted archive") }),
+      zipSync({
+        [`${submissionId}.zip`]: encoder.encode("substituted archive"),
+      }),
     );
     await assertRejects(
       () => readA2aArchivedSubmission(root, messageId, expected),

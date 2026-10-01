@@ -150,7 +150,10 @@ function reconcileActiveBusinessIncome(
     );
   }
   let employeeWages = 0;
-  if ((f1040.line1a_wages ?? 0) > 0 || pending.w2 !== undefined) {
+  if (
+    (typeof f1040.line1a_wages === "number" &&
+      f1040.line1a_wages > 0) || pending.w2 !== undefined
+  ) {
     if (!pending.w2) {
       throw new Error(
         "Form 4562 line 11 employee wages need their identified W-2 source",

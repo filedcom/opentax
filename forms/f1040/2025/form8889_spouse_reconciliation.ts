@@ -160,22 +160,29 @@ export function reconcileDatedExceptionForm8889(
     line10_adjustments: z.number(),
     line23_other_taxes: z.number().optional(),
   }).passthrough().parse(allPending?.f1040);
+  const printed = z.object({
+    print_line13_deduction: z.number().optional(),
+    print_line16_taxable: z.number().optional(),
+    print_line17b_penalty: z.number().optional(),
+    print_line20: z.number().optional(),
+    print_line21: z.number().optional(),
+  }).passthrough().parse(filed);
   if (
     (schedule1.line13_hsa_deduction ?? 0) !==
-      (filed.print_line13_deduction ?? 0) ||
+      (printed.print_line13_deduction ?? 0) ||
     (schedule1.line8f_hsa_income ?? 0) !==
-      (filed.print_line16_taxable ?? 0) + (filed.print_line20 ?? 0) ||
+      (printed.print_line16_taxable ?? 0) + (printed.print_line20 ?? 0) ||
     (schedule2.line17c_hsa_penalty ?? 0) !==
-      (filed.print_line17b_penalty ?? 0) ||
+      (printed.print_line17b_penalty ?? 0) ||
     (schedule2.line17d_hsa_eligibility_tax ?? 0) !==
-      (filed.print_line21 ?? 0) ||
+      (printed.print_line21 ?? 0) ||
     schedule1.line10_total_additional_income !==
       return1040.line8_additional_income ||
     schedule1.line26_total_adjustments !== return1040.line10_adjustments ||
     (source.age_65_exception_evidence !== undefined &&
       source.disability_exception_evidence !== undefined &&
       return1040.line23_other_taxes !==
-        (filed.print_line17b_penalty ?? 0) + (filed.print_line21 ?? 0))
+        (printed.print_line17b_penalty ?? 0) + (printed.print_line21 ?? 0))
   ) {
     throw new Error(
       "Form 8889 dated exception amounts differ from filed return",

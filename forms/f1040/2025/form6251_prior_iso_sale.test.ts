@@ -32,6 +32,7 @@ Deno.test("prior ISO sale replays 2024 lot and 2025 Form 8949 into native/PDF Fo
   assertEquals(result.diagnostics, []);
   const filed = result.pending.form6251!;
   const filer = extractFilerIdentity(general);
+  if (!filer) throw new Error("Expected synthetic filer identity");
   assertEquals(filed.line2k_disposition, -15_000);
   assertEquals(result.pending.f1040?.line7_capital_gain, 30_000);
   assertStringIncludes(
@@ -148,6 +149,7 @@ Deno.test("prior ISO loss sale caps regular and AMT Schedule D losses separately
   assertEquals(result.diagnostics, []);
   const filed = result.pending.form6251!;
   const filer = extractFilerIdentity(general);
+  if (!filer) throw new Error("Expected synthetic filer identity");
   // The $1,000 regular loss is fully deductible; the $16,000 AMT loss is
   // limited to $3,000, leaving a $2,000 negative line 2k adjustment.
   assertEquals(result.pending.f1040?.line7_capital_gain, -1_000);

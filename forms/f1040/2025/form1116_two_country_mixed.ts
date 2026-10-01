@@ -192,8 +192,6 @@ export function reconcileForm1116TwoCountryMixed(
     interest.box7 !== "Canada" ||
     dividend.foreign_tax_irs_country_code !== "FR" ||
     dividend.box8 !== "France" ||
-    interest.foreign_tax_irs_country_code ===
-      dividend.foreign_tax_irs_country_code ||
     !Array.isArray(refs) || refs.length !== 2 ||
     JSON.stringify([...refs].sort()) !==
       JSON.stringify(

@@ -273,11 +273,13 @@ export function qualifiedEntireDispositionLoss(
   const sale = item.passive_property_sales?.[0];
   const priorOperating = item.prior_unallowed_passive_operating ?? 0;
   const firstYear = item.first_year_activity_source;
+  const priorSource = item.prior_year_8582_source;
   const sourcedPriorLoss = firstYear === undefined && priorOperating > 0 &&
-    item.prior_year_8582_source?.activity_id === item.activity_id &&
-    item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
-    item.prior_year_8582_source.filed_part_ix_rows === undefined &&
-    item.prior_year_8582_source.filed_part_viii_row === undefined;
+    priorSource !== undefined &&
+    priorSource.activity_id === item.activity_id &&
+    priorSource.filed_part_vii_column_c === priorOperating &&
+    priorSource.filed_part_ix_rows === undefined &&
+    priorSource.filed_part_viii_row === undefined;
   const sourcedFirstYear = firstYear !== undefined && sale !== undefined &&
     firstYear.activity_id === item.activity_id &&
     firstYear.activity_name === item.property_description &&

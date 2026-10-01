@@ -559,7 +559,8 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       const review = item.foreign_tax_holding_review;
       if (
         !review ||
-        review.qualifying_held_days_in_31_day_window > item.holdingPeriodDays ||
+        review.qualifying_held_days_in_31_day_window >
+          item.holdingPeriodDays! ||
         review.qualifying_held_days_in_31_day_window +
               review.diminished_risk_days_excluded > 31 ||
         Number.isNaN(Date.parse(`${review.ex_dividend_date}T00:00:00Z`)) ||

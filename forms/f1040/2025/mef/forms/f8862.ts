@@ -456,6 +456,7 @@ function validateFinalizedCreditClaims(
         if (
           samePerson &&
           (typeof samePerson.ssn !== "string" ||
+            typeof student.student_ssn !== "string" ||
             samePerson.ssn.replace(/\D/g, "") !==
               student.student_ssn.replace(/\D/g, ""))
         ) {

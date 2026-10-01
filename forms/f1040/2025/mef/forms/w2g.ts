@@ -68,7 +68,9 @@ function assertRecipient(
 export function assertWithheldW2GSource(
   item: W2GItem,
   filer: FilerIdentity | undefined,
-): void {
+): asserts item is
+  & W2GItem
+  & Required<Pick<W2GItem, "payer_us_address" | "payer_ein">> {
   if (
     item.calendar_year !== 2025 || !item.source_document_reference ||
     !item.payer_name?.trim() || !item.payer_name_control ||
