@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **279 completed bounded items** are preserved
+and the full progress summary. The **281 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -64,6 +64,9 @@ Publication 974's single-business Form 7206/PTC iteration now checks its
 Worksheet W income and deductions against identified Schedule C/SE sources.
 Form 7203 now allocates one S corporation K-1 loss across a sourced cash
 capital contribution and a separately funded shareholder note, stock first.
+Form 8962 now reconciles one two-person monthly no-APTC policy and a dependent's
+required-filing W-2 MAGI to the final credit. Form 8582's MFS rental allowance
+now requires twelve months of separately sourced spouse residence facts.
 Form 8801's preview-only prior AMT and carryforward amounts now require
 matching reviewed 2024 Form 6251/8801 line records; positive filing stays closed.
 Form 7217 now allocates a bounded liquidating partnership basis increase to
@@ -147,7 +150,7 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 264 | Bounded child routes exist; full form-family coverage remains open. |
+| Named tax-form gaps | 20 | 266 | Bounded child routes exist; full form-family coverage remains open. |
 | Native MeF and PDF parity | 3 | 11 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
