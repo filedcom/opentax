@@ -498,6 +498,28 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "mfs-w2-lived-apart-all-year-social-security-box",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.MFS,
+        spouse_first_name: "Other",
+        spouse_last_name: "Taxpayer",
+        spouse_ssn: "222-33-4444",
+        mfs_spouse_itemizing: false,
+        mfs_spouse_lived_with_taxpayer: false,
+      },
+      w2: [wage(10_000, 1_000, "Example Employer", "12-3456789")],
+    },
+    filer: mfsFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 marks MFS status, prints the spouse identity, and checks line 6d lived apart all year",
+      "Line 6c lump-sum election remains unmarked without any Social Security election",
+      "W-2 wages, withholding, and refund agree with the finalized Form 1040 and native XML",
+    ],
+  },
+  {
     id: "mfs-w2-legal-separation-eic-child",
     inputs: {
       general: {
