@@ -191,7 +191,7 @@ Deno.test("Form 8962 same-state A-B-A policies reconcile one evidenced Marketpla
         },
       }),
     Error,
-    "one sourced Marketplace-error SLCSP correction",
+    "sourced Marketplace-error SLCSP corrections",
   );
   assertThrows(
     () =>
@@ -206,6 +206,385 @@ Deno.test("Form 8962 same-state A-B-A policies reconcile one evidenced Marketpla
       }),
     Error,
     "differs from its Form 1095-A policy or calculated PTC",
+  );
+});
+
+Deno.test("Form 8962 same-state A-B-A route reconciles two evidenced SLCSP corrections", () => {
+  const corrections = [
+    {
+      month: 7,
+      basis: "marketplace_error" as const,
+      corrected_slcsp: 650,
+      determination_source: "marketplace_contact" as const,
+      determination_reference: "TX-MKT-2025-JUL",
+      determination_record_sha256: "b".repeat(64),
+      determined_on: "2026-02-01",
+    },
+    {
+      month: 8,
+      basis: "marketplace_error" as const,
+      corrected_slcsp: 700,
+      determination_source: "marketplace_tool" as const,
+      determination_reference: "TX-MKT-2025-AUG",
+      determination_record_sha256: "c".repeat(64),
+      determined_on: "2026-02-02",
+    },
+  ];
+  const correctedPolicies = [policies[0], {
+    ...policies[1],
+    slcsp_corrections: corrections,
+  }];
+  const correctedPending = {
+    ...pending,
+    f1095a: { f1095as: correctedPolicies },
+    schedule2: { line1a_excess_advance_premium: 1_446 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 1_446 },
+  };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    correctedPending.f1095a,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals((sourceFields?.monthly_slcsps as number[])[6], 650);
+  assertEquals((sourceFields?.monthly_slcsps as number[])[7], 700);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 954);
+  assertEquals(calculated?.excess_advance_premium, 1_446);
+  const correctedFields = {
+    ...fields,
+    monthly_ptc_rows: fields.monthly_ptc_rows.map((row, index) =>
+      index === 6
+        ? { ...row, slcsp: 650, max_assistance: 117, allowed_credit: 117 }
+        : index === 7
+        ? { ...row, slcsp: 700, max_assistance: 167, allowed_credit: 167 }
+        : row
+    ),
+    total_premium_tax_credit: 954,
+    excess_advance_payment: 1_446,
+    excess_advance_premium: 1_446,
+  };
+  const xml = form8962.build(correctedFields, {
+    filer,
+    pending: correctedPending,
+  });
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>650</MonthlyPremiumSLCSPAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>700</MonthlyPremiumSLCSPAmt>",
+  );
+  const projected =
+    form8962Pdf.projectFields?.(correctedFields, correctedPending) ?? {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, correctedPending)?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [correctedPolicies[0], {
+              ...correctedPolicies[1],
+              slcsp_corrections: [corrections[0]],
+            }],
+          },
+        },
+      }),
+    Error,
+    "differs from its Form 1095-A policy or calculated PTC",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...correctedPending,
+        f1095a: {
+          f1095as: [correctedPolicies[0], {
+            ...correctedPolicies[1],
+            slcsp_corrections: [corrections[0], {
+              ...corrections[1],
+              determination_record_sha256: undefined,
+            }],
+          }],
+        },
+      }),
+    Error,
+    "sourced Marketplace-error SLCSP corrections",
+  );
+});
+
+Deno.test("Form 8962 corrects every covered month of one alternating policy and rejects duplicate or missing evidence", () => {
+  const corrections = [5, 6, 7, 8].map((month) => ({
+    month,
+    basis: "marketplace_error" as const,
+    corrected_slcsp: 600 + (month - 4) * 50,
+    determination_source: "marketplace_contact" as const,
+    determination_reference: `TX-MKT-2025-${month}`,
+    determination_record_sha256: String(month).repeat(64),
+    determined_on: "2026-02-01",
+  }));
+  const correctedPolicies = [policies[0], {
+    ...policies[1],
+    slcsp_corrections: corrections,
+  }];
+  const correctedPending = {
+    ...pending,
+    f1095a: { f1095as: correctedPolicies },
+    schedule2: { line1a_excess_advance_premium: 1_096 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 1_096 },
+  };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    correctedPending.f1095a,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals((sourceFields?.monthly_slcsps as number[]).slice(4, 8), [
+    650,
+    700,
+    750,
+    800,
+  ]);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 1_304);
+  assertEquals(calculated?.excess_advance_premium, 1_096);
+  const correctedFields = {
+    ...fields,
+    monthly_ptc_rows: fields.monthly_ptc_rows.map((row, index) =>
+      index >= 4 && index < 8
+        ? {
+          ...row,
+          slcsp: corrections[index - 4].corrected_slcsp,
+          max_assistance: 67 + (index - 3) * 50,
+          allowed_credit: 67 + (index - 3) * 50,
+        }
+        : row
+    ),
+    total_premium_tax_credit: 1_304,
+    excess_advance_payment: 1_096,
+    excess_advance_premium: 1_096,
+  };
+  const xml = form8962.build(correctedFields, {
+    filer,
+    pending: correctedPending,
+  });
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>800</MonthlyPremiumSLCSPAmt>",
+  );
+  const projected =
+    form8962Pdf.projectFields?.(correctedFields, correctedPending) ?? {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, correctedPending)?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [correctedPolicies[0], {
+              ...correctedPolicies[1],
+              slcsp_corrections: [corrections[0], {
+                ...corrections[1],
+                month: 5,
+              }, ...corrections.slice(2)],
+            }],
+          },
+        },
+      }),
+    Error,
+    "distinct covered APTC months",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...correctedPending,
+        f1095a: {
+          f1095as: [correctedPolicies[0], {
+            ...correctedPolicies[1],
+            slcsp_corrections: corrections.slice(0, 3),
+          }],
+        },
+      }),
+    Error,
+    "differs from its Form 1095-A policy or calculated PTC",
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [correctedPolicies[0], {
+              ...correctedPolicies[1],
+              slcsp_corrections: corrections.map((item) =>
+                item.month === 8
+                  ? { ...item, determination_record_sha256: undefined }
+                  : item
+              ),
+            }],
+          },
+        },
+      }),
+    Error,
+    "sourced Marketplace-error SLCSP corrections",
+  );
+});
+
+Deno.test("Form 8962 reconciles independent SLCSP determinations on both alternating policies", () => {
+  const firstCorrection = {
+    month: 1,
+    basis: "marketplace_error" as const,
+    corrected_slcsp: 650,
+    determination_source: "marketplace_contact" as const,
+    determination_reference: "TX-A-JAN",
+    determination_record_sha256: "a".repeat(64),
+    determined_on: "2026-02-01",
+  };
+  const middleCorrections = [5, 6, 7, 8].map((month) => ({
+    month,
+    basis: "marketplace_error" as const,
+    corrected_slcsp: 600 + (month - 4) * 50,
+    determination_source: "marketplace_tool" as const,
+    determination_reference: `TX-B-${month}`,
+    determination_record_sha256: String(month).repeat(64),
+    determined_on: "2026-02-02",
+  }));
+  const correctedPolicies = [{
+    ...policies[0],
+    slcsp_corrections: [firstCorrection],
+  }, {
+    ...policies[1],
+    slcsp_corrections: middleCorrections,
+  }];
+  const correctedPending = {
+    ...pending,
+    f1095a: { f1095as: correctedPolicies },
+    schedule2: { line1a_excess_advance_premium: 1_046 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 1_046 },
+  };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    correctedPending.f1095a,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals((sourceFields?.monthly_slcsps as number[]).slice(0, 8), [
+    650,
+    600,
+    600,
+    600,
+    650,
+    700,
+    750,
+    800,
+  ]);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 1_354);
+  assertEquals(calculated?.excess_advance_premium, 1_046);
+  const correctedFields = {
+    ...fields,
+    monthly_ptc_rows: fields.monthly_ptc_rows.map((row, index) => {
+      const slcsp = index === 0
+        ? 650
+        : index >= 4 && index < 8
+        ? middleCorrections[index - 4].corrected_slcsp
+        : row.slcsp;
+      return slcsp === row.slcsp ? row : {
+        ...row,
+        slcsp,
+        max_assistance: slcsp - 533,
+        allowed_credit: slcsp - 533,
+      };
+    }),
+    total_premium_tax_credit: 1_354,
+    excess_advance_payment: 1_046,
+    excess_advance_premium: 1_046,
+  };
+  const xml = form8962.build(correctedFields, {
+    filer,
+    pending: correctedPending,
+  });
+  assertEquals(
+    (xml.match(/<MonthlyPremiumSLCSPAmt>650<\/MonthlyPremiumSLCSPAmt>/g) ?? [])
+      .length,
+    2,
+  );
+  const projected =
+    form8962Pdf.projectFields?.(correctedFields, correctedPending) ?? {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, correctedPending)?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [{
+              ...correctedPolicies[0],
+              slcsp_corrections: [{
+                ...firstCorrection,
+                determination_record_sha256: undefined,
+              }],
+            }, correctedPolicies[1]],
+          },
+        },
+      }),
+    Error,
+    "sourced Marketplace-error SLCSP corrections",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.instances?.(projected, filer, {
+        ...correctedPending,
+        f1095a: {
+          f1095as: [{
+            ...correctedPolicies[0],
+            slcsp_corrections: [{ ...firstCorrection, month: 5 }],
+          }, correctedPolicies[1]],
+        },
+      }),
+    Error,
+    "distinct covered APTC months",
   );
 });
 
@@ -310,7 +689,7 @@ Deno.test("Form 8962 one monthly policy reconciles one evidenced Marketplace SLC
         },
       }),
     Error,
-    "one sourced Marketplace-error SLCSP correction",
+    "sourced Marketplace-error SLCSP corrections",
   );
 });
 

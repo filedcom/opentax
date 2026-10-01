@@ -1100,7 +1100,7 @@ function reconcileNoAptcPolicyMonths(
   }
 }
 
-function reconcileTwoNoAptcPolicyMonths(
+function reconcileMultiNoAptcPolicyMonths(
   fields: Input,
   context?: MefBuildContext,
 ): void {
@@ -1112,12 +1112,13 @@ function reconcileTwoNoAptcPolicyMonths(
     !context?.filer || !source.success || !general.success || !form1040.success
   ) {
     throw new Error(
-      "Form 8962 two-policy monthly PTC needs verified return and Marketplace sources",
+      "Form 8962 multi-policy monthly PTC needs verified return and Marketplace sources",
     );
   }
   const policies = current1095AStatements(source.data.f1095as);
   const rows = fields.monthly_ptc_rows;
   const ssn = context.filer.primarySSN.replaceAll("-", "");
+  const policyLabel = policies.length === 3 ? "three-policy" : "two-policy";
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
@@ -1125,8 +1126,26 @@ function reconcileTwoNoAptcPolicyMonths(
     general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
     (general.data.dependents?.length ?? 0) !== 0 ||
-    policies.length !== 2 ||
-    new Set(policies.map((policy) => policy.policy_number)).size !== 2 ||
+    (policies.length !== 2 && policies.length !== 3) ||
+    new Set(policies.map((policy) => policy.policy_number)).size !==
+      policies.length ||
+    (policies.length === 3 &&
+      Array.from(
+        { length: 12 },
+        (_, month) =>
+          policies.filter((policy) =>
+            (policy.monthly_premiums?.[month] ?? 0) > 0
+          )
+            .length !== 1,
+      ).some(Boolean)) ||
+    (policies.length === 3 && policies.some((policy) => {
+      const coveredMonths = policy.monthly_premiums?.flatMap((premium, index) =>
+        premium > 0 ? [index] : []
+      ) ?? [];
+      return coveredMonths.some((month, index) =>
+        index > 0 && month !== coveredMonths[index - 1] + 1
+      );
+    })) ||
     policies.some((policy) =>
       !policy.policy_number ||
       policy.coverage_state !== context.filer?.address.state ||
@@ -1137,7 +1156,10 @@ function reconcileTwoNoAptcPolicyMonths(
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || !policy.slcsp_corrections ||
       !policy.no_aptc_monthly_evidence ||
-      policy.monthly_premiums.some((amount) => amount <= 0) ||
+      !policy.monthly_premiums.some((amount) => amount > 0) ||
+      policy.monthly_slcsps.some((amount, index) =>
+        policy.monthly_premiums![index] === 0 && amount !== 0
+      ) ||
       policy.monthly_aptcs.some((amount) => amount !== 0) ||
       (policy.annual_premium !== undefined &&
         Math.abs(
@@ -1164,7 +1186,7 @@ function reconcileTwoNoAptcPolicyMonths(
     pending?.form2555 !== undefined
   ) {
     throw new Error(
-      "Form 8962 two-policy monthly PTC needs distinct same-state nonshared policies for one filer",
+      `Form 8962 ${policyLabel} monthly PTC needs distinct same-state nonshared policies for one filer`,
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
@@ -1172,7 +1194,12 @@ function reconcileTwoNoAptcPolicyMonths(
     pending,
     form1040.data.line2a_tax_exempt ?? 0,
   );
-  const incomeAmounts = simplePolicyIncomeAmounts(income, povertyLine, 1, 1);
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    income,
+    povertyLine,
+    1,
+    policies.length,
+  );
   const annualContribution = Math.round(income * incomeAmounts.figure);
   const contribution = Math.round(annualContribution / 12);
   if (
@@ -1184,13 +1211,21 @@ function reconcileTwoNoAptcPolicyMonths(
     fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
     fields.applicable_figure !== incomeAmounts.figure ||
     fields.annual_applicable_contribution !== annualContribution ||
-    fields.monthly_applicable_contribution !== contribution
+    fields.monthly_applicable_contribution !== contribution ||
+    (fields.annual_slcsp !== undefined &&
+      fields.annual_slcsp !== rows.reduce(
+          (sum, row) => sum + (row.slcsp ?? 0),
+          0,
+        ))
   ) {
     throw new Error(
-      "Form 8962 two-policy monthly income differs from finalized return",
+      `Form 8962 ${policyLabel} monthly income differs from finalized return`,
     );
   }
   const evidence = policies.map((policy) => ({
+    coveredMonths: policy.monthly_premiums!.flatMap((premium, index) =>
+      premium > 0 ? [index + 1] : []
+    ),
     corrections: new Map(
       policy.slcsp_corrections!.map((item) => [item.month, item]),
     ),
@@ -1200,35 +1235,58 @@ function reconcileTwoNoAptcPolicyMonths(
   }));
   if (
     policies.some((policy, index) =>
-      evidence[index].corrections.size !== 12 ||
-      evidence[index].payments.size !== 12 ||
-      policy.slcsp_corrections!.length !== 12 ||
-      policy.no_aptc_monthly_evidence!.length !== 12
+      evidence[index].corrections.size !==
+        evidence[index].coveredMonths.length ||
+      evidence[index].payments.size !== evidence[index].coveredMonths.length ||
+      policy.slcsp_corrections!.length !==
+        evidence[index].coveredMonths.length ||
+      policy.no_aptc_monthly_evidence!.length !==
+        evidence[index].coveredMonths.length ||
+      evidence[index].coveredMonths.some((month) =>
+        !evidence[index].corrections.has(month) ||
+        !evidence[index].payments.has(month)
+      )
     )
   ) {
     throw new Error(
-      "Form 8962 two-policy monthly PTC needs twelve determinations and payments per policy",
+      `Form 8962 ${policyLabel} monthly PTC needs a determination and payment for every policy-covered month`,
     );
   }
   let credit = 0;
   for (let index = 0; index < 12; index++) {
     const month = index + 1;
-    const premium = roundForm8962Amounts(
-      policies.map((policy) => policy.monthly_premiums![index]),
+    const active = policies.flatMap((policy, policyIndex) =>
+      policy.monthly_premiums![index] > 0 ? [policyIndex] : []
     );
-    const sourceSlcsp = evidence[0].corrections.get(month)?.corrected_slcsp;
+    if (active.length === 0) {
+      throw new Error(
+        `Form 8962 ${policyLabel} month ${month} needs a covered policy`,
+      );
+    }
+    const premium = roundForm8962Amounts(
+      active.map((policyIndex) =>
+        policies[policyIndex].monthly_premiums![index]
+      ),
+    );
+    const sourceSlcsp = evidence[active[0]].corrections.get(month)
+      ?.corrected_slcsp;
     if (sourceSlcsp === undefined || sourceSlcsp <= 0) {
       throw new Error(
-        `Form 8962 two-policy month ${month} needs a determined SLCSP`,
+        `Form 8962 ${policyLabel} month ${month} needs a determined SLCSP`,
       );
     }
     const slcsp = roundForm8962Amounts([sourceSlcsp]);
-    if (evidence[1].corrections.get(month)?.corrected_slcsp !== sourceSlcsp) {
+    if (
+      active.some((policyIndex) =>
+        evidence[policyIndex].corrections.get(month)?.corrected_slcsp !==
+          sourceSlcsp
+      )
+    ) {
       throw new Error(
-        `Form 8962 two-policy month ${month} needs one same-state SLCSP`,
+        `Form 8962 ${policyLabel} month ${month} needs one same-state SLCSP`,
       );
     }
-    for (let policyIndex = 0; policyIndex < 2; policyIndex++) {
+    for (const policyIndex of active) {
       const correction = evidence[policyIndex].corrections.get(month);
       const proof = evidence[policyIndex].payments.get(month);
       if (
@@ -1243,7 +1301,7 @@ function reconcileTwoNoAptcPolicyMonths(
           ) === null
       ) {
         throw new Error(
-          `Form 8962 two-policy month ${month} lacks matching SLCSP or full payment evidence`,
+          `Form 8962 ${policyLabel} month ${month} lacks matching SLCSP or full payment evidence`,
         );
       }
     }
@@ -1257,7 +1315,7 @@ function reconcileTwoNoAptcPolicyMonths(
       row.allowed_credit !== allowed
     ) {
       throw new Error(
-        `Form 8962 two-policy month ${month} differs from sources or calculated credit`,
+        `Form 8962 ${policyLabel} month ${month} differs from sources or calculated credit`,
       );
     }
     credit += allowed;
@@ -1279,7 +1337,7 @@ function reconcileTwoNoAptcPolicyMonths(
     form1040.data.line31_additional_payments !== roundedCredit
   ) {
     throw new Error(
-      "Form 8962 two-policy monthly credit differs from finalized return",
+      `Form 8962 ${policyLabel} monthly credit differs from finalized return`,
     );
   }
 }
@@ -1895,31 +1953,35 @@ function reconcileSimplePolicyMonths(
       policy.slcsp_corrections !== undefined
     );
     if (correctedPolicies.length > 0) {
-      const policy = correctedPolicies[0];
-      const correction = policy?.slcsp_corrections?.[0];
-      const index = (correction?.month ?? 0) - 1;
       if (
         fields.household_size !== 1 || policies.length < 1 ||
         policies.length > 2 ||
-        correctedPolicies.length !== 1 ||
-        policy?.slcsp_corrections?.length !== 1 ||
-        correction?.basis !== "marketplace_error" ||
-        !correction.determination_reference ||
-        !correction.determination_record_sha256 ||
-        !correction.determined_on ||
-        !validIsoDate(correction.determined_on) ||
-        correction.determined_on <
-          `2025-${String(correction.month).padStart(2, "0")}-01` ||
-        correction.determined_on > "2026-04-15" ||
-        (policy.monthly_premiums?.[index] ?? 0) <= 0 ||
-        (policy.monthly_aptcs?.[index] ?? 0) <= 0 ||
-        (policy.monthly_slcsps?.[index] ?? 0) <= 0 ||
-        correction.corrected_slcsp <= 0 ||
-        correction.corrected_slcsp === policy.monthly_slcsps?.[index] ||
+        correctedPolicies.some((policy) => {
+          const corrections = policy.slcsp_corrections ?? [];
+          return corrections.length < 1 ||
+            new Set(corrections.map((correction) => correction.month)).size !==
+              corrections.length ||
+            corrections.some((correction) => {
+              const index = correction.month - 1;
+              return correction.basis !== "marketplace_error" ||
+                !correction.determination_reference ||
+                !correction.determination_record_sha256 ||
+                !correction.determined_on ||
+                !validIsoDate(correction.determined_on) ||
+                correction.determined_on <
+                  `2025-${String(correction.month).padStart(2, "0")}-01` ||
+                correction.determined_on > "2026-04-15" ||
+                (policy.monthly_premiums?.[index] ?? 0) <= 0 ||
+                (policy.monthly_aptcs?.[index] ?? 0) <= 0 ||
+                (policy.monthly_slcsps?.[index] ?? 0) <= 0 ||
+                correction.corrected_slcsp <= 0 ||
+                correction.corrected_slcsp === policy.monthly_slcsps?.[index];
+            });
+        }) ||
         policies.some((item) => item.slcsp_review_periods !== undefined)
       ) {
         throw new Error(
-          "Form 8962 same-state policies need one sourced Marketplace-error SLCSP correction on a covered APTC month",
+          "Form 8962 same-state policies need sourced Marketplace-error SLCSP corrections on distinct covered APTC months",
         );
       }
     }
@@ -2763,9 +2825,11 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
         const policyCount = form1095aSchema.safeParse(context?.pending?.f1095a);
         if (
           policyCount.success &&
-          current1095AStatements(policyCount.data.f1095as).length === 2
+          [2, 3].includes(
+            current1095AStatements(policyCount.data.f1095as).length,
+          )
         ) {
-          reconcileTwoNoAptcPolicyMonths(fields, context);
+          reconcileMultiNoAptcPolicyMonths(fields, context);
         } else {
           reconcileNoAptcPolicyMonths(fields, context);
         }

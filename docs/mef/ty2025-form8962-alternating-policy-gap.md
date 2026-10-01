@@ -53,6 +53,51 @@ PDF projection runs the same filing guard. The [2025 Form 8962 line 10
 instructions](https://www.irs.gov/instructions/i8962) direct a taxpayer who
 has reason to believe the Marketplace reported a wrong SLCSP to determine the
 correct amount and use monthly lines when it varies. Positive and tamper
-fixtures are authored for deferred bulk verification. This route excludes
-multiple corrected months, coverage-family changes, moves, no-APTC months,
-overlaps, other covered people, and unauthenticated determination bytes.
+fixtures are authored for deferred bulk verification. These bounded correction
+routes exclude coverage-family changes, moves, no-APTC months, overlaps, other
+covered people, and unauthenticated determination bytes.
+
+The same A-B-A source now supports **two** distinct `marketplace_error`
+SLCSP corrections on covered APTC months of one identified policy. Each month
+needs its own positive original and corrected column B amount, Marketplace
+tool/contact determination, dated reference, and reviewed record SHA-256.
+The Form 1095-A annual column B totals remain the original reported sums;
+the two corrected amounts feed only the corresponding monthly Form 8962
+calculations. Native MeF and PDF replay both source rows and the finalized
+Schedule 2/Form 1040 repayment. A July $650 and August $700 determination
+on the four-month middle policy raise a $804 baseline credit to $954 and
+reduce $2,400 APTC excess to $1,446. Focused source, missing/tampered-record,
+native/PDF, and full-return executor fixtures are authored but unrun. The
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) direct
+monthly reporting when corrected SLCSP changes by month. More than two
+policies with corrections, overlapping policies, coverage-family changes,
+moves, and source-byte authentication remain open.
+
+The same source-reconciled distinct-month machinery also supports a
+`marketplace_error` determination for **every covered APTC month** of the one
+corrected policy. There is no separate count limit: the 2025 month range,
+distinctness requirement, and positive original premium/SLCSP/APTC bound the
+list to the applicable policy months. Every month retains its own dated
+Marketplace reference and reviewed record hash, and unchanged policy months
+still replay against the original 1095-A. A four-month middle policy with
+May–August corrected SLCSP of $650, $700, $750, and $800 yields $1,304 PTC
+and $1,096 excess APTC from the original $2,400 advance payments. Source,
+calculation, native/PDF, duplicate-month, omitted-month, missing-record, and
+executor full-return fixtures are authored but unrun. Other policy-count and
+family variants and authentication of Marketplace determination bytes remain
+open.
+
+Both nonoverlapping same-state policies may now carry their own independently
+determined `marketplace_error` SLCSP months for the same single filer. The
+filing guard checks each policy's correction list against its own original
+1095-A monthly columns, covered APTC months, distinct month numbers, dated
+Marketplace references, and reviewed record hashes. Source aggregation and
+native/PDF row replay select the active policy for each month; neither policy's
+correction can alter the other's months or original annual totals. In an A-B-A
+case, a January $650 determination on policy A plus May–August determinations
+of $650, $700, $750, and $800 on policy B yield $1,354 PTC and $1,046 excess
+APTC from $2,400 advances. Source/calculation/native/PDF, full-return,
+missing-hash, and wrong-policy-month fixtures are authored but unrun. Two
+policies with overlapping coverage, three or more corrected policies, and
+other covered-family variants remain closed; Marketplace source-byte
+authentication remains open.
