@@ -35,6 +35,14 @@ figures that source credit. The drug designation and clinical-testing records
 remain unauthenticated, and passive, pass-through, mixed-source, and unused
 credit carryover routes need separate evidence.
 
+The matching Form 8820 child PDF now checks its filed self-earned source and
+line 4 against the same prepared Form 3800 Part III line 1h IRS8820 document
+ID, credit amount, Part V detail, and line 38, then reconciles Schedule 3 and
+final Form 1040. The direct $1,975 case and changed source, document ID,
+amount, detail, and final-credit fixtures await the bulk run. Zero-credit
+reduced-election statements retain their separate printing path; pass-through
+credits do not create a self-earned Form 8820 child copy.
+
 One self-earned, nonpassive qualified commercial clean vehicle now has an
 additional direct Form 3800 PDF source check. The Form 8936 Part V and Schedule
 A source facts calculate a $3,000 credit for a $10,000 electric van acquired
