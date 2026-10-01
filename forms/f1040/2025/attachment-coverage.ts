@@ -8,6 +8,11 @@ import {
 } from "../nodes/intermediate/forms/form4684/index.ts";
 import { isSupportedForm2106Route } from "./form2106_staged.ts";
 import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
+import {
+  calculateForm8881,
+  inputSchema as f8881InputSchema,
+} from "../nodes/inputs/f8881/index.ts";
+import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -163,18 +168,22 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f8881",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 8881 pension-plan credit needs native attachment and Form 3800 source reconciliation",
-    isActive: (fields) =>
-      fields.startup !== undefined || fields.contributions !== undefined ||
-      fields.auto_enrollment !== undefined ||
-      fields.military_spouses !== undefined,
+      "Form 8881 needs a positive linked direct Schedule C employer source",
+    isActive: (fields) => {
+      if (Object.keys(fields).length === 0) return false;
+      const parsed = f8881InputSchema.safeParse(fields);
+      if (!parsed.success) return true;
+      const lines = calculateForm8881(parsed.data);
+      return lines.line8 + lines.line11 + lines.line15 <= 0;
+    },
   },
   {
     pendingKey: "f3800",
     exportKinds: ["mef", "pdf"],
-    reason:
-      "Form 8881 source credit needs registered Form 3800 Part III lines and a native attachment",
-    isActive: (fields) => fields.f8881_credit !== undefined,
+    reason: "Form 8881 credit needs a complete source claim",
+    isActive: (fields) =>
+      fields.f8881_credit !== undefined &&
+      !f3800InputSchema.safeParse(fields).success,
   },
   {
     pendingKey: "f8882",

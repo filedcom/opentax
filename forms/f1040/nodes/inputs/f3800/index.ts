@@ -121,6 +121,7 @@ const f5884CreditSchema = z.object({
 });
 
 const f8881CreditSchema = z.object({
+  schedule_c_business_reference: z.string().trim().min(1),
   part_i_credit: z.number().int().nonnegative(),
   part_ii_credit: z.number().int().nonnegative(),
   part_iii_credit: z.number().int().nonnegative(),

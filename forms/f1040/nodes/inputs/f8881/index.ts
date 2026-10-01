@@ -158,6 +158,7 @@ const militarySpouseSchema = z.object({
 });
 
 export const inputSchema = z.object({
+  schedule_c_business_reference: reference,
   plan_type: z.nativeEnum(PlanType),
   startup: startupSchema.optional(),
   contributions: contributionSchema.optional(),
@@ -301,6 +302,7 @@ class F8881Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [output(f3800, {
         f8881_credit: {
+          schedule_c_business_reference: rawInput.schedule_c_business_reference,
           part_i_credit: lines.line8,
           part_ii_credit: lines.line11,
           part_iii_credit: lines.line15,

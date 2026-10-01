@@ -3,6 +3,7 @@ import { form8881 } from "./f8881.ts";
 import { form8881Pdf } from "../../pdf/forms/f8881.ts";
 
 const source = {
+  schedule_c_business_reference: "PLAN-BUSINESS-1",
   plan_type: "401k",
   startup: {
     plan_effective_on: "2025-01-01",
@@ -29,6 +30,7 @@ const source = {
 
 const form3800 = {
   f8881_credit: {
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     part_i_credit: 750,
     part_ii_credit: 500,
     part_iii_credit: 0,
@@ -38,7 +40,21 @@ const form3800 = {
 
 Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts", () => {
   const xml = form8881.build(source, {
-    pending: { f8881: source, f3800: form3800 },
+    pending: {
+      f8881: source,
+      f3800: form3800,
+      schedule_c: {
+        schedule_cs: [{
+          business_reference: "PLAN-BUSINESS-1",
+          line_a_principal_business: "Consulting",
+          line_b_business_code: "541611",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: 10_000,
+        }],
+      },
+    },
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
   });
   assertStringIncludes(xml, "<QualifiedEmployeeCnt>20</QualifiedEmployeeCnt>");
   assertStringIncludes(
@@ -62,6 +78,16 @@ Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts
   const printed = form8881Pdf.projectFields!(source, {
     f8881: source,
     f3800: form3800,
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "PLAN-BUSINESS-1",
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541611",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 10_000,
+      }],
+    },
   });
   assertEquals(printed.lineA, 20);
   assertEquals(printed.line3Count, 3);
@@ -75,7 +101,11 @@ Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts
 
 Deno.test("staged IRS8881 XML and paper reject a missing or altered Form 3800 claim", () => {
   assertThrows(
-    () => form8881.build(source, { pending: { f8881: source } }),
+    () =>
+      form8881.build(source, {
+        pending: { f8881: source },
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
     Error,
     "needs its Form 3800 source credit",
   );
@@ -84,7 +114,23 @@ Deno.test("staged IRS8881 XML and paper reject a missing or altered Form 3800 cl
   };
   assertThrows(
     () =>
-      form8881.build(source, { pending: { f8881: source, f3800: tampered } }),
+      form8881.build(source, {
+        pending: {
+          f8881: source,
+          f3800: tampered,
+          schedule_c: {
+            schedule_cs: [{
+              business_reference: "PLAN-BUSINESS-1",
+              line_a_principal_business: "Consulting",
+              line_b_business_code: "541611",
+              line_f_accounting_method: "cash",
+              line_g_material_participation: true,
+              line_1_gross_receipts: 10_000,
+            }],
+          },
+        },
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
     Error,
     "do not reconcile",
   );
@@ -93,6 +139,16 @@ Deno.test("staged IRS8881 XML and paper reject a missing or altered Form 3800 cl
       form8881Pdf.projectFields!(source, {
         f8881: source,
         f3800: tampered,
+        schedule_c: {
+          schedule_cs: [{
+            business_reference: "PLAN-BUSINESS-1",
+            line_a_principal_business: "Consulting",
+            line_b_business_code: "541611",
+            line_f_accounting_method: "cash",
+            line_g_material_participation: true,
+            line_1_gross_receipts: 10_000,
+          }],
+        },
       }),
     Error,
     "do not reconcile",

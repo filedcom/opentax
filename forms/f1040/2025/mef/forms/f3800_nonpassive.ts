@@ -18,7 +18,7 @@ import {
 } from "./f3800_current_rows.ts";
 
 function nontransferableCurrentRow(
-  line: "1e" | "1h" | "1i" | "1v" | "1y" | "1aa" | "4b",
+  line: "1e" | "1h" | "1i" | "1j" | "1v" | "1y" | "1aa" | "1dd" | "1ee" | "4b",
   credit: number,
   appliedCredit: number,
   metadata: Form3800CurrentCreditRowMetadata,
@@ -103,6 +103,14 @@ export type Form3800NonpassiveXmlInput = {
     readonly credit: number;
     readonly documentId: string;
     readonly appliedCredit: number;
+  };
+  readonly form8881?: {
+    readonly documentId: string;
+    readonly parts: readonly {
+      readonly line: "1j" | "1dd" | "1ee";
+      readonly credit: number;
+      readonly appliedCredit: number;
+    }[];
   };
   readonly form3468PartV?: {
     readonly credit: number;
@@ -218,7 +226,7 @@ export function buildForm3800NonpassiveParts(
   const credits = classifyForm8835Credits(input.facilities);
   if (
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
-    !input.form8844 &&
+    !input.form8844 && !input.form8881 &&
     !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
     !input.form8936Commercial &&
@@ -230,6 +238,19 @@ export function buildForm3800NonpassiveParts(
   const form8820Credit = input.form8820?.credit ?? 0;
   const form8874Credit = input.form8874?.credit ?? 0;
   const form8844Credit = input.form8844?.credit ?? 0;
+  const form8881Parts = input.form8881?.parts ?? [];
+  if (
+    input.form8881 && (
+      !input.form8881.documentId || form8881Parts.length === 0 ||
+      new Set(form8881Parts.map((part) => part.line)).size !==
+        form8881Parts.length ||
+      form8881Parts.some((part) =>
+        !Number.isInteger(part.credit) || part.credit <= 0 ||
+        !Number.isInteger(part.appliedCredit) || part.appliedCredit < 0 ||
+        part.appliedCredit > part.credit
+      )
+    )
+  ) throw new Error("Form 3800 has an invalid Form 8881 source allocation");
   if (
     input.form8844 && (
       !input.form8844.documentId ||
@@ -456,7 +477,9 @@ export function buildForm3800NonpassiveParts(
     }
   }
   if (
-    credits.standardCredit + form8826Credit + form8820Credit +
+    credits.standardCredit +
+          form8881Parts.reduce((sum, part) => sum + part.credit, 0) +
+          form8826Credit + form8820Credit +
           form8874Credit + form3468PartVCredit + form8936Credit +
           form8936CommercialCredit !==
       input.tax.standardCredit ||
@@ -593,7 +616,9 @@ export function buildForm3800NonpassiveParts(
   const standardApplied = input.facilities.reduce(
     (sum, facility, index) =>
       sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
-    form8826Applied + (input.form8820?.appliedCredit ?? 0) +
+    form8826Applied +
+      form8881Parts.reduce((sum, part) => sum + part.appliedCredit, 0) +
+      (input.form8820?.appliedCredit ?? 0) +
       (input.form8874?.appliedCredit ?? 0) +
       (input.form3468PartV?.appliedCredit ?? 0) +
       (input.form8936?.appliedCredit ?? 0) +
@@ -674,6 +699,14 @@ export function buildForm3800NonpassiveParts(
       sourceDocumentId: input.form8844.documentId,
     }]
     : [];
+  const form8881PartVGroups: Form3800NonpassiveDetailRow[] = form8881Parts.map((
+    part,
+  ) => ({
+    line: part.line,
+    credit: part.credit,
+    appliedCredit: part.appliedCredit,
+    sourceDocumentId: input.form8881!.documentId,
+  }));
   const form3468PartVGroups: Form3800NonpassiveDetailRow[] =
     input.form3468PartV?.sources.map((source, index) => ({
       line: "1v" as const,
@@ -855,6 +888,13 @@ export function buildForm3800NonpassiveParts(
         ),
       ]
       : []),
+    ...form8881Parts.filter((part) => part.line === "1j").map((part) =>
+      nontransferableCurrentRow(part.line, part.credit, part.appliedCredit, {
+        sourceCount: 1,
+        referenceDocumentId: input.form8881!.documentId,
+        referenceDocumentName: "IRS8881",
+      }, [])
+    ),
     ...(input.form3468PartV
       ? [nontransferableCurrentRow(
         "1v",
@@ -901,6 +941,13 @@ export function buildForm3800NonpassiveParts(
         ),
       ]
       : []),
+    ...form8881Parts.filter((part) => part.line !== "1j").map((part) =>
+      nontransferableCurrentRow(part.line, part.credit, part.appliedCredit, {
+        sourceCount: 1,
+        referenceDocumentId: input.form8881!.documentId,
+        referenceDocumentName: "IRS8881",
+      }, [])
+    ),
     ...(input.form8844
       ? [nontransferableCurrentRow(
         "3",
@@ -967,6 +1014,12 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: input.form8874.appliedCredit,
       }]
       : []),
+    ...form8881Parts.filter((part) => part.line === "1j").map((part) => ({
+      line: part.line,
+      grossCredit: part.credit,
+      transferOutCredit: 0,
+      appliedCredit: part.appliedCredit,
+    })),
     ...(input.form3468PartV
       ? [{
         line: "1v" as const,
@@ -991,6 +1044,12 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: input.form8936Commercial.appliedCredit,
       }]
       : []),
+    ...form8881Parts.filter((part) => part.line !== "1j").map((part) => ({
+      line: part.line,
+      grossCredit: part.credit,
+      transferOutCredit: 0,
+      appliedCredit: part.appliedCredit,
+    })),
     ...(input.form8844
       ? [{
         line: "3" as const,
@@ -1039,6 +1098,7 @@ export function buildForm3800NonpassiveParts(
         }]
         : []),
       ...form8844PartVGroups,
+      ...form8881PartVGroups,
     ],
     carryoverDetails: [],
     passiveCurrentDetails: [],

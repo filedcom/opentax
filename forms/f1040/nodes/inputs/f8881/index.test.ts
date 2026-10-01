@@ -62,6 +62,7 @@ const militarySpouses = {
 
 Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
   const three = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
     startup,
   });
@@ -69,6 +70,7 @@ Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
   assertEquals(three.line4, 750);
   assertEquals(three.line5, 750);
   const twenty = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
     startup: { ...startup, eligible_non_hce_count: 20, startup_costs: 8_000 },
   });
@@ -77,6 +79,7 @@ Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
 
 Deno.test("Form 8881 larger employer startup rate and $500 floor", () => {
   const lines = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Simple,
     startup: {
       ...startup,
@@ -92,6 +95,7 @@ Deno.test("Form 8881 larger employer startup rate and $500 floor", () => {
 
 Deno.test("Form 8881 contribution, auto-enrollment, and military spouse parts stay separate", () => {
   const source = {
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
     startup,
     contributions: {
@@ -119,6 +123,7 @@ Deno.test("Form 8881 contribution, auto-enrollment, and military spouse parts st
     nodeType: "f3800",
     fields: {
       f8881_credit: {
+        schedule_c_business_reference: "PLAN-BUSINESS-1",
         part_i_credit: 1_550,
         part_ii_credit: 500,
         part_iii_credit: 500,
@@ -187,6 +192,7 @@ Deno.test("Form 8881 rejects unsupported or unproven source facts", () => {
   );
   assertThrows(() =>
     calculateForm8881({
+      schedule_c_business_reference: "PLAN-BUSINESS-1",
       plan_type: PlanType.DefBenefit,
       contributions: {
         ...contributions,

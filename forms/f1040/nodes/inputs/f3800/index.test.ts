@@ -49,6 +49,7 @@ const carriedCredit: Form3800CarryoverVintage = {
 Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Schedule 3 credit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8881_credit: {
+      schedule_c_business_reference: "PLAN-BUSINESS-1",
       part_i_credit: 1_550,
       part_ii_credit: 500,
       part_iii_credit: 500,
@@ -57,6 +58,7 @@ Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Sc
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 2_550,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -71,6 +73,7 @@ Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Sc
   assertEquals(
     f3800.inputSchema.safeParse({
       f8881_credit: {
+        schedule_c_business_reference: "PLAN-BUSINESS-1",
         part_i_credit: 1_550,
         part_ii_credit: 500,
         part_iii_credit: 500,

@@ -3,6 +3,7 @@ import {
   calculateForm8881,
   inputSchema,
 } from "../../../nodes/inputs/f8881/index.ts";
+import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export function reconcileForm8881Credit(
@@ -10,6 +11,7 @@ export function reconcileForm8881Credit(
   form3800Raw: unknown,
 ): ReturnType<typeof calculateForm8881> {
   const lines = calculateForm8881(inputSchema.parse(sourceRaw));
+  const source = inputSchema.parse(sourceRaw);
   if (
     !form3800Raw || typeof form3800Raw !== "object" ||
     !("f8881_credit" in form3800Raw)
@@ -22,10 +24,13 @@ export function reconcileForm8881Credit(
     !("part_i_credit" in credit) ||
     !("part_ii_credit" in credit) ||
     !("part_iii_credit" in credit) ||
+    !("schedule_c_business_reference" in credit) ||
     !("subject_to_passive_activity_limit" in credit) ||
     credit.part_i_credit !== lines.line8 ||
     credit.part_ii_credit !== lines.line11 ||
     credit.part_iii_credit !== lines.line15 ||
+    credit.schedule_c_business_reference !==
+      source.schedule_c_business_reference ||
     credit.subject_to_passive_activity_limit !== false
   ) {
     throw new Error("Form 8881 parts do not reconcile to Form 3800 source");
@@ -33,7 +38,26 @@ export function reconcileForm8881Credit(
   return lines;
 }
 
-/** Exact TY2025 IRS8881.xsd element order. This descriptor is not registered. */
+export function reconcileForm8881DirectEmployer(
+  pending: Readonly<Record<string, unknown>>,
+): ReturnType<typeof calculateForm8881> {
+  const source = inputSchema.parse(pending.f8881);
+  const lines = reconcileForm8881Credit(source, pending.f3800);
+  const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
+  const matches = scheduleC.schedule_cs.filter((business) =>
+    business.business_reference === source.schedule_c_business_reference
+  );
+  if (
+    matches.length !== 1 || matches[0].line_g_material_participation !== true
+  ) {
+    throw new Error(
+      "Form 8881 direct employer needs one participating Schedule C business",
+    );
+  }
+  return lines;
+}
+
+/** Exact TY2025 IRS8881.xsd element order. */
 export const form8881: MefFormDescriptor<"f8881", unknown> = {
   pendingKey: "f8881",
   FIELD_MAP: [],
@@ -41,9 +65,18 @@ export const form8881: MefFormDescriptor<"f8881", unknown> = {
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
     const source = inputSchema.parse(raw);
-    const lines = context?.pending
-      ? reconcileForm8881Credit(source, context.pending.f3800)
-      : calculateForm8881(source);
+    if (
+      !context?.pending || context.documentIdsByPendingKey?.f3800?.length !== 1
+    ) {
+      throw new Error("Form 8881 needs one attached sourced Form 3800");
+    }
+    if (
+      JSON.stringify(source) !==
+        JSON.stringify(inputSchema.parse(context.pending.f8881))
+    ) {
+      throw new Error("Form 8881 source differs from filed return");
+    }
+    const lines = reconcileForm8881DirectEmployer(context.pending);
     return elements("IRS8881", [
       source.startup
         ? element(

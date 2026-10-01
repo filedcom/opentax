@@ -1,9 +1,9 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema } from "../../../nodes/inputs/f8881/index.ts";
-import { reconcileForm8881Credit } from "../../mef/forms/f8881.ts";
+import { reconcileForm8881DirectEmployer } from "../../mef/forms/f8881.ts";
 
 // Field names and positions were inspected on the IRS December 2025
-// fillable one-page Form 8881. This descriptor is staged, not registered.
+// fillable one-page Form 8881.
 const page = "topmostSubform[0].Page1[0]";
 const text = (domainKey: string, fieldNumber: number): PdfFieldEntry => ({
   kind: "text",
@@ -43,7 +43,13 @@ export const form8881Pdf: PdfFormDescriptor = {
   filerFields: [text("nameLine1", 1), text("primarySSN", 2)],
   projectFields(raw, allPending) {
     const source = inputSchema.parse(raw);
-    const lines = reconcileForm8881Credit(source, allPending.f3800);
+    if (
+      JSON.stringify(source) !==
+        JSON.stringify(inputSchema.parse(allPending.f8881))
+    ) {
+      throw new Error("Form 8881 PDF source differs from filed return");
+    }
+    const lines = reconcileForm8881DirectEmployer(allPending);
     return {
       ...lines,
       lineA: source.startup

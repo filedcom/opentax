@@ -49,6 +49,7 @@ import { form5471ScheduleR } from "./f5471_schedule_r.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
 import { form8844 } from "./f8844.ts";
+import { form8881 } from "./f8881.ts";
 import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
 import { form5884DeductionDifferentiationStatement } from "./f5884_deduction_differentiation_stmt.ts";
 import { form6198 } from "./f6198.ts";
@@ -279,6 +280,7 @@ export const ALL_MEF_FORMS = [
   // Form 8839
   form8839,
   form8844,
+  form8881,
   // Form 8853
   form8853,
   // Initial Form 8854 follows Form 8853 in ReturnData1040.xsd.

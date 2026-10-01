@@ -65,6 +65,7 @@ import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_co
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
+import { reconcileForm8881DirectEmployer } from "./f8881.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -723,6 +724,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8844_direct_employer_credit?.credit_amount ?? 0) > 0 ||
+    fields.f8881_credit !== undefined ||
     fields.f8874_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8820_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
@@ -788,6 +790,9 @@ export function prepareForm3800DocumentParts(
   const form8874 = sourceForm8874(parsed, context);
   const form8844 = parsed.f8844_direct_employer_credit
     ? reconcileForm8844DirectEmployer(context.pending ?? {})
+    : undefined;
+  const form8881 = parsed.f8881_credit
+    ? reconcileForm8881DirectEmployer(context.pending ?? {})
     : undefined;
   if (
     (tax.empowermentCredit ?? 0) !==
@@ -917,6 +922,9 @@ export function prepareForm3800DocumentParts(
     form8826Credit,
     form8820Credit,
     form8874Credit,
+    form8881PartICredit: form8881?.line8,
+    form8881PartIICredit: form8881?.line11,
+    form8881PartIIICredit: form8881?.line15,
     form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
     form5884Credit: form5884?.credit,
@@ -988,6 +996,11 @@ export function prepareForm3800DocumentParts(
   );
   const form8874Applied = applied("nonpassive:8874");
   const form8844Applied = applied("nonpassive:8844");
+  const form8881Applied = {
+    i: applied("nonpassive:8881:i"),
+    ii: applied("nonpassive:8881:ii"),
+    iii: applied("nonpassive:8881:iii"),
+  };
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
     "nonpassive:3468-part-v",
@@ -1032,6 +1045,10 @@ export function prepareForm3800DocumentParts(
   const form8844Ids = context.documentIdsByPendingKey.f8844 ?? [];
   if (form8844Ids.length !== (form8844 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8844 document count differs from source");
+  }
+  const form8881Ids = context.documentIdsByPendingKey.f8881 ?? [];
+  if (form8881Ids.length !== (form8881 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8881 document count differs from source");
   }
   const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
   if (form8835Ids.length !== facilities.length) {
@@ -1134,6 +1151,28 @@ export function prepareForm3800DocumentParts(
           credit: form8844.lines.line2,
           documentId: form8844Ids[0],
           appliedCredit: form8844Applied,
+        }
+        : undefined,
+      form8881: form8881
+        ? {
+          documentId: form8881Ids[0],
+          parts: [
+            {
+              line: "1j" as const,
+              credit: form8881.line8,
+              appliedCredit: form8881Applied.i,
+            },
+            {
+              line: "1dd" as const,
+              credit: form8881.line11,
+              appliedCredit: form8881Applied.ii,
+            },
+            {
+              line: "1ee" as const,
+              credit: form8881.line15,
+              appliedCredit: form8881Applied.iii,
+            },
+          ].filter((part) => part.credit > 0),
         }
         : undefined,
       form3468PartV: form3468PartVCredit > 0
