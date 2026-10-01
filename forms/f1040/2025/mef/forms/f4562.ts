@@ -165,25 +165,35 @@ function reconcileActiveBusinessIncome(
     }
     const w2 = w2InputSchema.parse(pending.w2);
     const general = z.record(z.unknown()).parse(pending.general);
-    const item = w2.w2s[0];
     const taxpayerSSN = typeof general.taxpayer_ssn === "string"
       ? general.taxpayer_ssn.replaceAll("-", "")
       : "";
+    const employerEins = w2.w2s.map((item) =>
+      item.employer_ein?.replaceAll("-", "") ?? ""
+    );
+    const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
     if (
-      w2.w2s.length !== 1 || w2.f8958_allocation !== undefined ||
-      !item || item.box13_statutory_employee === true ||
-      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
-      item.employee_ssn?.replaceAll("-", "") !== taxpayerSSN ||
+      w2.w2s.length < 1 || w2.w2s.length > 2 ||
+      w2.f8958_allocation !== undefined ||
       !/^\d{9}$/.test(taxpayerSSN) ||
-      !Number.isSafeInteger(item.box1_wages) || item.box1_wages <= 0 ||
-      f1040.line1a_wages !== item.box1_wages ||
-      f1040.line1z_total_wages !== item.box1_wages
+      employerEins.some((ein) => !/^\d{9}$/.test(ein)) ||
+      new Set(employerEins).size !== w2.w2s.length ||
+      w2.w2s.some((item) =>
+        (w2.w2s.length === 2 && !item.employer_name?.trim()) ||
+        !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+        item.box13_statutory_employee === true ||
+        item.employee_ssn?.replaceAll("-", "") !== taxpayerSSN ||
+        !Number.isSafeInteger(item.box1_wages) || item.box1_wages <= 0
+      ) ||
+      !Number.isSafeInteger(wages) ||
+      f1040.line1a_wages !== wages ||
+      f1040.line1z_total_wages !== wages
     ) {
       throw new Error(
-        "Form 4562 line 11 requires one taxpayer-owned ordinary W-2 matching final Form 1040 wages",
+        "Form 4562 line 11 requires one or two distinct taxpayer-owned ordinary W-2 employers matching final Form 1040 wages",
       );
     }
-    employeeWages = item.box1_wages;
+    employeeWages = wages;
   } else if ((f1040.line1z_total_wages ?? 0) !== 0) {
     throw new Error("Form 4562 line 11 cannot reconcile Form 1040 wages");
   }
