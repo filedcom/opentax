@@ -1,15 +1,33 @@
 # TY2025 Form 1116 main PDF category boundary
 
-**Sole 1099-INT source inventory (staged, unrun):** The bounded passive-interest
-PDF route now rejects another positive monetary box or interest adjustment on
-its sole identified Form 1099-INT. Its existing affirmative review and return
+**One 1099-INT with foreign interest and U.S. Treasury interest (written,
+unrun):** A single identified payer may now report passive foreign box 1
+interest, U.S.-source Treasury box 3 interest, and box 6 foreign tax. The
+foreign tax item remains box 1 only; worldwide income and Form 1040 taxable
+interest equal boxes 1 plus 3. The 2025 Part I standard deduction is allocated
+at the foreign/worldwide five-decimal ratio, with a whole-dollar line 3g/6
+amount matching the native source group and category calculation. A shared
+native/PDF guard replays all three source boxes, excludes other monetary boxes
+and interest adjustments, checks Form 1040 lines 2b/9/11/12a/15/16, and ties
+the allowed credit to Schedule 3 line 1. The existing affirmative one-source
+review and prior-year carryback review remain required. Positive and changed
+box-3/return fixtures are authored for deferred validation. Treasury securities
+from another payer, bond-premium adjustments, other income, source bytes, and
+filled-PDF/XSD review remain open. See the [2025 Form 1116 Part I
+instructions](https://www.irs.gov/instructions/i1116).
+
+**Sole 1099-INT source inventory (staged, unrun):** The original bounded passive-interest
+PDF route rejects another positive monetary box or interest adjustment on
+its sole identified Form 1099-INT; the separately reconciled box-3 case above
+is the only extension. The original affirmative review and return
 join say box 1 is the entire worldwide income, box 6 is the only foreign tax,
 and Form 1040 lines 2a, 2b, 9, and 11 reconcile to that one item. U.S. Treasury
-interest, tax-exempt interest, withholding, early-withdrawal penalty, bond
+interest from another source, tax-exempt interest, withholding, early-withdrawal penalty, bond
 premium, nominee interest, and similar amounts on the same statement require a
 separate source-to-return calculation before this PDF can truthfully print a
 one-income-source Form 1116. The ordinary box-1/box-6 positive fixture and
-box-3/box-8/box-4/box-11 tamper fixtures are authored for deferred validation.
+box-8/box-4/box-11 tamper fixtures are authored for deferred validation; box 3
+without its full route still rejects.
 The broader native source model is unchanged; mixed 1099-INT payer content
 remains outside this narrow PDF projection. See the [2025 Form 1116 Part I
 instructions](https://www.irs.gov/instructions/i1116) for worldwide gross

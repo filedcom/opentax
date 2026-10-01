@@ -1,4 +1,5 @@
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
+import { inputSchema as dividendSourceSchema } from "../nodes/inputs/f1099div/index.ts";
 import {
   calculateForm4952,
   inputSchema as form4952Schema,
@@ -80,15 +81,23 @@ export function reconcileForm4952DirectDebtExport(
   const printed = form4952Schema.safeParse(fields);
   const retained = form4952Schema.safeParse(pending.form4952);
   const interest = interestSourceSchema.safeParse(pending.f1099int);
+  const dividend = dividendSourceSchema.safeParse(pending.f1099div);
+  const oneInterest = interest.success &&
+    interest.data.f1099ints.length === 1 &&
+    pending.f1099div === undefined;
+  const oneDividend = dividend.success &&
+    dividend.data.f1099divs.length === 1 &&
+    pending.f1099int === undefined &&
+    (dividend.data.f1099divs[0].box1b ?? 0) === 0;
   if (
-    !printed.success || !retained.success || !interest.success ||
+    !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
-    interest.data.f1099ints.length !== 1 ||
+    (!oneInterest && !oneDividend) ||
     pending.f1099oid !== undefined ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
-      "Form 4952 direct debt export needs one retained loan, matching payments, and one 1099-INT investment payer",
+      "Form 4952 direct debt export needs one retained loan, matching payments, and one unadjusted 1099-INT or ordinary 1099-DIV investment payer",
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");
@@ -106,9 +115,19 @@ export function reconcileForm4952DirectDebtExport(
     lineKeys.some((key) => fields[key] !== lines[key]) ||
     printed.data.investment_interest_expense !==
       retained.data.investment_interest_expense ||
-    typeof printed.data.source_1099_interest !== "number" ||
-    typeof retained.data.source_1099_interest !== "number" ||
-    printed.data.source_1099_interest !== retained.data.source_1099_interest
+    (oneInterest
+      ? typeof printed.data.source_1099_interest !== "number" ||
+        typeof retained.data.source_1099_interest !== "number" ||
+        printed.data.source_1099_interest !==
+          retained.data.source_1099_interest ||
+        printed.data.source_1099_dividends !== undefined ||
+        retained.data.source_1099_dividends !== undefined
+      : typeof printed.data.source_1099_dividends !== "number" ||
+        typeof retained.data.source_1099_dividends !== "number" ||
+        printed.data.source_1099_dividends !==
+          retained.data.source_1099_dividends ||
+        printed.data.source_1099_interest !== undefined ||
+        retained.data.source_1099_interest !== undefined)
   ) {
     throw new Error(
       "Form 4952 direct debt lines differ from the retained loan and return",

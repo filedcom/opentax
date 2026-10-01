@@ -195,6 +195,83 @@ Deno.test("2024-origin refinance points use a filed-year ledger for 2025 amortiz
   );
 });
 
+Deno.test("2023-origin refinance points require two filed-year ledgers before 2025 amortization", () => {
+  const priorLoan = {
+    ...refinance,
+    refinance_close_year: 2023 as const,
+    refinance_close_month: 6,
+    monthly_payment_records: Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      document_reference: `2025-payment-${index + 1}`,
+    })),
+    prior_year_2023: {
+      filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
+      filed_2023_points_workpaper_reference: "2023 loan points ledger",
+      filed_2023_loan_points_deduction: 67,
+      payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+        month,
+        document_reference: `2023-payment-${month}`,
+      })),
+    },
+    prior_year_2024: {
+      filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
+      filed_2024_points_workpaper_reference: "2024 loan points ledger",
+      filed_2024_loan_points_deduction: 133,
+      payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+        month: index + 1,
+        document_reference: `2024-payment-${index + 1}`,
+      })),
+    },
+  };
+  const priorSource = { refinances: [priorLoan] };
+  assertEquals(refinancePointsDeduction(priorSource), 133);
+  assertRefinancePointsSource(priorSource, form1098, ["111223333"], 133);
+  for (
+    const invalid of [
+      { ...priorLoan, prior_year_2023: undefined },
+      { ...priorLoan, prior_year_2024: undefined },
+      {
+        ...priorLoan,
+        prior_year_2023: {
+          ...priorLoan.prior_year_2023,
+          filed_2023_return_reference:
+            priorLoan.prior_year_2024.filed_2024_return_reference,
+        },
+      },
+      {
+        ...priorLoan,
+        prior_year_2023: {
+          ...priorLoan.prior_year_2023,
+          filed_2023_loan_points_deduction: 66,
+        },
+      },
+      {
+        ...priorLoan,
+        prior_year_2024: {
+          ...priorLoan.prior_year_2024,
+          payment_records_2024: priorLoan.prior_year_2024.payment_records_2024
+            .slice(1),
+        },
+      },
+      {
+        ...priorLoan,
+        prior_year_2023: {
+          ...priorLoan.prior_year_2023,
+          payment_records_2023: [
+            ...priorLoan.prior_year_2023.payment_records_2023.slice(0, 5),
+            priorLoan.prior_year_2024.payment_records_2024[0],
+          ],
+        },
+      },
+    ]
+  ) {
+    assertEquals(
+      inputSchema.safeParse({ refinances: [invalid] }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("refinance points reject mismatched payer, owner, and filed amount", () => {
   assertThrows(
     () => assertRefinancePointsSource(source, undefined, ["111223333"], 67),

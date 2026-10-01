@@ -38,6 +38,15 @@ payment, or brokerage bytes, and does not cover mixed-use or later-year debt.
 These source references remain reviewer assertions until document
 authentication is implemented.
 
+The same one-loan route also accepts exactly one affirmed Form 1099-DIV payer
+with ordinary box 1a dividends and no qualified box 1b amount. The retained
+loan, its payments, the dividend source, Form 4952 lines 1–8, Schedule A line
+9, and finalized Form 1040 line 3b and itemization must agree at native and
+PDF export. A focused positive and changed-source fixture is authored for the
+deferred batch. Mixed interest/dividend payers, qualified dividends, foreign
+tax, capital-gain distributions, and unauthenticated lender or broker bytes
+remain outside this direct-loan route.
+
 An affirmatively classified Form 1099-MISC box 2 portfolio royalty sends the
 same amount to Schedule E income and Form 4952 line 4a. A bounded filing route
 now requires one 1099-MISC and one separately identified, nonbusiness,

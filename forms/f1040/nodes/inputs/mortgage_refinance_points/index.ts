@@ -34,6 +34,13 @@ const priorYear2024Schema = z.object({
   payment_records_2024: z.array(paymentSchema).min(1).max(12),
 }).strict();
 
+const priorYear2023Schema = z.object({
+  filed_2023_return_reference: z.string().trim().min(1),
+  filed_2023_points_workpaper_reference: z.string().trim().min(1),
+  filed_2023_loan_points_deduction: z.number().int().nonnegative(),
+  payment_records_2023: z.array(paymentSchema).min(1).max(12),
+}).strict();
+
 export const itemSchema = z.object({
   mortgage_id: z.string().trim().min(1),
   recipient_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -41,8 +48,13 @@ export const itemSchema = z.object({
   form1098_source_document_reference: z.string().trim().min(1),
   closing_disclosure_reference: z.string().trim().min(1),
   pub936_workpaper_reference: z.string().trim().min(1),
-  refinance_close_year: z.union([z.literal(2024), z.literal(2025)]),
+  refinance_close_year: z.union([
+    z.literal(2023),
+    z.literal(2024),
+    z.literal(2025),
+  ]),
   refinance_close_month: z.number().int().min(1).max(12),
+  prior_year_2023: priorYear2023Schema.optional(),
   prior_year_2024: priorYear2024Schema.optional(),
   prior_qualified_home_debt: z.number().finite().positive(),
   refinanced_principal: z.number().finite().positive(),
@@ -63,7 +75,13 @@ export const itemSchema = z.object({
   const improvementAmount = item.improvement
     ?.amount_used_to_substantially_improve_main_home ?? 0;
   const prior = item.prior_year_2024;
-  const priorMonths = prior?.payment_records_2024.map((record) => record.month)
+  const prior2023 = item.prior_year_2023;
+  const prior2023Months = prior2023?.payment_records_2023.map((record) =>
+    record.month
+  ).sort((a, b) => a - b) ?? [];
+  const priorMonths = prior?.payment_records_2024.map((record) =>
+    record.month
+  )
     .sort((a, b) => a - b) ?? [];
   const expectedPrior = Array.from(
     { length: priorMonths.length },
@@ -73,6 +91,9 @@ export const itemSchema = z.object({
     item.points_for_nondeductible_services;
   const expected2024Deduction = Math.round(
     interestPoints * priorMonths.length / item.loan_term_months,
+  );
+  const expected2023Deduction = Math.round(
+    interestPoints * prior2023Months.length / item.loan_term_months,
   );
   const expected = Array.from(
     { length: months.length },
@@ -102,11 +123,22 @@ export const itemSchema = z.object({
         "Refinance points need qualified prior debt plus any documented main-home improvement to cover the new principal, interest-like points, and distinct consecutive 2025 payment records through December or the reviewed full-payoff month",
     });
   }
-  if (item.refinance_close_year === 2025 && prior !== undefined) {
+  if (
+    item.refinance_close_year === 2025 &&
+    (prior !== undefined || prior2023 !== undefined)
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["prior_year_2024"],
-      message: "A 2025 refinance cannot claim a 2024 amortization ledger",
+      path: [prior2023 !== undefined ? "prior_year_2023" : "prior_year_2024"],
+      message:
+        "A 2025 refinance cannot claim an earlier-year amortization ledger",
+    });
+  }
+  if (item.refinance_close_year === 2024 && prior2023 !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prior_year_2023"],
+      message: "A 2024 refinance cannot claim a 2023 amortization ledger",
     });
   }
   if (
@@ -134,6 +166,43 @@ export const itemSchema = z.object({
       path: ["prior_year_2024"],
       message:
         "A 2024 refinance needs its filed 2024 loan-points workpaper and distinct consecutive payment records through December 2024, a matching claimed deduction, and twelve 2025 payments within the remaining loan term",
+    });
+  }
+  if (
+    item.refinance_close_year === 2023 &&
+    (prior2023 === undefined || prior === undefined ||
+      item.early_payoff_2025 !== undefined || item.improvement !== undefined ||
+      months.length !== 12 || priorMonths.length !== 12 ||
+      prior2023Months[0] < item.refinance_close_month ||
+      prior2023Months.some((month, index) =>
+        month !== 13 - prior2023Months.length + index
+      ) ||
+      priorMonths.some((month, index) => month !== index + 1) ||
+      prior2023.filed_2023_return_reference ===
+        prior.filed_2024_return_reference ||
+      prior2023.filed_2023_points_workpaper_reference ===
+        prior.filed_2024_points_workpaper_reference ||
+      new Set([
+          ...prior2023.payment_records_2023,
+          ...prior.payment_records_2024,
+          ...records,
+        ].map((record) => record.document_reference)).size !==
+        prior2023.payment_records_2023.length +
+          prior.payment_records_2024.length + records.length ||
+      prior2023.filed_2023_loan_points_deduction !==
+        expected2023Deduction ||
+      prior.filed_2024_loan_points_deduction !== expected2024Deduction ||
+      item.loan_term_months <
+        prior2023Months.length + priorMonths.length + months.length ||
+      Math.round(interestPoints * months.length / item.loan_term_months) >
+        interestPoints - prior2023.filed_2023_loan_points_deduction -
+          prior.filed_2024_loan_points_deduction)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prior_year_2023"],
+      message:
+        "A 2023 refinance needs reviewed 2023 and 2024 filed loan-points workpapers, distinct consecutive payments through each December, and twelve 2025 payments within the remaining loan term",
     });
   }
 });

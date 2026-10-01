@@ -90,6 +90,24 @@ return/workpaper bytes and mortgage-limit allocation across loans beyond the
 bounded two-loan route remain open;
 the fixture is unrun pending the combined batch.
 
+The same unreported-points path now accepts a 2023-origin ordinary refinance
+when the source has separate reviewed filed 2023 and 2024 return/workpaper
+references, consecutive payment records from each year's first payment through
+December, and twelve 2025 payments. It recomputes both prior deductions,
+requires distinct payment references across all three years, and limits the
+2025 claim to the remaining interest-like points. In the bounded $2,000 / 180-
+month loan closing in June 2023, six 2023 payments produce $67, twelve 2024
+payments produce $133, and twelve 2025 payments produce $133 on Schedule A
+line 8c. The linked 2025 Form 1098 box 1 interest remains on line 8a; the
+2025 itemized total reaches Form 1040 line 12e. Native MeF and PDF use the
+same source-replay gate. Focused positive/tamper and full-return XSD/PDF
+fixtures are authored but unrun. [Publication 936](https://www.irs.gov/publications/p936)
+requires ratable deduction of ordinary refinance points, and the [Schedule A
+instructions](https://www.irs.gov/instructions/i1040sca) place unreported
+points on line 8c. Historical return and lender/payment bytes remain
+unauthenticated; improvement, payoff, mixed debt, and cross-loan limits remain
+closed for this older vintage.
+
 A bounded mixed-use improvement route now records the portion of new loan
 principal used to repay qualified old home debt and the portion used to
 substantially improve the main home. The two amounts must exactly cover the

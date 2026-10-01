@@ -23,6 +23,7 @@ import {
 } from "./f1116_conversion_explanation.ts";
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
@@ -118,8 +119,8 @@ function sourceXml(
   const allocatedGeneralDeduction = worldwideGrossIncome > 0
     ? items.reduce(
       (sum, item) =>
-        sum + generalDeductions *
-          Number(ratio(item.foreign_gross_income, worldwideGrossIncome)),
+        sum + Math.round(generalDeductions *
+          Number(ratio(item.foreign_gross_income, worldwideGrossIncome))),
       0,
     )
     : 0;
@@ -382,6 +383,10 @@ function buildIRS1116(
   }
   const summaries = rawSummaries.map((summary) =>
     categorySummarySchema.parse(summary)
+  );
+  reconcileForm1116TreasuryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
   const k3Items = summaries.flatMap((summary) => summary.items).filter((item) =>
     item.schedule_k3_line12_reduction !== undefined ||

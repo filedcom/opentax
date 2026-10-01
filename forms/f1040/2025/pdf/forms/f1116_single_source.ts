@@ -10,6 +10,7 @@ import { inputSchema as f1099intInputSchema } from "../../../nodes/inputs/f1099i
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { scheduleBPresentation } from "../../mef/forms/f1116_schedule_b.ts";
+import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -46,6 +47,7 @@ export function projectSingleSourceForm1116Pdf(
     throw new Error("Form 1116 PDF supports one reviewed passive tax item");
   }
   const item = summary.items[0];
+  const treasury = reconcileForm1116TreasuryInterest(fields, pending);
   const k3 = item.partnership_k3_passive_interest;
   const sCorpK3 = item.s_corp_k3_passive_interest;
   const review =
@@ -236,9 +238,8 @@ export function projectSingleSourceForm1116Pdf(
   if (reportedOn1099) {
     const source = f1099intInputSchema.safeParse(pending.f1099int);
     const rows = source.success ? source.data.f1099ints : [];
-    // This PDF route treats box 1 as the sole worldwide income source and
-    // box 6 as the sole foreign tax. Other monetary boxes or interest
-    // adjustments require their own Form 1040 and Part I reconciliation.
+    // Box 3 is permitted only under the shared Treasury-interest source and
+    // return reconciliation. Other boxes and adjustments remain closed.
     const otherMonetaryBoxes = [
       "box2",
       "box3",
@@ -257,7 +258,9 @@ export function projectSingleSourceForm1116Pdf(
     ] as const;
     if (
       rows.length !== 1 ||
-      otherMonetaryBoxes.some((key) => (rows[0][key] ?? 0) !== 0) ||
+      otherMonetaryBoxes.some((key) =>
+        (key !== "box3" || !treasury) && (rows[0][key] ?? 0) !== 0
+      ) ||
       rows[0].seller_financed === true ||
       rows[0].elect_bond_premium_amortization === true ||
       rows[0].foreign_tax_source_document_reference !==
@@ -282,7 +285,8 @@ export function projectSingleSourceForm1116Pdf(
   );
   const line18 = number(fields.total_income, "Part III line 18");
   const line20 = number(fields.us_tax_before_credits, "Part III line 20");
-  const foreignTaxableIncome = item.foreign_gross_income - standardDeduction;
+  const allocatedDeduction = treasury?.allocatedDeduction ?? standardDeduction;
+  const foreignTaxableIncome = item.foreign_gross_income - allocatedDeduction;
   if (
     worldwideGross <= 0 || line18 <= 0 || line20 <= 0 ||
     item.foreign_gross_income <= 0 ||
@@ -293,8 +297,10 @@ export function projectSingleSourceForm1116Pdf(
     !Number.isSafeInteger(standardDeduction) ||
     !Number.isSafeInteger(line18) ||
     !Number.isSafeInteger(line20) ||
-    item.foreign_gross_income !== worldwideGross ||
-    foreignTaxableIncome !== line18 ||
+    (treasury
+      ? treasury.worldwideGross !== worldwideGross
+      : item.foreign_gross_income !== worldwideGross) ||
+    worldwideGross - standardDeduction !== line18 ||
     item.foreign_tax_paid <= 0 ||
     summary.foreignGrossIncome !== item.foreign_gross_income ||
     summary.includedForeignIncome !== item.foreign_gross_income ||
@@ -305,7 +311,7 @@ export function projectSingleSourceForm1116Pdf(
     summary.foreignTaxableIncome !== foreignTaxableIncome ||
     summary.directlyAllocableDeductions !== 0 ||
     summary.explicitlyApportionedDeductions !== 0 ||
-    summary.automaticallyApportionedDeductions !== standardDeduction ||
+    summary.automaticallyApportionedDeductions !== allocatedDeduction ||
     (summary.vehicleInterestByCountry ?? []).some((row) => row.amount !== 0) ||
     (item.directly_allocable_deductions ?? 0) !== 0 ||
     (item.apportioned_deductions ?? 0) !== 0 ||
@@ -384,10 +390,10 @@ export function projectSingleSourceForm1116Pdf(
   ];
   if (
     !f1040 || !schedule3 ||
-    f1040.line2b_taxable_interest !== item.foreign_gross_income ||
-    f1040.line9_total_income !== item.foreign_gross_income ||
+    f1040.line2b_taxable_interest !== worldwideGross ||
+    f1040.line9_total_income !== worldwideGross ||
     !zero(f1040.line10_adjustments) ||
-    f1040.line11_agi !== item.foreign_gross_income ||
+    f1040.line11_agi !== worldwideGross ||
     f1040.line11_agi - standardDeduction !== line18 ||
     f1040.line12a_standard_deduction !== standardDeduction ||
     !zero(f1040.line12e_itemized_deductions) ||
@@ -486,12 +492,12 @@ export function projectSingleSourceForm1116Pdf(
     pdf_line3d_a: item.foreign_gross_income,
     pdf_line3e_a: worldwideGross,
     pdf_line3f_a: line3f.toFixed(5),
-    pdf_line3g_a: standardDeduction,
+    pdf_line3g_a: allocatedDeduction,
     pdf_line4a_a: 0,
     pdf_line4b_a: 0,
     pdf_line5_a: 0,
-    pdf_line6_a: standardDeduction,
-    pdf_line6_total: standardDeduction,
+    pdf_line6_a: allocatedDeduction,
+    pdf_line6_total: allocatedDeduction,
     pdf_line7: foreignTaxableIncome,
     pdf_tax_credit_method: item.tax_credit_method,
     pdf_part2_date_a: reportedOn1099

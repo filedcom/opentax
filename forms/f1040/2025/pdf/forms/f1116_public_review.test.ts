@@ -118,6 +118,56 @@ Deno.test("Form 1116 public review joins one sourced interest tax, standard dedu
   );
 });
 
+Deno.test("Form 1116 apportions standard deduction across foreign box 1 and domestic Treasury box 3", () => {
+  const source = inputs();
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box3: 10_000 }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  assert(parent);
+  const projected = form1116Pdf.projectFields?.(parent, result.pending) ?? {};
+  assertEquals(projected.pdf_line1a_a, 50_000);
+  assertEquals(projected.pdf_line3e_a, 60_000);
+  assertEquals(projected.pdf_line3f_a, "0.83333");
+  assertEquals(projected.pdf_line3g_a, 13_125);
+  assertEquals(projected.pdf_line7, 36_875);
+  assertEquals(parent.total_income, 44_250);
+  assertEquals(
+    projected.pdf_line35,
+    result.pending.schedule3?.line1_foreign_tax_credit,
+  );
+  const [xml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  assert(xml.includes("<GrossIncomeAmt>60000</GrossIncomeAmt>"));
+  assert(xml.includes("<ProRataDeductionsNotRelatedAmt>13125</ProRataDeductionsNotRelatedAmt>"));
+  assertThrows(() => form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    {
+      pending: {
+        ...result.pending,
+        f1099int: {
+          ...result.pending.f1099int,
+          f1099ints: [{
+            ...(result.pending.f1099int?.f1099ints as Record<string, unknown>[])[0],
+            box3: 9_000,
+          }],
+        },
+      },
+    },
+  ));
+  assertThrows(() => form1116Pdf.projectFields?.(parent, {
+    ...result.pending,
+    f1040: {
+      ...result.pending.f1040,
+      line2b_taxable_interest: 59_000,
+    },
+  }));
+});
+
 Deno.test("Form 1116 public PDF route rejects mixed income, wrong worldwide gross, and other deductions", () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
@@ -139,7 +189,7 @@ Deno.test("Form 1116 public PDF route rejects mixed income, wrong worldwide gros
         worldwide_gross_income: 50_001,
       }, result.pending),
     Error,
-    "standard-deduction, zero-carryover",
+    "Treasury-interest route",
   );
   assertThrows(
     () =>
@@ -219,7 +269,9 @@ Deno.test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradi
           f1099int: { ...source, f1099ints: [{ ...row, ...extra }] },
         }),
       Error,
-      "must match the identified source",
+      "box3" in extra
+        ? "Treasury-interest deduction"
+        : "must match the identified source",
     );
   }
 });

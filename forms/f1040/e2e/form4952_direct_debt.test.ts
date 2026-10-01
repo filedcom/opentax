@@ -36,7 +36,7 @@ const trace = {
   }],
 } as const;
 
-function filing() {
+function filing(source: "interest" | "dividend" = "interest") {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -45,11 +45,24 @@ function filing() {
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
     },
-    f1099int: [{
-      payer_name: "Taxable bond payer",
-      box1: 100_000,
-      investment_property_for_form4952: true,
-    }],
+    ...(source === "interest"
+      ? {
+        f1099int: [{
+          payer_name: "Taxable bond payer",
+          box1: 100_000,
+          investment_property_for_form4952: true,
+        }],
+      }
+      : {
+        f1099div: [{
+          payerName: "Taxable stock payer",
+          source_document_reference: "issued-2025-stock-dividend",
+          isNominee: false,
+          box11: false,
+          box1a: 100_000,
+          investment_property_for_form4952: true,
+        }],
+      }),
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       fincen_form114_required: false,
@@ -95,6 +108,36 @@ Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF"
   assertEquals(
     form4952Pdf.instances!(fields, testFiler(), result.pending).length,
     1,
+  );
+});
+
+Deno.test("Form 4952 traced loan with one ordinary dividend payer reaches native and PDF", () => {
+  const result = filing("dividend");
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line4a, 100_000);
+  assertEquals(result.pending.form4952?.line8, 20_000);
+  assertEquals(result.pending.f1040?.line3b_ordinary_dividends, 100_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  const fields = result.pending.form4952!;
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: { ...result.pending, f1099div: { f1099divs: [] } },
+        filer: testFiler(),
+      }),
+    Error,
+    "one retained loan",
   );
 });
 

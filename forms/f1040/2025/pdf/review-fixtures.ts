@@ -535,6 +535,72 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-2023-refinance-points-ledger",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        lender_name: "Refinance Lender",
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "2025 continuing-loan Form 1098",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 interest workpaper",
+        for_routing: "A",
+      }],
+      mortgage_refinance_points: {
+        refinances: [{
+          mortgage_id: "refinance-2023-ledger",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          lender_name: "Refinance Lender",
+          form1098_source_document_reference: "2025 continuing-loan Form 1098",
+          closing_disclosure_reference: "2023 refinance closing disclosure",
+          pub936_workpaper_reference: "2025 refinance points workpaper",
+          refinance_close_year: 2023,
+          refinance_close_month: 6,
+          prior_year_2023: {
+            filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
+            filed_2023_points_workpaper_reference: "2023 loan points ledger",
+            filed_2023_loan_points_deduction: 67,
+            payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+              month,
+              document_reference: `2023-payment-${month}`,
+            })),
+          },
+          prior_year_2024: {
+            filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
+            filed_2024_points_workpaper_reference: "2024 loan points ledger",
+            filed_2024_loan_points_deduction: 133,
+            payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+              month: index + 1,
+              document_reference: `2024-payment-${index + 1}`,
+            })),
+          },
+          prior_qualified_home_debt: 100_000,
+          refinanced_principal: 100_000,
+          loan_term_months: 180,
+          total_points_charged: 3_000,
+          points_for_nondeductible_services: 1_000,
+          monthly_payment_records: Array.from({ length: 12 }, (_, index) => ({
+            month: index + 1,
+            document_reference: `2025-payment-${index + 1}`,
+          })),
+          qualified_home_secured_verified: true,
+          points_not_reported_in_box6_verified: true,
+          points_paid_directly_verified: true,
+          acquisition_debt_limit_verified: true,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "Schedule A line 8a prints 18,000 of reported interest and line 8c prints 133 from the 2023 refinance points ledger",
+      "Form 1040 line 12e matches the 18,133 itemized deduction",
+      "The distinct 2023 and 2024 filed-year ledgers reconcile before the 2025 claim",
+    ],
+  },
+  {
     id: "single-1098-prior-year-recovery",
     inputs: {
       general: singleGeneral,
