@@ -108,6 +108,13 @@ short-term gains is also accepted when both complete totals stay positive;
 its audited regular and AMT preferential net capital gain is zero, so Part III
 does not print. Positive and mismatched-net fixtures are authored for the deferred
 batch. Net losses, sign-changing rows, other capital activity, special-rate
-gains, Form 4952 elections, and qualified dividends remain closed. See the
+gains and Form 4952 elections remain closed. A bounded ordinary 1099-DIV
+qualified-dividend combination now joins the audited short-term-basis gain and
+short-term-loss/long-term-gain paths to Part III when the combined preferential
+amount fits both regular and AMT taxable income. Native and PDF export require
+the retained 1099-DIV payer, finalized Form 1040 dividends and taxable income,
+and the separate AMT net capital gain. The positive and tamper fixtures await
+the requested final bulk pass; other dividend classes, capital-gain-excess
+worksheets, and issued-copy bytes remain open. See the
 [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
 and [2025 Schedule D instructions](https://www.irs.gov/instructions/i1040sd).

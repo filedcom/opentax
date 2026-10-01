@@ -1,7 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
-import { assertIsoQualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
 import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
@@ -157,7 +157,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   assertForm6251DepreciationSource(fields);
   assertForm6251TrustSource(fields, context?.pending);
   assertForm6251PrivateActivityBondSource(fields, context?.pending);
-  assertIsoQualifiedDividendSource(fields, context?.pending);
+  assertForm6251QualifiedDividendSource(fields, context?.pending);
   if ((fields.iso_adjustment ?? 0) > 0) {
     const filer = context?.filer;
     if (!filer) {

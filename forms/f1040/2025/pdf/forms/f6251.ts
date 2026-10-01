@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
-import { assertIsoQualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
 import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
@@ -92,7 +92,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertForm6251DepreciationSource(fields);
     assertForm6251TrustSource(fields, allPending);
     assertForm6251PrivateActivityBondSource(fields, allPending);
-    assertIsoQualifiedDividendSource(fields, allPending);
+    assertForm6251QualifiedDividendSource(fields, allPending);
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;
     const agi = form1040?.line11_agi;

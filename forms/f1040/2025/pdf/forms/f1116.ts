@@ -3,7 +3,10 @@ import {
   alternativeCompensationWorldwideTotal,
   inputSchema as fecInputSchema,
 } from "../../../nodes/inputs/fec/index.ts";
-import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
+import {
+  categorySummarySchema,
+  scheduleCFilingBlockReason,
+} from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { projectSingleSourceForm1116Pdf } from "./f1116_single_source.ts";
 import { projectGeneralWageForm1116Pdf } from "./f1116_general_wage.ts";
 import { IncomeCategory } from "../../../nodes/intermediate/forms/form_1116/index.ts";
@@ -153,9 +156,9 @@ export const form1116Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf",
   projectFields(fields, allPending) {
     if (fields.foreign_tax_redeterminations !== undefined) {
-      throw new Error(
-        "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-      );
+      throw new Error(scheduleCFilingBlockReason(
+        fields.foreign_tax_redeterminations,
+      ));
     }
     const summaries = Array.isArray(fields.category_summaries)
       ? fields.category_summaries.map((summary) =>

@@ -633,7 +633,6 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
           longLossOffsetShortGain) ||
-        (input.qualified_dividends ?? 0) !== 0 ||
         (input.form4952_regular_election ?? 0) !== 0 ||
         (input.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
         (input.form4952_amt_election ?? 0) !== 0 ||
@@ -747,17 +746,15 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           "Form 6251 line 2k AMT basis path needs its identified rows to reconcile with regular Schedule D net capital gain, with no other capital activity, Form 4952, special-rate gain, or Form 2555",
         );
       }
-      // With only audited positive short-term gains, Schedule D has no net
-      // capital gain for either tax. Qualified dividends still use Part III;
-      // keep this route to bases where neither worksheet caps that amount.
+      // Qualified dividends and audited capital gains use Part III only when
+      // neither regular nor AMT taxable income caps their combined amount.
       if (
-        shortTermBasisRows.length > 0 && longTermBasisRows.length === 0 &&
         qualDiv > 0 &&
-        (qualDiv > (input.regular_taxable_income ?? 0) ||
-          qualDiv > taxableExcess)
+        (qualDiv + regularNetCg > (input.regular_taxable_income ?? 0) ||
+          qualDiv + Math.max(0, amtBasisNet) > taxableExcess)
       ) {
         throw new Error(
-          "Form 6251 short-term AMT basis with qualified dividends needs the dividend amount within regular and AMT taxable income",
+          "Form 6251 AMT basis with qualified dividends needs the preferential amount within regular and AMT taxable income",
         );
       }
     }

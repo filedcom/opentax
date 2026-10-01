@@ -1,5 +1,28 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One W-2 plus one Form 1099-INT (2026-10-01, unrun)
+
+One under-65, nonblind dependent's identified 2025 W-2 wages and one identified
+Form 1099-INT's taxable and tax-exempt interest can now enter the same filed
+single Form 1040 source. Its lines 1z, 2a, 2b and 11b must reconcile to the
+issued records, and all other modeled income and adjustments stay zero. The
+[2025 Pub. 501 Table 2](https://www.irs.gov/publications/p501) mixed-income
+filing requirement is established when taxable interest exceeds $1,350, wages
+exceed $15,750, or gross income exceeds the larger of $1,350 and wages up to
+$15,300 plus $450. Equality to every applicable threshold is insufficient.
+The dependent's Worksheet 1-2 MAGI is filed AGI plus tax-exempt interest; the
+parent's own Form 1040 wages and AGI remain separate.
+
+The bounded one-policy, full-year same-state Form 8962 route rechecks the
+dependent SSN, unique filed-return/W-2/1099-INT references, two-person poverty
+line, household MAGI and credit or repayment. The computed amount enters
+Schedule 3 line 9 or Schedule 2 line 1a and reconciles to parent Form 1040
+line 31 or 17 in native MeF and PDF projection. Positive net-credit and
+excess-APTC cases, plus income, identity, duplicate-reference, filing-threshold,
+and parent-return tampering fixtures are authored but unrun. Issuer and filed
+return bytes, multiple wage/interest sources, older or blind mixed-income
+dependents, other income, and wider policy combinations remain open.
+
 ## One wage-only required-filing dependent (2026-10-01, unrun)
 
 The existing required-filing dependent record now accepts exactly one
@@ -9,7 +32,7 @@ must match the dependent's filed single Form 1040 lines 1z and 11b, with zero
 interest and every other taxable/adjustment line still zero. The dependent must
 be under 65, not blind, and have wages **above** the $15,750 earned-income
 filing threshold in [2025 Pub. 501 Table 2](https://www.irs.gov/publications/p501).
-A W-2 at exactly $15,750, a refund-only return, mixed wage/interest income,
+A W-2 at exactly $15,750, a refund-only return, or unsupported other income,
 or a borrowed W-2/return reference fails. The general node adds this filed AGI
 to Form 8962 Worksheet 1-2 line 2b; it does not add the dependent's wages to
 the parent's Form 1040.
@@ -21,7 +44,7 @@ annual credit/repayment, Schedule 3 line 9 or Schedule 2 line 1a, and Form
 1040 line 31 or 17 before native MeF and PDF export. Positive net-credit and
 excess-APTC fixtures plus W-2, threshold and return-tamper cases are authored
 but unrun. This supports entered document references, not authenticated W-2 or
-filed-return bytes. Mixed wages and interest, self-employment, dependent
+filed-return bytes. Other mixed income, self-employment, dependent
 deductions, other filing triggers, multiple dependent wage cases, policy
 allocations, and Marketplace source authentication remain open.
 
@@ -79,7 +102,7 @@ single-filing-status repayment cap; those routes have their own identity and
 monthly reconciliation checks. Form 8814 children, dependent Form 2555 or
 Social Security facts, and unsupported policy configurations still stop.
 Source references identify records, not authenticate their
-contents. Other required-filing bases (wages, self-employment, mixed income,
+contents. Other required-filing bases (self-employment, other mixed income,
 marital filing rules, and Pub. 501 Table 3 triggers) and other dependent
 income/deductions remain outside this route. The `not_required` classification
 lacks that review and now fails closed in the bounded annual projection, even

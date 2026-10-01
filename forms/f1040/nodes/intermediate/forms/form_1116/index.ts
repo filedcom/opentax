@@ -388,6 +388,29 @@ export type RedeterminationDisclosure = z.infer<
   typeof redeterminationDisclosureSchema
 >;
 
+/** The staged Schedule C workpaper cannot establish an accepted affected-year
+ * return, amendment receipt, or the 2025 return's carryover consequences. */
+export function scheduleCFilingBlockReason(raw: unknown): string {
+  const ledgers = z.array(redeterminationDisclosureSchema).min(1).parse(raw);
+  const changed = ledgers.flatMap((ledger) =>
+    ledger.affected_years.filter((year) =>
+      year.redetermined_us_tax_liability_usd !==
+        year.us_tax_liability_on_filed_return_usd
+    ).map((year) => `${ledger.income_category} ${year.tax_year_end}`)
+  );
+  if (changed.length > 0) {
+    return `Form 1116 Schedule C cannot file: ${
+      changed.join(", ")
+    } changes U.S. liability; authenticated affected-year filing and amendment receipts, intervening-year attributes, and the 2025 Form 1116/Schedule 3/Form 1040 join are required`;
+  }
+  const years = ledgers.map((ledger) =>
+    `${ledger.income_category} ${ledger.relation_back_year_end}`
+  );
+  return `Form 1116 Schedule C cannot file: ${
+    years.join(", ")
+  } has no liability change, but authenticated filed-year records, intervening-year attributes, and the 2025 Form 1116/Schedule 3/Form 1040 join are required`;
+}
+
 export const carryoverReviewSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
   prior_year_form1116_line23_limit: z.number().nonnegative(),
@@ -830,9 +853,9 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.foreign_tax_redeterminations?.length ?? 0) > 0) {
-      throw new Error(
-        "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-      );
+      throw new Error(scheduleCFilingBlockReason(
+        input.foreign_tax_redeterminations,
+      ));
     }
     for (const item of input.foreign_tax_items ?? []) {
       if (
@@ -1069,9 +1092,10 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });
-    const origin2015 = priorCarryovers[0]?.vintages.find((vintage) =>
-      vintage.vintage_tax_year === 2015
-    )?.prior_year_schedule_b_line8_vintage_amount ?? 0;
+    const origin2015 =
+      priorCarryovers[0]?.vintages.find((vintage) =>
+        vintage.vintage_tax_year === 2015
+      )?.prior_year_schedule_b_line8_vintage_amount ?? 0;
     const expired2015 = Math.max(
       0,
       origin2015 - (categories[0]?.usedPriorYearCarryover ?? 0),

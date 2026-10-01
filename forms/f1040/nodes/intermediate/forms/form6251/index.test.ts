@@ -127,6 +127,33 @@ function basisSourcePending(fields: Record<string, unknown>) {
   };
 }
 
+function basisDividendPending(
+  fields: Record<string, unknown>,
+  qualified: number,
+  ordinary: number,
+) {
+  return {
+    ...basisSourcePending(fields),
+    f1099div: {
+      f1099divs: [{
+        payerName: "Audited dividend payer",
+        source_document_reference: "issued-2025-dividend-payer",
+        isNominee: false,
+        box11: false,
+        box1a: ordinary,
+        box1b: qualified,
+      }],
+    },
+    f1040: {
+      line3a_qualified_dividends: qualified,
+      line3b_ordinary_dividends: ordinary,
+      line11_agi: 200_000,
+      line14_deductions_qbi_total: 0,
+      line15_taxable_income: fields.regular_taxable_income,
+    },
+  };
+}
+
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
@@ -597,26 +624,25 @@ Deno.test("form6251: audited short-term AMT basis and qualified dividends use Pa
   assertEquals(filed?.fields.line27, 190_000);
   assertStringIncludes(
     mef6251.build(filed!.fields, {
-      pending: basisSourcePending(filed!.fields),
+      pending: basisDividendPending(filed!.fields, 10_000, 12_000),
     }),
     "<CapitalGainsWorksheetAmt>10000</CapitalGainsWorksheetAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
-      ...basisSourcePending(filed!.fields),
-      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+      ...basisDividendPending(filed!.fields, 10_000, 12_000),
     })?.line13,
     10_000,
   );
   assertThrows(
     () => compute({ ...base, regular_taxable_income: 9_999 }),
     Error,
-    "dividend amount within regular and AMT taxable income",
+    "preferential amount within regular and AMT taxable income",
   );
   assertThrows(
     () => compute({ ...base, regular_tax_income: 90_000 }),
     Error,
-    "dividend amount within regular and AMT taxable income",
+    "preferential amount within regular and AMT taxable income",
   );
 });
 
@@ -694,6 +720,7 @@ Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part
     regular_tax_income: 200_000,
     regular_taxable_income: 200_000,
     regular_tax: 0,
+    qualified_dividends: 10_000,
     net_capital_gain: 40_000,
     line2k_8949_capital_audit: {
       transactions: [
@@ -739,19 +766,34 @@ Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part
   const filed = result.outputs.find((row) => row.nodeType === "form6251");
   assertEquals(filed?.fields.line2k_disposition, -8_000);
   assertEquals(filed?.fields.amti, 192_000);
-  assertEquals(filed?.fields.line13, 32_000);
+  assertEquals(filed?.fields.line13, 42_000);
   assertStringIncludes(
     mef6251.build(filed!.fields, {
-      pending: basisSourcePending(filed!.fields),
+      pending: basisDividendPending(filed!.fields, 10_000, 12_000),
     }),
     "<PropertyDispositionAmt>-8000</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
-      ...basisSourcePending(filed!.fields),
-      f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
+      ...basisDividendPending(filed!.fields, 10_000, 12_000),
     })?.line13,
-    32_000,
+    42_000,
+  );
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: basisSourcePending(filed!.fields),
+      }),
+    Error,
+    "reconciled 1099-DIV",
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(filed!.fields, {
+        ...basisDividendPending(filed!.fields, 9_999, 12_000),
+      }),
+    Error,
+    "reconciled 1099-DIV",
   );
   assertThrows(
     () => compute({ ...input, net_capital_gain: 50_000 }),

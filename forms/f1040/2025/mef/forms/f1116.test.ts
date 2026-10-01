@@ -513,14 +513,32 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   );
 });
 
-Deno.test("Form 1116 MeF rejects a disclosed redetermination without native Schedule C", () => {
+Deno.test("Form 1116 MeF rejects a disclosed redetermination without authenticated affected-year records", () => {
   assertThrows(
     () =>
       form1116.build({
         foreign_tax_redeterminations: [scheduleCLedger()],
       }),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
+  );
+});
+
+Deno.test("Form 1116 MeF names a changed affected year before direct export", () => {
+  const ledger = scheduleCLedger();
+  assertThrows(
+    () =>
+      form1116.build({
+        foreign_tax_redeterminations: [{
+          ...ledger,
+          affected_years: [{
+            ...ledger.affected_years[0],
+            redetermined_us_tax_liability_usd: 4_020,
+          }],
+        }],
+      }),
+    Error,
+    "amendment receipts",
   );
 });
 
@@ -535,7 +553,7 @@ Deno.test("Form 1116 MeF cannot serialize a multi-category redetermination as it
         category_summaries: [passive],
       }),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
   );
 });
 
@@ -735,14 +753,22 @@ Deno.test("Form 1116 line 3b uses a linked source-specific deductions statement"
 });
 
 Deno.test("Form 1116 other-deductions statement omits return context without a credit claim", () => {
-  assertEquals(form1116OtherDeductionsStatement.build({}, {
-    pending: { form_1116: { other_deductions: 5_652 } },
-  }), "");
-  assertThrows(() => form1116OtherDeductionsStatement.build({}, {
-    pending: {
-      form_1116: { ...fields, other_deductions: 2_000 },
-    },
-  }), Error, "need a source explanation");
+  assertEquals(
+    form1116OtherDeductionsStatement.build({}, {
+      pending: { form_1116: { other_deductions: 5_652 } },
+    }),
+    "",
+  );
+  assertThrows(
+    () =>
+      form1116OtherDeductionsStatement.build({}, {
+        pending: {
+          form_1116: { ...fields, other_deductions: 2_000 },
+        },
+      }),
+    Error,
+    "need a source explanation",
+  );
 });
 
 Deno.test("Form 1116 line 3b rejects a missing explanation or missing linked document", () => {

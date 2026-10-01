@@ -52,14 +52,32 @@ Deno.test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced intere
   );
 });
 
-Deno.test("Form 1116 PDF rejects disclosed redetermination without Schedule C", () => {
+Deno.test("Form 1116 PDF rejects disclosed redetermination without authenticated affected-year records", () => {
   assertThrows(
     () =>
       form1116Pdf.projectFields?.({
         foreign_tax_redeterminations: [scheduleCLedger()],
       }, {}),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
+  );
+});
+
+Deno.test("Form 1116 PDF names a changed affected year before projection", () => {
+  const ledger = scheduleCLedger();
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.({
+        foreign_tax_redeterminations: [{
+          ...ledger,
+          affected_years: [{
+            ...ledger.affected_years[0],
+            redetermined_us_tax_liability_usd: 4_020,
+          }],
+        }],
+      }, {}),
+    Error,
+    "amendment receipts",
   );
 });
 
@@ -74,7 +92,7 @@ Deno.test("Form 1116 PDF cannot omit an unpaid-accrual event on a zero-credit re
         us_tax_before_credits: 0,
       }, {}),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
   );
 });
 

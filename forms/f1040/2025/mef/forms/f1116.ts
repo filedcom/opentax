@@ -6,6 +6,7 @@ import {
   ForeignTaxKind,
   IncomeCategory,
   type RedeterminationDisclosure,
+  scheduleCFilingBlockReason,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -368,9 +369,9 @@ function buildIRS1116(
   context?: MefBuildContext,
 ): readonly string[] {
   if (fields.foreign_tax_redeterminations !== undefined) {
-    throw new Error(
-      "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
-    );
+    throw new Error(scheduleCFilingBlockReason(
+      fields.foreign_tax_redeterminations,
+    ));
   }
   const rawSummaries = fields.category_summaries;
   if (!rawSummaries || rawSummaries.length === 0) {

@@ -135,7 +135,7 @@ Deno.test("form1116: disclosed 2025 foreign tax redetermination fails before cre
         foreign_tax_redeterminations: [scheduleCLedger()],
       }),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
   );
   assertThrows(
     () =>
@@ -151,7 +151,25 @@ Deno.test("form1116: disclosed 2025 foreign tax redetermination fails before cre
         }],
       }),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
+  );
+});
+
+Deno.test("form1116: changed affected-year liability names the missing amendment receipt", () => {
+  const ledger = scheduleCLedger();
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_redeterminations: [{
+          ...ledger,
+          affected_years: [{
+            ...ledger.affected_years[0],
+            redetermined_us_tax_liability_usd: 4_020,
+          }],
+        }],
+      }),
+    Error,
+    "amendment receipts",
   );
 });
 
@@ -167,7 +185,7 @@ Deno.test("form1116: an unpaid-accrual event cannot disappear when the current-y
         us_tax_before_credits: 0,
       }),
     Error,
-    "needs native Schedule C",
+    "authenticated filed-year records",
   );
 });
 
@@ -657,16 +675,33 @@ Deno.test("form1116: reviewed passive 2016-2020 origins feed the 2025 limitation
     prior_year_carryovers: [{
       income_category: IncomeCategory.Passive,
       vintages: [
-        { vintage_tax_year: 2020, prior_year_schedule_b_line8_vintage_amount: 200 },
-        { vintage_tax_year: 2019, prior_year_schedule_b_line8_vintage_amount: 100 },
-        { vintage_tax_year: 2018, prior_year_schedule_b_line8_vintage_amount: 100 },
-        { vintage_tax_year: 2017, prior_year_schedule_b_line8_vintage_amount: 100 },
-        { vintage_tax_year: 2016, prior_year_schedule_b_line8_vintage_amount: 100 },
+        {
+          vintage_tax_year: 2020,
+          prior_year_schedule_b_line8_vintage_amount: 200,
+        },
+        {
+          vintage_tax_year: 2019,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
+        {
+          vintage_tax_year: 2018,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
+        {
+          vintage_tax_year: 2017,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
+        {
+          vintage_tax_year: 2016,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
       ],
       prior_year_schedule_b_line8_total: 600,
       prior_year_schedule_b_line8_other_vintages_total: 0,
       no_intervening_adjustments: true,
-      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2016-2020 vintages"],
+      source_document_references: [
+        "Filed 2024 passive Schedule B line 8, original 2016-2020 vintages",
+      ],
     }],
   });
   const summary = result.outputs.find((row) => row.nodeType === "form_1116")
@@ -678,8 +713,13 @@ Deno.test("form1116: reviewed passive 2016-2020 origins feed the 2025 limitation
   assertEquals(summary[0].priorYearCarryover, 600);
   assertEquals(summary[0].usedPriorYearCarryover, 300);
   assertEquals(summary[0].allowedCredit, 500);
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit, 500);
-  const scheduleB = result.outputs.find((row) => row.nodeType === "form1116_schedule_b")?.fields;
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
+  );
+  const scheduleB = result.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
   assertEquals(scheduleB?.used_prior_year_carryover, 300);
   assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
 });
@@ -696,19 +736,32 @@ Deno.test("form1116: unused 2015 passive balance expires after oldest-first 2025
     prior_year_carryovers: [{
       income_category: IncomeCategory.Passive,
       vintages: [
-        { vintage_tax_year: 2016, prior_year_schedule_b_line8_vintage_amount: 200 },
-        { vintage_tax_year: 2015, prior_year_schedule_b_line8_vintage_amount: 400 },
+        {
+          vintage_tax_year: 2016,
+          prior_year_schedule_b_line8_vintage_amount: 200,
+        },
+        {
+          vintage_tax_year: 2015,
+          prior_year_schedule_b_line8_vintage_amount: 400,
+        },
       ],
       prior_year_schedule_b_line8_total: 600,
       prior_year_schedule_b_line8_other_vintages_total: 0,
       no_intervening_adjustments: true,
-      source_document_references: ["Filed 2024 passive Schedule B line 8, original 2015 and 2016 vintages"],
+      source_document_references: [
+        "Filed 2024 passive Schedule B line 8, original 2015 and 2016 vintages",
+      ],
     }],
   });
-  const scheduleB = result.outputs.find((row) => row.nodeType === "form1116_schedule_b")?.fields;
+  const scheduleB = result.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
   assertEquals(scheduleB?.used_prior_year_carryover, 300);
   assertEquals(scheduleB?.remaining_prior_year_carryover, 200);
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit, 500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
+  );
 });
 
 Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", () => {

@@ -207,3 +207,17 @@ change; an affected-year amended return is required only when liability
 changes. This branch remains unregistered and fail-closed for filing because
 filed-year authenticity, later-year attributes, 2025 return joins, and the
 deferred validation gates are still unresolved.
+
+## Active filing gate for the affected year
+
+The active Form 1116 calculation, direct native builder, and parent PDF
+projector now use the same parsed Schedule C ledger to identify the blocked
+category and affected year. A changed U.S. liability explicitly requires an
+authenticated affected-year filing and amendment receipt. An unchanged
+liability still requires authenticated filed-year records. Both branches also
+require verified intervening-year tax attributes and a 2025 Form 1116,
+Schedule 3, and Form 1040 join before Schedule C registration. Focused
+unchanged and changed-liability rejection fixtures are authored for the
+deferred batch. The staged reviewed PDFs establish byte hashes and reviewer
+links, but do not extract filed lines from an authenticated IRS record or prove
+an amendment was accepted; they therefore cannot activate this route.
