@@ -23,12 +23,15 @@ import { residentElectionName } from "../../resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
+import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
 } from "../../return-wide-arithmetic.ts";
 
 export interface Fields {
+  presidential_campaign_fund_taxpayer?: boolean;
+  presidential_campaign_fund_spouse?: boolean;
   filing_status?: string;
   taxpayer_ssn?: string;
   taxpayer_ssn_valid_for_employment?: boolean;
@@ -432,6 +435,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  assertPresidentialCampaignSource(fields, context?.pending);
   assertReturnWideArithmetic(fields);
   assertEstimatedPaymentLine26(fields, context?.pending);
   assertF8288OtherWithholding(fields, context?.pending);
@@ -592,6 +596,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   const requiredPrefix = [
     ...(mainHomeInUS === true
       ? [element("MainHomeInUSOverHalfYrInd", "X")]
+      : []),
+    ...(fields.presidential_campaign_fund_taxpayer === true
+      ? [element("PECFPrimaryInd", "X")]
+      : []),
+    ...(fields.presidential_campaign_fund_spouse === true
+      ? [element("PECFSpouseInd", "X")]
       : []),
     element("IndividualReturnFilingStatusCd", statusCode),
     ...(residentElection

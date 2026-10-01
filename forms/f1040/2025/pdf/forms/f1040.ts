@@ -11,6 +11,7 @@ import { residentElectionName } from "../../resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
+import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -58,6 +59,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "checkbox",
     domainKey: "main_home_in_us_over_half_year",
     pdfField: "topmostSubform[0].Page1[0].c1_5[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "presidential_campaign_fund_taxpayer",
+    pdfField: "topmostSubform[0].Page1[0].c1_6[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "presidential_campaign_fund_spouse",
+    pdfField: "topmostSubform[0].Page1[0].c1_7[0]",
   },
   // ── Page 1: Filing Status checkboxes ──────────────────────────────────────
   // Verified against the 2025 f1040 AcroForm field dump (rects at y≈578–554):
@@ -599,6 +610,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;

@@ -57,6 +57,8 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  presidential_campaign_fund_taxpayer: z.boolean().optional(),
+  presidential_campaign_fund_spouse: z.boolean().optional(),
   bank_routing_number: z.string().length(9).optional(),
   bank_account_number: z.string().min(4).max(17).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
@@ -1104,6 +1106,14 @@ class F1040Node extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (
+      input.presidential_campaign_fund_spouse === true &&
+      input.filing_status !== FilingStatus.MFJ
+    ) {
+      throw new Error(
+        "Form 1040 presidential campaign spouse mark requires a joint return",
+      );
+    }
     const schedule3 = input.credit_limit_schedule3_lines;
     const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
     if (schedule3 && elderlyCredit > 0) {
@@ -1223,6 +1233,18 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
       ...numericLines,
+      ...(effectiveInput.presidential_campaign_fund_taxpayer === undefined
+        ? {}
+        : {
+          presidential_campaign_fund_taxpayer:
+            effectiveInput.presidential_campaign_fund_taxpayer,
+        }),
+      ...(effectiveInput.presidential_campaign_fund_spouse === undefined
+        ? {}
+        : {
+          presidential_campaign_fund_spouse:
+            effectiveInput.presidential_campaign_fund_spouse,
+        }),
       ...(effectiveInput.bank_routing_number === undefined ? {} : {
         bank_routing_number: effectiveInput.bank_routing_number,
       }),
