@@ -1,5 +1,28 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## Traced taxable-securities loan alongside a portfolio royalty (staged, unrun)
+
+The one-owner direct-use borrowing workpaper now also reconciles the existing
+single 1099-MISC portfolio royalty route. The loan must directly and entirely
+purchase identified taxable securities, with one lender, disbursement,
+purchase, and paid-interest record set. Its owner and $300 paid interest must
+match the final filer and Form 4952 line 1. The separate $800 royalty is
+reported once on Schedule E and Schedule 1 and contributes to Form 4952 line
+4a; the loan interest is limited on Form 4952 and reaches Schedule A line 9.
+Native MeF and PDF replay the loan and royalty sources and check the selected
+Form 1040 itemized deduction and line 8 income. The [2025 Publication
+550](https://www.irs.gov/publications/p550) allocates borrowed-fund interest
+by its actual use, and the [2025 Schedule E
+instructions](https://www.irs.gov/instructions/i1040se) distinguish interest
+attributable to royalties from investment-use interest.
+
+Positive full-return/native/PDF and changed owner, purchase, lender, and
+payment fixtures are authored but unrun. This reviewed direct-use workpaper
+does not authenticate lender, bank, or purchase bytes and covers no mixed-use
+loan or royalty-attributable debt. The K-1 box 20 code B export guard remains
+closed for the issued-supplement and partner-limitation evidence described in
+the [code B gap](ty2025-form4952-k1-code-b-gap.md).
+
 Sources:
 [2025 Form 4952 and its instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf),
 especially line 4a (royalties from property held for investment, outside the

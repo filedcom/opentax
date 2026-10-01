@@ -1,6 +1,7 @@
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as dividendSourceSchema } from "../nodes/inputs/f1099div/index.ts";
 import { inputSchema as oidSourceSchema } from "../nodes/inputs/f1099oid/index.ts";
+import { inputSchema as miscSourceSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../nodes/types.ts";
 import {
@@ -87,6 +88,10 @@ export function reconcileForm4952DirectDebtExport(
   const interest = interestSourceSchema.safeParse(pending.f1099int);
   const dividend = dividendSourceSchema.safeParse(pending.f1099div);
   const oid = oidSourceSchema.safeParse(pending.f1099oid);
+  const misc = miscSourceSchema.safeParse(pending.f1099m);
+  const oneRoyalty = misc.success && misc.data.f1099ms.length === 1 &&
+    pending.f1099int === undefined && pending.f1099div === undefined &&
+    pending.f1099oid === undefined;
   const oneInterest = interest.success &&
     interest.data.f1099ints.length === 1 &&
     pending.f1099div === undefined && pending.f1099oid === undefined;
@@ -200,11 +205,11 @@ export function reconcileForm4952DirectDebtExport(
       !oneTreasuryInterestAndOid &&
       !oneInterestAndDividend && !oneOidAndDividend &&
       !twoInterestAndDividend && !interestAndTwoDividends &&
-      !twoInterestTwoDividends) ||
+      !twoInterestTwoDividends && !oneRoyalty) ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
-      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099-INT, 1099-DIV, or taxable 1099-OID investment payer inventory",
+      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099 investment payer or royalty inventory",
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");
@@ -354,6 +359,15 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_interest !== "number" ||
         printed.data.source_1099_interest !==
           retained.data.source_1099_interest ||
+        printed.data.source_1099_dividends !== undefined ||
+        retained.data.source_1099_dividends !== undefined
+      : oneRoyalty
+      ? typeof printed.data.source_1099_royalties !== "number" ||
+        typeof retained.data.source_1099_royalties !== "number" ||
+        printed.data.source_1099_royalties !==
+          retained.data.source_1099_royalties ||
+        printed.data.source_1099_interest !== undefined ||
+        retained.data.source_1099_interest !== undefined ||
         printed.data.source_1099_dividends !== undefined ||
         retained.data.source_1099_dividends !== undefined
       : typeof printed.data.source_1099_dividends !== "number" ||
