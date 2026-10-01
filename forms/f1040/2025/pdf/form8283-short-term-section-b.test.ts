@@ -35,22 +35,27 @@ async function sha256(bytes: Uint8Array): Promise<string> {
 }
 
 for (
-  const propertyType of [
-    "equipment",
-    "art_under_20000",
-    "collectibles",
+  const [propertyType, appraisedFmv, basis] of [
+    ["equipment", 18_000, 12_000],
+    ["art_under_20000", 18_000, 12_000],
+    ["art_at_least_20000", 25_000, 22_000],
+    ["collectibles", 18_000, 12_000],
   ] as const
 ) {
   Deno.test(`Section B purchased short-term ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
-    const purchase = await evidence("invoice and basis $12,000, 2025-01-15");
+    const purchase = await evidence(
+      `invoice and basis $${basis}, 2025-01-15`,
+    );
     const appraisal = await evidence(
-      `signed appraisal: ${propertyType} FMV $18,000`,
+      `signed appraisal: ${propertyType} FMV $${appraisedFmv}`,
     );
     const signedForm = await evidence(
       `completed signed Form 8283 for ${propertyType}`,
     );
     const reduction = await evidence(
-      "FMV $18,000 less short-term gain $6,000 equals claim $12,000",
+      `FMV $${appraisedFmv} less short-term gain $${
+        appraisedFmv - basis
+      } equals claim $${basis}`,
     );
     const appraiserSignature = await evidence("appraiser signature");
     const doneeSignature = await evidence("donee signature");
@@ -63,7 +68,8 @@ for (
     const item = {
       property_description: propertyType === "equipment"
         ? "Unused personal audio equipment, serial ST-8283"
-        : propertyType === "art_under_20000"
+        : propertyType === "art_under_20000" ||
+            propertyType === "art_at_least_20000"
         ? "Purchased framed painting, catalog ST-8283"
         : "Purchased rare coin, catalog ST-8283",
       property_type: propertyType,
@@ -71,9 +77,9 @@ for (
       date_acquired: "2025-01-15",
       donor_acquisition_description: "Purchase",
       date_contributed: "2025-06-01",
-      fmv: 18_000,
-      deduction_claimed: 12_000,
-      cost_or_adjusted_basis: 12_000,
+      fmv: appraisedFmv,
+      deduction_claimed: basis,
+      cost_or_adjusted_basis: basis,
       charitable_limit_category: "noncash_50",
       is_capital_gain_property: false,
       signed_form_attachment_file_name: "Signed8283.pdf",
@@ -113,7 +119,7 @@ for (
         signature_attachment_file_name: "DoneeSignature.pdf",
       },
       short_term_tangible_reduction: {
-        short_term_gain_removed: 6_000,
+        short_term_gain_removed: appraisedFmv - basis,
         purchase_record_attachment_file_name: "PurchaseRecord.pdf",
         purchase_record_review: {
           reviewed_by: "Synthetic reviewer",
@@ -149,9 +155,12 @@ for (
     assertEquals(result.diagnostics, []);
     assertEquals(
       result.pending.schedule_a.line_12_noncash_contributions,
-      12_000,
+      basis,
     );
-    assertEquals(result.pending.f1040.line12e_itemized_deductions, 48_000);
+    assertEquals(
+      result.pending.f1040.line12e_itemized_deductions,
+      36_000 + basis,
+    );
     const pending = buildPending(result.pending);
     const attachments = [
       {
@@ -191,15 +200,15 @@ for (
     });
     assertStringIncludes(
       bundle.xml,
-      "<AppraisedFairMarketValueAmt>18000</AppraisedFairMarketValueAmt>",
+      `<AppraisedFairMarketValueAmt>${appraisedFmv}</AppraisedFairMarketValueAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
-      "<DeductionClaimedAmt>12000</DeductionClaimedAmt>",
+      `<DeductionClaimedAmt>${basis}</DeductionClaimedAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
-      "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
+      `<OtherThanByCashOrCheckAmt>${basis}</OtherThanByCashOrCheckAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
@@ -207,6 +216,8 @@ for (
         ? "<EquipmentInd>X</EquipmentInd>"
         : propertyType === "art_under_20000"
         ? "<ArtWorthLssThan20000DollarsInd>X</ArtWorthLssThan20000DollarsInd>"
+        : propertyType === "art_at_least_20000"
+        ? "<ArtWorthAtLeast20000DollarsInd>X</ArtWorthAtLeast20000DollarsInd>"
         : "<CollectiblesInd>X</CollectiblesInd>",
     );
     const [projected] = form8283Pdf.instances!(
@@ -218,7 +229,11 @@ for (
       projected.section_b_collectibles,
       propertyType === "collectibles",
     );
-    assertEquals(projected.section_b_claim, 12_000);
+    assertEquals(
+      projected.section_b_art_at_least_20000,
+      propertyType === "art_at_least_20000",
+    );
+    assertEquals(projected.section_b_claim, basis);
     const filled = await buildPdfBytes(
       pending,
       base.filer,
@@ -238,6 +253,30 @@ for (
         }),
       Error,
       "bytes differ from reviewed SHA-256",
+    );
+    await assertRejects(
+      () =>
+        buildMefBundle(pending, {
+          filer: base.filer,
+          attachments: attachments.map((entry) =>
+            entry.fileName === "FullAppraisal.pdf"
+              ? { ...entry, bytes: purchase }
+              : entry
+          ),
+        }),
+      Error,
+    );
+    await assertRejects(
+      () =>
+        buildMefBundle(pending, {
+          filer: base.filer,
+          attachments: attachments.map((entry) =>
+            entry.fileName === "Signed8283.pdf"
+              ? { ...entry, bytes: purchase }
+              : entry
+          ),
+        }),
+      Error,
     );
     await assertRejects(
       () =>

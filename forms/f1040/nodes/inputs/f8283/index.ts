@@ -786,9 +786,12 @@ const sectionBItemSchema = z.object({
     if (
       (item.property_type !== SectionBPropertyType.Equipment &&
         item.property_type !== SectionBPropertyType.ArtUnder20000 &&
+        item.property_type !== SectionBPropertyType.ArtAtLeast20000 &&
         item.property_type !== SectionBPropertyType.Collectibles) ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
         item.fmv >= 20_000) ||
+      (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+        item.deduction_claimed < 20_000) ||
       item.capital_gain_reduction_election_confirmed === true ||
       item.investment_land_unimproved_confirmed === true ||
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
@@ -818,7 +821,7 @@ const sectionBItemSchema = z.object({
         code: "custom",
         path: ["short_term_tangible_reduction"],
         message:
-          "Form 8283 purchased short-term equipment, art below $20,000, or collectible needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase record, and reduction statement",
+          "Form 8283 purchased short-term equipment, art, or collectible needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase record, and reduction statement",
       });
     }
   }

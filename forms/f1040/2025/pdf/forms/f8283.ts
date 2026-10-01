@@ -382,6 +382,7 @@ function sectionBOrdinaryTangibleInstance(
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
+        propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
         propertyType !== SectionBPropertyType.Collectibles) ||
         !appraisal?.attachment_file_name ||
         !appraisal.full_appraisal_source_review ||

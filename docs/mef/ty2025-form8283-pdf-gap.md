@@ -209,7 +209,17 @@ with SHA-256
 `0c640887de585db56ef65df89e200222b914e95c620bf8cc473a1920fef96d5d`.
 The PDFs are synthetic evidence and the review assertions are not independent
 authentication of an actual signed appraisal. Art above $500,000, multiple
-items, reductions and carryovers remain closed.
+items, other reduction reasons, and carryovers remain closed.
+
+The purchased short-term art reduction now also accepts a single art item with
+appraised FMV $25,000 and a $22,000 basis-limited claim. The PDF preview uses
+the art-at-least-$20,000 box and shows both amounts, appraiser/donee source
+facts, and the reduction explanation. Native MeF requires the complete signed
+appraisal and completed signed Form 8283 as separate, byte-reviewed PDFs along
+with the purchase record, reduction statement, and signature documents. The
+Schedule A/native/PDF fixture and altered-statement-byte case are authored but
+unrun in this implementation pass; the broader art and carryover boundaries
+above remain.
 
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than

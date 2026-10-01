@@ -1,5 +1,23 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased short-term Section B art at $20,000 or more (2026-10-01, unrun)
+
+The bounded purchased short-term tangible-property route now includes one
+artwork with appraised FMV above the basis-limited claim of at least $20,000.
+The reviewed source requires a purchase/basis PDF, complete signed qualified
+appraisal PDF, FMV-reduction computation PDF, completed signed Form 8283 PDF,
+and distinct appraiser and donee signature PDFs. It ties short-term appreciation
+removed under section 170(e)(1)(A) to appraised FMV minus basis; the claim must
+equal basis. The native form reports original appraised FMV separately from the
+reduced claim and links all six distinct reviewed documents. Schedule A and
+Form 1040 must reconcile to the same one-gift source; the official PDF preview
+prints the art-at-least-$20,000 box, both values, appraiser/donee facts, and a
+supplemental explanation. A $25,000 FMV/$22,000 basis example and altered
+reduction, appraisal, and signed-form byte rejection fixtures are authored but
+unrun. This does not verify signatures or
+appraisal content automatically; document review remains required. Other
+Section B reduction reasons, multi-item forms, and carryovers stay closed.
+
 ## Donor-prepared Section A manuscript reduction (2026-10-01, unrun)
 
 [Publication 526 (2025)](https://www.irs.gov/publications/p526) explicitly
@@ -236,10 +254,11 @@ from the signed Form 8283 and signature excerpts. This is a source-review gate,
 not automated verification of the appraisal or tax facts. Focused mismatch and
 missing-review cases are written but unrun.
 
-Other Section B items with a claimed amount below appraised FMV now stop at
-native export. The bounded land election is the only Section B reduction with a
-sourced computation and reviewed statement PDF; another reduced Section B gift
-cannot be filed as if its FMV were unreduced. A focused rejection case is
+At that implementation stage, other Section B items with a claimed amount below
+appraised FMV stopped at native export. The bounded land election then was the
+only Section B reduction with a sourced computation and reviewed statement PDF;
+another reduced Section B gift could not be filed as if its FMV were unreduced.
+A focused rejection case is
 written but unrun. Positive Section B fixtures that did not intend a
 property-level reduction now use equal appraised FMV and claimed amount. This
 does not implement inventory, recapture, unrelated-use, or other Section B
