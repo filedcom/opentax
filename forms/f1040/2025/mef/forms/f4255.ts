@@ -60,6 +60,25 @@ function totalRows(rows: readonly F4255Row[]): PartIRow {
   };
 }
 
+export function reconcileForm4255Schedule2(
+  input: F4255Input,
+  pending: Record<string, unknown>,
+): void {
+  const lines = calculateForm4255Routes(input);
+  const schedule2 = pending.schedule2 as Record<string, unknown> | undefined;
+  const expected: ReadonlyArray<readonly [string, number]> = [
+    ["line1d_form4255_net_epe", lines.line1d],
+    ["line1e_form4255_excessive_payment", lines.line1e_1d + lines.line1e_2a],
+    ["line1f_form4255_20_percent_ep", lines.line1f_1d + lines.line1f_2a],
+    ["line19_form4255_net_epe", lines.line19],
+  ];
+  for (const [key, amount] of expected) {
+    if ((schedule2?.[key] ?? 0) !== amount) {
+      throw new Error(`Form 4255 ${key} differs from Schedule 2`);
+    }
+  }
+}
+
 export const form4255: MefFormDescriptor<"f4255", unknown> = {
   pendingKey: "f4255",
   FIELD_MAP: [],
@@ -72,27 +91,11 @@ export const form4255: MefFormDescriptor<"f4255", unknown> = {
     // no authenticated prior return or IRS determination bytes to verify.
     if (Object.values(lines).some((amount) => amount > 0)) {
       throw new Error(
-        "Form 4255 export needs authenticated prior-credit and IRS determination source bytes and a registered Form 4255 PDF",
+        "Form 4255 export needs authenticated prior-credit and IRS determination source bytes",
       );
     }
     if (context?.pending) {
-      const schedule2 = context.pending.schedule2 as
-        | Record<string, unknown>
-        | undefined;
-      const expected: ReadonlyArray<readonly [string, number]> = [
-        ["line1d_form4255_net_epe", lines.line1d],
-        [
-          "line1e_form4255_excessive_payment",
-          lines.line1e_1d + lines.line1e_2a,
-        ],
-        ["line1f_form4255_20_percent_ep", lines.line1f_1d + lines.line1f_2a],
-        ["line19_form4255_net_epe", lines.line19],
-      ];
-      for (const [key, amount] of expected) {
-        if ((schedule2?.[key] ?? 0) !== amount) {
-          throw new Error(`Form 4255 ${key} differs from Schedule 2`);
-        }
-      }
+      reconcileForm4255Schedule2(input, context.pending);
     }
     return elements("IRS4255", [
       ...input.rows.filter((row) => row.credit_line === "1d").map((row) =>

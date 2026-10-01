@@ -340,7 +340,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f4255",
     exportKinds: ["pdf"],
-    reason: "Form 4255 has a native filing but no source-backed PDF",
+    reason:
+      "Form 4255 PDF needs authenticated prior-return and IRS determination bytes before positive filing",
     isActive: (fields) => nonempty(fields.rows),
   },
   {
