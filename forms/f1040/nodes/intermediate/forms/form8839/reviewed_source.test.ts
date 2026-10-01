@@ -1,8 +1,15 @@
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
+import { FilingStatus as MefFilingStatus } from "../../../../mef/header.ts";
 import { FilingStatus } from "../../../types.ts";
 import { form8839, prepareForm8839Credit } from "./index.ts";
 import { assertReviewedDomestic8839Source } from "./reviewed_source.ts";
 import { bindReviewedDomestic8839DocumentBytes } from "./document_byte_binding.ts";
+import { projectByteBoundStagedDomestic8839 } from "./byte_bound_staged_route.ts";
 
 const input = {
   filing_status: FilingStatus.Single,
@@ -201,7 +208,7 @@ Deno.test("Form 8839 preflight does not reopen the active filing node", () => {
   );
 });
 
-Deno.test("Form 8839 reviewed decree, receipt, payment and reimbursement bind to exact bytes", async () => {
+Deno.test("Form 8839 reviewed decree, payment and reimbursement bytes settle one staged credit", async () => {
   const bytes = {
     decree: new TextEncoder().encode("synthetic decree Ada 2025-07-15 TX"),
     birth: new TextEncoder().encode("synthetic birth record Ada 2020-02-01"),
@@ -260,6 +267,136 @@ Deno.test("Form 8839 reviewed decree, receipt, payment and reimbursement bind to
     { source_document_id: "reimbursement-1", bytes: bytes.reimbursement },
   ];
   await bindReviewedDomestic8839DocumentBytes(sourced, reviewed, documents);
+  const sinkInput = {
+    filing_status: FilingStatus.Single,
+    line1a_wages: 200_000,
+    line11_agi: 200_000,
+    line16_income_tax: 20_000,
+    line17_additional_taxes: 0,
+    line19_child_tax_credit: 2_000,
+    line20_nonrefundable_credits: 1_000,
+    form8859_worksheet_b_applies: false,
+    credit_limit_schedule3_lines: {
+      line1: 1_000,
+      line2: 0,
+      line3: 0,
+      line4: 0,
+      line5a: 0,
+      line5b: 0,
+      line6aGbc: 0,
+      line6bPriorMinimumTax: 0,
+      line6cAdoption: 0,
+      line6dElderlyDisabled: 0,
+      line6fCleanVehicle: 0,
+      line6gMortgage: 0,
+      line6hHomebuyer: 0,
+      line6iElectricVehicle: 0,
+      line6jRefueling: 0,
+      line6kBondCredit: 0,
+      line6lForm8978: 0,
+      line6mUsedCleanVehicle: 0,
+      line7: 0,
+    },
+  };
+  const magiReview = {
+    reviewed_by: "Return Reviewer",
+    reviewed_on: "2026-04-01",
+    section933: {
+      no_puerto_rico_excluded_income_confirmed: true,
+      return_wide_review_reference: "territory-review",
+    },
+    form2555: {
+      no_form2555_filing_or_exclusion_confirmed: true,
+      return_wide_review_reference: "foreign-income-review",
+    },
+    form4563: {
+      no_form4563_filing_or_exclusion_confirmed: true,
+      return_wide_review_reference: "territory-return-review",
+    },
+  };
+  const filer = {
+    primarySSN: "123456789",
+    nameLine1: "Example Taxpayer",
+    nameControl: "EXAM",
+    address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    filingStatus: MefFilingStatus.Single,
+  };
+  const projection = await projectByteBoundStagedDomestic8839(
+    sourced,
+    reviewed,
+    documents,
+    sinkInput,
+    magiReview,
+    filer,
+  );
+  assertEquals(projection.credit.perChild[0]?.line5, 11_000);
+  assertEquals(projection.credit.line13, 5_000);
+  assertEquals(projection.credit.line18, 6_000);
+  assertEquals(projection.final1040.line30_refundable_adoption, 5_000);
+  assertEquals(projection.finalSchedule3.line6c_adoption_credit, 6_000);
+  assertStringIncludes(
+    projection.xml,
+    "<QualifiedAdoptionExpenseAmt>11000</QualifiedAdoptionExpenseAmt>",
+  );
+  assertStringIncludes(
+    projection.xml,
+    "<NonrefundableAdoptionCreditAmt>6000</NonrefundableAdoptionCreditAmt>",
+  );
+  assertEquals(projection.pdfFields.line5, 11_000);
+  assertEquals(projection.pdfFields.line18, 6_000);
+  await assertRejects(
+    () =>
+      projectByteBoundStagedDomestic8839(
+        sourced,
+        reviewed,
+        [...documents.slice(0, 4), { ...documents[4]!, bytes: bytes.receipt }],
+        sinkInput,
+        magiReview,
+        filer,
+      ),
+    Error,
+    "bytes differ from its source SHA-256",
+  );
+  await assertRejects(
+    () =>
+      projectByteBoundStagedDomestic8839(
+        sourced,
+        {
+          ...reviewed,
+          expenses: [{
+            ...reviewed.expenses[0]!,
+            reimbursement: {
+              ...reviewed.expenses[0]!.reimbursement,
+              reimbursed_amount: 1_001,
+            },
+          }],
+        },
+        documents,
+        sinkInput,
+        magiReview,
+        filer,
+      ),
+    Error,
+    "reviewed payment does not match",
+  );
+  await assertRejects(
+    () =>
+      projectByteBoundStagedDomestic8839(
+        sourced,
+        reviewed,
+        documents,
+        { ...sinkInput, line20_nonrefundable_credits: 0 },
+        magiReview,
+        filer,
+      ),
+    Error,
+    "Schedule 3 lines do not reconcile",
+  );
   await assertRejects(
     () =>
       bindReviewedDomestic8839DocumentBytes(sourced, reviewed, [
