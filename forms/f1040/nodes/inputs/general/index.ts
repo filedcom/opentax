@@ -437,9 +437,14 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       taxReturn.wage_forms_w2?.length === 1 &&
       taxableInterest === 0 && exemptInterest === 0 &&
       taxReturn.interest_forms1099.length === 0;
+    const mixedInterestAndDividends = wages === 0 &&
+      taxReturn.wage_forms_w2 === undefined &&
+      taxableInterest > 0 && dividends > 0 &&
+      taxReturn.interest_forms1099.length === 1;
     if (
       !wageOnly && !interestOnly && !mixedWagesAndInterest &&
-      !dividendOnly && !mixedWagesAndDividends
+      !dividendOnly && !mixedWagesAndDividends &&
+      !mixedInterestAndDividends
     ) {
       throw new Error(
         "Form 8962 dependent required-filing source supports bounded W-2, Form 1099-INT, and ordinary-only Form 1099-DIV combinations",
@@ -475,6 +480,16 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
         );
       }
       return total + filed.line11b_agi;
+    }
+    if (mixedInterestAndDividends) {
+      const unearnedThreshold = 1_350 +
+        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+      if (taxableInterest + dividends <= unearnedThreshold) {
+        throw new Error(
+          "Form 8962 dependent combined interest and dividends do not establish the 2025 filing requirement",
+        );
+      }
+      return total + filed.line11b_agi + exemptInterest;
     }
     if (wageOnly) {
       if (age65 || filed.blind || wages <= 15_750) {

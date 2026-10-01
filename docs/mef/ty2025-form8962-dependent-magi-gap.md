@@ -281,4 +281,24 @@ the dependent's filed AGI in line 2b. An authored $15,000 W-2 plus $1,000
 dividend case yields the same $16,000 dependent MAGI and $8,184 monthly PTC
 through Schedule 3, Form 1040, native MeF, and PDF. At-threshold, owner, filed
 line, and duplicate-document rejection fixtures are written but unrun. Other
-dividend combinations and source-byte authentication remain open.
+dividend combinations beyond the interest case below and source-byte
+authentication remain open.
+
+## One interest form plus one ordinary-dividend form (2026-10-01, unrun)
+
+A claimed dependent's filed single 2025 return may now carry one Form 1099-INT
+and one ordinary-only Form 1099-DIV, with no wages or other income. Their
+taxable interest and dividends must equal filed Form 1040 lines 2b and 3b;
+the interest form's exempt interest must equal line 2a, and AGI must equal
+taxable interest plus dividends. The two source recipient SSNs must match the
+dependent and all three source document IDs, including the filed return, must
+be distinct. The combined taxable interest and dividends must exceed the
+single-dependent unearned-income filing threshold in [2025 Publication 501](https://www.irs.gov/publications/p501).
+Under [Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962),
+line 2b then includes filed AGI plus the dependent's tax-exempt interest.
+The authored $4,800 taxable interest, $200 exempt interest, and $11,000
+ordinary dividend case produces $16,000 dependent MAGI and joins the monthly
+$8,184 PTC to Schedule 3, Form 1040, native MeF, and PDF. At-threshold,
+recipient, exempt-interest, and duplicate-document tamper cases are authored
+but unrun. Multiple forms, wage combinations with both sources, other Form
+1099-DIV boxes, source-byte authenticity, and IRS acceptance remain open.

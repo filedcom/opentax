@@ -287,6 +287,30 @@ const mixedDividendDependent = {
   },
 };
 
+const interestDividendDependent = {
+  ...dividendDependent,
+  ptc_tax_return: {
+    ...dividendDependent.ptc_tax_return,
+    filed_form1040: {
+      ...dividendDependent.ptc_tax_return.filed_form1040,
+      line2a_tax_exempt_interest: 200,
+      line2b_taxable_interest: 4_800,
+      line3b_dividends: 11_000,
+      line11b_agi: 15_800,
+    },
+    interest_forms1099: [{
+      source_document_id: "casey-issued-2025-1099-int",
+      recipient_ssn: "987654321",
+      box1_taxable_interest: 4_800,
+      box8_tax_exempt_interest: 200,
+    }],
+    dividend_form1099: {
+      ...dividendDependent.ptc_tax_return.dividend_form1099,
+      box1a_ordinary_dividends: 11_000,
+    },
+  },
+};
+
 Deno.test("Form 8962 ordinary-dividend dependent joins monthly policy, final credit, native and PDF", async () => {
   const result = dividendReturn();
   assertEquals(result.diagnostics, []);
@@ -447,6 +471,97 @@ Deno.test("Form 8962 mixed W-2 and dividend dependent rejects threshold, owner a
         dividend_form1099: {
           ...mixedDividendDependent.ptc_tax_return.dividend_form1099,
           source_document_id: "casey-issued-2025-w2",
+        },
+      }),
+      filer,
+    )
+  );
+});
+
+Deno.test("Form 8962 taxable and tax-exempt interest plus dividends joins monthly credit, native and PDF", async () => {
+  const result = dividendReturn(interestDividendDependent);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 16_000);
+  assertEquals(pending.form8962.household_income, 40_880);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 8_184);
+  assertEquals(pending.f1040.line31_additional_payments, 8_184);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>8184</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 interest and dividend dependent rejects threshold, source and tax-exempt drift", async () => {
+  const result = dividendReturn(interestDividendDependent);
+  const pending = normalizeAllPending(result.pending);
+  const changed = (
+    ptcTaxReturn: typeof interestDividendDependent.ptc_tax_return,
+  ) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...interestDividendDependent,
+        ptc_tax_return: ptcTaxReturn,
+      }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDividendDependent.ptc_tax_return,
+        filed_form1040: {
+          ...interestDividendDependent.ptc_tax_return.filed_form1040,
+          line2b_taxable_interest: 500,
+          line3b_dividends: 850,
+          line11b_agi: 1_350,
+        },
+        interest_forms1099: [{
+          ...interestDividendDependent.ptc_tax_return.interest_forms1099[0],
+          box1_taxable_interest: 500,
+        }],
+        dividend_form1099: {
+          ...interestDividendDependent.ptc_tax_return.dividend_form1099,
+          box1a_ordinary_dividends: 850,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDividendDependent.ptc_tax_return,
+        interest_forms1099: [{
+          ...interestDividendDependent.ptc_tax_return.interest_forms1099[0],
+          recipient_ssn: "111223333",
+        }],
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDividendDependent.ptc_tax_return,
+        filed_form1040: {
+          ...interestDividendDependent.ptc_tax_return.filed_form1040,
+          line2a_tax_exempt_interest: 199,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...interestDividendDependent.ptc_tax_return,
+        dividend_form1099: {
+          ...interestDividendDependent.ptc_tax_return.dividend_form1099,
+          source_document_id: "casey-issued-2025-1099-int",
         },
       }),
       filer,
