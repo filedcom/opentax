@@ -28,6 +28,29 @@ function minimalIraItem(overrides: Partial<Item> = {}): Item {
   };
 }
 
+function priorBasisDistributionEvidence(yearEndValue: number) {
+  return {
+    prior_form8606: {
+      tax_year: 2024 as const,
+      source_document_reference: "2024 filed Form 8606",
+      owner_ssn: "111223333",
+      filed_line14_basis: 20_000,
+    },
+    year_end_statement: {
+      as_of: "2025-12-31" as const,
+      source_document_reference: "2025 all-IRA statement",
+      owner_ssn: "111223333",
+      all_traditional_ira_balances_included_confirmed: true as const,
+      total_fair_market_value: yearEndValue,
+    },
+    form1099r_source_document_reference: "2025 issued Form 1099-R",
+    no_current_nondeductible_contribution_confirmed: true as const,
+    no_other_traditional_ira_distribution_or_conversion_confirmed:
+      true as const,
+    no_rollover_repayment_qcd_hsa_or_disaster_amount_confirmed: true as const,
+  };
+}
+
 function minimalPensionItem(overrides: Partial<Item> = {}): Item {
   return {
     payer_name: "Test Pension",
@@ -201,6 +224,8 @@ Deno.test("f1099r.compute: code 1 IRA with basis sends the Form 8606 taxable amo
     box7_distribution_code: DistributionCode.Code1,
     prior_ira_basis: 20000,
     year_end_ira_value: 60000,
+    source_document_reference: "2025 issued Form 1099-R",
+    form8606_distribution_evidence: priorBasisDistributionEvidence(60_000),
   })]);
   // Form 8606 Part I: basis 20,000 over (60,000 + 20,000) is a 0.25 nontaxable ratio,
   // so line 15c taxable = 20,000 - 5,000 = 15,000. Form 5329 line 1 takes the amount
@@ -219,6 +244,8 @@ Deno.test("f1099r.compute: code 1 IRA fully covered by basis sends 0 to form5329
     box7_distribution_code: DistributionCode.Code1,
     prior_ira_basis: 20000,
     year_end_ira_value: 0,
+    source_document_reference: "2025 issued Form 1099-R",
+    form8606_distribution_evidence: priorBasisDistributionEvidence(0),
   })]);
   // Basis covers the whole distribution, so Form 8606 line 15c is 0 and nothing is
   // includible in income for the 10% additional tax.

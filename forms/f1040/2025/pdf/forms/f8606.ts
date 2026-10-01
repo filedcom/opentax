@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8606 } from "../../mef/forms/f8606.ts";
+import { printSchema } from "../../../nodes/intermediate/forms/form8606/index.ts";
 
 // IRS Form 8606 (2025) AcroForm field names.
 // Verified against the f8606--2025.pdf AcroForm field dump.
@@ -41,6 +42,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "print_line4_post_year_contributions",
+    pdfField: "topmostSubform[0].Page1[0].f1_12[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line5_current_basis",
+    pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
+  },
+  {
+    kind: "text",
     domainKey: "print_line6_year_end_value",
     pdfField: "topmostSubform[0].Page1[0].f1_14[0]",
   },
@@ -53,6 +65,34 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "print_line8_conversions",
     pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line9_combined_value",
+    pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line10_ratio_whole",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line10_ratio_fraction",
+    pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line11_nontaxable_conversion",
+    pdfField: "topmostSubform[0].Page1[0].f1_20[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line12_nontaxable_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
   },
   {
     kind: "text",
@@ -63,6 +103,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "print_line14_remaining_basis",
     pdfField: "topmostSubform[0].Page1[0].f1_23[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line15a_not_converted",
+    pdfField: "topmostSubform[0].Page2[0].f2_01[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line15b_disaster",
+    pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
+    printZero: true,
   },
   {
     kind: "text",
@@ -86,6 +137,21 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8606Pdf: PdfFormDescriptor = {
   pendingKey: "form8606",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8606--2025.pdf",
+  projectFields(raw) {
+    if (Object.keys(raw).length === 0) return raw;
+    const parsed = printSchema.parse(raw);
+    if (!parsed.distribution_evidence) return raw;
+    const ratio = parsed.print_line10_basis_ratio!;
+    const ratioThousandths = Math.round(ratio * 1_000);
+    return {
+      ...raw,
+      print_line10_ratio_whole: Math.floor(ratioThousandths / 1_000),
+      print_line10_ratio_fraction: String(ratioThousandths % 1_000).padStart(
+        3,
+        "0",
+      ),
+    };
+  },
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     if (!filer || !allPending) {

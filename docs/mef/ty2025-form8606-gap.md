@@ -1,8 +1,8 @@
 # TY2025 Form 8606 coverage gap
 
-Status: bounded taxpayer-owned, no-activity Part I native MeF/PDF routes
-written but unrun. Tests, local XSD validation, filled PDF rendering, and IRS
-ATS remain outstanding.
+Status: bounded taxpayer-owned no-activity and one prior-basis distribution
+Part I native MeF/PDF routes written but unrun. Tests, local XSD validation,
+filled PDF rendering, and IRS ATS remain outstanding.
 
 ## Structural mismatch
 
@@ -20,7 +20,7 @@ The [2025 Form 8606](https://www.irs.gov/pub/irs-pdf/f8606.pdf) says married
 filers prepare separate forms for each spouse who must file. The return-level
 MeF context knows the taxpayer and spouse identities, but the Form 8606 node
 does not identify which spouse owns each IRA contribution or distribution.
-Attaching the primary filer identity to an unclassified source would be an
+   Attaching the primary filer identity to an unclassified source would be an
 unsupported assumption.
 
 ## Calculation and output blockers
@@ -42,13 +42,19 @@ unsupported assumption.
    through the calculation, native XML, and PDF projection. The PDF replays
    the same final-source gate. A full-return positive fixture and source/return
    tamper cases are authored but unrun.
-2. The [2025 instructions](https://www.irs.gov/pub/irs-pdf/i8606.pdf) and
-   form require line 4 for 2025 contributions made during January 1 through
-   April 15, 2026. The current calculation does not collect that portion,
-   so its distribution-year line 5 and basis-ratio result can be wrong.
-   It also lacks the current-year rollover/repayment, qualified-disaster,
-   and first-time-homebuyer facts called for on lines 6-7, 15b-15c,
-   20-21, and 25b-25c.
+2. One taxpayer-owned, single-Form-1099-R traditional IRA distribution with
+   positive prior basis now requires a reviewed filed 2024 Form 8606 line 14,
+   a distinct 2025 year-end statement covering all traditional IRA balances,
+   and explicit confirmations of no current contribution, other distribution,
+   conversion, rollover, QCD, HSA transfer, or disaster amount. It computes
+   and prints all Part I lines 1–15c, including a three-decimal basis ratio,
+   and replays the 1099-R, source owners, Form 1040 lines 4a/4b, native XML,
+   and two-page PDF. Positive and tamper fixtures are authored but unrun.
+   The [2025 instructions](https://www.irs.gov/pub/irs-pdf/i8606.pdf) also
+   require line 4 for 2025 contributions made during January 1 through
+   April 15, 2026. That route, current-year rollover/repayment,
+   qualified-disaster, first-time-homebuyer, and mixed/multiple IRA sources
+   remain open.
 3. The Part III calculation subtracts combined contribution and conversion
    bases from gross Roth distribution in one step. The form orders those
    amounts through lines 19-25 and has distinct qualifying-distribution,

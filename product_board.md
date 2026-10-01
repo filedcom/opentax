@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **201 completed bounded items** are preserved
+and the full progress summary. The **202 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -21,6 +21,7 @@ bounded additions cover three- and four-source spouse Form 4972 elections,
 prior-year ISO basis on Form 6251, distinct section 951(a)/951A income on
 Schedule 1, a reviewed Form 6251 investment-interest AMT difference, a partnership
 K-1 Form 8582-CR PDF route, and native/PDF Form 8992 with Schedule A.
+One reviewed prior-basis IRA distribution now prints Form 8606 Part I.
 The Form 5471/8992 positive export remains closed until mandatory attachments
 are built.
 

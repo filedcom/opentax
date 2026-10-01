@@ -8,6 +8,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import type { z } from "zod";
 import { inputSchema as iraWorksheetSchema } from "../../../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { inputSchema as w2Schema } from "../../../nodes/inputs/w2/index.ts";
+import { reconcileForm8606Distribution } from "../../form8606_distribution_reconciliation.ts";
 
 type Input = z.infer<typeof printSchema> | readonly [];
 
@@ -30,7 +31,61 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       "Form 8606 spouse-owned IRA needs a separate owner-specific filing route",
     );
   }
+  const reviewedDistribution = reconcileForm8606Distribution(
+    fields,
+    context?.pending,
+    context?.filer,
+  );
+  if (reviewedDistribution) {
+    const filer = context!.filer!;
+    return elements("IRS8606", [
+      element("Form8606IRANamelineTxt", filer.fullName),
+      element("NondedIRATxpyrWithIRASSN", filer.primarySSN),
+      element(
+        "NondedIRACurrTYNondedContriAmt",
+        fields.print_line1_nondeductible,
+      ),
+      element("NondedIRABasisForPYAmt", fields.print_line2_prior_basis),
+      element("NondedIRATotalIRAValueAmt", fields.print_line3_total_basis),
+      element(
+        "NondedIRAPostTaxYrContriAmt",
+        fields.print_line4_post_year_contributions,
+      ),
+      element("NondedIRATaxYearNetBasisAmt", fields.print_line5_current_basis),
+      element(
+        "NondedIRACurrTYIRAPlusRllvrAmt",
+        fields.print_line6_year_end_value,
+      ),
+      element("NondedIRAWthdrwLessRllvrAmt", fields.print_line7_distributions),
+      element("NondedIRATYCombinedIRAValueAmt", fields.print_line8_conversions),
+      element(
+        "NondedIRATotRllvrWthdrwVlAmt",
+        fields.print_line9_combined_value,
+      ),
+      element(
+        "NondedIRATaxYearBasisRt",
+        fields.print_line10_basis_ratio!.toFixed(3),
+      ),
+      element(
+        "NondedIRANontxCnvrtAmt",
+        fields.print_line11_nontaxable_conversion,
+      ),
+      element(
+        "NondedIRANontxWthdrwUncnvrtAmt",
+        fields.print_line12_nontaxable_distribution,
+      ),
+      element("NondedIRANontxOfWthdrwAmt", fields.print_line13_nontaxable),
+      element("NondedIRATotalIRABasisAmt", fields.print_line14_remaining_basis),
+      element(
+        "NondedIRANotCnvrtLessRllvrAmt",
+        fields.print_line15a_not_converted,
+      ),
+      element("NondedIRAQlfyDisasterDistriAmt", fields.print_line15b_disaster),
+      element("NondedIRATaxableAmt", fields.print_line15c_taxable),
+    ]);
+  }
   if (
+    details.no_ira_distributions_or_conversions_confirmed !== true ||
     fields.source_traditional_distributions !== 0 ||
     fields.source_roth_conversion !== 0 ||
     fields.source_roth_distribution !== 0 ||

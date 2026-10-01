@@ -14,8 +14,10 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { form5329 } from "../../intermediate/forms/form5329/index.ts";
 import { form4972Elections } from "../../intermediate/forms/form4972/elections.ts";
 import {
+  distributionEvidenceSchema,
   form8606,
   type Form8606Input,
+  IraOwner,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
@@ -398,6 +400,7 @@ export const itemSchema = z.object({
   // When set, this item's gross distribution is routed through Form 8606 Part I to compute
   // the correct taxable amount (box2a is suppressed from line4b; form8606 emits taxable instead).
   prior_ira_basis: z.number().nonnegative().optional(),
+  form8606_distribution_evidence: distributionEvidenceSchema.optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -927,11 +930,37 @@ function routedThrough8606PartI(item: R1099Item): boolean {
 // prior_ira_basis is the total nondeductible basis carried into this year (line 2).
 // year_end_ira_value is the FMV of remaining traditional IRAs on 12/31 (line 6; 0 if fully distributed).
 function form8606PartIInput(item: R1099Item): Form8606Input {
+  const evidence = item.form8606_distribution_evidence;
+  if (
+    !evidence || item.ts !== "T" || !item.source_document_reference ||
+    evidence.form1099r_source_document_reference !==
+      item.source_document_reference ||
+    evidence.prior_form8606.filed_line14_basis !== item.prior_ira_basis ||
+    evidence.prior_form8606.owner_ssn !==
+      evidence.year_end_statement.owner_ssn ||
+    evidence.year_end_statement.total_fair_market_value !==
+      (item.year_end_ira_value ?? 0) ||
+    new Set([
+        evidence.form1099r_source_document_reference,
+        evidence.prior_form8606.source_document_reference,
+        evidence.year_end_statement.source_document_reference,
+      ]).size !== 3
+  ) {
+    throw new Error(
+      "Form 8606 prior-basis distribution needs matching 1099-R, filed prior Form 8606, and year-end IRA statement sources",
+    );
+  }
   return {
     nondeductible_contributions: 0,
     prior_basis: item.prior_ira_basis!,
     traditional_distributions: item.box1_gross_distribution,
     year_end_ira_value: item.year_end_ira_value ?? 0,
+    distribution_evidence: evidence,
+    filing_details: {
+      owner: IraOwner.Taxpayer,
+      prior_basis_documented_from_2024_form8606: true,
+      no_ira_distributions_or_conversions_confirmed: false,
+    },
   };
 }
 
