@@ -5901,6 +5901,72 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-code-d-excess-line1h",
+    inputs: {
+      general: singleGeneral,
+      w2: [
+        {
+          ...wage(50_000, 5_000, "First Example Employer", "12-3456789"),
+          employee_ssn: "111223333",
+          box12_entries: [{ code: "D", amount: 13_000 }],
+          box13_retirement_plan: true,
+          excess_deferral_review: {
+            plan_type: "non_simple_401k",
+            plan_review_reference: "Reviewed first 2025 plan terms",
+            employee_birth_date: "1985-06-15",
+            birth_date_source_reference: "Reviewed taxpayer date of birth",
+            w2_source_reference: "First 2025 W-2 copy",
+          },
+        },
+        {
+          ...wage(50_000, 5_000, "Second Example Employer", "98-7654321"),
+          employee_ssn: "111223333",
+          box12_entries: [{ code: "D", amount: 13_000 }],
+          box13_retirement_plan: true,
+          excess_deferral_review: {
+            plan_type: "non_simple_401k",
+            plan_review_reference: "Reviewed second 2025 plan terms",
+            employee_birth_date: "1985-06-15",
+            birth_date_source_reference: "Reviewed taxpayer date of birth",
+            w2_source_reference: "Second 2025 W-2 copy",
+          },
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 1h prints EXCESS DEFERRALS in the type box and 2,500 in the amount box",
+      "The two distinct employer W-2s contribute 26,000 of reviewed code D deferrals against the 23,500 limit",
+      "Form 1040 line 1a retains 100,000 of W-2 wages and line 1z adds the 2,500 excess once",
+    ],
+  },
+  {
+    id: "single-1099r-code8-corrective-line1h",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      f1099r: [{
+        payer_name: "Example Retirement Plan",
+        payer_ein: "98-7654321",
+        recipient_ssn: "111223333",
+        source_document_reference: "2025 corrective Form 1099-R copy",
+        ts: TS.T,
+        box1_gross_distribution: 5_000,
+        box2a_taxable_amount: 3_000,
+        box7_distribution_code: DistributionCode.Code8,
+        box7_ira_simple_indicator: false,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 1h prints CORRECTIVE DISTRIBUTION in the type box and 3,000 taxable dollars in the amount box",
+      "The 5,000 Form 1099-R gross remains on the source statement rather than Form 1040 pension line 5a",
+      "The finalized Form 1040 and retained AGI line 1h amounts both reconcile to taxable box 2a",
+    ],
+  },
+  {
     id: "single-standalone-fec-line1h",
     inputs: {
       general: singleGeneral,

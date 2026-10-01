@@ -134,7 +134,129 @@ Deno.test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", 
         form2555: physical as Record<string, unknown>,
       }),
     Error,
-    "overlapping FEC and Form 2555 wages",
+    "separate attribution for mixed earned-income types",
+  );
+});
+
+Deno.test("Form 1040 PDF line 1h labels reviewed W-2 code D excess deferrals", () => {
+  const wage = (ein: string, reference: string) => ({
+    employer_ein: ein,
+    employee_ssn: "111223333",
+    box1_wages: 50_000,
+    box2_fed_withheld: 5_000,
+    box12_entries: [{ code: "D", amount: 13_000 }],
+    box13_retirement_plan: true,
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: "Reviewed 2025 plan terms",
+      employee_birth_date: "1985-06-15",
+      birth_date_source_reference: "Reviewed date of birth",
+      w2_source_reference: reference,
+    },
+  });
+  const source = {
+    w2: {
+      w2s: [
+        wage("12-3456789", "2025 W-2 A"),
+        wage("98-7654321", "2025 W-2 B"),
+      ],
+    },
+    agi_aggregator: { line1h_other_earned: 2_500 },
+  };
+  const fields = { line1h_other_earned: 2_500 };
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, source)?.print_line1h_type,
+    "EXCESS DEFERRALS",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ line1h_other_earned: 2_501 }, source),
+    Error,
+    "must equal finalized and AGI line 1h",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        agi_aggregator: { line1h_other_earned: 2_501 },
+      }),
+    Error,
+    "must equal finalized and AGI line 1h",
+  );
+});
+
+Deno.test("Form 1040 PDF line 1h labels only an identified code-8 corrective plan distribution", () => {
+  const source = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Example Retirement Plan",
+        payer_ein: "12-3456789",
+        recipient_ssn: "111223333",
+        source_document_reference: "2025 1099-R copy",
+        ts: "T",
+        box1_gross_distribution: 5_000,
+        box2a_taxable_amount: 3_000,
+        box7_distribution_code: "8",
+        box7_ira_simple_indicator: false,
+      }],
+    },
+    agi_aggregator: { line1h_other_earned: [3_000] },
+  };
+  const fields = { line1h_other_earned: 3_000 };
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, source)?.print_line1h_type,
+    "CORRECTIVE DISTRIBUTION",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        f1099r: {
+          f1099rs: [{
+            ...source.f1099r.f1099rs[0],
+            source_document_reference: undefined,
+          }],
+        },
+      }),
+    Error,
+    "need identified 2025 Form 1099-R sources",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        agi_aggregator: { line1h_other_earned: 3_001 },
+      }),
+    Error,
+    "must equal finalized and AGI line 1h",
+  );
+  const deferralW2 = (employerEin: string, reference: string) => ({
+    employer_ein: employerEin,
+    employee_ssn: "111223333",
+    box1_wages: 50_000,
+    box2_fed_withheld: 5_000,
+    box12_entries: [{ code: "D", amount: 13_000 }],
+    box13_retirement_plan: true,
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: "Reviewed 2025 plan terms",
+      employee_birth_date: "1985-06-15",
+      birth_date_source_reference: "Reviewed date of birth",
+      w2_source_reference: reference,
+    },
+  });
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        w2: {
+          w2s: [
+            deferralW2("12-3456789", "2025 W-2 A"),
+            deferralW2("98-7654321", "2025 W-2 B"),
+          ],
+        },
+      }),
+    Error,
+    "separate attribution for mixed earned-income types",
   );
 });
 

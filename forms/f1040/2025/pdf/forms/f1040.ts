@@ -25,10 +25,15 @@ import {
 } from "../../../nodes/inputs/general/index.ts";
 import {
   assertIraRolloverEvidence,
+  correctivePlanItems,
   inputSchema as f1099rInputSchema,
   isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
+import {
+  codeDExcessDeferral,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
 
 // IRS Form 1040 (2025) AcroForm field names.
 // Verified empirically by filling each field with a unique value and inspecting the output.
@@ -616,24 +621,75 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-function line1hFecType(
+function line1hType(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
-): "FEC" | undefined {
+): "FEC" | "EXCESS DEFERRALS" | "CORRECTIVE DISTRIBUTION" | undefined {
   const fecSource = allPending.fec;
   const physicalSource = allPending.form2555?.filing_details;
-  if (fecSource === undefined && physicalSource === undefined) return undefined;
-  if (fecSource !== undefined && physicalSource !== undefined) {
+  const sources: Array<{
+    type: "FEC" | "EXCESS DEFERRALS" | "CORRECTIVE DISTRIBUTION";
+    amount: number;
+  }> = [];
+  if (fecSource !== undefined) {
+    sources.push({
+      type: "FEC",
+      amount: nativeFecInputSchema.parse(fecSource).fecs.reduce(
+        (sum, item) => sum + item.compensation_usd,
+        0,
+      ),
+    });
+  }
+  if (physicalSource !== undefined) {
+    sources.push({
+      type: "FEC",
+      amount: physicalPresenceFilingSchema.parse(physicalSource).foreign_wages,
+    });
+  }
+  if (allPending.w2 !== undefined) {
+    const excess = codeDExcessDeferral(
+      w2InputSchema.parse(allPending.w2).w2s,
+    );
+    if (excess.amount > 0) {
+      sources.push({ type: "EXCESS DEFERRALS", amount: excess.amount });
+    }
+  }
+  if (allPending.f1099r !== undefined) {
+    const items = correctivePlanItems(
+      f1099rInputSchema.parse(allPending.f1099r).f1099rs,
+    );
+    if (items.length > 0) {
+      if (
+        items.some((item) =>
+          !Number.isSafeInteger(item.box2a_taxable_amount) ||
+          (item.box2a_taxable_amount ?? 0) <= 0 ||
+          !item.recipient_ssn || !item.ts ||
+          !item.source_document_reference ||
+          !/^\d{2}-?\d{7}$/.test(item.payer_ein)
+        ) ||
+        new Set(items.map((item) => item.source_document_reference)).size !==
+          items.length
+      ) {
+        throw new Error(
+          "Form 1040 PDF line 1h corrective distributions need identified 2025 Form 1099-R sources",
+        );
+      }
+      sources.push({
+        type: "CORRECTIVE DISTRIBUTION",
+        amount: items.reduce(
+          (sum, item) => sum + item.box2a_taxable_amount!,
+          0,
+        ),
+      });
+    }
+  }
+  if (sources.length === 0) return undefined;
+  if (sources.length > 1) {
     throw new Error(
-      "Form 1040 PDF line 1h needs reconciled overlapping FEC and Form 2555 wages",
+      "Form 1040 PDF line 1h needs separate attribution for mixed earned-income types",
     );
   }
-  const sourceWages = fecSource !== undefined
-    ? nativeFecInputSchema.parse(fecSource).fecs.reduce(
-      (sum, item) => sum + item.compensation_usd,
-      0,
-    )
-    : physicalPresenceFilingSchema.parse(physicalSource).foreign_wages;
+  const sourceWages = sources[0].amount;
   const agiLine1h = allPending.agi_aggregator?.line1h_other_earned;
   const agiWages = typeof agiLine1h === "number"
     ? agiLine1h
@@ -646,10 +702,10 @@ function line1hFecType(
     fields.line1h_other_earned !== sourceWages || agiWages !== sourceWages
   ) {
     throw new Error(
-      "Form 1040 PDF line 1h FEC wages must equal finalized and AGI line 1h",
+      "Form 1040 PDF line 1h source must equal finalized and AGI line 1h",
     );
   }
-  return "FEC";
+  return sources[0].type;
 }
 
 export const irs1040Pdf: PdfFormDescriptor = {
@@ -660,7 +716,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
-    const printLine1hType = line1hFecType(fields, allPending);
+    const printLine1hType = line1hType(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;
     const selected = typeof standard === "number"
