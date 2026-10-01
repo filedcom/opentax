@@ -169,7 +169,10 @@ Deno.test("2025 two-employer Form 4137 tips build one prepared filled return PDF
   );
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  const bundle = await buildMefBundle(pending, { filer: fixture.filer });
+  const bundle = await buildMefBundle(pending, {
+    filer: fixture.filer,
+    attachments: [],
+  });
   const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
   assert((await PDFDocument.load(pdf)).getPageCount() >= 7);
 });

@@ -151,7 +151,10 @@ for (const descriptor of ALL_PDF_FORMS) {
       const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
     ) {
       for (
-        const pdfField of [entry.pdfField, ...(entry.extraPdfFields ?? [])]
+        const pdfField of [
+          entry.pdfField,
+          ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
+        ]
       ) {
         assertMatch(
           pdfField,
@@ -216,7 +219,10 @@ for (const descriptor of ALL_PDF_FORMS) {
         const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
       ) {
         for (
-          const pdfField of [entry.pdfField, ...(entry.extraPdfFields ?? [])]
+          const pdfField of [
+            entry.pdfField,
+            ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
+          ]
         ) {
           assertEquals(
             realFields.has(pdfField),
