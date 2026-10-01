@@ -175,7 +175,7 @@ Deno.test("prior ISO loss sale caps regular and AMT Schedule D losses separately
   assertThrows(
     () => mef6251.build(filed, { pending: changedSale, filer }),
     Error,
-    "raw 2025 broker/Form 8949 row",
+    "every AMT basis row to match",
   );
   assertThrows(
     () => form6251Pdf.instances?.(filed, filer, changedSale),
