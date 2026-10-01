@@ -355,6 +355,34 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form2439-undistributed-gain-and-tax-credit",
+    inputs: {
+      general: singleGeneral,
+      f2439: [{
+        box1a: 10_000,
+        box2: 1_500,
+        shareholder: TS.T,
+        shareholder_name: "Alex Example",
+        shareholder_ssn_last4: "3333",
+        payer_name: "Example Growth Fund",
+        payer_ein: "12-3456789",
+        payer_address_line1: "1 Fund Way",
+        payer_address_city: "Boston",
+        payer_address_state: "MA",
+        payer_address_zip: "02110",
+        tax_period_begin: "2025-01-01",
+        tax_period_end: "2025-12-31",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d", "schedule3", "f2439"],
+    reviewFocus: [
+      "The Form 2439 Copy B identifies the taxpayer and fund and prints the 10,000 undistributed gain and 1,500 tax credit",
+      "Schedule D line 11 carries the undistributed gain and Schedule 3 line 13a carries the same payer-paid tax",
+      "The native Form 2439, Form 1040 payment total, and 1,500 refund match the source copy",
+    ],
+  },
+  {
     id: "single-fully-repaid-unemployment",
     inputs: {
       general: singleGeneral,
