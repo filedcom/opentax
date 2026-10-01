@@ -8,87 +8,220 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// Form 8828 — Recapture of Federal Mortgage Subsidy
-// IRC §143(m): When a home financed with a federally subsidized mortgage (tax-exempt
-// bond) is sold within 9 years, a portion of the subsidy must be repaid if MAGI
-// exceeded the repayment income limit. Recapture flows to Schedule 2 line 10.
-
-// TY2025 Constants
-const SUBSIDY_FACTOR = 0.0625; // 6.25% per IRC §143(m)(2)
-const MAX_INCOME_PCT = 0.50; // 50% cap per IRC §143(m)(3)
-const GAIN_RECAPTURE_CAP_RATE = 0.50; // 50% of gain per IRC §143(m)(5)
-
-// Holding period percentage table per IRC §143(m)(4)
-const HOLDING_PERIOD_TABLE: Record<number, number> = {
-  1: 0.20,
-  2: 0.40,
-  3: 0.60,
-  4: 0.80,
-  5: 1.00,
-  6: 0.80,
-  7: 0.60,
-  8: 0.40,
-  9: 0.20,
-};
+// Form 8828 (Rev. November 2024), used for TY2025. The original issuer
+// notification supplies lines 16, 19, and 20; an interest-rate estimate does not.
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+  (value) => {
+    const parsed = Date.parse(`${value}T00:00:00Z`);
+    return Number.isFinite(parsed) &&
+      new Date(parsed).toISOString().slice(0, 10) === value;
+  },
+  "Enter a valid ISO calendar date",
+);
+const moneySchema = z.number().finite().nonnegative();
 
 export const itemSchema = z.object({
-  // Original federally subsidized mortgage loan amount
-  original_loan_amount: z.number().nonnegative(),
-  // Federally subsidized interest rate benefit (decimal, e.g. 0.06 for 6%)
-  subsidy_rate: z.number().nonnegative(),
-  // Number of complete years home was held (1-9+); ≥10 → no recapture
-  holding_period_years: z.number().nonnegative(),
-  // Realized gain on the sale
-  gain_on_sale: z.number().nonnegative(),
-  // Modified adjusted gross income
-  modified_agi: z.number().nonnegative(),
-  // Repayment income limit from bond issuer (per IRC §143(f) / HUD tables)
-  repayment_income_limit: z.number().nonnegative(),
-  // Family size (informational; repayment_income_limit already reflects family size)
-  family_size: z.number().optional(),
+  property_address: z.string().min(1), // Part I, line 1
+  subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
+  issuer_name: z.string().min(1), // line 3
+  issuer_state: z.string().min(2),
+  original_lender_name: z.string().min(1), // line 4
+  original_lender_address: z.string().min(1),
+  original_loan_closing_date: dateSchema, // line 5
+  disposition_date: dateSchema, // line 6
+  full_repayment_date: dateSchema, // line 8; may equal disposition date
+  sales_price_of_interest: moneySchema, // line 9; FMV for a gift
+  selling_expenses: moneySchema, // line 10
+  adjusted_basis_of_interest: moneySchema, // line 12
+  adjusted_gross_income: z.number().finite(), // MAGI worksheet: Form 1040 line 11
+  tax_exempt_interest: moneySchema, // MAGI worksheet addback
+  home_gain_included_in_gross_income: moneySchema, // MAGI worksheet subtraction
+  family_size_at_disposition: z.number().int().positive(),
+  adjusted_qualifying_income: moneySchema, // issuer table, line 16
+  highest_federally_subsidized_loan_amount: z.number().finite().positive(),
+  issuer_federally_subsidized_amount: moneySchema, // issuer notification, line 19
+  issuer_holding_period_percentage: z.number().int().min(0).max(100), // issuer table, line 20
+}).superRefine((item, ctx) => {
+  const closing = parseDate(item.original_loan_closing_date);
+  const sale = parseDate(item.disposition_date);
+  const repayment = parseDate(item.full_repayment_date);
+  if (closing < Date.UTC(1991, 0, 1)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["original_loan_closing_date"],
+      message: "Form 8828 applies only to original loans closed after 1990",
+    });
+  }
+  if (sale <= closing) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["disposition_date"],
+      message: "Disposition must follow original loan closing",
+    });
+  }
+  if (repayment <= closing || repayment > sale) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["full_repayment_date"],
+      message: "Repayment must be between closing and disposition",
+    });
+  }
+  const gain = item.sales_price_of_interest - item.selling_expenses -
+    item.adjusted_basis_of_interest;
+  if (item.home_gain_included_in_gross_income > Math.max(0, gain)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["home_gain_included_in_gross_income"],
+      message: "Recognized home gain exceeds Form 8828 line 13 gain",
+    });
+  }
+  const expectedSubsidy = item.highest_federally_subsidized_loan_amount *
+    0.0625;
+  if (
+    Math.abs(item.issuer_federally_subsidized_amount - expectedSubsidy) > 0.5
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["issuer_federally_subsidized_amount"],
+      message:
+        "Issuer amount must equal 6.25% of highest federally subsidized loan",
+    });
+  }
+  if (sale > closing && repayment > closing && repayment <= sale) {
+    const expectedHolding = holdingPeriodPercentage(
+      item.original_loan_closing_date,
+      item.full_repayment_date,
+      item.disposition_date,
+    );
+    if (item.issuer_holding_period_percentage !== expectedHolding) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["issuer_holding_period_percentage"],
+        message:
+          `Holding period percentage must be ${expectedHolding}% for these dates`,
+      });
+    }
+  }
 });
 
-export const inputSchema = z.object({
-  f8828s: z.array(itemSchema).min(1),
-});
+export const inputSchema = z.object({ f8828s: z.array(itemSchema).min(1) });
+export type F8828Item = z.infer<typeof itemSchema>;
 
-type F8828Item = z.infer<typeof itemSchema>;
-
-// Federally subsidized amount per IRC §143(m)(2): loan × rate × 6.25%
-function federallySubsidizedAmount(item: F8828Item): number {
-  return item.original_loan_amount * item.subsidy_rate * SUBSIDY_FACTOR;
+function parseDate(value: string): number {
+  return Date.parse(`${value}T00:00:00Z`);
 }
 
-// Holding period percentage per IRC §143(m)(4) table
-function holdingPeriodPct(years: number): number {
-  const rounded = Math.floor(years);
-  return HOLDING_PERIOD_TABLE[rounded] ?? 0;
+function roundedUpYears(start: string, end: string): number {
+  const [startYear, startMonth, startDay] = start.split("-").map(Number);
+  const [endYear, endMonth, endDay] = end.split("-").map(Number);
+  const yearDelta = endYear - startYear;
+  if (endMonth === startMonth && endDay === startDay) return yearDelta;
+  return yearDelta +
+    (endMonth > startMonth || (endMonth === startMonth && endDay > startDay)
+      ? 1
+      : 0);
 }
 
-// Income percentage per IRC §143(m)(3): (MAGI / limit - 1) × 100%, capped at 50%
-// Source: Form 8828 instructions line 10; IRC §143(m)(3)
-function incomePct(magi: number, limit: number): number {
-  if (limit <= 0) return 0;
-  if (magi <= limit) return 0;
-  const raw = (magi / limit) - 1;
-  return Math.min(raw, MAX_INCOME_PCT);
+function fullYearsAndMonths(start: string, end: string): {
+  years: number;
+  months: number;
+} {
+  const [startYear, startMonth, startDay] = start.split("-").map(Number);
+  const [endYear, endMonth, endDay] = end.split("-").map(Number);
+  const totalMonths = (endYear - startYear) * 12 + endMonth - startMonth -
+    (endDay < startDay ? 1 : 0);
+  return { years: Math.floor(totalMonths / 12), months: totalMonths % 12 };
 }
 
-// Recapture tax for one Form 8828 per IRC §143(m)
-function recaptureForItem(item: F8828Item): number {
-  const holdingPct = holdingPeriodPct(item.holding_period_years);
-  if (holdingPct === 0) return 0;
+function holdingPeriodPercentage(
+  closing: string,
+  repayment: string,
+  disposition: string,
+): number {
+  const saleYears = roundedUpYears(closing, disposition);
+  const standard = saleYears <= 5
+    ? Math.min(saleYears, 5) * 20
+    : Math.max(0, 10 - saleYears) * 20;
+  // Instructions, line 20 holding-period worksheet: early full repayment
+  // before disposition and within the first four years.
+  if (repayment === disposition || roundedUpYears(closing, repayment) > 4) {
+    return standard;
+  }
+  const repaymentPct = roundedUpYears(closing, repayment) * 20;
+  const yearsAfterRepayment = roundedUpYears(repayment, disposition);
+  const subsequentPct = Math.max(0, 6 - yearsAfterRepayment) * 20;
+  return Math.round(repaymentPct * subsequentPct / 100);
+}
 
-  const subsidyAmt = federallySubsidizedAmount(item);
-  const adjustedRecapture = subsidyAmt * holdingPct;
+export interface F8828Lines {
+  line7_full_years: number;
+  line7_full_months: number;
+  line9_sales_price: number;
+  line10_selling_expenses: number;
+  line11_amount_realized: number;
+  line12_adjusted_basis: number;
+  line13_gain_or_loss: number;
+  line14_half_gain: number;
+  line15_modified_agi: number;
+  line16_adjusted_qualifying_income: number;
+  line17_income_excess: number;
+  line18_income_percentage: number;
+  line19_federally_subsidized_amount: number;
+  line20_holding_period_percentage: number;
+  line21_holding_adjusted_amount: number;
+  line22_recapture_amount: number;
+  line23_tax: number;
+}
 
-  const incPct = incomePct(item.modified_agi, item.repayment_income_limit);
-  if (incPct === 0) return 0;
-
-  const gainCap = item.gain_on_sale * GAIN_RECAPTURE_CAP_RATE;
-  if (gainCap === 0) return 0;
-
-  return Math.min(adjustedRecapture * incPct, gainCap);
+/** Official Form 8828 lines 9-23; percentages are stored as 0-100. */
+export function computeF8828Lines(item: F8828Item): F8828Lines {
+  const line7 = fullYearsAndMonths(
+    item.original_loan_closing_date,
+    item.disposition_date,
+  );
+  const line11_amount_realized = item.sales_price_of_interest -
+    item.selling_expenses;
+  const line13_gain_or_loss = line11_amount_realized -
+    item.adjusted_basis_of_interest;
+  const line15_modified_agi = item.adjusted_gross_income +
+    item.tax_exempt_interest - item.home_gain_included_in_gross_income;
+  const line17_income_excess = line15_modified_agi -
+    item.adjusted_qualifying_income;
+  const line18_income_percentage = line17_income_excess <= 0
+    ? 0
+    : line17_income_excess >= 5_000
+    ? 100
+    : Math.round(line17_income_excess / 5_000 * 100);
+  const line20_holding_period_percentage = holdingPeriodPercentage(
+    item.original_loan_closing_date,
+    item.full_repayment_date,
+    item.disposition_date,
+  );
+  const line21_holding_adjusted_amount =
+    item.issuer_federally_subsidized_amount * line20_holding_period_percentage /
+    100;
+  const line22_recapture_amount = line21_holding_adjusted_amount *
+    line18_income_percentage / 100;
+  const line14_half_gain = Math.max(0, line13_gain_or_loss * 0.5);
+  return {
+    line7_full_years: line7.years,
+    line7_full_months: line7.months,
+    line9_sales_price: item.sales_price_of_interest,
+    line10_selling_expenses: item.selling_expenses,
+    line11_amount_realized,
+    line12_adjusted_basis: item.adjusted_basis_of_interest,
+    line13_gain_or_loss,
+    line14_half_gain,
+    line15_modified_agi,
+    line16_adjusted_qualifying_income: item.adjusted_qualifying_income,
+    line17_income_excess,
+    line18_income_percentage,
+    line19_federally_subsidized_amount: item.issuer_federally_subsidized_amount,
+    line20_holding_period_percentage,
+    line21_holding_adjusted_amount,
+    line22_recapture_amount,
+    line23_tax: Math.min(line14_half_gain, line22_recapture_amount),
+  };
 }
 
 function buildOutputs(recapture: number): NodeOutput[] {
@@ -110,7 +243,7 @@ class F8828Node extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     const totalRecapture = input.f8828s.reduce(
-      (sum, item) => sum + recaptureForItem(item),
+      (sum, item) => sum + computeF8828Lines(item).line23_tax,
       0,
     );
     return { outputs: buildOutputs(totalRecapture) };
