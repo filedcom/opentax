@@ -5935,6 +5935,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Form 1040 line 1h places FEC in the type box and 3,000 in the adjacent amount box",
       "The 75,000 domestic W-2 remains on line 1a, while line 1z includes both wage sources once",
+      "The finalized Form 1040 and retained AGI line 1h amounts both reconcile to the 3,000 FEC source",
       "Native output links the line 1h amount to one FEC record and Wages Not Shown Schedule",
     ],
   },
