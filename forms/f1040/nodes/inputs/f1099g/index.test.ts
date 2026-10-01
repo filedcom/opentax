@@ -9,6 +9,13 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   return { farm_id: "farm-1", ...overrides };
 }
 
+function reviewedNonbusinessGrant(amount: number) {
+  return minimalItem({
+    box_6_taxable_grants: amount,
+    box_6_schedule1_nonbusiness_reviewed: true,
+  });
+}
+
 function rtaaItem(amount: number, reference = "issued-rtaa-1099g-1") {
   return minimalItem({
     box_5_rtaa: amount,
@@ -206,9 +213,26 @@ Deno.test("f1099g.compute: box_5_rtaa zero — no schedule1 rtaa output", () => 
 });
 
 Deno.test("f1099g.compute: box_6_taxable_grants routes to schedule1 line8z_taxable_grants", () => {
-  const result = compute([minimalItem({ box_6_taxable_grants: 2000 })]);
+  const result = compute([reviewedNonbusinessGrant(2000)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 2000);
+});
+
+Deno.test("f1099g.compute: unclassified box 6 grant cannot silently become line 8z income", () => {
+  assertThrows(
+    () => compute([minimalItem({ box_6_taxable_grants: 2_000 })]),
+    Error,
+    "reviewed nonbusiness Schedule 1 classification",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box_6_taxable_grants: 2_000,
+        box_6_schedule1_nonbusiness_reviewed: false,
+      })]),
+    Error,
+    "reviewed nonbusiness Schedule 1 classification",
+  );
 });
 
 Deno.test("f1099g.compute: box_7_agriculture retains its farm source", () => {
@@ -401,7 +425,7 @@ Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to sched
 
 // Box 6 taxable grants — the $600 payer threshold is not an income exclusion.
 Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () => {
-  const result = compute([minimalItem({ box_6_taxable_grants: 599 })]);
+  const result = compute([reviewedNonbusinessGrant(599)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_taxable_grants, 599);
   assertEquals(
     (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
@@ -411,7 +435,7 @@ Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () 
 });
 
 Deno.test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes to schedule1", () => {
-  const result = compute([minimalItem({ box_6_taxable_grants: 600 })]);
+  const result = compute([reviewedNonbusinessGrant(600)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 600);
 });
@@ -542,6 +566,7 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
       box_4_federal_withheld: 800,
       box_5_rtaa: 1200,
       box_6_taxable_grants: 750,
+      box_6_schedule1_nonbusiness_reviewed: true,
       box_7_agriculture: 4000,
       box_8_trade_or_business: false,
       box_9_market_gain: 300,

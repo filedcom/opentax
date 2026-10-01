@@ -252,7 +252,11 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
     filingStatus: FilingStatus.Single,
   } as never, {
     f1099g: {
-      f1099gs: [{ box_6_taxable_grants: 300, recipient_tin: "111223333" }],
+      f1099gs: [{
+        box_6_taxable_grants: 300,
+        box_6_schedule1_nonbusiness_reviewed: true,
+        recipient_tin: "111223333",
+      }],
     },
   })?.[0];
   assertEquals(projected?.line8z_other, 600);
@@ -271,9 +275,11 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
     f1099g: {
       f1099gs: [{
         box_6_taxable_grants: 400,
+        box_6_schedule1_nonbusiness_reviewed: true,
         recipient_tin: "111223333",
       }, {
         box_6_taxable_grants: 600,
+        box_6_schedule1_nonbusiness_reviewed: true,
         recipient_tin: "111223333",
       }],
     },
@@ -329,6 +335,23 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
       "box 6 recipients matching the filer or joint spouse",
     );
   }
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_taxable_grants: 1_000 },
+        filer,
+        {
+          f1099g: {
+            f1099gs: [{
+              ...all.f1099g.f1099gs[0],
+              box_6_schedule1_nonbusiness_reviewed: false,
+            }, all.f1099g.f1099gs[1]],
+          },
+        },
+      ),
+    Error,
+    "reviewed nonbusiness Schedule 1 classification",
+  );
   const joint = {
     primarySSN: "111223333",
     filingStatus: FilingStatus.MarriedFilingJointly,

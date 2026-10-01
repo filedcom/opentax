@@ -33,6 +33,7 @@ export const itemSchema = z.object({
   box_4_federal_withheld: z.number().nonnegative().optional(),
   box_5_rtaa: z.number().nonnegative().optional(),
   box_6_taxable_grants: z.number().nonnegative().optional(),
+  box_6_schedule1_nonbusiness_reviewed: z.boolean().optional(),
   box_7_agriculture: z.number().nonnegative().optional(),
   box_8_trade_or_business: z.boolean().optional(),
   box_9_market_gain: z.number().nonnegative().optional(),
@@ -46,6 +47,17 @@ export const itemSchema = z.object({
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    (item.box_6_taxable_grants ?? 0) > 0 &&
+    item.box_6_schedule1_nonbusiness_reviewed !== true
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_6_schedule1_nonbusiness_reviewed"],
+      message:
+        "Form 1099-G box 6 needs a reviewed nonbusiness Schedule 1 classification; business and farm grants need their own route",
+    });
+  }
   if ((item.box_5_rtaa ?? 0) > 0) {
     if (!Number.isSafeInteger(item.box_5_rtaa)) {
       ctx.addIssue({

@@ -8,9 +8,17 @@ unsourced line 8z grant amount rejects. Each positive box 6 copy now needs a
 recipient TIN matching the taxpayer or joint spouse at native and PDF export;
 missing and wrong-owner copies reject. Two-copy positive, joint-spouse, and
 altered-total/owner fixtures are authored for the deferred bulk gate. The
+source now also requires an affirmative review that each positive box 6 grant
+is nonbusiness income for Schedule 1; an unclassified or business/farm grant
+cannot automatically enter line 8z. The
 [Form 1099-G instructions](https://www.irs.gov/pub/irs-pdf/i1099g.pdf)
-identify box 6 as taxable grants. This narrow check does not establish each
-grant's tax character, payer-copy authenticity, or business/farm routing.
+identify box 6 as taxable grants. [2025 Publication 334](https://www.irs.gov/publications/p334)
+directs income connected with a sole proprietorship to Schedule C, while the
+[2025 Schedule F instructions](https://www.irs.gov/instructions/i1040sf)
+direct agricultural program payments to Schedule F. Form 1099-G box 8 only
+classifies certain box 2 business-tax refunds and cannot classify box 6.
+This narrow review flag does not independently establish each grant's tax
+character, payer-copy authenticity, or a business/farm route.
 Those source reviews and the filled PDF, XSD, and IRS
 acceptance checks remain open.
 

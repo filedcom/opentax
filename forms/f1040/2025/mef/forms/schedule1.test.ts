@@ -255,6 +255,7 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
       f1099g: {
         f1099gs: [{
           box_6_taxable_grants: 1_500,
+          box_6_schedule1_nonbusiness_reviewed: true,
           recipient_tin: "111223333",
         }],
       },
@@ -313,8 +314,13 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
     filingStatus: FilingStatus.Single,
   };
   const copies = {
-    f1099gs: [{ box_6_taxable_grants: 400, recipient_tin: "111223333" }, {
+    f1099gs: [{
+      box_6_taxable_grants: 400,
+      box_6_schedule1_nonbusiness_reviewed: true,
+      recipient_tin: "111223333",
+    }, {
       box_6_taxable_grants: 600,
+      box_6_schedule1_nonbusiness_reviewed: true,
       recipient_tin: "111223333",
     }],
   };
@@ -360,6 +366,22 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
       "box 6 recipients matching the filer or joint spouse",
     );
   }
+  assertThrows(
+    () =>
+      schedule1.build({ line8z_taxable_grants: 1_000 }, {
+        filer,
+        pending: {
+          f1099g: {
+            f1099gs: [{
+              ...copies.f1099gs[0],
+              box_6_schedule1_nonbusiness_reviewed: false,
+            }, copies.f1099gs[1]],
+          },
+        },
+      }),
+    Error,
+    "reviewed nonbusiness Schedule 1 classification",
+  );
 });
 
 Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {
