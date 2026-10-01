@@ -567,3 +567,20 @@ missing, and owner-self patient SSNs, plus final tax drift, reject. The
 permit an HSA beneficiary's spouse's unreimbursed qualified medical expenses.
 These fixtures are authored but unrun; receipt and trustee bytes remain
 unauthenticated, and nonjoint or more complex coverage paths remain open.
+
+## Spouse-owned HSA receipt for one claimed child (2026-10-01, unrun)
+
+The same paired self-only route now allows one spouse-owned HSA receipt to pay
+an expense for one child claimed on the joint return. A receipt labeled
+`dependent` must name the patient's SSN. Native MeF and PDF projection parse
+the retained general return source, require exactly one claimed dependent and
+one dependent-labeled receipt across the two HSA owners, and match those SSNs.
+The primary and spouse Form 1099-SA sources remain tied to their respective
+owners, while each Form 8889 line 15 uses only its owner's reviewed receipts.
+The authored full-return case keeps the $700 taxable distribution and $140
+additional tax reconciled to Schedule 1, Schedule 2, and Form 1040, with two
+separate native/PDF Form 8889 pages. Wrong, missing, owner-self, and unclaimed
+patient cases are authored to reject. The [2025 Form 8889 line-15 instructions](https://www.irs.gov/instructions/i8889)
+allow HSA funds for qualified expenses of dependents. These cases are unrun;
+special deemed-dependent exceptions, multiple patient receipts, receipt-byte
+authentication, and wider HSA combinations remain open.

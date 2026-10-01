@@ -10,6 +10,7 @@ import {
   Box12Code,
   inputSchema as w2InputSchema,
 } from "../nodes/inputs/w2/index.ts";
+import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
 import {
   calculateOwnerForms as calculate5329OwnerForms,
   inputSchema as form5329InputSchema,
@@ -730,6 +731,29 @@ export function reconcilePairedForm8889(
     ) {
       throw new Error(
         "Form 8889 spouse medical receipt patient must match the other joint-return HSA owner",
+      );
+    }
+  }
+  const dependentReceipts = owners.flatMap((owner) =>
+    owner.qualified_medical_expense_evidence?.filter((receipt) =>
+      receipt.eligible_person === "dependent"
+    ) ?? []
+  );
+  if (dependentReceipts.length > 0) {
+    const general = generalSchema.safeParse(allPending?.general);
+    const claimed = general.success
+      ? (general.data.dependents ?? []).filter((dependent) =>
+        dependent.dependent_on_another_return !== true
+      )
+      : [];
+    if (
+      dependentReceipts.length !== 1 || claimed.length !== 1 ||
+      !dependentReceipts[0].patient_ssn ||
+      dependentReceipts[0].patient_ssn.replaceAll("-", "") !==
+        claimed[0].ssn?.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8889 paired dependent medical receipt must name the one claimed dependent on the joint return",
       );
     }
   }
