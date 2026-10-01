@@ -3,8 +3,8 @@
 ## Full status summary (2026-10-01)
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
-TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **364 completed bounded items** and their exact limits live in the
+TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
+completed checkboxes**. The **364 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -38,21 +38,19 @@ Several candidates intentionally stop at source review because prior accepted
 returns, IRS notices, signatures, or other authoritative bytes cannot yet be
 authenticated.
 
-**Current implementation batch.** Form 1116 Schedule C current-year
-reconciliation and Form 8582 prior-year rental PAL import are recorded in the
-ledger as bounded and export-gated. Form 1098 Copy B evidence binding for
-positive box 6 and Form 8962 self-employed health-insurance deduction/PTC
-ordering and a further Form 8283 Section B art slice are also recorded.
-The bounded Form 3800/Form 8820 PDF credit reconciliation is also recorded.
-The sourced Form 8835 landfill-gas facility and Form 4952 Treasury-interest
-plus OID pair, an age-55 Form 8889 recapture route, a four-copy Form 4972
-collection fix, and a Form 8995 REIT-only route are also recorded.
-The latest Form 6251 slice covers mixed-term gains offsetting losses across
-the separate regular and AMT deduction caps. Form 8283 Section A stock
-carryovers above $5,000 and Form 8962 corrected policy months across up to
-twelve nonoverlapping policies are now recorded. Form 8582 activity ledgers
-and Form 1116 carryover/PDF paths are in progress.
-The agreed full test batch remains deferred until implementation is finished.
+**Current implementation status.** The latest completed slices cover Form 6251
+mixed-term capital-loss caps, Form 8283 Section A stock carryovers above $5,000,
+and Form 8962 corrected SLCSP months across up to twelve nonoverlapping
+policies. Form 8582 activity ledgers, Form 1116 Schedule B carryover/PDF
+reconciliation, and Form 3800 mixed-credit PDF parity are in progress. Earlier
+bounded work includes Form 1116 Schedule C current-year reconciliation,
+Form 8582 prior-year rental PAL import, Form 1098 Copy B box 6 evidence,
+Form 8962 self-employed insurance/PTC ordering, Form 8283 Section B art,
+Form 3800/Form 8820 credit PDF parity, Form 8835 landfill gas, Form 4952
+Treasury interest and OID, Form 8889 age-55 recapture, four Form 4972 copies,
+and a Form 8995 REIT-only route. Exact supported inputs and remaining gates
+for each slice are in the completed ledger. The agreed full test batch is
+deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
