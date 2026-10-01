@@ -12,6 +12,7 @@ function item(overrides: Record<string, unknown> = {}) {
       zip: "83702",
     },
     subsidy_type: "tax_exempt_bond_loan",
+    disposition_kind: "sale",
     issuer_type: "agency",
     issuer_name: "Idaho Housing Agency",
     issuer_state: "ID",
@@ -38,7 +39,8 @@ function item(overrides: Record<string, unknown> = {}) {
     issuer_holding_period_percentage: 100,
     ...overrides,
   };
-  const source_transaction_id = `sale-${facts.property_address.line1}`;
+  const source_transaction_id =
+    `${facts.disposition_kind}-${facts.property_address.line1}`;
   return {
     ...facts,
     source_transaction_id,
@@ -55,8 +57,10 @@ function item(overrides: Record<string, unknown> = {}) {
       adjusted_qualifying_income: facts.adjusted_qualifying_income,
       holding_period_percentage: facts.issuer_holding_period_percentage,
     },
-    reviewed_sale: {
-      document_reference: "closing-statement-14-main",
+    reviewed_disposition: {
+      document_reference: facts.disposition_kind === "gift"
+        ? "gift-deed-14-main"
+        : "closing-statement-14-main",
       basis_record_reference: "basis-record-14-main",
       source_transaction_id,
       owner_ssn: "123456789",
@@ -66,7 +70,35 @@ function item(overrides: Record<string, unknown> = {}) {
       selling_expenses: facts.selling_expenses,
       adjusted_basis_of_interest: facts.adjusted_basis_of_interest,
       gain_included_in_gross_income: facts.home_gain_included_in_gross_income,
-      exclusion_record_reference: "home-exclusion-14-main",
+      ...(facts.disposition_kind === "sale"
+        ? { exclusion_record_reference: "home-exclusion-14-main" }
+        : {}),
+    },
+  };
+}
+
+function gift(overrides: Record<string, unknown> = {}) {
+  const disposition = item({
+    disposition_kind: "gift",
+    sales_price_of_interest: 280_000,
+    selling_expenses: 0,
+    home_gain_included_in_gross_income: 0,
+    ...overrides,
+  });
+  return {
+    ...disposition,
+    reviewed_gift: {
+      deed_reference: "gift-deed-14-main",
+      valuation_reference: "appraisal-14-main",
+      donee_name: "Adult Child",
+      donee_relationship: "relative_other_than_spouse",
+      donee_is_spouse_or_former_spouse: false,
+      deed_date: disposition.disposition_date,
+      fair_market_value_of_interest: disposition.sales_price_of_interest,
+      loan_payoff_reference: "payoff-14-main",
+      loan_payoff_date: disposition.full_repayment_date,
+      entire_taxpayer_interest_transferred: true,
+      no_consideration_confirmed: true,
     },
   };
 }
@@ -123,6 +155,61 @@ Deno.test("staged IRS8828 and official PDF project source lines and Schedule 2 t
   assertEquals(printed.length, 1);
   assertEquals(printed[0].line23, 6_250);
   assertEquals(printed[0].line18, 50);
+});
+
+Deno.test("staged IRS8828 gift prints deemed FMV and requires no invented Form 8949 row", () => {
+  const source = { f8828s: [gift()] };
+  const finalReturn = {
+    f1040: { line11_agi: 105_000, line2a_tax_exempt: 1_000 },
+    schedule2: { line17b_mortgage_subsidy_recapture: 12_500 },
+  };
+  const xml = form8828.build(source, { pending: finalReturn });
+  assertEquals(xml.length, 1);
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdySalesPriceIntHomeAmt>280000</MortgSbsdySalesPriceIntHomeAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<MortgSbsdyRecaptureTaxAmt>12500</MortgSbsdyRecaptureTaxAmt>",
+  );
+  const printed = form8828Pdf.instances!(source, {
+    nameLine1: "Jane Taxpayer",
+    primarySSN: "123456789",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "14 Main St", city: "Boise", state: "ID", zip: "83702" },
+  }, finalReturn);
+  assertEquals(printed[0].line9, 280_000);
+  assertEquals(printed[0].line23, 12_500);
+});
+
+Deno.test("staged IRS8828 gift rejects unsupported consideration and valuation tamper", () => {
+  const valid = gift();
+  assertThrows(() =>
+    form8828.build({
+      f8828s: [{
+        ...valid,
+        reviewed_gift: {
+          ...valid.reviewed_gift,
+          fair_market_value_of_interest: 279_000,
+        },
+      }],
+    }), Error);
+  assertThrows(() =>
+    form8828.build({
+      f8828s: [{
+        ...valid,
+        reviewed_gift: {
+          ...valid.reviewed_gift,
+          no_consideration_confirmed: false,
+        },
+      }],
+    }), Error);
+  assertThrows(
+    () => form8828.build({ f8828s: [gift({ selling_expenses: 500 })] }),
+    Error,
+  );
 });
 
 Deno.test("staged IRS8828 emits each property, including required zero-tax attachment", () => {
@@ -189,11 +276,11 @@ Deno.test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain
   );
 
   const sale = item();
-  sale.reviewed_sale.selling_expenses = 10_000;
+  sale.reviewed_disposition.selling_expenses = 10_000;
   assertThrows(
     () => form8828.build({ f8828s: [sale] }, { pending: pending() }),
     Error,
-    "sale records",
+    "disposition records",
   );
 
   const wrongGain = pending();
@@ -212,7 +299,7 @@ Deno.test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain
   );
 
   const wrongOwner = item();
-  wrongOwner.reviewed_sale.owner_ssn = "999999999";
+  wrongOwner.reviewed_disposition.owner_ssn = "999999999";
   assertThrows(
     () =>
       form8828.build({ f8828s: [wrongOwner] }, {
@@ -242,8 +329,8 @@ Deno.test("staged IRS8828 accepts fully excluded gain only with exclusion eviden
   });
   const reviewed = {
     ...excluded,
-    reviewed_sale: {
-      ...excluded.reviewed_sale,
+    reviewed_disposition: {
+      ...excluded.reviewed_disposition,
       exclusion_record_reference: undefined,
     },
   };

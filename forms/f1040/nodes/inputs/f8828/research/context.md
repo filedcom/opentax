@@ -26,6 +26,16 @@ period worksheet applies when the original loan was fully repaid before sale
 within the first four years, including a conventional refinance; a reissued MCC
 is treated as an extension of the original loan for the repayment date.
 
+The bounded gift branch follows the
+[IRS instructions](https://www.irs.gov/pub/irs-pdf/i8828.pdf): a gift outside
+the spouse/ex-spouse divorce exception uses deed date on line 6 and the fair
+market value of the taxpayer's interest on line 9. It requires a reviewed gift
+deed, valuation and payoff record, full transfer of that interest, and no
+consideration. This branch uses zero selling expense and zero gain included in
+gross income; transfers with debt assumed or other consideration remain
+unsupported. A positive deemed gain can still create recapture tax on Schedule 2
+without a Form 8949 sale row.
+
 ## Calculation
 
 | Line       | Derivation                                                                                                                                                                                                                                            |
@@ -37,18 +47,18 @@ is treated as an extension of the original loan for the repayment date.
 | 20         | Issuer holding period percentage corresponding to full and partial years held; verify against the 20%-100%-20% nine-year table. If the loan was repaid within four years before disposition, use the IRS holding period percentage worksheet instead. |
 | 21-23      | Multiply line 19 by line 20 percentage, then by line 18 percentage; tax is the smaller of that amount and line 14.                                                                                                                                    |
 
-The node's calculated tax contributes to Schedule 2 line 17b. The **MeF and PDF
-export guard still rejects every nonempty Form 8828 input** because the native
-Form 8828 attachment, verified return-level AGI/interest/gain reconciliation,
-and complete issuer document evidence are not yet in place. Node calculations
-and unit fixtures do not establish a fileable return.
+The node's calculated tax contributes to Schedule 2 line 17b. Native MeF and PDF
+descriptors and a strict return/source reconciler are staged. The **MeF and PDF
+export guard still rejects every nonempty Form 8828 input** while document
+bytes, filing-rule coverage and final attachment validation remain open. Node
+calculations and authored fixtures do not establish a fileable return.
 
 ## Remaining before public export
 
-- Register the native Form 8828 MeF root and PDF descriptor with source fields
-  and zero-tax attachment behavior.
-- Reconcile AGI, tax-exempt interest, recognized home gain, and Schedule 2 line
-  17b against the computed return.
-- Support or expressly exclude special transfers, casualty replacement and
-  amended-return scenarios; establish source document review and filing-rule/ATS
-  evidence.
+- Validate the staged native Form 8828 MeF root and PDF descriptor, including
+  zero-tax attachment behavior, and register them only after the public path is
+  supported.
+- Verify issuer, disposition, basis, exclusion and gift source document bytes;
+  reconcile taxable gain through the exact Form 8949 transaction.
+- Support or expressly exclude transfers with consideration, casualty
+  replacement and amended-return scenarios; establish filing-rule/ATS evidence.

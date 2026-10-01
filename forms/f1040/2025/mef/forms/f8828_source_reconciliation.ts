@@ -33,26 +33,28 @@ function assertReviewedRecords(item: F8828Item): void {
       "Form 8828 issuer calculation facts differ from the reviewed notification",
     );
   }
-  const sale = item.reviewed_sale;
+  const disposition = item.reviewed_disposition;
   if (
-    sale.source_transaction_id !== item.source_transaction_id ||
-    !sameAddress(sale.property_address, item.property_address) ||
-    sale.disposition_date !== item.disposition_date ||
-    sale.sales_price_of_interest !== item.sales_price_of_interest ||
-    sale.selling_expenses !== item.selling_expenses ||
-    sale.adjusted_basis_of_interest !== item.adjusted_basis_of_interest ||
-    sale.gain_included_in_gross_income !==
+    disposition.source_transaction_id !== item.source_transaction_id ||
+    !sameAddress(disposition.property_address, item.property_address) ||
+    disposition.disposition_date !== item.disposition_date ||
+    disposition.sales_price_of_interest !== item.sales_price_of_interest ||
+    disposition.selling_expenses !== item.selling_expenses ||
+    disposition.adjusted_basis_of_interest !==
+      item.adjusted_basis_of_interest ||
+    disposition.gain_included_in_gross_income !==
       item.home_gain_included_in_gross_income
   ) {
     throw new Error(
-      "Form 8828 property, disposition, basis or gain differs from reviewed sale records",
+      "Form 8828 property, disposition, basis or gain differs from reviewed disposition records",
     );
   }
   const gain = computeF8828Lines(item).line13_gain_or_loss;
   if (
-    sale.gain_included_in_gross_income > Math.max(0, gain) ||
-    (gain > 0 && sale.gain_included_in_gross_income === 0 &&
-      !sale.exclusion_record_reference)
+    disposition.gain_included_in_gross_income > Math.max(0, gain) ||
+    (item.disposition_kind === "sale" && gain > 0 &&
+      disposition.gain_included_in_gross_income === 0 &&
+      !disposition.exclusion_record_reference)
   ) {
     throw new Error(
       "Form 8828 fully excluded sale needs reviewed exclusion evidence",
@@ -95,7 +97,7 @@ export function reconcileForm8828Sources(
     seenTransactions.add(item.source_transaction_id);
     if (
       ownerIds &&
-      (!ownerIds.has(item.reviewed_sale.owner_ssn) ||
+      (!ownerIds.has(item.reviewed_disposition.owner_ssn) ||
         !ownerIds.has(item.reviewed_issuer.borrower_ssn))
     ) {
       throw new Error(
@@ -129,7 +131,7 @@ export function reconcileForm8828Sources(
   const transactions = linkedForm8949Transactions(pending);
   for (const item of items) {
     const taxableGain = item.home_gain_included_in_gross_income;
-    if (taxableGain <= 0) continue;
+    if (taxableGain <= 0 || item.disposition_kind === "gift") continue;
     const matches = transactions.filter((tx) =>
       tx.source_transaction_id === item.source_transaction_id
     );

@@ -44,7 +44,7 @@ const reviewedIssuerSchema = z.object({
   holding_period_percentage: z.number().int().min(0).max(100),
 });
 
-const reviewedSaleSchema = z.object({
+const reviewedDispositionSchema = z.object({
   document_reference: sourceReference,
   basis_record_reference: sourceReference,
   source_transaction_id: sourceReference,
@@ -57,11 +57,26 @@ const reviewedSaleSchema = z.object({
   gain_included_in_gross_income: moneySchema,
   exclusion_record_reference: sourceReference.optional(),
 });
+const reviewedGiftSchema = z.object({
+  deed_reference: sourceReference,
+  valuation_reference: sourceReference,
+  donee_name: z.string().trim().min(1),
+  donee_relationship: z.enum(["unrelated", "relative_other_than_spouse"]),
+  donee_is_spouse_or_former_spouse: z.literal(false),
+  deed_date: dateSchema,
+  fair_market_value_of_interest: moneySchema,
+  loan_payoff_reference: sourceReference,
+  loan_payoff_date: dateSchema,
+  entire_taxpayer_interest_transferred: z.literal(true),
+  no_consideration_confirmed: z.literal(true),
+});
 
 export const itemSchema = z.object({
   source_transaction_id: sourceReference,
   reviewed_issuer: reviewedIssuerSchema,
-  reviewed_sale: reviewedSaleSchema,
+  reviewed_disposition: reviewedDispositionSchema,
+  disposition_kind: z.enum(["sale", "gift"]),
+  reviewed_gift: reviewedGiftSchema.optional(),
   property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
   issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination
@@ -84,6 +99,36 @@ export const itemSchema = z.object({
   issuer_federally_subsidized_amount: moneySchema, // issuer notification, line 19
   issuer_holding_period_percentage: z.number().int().min(0).max(100), // issuer table, line 20
 }).superRefine((item, ctx) => {
+  if (item.disposition_kind === "gift") {
+    const gift = item.reviewed_gift;
+    if (!gift) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reviewed_gift"],
+        message: "Gift disposition needs deed and fair-market-value evidence",
+      });
+    } else if (
+      gift.deed_date !== item.disposition_date ||
+      gift.fair_market_value_of_interest !== item.sales_price_of_interest ||
+      gift.deed_reference !== item.reviewed_disposition.document_reference ||
+      gift.loan_payoff_date !== item.full_repayment_date ||
+      item.selling_expenses !== 0 ||
+      item.home_gain_included_in_gross_income !== 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reviewed_gift"],
+        message:
+          "Gift date and Form 8828 line 9 must use deed date and appraised FMV with no consideration, sale expenses, or recognized sale gain",
+      });
+    }
+  } else if (item.reviewed_gift !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reviewed_gift"],
+      message: "Sale disposition cannot include gift evidence",
+    });
+  }
   const closing = parseDate(item.original_loan_closing_date);
   const sale = parseDate(item.disposition_date);
   const repayment = parseDate(item.full_repayment_date);
@@ -221,7 +266,17 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
     item.original_loan_closing_date,
     item.disposition_date,
   );
-  const line11_amount_realized = item.sales_price_of_interest -
+  // The IRS treats a gift outside the divorce exception as a deemed sale at
+  // the fair market value of the taxpayer's interest on the deed date.
+  if (item.disposition_kind === "gift" && !item.reviewed_gift) {
+    throw new Error(
+      "Form 8828 gift needs reviewed deed and valuation evidence",
+    );
+  }
+  const line9_sales_price = item.disposition_kind === "gift"
+    ? item.reviewed_gift!.fair_market_value_of_interest
+    : item.sales_price_of_interest;
+  const line11_amount_realized = line9_sales_price -
     item.selling_expenses;
   const line13_gain_or_loss = line11_amount_realized -
     item.adjusted_basis_of_interest;
@@ -248,7 +303,7 @@ export function computeF8828Lines(item: F8828Item): F8828Lines {
   return {
     line7_full_years: line7.years,
     line7_full_months: line7.months,
-    line9_sales_price: item.sales_price_of_interest,
+    line9_sales_price,
     line10_selling_expenses: item.selling_expenses,
     line11_amount_realized,
     line12_adjusted_basis: item.adjusted_basis_of_interest,
