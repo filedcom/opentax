@@ -584,3 +584,22 @@ allocation. Foreign-source income or Form 1116 requires investment-interest
 allocation across U.S. and foreign assets. The zero-adjustment AMT assertion and
 manual loan-interest tracing are not independently authenticated. None of these
 cases is silently treated as the newly supported qualified-dividend combination.
+
+## Traced loan with four distinct investment payers (2026-10-01, unrun)
+
+One owner-owned direct-use taxable-securities loan now joins two separately
+identified Form 1099-INT box 1 payers and two separately identified Form
+1099-DIV box 1a payers, with box 1b qualified dividends on the first dividend
+copy. Four payer names and four issued-copy references must be distinct. The
+loan principal, purchase, lender interest total, and individual payments still
+reconcile to Form 4952 line 1. The source amounts yield lines 4a/4b and line 8,
+then match Form 1040 lines 2b/3a/3b, Schedule A line 9, the native Form 4952,
+and its PDF. The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+directs qualified dividends included on line 4a to line 4b; this route makes
+no line 4g election. A full-return positive and duplicate-copy, changed box 1b,
+and changed Form 1040 fixtures are authored for the deferred validation pass.
+
+The payer and lender record identifiers and amounts remain supplied facts;
+issued bytes are not authenticated. Mixed loan use, a second loan, capital-gain
+distributions, foreign income/tax, prior carryover, and line 4g election remain
+outside this bounded route.

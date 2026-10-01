@@ -51,6 +51,7 @@ function filing(
     | "oid_dividend"
     | "two_interest"
     | "two_interest_dividend"
+    | "two_interest_two_dividends"
     | "interest_two_dividends" = "interest",
   spouseOwned = false,
 ) {
@@ -83,7 +84,8 @@ function filing(
         }],
       }
       : {}),
-    ...(source === "two_interest" || source === "two_interest_dividend"
+    ...(source === "two_interest" || source === "two_interest_dividend" ||
+        source === "two_interest_two_dividends"
       ? {
         f1099int: [{
           payer_name: "First taxable bond payer",
@@ -134,6 +136,7 @@ function filing(
       }),
     ...(source === "interest_dividend" || source === "oid_dividend" ||
         source === "two_interest_dividend" ||
+        source === "two_interest_two_dividends" ||
         source === "interest_two_dividends"
       ? {
         f1099div: [
@@ -142,10 +145,17 @@ function filing(
             source_document_reference: "issued-2025-stock-dividend",
             isNominee: false,
             box11: false,
-            box1a: source === "interest_two_dividends" ? 15_000 : 40_000,
+            box1a: source === "interest_two_dividends" ||
+                source === "two_interest_two_dividends"
+              ? 15_000
+              : 40_000,
+            ...(source === "two_interest_two_dividends"
+              ? { box1b: 5_000 }
+              : {}),
             investment_property_for_form4952: true,
           },
-          ...(source === "interest_two_dividends"
+          ...(source === "interest_two_dividends" ||
+              source === "two_interest_two_dividends"
             ? [{
               payerName: "Second taxable stock payer",
               source_document_reference: "issued-2025-second-stock-dividend",
@@ -577,6 +587,88 @@ Deno.test("Form 4952 traced loan with two interest payers and one dividend payer
       filer: testFiler(),
     }), Error);
   assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
+});
+
+Deno.test("Form 4952 traced loan joins two interest and two dividend payers with one qualified amount", async () => {
+  const result = filing("two_interest_two_dividends");
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form4952!;
+  assertEquals(fields.line1, 20_000);
+  assertEquals(fields.line4a, 100_000);
+  assertEquals(fields.line4b, 5_000);
+  assertEquals(fields.line4g, 0);
+  assertEquals(fields.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 60_000);
+  assertEquals(result.pending.f1040?.line3a_qualified_dividends, 5_000);
+  assertEquals(result.pending.f1040?.line3b_ordinary_dividends, 40_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentPropQualDividendsAmt>5000</InvestmentPropQualDividendsAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line4b,
+    5_000,
+  );
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer: testFiler() });
+  assertStringIncludes(
+    bundle.xml,
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  const pdf = await buildPdfBytes(pending, testFiler(), ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
+
+  const interestItems = (result.pending.f1099int as {
+    f1099ints: Record<string, unknown>[];
+  }).f1099ints;
+  const dividendItems = (result.pending.f1099div as {
+    f1099divs: Record<string, unknown>[];
+  }).f1099divs;
+  for (
+    const changed of [
+      {
+        ...result.pending,
+        f1099int: {
+          f1099ints: [interestItems[0], {
+            ...interestItems[1],
+            source_document_reference:
+              interestItems[0].source_document_reference,
+          }],
+        },
+      },
+      {
+        ...result.pending,
+        f1099div: {
+          f1099divs: [{ ...dividendItems[0], box1b: 4_999 }, dividendItems[1]],
+        },
+      },
+      {
+        ...result.pending,
+        f1099div: {
+          f1099divs: [dividendItems[0], {
+            ...dividendItems[1],
+            source_document_reference:
+              interestItems[0].source_document_reference,
+          }],
+        },
+      },
+      {
+        ...result.pending,
+        f1040: { ...result.pending.f1040, line3a_qualified_dividends: 4_999 },
+      },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        nativeForm4952.build(fields, { pending: changed, filer: testFiler() }),
+      Error,
+    );
+    assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
+  }
 });
 
 Deno.test("Form 4952 traced loan with two distinct interest payers reaches native and PDF", () => {

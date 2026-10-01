@@ -143,12 +143,37 @@ export function reconcileForm4952DirectDebtExport(
     new Set(dividend.data.f1099divs.map((item) => item.payerName)).size ===
       2 &&
     !!interest.data.f1099ints[0].source_document_reference;
+  const twoInterestTwoDividends = interest.success && dividend.success &&
+    interest.data.f1099ints.length === 2 &&
+    dividend.data.f1099divs.length === 2 &&
+    pending.f1099oid === undefined &&
+    interest.data.f1099ints.every((item) =>
+      item.source_document_reference?.trim() && item.payer_name?.trim()
+    ) &&
+    dividend.data.f1099divs.every((item) =>
+      item.source_document_reference?.trim() && item.payerName?.trim()
+    ) &&
+    (dividend.data.f1099divs[0].box1b ?? 0) > 0 &&
+    (dividend.data.f1099divs[1].box1b ?? 0) === 0 &&
+    new Set([
+        ...interest.data.f1099ints.map((item) =>
+          item.source_document_reference
+        ),
+        ...dividend.data.f1099divs.map((item) =>
+          item.source_document_reference
+        ),
+      ]).size === 4 &&
+    new Set([
+        ...interest.data.f1099ints.map((item) => item.payer_name),
+        ...dividend.data.f1099divs.map((item) => item.payerName),
+      ]).size === 4;
   if (
     !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
     (!oneInterest && !twoInterest && !oneDividend && !oneOid &&
       !oneInterestAndDividend && !oneOidAndDividend &&
-      !twoInterestAndDividend && !interestAndTwoDividends) ||
+      !twoInterestAndDividend && !interestAndTwoDividends &&
+      !twoInterestTwoDividends) ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
@@ -213,7 +238,32 @@ export function reconcileForm4952DirectDebtExport(
     lineKeys.some((key) => fields[key] !== lines[key]) ||
     printed.data.investment_interest_expense !==
       retained.data.investment_interest_expense ||
-    (twoInterest || twoInterestAndDividend
+    (twoInterestTwoDividends
+      ? !Array.isArray(printed.data.source_1099_interest) ||
+        !Array.isArray(retained.data.source_1099_interest) ||
+        !Array.isArray(printed.data.source_1099_dividends) ||
+        !Array.isArray(retained.data.source_1099_dividends) ||
+        printed.data.source_1099_interest.length !== 2 ||
+        retained.data.source_1099_interest.length !== 2 ||
+        printed.data.source_1099_dividends.length !== 2 ||
+        retained.data.source_1099_dividends.length !== 2 ||
+        JSON.stringify(
+            [...printed.data.source_1099_interest].sort((a, b) => a - b),
+          ) !==
+          JSON.stringify(
+            [...retained.data.source_1099_interest].sort((a, b) => a - b),
+          ) ||
+        JSON.stringify(
+            [...printed.data.source_1099_dividends].sort((a, b) => a - b),
+          ) !==
+          JSON.stringify(
+            [...retained.data.source_1099_dividends].sort((a, b) => a - b),
+          ) ||
+        typeof printed.data.source_1099_qualified_dividends !== "number" ||
+        typeof retained.data.source_1099_qualified_dividends !== "number" ||
+        printed.data.source_1099_qualified_dividends !==
+          retained.data.source_1099_qualified_dividends
+      : twoInterest || twoInterestAndDividend
       ? !Array.isArray(printed.data.source_1099_interest) ||
         !Array.isArray(retained.data.source_1099_interest) ||
         printed.data.source_1099_interest.length !== 2 ||
