@@ -1,5 +1,23 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Two ordinary foreign dividends from one country (implementation authored; bulk validation pending)
+
+Two distinct identified Forms 1099-DIV may now supply ordinary, entirely
+foreign-source box 1a dividends and box 7 paid foreign tax for one passive
+country. A separate `two_dividend_pdf_review` names both source references and
+affirms the existing Part I-IV inventory constraints. The two input rows must
+have distinct payer names and document references, the same IRS country code,
+qualifying holding-period reviews, and no qualified dividend, nominee, other
+monetary box, or unrelated income. Their box 1a and box 7 amounts reconcile
+one-to-one to the two Form 1116 tax items, the preference review, Schedule 3,
+and Form 1040. Native MeF groups their same-country 1099 taxes into its
+dividend withholding amount; the PDF prints the summed income and tax in
+country column A and Part II's dividend row. Positive and source/return tamper
+fixtures are authored but have not been run under the requested single bulk
+validation pass. Distinct countries, qualified dividends, other income or
+deductions, source-document byte authentication, and IRS acceptance remain
+outside this bound.
+
 **Three-country interest and ordinary dividends (written, unrun):** Two
 separately issued Forms 1099-INT with foreign box 1/box 6 interest in Canada
 and Germany and one French corporation Form 1099-DIV with nonqualified foreign

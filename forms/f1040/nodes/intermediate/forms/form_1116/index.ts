@@ -602,6 +602,7 @@ export const inputSchema = z.object({
     singleSourceK3PdfReviewSchema,
   ]).optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
+  two_dividend_pdf_review: multiSourcePdfReviewSchema.optional(),
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
@@ -1176,6 +1177,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         category_summaries: categories,
         single_source_pdf_review: input.single_source_pdf_review,
         multi_source_pdf_review: input.multi_source_pdf_review,
+        two_dividend_pdf_review: input.two_dividend_pdf_review,
         mixed_interest_dividend_pdf_review:
           input.mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review: input.two_country_interest_pdf_review,

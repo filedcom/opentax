@@ -26,6 +26,7 @@ import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_co
 import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
+import { reconcileForm1116TwoForeignDividends } from "../../form1116_two_foreign_dividends.ts";
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
@@ -441,10 +442,16 @@ function buildIRS1116(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
-  reconcileForm1116ForeignDividend(
+  const twoDividend = reconcileForm1116TwoForeignDividends(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
+  if (!twoDividend) {
+    reconcileForm1116ForeignDividend(
+      fields as unknown as Readonly<Record<string, unknown>>,
+      (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+    );
+  }
   const k3Items = summaries.flatMap((summary) => summary.items).filter((item) =>
     item.schedule_k3_line12_reduction !== undefined ||
     item.partnership_k3_passive_interest !== undefined ||
