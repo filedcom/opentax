@@ -25,6 +25,7 @@ import {
   assertOrdinarySectionBReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
+  isTwoSectionBReducedEquipmentGroup,
   isTwoSectionBSimilarArtGroup,
 } from "../../mef/forms/f8283_election.ts";
 import {
@@ -651,14 +652,18 @@ export const form8283Pdf: PdfFormDescriptor = {
     const sectionB = source.section_b_items ?? [];
     if (sectionB.length > 0) {
       if (sectionB.length === 2) {
-        if (!isTwoSectionBSimilarArtGroup(source)) {
+        const similarArt = isTwoSectionBSimilarArtGroup(source);
+        const reducedEquipment = isTwoSectionBReducedEquipmentGroup(source);
+        if (!similarArt && !reducedEquipment) {
           throw new Error(
-            "Form 8283 PDF two Section B gifts need distinct signed/appraised similar-art sources and donees",
+            "Form 8283 PDF two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",
           );
         }
         assertOrdinarySectionBReconciled(
           { pending: allPending },
-          SectionBPropertyType.ArtAtLeast20000,
+          similarArt
+            ? SectionBPropertyType.ArtAtLeast20000
+            : SectionBPropertyType.Equipment,
         );
         if (
           JSON.stringify(source) !==

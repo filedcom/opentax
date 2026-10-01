@@ -548,3 +548,23 @@ publicly traded securities belong in Section A. The underlying issuer,
 purchase, valuation, and donee records still need real human review. Mixed
 lots, partnership/S corporation interests, long-term securities, carryovers,
 and IRS acceptance remain outside this bounded route.
+
+## Two separately reviewed short-term Section B equipment gifts (2026-10-01, unrun)
+
+The reviewed short-term ordinary-income reduction route now also handles
+exactly two purchased equipment gifts in one similar-item group, made to
+different donees. Each item has its own appraised FMV above its basis-limited
+claim, purchase/basis record, full qualified appraisal, completed signed Form
+8283, appraiser and donee signature PDFs, and a separate FMV-reduction
+computation. All twelve named PDFs must be distinct; the existing attachment
+checks compare the reviewed SHA-256 values with the submitted bytes. The
+[2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require Section B for similar items whose total claimed deduction exceeds
+$5,000 and a separate Section B for each donee. The source-to-return guard
+recomputes the complete Schedule A inventory and itemized Form 1040 total;
+native MeF emits two Section B documents and the PDF projects two unsigned
+copies with their separate FMV and claimed amounts. An authored $18,000/$12,000
+and $19,000/$13,000 pair produces a $25,000 Schedule A deduction, with
+changed reduction-PDF bytes, repeated donee EIN, and changed itemized-total
+fixtures for deferred bulk validation. Other combinations, carryovers, and
+actual taxpayer document review remain open.

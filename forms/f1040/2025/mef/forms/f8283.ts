@@ -19,6 +19,7 @@ import {
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
+  isTwoSectionBReducedEquipmentGroup,
   isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
 import {
@@ -1144,14 +1145,18 @@ export const form8283: MefFormDescriptor<
       assertOrdinarySectionBReconciled(context, propertyType);
     }
     if (sectionB.length === 2) {
-      if (!isTwoSectionBSimilarArtGroup(parsed)) {
+      const similarArt = isTwoSectionBSimilarArtGroup(parsed);
+      const reducedEquipment = isTwoSectionBReducedEquipmentGroup(parsed);
+      if (!similarArt && !reducedEquipment) {
         throw new Error(
-          "Form 8283 two Section B gifts need distinct signed/appraised similar-art sources and donees",
+          "Form 8283 two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",
         );
       }
       assertOrdinarySectionBReconciled(
         context,
-        SectionBPropertyType.ArtAtLeast20000,
+        similarArt
+          ? SectionBPropertyType.ArtAtLeast20000
+          : SectionBPropertyType.Equipment,
       );
     }
     const sectionA = parsed.section_a_items ?? [];

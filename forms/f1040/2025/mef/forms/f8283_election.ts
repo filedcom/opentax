@@ -450,6 +450,54 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
     new Set(documents).size === documents.length;
 }
 
+/** Two fully reviewed short-term equipment gifts in one similar-item group. */
+export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
+  const items = form.section_b_items ?? [];
+  if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
+    return false;
+  }
+  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const documents = items.flatMap((item) => [
+    item.signed_form_attachment_file_name,
+    item.qualified_appraisal?.attachment_file_name,
+    item.qualified_appraisal?.signature_attachment_file_name,
+    item.donee_acknowledgment?.signature_attachment_file_name,
+    item.ordinary_income_reduction?.purchase_record_attachment_file_name,
+    item.ordinary_income_reduction?.reduction_statement_attachment_file_name,
+  ]);
+  return !!group &&
+    items.every((item) =>
+      item.similar_item_group?.trim().toLowerCase() === group &&
+      item.property_type === SectionBPropertyType.Equipment &&
+      item.fmv > 5_000 && item.fmv <= 500_000 &&
+      item.deduction_claimed > 5_000 &&
+      item.deduction_claimed === item.cost_or_adjusted_basis &&
+      item.deduction_claimed < item.fmv &&
+      item.ordinary_income_reduction?.reason ===
+        "purchased_short_term_capital_asset" &&
+      item.ordinary_income_reduction.gain_removed ===
+        item.fmv - item.deduction_claimed &&
+      item.ordinary_income_reduction.purchase_record_review !== undefined &&
+      item.ordinary_income_reduction.reduction_statement_review !== undefined &&
+      item.charitable_limit_category === "noncash_50" &&
+      item.is_capital_gain_property === false &&
+      item.donor_acquisition_description?.trim().toLowerCase() ===
+        "purchase" &&
+      item.date_acquired?.startsWith("2025-") &&
+      item.date_contributed?.startsWith("2025-") &&
+      item.date_acquired < item.date_contributed &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      item.qualified_appraisal?.full_appraisal_source_review !== undefined &&
+      item.signed_form_source_review !== undefined &&
+      item.donee_acknowledgment?.signed_by_donee === true &&
+      item.donee_acknowledgment.unrelated_use === false
+    ) &&
+    items[0]!.donee_acknowledgment!.ein !==
+      items[1]!.donee_acknowledgment!.ein &&
+    documents.length === 12 && documents.every(Boolean) &&
+    new Set(documents).size === documents.length;
+}
+
 function assertSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA: Readonly<Record<string, unknown>> | undefined,
@@ -481,9 +529,13 @@ function assertSectionBReconciled(
   const pairedArt = ordinary &&
     ordinaryPropertyType === SectionBPropertyType.ArtAtLeast20000 &&
     isTwoSectionBSimilarArtGroup(form);
+  const pairedEquipment = ordinary &&
+    ordinaryPropertyType === SectionBPropertyType.Equipment &&
+    isTwoSectionBReducedEquipmentGroup(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
-    (!pairedArt && (form.section_b_items ?? []).length !== 1) ||
+    (!pairedArt && !pairedEquipment &&
+      (form.section_b_items ?? []).length !== 1) ||
     (ordinary
       ? form.section_b_items?.some((item) =>
         item.property_type !== ordinaryPropertyType ||
@@ -494,7 +546,7 @@ function assertSectionBReconciled(
   ) {
     throw new Error(
       ordinary
-        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar art gifts`
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar gifts`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }
