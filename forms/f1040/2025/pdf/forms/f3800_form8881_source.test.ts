@@ -138,7 +138,11 @@ Deno.test("Form 8881 Part I and II bind separate native and printable Form 3800 
   assertEquals(pdf[form3800PartIIIFields("1dd").e], 500);
   assertEquals(pdf[form3800PartIIIFields("1j").i], 750);
   assertEquals(pdf[form3800PartIIIFields("1dd").i], 500);
-  assertEquals(form8881Pdf.projectFields!(source, pending).line11, 500);
+  const child = form8881Pdf.projectFields!(source, pending);
+  assertEquals(child.line11, 500);
+  assertEquals(form8881Pdf.instances!(child, testFiler(), pending, prepared), [
+    child,
+  ]);
 });
 
 Deno.test("Form 3800 PDF rejects a second Form 8881 part claiming another document ID", () => {
@@ -218,6 +222,65 @@ Deno.test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
   const [pdf] = form3800Pdf.instances!(claim, testFiler(), filed, prepared);
   assertEquals(pdf[form3800PartIIIFields("1ee").e], 500);
   assertEquals(pdf[form3800PartIIIFields("1ee").i], 500);
+  const child = form8881Pdf.projectFields!(military, filed);
+  assertEquals(child.line15, 500);
+  assertEquals(form8881Pdf.instances!(child, testFiler(), filed, prepared), [
+    child,
+  ]);
+});
+
+Deno.test("Form 8881 child PDF rejects changed source, prepared part links, and final credit", () => {
+  const prepared = prepareForm3800DocumentParts(f3800, {
+    pending,
+    documentIdsByPendingKey: ids,
+  });
+  if (!prepared) throw new Error("Expected sourced Form 3800");
+  const fields = form8881Pdf.projectFields!(source, pending);
+  assertThrows(() => form8881Pdf.instances!(fields, testFiler(), pending));
+  assertThrows(() =>
+    form8881Pdf.instances!(
+      { ...fields, line11: 499 },
+      testFiler(),
+      pending,
+      prepared,
+    )
+  );
+  assertThrows(() =>
+    form8881Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentRows: prepared.currentRows.map((row) =>
+        row.line === "1dd"
+          ? {
+            ...row,
+            metadata: { ...row.metadata, referenceDocumentId: "IRS8881_2" },
+          }
+          : row
+      ),
+      currentDetails: prepared.currentDetails.map((row) =>
+        row.line === "1dd" ? { ...row, sourceDocumentId: "IRS8881_2" } : row
+      ),
+    })
+  );
+  assertThrows(() =>
+    form8881Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentAmounts: prepared.currentAmounts.map((row) =>
+        row.line === "1j" ? { ...row, nonpassiveCredit: 749 } : row
+      ),
+    })
+  );
+  assertThrows(() =>
+    form8881Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      lines: { ...prepared.lines, line38: 1_249 },
+    })
+  );
+  assertThrows(() =>
+    form8881Pdf.instances!(fields, testFiler(), {
+      ...pending,
+      f1040: { ...pending.f1040, line20_nonrefundable_credits: 1_249 },
+    }, prepared)
+  );
 });
 
 Deno.test("Form 8881 export rejects altered source, document link and prepared row", () => {

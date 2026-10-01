@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema } from "../../../nodes/inputs/f8881/index.ts";
 import { reconcileForm8881DirectEmployer } from "../../mef/forms/f8881.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 
 // Field names and positions were inspected on the IRS December 2025
 // fillable one-page Form 8881.
@@ -62,5 +63,68 @@ export const form8881Pdf: PdfFormDescriptor = {
       line6e3: lines.line6a > 50 ? lines.line6e3 : undefined,
       line6e4: lines.line6a > 50 ? lines.line6e4 : undefined,
     };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending?.f8881 || !allPending.f3800 || !prepared) {
+      throw new Error("Form 8881 PDF needs the prepared Form 3800 document");
+    }
+    const lines = reconcileForm8881DirectEmployer(allPending);
+    const expected = form8881Pdf.projectFields!(allPending.f8881, allPending);
+    const parts = [
+      { line: "1j", credit: lines.line8 },
+      { line: "1dd", credit: lines.line11 },
+      { line: "1ee", credit: lines.line15 },
+    ];
+    const documentIds = new Set<string>();
+    if (JSON.stringify(fields) !== JSON.stringify(expected)) {
+      throw new Error("Form 8881 PDF differs from filed source lines");
+    }
+    for (const part of parts) {
+      const rows = prepared.currentRows.filter((row) => row.line === part.line);
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === part.line
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === part.line
+      );
+      if (part.credit === 0) {
+        if (rows.length || amounts.length || details.length) {
+          throw new Error(`Form 8881 PDF has an unclaimed ${part.line} row`);
+        }
+        continue;
+      }
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8881" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined ||
+        detail.credit !== part.credit ||
+        amount.nonpassiveCredit !== part.credit ||
+        amount.totalCredit !== part.credit ||
+        amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== detail.appliedCredit
+      ) {
+        throw new Error(
+          `Form 8881 PDF differs from prepared Form 3800 ${part.line}`,
+        );
+      }
+      documentIds.add(row.metadata.referenceDocumentId);
+    }
+    if (
+      documentIds.size !== 1 ||
+      prepared.lines.line38 !== allPending.f3800.allowed_credit
+    ) {
+      throw new Error("Form 8881 PDF has inconsistent prepared credit links");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
 };

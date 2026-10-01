@@ -16,6 +16,13 @@ Form 1040 join checks the allowed total. A second-part document-ID tamper
 fixture is authored for the deferred bulk pass. The check binds in-memory
 document references; it does not authenticate the underlying plan records.
 
+The registered Form 8881 child PDF now repeats that positive-part check for
+lines 1j, 1dd, and 1ee before printing: it replays its source lines, rejects
+unclaimed rows, requires one IRS8881 document ID across the prepared rows and
+details, and follows line 38 through Schedule 3 and Form 1040. Startup plus
+enrollment and three-part military-spouse positives, with altered print,
+document ID, amount, line 38, and final-credit cases, await the bulk run.
+
 The direct PDF descriptor now requires the pending Form 3800 allowed-credit
 amount to match both its return-wide pending source and the prepared native
 line 38 at cent precision. A changed raw descriptor argument or changed pending
