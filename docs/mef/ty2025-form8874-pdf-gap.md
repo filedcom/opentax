@@ -69,6 +69,17 @@ event. A future source integration should join both notices by CDE EIN, investor
 TIN, original QEI date, and investment amount, then reconcile the 2025 credit
 allowance and any recapture before broadening eligibility claims.
 
+A Form 8874-specific staged helper now parses one reviewed, signed Form 8874-A
+notice and compares its CDE name/EIN, investor name/TIN, initial investment
+date, QEI amount, seven scheduled annual amounts, and the 2025 allowance amount
+to one existing direct Form 8874 investment and the prepared Form 1040 owner. It
+also checks the CDE's 60-day delivery window. Positive and tamper fixtures are
+authored but await the requested bulk test pass. This helper is not yet invoked
+by the public return graph: there is no prepared Form 8874-A source slot or
+document-ingestion path. Even after that join is wired, the credit's continuing
+QEI status and recapture history need later CDE evidence; a 2023 issuance notice
+alone cannot prove conditions on a 2025 anniversary.
+
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date. It
 computes a $500 credit, prints the CDE identity and address on two lines within
