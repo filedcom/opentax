@@ -13,6 +13,10 @@ import {
   calculateForm8874,
   inputSchema as f8874InputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
+import {
+  computeCommercialVehicleCreditLines,
+  inputSchema as f8936InputSchema,
+} from "../../../nodes/inputs/f8936/index.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import {
@@ -149,6 +153,64 @@ export const form3800Pdf: PdfFormDescriptor = {
             "Form 3800 PDF line 4b differs from one self-earned Form 5884 source",
           );
         }
+      }
+    }
+    if (
+      source.f8936_commercial_vehicle_credit &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8820_credit && !source.f8874_credit &&
+      !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length
+    ) {
+      const filed = f8936InputSchema.parse(all.f8936);
+      const vehicle = filed.f8936s[0];
+      const credit = vehicle?.credit_kind ===
+          "qualified_commercial_clean_vehicle"
+        ? computeCommercialVehicleCreditLines(vehicle).line26Credit
+        : 0;
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1aa");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1aa"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1aa"
+      );
+      if (
+        filed.f8936s.length !== 1 || credit <= 0 ||
+        vehicle?.business_credit_subject_to_passive_activity_limit !== false ||
+        source.f8936_commercial_vehicle_credit
+          .subject_to_passive_activity_limit ||
+        source.f8936_commercial_vehicle_credit.credit_amount !== credit ||
+        JSON.stringify(rawSource.f8936_commercial_vehicle_credit) !==
+          JSON.stringify(source.f8936_commercial_vehicle_credit) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentDetails.length !== 1 ||
+        rows[0].metadata.sourceCount !== 1 ||
+        rows[0].metadata.referenceDocumentName !== "IRS8936" ||
+        !rows[0].metadata.referenceDocumentId ||
+        details[0].sourceDocumentId !==
+          rows[0].metadata.referenceDocumentId ||
+        details[0].passThroughEin !== undefined ||
+        details[0].credit !== credit ||
+        details[0].appliedCredit !== amounts[0].appliedCredit ||
+        amounts[0].nonpassiveCredit !== credit ||
+        amounts[0].totalCredit !== credit ||
+        amounts[0].passiveBeforeLimit !== 0 ||
+        amounts[0].passiveAfterLimit !== 0 ||
+        amounts[0].transferOutCredit !== 0 ||
+        prepared.lines.line17 !== amounts[0].appliedCredit ||
+        prepared.lines.line38 !== amounts[0].appliedCredit
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 1aa differs from one self-earned commercial Form 8936 source",
+        );
       }
     }
     if (

@@ -14,6 +14,21 @@ credit fails before any page fields are projected. Positive and tamper fixtures
 are authored for the deferred bulk run; this closes the direct-projection
 amount drift, while individual credit-source authenticity remains open.
 
+One self-earned, nonpassive qualified commercial clean vehicle now has an
+additional direct Form 3800 PDF source check. The Form 8936 Part V and Schedule
+A source facts calculate a $3,000 credit for a $10,000 electric van acquired
+September 30, 2025. The nine-page parent PDF replays that calculation, the
+filed IRS8936 document ID, one Part III line 1aa and Part V detail, Part II
+line 17/38, Schedule 3 line 6a/8, and final Form 1040 line 20. Positive
+full-return/native/PDF and changed basis, acquisition date, prepared row,
+raw credit, and final-return fixtures are authored but unrun. The
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+place Form 8936 Part V on line 1aa, and the
+[2025 Form 8936 instructions](https://www.irs.gov/instructions/i8936)
+close acquisitions after September 30. Multiple vehicles, passive business
+credits, source-document authentication, carryforwards, and the deferred
+test/XSD/filled-PDF/business-rule/ATS batch remain open.
+
 For one nonpassive, self-earned Form 5884 employer claim, the Form 3800 PDF
 now recalculates the work opportunity credit from the employee certification,
 hours, and payroll source, and matches it to the pending and raw Form 3800
