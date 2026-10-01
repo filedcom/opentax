@@ -120,6 +120,11 @@ Deno.test("Form 8611 PDF preserves bond identity and section 42(j)(5) note", () 
 Deno.test("Form 8611 PDF rejects changed recapture source or final return", () => {
   const f8611Source = { f8611s: [owner] };
   assertThrows(
+    () => form8611Pdf.instances!(f8611Source, form8992Filer),
+    Error,
+    "needs the finalized return",
+  );
+  assertThrows(
     () =>
       form8611Pdf.instances!(
         f8611Source,

@@ -84,6 +84,9 @@ export const form8611Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8611 PDF needs final filer name and SSN");
     }
+    if (!allPending) {
+      throw new Error("Form 8611 PDF needs the finalized return");
+    }
     reconcileForm8611Schedule2(f8611s, allPending);
     return f8611s.map((item) => {
       const lines = calculateForm8611(item);
