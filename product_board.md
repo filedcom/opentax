@@ -17,7 +17,7 @@ coverage decision, or release gate.
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
 | Named tax-form gaps | 20 | 326 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
+| Automated and artifact validation | 5 | 0 | The latest full run passed 10,002 cases and found four fixture failures; all four have focused fixes, and the full rerun is pending. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
 
 **Implemented coverage.** Bounded routes now connect selected wage, information
@@ -62,7 +62,8 @@ names the exact supported inputs and remaining gates for every slice.
 Merge-readiness validation is under way. The branch was rebased onto
 `origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
 the PR's shared Schedule SE calculation were retained at the two conflict
-sites. The full suite has not passed.
+sites. The latest full suite passed 10,002 cases and found four fixture
+failures. All four have focused fixes; a full rerun is required.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
@@ -90,16 +91,21 @@ test-import TypeScript errors before execution; both imports were corrected. Its
 records that gate. The next complete command passed TypeScript checking and
 executed the suite: **9,736 passed, 266 failed**. Its
 [local log](.state/research/ty2025-pr56-post-rebase-full-rerun-2026-10-01.log)
-is the current failing baseline; several failures were fixed while that run was
-still in progress. Focused repairs are under way, and a fresh complete run is
-required. The corrected TY2025 v5.4
+was the earlier failing baseline. A subsequent complete run at `1a4a793b`
+passed **10,002** and failed **4** in 28m57s. Its
+[local log](.state/research/ty2025-pr56-final-full-rerun-2026-10-01.log)
+shows stale Form 8949 direct-sale and Form 8826 pass-through fixtures, plus a
+prior Form 4835 export assertion that lacked authenticated 2024 filing evidence.
+Those fixtures now test canonical sale rows, matched K-1 sources, and the
+prior-year export stop. The affected files pass **47/47** focused tests after
+repair; the same complete command must run again. The corrected TY2025 v5.4
 [XSD validation file](.state/research/pr56-xsd-focused.log) now passes
 **181/181**, with source-backed positive cases and explicit stops where
 authenticated prior filing bytes are missing. Focused Form 7203/8582/8606,
 Form 8962, Form 6251, and core return suites have also passed after repairs.
 The Form 8978 negative Schedule 2 line 18 PDF route remains closed pending a
 supported signed-offset projection. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
-checks at `9effd20b`. No current complete test, filled-PDF,
+checks at `9effd20b`. No current passing complete test, filled-PDF,
 business-rule, or IRS ATS acceptance is claimed. After implementation and
 scope decisions, run one full test batch, source-backed XSD/business-rule
 validation, and the [sixty prepared filled-PDF
