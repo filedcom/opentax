@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **309 completed bounded items**, with
+and no completed checklist items. The **310 completed bounded items**, with
 their source and validation limits, are in the
 [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -16,7 +16,7 @@ form or a release gate.
 | Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
 | Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
 | Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 293 | Extend bounded routes to every retained form branch and source combination. |
+| Named tax-form gaps | 20 | 294 | Extend bounded routes to every retained form branch and source combination. |
 | Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
 | Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
 | IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
@@ -64,6 +64,8 @@ A spouse-owned first-year Roth distribution now keeps that spouse's Form
 8606 owner identity while reconciling joint IRA income and Form 5329 tax.
 A staged Form 8839 credit candidate now applies the 2025 MAGI phaseout and
 reconciles refundable and nonrefundable portions; positive filing stays closed.
+Form 8990 debt tracing now requires dated borrowing-use records that account
+for the full proceeds and connect each payment to the same Schedule C business.
 
 **Evidence and validation.** The last complete `deno task test` baseline
 passed 8,951/8,951 at `44282e25`; its
