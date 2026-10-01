@@ -9,6 +9,39 @@ Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   ]);
 });
 
+Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {
+  const field = (key: string) =>
+    schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
+  assertEquals(
+    field("line8n_section951a_inclusion"),
+    "topmostSubform[0].Page1[0].f1_26[0]",
+  );
+  assertEquals(
+    field("line8o_section951aa_inclusion"),
+    "topmostSubform[0].Page1[0].f1_27[0]",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8n_section951a_inclusion: 11_000 },
+        undefined,
+        {},
+      ),
+    Error,
+    "complete Form 5471 schedules",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8o_section951aa_inclusion: 42_000 },
+        undefined,
+        {},
+      ),
+    Error,
+    "Form 8992 with Schedule A",
+  );
+});
+
 Deno.test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer source", () => {
   const filer = {
     primarySSN: "111223333",

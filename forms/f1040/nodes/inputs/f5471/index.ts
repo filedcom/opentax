@@ -1,109 +1,154 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  AtLeastOne,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
-// TY2025 — Form 5471: Information Return of U.S. Persons With Respect To
-// Certain Foreign Corporations.
-//
-// Filed by U.S. persons who are officers, directors, or shareholders in
-// certain foreign corporations (IRC §6038). Five filing categories (1–5)
-// determine which schedules must be attached.
-//
-// This input is retained for intake, but filing remains unsupported. Section
-// 951(a) belongs on Schedule 1 line 8n; an individual's section 951A amount
-// requires Form 8992 and belongs on line 8o. Neither can be inferred from the
-// sparse fields below, and the required Form 5471 schedules are not emitted.
-//
-// The historical intake contains only a subset of the required schedules.
+// One wholly owned Category 5a CFC, individual shareholder, no section 962
+// election. These are reported Schedule I / I-1 facts, not asserted inclusion.
+const dollars = z.number().int().nonnegative();
+const sourceReference = z.string().trim().min(1);
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
-// Filing category determines which schedules are required (Form 5471 instructions p.1)
 export enum FilingCategory {
-  // Category 1 — U.S. person is an officer or director of a foreign corp in
-  // which a U.S. person acquired ≥10% stock. No income inclusion required.
-  Category1 = "1",
-  // Category 2 — U.S. citizen/resident who is an officer or director of a
-  // foreign corporation and a U.S. person acquired ≥10% stock during the year.
-  Category2 = "2",
-  // Category 3 — U.S. person who acquired ≥10% or an additional ≥10% of a
-  // foreign corp, or a U.S. person who disposed of ≥10% stock.
-  Category3 = "3",
-  // Category 4 — U.S. person who had control (>50% of vote or value) of a
-  // foreign corporation for ≥30 days during the annual accounting period.
-  Category4 = "4",
-  // Category 5 — U.S. shareholders of a controlled foreign corporation (CFC)
-  // on the last day of the CFC's annual accounting period. Subpart F/GILTI apply.
-  Category5 = "5",
+  Category5a = "5a",
 }
 
-// ─── Per-item schema ──────────────────────────────────────────────────────────
-
-// One Form 5471 item = one foreign corporation
-export const itemSchema = z.object({
-  // ── Identifying information (5471 main screen, Part I) ────────────────────
-  // Legal name of the foreign corporation (Form 5471 Part I line 1b)
-  foreign_corp_name: z.string(),
-  // EIN or reference ID assigned to the corporation (Form 5471 Part I line 1c)
-  foreign_corp_ein_or_reference_id: z.string().optional(),
-  // Country of incorporation or organization (Form 5471 Part I line 1g)
-  country_of_incorporation: z.string(),
-  // Functional currency of the foreign corporation (Form 5471 Part I)
-  functional_currency: z.string().optional(),
-  // Filing category 1–5 (Form 5471 Category of Filer)
-  filing_category: z.nativeEnum(FilingCategory),
-
-  // ── Schedule I — Summary of Shareholder's Income (SCHI screen) ───────────
-  // Subpart F income includible under IRC §951(a)(1)(A) — Schedule I line 1
-  subpart_f_income: z.number().nonnegative().optional(),
-  // Previously excluded Subpart F income withdrawn from investment — Schedule I line 5
-  previously_excluded_subpart_f_income: z.number().nonnegative().optional(),
-  // Amount included under IRC §951(a)(1)(B) (factoring income) — Schedule I line 6
-  factoring_income: z.number().nonnegative().optional(),
-
-  // ── Schedule I-1 — GILTI (I1 screen) ─────────────────────────────────────
-  // Historical asserted amount; Schedule I-1 reports CFC-level inputs, while
-  // the individual's inclusion requires Form 8992.
-  gilti_inclusion: z.number().nonnegative().optional(),
-
-  // ── Schedule E — Foreign Taxes Paid (SCHE screen) ────────────────────────
-  // Foreign income taxes paid/accrued on Subpart F income (IRC §960(a)) — informational
-  foreign_taxes_paid_subpart_f: z.number().nonnegative().optional(),
-  // Foreign income taxes paid/accrued allocable to GILTI (IRC §960(d)) — informational
-  foreign_taxes_paid_gilti: z.number().nonnegative().optional(),
-
-  // ── Schedule H — Current E&P (SCHH screen) ────────────────────────────────
-  // Current year earnings and profits — informational reference data
-  current_ep: z.number().optional(),
-
-  // ── Schedule J — Accumulated E&P (SCHJ screen) ────────────────────────────
-  // Accumulated E&P at beginning of year — informational reference data
-  accumulated_ep_beginning: z.number().optional(),
-  // Accumulated E&P at end of year — informational reference data
-  accumulated_ep_ending: z.number().optional(),
+export const scheduleISchema = z.object({
+  line1a: dollars,
+  line1b: dollars,
+  line1c: dollars,
+  line1d: dollars,
+  line1e: dollars,
+  line1f: dollars,
+  line1g: dollars,
+  line1h: dollars,
+  line2_us_property: dollars,
+  // Factoring income has separate reporting treatment outside this route.
+  line4_factoring: z.literal(0),
+  worksheet_a_reference: sourceReference.optional(),
+  worksheet_b_reference: sourceReference.optional(),
+}).strict().superRefine((value, ctx) => {
+  if (
+    value.line1e + value.line1f + value.line1g + value.line1h > 0 &&
+    !value.worksheet_a_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["worksheet_a_reference"],
+      message: "Positive Schedule I lines 1e–1h need Worksheet A source",
+    });
+  }
+  if (value.line2_us_property > 0 && !value.worksheet_b_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["worksheet_b_reference"],
+      message: "Positive Schedule I line 2 needs Worksheet B source",
+    });
+  }
 });
+
+export const testedIncomeSchema = z.object({
+  tested_income: dollars,
+  pro_rata_tested_income: dollars,
+  pro_rata_qbai: dollars,
+  pro_rata_tested_interest_income: dollars,
+  pro_rata_tested_interest_expense: dollars,
+  schedule_i1_source_reference: sourceReference,
+}).strict().refine(
+  (v) => v.tested_income === v.pro_rata_tested_income,
+  "Wholly owned CFC tested income must equal the shareholder pro rata amount",
+);
+
+export const itemSchema = z.object({
+  foreign_corp_name: z.string().trim().min(1),
+  foreign_corp_ein_or_reference_id: z.string().trim().min(1),
+  country_of_incorporation: z.string().trim().min(1),
+  functional_currency: z.string().trim().min(1),
+  filing_category: z.literal(FilingCategory.Category5a),
+  shareholder_tin: z.string().regex(/^\d{9}$/),
+  ownership_percent: z.literal(100),
+  section_962_election: z.literal(false),
+  reviewed_form5471_source_reference: sourceReference,
+  schedule_i: scheduleISchema,
+  schedule_i1: testedIncomeSchema,
+}).strict();
 
 export const inputSchema = z.object({
-  f5471s: z.array(itemSchema).min(1),
-});
+  f5471s: z.tuple([itemSchema]),
+}).strict();
 
-// ─── Node class ───────────────────────────────────────────────────────────────
+export type F5471Item = z.infer<typeof itemSchema>;
+
+export function calculateCategory5Inclusions(item: F5471Item) {
+  const scheduleI = item.schedule_i;
+  const section951a = scheduleI.line1a + scheduleI.line1b +
+    scheduleI.line1c + scheduleI.line1d + scheduleI.line1e +
+    scheduleI.line1f + scheduleI.line1g + scheduleI.line1h +
+    scheduleI.line2_us_property;
+  // The 2025 Schedule 1 instruction cites Schedule I lines 1a–1h and 2;
+  // line 4 factoring does not enter line 8n.
+  const tested = item.schedule_i1;
+  const netTestedIncome = tested.pro_rata_tested_income;
+  const dtir = Math.round(tested.pro_rata_qbai * 0.1);
+  const specifiedInterestExpense = Math.max(
+    0,
+    tested.pro_rata_tested_interest_expense -
+      tested.pro_rata_tested_interest_income,
+  );
+  const netDtir = Math.max(0, dtir - specifiedInterestExpense);
+  const gilti = Math.max(0, netTestedIncome - netDtir);
+  return {
+    section951a,
+    gilti,
+    form8992: {
+      part_i_line1: netTestedIncome,
+      part_i_line2: 0,
+      part_i_line3: netTestedIncome,
+      part_ii_line1: netTestedIncome,
+      part_ii_line2: dtir,
+      part_ii_line3a: tested.pro_rata_tested_interest_expense,
+      part_ii_line3b: tested.pro_rata_tested_interest_income,
+      part_ii_line3c: specifiedInterestExpense,
+      part_ii_line4: netDtir,
+      part_ii_line5: gilti,
+    },
+  };
+}
 
 class F5471Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5471";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    inputSchema.parse(input);
-    throw new Error(
-      "TY2025 Form 5471 requires reviewed shareholder inclusions, Form 8992 when applicable, and native Form 5471 schedules before calculation",
-    );
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
+    const { f5471s: [item] } = inputSchema.parse(rawInput);
+    const { section951a, gilti } = calculateCategory5Inclusions(item);
+    const fields = {
+      ...(section951a > 0 ? { line8n_section951a_inclusion: section951a } : {}),
+      ...(gilti > 0 ? { line8o_section951aa_inclusion: gilti } : {}),
+    };
+    if (Object.keys(fields).length === 0) return { outputs: [] };
+    return {
+      outputs: [
+        this.outputNodes.output(
+          schedule1,
+          fields as AtLeastOne<z.infer<typeof schedule1.inputSchema>>,
+        ),
+        this.outputNodes.output(
+          agi_aggregator,
+          fields as AtLeastOne<z.infer<typeof agi_aggregator.inputSchema>>,
+        ),
+      ],
+    };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const f5471 = new F5471Node();

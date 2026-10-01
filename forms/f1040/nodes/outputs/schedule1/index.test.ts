@@ -126,6 +126,18 @@ Deno.test("schedule1: taxable Form 8889 amounts enter line 8f and total income",
   assertEquals(f.line10_total_additional_income, 1100);
 });
 
+Deno.test("schedule1: section 951(a) and 951A(a) occupy distinct lines and total", () => {
+  const f = fields({
+    line8n_section951a_inclusion: 11_000,
+    line8o_section951aa_inclusion: 42_000,
+  });
+  assertEquals(f.line8n_section951a_inclusion, 11_000);
+  assertEquals(f.line8o_section951aa_inclusion, 42_000);
+  assertEquals(f.line9_total_other_income, 53_000);
+  assertEquals(f.line10_total_additional_income, 53_000);
+  assertEquals(f.line8z_other, undefined);
+});
+
 Deno.test("schedule1: HSA excess-withdrawal earnings enter line 8z total", () => {
   const f = fields({ line8z_hsa_excess_earnings: 100 });
   assertEquals(f.line10_total_additional_income, 100);

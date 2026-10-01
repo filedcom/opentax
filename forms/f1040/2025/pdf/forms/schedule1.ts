@@ -118,6 +118,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line8n_section951a_inclusion",
+    pdfField: "topmostSubform[0].Page1[0].f1_26[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8o_section951aa_inclusion",
+    pdfField: "topmostSubform[0].Page1[0].f1_27[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line8p_excess_business_loss",
     pdfField: "topmostSubform[0].Page1[0].f1_28[0]",
   },
@@ -246,6 +256,14 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    if (
+      Number(fields.line8n_section951a_inclusion ?? 0) > 0 ||
+      Number(fields.line8o_section951aa_inclusion ?? 0) > 0
+    ) {
+      throw new Error(
+        "Schedule 1 lines 8n/8o need complete Form 5471 schedules and Form 8992 with Schedule A before PDF export",
+      );
+    }
     assertPersonalPropertyRentalSource(fields, all, filer);
     if (
       all?.f1098 !== undefined ||

@@ -54,6 +54,19 @@ Deno.test("Schedule 1 omits absent values and ignores unknown fields", () => {
   assertNotIncludes(xml, "999");
 });
 
+Deno.test("Schedule 1 line 8n/8o XML stays closed until required foreign corporation forms are native", () => {
+  assertThrows(
+    () => schedule1.build({ line8n_section951a_inclusion: 11_000 }),
+    Error,
+    "complete native Form 5471 schedules",
+  );
+  assertThrows(
+    () => schedule1.build({ line8o_section951aa_inclusion: 42_000 }),
+    Error,
+    "Form 8992 with Schedule A",
+  );
+});
+
 Deno.test("Schedule 1 native rejects Form 1098 box 4 recovery without its payer source", () => {
   const filer = {
     primarySSN: "111223333",

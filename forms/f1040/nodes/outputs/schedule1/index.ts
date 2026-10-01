@@ -53,6 +53,9 @@ const inputSchema = z.object({
   line8i_prizes_awards: z.number().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
   line8l_personal_property_rent: z.number().int().nonnegative().optional(),
+  // Section 951(a) and 951A(a) have distinct TY2025 printed lines.
+  line8n_section951a_inclusion: z.number().int().nonnegative().optional(),
+  line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
   line8z_taxable_grants: z.number().optional(),
@@ -177,6 +180,8 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8i_prizes_awards ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8l_personal_property_rent ?? 0) +
+    (input.line8n_section951a_inclusion ?? 0) +
+    (input.line8o_section951aa_inclusion ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
@@ -335,6 +340,8 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8i_prizes_awards",
     "line8j_f1099k_hobby_income",
     "line8l_personal_property_rent",
+    "line8n_section951a_inclusion",
+    "line8o_section951aa_inclusion",
     "line8p_excess_business_loss",
     "line8z_rtaa",
     "line8z_taxable_grants",

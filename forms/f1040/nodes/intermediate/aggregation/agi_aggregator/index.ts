@@ -176,6 +176,8 @@ export const inputSchema = z.object({
   line8z_f1099m_box3_other: z.number().nonnegative().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
   line8l_personal_property_rent: z.number().int().nonnegative().optional(),
+  line8n_section951a_inclusion: z.number().int().nonnegative().optional(),
+  line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
   line8z_substitute_payments: z.number().nonnegative().optional(),
   line8z_nqdc: z.number().nonnegative().optional(),
@@ -390,6 +392,8 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8l_personal_property_rent ?? 0) +
+    (input.line8n_section951a_inclusion ?? 0) +
+    (input.line8o_section951aa_inclusion ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
     (input.line8z_nqdc ?? 0) +
@@ -625,6 +629,8 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8l_personal_property_rent ?? 0) +
+    (input.line8n_section951a_inclusion ?? 0) +
+    (input.line8o_section951aa_inclusion ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
     (input.line8z_nqdc ?? 0) +

@@ -23,6 +23,8 @@ export interface Fields {
   line8i_prizes_awards?: number | null;
   line8j_f1099k_hobby_income?: number | null;
   line8l_personal_property_rent?: number | null;
+  line8n_section951a_inclusion?: number | null;
+  line8o_section951aa_inclusion?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
   line8z_taxable_grants?: number | null;
@@ -83,6 +85,8 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8i_prizes_awards", "PrizesAwardsAmt"],
   ["line8j_f1099k_hobby_income", "ActivityNotForProfitIncmAmt"],
   ["line8l_personal_property_rent", "RentalIncomePersonalPropAmt"],
+  ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
+  ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
   ["line8z_nqdc", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
@@ -197,6 +201,14 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (
+      (fields.line8n_section951a_inclusion ?? 0) > 0 ||
+      (fields.line8o_section951aa_inclusion ?? 0) > 0
+    ) {
+      throw new Error(
+        "Schedule 1 lines 8n/8o need the complete native Form 5471 schedules and Form 8992 with Schedule A before MeF export",
+      );
+    }
     assertPersonalPropertyRentalSource(
       fields,
       context?.pending,
