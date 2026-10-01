@@ -129,6 +129,21 @@ half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Implemented one-farm route
 
+One sourced Schedule F farm may now combine with one separately identified,
+nonnominee Form 1099-DIV containing qualified dividends in box 1b no greater
+than box 1a ordinary dividends, with box 1a at most $1,500. The farm source
+and half-SE-tax deduction still reconcile to Schedule 1. The issued dividend
+copy supplies Form 1040 lines 3a/3b and Form 8995 line 12, reducing the line
+13 taxable-income limit; line 15 remains tied to Form 1040 line 13. Native and
+PDF export replay the dividend copy, reject other dividend components and REIT
+anchors, and compare the final return and every printed QBI line. A positive
+$80,000 cash farm with $1,000 ordinary/$600 qualified dividends and source,
+return, and printed-line tamper fixtures are authored but unrun. The
+[2025 Form 8995 line 12 instructions](https://www.irs.gov/instructions/i8995)
+require qualified dividends in the net-capital-gain limit. Multiple issuers,
+Schedule B amounts, capital gains, REIT/PTP combinations, source-byte
+authentication, and the full deferred validation batch remain open.
+
 The Schedule F node now retains an identified farm row with the source Schedule
 F item and its computed profit. A positive Form 8995 claim requires one farm ID,
 farm name, a sourced line 1(b) TIN, material participation, and an explicit confirmation

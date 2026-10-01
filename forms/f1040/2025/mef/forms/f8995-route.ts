@@ -549,6 +549,10 @@ export function assertOneScheduleF8995(
   const scheduleSe = pending.schedule_se;
   const form7206 = pending.form7206;
   const seDeduction = fields.se_tax_deduction ?? 0;
+  const qualifiedDividends = pending.f1099div !== undefined ||
+      !zeroOrAbsent(fields.net_capital_gain)
+    ? qualifiedDividendSource(pending.f1099div, undefined)
+    : { ordinary: 0, qualified: 0 };
   const rawQbi = farm && source.success
     ? computeFarmNetProfit(
       farm,
@@ -567,7 +571,6 @@ export function assertOneScheduleF8995(
     "schedule_e",
     "k1_partnership",
     "k1_s_corp",
-    "f1099div",
     "f1099patr",
     "schedule_d",
     "f1099b",
@@ -629,6 +632,7 @@ export function assertOneScheduleF8995(
     !zeroOrAbsent(fields.qbi_from_schedule_c) ||
     !zeroOrAbsent(fields.qbi) || !zeroOrAbsent(fields.sstb_qbi) ||
     !zeroOrAbsent(fields.line6_sec199a_dividends) ||
+    fields.reit_dividend_sources !== undefined ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
     !zeroOrAbsent(fields.se_health_insurance_deduction) ||
@@ -636,10 +640,13 @@ export function assertOneScheduleF8995(
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
     !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
     schedule1.line6_schedule_f !== rawQbi ||
-    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
+    (f1040.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends.qualified ||
+    (f1040.line3b_ordinary_dividends ?? 0) !==
+      qualifiedDividends.ordinary ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
-    !zeroOrAbsent(fields.net_capital_gain) ||
+    (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
@@ -654,7 +661,7 @@ export function assertOneScheduleF8995(
     businessName: farm.line_c_farm_name,
     tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
     qbi: fields.line1_qbi as number,
-    lines: assertFiledLines(fields, f1040),
+    lines: assertFiledLines(fields, f1040, 0, qualifiedDividends.qualified),
   };
 }
 

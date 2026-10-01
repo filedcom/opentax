@@ -417,7 +417,7 @@ function oneScheduleFLines(
     sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
-    sumField(input.net_capital_gain) !== 0 ||
+    !Number.isSafeInteger(sumField(input.net_capital_gain)) ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.agi === undefined || !Number.isFinite(input.agi) ||
@@ -429,7 +429,9 @@ function oneScheduleFLines(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
   );
   const line5 = Math.round(qbi * QBI_RATE);
-  const line14 = Math.round(line11 * QBI_RATE);
+  const line12 = sumField(input.net_capital_gain);
+  const line13 = Math.max(0, line11 - line12);
+  const line14 = Math.round(line13 * QBI_RATE);
   return {
     line1_business_reference: business.business_reference,
     line1_business_name: business.business_name,
@@ -447,8 +449,8 @@ function oneScheduleFLines(
     line9: 0,
     line10: line5,
     line11,
-    line12: 0,
-    line13: line11,
+    line12,
+    line13,
     line14,
     line15: Math.min(line5, line14),
     line16: 0,
