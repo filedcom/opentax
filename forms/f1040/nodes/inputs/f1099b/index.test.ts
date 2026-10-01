@@ -105,6 +105,7 @@ Deno.test("1099-B rejects an identified transaction repeated with altered tax ad
 
 Deno.test("schema: missing part field is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     description: "100 sh XYZ",
     date_acquired: "01012024",
     date_sold: "06012024",
@@ -122,6 +123,7 @@ Deno.test("schema: missing part field is rejected", () => {
 
 Deno.test("schema: missing description is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     part: "A",
     date_acquired: "01012024",
     date_sold: "06012024",
@@ -139,6 +141,7 @@ Deno.test("schema: missing description is rejected", () => {
 
 Deno.test("schema: missing date_acquired is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     part: "A",
     description: "100 sh XYZ",
     date_sold: "06012024",
@@ -156,6 +159,7 @@ Deno.test("schema: missing date_acquired is rejected", () => {
 
 Deno.test("schema: missing date_sold is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     part: "A",
     description: "100 sh XYZ",
     date_acquired: "01012024",
@@ -173,6 +177,7 @@ Deno.test("schema: missing date_sold is rejected", () => {
 
 Deno.test("schema: missing proceeds is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     part: "A",
     description: "100 sh XYZ",
     date_acquired: "01012024",
@@ -190,6 +195,7 @@ Deno.test("schema: missing proceeds is rejected", () => {
 
 Deno.test("schema: missing cost_basis is rejected", () => {
   const item = {
+    recipient_ssn: "111223333",
     part: "A",
     description: "100 sh XYZ",
     date_acquired: "01012024",

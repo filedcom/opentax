@@ -80,3 +80,21 @@ amount. A future direct source contract needs issued-document identity,
 recipient TIN, account or transaction identity, correction status, and source
 bytes where the return uses those facts. Until then, the unsupported or
 ambiguous combinations above remain open.
+
+## Existing 1099-B source fixture inventory
+
+The unit-test `minimalItem` and full-return owner fixtures use the explicitly
+known test taxpayer SSN `111223333`; the joint spouse positive case uses
+`222334444`. Six single-field schema-negative rows also retain the known test
+taxpayer SSN so the named missing field remains their only omission. The
+missing-recipient and wrong-recipient cases intentionally retain that defect.
+The Form 8886 attachment-coverage fixture is a raw negative disposition with
+no filer or recipient and never asserts a valid filed 1099-B.
+
+There are 60 `f1099b` source rows in 25 TY2025 benchmark `input.json` files.
+None of those inputs identifies the filed taxpayer or spouse by SSN. SSNs in
+some benchmark files identify dependents, not a sale owner. These benchmark
+rows therefore remain unassigned under the direct source contract; adding a
+recipient to them requires the filed return or issued broker document. No CLI
+sample provides a separate concrete `f1099b` input, and the Form 8949,
+Schedule D, Form 6781, and 2026 references are derived or distinct sources.

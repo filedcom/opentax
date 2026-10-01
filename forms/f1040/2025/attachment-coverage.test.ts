@@ -135,6 +135,9 @@ Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => 
 });
 
 Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
+  // This is a raw attachment-coverage negative fixture, not a filed 1099-B:
+  // no recipient/filer is supplied because the reportable-transaction gate
+  // must reject before a source-owner claim is made.
   const row = {
     source_transaction_id: "sale-2025-large-loss",
     proceeds: 100_000,
