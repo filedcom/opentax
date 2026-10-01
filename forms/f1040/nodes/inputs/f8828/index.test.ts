@@ -5,12 +5,23 @@ import { computeF8828Lines, f8828 } from "./index.ts";
 
 function transaction(overrides: Record<string, unknown> = {}) {
   return {
-    property_address: "14 Main St, Boise, ID 83702",
+    property_address: {
+      line1: "14 Main St",
+      city: "Boise",
+      state: "ID",
+      zip: "83702",
+    },
     subsidy_type: "tax_exempt_bond_loan",
+    issuer_type: "agency",
     issuer_name: "Idaho Housing Agency",
     issuer_state: "ID",
     original_lender_name: "Example Bank",
-    original_lender_address: "10 Bank St, Boise, ID 83702",
+    original_lender_address: {
+      line1: "10 Bank St",
+      city: "Boise",
+      state: "ID",
+      zip: "83702",
+    },
     original_loan_closing_date: "2020-06-01",
     disposition_date: "2025-03-01",
     full_repayment_date: "2025-03-01",
@@ -121,7 +132,14 @@ Deno.test("f8828: partial years use the issuer's year of disposition", () => {
 Deno.test("f8828: multiple separate homes aggregate only calculated tax", () => {
   const result = compute(
     transaction(),
-    transaction({ property_address: "28 Hill St, Boise, ID 83702" }),
+    transaction({
+      property_address: {
+        line1: "28 Hill St",
+        city: "Boise",
+        state: "ID",
+        zip: "83702",
+      },
+    }),
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17b_mortgage_subsidy_recapture,

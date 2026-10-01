@@ -19,14 +19,25 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
   "Enter a valid ISO calendar date",
 );
 const moneySchema = z.number().finite().nonnegative();
+const streetSchema = z.string().regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/).max(
+  35,
+);
+const usAddressSchema = z.object({
+  line1: streetSchema,
+  line2: streetSchema.optional(),
+  city: z.string().regex(/^([A-Za-z] ?)*[A-Za-z]$/).max(22),
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: z.string().regex(/^\d{5}(?:\d{4}|\d{7})?$/),
+});
 
 export const itemSchema = z.object({
-  property_address: z.string().min(1), // Part I, line 1
+  property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
+  issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination
   issuer_name: z.string().min(1), // line 3
-  issuer_state: z.string().min(2),
+  issuer_state: z.string().regex(/^[A-Z]{2}$/),
   original_lender_name: z.string().min(1), // line 4
-  original_lender_address: z.string().min(1),
+  original_lender_address: usAddressSchema,
   original_loan_closing_date: dateSchema, // line 5
   disposition_date: dateSchema, // line 6
   full_repayment_date: dateSchema, // line 8; may equal disposition date
