@@ -3,14 +3,14 @@
 ## Full status summary (2026-10-02)
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
-TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **635 completed bounded items** and their exact limits live in the
+TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
+completed checkboxes**. The **638 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
-**Current order of work.** Complete the 33 open TODOs outside **Named tax-form
+**Current order of work.** Complete the 32 open TODOs outside **Named tax-form
 gaps** first, including scope, coverage decisions, core return paths, native/PDF
 parity, validation preparation, and delivery prerequisites. The 20 named-form
 parent gaps remain on this board for the following implementation phase. Finish
@@ -19,16 +19,16 @@ diagnostic evidence, not a release pass.
 
 | Workstream | Open TODOs | Current state |
 | --- | ---: | --- |
-| Scope and completion rules | 4 | Filing boundaries and end-to-end acceptance rule need final review. |
+| Scope and completion rules | 3 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | Return-wide joins and source classification remain incomplete. |
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 138-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
+| Automated and artifact validation | 5 | A 141-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 635 bounded routes and
+**Implemented coverage.** The completed ledger records 638 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -77,8 +77,8 @@ owner before native/PDF export.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
-now has 138 source fixtures, 62 of 112 unique registered PDF keys represented,
-and a deterministic per-page review manifest; the 50 uncovered keys remain open.
+now has 141 source fixtures, 65 of 112 unique registered PDF keys represented,
+and a deterministic per-page review manifest; the 47 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
 human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
@@ -114,6 +114,8 @@ Positive Form 1040 line 26 estimated payments now replay the retained 1040-ES
 quarter amounts and applied prior-year overpayment at native/PDF export;
 external receipt and owner proof remain open. Final Form 1040 export also checks
 printed AGI, deductions, and taxable income against their component lines.
+Filed overpayment and amount owed now replay whole-dollar tax/payment balance
+and any reported estimated-tax penalty before native/PDF projection.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
 replays the claimed child's exact U.S. residence months into native and PDF
 line 6, requiring that fact for an otherwise qualifying child. The 2025 Schedule 2 graph and
@@ -151,7 +153,6 @@ These gates and a filing-ready release remain open.
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
 - [ ] Resolve every other entered Form 1040-family filing claim with a complete route or a named, user-approved fail-closed exclusion; review registered builders, schema literals, written tests, and previews without counting them as support alone.
 - [ ] Verify every retained positive filing route has a source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain, with correct taxpayer/spouse ownership, source provenance, totals, and rejection of unsupported or inconsistent inputs.
-- [ ] Review the diff for any compatibility layer, fallback, dual API shape, migration shim, or temporary workaround, and confirm the user was told what would be added and why before it was introduced, as required by AGENTS.md.
 
 ## Coverage inventory and decisions
 
