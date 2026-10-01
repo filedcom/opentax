@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import type { MefFormsPending } from "./mef/types.ts";
@@ -74,7 +74,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("Form 8582 releases a sourced prior operating PAL on an entire sale with zero current operations", () => {
+Deno.test("Form 8582 calculates entire-sale PAL release but requires authenticated prior return to export", () => {
   const result = filedReturn();
   assertEquals(result.carryforwards.suspended_pal_8582, undefined);
   assertEquals(result.pending.form8582?.current_loss ?? 0, 0);
@@ -84,15 +84,10 @@ Deno.test("Form 8582 releases a sourced prior operating PAL on an entire sale wi
   assertEquals(result.pending.f1040?.line11_agi, 55_000);
 
   const pending = result.pending as MefFormsPending;
-  const xml = buildMefXml(pending, extractFilerIdentity(general));
-  assertStringIncludes(
-    xml,
-    "<PriorYearUnallowedOtherLossAmt>3000</PriorYearUnallowedOtherLossAmt>",
-  );
-  assertStringIncludes(xml, "<OverallGainAmt>5000</OverallGainAmt>");
-  assertStringIncludes(
-    xml,
-    "<AdjustedGrossIncomeAmt>55000</AdjustedGrossIncomeAmt>",
+  assertThrows(
+    () => buildMefXml(pending, extractFilerIdentity(general)),
+    Error,
+    "needs authenticated accepted-2024 return and activity ledger",
   );
   const projected = form8582Pdf.projectFields!(
     pending.form8582!,

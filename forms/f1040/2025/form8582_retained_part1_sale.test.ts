@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import type { MefFormsPending } from "./mef/types.ts";
@@ -74,7 +74,7 @@ function filedReturn() {
   return result.pending as MefFormsPending;
 }
 
-Deno.test("retained long-held sale keeps section 1231 gain on Schedule D and allocates PAL on Form 8582", () => {
+Deno.test("retained long-held sale calculates section 1231 gain and PAL but needs authenticated prior return to export", () => {
   const pending = filedReturn();
   assertEquals(
     (pending.form8582?.current_4797_sale_gains as
@@ -86,18 +86,10 @@ Deno.test("retained long-held sale keeps section 1231 gain on Schedule D and all
   assertEquals(pending.schedule1?.line5_schedule_e, -7_000);
   assertEquals(pending.schedule_d?.line_11_form2439, 7_000);
   assertEquals(pending.f1040?.line11_agi, 50_000);
-  const xml = buildMefXml(pending, extractFilerIdentity(general));
-  assertStringIncludes(
-    xml,
-    "<OtherActivityIncomeAmt>7000</OtherActivityIncomeAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<PriorYearUnallowedOtherLossAmt>3000</PriorYearUnallowedOtherLossAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<AdjustedGrossIncomeAmt>50000</AdjustedGrossIncomeAmt>",
+  assertThrows(
+    () => buildMefXml(pending, extractFilerIdentity(general)),
+    Error,
+    "needs authenticated accepted-2024 return and activity ledger",
   );
   const worksheet = form8582Pdf.projectFields!(
     pending.form8582!,
