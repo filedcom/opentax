@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **592 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **596 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -21,14 +21,14 @@ diagnostic evidence, not a release pass.
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 4 | 2 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 8 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 41 | Return-wide joins and source classification remain incomplete. |
+| Core return and source paths | 8 | 42 | Return-wide joins and source classification remain incomplete. |
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | 492 | Many sourced form slices exist; the listed parent form paths remain open. |
-| Native MeF and PDF parity | 3 | 44 | Registry, attachment, and printable-output parity remain open. |
+| Native MeF and PDF parity | 3 | 45 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 1 | A deterministic filled-PDF review plan is ready; the prior full command reached 10,168 passes and 174 failures. |
-| IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
+| IRS ATS and delivery | 5 | 3 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 592 bounded routes and
+**Implemented coverage.** The completed ledger records 596 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -70,11 +70,18 @@ ran within the suite; complete route coverage and filled-PDF visual review
 remain pending.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
+CLI `return get` now reads the same finalized pending graph used for export.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
 now has 117 source fixtures, 41 of 112 unique registered PDF keys represented,
 and a deterministic per-page review manifest; the 71 uncovered keys remain open.
+The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
+smoke of each compiled asset before upload. The eight Form 1040 ATS scenarios
+have source-backed assertion and attachment plans; Scenario 1 and 8 source
+conflicts remain unresolved. Neither smoke nor ATS submission has run.
+Prepared bundle parity now rechecks the XML digest and every attachment's
+metadata and PDF bytes before PDF projection or submission archiving.
 
 **Coverage and release gates.** The current static audit counts 145 registered native MeF
 descriptors, 115 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
