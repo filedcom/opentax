@@ -165,7 +165,7 @@ Deno.test("Form 8962 interstate move rejects a lower table, missing residence de
         },
       }),
     Error,
-    "needs twelve residence months with one state switch",
+    "needs twelve residence months with one chronological state switch",
   );
   assertThrows(
     () =>
