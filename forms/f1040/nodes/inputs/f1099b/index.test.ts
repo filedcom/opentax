@@ -68,11 +68,9 @@ Deno.test("schema: empty b99s array is rejected", () => {
   );
 });
 
-Deno.test("1099-B requires an issued recipient for capital-gain attribution", () => {
-  assertThrows(
-    () => compute([minimalItem({ recipient_ssn: undefined })]),
-    Error,
-  );
+Deno.test("1099-B ownerless benchmark row may calculate pending capital gain", () => {
+  const result = compute([minimalItem({ recipient_ssn: undefined })]);
+  assertEquals(getTx(result)?.gain_loss, 200);
 });
 
 Deno.test("1099-B rejects an identified transaction repeated with altered tax adjustments", () => {

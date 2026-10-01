@@ -55,9 +55,10 @@ document supplied it.
   to the taxpayer or joint spouse before the withholding can support Form 1040
   line 25b. An unrelated recipient or a spouse on a separate return rejects.
   This does not identify duplicate NEC copies or authenticate payer bytes.
-- Each Form 1099-B sale now carries an issued recipient SSN. Native and PDF
-  export require it to match the taxpayer or joint spouse before the sale can
-  feed Form 8949, Schedule D, and Form 1040. A repeated transaction with the
+- Form 1099-B calculation accepts an ownerless source row, including the
+  existing benchmark cases. Final native and PDF export require an issued
+  recipient SSN that matches the taxpayer or joint spouse before the sale can
+  be filed through Form 8949, Schedule D, and Form 1040. A repeated row with the
   same broker TIN, recipient, account, source document, and transaction ID
   rejects before its capital gain can accumulate twice. Different identified
   transactions on one broker statement remain distinct. Broker statement
@@ -68,7 +69,7 @@ document supplied it.
 | Source family | Current evidence found in source contract | Outstanding ownership or duplicate question |
 | --- | --- | --- |
 | W-2, W-2G | W-2 employee SSN is optional; W-2G has payer-copy and winner identity checks. | Require an explicit issued W-2 recipient and reconcile all wage/withholding rows to the same final owner. Duplicate W-2 copies need employer control/correction identity. |
-| 1099-INT/DIV/OID/B | INT/OID have optional payer and source references; DIV has optional source reference; B requires recipient SSN and optionally retains broker/account/document/transaction identity. INT, DIV, and OID reject bounded exact identified-copy repeats; B rejects repeated identified transactions and wrong return recipients. | Recipient TIN remains absent from INT/DIV/OID base contracts. Prove taxpayer/spouse ownership and de-duplicate corrected or repeated payer/account reports across Schedule B and Form 1040. For B, broker source bytes, corrections, and rows missing complete issued transaction identity remain open. |
+| 1099-INT/DIV/OID/B | INT/OID have optional payer and source references; DIV has optional source reference; B can calculate without recipient SSN but final export requires it, and optionally retains broker/account/document/transaction identity. INT, DIV, and OID reject bounded exact identified-copy repeats; B rejects repeated identified transactions and missing or wrong filing recipients. | Recipient TIN remains absent from INT/DIV/OID base contracts. Prove taxpayer/spouse ownership and de-duplicate corrected or repeated payer/account reports across Schedule B and Form 1040. For B, broker source bytes, corrections, and rows missing complete issued transaction identity remain open. |
 | 1099-R/G | R has optional recipient SSN and source reference; G has optional recipient TIN and source reference. Explicit 1099-R recipient SSNs now reconcile at native/PDF export; G rejects a bounded exact identified-copy repeat. | Require issued recipient identity for each positive return route and reconcile multiple corrected copies, withholding, and final income once. The G guard needs all four copy identifiers and cannot adjudicate a corrected copy with changed payer boxes. |
 | 1099-NEC/K/MISC/PATR | NEC and K/MISC have recipient and business-source fields for bounded routes; PATR does not expose a universal recipient identity. NEC box 4 withholding now requires an issued recipient matched at full-return export; MISC rejects an exact repeated copy when its account number is present. | Confirm recipient against each Schedule C/F/property owner and reject overlap when one payment appears on more than one payer form or gross-receipts source. Cash/accrual timing, missing account numbers, and corrected payer copies with changed boxes remain open. |
 | 1099-SA, 1098, 1095-A, 3921 | HSA owner/medical-use paths, 1098 recipient/source facts, 1095-A policy recipient, and 3921 document references exist in bounded paths. | Reconcile every owner and correction/vintage across the final 1040 and any paired forms. 3921's unique reference is local to its input collection; it does not prove option-event ownership across W-2 and 1099-B. |
@@ -87,14 +88,15 @@ The unit-test `minimalItem` and full-return owner fixtures use the explicitly
 known test taxpayer SSN `111223333`; the joint spouse positive case uses
 `222334444`. Six single-field schema-negative rows also retain the known test
 taxpayer SSN so the named missing field remains their only omission. The
-missing-recipient and wrong-recipient cases intentionally retain that defect.
+ownerless benchmark calculation and missing-recipient filing rejection
+intentionally omit that field; the wrong-recipient case retains its mismatch.
 The Form 8886 attachment-coverage fixture is a raw negative disposition with
 no filer or recipient and never asserts a valid filed 1099-B.
 
 There are 60 `f1099b` source rows in 25 TY2025 benchmark `input.json` files.
 None of those inputs identifies the filed taxpayer or spouse by SSN. SSNs in
 some benchmark files identify dependents, not a sale owner. These benchmark
-rows therefore remain unassigned under the direct source contract; adding a
-recipient to them requires the filed return or issued broker document. No CLI
+rows can calculate pending gains but cannot be filed through native or PDF
+export until an issued broker document supplies a matching recipient. No CLI
 sample provides a separate concrete `f1099b` input, and the Form 8949,
 Schedule D, Form 6781, and 2026 references are derived or distinct sources.

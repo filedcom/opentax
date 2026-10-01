@@ -60,3 +60,19 @@ Deno.test("1099-B wrong recipient blocks native and PDF final return", async () 
     "1099-B recipient must match",
   );
 });
+
+Deno.test("1099-B missing issued recipient blocks native and PDF filing", async () => {
+  const pending = {
+    f1099b: { f1099bs: [{ ...row, recipient_ssn: undefined }] },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "1099-B filing needs an issued recipient SSN",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "1099-B filing needs an issued recipient SSN",
+  );
+});

@@ -26,7 +26,8 @@ const NONCOVERED_PART_SHIFT: Partial<Record<string, string>> = {
 };
 
 export const itemSchema = z.object({
-  recipient_ssn: z.string().regex(/^\d{9}$/),
+  // Calculation-only records may lack the issued owner; final export requires it.
+  recipient_ssn: z.string().regex(/^\d{9}$/).optional(),
   payer_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().trim().min(1).optional(),
   source_document_reference: z.string().trim().min(1).optional(),

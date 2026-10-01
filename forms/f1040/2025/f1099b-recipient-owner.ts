@@ -20,6 +20,9 @@ export function assert1099BRecipientOwner(
     recipients.add(filer.spouse.ssn.replace(/\D/g, ""));
   }
   for (const row of parsed.data.f1099bs) {
+    if (!row.recipient_ssn) {
+      throw new Error("1099-B filing needs an issued recipient SSN");
+    }
     if (!recipients.has(row.recipient_ssn)) {
       throw new Error(
         "1099-B recipient must match the taxpayer or joint-filing spouse",
