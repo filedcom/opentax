@@ -1,5 +1,27 @@
 # TY2025 paired Form 8889 boundary
 
+## One code-2 return plus the other owner's medical distribution (written, unrun)
+
+The paired full-year self-only route now accepts one owner's full timely
+personal-excess return on a recipient-matched code-2 Form 1099-SA while the
+other owner has one code-1 Form 1099-SA and one reviewed medical receipt. The
+first owner's box 1 and earnings reach Form 8889 lines 14a/14b and Schedule 1
+line 8z; the second owner's qualified and taxable amounts reach lines 15/16,
+Schedule 1 line 8f, and any 20% tax on Schedule 2 line 17c. Native and PDF
+export recompute both owner forms, enforce separate source references, and
+match the combined Schedule 1 totals to Form 1040 lines 8 and 10 and the
+additional tax to line 23. A full-return positive case and receipt and return
+tamper cases are authored for the deferred validation batch.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+place timely returned excess plus earnings on line 14b and qualified medical
+expenses on line 15. The [2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+identify distribution codes 1 and 2 and include box 2 earnings in box 1. This
+route excludes employer excess, a second ordinary statement or medical receipt,
+age-65/disability exceptions, rollovers, prior excess, and testing-period
+events. Form 1099-SA and receipt references remain entered evidence rather than
+authenticated source bytes.
+
 ## Both owners' prior HSA excess (2026-10-01 build pass, unrun)
 
 The paired full-year self-only route now accepts independently reviewed 2024

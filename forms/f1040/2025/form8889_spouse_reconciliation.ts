@@ -747,6 +747,30 @@ export function reconcilePairedForm8889(
   const pairedCode2Owners = owners.filter((owner) =>
     owner.hsa_excluded_distributions?.timely_excess_withdrawal !== undefined
   );
+  const code2NormalOwner = pairedCode2Owners.length === 1
+    ? owners.find((owner) => owner !== pairedCode2Owners[0])
+    : undefined;
+  const pairedCode2WithMedical = selfOnly &&
+    pairedCode2Owners.length === 1 &&
+    code2NormalOwner !== undefined &&
+    owners.every((owner) =>
+      fullYearCoverage(
+        owner.eligible_hdhp_coverage_by_month,
+        CoverageType.SelfOnly,
+      )
+    ) &&
+    (code2NormalOwner.hsa_distributions ?? 0) > 0 &&
+    code2NormalOwner.form1099_sa_distributions?.length === 1 &&
+    code2NormalOwner.form1099_sa_distributions?.[0]?.box3_distribution_code ===
+      "1" &&
+    (code2NormalOwner.qualified_medical_expenses ?? 0) > 0 &&
+    (code2NormalOwner.qualified_medical_expenses ?? 0) <
+      (code2NormalOwner.hsa_distributions ?? 0) &&
+    code2NormalOwner.qualified_medical_expense_evidence?.length === 1 &&
+    code2NormalOwner.hsa_excluded_distributions === undefined &&
+    code2NormalOwner.age_65_exception_evidence === undefined &&
+    code2NormalOwner.disability_exception_evidence === undefined &&
+    (code2NormalOwner.exception_qualified_taxable_amount ?? 0) === 0;
   const pairedEmployerCode2Owners = owners.filter((owner) =>
     owner.employer_excess_treatment?.timely_withdrawal
       ?.withdrawal_tax_year === 2025
@@ -949,6 +973,7 @@ export function reconcilePairedForm8889(
             (owner.qualified_medical_expenses ?? 0) === 0 &&
             owners.every((other) =>
               other === owner || (other.hsa_distributions ?? 0) === 0 ||
+              (pairedCode2WithMedical && other === code2NormalOwner) ||
               (other.hsa_excluded_distributions
                     ?.timely_excess_withdrawal !== undefined &&
                 (other.qualified_medical_expenses ?? 0) === 0)
@@ -1109,6 +1134,19 @@ export function reconcilePairedForm8889(
   ) {
     throw new Error(
       "Form 8889 two-owner rollover needs separate full-year self-only sources and matching Schedule 1/2 and Form 1040 totals",
+    );
+  }
+  if (
+    pairedCode2WithMedical &&
+    ((schedule1.line10_total_additional_income ?? 0) !==
+        sum("print_line16_taxable") + code2Earnings ||
+      (schedule2.line8_form5329_tax ?? 0) !== 0 ||
+      (schedule2.line17d_hsa_eligibility_tax ?? 0) !== 0 ||
+      (form1040.line23_other_taxes ?? 0) !==
+        sum("print_line17b_penalty"))
+  ) {
+    throw new Error(
+      "Form 8889 paired code-2 and medical distribution totals differ from Form 1040",
     );
   }
   if (
