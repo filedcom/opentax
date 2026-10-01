@@ -33,8 +33,11 @@ groups, structured foreign addresses and Part VI classification indicators. In
 the final MeF pass after document discovery, a staged reconciliation checks
 filed Schedule B payer rows and Form 1040 totals for the interest and ordinary
 dividend Part III routes. It also matches a Part IV Form 8621 asset to the
-prepared IRS8621 document ID, issuer name and foreign entity identifier. Other
-Part III destinations and Part IV forms fail closed in that helper.
+prepared IRS8621 document ID, issuer name and foreign entity identifier. The
+bounded Category 5a CFC route joins a Part IV stock asset to the prepared
+IRS5471 document, shareholder TIN, corporation identifier, jurisdiction and
+foreign address. Other Part III destinations and Part IV forms fail closed in
+that helper.
 
 **Public export remains closed** for active Form 8938 inputs. Both projections
 are absent from the shared registries and the existing MeF/PDF guard remains in
@@ -45,7 +48,8 @@ place. Before opening export:
    graph proves a Form 1040 was prepared and checks filing status, but does not
    carry these two legal determinations.
 2. Review any supplementary issuer statement and build prepared-document
-   identity joins for Forms 3520, 3520-A, 5471 and 8865.
+   identity joins for Forms 3520, 3520-A and 8865, and other Form 5471 filing
+   categories beyond the bounded Category 5a route.
 3. Extend Part III filed-line joins beyond Schedule B interest and ordinary
    dividends to gains, other income, deductions and credits without computing
    them twice.
