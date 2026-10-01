@@ -1,4 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { registry } from "../../../2025/registry.ts";
 import { calculateForm8826, f8826 } from "./index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
@@ -119,7 +122,34 @@ Deno.test("pass-through-only credit does not require the recipient's self-earned
     }],
   };
   assertEquals(f8826.inputSchema.safeParse(input).success, true);
-  assertEquals(form3800Credit(compute(input)), 1_250);
+  assertThrows(
+    () => findForm3800(compute(input)),
+    Error,
+    "one matching K-1 disabled-access source",
+  );
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+    },
+    f8826: input,
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
+      box15_code_k_disabled_access_credit: 1_250,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.f3800.f8826_credit_entries as Array<{
+      credit_amount: number;
+    }>)[0].credit_amount,
+    1_250,
+  );
 });
 
 Deno.test("pass-through credit keeps entity identity and rejects duplicates", () => {
@@ -191,14 +221,44 @@ Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", 
     ),
     500_000,
   );
-  assertEquals(
-    f3800.inputSchema.parse(findForm3800(compute(input))?.fields)
-      .f8826_credit_entries,
-    [{
-      source_type: "self",
-      credit_amount: 1_000,
-      subject_to_passive_activity_limit: false,
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+    },
+    f8826: input,
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
+      box15_code_k_disabled_access_credit: 2_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
     }],
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
+      box13_code_k_disabled_access_credit: 3_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.f3800.f8826_credit_entries as Array<{
+      source_type: string;
+      credit_amount: number;
+    }>).map(({ source_type, credit_amount }) => ({
+      source_type,
+      credit_amount,
+    })).sort((left, right) =>
+      left.source_type.localeCompare(right.source_type)
+    ),
+    [{ source_type: "partnership", credit_amount: 1_666.67 }, {
+      source_type: "s_corporation",
+      credit_amount: 2_500,
+    }, { source_type: "self", credit_amount: 833.33 }],
   );
 });
 
