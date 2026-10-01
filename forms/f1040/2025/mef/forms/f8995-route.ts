@@ -208,15 +208,18 @@ function qualifiedReitDividends(
   const sourceReferences = new Set<string>();
   const payerNames = new Set<string>();
   const reviewReferences = new Set<string>();
+  const maximumReitCopies = qualifiedDividends > 0 ? 1 : 3;
+  const maximumIssuedCopies = qualifiedDividends > 0 ? 2 : 3;
   if (
-    items.length < 1 || items.length > 2 || allItems.length > 2 ||
+    items.length < 1 || items.length > maximumReitCopies ||
+    allItems.length > maximumIssuedCopies ||
     other.length !== (qualifiedDividends > 0 ? 1 : 0) ||
     (other.length === 1 &&
       (!other[0].box1b || other[0].box1b !== qualifiedDividends ||
         allItems.reduce((sum, item) => sum + item.box1a, 0) > 1_500))
   ) {
     throw new Error(
-      "Form 8995 REIT component needs one or two identified box 5 copies, optionally alongside one distinct qualified-dividend copy",
+      "Form 8995 REIT component needs at most three identified box 5 copies, or one alongside a distinct qualified-dividend copy",
     );
   }
   if (!Array.isArray(anchors) || anchors.length !== items.length) {

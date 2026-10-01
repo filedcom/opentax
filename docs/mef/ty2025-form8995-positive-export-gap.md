@@ -56,8 +56,8 @@ and line 10 includes the business and REIT components. The exporter compares
 that record with Form 1040 line 3b, the final line 13 deduction, and every
 printed Form 8995 line; the PDF invokes the same source check. An executor
 positive case and amount, 91-day holding, related-payment, source-reference, qualified-dividend,
-return and prepared-line tamper fixtures are authored but unrun. More than two
-dividend issuers, qualified dividends, capital gains, prior REIT/PTP losses,
+return and prepared-line tamper fixtures are authored but unrun. More than three
+REIT issuers, qualified dividends, capital gains, prior REIT/PTP losses,
 PTP income, and issued-document byte authentication remain open. This follows
 the [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
 for the separate qualified-REIT component and taxable-income limit.
@@ -73,8 +73,23 @@ issued copy; they sum both issued amounts into Form 8995
 lines 6/8/9, reconcile Form 1040 lines 3b/13, and replay every printed line.
 A full-return positive and changed-source, duplicate-identity, insufficient-
 holding, and changed-return fixtures are authored for the deferred validation
-pass. More than two issuers, Schedule B amounts, other dividend boxes, and
+pass. More than three issuers, Schedule B amounts, other dividend boxes, and
 issued-document byte authentication remain open.
+
+The one-Schedule-C route now also accepts exactly three distinct issued
+Form 1099-DIV copies when each has box 1a equal to positive box 5 section
+199A dividends and the combined ordinary dividends are at most $1,500. Each
+copy needs its own payer name, source reference, and 91-day holding-review
+reference; native and PDF export replay those identities and the full amounts
+against retained sources, Form 8995 lines 6–10, and Form 1040 lines 3b/13.
+An authored $350/$450/$500 positive case and amount, duplicate identity,
+holding, fourth-copy, return, and prepared-line tamper cases await the bulk
+gate. A simultaneous qualified-dividend issuer remains bounded to one REIT
+issuer; Schedule B amounts, additional boxes, and source-byte authentication
+remain open. The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+allow qualified REIT dividends in the line 6 aggregate; the
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+require Schedule B when ordinary dividends exceed $1,500.
 
 The one-Schedule-C route also accepts one identified, nonnominee Form 1099-DIV
 with positive box 1b qualified dividends not exceeding box 1a ordinary
