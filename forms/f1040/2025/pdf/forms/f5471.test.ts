@@ -1,0 +1,33 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import { form8992Filer, form8992Pending } from "../../form8992.fixture.ts";
+import { form5471Pdf } from "./f5471.ts";
+
+Deno.test("Form 5471 PDF maps page 1, B Part II, and Schedule I", () => {
+  const [fields] = form5471Pdf.instances?.(
+    {},
+    form8992Filer,
+    form8992Pending,
+  ) ?? [];
+  assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 5]);
+  assertEquals(fields?.category5a, true);
+  assertEquals(fields?.shares_end, 100);
+  assertEquals(fields?.line1e, 8_000);
+  assertEquals(fields?.line2, 1_000);
+  assertEquals(
+    form5471Pdf.fields.find((entry) => entry.domainKey === "shares_end")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].Table_SchB_PartII[0].Row1[0].Row1d[0].f2_81[0]",
+  );
+  assertThrows(() =>
+    form5471Pdf.instances?.(
+      {},
+      form8992Filer,
+      {
+        ...form8992Pending,
+        schedule1: {
+          ...form8992Pending.schedule1,
+          line8n_section951a_inclusion: 10_999,
+        },
+      },
+    ), Error);
+});

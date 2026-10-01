@@ -30,6 +30,16 @@ export const scheduleISchema = z.object({
   line2_us_property: dollars,
   // Factoring income has separate reporting treatment outside this route.
   line4_factoring: z.literal(0),
+  line5a_eligible_dividends: z.literal(0),
+  line5b_extraordinary_disposition: z.literal(0),
+  line5c_extraordinary_reduction: z.literal(0),
+  line5d_hybrid_dividends: z.literal(0),
+  line5e_other_dividends: z.literal(0),
+  line6_exchange_gain_or_loss: z.literal(0),
+  income_blocked: z.literal(false),
+  income_unblocked: z.literal(false),
+  extraordinary_disposition_account: z.literal(false),
+  hybrid_deduction_accounts: z.literal(0),
   worksheet_a_reference: sourceReference.optional(),
   worksheet_b_reference: sourceReference.optional(),
 }).strict().superRefine((value, ctx) => {
@@ -198,7 +208,7 @@ export const scheduleHSchema = z.object({
 // One directly paid general-category tax, wholly attributable to tested
 // income. Other Schedule E/E-1 columns require separate source histories.
 export const scheduleESchema = z.object({
-  tax_country_code: z.string().regex(/^[A-Z]{2}$/),
+  tax_country_code: z.literal("EI"),
   foreign_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
   us_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
   taxable_income_local: dollars,
@@ -223,13 +233,56 @@ export const scheduleESchema = z.object({
   "Schedule E local tax and conversion rate must reconcile to U.S. dollars",
 );
 
+const foreignAddressSchema = z.object({
+  line1: z.string().trim().min(1).max(35)
+    .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
+  city: z.string().trim().min(1).max(35)
+    .regex(/^([A-Za-z] ?)*[A-Za-z]$/),
+  country_code: z.literal("EI"),
+  postal_code: z.string().trim().min(1).max(16),
+}).strict();
+
+export const form5471IdentitySchema = z.object({
+  cfc_tax_year_begin: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  cfc_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  filer_tax_year_begin: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  filer_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  foreign_address: foreignAddressSchema,
+  incorporation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  principal_business_country_code: z.literal("EI"),
+  principal_business_activity_code: z.string().regex(/^\d{6}$/)
+    .refine((code) => Number(code) >= 1 && Number(code) <= 999_000),
+  principal_business_activity_description: z.string().trim().min(1).max(35)
+    .regex(/^[A-Za-z0-9\- &]+$/),
+  books_custodian_business_name: z.string().trim().min(1).max(75)
+    .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
+  books_at_cfc_address: z.literal(true),
+  statutory_agent_business_name: z.string().trim().min(1).max(75)
+    .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
+  statutory_agent_at_cfc_address: z.literal(true),
+  no_us_branch_or_agent: z.literal(true),
+  no_us_tax_return: z.literal(true),
+  no_joint_filing_for_other_persons: z.literal(true),
+  stock_class_description: z.string().trim().min(1).max(20),
+  direct_shares_begin: z.number().int().positive(),
+  direct_shares_end: z.number().int().positive(),
+  total_outstanding_shares_begin: z.number().int().positive(),
+  total_outstanding_shares_end: z.number().int().positive(),
+  source_workpaper_reference: sourceReference,
+}).strict().refine(
+  (value) =>
+    value.direct_shares_begin === value.total_outstanding_shares_begin &&
+    value.direct_shares_end === value.total_outstanding_shares_end,
+  "Wholly owned direct CFC stock counts must equal total outstanding shares at both year ends",
+);
+
 export const itemSchema = z.object({
   foreign_corp_name: z.string().trim().min(1).max(75)
     .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
   foreign_corp_ein: z.string().regex(/^\d{9}$/).optional(),
   foreign_corp_reference_id: z.string().trim().regex(/^[A-Za-z0-9]+$/)
     .max(50).optional(),
-  country_of_incorporation: z.string().trim().min(1),
+  country_of_incorporation: z.literal("EI"),
   functional_currency: z.string().trim().min(1),
   filing_category: z.literal(FilingCategory.Category5a),
   shareholder_tin: z.string().regex(/^\d{9}$/),
@@ -240,8 +293,10 @@ export const itemSchema = z.object({
   schedule_i1: testedIncomeSchema,
   schedule_h: scheduleHSchema,
   schedule_e: scheduleESchema,
+  form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
+  const identity = value.form5471_identity;
   if (
     e.local_currency !== value.functional_currency ||
     e.tax_local !== e.tax_functional ||
@@ -254,6 +309,18 @@ export const itemSchema = z.object({
       path: ["schedule_e"],
       message:
         "Bounded Schedule E tax must be solely general-category tested income, in the CFC functional currency, and reconcile to Schedule I-1 line 7",
+    });
+  }
+  if (
+    identity.foreign_address.country_code !== e.tax_country_code ||
+    identity.foreign_address.country_code !== value.country_of_incorporation ||
+    identity.cfc_tax_year_end !== e.us_tax_year_end
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["form5471_identity"],
+      message:
+        "Form 5471 CFC jurisdiction and U.S. tax year must reconcile to Schedule E",
     });
   }
 }).refine(

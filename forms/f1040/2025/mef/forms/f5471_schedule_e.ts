@@ -59,7 +59,7 @@ export const form5471ScheduleE: MefFormDescriptor<"f5471_schedule_e", unknown> =
         ]),
         element("TotalTaxInUSDollarsAmt", e.tax_usd),
         element("TotalTaxInFunctionalCurAmt", e.tax_functional),
-        element("Section986a1DElectionInd", false),
+        element("Section986a1DElectionInd", "false"),
         elements("Frm5471SchETestedIncomeGrp", [
           element("TotalTaxInUSDollarsAmt", e.tax_usd),
           element("TotalCurrentAccumulatedEPAmt", e.tax_usd),

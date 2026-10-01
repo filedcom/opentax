@@ -34,12 +34,27 @@ balance, PTEP tax, inclusion deemed paid tax, and other E-1 adjustments. Thus
 Schedule E-1 tested-income lines 4, 8, 13, and 15 can be computed directly.
 The remaining categories and foreign tax histories stay outside this branch.
 
+The bounded parent Form 5471 now has reviewed CFC tax-year, foreign address,
+incorporation, activity, stock-register and books-custodian facts. Its page 1,
+Schedule B Part II single direct shareholder, and embedded Schedule I lines
+1a–9 have native/PDF projections. The direct shareholder name, SSN and U.S.
+address come from the final return filer; the stock counts come from the
+reviewed CFC register. Schedule I additional dividends, exchange gains,
+blocked income, extraordinary-disposition accounts and hybrid-deduction
+accounts are explicitly zero or false in this route. The parent projection
+omits Schedule G and does not by itself constitute a complete filing.
+The current country source is narrowed to the `EI` Ireland code enumerated by
+the TY2025 MeF `CountryType` (including the Schedule E tax country), and the
+direct shares equal total outstanding shares at both year ends.
+
 **Filing remains closed.** Form 5471 Category 5a requires the full corporation
 identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
 G-1, H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
-and other attachments depending on ownership and transactions. This source contract does not yet contain or emit
-those schedules. Form 8992, Schedule A, and separate Form 5471 Schedules E/E-1, H and I-1
-now have source-reconciled native MeF/PDF descriptors, but the full Form 5471
+and other attachments depending on ownership and transactions. Form 5471 page 1,
+Schedule B Part II, and Schedule I, plus Form 8992, its Schedule A, and separate
+Form 5471 Schedules E/E-1, H and I-1 now have source-reconciled native MeF/PDF
+descriptors, but Schedule G/G-1, J, P, Q, R and conditional attachments remain.
+The full Form 5471
 packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a
 reviewer locator, not authenticated filed document bytes. The Schedule I-1 and
@@ -52,6 +67,8 @@ Sources:
 - [2025 Form 1040 instructions, Schedule 1 lines 8n and 8o](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
 - [2025 Form 5471 and Schedule I](https://www.irs.gov/pub/irs-pdf/f5471.pdf)
 - [Form 5471 instructions and required Category 5 schedules](https://www.irs.gov/instructions/i5471)
+- Checked-in TY2025 v5.4 `IRS5471.xsd` parent model, including embedded
+  Schedule B Part II and Schedule I.
 - [Form 8992](https://www.irs.gov/pub/irs-pdf/f8992.pdf) and
   [Schedule A](https://www.irs.gov/pub/irs-pdf/f8992sa.pdf)
 - Checked-in TY2025 v5.4 MeF schemas for IRS1040Schedule1, IRS5471, IRS8992, and
