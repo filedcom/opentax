@@ -10,7 +10,7 @@ The detailed, older [MeF coverage inventory](coverage-inventory.md) and
 [coverage disposition queue](ty2025-form1040-coverage-decisions.md) identifies
 which proposed workflow boundaries still need the user's approval. The
 [TY2025 schema-root census](ty2025-xsd-document-root-census.md) lists all 211
-IRS document roots permitted by the checked-in Form 1040 return schema,
+IRS document roots permitted by the locally cached Form 1040 return schema,
 including unregistered roots awaiting applicability review. The current worktree
 had an earlier fixed-source repository-wide `deno task test` pass on the
 `11d5047d` source snapshot (8,897/8,897). The later PR #59 bulk run recorded
@@ -103,7 +103,7 @@ Everything else below remains **open** until its supported tax situations,
 source provenance, and filing output have been audited. A registered serializer
 is not proof that a form's instructions are implemented.
 
-Schema-conformance alert: static comparison with the checked-in TY2025 v5.4 XSDs
+Schema-conformance alert: static comparison with the locally cached TY2025 v5.4 XSDs
 found that the original Form 4562, 7206, 8606, 8829, 8839, 8853, 8990, and
 8995-A serializers used invalid or incorrectly nested native tags. Bounded
 source-to-native-XML replacements are now written for all eight, as for the
@@ -458,7 +458,7 @@ requirements; the linked root crosswalk tracks unresolved applicability.
 
 ### Unregistered TY2025 schema paths needing a product disposition
 
-The checked-in TY2025 v5.4 `ReturnData1040.xsd` has 211 distinct `IRS...`
+The locally cached TY2025 v5.4 `ReturnData1040.xsd` has 211 distinct `IRS...`
 document references. That is a schema menu, **not** 211 documents required for
 every Form 1040 and not a support count. The registry audit above covers only
 what this exporter currently knows how to emit. Schedule 1-A moved from this

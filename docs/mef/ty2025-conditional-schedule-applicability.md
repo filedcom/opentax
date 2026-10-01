@@ -1,7 +1,7 @@
 # TY2025 conditional schedules: 8995-A A-D and 1116 C
 
 Static source and schema audit, reconciled 2026-10-02. This records **conditional filing
-triggers**, not blanket implementation or exclusion. The checked-in TY2025 v5.4
+triggers**, not blanket implementation or exclusion. The locally cached TY2025 v5.4
 `ReturnData1040.xsd` permits one each of `IRS8995AScheduleA`, `B`, `C`, and `D`,
 and unbounded `IRS1116ScheduleC` documents. Their individual XSDs live under
 `Shared/IRS8995ASchedule[A-D]/` and `Shared/IRS1116ScheduleC/`. Schedules A, B,
