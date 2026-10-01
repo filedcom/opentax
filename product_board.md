@@ -58,8 +58,8 @@ activity-ledger and Part IX paths, Form 3800 mixed credits, Form 8962 corrected
 policy months, and a staged Form 8621 prior-distribution record check. These
 are bounded slices; each parent form TODO below still has wider inputs or
 evidence gates. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-names the exact supported inputs and remaining gates for every slice. The
-agreed full test batch is deferred until implementation is finished.
+names the exact supported inputs and remaining gates for every slice.
+Merge-readiness validation is under way; the full suite has not passed.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
@@ -74,9 +74,12 @@ otherwise its named fail-closed boundary needs user approval.
 **Validation and delivery.** The last complete `deno task test` baseline
 passed 8,951/8,951 at `44282e25`; its
 [log](.state/research/ty2025-full-test-schedule1a-vehicle.log) predates this
-work. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD checks at
-`9effd20b`. Current fixtures are authored but unrun under the requested
-implementation-first sequence. No current complete test, filled-PDF,
+work. The merge-check `deno task test` attempt on 2026-10-01 stopped at
+TypeScript checking with 484 errors before executing tests; the
+[local log](.state/research/ty2025-pr56-merge-check-2026-10-01.log) records
+the initial failure. The branch is being repaired and must rerun the same
+full command. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
+checks at `9effd20b`. No current complete test, filled-PDF,
 business-rule, or IRS ATS acceptance is claimed. After implementation and
 scope decisions, run one full test batch, source-backed XSD/business-rule
 validation, and the [sixty prepared filled-PDF
