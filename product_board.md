@@ -59,7 +59,10 @@ policy months, and a staged Form 8621 prior-distribution record check. These
 are bounded slices; each parent form TODO below still has wider inputs or
 evidence gates. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
 names the exact supported inputs and remaining gates for every slice.
-Merge-readiness validation is under way; the full suite has not passed.
+Merge-readiness validation is under way. The branch was rebased onto
+`origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
+the PR's shared Schedule SE calculation were retained at the two conflict
+sites. The full suite has not passed.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
@@ -81,7 +84,21 @@ the initial failure. A second full attempt after repairs stopped at 108
 TypeScript errors before executing tests; its
 [local log](.state/research/ty2025-pr56-merge-check-rerun-2026-10-01.log)
 records the remaining clusters. The branch is being repaired and must rerun
-the same full command. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
+the same full command. A post-rebase full attempt reached two missing
+test-import TypeScript errors before execution; both imports were corrected. Its
+[local log](.state/research/ty2025-pr56-post-rebase-2026-10-01.log)
+records that gate. The next complete command passed TypeScript checking and
+executed the suite: **9,736 passed, 266 failed**. Its
+[local log](.state/research/ty2025-pr56-post-rebase-full-rerun-2026-10-01.log)
+is the current failing baseline; several failures were fixed while that run was
+still in progress. Focused repairs are under way, and a fresh complete run is
+required. The corrected TY2025 v5.4
+[XSD validation file](.state/research/pr56-xsd-focused.log) now passes
+**181/181**, with source-backed positive cases and explicit stops where
+authenticated prior filing bytes are missing. Focused Form 7203/8582/8606,
+Form 8962, Form 6251, and core return suites have also passed after repairs.
+The Form 8978 negative Schedule 2 line 18 PDF route remains closed pending a
+supported signed-offset projection. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
 checks at `9effd20b`. No current complete test, filled-PDF,
 business-rule, or IRS ATS acceptance is claimed. After implementation and
 scope decisions, run one full test batch, source-backed XSD/business-rule
