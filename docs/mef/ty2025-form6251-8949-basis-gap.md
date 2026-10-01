@@ -5,6 +5,26 @@ written. Tests are written but have not been run in the agreed full batch. IRS
 XSD validation, filled-PDF visual review, business-rule checks, and ATS
 acceptance are still pending.
 
+## One short-term regular loss becomes an AMT gain (2026-10-01, unrun)
+
+The
+[2025 Form 6251 line-2k instructions](https://www.irs.gov/instructions/i6251)
+require a separate AMT Form 8949 and Schedule D calculation when the AMT basis
+differs. One identified, unadjusted short-term Form 8949 lot can now have a
+regular loss within the single-filer $3,000 capital-loss deduction limit and a
+positive AMT gain. The complete Schedule D audit contains only that lot, so both
+amounts affect ordinary-rate taxable income and no Part III preferential gain is
+created. Its $500 regular loss and $500 AMT gain yield a positive $1,000 Form
+6251 line-2k adjustment. Native and PDF preflights replay the Form 8949
+transaction and require the regular loss on Form 1040 line 7, the computed AMT
+on Schedule 2, and matching Form 1040 tax and taxable income.
+
+This slice remains limited to one single-filer short-term lot with no other
+capital activity, qualified dividends, Form 4952 election, special-rate gain, or
+capital-loss carryover. MFS, wider sign-changing lots, Part III and broker byte
+authentication remain open. Positive and tamper fixtures are authored for the
+deferred bulk validation.
+
 The native and PDF Form 6251 exporters now replay every line 2k basis row
 against the retained raw Form 8949 input. The row set must be exact, with
 distinct source IDs and matching part, proceeds, regular/AMT bases, and gains;
