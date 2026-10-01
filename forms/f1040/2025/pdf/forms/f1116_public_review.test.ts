@@ -22,6 +22,20 @@ import {
 } from "../../mef/forms/f1116_schedule_b.ts";
 
 const bankReference = "2025 Canadian bank Form 1099-INT and source review";
+const filed2024Form1040Id = "filed-2024-form1040-111223333";
+const filed2024PassiveScheduleBId = "filed-2024-passive-schedule-b-111223333";
+
+function filed2024PassiveScheduleB(amount: number) {
+  return {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2015_ninth_preceding_amount: amount,
+    line8_total: amount,
+  };
+}
 
 const singleSourceReview = {
   source_document_reference: bankReference,
@@ -160,8 +174,10 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [
-          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+          filed2024Form1040Id,
+          filed2024PassiveScheduleBId,
         ],
+        filed_2024_schedule_b: filed2024PassiveScheduleB(100),
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
@@ -222,6 +238,34 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
         form1116_schedule_b: {
           ...pending.form1116_schedule_b,
           current_year_excess_tax: summary.currentYearExcessTax + 1,
+        },
+      },
+      {
+        ...pending,
+        form1116_prior_carryover: {
+          carryovers: [{
+            ...((pending.form1116_prior_carryover as {
+              carryovers: Array<Record<string, unknown>>;
+            }).carryovers[0]),
+            filed_2024_schedule_b: {
+              ...filed2024PassiveScheduleB(100),
+              taxpayer_ssn: "999999999",
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        form1116_prior_carryover: {
+          carryovers: [{
+            ...((pending.form1116_prior_carryover as {
+              carryovers: Array<Record<string, unknown>>;
+            }).carryovers[0]),
+            filed_2024_schedule_b: {
+              ...filed2024PassiveScheduleB(100),
+              line8_2015_ninth_preceding_amount: 99,
+            },
+          }],
         },
       },
     ]
@@ -427,8 +471,10 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [
-          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+          filed2024Form1040Id,
+          filed2024PassiveScheduleBId,
         ],
+        filed_2024_schedule_b: filed2024PassiveScheduleB(9_000),
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });

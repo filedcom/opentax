@@ -505,6 +505,15 @@ export const priorYearCarryoverSchema = z.object({
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
+  filed_2024_schedule_b: z.object({
+    taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    tax_year: z.literal(2024),
+    income_category: z.nativeEnum(IncomeCategory),
+    form1040_source_document_id: z.string().trim().min(1),
+    schedule_b_source_document_id: z.string().trim().min(1),
+    line8_2015_ninth_preceding_amount: z.number().int().positive(),
+    line8_total: z.number().int().positive(),
+  }).strict().optional(),
 }).strict().superRefine((source, ctx) => {
   if (
     source.income_category !== IncomeCategory.Passive &&

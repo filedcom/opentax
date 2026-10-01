@@ -53,4 +53,38 @@ export function assertForm1116CarryoverSource(
       "Form 1116 Schedule B filed source vintage amounts or references differ from retained prior-year review",
     );
   }
+  const origin2015 = retained.vintages.find((vintage) =>
+    vintage.vintage_tax_year === 2015
+  );
+  if (origin2015) {
+    const filed = retained.filed_2024_schedule_b;
+    const printedFiled = printed.filed_2024_schedule_b;
+    const general = pending?.general as
+      | { taxpayer_ssn?: unknown }
+      | undefined;
+    const owner = typeof general?.taxpayer_ssn === "string"
+      ? general.taxpayer_ssn.replaceAll("-", "")
+      : undefined;
+    if (
+      !filed || !printedFiled || !owner ||
+      filed.taxpayer_ssn.replaceAll("-", "") !== owner ||
+      filed.income_category !== retained.income_category ||
+      filed.line8_2015_ninth_preceding_amount !==
+        origin2015.prior_year_schedule_b_line8_vintage_amount ||
+      filed.line8_total !== retained.prior_year_schedule_b_line8_total ||
+      filed.form1040_source_document_id ===
+        filed.schedule_b_source_document_id ||
+      !retained.source_document_references.includes(
+        filed.form1040_source_document_id,
+      ) ||
+      !retained.source_document_references.includes(
+        filed.schedule_b_source_document_id,
+      ) ||
+      JSON.stringify(filed) !== JSON.stringify(printedFiled)
+    ) {
+      throw new Error(
+        "Form 1116 Schedule B expiring 2015 vintage needs the filed 2024 return and same-category Schedule B line 8 identity and amounts",
+      );
+    }
+  }
 }
