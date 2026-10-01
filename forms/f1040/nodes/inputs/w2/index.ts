@@ -83,6 +83,14 @@ const box12EntrySchema = z.object({
   code_g_employee_split_review_ref: z.string().trim().min(1).optional(),
 });
 
+const excessDeferralReviewSchema = z.object({
+  plan_type: z.literal("non_simple_401k"),
+  plan_review_reference: z.string().trim().min(1),
+  employee_birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  birth_date_source_reference: z.string().trim().min(1),
+  w2_source_reference: z.string().trim().min(1),
+}).strict();
+
 const box14EntrySchema = z.object({
   description: z.string().min(1).max(100).describe("Label printed by employer"),
   amount: z.number().nonnegative().describe("Dollar amount"),
@@ -143,6 +151,9 @@ export const w2ItemSchema = z.object({
   ),
   box12_entries: z.array(box12EntrySchema).optional().describe(
     "Coded benefit/deferral entries (up to 4 per W-2)",
+  ),
+  excess_deferral_review: excessDeferralReviewSchema.optional().describe(
+    "Reviewed non-SIMPLE 401(k), age, and W-2 evidence for a 2025 code D excess deferral",
   ),
   box13_statutory_employee: z.boolean().optional().describe(
     "Statutory employee — wages go to Schedule C, not line 1a",
@@ -208,6 +219,110 @@ export const inputSchema = z.object({
 type F1040Input = z.infer<typeof f1040.inputSchema>;
 export type W2Item = z.infer<typeof w2ItemSchema>;
 type W2Items = W2Item[];
+
+const ELECTIVE_DEFERRAL_CODES = new Set<Box12Code>([
+  Box12Code.D,
+  Box12Code.E,
+  Box12Code.F,
+  Box12Code.G,
+  Box12Code.H,
+  Box12Code.S,
+  Box12Code.AA,
+  Box12Code.BB,
+  Box12Code.EE,
+]);
+
+/** The one supported 2025 line 1h W-2 excess: traditional, non-SIMPLE code D. */
+export function codeDExcessDeferral(w2s: W2Items): {
+  amount: number;
+  owners: string[];
+} {
+  const candidateOwners = new Set<string>();
+  for (const item of w2s) {
+    if (
+      !(item.box12_entries ?? []).some((entry) =>
+        entry.code === Box12Code.D && entry.amount > 0
+      )
+    ) continue;
+    const owner = item.employee_ssn?.replaceAll("-", "");
+    if (!owner || !/^\d{9}$/.test(owner)) {
+      throw new Error("W-2 code D excess review needs the employee SSN");
+    }
+    candidateOwners.add(owner);
+  }
+  let amount = 0;
+  const owners: string[] = [];
+  for (const owner of candidateOwners) {
+    const items = w2s.filter((item) =>
+      item.employee_ssn?.replaceAll("-", "") === owner
+    );
+    const codeD = items.reduce(
+      (sum, item) =>
+        sum +
+        (item.box12_entries ?? []).filter((entry) => entry.code === Box12Code.D)
+          .reduce((subtotal, entry) => subtotal + entry.amount, 0),
+      0,
+    );
+    if (codeD <= 23_500) continue;
+    const sourceItems = items.filter((item) =>
+      (item.box12_entries ?? []).some((entry) =>
+        entry.code === Box12Code.D && entry.amount > 0
+      )
+    );
+    const eins = sourceItems.map((item) =>
+      item.employer_ein?.replaceAll("-", "")
+    );
+    const dates = sourceItems.map((item) =>
+      item.excess_deferral_review?.employee_birth_date
+    );
+    const date = dates[0];
+    const birth = date ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
+    if (
+      items.some((item) =>
+        (item.box12_entries ?? []).some((entry) =>
+          entry.amount > 0 && ELECTIVE_DEFERRAL_CODES.has(entry.code) &&
+          entry.code !== Box12Code.D
+        )
+      ) ||
+      sourceItems.length < 2 ||
+      !Number.isSafeInteger(codeD) ||
+      sourceItems.some((item) =>
+        (item.box12_entries ?? []).some((entry) =>
+          entry.code === Box12Code.D && !Number.isSafeInteger(entry.amount)
+        )
+      ) ||
+      eins.some((ein) => !ein || !/^\d{9}$/.test(ein)) ||
+      new Set(eins).size !== eins.length ||
+      sourceItems.some((item) =>
+        item.box13_retirement_plan !== true ||
+        item.excess_deferral_review?.plan_type !== "non_simple_401k" ||
+        !item.excess_deferral_review?.plan_review_reference ||
+        !item.excess_deferral_review?.birth_date_source_reference ||
+        !item.excess_deferral_review?.w2_source_reference
+      ) ||
+      new Set(
+          sourceItems.map((item) =>
+            item.excess_deferral_review?.w2_source_reference
+          ),
+        ).size !== sourceItems.length ||
+      dates.some((value) => value !== date) ||
+      !Number.isFinite(birth.getTime()) ||
+      birth.toISOString().slice(0, 10) !== date ||
+      date! < "1976-01-01" || date! > "2025-12-31" ||
+      sourceItems.some((item) =>
+        item.taxpayer_age !== undefined &&
+        item.taxpayer_age !== 2025 - birth.getUTCFullYear()
+      )
+    ) {
+      throw new Error(
+        "W-2 line 1h code D excess needs distinct employer W-2s, one under-50 owner, reviewed non-SIMPLE plans, and no competing deferrals",
+      );
+    }
+    amount += codeD - 23_500;
+    owners.push(owner);
+  }
+  return { amount, owners };
+}
 
 function box14Amount(item: W2Item, description: string): number | undefined {
   const matches = (item.box14_entries ?? []).filter((entry) =>
@@ -692,7 +807,8 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
       employee_ssn: item.employee_ssn!,
       employer_ein: item.employer_ein!,
       amount: item.flsa_overtime_review!.employer_statement
-        ?.qualified_overtime_premium ?? item.box14_entries!.find((entry) =>
+        ?.qualified_overtime_premium ??
+        item.box14_entries!.find((entry) =>
           entry.description.trim().toLowerCase() === "flsa overtime premium"
         )!.amount,
       box1_wages: item.box1_wages,
@@ -887,6 +1003,9 @@ class W2Node extends TaxNode<typeof inputSchema> {
         cfg.retirementLimits,
       );
     }
+    const excessDeferral = ctx.taxYear === 2025
+      ? codeDExcessDeferral(input.w2s)
+      : { amount: 0, owners: [] };
 
     const incomeTaxFields = input.f8958_allocation
       ? communityW2Fields(input.w2s, input.f8958_allocation)
@@ -894,6 +1013,9 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const f1040Fields: F1040Input = {
       ...incomeTaxFields,
       ...combatPayFields(input.w2s),
+      ...(excessDeferral.amount > 0
+        ? { line1h_other_earned: excessDeferral.amount }
+        : {}),
     };
 
     const outputs: NodeOutput[] = [
@@ -919,6 +1041,9 @@ class W2Node extends TaxNode<typeof inputSchema> {
     > = {};
     if (incomeTaxFields.line1a_wages !== undefined) {
       agiWageFields.line1a_wages = incomeTaxFields.line1a_wages;
+    }
+    if (excessDeferral.amount > 0) {
+      agiWageFields.line1h_other_earned = excessDeferral.amount;
     }
     const entries = regularItems(input.w2s).flatMap((item) =>
       item.box12_entries ?? []

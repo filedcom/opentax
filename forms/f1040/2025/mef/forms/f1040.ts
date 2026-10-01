@@ -10,8 +10,14 @@ import {
   IRSDependentRelationshipCode,
 } from "../../../nodes/inputs/general/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
+  codeDExcessDeferral,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
+import {
+  DistributionCode,
   inputSchema as f1099rInputSchema,
   iraDistributionExplanation,
   isIraRollover,
@@ -442,6 +448,60 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertF8288OtherWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);
   assertSchedule2Line23(fields, context?.pending);
+  if (context?.pending?.w2 !== undefined) {
+    const source = w2InputSchema.safeParse(context.pending.w2);
+    if (!source.success) {
+      throw new Error(
+        "Form 1040 line 1h needs valid retained W-2 deferral facts",
+      );
+    }
+    const excess = codeDExcessDeferral(source.data.w2s);
+    if (excess.amount > 0) {
+      const filer = context.filer;
+      const allowedOwners = [
+        filer?.primarySSN.replace(/\D/g, ""),
+        filer?.filingStatus === MefFilingStatus.MarriedFilingJointly
+          ? filer.spouse?.ssn.replace(/\D/g, "")
+          : undefined,
+      ];
+      const distributions = context.pending.f1099r === undefined
+        ? undefined
+        : f1099rInputSchema.safeParse(context.pending.f1099r);
+      if (distributions && !distributions.success) {
+        throw new Error(
+          "Form 1040 line 1h needs valid retained Form 1099-R facts",
+        );
+      }
+      const hasCorrectiveDistribution = distributions?.success &&
+        distributions.data.f1099rs.some((item) =>
+          item.box7_distribution_code === DistributionCode.Code8 &&
+          item.box7_ira_simple_indicator !== true &&
+          item.no_distribution_received !== true &&
+          (item.box2a_taxable_amount ?? 0) > 0
+        );
+      const agiRaw = (context.pending.agi_aggregator as
+        | { line1h_other_earned?: unknown }
+        | undefined)?.line1h_other_earned;
+      const agiAmount = typeof agiRaw === "number"
+        ? agiRaw
+        : Array.isArray(agiRaw) &&
+            agiRaw.every((value) => typeof value === "number")
+        ? agiRaw.reduce((sum, value) => sum + value, 0)
+        : undefined;
+      if (
+        excess.owners.some((owner) => !allowedOwners.includes(owner)) ||
+        context.pending.fec !== undefined ||
+        context.pending.form2555 !== undefined ||
+        hasCorrectiveDistribution ||
+        fields.line1h_other_earned !== excess.amount ||
+        agiAmount !== excess.amount
+      ) {
+        throw new Error(
+          "Form 1040 line 1h W-2 excess must be sole-source, filer-owned, and match filed and AGI amounts",
+        );
+      }
+    }
+  }
   const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
   if (

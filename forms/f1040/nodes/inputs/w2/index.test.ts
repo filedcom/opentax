@@ -40,6 +40,62 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+function reviewedCodeDW2(ein: string, amount: number) {
+  return minimalItem({
+    employer_ein: ein,
+    employee_ssn: "123-45-6789",
+    box1_wages: 50_000,
+    box13_retirement_plan: true,
+    box12_entries: [{ code: Box12Code.D, amount }],
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: `plan-${ein}`,
+      employee_birth_date: "1990-06-01",
+      birth_date_source_reference: "2025 identity review",
+      w2_source_reference: `w2-${ein}`,
+    },
+  });
+}
+
+Deno.test("distinct reviewed code D W-2s deposit only their 2025 excess on line 1h and AGI", () => {
+  const result = compute([
+    reviewedCodeDW2("12-3456789", 15_000),
+    reviewedCodeDW2("98-7654321", 12_000),
+  ]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1h_other_earned, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line1h_other_earned,
+    3_500,
+  );
+});
+
+Deno.test("code D excess rejects absent review, same employer, Roth, and age-50 facts", () => {
+  const first = reviewedCodeDW2("12-3456789", 15_000);
+  const second = reviewedCodeDW2("98-7654321", 12_000);
+  for (
+    const changed of [
+      { ...second, excess_deferral_review: undefined },
+      { ...second, employer_ein: "12-3456789" },
+      {
+        ...second,
+        box12_entries: [
+          { code: Box12Code.D, amount: 12_000 },
+          { code: Box12Code.AA, amount: 1_000 },
+        ],
+      },
+      {
+        ...second,
+        excess_deferral_review: {
+          ...(second.excess_deferral_review as Record<string, unknown>),
+          employee_birth_date: "1975-06-01",
+        },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([first, changed]), Error);
+  }
+});
+
 // ============================================================
 // 1. Input Schema — non-obvious constraints only
 // ============================================================
@@ -453,15 +509,32 @@ Deno.test("employer statement overtime rejects a different employee or duplicate
       furnished_to_employee: true as const,
     },
   };
-  assertThrows(() => compute([minimalItem({
-    employee_ssn: "111223333", employer_ein: "123456789",
-    box1_wages: 80_000, flsa_overtime_review: reviewed,
-  })]), Error, "matching source identities");
-  assertThrows(() => compute([minimalItem({
-    employee_ssn: "999887777", employer_ein: "123456789",
-    box1_wages: 80_000, flsa_overtime_review: reviewed,
-    box14_entries: [{ description: "FLSA Overtime Premium", amount: 4_000 }],
-  })]), Error, "one positive box 14 or employer-statement premium");
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        box1_wages: 80_000,
+        flsa_overtime_review: reviewed,
+      })]),
+    Error,
+    "matching source identities",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "999887777",
+        employer_ein: "123456789",
+        box1_wages: 80_000,
+        flsa_overtime_review: reviewed,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+        }],
+      })]),
+    Error,
+    "one positive box 14 or employer-statement premium",
+  );
 });
 
 Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
