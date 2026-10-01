@@ -29,6 +29,38 @@ const facility = {
   is_fiscal_year: false,
 };
 
+const closedLoop = {
+  ...facility,
+  energy_type: EnergyType.BiomassClosed,
+  facility_description: "Closed-loop biomass facility",
+  closed_loop_biomass_source: {
+    facility_description: "Closed-loop biomass facility",
+    planting_record_reference: "crop-planting-2025",
+    planted_exclusively_for_facility_verified: true as const,
+    original_facility_not_cofired_verified: true as const,
+    production_meter_record_reference: "meter-2025",
+    metered_kwh_produced: 1_000_000,
+    unrelated_sale_invoice_reference: "utility-invoice-2025",
+    invoiced_kwh_sold: 1_000_000,
+    unrelated_buyer_verified: true as const,
+    no_investment_credit_election_verified: true as const,
+    no_section1603_grant_verified: true as const,
+  },
+};
+
+Deno.test("Form 8835: sourced closed-loop biomass maps to native line 1b", () => {
+  const xml = form8835.build({ f8835s: [closedLoop] })[0];
+  assertStringIncludes(xml, "<KwHrsPrdcdSoldClsLoopBmssQty>1000000</KwHrsPrdcdSoldClsLoopBmssQty>");
+  assertStringIncludes(xml, "<KwHrsPrdcdSoldClsLoopBmssCrAmt>6000</KwHrsPrdcdSoldClsLoopBmssCrAmt>");
+  assertThrows(() => form8835.build({ f8835s: [{
+    ...closedLoop,
+    closed_loop_biomass_source: {
+      ...closedLoop.closed_loop_biomass_source,
+      metered_kwh_produced: 999_999,
+    },
+  }] }), Error, "matching kWh");
+});
+
 Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields", () => {
   const documents = form8835.build({
     f8835s: [facility, {

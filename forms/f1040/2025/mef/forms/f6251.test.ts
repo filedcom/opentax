@@ -46,6 +46,17 @@ function isoContext(amount: number) {
 }
 
 function filed(fields: Parameters<typeof form6251.build>[0]): string {
+  const context = isoContext(fields.iso_adjustment ?? 0);
+  const trust = typeof fields.line2j_estates_and_trusts === "number" &&
+      fields.line2j_estates_and_trusts !== 0
+    ? {
+      k1_trust: {
+        k1_trusts: [
+          trustCopy(fields.line2j_estates_and_trusts),
+        ],
+      },
+    }
+    : {};
   return form6251.build(
     {
       line11_amt: 1,
@@ -59,8 +70,19 @@ function filed(fields: Parameters<typeof form6251.build>[0]): string {
         }
         : {}),
     },
-    isoContext(fields.iso_adjustment ?? 0),
+    { ...context, pending: { ...context.pending, ...trust } },
   );
+}
+
+function trustCopy(amount: number) {
+  return {
+    estate_trust_name: "Synthetic Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "synthetic issued trust K-1",
+    box12_code_a_amt_adjustment: amount,
+    box12_codes_b_through_f_absent: true,
+    box12_codes_g_through_i_absent: true,
+  };
 }
 
 function depreciationWorkpaper(amount: number) {
@@ -284,6 +306,7 @@ Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order
     line2l_depreciation_workpaper: depreciationWorkpaper(200),
   }, {
     pending: {
+      k1_trust: { k1_trusts: [trustCopy(100)] },
       f8949: {
         f8949s: [{
           source_transaction_id: "basis-sale",

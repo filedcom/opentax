@@ -141,6 +141,19 @@ builders both require the head-of-household return header; the same source,
 deduction, native attachment, and PDF calculations apply. Positive, boundary,
 status-mismatch, and still-unsupported qualifying-surviving-spouse fixtures
 are authored but unrun. QSS remains closed pending its return-boundary review.
+One qualifying-surviving-spouse return with an identified SSTB also uses the
+2025 $197,300–$247,300 nonjoint Schedule A phase-in. The calculator retains
+the same single-business, source-attested QBI/W-2/UBIA and zero-other-item
+limits; both native documents require a qualifying-surviving-spouse return
+header, and both PDF instances reject a different final filer status. The
+parent and companion line calculations, Form 1040 line 13 deduction, native
+XML, PDF projection, and wrong-status cases are authored for the deferred
+batch. The general return's underlying surviving-spouse eligibility evidence
+and the issued business-source bytes remain separate validation gates. The
+[2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+place all returns other than joint in the $197,300 threshold and $50,000
+phase-in range.
+
 An MFS return with one taxpayer-owned SSTB now uses the same nonjoint phase-in
 only when the SSTB filing details identify the primary taxpayer by SSN, name a
 separate-return QBI/W-2/UBIA allocation workpaper, and affirm that no spouse

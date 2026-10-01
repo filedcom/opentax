@@ -28,6 +28,52 @@ function lines(overrides: Record<string, unknown> = {}) {
   );
 }
 
+const closedLoopSource = {
+  facility_description: "Closed-loop biomass facility",
+  planting_record_reference: "crop-planting-2025",
+  planted_exclusively_for_facility_verified: true as const,
+  original_facility_not_cofired_verified: true as const,
+  production_meter_record_reference: "meter-2025",
+  metered_kwh_produced: 1_000_000,
+  unrelated_sale_invoice_reference: "utility-invoice-2025",
+  invoiced_kwh_sold: 1_000_000,
+  unrelated_buyer_verified: true as const,
+  no_investment_credit_election_verified: true as const,
+  no_section1603_grant_verified: true as const,
+};
+
+Deno.test("f8835: sourced closed-loop biomass reaches the first-four-year Form 3800 row", () => {
+  const row = lines({
+    energy_type: EnergyType.BiomassClosed,
+    facility_description: "Closed-loop biomass facility",
+    closed_loop_biomass_source: closedLoopSource,
+  });
+  assertEquals(row.line1, 6_000);
+  assertEquals(row.line15, 6_000);
+  assertEquals(row.form3800Line, "4e");
+  assertThrows(() => lines({ energy_type: EnergyType.BiomassClosed }), Error,
+    "planting, meter, and unrelated-sale sources");
+  assertThrows(() => lines({
+    energy_type: EnergyType.BiomassClosed,
+    facility_description: "Closed-loop biomass facility",
+    closed_loop_biomass_source: {
+      ...closedLoopSource,
+      invoiced_kwh_sold: 999_999,
+    },
+  }), Error, "matching kWh");
+  assertThrows(() => lines({
+    energy_type: EnergyType.BiomassClosed,
+    facility_description: "Another biomass facility",
+    closed_loop_biomass_source: closedLoopSource,
+  }), Error, "facility-matched");
+  assertThrows(() => lines({
+    energy_type: EnergyType.BiomassClosed,
+    facility_description: "Closed-loop biomass facility",
+    facility_construction_start_date: "2025-01-01",
+    closed_loop_biomass_source: closedLoopSource,
+  }), Error, "construction must begin before 2025");
+});
+
 Deno.test("f8835: 2025 base rate and fivefold increase are separate lines", () => {
   assertEquals(lines().line1, 6_000);
   assertEquals(lines().line9, 6_000);

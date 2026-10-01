@@ -191,16 +191,20 @@ function reconcileReturn(
     ? HeaderFilingStatus.MarriedFilingSeparately
     : fields.filing_status === NodeFilingStatus.HOH
     ? HeaderFilingStatus.HeadOfHousehold
+    : fields.filing_status === NodeFilingStatus.QSS
+    ? HeaderFilingStatus.QualifyingSurvivingSpouse
     : HeaderFilingStatus.Single;
   if (
     context.filer.filingStatus !== expectedStatus ||
     (fields.filing_status !== NodeFilingStatus.Single &&
       fields.filing_status !== NodeFilingStatus.HOH &&
+      fields.filing_status !== NodeFilingStatus.QSS &&
       fields.filing_status !== NodeFilingStatus.MFS &&
       fields.filing_status !== NodeFilingStatus.MFJ) ||
     ((fields.filing_status === NodeFilingStatus.MFJ ||
       fields.filing_status === NodeFilingStatus.MFS ||
-      fields.filing_status === NodeFilingStatus.HOH) &&
+      fields.filing_status === NodeFilingStatus.HOH ||
+      fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details)
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");

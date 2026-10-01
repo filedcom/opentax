@@ -7,17 +7,29 @@ separate form for each qualified facility and carry the applicable line 15
 credit to Form 3800 line 4e for production during the first four years after the
 facility entered service.
 
-The current PDF route covers filer-owned, nonpassive wind and geothermal
-facilities placed in service after 2021, with 2025 production during the first
+The current PDF route covers filer-owned, nonpassive wind, geothermal, and
+closed-loop biomass facilities placed in service after 2021, with 2025 production during the first
 four years. It prints a separate three-page copy for each facility, including
 source-backed identity, address, coordinates, dates, and AC capacity. Wind
-production and credit use line 1a; geothermal uses line 1c. Both carry their
-calculated amount through lines 2, 4, 6, 8, 9, 12, 13, and 15. The two printed
-rate cells are read-only and left untouched. The source gate matches each
+production and credit use line 1a; closed-loop biomass uses line 1b; geothermal
+uses line 1c. All carry their calculated amount through lines 2, 4, 6, 8, 9,
+12, 13, and 15. The printed rate cells are read-only and left untouched. The source gate matches each
 indexed Form 3800 line 4e entry and the prepared native Part III source rows,
 requires the facility credit to be fully used on line 4e, and checks the
 return-wide Form 3800 total against Schedule 3 and Form 1040. Repeated
 physical-facility identities reject at input validation.
+
+The closed-loop biomass route requires a planting record for material planted
+exclusively for that facility, an original facility without co-firing, metered
+production and an unrelated-buyer sale invoice with quantities equal to the
+claimed kWh, construction before 2025, and attestations that no investment
+credit election or section 1603 grant displaced the production credit. It uses
+the 2025 post-2021 0.6-cent rate in the
+[IRS instructions](https://www.irs.gov/instructions/i8835). Native line 1b
+elements and PDF line 1b fields receive the same calculated amount and
+Form 3800 source check. Calculation, native, PDF, and mismatch fixtures are
+authored for deferred validation. Planting, meter, invoice, and election
+record bytes are not authenticated; modified/co-fired facilities remain closed.
 
 Local source-to-XML-to-PDF cases cover one geothermal facility, two distinct
 geothermal facilities, and one wind plus one geothermal facility. The mixed
@@ -60,7 +72,8 @@ The fixed-source `deno task test` run on `08786417` passed 8,860/8,860,
 zero failed, with no ignored tests reported in 15m48s; its log is
 `.state/research/ty2025-full-test-08786417.log`.
 
-Other energy types, pre-2022 rates and wind phaseout, production after the
+Other energy types beyond wind, geothermal, and closed-loop biomass,
+pre-2022 rates and wind phaseout, production after the
 first four years, passive credits, transfers, increased credit, domestic
 content or energy-community bonuses, bond reduction, fiscal-year phaseout,
 and other mixed Form 3800 credit sources remain open. A zero-credit facility stops

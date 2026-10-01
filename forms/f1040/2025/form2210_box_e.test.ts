@@ -3,6 +3,7 @@ import {
   calculateForm2210BoxEPage1,
   type Form2210BoxEInput,
 } from "./form2210_box_e.ts";
+import { reconcileForm2210BoxEFinalized2025 } from "./form2210_box_e_finalized.ts";
 
 function source(): Form2210BoxEInput {
   return {
@@ -116,4 +117,29 @@ Deno.test("Form 2210 box E rejects cases not requiring a page-1 attachment", () 
       ],
     })
   );
+});
+
+Deno.test("Form 2210 box E page 1 binds current tax and withholding to finalized Form 1040", () => {
+  const final1040 = {
+    filing_status: "mfj",
+    line22_tax_after_credits: 10_000,
+    line25d_total_withholding: 2_000,
+  };
+  assertEquals(
+    reconcileForm2210BoxEFinalized2025(source(), final1040),
+    calculateForm2210BoxEPage1(source()),
+  );
+  for (const changed of [
+    { line22_tax_after_credits: 9_999 },
+    { line25d_total_withholding: 2_001 },
+    { line23_other_taxes: 1 },
+    { line25c_total: 1 },
+    { line32_refundable_credits_total: 1 },
+    { line38_underpayment_penalty: 0 },
+    { filing_status: "mfs" },
+  ]) {
+    assertThrows(() => reconcileForm2210BoxEFinalized2025(
+      source(), { ...final1040, ...changed },
+    ));
+  }
 });

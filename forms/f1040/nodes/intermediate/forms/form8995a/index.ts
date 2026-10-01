@@ -507,13 +507,14 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   if (
     !source ||
     (input.filing_status !== FilingStatus.Single &&
-      input.filing_status !== FilingStatus.HOH && !joint && !separate) ||
+      input.filing_status !== FilingStatus.HOH &&
+      input.filing_status !== FilingStatus.QSS && !joint && !separate) ||
     !Number.isInteger(input.taxable_income) ||
     input.taxable_income <= threshold ||
     input.taxable_income >= threshold + phaseInRange
   ) {
     throw new Error(
-      "Form 8995-A Schedule A needs one identified single, head-of-household, separate, or joint-filer SSTB within the phase-in range",
+      "Form 8995-A Schedule A needs one identified single, head-of-household, surviving-spouse, separate, or joint-filer SSTB within the phase-in range",
     );
   }
   if (

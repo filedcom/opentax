@@ -6,6 +6,21 @@ function basisSourcePending(fields: Record<string, unknown>) {
   const raw = fields.line2k_8949_basis_dispositions;
   const circulation = fields.line2o_circulation_costs;
   const depletion = fields.line2d_depletion;
+  const trustAmount = fields.line2j_estates_and_trusts;
+  const trust = typeof trustAmount === "number" && trustAmount !== 0
+    ? {
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Synthetic Trust",
+          estate_trust_ein: "123456789",
+          source_document_reference: "synthetic issued trust K-1",
+          box12_code_a_amt_adjustment: trustAmount,
+          box12_codes_b_through_f_absent: true,
+          box12_codes_g_through_i_absent: true,
+        }],
+      },
+    }
+    : {};
   const scheduleC = typeof depletion === "number" && depletion !== 0
     ? {
       schedule_c: {
@@ -48,11 +63,12 @@ function basisSourcePending(fields: Record<string, unknown>) {
       },
     }
     : {};
-  if (raw === undefined) return { ...f59e, ...scheduleC };
+  if (raw === undefined) return { ...f59e, ...scheduleC, ...trust };
   const rows = Array.isArray(raw) ? raw : [raw];
   return {
     ...f59e,
     ...scheduleC,
+    ...trust,
     f8949: {
       f8949s: rows.map((row: {
         source_transaction_id: string;

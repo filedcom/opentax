@@ -79,7 +79,7 @@ Deno.test("Form 8995-A Schedule A: thresholds, extra business, unsourced amounts
   assertThrows(() => parent.build({ ...input, taxable_income: 247_300 }, context), Error, "phase-in range");
   assertThrows(() => parent.build({ ...input, sstb_qbi: 99_999 }, context), Error, "only business");
   assertThrows(() => parent.build({ ...input, qbi: 100 }, context), Error, "only business");
-  assertThrows(() => parent.build({ ...input, sstb_filing_details: undefined }, context), Error, "identified single, head-of-household, separate, or joint-filer SSTB");
+  assertThrows(() => parent.build({ ...input, sstb_filing_details: undefined }, context), Error, "identified single, head-of-household, surviving-spouse, separate, or joint-filer SSTB");
   assertThrows(() => parent.build({
     ...input,
     sstb_w2_wages: 100_000,
@@ -173,10 +173,48 @@ Deno.test("Form 8995-A Schedule A: head of household uses the other-return phase
     Error,
     "phase-in range",
   );
+});
+
+Deno.test("Form 8995-A Schedule A: qualifying surviving spouse uses the nonjoint phase-in", () => {
+  const survivor = { ...input, filing_status: NodeFilingStatus.QSS };
+  const survivorContext = {
+    filer: { ...filer, filingStatus: HeaderFilingStatus.QualifyingSurvivingSpouse },
+    pending: {
+      form8995a: survivor,
+      form8995a_schedule_a: survivor,
+      f1040: { line13_qbi_deduction: 6_250 },
+    },
+  };
+  const result = node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(survivor),
+  );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f1040")?.fields
+      .line13_qbi_deduction,
+    6_250,
+  );
+  const scheduleXml = form8995aScheduleA.build(survivor, survivorContext);
+  assertStringIncludes(scheduleXml, "<FilingStatusThresholdCd>197300</FilingStatusThresholdCd>");
+  assertStringIncludes(scheduleXml, "<FilingStatusPhaseInRangeCd>50000</FilingStatusPhaseInRangeCd>");
+  assertStringIncludes(
+    parent.build(survivor, survivorContext),
+    "<QualifiedBusinessIncomeDedAmt>6250</QualifiedBusinessIncomeDedAmt>",
+  );
   assertThrows(
-    () => parent.build({ ...household, filing_status: NodeFilingStatus.QSS }, householdContext),
+    () => parent.build(survivor, { ...survivorContext, filer }),
     Error,
-    "head-of-household",
+    "filing status differs",
+  );
+  assertThrows(
+    () => form8995aScheduleA.build(survivor, { ...survivorContext, filer }),
+    Error,
+    "filing status differs",
+  );
+  assertThrows(
+    () => parent.build({ ...survivor, taxable_income: 247_300 }, survivorContext),
+    Error,
+    "phase-in range",
   );
 });
 

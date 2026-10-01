@@ -84,6 +84,14 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
       }
       assertMfsSstbOwner(input, filer.primarySSN);
     }
+    if (
+      input.filing_status === NodeFilingStatus.QSS &&
+      filer?.filingStatus !== HeaderFilingStatus.QualifyingSurvivingSpouse
+    ) {
+      throw new Error(
+        "Form 8995-A Schedule A PDF surviving-spouse status differs from the final filer",
+      );
+    }
     return [raw];
   },
 };

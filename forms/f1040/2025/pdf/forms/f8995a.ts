@@ -250,6 +250,14 @@ export const form8995aPdf: PdfFormDescriptor = {
       assertMfsSstbOwner(input, filer.primarySSN);
     }
     if (
+      input.filing_status === NodeFilingStatus.QSS &&
+      filer?.filingStatus !== HeaderFilingStatus.QualifyingSurvivingSpouse
+    ) {
+      throw new Error(
+        "Form 8995-A PDF surviving-spouse status differs from the final filer",
+      );
+    }
+    if (
       input.aggregation_filing_details ||
       (input.aggregation_groups ?? []).length > 0
     ) {

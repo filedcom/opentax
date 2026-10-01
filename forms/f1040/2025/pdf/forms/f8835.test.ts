@@ -51,6 +51,46 @@ function facility(): F8835Item {
   };
 }
 
+function closedLoopFacility(): F8835Item {
+  return {
+    ...facility(),
+    energy_type: EnergyType.BiomassClosed,
+    facility_description: "Closed-loop biomass production site",
+    closed_loop_biomass_source: {
+      facility_description: "Closed-loop biomass production site",
+      planting_record_reference: "crop-planting-2025",
+      planted_exclusively_for_facility_verified: true,
+      original_facility_not_cofired_verified: true,
+      production_meter_record_reference: "meter-2025",
+      metered_kwh_produced: 100_000,
+      unrelated_sale_invoice_reference: "utility-invoice-2025",
+      invoiced_kwh_sold: 100_000,
+      unrelated_buyer_verified: true,
+      no_investment_credit_election_verified: true,
+      no_section1603_grant_verified: true,
+    },
+  };
+}
+
+Deno.test("Form 8835 PDF prints sourced closed-loop biomass on line 1b", () => {
+  const fields = projected(pending(closedLoopFacility()));
+  assertEquals(fields?.facility_type, "Closed-loop biomass");
+  assertEquals(fields?.ac_other, true);
+  assertEquals(fields?.line1b_quantity, 100_000);
+  assertEquals(fields?.line1b_credit, 600);
+  assertEquals(fields?.line1a_quantity, undefined);
+  assertEquals(fields?.line1c_quantity, undefined);
+  assertEquals(fields?.line15, 600);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "line1b_credit")?.pdfField,
+    "topmostSubform[0].Page2[0].Table_PartII_Lines1a-j[0].Line1b[0].f2_6[0]",
+  );
+  const altered = pending(closedLoopFacility());
+  (altered.f3800.f8835_credit_entries as Array<Record<string, unknown>>)[0]
+    .credit_amount = 599;
+  assertThrows(() => projected(altered), Error, "disagrees with native Form 3800");
+});
+
 function pending(
   item: F8835Item | readonly F8835Item[] = facility(),
 ): Record<string, Record<string, unknown>> {

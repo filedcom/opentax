@@ -6,6 +6,27 @@ especially line 4a (royalties from property held for investment, outside the
 ordinary course of business) and line 8 (royalty-attributable interest goes to
 Schedule E), plus checked-in v5.4 `Common/IRS4952/IRS4952.xsd`.
 
+## Direct-use borrowing evidence prerequisite
+
+[2025 Publication 550](https://www.irs.gov/publications/p550) allocates interest
+according to how borrowed proceeds are used, including changes from investment
+to personal use. Form 4952 line 1 reports investment interest paid or accrued
+in 2025. A strict standalone workpaper now records one 2025 borrowing whose
+entire principal directly bought identified taxable securities, with lender,
+agreement, disbursement, purchase, and interest-payment references. It checks
+the same final filer, chronological purchase and payments, unique payment IDs,
+the lender's 2025 interest total, and exact equality to the manually entered
+Form 4952 line 1 interest. Mixed use, tax-exempt assets, and a simultaneous
+positive K-1 code H source are outside this one-loan workpaper.
+
+The workpaper is a source-evidence prerequisite, not a filing authorization.
+Its references and affirmations are typed input, not authenticated bank or
+broker bytes. It has no loan-balance history after the purchase, no later
+refinance or reassignment, and no trust or partnership asset look-through.
+Native and PDF export still use their existing guards; they do not consume
+this workpaper yet. Focused positive and tamper fixtures are authored for the
+deferred validation batch.
+
 An affirmatively classified Form 1099-MISC box 2 portfolio royalty sends the
 same amount to Schedule E income and Form 4952 line 4a. A bounded filing route
 now requires one 1099-MISC and one separately identified, nonbusiness,

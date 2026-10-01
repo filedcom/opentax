@@ -25,6 +25,19 @@ export const itemSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
   kwh_produced: z.number().int().nonnegative(),
   kwh_sold: z.number().int().nonnegative(),
+  closed_loop_biomass_source: z.object({
+    facility_description: z.string().trim().min(1),
+    planting_record_reference: z.string().trim().min(1),
+    planted_exclusively_for_facility_verified: z.literal(true),
+    original_facility_not_cofired_verified: z.literal(true),
+    production_meter_record_reference: z.string().trim().min(1),
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+    no_investment_credit_election_verified: z.literal(true),
+    no_section1603_grant_verified: z.literal(true),
+  }).strict().optional(),
   facility_description: z.string().min(1).max(50).optional(),
   facility_us_address: z.object({
     line1: z.string().min(1),
@@ -265,6 +278,32 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  item = itemSchema.parse(item);
+  if (item.energy_type === EnergyType.BiomassClosed) {
+    const source = item.closed_loop_biomass_source;
+    if (item.facility_construction_start_date >= "2025-01-01") {
+      throw new Error(
+        "Form 8835 closed-loop biomass construction must begin before 2025",
+      );
+    }
+    if (
+      !source ||
+      source.facility_description !== item.facility_description ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      source.planting_record_reference === source.production_meter_record_reference ||
+      source.planting_record_reference === source.unrelated_sale_invoice_reference ||
+      source.production_meter_record_reference === source.unrelated_sale_invoice_reference
+    ) {
+      throw new Error(
+        "Form 8835 closed-loop biomass needs facility-matched planting, meter, and unrelated-sale sources matching kWh",
+      );
+    }
+  } else if (item.closed_loop_biomass_source !== undefined) {
+    throw new Error(
+      "Form 8835 closed-loop biomass source cannot classify another energy type",
+    );
+  }
   if (
     parsedDate(item.facility_construction_start_date) >
       parsedDate(item.facility_placed_in_service_date)

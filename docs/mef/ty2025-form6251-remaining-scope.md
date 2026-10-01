@@ -76,3 +76,11 @@ rechecks distinct property IDs and the regular-minus-AMT depreciation total at
 native and PDF export. A direct amount without its reviewed workpaper rejects.
 The source and tamper fixtures await the combined pass; the underlying asset
 records and other AMT depreciation methods remain open.
+
+# Trust K-1 code A replay (staged, unrun)
+
+Native and PDF Form 6251 line 2j now replays the signed total from distinct
+retained trust K-1 box 12 code A sources. Each source must name its trust,
+issued-copy reference and EIN, and affirm that other box 12 AMT codes are
+absent. Omitting or changing a source rejects; the focused fixtures await the
+bulk pass. This does not authenticate issued K-1 bytes or model codes B–I.

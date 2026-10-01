@@ -36,6 +36,8 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
     ? HeaderFilingStatus.MarriedFilingSeparately
     : fields.filing_status === NodeFilingStatus.HOH
     ? HeaderFilingStatus.HeadOfHousehold
+    : fields.filing_status === NodeFilingStatus.QSS
+    ? HeaderFilingStatus.QualifyingSurvivingSpouse
     : HeaderFilingStatus.Single;
   if (context?.filer?.filingStatus !== expectedStatus) {
     throw new Error(

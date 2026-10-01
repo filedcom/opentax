@@ -143,6 +143,56 @@ Deno.test("Form 8995-A Schedule A PDF maps head-of-household phase-in", () => {
   assertEquals(parent?.line39, 6_250);
 });
 
+Deno.test("Form 8995-A Schedule A PDF binds surviving-spouse phase-in to final filer", () => {
+  const survivor = { ...sstb, filing_status: "qss" };
+  const survivorPending = {
+    form8995a: survivor,
+    form8995a_schedule_a: survivor,
+    f1040: { line13_qbi_deduction: 6_250 },
+  };
+  const filer = {
+    primarySSN: "123456789",
+    nameLine1: "SMITH JOHN A",
+    nameControl: "SMIT",
+    address: { line1: "1 MAIN ST", city: "AUSTIN", state: "TX", zip: "78701" },
+    filingStatus: HeaderFilingStatus.QualifyingSurvivingSpouse,
+  };
+  const schedule = form8995aScheduleAPdf.projectFields?.(
+    survivor,
+    survivorPending,
+  );
+  const parent = form8995aPdf.projectFields?.(survivor, survivorPending);
+  assertEquals(schedule?.line6, 197_300);
+  assertEquals(schedule?.line8, 50_000);
+  assertEquals(parent?.line21, 197_300);
+  assertEquals(parent?.line23, 50_000);
+  assertEquals(parent?.line39, 6_250);
+  assertEquals(
+    form8995aPdf.instances?.(survivor, filer, survivorPending),
+    [survivor],
+  );
+  assertEquals(
+    form8995aScheduleAPdf.instances?.(survivor, filer, survivorPending),
+    [survivor],
+  );
+  assertThrows(
+    () => form8995aPdf.instances?.(survivor, {
+      ...filer,
+      filingStatus: HeaderFilingStatus.HeadOfHousehold,
+    }, survivorPending),
+    Error,
+    "surviving-spouse status differs",
+  );
+  assertThrows(
+    () => form8995aScheduleAPdf.instances?.(survivor, {
+      ...filer,
+      filingStatus: HeaderFilingStatus.Single,
+    }, survivorPending),
+    Error,
+    "surviving-spouse status differs",
+  );
+});
+
 Deno.test("Form 8995-A Schedule A PDF MFS owner and final filer reconcile", () => {
   const separate = {
     ...sstb,
