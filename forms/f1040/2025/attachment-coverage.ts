@@ -203,7 +203,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f3800",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 8908 line 1p needs individual-certifier identity and linked Form 7220 PWA attachment support",
+      "Form 8908 line 1p needs registered native/PDF Form 8908 and per-residence Form 7220 attachment support",
     isActive: (fields) => fields.f8908_credit !== undefined,
   },
   {

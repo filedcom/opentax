@@ -34,10 +34,11 @@ function sixClassSource() {
       form7220_review_reference: prevailing_wage_met
         ? `Form7220-review-${index + 1}`
         : undefined,
-      certifier_name: index < 3
-        ? "North Certification LLC"
-        : "South Certification LLC",
-      certifier_state: "NY",
+      certifier: {
+        kind: "business" as const,
+        name: index < 3 ? "North Certification LLC" : "South Certification LLC",
+        state: "NY",
+      },
       certification_reference: `certificate-${index + 1}`,
       certified_on: "2025-05-01",
       certification_modified: index === 5,
@@ -90,6 +91,56 @@ Deno.test("staged IRS8908 and official PDF project all six classes, certifiers, 
   );
 });
 
+Deno.test("staged IRS8908 preserves an individual certifier in native and PDF output", () => {
+  const original = sixClassSource();
+  const source = {
+    f8908s: original.f8908s.map((home, index) =>
+      index === 0
+        ? {
+          ...home,
+          certifier: {
+            kind: "person" as const,
+            name: "Jane Certifier",
+            state: "NY",
+          },
+        }
+        : home
+    ),
+  };
+  const pending = { f8908: source, f3800: credit };
+  const xml = form8908.build(source, { pending });
+  assertStringIncludes(xml, "<PersonNm>Jane Certifier</PersonNm>");
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>North Certification LLC</BusinessNameLine1Txt>",
+  );
+  const fields = form8908Pdf.projectFields!(source, pending);
+  assertEquals(fields.certifier_1_name, "Jane Certifier");
+  assertEquals(fields.certifier_2_name, "North Certification LLC");
+  const overlong = {
+    f8908s: source.f8908s.map((home, index) =>
+      index === 0
+        ? {
+          ...home,
+          certifier: {
+            kind: "person" as const,
+            name: "A".repeat(36),
+            state: "NY",
+          },
+        }
+        : home
+    ),
+  };
+  assertThrows(
+    () =>
+      form8908.build(overlong, {
+        pending: { f8908: overlong, f3800: credit },
+      }),
+    Error,
+    "identity field",
+  );
+});
+
 Deno.test("staged Form 8908 projections reject missing or altered Form 3800 credit", () => {
   const source = sixClassSource();
   assertThrows(
@@ -139,7 +190,10 @@ Deno.test("staged Form 8908 rejects certifiers beyond the 38-row paper inventory
       acquisition_record_reference: `sale-${index + 1}`,
       contractor_basis_record_reference: `basis-${index + 1}`,
       certification_reference: `certificate-${index + 1}`,
-      certifier_name: `Certification Company ${index + 1}`,
+      certifier: {
+        ...base.certifier,
+        name: `Certification Company ${index + 1}`,
+      },
     })),
   };
   assertThrows(

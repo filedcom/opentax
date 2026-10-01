@@ -33,8 +33,11 @@ function fixture() {
       form7220_review_reference: prevailing_wage_met
         ? `7220-${index + 1}`
         : undefined,
-      certifier_name: index < 3 ? "North Certifier" : "South Certifier",
-      certifier_state: "NY",
+      certifier: {
+        kind: "business" as const,
+        name: index < 3 ? "North Certifier" : "South Certifier",
+        state: "NY",
+      },
       certification_reference: `cert-${index + 1}`,
       certified_on: "2024-12-15",
       certification_modified: index === 5,
@@ -52,6 +55,28 @@ Deno.test("Form 8908 source calculator retains all six printed credit classes", 
   assertEquals(lines.itemE_certifications, 6);
   assertEquals(lines.certifiers[1].modified_certifications, 1);
   assertEquals(lines.first20HomeAddresses.length, 6);
+});
+
+Deno.test("Form 8908 keeps a person and business with the same name distinct", () => {
+  const original = fixture();
+  const source = {
+    ...original,
+    homes: original.homes.map((home, index) =>
+      index === 0
+        ? {
+          ...home,
+          certifier: {
+            kind: "person" as const,
+            name: "North Certifier",
+            state: "NY",
+          },
+        }
+        : home
+    ),
+  };
+  const lines = calculateForm8908Source(source);
+  assertEquals(lines.itemD_distinct_certifiers, 3);
+  assertEquals(lines.certifiers[0].kind, "person");
 });
 
 Deno.test("Form 8908 rejects duplicate, late-certified, and unsupported PWA facts", () => {

@@ -115,6 +115,9 @@ export const form8908Pdf: PdfFormDescriptor = {
     text("primarySSN", `${page1}.f1_02[0]`),
   ],
   projectFields(raw, allPending) {
+    if (JSON.stringify(raw) !== JSON.stringify(allPending.f8908)) {
+      throw new Error("Form 8908 PDF source differs from filed return");
+    }
     const { lines } = reconciledForm8908Source(raw, allPending.f3800);
     const fields: Record<string, unknown> = {
       itemA: true,

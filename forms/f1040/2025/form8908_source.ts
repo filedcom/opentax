@@ -21,8 +21,18 @@ export const form8908HomeSourceSchema = z.object({
   zero_energy_ready: z.boolean(),
   prevailing_wage_met: z.boolean().optional(),
   form7220_review_reference: z.string().trim().min(1).optional(),
-  certifier_name: z.string().trim().min(1),
-  certifier_state: z.string().regex(/^[A-Z]{2}$/),
+  certifier: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("person"),
+      name: z.string().trim().min(1),
+      state: z.string().regex(/^[A-Z]{2}$/),
+    }).strict(),
+    z.object({
+      kind: z.literal("business"),
+      name: z.string().trim().min(1),
+      state: z.string().regex(/^[A-Z]{2}$/),
+    }).strict(),
+  ]),
   certification_reference: z.string().trim().min(1),
   certified_on: isoDate,
   certification_modified: z.boolean(),
@@ -46,6 +56,7 @@ export interface Form8908SourceLines {
   itemD_distinct_certifiers: number;
   itemE_certifications: number;
   certifiers: readonly {
+    kind: "person" | "business";
     name: string;
     state: string;
     homes_certified: number;
@@ -115,11 +126,12 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
       : 4;
     counts[category]++;
     const certifierKey =
-      `${home.certifier_name.trim().toUpperCase()}|${home.certifier_state}`;
+      `${home.certifier.kind}|${home.certifier.name.trim().toUpperCase()}|${home.certifier.state}`;
     const prior = certifiers.get(certifierKey);
     certifiers.set(certifierKey, {
-      name: prior?.name ?? home.certifier_name,
-      state: home.certifier_state,
+      kind: home.certifier.kind,
+      name: prior?.name ?? home.certifier.name,
+      state: home.certifier.state,
       homes_certified: (prior?.homes_certified ?? 0) + 1,
       modified_certifications: (prior?.modified_certifications ?? 0) +
         Number(home.certification_modified),

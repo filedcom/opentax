@@ -26,6 +26,12 @@ export const form8908: MefFormDescriptor<"f8908", unknown> = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8908--2025.pdf",
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
+    if (
+      !context?.pending ||
+      JSON.stringify(raw) !== JSON.stringify(context.pending.f8908)
+    ) {
+      throw new Error("Form 8908 source differs from filed return");
+    }
     const { source, lines } = reconciledForm8908Source(
       raw,
       context?.pending?.f3800,
@@ -50,9 +56,11 @@ export const form8908: MefFormDescriptor<"f8908", unknown> = {
       element("TotalCreditAmt", lines.line8),
       ...lines.certifiers.map((certifier) =>
         elements("CertifierInformationGrp", [
-          elements("BusinessName", [
-            element("BusinessNameLine1Txt", certifier.name),
-          ]),
+          certifier.kind === "person"
+            ? element("PersonNm", certifier.name)
+            : elements("BusinessName", [
+              element("BusinessNameLine1Txt", certifier.name),
+            ]),
           element("StateAbbreviationCd", certifier.state),
           element("HomesCertifiedCnt", certifier.homes_certified),
           element(

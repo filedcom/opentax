@@ -37,8 +37,7 @@ export function reconciledForm8908Source(
         zero_energy_ready: home.zero_energy_ready,
         prevailing_wage_met: home.prevailing_wage_met,
         form7220_review_reference: home.form7220_review_reference,
-        certifier_name: home.certifier_name,
-        certifier_state: home.certifier_state,
+        certifier: home.certifier,
         certification_reference: home.certification_reference,
         certified_on: home.certified_on,
         certification_modified: home.certification_modified,
@@ -51,13 +50,13 @@ export function reconciledForm8908Source(
   }
   for (const certifier of lines.certifiers) {
     if (
-      certifier.name.length > 75 ||
-      !/^([A-Za-z0-9#&'()\-] ?)*[A-Za-z0-9#&'()\-]$/.test(
-        certifier.name,
-      )
+      certifier.name.length > (certifier.kind === "person" ? 35 : 75) ||
+      !(certifier.kind === "person"
+        ? /^([A-Za-z0-9'\-] ?)*[A-Za-z0-9'\-]$/.test(certifier.name)
+        : /^([A-Za-z0-9#&'()\-] ?)*[A-Za-z0-9#&'()\-]$/.test(certifier.name))
     ) {
       throw new Error(
-        "Form 8908 certifier name cannot fit IRS8908 BusinessName",
+        "Form 8908 certifier name cannot fit its IRS8908 identity field",
       );
     }
   }
