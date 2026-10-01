@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **609 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **612 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 128-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 609 bounded routes and
+**Implemented coverage.** The completed ledger records 612 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -79,7 +79,9 @@ bounded registrations from staged guarded routes. Filled-PDF review preparation
 now has 128 source fixtures, 52 of 112 unique registered PDF keys represented,
 and a deterministic per-page review manifest; the 60 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
-before writing that case's filled PDF.
+before writing that case's filled PDF. A read-only checker can later verify the
+human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
+results without auto-certifying visual correctness.
 The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
 smoke of each compiled asset before upload, limits write permission to the
 publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios
@@ -93,6 +95,10 @@ statement packet decisions remain open.
 Identified 1099-DIV and 1099-OID payer copies now reject exact duplicate
 source records before their dividends, interest, and withholding accumulate;
 identified 1099-G and 1099-MISC copies have equivalent bounded guards.
+Positive 1099-NEC withholding now requires a matching taxpayer or joint-spouse
+recipient SSN at native/PDF export. A 14-route evidence matrix records where
+reviewed facts, retained source bytes, signatures, and IRS acceptance differ;
+the overall evidence policy still needs a user decision.
 
 **Coverage and release gates.** The current static audit counts 145 registered native MeF
 descriptors, 115 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
