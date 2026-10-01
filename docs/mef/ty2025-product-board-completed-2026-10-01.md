@@ -496,6 +496,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## 2026-10-01 follow-up implementation batch (unrun)
 
+- [x] Issue #60 Form 8995 now accepts finite cents in its one Schedule C business's source QBI, retains exact raw Schedule C and attributable deduction amounts through the calculation, then rounds the filed line 1 to whole dollars before the 20% and taxable-income limits. Full-return 49/50-cent boundaries and native/PDF source-tamper fixtures are authored but unrun. Form 8995-A retains its separate integer schema; other QBI source combinations and artifact validation remain open. See the [Form 8995 gap](ty2025-form8995-positive-export-gap.md).
+
 - [x] Form 1116 Schedule C amendment stage now checks the prepared Form 1040-X PDF AcroForm's affected year, filer SSN, and lines 6/7/8/10/11 columns A–C against the reviewed source for the affected year. Positive and altered-field fixtures are authored but unrun. This verifies the December 2025 AcroForm field layout, not the authenticity or IRS acceptance of an amended filing; public Schedule C export remains closed. See the [Schedule C gap](ty2025-form1116-schedule-c-gap.md).
 - [x] Form 8881 child PDF now matches positive Part I/II/III credit amounts and its document ID to the prepared Form 3800 parent and final return. The all-zero source still projects directly without requiring a positive parent, but public zero-credit export remains guarded by attachment coverage. Positive, zero, and tamper fixtures are authored but unrun; payroll/plan source authenticity, wider credit combinations, and artifact validation remain open. See the [Form 3800 PDF gap](ty2025-form3800-pdf-gap.md).
 
