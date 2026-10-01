@@ -655,6 +655,56 @@ function buildOtherPassive(
       );
     }
   }
+  // One at-risk share-rent farm loss may use the current profit of two
+  // separately identified other-passive rentals. Their combined allowed
+  // amount must cancel on the final return while the farm retains its PAL.
+  if (
+    activities.length === 3 && farmLosses.length === 1 &&
+    scheduleEProfits.length === 2 &&
+    farmLosses[0].current_net < -scheduleEProfits.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 1 &&
+    farmSource.data.f4835s[0].some_investment_not_at_risk === false &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 2 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    const profits = scheduleEProfits.reduce(
+      (sum, activity) => sum + activity.current_net,
+      0,
+    );
+    if (
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      limit.suspended !== -farmLosses[0].current_net - profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 one-farm/two-rental offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   const losses = activities.map((activity) =>
     Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
     activity.prior_unallowed_4797_part1 +

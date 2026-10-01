@@ -1,5 +1,23 @@
 # TY2025 Form 8582 durable activity identity
 
+## One current farm loss against two passive rental profits (written, unrun)
+
+The no-prior, no-sale Part V route now joins one Form 4835 share-rent farm's
+current at-risk loss to two separately identified type-B Schedule E rental
+profits. In the focused case, the farm's $5,000 loss uses $2,000 and $1,000 of
+rental profit, allowing $3,000 on its Form 4835 line 34c and retaining a $2,000
+PAL under the farm activity ID. The Form 8582 native builder requires the three
+source activities, one W-2, no K-1 or sale source, and exact Schedule 1 and
+Form 1040 totals; its PDF invokes the same check. Both Form 4835 outputs use
+the calculated allocation. A full-return positive case and farm, rental,
+identity, Schedule 1, and Form 1040 tamper cases are authored but unrun.
+
+This is a current-year other-passive offset under the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582). Prior PALs, active
+rental special allowance, dispositions, grouping, other passive sources,
+source-document authentication, durable accepted-year storage, filled-PDF
+review, and IRS filing acceptance remain open.
+
 ## Reviewed 2024 record joined to the 2025 return graph, unrun
 
 The public `form8582_prior_year_record` source now carries one typed, reviewed
