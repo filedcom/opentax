@@ -1,7 +1,10 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { k1SCorpNode } from "../../../inputs/k1_s_corp/index.ts";
 import { reconcileNewFormalNotes } from "./debt-note.ts";
-import { calculatePriorReducedNoteWorkpaper } from "./prior-reduced-note.ts";
+import {
+  calculatePriorReducedNoteGainCandidate,
+  calculatePriorReducedNoteWorkpaper,
+} from "./prior-reduced-note.ts";
 import { buildReviewedStockLoss7203 } from "../../../../2025/mef/forms/f7203_stock_loss.ts";
 import { form7203StockLossPdf } from "../../../../2025/pdf/forms/f7203_stock_loss.ts";
 import { buildReviewedStockLossScheduleE } from "../../../../2025/mef/forms/schedule_e_stock_loss.ts";
@@ -957,11 +960,12 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
   );
 });
 
-Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes but remains closed for filing", async () => {
+Deno.test("Form 7203 prior reduced formal note binds nine exact source bytes and stages box F gain but remains closed for filing", async () => {
   const records = [
     "2025 signed K-1 copy",
     "2024 stock-basis rollforward",
     "signed 2023 formal note",
+    "2023 original shareholder bank advance",
     "accepted 2024 Form 1040",
     "2024 IRS acceptance receipt",
     "accepted 2024 Form 7203",
@@ -991,14 +995,21 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
     signed_note_document_reference: "signed 2023 formal note",
     signed_note_sha256: hashes[2],
     note_execution_date: "2023-05-10",
+    original_advance_date: "2023-05-10",
+    original_advance_amount: 1_000,
+    original_advance_bank_reference: "2023 original shareholder bank advance",
+    original_advance_bank_sha256: hashes[3],
+    no_prior_note_principal_changes_confirmed: true,
+    no_form1099b_or_da_for_repayment_confirmed: true,
+    no_other_2025_capital_transactions_confirmed: true,
     shareholder_lender_ssn: "123456789",
     corporate_borrower_ein: "987654321",
     prior_filed_return_reference: "accepted 2024 Form 1040",
-    prior_filed_return_sha256: hashes[3],
+    prior_filed_return_sha256: hashes[4],
     prior_accepted_acknowledgement_reference: "2024 IRS acceptance receipt",
-    prior_accepted_acknowledgement_sha256: hashes[4],
+    prior_accepted_acknowledgement_sha256: hashes[5],
     prior_filed_form7203_reference: "accepted 2024 Form 7203",
-    prior_filed_form7203_sha256: hashes[5],
+    prior_filed_form7203_sha256: hashes[6],
     prior_form7203_line20_ending_face: 1_000,
     prior_form7203_line31_ending_basis: 500,
     opening_note_face_amount: 1_000,
@@ -1008,9 +1019,9 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
       date: "2025-08-15",
       amount: 400,
       corporate_loan_ledger_reference: "2025 corporate note principal ledger",
-      corporate_loan_ledger_sha256: hashes[6],
+      corporate_loan_ledger_sha256: hashes[7],
       shareholder_bank_deposit_reference: "2025 shareholder bank deposit",
-      shareholder_bank_deposit_sha256: hashes[7],
+      shareholder_bank_deposit_sha256: hashes[8],
       principal_only_confirmed: true,
     },
     no_other_shareholder_debt_confirmed: true,
@@ -1037,7 +1048,8 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
     inputs,
     records,
   );
-  assertEquals(bound.verifiedSourceDocuments.manifest.length, 8);
+  assertEquals(bound.verifiedSourceDocuments.manifest.length, 9);
+  assertEquals(bound.stagedPriorReducedNoteGain.form1040_line7_gain, 200);
   assertEquals(
     bound.verifiedSourceDocuments.getBytes(records[0].reference),
     records[0].bytes,
@@ -1075,6 +1087,16 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
   );
   await assertRejects(() =>
     executePriorReduced7203WithSourceDocuments(
+      inputs,
+      records.map((document, index) =>
+        index === 3
+          ? { ...document, bytes: new TextEncoder().encode("changed advance") }
+          : document
+      ),
+    )
+  );
+  await assertRejects(() =>
+    executePriorReduced7203WithSourceDocuments(
       {
         ...inputs,
         k1_s_corp: [{
@@ -1095,6 +1117,27 @@ Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes bu
   assertEquals(workpaper.line30_allowed_debt_loss, 300);
   assertEquals(workpaper.line34_reportable_gain, 200);
   assertEquals(workpaper.allowed_schedule_e_loss, 400);
+  const gain = calculatePriorReducedNoteGainCandidate(prior, source);
+  assertEquals(gain.transaction.part, "F");
+  assertEquals(gain.transaction.date_acquired, "2023-05-10");
+  assertEquals(gain.transaction.date_sold, "2025-08-15");
+  assertEquals(gain.transaction.proceeds, 400);
+  assertEquals(gain.transaction.cost_basis, 200);
+  assertEquals(gain.transaction.gain_loss, 200);
+  assertEquals(gain.schedule_d_line10_gain, 200);
+  assertEquals(gain.form1040_line7_gain, 200);
+  assertThrows(() =>
+    calculatePriorReducedNoteGainCandidate({
+      ...prior,
+      original_advance_date: "2025-01-01",
+    }, source)
+  );
+  assertThrows(() =>
+    calculatePriorReducedNoteGainCandidate({
+      ...prior,
+      original_advance_amount: 900,
+    }, source)
+  );
   assertThrows(() =>
     calculatePriorReducedNoteWorkpaper({
       ...prior,

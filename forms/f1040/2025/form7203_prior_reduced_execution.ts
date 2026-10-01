@@ -9,9 +9,7 @@ import type {
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "./registry.ts";
 import { inputSchema as k1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
-import {
-  calculatePriorReducedNoteWorkpaper,
-} from "../nodes/intermediate/forms/form7203/prior-reduced-note.ts";
+import { calculatePriorReducedNoteGainCandidate } from "../nodes/intermediate/forms/form7203/prior-reduced-note.ts";
 
 /**
  * Bind every claimed source to bytes in the same execution. The graph's prior
@@ -21,7 +19,13 @@ import {
 export async function executePriorReduced7203WithSourceDocuments(
   inputs: Record<string, unknown>,
   documents: readonly SourceDocumentBytes[],
-): Promise<DocumentBoundExecuteResult> {
+): Promise<
+  DocumentBoundExecuteResult & {
+    readonly stagedPriorReducedNoteGain: ReturnType<
+      typeof calculatePriorReducedNoteGainCandidate
+    >;
+  }
+> {
   const rawK1s = inputs.k1_s_corp;
   const parsed = k1InputSchema.parse({ k1_s_corps: rawK1s });
   if (parsed.k1_s_corps.length !== 1) {
@@ -32,7 +36,10 @@ export async function executePriorReduced7203WithSourceDocuments(
   if (!source || source.kind !== "prior_reduced_formal_note_repayment") {
     throw new Error("Form 7203 prior reduced note needs its tagged source");
   }
-  calculatePriorReducedNoteWorkpaper(source, k1);
+  const stagedPriorReducedNoteGain = calculatePriorReducedNoteGainCandidate(
+    source,
+    k1,
+  );
   const stock = k1.form7203_stock_loss_ledger;
   const general = inputs.general as Record<string, unknown> | undefined;
   if (
@@ -63,6 +70,10 @@ export async function executePriorReduced7203WithSourceDocuments(
       sha256: source.signed_note_sha256,
     },
     {
+      reference: source.original_advance_bank_reference,
+      sha256: source.original_advance_bank_sha256,
+    },
+    {
       reference: source.prior_filed_return_reference,
       sha256: source.prior_filed_return_sha256,
     },
@@ -83,7 +94,7 @@ export async function executePriorReduced7203WithSourceDocuments(
       sha256: source.principal_repayment.shareholder_bank_deposit_sha256,
     },
   ];
-  return await executeWithSourceDocuments(
+  const execution = await executeWithSourceDocuments(
     buildExecutionPlan(registry),
     registry,
     inputs,
@@ -91,4 +102,5 @@ export async function executePriorReduced7203WithSourceDocuments(
     claims,
     documents,
   );
+  return { ...execution, stagedPriorReducedNoteGain };
 }

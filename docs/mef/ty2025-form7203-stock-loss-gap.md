@@ -6,20 +6,36 @@ The executor now has an async `executeWithSourceDocuments` entry point. It
 requires an exact set of distinct source references, nonempty `Uint8Array`
 bytes, and SHA-256 matches before running the graph. Its result retains a
 read-only reference/digest manifest and privately copied bytes; access returns
-another copy. The Form 7203-specific entry point derives its eight claims
+another copy. The Form 7203-specific entry point derives its nine claims
 from the parsed, single-K-1 prior-reduced source: 2025 K-1, opening stock-basis
 workpaper, signed note, prior filed return, IRS acceptance acknowledgement,
-prior filed Form 7203, corporate loan ledger, and shareholder bank deposit.
+prior filed Form 7203, corporate loan ledger, shareholder bank deposit, and
+the original shareholder bank advance. The tagged prior-note source requires
+that advance's date, amount, reference and SHA-256; its date must match the
+signed note and its amount must match opening face. It also affirms no prior
+principal changes, no repayment Form 1099-B/1099-DA, and no other 2025 capital
+transactions.
 It also requires the same shareholder, corporation, stock ledger, and exact
 K-1 repayment/loss. Complete-byte, missing-byte, changed-byte, and altered-
 claim fixtures are authored for the deferred batch.
+
+For a note held more than one year, the staged gain candidate computes a
+Form 8949 Part II box F row with the original funding date, repayment date,
+full principal proceeds, Form 7203 line 26 nontaxable basis, and line 34
+capital gain. It passes that row through the existing Form 8949 and Schedule D
+calculators and requires the single-transaction Schedule D long-term and Form
+1040 line 7 amounts to equal line 34. The $400 repayment/$200 basis example
+produces $200 on each. Funding-date and original-advance tamper fixtures are
+authored. The byte-bound executor returns this candidate beside its verified
+manifest for review; it does not deposit the row or allow native/PDF filing.
 
 This verifies that the supplied bytes match the declared digests in this
 execution. It does **not** authenticate the issuer or IRS, parse the prior
 accepted return/Form 7203 to prove line 20/31, prove the note and principal
 payment contents, or establish the gain's holding period and character. The
 K-1 node and Form 7203 native/PDF exporters still reject the prior-reduced
-branch. Form 8949, Schedule D, and Form 1040 line 7 remain unjoined.
+branch. The gain has a calculated downstream candidate but remains unjoined
+to the actual return pending graph.
 
 The public K-1 source now uses the strict tagged `form7203_debt_evidence`
 contract. Its `new_2025_formal_notes` branch retains the active new-note routes
