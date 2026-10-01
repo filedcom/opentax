@@ -115,6 +115,7 @@ export function form8835PdfSources(
   const sourceDetails = prepared.currentDetails.filter((row) =>
     row.line === "4e"
   );
+  const filedDocumentIds = prepared.form8835DocumentIds;
   if (
     entries.length !== rows.length ||
     entries.some((entry, index) =>
@@ -135,12 +136,14 @@ export function form8835PdfSources(
     currentAmounts[0].transferOutCredit !== 0 ||
     currentAmounts[0].appliedCredit !== totalCredit ||
     sourceDetails.length !== rows.length ||
+    filedDocumentIds?.length !== rows.length ||
     sourceDetails.some((detail, index) =>
       detail.credit !== rows[index].lines.line15 ||
       detail.appliedCredit !== rows[index].lines.line15 ||
       (detail.transferOutCredit ?? 0) !== 0 ||
-      !detail.sourceDocumentId
+      detail.sourceDocumentId !== filedDocumentIds?.[index]
     ) ||
+    new Set(filedDocumentIds).size !== rows.length ||
     currentRows[0].metadata.referenceDocumentId !==
       sourceDetails.map((detail) => detail.sourceDocumentId).join(" ") ||
     prepared.lines.line37 < totalCredit ||

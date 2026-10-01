@@ -32,6 +32,8 @@ import {
 
 export type Form3800DocumentParts = {
   readonly lines: Form3800NonpassiveLines;
+  /** Reserved IRS8835 IDs in the same order as the filed facility copies. */
+  readonly form8835DocumentIds?: readonly string[];
   readonly transferStatementIds: readonly string[];
   readonly carryforwardSources: readonly Form3800CarryforwardDocumentSource[];
   readonly currentRows: readonly Form3800CurrentXmlRow[];

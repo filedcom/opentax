@@ -1464,7 +1464,7 @@ export function prepareForm3800DocumentParts(
       "Form 3800 carryforward needs authenticated prior-return evidence and an attached filed history statement",
     );
   }
-  return joined;
+  return { ...joined, form8835DocumentIds: form8835Ids };
 }
 
 export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {

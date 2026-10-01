@@ -441,6 +441,7 @@ function preparedParts(
   const ids = credits.map((_, index) => `F8835-${index + 1}`);
   return {
     lines: { line37: total, line38: total } as Form3800DocumentParts["lines"],
+    form8835DocumentIds: ids,
     transferStatementIds: [],
     carryforwardSources: [],
     currentRows: [{
@@ -587,6 +588,59 @@ Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a misma
     .credit_amount = 500;
   assertThrows(
     () => projectedAll(changed),
+    Error,
+    "disagrees with native Form 3800",
+  );
+});
+
+Deno.test("Form 8835 PDF binds each facility to its reserved native document ID", () => {
+  const second = {
+    ...facility(),
+    facility_description: "Second geothermal production site",
+    facility_us_address: {
+      line1: "20 Plant Rd",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: 39.223456,
+    facility_longitude: -75.223456,
+  };
+  const source = pending([facility(), second]);
+  const prepared = preparedParts(source);
+  assertEquals(
+    form8835Pdf.instances?.({}, filer, source, prepared)?.length,
+    2,
+  );
+  const swappedIds = [...prepared.form8835DocumentIds!].reverse();
+  assertThrows(
+    () =>
+      form8835Pdf.instances?.({}, filer, source, {
+        ...prepared,
+        form8835DocumentIds: swappedIds,
+      }),
+    Error,
+    "disagrees with native Form 3800",
+  );
+  const counterfeitId = prepared.currentDetails.map((detail, index) => ({
+    ...detail,
+    sourceDocumentId: index === 1 ? "OTHER-DOCUMENT" : detail.sourceDocumentId,
+  }));
+  assertThrows(
+    () =>
+      form8835Pdf.instances?.({}, filer, source, {
+        ...prepared,
+        currentRows: prepared.currentRows.map((row) => ({
+          ...row,
+          metadata: {
+            ...row.metadata,
+            referenceDocumentId: counterfeitId.map((detail) =>
+              detail.sourceDocumentId
+            ).join(" "),
+          },
+        })),
+        currentDetails: counterfeitId,
+      }),
     Error,
     "disagrees with native Form 3800",
   );

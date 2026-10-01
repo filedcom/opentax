@@ -359,6 +359,18 @@ IDs and three-page PDF copies, two $600 Form 3800 Part V rows, and $1,200 on
 line 38, Schedule 3 line 6a, and Form 1040 line 20. Its native XML passes
 local TY2025 v5.4 XSD. The 20-page packet was rendered and inspected; its PDF
 SHA-256 is `6136172eee20ac9e9ac76b139102547eb4ee4f4a55c0d25927fdb5e4aa1dd78f`.
+
+The registered Form 8835 child PDF now also checks the exact reserved native
+`IRS8835` document IDs in facility order against its Form 3800 Part V source
+details. Before this check, a forged nonempty second detail ID could pass if
+the Part III reference string was changed with it. A two-facility positive and
+swapped/counterfeit-ID fixtures are authored for the deferred bulk pass. The
+[2025 Form 8835 instructions](https://www.irs.gov/instructions/i8835) require
+a separate form for each qualified facility; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) require
+Part V breakdowns when a Part III amount aggregates multiple facilities.
+This binds prepared document references and does not authenticate production
+meter or electricity-sale records.
 The next mixed wind/geothermal source return prints wind on Form 8835 line 1a,
 geothermal on line 1c, two $600 Part V rows, and $1,200 through line 38,
 Schedule 3, and Form 1040. Its local TY2025 v5.4 XML check passes; the two
