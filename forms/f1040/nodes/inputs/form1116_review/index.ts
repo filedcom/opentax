@@ -8,6 +8,7 @@ import {
   mixedInterestDividendPdfReviewSchema,
   multiSourcePdfReviewSchema,
   singleSourcePdfReviewSchema,
+  twoCountryInterestPdfReviewSchema,
 } from "../../intermediate/forms/form_1116/index.ts";
 
 /** The narrow TY2025 zero-foreign-preferential-income source review. */
@@ -20,6 +21,8 @@ export const inputSchema = z.object({
   single_source_pdf_review: singleSourcePdfReviewSchema.optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
+    .optional(),
+  two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
 }).strict();
 
@@ -34,6 +37,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
       single_source_pdf_review,
       multi_source_pdf_review,
       mixed_interest_dividend_pdf_review,
+      two_country_interest_pdf_review,
       ...preferential
     } = review;
     if (
@@ -41,6 +45,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         single_source_pdf_review,
         multi_source_pdf_review,
         mixed_interest_dividend_pdf_review,
+        two_country_interest_pdf_review,
       ].filter(Boolean).length > 1
     ) {
       throw new Error(
@@ -53,6 +58,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         single_source_pdf_review,
         multi_source_pdf_review,
         mixed_interest_dividend_pdf_review,
+        two_country_interest_pdf_review,
       })],
     };
   }

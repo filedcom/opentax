@@ -84,6 +84,17 @@ export const mixedInterestDividendPdfReviewSchema = singleSourcePdfReviewSchema
     dividend_source_document_reference: z.string().trim().min(1),
   }).strict();
 
+export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
+  .omit({
+    source_document_reference: true,
+    domestic_treasury_source_document_reference: true,
+  }).extend({
+    column_a_source_document_reference: z.string().trim().min(1),
+    column_a_irs_country_code: z.string().length(2),
+    column_b_source_document_reference: z.string().trim().min(1),
+    column_b_irs_country_code: z.string().length(2),
+  }).strict();
+
 export const partnershipK3PassiveInterestSchema = z.object({
   partnership_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: z.string().trim().min(1),
@@ -561,6 +572,8 @@ export const inputSchema = z.object({
   ]).optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
+    .optional(),
+  two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
 });
 
@@ -1129,6 +1142,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         multi_source_pdf_review: input.multi_source_pdf_review,
         mixed_interest_dividend_pdf_review:
           input.mixed_interest_dividend_pdf_review,
+        two_country_interest_pdf_review: input.two_country_interest_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });
