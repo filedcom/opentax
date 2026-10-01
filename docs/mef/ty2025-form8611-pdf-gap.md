@@ -1,12 +1,12 @@
 # TY2025 Form 8611 printable-return gap
 
-Static source, native, and blank-PDF review on 2026-09-28. No PDF descriptor or
-focused case was added, and no test, typecheck, XSD, filled-PDF render,
-business-rule, or ATS run occurred. The current
-[IRS Form 8611](https://www.irs.gov/pub/irs-pdf/f8611.pdf) is a one-page return
-attachment followed by two instruction pages. It calls for a separate form per
-building and prints building/bond identity plus lines 1-15; lines 16-17 are for
-section 42(j)(5) partnerships, not an ordinary individual recipient.
+Static source, native, and blank-PDF review began on 2026-09-28. A bounded PDF
+descriptor and direct projection fixtures are now authored, but no test,
+typecheck, XSD, filled-PDF render, business-rule, or ATS run has occurred. The
+current [IRS Form 8611](https://www.irs.gov/pub/irs-pdf/f8611.pdf) is a one-page
+return attachment followed by two instruction pages. It calls for a separate
+form per building and prints building/bond identity plus lines 1-15; lines 16-17
+are for section 42(j)(5) partnerships, not an ordinary individual recipient.
 
 The public `f8611` source retains one building address/BIN/date, optional
 tax-exempt bond details, and either an own-credit calculation or a flow-through
@@ -30,12 +30,20 @@ internally consistent calculation can therefore print incorrect historical
 recapture figures. The positive Schedule 2 sum cannot detect a wrong amount
 shared by both outputs.
 
-**Decision for this build slice:** no positive PDF route yet. A bounded PDF
-should begin only after typed, identified prior-filed Form 8586/8609/8609-A/8611
-or issuer K-1 records are linked to each building and checked against the
-entered worksheet, recapture, interest, and unused-credit facts. Then
-recalculate each line, compare each building's native and PDF projection,
-reconcile the sum to the finalized return, map the actual AcroForm widgets, and
-run the deferred XSD and filled-PDF visual batch. A zero line 14 is not, by
-itself, proof that a Form 8611 or carryforward line 15 is unnecessary; classify
-the recapture event and IRS exceptions separately.
+The Form 8611 PDF descriptor now maps the 2021 revision's actual first-page
+AcroForm widgets: filer and building identity, optional bond facts, and lines
+1–15, with one page per building. It splits the two printed decimal ratios,
+leaves own-credit lines 1–7 blank for pass-through recipients, and prints the
+section 42(j)(5) line 11 annotation where applicable. Its source projection uses
+the same line calculator as native MeF and compares the sum of line 14 to final
+Schedule 2 line 16. The source also rejects duplicate building BINs so two
+recapture events cannot silently emit two Forms 8611 for one building. The
+authored positive and tamper fixtures remain unrun; the PDF export gate remains
+active.
+
+**Remaining evidence prerequisite:** link typed, identified prior-filed Form
+8586/8609/8609-A/8611 or issuer K-1 records to each building and check the
+entered worksheet, recapture, interest, and unused-credit facts against them.
+Then run the deferred XSD and filled-PDF visual batch and the IRS rules. A zero
+line 14 is not, by itself, proof that a Form 8611 or carryforward line 15 is
+unnecessary; classify the recapture event and IRS exceptions separately.

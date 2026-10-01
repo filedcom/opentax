@@ -6,6 +6,26 @@ import {
 } from "../../../nodes/inputs/f8611/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
+export function reconcileForm8611Schedule2(
+  items: readonly F8611Item[],
+  pending?: Record<string, unknown>,
+): void {
+  const total = items.reduce(
+    (sum, item) => sum + calculateForm8611(item).line14,
+    0,
+  );
+  if (!pending || total <= 0) return;
+  const schedule2 = pending.schedule2;
+  const claimed = schedule2 && typeof schedule2 === "object"
+    ? (schedule2 as Record<string, unknown>).line16_lihtc_recapture
+    : undefined;
+  if (typeof claimed !== "number" || Math.abs(claimed - total) > 0.005) {
+    throw new Error(
+      "Form 8611 line 14 total differs from Schedule 2 line 16",
+    );
+  }
+}
+
 function building(item: F8611Item): string {
   const address = item.building_us_address;
   const bond = item.tax_exempt_bond;
@@ -32,9 +52,7 @@ function building(item: F8611Item): string {
     lines.line1 === undefined
       ? ""
       : element("PYTotalCreditsOnForm8586Amt", lines.line1),
-    lines.line2 === undefined
-      ? ""
-      : element("CreditsIncludedAmt", lines.line2),
+    lines.line2 === undefined ? "" : element("CreditsIncludedAmt", lines.line2),
     lines.line3 === undefined
       ? ""
       : element("CreditsSubjectToRecaptureAmt", lines.line3),
@@ -70,28 +88,15 @@ function building(item: F8611Item): string {
   ]);
 }
 
-export const form8611: MefFormDescriptor<"f8611", unknown, readonly string[]> = {
-  pendingKey: "f8611",
-  FIELD_MAP: [],
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8611.pdf",
-  build(raw, context?: MefBuildContext) {
-    if (!raw || typeof raw !== "object" || !("f8611s" in raw)) return [];
-    const input = inputSchema.parse(raw);
-    const total = input.f8611s.reduce(
-      (sum, item) => sum + calculateForm8611(item).line14,
-      0,
-    );
-    if (context?.pending && total > 0) {
-      const schedule2 = context.pending.schedule2;
-      const claimed = schedule2 && typeof schedule2 === "object"
-        ? (schedule2 as Record<string, unknown>).line16_lihtc_recapture
-        : undefined;
-      if (typeof claimed !== "number" || Math.abs(claimed - total) > 0.005) {
-        throw new Error(
-          "Form 8611 line 14 total differs from Schedule 2 line 16",
-        );
-      }
-    }
-    return input.f8611s.map(building);
-  },
-};
+export const form8611: MefFormDescriptor<"f8611", unknown, readonly string[]> =
+  {
+    pendingKey: "f8611",
+    FIELD_MAP: [],
+    pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8611.pdf",
+    build(raw, context?: MefBuildContext) {
+      if (!raw || typeof raw !== "object" || !("f8611s" in raw)) return [];
+      const input = inputSchema.parse(raw);
+      reconcileForm8611Schedule2(input.f8611s, context?.pending);
+      return input.f8611s.map(building);
+    },
+  };

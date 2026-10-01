@@ -63,3 +63,17 @@ Deno.test("Form 8611 reconciles line 14 totals with Schedule 2 line 16", () => {
     "differs from Schedule 2 line 16",
   );
 });
+
+Deno.test("Form 8611 native rejects two documents for one building BIN", () => {
+  assertThrows(
+    () =>
+      form8611.build({
+        f8611s: [owner, {
+          ...owner,
+          source_document_reference: "Another event on the same building",
+        }],
+      }),
+    Error,
+    "one combined document per building BIN",
+  );
+});
