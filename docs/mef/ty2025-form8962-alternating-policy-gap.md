@@ -141,6 +141,29 @@ fixtures are authored but unrun. The
 [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require monthly columns A/C from the policies and a correctly determined
 SLCSP when Marketplace column B is wrong. Concurrent coverage, other
-tax-family members, interstate policies, five or more corrected policies,
-Marketplace source-byte authentication, and bulk test/XSD/filled-PDF/ATS
-validation remain open.
+tax-family members, interstate policies, Marketplace source-byte
+authentication, and bulk test/XSD/filled-PDF/ATS validation remain open.
+
+## Five through twelve sequential corrected policies (implementation staged)
+
+The same one-person, same-state reconciliation now permits an independently
+determined `marketplace_error` SLCSP on each of up to twelve identified,
+nonoverlapping monthly policies. The twelve-month tax year and the existing
+one-active-policy-per-month rule bound the count; the
+[2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962) do
+not impose a separate policy-count limit. Each correction still needs its own
+covered APTC month, positive original column B, positive premium and APTC,
+different corrected SLCSP, dated Marketplace determination reference, and
+reviewed record SHA-256. Native MeF replays the corrected SLCSP against the
+appropriate policy's original Form 1095-A columns and finalized Schedule 2 and
+Form 1040. PDF projection invokes the same guard.
+
+A five-policy source graph covers January–February, March–April, May–June,
+July–August, and September–December. One $650 determination on the first month
+of each policy raises the original $804 credit to $1,054 and lowers excess APTC
+to $1,346. Source-to-return, native XML, PDF, missing-record,
+wrong-policy-month, and final-tax fixtures are authored for deferred bulk
+validation. More than twelve same-year policies cannot each own a distinct
+covered month in this nonoverlap route. Concurrent policies, changed coverage
+families, authenticated Marketplace determination bytes, IRS acceptance, and
+bulk test/XSD/filled-PDF/ATS verification remain open.

@@ -4836,6 +4836,54 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-five-sequential-corrected-slcsp-policies",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_300, 8_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        [1, 2],
+        [3, 4],
+        [5, 6],
+        [7, 8],
+        [9, 12],
+      ].map(([start, end], index) => {
+        const covered = Array.from(
+          { length: 12 },
+          (_, month) => month + 1 >= start && month + 1 <= end,
+        );
+        const count = end - start + 1;
+        return {
+          issuer_name: "Texas Marketplace",
+          policy_number: `TX-CORRECTED-${index + 1}`,
+          coverage_state: "TX",
+          covered_individual_ssns: ["111223333"],
+          monthly_premiums: covered.map((yes) => yes ? 500 : 0),
+          monthly_slcsps: covered.map((yes) => yes ? 600 : 0),
+          monthly_aptcs: covered.map((yes) => yes ? 200 : 0),
+          annual_premium: count * 500,
+          annual_slcsp: count * 600,
+          annual_aptc: count * 200,
+          slcsp_corrections: [{
+            month: start,
+            basis: "marketplace_error" as const,
+            corrected_slcsp: 650,
+            determination_source: "marketplace_contact" as const,
+            determination_reference: `TX-CORRECTED-${index + 1}-MONTH-${start}`,
+            determination_record_sha256: String(index + 1).repeat(64),
+            determined_on: "2026-02-01",
+          }],
+        };
+      }),
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule2"],
+    reviewFocus: [
+      "Five identified sequential policies retain their original Form 1095-A column B totals",
+      "Five dated $650 SLCSP determinations appear only in their covered months and yield $1,054 PTC",
+      "The $1,346 excess APTC reaches Schedule 2 and Form 1040 exactly once",
+    ],
+  },
+  {
     id: "single-situation4-nonenrolled-other-taxpayer",
     inputs: {
       general: {

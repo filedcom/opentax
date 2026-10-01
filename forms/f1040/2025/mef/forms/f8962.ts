@@ -1842,7 +1842,7 @@ function reconcileSimplePolicyMonths(
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || policy.shared_policy_periods ||
       (!interstateMove && policy.slcsp_corrections &&
-        !(fields.household_size === 1 && policies.length <= 4)) ||
+        !(fields.household_size === 1 && policies.length <= 12)) ||
       (!interstateMove && policy.slcsp_review_periods)
     ) ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
@@ -2076,7 +2076,7 @@ function reconcileSimplePolicyMonths(
     if (correctedPolicies.length > 0) {
       if (
         fields.household_size !== 1 || policies.length < 1 ||
-        policies.length > 4 ||
+        policies.length > 12 ||
         correctedPolicies.some((policy) => {
           const corrections = policy.slcsp_corrections ?? [];
           return corrections.length < 1 ||

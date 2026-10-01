@@ -748,6 +748,99 @@ Deno.test("Form 8962 reconciles four sequential same-state policies for one file
   );
 });
 
+Deno.test("Form 8962 reconciles twelve one-month policies with separate Marketplace SLCSP determinations", () => {
+  const sequential = months.map((_, owner) => ({
+    ...policy(
+      `TX-CORRECTED-${owner + 1}`,
+      months.map((_, index) => index === owner),
+    ),
+    slcsp_corrections: [{
+      month: owner + 1,
+      basis: "marketplace_error" as const,
+      corrected_slcsp: 650,
+      determination_source: "marketplace_contact" as const,
+      determination_reference: `TX-MKT-2025-${owner + 1}`,
+      determination_record_sha256: "a".repeat(64),
+      determined_on: "2026-02-01",
+    }],
+  }));
+  const source = { f1095as: sequential };
+  const sourceFields = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(sourceFields?.monthly_slcsps, Array(12).fill(650));
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...sourceFields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.total_premium_tax_credit, 1_404);
+  assertEquals(calculated?.excess_advance_premium, 996);
+  const correctedFields = {
+    ...fields,
+    monthly_ptc_rows: fields.monthly_ptc_rows.map((row) => ({
+      ...row,
+      slcsp: 650,
+      max_assistance: 117,
+      allowed_credit: 117,
+    })),
+    total_premium_tax_credit: 1_404,
+    excess_advance_payment: 996,
+    excess_advance_premium: 996,
+  };
+  const correctedPending = {
+    ...pending,
+    f1095a: source,
+    schedule2: { line1a_excess_advance_premium: 996 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 996 },
+  };
+  const xml = form8962.build(correctedFields, {
+    filer,
+    pending: correctedPending,
+  });
+  assertEquals(
+    (xml.match(/<MonthlyPremiumSLCSPAmt>650<\/MonthlyPremiumSLCSPAmt>/g) ?? [])
+      .length,
+    12,
+  );
+  const projected = form8962Pdf.projectFields?.(
+    correctedFields,
+    correctedPending,
+  ) ?? {};
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, correctedPending)?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8962.build(correctedFields, {
+        filer,
+        pending: {
+          ...correctedPending,
+          f1095a: {
+            f1095as: [...sequential.slice(0, 11), {
+              ...sequential[11],
+              slcsp_corrections: [{
+                ...sequential[11].slcsp_corrections[0],
+                determination_reference: undefined,
+              }],
+            }],
+          },
+        },
+      }),
+    Error,
+    "sourced Marketplace-error SLCSP corrections",
+  );
+});
+
 Deno.test("Form 8962 two sequential policies at 200% FPL apply the single-filer repayment cap", () => {
   const lowerIncomePolicies = [0, 1].map((owner) => {
     const active = months.map((_, index) => Math.floor(index / 6) === owner);
