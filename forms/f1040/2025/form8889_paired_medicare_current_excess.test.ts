@@ -52,7 +52,10 @@ const source = inputSchema.parse({
 function preparedReturn() {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
-    general: { ...base.inputs.general, spouse_dob: "1982-03-10" },
+    general: {
+      ...(base.inputs.general as Record<string, unknown>),
+      spouse_dob: "1982-03-10",
+    },
     form8889: source,
   });
   assertEquals(result.diagnostics, []);

@@ -35,30 +35,35 @@ Deno.test("Form 5329 emits distinct owner documents and reconciles combined Sche
     },
     pending: {
       schedule2: { line8_form5329_tax: 560 },
-      form8889: { forms: [{
-        owner: "spouse",
-        print_line2_taxpayer_contributions: 1_000,
-        print_line12: 0,
-        print_line16_taxable: 0,
-      }] },
+      form8889: {
+        forms: [{
+          owner: "spouse",
+          print_line2_taxpayer_contributions: 1_000,
+          print_line12: 0,
+          print_line16_taxable: 0,
+        }],
+      },
     },
   });
   assertEquals(documents.length, 2);
   assertStringIncludes(documents[0], "<SSN>123456789</SSN>");
   assertStringIncludes(documents[1], "<SSN>987654321</SSN>");
   assertThrows(
-    () => form5329.build({ owner_entries, owner_forms }, {
-      filer,
-      pending: {
-        schedule2: { line8_form5329_tax: 500 },
-        form8889: { forms: [{
-          owner: "spouse",
-          print_line2_taxpayer_contributions: 1_000,
-          print_line12: 0,
-          print_line16_taxable: 0,
-        }] },
-      },
-    }),
+    () =>
+      form5329.build({ owner_entries, owner_forms }, {
+        filer,
+        pending: {
+          schedule2: { line8_form5329_tax: 500 },
+          form8889: {
+            forms: [{
+              owner: "spouse",
+              print_line2_taxpayer_contributions: 1_000,
+              print_line12: 0,
+              print_line16_taxable: 0,
+            }],
+          },
+        },
+      }),
     Error,
     "Schedule 2 line 8",
   );
@@ -102,19 +107,23 @@ function buildOwner(
   const hsa = owner_entries[0]?.hsa_part_vii;
   const owner = owner_entries[0]?.owner === TS.S ? "spouse" : "primary";
   const form8889 = hsa
-    ? { forms: [{
-      owner,
-      beneficiary_ssn: "123456789",
-      print_line2_taxpayer_contributions: 0,
-      print_line12: hsa.line43_unused_contribution_room,
-      ...(priorAmount
-        ? { print_line13_deduction: Math.min(
-          hsa.line43_unused_contribution_room,
-          Math.max(0, priorAmount - hsa.line44_taxable_distributions),
-        ) }
-        : {}),
-      print_line16_taxable: hsa.line44_taxable_distributions,
-    }] }
+    ? {
+      forms: [{
+        owner,
+        beneficiary_ssn: "123456789",
+        print_line2_taxpayer_contributions: 0,
+        print_line12: hsa.line43_unused_contribution_room,
+        ...(priorAmount
+          ? {
+            print_line13_deduction: Math.min(
+              hsa.line43_unused_contribution_room,
+              Math.max(0, priorAmount - hsa.line44_taxable_distributions),
+            ),
+          }
+          : {}),
+        print_line16_taxable: hsa.line44_taxable_distributions,
+      }],
+    }
     : undefined;
   const pending = {
     ...context.pending,
@@ -280,12 +289,13 @@ Deno.test("Form 5329 will not invent a required account balance", () => {
 
 Deno.test("Form 5329 MeF rejects obsolete flat HSA excess keys", () => {
   assertThrows(
-    () => form5329.build(
-      { excess_hsa: 500, hsa_value: 2_000 } as unknown as Parameters<
-        typeof form5329.build
-      >[0],
-      { filer },
-    ),
+    () =>
+      form5329.build(
+        { excess_hsa: 500, hsa_value: 2_000 } as unknown as Parameters<
+          typeof form5329.build
+        >[0],
+        { filer },
+      ),
     Error,
     "requires owner entries",
   );
@@ -317,9 +327,9 @@ Deno.test("Form 5329 MeF rejects an owner-mismatched filed prior HSA source", ()
     hsa_part_vii: {
       line42_prior_excess: 2_000,
       prior_year_source: {
-        tax_year: 2024,
+        tax_year: 2024 as const,
         filed_form5329_reference: "filed-2024-5329-other-owner",
-        filed_return_reviewed: true,
+        filed_return_reviewed: true as const,
         owner_ssn: "987654321",
         form5329_line48: 2_000,
         form5329_line49: 120,
@@ -332,20 +342,23 @@ Deno.test("Form 5329 MeF rejects an owner-mismatched filed prior HSA source", ()
   }];
   const owner_forms = calculateOwnerForms({ owner_entries }).forms;
   assertThrows(
-    () => form5329.build({ owner_entries, owner_forms }, {
-      filer,
-      pending: {
-        schedule2: { line8_form5329_tax: 90 },
-        form8889: { forms: [{
-          owner: "primary",
-          beneficiary_ssn: "123456789",
-          print_line2_taxpayer_contributions: 3_800,
-          print_line12: 4_300,
-          print_line13_deduction: 4_300,
-          print_line16_taxable: 0,
-        }] },
-      },
-    }),
+    () =>
+      form5329.build({ owner_entries, owner_forms }, {
+        filer,
+        pending: {
+          schedule2: { line8_form5329_tax: 90 },
+          form8889: {
+            forms: [{
+              owner: "primary",
+              beneficiary_ssn: "123456789",
+              print_line2_taxpayer_contributions: 3_800,
+              print_line12: 4_300,
+              print_line13_deduction: 4_300,
+              print_line16_taxable: 0,
+            }],
+          },
+        },
+      }),
     Error,
     "reviewed filed 2024 owner source",
   );

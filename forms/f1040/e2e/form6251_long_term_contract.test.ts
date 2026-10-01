@@ -70,7 +70,10 @@ Deno.test("Form 6251 first-year long-term contract uses AMT percentage of comple
   const fields = result.pending.form6251!;
   assertEquals(result.pending.schedule1?.line3_schedule_c, 0);
   assertEquals(fields.line2p_long_term_contracts, 150_000);
-  assertEquals((fields.line11_amt ?? 0) > 0, true);
+  assertEquals(
+    typeof fields.line11_amt === "number" && fields.line11_amt > 0,
+    true,
+  );
   assertEquals(result.pending.schedule2?.line2_amt, fields.line11_amt);
   assertEquals(
     result.pending.f1040?.line17_additional_taxes,

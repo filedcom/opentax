@@ -60,7 +60,10 @@ Deno.test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, n
   const fields = result.pending.form6251!;
   assertEquals(result.pending.schedule1?.line3_schedule_c, 300_000);
   assertEquals(fields.line2q_mining_costs, 90_000);
-  assertEquals((fields.line11_amt ?? 0) > 0, true);
+  assertEquals(
+    typeof fields.line11_amt === "number" && fields.line11_amt > 0,
+    true,
+  );
   assertEquals(result.pending.schedule2?.line2_amt, fields.line11_amt);
   assertEquals(
     result.pending.f1040?.line17_additional_taxes,

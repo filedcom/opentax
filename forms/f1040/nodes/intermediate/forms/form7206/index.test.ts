@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TS } from "../../../types.ts";
 import { FilingStatus } from "../../../../mef/header.ts";
+import { FilingStatus as InputFilingStatus } from "../../../types.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import { scheduleC as scheduleCNode } from "../../../inputs/schedule_c/index.ts";
 import {
@@ -559,7 +560,7 @@ Deno.test("Publication 974 Marketplace deduction uses the identified Schedule C 
       required_filing_dependents_modified_agi: 0,
       household_size: 1,
       fpl_region: "contiguous" as const,
-      filing_status: FilingStatus.Single,
+      filing_status: InputFilingStatus.Single as const,
     },
     form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
       form1095a_policy_number: "MARKETPLACE-A",

@@ -3,7 +3,7 @@ import { f1040_2025 } from "./index.ts";
 import { inputSchema as f3468InputSchema } from "../nodes/inputs/f3468/index.ts";
 import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
 import { trustK1PartVFixture } from "../nodes/inputs/f3468/trust-part-v.fixture.ts";
-import { normalizeAllPending } from "./pdf/pending.ts";
+import { normalizeAllPending } from "./pending.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { form3468Pdf } from "./pdf/forms/f3468.ts";
 

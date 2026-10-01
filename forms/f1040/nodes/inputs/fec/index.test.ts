@@ -2,7 +2,9 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { fec } from "./index.ts";
 import { ForeignTaxCreditMethod } from "../../intermediate/forms/form_1116/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
     foreign_employer_name: "ACME Foreign Corp",
     country_code: "DE",
@@ -12,8 +14,11 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return fec.compute({ taxYear: 2025, formType: "f1040" }, { fecs: items });
+function compute(items: Record<string, unknown>[]) {
+  return fec.compute(
+    { taxYear: 2025, formType: "f1040" },
+    fec.inputSchema.parse({ fecs: items }),
+  );
 }
 
 const alternativeBasis = {

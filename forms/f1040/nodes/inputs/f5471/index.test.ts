@@ -306,9 +306,12 @@ Deno.test("Category 4/5a source requires reviewed absence of 2025 pro rata share
     const omitted = { ...item.schedule_g } as Record<string, unknown>;
     delete omitted[key];
     assertThrows(() =>
-      f5471.compute(ctx, {
-        f5471s: [{ ...item, schedule_g: omitted }],
-      }), Error);
+      f5471.compute(
+        ctx,
+        f5471.inputSchema.parse({
+          f5471s: [{ ...item, schedule_g: omitted }],
+        }),
+      ), Error);
   }
 });
 

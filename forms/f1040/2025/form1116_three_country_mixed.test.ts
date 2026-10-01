@@ -158,7 +158,7 @@ Deno.test("three-country mixed credit rejects changed dividend, interest, review
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
-  const changed = [
+  const changed: Record<string, Record<string, unknown>>[] = [
     {
       ...result.pending,
       f1099int: { f1099ints: [canada, { ...germany, box6: 999 }] },
@@ -183,6 +183,9 @@ Deno.test("three-country mixed credit rejects changed dividend, interest, review
     },
   ];
   for (const pending of changed) {
+    if (!("form_1116" in pending)) {
+      throw new Error("Expected Form 1116 in synthetic return");
+    }
     const alteredParent = pending.form_1116;
     assertThrows(
       () =>

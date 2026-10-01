@@ -89,7 +89,7 @@ const filer = {
   },
 };
 
-function filedReturn(k1 = source) {
+function filedReturn(k1: Record<string, unknown> = source) {
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,

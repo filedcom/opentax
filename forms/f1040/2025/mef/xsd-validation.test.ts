@@ -8402,7 +8402,12 @@ Deno.test({
   }
   const issuedCopyBytes = await issuedCopy.save();
   const issuedCopyHash = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", issuedCopyBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(issuedCopyBytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const result = runReturn({

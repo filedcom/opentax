@@ -48,7 +48,12 @@ async function copy(box1 = "18000", includeBox6 = true): Promise<Uint8Array> {
 
 async function review(bytes: Uint8Array) {
   const sha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(bytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   return {

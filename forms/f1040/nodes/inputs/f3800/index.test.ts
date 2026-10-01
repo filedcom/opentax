@@ -175,7 +175,9 @@ Deno.test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limi
       f3468_trust_part_v_credit_entries: [{
         ...entry,
         subject_to_passive_activity_limit: true,
-      }],
+      }] as unknown as NonNullable<
+        Parameters<typeof f3800.compute>[1]["f3468_trust_part_v_credit_entries"]
+      >,
     }), Error);
 });
 
