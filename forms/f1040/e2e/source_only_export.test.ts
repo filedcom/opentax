@@ -6,6 +6,7 @@ import { AccountType } from "../nodes/inputs/f8888/index.ts";
 import { buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { type FilerIdentity, FilingStatus } from "../2025/mef/types.ts";
+import { assertAttachmentCoverage } from "../2025/attachment-coverage.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -177,7 +178,7 @@ Deno.test("Form 8888 split refund cannot export without a matching final refund"
   );
 });
 
-Deno.test("Form 9465 installment request cannot disappear from MeF", () => {
+Deno.test("reviewed Form 9465 request stays blocked in MeF and PDF", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     f9465: attached9465,
   }, { taxYear: 2025, formType: "f1040" });
@@ -189,7 +190,12 @@ Deno.test("Form 9465 installment request cannot disappear from MeF", () => {
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 9465 attached installment request remains blocked pending accepted electronic authorization",
+    "Form 9465 attached installment request remains blocked until IRS guidance establishes how its separate third-party disclosure authorization is signed",
+  );
+  assertThrows(
+    () => assertAttachmentCoverage(pending, "pdf"),
+    Error,
+    "Form 9465 attached installment request remains blocked until IRS guidance establishes how its separate third-party disclosure authorization is signed",
   );
 });
 

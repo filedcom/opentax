@@ -35,6 +35,8 @@ export const inputSchema = z.object({
     no_default_in_last_12_months_confirmed: z.literal(true),
     no_bankruptcy_or_offer_in_compromise_confirmed: z.literal(true),
     address_unchanged_since_last_return_confirmed: z.literal(true),
+    // Review provenance only. This does not represent the Form 9465 jurat,
+    // its third-party disclosure consent, or an accepted MeF signature.
     taxpayer_authorized_attached_request_confirmed: z.literal(true),
   }).strict(),
   final_1040_line37_amount_owed: positiveWholeDollar.refine(

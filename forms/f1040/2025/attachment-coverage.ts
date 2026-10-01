@@ -262,7 +262,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f9465",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 9465 attached installment request remains blocked pending accepted electronic authorization and linked native/PDF filing review",
+      "Form 9465 attached installment request remains blocked until IRS guidance establishes how its separate third-party disclosure authorization is signed with a Form 1040 e-file and linked native/PDF filing review is complete",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
