@@ -221,9 +221,15 @@ A nonzero Form 6251 line 2d now replays the retained Schedule C property-level
 AMT depletion workpapers at native and PDF export. It requires each business's
 regular Schedule C line 12 to equal its property regular allowances, rejects
 duplicate property references and passive or at-risk-limited activities, and
-matches the signed regular-minus-AMT total to line 2d. The source, native, and
-PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound to
-workpaper bytes; other depletion sources and activity refigures remain open.
+matches the signed regular-minus-AMT total to line 2d. A mixed two-property
+case now retains a positive adjustment from one property and a negative
+adjustment from another, then checks total Schedule C profit on Schedule 1 and
+positive AMT on Schedule 2 and Form 1040 at both native and PDF export. The
+[2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251) direct
+the line 2d difference to be negative when the AMT depletion deduction exceeds
+the regular deduction. The source, native, and PDF fixtures await the agreed
+bulk pass. Reviewed figures are still not bound to workpaper bytes; other
+depletion sources, zero-AMT filings, and activity refigures remain open.
 
 # Property depreciation replay (staged, unrun)
 
