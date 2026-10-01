@@ -1,35 +1,34 @@
-# Form 8994 — Employer Credit for Paid Family and Medical Leave (IRC §45S)
+# Form 8994 direct-employer source for TY2025
 
-## Purpose
-Allows eligible employers to claim a credit equal to a percentage of wages paid to qualifying employees during Family and Medical Leave Act (FMLA) leave. Credit flows to **Schedule 3 line 6z** (general business credit).
+The [January 2021 Form 8994](https://www.irs.gov/pub/irs-pdf/f8994.pdf) remains
+the filing form for 2025 under the
+[December 2024 instructions](https://www.irs.gov/instructions/i8994). Line 1 is
+the sum of qualifying leave wages multiplied by each employee's applicable
+percentage. The rate is 12.5% at 50% wage replacement and rises by 0.25
+percentage points for each percentage point above 50%, capped at 25%. The first
+12 weeks of qualifying leave for an employee count. The 2025 prior-year
+compensation ceiling is $93,000. The employer must reduce its wage deduction by
+the line 1 credit, even if the credit is limited or carried.
 
-## IRS References
-- Form 8994 and Instructions (TY2025)
-- IRC §45S — Employer Credit for Paid Family and Medical Leave
-- Rev. Proc. 2024-40 (TY2025 parameters)
+The direct Schedule C source requires the written policy, adoption/effective
+dates, two-week full-time leave entitlement and proportional part-time
+entitlement, 50%-or-greater employer-funded replacement rate, noninterference
+compliance, FMLA-designated purpose, employee service and 2024 compensation
+evidence, payroll and normal wage facts, and exclusions of state-required/paid
+wages and wages used for another business credit. It checks the filed proprietor
+SSN, employer EIN, payroll wages and Schedule C line 26 credit reduction. The
+current bounded route requires the Form 8994 credit to be the only
+`line_26_other_employment_credits` amount for that business.
 
-## TY2025 Constants
-- **Base rate:** 12.5% (when wage replacement = 50%)
-- **Rate increment:** +0.25% per percentage point above 50%
-- **Maximum rate:** 25% (when wage replacement = 100%)
-- **Minimum wage replacement:** 50% to qualify
+The public node emits no tax credit. Direct credits belong on Form 3800 Part III
+line 4j and must be limited through Form 3800 before reaching Schedule 3. A
+K-1-only recipient does not file Form 8994 personally; partnerships, S
+corporations, mixed direct and pass-through credits, and nonproprietor employers
+remain outside this source. Actual written-policy and payroll bytes are retained
+references, not independently parsed by the return graph.
 
-## Input Schema
-- `employees[]` — per-employee data:
-  - `fmla_wages` — wages paid during leave
-  - `wage_replacement_pct` — fraction of normal wages paid (0.50–1.00)
-  - `weeks_leave` — optional, informational
-
-## Compute Logic
-1. `creditRate(wagePct)` — returns 0 if < 50%; else `min(12.5% + (points above 50%) × 0.25%, 25%)`
-2. `employeeCredit(e)` — `round(fmla_wages × creditRate)`
-3. `totalCredit(employees)` — sum across all employees
-4. Emit `{ line6z_general_business_credit: credit }` to Schedule 3 if credit > 0
-
-## Output Nodes
-- `schedule3` (line 6z)
-
-## Key Design Notes
-- `wage_replacement_pct` is stored as a decimal (0.50 = 50%), not percentage points.
-- `pointsAbove50 = round((wagePct - 0.50) × 100)` — uses `Math.round` to handle float precision.
-- Credit is rounded to whole dollars via `Math.round`.
+The official PDF's four Yes boxes and lines 1-3 are staged in an unregistered
+descriptor. The TY2025 `IRS8994` MeF XSD is not checked into this repository and
+the IRS distributes 1040 schema packages through its e-Services Secure Object
+Repository. No native XML tag names are inferred; the attachment/export guard
+stays closed until that schema and Form 3800 linkage are available.
