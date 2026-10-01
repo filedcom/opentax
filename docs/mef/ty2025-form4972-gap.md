@@ -496,3 +496,25 @@ They require all of these steps:
 
 No compatibility layer, fallback, or provisional calculation is proposed.
 Unsupported box 9a combinations continue to stop the election.
+
+## Separate spouse Part II and Part III elections (written, unrun)
+
+A joint return with one full-share, single-1099-R taxpayer plan and one
+full-share, single-1099-R spouse plan can now elect different parts. The taxpayer
+in the authored case elects Part II only on positive box 3 capital gain: line 7
+is 20% of that gain, and box 2a less box 3 reaches Form 1040 line 5b. The
+spouse elects Part III only: the separate ten-year tax reaches the second Form
+4972 and none of that distribution enters line 5b. The two special taxes add
+once to Form 1040 line 16. The distinct participant/plan identities and 1099-R
+references are retained per attachment; native and PDF collection projections
+replay each elected source and reject mismatched capital gain, ordinary pension
+amount, or combined tax. Positive and tamper fixtures are authored but unrun.
+
+The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require spouses filing jointly to attach separate forms and combine tax on line
+16; their reporting directions place the Part-II-only ordinary share on Form
+1040 lines 5a/5b and exclude a Part III distribution from those lines. This
+slice does not authenticate plan statements or prior-election history. Spouse
+pairs with NUA, annuities, beneficiary allocations, partial shares, or more
+than one source for a Part-II-only plan remain closed, as do filled-PDF, XSD,
+business-rule, and ATS verification.

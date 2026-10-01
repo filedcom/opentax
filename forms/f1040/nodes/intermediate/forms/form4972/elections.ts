@@ -133,8 +133,12 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
       if (
         recipients[0] === recipients[1] ||
         !recipients.includes("T") || !recipients.includes("S") ||
-        forms.some((form) =>
-          form.elect_10yr_averaging !== true ||
+        forms.some((form, index) =>
+          (form.elect_10yr_averaging !== true &&
+            (form.elect_capital_gain !== true ||
+              typeof form.capital_gain_amount !== "number" ||
+              form.capital_gain_amount <= 0 ||
+              elections[index].source_document_references.length !== 1)) ||
           form.beneficiary_distribution !== false ||
           (form.federal_estate_tax ?? 0) !== 0 ||
           (form.death_benefit_exclusion ?? 0) !== 0

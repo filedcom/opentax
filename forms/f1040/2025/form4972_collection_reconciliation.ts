@@ -164,7 +164,10 @@ export function reconcileForm4972Collection(
       !filer.spouse?.ssn ||
       scoped.some(({ fields, sources }) =>
         (sources.length !== 1 && sources.length !== 2) ||
-        fields.elect_10yr_averaging !== true ||
+        (fields.elect_10yr_averaging !== true &&
+          (sources.length !== 1 || fields.elect_capital_gain !== true ||
+            typeof fields.capital_gain_amount !== "number" ||
+            fields.capital_gain_amount <= 0)) ||
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
         (fields.box6_nua ?? 0) !== 0 ||
@@ -174,7 +177,26 @@ export function reconcileForm4972Collection(
       )
     ) {
       throw new Error(
-        "Form 4972 spouse pair needs a joint full-share Part-III-only return",
+        "Form 4972 spouse pair needs a joint full-share, source-matched Part II or Part III return",
+      );
+    }
+    const ordinary = scoped.reduce(
+      (sum, { fields }) =>
+        sum +
+        (fields.elect_10yr_averaging === true
+          ? 0
+          : Number(fields.lump_sum_amount) -
+            Number(fields.capital_gain_amount)),
+      0,
+    );
+    if (
+      (returnFields.line5b_form4972_ordinary ?? 0) !== ordinary ||
+      (ordinary > 0 &&
+        (typeof returnFields.line5b_pension_taxable !== "number" ||
+          returnFields.line5b_pension_taxable < ordinary))
+    ) {
+      throw new Error(
+        "Form 4972 spouse Part II ordinary income must match Form 1040 pension income",
       );
     }
     const taxpayer = scoped.find(({ fields }) => fields.recipient === "T");
