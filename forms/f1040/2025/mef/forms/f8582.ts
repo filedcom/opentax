@@ -512,18 +512,22 @@ function buildOtherPassive(
     input.has_current_4797_transaction !== true
   ) {
     const pending = context?.pending;
-    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const w2 = pending?.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
     const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
     const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
     const net = Math.max(0, rentalProfit.current_net + farmLoss.current_net);
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
     if (
-      !w2.success || w2.data.w2s.length !== 1 || !f1040 || !schedule1 ||
-      rentalProfit.current_net >= -farmLoss.current_net ||
-      limit.allowed !== rentalProfit.current_net ||
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !== Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
       schedule1.line5_schedule_e !== net ||
       (f1040.line8_additional_income ?? 0) !== net ||
-      f1040.line1z_total_wages !== w2.data.w2s[0].box1_wages ||
-      f1040.line11_agi !== w2.data.w2s[0].box1_wages
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages + net
     ) {
       throw new Error(
         "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
