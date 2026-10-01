@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **655 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **658 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -25,10 +25,10 @@ diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 142-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
+| Automated and artifact validation | 5 | A 143-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 655 bounded routes and
+**Implemented coverage.** The completed ledger records 658 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -80,7 +80,7 @@ property allocation.
 Shared native/PDF preflights now replay the attached Schedule 1, 1-A, 2, and 3
 totals into Form 1040. The source-only and conditional-schedule audits distinguish
 bounded registrations from staged guarded routes. Filled-PDF review preparation
-now has 142 source fixtures, 65 of 112 unique registered PDF keys represented,
+now has 143 source fixtures, 65 of 112 unique registered PDF keys represented,
 and a deterministic per-page review manifest; the 47 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
@@ -96,6 +96,8 @@ Prepared bundle parity now rechecks the XML digest and every attachment's
 metadata and PDF bytes before PDF projection or submission archiving.
 Prepared MeF/A2A validation now also checks Form 1040 first, document IDs and
 references, and XML/header attachment counts against the retained inventory.
+Reopening an archived outbound A2A submission now also replays document order,
+counts, IDs, references, and PDF attachment entries against its stored ZIP.
 The native registry audit now identifies 115 bounded main/numbered rows,
 one blocked Form 8990 row, and the missing Form 8621 parent PDF; supporting
 statement packet decisions remain open.
@@ -153,8 +155,10 @@ value is unselected, so a missing IRS widget fails before export.
 It also resolves mapped present-zero text fields before leaving them blank,
 so a missing or wrong-type widget fails. Schedule 1 PDF now prints the retained
 1099-G same-year unemployment repayment checkbox and amount and checks its
-line 7 net; zero-net returns without other Schedule 1 activity still need
-Schedule 1 graph emission. Final native/PDF Form 1040 line 25b now replays
+line 7 net. A fully repaid 2025 benefit now retains a zero-valued Schedule 1
+so its repayment annotation can print; repayments exceeding benefits remain
+outside that bounded route. Form 1040 PDF now marks line 6d for a retained
+MFS lived-apart-all-year fact. Final native/PDF Form 1040 line 25b now replays
 withholding from fourteen retained 1099-family source routes, rejects identified
 broker duplicates and unsupported owner claims, and requires filer identity
 for positive withholding. Sources without recipient identity still need
@@ -245,7 +249,7 @@ These gates and a filing-ready release remain open.
 - [ ] Finish the non-named implementation and coverage decisions for this phase before the agreed single full-batch gate. The 20 named-form parent gaps are deferred to the following phase; existing focused cases and historical passes are not evidence for the current worktree.
 - [ ] Run `deno task test` as the full batch for this phase after its retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until this phase passes.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the locally cached TY2025 IRS schema, recording its provenance and digest. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the 142 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the 143 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery
