@@ -33,6 +33,29 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("1099-G exact issued-copy repetition cannot double income or withholding", () => {
+  const issued = minimalItem({
+    payer_name: "State Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    account_number: "BEN-1",
+    source_document_reference: "issued-1099g-copy-1",
+    box_1_unemployment: 500,
+    box_4_federal_withheld: 20,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box_1_repaid: 100 }]),
+    Error,
+    "repeats the same identified payer-issued copy",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, account_number: "BEN-2" },
+  ]);
+  assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1000);
+  assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -97,21 +120,31 @@ Deno.test("f1099g.compute: box_2_state_refund not taxable when not itemized — 
 Deno.test("f1099g.compute: partial taxable state refund uses reviewed amount on Schedule 1, AGI, and AMT", () => {
   const result = compute([reviewedRefund(500, 180)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line1_state_refund, 180);
-  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line1_state_refund, 180);
+  assertEquals(
+    (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
+      .line1_state_refund,
+    180,
+  );
   assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 180);
 });
 
 Deno.test("f1099g.compute: state refund above box 2 or inconsistent with no itemization is rejected", () => {
   assertThrows(() => compute([reviewedRefund(500, 501)]), Error);
   assertThrows(
-    () => compute([reviewedRefund(500, 100, { box_2_prior_year_itemized: false })]),
+    () =>
+      compute([reviewedRefund(500, 100, { box_2_prior_year_itemized: false })]),
     Error,
   );
 });
 
 Deno.test("f1099g.compute: positive state refund without workpaper reference is rejected", () => {
   assertThrows(
-    () => compute([reviewedRefund(500, 100, { box_2_recovery_workpaper_reference: undefined })]),
+    () =>
+      compute([
+        reviewedRefund(500, 100, {
+          box_2_recovery_workpaper_reference: undefined,
+        }),
+      ]),
     Error,
   );
 });
@@ -290,7 +323,11 @@ Deno.test("f1099g.compute: mixed items — unemployment and state refund both ro
 Deno.test("f1099g.compute: box_1_unemployment $9 routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_1_unemployment: 9 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line7_unemployment, 9);
-  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line7_unemployment, 9);
+  assertEquals(
+    (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
+      .line7_unemployment,
+    9,
+  );
 });
 
 Deno.test("f1099g.compute: box_1_unemployment $10 (at threshold) — routes to schedule1", () => {
@@ -311,7 +348,11 @@ Deno.test("f1099g.compute: taxable $9 state refund routes to Schedule 1, AGI, an
     reviewedRefund(9, 9),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line1_state_refund, 9);
-  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line1_state_refund, 9);
+  assertEquals(
+    (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
+      .line1_state_refund,
+    9,
+  );
   assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 9);
 });
 
@@ -327,7 +368,11 @@ Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized �
 Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_5_rtaa: 599 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_rtaa, 599);
-  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line8z_rtaa, 599);
+  assertEquals(
+    (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
+      .line8z_rtaa,
+    599,
+  );
 });
 
 Deno.test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule1", () => {
@@ -346,7 +391,11 @@ Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to sched
 Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_6_taxable_grants: 599 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_taxable_grants, 599);
-  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line8z_taxable_grants, 599);
+  assertEquals(
+    (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
+      .line8z_taxable_grants,
+    599,
+  );
 });
 
 Deno.test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes to schedule1", () => {
@@ -481,7 +530,8 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
       box_2_state_refund: 500,
       box_2_prior_year_itemized: true,
       box_2_taxable_recovery_verified_amount: 500,
-      box_2_recovery_workpaper_reference: "reviewed-2024-state-refund-workpaper",
+      box_2_recovery_workpaper_reference:
+        "reviewed-2024-state-refund-workpaper",
       box_3_tax_year: 2024,
       box_4_federal_withheld: 800,
       box_5_rtaa: 1200,
