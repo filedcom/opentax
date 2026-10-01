@@ -328,6 +328,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line6b_ss_taxable",
     pdfField: "topmostSubform[0].Page1[0].f1_69[0]",
   },
+  {
+    kind: "checkbox",
+    domainKey: "print_mfs_lived_apart_entire_year",
+    // 2025 line 6d: c1_42 at x467.2, y104.002 in the IRS AcroForm.
+    pdfField: "topmostSubform[0].Page1[0].c1_42[0]",
+  },
   // Line 7: only one of the two keys is set per return
   {
     kind: "text",
@@ -780,6 +786,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_resident_election: residentElection !== undefined,
       print_resident_election_name: residentElection,
       print_mfs_spouse_full_name: printMfsSpouseName,
+      print_mfs_lived_apart_entire_year: fields.filing_status === "mfs" &&
+        fields.mfs_spouse_lived_with_taxpayer === false,
       print_more_than_four_dependents: dependents.length > 4,
       ...(iraRollover && fields.line4b_ira_taxable === 0
         ? { line4b_ira_taxable: "0" }
