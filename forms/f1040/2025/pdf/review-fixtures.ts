@@ -325,6 +325,36 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form8888-two-account-refund",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(10_000, 1_000, "Example Employer", "12-3456789")],
+      f8888: {
+        account_1: {
+          routing_number: "021000021",
+          account_number: "111222333",
+          account_type: "checking",
+          amount: 300,
+          owner_name: "Alex Example",
+        },
+        account_2: {
+          routing_number: "021000021",
+          account_number: "444555666",
+          account_type: "savings",
+          amount: 700,
+          owner_name: "Alex Example",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f8888"],
+    reviewFocus: [
+      "Form 1040 shows a 1,000 refund and marks the attached Form 8888",
+      "Form 8888 prints 300 and 700 in distinct checking and savings accounts",
+      "The two allocations and native Form 8888 total equal the filed refund",
+    ],
+  },
+  {
     id: "single-fully-repaid-unemployment",
     inputs: {
       general: singleGeneral,
