@@ -38,12 +38,16 @@ mark is an error.
 
 The current calculation fixture intentionally has no QCD fields. Its numerical
 return assertions are provisional and cannot establish a complete ATS case.
+The packet also leaves Form 1040 line 4a blank despite printing the $35,800
+code-Q Roth distribution; obtain the intended line-4a treatment rather than
+forcing that gross amount or treating the blank as verified.
 The code-G Form 1099-R and the packet's printed line 5c mark together establish
 the direct-rollover source fact. Code G alone is insufficient because the 2025
 Form 1099-R instructions also use it for designated Roth employer contributions.
 The Form 1040 node now carries that confirmed pension/plan checkbox to native MeF and the 2025 PDF field,
-with source checks in both output builders. Focused cases are written but have
-not been run under the build-first instruction. This does not resolve the
+with source checks in both output builders. Earlier focused code-G and
+Scenario 8 local-XSD checks passed on the recorded source snapshot; the
+current PR's full suite has not passed. This does not resolve the
 separate QCD source blocker.
 
 No complete Scenario 8 XML/PDF or IRS business-rule acceptance is claimed.
