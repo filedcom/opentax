@@ -1,4 +1,5 @@
 import { box11CodeJSourceSchema } from "../../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { rtaaSourceSchema } from "../../../nodes/inputs/f1099g/rtaa-source.ts";
 
 export interface Schedule1OtherIncomeRow {
   readonly label: string;
@@ -18,7 +19,6 @@ const SOURCED_COMPONENTS = [
   ],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
-  ["line8z_rtaa", "Trade adjustment assistance"],
   ["line8z_taxable_grants", "Taxable grants"],
   ["line8z_golden_parachute", "Excess golden parachute"],
   ["at_risk_disallowed_add_back", "At-risk loss add-back"],
@@ -123,9 +123,35 @@ export function schedule1OtherIncomeRows(
       );
     }
   }
+  const rtaaSources = source.f1099g_rtaa_sources;
+  if (rtaaSources !== undefined && !Array.isArray(rtaaSources)) {
+    throw new Error("Schedule 1 RTAA sources must be rows");
+  }
+  const rtaaRows: Schedule1OtherIncomeRow[] = (rtaaSources ?? []).map(
+    (value: unknown) => {
+      const row = rtaaSourceSchema.parse(value);
+      return {
+        label: `RTAA payments ${row.payer_tin}`,
+        amount: row.amount,
+      };
+    },
+  );
+  const rtaaTotal = rtaaRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_rtaa !== rtaaTotal) {
+    if (source.line8z_rtaa !== undefined || rtaaTotal > 0) {
+      throw new Error(
+        "Schedule 1 RTAA total differs from Form 1099-G box 5 rows",
+      );
+    }
+  }
   const rows = source.f1099m_box3_other_income_sources;
   if (rows === undefined) {
-    return [...componentRows, ...partnershipRows, ...substituteRows];
+    return [
+      ...componentRows,
+      ...partnershipRows,
+      ...substituteRows,
+      ...rtaaRows,
+    ];
   }
   if (!Array.isArray(rows)) {
     throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
@@ -149,7 +175,13 @@ export function schedule1OtherIncomeRows(
     }
     return { label: row.description, amount: row.amount };
   });
-  return [...componentRows, ...partnershipRows, ...substituteRows, ...box3Rows];
+  return [
+    ...componentRows,
+    ...partnershipRows,
+    ...substituteRows,
+    ...rtaaRows,
+    ...box3Rows,
+  ];
 }
 
 export function schedule1OtherIncomeTotal(

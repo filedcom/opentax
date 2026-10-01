@@ -16,6 +16,7 @@ import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { type RtaaSource, rtaaSourceSchema } from "./rtaa-source.ts";
 
 // Form 1099-G issuer reporting thresholds do not create recipient-side
 // taxable-income exclusions. Route any positive amount designated taxable.
@@ -45,6 +46,27 @@ export const itemSchema = z.object({
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
+  if ((item.box_5_rtaa ?? 0) > 0) {
+    if (!Number.isSafeInteger(item.box_5_rtaa)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_5_rtaa"],
+        message: "Form 1099-G box 5 RTAA needs a whole-dollar amount",
+      });
+    }
+    if (
+      !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_5_rtaa"],
+        message:
+          "Form 1099-G box 5 RTAA needs payer, recipient, and issued-copy identity",
+      });
+    }
+  }
   const refund = item.box_2_state_refund ?? 0;
   const taxable = item.box_2_taxable_recovery_verified_amount;
   if (refund === 0) {
@@ -155,6 +177,53 @@ function totalRtaa(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_5_rtaa ?? 0), 0);
 }
 
+export function rtaaSources(g99s: G99Items): RtaaSource[] {
+  return g99s.filter((item) => (item.box_5_rtaa ?? 0) > 0).map((item) =>
+    rtaaSourceSchema.parse({
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin?.replace(/\D/g, ""),
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+      ...(item.account_number ? { account_number: item.account_number } : {}),
+      amount: item.box_5_rtaa,
+    })
+  );
+}
+
+export function assertForm1099gRtaaSources(
+  raw: unknown,
+  retainedRows: unknown,
+  expectedAmount: number,
+  recipientSsns: readonly string[],
+): void {
+  const issued = raw === undefined
+    ? []
+    : rtaaSources(inputSchema.parse(raw).f1099gs);
+  const retained = z.array(rtaaSourceSchema).parse(retainedRows ?? []);
+  const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
+  const identities = issued.map((row) =>
+    JSON.stringify([
+      row.source_document_reference,
+      row.payer_tin,
+      row.recipient_tin,
+      row.account_number ?? "",
+    ])
+  );
+  const sortRows = (rows: readonly RtaaSource[]) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (
+    !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
+    issued.reduce((sum, row) => sum + row.amount, 0) !== expectedAmount ||
+    new Set(identities).size !== identities.length ||
+    issued.some((row) => !owners.has(row.recipient_tin)) ||
+    JSON.stringify(sortRows(issued)) !== JSON.stringify(sortRows(retained))
+  ) {
+    throw new Error(
+      "Schedule 1 RTAA rows must match distinct issued Form 1099-G box 5 copies and filer owners",
+    );
+  }
+}
+
 function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
 }
@@ -174,6 +243,7 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
   if (rtaa > 0) {
     fields.line8z_rtaa = rtaa;
+    fields.f1099g_rtaa_sources = rtaaSources(g99s);
   }
   if (grants > 0) {
     fields.line8z_taxable_grants = grants;

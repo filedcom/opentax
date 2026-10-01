@@ -9,6 +9,16 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   return { farm_id: "farm-1", ...overrides };
 }
 
+function rtaaItem(amount: number, reference = "issued-rtaa-1099g-1") {
+  return minimalItem({
+    box_5_rtaa: amount,
+    payer_name: "State RTAA Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: reference,
+  });
+}
+
 function reviewedRefund(
   refund: number,
   taxable: number,
@@ -178,9 +188,11 @@ Deno.test("f1099g.compute: box_4_federal_withheld zero — no f1040 withholding 
 });
 
 Deno.test("f1099g.compute: box_5_rtaa routes to schedule1 line8z_rtaa", () => {
-  const result = compute([minimalItem({ box_5_rtaa: 1500 })]);
+  const result = compute([rtaaItem(1500)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 1500);
+  assertEquals(input.f1099g_rtaa_sources?.[0]?.amount, 1500);
+  assertEquals(input.f1099g_rtaa_sources?.[0]?.payer_tin, "123456789");
 });
 
 Deno.test("f1099g.compute: box_5_rtaa zero — no schedule1 rtaa output", () => {
@@ -277,8 +289,8 @@ Deno.test("f1099g.compute: multiple items — box_4_federal_withheld summed to f
 
 Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 line8z_rtaa", () => {
   const result = compute([
-    minimalItem({ box_5_rtaa: 1000 }),
-    minimalItem({ box_5_rtaa: 2000 }),
+    rtaaItem(1000, "issued-rtaa-1099g-1"),
+    rtaaItem(2000, "issued-rtaa-1099g-2"),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 3000);
@@ -366,7 +378,7 @@ Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized �
 
 // Box 5 RTAA — the $600 payer threshold is not an income exclusion.
 Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => {
-  const result = compute([minimalItem({ box_5_rtaa: 599 })]);
+  const result = compute([rtaaItem(599)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_rtaa, 599);
   assertEquals(
     (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
@@ -376,13 +388,13 @@ Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => 
 });
 
 Deno.test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule1", () => {
-  const result = compute([minimalItem({ box_5_rtaa: 600 })]);
+  const result = compute([rtaaItem(600)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 600);
 });
 
 Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to schedule1", () => {
-  const result = compute([minimalItem({ box_5_rtaa: 601 })]);
+  const result = compute([rtaaItem(601)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 601);
 });
@@ -544,6 +556,8 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
       box_11_state_withheld: 250,
       payer_name: "Texas Workforce Commission",
       payer_tin: "74-6000001",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-2025-1099g-all-boxes",
       account_number: "TX-2025-001",
     }),
   ]);

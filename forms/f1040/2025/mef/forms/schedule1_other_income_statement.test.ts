@@ -5,8 +5,7 @@ import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statemen
 const sourced = {
   line8z_form8814: 200,
   line8z_hsa_excess_earnings: 100,
-  line8z_rtaa: 300,
-  line9_total_other_income: 600,
+  line9_total_other_income: 300,
 };
 
 Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
@@ -21,7 +20,7 @@ Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
     statement,
     "<OtherIncomeCodeTxt>HSA excess earnings</OtherIncomeCodeTxt>",
   );
-  assertStringIncludes(statement, "<OtherIncomeAmt>300</OtherIncomeAmt>");
+  assertStringIncludes(statement, "<OtherIncomeAmt>200</OtherIncomeAmt>");
   const xml = schedule1.build(sourced, {
     documentIdsByPendingKey: {
       schedule1_other_income_statement: ["OtherIncomeTypeStatement4"],
@@ -29,7 +28,7 @@ Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement4" referenceDocumentName="OtherIncomeTypeStatement">600</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement4" referenceDocumentName="OtherIncomeTypeStatement">300</OtherIncomeTotalAmt>',
   );
 });
 

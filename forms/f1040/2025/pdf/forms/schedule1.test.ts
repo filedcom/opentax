@@ -158,14 +158,14 @@ Deno.test("Schedule 1 PDF maps W-2G winnings to line 8b, not line 8z", () => {
 
 Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
   const projected = schedule1Pdf.instances?.({
-    line8z_rtaa: 300,
+    line8z_taxable_grants: 300,
     line8z_form8814: 200,
     line8z_hsa_excess_earnings: 100,
   })?.[0];
   assertEquals(projected?.line8z_other, 600);
   assertEquals(
     projected?.line8z_description,
-    "Form 8814, HSA excess earnings, Trade adjustment assistance",
+    "Form 8814, HSA excess earnings, Taxable grants",
   );
 });
 

@@ -218,8 +218,7 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     line8z_form8814: 50,
     line8z_hsa_excess_earnings: 100,
     line8z_hsa_excess_employer: 700,
-    line8z_rtaa: 300,
-    line8z_taxable_grants: 1200,
+    line8z_taxable_grants: 1500,
     line8z_substitute_payments: 750,
     f1099m_box8_substitute_sources: [{
       payer_name: "Broker Payer",
@@ -272,7 +271,7 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
       "generic income needs identified source types",
     );
   }
-  const typed = { line8z_rtaa: 300 };
+  const typed = { line8z_taxable_grants: 300 };
   for (const ids of [[], ["Statement-1", "Statement-2"]]) {
     assertThrows(
       () =>

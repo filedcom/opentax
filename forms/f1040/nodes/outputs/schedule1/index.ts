@@ -8,6 +8,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { box11CodeJSourceSchema } from "../../inputs/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../inputs/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k.ts";
+import { rtaaSourceSchema } from "../../inputs/f1099g/rtaa-source.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly
 //
@@ -58,6 +59,7 @@ const inputSchema = z.object({
   line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
+  f1099g_rtaa_sources: z.array(rtaaSourceSchema).optional(),
   line8z_taxable_grants: z.number().optional(),
   line8z_substitute_payments: z.number().optional(),
   line8z_attorney_proceeds: z.number().optional(),
@@ -411,6 +413,9 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
       ? {
         f1099m_box8_substitute_sources: input.f1099m_box8_substitute_sources,
       }
+      : {}),
+    ...(input.f1099g_rtaa_sources !== undefined
+      ? { f1099g_rtaa_sources: input.f1099g_rtaa_sources }
       : {}),
     ...(input.k1_partnership_box11_code_j_sources !== undefined
       ? {

@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
+import { assertForm1099gRtaaSources } from "../../../nodes/inputs/f1099g/index.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
@@ -283,6 +284,24 @@ export const schedule1Pdf: PdfFormDescriptor = {
         all?.f1098,
         recipients,
         Number(fields.line8z_f1098_interest_recovery ?? 0),
+      );
+    }
+    if (
+      all?.f1099g !== undefined ||
+      Number(fields.line8z_rtaa ?? 0) > 0 ||
+      fields.f1099g_rtaa_sources !== undefined
+    ) {
+      if (!filer) throw new Error("Schedule 1 PDF RTAA needs filer identity");
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertForm1099gRtaaSources(
+        all?.f1099g,
+        fields.f1099g_rtaa_sources,
+        Number(fields.line8z_rtaa ?? 0),
+        recipients,
       );
     }
     const rows = schedule1OtherIncomeRows(fields);

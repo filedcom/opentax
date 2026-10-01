@@ -1,5 +1,22 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 Form 1099-G box 5 RTAA source rows (unrun)
+
+The bounded RTAA route now requires payer name/TIN, recipient TIN, and an
+issued-copy reference for every positive Form 1099-G box 5 entry. It retains
+one row per copy in Schedule 1, while the same summed amount reaches AGI and
+Form 1040 line 8. The native line 8z type statement prints a separately
+identified RTAA row for each payer. MeF and PDF export compare those rows,
+the filed line 8z total, the distinct issued-copy identities, and recipient
+ownership against the retained Form 1099-G sources. Two-payer positive and
+changed-row, changed-copy, changed-total, wrong-owner, and missing-identity
+fixtures are authored for the deferred implementation gate. The
+[TY2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+explicitly direct box 5 RTAA to Schedule 1 line 8z and require a type and
+amount; [2025 Publication 525](https://www.irs.gov/publications/p525) also
+states that state RTAA payments are included in income. Exact payer-copy PDF
+bytes, tax-program eligibility, visual parity, and IRS acceptance remain open.
+
 ## 2026-10-01 Form 1099-MISC box 8 source rows (unrun)
 
 The box 8 substitute-payment route now carries one payer, recipient, and amount
