@@ -1826,7 +1826,7 @@ Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags presen
   assertNotIncludes(xml, "<IRS8839>");
 });
 
-Deno.test("multiple W-2s become separate documents with unique IDs and an exact document count", () => {
+Deno.test("multiple W-2s become separate documents with unique IDs and an exact document count", async () => {
   const filerIdentity = sampleFiler();
   const baseW2 = {
     employer_ein: "12-3456789",
@@ -1839,6 +1839,7 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
     box2_fed_withheld: 3_000,
   };
   const xml = buildMefXml({
+    f1040: { line25a_w2_withheld: 6_000 },
     w2: {
       w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }],
     },
@@ -1847,6 +1848,20 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   assertStringIncludes(xml, 'documentCnt="3"');
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW21">');
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW22">');
+  const tampered = {
+    f1040: { line25a_w2_withheld: 5_999 },
+    w2: { w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }] },
+  };
+  assertThrows(
+    () => buildMefXml(tampered, filerIdentity),
+    Error,
+    "line 25a differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(tampered, filerIdentity),
+    Error,
+    "line 25a differs",
+  );
 });
 
 Deno.test("context-only supporting forms are not emitted", () => {
