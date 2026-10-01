@@ -22,8 +22,17 @@ uses $33,300 even though the eligibility prose describes the reduction as
 beginning above $33,000. The
 [2025 average-premium table](https://www.irs.gov/instructions/i8941) lists
 $9,358 for employee-only coverage in Albany County, NY, used in the authored
-positive fixture. Other table values remain reviewed source assertions and must
-be authenticated before export.
+positive fixture. Other table values are not accepted by this staged source.
+
+The staged SHOP review now checks the official Albany County row at $9,358 and
+binds the Marketplace, plan, employer EIN, and exact employee set. Each employee
+has 12 distinct coverage months with invoice and employer-payment references.
+The monthly amounts must match the annual Worksheet 4 inputs and the uniform
+employer contribution. Duplicated references, missing coverage months, changed
+amounts, and another rating-area row are rejected. This deliberately narrows
+the current staged source to Albany County, NY; other 2025 table rows need
+authenticated entries. Document references are assertions until issuer/plan
+and payment records are independently reviewed, so they do not open filing.
 
 An unregistered native IRS8941 serializer follows the locally available TY2025
 v5.4 IRS8941 schema. An unregistered official one-page PDF descriptor maps the

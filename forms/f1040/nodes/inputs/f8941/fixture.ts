@@ -32,5 +32,30 @@ export function form8941DirectFixture() {
       rating_area_state: "NY",
       enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
     })),
+    shop_review: {
+      irs_table_tax_year: 2025 as const,
+      irs_table_source_url: "https://www.irs.gov/instructions/i8941" as const,
+      irs_table_state: "NY",
+      irs_table_county: "Albany",
+      irs_table_employee_only_average_premium: 9358,
+      table_review_reference: "IRS-8941-2025-NY-ALBANY-REVIEW",
+      shop_marketplace_identifier: "NY-SHOP-2025",
+      shop_plan_reference: "SHOP-PLAN-1",
+      employment_ein: "123456789",
+      employee_premium_reviews: Array.from({ length: 5 }, (_, index) => ({
+        employee_reference: `EMP-${index + 1}`,
+        enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+        monthly_premiums: Array.from({ length: 12 }, (_, monthIndex) => ({
+          month: monthIndex + 1,
+          employee_only_coverage_verified: true as const,
+          billed_premium: monthIndex < 8 ? 834 : 832,
+          employer_payment: monthIndex < 8 ? 417 : 416,
+          shop_invoice_reference: `SHOP-INV-${index + 1}-${monthIndex + 1}`,
+          employer_payment_reference: `SHOP-PAID-${index + 1}-${
+            monthIndex + 1
+          }`,
+        })),
+      })),
+    },
   };
 }

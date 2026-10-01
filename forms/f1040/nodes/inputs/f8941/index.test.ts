@@ -25,6 +25,20 @@ Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
     enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
     social_security_medicare_wages: 34_000,
   }));
+  source.shop_review.employee_premium_reviews = Array.from(
+    { length: 11 },
+    (_, index) => ({
+      ...source.shop_review.employee_premium_reviews[0],
+      employee_reference: `EMP-${index + 1}`,
+      enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+      monthly_premiums: source.shop_review.employee_premium_reviews[0]
+        .monthly_premiums.map((month) => ({
+          ...month,
+          shop_invoice_reference: `SHOP-INV-${index + 1}-${month.month}`,
+          employer_payment_reference: `SHOP-PAID-${index + 1}-${month.month}`,
+        })),
+    }),
+  );
   const lines = calculateForm8941(source);
   assertEquals(lines.line2, 11);
   assertEquals(lines.line3, 34_000);
@@ -39,11 +53,15 @@ Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history an
   assertThrows(
     () => calculateForm8941(premium),
     Error,
-    "uniform SHOP contribution",
+    "monthly premiums differ from worksheet inputs",
   );
   const rating = form8941DirectFixture();
   rating.employees[0].irs_2025_rating_area_average_premium = 10_000;
-  assertThrows(() => calculateForm8941(rating), Error, "one rating area");
+  assertThrows(
+    () => calculateForm8941(rating),
+    Error,
+    "employee rating area differs",
+  );
   const incomplete = { ...form8941DirectFixture() };
   delete (incomplete as Partial<typeof incomplete>)
     .all_nonexcluded_employees_enrolled_verified;
@@ -64,6 +82,56 @@ Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history an
       premiums_paid: 25_000,
     }).success,
     false,
+  );
+});
+
+Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premiums", () => {
+  const table = form8941DirectFixture();
+  table.shop_review.irs_table_employee_only_average_premium = 10_000;
+  assertThrows(() => calculateForm8941(table), Error, "not authenticated");
+
+  const area = form8941DirectFixture();
+  area.shop_review.irs_table_county = "Albany County";
+  assertThrows(() => calculateForm8941(area), Error, "not authenticated");
+
+  const omitted = form8941DirectFixture();
+  omitted.shop_review.employee_premium_reviews.pop();
+  assertThrows(
+    () => calculateForm8941(omitted),
+    Error,
+    "employee set is incomplete",
+  );
+
+  const month = form8941DirectFixture();
+  month.shop_review.employee_premium_reviews[0].monthly_premiums[11].month = 11;
+  assertThrows(() => calculateForm8941(month), Error, "month is duplicated");
+
+  const payment = form8941DirectFixture();
+  payment.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .employer_payment = 418;
+  assertThrows(
+    () => calculateForm8941(payment),
+    Error,
+    "monthly employer contribution",
+  );
+
+  const reused = form8941DirectFixture();
+  reused.shop_review.employee_premium_reviews[1].monthly_premiums[0]
+    .shop_invoice_reference =
+      reused.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+        .shop_invoice_reference;
+  assertThrows(
+    () => calculateForm8941(reused),
+    Error,
+    "invoice or payment is reused",
+  );
+
+  const total = form8941DirectFixture();
+  total.employees[0].full_year_employee_only_shop_premium = 9998;
+  assertThrows(
+    () => calculateForm8941(total),
+    Error,
+    "monthly premiums differ",
   );
 });
 

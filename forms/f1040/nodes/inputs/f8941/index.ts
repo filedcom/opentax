@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { TS } from "../../types.ts";
+import { shopReviewSchema, verifyForm8941ShopReview } from "./shop_evidence.ts";
 
 const amount = z.number().int().finite().nonnegative();
 const employeeSchema = z.object({
@@ -46,6 +47,7 @@ export const inputSchema = z.object({
   }).strict().optional(),
   other_schedule_c_employee_benefits: amount,
   employees: z.array(employeeSchema).min(1).max(24),
+  shop_review: shopReviewSchema,
 }).strict();
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -72,6 +74,7 @@ export interface Form8941Lines {
 /** TY2025 Form 8941 lines 1–16 and Worksheets 1–7 for the bounded source. */
 export function calculateForm8941(raw: unknown): Form8941Lines {
   const source = inputSchema.parse(raw);
+  verifyForm8941ShopReview(source);
   if (
     (source.credit_period_first_year === 2024) !==
       Boolean(source.first_year_filed_form8941)
