@@ -22,6 +22,104 @@ const threeGapFixture = pdfReviewFixtures.find((item) =>
 const fourGapFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-three-no-aptc-policies-four-uncovered-months"
 )!;
+const partialPolicyFixture = pdfReviewFixtures.find((item) =>
+  item.id === "single-two-sequential-no-aptc-policies-protected-partial"
+)!;
+
+Deno.test("two sequential no-APTC policies reduce one protected partial premium through Form 1040, MeF, and PDF", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    partialPolicyFixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962.monthly_ptc_rows[0].premium, 401);
+  assertEquals(result.pending.form8962.monthly_ptc_rows[0].allowed_credit, 401);
+  assertEquals(result.pending.form8962.total_premium_tax_credit, 7_051);
+  assertEquals(result.pending.schedule3.line9_premium_tax_credit, 7_051);
+  assertEquals(result.pending.f1040.line31_additional_payments, 7_051);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: partialPolicyFixture.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<MonthlyPremiumAmt>401</MonthlyPremiumAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>7051</ReconciledPremiumTaxCreditAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(projected.pdf_month_1_premium, 401);
+  assertEquals(
+    form8962Pdf.instances?.(projected, partialPolicyFixture.filer, pending)
+      ?.length,
+    1,
+  );
+  const pdf = await buildPdfBytes(
+    pending,
+    partialPolicyFixture.filer,
+    ".pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+
+  const source = form1095aSchema.parse(pending.f1095a);
+  const first = source.f1095as[0];
+  const firstEvidence = first.no_aptc_monthly_evidence![0];
+  const belowThreshold = {
+    ...pending,
+    f1095a: {
+      f1095as: [{
+        ...first,
+        no_aptc_monthly_evidence: [{
+          ...firstEvidence,
+          premium_payment: {
+            ...firstEvidence.premium_payment,
+            amount: 300,
+          },
+        }, ...first.no_aptc_monthly_evidence!.slice(1)],
+      }, ...source.f1095as.slice(1)],
+    },
+  };
+  await assertRejects(
+    () =>
+      buildMefBundle(belowThreshold, {
+        filer: partialPolicyFixture.filer,
+        attachments: [],
+      }),
+    Error,
+  );
+  await assertRejects(
+    async () => {
+      form8962Pdf.instances?.(
+        projected,
+        partialPolicyFixture.filer,
+        belowThreshold,
+      );
+    },
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...pending,
+        schedule3: {
+          ...pending.schedule3,
+          line9_premium_tax_credit: 7_050,
+        },
+      }, {
+        filer: partialPolicyFixture.filer,
+        attachments: [],
+      }),
+    Error,
+    "two-policy monthly credit differs from finalized return",
+  );
+});
 
 for (
   const variant of [
@@ -930,7 +1028,7 @@ Deno.test("two sequential no-APTC policies at 200% FPL reconcile every paid mont
         attachments: [],
       }),
     Error,
-    "lacks matching SLCSP or full payment evidence",
+    "lacks matching SLCSP or timely premium-payment evidence",
   );
 });
 

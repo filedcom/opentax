@@ -1282,11 +1282,6 @@ function reconcileMultiNoAptcPolicyMonths(
       }
       continue;
     }
-    const premium = roundForm8962Amounts(
-      active.map((policyIndex) =>
-        policies[policyIndex].monthly_premiums![index]
-      ),
-    );
     const sourceSlcsp = evidence[active[0]].corrections.get(month)
       ?.corrected_slcsp;
     if (sourceSlcsp === undefined || sourceSlcsp <= 0) {
@@ -1305,25 +1300,34 @@ function reconcileMultiNoAptcPolicyMonths(
         `Form 8962 ${policyLabel} month ${month} needs one same-state SLCSP`,
       );
     }
+    const paidPremiums: number[] = [];
     for (const policyIndex of active) {
       const correction = evidence[policyIndex].corrections.get(month);
       const proof = evidence[policyIndex].payments.get(month);
+      const paidPremium = proof
+        ? paidNoAptcPremium(
+          proof.premium_payment,
+          policies[policyIndex].monthly_premiums![index],
+          true,
+          month,
+          policies[policyIndex].coverage_state,
+        )
+        : null;
       if (
         !correction || !proof || correction.basis !== "no_aptc" ||
         correction.corrected_slcsp !== sourceSlcsp ||
         proof.marketplace_slcsp !== sourceSlcsp ||
         proof.marketplace_method !== correction.determination_source ||
         !validIsoDate(proof.marketplace_determined_on) ||
-        paidNoAptcPremium(
-            proof.premium_payment,
-            policies[policyIndex].monthly_premiums![index],
-          ) === null
+        paidPremium === null
       ) {
         throw new Error(
-          `Form 8962 ${policyLabel} month ${month} lacks matching SLCSP or full payment evidence`,
+          `Form 8962 ${policyLabel} month ${month} lacks matching SLCSP or timely premium-payment evidence`,
         );
       }
+      paidPremiums.push(paidPremium);
     }
+    const premium = roundForm8962Amounts(paidPremiums);
     const assistance = Math.max(0, slcsp - contribution);
     const allowed = Math.min(premium, assistance);
     const row = rows[index];

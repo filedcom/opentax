@@ -4566,6 +4566,54 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-sequential-no-aptc-policies-protected-partial",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [
+        (() => {
+          const policy = sequentialNoAptcPolicy(
+            "TX-NO-APTC-PARTIAL-JAN-JUN",
+            1,
+            6,
+            600,
+          );
+          return {
+            ...policy,
+            no_aptc_monthly_evidence: [
+              {
+                ...policy.no_aptc_monthly_evidence[0],
+                premium_payment: {
+                  status: "protected_partial" as const,
+                  amount: 400.51,
+                  paid_on: "2026-03-01",
+                  reference: "TX-PARTIAL-JAN-PAYMENT",
+                  record_sha256: "a".repeat(64),
+                  protection_basis: "premium_payment_threshold" as const,
+                  minimum_payment_to_avoid_termination: 350.25,
+                  issuer_coverage_provided: true as const,
+                  issuer_confirmation_reference: "TX-PARTIAL-JAN-ISSUER",
+                  issuer_confirmation_sha256: "b".repeat(64),
+                },
+              },
+              ...policy.no_aptc_monthly_evidence.slice(1),
+            ],
+          };
+        })(),
+        sequentialNoAptcPolicy("TX-NO-APTC-PARTIAL-JUL-DEC", 7, 12, 700),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "January's $900 original Form 1095-A premium is reduced to the $400.51 timely protected payment and prints as $401",
+      "The two separate policy periods yield $7,051 PTC on Form 8962, Schedule 3 line 9, and Form 1040 line 31",
+    ],
+  },
+  {
     id: "single-twelve-sequential-no-aptc-policies-full-year",
     inputs: {
       general: {

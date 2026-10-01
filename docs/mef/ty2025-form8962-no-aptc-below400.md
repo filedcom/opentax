@@ -23,7 +23,7 @@ Missing second-policy July payment evidence and a payment after April 15,
 The fixtures are authored but unrun. Overlapping policies continue through
 the existing same-SLCSP two-policy checks. Sequential nonoverlapping policy
 blocks now cover all possible gap counts; two-policy overlap with more than two
-gaps, partial payments across policies, other covered
+gaps, other payment arrangements, other covered
 people, and authentication of Marketplace/payment document bytes remain open.
 
 ## Three sequential no-APTC policies (staged, unrun)
@@ -44,7 +44,7 @@ $900 paid premium and a Marketplace-determined $600, $700, or $800 SLCSP for
 its policy period. The twelve monthly credits total $7,800. Full-return,
 native/PDF, missing-third-policy-payment, overlapping-coverage, and
 returning-policy fixtures are authored but unrun. Other covered people,
-partial payments across policies, and external source-byte
+other payment arrangements, and external source-byte
 authentication remain open.
 
 ## One uncovered month between two or three policies (staged, unrun)
@@ -68,7 +68,7 @@ tamper case. The [2025 Form 8962 monthly
 instructions](https://www.irs.gov/instructions/i8962) use the amounts from
 Forms 1095-A only for months with coverage and allow a zero monthly row when no
 premium is eligible. Overlapping three-policy coverage, wider households,
-partial payments across policies, and source-byte authentication remain open.
+other payment arrangements, and source-byte authentication remain open.
 
 ## Three uncovered months across three sequential policies (staged, unrun)
 
@@ -160,6 +160,29 @@ agreed final batch. The route continues to reject overlapping policies,
 returning policy blocks, covered-family changes, shared policies, and source
 facts without matching Marketplace/payment evidence. Issuer document bytes
 and wider household/payment arrangements remain open.
+
+## Protected partial payment across sequential policies (staged, unrun)
+
+The same one-filer, same-state sequential route now accepts a qualifying
+protected partial premium payment on any covered month of two through twelve
+nonoverlapping no-APTC policies. Every policy must cover one contiguous block
+for the same enrollee and retain its original Form 1095-A premium and separate
+Marketplace SLCSP and timely payment records. The issuer-confirmed payment
+threshold, continued coverage, and retained payment/issuer references must
+support a partial amount; the source node uses only the amount paid by the
+unextended due date for Form 8962. The native and PDF guards rederive that
+amount from the original policy and payment facts.
+
+The authored two-policy example has a $900 January reported premium and a
+$400.51 timely payment above a $350.25 issuer-confirmed minimum. Form 8962
+prints $401 premium and credit for January, reducing the full-year claim to
+$7,051 on Schedule 3 line 9 and Form 1040 line 31. Full-return, native, PDF,
+below-threshold, and finalized-credit drift fixtures are authored but unrun.
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+allow a monthly credit where a partial payment suffices to avoid termination
+and require the used enrollment premium to exclude the unpaid portion.
+Shared/overlapping policies, other covered families, and authenticated issuer
+content remain open.
 
 The existing zero-APTC, one-person, one-policy route now reconciles the
 applicable figure from the TY2025 Form 8962 Table 2 at 100%-399% of the federal

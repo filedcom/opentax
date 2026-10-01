@@ -420,19 +420,48 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       .parse(input);
     const f1095as = current1095AStatements(sourceStatements);
     verifyPolicyCoverageIdentities(f1095as);
+    const hasProtectedPartial = f1095as.some((item) =>
+      item.no_aptc_monthly_evidence?.some((evidence) =>
+        evidence.premium_payment.status !== "paid_in_full"
+      )
+    );
+    const sequentialNoAptcPartial = f1095as.length >= 2 &&
+      f1095as.length <= 12 &&
+      f1095as.every((item) => {
+        const covered = item.monthly_premiums?.flatMap((premium, index) =>
+          premium > 0 ? [index] : []
+        ) ?? [];
+        return !!item.coverage_state &&
+          item.coverage_state === f1095as[0].coverage_state &&
+          item.covered_individual_ssns?.length === 1 &&
+          !!item.covered_individual_ssns?.[0] &&
+          item.covered_individual_ssns?.[0] ===
+            f1095as[0].covered_individual_ssns?.[0] &&
+          item.monthly_aptcs?.every((amount) =>
+            amount === 0
+          ) &&
+          item.no_aptc_monthly_evidence !== undefined &&
+          item.shared_policy_periods === undefined &&
+          item.alternative_marriage_owner === undefined &&
+          covered.length > 0 && covered.every((month, index) =>
+            index === 0 || month === covered[index - 1] + 1
+          );
+      }) &&
+      Array.from(
+        { length: 12 },
+        (_, month) =>
+          f1095as.filter((item) => (item.monthly_premiums?.[month] ?? 0) > 0)
+            .length <= 1,
+      ).every(Boolean);
     if (
-      f1095as.some((item) =>
-        item.no_aptc_monthly_evidence?.some((evidence) =>
-          evidence.premium_payment.status !== "paid_in_full"
-        )
-      ) &&
+      hasProtectedPartial && !sequentialNoAptcPartial &&
       (f1095as.length !== 1 ||
         f1095as[0].shared_policy_periods !== undefined ||
         !f1095as[0].monthly_premiums || !f1095as[0].monthly_aptcs ||
         f1095as[0].monthly_aptcs.some((amount) => amount !== 0))
     ) {
       throw new Error(
-        "Form 1095-A protected partial payment needs one nonshared zero-APTC monthly policy",
+        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
       );
     }
     const hasMarriageOwner = f1095as.some((item) =>
@@ -654,7 +683,8 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         adjustedPremiums[proof.month - 1] = payment.amount;
         hasProtectedPartial = true;
       }
-      const noAptcMonthlyClaim = f1095as.length === 1 &&
+      const noAptcMonthlyClaim = (f1095as.length === 1 ||
+        (sequentialNoAptcPartial && hasProtectedPartial)) &&
         item.no_aptc_monthly_evidence !== undefined &&
         item.monthly_aptcs.every((amount) => amount === 0) &&
         item.shared_policy_periods === undefined &&
