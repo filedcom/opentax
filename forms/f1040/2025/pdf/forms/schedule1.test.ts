@@ -9,6 +9,54 @@ Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   ]);
 });
 
+Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repayment", () => {
+  const byKey = (key: string) =>
+    schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
+  assertEquals(
+    byKey("print_line7_unemployment_repayment"),
+    "topmostSubform[0].Page1[0].Line7_ReadOrder[0].c1_3[0]",
+  );
+  assertEquals(
+    byKey("line7_unemployment_repayment"),
+    "topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0]",
+  );
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const all = {
+    f1099g: {
+      f1099gs: [
+        { box_1_unemployment: 5_000, box_1_repaid: 600 },
+        { box_1_unemployment: 2_000, box_1_repaid: 100 },
+      ],
+    },
+  };
+  const projected = schedule1Pdf.instances?.(
+    { line7_unemployment: 6_300 },
+    filer,
+    all,
+  )?.[0];
+  assertEquals(projected?.print_line7_unemployment_repayment, true);
+  assertEquals(projected?.line7_unemployment_repayment, 700);
+  assertEquals(projected?.line7_unemployment, 6_300);
+  const noRepayment = schedule1Pdf.instances?.(
+    { line7_unemployment: 5_000 },
+    filer,
+    { f1099g: { f1099gs: [{ box_1_unemployment: 5_000 }] } },
+  )?.[0];
+  assertEquals(noRepayment?.print_line7_unemployment_repayment, undefined);
+  assertEquals(noRepayment?.line7_unemployment_repayment, undefined);
+  assertThrows(
+    () => schedule1Pdf.instances?.({ line7_unemployment: 7_000 }, filer, all),
+    Error,
+    "line 7 differs from retained unemployment sources",
+  );
+});
+
 Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {
   const field = (key: string) =>
     schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;

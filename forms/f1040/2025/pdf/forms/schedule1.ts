@@ -1,7 +1,10 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
-import { assertForm1099gRtaaSources } from "../../../nodes/inputs/f1099g/index.ts";
+import {
+  assertForm1099gRtaaSources,
+  inputSchema as form1099gInputSchema,
+} from "../../../nodes/inputs/f1099g/index.ts";
 import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
@@ -72,6 +75,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line7_unemployment",
     pdfField: "topmostSubform[0].Page1[0].f1_12[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_line7_unemployment_repayment",
+    pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].c1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line7_unemployment_repayment",
+    pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0]",
   },
   {
     kind: "text",
@@ -258,6 +271,31 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    const unemploymentRows = all?.f1099g === undefined
+      ? []
+      : form1099gInputSchema.parse(all.f1099g).f1099gs;
+    const received = unemploymentRows.reduce(
+      (sum, row) => sum + (row.box_1_unemployment ?? 0),
+      0,
+    );
+    const repaid = unemploymentRows.reduce(
+      (sum, row) => sum + (row.box_1_repaid ?? 0),
+      0,
+    );
+    if (
+      (received > 0 || repaid > 0) &&
+      (fields.line7_unemployment ?? 0) !== Math.max(0, received - repaid)
+    ) {
+      throw new Error(
+        "Schedule 1 PDF line 7 differs from retained unemployment sources",
+      );
+    }
+    const repaymentFields = repaid > 0
+      ? {
+        print_line7_unemployment_repayment: true,
+        line7_unemployment_repayment: repaid,
+      }
+      : {};
     if (
       Number(fields.line8n_section951a_inclusion ?? 0) > 0 ||
       Number(fields.line8o_section951aa_inclusion ?? 0) > 0
@@ -331,9 +369,12 @@ export const schedule1Pdf: PdfFormDescriptor = {
     }
     const rows = schedule1OtherIncomeRows(fields);
     const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
-    if (rows.length === 0 && activityNotForProfit === 0) return [fields];
+    if (rows.length === 0 && activityNotForProfit === 0) {
+      return [{ ...fields, ...repaymentFields }];
+    }
     return [{
       ...fields,
+      ...repaymentFields,
       ...(activityNotForProfit > 0
         ? { line8j_f1099k_hobby_income: activityNotForProfit }
         : {}),
