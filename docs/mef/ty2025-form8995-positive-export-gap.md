@@ -1,5 +1,20 @@
 # TY2025 Form 8995 positive export boundary
 
+## REIT-only two or three issued payers (implementation authored; bulk validation pending)
+
+The positive Form 8995 route without trade or business QBI now accepts up to
+three separately identified Forms 1099-DIV with positive box 5 section 199A
+dividends, totaling at most $1,500. Each box 5 equals its box 1a, and the
+existing retained-source guard checks unique payer, document, and holding
+review references, the 91-day holding facts, and absence of other dividend
+components. The node sums the sources on lines 6/8, calculates line 9 and the
+taxable-income limit, and both MeF and PDF reconcile those lines to the issued
+copies and Form 1040 lines 3b/13. A three-payer positive graph/native/PDF case
+and payer, holding, source, fourth-payer, and return tamper cases are authored
+but unrun for the requested bulk validation. Trade or business combinations
+beyond the existing bounded route, aggregate dividends over $1,500, issued
+copy authentication, filled PDF, local XSD, and IRS acceptance remain open.
+
 Status: tightly bounded, positive one-business Schedule C, one-farm Schedule
 F, and one-issuer REIT-dividend-only routes are implemented for Form 8995 MeF
 and PDF. Other positive shapes still

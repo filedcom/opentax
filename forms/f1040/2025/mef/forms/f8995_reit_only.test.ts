@@ -27,7 +27,7 @@ const reit = {
   },
 };
 
-function filedReturn() {
+function filedReturn(reits: typeof reit[] = [reit]) {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
     general: {
@@ -35,11 +35,107 @@ function filedReturn() {
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
-    f1099div: [reit],
+    f1099div: reits,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   return result.pending;
 }
+
+const threeReits = [
+  {
+    ...reit,
+    payerName: "North REIT",
+    source_document_reference: "2025 North REIT 1099-DIV",
+    box1a: 350,
+    box5: 350,
+    section199a_holding_review: {
+      ...reit.section199a_holding_review,
+      review_reference: "North holding review",
+    },
+  },
+  {
+    ...reit,
+    payerName: "South REIT",
+    source_document_reference: "2025 South REIT 1099-DIV",
+    box1a: 450,
+    box5: 450,
+    section199a_holding_review: {
+      ...reit.section199a_holding_review,
+      review_reference: "South holding review",
+    },
+  },
+  {
+    ...reit,
+    payerName: "West REIT",
+    source_document_reference: "2025 West REIT 1099-DIV",
+    box1a: 500,
+    box5: 500,
+    section199a_holding_review: {
+      ...reit.section199a_holding_review,
+      review_reference: "West holding review",
+    },
+  },
+];
+
+Deno.test("three separately reviewed REIT issuers without business QBI reach Form 8995 native and PDF", () => {
+  const pending = filedReturn(threeReits);
+  const fields = pending.form8995;
+  assertEquals(pending.f1040.line3b_ordinary_dividends, 1_300);
+  assertEquals(fields.line1_qbi, 0);
+  assertEquals(fields.line6, 1_300);
+  assertEquals(fields.line9, 260);
+  assertEquals(fields.line15, pending.f1040.line13_qbi_deduction);
+  const native = form8995.build(fields, { pending });
+  assertStringIncludes(
+    native,
+    "<QlfyREITDivPTPIncomeLossAmt>1300</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  const pdf = form8995Pdf.projectFields!(fields, pending);
+  assertEquals(pdf.line6, 1_300);
+  assertEquals(pdf.line9, 260);
+  assertEquals(pdf.line15, pending.f1040.line13_qbi_deduction);
+});
+
+Deno.test("REIT-only three-issuer native and PDF reject payer, holding, source and total tampering", () => {
+  const pending = filedReturn(threeReits);
+  const fields = pending.form8995;
+  const changed = (rows: typeof threeReits) => ({
+    ...pending,
+    f1099div: { f1099divs: rows },
+  });
+  for (
+    const replay of [
+      changed([threeReits[0], threeReits[1], { ...threeReits[2], box5: 499 }]),
+      changed([threeReits[0], threeReits[1], {
+        ...threeReits[2],
+        payerName: "North REIT",
+      }]),
+      changed([threeReits[0], threeReits[1], {
+        ...threeReits[2],
+        source_document_reference: threeReits[0].source_document_reference,
+      }]),
+      changed([threeReits[0], threeReits[1], {
+        ...threeReits[2],
+        section199a_holding_review: {
+          ...threeReits[2].section199a_holding_review,
+          qualified_held_days_in_91_day_window: 45,
+        },
+      }]),
+      changed([...threeReits, {
+        ...reit,
+        payerName: "East REIT",
+        source_document_reference: "2025 East REIT 1099-DIV",
+      }]),
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 1_299 },
+      },
+    ]
+  ) {
+    assertThrows(() => form8995.build(fields, { pending: replay }), Error);
+    assertThrows(() => form8995Pdf.projectFields!(fields, replay), Error);
+  }
+});
 
 Deno.test("one reviewed REIT dividend without business QBI reaches Form 8995, Form 1040, native and PDF", () => {
   const pending = filedReturn();

@@ -742,7 +742,8 @@ function assertReitOnly8995(
     otherSourceKeys.some((key) => pending[key] !== undefined) ||
     hasBusinessSe || hasBusiness7206 ||
     !Array.isArray(fields.reit_dividend_sources) ||
-    fields.reit_dividend_sources.length !== 1 ||
+    fields.reit_dividend_sources.length < 1 ||
+    fields.reit_dividend_sources.length > 3 ||
     general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
@@ -776,7 +777,7 @@ function assertReitOnly8995(
       fields.line11
   ) {
     throw new Error(
-      "Form 8995 REIT-only filing needs one reviewed issued 1099-DIV and exact Form 1040 source reconciliation",
+      "Form 8995 REIT-only filing needs one to three reviewed issued 1099-DIV copies and exact Form 1040 source reconciliation",
     );
   }
   return {

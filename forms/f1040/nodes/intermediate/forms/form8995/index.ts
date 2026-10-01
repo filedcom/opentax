@@ -466,7 +466,9 @@ function reitOnlyLines(
   if (
     input.schedule_c_qbi_businesses !== undefined ||
     input.schedule_f_qbi_businesses !== undefined ||
-    input.reit_dividend_sources?.length !== 1 ||
+    !input.reit_dividend_sources ||
+    input.reit_dividend_sources.length < 1 ||
+    input.reit_dividend_sources.length > 3 ||
     !Number.isSafeInteger(reit) || reit <= 0 ||
     reit > 1_500 ||
     sumField(input.qbi_from_schedule_c) !== 0 ||
