@@ -83,12 +83,14 @@ function assertFiledLines(
   fields: Record<string, unknown>,
   f1040: Record<string, unknown>,
   reit: number = 0,
+  qualifiedDividends: number = 0,
 ): OneBusiness8995["lines"] {
   const qbi = fields.line1_qbi as number;
   const line11 = fields.line11 as number;
   const line5 = Math.round(qbi * 0.2);
   const line9 = Math.round(reit * 0.2);
-  const line14 = Math.round(line11 * 0.2);
+  const line13 = Math.max(0, line11 - qualifiedDividends);
+  const line14 = Math.round(line13 * 0.2);
   const expected = {
     2: qbi,
     3: 0,
@@ -100,8 +102,8 @@ function assertFiledLines(
     9: line9,
     10: line5 + line9,
     11: line11,
-    12: 0,
-    13: line11,
+    12: qualifiedDividends,
+    13: line13,
     14: line14,
     15: Math.min(line5 + line9, line14),
     16: 0,
@@ -123,6 +125,55 @@ function assertFiledLines(
 
 function zeroOrAbsent(value: unknown): boolean {
   return value === undefined || value === 0;
+}
+
+/** One issued, nonnominee dividend record without other 1099-DIV components. */
+function qualifiedDividendSource(source: unknown): {
+  ordinary: number;
+  qualified: number;
+} {
+  const parsed = form1099DivInputSchema.safeParse(source);
+  const item = parsed.success && parsed.data.f1099divs.length === 1
+    ? parsed.data.f1099divs[0]
+    : undefined;
+  if (
+    !item?.payerName?.trim() || !item.source_document_reference?.trim() ||
+    item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
+    !Number.isSafeInteger(item.box1a) || item.box1a <= 0 ||
+    item.box1a > 1_500 || !Number.isSafeInteger(item.box1b) ||
+    (item.box1b ?? 0) <= 0 || (item.box1b ?? 0) > item.box1a ||
+    [
+      item.box2a,
+      item.box2b,
+      item.box2c,
+      item.box2d,
+      item.box2e,
+      item.box2f,
+      item.box3,
+      item.box4,
+      item.box5,
+      item.box6,
+      item.box7,
+      item.box9,
+      item.box10,
+      item.box12,
+      item.box13,
+      item.box16,
+    ].some((amount) => !zeroOrAbsent(amount)) ||
+    item.box8 !== undefined || item.box14 !== undefined ||
+    item.box15 !== undefined ||
+    item.foreign_source_dividends_usd !== undefined ||
+    item.foreign_source_qualified_dividends_usd !== undefined ||
+    item.foreign_tax_irs_country_code !== undefined ||
+    item.foreign_tax_holding_review !== undefined ||
+    item.section199a_holding_review !== undefined ||
+    item.investment_property_for_form4952 === true
+  ) {
+    throw new Error(
+      "Form 8995 qualified-dividend route needs one identified issued 1099-DIV without other dividend components or Schedule B threshold",
+    );
+  }
+  return { ordinary: item.box1a, qualified: item.box1b! };
 }
 
 function qualifiedReitDividends(source: unknown, anchors: unknown): number {
@@ -280,7 +331,10 @@ export function assertOneScheduleC8995(
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
-  const reit = qualifiedReitDividends(
+  const qualifiedDividends = !zeroOrAbsent(fields.net_capital_gain)
+    ? qualifiedDividendSource(pending.f1099div)
+    : { ordinary: 0, qualified: 0 };
+  const reit = qualifiedDividends.qualified > 0 ? 0 : qualifiedReitDividends(
     pending.f1099div,
     fields.reit_dividend_sources,
   );
@@ -408,11 +462,15 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(fields.retirement_plan_deduction) ||
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
     schedule1.line3_schedule_c !== rawQbi ||
-    !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
-    (f1040.line3b_ordinary_dividends ?? 0) !== reit ||
+    (f1040.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends.qualified ||
+    (f1040.line3b_ordinary_dividends ?? 0) !==
+      reit + qualifiedDividends.ordinary ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
-    !zeroOrAbsent(fields.net_capital_gain) ||
+    (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
+    (qualifiedDividends.qualified > 0 &&
+      fields.reit_dividend_sources !== undefined) ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
@@ -424,7 +482,12 @@ export function assertOneScheduleC8995(
     );
   }
   const qbi = fields.line1_qbi as number;
-  const expected = assertFiledLines(fields, f1040, reit);
+  const expected = assertFiledLines(
+    fields,
+    f1040,
+    reit,
+    qualifiedDividends.qualified,
+  );
   return {
     businessName: sourceBusiness.line_c_business_name,
     tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },

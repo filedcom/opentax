@@ -74,6 +74,71 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
   );
 });
 
+Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line 12 and both filed outputs", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const dividend = {
+    payerName: "Example Dividend Fund",
+    source_document_reference: "2025 issued Example Dividend Fund 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 1_000,
+    box1b: 600,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [dividend],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const { pending } = result;
+  const fields = pending.form8995;
+  assertEquals(pending.f1040?.line3a_qualified_dividends, 600);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_000);
+  assertEquals(fields?.line12, 600);
+  assertEquals(fields?.line13, Math.max(0, (fields?.line11 as number) - 600));
+  assertEquals(fields?.line14, Math.round((fields?.line13 as number) * 0.2));
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(xml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
+  const returnXml = buildMefXml(pending, testFiler());
+  assertStringIncludes(returnXml, "<IRS8995 documentId=");
+  assertStringIncludes(returnXml, "<NetCapitalGainAmt>600</NetCapitalGainAmt>");
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line12, 600);
+  assertEquals(pdf?.line13, fields?.line13);
+  assertEquals(pdf?.line15, pending.f1040?.line13_qbi_deduction);
+
+  const changedSource = (change: Record<string, unknown>) => ({
+    ...pending,
+    f1099div: { f1099divs: [{ ...dividend, ...change }] },
+  });
+  for (
+    const changed of [
+      changedSource({ box1b: 500 }),
+      changedSource({ box1a: 999 }),
+      changedSource({ source_document_reference: undefined }),
+      changedSource({ box5: 100 }),
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line3a_qualified_dividends: 500 },
+      },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line3b_ordinary_dividends: 999 },
+      },
+    ]
+  ) {
+    assertThrows(() => form8995.build(fields, { pending: changed }), Error);
+    assertThrows(() => form8995Pdf.projectFields?.(fields, changed), Error);
+  }
+  assertThrows(
+    () => form8995.build({ ...fields, line12: 500 }, { pending }),
+    Error,
+  );
+});
+
 Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"

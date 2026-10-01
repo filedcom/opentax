@@ -59,6 +59,22 @@ holding, and changed-return fixtures are authored for the deferred validation
 pass. More than two issuers, Schedule B amounts, other dividend boxes, and
 issued-document byte authentication remain open.
 
+The one-Schedule-C route also accepts one identified, nonnominee Form 1099-DIV
+with positive box 1b qualified dividends not exceeding box 1a ordinary
+dividends. Box 1a must be at most $1,500; capital-gain distributions, section
+199A dividends, foreign tax, other dividend boxes, and any simultaneous REIT
+component are outside this route. The calculation places box 1b on Form 8995
+line 12, subtracts it from line 11 for line 13, and applies the 20% income
+limit on line 14. The native and PDF guards replay the issued-copy amounts
+against Form 1040 lines 3a/3b, Form 8995 lines 12-15, and Form 1040 line 13.
+An authored positive case uses box 1a $1,000 and box 1b $600; changed source
+amount, missing document reference, changed return, and changed prepared-line
+cases are authored but unrun. This follows the
+[2025 Form 8995 line 12 instructions](https://www.irs.gov/instructions/i8995).
+Qualified dividends from multiple issuers, mixed REIT and qualified dividends,
+Schedule B amounts, capital gains, and issued-copy byte authentication remain
+open.
+
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the
 record only when the business has a name, EIN, reference, positive integer net
@@ -68,14 +84,16 @@ of a specified cooperative. The source Schedule C must independently recalculate
 to the business profit and match Schedule 1 line 3. The final Schedule 1 line 15
 must match the sourced half of self-employment tax when Schedule SE applies;
 that deduction reduces line 1 QBI. Lines 16-17 remain zero, so health insurance
-or retirement-plan deductions cannot be silently allocated. No other QBI, REIT/PTP, gain or
-qualified-dividend input is allowed. The
+or retirement-plan deductions cannot be silently allocated. Other QBI sources,
+capital gain, and dividend combinations beyond the bounded routes above remain
+closed. The
 [corrected IRS TY2025 instructions](https://www.irs.gov/instructions/i8995)
 define Form 8995 line 11 for 1040 filers as Form 1040 line 11a minus lines 12e
 and 13b. The code checks the same equation using its internal `line11_agi`,
 `line12c_deduction_total` (the filed line 12e total), and zero
 `line13b_additional_deductions` keys. Form 8995 line 12 is qualified dividends
-plus net capital gain; both are explicitly checked zero here. Form 1040 line 13
+plus net capital gain; the qualified-dividend route checks its nonzero box 1b
+amount, while the other bounded routes check line 12 as zero. Form 1040 line 13
 must equal Form 8995 line 15. The native XML includes the required business
 group and every line 2-17 in XSD order. The PDF maps the same business and lines
 to the official TY2025 AcroForm fields.
