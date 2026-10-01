@@ -453,6 +453,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].c2_9[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "form4972_tax",
+    // 2025 line 16 box 2: c2_10 at x370.2, y626.002.
+    pdfField: "topmostSubform[0].Page2[0].c2_10[0]",
+  },
+  {
     kind: "text",
     domainKey: "line17_additional_taxes",
     pdfField: "topmostSubform[0].Page2[0].f2_09[0]",

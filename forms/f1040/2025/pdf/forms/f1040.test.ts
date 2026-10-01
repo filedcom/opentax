@@ -173,6 +173,34 @@ Deno.test("2025 Form 1040 PDF line 12e prints the selected deduction once", () =
   );
 });
 
+Deno.test("2025 Form 1040 PDF line 16 identifies Form 4972 in box 2", () => {
+  const line16Checks = irs1040Pdf.fields.filter((field) =>
+    field.domainKey === "form8814_tax" || field.domainKey === "form4972_tax"
+  );
+  assertEquals(
+    line16Checks.map((field) => [field.domainKey, field.kind, field.pdfField]),
+    [
+      [
+        "form8814_tax",
+        "checkbox",
+        "topmostSubform[0].Page2[0].c2_9[0]",
+      ],
+      [
+        "form4972_tax",
+        "checkbox",
+        "topmostSubform[0].Page2[0].c2_10[0]",
+      ],
+    ],
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({
+      line16_income_tax: 500,
+      form4972_tax: 500,
+    }, {})?.form4972_tax,
+    500,
+  );
+});
+
 Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "line4c_ira_rollover"
