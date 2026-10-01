@@ -63,6 +63,11 @@ export function assertForm6251PrivateActivityBondSource(
     divs.length === 0 && children.length === 0;
   const oneDivOnly = divs.length === 1 && (divs[0].box13 ?? 0) > 0 &&
     ints.length === 0 && oids.length === 0 && children.length === 0;
+  const oneIntOneDiv = ints.length === 1 && divs.length === 1 &&
+    (ints[0].box9 ?? 0) > 0 && (divs[0].box13 ?? 0) > 0 &&
+    oids.length === 0 && children.length === 0;
+  const mixedIntDivPab = ints.some((item) => (item.box9 ?? 0) > 0) &&
+    divs.some((item) => (item.box13 ?? 0) > 0);
   const sameIssuer = oneIntOneOid &&
     ints[0].payer_tin === oids[0].payer_tin &&
     ints[0].payer_name === oids[0].payer_name;
@@ -115,6 +120,7 @@ export function assertForm6251PrivateActivityBondSource(
     (fields.private_activity_bond_interest ?? 0) !== total ||
     (hasOidPab && !oneOidOnly && !oneIntOneOid) ||
     (hasAllocableDeduction && !twoIntOnly && !oneOidOnly && !oneIntOneOid) ||
+    (mixedIntDivPab && !oneIntOneDiv) ||
     (oneDivOnly && (
       !divs[0].payerName?.trim() ||
       !/^\d{9}$/.test(divs[0].payerTin ?? "") ||
@@ -154,6 +160,84 @@ export function assertForm6251PrivateActivityBondSource(
       divs[0].foreign_tax_irs_country_code !== undefined ||
       claimedInterest !== 0 ||
       form1040?.line2a_tax_exempt !== divs[0].box12 ||
+      amt === undefined || amt <= 0 || schedule2?.line2_amt !== amt ||
+      (typeof form1040?.line17_additional_taxes !== "number" ||
+        Number(form1040.line17_additional_taxes) < amt)
+    )) ||
+    (oneIntOneDiv && (
+      !/^[0-9]{9}$/.test(ints[0].payer_tin ?? "") ||
+      !/^[0-9]{9}$/.test(divs[0].payerTin ?? "") ||
+      ints[0].payer_tin === divs[0].payerTin ||
+      !ints[0].payer_name?.trim() || !divs[0].payerName?.trim() ||
+      !ints[0].source_document_reference ||
+      !divs[0].source_document_reference ||
+      !ints[0].pab_review_reference ||
+      !ints[0].pab_eligible_bonds_reviewed ||
+      !ints[0].pab_allocable_deduction_workpaper ||
+      !divs[0].pab_dividend_review ||
+      divs[0].pab_dividend_review
+          ?.bond_eligibility_review_reference ===
+        divs[0].pab_dividend_review
+          ?.taxpayer_expense_review_reference ||
+      new Set([
+          ints[0].source_document_reference,
+          divs[0].source_document_reference,
+          ints[0].pab_review_reference,
+          ints[0].pab_allocable_deduction_workpaper
+            ?.reviewed_workpaper_reference,
+          ints[0].pab_allocable_deduction_workpaper?.expense_record_reference,
+          divs[0].pab_dividend_review?.bond_eligibility_review_reference,
+          divs[0].pab_dividend_review?.taxpayer_expense_review_reference,
+        ]).size !== 7 ||
+      ints[0].box8 !== ints[0].box9 ||
+      (ints[0].box13 ?? 0) !== 0 ||
+      divs[0].box12 !== divs[0].box13 ||
+      divs[0].isNominee || divs[0].nominee_distribution !== undefined ||
+      divs[0].box11 ||
+      divs[0].investment_property_for_form4952 === true ||
+      [
+        ints[0].box1,
+        ints[0].box2,
+        ints[0].box3,
+        ints[0].box4,
+        ints[0].box5,
+        ints[0].box6,
+        ints[0].box10,
+        ints[0].box11,
+        ints[0].box12,
+        ints[0].box17,
+        divs[0].box1a,
+        divs[0].box1b,
+        divs[0].box2a,
+        divs[0].box2b,
+        divs[0].box2c,
+        divs[0].box2d,
+        divs[0].box2e,
+        divs[0].box2f,
+        divs[0].box3,
+        divs[0].box4,
+        divs[0].box5,
+        divs[0].box6,
+        divs[0].box7,
+        divs[0].box9,
+        divs[0].box10,
+        divs[0].box16,
+      ].some((value) => (value ?? 0) !== 0) ||
+      ints[0].box7 !== undefined || ints[0].box14 !== undefined ||
+      ints[0].box15 !== undefined || ints[0].box16 !== undefined ||
+      ints[0].foreign_source_interest_usd !== undefined ||
+      ints[0].foreign_tax_irs_country_code !== undefined ||
+      ints[0].foreign_tax_source_document_reference !== undefined ||
+      ints[0].seller_financed === true ||
+      ints[0].investment_property_for_form4952 === true ||
+      divs[0].box8 !== undefined || divs[0].box14 !== undefined ||
+      divs[0].box15 !== undefined ||
+      divs[0].foreign_source_dividends_usd !== undefined ||
+      divs[0].foreign_source_qualified_dividends_usd !== undefined ||
+      divs[0].foreign_tax_irs_country_code !== undefined ||
+      claimedInterest !== ints[0].box9 ||
+      form1040?.line2a_tax_exempt !==
+        (ints[0].box8 ?? 0) + (divs[0].box12 ?? 0) ||
       amt === undefined || amt <= 0 || schedule2?.line2_amt !== amt ||
       (typeof form1040?.line17_additional_taxes !== "number" ||
         Number(form1040.line17_additional_taxes) < amt)

@@ -4,6 +4,23 @@ Status: coverage disposition only. This document does not turn an unsupported
 AMT situation into a supported return. The agreed full test batch, IRS XSD
 validation, filled-PDF review, and ATS acceptances have not run.
 
+## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
+
+The [2025 Form 6251 line 2g instructions](https://www.irs.gov/instructions/i6251)
+direct the filer to combine eligible specified-bond interest reported in Form
+1099-INT box 9 and the specified-bond portion of tax-exempt fund dividends
+reported in Form 1099-DIV box 13. A bounded mixed source now requires one
+reviewed, wholly specified 1099-INT box 8/9 copy and one reviewed, wholly
+specified 1099-DIV box 12/13 copy, with distinct issuer and workpaper
+references, no taxpayer allocable deduction, and no other PAB source or
+unrelated income boxes. The direct bond amount reaches the retained interest
+source; both amounts reach Form 6251 line 2g and Form 1040 line 2a. Native
+and PDF preflight replay the copies and reconcile positive AMT to Schedule 2
+line 2 and Form 1040 line 17. The authored full-return positive and amount,
+review, duplicate-copy, line-2a, and tax-tamper fixtures await the bulk test.
+Issuer copies and review records are references, not authenticated bytes;
+mixed sources with deductions and wider combinations remain open.
+
 ## Two distinct bonds reported by one 1099-INT issuer (2026-10-01, unrun)
 
 The bounded Form 6251 line 2g path now accepts two separately issued 1099-INT
