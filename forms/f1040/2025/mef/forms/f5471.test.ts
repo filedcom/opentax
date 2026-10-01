@@ -17,17 +17,24 @@ try {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Category 5a Form 5471 parent joins page 1, B Part II, G, and I", () => {
+Deno.test("Category 4/5a Form 5471 parent joins A, B, G, and I", () => {
   const xml = form5471.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
   });
   assertStringIncludes(xml, "<CategoryOfFiler5aInd>X</CategoryOfFiler5aInd>");
+  assertStringIncludes(xml, "<CategoryOfFiler4Ind>X</CategoryOfFiler4Ind>");
   assertStringIncludes(
     xml,
     "<VotingStockOwnedPct>1.00000</VotingStockOwnedPct>",
   );
   assertStringIncludes(xml, "<DirectShareholdersForeignCorp>");
+  assertStringIncludes(xml, "<StockOfTheForeignCorporation>");
+  assertStringIncludes(xml, "<USShareholdersOfForeignCorp>");
+  assertStringIncludes(
+    xml,
+    "<ProRataShareSubpartFIncomeRt>1.00000</ProRataShareSubpartFIncomeRt>",
+  );
   assertStringIncludes(
     xml,
     "<AnnualAcctPeriodEndShareCnt>100</AnnualAcctPeriodEndShareCnt>",

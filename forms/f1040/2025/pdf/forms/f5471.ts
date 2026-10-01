@@ -19,6 +19,8 @@ const p6 = (key: string, number: number, printZero = false) =>
   field(key, 6, `f6_${number}[0]`, printZero);
 const partII = (key: string, path: string) =>
   field(key, 2, `Table_SchB_PartII[0].Row1[0].${path}`);
+const partI = (key: string, path: string) =>
+  field(key, 2, `Table_SchB_PartI[0].Row1[0].${path}`);
 const monthDay = (date: string) => date.slice(5).replace("-", "/");
 const shortYear = (date: string) => date.slice(2, 4);
 const fullDate = (date: string) =>
@@ -54,7 +56,7 @@ const scheduleGQuestions = [
 export const form5471Pdf: PdfFormDescriptor = {
   pendingKey: "f5471_parent",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471.pdf",
-  // Category 5a uses page 1, Schedule B Part II, Schedule G, and Schedule I.
+  // The direct sole owner is both Category 4 and 5a. C/F remain gated.
   pageIndices: () => [0, 1, 3, 4, 5],
   fields: [
     field("cfc_begin_md", 1, "PgHeader[0].f1_1[0]"),
@@ -68,6 +70,11 @@ export const form5471Pdf: PdfFormDescriptor = {
     field("filer_state", 1, "Address[0].f1_9[0]"),
     field("filer_zip", 1, "Address[0].f1_10[0]"),
     p1("shareholder_tin", 11),
+    {
+      kind: "checkbox",
+      domainKey: "category4",
+      pdfField: `${page(1)}c1_6[0]`,
+    },
     {
       kind: "checkbox",
       domainKey: "category5a",
@@ -89,6 +96,14 @@ export const form5471Pdf: PdfFormDescriptor = {
     p1("functional_currency", 39),
     p1("statutory_agent", 43),
     p1("books_custodian", 44),
+    field("stock_class", 1, "Table_SchA[0].Row1[0].f1_45[0]"),
+    field("total_shares_begin", 1, "Table_SchA[0].Row1[0].f1_46[0]"),
+    field("total_shares_end", 1, "Table_SchA[0].Row1[0].f1_47[0]"),
+    partI("shareholder_detail", "f2_1[0]"),
+    partI("stock_class", "Row1b[0].f2_2[0]"),
+    partI("shares_begin", "Row1c[0].f2_6[0]"),
+    partI("shares_end", "Row1d[0].f2_10[0]"),
+    partI("pro_rata_subpart_f_percent", "f2_14[0]"),
     partII("shareholder_detail", "f2_72[0]"),
     partII("stock_class", "Row1b[0].f2_73[0]"),
     partII("shares_begin", "Row1c[0].f2_77[0]"),
@@ -165,6 +180,7 @@ export const form5471Pdf: PdfFormDescriptor = {
       filer_state: filer.address.state,
       filer_zip: filer.address.zip,
       category5a: true,
+      category4: true,
       voting_percent: cfc.ownership_percent,
       filer_begin_md: monthDay(id.filer_tax_year_begin),
       filer_begin_year: shortYear(id.filer_tax_year_begin),
@@ -189,8 +205,11 @@ export const form5471Pdf: PdfFormDescriptor = {
         cfc.shareholder_tin,
       ].filter(Boolean).join("\n"),
       stock_class: id.stock_class_description,
+      total_shares_begin: id.total_outstanding_shares_begin,
+      total_shares_end: id.total_outstanding_shares_end,
       shares_begin: id.direct_shares_begin,
       shares_end: id.direct_shares_end,
+      pro_rata_subpart_f_percent: cfc.ownership_percent,
       ...Object.fromEntries(
         scheduleGQuestions.map(([key]) => [key, cfc.schedule_g[key]]),
       ),

@@ -41,6 +41,7 @@ import { form5471ScheduleE } from "./f5471_schedule_e.ts";
 import { form5471ScheduleH } from "./f5471_schedule_h.ts";
 import { form5471ScheduleI1 } from "./f5471_schedule_i1.ts";
 import { form5471ScheduleJ } from "./f5471_schedule_j.ts";
+import { form5471ScheduleM } from "./f5471_schedule_m.ts";
 import { form5471ScheduleP } from "./f5471_schedule_p.ts";
 import { form5471ScheduleQ } from "./f5471_schedule_q.ts";
 import { form5471ScheduleR } from "./f5471_schedule_r.ts";
@@ -220,6 +221,7 @@ export const ALL_MEF_FORMS = [
   form5471ScheduleH,
   form5471ScheduleI1,
   form5471ScheduleJ,
+  form5471ScheduleM,
   form5471ScheduleP,
   form5471ScheduleQ,
   form5471ScheduleR,

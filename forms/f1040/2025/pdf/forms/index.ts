@@ -44,6 +44,7 @@ import { form5471ScheduleEPdf } from "./f5471_schedule_e.ts";
 import { form5471ScheduleHPdf } from "./f5471_schedule_h.ts";
 import { form5471ScheduleI1Pdf } from "./f5471_schedule_i1.ts";
 import { form5471ScheduleJPdf } from "./f5471_schedule_j.ts";
+import { form5471ScheduleMPdf } from "./f5471_schedule_m.ts";
 import { form5471SchedulePPdf } from "./f5471_schedule_p.ts";
 import { form5471ScheduleQPdf } from "./f5471_schedule_q.ts";
 import { form5471ScheduleRPdf } from "./f5471_schedule_r.ts";
@@ -148,6 +149,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form5471ScheduleHPdf,
   form5471ScheduleI1Pdf,
   form5471ScheduleJPdf,
+  form5471ScheduleMPdf,
   form5471SchedulePPdf,
   form5471ScheduleQPdf,
   form5471ScheduleRPdf,

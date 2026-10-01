@@ -336,6 +336,20 @@ export const scheduleQSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// Schedule M for the reviewed inventory sale to the sole U.S. shareholder.
+// The transaction ledger rules out the remaining related-party columns and
+// transaction types, and records no outstanding balances during the year.
+export const scheduleMSchema = z.object({
+  inventory_sales_to_filer_functional: dollars,
+  inventory_sales_to_filer_usd: dollars,
+  no_other_related_party_transactions: z.literal(true),
+  maximum_related_party_accounts_payable_usd: z.literal(0),
+  maximum_related_party_borrowing_usd: z.literal(0),
+  maximum_related_party_accounts_receivable_usd: z.literal(0),
+  maximum_related_party_lending_usd: z.literal(0),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -401,6 +415,7 @@ export const itemSchema = z.object({
   schedule_p: schedulePSchema,
   schedule_r: scheduleRSchema,
   schedule_q: scheduleQSchema,
+  schedule_m: scheduleMSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
@@ -433,6 +448,23 @@ export const itemSchema = z.object({
   }
   const j = value.schedule_j;
   const q = value.schedule_q;
+  const m = value.schedule_m;
+  if (
+    m.inventory_sales_to_filer_functional !==
+      q.sales_gross_income_functional ||
+    m.inventory_sales_to_filer_usd !== value.schedule_i.line1f ||
+    Math.round(
+        m.inventory_sales_to_filer_functional /
+          Number(value.schedule_i1.average_exchange_rate),
+      ) !== m.inventory_sales_to_filer_usd
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_m"],
+      message:
+        "Schedule M related-person inventory sale must reconcile to Schedule Q sales and Schedule I line 1f",
+    });
+  }
   if (
     value.schedule_i.line1a !== 0 ||
     value.schedule_i.line1b !== 0 ||

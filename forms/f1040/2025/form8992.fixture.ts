@@ -195,6 +195,16 @@ export const form8992Cfc: F5471Item = {
     high_tax_election: false,
     source_workpaper_reference: "Reviewed Schedule Q income-group allocation",
   },
+  schedule_m: {
+    inventory_sales_to_filer_functional: 10_000,
+    inventory_sales_to_filer_usd: 10_000,
+    no_other_related_party_transactions: true,
+    maximum_related_party_accounts_payable_usd: 0,
+    maximum_related_party_borrowing_usd: 0,
+    maximum_related_party_accounts_receivable_usd: 0,
+    maximum_related_party_lending_usd: 0,
+    source_workpaper_reference: "Reviewed related-party transaction ledger",
+  },
   form5471_identity: {
     cfc_tax_year_begin: "2025-01-01",
     cfc_tax_year_end: "2025-12-31",

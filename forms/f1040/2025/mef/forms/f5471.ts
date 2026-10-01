@@ -54,6 +54,7 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
       element("FilerTaxYearBeginDt", id.filer_tax_year_begin),
       element("FilerTaxYearEndDt", id.filer_tax_year_end),
       element("SSN", cfc.shareholder_tin),
+      element("CategoryOfFiler4Ind", "X"),
       element("CategoryOfFiler5aInd", "X"),
       element("VotingStockOwnedPct", "1.00000"),
       elements("ForeignCorporation", [
@@ -95,7 +96,31 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
         ]),
         foreignAddress(cfcAddress),
       ]),
+      elements("IRS5471ScheduleA", [
+        elements("StockOfTheForeignCorporation", [
+          element("StockClassDesc", id.stock_class_description),
+          element(
+            "AnnualAcctPeriodBeginShareCnt",
+            id.total_outstanding_shares_begin,
+          ),
+          element(
+            "AnnualAcctPeriodEndShareCnt",
+            id.total_outstanding_shares_end,
+          ),
+        ]),
+      ]),
       elements("IRS5471ScheduleB", [
+        elements("USShareholdersOfForeignCorp", [
+          element("PersonNm", shareholderName),
+          usAddress(context.filer.address),
+          element("ShareholderSSN", cfc.shareholder_tin),
+          elements("ForeignCorporationStocks", [
+            element("StockClassDesc", id.stock_class_description),
+            element("AnnualAcctPeriodBeginShareCnt", id.direct_shares_begin),
+            element("AnnualAcctPeriodEndShareCnt", id.direct_shares_end),
+          ]),
+          element("ProRataShareSubpartFIncomeRt", "1.00000"),
+        ]),
         elements("DirectShareholdersForeignCorp", [
           element("PersonNm", shareholderName),
           usAddress(context.filer.address),
