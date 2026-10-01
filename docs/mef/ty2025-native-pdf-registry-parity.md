@@ -4,7 +4,7 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **138 native descriptors and 102 PDF
+exclusion. The indexes currently hold **138 native descriptors and 103 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
 
@@ -22,7 +22,6 @@ found expenditure-level evidence and no-double-benefit checks still missing.
 | `f965`                  | `IRS965A`                   | No Form 965-A PDF. Source includes prior-year liability/payment and transfer history that still needs independent review.                                  |
 | `form8621`              | `IRS8621`                   | No PFIC Form 8621 PDF or Part V excess-distribution statement print route.                                                                                 |
 | `f4255`                 | `IRS4255`                   | No investment-credit recapture PDF.                                                                                                                        |
-| `f8611`                 | `IRS8611`                   | No low-income-housing-credit recapture PDF.                                                                                                                |
 | `f8826`                 | `IRS8826`                   | No direct-claim disabled-access-credit PDF. Pass-through-only credits are a separate Form 3800 route and do **not** require the recipient's own Form 8826. |
 | `f8854`, `f8854_annual` | `IRS8854` initial or annual | Neither filed variant has a Form 8854 PDF descriptor. The native initial/annual statements do not substitute for the parent printed form.                  |
 
@@ -38,6 +37,12 @@ The later W-2G route now has a registered recipient Copy B PDF descriptor and
 an inspected five-page synthetic packet. It reproduces reviewed source facts;
 the issued-copy bytes and any required signature remain separate evidence
 gates. This does not change the parent taxpayer-form priority-1 list.
+
+Form 8611 now has a registered, bounded one-page-per-building PDF descriptor
+that reconciles native recapture totals with Schedule 2 line 16. Positive
+printable export stays closed until the historical Forms 8586/8609/8609-A/8611
+or issuer K-1 credit and interest records can be verified. Its authored
+source/native/PDF fixtures await the implementation-first bulk gate.
 
 Form 3468's bounded trust-owned Part V route now has both registered
 descriptors. Form 8992, its Schedule A, and Form 5471 page 1/A/B/C/F/G/I plus
