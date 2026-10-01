@@ -301,6 +301,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Reconcile either spouse's full-year self-only HSA employer excess paid to that HSA owner, with a matching owner W-2 code W and code-2 Form 1099-SA: separate Forms 8889, Schedule 1 earnings/principal, W-2 wages, Form 1040 lines 1a/8/10/23, native MeF, and PDF agree. Primary/spouse positive and W-2/box-2/Schedule 1/return tamper fixtures are authored for deferred validation; employer-directed returns, mixed events, partial returns, and source-byte authentication remain open.
 
+- [x] Reconcile three distinct full-share Form 1099-R copies from one taxpayer, plan, and payer in a single Form 4972 Part II+III election: sum boxes 2a/3 once, join special tax to Form 1040, and replay all three sources and final tax in native MeF and PDF. Positive and missing/changed third-copy, plan, and return-tax tamper fixtures are authored for deferred validation; further distributions, partial shares, NUA/annuity/estate/death combinations, and source-byte authentication remain open.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
