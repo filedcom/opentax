@@ -409,6 +409,42 @@ function buildOtherPassive(
     activeParticipation: false,
     filingStatus: input.filing_status,
   });
+  // A prior operating PAL used against the same rental's current profit must
+  // cancel that profit on Schedule E, while leaving the remainder suspended.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net > 0 &&
+    activities[0].prior_unallowed_operating > activities[0].current_net &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !activities[0].prior_year_8582_source || !w2.success ||
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== activities[0].current_net ||
+      limit.suspended !==
+        activities[0].prior_unallowed_operating - activities[0].current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 prior rental loss and current profit must reconcile the filed-year source, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   // One current Form 4835 loss offset by one unrelated Schedule E passive
   // rental profit must reach the finalized return exactly once. This narrow
   // no-prior, no-sale route has no special rental allowance.

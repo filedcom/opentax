@@ -1,5 +1,23 @@
 # TY2025 Form 8582 durable activity identity
 
+## One filed-2024 operating PAL against the same rental's 2025 profit
+
+A bounded no-sale Part V route now uses one identified other-passive Schedule E
+rental's $5,000 prior operating PAL against $3,000 current profit. Its 2024
+Form 8582 Part VII column (c) amount, filed-document reference, and durable
+activity ID must match the 2025 source. Form 8582 allows $3,000 and retains
+$2,000 by activity ID; Schedule E and Schedule 1 net to zero while the final
+Form 1040 retains the separately sourced $50,000 wages. Native export rechecks
+the activity, prior source, allowed/suspended split, Schedule 1, and Form 1040;
+the PDF projector invokes that check. Full-return, native/PDF, and prior-source
+and return-tamper fixtures are authored but unrun. The
+[2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+place other-passive activity income and prior unallowed losses in Part V and
+direct the prior amount to the filed 2024 Part VII column (c). The supplied
+filed-return reference is not independently authenticated. Other activity
+mixes, dispositions, durable accepted-return import, and the full test/XSD/
+filled-PDF/business-rule/ATS batch remain open.
+
 ## One current farm-rental loss offset by one rental profit
 
 A bounded no-prior, no-sale type-B route now joins one Form 4835 share-rent
