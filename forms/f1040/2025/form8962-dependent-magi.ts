@@ -62,19 +62,26 @@ export function reconcileDependentMagi(
     );
   }
   if (
+    householdSize !== 2 &&
     claimed.some((dependent) =>
       dependent.ptc_tax_return?.filing === "not_required"
     )
   ) {
     throw new Error(
-      "Form 8962 bounded dependent path needs a source-backed not-required filing-threshold workpaper",
+      "Form 8962 not-required dependent path supports one claimed dependent",
     );
   }
   if (
     claimed.some((dependent) => {
       const source = dependent.ptc_tax_return;
       const ssn = dependent.ssn?.replaceAll("-", "");
-      return !ssn || source?.filing !== "required" ||
+      if (!ssn || !source) return true;
+      if (source.filing === "not_required") {
+        return source.wage_form_w2.employee_ssn.replaceAll("-", "") !== ssn ||
+          source.filing_requirement_review.dependent_ssn.replaceAll("-", "") !==
+            ssn;
+      }
+      return source.filing !== "required" ||
         source.filed_form1040.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
         source.interest_forms1099.some((form) =>
           form.recipient_ssn?.replaceAll("-", "") !== ssn
@@ -97,7 +104,12 @@ export function reconcileDependentMagi(
   }
   const documentIds = claimed.flatMap((dependent) => {
     const source = dependent.ptc_tax_return;
-    return source?.filing === "required"
+    return source?.filing === "not_required"
+      ? [
+        source.wage_form_w2.source_document_id,
+        source.filing_requirement_review.source_document_id,
+      ]
+      : source?.filing === "required"
       ? [
         source.filed_form1040.source_document_id,
         ...source.interest_forms1099.map((form) => form.source_document_id),

@@ -144,7 +144,7 @@ Deno.test("Form 8962 dependent threshold rejects a normalized impossible birth d
   );
 });
 
-Deno.test("Form 8962 PDF closes an unproved not-required dependent even with zero line 2b", () => {
+Deno.test("Form 8962 PDF closes a not-required dependent without a filing review even with zero line 2b", () => {
   const general = {
     ...dependentSource,
     dependents: [{
@@ -162,7 +162,7 @@ Deno.test("Form 8962 PDF closes an unproved not-required dependent even with zer
         annual_premium: 6_000,
       }, { general }),
     Error,
-    "source-backed not-required filing-threshold workpaper",
+    "verified general return source",
   );
 });
 

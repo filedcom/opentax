@@ -126,7 +126,31 @@ export const dependentSchema = z.object({
   // Form 8962 Worksheet 1-2. A dependent's MAGI counts only when a return is
   // required because income meets the filing threshold, not for refund-only returns.
   ptc_tax_return: z.discriminatedUnion("filing", [
-    z.object({ filing: z.literal("not_required") }),
+    z.object({
+      filing: z.literal("not_required"),
+      // Bounded wage-only Table 2 determination. The reviewed inventory also
+      // rules out the separate Pub. 501 Table 3 filing triggers.
+      wage_form_w2: z.object({
+        source_document_id: z.string().min(1),
+        employer_name: z.string().trim().min(1),
+        employer_ein: z.string().regex(/^\d{9}$/),
+        employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1_wages: z.number().positive(),
+      }).strict(),
+      filing_requirement_review: z.object({
+        source_document_id: z.string().min(1),
+        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        tax_year: z.literal(2025),
+        filing_status: z.literal("single"),
+        blind: z.literal(false),
+        wage_source_document_id: z.string().min(1),
+        other_income_reviewed_absent: z.literal(true),
+        other_filing_triggers_reviewed_absent: z.literal(true),
+        return_filed: z.literal(false),
+        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reviewer_name: z.string().trim().min(1),
+      }).strict(),
+    }).strict(),
     z.object({ filing: z.literal("form8814") }),
     z.object({
       filing: z.literal("required"),
@@ -326,6 +350,39 @@ type DependentItem = z.infer<typeof dependentSchema>;
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
   return dependents.reduce((total, dep) => {
     const taxReturn = dep.ptc_tax_return;
+    if (taxReturn?.filing === "not_required") {
+      const wage = taxReturn.wage_form_w2;
+      const review = taxReturn.filing_requirement_review;
+      const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
+        ? new Date(`${dep.dob}T00:00:00Z`)
+        : new Date(Number.NaN);
+      const reviewed = new Date(`${review.reviewed_on}T00:00:00Z`);
+      if (
+        Number.isNaN(birth.getTime()) ||
+        birth.toISOString().slice(0, 10) !== dep.dob
+      ) {
+        throw new Error("Form 8962 dependent needs a valid birth date");
+      }
+      if (
+        birth.getTime() < Date.UTC(1961, 0, 2) ||
+        wage.box1_wages > 15_750 ||
+        Number.isNaN(reviewed.getTime()) ||
+        reviewed.toISOString().slice(0, 10) !== review.reviewed_on ||
+        reviewed.getTime() < Date.UTC(2026, 0, 1) ||
+        review.wage_source_document_id !== wage.source_document_id ||
+        review.source_document_id === wage.source_document_id ||
+        wage.employee_ssn.replaceAll("-", "") !==
+          dep.ssn?.replaceAll("-", "") ||
+        review.dependent_ssn.replaceAll("-", "") !==
+          dep.ssn?.replaceAll("-", "") ||
+        !dep.ssn
+      ) {
+        throw new Error(
+          "Form 8962 dependent wage-only not-required review must match the under-65 dependent, W-2, and 2025 filing threshold",
+        );
+      }
+      return total;
+    }
     if (!taxReturn || taxReturn.filing !== "required") return total;
     const filed = taxReturn.filed_form1040;
     const taxableInterest = taxReturn.interest_forms1099.reduce(

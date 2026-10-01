@@ -1358,7 +1358,7 @@ Deno.test("Form 8962 annual line 11 reconciles a required-filing dependent's Wor
         },
       }),
     Error,
-    "source-backed not-required filing-threshold workpaper",
+    "verified general return source",
   );
 });
 

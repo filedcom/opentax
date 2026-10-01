@@ -1,5 +1,31 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Reviewed wage-only dependent below the filing threshold (2026-10-01, unrun)
+
+The `not_required` source now takes one identified 2025 W-2 and a distinct
+reviewed filing-requirement workpaper for an under-65, nonblind single
+dependent. The workpaper names the dependent and W-2, records that the remaining
+income and separate filing triggers were reviewed and absent, and states that
+no return was filed. The identified W-2 wages must be at most $15,750; a dollar
+above it cannot enter this exclusion. An incomplete assertion, mismatched SSN,
+borrowed document ID, invalid review date, or a two-dependent not-required
+combination closes the route. The workpaper must be dated after tax year end.
+This uses [2025 Pub. 501 Table 2 and Table 3](https://www.irs.gov/publications/p501)
+and [2025 Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962).
+
+With one unchanged same-state, nonshared Form 1095-A policy covering the single
+filer and this dependent, the existing monthly no-APTC route now projects
+Form 8962 line 2b as zero. The dependent's W-2 stays out of the parent's AGI;
+household income, the two-person poverty line, each month's SLCSP and allowed
+credit, Schedule 3 line 9, and Form 1040 line 31 still reconcile. A $15,750
+dependent W-2 and $40,880 parent wage example computes $8,184 PTC, with
+threshold, workpaper identity, policy, SLCSP, and final-return tamper fixtures
+authored for the deferred bulk gate. The workpaper and W-2 references identify
+documents but do not authenticate their bytes or prove the income inventory
+independently. Refund-only dependent returns, interest/mixed income, more than
+one not-required dependent, shared policies, and wider household situations
+remain closed.
+
 ## Two W-2 employers plus one Form 1099-INT (2026-10-01, unrun)
 
 One claimed dependent's referenced filed 2025 single return can now reconcile
