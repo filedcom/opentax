@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **679 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **680 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 149-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 679 bounded routes and
+**Implemented coverage.** The completed ledger records 680 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -156,7 +156,10 @@ amount and its retained AGI counterpart. Source-complete standalone FEC wages
 build one native record per employer and one aggregate wage statement with
 owner and line 1h/AGI checks. A bounded non-IRA 2025 1099-R code 8 correction
 now reaches line 1h and its native wage statement instead of pension lines;
-its PDF type remains in progress. Other line 1h income types remain open.
+its PDF type remains in progress. Reviewed, under-50, non-SIMPLE W-2 code D
+deferrals now add only the excess above $23,500 to line 1h and AGI with
+native source checks; its PDF type also remains in progress. Other line 1h
+income types remain open.
 The retained ACTC opt-out
 now reaches the Form 1040 line 28 native indicator and PDF checkbox, and
 conflicting Form 8812 item answers reject. The wider core-return and PDF
