@@ -84,6 +84,31 @@ Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Sc
   );
 });
 
+Deno.test("f3800: staged Form 8908 source enters standard credit separately from legacy totals", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8908_credit: {
+      credit_amount: 2_500,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form3800_source_credits?.standardCredit,
+    2_500,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule3), {
+    form3800_source_credit_pending: true,
+  });
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8908_credit: {
+        credit_amount: 2_500,
+        subject_to_passive_activity_limit: true,
+      },
+    }).success,
+    false,
+  );
+});
+
 Deno.test("f3800: reconciled nonpassive vintages reach their separate tax limits", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     carryforward_vintages: [{

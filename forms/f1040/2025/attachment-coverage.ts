@@ -200,6 +200,13 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => nonempty(fields.f8908s),
   },
   {
+    pendingKey: "f3800",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8908 line 1p needs individual-certifier identity and linked Form 7220 PWA attachment support",
+    isActive: (fields) => fields.f8908_credit !== undefined,
+  },
+  {
     pendingKey: "f8994",
     exportKinds: ["mef", "pdf"],
     reason: "Form 8994 paid-leave credit needs a native attachment",
