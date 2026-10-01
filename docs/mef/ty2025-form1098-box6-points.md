@@ -15,7 +15,7 @@ were read from the [official 2025 Form 1098 Copy B](https://www.irs.gov/pub/irs-
 For a positive box 6 source, the public Form 1098 input now carries an
 `issuer_copy` with filename, reviewed SHA-256, and exact PDF bytes. The MeF
 bundle and filled-PDF builders require this evidence and invoke the same
-Copy B verifier on the executor's original source before export. The issued
+Copy B verifier on the prepared `f1098` source before export. The issued
 copy is retained as evidence and is not included in the transmitted MeF PDF
 attachments. Positive, missing-copy, and changed-byte fixtures are authored
 for the deferred bulk batch. The standalone synchronous XML construction

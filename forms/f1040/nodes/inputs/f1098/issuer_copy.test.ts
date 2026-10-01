@@ -104,8 +104,8 @@ Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missin
   const bytes = await copy();
   const reviewed = await review(bytes);
   const source = {
-    start: {
-      f1098: [{
+    f1098: {
+      f1098s: [{
         ...item,
         issuer_copy: {
           file_name: reviewed.file_name,
@@ -119,7 +119,7 @@ Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missin
   await assertRejects(
     () =>
       assertForm1098IssuerCopies({
-        start: { f1098: [{ ...item }] },
+        f1098: { f1098s: [{ ...item }] },
       }),
     Error,
     "needs the reviewed issuer Copy B bytes",
@@ -127,14 +127,14 @@ Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missin
   await assertRejects(
     () =>
       buildMefBundle(
-        { start: { f1098: [{ ...item }] } } as unknown as MefFormsPending,
+        { f1098: { f1098s: [{ ...item }] } } as unknown as MefFormsPending,
         { attachments: [] },
       ),
     Error,
     "needs the reviewed issuer Copy B bytes",
   );
   await assertRejects(
-    () => buildPdfBytes({ start: { f1098: [{ ...item }] } }, undefined),
+    () => buildPdfBytes({ f1098: { f1098s: [{ ...item }] } }, undefined),
     Error,
     "needs the reviewed issuer Copy B bytes",
   );
@@ -142,11 +142,11 @@ Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missin
   await assertRejects(
     () =>
       assertForm1098IssuerCopies({
-        start: {
-          f1098: [{
+        f1098: {
+          f1098s: [{
             ...item,
             issuer_copy: {
-              ...source.start.f1098[0].issuer_copy,
+              ...source.f1098.f1098s[0].issuer_copy,
               bytes: changed,
             },
           }],

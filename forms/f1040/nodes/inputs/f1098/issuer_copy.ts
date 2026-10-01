@@ -115,17 +115,13 @@ export async function verifyForm1098IssuerCopy(
   }
 }
 
-/** Bind every positive box 6 source in the executor's original input. */
+/** Bind every positive box 6 source in the prepared Form 1098 input. */
 export async function assertForm1098IssuerCopies(
   pending: Record<string, unknown>,
 ): Promise<void> {
-  const start = pending.start;
-  if (start === null || typeof start !== "object" || Array.isArray(start)) {
-    return;
-  }
-  const raw = (start as Record<string, unknown>).f1098;
+  const raw = pending.f1098;
   if (raw === undefined) return;
-  const { f1098s } = inputSchema.parse({ f1098s: raw });
+  const { f1098s } = inputSchema.parse(raw);
   for (const item of f1098s) {
     if ((item.box6_points_paid ?? 0) <= 0) continue;
     if (!item.issuer_copy) {
