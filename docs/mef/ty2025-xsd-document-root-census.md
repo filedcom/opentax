@@ -3,7 +3,9 @@
 Root list from 2026-09-28; source-literal status updated 2026-10-01. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
 top-level `IRS...` references under ignored `.state/research/docs/`. These
 schema files are not tracked in Git; reproducible official artifact provenance
-remains a release gate. This is a complete **schema-root census**, not a
+remains a release gate. The [v5.4 archive record](ty2025-v54-schema-provenance.md)
+pins the local hashes and official SOR retrieval path. This is a complete
+**schema-root census**, not a
 completed tax-situation inventory or filing-readiness claim. The schema permits
 documents that may be irrelevant to a particular Form 1040 return. The product's
 agreed exclusions are only standalone 1040-NR, 1040-SS, 4868, and dual-status

@@ -181,7 +181,8 @@ partner and owner questions that must be answered first.
 For every retained supported scenario: resolve source provenance and required
 attachments, run the agreed full batch once build decisions are complete, repair
 failures, validate generated XML against a reproducibly sourced TY2025 IRS schema
-(the current v5.4 copy is an ignored local research cache),
+(the current v5.4 copy is an ignored local research cache; see the
+[archive provenance and hash check](ty2025-v54-schema-provenance.md)),
 inspect actually filled PDFs, then obtain applicable IRS business-rule and ATS
 acceptances. No ATS acceptance is recorded. Review, PR, merge and release follow
 those gates, not the static inventory.
