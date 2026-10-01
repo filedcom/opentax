@@ -161,7 +161,7 @@ Deno.test("Form 4562 bounded income route rejects wages and another business sou
         },
       }),
     Error,
-    "needs employee compensation included",
+    "identified W-2 source",
   );
   assertThrows(
     () =>

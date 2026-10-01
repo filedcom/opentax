@@ -42,7 +42,7 @@ export const form4562Pdf: PdfFormDescriptor = {
     form4562Mef.build(filed, { pending: allPending });
     return filed;
   },
-  instances(projected, filer) {
+  instances(projected, filer, allPending) {
     if (Object.keys(projected).length === 0) return [];
     const name = filer?.fullName ?? [
       filer?.firstName,
@@ -52,6 +52,19 @@ export const form4562Pdf: PdfFormDescriptor = {
     const ssn = filer?.primarySSN.replaceAll("-", "");
     if (!name || !ssn || !/^\d{9}$/.test(ssn)) {
       throw new Error("Form 4562 PDF needs filer name and identifying number");
+    }
+    if (allPending?.w2) {
+      const general = allPending.general;
+      const taxpayerSSN = general && typeof general === "object" &&
+          "taxpayer_ssn" in general &&
+          typeof general.taxpayer_ssn === "string"
+        ? general.taxpayer_ssn.replaceAll("-", "")
+        : "";
+      if (taxpayerSSN !== ssn) {
+        throw new Error(
+          "Form 4562 W-2 income-limit PDF filer must match the source taxpayer",
+        );
+      }
     }
     return [{ ...projected, filer_name: name, filer_ssn: ssn }];
   },
