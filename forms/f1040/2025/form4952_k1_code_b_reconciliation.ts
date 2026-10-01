@@ -68,6 +68,18 @@ const permittedRoyaltyFields = new Set([
   "expense_other_lines",
 ]);
 
+export function hasForm4952K1CodeB(
+  fields: Record<string, unknown>,
+  pending: Readonly<Record<string, unknown>>,
+): boolean {
+  const source = partnershipSchema.safeParse(pending.k1_partnership);
+  return fields.source_k1_allowed_investment_expenses !== undefined ||
+    (source.success &&
+      source.data.k1_partnerships.some((item) =>
+        item.box20_code_b_investment_expenses !== undefined
+      ));
+}
+
 /** One issuer-crosswalked K-1 code B expense already deducted on Schedule E. */
 export function reconcileForm4952K1CodeBRoyaltyPath(
   fields: Record<string, unknown>,

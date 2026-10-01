@@ -7,6 +7,10 @@ import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_10
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
 import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
+import {
+  hasForm4952K1CodeB,
+  reconcileForm4952K1CodeBRoyaltyPath,
+} from "../../form4952_k1_code_b_reconciliation.ts";
 import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
 import {
   hasForm4952PriorCarryforward,
@@ -59,6 +63,16 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4952--2025.pdf",
   build(fields, context) {
+    if (hasForm4952K1CodeB(fields, context?.pending ?? {})) {
+      if (!context?.filer) {
+        throw new Error("Form 4952 K-1 code B needs final filer identity");
+      }
+      assertForm4952K1Recipients(context.pending ?? {}, context.filer);
+      reconcileForm4952K1CodeBRoyaltyPath(fields, context.pending ?? {});
+      throw new Error(
+        "Form 4952 K-1 code B export needs verified issued supplement and deduction-limitation source bytes",
+      );
+    }
     if (hasForm4952PriorCarryforward(fields, context?.pending ?? {})) {
       reconcileForm4952PriorCarryforward(
         fields,

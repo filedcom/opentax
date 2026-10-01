@@ -100,3 +100,26 @@ the [line 5 allowed-deduction condition](https://www.irs.gov/pub/irs-prior/f4952
 and could double count the return deduction. The direct source model and
 line-4a calculation are written, but the filing guard remains active. No test,
 typecheck, XSD, PDF-render, or ATS result is claimed.
+
+## Full-return export boundary (implementation staged)
+
+The standalone code-B reconciliation is now invoked by native Form 4952
+building and by both PDF projection entry points whenever either the Form
+4952 source amount or the retained K-1 reports code B. It checks the K-1
+recipient, one issuer expense-item ID, the posted Schedule E royalty deduction,
+the Form 4952 line-5 limitation input, Schedule 1, Schedule A, and Form 1040
+before the explicit evidence gate rejects export. This prevents direct PDF
+instance calls from bypassing the return-level join. An authored W-2, K-1,
+Schedule E, mortgage-interest, Form 4952 and Form 1040 fixture yields $600
+royalty gross, one $350 Schedule E code-I debit, $250 Schedule 1 income,
+$350 Form 4952 line 5 and $250 line 8. It verifies both native and PDF
+export rejection and source/destination tampering; it remains unrun for the
+requested bulk pass.
+
+The [2025 Form 4952 line-8 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+also require royalty-attributable interest to be deducted on Schedule E rather
+than Schedule A. The staged fixture asserts that its code-H interest is not
+royalty-attributable; a supplied assertion alone does not prove the debt
+allocation. Issued K-1/supplement bytes, partner limitation workpapers, and
+source-backed code-H debt tracing are still needed before positive code-B
+filing can be enabled. Other code-I destinations and mixed K-1s remain open.

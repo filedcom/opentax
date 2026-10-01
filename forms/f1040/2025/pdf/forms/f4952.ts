@@ -7,6 +7,10 @@ import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_10
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
 import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
+import {
+  hasForm4952K1CodeB,
+  reconcileForm4952K1CodeBRoyaltyPath,
+} from "../../form4952_k1_code_b_reconciliation.ts";
 import { reconcileForm4952DirectDebtExport } from "../../form4952_debt_reconciliation.ts";
 import {
   hasForm4952PriorCarryforward,
@@ -50,6 +54,12 @@ export const form4952Pdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields(fields, allPending) {
+    if (hasForm4952K1CodeB(fields, allPending)) {
+      reconcileForm4952K1CodeBRoyaltyPath(fields, allPending);
+      throw new Error(
+        "Form 4952 K-1 code B PDF needs verified issued supplement and deduction-limitation source bytes",
+      );
+    }
     if (Object.keys(fields).length === 0) return fields;
     if (hasForm4952PriorCarryforward(fields, allPending)) {
       reconcileForm4952PriorCarryforward(fields, allPending);
@@ -100,6 +110,16 @@ export const form4952Pdf: PdfFormDescriptor = {
     return fields;
   },
   instances(fields, filer, allPending) {
+    if (hasForm4952K1CodeB(fields, allPending ?? {})) {
+      if (!filer || !allPending) {
+        throw new Error("Form 4952 PDF K-1 code B needs final filer identity");
+      }
+      assertForm4952K1Recipients(allPending, filer);
+      reconcileForm4952K1CodeBRoyaltyPath(fields, allPending);
+      throw new Error(
+        "Form 4952 K-1 code B PDF needs verified issued supplement and deduction-limitation source bytes",
+      );
+    }
     if (hasForm4952PriorCarryforward(fields, allPending ?? {})) {
       if (!filer || !allPending) {
         throw new Error(
