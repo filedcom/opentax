@@ -18,7 +18,7 @@ coverage decision, or release gate.
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | 492 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 42 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
+| Automated and artifact validation | 5 | 0 | The merged checkpoint passed 10,006/10,006 tests; the first new-batch command stopped at typecheck with 185 errors, under repair. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** The completed ledger records 582 bounded routes and
@@ -54,8 +54,10 @@ reaches Form 3800, Form 6251, native MeF, and PDF. Form 8994 now requires
 reviewed policy/payroll metadata matched to validated attachment bytes in a
 prepared MeF bundle and PDF; direct XML and standalone PDF claims stay closed. The other
 positive routes remain closed.
-The new positive and tamper fixtures are authored but the agreed full-batch test,
-XSD checks, and filled-PDF visual review have not run on this branch.
+The new positive and tamper fixtures are authored. The first agreed full-batch
+`deno task test` at `1c1cc6dc` on 2026-10-01 stopped before test execution with
+185 TypeScript errors. Repairs are in progress; the command must be rerun to a
+passing result. XSD checks and filled-PDF visual review remain pending.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 
