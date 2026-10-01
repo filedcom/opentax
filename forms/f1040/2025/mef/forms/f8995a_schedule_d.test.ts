@@ -351,6 +351,10 @@ Deno.test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 3
         ...withBox6.patron_filing_details.source_1099patr,
         box6_section199ag_deduction: 300_000,
       },
+      box6_written_notice_review: {
+        ...withBox6.patron_filing_details.box6_written_notice_review,
+        designated_199ag_amount: 300_000,
+      },
     },
   };
   assertThrows(

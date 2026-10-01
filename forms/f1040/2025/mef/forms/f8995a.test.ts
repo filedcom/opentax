@@ -181,7 +181,7 @@ Deno.test("Form 8995-A: Form 1040 mismatch and concurrent Form 8995 reject", () 
         filer,
         pending: {
           f1040: { line13_qbi_deduction: 10_000 },
-          form8995: { qbi: 1 },
+          form8995: { qbi_deduction: 1 },
         },
       }),
     Error,
