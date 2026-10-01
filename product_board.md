@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **222 completed bounded items** are preserved
+and the full progress summary. The **223 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -27,7 +27,7 @@ two-payer direct loan, S corporation passive credit, Form 5471 Schedule I-1,
 and child-worker Schedule H withholding add bounded routes. A separate
 FICA-only nonstudent-minor Schedule H route and the reviewed-zero Form 5471
 Schedules H and E/E-1 attachments, plus the parent page 1 and embedded
-Schedules B Part II/I, are now authored. The standalone Form 8862 one-ODC
+Schedules B Part II/I/G, are now authored. The standalone Form 8862 one-ODC
 route now replays Schedule 8812 and Form 1040 amounts at export; a standalone
 one-student AOTC route replays Form 8863, Schedule 3, and Form 1040 amounts.
 Schedule H has a bounded joint-return spouse withholding route. A spouse-owned
@@ -38,8 +38,8 @@ ordinary-tax credit through Form 3800 and the finalized return.
 One primary HSA owner with either ordering of age 65 and disability now
 allocates distinct Form 1099-SA distributions to bounded exception calculations;
 the age-first path also has one sourced HSA rollover.
-A reviewed 2024 Form 8582-CR single-activity opening candidate now reconciles
-into a 2025 preview; positive carryforward filing remains closed.
+A reviewed 2023/2024 Form 8582-CR two-activity opening candidate now reconciles
+Worksheet 9 into a 2025 preview; positive carryforward filing remains closed.
 The Form 5471/8992 positive export remains closed until mandatory attachments
 are built.
 
@@ -67,7 +67,7 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 210 | Bounded child routes exist; full form-family coverage remains open. |
+| Named tax-form gaps | 20 | 211 | Bounded child routes exist; full form-family coverage remains open. |
 | Native MeF and PDF parity | 3 | 8 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
