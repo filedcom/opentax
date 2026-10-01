@@ -517,7 +517,8 @@ export const priorYearCarryoverSchema = z.object({
     income_category: z.nativeEnum(IncomeCategory),
     form1040_source_document_id: z.string().trim().min(1),
     schedule_b_source_document_id: z.string().trim().min(1),
-    line8_2015_ninth_preceding_amount: z.number().int().positive(),
+    line8_2015_ninth_preceding_amount: z.number().int().positive().optional(),
+    line8_2016_eighth_preceding_amount: z.number().int().positive().optional(),
     line8_total: z.number().int().positive(),
   }).strict().optional(),
 }).strict().superRefine((source, ctx) => {
