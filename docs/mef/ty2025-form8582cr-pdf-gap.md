@@ -2,7 +2,8 @@
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
 one current-year passive New Markets credit from a self-earned Form 8874
-investment, a credit-only partnership K-1 box 15 code AD, or a credit-only
+investment (optionally paired with one distinct nonpassive Form 8874
+investment), a credit-only partnership K-1 box 15 code AD, or a credit-only
 S corporation K-1 box 13 code AD, plus one
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
@@ -13,9 +14,11 @@ export until their source, final-return, and carryforward joins are complete.
 the one-rental ordinary-tax calculation. The native and PDF exporters recompute
 its taxable-income-with/without-passive tax pair from the finalized Form 1040
 method, Schedule E rental ledger, Schedule 1, and filer status. The credit
-activity may be distinct from the rental income activity: one issued Form 8874
+activity may be distinct from the rental income activity: one passive Form 8874
 investment must exactly match the Form 8582-CR source's activity, source
-document, and current-year amount. Alternatively, one partnership K-1 box 15
+document, and current-year amount. One additional nonpassive investment on
+that Form 8874 enters Form 3800 line 1i outside the passive Worksheet 9.
+Alternatively, one partnership K-1 box 15
 code AD or S corporation K-1 box 13 code AD must match the pass-through
 EIN/name, K-1 reference, recipient TIN, passive classification, and
 current-year amount. That K-1 has no other income,
@@ -33,7 +36,8 @@ an unsourced individual Form 8874.
 Both exporters re-derive the current-year Worksheet 9 ledger and match its
 allowed/unallowed amount to line 37 and the Form 3800 passive allocation.
 Form 3800 line 38, Schedule 3 line 6a/8, and Form 1040 line 20 must agree
-with the allowed credit. The PDF prints Parts I and V: line 4a/4c, lines 5-7,
+with the allowed passive credit plus any one bounded nonpassive Form 8874
+investment. The PDF prints Parts I and V: line 4a/4c, lines 5-7,
 and line 37; unused special-allowance fields stay blank. Its AcroForm mappings
 follow the official two-page blank, including page 2 `f2_21` for line 37.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,

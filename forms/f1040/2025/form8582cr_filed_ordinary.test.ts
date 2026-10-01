@@ -6,7 +6,11 @@ import {
 } from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
-import { calculateForm8582CR } from "../nodes/intermediate/forms/form8582cr/index.ts";
+import {
+  calculateForm8582CR,
+  inputSchema as form8582crInputSchema,
+} from "../nodes/intermediate/forms/form8582cr/index.ts";
+import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
 import { buildCurrentYearCarryforwardLedger } from "../nodes/intermediate/forms/form8582cr/carryforward-ledger.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { PDFDocument } from "pdf-lib";
@@ -14,6 +18,11 @@ import { f1040_2025 } from "./index.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { form8582cr } from "./mef/forms/f8582cr.ts";
 import { form8582crPdf } from "./pdf/forms/f8582cr.ts";
+import { form3800Pdf } from "./pdf/forms/f3800.ts";
+import {
+  form3800PartIAndIIFields,
+  form3800PartIIIFields,
+} from "./pdf/forms/f3800_fields.ts";
 
 const passiveIncome = 20_000;
 const taxable = 104_250;
@@ -79,7 +88,11 @@ const general = {
   address_zip: "78701",
 };
 
-function filedReturn(investmentAmount = 10_000, interestBoxes: number[] = []) {
+function filedReturn(
+  investmentAmount = 10_000,
+  interestBoxes: number[] = [],
+  nonpassiveInvestmentAmount = 0,
+) {
   const interestAmount = interestBoxes.reduce((sum, amount) => sum + amount, 0);
   const taxableWithInterest = taxable + interestAmount;
   const taxAllWithInterest = ordinaryTax2025(
@@ -118,10 +131,23 @@ function filedReturn(investmentAmount = 10_000, interestBoxes: number[] = []) {
       form_1099_payments_made: false,
     }],
     f8874: {
-      investments: [{
-        ...investment,
-        qualified_equity_investment_amount: investmentAmount,
-      }],
+      investments: [
+        {
+          ...investment,
+          qualified_equity_investment_amount: investmentAmount,
+        },
+        ...(nonpassiveInvestmentAmount > 0
+          ? [{
+            ...investment,
+            initial_investment_date: "2022-04-15",
+            designation_notice_reference: "2022 nonpassive QEI notice",
+            qualified_equity_investment_amount: nonpassiveInvestmentAmount,
+            subject_to_passive_activity_limit: false,
+            passive_activity_reference: undefined,
+            passive_source_document_reference: undefined,
+          }]
+          : []),
+      ],
     },
     form8582cr: {
       credit_sources: [{
@@ -360,6 +386,113 @@ Deno.test("current-year passive New Markets credit and rental income reconcile F
     field.domainKey === "line37" &&
     field.pdfField === "topmostSubform[0].Page2[0].f2_21[0]"
   ));
+});
+
+Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 line 1i and final tax", async () => {
+  const result = filedReturn(10_000, [], 5_000);
+  const pending = normalizeAllPending(result.pending);
+  const passive = form8582crInputSchema.parse(pending.form8582cr);
+  const business = f3800InputSchema.parse(pending.f3800);
+  assertEquals(passive.credit_sources.length, 1);
+  assertEquals(business.f8874_credit?.credit_amount, 300);
+  assertEquals(business.allowed_credit, 800);
+  assertEquals(pending.schedule3.line6a_total, 800);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 800);
+  const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(passivePdf.line4a, 500);
+  assertEquals(passivePdf.line37, 500);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line1, 300);
+  assertEquals(parts.lines.line2, 500);
+  assertEquals(parts.lines.line3, 500);
+  assertEquals(parts.lines.line6, 800);
+  assertEquals(parts.lines.line17, 800);
+  assertEquals(parts.lines.line38, 800);
+  const [row] = parts.currentRows;
+  const [amount] = parts.currentAmounts;
+  assertEquals(parts.currentRows.length, 1);
+  assertEquals(row.line, "1i");
+  assertEquals(row.metadata.sourceCount, 2);
+  assertEquals(row.metadata.referenceDocumentName, "IRS8874");
+  assertEquals(
+    parts.currentDetails[0].sourceDocumentId,
+    row.metadata.referenceDocumentId,
+  );
+  assertEquals(
+    parts.passiveCurrentDetails[0].sourceDocument?.documentId,
+    row.metadata.referenceDocumentId,
+  );
+  assertEquals(amount.nonpassiveCredit, 300);
+  assertEquals(amount.passiveBeforeLimit, 500);
+  assertEquals(amount.passiveAfterLimit, 500);
+  assertEquals(amount.appliedCredit, 800);
+  assertStringIncludes(prepared.bundle.xml, "<IRS8874>");
+  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
+  assertStringIncludes(prepared.bundle.xml, "<Form8874CYCreditsGrp");
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    2,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1i").g], 800);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 800);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        filed.f3800,
+        extractFilerIdentity(general),
+        filed,
+        {
+          ...parts,
+          currentAmounts: [{ ...amount, passiveAfterLimit: 499 }],
+        },
+      ),
+    Error,
+    "mixed passive/nonpassive Form 8874 row",
+  );
+  const investments = pending.f8874.investments as Record<string, unknown>[];
+  const changedSource = {
+    ...pending,
+    f8874: {
+      investments: [investments[0], {
+        ...investments[1],
+        qualified_equity_investment_amount: 4_000,
+      }],
+    },
+  };
+  assertThrows(
+    () => form8582crPdf.projectFields!(pending.form8582cr, changedSource),
+    Error,
+    "current-year source allocation differ",
+  );
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(pending.form8582cr, {
+        ...pending,
+        f3800: {
+          ...business,
+          f8874_credit: {
+            credit_amount: 299,
+            subject_to_passive_activity_limit: false,
+          },
+        },
+      }),
+    Error,
+    "current-year source allocation differ",
+  );
 });
 
 Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Form 1040, native and PDF", async () => {

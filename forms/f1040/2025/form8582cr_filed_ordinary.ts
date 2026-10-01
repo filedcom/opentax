@@ -89,6 +89,7 @@ export function reconcileFiledForm8582CROrdinary(
     pending.general,
     pending.f1099int,
   );
+  let nonpassiveForm8874Credit = 0;
   if (selfCredit) {
     if (
       nonemptySource(pending.k1_partnership) ||
@@ -97,11 +98,15 @@ export function reconcileFiledForm8582CROrdinary(
       throw new Error("Form 8582-CR self-earned route has another K-1 source");
     }
     const creditForm = form8874InputSchema.parse(pending.f8874);
-    const credits = calculateForm8874(creditForm).rows.filter((row) =>
+    const rows = calculateForm8874(creditForm).rows;
+    const credits = rows.filter((row) =>
       row.investment.subject_to_passive_activity_limit
     );
+    const ordinaryCredits = rows.filter((row) =>
+      !row.investment.subject_to_passive_activity_limit
+    );
     if (
-      creditForm.investments.length !== 1 || credits.length !== 1 ||
+      credits.length !== 1 || ordinaryCredits.length > 1 ||
       credits[0].investment.passive_activity_reference !==
         source.activity_reference ||
       credits[0].investment.passive_source_document_reference !==
@@ -112,6 +117,7 @@ export function reconcileFiledForm8582CROrdinary(
         "Form 8582-CR credit differs from the filed passive Form 8874 investment",
       );
     }
+    nonpassiveForm8874Credit = ordinaryCredits[0]?.creditAmount ?? 0;
   } else if (partnershipCredit) {
     if (nonemptySource(pending.f8874)) {
       throw new Error(
@@ -194,15 +200,23 @@ export function reconcileFiledForm8582CROrdinary(
   }
   const f3800 = form3800InputSchema.parse(pending.f3800);
   if (
+    (nonpassiveForm8874Credit > 0 &&
+      (f3800.f8874_credit?.credit_amount !== nonpassiveForm8874Credit ||
+        f3800.f8874_credit?.subject_to_passive_activity_limit !== false)) ||
+    (nonpassiveForm8874Credit === 0 && f3800.f8874_credit !== undefined) ||
+    f3800.allowed_credit !== lines.line37 + nonpassiveForm8874Credit ||
     !sameForm3800PassiveAllocations(
       lines.sourceAllocations,
       f3800.passive_source_allocations ?? [],
     )
   ) {
     throw new Error(
-      "Form 8582-CR line 37 and source allocation differ from filed Form 3800",
+      "Form 8582-CR line 37 and current-year source allocation differ from filed Form 3800",
     );
   }
-  assertForm3800FinalCreditJoin(lines.line37, pending);
-  return { lines, ledger, tax };
+  assertForm3800FinalCreditJoin(
+    lines.line37 + nonpassiveForm8874Credit,
+    pending,
+  );
+  return { lines, ledger, tax, nonpassiveForm8874Credit };
 }

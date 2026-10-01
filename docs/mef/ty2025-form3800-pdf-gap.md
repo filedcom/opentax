@@ -328,6 +328,24 @@ orphan-drug and renewable-electricity-production credits in their respective
 current-year groups. Source-record authentication and carryforward filing
 remain open.
 
+A bounded current-year passive/ordinary New Markets route now takes one Form
+8874 with a $500 passive 2025 investment and a distinct $300 nonpassive
+2025 allowance investment. The passive source matches one Form 8582-CR
+ordinary line-6 rental worksheet and Worksheet 9 activity; the second
+investment stays outside that passive worksheet. Form 3800 joins both under
+Part III line 1i with one IRS8874 reference and two Part V details. Part I
+lines 1/2/3/6/17 and Part II line 38 reconcile the $300 ordinary and $500
+allowed passive amounts to $800 on Schedule 3 line 6a and Form 1040 line 20.
+Native and printable source replay checks the passive activity/reference,
+second investment amount, current row details, document identity, and final
+tax join. Full-return, source-amount, filed-credit, and prepared-row tamper
+fixtures are authored but unrun for the bulk pass. The [Form 8874
+instructions](https://www.irs.gov/instructions/i8874), [Form 8582-CR
+instructions](https://www.irs.gov/instructions/i8582cr), and [2025 Form 3800
+instructions](https://www.irs.gov/instructions/i3800) govern the bounded
+current-year claim. Additional passive activities, source kinds, unallowed
+prior-year imports, and issuer-byte authentication remain open.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional

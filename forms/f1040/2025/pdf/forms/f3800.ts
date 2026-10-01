@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
+import { reconcileFiledForm8582CROrdinary } from "../../form8582cr_filed_ordinary.ts";
 import {
   calculateForm8820,
   inputSchema as f8820InputSchema,
@@ -245,6 +246,79 @@ export const form3800Pdf: PdfFormDescriptor = {
       ) {
         throw new Error(
           "Form 3800 PDF mixed orphan-drug/geothermal sources differ from prepared tax use",
+        );
+      }
+    }
+    if (
+      source.f8874_credit &&
+      source.passive_source_allocations?.length === 1 &&
+      !source.f8820_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.carryforward_vintages?.length
+    ) {
+      const filed = f8874InputSchema.parse(all.f8874);
+      const credits = calculateForm8874(filed);
+      const { lines: passive, nonpassiveForm8874Credit } =
+        reconcileFiledForm8582CROrdinary(all.form8582cr, all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1i");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const ordinaryDetails = prepared.currentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      const passiveDetails = prepared.passiveCurrentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      if (
+        credits.rows.length !== 2 ||
+        credits.rows.filter((row) =>
+            row.investment.subject_to_passive_activity_limit
+          ).length !== 1 ||
+        nonpassiveForm8874Credit <= 0 ||
+        credits.nonpassiveCredit !== nonpassiveForm8874Credit ||
+        credits.passiveCredit !== passive.line37 ||
+        JSON.stringify(rawSource.f8874_credit) !==
+          JSON.stringify(source.f8874_credit) ||
+        JSON.stringify(rawSource.passive_source_allocations) !==
+          JSON.stringify(source.passive_source_allocations) ||
+        rows.length !== 1 || amounts.length !== 1 ||
+        ordinaryDetails.length !== 1 || passiveDetails.length !== 1 ||
+        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.referenceDocumentName !== "IRS8874" ||
+        !rows[0].metadata.referenceDocumentId ||
+        ordinaryDetails[0].sourceDocumentId !==
+          rows[0].metadata.referenceDocumentId ||
+        passiveDetails[0].sourceDocument?.documentId !==
+          rows[0].metadata.referenceDocumentId ||
+        ordinaryDetails[0].credit !== nonpassiveForm8874Credit ||
+        passiveDetails[0].source.beforePassiveLimit !==
+          credits.passiveCredit ||
+        passiveDetails[0].source.afterPassiveLimit !== passive.line37 ||
+        amounts[0].nonpassiveCredit !== nonpassiveForm8874Credit ||
+        amounts[0].passiveBeforeLimit !== credits.passiveCredit ||
+        amounts[0].passiveAfterLimit !== passive.line37 ||
+        amounts[0].appliedCredit !==
+          nonpassiveForm8874Credit + passive.line37 ||
+        prepared.lines.line1 !== nonpassiveForm8874Credit ||
+        prepared.lines.line2 !== credits.passiveCredit ||
+        prepared.lines.line3 !== passive.line37 ||
+        prepared.lines.line6 !==
+          nonpassiveForm8874Credit + passive.line37 ||
+        prepared.lines.line17 !==
+          nonpassiveForm8874Credit + passive.line37 ||
+        prepared.lines.line38 !==
+          nonpassiveForm8874Credit + passive.line37
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed passive/nonpassive Form 8874 row differs from filed source",
         );
       }
     }
