@@ -620,11 +620,31 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     item.open_loop_livestock_source !== undefined
   ) {
     const source = item.open_loop_livestock_source;
+    const lease = item.open_loop_nonowner_lessee_source;
     if (
-      item.open_loop_nonowner_lessee_source !== undefined ||
       item.facility_construction_start_date >= "2025-01-01" ||
       item.facility_placed_in_service_date < "2022-01-01" ||
-      item.facility_owned_by_filer !== true ||
+      (item.facility_owned_by_filer === true
+        ? lease !== undefined || item.facility_owner_business !== undefined ||
+          item.facility_owner_person !== undefined
+        : item.facility_owned_by_filer !== false || !lease ||
+          !item.facility_owner_business ||
+          item.facility_owner_person !== undefined ||
+          lease.owner_business_name !== item.facility_owner_business.name ||
+          lease.owner_business_ein !== item.facility_owner_business.ein ||
+          lease.facility_description !== item.facility_description ||
+          lease.facility_address_line1 !== item.facility_us_address?.line1 ||
+          lease.facility_latitude !== item.facility_latitude ||
+          lease.facility_longitude !== item.facility_longitude ||
+          new Set([
+              lease.lease_agreement_reference,
+              lease.owner_producer_acknowledgment_reference,
+              source.feedstock_record_reference,
+              source.construction_record_reference,
+              source.nameplate_capacity_record_reference,
+              source.production_meter_record_reference,
+              source.unrelated_sale_invoice_reference,
+            ]).size !== 7) ||
       item.existing_facility_expansion === true ||
       item.subject_to_passive_activity_limit ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||

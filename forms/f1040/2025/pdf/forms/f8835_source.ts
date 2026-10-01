@@ -41,7 +41,8 @@ export function form8835PdfSources(
   const rows = source.f8835s.map((item) => {
     const lines = calculateForm8835(item);
     const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
-      item.open_loop_cellulosic_source !== undefined &&
+      (item.open_loop_cellulosic_source !== undefined ||
+        item.open_loop_livestock_source !== undefined) &&
       item.open_loop_nonowner_lessee_source !== undefined &&
       item.facility_owned_by_filer === false &&
       item.facility_owner_business !== undefined &&

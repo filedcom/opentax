@@ -188,5 +188,21 @@ PDF now prints those same facts in Part I line 2b. An authored 100,000-kWh
 $300 full-return fixture plus owner, lease, missing-entitlement, and Form 3800
 tamper fixtures await the bulk validation pass. Lease, owner acknowledgment,
 feedstock, meter, and sale bytes are not authenticated. Non-owner operators
-other than a sourced lessee, livestock-waste, expanded/co-fired, passive,
+other than a sourced lessee, expanded/co-fired, passive,
 transfer, bonus, and later-year branches remain closed.
+
+## Non-owner livestock-waste biomass lessee (2026-10-01, unrun)
+
+The same [2025 Form 8835 owner rule](https://www.irs.gov/instructions/i8835)
+also covers a qualified open-loop agricultural livestock-waste facility when
+its owner is not the electricity producer. The bounded 150-kW-or-larger
+livestock route now accepts the existing single lessee record with a business
+owner name/EIN, exact facility address and coordinates, and distinct lease,
+owner nonproduction acknowledgment, nutrient feedstock, construction,
+nameplate-capacity, meter, and unrelated-sale references. The filer remains
+the recorded producer. A 100,000-kWh case yields $300 on Form 8835 line 1f
+and Form 3800 line 4e, through Schedule 3 to Form 1040. Native Form 8835
+and the PDF include the owner identity; source and final-return tamper fixtures
+are authored for the deferred bulk pass. The source references are reviewed
+entries without document-byte authentication. Other non-owner operators,
+pass-through, transfer, increased-credit, and later-year cases remain closed.
