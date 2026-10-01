@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **211 completed bounded items** are preserved
+and the full progress summary. The **212 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -29,6 +29,7 @@ FICA-only nonstudent-minor Schedule H route and the reviewed-zero Form 5471
 Schedule H attachment are now authored. The standalone Form 8862 one-ODC
 route now replays Schedule 8812 and Form 1040 amounts at export; a standalone
 one-student AOTC route replays Form 8863, Schedule 3, and Form 1040 amounts.
+Schedule H has a bounded joint-return spouse withholding route.
 The Form 5471/8992 positive export remains closed until mandatory attachments
 are built.
 
@@ -56,7 +57,7 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 199 | Bounded child routes exist; full form-family coverage remains open. |
+| Named tax-form gaps | 20 | 200 | Bounded child routes exist; full form-family coverage remains open. |
 | Native MeF and PDF parity | 3 | 8 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
