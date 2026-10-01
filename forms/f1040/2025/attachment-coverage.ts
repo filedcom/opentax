@@ -360,7 +360,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8854",
     exportKinds: ["pdf"],
-    reason: "Initial Form 8854 has a native filing but no source-backed PDF",
+    reason:
+      "Initial Form 8854 PDF needs authenticated prior-return, tax-compliance, and balance-sheet evidence before positive filing",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {

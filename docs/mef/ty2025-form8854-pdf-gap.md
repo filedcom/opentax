@@ -1,10 +1,9 @@
 # TY2025 Form 8854 PDF boundary
 
-Status: a bounded annual `f8854_annual` PDF descriptor projects a no-event
-carryforward, but positive PDF export remains gated. The initial `f8854` route
-has no PDF descriptor. Both remain open source-coverage gaps, not approved
-exclusions. Entered figures alone do not prove the prior-year and final-return
-facts below.
+Status: bounded initial `f8854` and annual `f8854_annual` PDF descriptors are
+registered, but positive PDF export remains gated. Both are open
+source-authentication gaps, not approved exclusions. Entered figures alone do
+not prove the prior-year and final-return facts below.
 
 The [official 2025 Form 8854](https://www.irs.gov/pub/irs-pdf/f8854.pdf) is a
 five-page initial and annual statement. Every filer completes Part I. A 2025
@@ -41,6 +40,19 @@ identified mark-to-market assets to Form 8949; that current-year join does not
 cure the prior-year status or balance-sheet gaps. Section D additionally needs
 its separate hypothetical-return and deferral-agreement evidence to be reflected
 in the complete printed package. Positive PDF export remains closed.
+
+The initial PDF descriptor projects a noncovered former U.S. citizen with a
+short U.S. mailing address, one U.S. citizenship, five prior-return tax amounts,
+and cash/bank deposits as the only balance-sheet asset. It fills Part I, Section
+A's five tax amounts, net worth and answers, and Section B's cash, total assets,
+zero liabilities and net worth. It leaves Section C blank and marks no Section D
+deferral. The five prior-return amounts are recomputed from the typed filed Form
+1040 and Schedule 3 records; the PDF candidate must match the finalized initial
+pending input. Other assets, liabilities, exception claims, significant changes,
+covered cases and deferral are outside this projection. Native MeF and the
+calculation node accept this staged source, while the PDF coverage gate still
+blocks positive filing until the five source returns, tax compliance and cash
+valuation/completeness can be authenticated.
 
 ## Annual statement
 
@@ -80,6 +92,6 @@ Only then map all applicable official fields and required statements, reconcile
 them with native MeF and the final Form 1040, and retain the separate signature
 and mailing obligations described in the IRS instructions.
 
-An annual no-event PDF descriptor, registration, and focused positive/tamper
-fixtures were added. No tests, typecheck, XSD validation or filled-PDF rendering
-was run in this implementation batch.
+Initial cash-only and annual no-event PDF descriptors, registrations, and
+focused positive/tamper fixtures were added. No tests, typecheck, XSD validation
+or filled-PDF rendering was run in this implementation batch.
