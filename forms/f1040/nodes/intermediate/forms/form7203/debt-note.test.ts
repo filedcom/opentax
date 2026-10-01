@@ -161,10 +161,6 @@ Deno.test("Form 7203 two-note second principal repayment replays into return, na
     xml.includes("<PrincipalDebtRepaymentAmt>500</PrincipalDebtRepaymentAmt>"),
     true,
   );
-  assertEquals(
-    xml.includes("<PrincipalDebtRepaymentAmt>250</PrincipalDebtRepaymentAmt>"),
-    true,
-  );
   assertEquals(xml.includes("<AllowableLossAmt>1600</AllowableLossAmt>"), true);
   assertEquals(xml.includes("<AllowableLossAmt>400</AllowableLossAmt>"), true);
   assertEquals(
@@ -862,6 +858,14 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
     xml.includes(
       "<TotPrincipalDebtRepaymentAmt>750</TotPrincipalDebtRepaymentAmt>",
     ),
+    true,
+  );
+  assertEquals(
+    xml.includes("<PrincipalDebtRepaymentAmt>500</PrincipalDebtRepaymentAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<PrincipalDebtRepaymentAmt>250</PrincipalDebtRepaymentAmt>"),
     true,
   );
   assertEquals(
