@@ -523,7 +523,8 @@ function buildOtherPassive(
       : 0;
     if (
       (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
-      limit.allowed !== Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
+      limit.allowed !==
+        Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
       schedule1.line5_schedule_e !== net ||
       (f1040.line8_additional_income ?? 0) !== net ||
       (f1040.line1z_total_wages ?? 0) !== wages ||
@@ -531,6 +532,62 @@ function buildOtherPassive(
     ) {
       throw new Error(
         "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // Two separate share-rent farms can use one other-passive rental's current
+  // profit. Reconcile the combined limit here; Part VII and each Form 4835
+  // retain their own activity-ID allocation below.
+  const farmLosses = activities.filter((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const farmSource = form4835InputSchema.safeParse(context?.pending?.f4835);
+  const rentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && farmLosses.length === 2 && rentalProfit &&
+    rentalProfit.current_net < -farmLosses.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 2 &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 1 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    if (!pending) {
+      throw new Error("Form 8582 two-farm passive offset needs source context");
+    }
+    const w2 = pending.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
+    const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
+    if (
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !== rentalProfit.current_net ||
+      limit.suspended !==
+        -farmLosses.reduce((sum, activity) => sum + activity.current_net, 0) -
+          rentalProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 two-farm passive offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
       );
     }
   }

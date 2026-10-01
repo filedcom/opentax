@@ -532,3 +532,22 @@ nonrecaptured section 1231 loss. This slice needs reviewed document bytes and an
 authenticated accepted 2024 return before the prior PAL is proven; other Part I
 dispositions, prior Form 4797-character PALs, recapture, partial §1231 lookback
 balances, and multi-activity joins remain closed.
+
+## Two current farm losses against one passive rental profit (written, unrun)
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+combine other-passive income and loss in Part V and allocate the allowed loss
+back to the reporting forms. A bounded no-prior, no-sale route now joins two
+distinct Form 4835 share-rent farms with current at-risk losses to one type-B
+Schedule E rental profit. The $3,000 and $1,000 farm losses use $2,000 of
+rental profit, giving $1,500 and $500 allowed on their separate Form 4835
+line 34c copies and the same amounts suspended under their activity IDs.
+Native Form 8582 checks the combined loss limit, Schedule 1 zero net rental
+income, and Form 1040 wages and AGI; its PDF projection and both Form 4835
+PDF instances use the same calculated allocation. Positive and changed farm,
+rental, identity, and final-return fixtures are authored but unrun.
+
+This extends the existing one-farm offset with a source-checked three-activity
+case. Farm and rental document bytes, grouping, prior PALs, dispositions,
+extra passive sources, accepted-year ledger storage, filled PDF review, and
+IRS filing acceptance remain open.
