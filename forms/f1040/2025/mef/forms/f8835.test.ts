@@ -69,6 +69,24 @@ const solar = {
   },
 };
 
+const openLoopSource = {
+  facility_description: "Open-loop biomass plant",
+  feedstock_record_reference: "cellulosic-feedstock-2025",
+  solid_nonhazardous_cellulosic_waste_verified: true as const,
+  original_facility_not_expanded_verified: true as const,
+  filer_produced_electricity_verified: true as const,
+  construction_record_reference: "cellulosic-construction-2023",
+  construction_began_on: "2023-06-01",
+  production_meter_record_reference: "cellulosic-meter-2025",
+  meter_period_start_date: "2025-01-01",
+  meter_period_end_date: "2025-12-31",
+  metered_kwh_produced: 1_000_000,
+  unrelated_sale_invoice_reference: "cellulosic-invoice-2025",
+  unrelated_sale_invoice_date: "2025-12-31",
+  invoiced_kwh_sold: 1_000_000,
+  unrelated_buyer_verified: true as const,
+};
+
 Deno.test("Form 8835: sourced solar maps to native line 1d and DC capacity", () => {
   const xml = form8835.build({ f8835s: [solar] })[0];
   assertStringIncludes(
@@ -132,6 +150,7 @@ Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields",
       ...facility,
       energy_type: EnergyType.BiomassOpen,
       facility_description: "Open-loop biomass plant",
+      open_loop_cellulosic_source: openLoopSource,
       facility_us_address: {
         ...facility.facility_us_address,
         line1: "200 Biomass Plant Rd",

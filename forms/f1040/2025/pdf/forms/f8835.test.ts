@@ -1,4 +1,9 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import {
   calculateForm8835,
@@ -8,6 +13,8 @@ import {
 import { form8835Pdf } from "./f8835.ts";
 import { ALL_PDF_FORMS } from "./index.ts";
 import type { Form3800DocumentParts } from "../../mef/forms/f3800_document.ts";
+import { f1040_2025 } from "../../index.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
@@ -94,6 +101,124 @@ function solarFacility(): F8835Item {
     },
   };
 }
+
+function openLoopCellulosicFacility(): F8835Item {
+  return {
+    ...facility(),
+    energy_type: EnergyType.BiomassOpen,
+    facility_description: "Open-loop cellulosic waste generation site",
+    open_loop_cellulosic_source: {
+      facility_description: "Open-loop cellulosic waste generation site",
+      feedstock_record_reference: "2025 cellulosic waste feedstock ledger",
+      solid_nonhazardous_cellulosic_waste_verified: true,
+      original_facility_not_expanded_verified: true,
+      filer_produced_electricity_verified: true,
+      construction_record_reference: "2023 cellulosic construction file",
+      construction_began_on: "2023-06-01",
+      production_meter_record_reference: "2025 cellulosic generation meter",
+      meter_period_start_date: "2025-01-01",
+      meter_period_end_date: "2025-12-31",
+      metered_kwh_produced: 100_000,
+      unrelated_sale_invoice_reference: "2025 cellulosic utility invoice",
+      unrelated_sale_invoice_date: "2025-12-31",
+      invoiced_kwh_sold: 100_000,
+      unrelated_buyer_verified: true,
+    },
+  };
+}
+
+Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, return, native and PDF", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-geothermal-general-business-credit"
+  )!;
+  const source = openLoopCellulosicFacility();
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8835: [source],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(result.pending.schedule3.line6a_total, 300);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].line, "4e");
+  assertEquals(parts.currentAmounts[0].appliedCredit, 300);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdSoldOpenLopBmssCrAmt>300</KwHrsPrdcdSoldOpenLopBmssCrAmt>",
+  );
+  const projected = form8835Pdf.instances?.(
+    {},
+    base.filer,
+    result.pending as Record<string, Record<string, unknown>>,
+    parts,
+  )?.[0];
+  assertEquals(
+    projected?.facility_type,
+    "Open-loop biomass (cellulosic waste)",
+  );
+  assertEquals(projected?.line1f_quantity, 100_000);
+  assertEquals(projected?.line1f_credit, 300);
+  assertEquals(projected?.line1c_credit, undefined);
+  assertEquals(projected?.line15, 300);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "line1f_credit")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].Table_PartII_Lines1a-j[0].Line1f[0].f2_18[0]",
+  );
+  assert((await prepared.renderPdf()).length > 0);
+  const pendingSource = result.pending as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const changedMeter = {
+    ...pendingSource,
+    f8835: {
+      f8835s: [{
+        ...source,
+        open_loop_cellulosic_source: {
+          ...source.open_loop_cellulosic_source!,
+          metered_kwh_produced: 99_999,
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => form8835Pdf.instances?.({}, base.filer, changedMeter, parts),
+    Error,
+    "matching kWh",
+  );
+  const changedCredit = {
+    ...pendingSource,
+    f3800: {
+      ...pendingSource.f3800,
+      f8835_credit_entries: [{
+        form3800_line: "4e",
+        credit_amount: 299,
+        transfer_out_amount: 0,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  assertThrows(
+    () => form8835Pdf.instances?.({}, base.filer, changedCredit, parts),
+    Error,
+    "disagrees with native Form 3800",
+  );
+  assertThrows(
+    () =>
+      calculateForm8835({
+        ...source,
+        open_loop_cellulosic_source: {
+          ...source.open_loop_cellulosic_source!,
+          feedstock_record_reference: "2025 cellulosic generation meter",
+        },
+      }),
+    Error,
+    "distinct feedstock",
+  );
+});
 
 Deno.test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 3800", () => {
   const source = pending(solarFacility());

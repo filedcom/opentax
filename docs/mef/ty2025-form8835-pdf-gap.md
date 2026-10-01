@@ -8,11 +8,11 @@ credit to Form 3800 line 4e for production during the first four years after the
 facility entered service.
 
 The current PDF route covers filer-owned, nonpassive wind, geothermal,
-closed-loop biomass, and solar facilities placed in service after 2021, with 2025 production during the first
+closed-loop biomass, open-loop cellulosic biomass, and solar facilities placed in service after 2021, with 2025 production during the first
 four years. It prints a separate three-page copy for each facility, including
 source-backed identity, address, coordinates, dates, and AC capacity. Wind
 production and credit use line 1a; closed-loop biomass uses line 1b; geothermal
-uses line 1c; solar uses line 1d. All carry their calculated amount through lines 2, 4, 6, 8, 9,
+uses line 1c; solar uses line 1d; open-loop cellulosic biomass uses line 1f. All carry their calculated amount through lines 2, 4, 6, 8, 9,
 12, 13, and 15. The printed rate cells are read-only and left untouched. The source gate matches each
 indexed Form 3800 line 4e entry and the prepared native Part III source rows,
 requires the facility credit to be fully used on line 4e, and checks the
@@ -45,6 +45,24 @@ elements and PDF line 1b fields receive the same calculated amount and
 Form 3800 source check. Calculation, native, PDF, and mismatch fixtures are
 authored for deferred validation. Planting, meter, invoice, and election
 record bytes are not authenticated; modified/co-fired facilities remain closed.
+
+The original filer-owned open-loop biomass route now covers only solid,
+nonhazardous cellulosic waste. It requires construction before 2025, placement
+in service after 2021, no expansion, a distinct qualifying-feedstock record,
+construction record, 2025 production meter, and unrelated-buyer sale invoice.
+Construction and meter dates, invoice date, facility identity, and
+meter/invoice kWh must match the claimed period and quantities, and all four
+references must differ. The [2025 Form 8835 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+define this open-loop resource, permit the original cellulosic facility, and
+assign the post-2021 0.3-cent rate. The bounded 100,000-kWh source produces
+$300 on Form 8835 line 1f and line 15, Form 3800 line 4e, Schedule 3 line 6a,
+and Form 1040 line 20. Native XML uses the line 1f production tags; the PDF
+prints line 1f and the same final amounts. Full-return, altered feedstock,
+meter, and Form 3800 fixtures are authored for deferred validation. Source
+references are entered evidence rather than authenticated feedstock, meter, or
+invoice bytes. Agricultural livestock waste, new-unit/expanded facilities,
+non-owner producers, passive, bonus, transfer, and later-year Form 3800 line 1f
+paths remain closed.
 
 Local source-to-XML-to-PDF cases cover one geothermal facility, two distinct
 geothermal facilities, and one wind plus one geothermal facility. The mixed
@@ -87,7 +105,7 @@ The fixed-source `deno task test` run on `08786417` passed 8,860/8,860,
 zero failed, with no ignored tests reported in 15m48s; its log is
 `.state/research/ty2025-full-test-08786417.log`.
 
-Other energy types beyond wind, geothermal, closed-loop biomass, and solar,
+Other energy types beyond wind, geothermal, closed-loop biomass, open-loop cellulosic biomass, and solar,
 pre-2022 rates and wind phaseout, production after the
 first four years, passive credits, transfers, increased credit, domestic
 content or energy-community bonuses, bond reduction, fiscal-year phaseout,

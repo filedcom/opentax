@@ -57,6 +57,24 @@ const solarSource = {
   section48_energy_credit_not_claimed_verified: true as const,
 };
 
+const openLoopSource = {
+  facility_description: "Open-loop cellulosic biomass facility",
+  feedstock_record_reference: "cellulosic-feedstock-2025",
+  solid_nonhazardous_cellulosic_waste_verified: true as const,
+  original_facility_not_expanded_verified: true as const,
+  filer_produced_electricity_verified: true as const,
+  construction_record_reference: "cellulosic-construction-2023",
+  construction_began_on: "2023-06-01",
+  production_meter_record_reference: "cellulosic-meter-2025",
+  meter_period_start_date: "2025-01-01",
+  meter_period_end_date: "2025-12-31",
+  metered_kwh_produced: 1_000_000,
+  unrelated_sale_invoice_reference: "cellulosic-invoice-2025",
+  unrelated_sale_invoice_date: "2025-12-31",
+  invoiced_kwh_sold: 1_000_000,
+  unrelated_buyer_verified: true as const,
+};
+
 Deno.test("f8835: sourced solar production reaches Form 3800 line 4e", () => {
   const solar = item({
     energy_type: EnergyType.Solar,
@@ -169,7 +187,15 @@ Deno.test("f8835: 2025 base rate and fivefold increase are separate lines", () =
     }).line9,
     30_000,
   );
-  assertEquals(lines({ energy_type: EnergyType.BiomassOpen }).line1, 3_000);
+  assertEquals(
+    lines({
+      energy_type: EnergyType.BiomassOpen,
+      facility_description: "Open-loop cellulosic biomass facility",
+      facility_owned_by_filer: true,
+      open_loop_cellulosic_source: openLoopSource,
+    }).line1,
+    3_000,
+  );
 });
 
 Deno.test("f8835: bonuses apply after the fivefold increase", () => {
@@ -362,6 +388,12 @@ Deno.test("f8835: forwards each facility and transfer election to Form 3800", ()
       item({
         energy_type: EnergyType.BiomassOpen,
         kwh_sold: 500_000,
+        facility_description: "Open-loop cellulosic biomass facility",
+        facility_owned_by_filer: true,
+        open_loop_cellulosic_source: {
+          ...openLoopSource,
+          invoiced_kwh_sold: 500_000,
+        },
       }),
     ],
   });

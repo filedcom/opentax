@@ -38,6 +38,23 @@ export const itemSchema = z.object({
     no_investment_credit_election_verified: z.literal(true),
     no_section1603_grant_verified: z.literal(true),
   }).strict().optional(),
+  open_loop_cellulosic_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    solid_nonhazardous_cellulosic_waste_verified: z.literal(true),
+    original_facility_not_expanded_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
   solar_production_source: z.object({
     facility_description: z.string().trim().min(1),
     construction_record_reference: z.string().trim().min(1),
@@ -362,6 +379,46 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
   } else if (item.closed_loop_biomass_source !== undefined) {
     throw new Error(
       "Form 8835 closed-loop biomass source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.BiomassOpen) {
+    const source = item.open_loop_cellulosic_source;
+    if (
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit ||
+      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined ||
+      !source ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 4
+    ) {
+      throw new Error(
+        "Form 8835 open-loop cellulosic facility needs original filer-owned production, qualifying feedstock, and distinct feedstock, construction, meter, and unrelated-sale sources matching dates and kWh",
+      );
+    }
+  } else if (item.open_loop_cellulosic_source !== undefined) {
+    throw new Error(
+      "Form 8835 open-loop cellulosic source cannot classify another energy type",
     );
   }
   if (

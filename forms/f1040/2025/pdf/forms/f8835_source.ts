@@ -49,7 +49,8 @@ export function form8835PdfSources(
       (item.energy_type !== EnergyType.Geothermal &&
         item.energy_type !== EnergyType.Wind &&
         item.energy_type !== EnergyType.BiomassClosed &&
-        item.energy_type !== EnergyType.Solar) ||
+        item.energy_type !== EnergyType.Solar &&
+        item.energy_type !== EnergyType.BiomassOpen) ||
       item.facility_placed_in_service_date < "2022-01-01" ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
@@ -72,7 +73,7 @@ export function form8835PdfSources(
       lines.form3800Line !== "4e"
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced closed-loop biomass, or sourced solar facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced closed-loop or open-loop cellulosic biomass, or sourced solar facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
       );
     }
     if (
