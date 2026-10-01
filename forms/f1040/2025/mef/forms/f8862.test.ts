@@ -194,57 +194,58 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
 
 Deno.test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice facts", () => {
   assertThrows(
-    () => nativeForm8862.build(scenarioInput, {
-      pending: { ...finalizedContext.pending, general: { filing_status: "single" } },
-    }),
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: { filing_status: "single" },
+        },
+      }),
     Error,
     "matching reviewed prior IRS notice",
   );
   assertThrows(
-    () => nativeForm8862.build(scenarioInput, {
-      pending: {
-        ...finalizedContext.pending,
-        general: {
-          ...noticeReviews,
-          prior_ctc_disallowance_review: {
-            ...noticeReviews.prior_ctc_disallowance_review,
-            disallowed_year: 2022,
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: {
+            ...noticeReviews,
+            prior_ctc_disallowance_review: {
+              ...noticeReviews.prior_ctc_disallowance_review,
+              disallowed_year: 2022,
+            },
           },
         },
-      },
-    }),
+      }),
     Error,
     "CTC/ODC claim needs a matching reviewed prior IRS notice",
   );
   assertThrows(
-    () => nativeForm8862.build(scenarioInput, {
-      pending: {
-        ...finalizedContext.pending,
-        general: {
-          ...noticeReviews,
-          prior_aotc_disallowance_review: {
-            ...noticeReviews.prior_aotc_disallowance_review,
-            taxpayer_ssn: "987654321",
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: {
+            ...noticeReviews,
+            prior_aotc_disallowance_review: {
+              ...noticeReviews.prior_aotc_disallowance_review,
+              taxpayer_ssn: "987654321",
+            },
           },
         },
-      },
-    }),
+      }),
     Error,
     "AOTC claim needs a matching reviewed prior IRS notice",
   );
 });
 
-Deno.test("Form 8862 serializes three credit sections with sourced names and answers", () => {
-  const xml = form8862.build(scenarioInput);
-  assertStringIncludes(xml, "<TaxYr>2025</TaxYr>");
-  assertStringIncludes(xml, "<EICClaimedInd>X</EICClaimedInd>");
-  assertStringIncludes(xml, "<CTCACTCODCClaimedInd>X</CTCACTCODCClaimedInd>");
-  assertStringIncludes(xml, "<AOTCClaimedInd>X</AOTCClaimedInd>");
-  assertEquals((xml.match(/<FilerWithQualifyingChildGrp>/g) ?? []).length, 2);
-  assertEquals((xml.match(/<CTCACTCChildInformationGrp>/g) ?? []).length, 2);
-  assertEquals((xml.match(/<AOTCStudentInformationGrp>/g) ?? []).length, 1);
-  assertStringIncludes(xml, "<LiveInUSDayCnt>365</LiveInUSDayCnt>");
-  assertStringIncludes(xml, "<EligibleStudentInd>true</EligibleStudentInd>");
+Deno.test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS notice", () => {
+  assertThrows(
+    () => form8862.build(scenarioInput),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
 });
 
 Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {

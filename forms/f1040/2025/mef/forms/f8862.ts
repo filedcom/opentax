@@ -485,6 +485,11 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
       return "";
     }
     validateFinalizedCreditClaims(fields, context);
+    if (fields.claim_ctc || fields.claim_aotc) {
+      throw new Error(
+        "Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents",
+      );
+    }
 
     return elements("IRS8862", [
       element("TaxYr", 2025),

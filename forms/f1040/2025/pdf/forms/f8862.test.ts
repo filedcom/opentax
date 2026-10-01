@@ -1,5 +1,4 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../mef/header.ts";
 import { form8862OverflowRows, form8862Pdf } from "./f8862.ts";
 
@@ -85,33 +84,31 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
       us_citizen_national_or_resident: true,
     }],
   };
-  const instances = form8862Pdf.instances?.(source, filer, {
-    general: noticeReviews,
-    f1040: {
-      line27_eitc: 500,
-      line19_child_tax_credit: 2200,
-      dependent_details: [{
-        first_name: "Alice",
-        last_name: "Doe",
-        credit_category: "ctc",
-      }],
-    },
-    eitc: {
-      credit_amount: 500,
-      qualifying_children: 1,
-      qualifying_child_details: [{ first_name: "Alice", last_name: "Doe" }],
-    },
-  }) ?? [];
-  assertEquals(instances.length, 1);
-  assertEquals(instances[0].tax_year, 2025);
-  assertEquals(instances[0].eitc_child_0_name, "Alice Doe");
-  assertEquals(instances[0].eitc_child_0_days, 300);
-  assertEquals(instances[0].eitc_has_child, "yes");
-  assertEquals(instances[0].ctc_child_0_name, "Alice Doe");
-  assertEquals(instances[0].ctc_child_0_citizen, "yes");
+  assertThrows(
+    () =>
+      form8862Pdf.instances?.(source, filer, {
+        general: noticeReviews,
+        f1040: {
+          line27_eitc: 500,
+          line19_child_tax_credit: 2200,
+          dependent_details: [{
+            first_name: "Alice",
+            last_name: "Doe",
+            credit_category: "ctc",
+          }],
+        },
+        eitc: {
+          credit_amount: 500,
+          qualifying_children: 1,
+          qualifying_child_details: [{ first_name: "Alice", last_name: "Doe" }],
+        },
+      }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
 });
 
-Deno.test("Form 8862 PDF attaches numbered continuation for extra children", async () => {
+Deno.test("Form 8862 retains numbered continuation rows without exporting CTC", () => {
   const ctc = {
     claim_ctc: true,
     ctc_disallowed_year: 2023,
@@ -125,27 +122,11 @@ Deno.test("Form 8862 PDF attaches numbered continuation for extra children", asy
       us_citizen_national_or_resident: true,
     })),
   };
-  const instance = form8862Pdf.instances?.(ctc, filer, {
-    general: noticeReviews,
-    f1040: {
-      line19_child_tax_credit: 500,
-      dependent_details: ctc.ctc_children.map((child) => ({
-        first_name: child.first_name,
-        last_name: child.last_name,
-        credit_category: "ctc",
-      })),
-    },
-  })[0];
-  assertEquals(instance?.ctc_child_3_name, "David Doe");
-  assertEquals(instance?.print_overflow_rows, [{
+  assertEquals(form8862OverflowRows(ctc), [{
     heading: "12. Child 5: Ellen Doe",
-    answers:
-      "14 lived with filer: yes; 15 qualifying child: yes; " +
+    answers: "14 lived with filer: yes; 15 qualifying child: yes; " +
       "16 dependent: yes; 17 US citizen/national/resident: yes",
   }]);
-  const document = await PDFDocument.create();
-  await form8862Pdf.appendSupplementalPages?.(document, instance!, filer);
-  assertEquals(document.getPageCount(), 1);
 });
 
 Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
@@ -168,7 +149,8 @@ Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
     answers: "16 dependent: yes; 17 US citizen/national/resident: yes",
   }, {
     heading: "18. Student 4: Student3 Doe",
-    answers: "19a eligible student: yes; 19b credit claimed four prior years: no",
+    answers:
+      "19a eligible student: yes; 19b credit claimed four prior years: no",
   }]);
 });
 
@@ -206,9 +188,10 @@ Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
     f1040: { line29_refundable_aoc: 1000 },
     f8863: { f8863s: [{ credit_type: "aoc", student_name: "Alice Doe" }] },
   };
-  assertEquals(
-    form8862Pdf.instances?.(aotc, filer, pending)?.[0].aotc_student_0_name,
-    "Alice Doe",
+  assertThrows(
+    () => form8862Pdf.instances?.(aotc, filer, pending),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
   );
   assertThrows(
     () =>

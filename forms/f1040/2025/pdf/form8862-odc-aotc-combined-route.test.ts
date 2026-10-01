@@ -1,5 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -7,7 +6,6 @@ import { registry } from "../registry.ts";
 import { buildMefBundle } from "../mef/builder.ts";
 import { form8862 as nativeForm8862 } from "../mef/forms/f8862.ts";
 import { buildPending } from "../mef/pending.ts";
-import { buildPdfBytes } from "./builder.ts";
 import { form8862Pdf } from "./forms/f8862.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 
@@ -119,7 +117,7 @@ function combinedInputs() {
   };
 }
 
-Deno.test("reviewed Form 8862 ODC and AOTC claims for one dependent reach the finalized return, native, and PDF", async () => {
+Deno.test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot authorize export", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -131,37 +129,21 @@ Deno.test("reviewed Form 8862 ODC and AOTC claims for one dependent reach the fi
   assertEquals(result.pending.f1040.line29_refundable_aoc, 1_000);
   assertEquals(result.pending.schedule3.line3_education_credit, 1_500);
   const pending = buildPending(result.pending);
-  const bundle = await buildMefBundle(pending, {
-    filer: base.filer,
-    attachments: [],
-  });
-  assertStringIncludes(bundle.xml, "<ODCPersonInformationGrp>");
-  assertStringIncludes(bundle.xml, "<AOTCStudentInformationGrp>");
-  assertStringIncludes(bundle.xml, "<IRS1040Schedule8812 ");
-  assertStringIncludes(bundle.xml, "<IRS8863 ");
-  assertStringIncludes(bundle.xml, "<IRS1040Schedule3 ");
-  const xsd = new URL(
-    "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsd, xmlPath],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-  } finally {
-    await Deno.remove(xmlPath);
-  }
-  const [projected] =
-    form8862Pdf.instances?.(pending.f8862!, base.filer, pending) ?? [];
-  assertEquals(projected?.odc_0_name, "Jamie Example");
-  assertEquals(projected?.aotc_student_0_name, "Jamie Example");
-  const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
-  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 8, true);
+  assertThrows(
+    () => nativeForm8862.build(pending.f8862!, { pending }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+  assertThrows(
+    () => form8862Pdf.instances?.(pending.f8862!, base.filer, pending),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+  await assertRejects(
+    () => buildMefBundle(pending, { filer: base.filer, attachments: [] }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
 });
 
 Deno.test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form 8862 export", () => {

@@ -31,6 +31,15 @@ for (const fixture of pdfReviewFixtures) {
         formType: "f1040",
       });
       assertEquals(result.diagnostics, []);
+      if (fixture.id === "single-8862-ctc-reinstatement") {
+        assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
+        assertThrows(
+          () => buildMefXml(buildPending(result.pending), fixture.filer),
+          Error,
+          "executor-owned authentication of prior IRS notice issuance and contents",
+        );
+        return;
+      }
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
       if (fixture.id === "single-section-a-capital-gain-reduction-gift") {
         assertEquals(
@@ -996,7 +1005,10 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, 'childInterestAndDividendTaxAmt="135"');
       }
       if (fixture.id === "single-form8814-child-gain-with-schedule-d") {
-        assertEquals(result.pending.schedule_d.print_line13_cap_gain_distrib, 179);
+        assertEquals(
+          result.pending.schedule_d.print_line13_cap_gain_distrib,
+          179,
+        );
         assertEquals(result.pending.f1040.line7_capital_gain, 1_179);
         assertEquals(result.pending.f1040.line7a_cap_gain_distrib, undefined);
         assertEquals(result.pending.f1040.form8814_tax, 135);
@@ -1007,16 +1019,6 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(projected?.print_form8814_line7a_included, false);
         assertStringIncludes(xml, "<IRS8814 ");
         assertStringIncludes(xml, "<IRS1040ScheduleD ");
-      }
-      if (fixture.id === "single-8862-ctc-reinstatement") {
-        const dependent = (result.pending.f1040.dependent_details as Array<
-          { first_name: string; credit_category: string }
-        >)[0];
-        assertEquals(dependent.first_name, "Jamie");
-        assertEquals(dependent.credit_category, "ctc");
-        assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
-        assertStringIncludes(xml, "<IRS8862 ");
-        assertStringIncludes(xml, "<IRS1040Schedule8812 ");
       }
       if (fixture.id === "single-1098-prior-year-recovery") {
         assertEquals(
