@@ -134,7 +134,7 @@ Deno.test("formAddCommand accepts and persists normalized 1099-MISC TINs", async
         payer_name: "Example Broker",
         payer_tin: "13-3863700",
         recipient_tin: "000-00-0000",
-        box8_substitute_payments: 608.60,
+        box8_substitute_payments: 609,
       }),
       baseDir: tmpDir,
     });
@@ -484,7 +484,7 @@ Deno.test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
         payer_name: "Example Broker",
         payer_tin: "13-3863700",
         recipient_tin: "000-00-0000",
-        box8_substitute_payments: 608.60,
+        box8_substitute_payments: 609,
       }),
       baseDir: tmpDir,
     });
