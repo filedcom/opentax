@@ -445,3 +445,26 @@ projection/guard cases are written but unrun. The requested full batch,
 canonical-field/widget-value check after fill, visual filled-PDF review, IRS
 business rules and ATS acceptance remain open. Until those checks run, the new
 PDF mapping is an unverified implementation, not a release clearance.
+
+## Retained long-held direct property sale
+
+A bounded type-B Schedule E rental with one retained-activity direct property
+sale can now carry a positive, no-depreciation Form 4797 Part I section 1231
+gain into Form 8582 Part V and Schedule D, while Form 8582 allocates a
+source-linked 2024 operating PAL back to Schedule E and Schedule 1. The source
+records the dated sale, signed closing-reference, explicit less-than-entire
+activity interest, filed 2024 Form 8582 Part VII amount, and a 2020–2024
+section 1231 lookback reference with zero nonrecaptured loss. Native MeF and
+Form 4797/8582 PDFs match the sale to the same Schedule E activity and check
+the computed PAL. A full-return positive and tamper fixture are authored, but
+execution, XSD validation, and filled-PDF review await the agreed bulk pass.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+require passive sale gains on their normal Form 4797 lines and Form 8582 to
+allocate losses while the activity remains held. The
+[2025 Form 4797 instructions](https://www.irs.gov/instructions/i4797)
+place a long-held section 1231 sale on Part I line 2 and use line 8 for any
+five-year nonrecaptured section 1231 loss. This slice needs reviewed document
+bytes and an authenticated accepted 2024 return before the prior PAL is proven;
+other Part I dispositions, prior Form 4797-character PALs, recapture, partial
+§1231 lookback balances, and multi-activity joins remain closed.

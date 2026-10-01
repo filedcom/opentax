@@ -371,7 +371,7 @@ export function assertPriorYear8582Evidence(input: Form8582Input): void {
     activities[0].prior_unallowed_4797_part2 === 0 &&
     sales.length === 1 &&
     sales[0].activity_id === activities[0].activity_id &&
-    sales[0].part === "II" &&
+    (sales[0].part === "I" || sales[0].part === "II") &&
     sales[0].entire_activity_interest_disposed === false;
   const entireOverallGainSale = activities.length === 1 &&
     (activities[0].activity_type === "B" ||

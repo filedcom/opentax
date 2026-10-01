@@ -102,6 +102,11 @@ export const itemSchema = z.object({
   // Dated sales of property in this rental activity. Form 4797 calculates
   // the gain from these same canonical rows and Form 8582 allocates its PAL.
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
+  // Filed five-year section 1231 loss history for a direct Part I sale.
+  section_1231_lookback_source: z.object({
+    source_document_reference: z.string().trim().min(1),
+    nonrecaptured_loss: z.literal(0),
+  }).strict().optional(),
   // Evidence that an entire-disposition activity first existed in TY2025.
   // A property acquired in 2025 alone does not prove it was not grouped with
   // an older passive activity.
@@ -334,16 +339,17 @@ export function qualifiedEntireDispositionGain(
     : undefined;
 }
 
-/** A retained rental's short-held property gain remains passive activity
+/** A retained rental's direct property gain remains passive activity
  * income; it does not release every prior operating PAL under §469(g). */
-export function qualifiedRetainedPartIISale(item: EItem): boolean {
+export function qualifiedRetainedPropertySale(item: EItem): boolean {
   const sale = item.passive_property_sales?.[0];
   if (
     (item.activity_type !== "A" && item.activity_type !== "B") ||
     !sale || item.disposed_of !== true ||
     !item.activity_id ||
     item.passive_property_sales?.length !== 1 ||
-    sale.part !== "II" ||
+    (sale.part === "I" &&
+      item.section_1231_lookback_source?.nonrecaptured_loss !== 0) ||
     sale.entire_activity_interest_disposed !== false ||
     sale.activity_id !== item.activity_id ||
     sale.activity_name !== item.property_description ||
@@ -452,7 +458,7 @@ function validateItem(item: EItem): void {
     item.disposed_of === true &&
     qualifiedEntireDispositionLoss(item) === undefined &&
     qualifiedEntireDispositionGain(item) === undefined &&
-    !qualifiedRetainedPartIISale(item)
+    !qualifiedRetainedPropertySale(item)
   ) {
     throw new Error(
       "Schedule E prior passive loss with current disposition needs section 469(g) review",
@@ -987,6 +993,11 @@ function form4797Outputs(
       item.activity_id ? [item.activity_id] : []
     ),
     ...(sales.length ? { passive_property_sales: sales } : {}),
+    ...(sales.some((sale) => sale.part === "I") &&
+        items.length === 1 &&
+        items[0].section_1231_lookback_source
+      ? { nonrecaptured_1231_loss: 0 }
+      : {}),
     ...(activities ? { passive_activity_sources: activities } : {}),
   })];
 }

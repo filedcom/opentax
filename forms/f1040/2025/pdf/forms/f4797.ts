@@ -13,6 +13,7 @@ import {
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
+  qualifiedRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import { z } from "zod";
 import {
@@ -30,6 +31,7 @@ import { inputSchema as form8824InputSchema } from "../../../nodes/intermediate/
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 import { appendForm4797Line2Statement } from "./f4797_line2_statement.ts";
+import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
 // Part I  — installment/exchange gain and section 1231 lines 4–9.
@@ -37,6 +39,18 @@ import { appendForm4797Line2Statement } from "./f4797_line2_statement.ts";
 // Part III — recapture: 1245 (line 22) and 1250 (line 26c).
 // Nonrecaptured 1231 loss from prior years: line 8.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  ...([
+    ["pdf_passive_line2_acquired", 7],
+    ["pdf_passive_line2_sold", 8],
+    ["pdf_passive_line2_price", 9],
+    ["pdf_passive_line2_depreciation", 10],
+    ["pdf_passive_line2_basis", 11],
+  ] as const).map(([domainKey, n]): PdfFieldEntry => ({
+    kind: "text",
+    domainKey,
+    pdfField: `topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_${n}[0]`,
+    ...(n === 10 ? { printZero: true } : {}),
+  })),
   ...Array.from({ length: 4 }, (_, index): PdfFieldEntry[] => {
     const row = index + 1;
     const first = 6 + index * 7;
@@ -375,6 +389,56 @@ export const form4797Pdf: PdfFormDescriptor = {
         pdf_sale_gain: gain,
         pdf_line17: gain,
         ordinary_gain: gain,
+      };
+    }
+    if (passiveSales.length === 1 && passiveSales[0].part === "I") {
+      const scheduleE = scheduleEInputSchema.parse(allPending.schedule_e ?? {});
+      const activity = scheduleE.schedule_es[0];
+      const ledger = form8582InputSchema.safeParse(allPending.form8582);
+      const sale = passiveSales[0];
+      if (
+        scheduleE.schedule_es.length !== 1 || !activity ||
+        !qualifiedRetainedPropertySale(activity) ||
+        !activity.passive_property_sales?.[0] ||
+        !samePassiveSale(activity.passive_property_sales[0], sale) ||
+        !ledger.success || ledger.data.activities?.length !== 1 ||
+        ledger.data.activities[0].activity_id !== sale.activity_id ||
+        ledger.data.current_4797_sale_gains?.length !== 1 ||
+        ledger.data.current_4797_sale_gains[0].part !== "I" ||
+        ledger.data.current_4797_sale_gains[0].gain !==
+          passiveSaleGain(sale) ||
+        fields.nonrecaptured_1231_loss !== 0 ||
+        Object.keys(fields).some((key) =>
+          ![
+            "passive_property_sales",
+            "disposed_properties",
+            "passive_disposed_activity_ids",
+            "passive_activity_sources",
+            "nonrecaptured_1231_loss",
+          ].includes(key)
+        )
+      ) {
+        throw new Error(
+          "Form 4797 PDF retained Part I sale needs its Schedule E, Form 8582 and five-year lookback sources",
+        );
+      }
+      nativeForm8582.build(allPending.form8582!, { pending: allPending });
+      const date = (iso: string) => {
+        const [year, month, day] = iso.split("-");
+        return `${month}/${day}/${year}`;
+      };
+      const gain = passiveSaleGain(sale);
+      return {
+        pdf_k1_line2_1_description: sale.property_description,
+        pdf_passive_line2_acquired: date(sale.acquired_on),
+        pdf_passive_line2_sold: date(sale.sold_on),
+        pdf_passive_line2_price: sale.gross_sales_price,
+        pdf_passive_line2_depreciation: sale.depreciation_allowed,
+        pdf_passive_line2_basis: sale.cost_or_other_basis,
+        pdf_k1_line2_1_gain: gain,
+        section_1231_gain: gain,
+        nonrecaptured_1231_loss: 0,
+        pdf_section_1231_line9: gain,
       };
     }
     const form8582 = allPending.form8582;

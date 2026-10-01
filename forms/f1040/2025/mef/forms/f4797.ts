@@ -225,6 +225,30 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       const activity = matches[0];
+      const retainedPartI = passiveSales.length === 1 &&
+        sale.part === "I" &&
+        sale.entire_activity_interest_disposed === false &&
+        (activity.prior_unallowed_passive_operating ?? 0) > 0 &&
+        (activity.prior_unallowed_passive_4797_part1 ?? 0) === 0 &&
+        (activity.prior_unallowed_passive_4797_part2 ?? 0) === 0;
+      if (
+        retainedPartI &&
+        (activity.passive_property_sales?.length !== 1 ||
+          !samePassiveSale(activity.passive_property_sales[0], sale))
+      ) {
+        throw new Error(
+          "Form 4797 passive Part I sale differs from its Schedule E property source",
+        );
+      }
+      if (
+        retainedPartI &&
+        (activity.section_1231_lookback_source?.nonrecaptured_loss !== 0 ||
+          fields.nonrecaptured_1231_loss !== 0)
+      ) {
+        throw new Error(
+          "Form 4797 passive Part I sale needs matching five-year section 1231 loss source",
+        );
+      }
       const hasPassiveLoss = computePropertyNet(activity) < 0 ||
         (activity.prior_unallowed_passive_operating ?? 0) > 0 ||
         (activity.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||

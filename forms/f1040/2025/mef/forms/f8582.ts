@@ -11,7 +11,7 @@ import {
   computePropertyNet,
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
-  qualifiedRetainedPartIISale,
+  qualifiedRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
   calculateForm4835AtRiskNet,
@@ -90,7 +90,7 @@ function linkedActivities(context: MefBuildContext): Array<{
       (item.disposed_of === true ||
         (item.passive_property_sales?.length ?? 0) > 0) &&
       qualifiedEntireDispositionGain(item) === undefined &&
-      !qualifiedRetainedPartIISale(item)
+      !qualifiedRetainedPropertySale(item)
     )
   ) {
     throw new Error(
