@@ -1,10 +1,15 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { form4952 as nativeForm4952 } from "../2025/mef/forms/f4952.ts";
 import { form4952Pdf } from "../2025/pdf/forms/f4952.ts";
 import { testFiler } from "../2025/mef/test-filer.ts";
+import { FilingStatus } from "../2025/mef/types.ts";
+import { buildPending } from "../2025/mef/pending.ts";
+import { buildMefBundle } from "../2025/mef/builder.ts";
+import { buildPdfBytes } from "../2025/pdf/builder.ts";
 
 const trace = {
   tax_year: 2025,
@@ -46,15 +51,37 @@ function filing(
     | "two_interest"
     | "two_interest_dividend"
     | "interest_two_dividends" = "interest",
+  spouseOwned = false,
 ) {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
-      filing_status: "single",
+      filing_status: spouseOwned ? "mfj" : "single",
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
+      ...(spouseOwned
+        ? {
+          spouse_first_name: "Sam",
+          spouse_last_name: "Taxpayer",
+          spouse_ssn: "444-55-6666",
+          spouse_dob: "1982-03-10",
+        }
+        : {}),
     },
+    ...(spouseOwned
+      ? {
+        f1098: [{
+          lender_name: "Home Lender",
+          recipient_tin: "123456789",
+          source_document_reference: "2025 spouse-loan fixture mortgage",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 mortgage workpaper",
+          for_routing: "A",
+        }],
+      }
+      : {}),
     ...(source === "two_interest" || source === "two_interest_dividend"
       ? {
         f1099int: [{
@@ -136,7 +163,9 @@ function filing(
     },
     form4952: {
       investment_interest_expense: 20_000,
-      direct_debt_trace: trace,
+      direct_debt_trace: spouseOwned
+        ? { ...trace, owner_tin: "444556666" }
+        : trace,
       amt_refigure: {
         prior_year_disallowed_interest: 0,
         interest_on_private_activity_bonds: 0,
@@ -174,6 +203,96 @@ Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF"
   assertEquals(
     form4952Pdf.instances!(fields, testFiler(), result.pending).length,
     1,
+  );
+});
+
+Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and Form 1040 with final owner checks", async () => {
+  const result = filing("interest", true);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line1, 20_000);
+  assertEquals(result.pending.form4952?.line8, 20_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 100_000);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 38_000);
+  const fields = result.pending.form4952!;
+  const jointFiler = {
+    ...testFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "444556666",
+      firstName: "Sam",
+      lastName: "Taxpayer",
+      nameControl: "TAXP",
+    },
+  };
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: jointFiler,
+    }),
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  assertEquals(
+    form4952Pdf.instances!(fields, jointFiler, result.pending).length,
+    1,
+  );
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: jointFiler,
+    attachments: [],
+  });
+  const pdf = await buildPdfBytes(pending, jointFiler, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: result.pending,
+        filer: {
+          ...jointFiler,
+          spouse: { ...jointFiler.spouse, ssn: "999887777" },
+        },
+      }),
+    Error,
+    "owner must match the final filer or joint spouse",
+  );
+  assertThrows(
+    () => form4952Pdf.instances!(fields, testFiler(), result.pending),
+    Error,
+    "owner must match the final filer or joint spouse",
+  );
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: {
+          ...result.pending,
+          general: { ...result.pending.general, spouse_ssn: "999-88-7777" },
+        },
+        filer: jointFiler,
+      }),
+    Error,
+    "matching source and final joint-return identities",
+  );
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: {
+          ...result.pending,
+          form4952: {
+            ...fields,
+            amt_refigure: {
+              ...fields.amt_refigure,
+              other_gross_income_adjustment: 1,
+            },
+          },
+        },
+        filer: jointFiler,
+      }),
+    Error,
+    "zero AMT refigure adjustments",
   );
 });
 

@@ -13,6 +13,7 @@ import {
   reconcileForm4952PriorCarryforward,
 } from "../../form4952_prior_carryforward_reconciliation.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
 
 export interface Fields {
   line1?: number | null;
@@ -79,6 +80,9 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
         fields,
         context?.pending ?? {},
         context?.filer?.primarySSN,
+        context?.filer?.filingStatus === FilingStatus.MarriedFilingJointly
+          ? context.filer.spouse?.ssn
+          : undefined,
       );
       if (!context?.filer) {
         throw new Error(

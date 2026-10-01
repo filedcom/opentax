@@ -117,6 +117,23 @@ the loan guard replays the retained trace and payments. A full-return positive
 and missing-OID source fixture are authored for deferred validation. Adjusted
 OID, other income classes, and authenticated document bytes remain open.
 
+For a married filing jointly return, the same direct-use taxable-securities
+loan may belong to the identified spouse instead of the primary filer. The
+retained loan owner TIN must match that final joint spouse; its direct purchase,
+lender total, and individual payment records still reconcile to Form 4952 line
+1. The bounded authored case combines a spouse-owned $20,000 interest loan with
+one affirmed $100,000 1099-INT investment payer and $18,000 of separately
+sourced mortgage interest so the joint return selects $38,000 of Schedule A
+deductions. Form 4952 line 8, Schedule A line 9, Form 1040 lines 2b/12e,
+native MeF, and PDF projection reconcile. A changed final spouse identity or
+single-filer status rejects; spouse-owned prior carryforwards or nonzero Form
+4952 AMT refigure adjustments remain closed. The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+deducts investment interest for property held for investment, while
+[2025 Publication 550](https://www.irs.gov/publications/p550) traces debt by
+use of proceeds and requires cash-method interest to be paid in the year.
+Issued lender, payment, broker, and 1099 bytes are not authenticated. The
+positive and tamper fixtures are authored for the deferred batch.
+
 It also accepts exactly one affirmed, unadjusted taxable Form 1099-OID box 1
 investment payer in place of the interest or dividend payer. The same retained
 loan and payment records, OID source, Form 4952, Schedule A, Form 1040 interest,

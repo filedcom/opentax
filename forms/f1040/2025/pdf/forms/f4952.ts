@@ -12,6 +12,7 @@ import {
   hasForm4952PriorCarryforward,
   reconcileForm4952PriorCarryforward,
 } from "../../form4952_prior_carryforward_reconciliation.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -116,6 +117,9 @@ export const form4952Pdf: PdfFormDescriptor = {
         fields,
         allPending,
         filer.primarySSN,
+        filer.filingStatus === FilingStatus.MarriedFilingJointly
+          ? filer.spouse?.ssn
+          : undefined,
       );
     }
     if (fields.source_k1_investment_interest !== undefined) {

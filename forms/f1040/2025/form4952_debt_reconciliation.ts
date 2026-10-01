@@ -1,6 +1,8 @@
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as dividendSourceSchema } from "../nodes/inputs/f1099div/index.ts";
 import { inputSchema as oidSourceSchema } from "../nodes/inputs/f1099oid/index.ts";
+import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
+import { FilingStatus as SourceFilingStatus } from "../nodes/types.ts";
 import {
   calculateForm4952,
   inputSchema as form4952Schema,
@@ -78,6 +80,7 @@ export function reconcileForm4952DirectDebtExport(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
   finalFilerTin?: string,
+  jointSpouseTin?: string,
 ): void {
   const printed = form4952Schema.safeParse(fields);
   const retained = form4952Schema.safeParse(pending.form4952);
@@ -154,14 +157,57 @@ export function reconcileForm4952DirectDebtExport(
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");
-  if (owner !== undefined && !/^\d{9}$/.test(owner)) {
-    throw new Error("Form 4952 direct debt export needs a final filer SSN");
+  const spouse = jointSpouseTin?.replaceAll("-", "");
+  if (
+    (owner !== undefined && !/^\d{9}$/.test(owner)) ||
+    (spouse !== undefined && (!/^\d{9}$/.test(spouse) || spouse === owner))
+  ) {
+    throw new Error(
+      "Form 4952 direct debt export needs valid joint filer SSNs",
+    );
   }
   const trace = retained.data.direct_debt_trace;
+  if (
+    owner !== undefined && trace.owner_tin !== owner &&
+    trace.owner_tin !== spouse
+  ) {
+    throw new Error(
+      "Form 4952 direct debt owner must match the final filer or joint spouse",
+    );
+  }
+  const spouseOwned = owner !== undefined && trace.owner_tin === spouse;
+  const general = generalSchema.safeParse(pending.general);
+  if (
+    spouseOwned &&
+    (!general.success ||
+      general.data.filing_status !== SourceFilingStatus.MFJ ||
+      general.data.taxpayer_ssn?.replaceAll("-", "") !== owner ||
+      general.data.spouse_ssn?.replaceAll("-", "") !== spouse)
+  ) {
+    throw new Error(
+      "Form 4952 joint spouse loan needs matching source and final joint-return identities",
+    );
+  }
+  if (
+    spouseOwned &&
+    ((retained.data.prior_year_carryforward ?? 0) !== 0 ||
+      (printed.data.prior_year_carryforward ?? 0) !== 0 ||
+      retained.data.prior_year_carryforward_source !== undefined ||
+      printed.data.prior_year_carryforward_source !== undefined ||
+      !retained.data.amt_refigure || !printed.data.amt_refigure ||
+      Object.values(retained.data.amt_refigure).some((amount) =>
+        amount !== 0
+      ) ||
+      Object.values(printed.data.amt_refigure).some((amount) => amount !== 0))
+  ) {
+    throw new Error(
+      "Form 4952 joint spouse loan needs zero prior carryforward and zero AMT refigure adjustments",
+    );
+  }
   reconcileForm4952DirectDebtTrace(
     trace,
     retained.data,
-    owner ?? trace.owner_tin,
+    trace.owner_tin,
   );
   const lines = calculateForm4952(retained.data);
   if (
