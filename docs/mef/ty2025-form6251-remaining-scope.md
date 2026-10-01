@@ -209,6 +209,15 @@ rows, compare the combined line 2q amount and Schedule 1 line 3 business
 income, and retain the Schedule 2/Form 1040 AMT join. Positive and expense,
 property-identity, and return-tamper fixtures are authored but unrun.
 
+The same reviewed-workpaper route now accepts more than two distinct current-year
+mine businesses without a count cap. An authored four-mine return has separate
+$100,000, $50,000, $30,000, and $20,000 expenses; the $200,000 regular
+deduction less $20,000 first-year AMT amortization yields Form 6251 line 2q of
+$180,000. Native and PDF replay each mine, compare Schedule 1 business income,
+and join positive AMT to Schedule 2 and Form 1040. Full-return positive and
+expense, property, Schedule 1, Schedule 2, and Form 1040 tamper cases are
+authored for the deferred bulk pass.
+
 Earlier-year amortization, multiple claims per business, other Schedule C
 businesses in the same return, property losses, source-document authentication,
 and full XSD/PDF/IRS filing gates remain open.

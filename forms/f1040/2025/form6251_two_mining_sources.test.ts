@@ -6,6 +6,10 @@ import { form6251 } from "./mef/forms/f6251.ts";
 import { form6251Pdf } from "./pdf/forms/f6251.ts";
 import { testFiler } from "./mef/test-filer.ts";
 import { assertDistinctMiningSources } from "../nodes/inputs/schedule_c/mining.ts";
+import { buildPending } from "./mef/pending.ts";
+import { buildMefBundle } from "./mef/builder.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
+import { PDFDocument } from "pdf-lib";
 
 const mine = (
   businessReference: string,
@@ -41,7 +45,7 @@ const mines = [
   mine("mine-east-2025", "east-claim", 50_000),
 ];
 
-function filing() {
+function filing(scheduleCItems = mines) {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -68,7 +72,7 @@ function filing() {
       employer_address_zip: "78701",
       box12_entries: [],
     }],
-    schedule_c: mines,
+    schedule_c: scheduleCItems,
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       fincen_form114_required: false,
@@ -78,6 +82,94 @@ function filing() {
   assertEquals(result.diagnostics, []);
   return result;
 }
+
+Deno.test("four distinct current-year mines reconcile Form 6251, Schedule 2, Form 1040, native, and PDF", async () => {
+  const allMines = [
+    ...mines,
+    mine("mine-north-2025", "north-claim", 30_000),
+    mine("mine-south-2025", "south-claim", 20_000),
+  ];
+  const pending = filing(allMines).pending;
+  const fields = pending.form6251!;
+  assertEquals(pending.schedule1?.line3_schedule_c, 0);
+  assertEquals(fields.line2q_mining_costs, 180_000);
+  assertEquals(pending.schedule2?.line2_amt, fields.line11_amt);
+  assertEquals(pending.f1040?.line17_additional_taxes, fields.line11_amt);
+  const xml = form6251.build(fields, { pending, filer: testFiler() });
+  assertStringIncludes(xml, "<MiningCostsAmt>180000</MiningCostsAmt>");
+  assertEquals(
+    form6251Pdf.projectFields!(fields, pending).line2q_mining_costs,
+    180_000,
+  );
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
+  const bundle = await buildMefBundle(buildPending(pending), {
+    filer: finalFiler,
+    attachments: [],
+  });
+  assertStringIncludes(bundle.xml, "<MiningCostsAmt>180000</MiningCostsAmt>");
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
+
+  for (
+    const changed of [
+      {
+        ...pending,
+        schedule_c: {
+          ...pending.schedule_c,
+          schedule_cs: [
+            ...allMines.slice(0, 3),
+            {
+              ...allMines[3],
+              part_v_other_expenses: [{
+                ...allMines[3].part_v_other_expenses[0],
+                amount: 19_990,
+              }],
+            },
+          ],
+        },
+      },
+      {
+        ...pending,
+        schedule_c: {
+          ...pending.schedule_c,
+          schedule_cs: [
+            ...allMines.slice(0, 3),
+            {
+              ...allMines[3],
+              amt_mining_cost_workpaper: {
+                ...allMines[3].amt_mining_cost_workpaper,
+                property_reference:
+                  allMines[0].amt_mining_cost_workpaper.property_reference,
+              },
+            },
+          ],
+        },
+      },
+      {
+        ...pending,
+        schedule1: { ...pending.schedule1, line3_schedule_c: 1 },
+      },
+      {
+        ...pending,
+        schedule2: { ...pending.schedule2, line2_amt: 1 },
+      },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line17_additional_taxes: 1 },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => form6251.build(fields, { pending: changed, filer: testFiler() }),
+      Error,
+    );
+    assertThrows(() => form6251Pdf.projectFields!(fields, changed), Error);
+  }
+});
 
 Deno.test("two distinct mine workpapers sum once on Form 6251 line 2q and the final return", () => {
   const pending = filing().pending;
