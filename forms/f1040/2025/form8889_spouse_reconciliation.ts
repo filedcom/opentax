@@ -736,11 +736,6 @@ export function reconcilePairedForm8889(
         (owner === medicareOwner && medicareAge65Distribution)) &&
       owner.disability_exception_evidence === undefined
     ) &&
-    (medicareOwner?.taxpayer_hsa_contributions ?? 0) <=
-      Math.round(
-        (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
-          (firstIneligible - 1) / 12,
-      ) &&
     (continuingOwner?.taxpayer_hsa_contributions ?? 0) <= 4_300 &&
     !source.w2_code_w_entries?.length;
   const otherCoverageOwner = owners.find((owner) =>
@@ -870,6 +865,24 @@ export function reconcilePairedForm8889(
   );
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
+  );
+  const medicareOwnerLimit = firstIneligible === undefined ? 0 : Math.round(
+    (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
+      (firstIneligible - 1) / 12,
+  );
+  // A current personal excess belongs only to the Medicare owner whose
+  // monthly limit ended. Its Form 5329 tax uses that owner's HSA year-end value.
+  const medicareCurrentExcessOwner = medicareSelfOnlyMonths &&
+      medicareOwner &&
+      (medicareOwner.taxpayer_hsa_contributions ?? 0) > medicareOwnerLimit &&
+      medicareOwner.hsa_december_31_value !== undefined &&
+      medicareOwner.prior_year_hsa_excess === undefined &&
+      !medicareAge65Distribution
+    ? medicareOwner
+    : undefined;
+  const pairedExcessOwners = owners.filter((owner) =>
+    owner.prior_year_hsa_excess !== undefined ||
+    owner === medicareCurrentExcessOwner
   );
   const priorExcessReferences = pairedPriorExcessOwners.map((owner) =>
     owner.prior_year_hsa_excess!.filed_form5329_reference
@@ -1105,12 +1118,12 @@ export function reconcilePairedForm8889(
   const expectedExcess = outputs.filter((row) => row.nodeType === "form5329")
     .flatMap((row) => row.fields.owner_entries as readonly unknown[]);
   let pairedExcessTax = 0;
-  if (expectedExcess.length > 0 || pairedPriorExcessOwners.length > 0) {
+  if (expectedExcess.length > 0 || pairedExcessOwners.length > 0) {
     if (
-      expectedExcess.length !== pairedPriorExcessOwners.length
+      expectedExcess.length !== pairedExcessOwners.length
     ) {
       throw new Error(
-        "Form 8889 paired excess needs a reviewed prior-year Form 5329 source for each affected owner",
+        "Form 8889 paired excess needs an owner-specific current Medicare or reviewed prior-year Form 5329 source",
       );
     }
     const pending5329 = z.object({
@@ -1141,14 +1154,19 @@ export function reconcilePairedForm8889(
     const calculated5329 = calculate5329OwnerForms(parsed5329);
     if (
       canonical(pending5329.owner_forms) !== canonical(calculated5329.forms) ||
-      calculated5329.forms.length !== pairedPriorExcessOwners.length ||
-      calculated5329.forms.some((form) =>
-        form.hsa_part_vii?.line47_current_year_excess !== 0
-      ) ||
+      calculated5329.forms.length !== pairedExcessOwners.length ||
+      calculated5329.forms.some((form, index) => {
+        const owner = pairedExcessOwners[index];
+        return owner === medicareCurrentExcessOwner
+          ? form.hsa_part_vii?.line42_prior_excess !== 0 ||
+            form.hsa_part_vii?.line47_current_year_excess !==
+              (owner.taxpayer_hsa_contributions ?? 0) - medicareOwnerLimit
+          : form.hsa_part_vii?.line47_current_year_excess !== 0;
+      }) ||
       calculated5329.total <= 0
     ) {
       throw new Error(
-        "Form 8889 paired prior excess differs from printed owner Form 5329",
+        "Form 8889 paired excess differs from printed owner Form 5329",
       );
     }
     reconcileHsaOwnerForms(calculated5329.forms, allPending?.form8889, filer);
@@ -1282,7 +1300,7 @@ export function reconcilePairedForm8889(
       (form1040.line10_adjustments ?? 0) ||
     (schedule2.line17c_hsa_penalty ?? 0) !== sum("print_line17b_penalty") ||
     (schedule2.line17d_hsa_eligibility_tax ?? 0) !== sum("print_line21") ||
-    (pairedPriorExcessOwners.length > 0 &&
+    (pairedExcessOwners.length > 0 &&
       ((schedule2.line8_form5329_tax ?? 0) !== pairedExcessTax ||
         (form1040.line23_other_taxes ?? 0) !== pairedExcessTax))
   ) {

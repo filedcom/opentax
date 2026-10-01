@@ -1,5 +1,30 @@
 # TY2025 Form 8889 paired Medicare mixed months (build pass, unrun)
 
+## One self-only Medicare owner retains a current personal excess (written, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+assign no contribution limit to a Medicare-enrolled month and direct each HSA
+owner to a separate Form 8889. The [2025 Form 5329
+instructions](https://www.irs.gov/instructions/i5329) place personal
+contributions above Form 8889 line 12 on that owner's Part VII line 47 and tax
+the lesser of the ending excess or that HSA's December 31 value at 6%.
+
+The paired self-only July-Medicare route now accepts $3,000 of personal
+contributions for the Medicare owner against a $2,150 six-month limit. The
+$850 retained excess and a sourced $5,000 year-end HSA value produce that
+owner's Form 5329 lines 47–49 and $51 Schedule 2 tax. The other owner has
+full-year self-only eligibility and a separate $3,000 deduction. A full-return
+fixture reconciles both Forms 8889, the single owner Form 5329, the $5,150
+Schedule 1/Form 1040 adjustment, and the $51 Schedule 2/Form 1040 tax through
+native MeF and PDF projections. Changed Medicare onset, printed owner excess,
+Schedule 2, and final-return tax reject. Cases remain unrun until the shared
+implementation batch ends.
+
+This bounded route has no prior excess, employer funding, distribution,
+timely excess withdrawal, or age-55 catch-up. The Medicare notice and HSA
+year-end value are entered references and amounts, not authenticated source
+bytes. Other owner-specific mixed-month and excess combinations remain open.
+
 ## One self-only owner enrolls in Medicare midyear (2026-10-01 build pass, unrun)
 
 The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) put
