@@ -803,7 +803,13 @@ export function reconcilePairedForm8889(
         disabilityOwner.disability_exception_evidence!
           .disability_source_reference ||
       owners.some((owner) =>
-        owner.hsa_excluded_distributions !== undefined ||
+        (owner === ageOwner &&
+          owner.hsa_excluded_distributions !== undefined) ||
+        (owner === disabilityOwner &&
+          owner.hsa_excluded_distributions !== undefined &&
+          (owner.hsa_excluded_distributions.rollover === undefined ||
+            owner.hsa_excluded_distributions.timely_excess_withdrawal !==
+              undefined)) ||
         owner.prior_year_hsa_excess !== undefined ||
         owner.testing_period_failure !== undefined ||
         (owner.form1099_sa_distributions?.length ?? 0) === 0

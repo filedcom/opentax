@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and no completed checklist items. The **311 completed bounded items**, with
+and no completed checklist items. The **312 completed bounded items**, with
 their source and validation limits, are in the
 [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 The [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
@@ -16,7 +16,7 @@ form or a release gate.
 | Scope and completion rules | 5 | 1 | Set filing boundaries and the source-to-output completion rule. |
 | Coverage inventory and decisions | 8 | 0 | Reconcile applicability, ownership, unsupported branches, and evidence standards. |
 | Core return and source paths | 8 | 4 | Complete return-wide joins and source classification. |
-| Named tax-form gaps | 20 | 295 | Extend bounded routes to every retained form branch and source combination. |
+| Named tax-form gaps | 20 | 296 | Extend bounded routes to every retained form branch and source combination. |
 | Native MeF and PDF parity | 3 | 11 | Resolve registry and filled-output parity. |
 | Automated and artifact validation | 5 | 0 | Run the final bulk test, XSD, filled-PDF, and business-rule gates. |
 | IRS ATS and delivery | 5 | 0 | Obtain credentials, accepted scenarios, review, merge, and release. |
@@ -51,6 +51,8 @@ An audited gain and loss in opposite holding-period buckets now join the
 bounded Form 6251 AMT-basis path when both net losses are fully deductible.
 A paired HSA return now combines one owner's timely excess return with the
 other owner's partly medical distribution across Forms 8889 and 1040.
+A paired age-65/disability HSA return now includes one sourced pre-disability
+rollover for the disability owner, with both Form 8889 copies and joint totals.
 A purchased short-term nonpublic stock gift now carries its basis-limited
 Form 8283 claim and reviewed issuer details through native and PDF output.
 One traced Form 4952 securities loan now reconciles four separate interest
