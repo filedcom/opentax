@@ -91,7 +91,16 @@ remains open. The Form 8978 negative Schedule 2 line 18 PDF route remains
 closed pending a supported signed-offset projection. IRS ATS transmission and
 acceptance with issued credentials are not yet evidenced. Resolve the open
 scope and form paths, inspect the prepared PDFs, then complete ATS and review
-before merge and release.
+before declaring the TY2025 filing family ready for accepted transmission.
+
+**CLI release checkpoint.** The user requested a new CLI version from the
+rebased PR as a bounded code release, without claiming IRS filing acceptance.
+The pre-merge signed W-2 CLI, MeF archive, and filled-PDF smoke suite passed
+**34/34** on 2026-10-01
+([local log](.state/research/pr56-release-smoke-premerge-2026-10-01.log)).
+A locally compiled binary reported `opentax dev` and listed 211 registered
+nodes. The five-platform `v2.0.5` release build and downloaded-binary smoke
+remain to be verified. The manual PDF and IRS ATS gates above remain open.
 
 ## Scope and completion rules
 
