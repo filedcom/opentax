@@ -47,6 +47,28 @@ missing filer identity are rejected. These fixtures are written but unrun. The
 supporting page is a prerequisite for parent PDF parity and remains outside the
 export packet while Form 8621 lacks material page-1 and election facts.
 
+A later parent-source slice added `parent_source` per PFIC: foreign corporation
+address and tax year, each share class with year-end shares/value, joint
+ownership and 2025 acquisition answers, new-versus-continuing QEF/MTM election
+status, an explicit no-outstanding-section-1294 answer, and a referenced issuer
+record with a SHA-256 digest. The source projector refuses a share/value sum or
+election status inconsistent with the calculation item. Native Form 8621 now
+emits these page-1 facts when supplied, including only genuinely new election
+boxes. A separate unregistered page-1 widget projection stages the same facts.
+Its source/native/widget positive and changed-share/election/date fixtures are
+written but unrun.
+
+The issuer record is a locator and declared digest; the product does not yet
+fetch or authenticate its bytes. The current source does not prove historical
+section 1294 status, QEF Annual Information Statement amounts, marketability and
+adjusted basis for section 1296, or prior distribution and tax records for
+section 1291. Page 1 also needs the final filer identity/address and calculated
+line 5 amounts, while Part V needs one separately printed page per excess event
+and Part VI needs a proven ledger or absence. The parent PDF descriptor remains
+unregistered and its export gate stays active. Before positive PDF export, bind
+and verify the source document bytes, reconcile the conditional pages and
+statements, then verify the completed filing against the final return.
+
 **Decision for this build slice:** no positive PDF projection is reliable even
 for one QEF or MTM item without inventing or leaving blank material page-1 facts
 and potentially mislabeling a Part II election. Keep the print route open. To

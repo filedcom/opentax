@@ -32,6 +32,88 @@ export enum PficRegime {
   QEF = "QEF",
 }
 
+function isIsoDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+// Facts shown on the printed parent form. The source document reference is an
+// evidence locator, not proof that the issuer's records were authenticated.
+export const form8621ParentSourceSchema = z.object({
+  corporation_address: z.object({
+    line1: z.string().trim().min(1),
+    line2: z.string().trim().min(1).optional(),
+    city: z.string().trim().min(1),
+    province_or_state: z.string().trim().min(1).optional(),
+    country_code: z.string().regex(/^[A-Z]{2}$/),
+    postal_code: z.string().trim().min(1).optional(),
+  }).strict(),
+  corporation_tax_year_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  corporation_tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  share_classes: z.array(
+    z.object({
+      description: z.string().trim().min(1),
+      year_end_shares: z.number().int().nonnegative(),
+      year_end_value_usd: z.number().nonnegative(),
+    }).strict(),
+  ).min(1),
+  jointly_owned_with_spouse: z.boolean(),
+  shares_acquired_during_2025: z.boolean(),
+  acquisition_date: z.string().regex(/^2025-\d{2}-\d{2}$/).optional(),
+  election_status: z.enum([
+    "section1291_no_new_election",
+    "qef_new_2025",
+    "qef_continuing",
+    "mtm_new_2025",
+    "mtm_continuing",
+  ]),
+  no_outstanding_section1294_election: z.literal(true),
+  issuer_record: z.object({
+    document_id: z.string().trim().min(1),
+    sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  }).strict(),
+}).strict().superRefine((source, ctx) => {
+  for (
+    const date of [
+      source.corporation_tax_year_start,
+      source.corporation_tax_year_end,
+      source.acquisition_date,
+    ]
+  ) {
+    if (date && !isIsoDate(date)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "PFIC source date must be a real calendar date",
+      });
+    }
+  }
+  if (source.corporation_tax_year_start >= source.corporation_tax_year_end) {
+    ctx.addIssue({
+      code: "custom",
+      message: "PFIC tax year must end after it starts",
+    });
+  }
+  if (source.corporation_tax_year_end.slice(0, 4) !== "2025") {
+    ctx.addIssue({ code: "custom", message: "PFIC tax year must end in 2025" });
+  }
+  if (source.shares_acquired_during_2025 !== Boolean(source.acquisition_date)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "2025 share acquisition needs its date",
+    });
+  }
+  if (
+    new Set(source.share_classes.map((share) => share.description)).size !==
+      source.share_classes.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "PFIC share classes must be distinct",
+    });
+  }
+});
+
 // Per-item schema — each Form 8621 covers one PFIC/QEF holding
 export const itemSchema = z.object({
   // Legal name of the PFIC or QEF
@@ -46,6 +128,7 @@ export const itemSchema = z.object({
   shares_owned: z.number().nonnegative(),
   // Fair market value of shares at end of tax year (Form 8621 Part I line 1b)
   fmv_at_year_end: z.number().nonnegative(),
+  parent_source: form8621ParentSourceSchema.optional(),
   // Each section 1291 distribution block supplies prior-year history and all
   // current distributions; each disposition supplies its realized gain.
   excess_events: z.array(excessEventSchema).optional(),
