@@ -10,6 +10,7 @@ import { trustPartVStatementFixture } from "../../nodes/inputs/f3468/trust-part-
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
 import { IraOwner } from "../../nodes/intermediate/forms/form8606/index.ts";
 import { ExclusionType } from "../../nodes/intermediate/forms/form982/index.ts";
+import { CertifiedInterestDocumentKind } from "../../nodes/intermediate/forms/form8396/calculation.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
 import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
@@ -6675,6 +6676,112 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 5695 shows a 150 door credit and 600 central-air-conditioner credit with both QMIDs",
       "The 750 home-improvement credit joins Schedule 3 and Form 1040",
       "The Section A and B home addresses and owner identity agree with the source return",
+    ],
+  },
+  {
+    id: "single-form461-schedule-c-excess-business-loss",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        form461_scope_review: {
+          only_schedule_c_and_f_business_items: true,
+          other_part_i_lines_zero: true,
+          part_ii_adjustments_zero: true,
+          post_at_risk_and_passive_limits_confirmed: true,
+          line2_schedule_c_amount: -400_000,
+          line6_schedule_f_amount: 0,
+          source_document_refs: ["Synthetic 2025 sole proprietor ledger"],
+        },
+      },
+      w2: [wage(200_000, 40_000, "Example Employer", "12-3456789")],
+      schedule_c: [{
+        line_a_principal_business: "Retail",
+        line_b_business_code: "459999",
+        line_c_business_name: "South Shop",
+        business_reference: "south-2025",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_32_at_risk: "a",
+        line_1_gross_receipts: 0,
+        line_27b_other_expenses: 400_000,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "form461"],
+    reviewFocus: [
+      "Form 461 reports the 400,000 Schedule C loss and 87,000 excess business loss",
+      "The 87,000 addback reaches Schedule 1 while the business loss stays on Schedule C",
+      "Form 1040 AGI and the separate next-year loss workpaper trace the same source review",
+    ],
+  },
+  {
+    id: "single-form4684-business-casualty-loss",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(50_000, 8_000, "Example Employer", "12-3456789")],
+      form4684: {
+        business_fmv_before: 80_000,
+        business_fmv_after: 50_000,
+        business_basis: 50_000,
+        business_insurance: 0,
+        business_is_section_1231: true,
+        business_property_description: "Workshop equipment",
+        business_property_location: "Austin, TX",
+        business_acquired_date: "2020-04-01",
+        business_casualty_date: "2025-06-15",
+        business_casualty_description: "Storm damaged workshop equipment",
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form4684", "form4797", "schedule1"],
+    reviewFocus: [
+      "Form 4684 Section B reports a 30,000 loss on workshop equipment",
+      "The long-term business casualty joins Form 4797 and Form 1040 AGI",
+      "The property description, dates, basis, values, and zero insurance match the source record",
+    ],
+  },
+  {
+    id: "single-form8396-certified-loan-interest-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(60_000, 5_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "Synthetic 2025 Form 1098 loan B",
+        box1_mortgage_interest: 7_500,
+        box1_current_year_deductible_interest: 7_500,
+        box1_deduction_workpaper_reference:
+          "Synthetic 2025 Pub. 936 loan B workpaper before Form 8396 reduction",
+        for_routing: "A",
+      }],
+      form8396: {
+        certificate_issuer_name: "Austin Housing Finance Corporation",
+        certificate_number: "MCC-2025-101",
+        certificate_issue_date: "2025-01-15",
+        current_year_claim: true,
+        interest_evidence: {
+          kind: CertifiedInterestDocumentKind.Form1098,
+          document_reference: "Synthetic 2025 Form 1098 loan B",
+          reported_interest_paid: 7_500,
+          taxpayer_interest_paid: 7_500,
+          original_mortgage_amount: 125_000,
+          certified_indebtedness_amount: 100_000,
+        },
+        interest_reporting_line: "8a",
+        mcc_rate: 0.2,
+        home_is_main_residence: true,
+        home_in_issuer_jurisdiction: true,
+        interest_paid_to_related_person: false,
+        certificate_is_reissued: false,
+        nonspouse_coowner: false,
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8396", "schedule3"],
+    reviewFocus: [
+      "Form 8396 allocates 7,500 interest to 100,000 of a 125,000 certified loan",
+      "The 1,200 mortgage interest credit reaches Schedule 3 and Form 1040",
+      "The certificate, Form 1098 reference, and qualified home facts agree with the source",
     ],
   },
 ];

@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-138 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+141 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -284,8 +284,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **62 distinct
-registered PDF keys out of 112**; **50 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **65 distinct
+registered PDF keys out of 112**; **47 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -350,7 +350,14 @@ credits on Form 5695. They add exact registered PDF keys to the review queue.
 Their expected pages and cross-form amounts still await the held bulk run and
 visual review.
 
-Uncovered registered PDF keys at this checkpoint (50):
+Three additional source-backed routes add a Schedule C excess business loss on
+Form 461 with its Schedule 1 addback, a long-term business casualty on Form 4684
+linked to Form 4797, and a mortgage credit certificate with allocated interest
+on Form 8396 linked to Schedule 3. Existing full-return graph tests establish
+the source shapes and cross-form joins; the held bulk run must still establish
+the new fixtures' XML validity and filled-page output.
+
+Uncovered registered PDF keys at this checkpoint (47):
 
 ```text
 f2106 f2210f f2439 f4136 f4255 f4835
@@ -359,8 +366,7 @@ f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
 f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
 f8859 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
-form461 form4684
-form8396 form8582cr
+form8582cr
 form8839 form8853
 form8978_schedule_a form8990 form8992 form8992_schedule_a
 form8995a_schedule_a form8995a_schedule_b
