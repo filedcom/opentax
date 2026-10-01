@@ -49,6 +49,51 @@ does not authenticate the partner audit source for Form 8978. The 2025 Schedule
 unprinted in the current graph/PDF. They need separate retained sale and
 interest-calculation evidence before inclusion in line 21.
 
+### Schedule 2 installment-sale interest source boundary
+
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+put section 453(l)(3) interest for certain residential-lot and timeshare dealer
+sales on Schedule 2 line 14, and section 453A(c) interest for qualifying
+nondealer installment obligations on line 15. The [2025 Form 6252
+instructions](https://www.irs.gov/pub/irs-pdf/f6252.pdf) explicitly say the
+interest is **not** calculated on Form 6252. [Publication 537
+(2025)](https://www.irs.gov/publications/p537) gives the section 453A test and
+calculation: sale price above $150,000, an aggregate year-of-origin outstanding
+face amount above $5 million, exceptions for farm and individual personal-use
+property, unrecognized gain at the close of the return year multiplied by the
+applicable maximum tax rate, the **fixed sale-year applicable percentage**, and
+the underpayment rate for the month containing the taxpayer's year end.
+Interest continues in later years while an originally qualifying obligation
+remains outstanding.
+
+The current `form6252.f6252s` rows supply gain, sale price, and payments for
+each attached Form 6252, with a 2024 filed-form check for some later-year
+sales. They do not inventory **all** outstanding obligations by origin year,
+identify sales belonging to one transaction, establish dealer/residential-lot
+or timeshare status for line 14, preserve the origin-year aggregate face amount
+and percentage for line 15, prove the year-end unpaid balance and unrecognized
+gain for every obligation, identify the statutory exceptions, or retain a
+year-end rate source. Partnership and S corporation pass-through information
+can also require an owner-level interest computation (see the [2025 Form 1065
+instructions](https://www.irs.gov/instructions/i1065) and [2025 Schedule K-1
+shareholder instructions](https://www.irs.gov/instructions/i1120ssk), codes M
+and N). Deriving interest from
+the Form 6252 current payment alone would therefore produce an unsupported
+Schedule 2 amount; accepting a bare interest figure would leave the source
+unauthenticated. The Schedule 2 graph input, native MeF mapping, and PDF
+descriptor have no line 14/15 fields, so neither amount can be printed or
+reconciled to line 21 and Form 1040 line 23 yet.
+
+The implementation gate is a retained obligation/interest workpaper keyed to
+each sale and pass-through source. It must carry origin-year, transaction and
+property classification, face amount and close-of-year balance, prior-year
+percentage where relevant, unrecognized gain and gain character, maximum tax
+rate, tax-year-end underpayment rate citation, and per-obligation line 14/15
+calculation. Then add the computed lines to Schedule 2 Part II, MeF, and PDF,
+and assert their sum through line 21 and Form 1040 line 23. A positive
+two-obligation case, a later-year carryover, both statutory classifications,
+and tampered workpaper/line totals should be in the bulk validation batch.
+
 ## Remaining return-wide work
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |
