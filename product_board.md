@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **625 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **626 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 134-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 625 bounded routes and
+**Implemented coverage.** The completed ledger records 626 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -109,6 +109,8 @@ replays the claimed child's U.S. residency flag. The 2025 Schedule 2 graph and
 native/PDF projectors reject obsolete Form 5405 line 10 repayments.
 Identified 1099-G box 5 RTAA copies now reconcile to Schedule 1 line 8z,
 native type statement, filled PDF, and the final Form 1040 income total.
+S corporation K-1 box 10 code J recovery rows also reconcile to that line and
+its native/PDF statement without claiming authenticated issuer bytes.
 Schedule 2 Part II now reconciles to Form 1040 line 23 after the retained
 Form 8978 reduction; Schedule 3 line 8 reconciles to Form 1040 line 20.
 A nine-root workflow matrix states the remaining amendment, payment,
