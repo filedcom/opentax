@@ -43,9 +43,24 @@ with ordinary box 1a dividends and no qualified box 1b amount. The retained
 loan, its payments, the dividend source, Form 4952 lines 1–8, Schedule A line
 9, and finalized Form 1040 line 3b and itemization must agree at native and
 PDF export. A focused positive and changed-source fixture is authored for the
-deferred batch. Mixed interest/dividend payers, qualified dividends, foreign
-tax, capital-gain distributions, and unauthenticated lender or broker bytes
-remain outside this direct-loan route.
+deferred batch. Qualified dividends, foreign tax, capital-gain distributions,
+and unauthenticated lender or broker bytes remain outside this direct-loan
+route.
+
+The direct loan also accepts one affirmed unadjusted box 1 Form 1099-INT payer
+alongside one ordinary box 1a Form 1099-DIV payer. The combined source guard
+replays both payers and the final Form 1040 interest/dividend amounts; the loan
+guard replays the same retained debt and payments. Form 4952 line 4a, Schedule
+A line 9, native MeF, and PDF must agree. A full-return positive and changed
+dividend-source fixture are authored for the deferred batch. Other mixed payer
+combinations and authenticated issuer or lender bytes remain open.
+
+The same single loan can pair one unadjusted taxable Form 1099-OID box 1 payer
+with the ordinary Form 1099-DIV payer. The combined source guard verifies the
+OID and dividend totals against the final return before native or PDF export;
+the loan guard replays the retained trace and payments. A full-return positive
+and missing-OID source fixture are authored for deferred validation. Adjusted
+OID, other income classes, and authenticated document bytes remain open.
 
 It also accepts exactly one affirmed, unadjusted taxable Form 1099-OID box 1
 investment payer in place of the interest or dividend payer. The same retained
