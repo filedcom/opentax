@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **582 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **584 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -21,14 +21,14 @@ diagnostic evidence, not a release pass.
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 6 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
+| Core return and source paths | 8 | 38 | Return-wide joins and source classification remain incomplete. |
 | Reported CLI issues | 0 | 4 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | 492 | Many sourced form slices exist; the listed parent form paths remain open. |
-| Native MeF and PDF parity | 3 | 42 | Registry, attachment, and printable-output parity remain open. |
+| Native MeF and PDF parity | 3 | 43 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The new-batch full command reached 10,168 passes and 174 failures after type repairs; failing routes are under repair. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 582 bounded routes and
+**Implemented coverage.** The completed ledger records 584 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
