@@ -72,7 +72,7 @@ export function form8938Fixture() {
         asset_type: ForeignAssetType.ForeignStock,
         foreign_entity_type: "corporation",
         description: "PFIC shares reported on Form 8621",
-        asset_identifier: "PFIC-1",
+        asset_identifier: "PFIC1",
         country: "FR",
         institution_or_issuer_name: "Example PFIC",
         institution_or_issuer_address: {
@@ -91,7 +91,7 @@ export function form8938Fixture() {
         maximum_value_usd: 10_000,
         year_end_value_usd: 10_000,
         excepted_on_form: "8621",
-        filed_exception_form_reference: "Form 8621 PFIC-1 TY2025",
+        filed_exception_form_reference: "IRS862117",
         tax_items: [],
       },
     ],

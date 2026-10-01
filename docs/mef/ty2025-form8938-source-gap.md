@@ -29,18 +29,26 @@ filed-line locations from detailed assets and Part IV counts from distinct
 filed-form references. The PDF stage repeats the official second page for
 additional Part V and Part VI assets, records the added-page count on page 1,
 and retains the one-page Part IV-only route. The MeF stage emits repeated detail
-groups, structured foreign addresses and Part VI classification indicators.
+groups, structured foreign addresses and Part VI classification indicators. In
+the final MeF pass after document discovery, a staged reconciliation checks
+filed Schedule B payer rows and Form 1040 totals for the interest and ordinary
+dividend Part III routes. It also matches a Part IV Form 8621 asset to the
+prepared IRS8621 document ID, issuer name and foreign entity identifier. Other
+Part III destinations and Part IV forms fail closed in that helper.
 
 **Public export remains closed** for active Form 8938 inputs. Both projections
 are absent from the shared registries and the existing MeF/PDF guard remains in
 place. Before opening export:
 
-1. Join filer identity/status and return-required determination to the actual
-   TY2025 return.
-2. Review any supplementary issuer statement; include Part IV counts only when
-   the referenced Forms 3520/3520-A/5471/8621/8865 actually filed.
-3. Reconcile Part III income, gains, deductions and credits to their filed
-   form/line without computing them twice.
+1. Establish taxpayer citizenship/residency and whether a return was legally
+   required from independently verified evidence. The current finalized return
+   graph proves a Form 1040 was prepared and checks filing status, but does not
+   carry these two legal determinations.
+2. Review any supplementary issuer statement and build prepared-document
+   identity joins for Forms 3520, 3520-A, 5471 and 8865.
+3. Extend Part III filed-line joins beyond Schedule B interest and ordinary
+   dividends to gains, other income, deductions and credits without computing
+   them twice.
 4. Review issuer/bank statement and FX source bytes, foreign trust/pension and
    possession/dual-resident exceptions, then validate the selected MeF schema
    and business rules and complete ATS evidence.

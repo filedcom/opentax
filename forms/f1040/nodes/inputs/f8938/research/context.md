@@ -53,3 +53,11 @@ actually filed attachments, and verify statement/FX source bytes and selected
 MeF/XSD/business rules. Asset inclusion, exceptions, foreign trusts/pensions,
 possession residents and partial-year dual-resident scenarios need full rules. A
 positive threshold decision alone is not a filed Form 8938.
+
+The staged final-pass reconciliation now joins filing status to the finalized
+Form 1040, Schedule B interest and dividend payer rows to their Form 1040
+totals, and a Part IV PFIC asset to its prepared IRS8621 document and issuer
+identity. Unsupported Part III destinations and other Part IV forms fail closed.
+The graph still lacks verified citizenship/residency and the legal
+return-required determination; those are not inferred from the presence of a
+prepared return.

@@ -7,6 +7,7 @@ import {
   projectForm8938,
   type TaxSummaryRow,
 } from "./f8938_projection.ts";
+import { assertForm8938ReturnReconciliation } from "./f8938_reconciliation.ts";
 
 const statusCode = {
   single: FilingStatus.Single,
@@ -190,6 +191,9 @@ export const form8938: MefFormDescriptor<"f8938", unknown> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8938.pdf",
   build(raw, context) {
     if (raw === undefined || raw === null) return "";
+    if (context?.phase === "final") {
+      assertForm8938ReturnReconciliation(raw, context);
+    }
     const projected = projectForm8938(raw);
     if (
       context?.filer &&

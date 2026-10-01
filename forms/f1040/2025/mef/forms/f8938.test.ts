@@ -44,7 +44,7 @@ Deno.test("staged Form 8938 MeF projects Parts I-VI and Part IV exception", () =
   assertStringIncludes(xml, "<CountryCd>CH</CountryCd>");
   assertStringIncludes(xml, "<AddressLine1Txt>20 Market St</AddressLine1Txt>");
   assertStringIncludes(xml, "<CorporationInd>true</CorporationInd>");
-  assertEquals(xml.includes("PFIC-1"), false); // Part IV only, not repeated detail
+  assertEquals(xml.includes("PFIC1"), false); // Part IV only, not repeated detail
 });
 
 Deno.test("staged Form 8938 MeF classifies a nonentity counterparty", () => {
