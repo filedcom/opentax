@@ -1,8 +1,14 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import {
+  inputSchema as scheduleAInputSchema,
+  scheduleA,
+} from "../schedule_a/index.ts";
 import {
   bindForm8283SectionBCarryoverSource,
   reviewForm8283SectionBCarryoverBundle,
+  reviewForm8283SectionBCarryoverReturn,
   sectionBCarryoverAttachmentDescription,
 } from "./section_b_carryover_source.ts";
 import { inputSchema as form8283InputSchema } from "./index.ts";
@@ -14,6 +20,12 @@ const priorFormBytes = new TextEncoder().encode(
 );
 const appraisalBytes = new TextEncoder().encode(
   "%PDF-1.7 reviewed qualified appraisal fixture",
+);
+const filedReturnBytes = new TextEncoder().encode(
+  "%PDF-1.7 reviewed filed 2024 return with Schedule A fixture",
+);
+const acceptanceNoticeBytes = new TextEncoder().encode(
+  "<Acknowledgment><Status>Accepted</Status><TaxYr>2024</TaxYr></Acknowledgment>",
 );
 
 Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to one carryover", async () => {
@@ -43,6 +55,30 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       sha256: await sha256Hex(appraisalBytes),
       reviewed_by: "Reviewer A",
       reviewed_on: "2026-09-30",
+    },
+    accepted_2024_filing: {
+      filed_return_copy: {
+        source_document_reference: "filed-2024-return-copy",
+        file_name: "filed-2024-return.pdf",
+        sha256: await sha256Hex(filedReturnBytes),
+        reviewed_by: "Reviewer A",
+        reviewed_on: "2026-09-30",
+      },
+      acceptance_notice: {
+        source_document_reference: "irs-2024-acceptance-notice",
+        file_name: "accepted-2024-ack.xml",
+        sha256: await sha256Hex(acceptanceNoticeBytes),
+        reviewed_by: "Reviewer A",
+        reviewed_on: "2026-09-30",
+        submission_id: "2024-submission-1",
+        accepted_status_reviewed: true,
+      },
+      filed_tax_year: 2024,
+      filed_taxpayer_ssn: "123456789",
+      filed_return_reference: "2024-accepted-return-1",
+      filed_schedule_a_line12_noncash: 15_000,
+      sole_2024_noncash_gift_confirmed: true,
+      prior_artwork_and_appraisal_in_filing_reviewed: true,
     },
     section_b_appraiser_and_donee_signatures_reviewed: true,
     appraisal_was_attached_to_2024_return_reviewed: true,
@@ -101,6 +137,8 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       "123456789",
       prior,
       appraisal,
+      filedReturnBytes,
+      acceptanceNoticeBytes,
     );
   await bind(source);
   await assertRejects(() =>
@@ -115,6 +153,46 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
   );
   await assertRejects(() =>
     bind({ ...source, original_2024_deduction_claim: 19_999 })
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      accepted_2024_filing: {
+        ...source.accepted_2024_filing,
+        filed_schedule_a_line12_noncash: 14_999,
+      },
+    })
+  );
+  await assertRejects(() =>
+    bindForm8283SectionBCarryoverSource(
+      source,
+      carryover,
+      "123456789",
+      priorFormBytes,
+      appraisalBytes,
+      new TextEncoder().encode("%PDF-1.7 changed filed return"),
+      acceptanceNoticeBytes,
+    )
+  );
+  await assertRejects(() =>
+    bindForm8283SectionBCarryoverSource(
+      source,
+      carryover,
+      "123456789",
+      priorFormBytes,
+      appraisalBytes,
+      filedReturnBytes,
+      new TextEncoder().encode("<Acknowledgment>changed</Acknowledgment>"),
+    )
+  );
+  await assertRejects(() =>
+    bind({
+      ...source,
+      accepted_2024_filing: {
+        ...source.accepted_2024_filing,
+        filed_taxpayer_ssn: "999999999",
+      },
+    })
   );
   await assertRejects(() =>
     bind({ ...source, filed_taxpayer_ssn: "987654321" })
@@ -187,6 +265,8 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
     "123456789",
     priorFormBytes,
     appraisalBytes,
+    filedReturnBytes,
+    acceptanceNoticeBytes,
     context,
   );
   assertEquals(reviewed.contributionId, "artwork-2024-1");
@@ -199,10 +279,12 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       "123456789",
       priorFormBytes,
       appraisalBytes,
+      filedReturnBytes,
+      acceptanceNoticeBytes,
       {
         ...context,
         documentIdsByAttachmentFileName: {
-          "prior-8283.pdf": "BinaryAttachment0001",
+          ...context.documentIdsByAttachmentFileName,
           "art-appraisal.pdf": "BinaryAttachment0001",
         },
       },
@@ -215,11 +297,87 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       "123456789",
       priorFormBytes,
       appraisalBytes,
+      filedReturnBytes,
+      acceptanceNoticeBytes,
       {
         ...context,
         attachmentDescriptionsByFileName: {
           ...context.attachmentDescriptionsByFileName,
           "art-appraisal.pdf": "Wrong appraisal description",
+        },
+      },
+    )
+  );
+  const scheduleSource = {
+    agi: 100_000,
+    force_itemized: true,
+    capital_gain_50_percent_election_confirmed: true as const,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [carryover],
+    noncash_contribution_items: [],
+  };
+  const result = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(scheduleSource),
+  );
+  const returnContext = {
+    filer: {
+      primarySSN: "123456789",
+      nameLine1: "Artwork Donor",
+      nameControl: "DONO",
+      address: {
+        line1: "1 Main Street",
+        city: "Boston",
+        state: "MA",
+        zip: "02108",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: {
+      schedule_a: {
+        ...scheduleSource,
+        ...result.finalizations![0].fields,
+      },
+      f1040: {
+        line11_agi: 100_000,
+        line12e_itemized_deductions:
+          result.outputs[0].fields.itemized_deductions,
+      },
+    },
+  };
+  assertEquals(
+    reviewForm8283SectionBCarryoverReturn(source, carryover, returnContext),
+    { contributionId: "artwork-2024-1", line13CarryoverDeduction: 5_000 },
+  );
+  assertThrows(() =>
+    reviewForm8283SectionBCarryoverReturn(
+      source,
+      carryover,
+      {
+        ...returnContext,
+        pending: {
+          ...returnContext.pending,
+          f1040: {
+            ...returnContext.pending.f1040,
+            line12e_itemized_deductions: 4_999,
+          },
+        },
+      },
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283SectionBCarryoverReturn(
+      source,
+      carryover,
+      {
+        ...returnContext,
+        pending: {
+          ...returnContext.pending,
+          schedule_a: {
+            ...returnContext.pending.schedule_a,
+            line_13_contribution_carryover: 4_999,
+          },
         },
       },
     )

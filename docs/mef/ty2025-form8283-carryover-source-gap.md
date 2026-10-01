@@ -99,3 +99,25 @@ authored for the deferred batch. This supplies the printable-fact prerequisite,
 but the current executor has no authenticated accepted 2024 return or IRS
 acknowledgment to verify the claimed prior filing. No current-year Section B
 filing is claimed by accepting the source contract.
+
+The Section B source contract now requires separate byte-hashed copies of the
+filed 2024 return and its purported IRS acceptance notice, reviewed 2024
+taxpayer/year/reference, the filed Schedule A line 12 noncash amount, and a
+review that this artwork was the sole 2024 noncash gift. The filed line 12 must
+equal the prior deduction carried into the 2025 ledger. All four retained source
+files have distinct references, names, hashes, and review dates; changed bytes,
+owner, and deduction amount are rejected. The filed return and acknowledgment
+are retained evidence, not 2025 MeF attachments. Only the prior Form 8283 and
+required appraisal are checked against distinct proposed MeF PDF attachment IDs.
+
+A separate staged return review checks this one-gift, primary-owner case against
+the complete finalized 2025 Schedule A capital-gain election ledger. It
+recomputes lines 11–13, requires the refigured basis less the 2024 deduction to
+be fully deductible on line 13, and matches the Form 1040 itemized total. The
+fixture uses a $30,000 artwork FMV, $20,000 basis, $15,000 prior deduction, and
+$5,000 current carryover; changed current Schedule A and Form 1040 amounts are
+rejected. This review is not called by filing output. The acceptance notice is
+only checked against a reviewer-entered hash and claimed status; no trusted IRS
+submission or transcript is available to authenticate it or to verify the
+filed-return PDF contents. Native Form 8283 and PDF export remain closed for
+Section B carryovers.
