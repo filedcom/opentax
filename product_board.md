@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **250 completed bounded items** are preserved
+and the full progress summary. The **254 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -51,7 +51,8 @@ while the allowed credit reaches the return; up to 15 separately sourced
 passive investments retain their own Form 8582-CR Worksheet 9 balances and
 Form 3800 Part V rows. A partnership and S corporation passive New Markets
 credit now share one sourced rental limit while retaining separate activity
-balances and issuer identities.
+balances and issuer identities; the credit-only pass-through route now covers
+up to 15 separately identified K-1 issuers.
 Form 4952 now limits a partnership K-1 code H expense with sourced unadjusted
 1099-OID income, alone or alongside plain 1099-INT or sourced 1099-DIV
 investment income. A directly traced MFJ spouse-owned investment loan now
@@ -60,9 +61,14 @@ now join its bounded Form 6251 AMT refigure.
 Two or three sequential same-state no-APTC policies now reconcile every
 possible uncovered-month count for the bounded one-filer case; the same sourced
 monthly route now accepts up to twelve distinct policy periods and reaches
-Form 8962, Schedule 3, Form 1040, and the PDF packet.
+Form 8962, Schedule 3, Form 1040, and the PDF packet. An issuer-protected
+partial payment across those sequential periods now reduces the claim to the
+amount actually paid.
 One- and two-lot long-term and mixed-term Form 8949 regular gains changing
-to limited AMT losses now reconcile Form 6251 line 2k and the finalized return.
+to limited AMT losses now reconcile Form 6251 line 2k and the finalized return;
+one private-activity-bond OID source now reaches Form 6251 line 2g.
+Purchased short-term Section B artwork above the $20,000 threshold now carries
+a sourced ordinary-income reduction through Form 8283 and Schedule A.
 The Form 5471 Schedule Q general-category attachment and Category 4/5a
 ownership, Schedule M inventory-sale, and Schedules C/F slices are authored;
 positive Form 5471/8992 export remains closed pending all-zero Schedule R
@@ -95,8 +101,8 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 237 | Bounded child routes exist; full form-family coverage remains open. |
-| Native MeF and PDF parity | 3 | 9 | Registry and filled-output parity remain open. |
+| Named tax-form gaps | 20 | 240 | Bounded child routes exist; full form-family coverage remains open. |
+| Native MeF and PDF parity | 3 | 10 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
 
