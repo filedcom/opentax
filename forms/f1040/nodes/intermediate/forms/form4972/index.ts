@@ -71,10 +71,10 @@ export const inputSchema = z.object({
   // Part III election: apply 10-year averaging using 1986 rate schedule
   elect_10yr_averaging: z.boolean().optional(),
 
-  // Part III, Line 10: death benefit exclusion (pre-1984 plans, max $5,000)
+  // Part III, line 9: death benefit exclusion (participant died before August 21, 1996).
   death_benefit_exclusion: z.number().nonnegative().optional(),
-  // For a partial-share Part-III-only beneficiary, line 9 uses the full
-  // allowable exclusion, not just this recipient's allocated share.
+  // For a partial-share beneficiary, line 9 uses the full allowable ordinary
+  // exclusion; Part II first removes this recipient's capital allocation.
   death_benefit_exclusion_source_reference: z.string().trim().min(1).optional(),
   death_benefit_recipient_allocated_amount: z.number().int().nonnegative()
     .optional(),
@@ -166,7 +166,6 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     partialDeathBenefit &&
     ((input.elect_10yr_averaging !== true &&
       input.elect_capital_gain !== true) ||
-      (input.box6_nua ?? 0) > 0 || input.elect_include_nua === true ||
       (input.annuity_actuarial_value ?? 0) > 0 ||
       (input.federal_estate_tax ?? 0) > 0 ||
       !input.death_benefit_exclusion_source_reference ||
@@ -175,7 +174,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         deathBenefit * recipientShare)
   ) {
     throw new Error(
-      "form4972: partial-share death benefit needs Part II or III and an administrator source matching the full exclusion and recipient allocation, without NUA, annuity, or estate tax",
+      "form4972: partial-share death benefit needs Part II or III and an administrator source matching the full exclusion and recipient allocation, without annuity or estate tax",
     );
   }
   if (
@@ -257,6 +256,27 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       );
     }
   }
+  if (partialDeathBenefit && input.elect_include_nua === true) {
+    const taxable = input.lump_sum_amount;
+    const gain = input.capital_gain_amount ?? 0;
+    const nua = input.box6_nua ?? 0;
+    const capital = gain + nua * gain / taxable;
+    const recipientTotal = taxable + nua;
+    if (
+      !Number.isSafeInteger(taxable) || !Number.isSafeInteger(gain) ||
+      !Number.isSafeInteger(nua) ||
+      !Number.isSafeInteger(nua * gain / taxable) ||
+      !Number.isSafeInteger(
+        input.death_benefit_recipient_allocated_amount! * capital /
+          recipientTotal,
+      ) ||
+      !Number.isSafeInteger(deathBenefit * capital / recipientTotal)
+    ) {
+      throw new Error(
+        "form4972: partial-share NUA and death benefit need exact whole-dollar worksheet allocations",
+      );
+    }
+  }
   if (input.alternate_payee_distribution === true) {
     throw new Error(
       "form4972: qualified alternate-payee election needs separate Form 4972 review",
@@ -294,7 +314,9 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     );
   }
   const taxableDistributionForDeathBenefit = partialDeathBenefit
-    ? input.lump_sum_amount / recipientShare
+    ? (input.lump_sum_amount +
+      (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0)) /
+      recipientShare
     : input.lump_sum_amount +
       (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0);
   if (deathBenefit > taxableDistributionForDeathBenefit) {
@@ -455,8 +477,10 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     // instead starts with the full allowable exclusion before line 29 prorates
     // Part III tax. Its capital fraction uses this recipient's box 3 / box 2a.
     const fullDeathBenefitCapitalShare = partialShare && electCapGain &&
-        box2aTaxable > 0
-      ? Math.round(deathBenefit * box3CapitalGain / box2aTaxable)
+        box2aTaxable + includedNua > 0
+      ? Math.round(
+        deathBenefit * capitalGain / (box2aTaxable + includedNua),
+      )
       : deathBenefitCapitalShare;
     const ordinaryDeathBenefit = deathBenefit - fullDeathBenefitCapitalShare;
     const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);

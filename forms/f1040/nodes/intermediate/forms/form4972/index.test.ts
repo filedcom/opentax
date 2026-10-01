@@ -181,7 +181,6 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
   );
   for (
     const unsupported of [
-      { box6_nua: 1_000, elect_include_nua: true },
       { annuity_actuarial_value: 1_000, annuity_share_pct: 50 },
       { federal_estate_tax: 1_000 },
     ]
@@ -278,7 +277,6 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     const changed of [
       { death_benefit_exclusion_source_reference: undefined },
       { death_benefit_recipient_allocated_amount: 2_000 },
-      { box6_nua: 1_000, elect_include_nua: true },
       { annuity_actuarial_value: 1_000, annuity_share_pct: 50 },
       { federal_estate_tax: 1_000 },
     ]

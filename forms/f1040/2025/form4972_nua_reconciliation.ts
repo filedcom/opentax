@@ -8,8 +8,8 @@ import {
 // One elected distribution is required. Death-benefit and estate-tax
 // allocations are supported for a full-share beneficiary, including a
 // Part III annuity. A sourced partial-share Part-II-only estate allocation
-// and Part-III-only estate allocations are also supported without a death
-// benefit or annuity. Their combined election uses the same reviewed allocation.
+// and Part-III-only estate allocations are also supported. A separate
+// partial-share beneficiary route combines NUA with a sourced death benefit.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -38,6 +38,10 @@ export function reconcileForm4972Nua(
     fields.death_benefit_exclusion > 0) ||
     (typeof fields.federal_estate_tax === "number" &&
       fields.federal_estate_tax > 0);
+  const partialDeath = sharePct < 100 &&
+    (fields.death_benefit_exclusion ?? 0) > 0;
+  const partialEstate = sharePct < 100 &&
+    (fields.federal_estate_tax ?? 0) > 0;
   if (
     !item || item.ts !== fields.recipient ||
     sharePct <= 0 || sharePct > 100 ||
@@ -54,10 +58,10 @@ export function reconcileForm4972Nua(
     (hasAllocation &&
       (fields.beneficiary_distribution !== true ||
         (sharePct !== 100 &&
-          ((fields.federal_estate_tax ?? 0) <= 0 ||
-            (fields.death_benefit_exclusion ?? 0) > 0 ||
+          ((partialDeath && partialEstate) ||
+            (!partialDeath && !partialEstate) ||
             (item.box8_other ?? 0) > 0 ||
-            (fields.elect_capital_gain === true &&
+            (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
               (fields.capital_gain_amount ?? 0) <= 0) ||
             item.box1_gross_distribution !==
@@ -69,7 +73,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; partial-share estate allocation needs a beneficiary election without a death benefit or annuity",
+      "Form 4972 NUA requires a sourced Part II or III; partial-share beneficiary allocation needs a single death-benefit or estate adjustment without an annuity",
     );
   }
   if (

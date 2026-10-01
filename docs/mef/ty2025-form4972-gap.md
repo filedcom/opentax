@@ -1,5 +1,30 @@
 # TY2025 Form 4972 remaining coverage
 
+## Partial-share beneficiary NUA and death benefit (2026-10-01, unrun)
+
+One sourced Form 1099-R with box 9a below 100% can now combine elected box 6
+NUA, a pre-August-21-1996 death-benefit exclusion, and Parts II and III. The
+beneficiary must provide the plan administrator's exclusion-allocation
+reference, the full allowable exclusion, and this recipient's exact share.
+The route requires whole-dollar NUA and death-benefit capital allocations,
+a wholly taxable distribution including elected NUA, no annuity, and no
+federal estate-tax adjustment. The [2025 Form 4972 NUA and Death Benefit
+Worksheets](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf) put the
+recipient's NUA capital portion on the line 6 worksheet, then allocate this
+recipient's death benefit across capital and ordinary portions. Its
+multiple-recipient instructions put the full ordinary death-benefit remainder
+on line 9 and prorate the Part III tax by box 9a on line 29. For the authored
+50% case, boxes 2a/3/6 are $20,000/$4,000/$4,000 and the full death benefit
+is $5,000: lines 6/7/8/9/10 are $4,300/$860/$38,400/$4,000/$34,400.
+The resulting special tax flows to Form 1040 line 16, where the 2025 form
+directs it, without a Schedule 2 amount. Native and PDF projections replay
+the elected 1099-R, calculated lines, and final Form 1040 special tax;
+positive and source/allocation/line/tax tamper fixtures are authored but unrun.
+The administrator reference does not authenticate statement bytes. Other
+partial-share NUA/death combinations with annuity or estate tax, multiple
+elected distributions, filled-PDF appearance, XSD/business-rule checks, and
+ATS acceptance remain open.
+
 ## Four full-share copies from one participant's plan (2026-10-01, unrun)
 
 The same-plan source collection no longer imposes a three-copy limit: each
@@ -477,8 +502,9 @@ They require all of these steps:
    9a.
 2. The no-NUA capital-election and bounded NUA line 8 routes with or without
    Part II are implemented and reconciled. The full-share, no-annuity
-   beneficiary allocation and bounded partial-share NUA/estate Part II and Part III routes are
-   written; partial-share NUA/death-benefit allocation remains open.
+   beneficiary allocation, bounded partial-share NUA/estate Part II and Part
+   III routes, and the partial-share NUA/death-benefit allocation above are
+   written.
 3. The full-share line 11 annuity/death/estate combination is bounded above. A
    Part-III-only partial-share estate-tax route without other allocations is now
    bounded above. Other partial-share allocations remain open: the full
@@ -490,9 +516,9 @@ They require all of these steps:
    visual check has run.
 5. Source-backed cases now include no NUA with and without capital election, an
    annuity whose box 8 percentage differs from box 9a, plus NUA with or without
-   Part II and no other allocation, including an annuity. Add NUA with death
-   benefit or other estate-tax allocation, death-benefit allocation, and
-   invalid/missing percentages. Verify native XML against v5.4 XSD and visually
+   Part II and no other allocation, including an annuity. The single-copy
+   partial-share NUA/death-benefit route is also authored. Add remaining NUA
+   combinations and invalid/missing percentages. Verify native XML against v5.4 XSD and visually
    inspect filled page 1, including `NUA` and `MRD` notes.
 
 ## Other unsupported paths and validation gates
