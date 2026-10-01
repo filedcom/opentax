@@ -157,6 +157,14 @@ Deno.test("Form 7203 two-note second principal repayment replays into return, na
   };
   const xml = buildReviewedStockLoss7203(fields, { filer, pending });
   assertEquals(xml.match(/<ShareholderDebtBasisGrp>/g)?.length, 2);
+  assertEquals(
+    xml.includes("<PrincipalDebtRepaymentAmt>500</PrincipalDebtRepaymentAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<PrincipalDebtRepaymentAmt>250</PrincipalDebtRepaymentAmt>"),
+    true,
+  );
   assertEquals(xml.includes("<AllowableLossAmt>1600</AllowableLossAmt>"), true);
   assertEquals(xml.includes("<AllowableLossAmt>400</AllowableLossAmt>"), true);
   assertEquals(
@@ -763,6 +771,181 @@ Deno.test("Form 7203 two formal notes reconcile one identified principal repayme
     form7203StockLossPdf.instances?.(fields, filer, {
       ...pending,
       schedule1: { ...pending.schedule1, line5_schedule_e: -2_400 },
+    })
+  );
+});
+
+Deno.test("Form 7203 two formal notes replay each identified repayment through the return and both debt columns", () => {
+  const notes = {
+    ...oneNote,
+    current_box1_ordinary_loss: 2_000,
+    no_2025_repayments_confirmed: false,
+    principal_repayment: {
+      formal_note_id: oneNote.formal_note_id,
+      date: "2025-08-15",
+      amount: 500,
+      corporate_loan_ledger_reference:
+        "2025 note-01 corporate principal ledger",
+      shareholder_bank_deposit_reference: "2025 note-01 shareholder deposit",
+      principal_only_confirmed: true,
+    },
+    second_formal_note: {
+      formal_note_id: "note-2025-02",
+      signed_note_document_reference: "signed note PDF 2025-02",
+      note_execution_date: "2025-06-12",
+      shareholder_lender_ssn: "123456789",
+      corporate_borrower_ein: "987654321",
+      bank_transfer_reference: "2025 bank transfer 88",
+      cash_advance_amount: 1_000,
+      corporation_received_funds_confirmed: true,
+      shareholder_funded_directly_confirmed: true,
+      not_a_guarantee_or_cosign_confirmed: true,
+      beginning_note_face_amount: 0,
+      beginning_note_debt_basis: 0,
+      no_2025_repayments_confirmed: false,
+      principal_repayment: {
+        formal_note_id: "note-2025-02",
+        date: "2025-09-12",
+        amount: 250,
+        corporate_loan_ledger_reference:
+          "2025 note-02 corporate principal ledger",
+        shareholder_bank_deposit_reference: "2025 note-02 shareholder deposit",
+        principal_only_confirmed: true,
+      },
+      no_prior_reduced_debt_basis_confirmed: true,
+    },
+  };
+  const source = {
+    ...oneNoteK1,
+    box1_ordinary_business: -2_000,
+    box16_code_e_loan_repayment: 750,
+    form7203_one_note_debt_candidate: notes,
+  };
+  assertEquals(
+    reconcileOneNoteDebtCandidate(notes, source).debtSupportedLossCandidate,
+    1_500,
+  );
+  const k1 = k1SCorpNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1SCorpNode.inputSchema.parse({ k1_s_corps: [source] }),
+  );
+  const fields = k1.outputs.find((row) => row.nodeType === "form7203")!.fields;
+  const nodeResult = form7203Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form7203Node.inputSchema.parse(fields),
+  );
+  assertEquals(nodeResult.outputs.length, 0);
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "Alex Taxpayer",
+    nameControl: "TAXP",
+    address: {
+      line1: "1 Main St",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    filingStatus: FilingStatus.Single,
+  };
+  const pending = {
+    k1_s_corp: { k1_s_corps: [source] },
+    schedule1: {
+      line5_schedule_e: -2_000,
+      line10_total_additional_income: -2_000,
+    },
+    f1040: { line8_additional_income: -2_000 },
+  };
+  const xml = buildReviewedStockLoss7203(fields, { filer, pending });
+  assertEquals(xml.match(/<ShareholderDebtBasisGrp>/g)?.length, 2);
+  assertEquals(
+    xml.includes(
+      "<TotPrincipalDebtRepaymentAmt>750</TotPrincipalDebtRepaymentAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    xml.includes(
+      "<TotDebtBasisBfrExpnssLossAmt>2250</TotDebtBasisBfrExpnssLossAmt>",
+    ),
+    true,
+  );
+  assertEquals(xml.includes("<AllowableLossAmt>1000</AllowableLossAmt>"), true);
+  assertEquals(xml.includes("<AllowableLossAmt>500</AllowableLossAmt>"), true);
+  const pdf = form7203StockLossPdf.instances?.(fields, filer, pending)?.[0];
+  assertEquals(pdf?.line19_debt1, 500);
+  assertEquals(pdf?.line19_debt2, 250);
+  assertEquals(pdf?.line19_total, 750);
+  assertEquals(pdf?.line26_debt1, 500);
+  assertEquals(pdf?.line26_debt2, 250);
+  assertEquals(pdf?.line32_debt1, 500);
+  assertEquals(pdf?.line32_debt2, 250);
+  assertEquals(pdf?.line33_total, 750);
+  assertEquals(pdf?.line27_total, 2_250);
+  assertEquals(pdf?.line30_debt1, 1_000);
+  assertEquals(pdf?.line30_debt2, 500);
+  assertEquals(pdf?.line31_debt1, 500);
+  assertEquals(pdf?.line31_debt2, 250);
+  assertEquals(pdf?.line35_allowed_debt, 1_500);
+  assertEquals(
+    buildReviewedStockLossScheduleE(fields, { filer, pending }).includes(
+      "<NonpassiveLossAmt>2000</NonpassiveLossAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    scheduleEStockLossPdf.instances?.(fields, filer, pending)?.[0]?.line41,
+    -2_000,
+  );
+  assertThrows(() =>
+    reconcileOneNoteDebtCandidate({
+      ...notes,
+      second_formal_note: {
+        ...notes.second_formal_note,
+        principal_repayment: {
+          ...notes.second_formal_note.principal_repayment,
+          formal_note_id: notes.formal_note_id,
+        },
+      },
+    }, source)
+  );
+  assertThrows(() =>
+    reconcileOneNoteDebtCandidate({
+      ...notes,
+      second_formal_note: {
+        ...notes.second_formal_note,
+        principal_repayment: {
+          ...notes.second_formal_note.principal_repayment,
+          shareholder_bank_deposit_reference:
+            notes.principal_repayment.shareholder_bank_deposit_reference,
+        },
+      },
+    }, source)
+  );
+  assertThrows(() =>
+    buildReviewedStockLoss7203(fields, {
+      filer,
+      pending: {
+        ...pending,
+        k1_s_corp: {
+          k1_s_corps: [{ ...source, box16_code_e_loan_repayment: 500 }],
+        },
+      },
+    })
+  );
+  assertThrows(() =>
+    form7203StockLossPdf.instances?.(fields, filer, {
+      ...pending,
+      schedule1: { ...pending.schedule1, line5_schedule_e: -1_900 },
+    })
+  );
+  assertThrows(() =>
+    buildReviewedStockLoss7203(fields, {
+      filer,
+      pending: {
+        ...pending,
+        f1040: { line8_additional_income: -1_900 },
+      },
     })
   );
 });

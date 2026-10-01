@@ -1,12 +1,31 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## Two formal notes with one principal repayment each (2026-10-01, unrun)
+
+The reviewed source permits a separately dated and evidenced 2025 principal
+repayment on each of two new formal shareholder notes. Each payment must name
+its own note ID, follow that note's advance, stay below its face amount, and
+have distinct corporate-ledger and shareholder-bank references. The payment
+amounts must sum exactly to K-1 box 16 code E. Both notes keep zero opening
+face/basis, complete debt-inventory confirmation, and no prior reduced basis.
+
+Form 7203 Part II places both repayments in their respective debt columns on
+lines 19, 26, 32, and 33, with aggregate totals. Lines 20, 27, and 29 use each
+post-repayment balance; line 30 allocates the debt-supported loss pro rata in
+exact whole dollars. Part III, Schedule E, Schedule 1 line 5, Form 1040 line 8,
+native MeF, and PDF replay the same allowance. Positive and note-ID,
+duplicate-evidence, K-1-total, and return-tamper fixtures are authored for
+deferred validation. More than one payment per note, prior reduced-basis gain,
+authenticated source bytes, and nonintegral allocations remain closed. See the
+[Form 7203 instructions](https://www.irs.gov/instructions/i7203).
+
 ## Two formal notes with principal repayment on the second note (2026-10-01, unrun)
 
 The reviewed K-1 can now identify one principal repayment on the second of two
 signed, directly funded 2025 formal shareholder notes. Its dated payment must
 name the second note ID, follow that note's advance, be below its face amount,
-and match K-1 box 16 code E. The first note affirms no repayment; a repayment on
-each note is rejected. Distinct loan-ledger and shareholder-bank references, the
+and match K-1 box 16 code E. The first note affirms no repayment in this
+particular case. Distinct loan-ledger and shareholder-bank references, the
 complete two-note debt inventory, and zero opening face and basis remain
 required.
 
@@ -16,8 +35,9 @@ allocates the current debt-supported loss pro rata in exact whole dollars. The
 shared projection reconciles the K-1 and both notes with Schedule E, Schedule 1
 line 5, Form 1040 line 8, native MeF, and the PDF. A positive second-note
 example and note-ID, dual-repayment, K-1, and return-tamper fixtures are
-authored for deferred validation. Repayments on both notes, prior reduced-basis
-gain, authenticated source bytes, and nonintegral allocations remain closed. The
+authored for deferred validation. Multiple repayments per note, prior
+reduced-basis gain, authenticated source bytes, and nonintegral allocations
+remain closed. The
 [Form 7203 instructions](https://www.irs.gov/instructions/i7203) require
 separate loan tracking and pro rata loss reduction.
 
@@ -39,8 +59,8 @@ basis, then reduces the two remaining debt bases pro rata using each note's
 native/PDF projection replays the K-1, stock ledger, both note sources,
 repayment, Schedule E loss, Schedule 1 line 5, and Form 1040 line 8. Positive
 and note-ID, K-1, and return-tamper fixtures are authored but unrun.
-Authenticated loan/bank bytes, repayments on both notes, reduced-basis repayment
-gain, and nonintegral allocations remain closed. This follows the
+Authenticated loan/bank bytes, multiple repayments per note, reduced-basis
+repayment gain, and nonintegral allocations remain closed. This follows the
 [Form 7203 instructions](https://www.irs.gov/instructions/i7203) for separate
 formal-note repayments and pro rata loss reduction.
 
@@ -62,9 +82,10 @@ The shared projection reconciles the two source notes and the allowed loss
 against Schedule E, Schedule 1 line 5 and Form 1040 line 8. A positive two-note
 case and altered note-ID/amount/return cases are authored but unrun. The note
 and bank records remain referenced rather than byte-authenticated; repayments
-on both notes, prior reduced debt basis, more than two notes, and nonintegral pro
-rata allocations remain closed. The separate-column and pro rata treatment
-follows the [Form 7203 instructions](https://www.irs.gov/instructions/i7203).
+more than one repayment per note, prior reduced debt basis, more than two notes,
+and nonintegral pro rata allocations remain closed. The separate-column and pro
+rata treatment follows the
+[Form 7203 instructions](https://www.irs.gov/instructions/i7203).
 
 ## One new formal note with a principal repayment (2026-10-01, unrun)
 

@@ -15,8 +15,8 @@ const principalRepaymentSchema = z.object({
   principal_only_confirmed: z.literal(true),
 }).strict();
 
-// Source contract for one or two new formal shareholder notes. At most one
-// sourced principal repayment may be assigned to an identified note.
+// Source contract for one or two new formal shareholder notes. Each listed
+// note may have one sourced principal repayment assigned to its own note ID.
 export const reviewedOneNoteDebtCandidateSchema = z.object({
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
@@ -105,8 +105,6 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
       (note.principal_repayment.formal_note_id !== note.formal_note_id ||
         note.principal_repayment.date <= note.note_execution_date ||
         note.principal_repayment.amount >= note.cash_advance_amount)) ||
-    (note.principal_repayment !== undefined &&
-      note.second_formal_note?.principal_repayment !== undefined) ||
     (note.second_formal_note?.principal_repayment !== undefined &&
       (note.second_formal_note.principal_repayment.formal_note_id !==
           note.second_formal_note.formal_note_id ||
