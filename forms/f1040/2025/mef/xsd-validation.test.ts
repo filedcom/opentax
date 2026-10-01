@@ -35,6 +35,7 @@ import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -8251,6 +8252,41 @@ Deno.test({
     "<IncentiveStockOptionsAmt>240000</IncentiveStockOptionsAmt>",
   );
   await validateXsd(xml, "identified ISO Form 3921 full return");
+});
+
+Deno.test({
+  name:
+    "XSD: prior ISO basis sale and retained current ISO reach Form 6251 and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    ...priorIsoSaleFixture(general.taxpayer_ssn),
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form6251?.iso_adjustment, 240_000);
+  assertEquals(result.pending.form6251?.line2k_disposition, -15_000);
+  assertEquals(result.pending.f1040?.line7_capital_gain, 30_000);
+  assertEquals(
+    result.pending.schedule2?.line2_amt,
+    result.pending.form6251?.line11_amt,
+  );
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<IncentiveStockOptionsAmt>240000</IncentiveStockOptionsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PropertyDispositionAmt>-15000</PropertyDispositionAmt>",
+  );
+  await validateXsd(xml, "prior ISO basis sale with current ISO exercise");
 });
 
 Deno.test({

@@ -3,6 +3,7 @@ import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
 import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
 import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import { assertPriorIsoSaleExport } from "../../form6251_prior_iso_sale.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
@@ -153,6 +154,12 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   }
   assertForm6251Line8(fields);
   assertForm6251Form8949Source(fields, context?.pending);
+  assertPriorIsoSaleExport(
+    fields,
+    context?.pending,
+    context?.filer?.primarySSN,
+    context?.filer?.filingStatus === FilingStatus.Single,
+  );
   assertForm6251CirculationSource(fields, context?.pending);
   assertForm6251DepletionSource(fields, context?.pending);
   assertForm6251DepreciationSource(fields);

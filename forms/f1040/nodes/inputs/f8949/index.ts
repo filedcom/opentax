@@ -41,6 +41,7 @@ export const itemSchema = z.object({
   part: z.nativeEnum(Form8949Part),
   description: z.string(),
   source_transaction_id: z.string().trim().min(1).optional(),
+  broker_statement_reference: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
   date_sold: z.string(),
   proceeds: z.number().nonnegative(),

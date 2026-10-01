@@ -3,6 +3,10 @@ import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
 import { assertForm6251QualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
 import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import {
+  assertPriorIsoSaleExport,
+  assertPriorIsoSaleRetention,
+} from "../../form6251_prior_iso_sale.ts";
 import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { assertForm6251DepletionSource } from "../../form6251_depletion_source.ts";
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
@@ -88,6 +92,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     }
     assertForm6251Line8(fields);
     assertForm6251Form8949Source(fields, allPending);
+    assertPriorIsoSaleRetention(fields, allPending);
     assertForm6251CirculationSource(fields, allPending);
     assertForm6251DepletionSource(fields, allPending);
     assertForm6251DepreciationSource(fields);
@@ -130,6 +135,12 @@ export const form6251Pdf: PdfFormDescriptor = {
     };
   },
   instances(fields, filer, allPending) {
+    assertPriorIsoSaleExport(
+      fields,
+      allPending,
+      filer?.primarySSN,
+      filer?.filingStatus === FilingStatus.Single,
+    );
     if ((Number(fields.iso_adjustment ?? 0)) > 0) {
       if (!filer) {
         throw new Error("Form 6251 line 2i PDF needs final filer identity");

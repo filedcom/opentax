@@ -49,3 +49,30 @@ remain open. A subsequent bounded extension sums multiple ordinary domestic
 1099-DIV payers at the same native/PDF gate; see the
 [remaining-scope note](ty2025-form6251-remaining-scope.md). Its fixtures await
 the bulk validation batch.
+
+## One prior-year ISO lot sold after both holding periods (implementation written; untested)
+
+The separate public `form6251_prior_iso_sale` review identifies one 2024
+Form 3921 exercise lot, the filed 2024 return and Form 6251 with an exact
+line 2i spread, and one 2025 broker statement/long-term Form 8949 sale. The
+review requires a single filer, a full-lot sale, no other 2024 ISO adjustment,
+and sale more than one year after exercise and more than two years after grant.
+The 2024 exercise price determines the regular basis; exercise-date fair value
+determines the AMT basis. The claimed prior line 2i must equal that basis
+difference. A single retained 2025 Form 8949 row must match its transaction ID,
+dates, proceeds and both bases; no other Schedule D activity is permitted by
+the existing basis audit. Form 6251 line 2k is the AMT gain less regular gain.
+At native and PDF export the review, raw Form 8949 row, single-filer identity,
+Schedule 2 AMT and Form 1040 capital gain are replayed against the retained
+return. The distinct 2025 retained-share Form 3921 line 2i route can coexist
+with this prior-year sale. A synthetic $15,000 prior adjustment yields a
+negative $15,000 line 2k on a $40,000 sale, while a separate $240,000 retained
+2025 exercise reaches line 2i. Source, native/PDF tamper and full-return
+fixtures are authored but unrun under the implementation-first workflow.
+
+The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+require separate AMT basis records and a Form 8949/Schedule D refigure on a
+later sale. The reviewed prior filing and issuer/broker references are not
+authenticated bytes or IRS acceptance evidence. Partial lots, disqualifying
+dispositions or compensation, other 2024 ISO lots, loss sales, additional
+capital activity and prior AMT capital-loss carryovers remain closed.

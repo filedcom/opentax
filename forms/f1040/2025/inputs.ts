@@ -1,5 +1,7 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
+import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
+import { priorIsoSaleReviewSchema } from "./form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/form4797/investment_1245.ts";
 import {
@@ -672,6 +674,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099b, itemSchema: f1099bItemSchema, isArray: true },
   { node: f1099r, itemSchema: f1099rItemSchema, isArray: true },
   { node: f1098, itemSchema: f1098ItemSchema, isArray: true },
+  {
+    node: form6251,
+    inputKey: "form6251_prior_iso_sale",
+    inputSchema: z.object({ prior_iso_sale_review: priorIsoSaleReviewSchema }),
+    isArray: false,
+  },
   {
     node: f1098,
     inputKey: "f1098_mortgage_limit_review",

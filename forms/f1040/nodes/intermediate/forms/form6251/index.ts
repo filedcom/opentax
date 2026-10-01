@@ -11,6 +11,10 @@ import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { normalizeArray } from "../../../utils.ts";
+import {
+  assertPriorIsoSaleCalculation,
+  priorIsoSaleReviewSchema,
+} from "../../../../2025/form6251_prior_iso_sale.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;
@@ -151,6 +155,7 @@ export const inputSchema = z.object({
     })),
     has_other_capital_activity: z.boolean(),
   }).optional(),
+  prior_iso_sale_review: priorIsoSaleReviewSchema.optional(),
   // Line 2o: current-year regular circulation-cost deduction less the AMT
   // deduction, sourced from the reviewed §59(e) expenditure record.
   line2o_circulation_costs: z.number().int().finite().optional(),
@@ -568,6 +573,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       );
     }
     const basisRows = normalizeArray(input.line2k_8949_basis_dispositions);
+    if (input.prior_iso_sale_review !== undefined) {
+      assertPriorIsoSaleCalculation(
+        input.prior_iso_sale_review,
+        basisRows,
+      );
+    }
     const basisIds = new Set<string>();
     const shortTermBasisRows = basisRows.filter((row) =>
       ["A", "B", "C"].includes(row.part)

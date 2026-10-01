@@ -12,6 +12,13 @@ adjusted or extra source rows reject. The direct replay fixture is authored but
 awaits the agreed bulk validation. This binds the two in-memory form routes,
 not the underlying broker document bytes.
 
+One qualifying full-lot sale of a 2024 ISO exercise is now linked to this
+replay through a distinct reviewed prior-year Form 3921/Form 6251 source,
+2025 broker transaction reference, and the exact regular and AMT share bases.
+It can coexist with a separate retained 2025 Form 3921 line 2i adjustment.
+See the [ISO source note](ty2025-form6251-iso-source-gap.md) for that bounded
+route and its unauthenticated prior-filing limitation.
+
 The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require refiguring Form 8949 and Schedule D for AMT when a disposition has a
 different AMT basis. The difference between the AMT and regular-tax gain or loss
