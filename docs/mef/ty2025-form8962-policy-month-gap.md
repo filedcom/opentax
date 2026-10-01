@@ -442,12 +442,28 @@ pending form and matches repayment or credit to finalized Schedule 2/3 and
 Form 1040. The PDF descriptor invokes the same reconciliation. Source, XML, PDF,
 tampering, and return-drift cases are written but not run.
 
-This does not yet cover shared policies where the other taxpayer is not a
-covered enrollee, multiple allocation periods or policies, a claimed dependent
-in either tax family, no-APTC Situation 3, divorce, corrected SLCSP, or
-inter-state shared coverage. Those routes still need tax-family membership and
-coverage-family facts, month-by-month source allocation, and their own
-final-return checks before native filing.
+The [TY2025 Situation 4 instructions](https://www.irs.gov/instructions/i8962)
+also allow the other allocating taxpayer to be absent from the 1095-A covered
+list. The IRS Joe/Alice/Jane example allocates to Alice, who claims covered
+Jane but is not enrolled. A bounded one-policy, full-year, one-person-filer
+route now records the [1095-A Part I line 5 recipient SSN](https://www.irs.gov/instructions/i1095a)
+and a reviewed other-family
+claim packet. The packet identifies the covered person's SSN, other taxpayer's
+SSN, policy number, tax year, Marketplace enrollment reference, tax-family
+review reference/hash, and allocation agreement reference/hash and percentage.
+The filing boundary requires the filer to be the 1095-A recipient and a covered
+person, the other taxpayer to be absent from the covered list, the claimed
+person to be the second covered person, and the packet's taxpayer, policy, and
+percentage to match the Part IV allocation. The same percentage allocates
+each month's premium, SLCSP, and APTC. Calculation and the shared native/PDF
+reconciliation carry the resulting credit to Schedule 3 line 9 and Form 1040
+line 31. A full-return fixture and packet, recipient, and final-return tamper
+cases are authored but unrun. Packet hashes are reviewed metadata; this route
+does not authenticate the underlying Marketplace, claim, or agreement bytes.
+
+Other non-enrolled-taxpayer combinations, multiple policies, wider tax
+families, unmatched agreement periods, corrected SLCSP, and interstate shared
+coverage remain closed pending their own source and final-return checks.
 
 ## One full-year MFS spouse policy
 

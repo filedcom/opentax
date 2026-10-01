@@ -4613,6 +4613,58 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-situation4-nonenrolled-other-taxpayer",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+      },
+      w2: [wage(30_120, 3_000, "Example Employer", "12-3456789")],
+      f1095a: [{
+        issuer_name: "Texas Marketplace",
+        policy_number: "TX-JOE-JANE-SHARED",
+        recipient_ssn: "111223333",
+        coverage_state: "TX",
+        covered_individual_ssns: ["111223333", "333445555"],
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(200),
+        annual_premium: 6_000,
+        annual_slcsp: 7_200,
+        annual_aptc: 2_400,
+        shared_policy_periods: [{
+          basis: "other_agreed",
+          situations_1_to_3_reviewed_and_inapplicable: true,
+          other_taxpayer_ssn: "222334444",
+          start_month: 1,
+          end_month: 12,
+          allocation_pct: 0.8,
+          other_family_claim_review: {
+            covered_individual_ssn: "333445555",
+            other_taxpayer_ssn: "222334444",
+            policy_number: "TX-JOE-JANE-SHARED",
+            tax_year: 2025,
+            other_taxpayer_claims_covered_individual: true,
+            marketplace_enrollment_reference:
+              "2025 TX Marketplace Joe/Jane enrollment",
+            tax_family_review_reference: "2025 Alice/Jane family-claim review",
+            tax_family_review_sha256: "a".repeat(64),
+            allocation_agreement_reference: "2025 Joe/Alice 80%-20% agreement",
+            allocation_agreement_sha256: "b".repeat(64),
+            filer_allocation_pct: 0.8,
+          },
+        }],
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "The 1095-A recipient and covered filer is Alex; the other Part IV taxpayer is not enrolled, and the reviewed family claim binds covered Jane to that taxpayer",
+      "Each month allocates 80% of the same premium, SLCSP, and APTC; the $2,880 net credit reaches Schedule 3 line 9 and Form 1040 line 31",
+      "Marketplace, tax-family, and signed-allocation references are reviewed metadata; source bytes remain unauthenticated",
+    ],
+  },
+  {
     id: "mfs-shared-policy-repayment",
     inputs: {
       general: {

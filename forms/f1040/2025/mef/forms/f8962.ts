@@ -2440,13 +2440,37 @@ function reconcileAgreedSharedPolicy(
     ) ||
     covered?.length !== 2 || new Set(covered).size !== 2 ||
     !covered.includes(filerSsn) ||
-    allocations.some((allocation) =>
-      !covered.includes(allocation.other_taxpayer_ssn) ||
-      allocation.other_taxpayer_ssn === filerSsn
-    )
+    allocations.some((allocation, index) => {
+      if (allocation.other_taxpayer_ssn === filerSsn) return true;
+      const period = sharedSourcePeriods?.[index];
+      const review = period?.basis === "other_agreed"
+        ? period.other_family_claim_review
+        : undefined;
+      if (covered?.includes(allocation.other_taxpayer_ssn)) {
+        return review !== undefined;
+      }
+      // The other Part IV taxpayer can claim a covered dependent without
+      // being an enrollee. Bind the recipient, covered person, tax-family
+      // review, Marketplace enrollment, and agreed percentage to this policy.
+      return allocation.basis !== "other_agreed" || !review ||
+        allocations.length !== 1 || allocation.start_month !== 1 ||
+        allocation.end_month !== 12 ||
+        !policy.monthly_premiums?.every((amount) => amount > 0) ||
+        !policy.monthly_aptcs?.every((amount) => amount > 0) ||
+        policy.recipient_ssn?.replaceAll("-", "") !== filerSsn ||
+        !covered?.includes(review.covered_individual_ssn.replaceAll("-", "")) ||
+        review.covered_individual_ssn.replaceAll("-", "") === filerSsn ||
+        review.other_taxpayer_ssn.replaceAll("-", "") !==
+          allocation.other_taxpayer_ssn ||
+        review.policy_number !== policy.policy_number ||
+        review.filer_allocation_pct !== allocation.premium_pct ||
+        !review.marketplace_enrollment_reference ||
+        !review.tax_family_review_reference ||
+        !review.allocation_agreement_reference;
+    })
   ) {
     throw new Error(
-      "Form 8962 agreed shared policy must match the source policy and both covered taxpayers",
+      "Form 8962 agreed shared policy must match the source policy, covered family member, and other allocating taxpayer",
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);

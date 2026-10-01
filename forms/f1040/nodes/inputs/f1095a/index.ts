@@ -63,6 +63,21 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     basis: z.literal("other_agreed"),
     situations_1_to_3_reviewed_and_inapplicable: z.literal(true),
     other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    // Situation 4 can allocate with a taxpayer who is not enrolled. The
+    // covered person belongs to that taxpayer's 2025 tax family instead.
+    other_family_claim_review: z.object({
+      covered_individual_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      policy_number: z.string().trim().min(1),
+      tax_year: z.literal(2025),
+      other_taxpayer_claims_covered_individual: z.literal(true),
+      marketplace_enrollment_reference: z.string().trim().min(1),
+      tax_family_review_reference: z.string().trim().min(1),
+      tax_family_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      allocation_agreement_reference: z.string().trim().min(1),
+      allocation_agreement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      filer_allocation_pct: allocationPctSchema,
+    }).strict().optional(),
     start_month: z.number().int().min(1).max(12),
     end_month: z.number().int().min(1).max(12),
     allocation_pct: allocationPctSchema,
@@ -90,6 +105,9 @@ export const itemSchema = z.object({
   // Part I — Issuer / Marketplace information
   issuer_name: z.string().trim().min(1),
   policy_number: z.string().trim().min(1).optional(),
+  // Form 1095-A Part I line 5 recipient, who may be different from a covered
+  // enrollee. For the bounded Situation 4 route, this is the filing taxpayer.
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   // The Marketplace checked CORRECTED on this source statement. When both
   // versions are retained, only this statement supplies Form 8962 amounts.
   corrected_box_checked: z.literal(true).optional(),
@@ -136,7 +154,8 @@ export const itemSchema = z.object({
         "marketplace_contact",
       ]),
       determination_reference: z.string().trim().min(1).optional(),
-      determination_record_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+      determination_record_sha256: z.string().regex(/^[a-f0-9]{64}$/)
+        .optional(),
       determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }).strict(),
   ).min(1).optional(),
