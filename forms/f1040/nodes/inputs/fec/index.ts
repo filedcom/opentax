@@ -45,7 +45,7 @@ export const itemSchema = z.object({
   currency: z.string().optional(),
   // Amount converted to US dollars at IRS-approved exchange rate
   compensation_usd: z.number().nonnegative(),
-  // Needed when another foreign-employer wage record establishes the same
+  // Needed when other foreign-employer wage records establish the same
   // employee's $250,000 worldwide compensation threshold for line 1b.
   compensation_owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   compensation_source_document_reference: z.string().trim().min(1).optional(),
@@ -89,26 +89,31 @@ export function alternativeCompensationWorldwideTotal(
   taxpayerSsn?: string,
 ): number {
   if (items.length === 1) return source.compensation_usd;
-  if (items.length !== 2 || !source.alternative_compensation_sourcing) return 0;
-  const other = items.find((item) => item !== source);
+  if (
+    items.length < 2 || items.length > 3 ||
+    !source.alternative_compensation_sourcing
+  ) return 0;
+  const others = items.filter((item) => item !== source);
   const owner = source.compensation_owner_ssn?.replace(/\D/g, "");
   if (
-    !other || !owner ||
-    other.compensation_owner_ssn?.replace(/\D/g, "") !== owner ||
+    others.length !== items.length - 1 || !owner ||
     (taxpayerSsn && taxpayerSsn.replace(/\D/g, "") !== owner) ||
     !source.compensation_source_document_reference ||
     source.compensation_source_document_reference !==
       source.alternative_compensation_sourcing.source_document_reference ||
-    !other.compensation_source_document_reference ||
-    source.compensation_source_document_reference ===
-      other.compensation_source_document_reference ||
-    other.compensation_usd <= 0 ||
-    (other.foreign_service_compensation_usd ?? 0) !== 0 ||
-    (other.foreign_tax_paid_usd ?? 0) !== 0 ||
-    (other.foreign_earned_income_exclusion_usd ?? 0) !== 0 ||
-    other.alternative_compensation_sourcing !== undefined
+    others.some((other) =>
+      other.compensation_owner_ssn?.replace(/\D/g, "") !== owner ||
+      !other.compensation_source_document_reference ||
+      other.compensation_usd <= 0 ||
+      (other.foreign_service_compensation_usd ?? 0) !== 0 ||
+      (other.foreign_tax_paid_usd ?? 0) !== 0 ||
+      (other.foreign_earned_income_exclusion_usd ?? 0) !== 0 ||
+      other.alternative_compensation_sourcing !== undefined
+    ) ||
+    new Set(items.map((item) => item.compensation_source_document_reference))
+        .size !== items.length
   ) return 0;
-  return source.compensation_usd + other.compensation_usd;
+  return items.reduce((total, item) => total + item.compensation_usd, 0);
 }
 
 function totalCompensationUsd(items: FecItems): number {

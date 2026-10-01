@@ -164,5 +164,28 @@ PDF projections independently match the combined wage inventory to the filer,
 Form 1040 line 1h/1z, standard-deduction ratio, and Schedule 3 credit. The
 source, complete-graph, native, PDF, and owner-tamper fixtures are authored
 for the deferred bulk run. W-2 wages, non-box-1 compensation, mixed foreign
-service/tax on the second employer, spouse wages, more employers, and uploaded
-wage-record byte authentication remain closed.
+service/tax on the second employer, spouse wages, and uploaded wage-record byte
+authentication remain closed.
+
+## Same-employee three-employer compensation inventory (implementation staged)
+
+The same line 1b route now accepts one alternatively sourced foreign-service
+item plus two additional foreign-employer records for U.S.-service wages. All
+three records must have the same employee SSN, positive compensation, distinct
+wage-document references, and no foreign service, foreign tax, Form 2555
+exclusion, or second alternative allocation on the two added records. The
+employee's three wages together must reach the instruction's $250,000
+threshold. The source node, native attachment, and PDF use the same inventory
+check. The PDF now compares the alternative statement's *specific* pay item
+total to that item's wage source while using all three wages for Form 1116
+Part I line 3e and the standard-deduction ratio. This also corrects the
+earlier two-employer PDF comparison, which compared one item to both wages.
+
+An authored $200,000 alternative item and two separately identified $50,000
+U.S.-service items yield $300,000 worldwide wages, $140,000 line 1a foreign
+compensation, $7,350 allocated standard deduction, and a $2,000 Form 1116
+credit on Schedule 3 and Form 1040. Native statement and currency attachment,
+parent PDF, wrong-owner and duplicate-document fixtures are written for the
+deferred batch. Issued wage and tax records remain unverified bytes; W-2
+compensation, four or more employer records, spouse wages, another foreign-tax
+item, and mixed income/deduction categories remain closed.

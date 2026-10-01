@@ -78,9 +78,9 @@ export function projectGeneralWageForm1116Pdf(
     );
   }
   const fec = fecInputSchema.safeParse(pending.fec);
-  if (!fec.success || fec.data.fecs.length < 1 || fec.data.fecs.length > 2) {
+  if (!fec.success || fec.data.fecs.length < 1 || fec.data.fecs.length > 3) {
     throw new Error(
-      "Form 1116 general wage PDF needs one or two identified foreign-employer sources",
+      "Form 1116 general wage PDF needs one to three identified foreign-employer sources",
     );
   }
   assertAlternativeCompensationSources([summary], { pending });
@@ -97,7 +97,7 @@ export function projectGeneralWageForm1116Pdf(
     : undefined;
   if (
     !wage ||
-    (fec.data.fecs.length === 2 && !taxpayerSsn) ||
+    (fec.data.fecs.length > 1 && !taxpayerSsn) ||
     alternativeCompensationWorldwideTotal(
         fec.data.fecs,
         wage,
@@ -125,7 +125,7 @@ export function projectGeneralWageForm1116Pdf(
     !safePositiveInteger(standardDeduction) ||
     foreign > gross || gross - standardDeduction !== line18 ||
     gross !== worldwideGross || foreignTaxableIncome <= 0 ||
-    alternative.compensation_item_total_usd !== gross ||
+    alternative.compensation_item_total_usd !== wage.compensation_usd ||
     alternative.alternative_foreign_source_usd !== foreign ||
     summary.foreignGrossIncome !== foreign ||
     summary.includedForeignIncome !== foreign ||
@@ -150,7 +150,7 @@ export function projectGeneralWageForm1116Pdf(
     !zero(wage.foreign_earned_income_exclusion_usd)
   ) {
     throw new Error(
-      "Form 1116 general wage PDF differs from the reviewed one-employer, standard-deduction, zero-carryover calculation",
+      "Form 1116 general wage PDF differs from the reviewed employee wage inventory, standard-deduction, zero-carryover calculation",
     );
   }
   const preferences = fields.regular_tax_preference_facts;
@@ -227,7 +227,7 @@ export function projectGeneralWageForm1116Pdf(
     schedule2TaxKeys.some((key) => !zero(schedule2[key]))
   ) {
     throw new Error(
-      "Form 1116 general wage PDF needs only the identified employer on Form 1040 lines 1h and 1z, with the filed standard deduction and reconciled tax",
+      "Form 1116 general wage PDF needs only the identified employers on Form 1040 lines 1h and 1z, with the filed standard deduction and reconciled tax",
     );
   }
   const line19 = ratio(foreignTaxableIncome, line18);

@@ -188,10 +188,15 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
       foreign_tax_paid_usd: 0,
     }],
   };
-  const result = execute(buildExecutionPlan(registry), registry, twoEmployerInputs, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    twoEmployerInputs,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
@@ -207,7 +212,10 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
     filer,
     attachments: [],
   });
-  assertStringIncludes(bundle.xml, "<AltBasisCompensationSourceStmt documentId=");
+  assertStringIncludes(
+    bundle.xml,
+    "<AltBasisCompensationSourceStmt documentId=",
+  );
   const altered = structuredClone(result.pending);
   (altered.fec as { fecs: Array<{ compensation_owner_ssn: string }> })
     .fecs[1].compensation_owner_ssn = "999-88-7777";
@@ -220,5 +228,111 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
     () => buildMefBundle(buildPending(altered), { filer, attachments: [] }),
     Error,
     "employee's $250,000 threshold",
+  );
+});
+
+Deno.test("three owner-matched foreign-employer wage records support one alternative compensation item", async () => {
+  const threeEmployerInputs = {
+    ...inputs,
+    fec: [{
+      ...inputs.fec[0],
+      compensation_amount: 160_000,
+      compensation_usd: 200_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: wageReference,
+      alternative_compensation_sourcing: {
+        ...alternative,
+        compensation_item_total_usd: 200_000,
+        alternative_us_source_usd: 60_000,
+        ordinary_us_source_usd: 80_000,
+        alternative_allocation_computation:
+          "140000 of 200000 salary sourced to Germany",
+      },
+    }, {
+      foreign_employer_name: "French Employer",
+      country_code: "FR",
+      compensation_amount: 40_000,
+      compensation_usd: 50_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: "2025 French wage ledger",
+      foreign_service_compensation_usd: 0,
+      foreign_tax_paid_usd: 0,
+    }, {
+      foreign_employer_name: "Dutch Employer",
+      country_code: "NL",
+      compensation_amount: 40_000,
+      compensation_usd: 50_000,
+      compensation_owner_ssn: "111-22-3333",
+      compensation_source_document_reference: "2025 Dutch wage ledger",
+      foreign_service_compensation_usd: 0,
+      foreign_tax_paid_usd: 0,
+    }],
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    threeEmployerInputs,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
+  assertEquals(result.pending.f1040?.line1z_total_wages, 300_000);
+  assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
+  const projected = form1116Pdf.projectFields?.(
+    result.pending.form_1116!,
+    result.pending,
+  ) ?? {};
+  assertEquals(projected.pdf_line1a_a, 140_000);
+  assertEquals(projected.pdf_line3e_a, 300_000);
+  assertEquals(projected.pdf_line3g_a, 7_350);
+  assertEquals(projected.pdf_line7, 132_650);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<AltBasisCompensationSourceStmt documentId=",
+  );
+  assertStringIncludes(bundle.xml, "<BinaryAttachment documentId=");
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(
+    (await PDFDocument.load(await buildPdfBytes(result.pending, filer)))
+      .getPageCount() >= 4,
+    true,
+  );
+
+  const wrongOwner = structuredClone(result.pending);
+  (wrongOwner.fec as { fecs: Array<{ compensation_owner_ssn: string }> })
+    .fecs[2].compensation_owner_ssn = "999-88-7777";
+  assertThrows(
+    () => form1116Pdf.projectFields?.(wrongOwner.form_1116!, wrongOwner),
+    Error,
+    "sourced foreign-employer compensation item",
+  );
+  await assertRejects(() =>
+    buildMefBundle(buildPending(wrongOwner), { filer, attachments: [] })
+  );
+  await assertRejects(() => buildPdfBytes(wrongOwner, filer));
+
+  const duplicateDocument = structuredClone(result.pending);
+  (duplicateDocument.fec as {
+    fecs: Array<{ compensation_source_document_reference: string }>;
+  }).fecs[2].compensation_source_document_reference = "2025 French wage ledger";
+  await assertRejects(() =>
+    buildMefBundle(buildPending(duplicateDocument), { filer, attachments: [] })
+  );
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        duplicateDocument.form_1116!,
+        duplicateDocument,
+      ),
+    Error,
+    "sourced foreign-employer compensation item",
   );
 });
