@@ -15,6 +15,7 @@ import {
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../nodes/inputs/f3800/index.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
+import { form8835PdfSources } from "./f8835_source.ts";
 import {
   form3800HeaderFields,
   form3800PartIAndIIFields,
@@ -167,6 +168,83 @@ export const form3800Pdf: PdfFormDescriptor = {
       ) {
         throw new Error(
           "Form 3800 PDF mixed orphan-drug/New Markets rows differ from filed sources",
+        );
+      }
+    }
+    if (
+      source.f8820_credit &&
+      source.f8835_credit_entries?.length === 1 &&
+      !source.f8874_credit && !source.f5884_credit &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const orphanSource = f8820InputSchema.parse(all.f8820);
+      const orphanCredit = calculateForm8820(orphanSource).line4;
+      const geothermalSources = form8835PdfSources(all, filer, prepared);
+      const geothermalCredit = geothermalSources[0]?.lines.line15;
+      const rawSource = f3800InputSchema.parse(raw);
+      const orphanRow = prepared.currentRows.filter((row) => row.line === "1h");
+      const geothermalRow = prepared.currentRows.filter((row) =>
+        row.line === "4e"
+      );
+      const orphanAmount = prepared.currentAmounts.filter((row) =>
+        row.line === "1h"
+      );
+      const geothermalAmount = prepared.currentAmounts.filter((row) =>
+        row.line === "4e"
+      );
+      const orphanDetail = prepared.currentDetails.filter((row) =>
+        row.line === "1h"
+      );
+      const geothermalDetail = prepared.currentDetails.filter((row) =>
+        row.line === "4e"
+      );
+      if (
+        orphanSource.subject_to_passive_activity_limit ||
+        (orphanSource.pass_through_credits?.length ?? 0) !== 0 ||
+        orphanCredit <= 0 || geothermalSources.length !== 1 ||
+        geothermalCredit === undefined || geothermalCredit <= 0 ||
+        source.f8820_credit.credit_amount !== orphanCredit ||
+        rawSource.f8820_credit?.credit_amount !== orphanCredit ||
+        JSON.stringify(rawSource.f8820_credit) !==
+          JSON.stringify(source.f8820_credit) ||
+        rawSource.f8835_credit_entries?.length !== 1 ||
+        JSON.stringify(rawSource.f8835_credit_entries[0]) !==
+          JSON.stringify(source.f8835_credit_entries[0]) ||
+        rawSource.f8835_credit_entries[0].credit_amount !== geothermalCredit ||
+        orphanRow.length !== 1 || geothermalRow.length !== 1 ||
+        orphanAmount.length !== 1 || geothermalAmount.length !== 1 ||
+        orphanDetail.length !== 1 || geothermalDetail.length !== 1 ||
+        orphanRow[0].metadata.sourceCount !== 1 ||
+        geothermalRow[0].metadata.sourceCount !== 1 ||
+        orphanRow[0].metadata.referenceDocumentName !== "IRS8820" ||
+        geothermalRow[0].metadata.referenceDocumentName !== "IRS8835" ||
+        !orphanRow[0].metadata.referenceDocumentId ||
+        !geothermalRow[0].metadata.referenceDocumentId ||
+        orphanRow[0].metadata.referenceDocumentId ===
+          geothermalRow[0].metadata.referenceDocumentId ||
+        orphanDetail[0].sourceDocumentId !==
+          orphanRow[0].metadata.referenceDocumentId ||
+        geothermalDetail[0].sourceDocumentId !==
+          geothermalRow[0].metadata.referenceDocumentId ||
+        orphanDetail[0].credit !== orphanCredit ||
+        geothermalDetail[0].credit !== geothermalCredit ||
+        orphanAmount[0].nonpassiveCredit !== orphanCredit ||
+        geothermalAmount[0].nonpassiveCredit !== geothermalCredit ||
+        prepared.lines.line1 !== orphanCredit ||
+        prepared.lines.line6 !== orphanCredit ||
+        prepared.lines.line17 !== orphanCredit ||
+        prepared.lines.line30 !== geothermalCredit ||
+        prepared.lines.line37 !== geothermalCredit ||
+        prepared.lines.line38 !== orphanCredit + geothermalCredit
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed orphan-drug/geothermal sources differ from prepared tax use",
         );
       }
     }

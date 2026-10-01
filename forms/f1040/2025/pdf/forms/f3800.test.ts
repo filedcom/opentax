@@ -6,6 +6,7 @@ import {
 } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
+import { inputSchema as f8835InputSchema } from "../../../nodes/inputs/f8835/index.ts";
 import { buildMefBundle } from "../../mef/builder.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import { form3800Pdf } from "./f3800.ts";
@@ -747,5 +748,129 @@ Deno.test("orphan-drug and New Markets credits retain distinct current-year sour
       ),
     Error,
     "mixed orphan-drug/New Markets rows",
+  );
+});
+
+Deno.test("orphan-drug ordinary and geothermal specified credits keep separate Form 3800 limits", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-geothermal-and-new-markets-credits"
+  )!;
+  const { f8874: _investment, ...otherInputs } = fixture.inputs;
+  const result = f1040_2025.executeReturn({
+    ...otherInputs,
+    f8820: {
+      f8820s: [{
+        generic_name: "Test Orphan Drug",
+        designation_application_number: "FDA-2025-456",
+        designation_date: "2024-03-15",
+        qualified_clinical_testing_expenses: 10_000,
+        qualifying_testing_confirmed: true,
+        expenses_exclude_third_party_funding: true,
+        expenses_not_used_for_research_credit: true,
+      }],
+      reduced_section280c_credit_election: true,
+      form8932_overlapping_wage_credit: 0,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line1, 1_975);
+  assertEquals(parts.lines.line6, 1_975);
+  assertEquals(parts.lines.line17, 1_975);
+  assertEquals(parts.lines.line30, 600);
+  assertEquals(parts.lines.line37, 600);
+  assertEquals(parts.lines.line38, 2_575);
+  assertEquals(
+    Object.fromEntries(parts.currentRows.map((row) => [
+      row.line,
+      [row.metadata.sourceCount, row.metadata.referenceDocumentName],
+    ])),
+    { "1h": [1, "IRS8820"], "4e": [1, "IRS8835"] },
+  );
+  assertEquals(
+    Object.fromEntries(parts.currentDetails.map((row) => [
+      row.line,
+      row.credit,
+    ])),
+    { "1h": 1_975, "4e": 600 },
+  );
+  assertEquals(
+    new Set(parts.currentRows.map((row) => row.metadata.referenceDocumentId))
+      .size,
+    2,
+  );
+  assertEquals((prepared.bundle.xml.match(/<IRS8820\b/g) ?? []).length, 1);
+  assertEquals((prepared.bundle.xml.match(/<IRS8835\b/g) ?? []).length, 1);
+  assertStringIncludes(prepared.bundle.xml, "<Form8820CYCreditsGrp");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalGeneralBusCreditsAppTxAmt>2575</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const pending3800 = f3800InputSchema.parse(allPending.f3800);
+  const pending8835 = f8835InputSchema.parse(allPending.f8835);
+  assertEquals(allPending.schedule3?.line6a_total, 2_575);
+  assertEquals(allPending.f1040?.line20_nonrefundable_credits, 2_575);
+  const printed = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1h").g], 1_975);
+  assertEquals(printed?.[form3800PartIIIFields("4e").g], 600);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 2_575);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+    true,
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        {
+          ...pending3800,
+          f8835_credit_entries: [{
+            ...pending3800.f8835_credit_entries![0],
+            credit_amount: 599,
+          }],
+        },
+        fixture.filer,
+        allPending,
+        parts,
+      ),
+    Error,
+    "mixed orphan-drug/geothermal sources",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        {
+          ...allPending,
+          f8835: {
+            f8835s: [{ ...pending8835.f8835s[0], kwh_sold: 90_000 }],
+          },
+        },
+        parts,
+      ),
+    Error,
+    "Form 8835 PDF production credit disagrees",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        allPending.f3800,
+        fixture.filer,
+        allPending,
+        { ...parts, lines: { ...parts.lines, line17: 1_974 } },
+      ),
+    Error,
+    "mixed orphan-drug/geothermal sources",
   );
 });

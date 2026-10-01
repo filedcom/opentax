@@ -313,6 +313,21 @@ current-year credit lines and source-form relationship. Clinical-testing and
 investment evidence in this synthetic case is source metadata; issuer-copy
 byte authentication and prior-year carryforward export remain open.
 
+Another authored mixed return combines that $1,975 self-earned Form 8820
+ordinary credit with a $600 geothermal Form 8835 specified credit. The
+prepared Form 3800 keeps the source documents on Part III lines 1h and 4e;
+Part I lines 1/6/17 allow $1,975, Part II lines 30/37 allow $600, and line 38,
+Schedule 3 line 6a, and Form 1040 line 20 retain $2,575. The printable parent
+now verifies each filed source, prepared row/detail and distinct document ID,
+as well as the ordinary and specified tax-use totals in this bounded
+combination. Positive, changed raw Form 8835 amount, changed facility sales,
+and altered Part I tax-use fixtures are authored; execution is deferred to
+the shared bulk pass. The
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) place
+orphan-drug and renewable-electricity-production credits in their respective
+current-year groups. Source-record authentication and carryforward filing
+remain open.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional
