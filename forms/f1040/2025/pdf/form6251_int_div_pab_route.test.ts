@@ -148,3 +148,105 @@ Deno.test("mixed PAB sources reject changed payer, review, amount, return and ta
     }, pending)
   );
 });
+
+const bondWithExpense = {
+  ...bond,
+  pab_allocable_deduction_workpaper: {
+    ...bond.pab_allocable_deduction_workpaper,
+    allocable_deduction: 10_000,
+  },
+};
+
+function filedWithDirectBondExpense() {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...base.inputs, f1099int: [bondWithExpense], f1099div: [fund] },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const form = result.pending.form6251;
+  assert(form);
+  return { form, pending: buildPending(result.pending) };
+}
+
+Deno.test("direct-bond expense reduces mixed PAB AMT preference but not Form 1040 tax-exempt interest", async () => {
+  const { form, pending } = filedWithDirectBondExpense();
+  const f1040 = pending.f1040 as Record<string, number>;
+  const schedule2 = pending.schedule2 as Record<string, number>;
+  assertEquals(form.line2g_pab_interest, 140_000);
+  assertEquals(form.private_activity_bond_interest, 290_000);
+  assertEquals(f1040.line2a_tax_exempt, 300_000);
+  assert(typeof form.line11_amt === "number" && form.line11_amt > 0);
+  assertEquals(schedule2.line2_amt, form.line11_amt);
+  assertEquals(f1040.line17_additional_taxes, form.line11_amt);
+  assertEquals(
+    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    290_000,
+  );
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<ExemptPrivateActivityBondsAmt>290000</ExemptPrivateActivityBondsAmt>",
+  );
+});
+
+Deno.test("mixed PAB direct expense rejects altered workpaper and final return", () => {
+  const { form, pending } = filedWithDirectBondExpense();
+  for (
+    const changed of [
+      {
+        ...pending,
+        f1099int: {
+          f1099ints: [{
+            ...bondWithExpense,
+            pab_allocable_deduction_workpaper: {
+              ...bondWithExpense.pab_allocable_deduction_workpaper,
+              allocable_deduction: 9_000,
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        f1099int: {
+          f1099ints: [{
+            ...bondWithExpense,
+            pab_allocable_deduction_workpaper: {
+              ...bondWithExpense.pab_allocable_deduction_workpaper,
+              not_claimed_elsewhere_on_return: false,
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        f1040: {
+          ...(pending.f1040 as Record<string, unknown>),
+          line2a_tax_exempt: 290_000,
+        },
+      },
+      {
+        ...pending,
+        schedule2: {
+          ...(pending.schedule2 as Record<string, unknown>),
+          line2_amt: 0,
+        },
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      form6251.build(form, { filer: base.filer, pending: changed })
+    );
+    assertThrows(() => form6251Pdf.projectFields?.(form, changed));
+  }
+  assertThrows(() =>
+    form6251Pdf.projectFields?.({
+      ...form,
+      private_activity_bond_interest: 300_000,
+    }, pending)
+  );
+});

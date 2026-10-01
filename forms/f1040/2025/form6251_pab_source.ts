@@ -119,7 +119,8 @@ export function assertForm6251PrivateActivityBondSource(
     claimedInterest !== interest ||
     (fields.private_activity_bond_interest ?? 0) !== total ||
     (hasOidPab && !oneOidOnly && !oneIntOneOid) ||
-    (hasAllocableDeduction && !twoIntOnly && !oneOidOnly && !oneIntOneOid) ||
+    (hasAllocableDeduction && !twoIntOnly && !oneOidOnly &&
+      !oneIntOneOid && !oneIntOneDiv) ||
     (mixedIntDivPab && !oneIntOneDiv) ||
     (oneDivOnly && (
       !divs[0].payerName?.trim() ||
@@ -235,7 +236,7 @@ export function assertForm6251PrivateActivityBondSource(
       divs[0].foreign_source_dividends_usd !== undefined ||
       divs[0].foreign_source_qualified_dividends_usd !== undefined ||
       divs[0].foreign_tax_irs_country_code !== undefined ||
-      claimedInterest !== ints[0].box9 ||
+      claimedInterest !== intNet(ints[0]) ||
       form1040?.line2a_tax_exempt !==
         (ints[0].box8 ?? 0) + (divs[0].box12 ?? 0) ||
       amt === undefined || amt <= 0 || schedule2?.line2_amt !== amt ||
