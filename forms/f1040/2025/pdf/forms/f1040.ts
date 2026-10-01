@@ -7,6 +7,7 @@ import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
+import { assertReturnWideArithmetic } from "../../return-wide-arithmetic.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -569,6 +570,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertReturnWideArithmetic(fields);
     const residentElection = residentElectionName(fields, allPending);
     assertMfsEitcSource(
       fields.filing_status,
@@ -679,7 +681,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
       fields.line7a_cap_gain_distrib >= child.capitalGain;
     const childGainOnScheduleD = child.capitalGain > 0 &&
       typeof fields.line7_capital_gain === "number" &&
-      typeof allPending.schedule_d?.print_line13_cap_gain_distrib === "number" &&
+      typeof allPending.schedule_d?.print_line13_cap_gain_distrib ===
+        "number" &&
       allPending.schedule_d.print_line13_cap_gain_distrib >= child.capitalGain;
     if (childGainDirect && childGainOnScheduleD) {
       throw new Error(
