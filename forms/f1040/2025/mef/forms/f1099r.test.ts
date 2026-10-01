@@ -36,6 +36,7 @@ function items() {
     recipient_address_city: form.recipientAddress.city,
     recipient_address_state: form.recipientAddress.state,
     recipient_address_zip: form.recipientAddress.zip,
+    recipient_ssn: filer.primarySSN,
     box1_gross_distribution: form.grossDistribution,
     box2a_taxable_amount: form.taxableAmount,
     box4_federal_withheld: form.federalWithholding,
@@ -181,6 +182,61 @@ Deno.test("1099-R wrong recipient cannot enter either full-return exporter", asy
     Error,
     "issued recipient SSN differs",
   );
+});
+
+Deno.test("positive 1099-R without an issued recipient cannot enter either exporter", async () => {
+  const [first] = items();
+  const missingRecipient = { ...first, recipient_ssn: undefined };
+  const pending = { f1099r: { f1099rs: [missingRecipient] } };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "positive issued copy needs recipient SSN",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "positive issued copy needs recipient SSN",
+  );
+});
+
+Deno.test("withholding-only 1099-R still needs its issued recipient", async () => {
+  const [first] = items();
+  const pending = {
+    f1099r: {
+      f1099rs: [{
+        ...first,
+        recipient_ssn: undefined,
+        box1_gross_distribution: 0,
+        box2a_taxable_amount: 0,
+        box4_federal_withheld: 100,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "positive issued copy needs recipient SSN",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "positive issued copy needs recipient SSN",
+  );
+});
+
+Deno.test("zero 1099-R source may remain without recipient income or withholding", () => {
+  const [first] = items();
+  const documents = f1099r.build({
+    f1099rs: [{
+      ...first,
+      recipient_ssn: undefined,
+      box1_gross_distribution: 0,
+      box2a_taxable_amount: 0,
+      box4_federal_withheld: 0,
+    }],
+  }, { filer });
+  assertEquals(documents.length, 1);
 });
 
 Deno.test("1099-R export requires a recipient name", () => {

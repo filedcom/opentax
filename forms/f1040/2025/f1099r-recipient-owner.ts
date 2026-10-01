@@ -2,7 +2,7 @@ import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { inputSchema } from "../../nodes/inputs/f1099r/index.ts";
 import { TS } from "../../nodes/types.ts";
 
-/** Prevent a payer's identified recipient from being filed as another owner. */
+/** Require a positive payer copy's recipient to match the filed owner. */
 export function assert1099RRecipientOwner(
   source: unknown,
   filer: FilerIdentity | undefined,
@@ -16,6 +16,16 @@ export function assert1099RRecipientOwner(
     throw new Error("1099-R owner review needs valid payer source rows");
   }
   for (const [index, item] of parsed.data.f1099rs.entries()) {
+    if (
+      (item.box1_gross_distribution > 0 ||
+        (item.box2a_taxable_amount ?? 0) > 0 ||
+        (item.box4_federal_withheld ?? 0) > 0) &&
+      !item.recipient_ssn
+    ) {
+      throw new Error(
+        `1099-R ${index + 1} positive issued copy needs recipient SSN`,
+      );
+    }
     const spouseOwned = item.ts === TS.S;
     if (
       spouseOwned &&
