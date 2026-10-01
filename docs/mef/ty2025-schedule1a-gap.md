@@ -4,7 +4,9 @@ Sources:
 [2025 Schedule 1-A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf),
 [2025 Form 1040 instructions, including Schedule 1-A](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),
 [IRS list of qualifying tipped occupations](https://www.irs.gov/forms-pubs/occupations-that-customarily-and-regularly-received-tips-on-or-before-dec-31-2024),
-and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
+and the ignored local v5.4 IRS schema cache at
+`Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`. The schema package is not
+checked in; reproducible provenance remains open.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
 line 13b. MeF includes identified W-2-box-7 and Form 4137 tips, reviewed Form 4070 employer reports, and reviewed W-2-box-14 FLSA
@@ -38,7 +40,11 @@ two-page PDF field map and inspected synthetic full-return packets.
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
   multiple Schedule C businesses, multiple Form 4137 employers in a
-  full packet, and underlying record authentication remain open.
+  full packet, and underlying record authentication remain open. Native and PDF
+  export also require every qualifying Form 4137 employer with a matching W-2
+  to appear in the Schedule 1-A claim. The two-employer positive and
+  omission-tamper fixtures await the bulk test gate; they do not authenticate
+  source documents.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
   nonexempt under the FLSA and that the premium is included in box 1. The W-2

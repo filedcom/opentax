@@ -14,6 +14,7 @@ import {
   FilingStatus as MefFilingStatus,
 } from "../types.ts";
 import { schedule1a } from "./schedule1a.ts";
+import { schedule1aPdf } from "../../pdf/forms/schedule1a.ts";
 
 Deno.test("Schedule 1-A omits context-only input before validating fractional return AGI", () => {
   assertEquals(
@@ -1028,6 +1029,100 @@ Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double coun
   assertStringIncludes(
     xml,
     "<QualifiedTipsEmployeeAmt>8500</QualifiedTipsEmployeeAmt>",
+  );
+});
+
+Deno.test("Schedule 1-A native and PDF require every qualifying Form 4137 employer", () => {
+  const secondW2 = {
+    ...singleTipsW2.w2s[0],
+    employer_ein: "987654321",
+    employer_name: "Second Restaurant",
+    box1_wages: 20_000,
+    box5_medicare_wages: 20_000,
+    box7_ss_tips: 2_000,
+    box14b_tipped_code: "103",
+  };
+  const source = {
+    ...singleTips,
+    qualified_employee_tips: [
+      ...singleTips.qualified_employee_tips,
+      {
+        employee_ssn: "111223333",
+        employer_ein: "987654321",
+        employer_name: "Second Restaurant",
+        amount: 2_000,
+        box5_medicare_wages: 20_000,
+        occupation_code: "103",
+        source_type: "w2_box7" as const,
+      },
+    ],
+    qualified_form4137_tips: [
+      {
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        employer_name: "Test Restaurant",
+        amount: 6_500,
+        occupation_code: "102",
+      },
+      {
+        employee_ssn: "111223333",
+        employer_ein: "987654321",
+        employer_name: "Second Restaurant",
+        amount: 3_000,
+        occupation_code: "103",
+      },
+    ],
+  };
+  const pending = {
+    f1040: { ...singleTips1040, line13b_additional_deductions: 9_500 },
+    w2: { w2s: [singleTipsW2.w2s[0], secondW2] },
+    form4137: {
+      taxpayer_ssn: "111223333",
+      forms: [{
+        recipient: "taxpayer",
+        employers: [
+          {
+            name: "Test Restaurant",
+            ein: "123456789",
+            tips_received: 6_500,
+            tips_reported: 5_000,
+          },
+          {
+            name: "Second Restaurant",
+            ein: "987654321",
+            tips_received: 3_000,
+            tips_reported: 2_000,
+          },
+        ],
+      }],
+    },
+  };
+  assertStringIncludes(
+    schedule1a.build(source, { pending }),
+    "<QualifiedTipsEmployeeAmt>9500</QualifiedTipsEmployeeAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(source, pending)?.line38_total,
+    9_500,
+  );
+
+  const missingEmployer = {
+    ...source,
+    qualified_form4137_tips: [source.qualified_form4137_tips[0]],
+  };
+  const reducedReturn = {
+    ...pending,
+    f1040: { ...pending.f1040, line13b_additional_deductions: 8_500 },
+  };
+  assertThrows(
+    () => schedule1a.build(missingEmployer, { pending: reducedReturn }),
+    Error,
+    "do not match the filed employer",
+  );
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(missingEmployer, reducedReturn),
+    Error,
+    "do not match the filed employer",
   );
 });
 

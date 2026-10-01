@@ -163,7 +163,51 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     const form4137 = form4137InputSchema.parse(
       context?.pending?.form4137 ?? {},
     );
+    const expectedForm4137Entries = (form4137.forms ?? []).flatMap((form) => {
+      const employeeSsn = form.recipient === "taxpayer"
+        ? form4137.taxpayer_ssn
+        : form4137.spouse_ssn;
+      if (!employeeSsn) return [];
+      return form.employers.flatMap((employer) => {
+        if (!employer.ein || employer.tips_received <= 0) return [];
+        const matches = filedW2s.filter((source) =>
+          normalize(source.employee_ssn ?? "") === normalize(employeeSsn) &&
+          normalize(source.employer_ein ?? "") === normalize(employer.ein!) &&
+          source.employer_name === employer.name &&
+          source.box13_statutory_employee !== true
+        );
+        if (matches.length > 1) {
+          throw new Error(
+            "Schedule 1-A Form 4137 tips need one qualifying W-2 per employer",
+          );
+        }
+        const source = matches[0];
+        if (!source) return [];
+        if (
+          employer.tipped_occupation_code !== undefined &&
+          source.box14b_tipped_code !== undefined &&
+          employer.tipped_occupation_code !== source.box14b_tipped_code
+        ) {
+          throw new Error(
+            "Schedule 1-A Form 4137 occupation disagrees with W-2 box 14b",
+          );
+        }
+        const occupationCode = employer.tipped_occupation_code ??
+          source.box14b_tipped_code;
+        return occupationCode !== undefined &&
+            isQualifiedTipsOccupationCode(occupationCode)
+          ? [{
+            employee_ssn: employeeSsn,
+            employer_ein: employer.ein,
+            employer_name: employer.name,
+            amount: employer.tips_received,
+            occupation_code: occupationCode,
+          }]
+          : [];
+      });
+    });
     if (
+      form4137Entries.length !== expectedForm4137Entries.length ||
       !form4137Entries.every((entry) => {
         const recipient = entry.employee_ssn.replaceAll("-", "") ===
             form4137.taxpayer_ssn?.replaceAll("-", "")
@@ -190,6 +234,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           candidate.box13_statutory_employee !== true
         );
         return employer !== undefined && source !== undefined &&
+          expectedForm4137Entries.some((expected) =>
+            normalize(expected.employee_ssn) ===
+              normalize(entry.employee_ssn) &&
+            normalize(expected.employer_ein) ===
+              normalize(entry.employer_ein) &&
+            expected.employer_name === entry.employer_name &&
+            expected.amount === entry.amount &&
+            expected.occupation_code === entry.occupation_code
+          ) &&
           (employer.tipped_occupation_code ?? source.box14b_tipped_code) ===
             entry.occupation_code &&
           (source.box14b_tipped_code === undefined ||
