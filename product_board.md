@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) is implementing the
 TY2025 Form 1040 filing family. This board contains **54 open checklist items**
-and the full progress summary. The **208 completed bounded items** are preserved
+and the full progress summary. The **209 completed bounded items** are preserved
 in the [completed checklist ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [2026-09-30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 preserves earlier evidence. A completed child route does not close its parent
@@ -25,7 +25,8 @@ One reviewed prior-basis IRA distribution and one dated current contribution
 now print Form 8606 Part I; a
 two-payer direct loan, S corporation passive credit, Form 5471 Schedule I-1,
 and child-worker Schedule H withholding add bounded routes. A separate
-FICA-only nonstudent-minor Schedule H route is now authored.
+FICA-only nonstudent-minor Schedule H route and the reviewed-zero Form 5471
+Schedule H attachment are now authored.
 The Form 5471/8992 positive export remains closed until mandatory attachments
 are built.
 
@@ -42,7 +43,7 @@ ATS acceptance result is claimed.
 
 **Remaining implementation.** Resolve the named workflow and evidence choices,
 then complete or obtain an approved, named fail-closed boundary for each
-applicable Form 1040 path. Reconcile the 130 registered MeF descriptors, 94 PDF
+applicable Form 1040 path. Reconcile the 131 registered MeF descriptors, 95 PDF
 descriptors, and 211 TY2025 IRS schema roots with public inputs, source proof,
 calculations, owner identity, Form 1040 joins, native XML, printable output,
 statements, and attachments. The open rows below identify current gaps; the
@@ -53,7 +54,7 @@ completed ledger records the smaller routes already implemented.
 | Scope and completion rules | 5 | 0 | Filing boundaries and source-to-output rule remain open. |
 | Coverage inventory and decisions | 8 | 0 | Descriptor/root applicability, ownership, and evidence choices remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and several source classifications remain open. |
-| Named tax-form gaps | 20 | 196 | Bounded child routes exist; full form-family coverage remains open. |
+| Named tax-form gaps | 20 | 197 | Bounded child routes exist; full form-family coverage remains open. |
 | Native MeF and PDF parity | 3 | 8 | Registry and filled-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | Final bulk tests, XSD, PDFs, and business rules remain open. |
 | IRS ATS and delivery | 5 | 0 | Credentials, accepted scenarios, PR review, merge, and release remain open. |
