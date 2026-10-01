@@ -13,6 +13,8 @@ import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconcilia
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
+import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
+import { physicalPresenceFilingSchema } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
@@ -35,7 +37,7 @@ import {
 //   f1_14–f1_19:  primary taxpayer name/SSN, spouse name/SSN
 //   f1_20–f1_24:  address (line1, apt, city, state, zip)
 //   f1_47–f1_57:  wages (lines 1a–1z)
-//                 f1_54 = line 1h description text (not a dollar field — skipped)
+//                 f1_54 = line 1h description text; f1_55 = line 1h amount
 //   f1_58–f1_75:  income lines 2–11 (interest, dividends, IRA, pension, SS, capital gains, AGI)
 //                 f1_64 and f1_67 = line 4c/5c box 3 text spaces (skipped),
 //                 f1_71 = near line 7b check area (skipped)
@@ -235,7 +237,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line1g_wages_8919",
     pdfField: "topmostSubform[0].Page1[0].f1_53[0]",
   },
-  // f1_54 = line 1h description text — not a dollar field, skipped
+  {
+    kind: "text",
+    domainKey: "print_line1h_type",
+    pdfField: "topmostSubform[0].Page1[0].f1_54[0]",
+  },
   {
     kind: "text",
     domainKey: "line1h_other_earned",
@@ -610,6 +616,42 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
+function line1hFecType(
+  fields: Record<string, unknown>,
+  allPending: Record<string, Record<string, unknown>>,
+): "FEC" | undefined {
+  const fecSource = allPending.fec;
+  const physicalSource = allPending.form2555?.filing_details;
+  if (fecSource === undefined && physicalSource === undefined) return undefined;
+  if (fecSource !== undefined && physicalSource !== undefined) {
+    throw new Error(
+      "Form 1040 PDF line 1h needs reconciled overlapping FEC and Form 2555 wages",
+    );
+  }
+  const sourceWages = fecSource !== undefined
+    ? nativeFecInputSchema.parse(fecSource).fecs.reduce(
+      (sum, item) => sum + item.compensation_usd,
+      0,
+    )
+    : physicalPresenceFilingSchema.parse(physicalSource).foreign_wages;
+  const agiLine1h = allPending.agi_aggregator?.line1h_other_earned;
+  const agiWages = typeof agiLine1h === "number"
+    ? agiLine1h
+    : Array.isArray(agiLine1h) &&
+        agiLine1h.every((value) => typeof value === "number")
+    ? agiLine1h.reduce((sum, value) => sum + value, 0)
+    : undefined;
+  if (
+    !Number.isFinite(sourceWages) || sourceWages <= 0 ||
+    fields.line1h_other_earned !== sourceWages || agiWages !== sourceWages
+  ) {
+    throw new Error(
+      "Form 1040 PDF line 1h FEC wages must equal finalized and AGI line 1h",
+    );
+  }
+  return "FEC";
+}
+
 export const irs1040Pdf: PdfFormDescriptor = {
   pendingKey: "f1040",
   // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
@@ -618,6 +660,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
+    const printLine1hType = line1hFecType(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;
     const selected = typeof standard === "number"
@@ -805,6 +848,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_line1h_type: printLine1hType,
       print_do_not_claim_actc: retainedActcOptOut(
         allPending.f8812,
         fields.line28_actc,

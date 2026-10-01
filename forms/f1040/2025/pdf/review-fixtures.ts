@@ -5901,6 +5901,44 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-standalone-fec-line1h",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      fec: [{
+        foreign_employer_name: "Maple Employer Ltd",
+        country_code: "CA",
+        compensation_amount: 3_000,
+        currency: "USD",
+        compensation_usd: 3_000,
+        compensation_owner_ssn: "111223333",
+        compensation_source_document_reference: "2025 Canadian payroll record",
+        service_residence: {
+          kind: "foreign",
+          address: {
+            line1: "10 King Street",
+            city: "Toronto",
+            country_code: "CA",
+          },
+        },
+        employer_foreign_address: {
+          line1: "20 Queen Street",
+          city: "Toronto",
+          country_code: "CA",
+        },
+        employer_has_us_ein: false,
+        employer_issued_w2: false,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 1h places FEC in the type box and 3,000 in the adjacent amount box",
+      "The 75,000 domestic W-2 remains on line 1a, while line 1z includes both wage sources once",
+      "Native output links the line 1h amount to one FEC record and Wages Not Shown Schedule",
+    ],
+  },
+  {
     id: "single-form2555-full-year-physical-presence",
     inputs: {
       general: singleGeneral,
@@ -5951,6 +5989,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     expectedPdfForms: ["f1040", "form2555", "schedule1"],
     reviewFocus: [
       "Form 2555 identifies the Toronto employer, 365 qualifying days, and 100,000 foreign wages",
+      "Form 1040 line 1h prints FEC in the type box beside 100,000 foreign wages",
       "Schedule 1 foreign earned income exclusion and Form 1040 AGI reconcile to the native documents",
       "All Form 2555 pages print in order with the taxpayer name and no housing exclusion",
     ],

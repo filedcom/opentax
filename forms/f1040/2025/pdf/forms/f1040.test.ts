@@ -1,6 +1,7 @@
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { AccountType } from "../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 
 // ---------------------------------------------------------------------------
 // Descriptor structure
@@ -45,6 +46,95 @@ Deno.test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", ()
     () => irs1040Pdf.projectFields?.({ line28_actc: 1 }, source),
     Error,
     "requires zero line 28 credit",
+  );
+});
+
+Deno.test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", () => {
+  const mapped = irs1040Pdf.fields.find((entry) =>
+    entry.domainKey === "print_line1h_type"
+  );
+  assertEquals(mapped?.kind, "text");
+  assertEquals(
+    mapped?.pdfField,
+    "topmostSubform[0].Page1[0].f1_54[0]",
+  );
+  const toronto = {
+    line1: "10 King Street",
+    city: "Toronto",
+    country_code: "CA",
+  };
+  const fec = {
+    fecs: [{
+      foreign_employer_name: "Maple Employer Ltd",
+      country_code: "CA",
+      compensation_amount: 3_000,
+      compensation_usd: 3_000,
+      compensation_owner_ssn: "111223333",
+      compensation_source_document_reference: "2025 payroll record",
+      service_residence: { kind: "foreign", address: toronto },
+      employer_foreign_address: toronto,
+      employer_has_us_ein: false,
+      employer_issued_w2: false,
+    }],
+  };
+  const source = {
+    fec,
+    agi_aggregator: { line1h_other_earned: [3_000] },
+  };
+  const fields = { line1h_other_earned: 3_000 };
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, source)?.print_line1h_type,
+    "FEC",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(
+      { line1h_other_earned: 3_000, print_line1h_type: "OTHER" },
+      source,
+    )?.print_line1h_type,
+    "FEC",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ line1h_other_earned: 3_001 }, source),
+    Error,
+    "must equal finalized and AGI line 1h",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        agi_aggregator: { line1h_other_earned: 3_001 },
+      }),
+    Error,
+    "must equal finalized and AGI line 1h",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(
+      { line1h_other_earned: 3_000, print_line1h_type: "FEC" },
+      {},
+    )?.print_line1h_type,
+    undefined,
+  );
+  const physical = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-form2555-full-year-physical-presence"
+  )?.inputs.form2555;
+  assertEquals(
+    irs1040Pdf.projectFields?.(
+      { line1h_other_earned: 100_000 },
+      {
+        form2555: physical as Record<string, unknown>,
+        agi_aggregator: { line1h_other_earned: [100_000] },
+      },
+    )?.print_line1h_type,
+    "FEC",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(fields, {
+        ...source,
+        form2555: physical as Record<string, unknown>,
+      }),
+    Error,
+    "overlapping FEC and Form 2555 wages",
   );
 });
 
