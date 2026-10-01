@@ -26,6 +26,7 @@ import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1),
+  source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
   seller_financed: z.boolean().optional(),
   buyer_used_as_personal_residence: z.boolean().optional(),

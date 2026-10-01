@@ -1,5 +1,44 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**One ordinary foreign 1099-DIV payer (written, unrun):** A sole issued
+Form 1099-DIV with positive box 1a ordinary dividends and box 7 foreign tax
+can feed one passive Form 1116 country column when the full box 1a amount is
+reviewed as foreign source, no box 1b qualified dividends or other monetary
+boxes are present, and its source reference matches the Form 1116 review.
+The payer's reviewed holding ledger records the ex-dividend date, at least 16
+qualifying days within the 31-day window, excluded diminished-risk days, and
+absence of a related-payment obligation. The ordinary-stock holding rule is
+affirmed; preferred stock with a longer required period stays closed. The
+calculation carries that source reference with the tax item, and native/PDF
+export replays the payer, holding ledger, country, Form 1040 line 3b, taxable
+income and tax, and Schedule 3 credit. The PDF projects the U.S.-dollar
+dividend withholding to Part II column q. A full-return positive case and
+source, holding, and return tamper cases are authored for deferred validation.
+Mixed interest/dividends, multiple payers, qualified dividends, nominee
+distributions, source bytes, and filled-output/XSD review remain open. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) state
+the dividend holding-period and related-payment limits.
+
+**Multiple same-country foreign 1099-INT payers (written, unrun):** A distinct
+`multi_source_pdf_review` names every foreign payer's document reference while
+retaining the existing single-source review for its original routes. One or
+more than two foreign 1099-INT payers may enter the bounded route when each has
+only positive box 1 foreign interest and box 6 foreign tax, all use the same
+IRS country and paid method, and the reviewed reference set matches the Form
+1116 item set exactly. The source ledger rejects a changed payer, amount,
+country, duplicate reference, additional monetary box, and any extra worldwide
+income. Form 1116 Part I and Part II aggregate the payers in one country
+column; the standard deduction is apportioned from their aggregate gross
+income so per-payer rounding does not distort line 3g. The category limit,
+Schedule 3 credit, Form 1040 lines 2b/9/11/12a/15/16, native XML, and parent
+PDF replay the same source/return guard. A three-payer full-return case and
+tamper fixtures are authored but unrun. Multiple countries, dividend/rent
+tax, reductions, mixed domestic income, authenticated source bytes, and
+filled-output/XSD/ATS review remain open. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) direct
+same-country income to one Part I column and require worldwide gross income
+for line 3e.
+
 **One 1099-INT with foreign interest and U.S. Treasury interest (written,
 unrun):** A single identified payer may now report passive foreign box 1
 interest, U.S.-source Treasury box 3 interest, and box 6 foreign tax. The
@@ -15,6 +54,19 @@ box-3/return fixtures are authored for deferred validation. Treasury securities
 from another payer, bond-premium adjustments, other income, source bytes, and
 filled-PDF/XSD review remain open. See the [2025 Form 1116 Part I
 instructions](https://www.irs.gov/instructions/i1116).
+
+**Two identified 1099-INT payers (written, unrun):** The same passive-interest
+calculation now accepts one foreign-interest payer with box 1 and box 6 and a
+separate U.S. Treasury-only payer with box 3. The Treasury payer has its own
+source-document reference, distinct payer name and no foreign-tax or other
+monetary boxes; the affirmative Form 1116 review identifies both references.
+The native/PDF source guard requires exactly those two Form 1099-INT rows,
+checks the foreign payer against the single Part II tax item, and recomputes
+the five-decimal standard-deduction apportionment from combined worldwide
+interest. Form 1040 lines 2b, 9, 11, 12a, 15 and 16 and Schedule 3 line 1
+must match. A full-return positive case and changed payer, tax, and return
+cases are authored but unrun. Other payers, adjustments, income categories,
+countries, source bytes, and filled-output/XSD/ATS validation remain open.
 
 **Sole 1099-INT source inventory (staged, unrun):** The original bounded passive-interest
 PDF route rejects another positive monetary box or interest adjustment on

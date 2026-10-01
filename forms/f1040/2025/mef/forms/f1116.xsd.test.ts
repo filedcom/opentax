@@ -587,7 +587,7 @@ Deno.test({
 
 Deno.test({
   name:
-    "XSD: 1099 interest and dividends from one country share a Form 1116 source",
+    "Form 1116 mixed interest/dividend source remains closed without a combined review",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
@@ -637,24 +637,23 @@ Deno.test({
       foreign_source_dividends_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
       holdingPeriodDays: 20,
+      foreign_tax_holding_review: {
+        ex_dividend_date: "2025-06-15",
+        qualifying_held_days_in_31_day_window: 20,
+        diminished_risk_days_excluded: 0,
+        no_related_payment_obligation_confirmed: true,
+        ordinary_stock_holding_rule_confirmed: true,
+        review_reference: "Canadian Fund holding ledger",
+        reviewed_on: "2026-02-01",
+      },
     }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  const xml = buildMefXml(result.pending, filer);
-  assertEquals([...xml.matchAll(/<ForeignTaxCreditSource>/g)].length, 1);
-  assertStringIncludes(
-    xml,
-    "<ForeignTaxSpecialTypeCd>1099 TAX</ForeignTaxSpecialTypeCd>",
+  assertThrows(
+    () => buildMefXml(result.pending, filer),
+    Error,
+    "one reviewed ordinary 1099-DIV",
   );
-  assertStringIncludes(
-    xml,
-    "<USTaxWithheldOnDividendAmt>100</USTaxWithheldOnDividendAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<USTaxWithheldOnInterestAmt>100</USTaxWithheldOnInterestAmt>",
-  );
-  await validateXsd(xml);
 });
 
 Deno.test({

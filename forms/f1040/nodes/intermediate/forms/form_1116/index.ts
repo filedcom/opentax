@@ -45,6 +45,8 @@ export const foreignTaxCurrencySchema = z.object({
 
 export const singleSourcePdfReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
+  domestic_treasury_source_document_reference: z.string().trim().min(1)
+    .optional(),
   all_foreign_tax_items_identified_confirmed: z.literal(true),
   all_worldwide_income_sources_identified_confirmed: z.literal(true),
   all_part_i_deductions_and_losses_except_standard_zero_confirmed: z.literal(
@@ -64,6 +66,13 @@ export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
   no_foreign_tax_reduction_confirmed: true,
 }).extend({
   only_identified_k3_line12_reduction_confirmed: z.literal(true),
+}).strict();
+
+export const multiSourcePdfReviewSchema = singleSourcePdfReviewSchema.omit({
+  source_document_reference: true,
+  domestic_treasury_source_document_reference: true,
+}).extend({
+  payer_source_document_references: z.array(z.string().trim().min(1)).min(2),
 }).strict();
 
 export const partnershipK3PassiveInterestSchema = z.object({
@@ -541,6 +550,7 @@ export const inputSchema = z.object({
     singleSourcePdfReviewSchema,
     singleSourceK3PdfReviewSchema,
   ]).optional(),
+  multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
 });
 
 type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
@@ -676,16 +686,27 @@ function categoryTotals(
         "Form 1116 needs worldwide gross income to apportion deductions",
       );
     }
+    const oneCountry1099Interest = matching.length > 1 &&
+      matching.every((item) =>
+        item.tax_reported_on_1099 === true &&
+        item.tax_kind === ForeignTaxKind.Interest &&
+        item.irs_country_code === matching[0].irs_country_code
+      );
     const automaticApportioned = worldwideGrossIncome > 0
-      ? matching.reduce(
-        (sum, item) =>
-          sum +
-          Math.round(
-            generalDeductions *
-              fraction(item.foreign_gross_income, worldwideGrossIncome),
-          ),
-        0,
-      )
+      ? oneCountry1099Interest
+        ? Math.round(
+          generalDeductions *
+            fraction(foreignGrossIncome, worldwideGrossIncome),
+        )
+        : matching.reduce(
+          (sum, item) =>
+            sum +
+            Math.round(
+              generalDeductions *
+                fraction(item.foreign_gross_income, worldwideGrossIncome),
+            ),
+          0,
+        )
       : 0;
     const vehicleInterestByCountry = [...vehicleInterestAllocations]
       .filter(([key]) => key.startsWith(`${category}|`))
@@ -1089,6 +1110,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         us_tax_before_credits: input.us_tax_before_credits,
         category_summaries: categories,
         single_source_pdf_review: input.single_source_pdf_review,
+        multi_source_pdf_review: input.multi_source_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });

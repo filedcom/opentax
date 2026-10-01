@@ -120,6 +120,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("pdf_part2_foreign_interest_a", `${part2a}f1_55[0]`),
   textField("pdf_part2_foreign_other_a", `${part2a}f1_56[0]`),
   textField("pdf_part2_us_interest_a", `${part2a}f1_59[0]`),
+  textField("pdf_part2_us_dividend_a", `${part2a}f1_57[0]`),
   textField("pdf_part2_us_other_a", `${part2a}f1_60[0]`),
   textField("pdf_part2_total_a", `${part2a}f1_61[0]`),
   textField("pdf_line8", `${page1}f1_82[0]`),

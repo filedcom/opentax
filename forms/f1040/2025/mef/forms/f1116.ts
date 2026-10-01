@@ -24,6 +24,8 @@ import {
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
+import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
+import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
@@ -117,12 +119,24 @@ function sourceXml(
     0,
   );
   const allocatedGeneralDeduction = worldwideGrossIncome > 0
-    ? items.reduce(
-      (sum, item) =>
-        sum + Math.round(generalDeductions *
-          Number(ratio(item.foreign_gross_income, worldwideGrossIncome))),
-      0,
-    )
+    ? items.length > 1 &&
+        items.every((item) =>
+          item.tax_reported_on_1099 === true &&
+          item.tax_kind === ForeignTaxKind.Interest &&
+          item.irs_country_code === first.irs_country_code
+        )
+      ? Math.round(
+        generalDeductions *
+          Number(ratio(foreignGrossIncome, worldwideGrossIncome)),
+      )
+      : items.reduce(
+        (sum, item) =>
+          sum + Math.round(
+            generalDeductions *
+              Number(ratio(item.foreign_gross_income, worldwideGrossIncome)),
+          ),
+        0,
+      )
     : 0;
   const deductions = items.reduce(
     (sum, item) => sum + (item.apportioned_deductions ?? 0),
@@ -385,6 +399,14 @@ function buildIRS1116(
     categorySummarySchema.parse(summary)
   );
   reconcileForm1116TreasuryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116MultiForeignInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116ForeignDividend(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );

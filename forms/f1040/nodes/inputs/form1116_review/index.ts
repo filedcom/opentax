@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   form_1116,
+  multiSourcePdfReviewSchema,
   singleSourcePdfReviewSchema,
 } from "../../intermediate/forms/form_1116/index.ts";
 
@@ -16,6 +17,7 @@ export const inputSchema = z.object({
   source_document_references: z.array(z.string().trim().min(1)).min(1),
   no_amt_liability_verified: z.literal(true),
   single_source_pdf_review: singleSourcePdfReviewSchema.optional(),
+  multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
 }).strict();
 
 class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
@@ -25,11 +27,21 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, raw: z.infer<typeof inputSchema>): NodeResult {
     const review = inputSchema.parse(raw);
-    const { single_source_pdf_review, ...preferential } = review;
+    const {
+      single_source_pdf_review,
+      multi_source_pdf_review,
+      ...preferential
+    } = review;
+    if (single_source_pdf_review && multi_source_pdf_review) {
+      throw new Error(
+        "Form 1116 source review must choose one PDF source inventory",
+      );
+    }
     return {
       outputs: [this.outputNodes.output(form_1116, {
         foreign_preferential_income_review: preferential,
         single_source_pdf_review,
+        multi_source_pdf_review,
       })],
     };
   }

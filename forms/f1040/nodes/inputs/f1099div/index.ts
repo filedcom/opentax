@@ -87,6 +87,15 @@ export const itemSchema = z.object({
   box15: z.string().optional(),
   box16: z.number().nonnegative().optional(),
   holdingPeriodDays: z.number().nonnegative().optional(),
+  foreign_tax_holding_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    qualifying_held_days_in_31_day_window: z.number().int().min(16).max(31),
+    diminished_risk_days_excluded: z.number().int().min(0).max(31),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    ordinary_stock_holding_rule_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
   section199a_holding_review: z.object({
     ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
     qualified_held_days_in_91_day_window: z.number().int().min(0).max(91),
@@ -527,6 +536,25 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       item.holdingPeriodDays! >= HOLDING_PERIOD_FOREIGN_DAYS
     );
     for (const item of eligibleItems) {
+      const review = item.foreign_tax_holding_review;
+      if (
+        !review ||
+        review.qualifying_held_days_in_31_day_window > item.holdingPeriodDays ||
+        review.qualifying_held_days_in_31_day_window +
+              review.diminished_risk_days_excluded > 31 ||
+        Number.isNaN(Date.parse(`${review.ex_dividend_date}T00:00:00Z`)) ||
+        new Date(`${review.ex_dividend_date}T00:00:00Z`).toISOString().slice(
+            0,
+            10,
+          ) !==
+          review.ex_dividend_date
+      ) {
+        throw new Error(
+          "1099-DIV foreign tax needs reviewed qualifying days in the ex-dividend window and no related payment",
+        );
+      }
+    }
+    for (const item of eligibleItems) {
       if (
         item.foreign_source_dividends_usd === undefined ||
         item.foreign_source_dividends_usd <= 0 ||
@@ -564,6 +592,8 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         foreign_tax_items: eligibleItems.map((item) => ({
           foreign_tax_paid: item.box7!,
           foreign_gross_income: item.foreign_source_dividends_usd!,
+          foreign_income_source_document_reference:
+            item.source_document_reference,
           income_category: IncomeCategory.Passive,
           irs_country_code: item.foreign_tax_irs_country_code,
           tax_kind: ForeignTaxKind.Dividends,
