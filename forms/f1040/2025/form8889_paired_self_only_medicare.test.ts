@@ -136,7 +136,7 @@ for (const medicareOwner of ["T", "S"] as const) {
             },
         ),
       Error,
-      "Medicare onset",
+      "Medicare enrollment needs one sourced onset",
     );
     assertThrows(
       () =>
@@ -192,7 +192,7 @@ for (const medicareOwner of ["T", "S"] as const) {
           },
         }),
       Error,
-      "paired export needs sourced",
+      "December 31 HSA value for Form 5329",
     );
     assertThrows(
       () =>

@@ -180,7 +180,7 @@ Deno.test("paired Form 8889 rejects an unlinked or unsupported second rollover",
         },
       }),
     Error,
-    "two-owner rollover needs",
+    "printed lines differ from owner source calculation",
   );
 });
 

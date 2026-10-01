@@ -132,6 +132,10 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
     last_month_rule_elected: false,
     married_at_year_end: false,
     w2_code_w_entries: [{ employee_ssn: "123456789", amount: 5_000 }],
+    employer_contribution_years: {
+      made_in_2025_for_2024_in_w2: 0,
+      made_in_2026_for_2025: 0,
+    },
     employer_excess_treatment: {
       amount_included_in_w2_box1: 0,
       timely_withdrawal: {

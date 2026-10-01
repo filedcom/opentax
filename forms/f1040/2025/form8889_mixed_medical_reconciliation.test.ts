@@ -24,6 +24,8 @@ function mixedCase() {
       ssn: "123456789",
     },
     eligible_hdhp_coverage_by_month: Array(12).fill("self_only"),
+    age_55_or_older: false,
+    last_month_rule_elected: false,
     taxpayer_hsa_contributions: 2_000,
     hsa_distributions: 1_000,
     form1099_sa_distributions: [{

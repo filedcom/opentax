@@ -11,6 +11,7 @@ export function reconcilePrimaryMixedMedicalForm8889(
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
+  if (filer && filer.filingStatus !== FilingStatus.Single) return;
   const filed = forms[0];
   const pending = allPending?.form8889;
   const raw = pending && typeof pending === "object" && !Array.isArray(pending)
