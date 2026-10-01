@@ -1,0 +1,40 @@
+# TY2025 core source ownership and duplicate audit
+
+This is a static source-to-return audit for the open core-source board item. It
+does not establish issued-document authenticity or IRS acceptance. The source
+nodes and export preflights must be assessed together: a calculated amount can
+be present even when the final return lacks enough information to prove whose
+document supplied it.
+
+## Bounded corrections staged in this batch
+
+- `mef/forms/w2.ts` now rejects an explicit W-2 employee SSN outside the
+  taxpayer or joint spouse. A spouse SSN on a separate return also rejects.
+  Previously the exporter put an unrelated SSN beside the taxpayer's name.
+  A matching joint spouse still prints the spouse's name and SSN. Missing
+  `employee_ssn` still defaults to the primary filer; requiring the issued W-2
+  owner for every wage statement needs a direct source-contract change and a
+  fixture migration.
+- `nodes/inputs/f1099int/index.ts` now rejects a repeated issued copy when
+  source reference, payer TIN, and account number all match. Different
+  accounts remain distinct even when the payer and packet reference match.
+  Rows without all three source identifiers are still ambiguous; the node
+  does not infer identity from amount or payer name alone.
+
+## Source inventory and remaining joins
+
+| Source family | Current evidence found in source contract | Outstanding ownership or duplicate question |
+| --- | --- | --- |
+| W-2, W-2G | W-2 employee SSN is optional; W-2G has payer-copy and winner identity checks. | Require an explicit issued W-2 recipient and reconcile all wage/withholding rows to the same final owner. Duplicate W-2 copies need employer control/correction identity. |
+| 1099-INT/DIV/OID/B | INT/OID have optional payer and source references; DIV has optional source reference; B capital dispositions use transaction facts. | Individual recipient TIN is absent from these base contracts. Prove taxpayer/spouse ownership and de-duplicate corrected or repeated payer/account/transaction reports across Schedule B/D and Form 1040. The new INT guard covers only an exact identified copy. |
+| 1099-R/G | R has optional recipient SSN and source reference; G has optional recipient TIN and source reference. | Require issued recipient identity for each positive return route and reconcile multiple corrected copies, withholding, and final income once. |
+| 1099-NEC/K/MISC/PATR | NEC and K/MISC have recipient and business-source fields for bounded routes; PATR does not expose a universal recipient identity. | Confirm recipient against each Schedule C/F/property owner and reject overlap when one payment appears on more than one payer form or gross-receipts source. Cash/accrual timing and corrected payer copies remain open. |
+| 1099-SA, 1098, 1095-A, 3921 | HSA owner/medical-use paths, 1098 recipient/source facts, 1095-A policy recipient, and 3921 document references exist in bounded paths. | Reconcile every owner and correction/vintage across the final 1040 and any paired forms. 3921's unique reference is local to its input collection; it does not prove option-event ownership across W-2 and 1099-B. |
+| Partnership, S corporation, and trust K-1 | Recipient TIN or beneficiary SSN and issuer/source identifiers exist for selected code-specific routes. | Apply owner and duplicate checks across all retained K-1 codes, revisions, and passive/portfolio destinations, including spouse attribution on joint returns. |
+| Foreign employer and reviewed prior returns | Specialized routes retain reviewed workpapers/source references. | A common employer/recipient identity and prior-return-vintage ledger is not enforced across all wage, credit, carryover, and amended-return consumers. |
+
+No general cross-form duplicate key can safely be made from payer name and
+amount. A future direct source contract needs issued-document identity,
+recipient TIN, account or transaction identity, correction status, and source
+bytes where the return uses those facts. Until then, the unsupported or
+ambiguous combinations above remain open.

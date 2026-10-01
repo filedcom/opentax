@@ -190,6 +190,24 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     for (const item of int1099s) {
       validateIntItem(item);
     }
+    const issuedCopyKeys = new Set<string>();
+    for (const item of int1099s) {
+      if (
+        !item.source_document_reference || !item.payer_tin ||
+        !item.account_number
+      ) continue;
+      const key = JSON.stringify([
+        item.source_document_reference,
+        item.payer_tin.replace(/\D/g, ""),
+        item.account_number,
+      ]);
+      if (issuedCopyKeys.has(key)) {
+        throw new Error(
+          "1099-INT repeats the same payer, account, and issued source copy",
+        );
+      }
+      issuedCopyKeys.add(key);
+    }
 
     const totalBox2 = int1099s.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
     const totalBox4 = int1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);

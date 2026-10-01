@@ -147,3 +147,41 @@ Deno.test("w2 refuses a finalized document without filer identity", () => {
     "filer identity",
   );
 });
+
+Deno.test("W-2 MeF binds an explicit employee SSN to the return owner", () => {
+  const jointFiler: FilerIdentity = {
+    ...filer(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "222334444",
+      firstName: "Joint",
+      lastName: "Spouse",
+      nameControl: "SPOU",
+    },
+  };
+  const [spouseXml] = w2.build({
+    w2s: [item({ employee_ssn: "222-33-4444" })],
+  }, { filer: jointFiler });
+  assertStringIncludes(spouseXml, "<EmployeeSSN>222334444</EmployeeSSN>");
+  assertStringIncludes(spouseXml, "<EmployeeNm>Joint Spouse</EmployeeNm>");
+
+  assertThrows(
+    () =>
+      w2.build({ w2s: [item({ employee_ssn: "999-88-7777" })] }, {
+        filer: jointFiler,
+      }),
+    Error,
+    "employee SSN must match the taxpayer or joint spouse",
+  );
+  assertThrows(
+    () =>
+      w2.build({ w2s: [item({ employee_ssn: "222334444" })] }, {
+        filer: {
+          ...jointFiler,
+          filingStatus: FilingStatus.MarriedFilingSeparately,
+        },
+      }),
+    Error,
+    "spouse wages require a joint Form 1040",
+  );
+});
