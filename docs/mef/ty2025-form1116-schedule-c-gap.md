@@ -93,10 +93,11 @@ absence of later-year tax-attribute effects is still supplied with a document
 reference, not proven by the current-year graph. Document intake requires six
 base reviewed PDF/hash records for the filed return, filed Form 1116 and
 Schedule 3, revised Form 1116 calculation, affected-year recalculation, and
-later-year review, plus one for every payor foreign record. The filed documents
-and amended-year workpapers must be reviewed for authenticity and completeness.
-The projection remains unregistered, so no Schedule C is filed from these
-assertions. Supporting primary sources:
+later-year review, plus one for every payor foreign record and, when liability
+changes, one prepared Form 1040-X. The filed documents and amended-year
+workpapers must be reviewed for authenticity and completeness. The projection
+remains unregistered, so no Schedule C is filed from these assertions.
+Supporting primary sources:
 [2023 Form 1116](https://www.irs.gov/pub/irs-prior/f1116--2023.pdf),
 [2024 Form 1116](https://www.irs.gov/pub/irs-prior/f1116--2024.pdf),
 [2023 Form 1040](https://www.irs.gov/pub/irs-prior/f1040--2023.pdf),
@@ -169,6 +170,29 @@ hashed PDFs to one filer; it does not extract identity from those PDFs or
 authenticate that the IRS received the prior filed return or amendment. A
 wrong-owner and missing-foreign-link rejection fixture is written but unrun.
 
+## Prepared affected-year Form 1040-X prerequisite, still not filed
+
+When the staged relation-back-year recomputation changes U.S. tax liability,
+document intake now requires a separately reviewed prepared Form 1040-X PDF with
+its own reference, filer identity, and SHA-256. The reviewer must transcribe
+columns A, B, and C of lines 6, 7, 8, 10, and 11. Intake checks the amendment
+year, every A/C amount against the filed and recalculated Form 1040 lines, every
+B amount as C minus A, and the tax arithmetic in A/C. The same reviewed
+recalculation drives Schedule C Part IV in the staged native and PDF candidates.
+An unchanged-liability case cannot supply this amendment. Positive and altered
+credit/PDF-byte rejection fixtures are written but unrun.
+
+The [December 2025 Form 1040-X](https://www.irs.gov/pub/irs-pdf/f1040x.pdf)
+places tax, nonrefundable credits, tax after credits, other taxes, and total tax
+on those five lines. The
+[Schedule C instructions](https://www.irs.gov/instructions/i1116sc) require an
+affected-year amendment when the U.S. liability changes. This reviewed prepared
+document is a source prerequisite only. It does not establish that Form 1040-X
+and its changed Form 1116, Schedule 3, and Form 1040 were submitted or accepted.
+Payment/refund reconciliation, required explanations, signatures, current-year
+joins, authentication, and the batch validation gates remain open. The live
+export guard is unchanged.
+
 ## Mixed increases and decreases, still staged and unrun
 
 The staged native and PDF projections now place a same-year accrued-tax increase
@@ -202,22 +226,22 @@ reports the filed and redetermined foreign tax and credit. Native and PDF
 projections leave Part IV blank when the independently recomputed U.S. tax
 liability is unchanged. A focused native/PDF candidate fixture is written but
 unrun. The [Schedule C instructions](https://www.irs.gov/instructions/i1116sc)
-require the current-year Schedule C even when there is no U.S. liability
-change; an affected-year amended return is required only when liability
-changes. This branch remains unregistered and fail-closed for filing because
-filed-year authenticity, later-year attributes, 2025 return joins, and the
-deferred validation gates are still unresolved.
+require the current-year Schedule C even when there is no U.S. liability change;
+an affected-year amended return is required only when liability changes. This
+branch remains unregistered and fail-closed for filing because filed-year
+authenticity, later-year attributes, 2025 return joins, and the deferred
+validation gates are still unresolved.
 
 ## Active filing gate for the affected year
 
 The active Form 1116 calculation, direct native builder, and parent PDF
 projector now use the same parsed Schedule C ledger to identify the blocked
 category and affected year. A changed U.S. liability explicitly requires an
-authenticated affected-year filing and amendment receipt. An unchanged
-liability still requires authenticated filed-year records. Both branches also
-require verified intervening-year tax attributes and a 2025 Form 1116,
-Schedule 3, and Form 1040 join before Schedule C registration. Focused
-unchanged and changed-liability rejection fixtures are authored for the
-deferred batch. The staged reviewed PDFs establish byte hashes and reviewer
-links, but do not extract filed lines from an authenticated IRS record or prove
-an amendment was accepted; they therefore cannot activate this route.
+authenticated affected-year filing and amendment receipt. An unchanged liability
+still requires authenticated filed-year records. Both branches also require
+verified intervening-year tax attributes and a 2025 Form 1116, Schedule 3, and
+Form 1040 join before Schedule C registration. Focused unchanged and
+changed-liability rejection fixtures are authored for the deferred batch. The
+staged reviewed PDFs establish byte hashes and reviewer links, but do not
+extract filed lines from an authenticated IRS record or prove an amendment was
+accepted; they therefore cannot activate this route.
