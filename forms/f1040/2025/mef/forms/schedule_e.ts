@@ -371,9 +371,11 @@ export function validatePassiveActivityLink(
     if (
       (context?.pending?.form8582 !== undefined &&
         context.pending.form8582 !== null &&
-        Object.keys(context.pending.form8582).some((key) =>
-          key !== "filing_status"
-        )) || !sale ||
+        (!Object.hasOwn(context.pending.form8582, "filing_status") ||
+          Object.keys(context.pending.form8582).some((key) =>
+            key !== "filing_status"
+          ))) ||
+      !sale ||
       pendingSales?.length !== 1 ||
       !pendingSale.success || !samePassiveSale(pendingSale.data, sale)
     ) {
@@ -479,20 +481,26 @@ function validatePartIxCarryovers(
   if (carried.length === 0) return;
   const linked = context?.pending?.form8582;
   if (!linked || typeof linked !== "object" || Array.isArray(linked)) {
-    throw new Error("Schedule E Form 4797 carryovers need a matching Form 8582 worksheet");
+    throw new Error(
+      "Schedule E Form 4797 carryovers need a matching Form 8582 worksheet",
+    );
   }
   const ledger = form8582InputSchema.parse(linked);
-  if (carried.some((item) => {
-    const activity = ledger.activities?.find((row) =>
-      row.activity_id === item.activity_id
+  if (
+    carried.some((item) => {
+      const activity = ledger.activities?.find((row) =>
+        row.activity_id === item.activity_id
+      );
+      return !activity ||
+        activity.prior_unallowed_4797_part1 !==
+          (item.prior_unallowed_passive_4797_part1 ?? 0) ||
+        activity.prior_unallowed_4797_part2 !==
+          (item.prior_unallowed_passive_4797_part2 ?? 0);
+    })
+  ) {
+    throw new Error(
+      "Schedule E Form 4797 carryovers differ from Form 8582 activity rows",
     );
-    return !activity ||
-      activity.prior_unallowed_4797_part1 !==
-        (item.prior_unallowed_passive_4797_part1 ?? 0) ||
-      activity.prior_unallowed_4797_part2 !==
-        (item.prior_unallowed_passive_4797_part2 ?? 0);
-  })) {
-    throw new Error("Schedule E Form 4797 carryovers differ from Form 8582 activity rows");
   }
   form8582.build(linked as Record<string, unknown>, context);
 }

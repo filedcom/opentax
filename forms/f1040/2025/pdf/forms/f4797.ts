@@ -360,9 +360,10 @@ export const form4797Pdf: PdfFormDescriptor = {
         (entireLoss === undefined && entireGain === undefined) ||
         (entireLoss !== undefined && allPending.form8582 !== undefined &&
           allPending.form8582 !== null &&
-          Object.keys(allPending.form8582).some((key) =>
-            key !== "filing_status"
-          )) ||
+          (!Object.hasOwn(allPending.form8582, "filing_status") ||
+            Object.keys(allPending.form8582).some((key) =>
+              key !== "filing_status"
+            ))) ||
         (entireGain !== undefined &&
           (!gainLedger?.success ||
             gainLedger.data.activities?.length !== 1 ||
