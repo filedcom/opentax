@@ -1,4 +1,4 @@
-import { assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
   assertForm1098IssuerCopies,
@@ -7,6 +7,10 @@ import {
 import { buildMefBundle } from "../../../2025/mef/builder.ts";
 import { buildPdfBytes } from "../../../2025/pdf/builder.ts";
 import type { MefFormsPending } from "../../../2025/mef/types.ts";
+import { f1040_2025 } from "../../../2025/index.ts";
+import { buildPending } from "../../../2025/mef/pending.ts";
+import { FilingStatus } from "../../types.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";
 
 const item = {
@@ -221,6 +225,45 @@ Deno.test("whole-return cross-loan review binds both lender-issued Forms 1098 at
     },
   };
   await assertForm1098IssuerCopies(source);
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Taxpayer",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    digital_assets: false,
+    address_line1: "1 Test Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({
+    general,
+    f1098: source.f1098.f1098s,
+    f1098_purchase_points_cross_loan_review:
+      fixture.f1098_purchase_points_cross_loan_review,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    21_000,
+  );
+  const filer = extractFilerIdentity(general);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<RptHomeMortgIntAndPointsAmt>21000</RptHomeMortgIntAndPointsAmt>",
+  );
+  const filled = await buildPdfBytes(
+    bundle.pending,
+    filer,
+    ".pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
   const withoutExisting = {
     f1098: {
       ...source.f1098,
