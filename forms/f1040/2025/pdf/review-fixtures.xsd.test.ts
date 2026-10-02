@@ -111,7 +111,9 @@ const directNewMarketsReviewIds = new Set([
 
 for (const fixture of pdfReviewFixtures) {
   Deno.test({
-    name: directNewMarketsReviewIds.has(fixture.id)
+    name: fixture.id === "single-form461-schedule-c-excess-business-loss"
+      ? `filled-PDF source ${fixture.id} keeps the sourced loss and blocks unsupported QBI carryforward export`
+      : directNewMarketsReviewIds.has(fixture.id)
       ? `filled-PDF source ${fixture.id} blocks unauthenticated direct Form 8874 export`
       : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
@@ -120,6 +122,19 @@ for (const fixture of pdfReviewFixtures) {
         taxYear: 2025,
         formType: "f1040",
       });
+      if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
+        assertEquals(result.diagnostics.length, 1);
+        assertStringIncludes(
+          result.diagnostics[0].message,
+          "Form 8995 net QBI loss needs a sourced carryforward filing route",
+        );
+        assertEquals(
+          (result.pending.form461 as Record<string, unknown>)
+            .line16_excess_business_loss,
+          -87_000,
+        );
+        return;
+      }
       assertEquals(result.diagnostics, []);
       if (fixture.id === "single-8862-ctc-reinstatement") {
         assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
@@ -132,7 +147,10 @@ for (const fixture of pdfReviewFixtures) {
       }
       const pending = buildPending(result.pending);
       if (directNewMarketsReviewIds.has(fixture.id)) {
-        assertEquals((pending.f8874?.investments?.length ?? 0) > 0, true);
+        const directInvestments = (pending.f8874 as
+          | { investments?: unknown[] }
+          | undefined)?.investments ?? [];
+        assertEquals(directInvestments.length > 0, true);
         assertThrows(
           () => buildMefXml(pending, fixture.filer),
           Error,
