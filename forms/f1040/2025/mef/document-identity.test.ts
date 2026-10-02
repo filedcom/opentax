@@ -98,6 +98,36 @@ Deno.test("Form 8814 child-interest reference uses its exact IRS schema name", (
   }
 });
 
+Deno.test("Schedule F statement references use exact IRS names despite shortened roots", () => {
+  const statements = [
+    ["CCCLoanDetailCashMethodStmt", "CCCLoanDetailCashMethodStatement"],
+    ["CCCLoanDetailAccrualMethodStmt", "CCCLoanDetailAccrualMethodStatement"],
+    [
+      "PostponementCropInsDsstrStmt",
+      "PostponementOfCropInsuranceAndDisasterPaymentsStatement",
+    ],
+  ] as const;
+  for (const [root, name] of statements) {
+    const id = documentId(root, 1);
+    const fragments = (referenceName: string) => [{
+      pendingKey: "schedule_f",
+      tag: "IRS1040ScheduleF",
+      xml:
+        `<IRS1040ScheduleF><Statement referenceDocumentId="${id}" referenceDocumentName="${referenceName}"/></IRS1040ScheduleF>`,
+    }, {
+      pendingKey: "statement",
+      tag: root,
+      xml: `<${root}/>`,
+    }];
+    validateDocumentReferences(fragments(name));
+    assertThrows(
+      () => validateDocumentReferences(fragments(root)),
+      Error,
+      "referenceDocumentName differs",
+    );
+  }
+});
+
 Deno.test("prepared MeF inventory counts only direct ReturnData documents", () => {
   const bundle: MefBundle = {
     xml:
