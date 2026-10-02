@@ -1856,7 +1856,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         presidential_campaign_fund_taxpayer: true,
         presidential_campaign_fund_spouse: true,
       },
-      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111223333",
+      }],
     },
     filer: jointFiler,
     expectedPdfForms: ["f1040"],
@@ -1871,8 +1874,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: jointGeneral,
       w2: [
-        wage(85_000, 9_000, "First Example Employer", "12-3456789"),
-        wage(42_000, 4_000, "Second Example Employer", "98-7654321"),
+        {
+          ...wage(85_000, 9_000, "First Example Employer", "12-3456789"),
+          employee_ssn: "111223333",
+        },
+        {
+          ...wage(42_000, 4_000, "Second Example Employer", "98-7654321"),
+          employee_ssn: "444556666",
+        },
       ],
     },
     filer: jointFiler,
@@ -1888,8 +1897,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: jointGeneral,
       w2: [
-        wage(42_000, 4_000, "First Example Employer", "12-3456789"),
-        wage(28_000, 2_500, "Second Example Employer", "98-7654321"),
+        {
+          ...wage(42_000, 4_000, "First Example Employer", "12-3456789"),
+          employee_ssn: "111223333",
+        },
+        {
+          ...wage(28_000, 2_500, "Second Example Employer", "98-7654321"),
+          employee_ssn: "444556666",
+        },
       ],
       schedule_lep: {
         requests: [
@@ -3224,7 +3239,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         spouse_ssn_issued_before_due_date: true,
         spouse_tin_issued_by_due_date: true,
       },
-      w2: [wage(160_000, 20_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(160_000, 20_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111223333",
+      }],
       schedule1a: {
         senior_zero_exclusions_review: {
           no_section933_puerto_rico_excluded_income: true,
@@ -4630,7 +4648,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "joint-two-hsa-owners",
     inputs: {
       general: { ...jointGeneral, spouse_dob: "1970-03-10" },
-      w2: [wage(90_000, 12_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(90_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111223333",
+      }],
       form8889: {
         beneficiary_identity: {
           owner: "T",
