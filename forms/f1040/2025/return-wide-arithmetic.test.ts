@@ -293,6 +293,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     line10_adjustments: 50,
     line13b_additional_deductions: 75,
     line17_additional_taxes: 100,
+    line20_nonrefundable_credits: 25,
     line31_additional_payments: 40,
   };
   const pending = {
@@ -302,7 +303,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     },
     schedule1a: { line38_total: 75 },
     schedule2: { line2_amt: 100 },
-    schedule3: { line15_total: 40 },
+    schedule3: { line8_total: 25, line15_total: 40 },
   };
   assertReturnScheduleJoins(fields, pending);
   for (
@@ -311,6 +312,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
       ["line10_adjustments", "line 10"],
       ["line13b_additional_deductions", "line 13b"],
       ["line17_additional_taxes", "line 17"],
+      ["line20_nonrefundable_credits", "line 20"],
       ["line31_additional_payments", "line 31"],
     ] as const
   ) {
@@ -330,6 +332,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     line8_additional_income: 300,
     line10_adjustments: 50,
     line17_additional_taxes: 100,
+    line20_nonrefundable_credits: 25,
     line31_additional_payments: 40,
   };
   assertStringIncludes(
@@ -353,6 +356,24 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
       ),
     Error,
     "line 31",
+  );
+  assertThrows(
+    () =>
+      irs1040.build(
+        { ...filedWithSchedules, line20_nonrefundable_credits: 26 },
+        { pending: attached },
+      ),
+    Error,
+    "line 20",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { ...filedWithSchedules, line20_nonrefundable_credits: 26 },
+        attached,
+      ),
+    Error,
+    "line 20",
   );
 });
 

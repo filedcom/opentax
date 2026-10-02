@@ -297,6 +297,14 @@ export function assertReturnScheduleJoins(
 
   const schedule3 = record("schedule3");
   if (schedule3) {
+    const nonrefundableCredits = schedule3.line8_total;
+    if (typeof nonrefundableCredits === "number") {
+      match(
+        amount(fields, "line20_nonrefundable_credits"),
+        nonrefundableCredits,
+        "line 20",
+      );
+    }
     // The graph retains cents for Schedule 3 and Form 1040 arithmetic. Both
     // export paths print whole dollars, so compare their filed amounts here.
     match(
