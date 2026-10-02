@@ -606,6 +606,38 @@ export function assertForm1098MortgageLimitSources(
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
+  const fullYearPost2017 = parsed.f1098s.filter((item) => {
+    const date = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
+      item.box3_origination_date ?? "",
+    );
+    if (!date) return false;
+    const originated = new Date(
+      Date.UTC(Number(date[3]), Number(date[1]) - 1, Number(date[2])),
+    );
+    return originated.getUTCFullYear() === Number(date[3]) &&
+      originated.getUTCMonth() + 1 === Number(date[1]) &&
+      originated.getUTCDate() === Number(date[2]) &&
+      originated >= new Date("2017-12-16T00:00:00Z") &&
+      originated < new Date("2025-01-01T00:00:00Z") &&
+      (item.for_routing ?? ForRouting.A) === ForRouting.A &&
+      item.refinance !== true &&
+      item.binding_contract_exception !== true &&
+      (item.box2_outstanding_principal ?? 0) > 0 &&
+      item.box1_mortgage_interest > 0 &&
+      item.box1_current_year_deductible_interest ===
+        item.box1_mortgage_interest;
+  });
+  if (
+    singleFiler && fullYearPost2017.length >= 3 &&
+    fullYearPost2017.reduce(
+        (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
+        0,
+      ) > 750_000
+  ) {
+    throw new Error(
+      "Schedule A three or more post-2017 mortgages over $750,000 need a supported whole-return Pub. 936 limit review",
+    );
+  }
   if (!parsed.mortgage_limit_review) return;
   const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
   const expectedLine8a = parsed.f1098s.reduce(
