@@ -137,8 +137,20 @@ lower-bound reconciliation, not complete Form
 8288-A filing support: the raw `f8288` source has no seller taxpayer identity,
 issued certificate byte binding, or filed Form 8288-A attachment. Those facts
 and cross-source duplicate/period checks remain before the credit is verified.
-Other line 25c source families, including Schedule K-1 and Form 1042-S, need
-their own reviewed source and duplicate checks before exact equality is safe.
+Other line 25c source families cannot yet be added to this lower bound. The
+public partnership, S corporation, and trust Schedule K-1 inputs have no typed
+federal-withholding amount. In particular, the trust K-1 has no box 13 code B
+backup-withholding amount or required beneficiary-copy attachment, although
+the [2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
+require that copy when code B is claimed. The public railroad and SSA inputs
+are not RRB-1042-S or SSA-1042-S recipient copies with withholding and
+residency facts. Annual Form 8854's narrowly typed code 38/39 Form 1042-S
+source summaries document expatriation distributions; they cannot establish
+a current resident Form 1040 withholding credit. Add those source types,
+recipient and tax-year identity, required copy/declaration evidence, and
+duplicate checks before counting their amounts or claiming exact line 25c
+equality. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+explicitly place K-1 and Form 1042-S withholding on line 25c.
 
 ## Remaining return-wide work
 
