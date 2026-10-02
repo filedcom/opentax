@@ -431,6 +431,9 @@ Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
 authenticity, and visual parity still require separate review.
+The generator records one fixed synthetic `ReturnTs` in its source record and
+manifest so later source replay yields byte-identical native XML. This timestamp
+is only for the review batch; ordinary exports keep their actual build time.
 
 Each case writes a filled PDF and a JSON record of its synthetic source,
 identity, expected forms, review focus and raw computed pending data. On a fully

@@ -8,6 +8,10 @@ import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
+import {
+  REVIEW_RETURN_TIMESTAMP,
+  reviewFiler,
+} from "./ty2025-pdf-review-source.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -92,6 +96,11 @@ const manifest = object(
 );
 checked(manifest.synthetic, "synthetic review-batch flag");
 if (manifest.taxYear !== 2025) throw new Error("Review batch is not TY2025");
+if (manifest.reviewReturnTimestamp !== REVIEW_RETURN_TIMESTAMP) {
+  throw new Error(
+    "Review batch header timestamp differs from the review source",
+  );
+}
 const schemaDigest = await sha256Hex(await Deno.readFile(xsdPath));
 if (manifest.xsdSha256 !== schemaDigest) {
   throw new Error("TY2025 XSD SHA-256 differs from the recorded schema");
@@ -118,6 +127,7 @@ for (const [index, rawCase] of cases.entries()) {
   const id = string(entry.id, `case ${index + 1} ID`);
   const fixture = fixtures.get(id);
   if (!fixture) throw new Error(`Unknown review case ${id}`);
+  const filer = reviewFiler(fixture.filer);
   if (seen.has(id)) throw new Error(`Duplicate review case ${id}`);
   seen.add(id);
   expectedStrings(
@@ -172,7 +182,7 @@ for (const [index, rawCase] of cases.entries()) {
     `${id} source review focus`,
   );
   if (
-    JSON.stringify(sourceData.filer) !== JSON.stringify(fixture.filer) ||
+    JSON.stringify(sourceData.filer) !== JSON.stringify(filer) ||
     JSON.stringify(sourceData.inputs) !== JSON.stringify(fixture.inputs)
   ) {
     throw new Error(
@@ -192,7 +202,7 @@ for (const [index, rawCase] of cases.entries()) {
     );
   }
   const rebuilt = await buildMefBundle(buildPending(result.pending), {
-    filer: fixture.filer,
+    filer,
     attachments: [],
   });
   if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {

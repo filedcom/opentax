@@ -10,6 +10,10 @@ import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
+import {
+  REVIEW_RETURN_TIMESTAMP,
+  reviewFiler,
+} from "./ty2025-pdf-review-source.ts";
 
 const [outputDir, xsdArg] = Deno.args;
 if (!outputDir || !xsdArg || Deno.args.length !== 2) {
@@ -53,6 +57,7 @@ const fixtureIds = new Set<string>();
 const reviewManifest: Record<string, unknown>[] = [];
 
 for (const fixture of pdfReviewFixtures) {
+  const filer = reviewFiler(fixture.filer);
   if (fixtureIds.has(fixture.id)) {
     throw new Error(`Duplicate filled-PDF review fixture: ${fixture.id}`);
   }
@@ -81,13 +86,13 @@ for (const fixture of pdfReviewFixtures) {
     );
   }
   const bundle = await buildMefBundle(buildPending(result.pending), {
-    filer: fixture.filer,
+    filer,
     attachments: [],
   });
   await validateXmlAgainstXsd(bundle.xml, fixture.id);
   const pdf = await buildPdfBytes(
     bundle.pending,
-    fixture.filer,
+    filer,
     cacheDir,
     bundle,
   );
@@ -100,7 +105,7 @@ for (const fixture of pdfReviewFixtures) {
       id: fixture.id,
       synthetic: true,
       inputs: fixture.inputs,
-      filer: fixture.filer,
+      filer,
       expectedPdfForms: fixture.expectedPdfForms,
       reviewFocus: fixture.reviewFocus,
       pending: result.pending,
@@ -166,6 +171,7 @@ await Deno.writeTextFile(
     {
       synthetic: true,
       taxYear: 2025,
+      reviewReturnTimestamp: REVIEW_RETURN_TIMESTAMP,
       xsdSha256,
       fixtureCount: reviewManifest.length,
       cases: reviewManifest,
