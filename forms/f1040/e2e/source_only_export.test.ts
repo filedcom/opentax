@@ -178,7 +178,7 @@ Deno.test("Form 8888 split refund cannot export without a matching final refund"
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 8888 line 5 must equal finalized Form 1040 line 35a refund",
+    "Form 1040 refund distribution requires a positive refund",
   );
 });
 
