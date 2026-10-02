@@ -14,15 +14,17 @@ recorded digest; the manifest alone does not establish a signature or publisher
 identity.
 
 `scripts/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
-source CLI, from an isolated temporary working directory. It checks the injected
+source CLI, from a temporary working directory. It checks the injected
 version, creates a synthetic TY2025 Single return, adds full filer and W-2
 source facts, checks computed wages and withholding, requires CLI validation to
 find no applicable rule failures, and exports finalized MeF XML with exactly one
 `IRS1040` and one `IRSW2` document. It checks filer identity, filing status,
 employer identity, wages, and withholding against the synthetic source in those
 documents, then loads the exported PDF to require at least two pages. It never
-passes `--force` or `--draft`. The temporary return,
-XML output, PDF and downloaded IRS template cache are deleted after the run.
+passes `--force` or `--draft`. The temporary return, XML output, PDF, and
+downloaded IRS template cache are deleted after the run. The compiled CLI may
+also read or write its update-check cache in the runner's home directory at
+`.opentax/update-check.json`; that cache is outside the temporary directory.
 
 For a manually built native asset on a matching machine, run:
 
