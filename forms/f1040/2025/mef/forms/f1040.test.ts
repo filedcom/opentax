@@ -894,7 +894,7 @@ Deno.test("all fields ordering matches field map sequence", () => {
     line25b_withheld_1099: 12,
     line28_actc: 13,
     line29_refundable_aoc: 14,
-    line33_total_payments: 15,
+    line33_total_payments: 50,
   });
 
   const elementOrder = [
@@ -1178,10 +1178,10 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line29_refundable_aoc: 2500,
     line30_refundable_adoption: 2000,
     line31_additional_payments: 1100,
-    line32_refundable_credits_total: 5200,
-    line33_total_payments: 12000,
-    line34_overpayment: 6000,
-    line35a_refund: 6000,
+    line32_refundable_credits_total: 7200,
+    line33_total_payments: 16550,
+    line34_overpayment: 10550,
+    line35a_refund: 10550,
   });
 
   assertStringIncludes(result, "<IRS1040>");
@@ -1275,7 +1275,7 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
   );
   assertStringIncludes(
     result,
-    "<RefundableCreditsAmt>5200</RefundableCreditsAmt>",
+    "<RefundableCreditsAmt>7200</RefundableCreditsAmt>",
   );
   assertStringIncludes(
     result,
@@ -1285,9 +1285,9 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     result,
     "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>",
   );
-  assertStringIncludes(result, "<TotalPaymentsAmt>12000</TotalPaymentsAmt>");
-  assertStringIncludes(result, "<OverpaidAmt>6000</OverpaidAmt>");
-  assertStringIncludes(result, "<RefundAmt>6000</RefundAmt>");
+  assertStringIncludes(result, "<TotalPaymentsAmt>16550</TotalPaymentsAmt>");
+  assertStringIncludes(result, "<OverpaidAmt>10550</OverpaidAmt>");
+  assertStringIncludes(result, "<RefundAmt>10550</RefundAmt>");
   assertStringIncludes(
     result,
     "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>",
