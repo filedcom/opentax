@@ -39,6 +39,25 @@ Schedule R claim at graph input and native/PDF export. A separate optional
 document-review helper would leave the free-text-reference route open, so it
 does not close the physician, income, or benefit source gap.
 
+The current CLI stores node inputs as JSON in `return.json`, then executes the
+graph before loading attachment bytes. Its attachment loader reads only the
+Form 8839 public-source manifest. `prepareReturn` passes those bytes to the
+async MeF bundle, where every supplied PDF becomes a `BinaryAttachment` in the
+submission packet. The synchronous `buildMefXml` and standalone `buildPdfBytes`
+APIs can still run without that bundle; Form 8839 and Form 8994 explicitly
+reject these direct paths for their byte-required claims. Schedule R has no
+equivalent required source manifest, CLI loader, prepared-bundle reconciliation,
+or direct-builder guard. Adding a hash field to its current input would not
+prove the application saw the document bytes.
+
+The product evidence standard must specify whether physician, retirement,
+income, and benefit records are retained source evidence or IRS-submitted
+attachments, and which reviewer assertion is sufficient for unstructured or
+signed pages. If they are retained only, the current MeF `attachments` array
+cannot carry them without also transmitting them. Implementing a single
+required Schedule R source route needs that storage/packet distinction before
+the free-text-reference path can be replaced without a bypass.
+
 Focused calculation, native, and PDF cases for the age and disability statuses
 are written but unrun under the implementation-first workflow. A complete
 source-backed full-return XSD/filled-PDF case for each new status, verified
