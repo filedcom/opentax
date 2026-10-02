@@ -622,6 +622,11 @@ Deno.test("prepared manifest keeps native tag-position IDs for repeated W-2 copi
     f1040: {
       filing_status: "single",
       digital_assets: false,
+      line1a_wages: 6_000,
+      line1z_total_wages: 6_000,
+      line9_total_income: 6_000,
+      line10_adjustments: 0,
+      line11_agi: 6_000,
       line25a_w2_withheld: 600,
     },
     w2: { w2s: [w2, { ...w2, employer_ein: "98-7654321" }] },
@@ -1859,7 +1864,19 @@ Deno.test("IRS8582 absent when form8582 missing from pending", () => {
 });
 
 Deno.test("IRS1040ScheduleF present when schedule_f has data", () => {
-  const xml = buildMefXml({ schedule_f: sampleScheduleF });
+  const xml = buildMefXml({
+    schedule_f: sampleScheduleF,
+    schedule1: {
+      line6_schedule_f: 2_000,
+      line10_total_additional_income: 2_000,
+    },
+    f1040: {
+      line8_additional_income: 2_000,
+      line9_total_income: 2_000,
+      line10_adjustments: 0,
+      line11_agi: 2_000,
+    },
+  });
   assertStringIncludes(xml, "<IRS1040ScheduleF ");
 });
 
@@ -2151,7 +2168,14 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
     box2_fed_withheld: 3_000,
   };
   const xml = buildMefXml({
-    f1040: { line25a_w2_withheld: 6_000 },
+    f1040: {
+      line1a_wages: 60_000,
+      line1z_total_wages: 60_000,
+      line9_total_income: 60_000,
+      line10_adjustments: 0,
+      line11_agi: 60_000,
+      line25a_w2_withheld: 6_000,
+    },
     w2: {
       w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }],
     },
@@ -2164,6 +2188,11 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
     f1040: {
       filing_status: "single",
       digital_assets: false,
+      line1a_wages: 60_000,
+      line1z_total_wages: 60_000,
+      line9_total_income: 60_000,
+      line10_adjustments: 0,
+      line11_agi: 60_000,
       line25a_w2_withheld: 5_999,
     },
     w2: { w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }] },
