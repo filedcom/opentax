@@ -213,8 +213,6 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Exclusions ────────────────────────────────────────
   // Line 8d — Foreign earned income exclusion (Form 2555)
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
-  // Line 8d — Foreign housing deduction (Form 2555)
-  line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part II — Above-the-line deductions ────────────────────────
   // Line 13 — HSA deduction (Form 8889)
@@ -472,10 +470,7 @@ function grossIncome(
 // Sum IRC §911 exclusions. Form 8815 savings-bond interest is excluded
 // before taxable interest reaches this node, not on Schedule 1 line 8b.
 function exclusions(input: AgiInput): number {
-  return (
-    (input.line8d_foreign_earned_income_exclusion ?? 0) +
-    (input.line8d_foreign_housing_deduction ?? 0)
-  );
+  return input.line8d_foreign_earned_income_exclusion ?? 0;
 }
 
 // Sum above-the-line deductions excluding SLI (used to compute MAGI for SLI phase-out).
@@ -654,8 +649,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) -
     remainingAllowedPassiveLoss(input) -
-    (input.line8d_foreign_earned_income_exclusion ?? 0) -
-    (input.line8d_foreign_housing_deduction ?? 0)
+    (input.line8d_foreign_earned_income_exclusion ?? 0)
   );
 }
 
@@ -696,6 +690,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    // Reject the obsolete input before Zod silently strips unknown keys.
+    // Form 2555 line 50 requires a separately supported Schedule 1 line 24j source.
+    if (
+      Object.hasOwn(rawInput as object, "line8d_foreign_housing_deduction")
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction is unsupported in the AGI aggregator",
+      );
+    }
     const input = inputSchema.parse(rawInput);
     if (input.pal_pending_active_4797 === true) {
       return {
@@ -802,7 +805,6 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8962, {
         taxpayer_modified_agi: agi + (input.tax_exempt_interest ?? 0) +
           (input.line8d_foreign_earned_income_exclusion ?? 0) +
-          (input.line8d_foreign_housing_deduction ?? 0) +
           Math.max(0, ssaGross - ssaTaxable),
         pub974_income_audit: {
           schedule1_line3_schedule_c: input.line3_schedule_c ?? 0,
@@ -813,8 +815,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             ssaGross - ssaTaxable,
           ),
           form2555_lines45_and_50:
-            (input.line8d_foreign_earned_income_exclusion ?? 0) +
-            (input.line8d_foreign_housing_deduction ?? 0),
+            input.line8d_foreign_earned_income_exclusion ?? 0,
           schedule1_adjustments_except_line17: line10 -
             (input.line17_se_health_insurance ?? 0),
           schedule1_line15_se_tax_deduction: input.line15_se_deduction ?? 0,

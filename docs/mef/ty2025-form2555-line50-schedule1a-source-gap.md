@@ -8,7 +8,9 @@ TY2025 v5.4 Schedule 1 XSD has `HousingDeductionAmt` at line 24j; it is not
 part of `TotalIncomeExclusionAmt` at line 8d. The old
 `line8d_foreign_housing_deduction` input was therefore an incorrect line
 identity. A positive value now rejects at Schedule 1 calculation and native
-and PDF export instead of being added to line 8d.
+and PDF export instead of being added to line 8d. The AGI aggregator also
+rejects the obsolete input before parsing; no housing amount can alter AGI,
+the Form 8962 modified AGI addback, or related computations through that path.
 
 ## Why the present source cannot produce line 50
 
@@ -59,7 +61,8 @@ from today's employee-wages-only source.
    missing prior-year carryover evidence.
 
 This is a required implementation contract, not a supported positive route.
-The focused boundary test rejects a proposed $1,000 housing deduction at the
-calculation node, native Schedule 1, and filled PDF projection. Full-return
+The focused boundary tests reject a proposed $1,000 housing deduction at the
+calculation node, native Schedule 1, and filled PDF projection, and reject
+obsolete AGI aggregator input even before export. Full-return
 XSD, visual PDF, IRS business rules, and ATS acceptance for positive line 50
 remain unverified.
