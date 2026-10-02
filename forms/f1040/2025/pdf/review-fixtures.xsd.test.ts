@@ -469,7 +469,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "differs from payer box 4",
+          "Form 1040 line 25b differs from retained 1099-family withholding",
         );
         assertThrows(
           () =>
@@ -712,7 +712,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "needs a reviewed income classification",
+          "1099-K receipt review must match its income route",
         );
         const kRows = result.pending.schedule_c
           .f1099k_receipt_sources as Array<Record<string, unknown>>;
