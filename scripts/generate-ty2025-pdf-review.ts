@@ -24,6 +24,12 @@ import {
   assertReviewSchemaDigest,
   assertReviewSchemaTree,
 } from "./ty2025-pdf-review-schema.ts";
+import {
+  createPrivateReviewDirectory,
+  makeReviewCacheFilesPrivate,
+  writePrivateReviewFile,
+  writePrivateReviewTextFile,
+} from "./ty2025-pdf-review-private-files.ts";
 
 const [outputDir, xsdArg] = Deno.args;
 if (!outputDir || !xsdArg || Deno.args.length !== 2) {
@@ -42,7 +48,7 @@ await assertReviewSchemaTree(xsdPath);
 async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
   const xmlPath = await Deno.makeTempFile({ dir: outputDir, suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
+    await Deno.writeTextFile(xmlPath, xml, { mode: 0o600 });
     const result = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
@@ -61,9 +67,10 @@ async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
 }
 
 // Deliberately refuse an existing directory so a prior review is never replaced.
-await Deno.mkdir(outputDir);
+await createPrivateReviewDirectory(outputDir);
 const plan = buildExecutionPlan(registry);
 const cacheDir = join(outputDir, "irs-pdf-cache");
+await createPrivateReviewDirectory(cacheDir);
 const registered = new Set(ALL_PDF_FORMS.map((form) => form.pendingKey));
 const fixtureIds = new Set<string>();
 const reviewManifest: Record<string, unknown>[] = [];
@@ -110,6 +117,7 @@ for (const fixture of pdfReviewFixtures) {
     bundle,
     pageOrigins,
   );
+  await makeReviewCacheFilesPrivate(cacheDir);
   const xml = bundle.xml;
   const xmlFileContents = xml + "\n";
   const rendered = await PDFDocument.load(pdf);
@@ -172,22 +180,24 @@ for (const fixture of pdfReviewFixtures) {
       reviewerNotes: "",
     })),
   });
-  await Deno.writeFile(join(outputDir, `${fixture.id}.pdf`), pdf);
-  await Deno.writeTextFile(
-    join(outputDir, `${fixture.id}.xml`),
+  await writePrivateReviewFile(outputDir, `${fixture.id}.pdf`, pdf);
+  await writePrivateReviewTextFile(
+    outputDir,
+    `${fixture.id}.xml`,
     xmlFileContents,
   );
-  await Deno.writeTextFile(
-    join(outputDir, `${fixture.id}.json`),
+  await writePrivateReviewTextFile(
+    outputDir,
+    `${fixture.id}.json`,
     sourceFileContents,
   );
 }
 
-await Deno.writeTextFile(
-  join(outputDir, "review-manifest.json"),
+await writePrivateReviewTextFile(
+  outputDir,
+  "review-manifest.json",
   JSON.stringify(
     {
-      synthetic: true,
       taxYear: 2025,
       reviewReturnTimestamp: REVIEW_RETURN_TIMESTAMP,
       xsdSha256,

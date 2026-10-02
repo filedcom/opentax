@@ -27,11 +27,9 @@ const cases = pdfReviewFixtures.map((fixture) => {
   return {
     id: fixture.id,
     expectedPdfForms: fixture.expectedPdfForms,
-    ownerSsns: [
-      fixture.filer.primarySSN,
-      ...(fixture.filer.spouse ? [fixture.filer.spouse.ssn] : []),
-    ],
-    reviewFocus: fixture.reviewFocus,
+    reviewFocus: fixture.reviewFocus.map((focus) =>
+      focus.replace(/\b\d{3}[- ]?\d{2}[- ]?\d{4}\b/g, "[identifier redacted]")
+    ),
   };
 });
 

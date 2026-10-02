@@ -1,4 +1,4 @@
-import { assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertReviewSourceFileContents,
   reviewSourceFileContents,
@@ -18,6 +18,7 @@ Deno.test("source replay rejects extra unsupported fields despite matching manif
   const expected = reviewSourceFileContents(fixture, filer, {
     f1040: { line26: 300 },
   });
+  assertEquals(Object.hasOwn(JSON.parse(expected), "synthetic"), false);
   const edited = JSON.stringify(
     {
       ...JSON.parse(expected),

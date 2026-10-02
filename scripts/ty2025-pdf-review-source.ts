@@ -17,7 +17,6 @@ export function reviewSourceFileContents(
   return JSON.stringify(
     {
       id: fixture.id,
-      synthetic: true,
       inputs: fixture.inputs,
       filer,
       expectedPdfForms: fixture.expectedPdfForms,

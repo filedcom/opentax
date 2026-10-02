@@ -112,7 +112,6 @@ const manifest = object(
   JSON.parse(await Deno.readTextFile(join(directory, "review-manifest.json"))),
   "review manifest",
 );
-checked(manifest.synthetic, "synthetic review-batch flag");
 if (manifest.taxYear !== 2025) throw new Error("Review batch is not TY2025");
 if (manifest.reviewReturnTimestamp !== REVIEW_RETURN_TIMESTAMP) {
   throw new Error(
@@ -199,8 +198,8 @@ for (const [index, rawCase] of cases.entries()) {
     JSON.parse(new TextDecoder().decode(source)),
     `${id} source`,
   );
-  if (sourceData.id !== id || sourceData.synthetic !== true) {
-    throw new Error(`${id}: source identity or synthetic flag differs`);
+  if (sourceData.id !== id) {
+    throw new Error(`${id}: source identity differs`);
   }
   expectedStrings(
     sourceData.expectedPdfForms,
