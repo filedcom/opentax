@@ -286,7 +286,10 @@ Deno.test("Form 8962 PDF projects shared policy percentages without dollar round
     total_premium_tax_credit: 804,
     total_advance_ptc: 536,
     net_premium_tax_credit: 268,
-  }, {});
+  }, {
+    schedule3: { line9_premium_tax_credit: 268 },
+    f1040: { line31_additional_payments: 268 },
+  });
   assertEquals(projected?.pdf_applicable_figure, "0.0200");
   assertEquals(projected?.pdf_line9_yes, true);
   assertEquals(projected?.pdf_line10_no, true);
