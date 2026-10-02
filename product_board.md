@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **737 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **740 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 160-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 737 bounded routes and
+**Implemented coverage.** The completed ledger records 740 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -272,8 +272,14 @@ The filer-owned line 36 overpayment election now reduces the refund by its
 source-checked amount and prints in native XML and PDF.
 The line 26 former-spouse SSN now prints for a reviewed agreed split of joint
 estimated payments after divorce, with exact quarterly source reconciliation.
-Form 8288-A withholding now deposits to Form 1040 line 25c, with a retained
-source lower-bound check at final native/PDF export.
+Form 8288-A withholding now deposits to Form 1040 line 25c; final native/PDF
+export checks the combined retained Form 8288-A, W-2G, Form 8805, and Form
+8959 withholding lower bound. Unmodeled families and exact source equality
+remain open.
+Schedule H positive unrelated-worker withholding now requires a distinct
+reviewed W-4 request and employer agreement for FICA-only and FUTA payroll.
+Scenario 8's code-Q Roth IRA gross now prints on line 4a in native/PDF; the
+printed IRS QCD mark still needs clarification before ATS acceptance.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
 replays the claimed child's exact U.S. residence months into native and PDF
 line 6, requiring that fact for an otherwise qualifying child. The 2025 Schedule 2 graph and
