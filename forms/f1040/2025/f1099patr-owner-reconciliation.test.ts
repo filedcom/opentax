@@ -68,6 +68,33 @@ Deno.test("joint spouse 1099-PATR belongs on MFJ return only", () => {
   );
 });
 
+Deno.test("one 1099-PATR issued reference without an account cannot be counted twice", () => {
+  const issued = personalDistribution("111223333").f1099patr.f1099patrs[0];
+  const duplicate = {
+    f1099patr: { f1099patrs: [issued, { ...issued }] },
+  };
+  assertThrows(
+    () => irs1040.build(filed, { pending: duplicate }),
+    Error,
+    "1099-PATR repeats the same payer, recipient, and issued source reference",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, duplicate),
+    Error,
+    "1099-PATR repeats the same payer, recipient, and issued source reference",
+  );
+  const distinct = {
+    f1099patr: {
+      f1099patrs: [
+        issued,
+        { ...issued, source_document_reference: "patr-copy-2" },
+      ],
+    },
+  };
+  irs1040.build(filed, { pending: distinct });
+  irs1040Pdf.projectFields?.(filed, distinct);
+});
+
 Deno.test("positive PATR withholding and cooperative deduction need a filed owner", () => {
   for (
     const box of [{ box4_federal_withheld: 20 }, {

@@ -231,7 +231,11 @@ Deno.test("1099-PATR rejects repeated identified payer accounts before income or
     Error,
     "1099-PATR repeats the same payer, recipient, and account",
   );
-  const distinct = compute([issued, { ...issued, account_number: "P-2" }]);
+  const distinct = compute([issued, {
+    ...issued,
+    account_number: "P-2",
+    source_document_reference: "issued-patr-second",
+  }]);
   assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 40);
 });
 
