@@ -16,7 +16,9 @@ survival through December 31 support the narrower full-life birth route. The
 actual months must equal the calendar months from the birth month through
 December; the native MeF and filled PDF then print **12** on line 6 as the
 Schedule EIC instructions require. Form 1040 dependent residency uses the same
-reviewed birth fact. An absent or inconsistent review cannot manufacture
+reviewed birth fact. An EIC candidate born late in 2025 with an affirmative
+U.S. residency answer and no birth review fails calculation so the return does
+not silently become childless EIC. An inconsistent review cannot manufacture
 residence months beyond the birth date.
 
 The calculated EIC child detail retains the actual months and review. The

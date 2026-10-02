@@ -186,6 +186,14 @@ Deno.test("Schedule EIC rejects repeated identity and unsupported birth residenc
     JSON.stringify(fabricated.diagnostics),
     "2025 birth months exceed possible calendar residence",
   );
+  const unreviewed = run([deps[0], deps[1], {
+    ...deps[2],
+    eic_birth_residency_review: undefined,
+  }]);
+  assertStringIncludes(
+    JSON.stringify(unreviewed.diagnostics),
+    "EIC 2025 birth needs reviewed residence",
+  );
   const inconsistent = run([deps[0], deps[1], {
     ...deps[2],
     months_lived_with_you_in_us: 0,

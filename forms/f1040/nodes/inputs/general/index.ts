@@ -913,14 +913,23 @@ function isEitcQualifyingChild(
   ssn: string;
   months_lived_with_you_in_us: number;
 } {
-  const otherwiseQualified = passesResidencyTest(dep) &&
-    dep.lived_in_us_over_half_year === true &&
+  const qualifyingIdentity = dep.lived_in_us_over_half_year === true &&
     dep.ssn !== undefined && dep.ssn.length > 0 &&
     dep.ssn_valid_for_employment === true &&
     dep.tin_issued_by_due_date === true &&
     passesJointReturnTest(dep) &&
     passesRelationshipTest(dep) &&
     passesEitcAgeTest(dep);
+  if (
+    qualifyingIdentity && dep.dob.startsWith("2025-") &&
+    dep.months_in_home <= 6 &&
+    dep.eic_birth_residency_review === undefined
+  ) {
+    throw new Error(
+      "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
+    );
+  }
+  const otherwiseQualified = passesResidencyTest(dep) && qualifyingIdentity;
   if (
     otherwiseQualified &&
     dep.months_lived_with_you_in_us === undefined
