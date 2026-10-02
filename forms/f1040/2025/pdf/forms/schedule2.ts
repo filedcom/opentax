@@ -7,7 +7,10 @@ import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.t
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
-import { assertNo2025Schedule2Line10 } from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
+import {
+  assertNo2025Schedule2Line10,
+  assertNoUnsupportedSchedule2Line14,
+} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { assertSection453aSchedule2Line } from "../../section453a-reconciliation.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
@@ -241,6 +244,7 @@ export const schedule2Pdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     assertNo2025Schedule2Line10(fields);
+    assertNoUnsupportedSchedule2Line14(fields);
     assertSection453aSchedule2Line(
       fields.line15_section453a_interest,
       allPending.f453a_interest,

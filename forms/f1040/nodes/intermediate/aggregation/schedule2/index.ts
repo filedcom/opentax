@@ -70,6 +70,8 @@ export const inputSchema = z.object({
   // Line 12 — Net Investment Income Tax (from Form 8960 line 17)
   // IRC §1411; Form 8960 line 17 → Schedule 2 line 12
   line12_niit: z.number().nonnegative().optional(),
+  // Line 14 needs payment-level dealer-sale tax and sale-date AFR evidence.
+  line14_section453l_interest: z.number().int().safe().nonnegative().optional(),
   // Line 15 — interest on deferred tax on qualifying nondealer installment sales.
   line15_section453a_interest: z.number().int().safe().nonnegative().optional(),
   // Line 4 — Self-employment tax (from Schedule SE line 12)
@@ -165,7 +167,20 @@ export function schedule2Part1Total(raw: unknown): number {
 
 /** 2025 line 21 before the separately calculated Form 8978 line 17z offset. */
 export function schedule2Part2Total(raw: unknown): number {
-  return part2Total(inputSchema.parse(raw));
+  const input = inputSchema.parse(raw);
+  assertNoUnsupportedSchedule2Line14(input);
+  return part2Total(input);
+}
+
+export function assertNoUnsupportedSchedule2Line14(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const claim = fields.line14_section453l_interest;
+  if (claim !== undefined && claim !== null && claim !== 0) {
+    throw new Error(
+      "Schedule 2 line 14 needs a section 453(l)(3) payment-level tax, sale-date AFR, and elapsed-period workpaper",
+    );
+  }
 }
 
 export function assertNo2025Schedule2Line10(
@@ -183,6 +198,7 @@ export function assertNo2025Schedule2Line10(
 
 function part2Total(input: Schedule2Input): number {
   assertNo2025Schedule2Line10(input);
+  assertNoUnsupportedSchedule2Line14(input);
   return (input.line4_se_tax ?? 0) +
     (input.line5_unreported_tip_tax ?? 0) +
     line8(input) +
@@ -247,6 +263,7 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertNoUnsupportedSchedule2Line14(input);
     if ((input.line17a_investment_credit_recapture ?? 0) > 0) {
       throw new Error(
         "Schedule 2 generic 3468 recapture requires a specific Form 4255 credit-line source",

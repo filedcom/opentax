@@ -19,6 +19,15 @@ Deno.test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
   );
 });
 
+Deno.test("2025 PDF Schedule 2 rejects unsourced dealer installment interest", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.({ line14_section453l_interest: 120 }, {}),
+    Error,
+    "line 14 needs",
+  );
+});
+
 Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
   const source = {
     rows: [{

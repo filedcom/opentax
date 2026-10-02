@@ -215,6 +215,7 @@ Deno.test({
     xml,
     "<IntDefrdTaxGainInstalSalesAmt>11317</IntDefrdTaxGainInstalSalesAmt>",
   );
+  assertEquals(xml.includes("<IntTaxDueInstalSaleIncmAmt>"), false);
   assertStringIncludes(xml, "<TotalOtherTaxesAmt>11317</TotalOtherTaxesAmt>");
   await validateXsd(xml, "TY2025 section 453A Schedule 2 line 15");
 });

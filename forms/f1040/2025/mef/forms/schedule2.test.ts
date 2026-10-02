@@ -58,6 +58,14 @@ Deno.test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
   );
 });
 
+Deno.test("2025 native Schedule 2 rejects unsourced dealer installment interest", () => {
+  assertThrows(
+    () => schedule2.build({ line14_section453l_interest: 120 }),
+    Error,
+    "line 14 needs",
+  );
+});
+
 Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
   const source = {
     rows: [{

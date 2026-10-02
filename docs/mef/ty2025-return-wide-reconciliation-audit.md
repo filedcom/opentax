@@ -59,8 +59,9 @@ cover a positive reduced total and tampering with the Schedule 2 source,
 adjusted worksheet, or Form 1040 amount. This proves the retained arithmetic; it
 does not authenticate the partner audit source for Form 8978. The bounded
 section 453A [obligation workpaper](ty2025-section453a-interest-workpaper.md)
-now sources and prints Schedule 2 line 15. Section 453(l)(3) line 14 and the
-external sale/evidence joins remain open.
+now sources and prints Schedule 2 line 15. Section 453(l)(3) line 14 rejects
+unsupported amounts; its source route and external sale/evidence joins remain
+open.
 
 ### Schedule 2 installment-sale interest source boundary
 
@@ -95,11 +96,23 @@ the Form 6252 current payment alone would therefore produce an unsupported
 Schedule 2 amount; accepting a bare interest figure would leave the source
 unauthenticated. The new line 15 route replays a retained obligation inventory
 at graph, native, and PDF boundaries, but does not authenticate its cited
-records or join every row to a filed Form 6252. Line 14 still has no route.
+records or join every row to a filed Form 6252. Line 14 now rejects direct
+graph, native, and PDF claims rather than silently dropping them. Under
+[section 453(l)(2)(B) and (3)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/pdf/USCODE-2024-title26-subtitleA-chap1-subchapE-partII-subpartB-sec453.pdf),
+the seller must elect installment treatment for a qualifying dealer sale to an
+individual of a residential lot or specified timeshare right. A residential lot
+does not qualify if the seller or a related person is to improve it, and a
+guarantee by someone other than an individual disqualifies the obligation.
+Interest is due only for payments received after the sale year. It applies to
+the tax attributable to each such payment, from sale date to payment date, at
+the sale-date section 1274 AFR compounded semiannually. Current Form 6252
+rows do not preserve the election, classification, guarantee/improvement facts,
+payment dates, sale-date AFR, or payment-specific tax calculation. These are
+needed before a positive line 14 can be computed.
 
 Remaining gates include authenticated obligation and balance records, the
 Form 6252 sale-key and accepted prior-year workpaper join, pass-through
-allocations, and a separate section 453(l)(3) line 14 calculation. The bounded
+allocations, and a section 453(l)(3) line 14 source and calculation. The bounded
 line 15 tests cover two obligations, a later-year balance, exclusions,
 tampering, native XSD, and filled PDF text. They do not establish those
 remaining facts or IRS acceptance.

@@ -8,7 +8,10 @@ import {
   calculateForm4255Routes,
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
-import { assertNo2025Schedule2Line10 } from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
+import {
+  assertNo2025Schedule2Line10,
+  assertNoUnsupportedSchedule2Line14,
+} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { assertSection453aSchedule2Line } from "../../section453a-reconciliation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -27,6 +30,7 @@ export interface Fields {
   line9_household_employment?: number | null;
   line11_additional_medicare?: number | null;
   line12_niit?: number | null;
+  line14_section453l_interest?: number | null;
   line15_section453a_interest?: number | null;
   uncollected_fica?: number | null;
   uncollected_fica_gtl?: number | null;
@@ -131,6 +135,7 @@ function buildIRS1040Schedule2(
   context?: MefBuildContext,
 ): string {
   assertNo2025Schedule2Line10(fields);
+  assertNoUnsupportedSchedule2Line14(fields);
   assertSection453aSchedule2Line(
     fields.line15_section453a_interest,
     context?.pending?.f453a_interest,

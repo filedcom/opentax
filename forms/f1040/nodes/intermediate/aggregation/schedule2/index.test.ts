@@ -25,6 +25,14 @@ Deno.test("2025 Schedule 2 reserved line 10 rejects stale Form 5405 repayment", 
   assertThrows(() => schedule2Part1Total(stale), Error, "line 10 is reserved");
 });
 
+Deno.test("2025 Schedule 2 rejects unsourced dealer installment interest on line 14", () => {
+  assertThrows(
+    () => compute({ line14_section453l_interest: 120 }),
+    Error,
+    "line 14 needs",
+  );
+});
+
 Deno.test("validation: all-zero fields produce no output", () => {
   const result = compute({
     uncollected_fica: 0,
