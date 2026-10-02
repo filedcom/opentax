@@ -7,6 +7,8 @@ import {
 import { join } from "@std/path";
 import { PDFDocument } from "pdf-lib";
 import { buildPdfBytes, fillFormPdf } from "./builder.ts";
+import { buildMefBundle } from "../mef/builder.ts";
+import { sha256Hex } from "../prepared-source.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { FilingStatus } from "../../mef/header.ts";
@@ -367,6 +369,42 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     const header = new TextDecoder().decode(result.slice(0, 5));
     assertEquals(header, "%PDF-");
     assertGreater(result.length, 100);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("prepared PDF accepts retained native XML after clock drift and rejects a changed answer with a fresh digest", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await makeMinimalF1040Pdf([]));
+    const pending = { f1040: printable1040({}) };
+    const bundle = await buildMefBundle(pending, {
+      filer: mockFiler,
+      attachments: [],
+    });
+
+    // A bundle prepared in an earlier second must still project to its source.
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    const validPdf = await buildPdfBytes(pending, mockFiler, tmpDir, bundle);
+    assertGreater((await PDFDocument.load(validPdf)).getPageCount(), 0);
+
+    const xml = bundle.xml.replace(
+      "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+      "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+    );
+    assertEquals(xml === bundle.xml, false);
+    const xmlSha256 = await sha256Hex(new TextEncoder().encode(xml));
+    await assertRejects(
+      () =>
+        buildPdfBytes(pending, mockFiler, tmpDir, {
+          ...bundle,
+          xml,
+          xmlSha256,
+        }),
+      Error,
+      "Prepared MeF XML differs from its retained source projection",
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

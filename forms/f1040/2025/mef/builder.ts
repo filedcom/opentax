@@ -410,9 +410,17 @@ export function assertPreparedBundleProjection(
   bundle: MefBundle,
   filer: FilerIdentity,
 ): void {
+  // ReturnTs is generated at preparation time when the filer has no timestamp.
+  // Replay that retained instant so the native document comparison is stable.
+  const retainedTimestamp = bundle.xml.match(
+    /<ReturnTs>(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})-05:00<\/ReturnTs>/,
+  )?.[1];
+  if (!filer.timestamp && !retainedTimestamp) {
+    throw new Error("Prepared MeF XML has no replayable ReturnTs");
+  }
   const projected = buildReturnXml(
     bundle.pending,
-    filer,
+    filer.timestamp ? filer : { ...filer, timestamp: `${retainedTimestamp}Z` },
     F1040_2025_CONFIG.mefSchemaVersion,
     2025,
     "1040",

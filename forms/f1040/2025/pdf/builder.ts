@@ -5,7 +5,10 @@ import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
-import type { MefBundle } from "../mef/builder.ts";
+import {
+  assertPreparedBundleProjection,
+  type MefBundle,
+} from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/prepared-attachment-manifest.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
@@ -557,6 +560,10 @@ export async function buildPdfBytes(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    if (!filer) {
+      throw new Error("Prepared MeF PDF needs its filer identity");
+    }
+    assertPreparedBundleProjection(preparedBundle, filer);
   }
   const form8283Source = normalized.f8283
     ? form8283SourceSchema.parse(normalized.f8283)
