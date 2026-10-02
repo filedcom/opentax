@@ -271,6 +271,10 @@ import {
   inputSchema as f8874RecaptureInputSchema,
 } from "../nodes/inputs/f8874/recapture_node.ts";
 import {
+  f453a_interest,
+  inputSchema as f453aInterestInputSchema,
+} from "../nodes/inputs/f453a_interest/index.ts";
+import {
   f8911,
   inputSchema as f8911InputSchema,
 } from "../nodes/inputs/f8911/index.ts";
@@ -831,6 +835,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   {
     node: f8874_recapture,
     inputSchema: f8874RecaptureInputSchema,
+    isArray: false,
+  },
+  {
+    node: f453a_interest,
+    inputSchema: f453aInterestInputSchema,
     isArray: false,
   },
   { node: f8911, inputSchema: f8911InputSchema, isArray: false },

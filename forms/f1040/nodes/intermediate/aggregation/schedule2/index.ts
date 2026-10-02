@@ -70,6 +70,8 @@ export const inputSchema = z.object({
   // Line 12 — Net Investment Income Tax (from Form 8960 line 17)
   // IRC §1411; Form 8960 line 17 → Schedule 2 line 12
   line12_niit: z.number().nonnegative().optional(),
+  // Line 15 — interest on deferred tax on qualifying nondealer installment sales.
+  line15_section453a_interest: z.number().int().safe().nonnegative().optional(),
   // Line 4 — Self-employment tax (from Schedule SE line 12)
   // IRC §1401; Schedule SE line 12 → Schedule 2 line 4
   line4_se_tax: z.number().nonnegative().optional(),
@@ -194,6 +196,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17d_hsa_eligibility_tax ?? 0) +
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
+    (input.line15_section453a_interest ?? 0) +
     (input.line9_household_employment ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line17a_new_markets_credit_recapture ?? 0) +
@@ -230,6 +233,7 @@ function part2UnclassifiedTax(input: Schedule2Input): number {
       ? input.line8_form5329_tax ?? 0
       : 0;
   return form5329WithoutBreakdown +
+    (input.line15_section453a_interest ?? 0) +
     (input.line19_form4255_net_epe ?? 0) +
     (input.line17z_other_additional_taxes ?? 0);
 }

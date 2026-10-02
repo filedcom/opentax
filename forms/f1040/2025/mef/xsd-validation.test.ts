@@ -40,6 +40,7 @@ import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+import { twoObligation453aFixture } from "../../nodes/inputs/f453a_interest/fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
 import {
@@ -196,6 +197,26 @@ Deno.test({
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
   );
   await validateXsd(xml, "TY2025 Schedule 2 lines 17b and 17c");
+});
+
+Deno.test({
+  name:
+    "XSD: section 453A obligation workpaper reaches Schedule 2 line 15 and Form 1040 line 23",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: 11_317 },
+    schedule2: { line15_section453a_interest: 11_317 },
+    f453a_interest: twoObligation453aFixture,
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(
+    xml,
+    "<IntDefrdTaxGainInstalSalesAmt>11317</IntDefrdTaxGainInstalSalesAmt>",
+  );
+  assertStringIncludes(xml, "<TotalOtherTaxesAmt>11317</TotalOtherTaxesAmt>");
+  await validateXsd(xml, "TY2025 section 453A Schedule 2 line 15");
 });
 
 Deno.test({

@@ -57,10 +57,10 @@ The
 place the bounded negative Form 8978 adjustment on Schedule 2 line 17z. Fixtures
 cover a positive reduced total and tampering with the Schedule 2 source,
 adjusted worksheet, or Form 1040 amount. This proves the retained arithmetic; it
-does not authenticate the partner audit source for Form 8978. The 2025 Schedule
-2 line 14 and line 15 installment-sale interest entries remain unsourced and
-unprinted in the current graph/PDF. They need separate retained sale and
-interest-calculation evidence before inclusion in line 21.
+does not authenticate the partner audit source for Form 8978. The bounded
+section 453A [obligation workpaper](ty2025-section453a-interest-workpaper.md)
+now sources and prints Schedule 2 line 15. Section 453(l)(3) line 14 and the
+external sale/evidence joins remain open.
 
 ### Schedule 2 installment-sale interest source boundary
 
@@ -93,19 +93,16 @@ shareholder instructions](https://www.irs.gov/instructions/i1120ssk), codes M
 and N). Deriving interest from
 the Form 6252 current payment alone would therefore produce an unsupported
 Schedule 2 amount; accepting a bare interest figure would leave the source
-unauthenticated. The Schedule 2 graph input, native MeF mapping, and PDF
-descriptor have no line 14/15 fields, so neither amount can be printed or
-reconciled to line 21 and Form 1040 line 23 yet.
+unauthenticated. The new line 15 route replays a retained obligation inventory
+at graph, native, and PDF boundaries, but does not authenticate its cited
+records or join every row to a filed Form 6252. Line 14 still has no route.
 
-The implementation gate is a retained obligation/interest workpaper keyed to
-each sale and pass-through source. It must carry origin-year, transaction and
-property classification, face amount and close-of-year balance, prior-year
-percentage where relevant, unrecognized gain and gain character, maximum tax
-rate, tax-year-end underpayment rate citation, and per-obligation line 14/15
-calculation. Then add the computed lines to Schedule 2 Part II, MeF, and PDF,
-and assert their sum through line 21 and Form 1040 line 23. A positive
-two-obligation case, a later-year carryover, both statutory classifications,
-and tampered workpaper/line totals should be in the bulk validation batch.
+Remaining gates include authenticated obligation and balance records, the
+Form 6252 sale-key and accepted prior-year workpaper join, pass-through
+allocations, and a separate section 453(l)(3) line 14 calculation. The bounded
+line 15 tests cover two obligations, a later-year balance, exclusions,
+tampering, native XSD, and filled PDF text. They do not establish those
+remaining facts or IRS acceptance.
 
 ### Form 1040 line 26 estimated-payment amount
 
@@ -167,7 +164,7 @@ arithmetic does not establish receipt ownership or IRS account posting.
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 1z, 9, 11, and 15. Final export replays line 1z and line 9 from retained components when enough rows are present, line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |
 | Schedule 1 and 1-A             | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040.                                                                                        | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open.                                                                                     |
-| Schedule 2 and 3               | Schedule 2 Parts I and II and Schedule 3 nonrefundable/payment totals now reconcile to Form 1040, including the retained Form 8978 line 17z reduction; several credits are finalized in the Form 1040 sink after tax is known. | Authenticate child sources, including the Form 8978 partner audit and corrected return facts. The official 2025 Schedule 2 also has installment-sale interest on lines 14 and 15, which lack a sourced graph route and printable projection. |
+| Schedule 2 and 3               | Schedule 2 Parts I and II and Schedule 3 nonrefundable/payment totals now reconcile to Form 1040, including the retained Form 8978 line 17z reduction and bounded section 453A line 15 workpaper; several credits are finalized in the Form 1040 sink after tax is known. | Authenticate child sources, including the Form 8978 partner audit and corrected return facts. Section 453(l)(3) line 14 and the line 15 external sale/evidence joins remain open. |
 | Withholding and payments       | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines.                                                                                                    | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31.                                                                                                |
 | Multiple copies and carryovers | Several child descriptors create multiple owner/source-specific native and PDF copies; credit and loss carryovers have route-specific ledgers.                                                                                 | Require a complete per-copy source inventory and origin-year/earlier-use ledger across the final return. One arithmetic total cannot establish that all copies belong to the taxpayer or that a carryover is available.                      |
 
