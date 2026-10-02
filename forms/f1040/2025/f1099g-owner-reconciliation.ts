@@ -1,4 +1,7 @@
-import { inputSchema } from "../nodes/inputs/f1099g/index.ts";
+import {
+  assertDistinct1099GCopies,
+  inputSchema,
+} from "../nodes/inputs/f1099g/index.ts";
 
 const positiveAmountKeys = [
   "box_1_unemployment",
@@ -20,6 +23,7 @@ export function assertPositive1099GOwner(
 ): void {
   if (pending?.f1099g === undefined) return;
   const rows = inputSchema.parse(pending.f1099g).f1099gs;
+  assertDistinct1099GCopies(rows);
   const primary = typeof fields.taxpayer_ssn === "string"
     ? fields.taxpayer_ssn.replace(/\D/g, "")
     : undefined;

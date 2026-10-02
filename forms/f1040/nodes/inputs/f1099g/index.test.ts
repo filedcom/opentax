@@ -107,10 +107,24 @@ Deno.test("1099-G repeated identified account cannot double income or withholdin
   );
   const distinct = compute([
     issued,
-    { ...issued, account_number: "BEN-2" },
+    {
+      ...issued,
+      account_number: "BEN-2",
+      source_document_reference: "separate-1099g-copy-2",
+    },
   ]);
   assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1000);
   assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
+});
+
+Deno.test("1099-G repeated issued reference without an account cannot double RTAA income", () => {
+  const issued = rtaaItem(500);
+  assertThrows(
+    () => compute([issued, { ...issued, box_5_rtaa: 600 }]),
+    Error,
+    "repeats the same identified payer, recipient, and issued source reference",
+  );
+  compute([issued, rtaaItem(600, "separate-issued-rtaa-copy")]);
 });
 
 // =============================================================================

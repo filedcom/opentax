@@ -41,6 +41,27 @@ Deno.test("positive 1099-G unemployment owner is checked by native and PDF Form 
   }
 });
 
+Deno.test("one issued 1099-G reference without an account cannot replay changed income in native or PDF", () => {
+  const [issued] = unemployment("111223333").f1099g.f1099gs;
+  const pending = {
+    f1099g: {
+      f1099gs: [issued, { ...issued, box_1_unemployment: 200 }],
+    },
+  };
+  for (
+    const build of [
+      () => irs1040.build(filed, { pending }),
+      () => irs1040Pdf.projectFields?.(filed, pending),
+    ]
+  ) {
+    assertThrows(
+      build,
+      Error,
+      "repeats the same identified payer, recipient, and issued source reference",
+    );
+  }
+});
+
 Deno.test("joint spouse 1099-G belongs on MFJ return only", () => {
   const source = unemployment("444556666");
   const joint = {

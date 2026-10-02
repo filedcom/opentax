@@ -158,22 +158,37 @@ export const inputSchema = z.object({
 type G99Items = z.infer<typeof itemSchema>[];
 
 export function assertDistinct1099GCopies(items: G99Items): void {
-  const seen = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenReferences = new Set<string>();
   for (const item of items) {
-    if (
-      !item.payer_tin || !item.recipient_tin || !item.account_number
-    ) continue;
-    const key = JSON.stringify([
-      item.payer_tin.replace(/\D/g, ""),
-      item.recipient_tin,
-      item.account_number.trim(),
-    ]);
-    if (seen.has(key)) {
-      throw new Error(
-        "1099-G repeats the same identified payer, recipient, and account; corrected copies need a reviewed single current row",
-      );
+    if (!item.payer_tin || !item.recipient_tin) continue;
+    const payer = item.payer_tin.replace(/\D/g, "");
+    if (item.account_number) {
+      const key = JSON.stringify([
+        payer,
+        item.recipient_tin,
+        item.account_number.trim(),
+      ]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-G repeats the same identified payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
     }
-    seen.add(key);
+    if (item.source_document_reference) {
+      const key = JSON.stringify([
+        payer,
+        item.recipient_tin,
+        item.source_document_reference,
+      ]);
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "1099-G repeats the same identified payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+        );
+      }
+      seenReferences.add(key);
+    }
   }
 }
 
