@@ -71,7 +71,10 @@ Deno.test("Form 2439 gain-only Copy B is included without Schedule 3 credit", ()
     { f2439s: [{ ...item, box2: undefined }] },
     { filer },
   );
-  assertStringIncludes(xml, "<TotalUndistributedLTCapGainAmt>10000</TotalUndistributedLTCapGainAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalUndistributedLTCapGainAmt>10000</TotalUndistributedLTCapGainAmt>",
+  );
   assertEquals(xml.includes("TaxPaidByRICOrREITAmt"), false);
 });
 
@@ -193,12 +196,17 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single", line31_additional_payments: 1_500 },
-    schedule3: { line13a_total: 1_500, line15_total: 1_500 },
+    schedule3: {
+      line13a_total: 1_500,
+      line14_total: 1_500,
+      line15_total: 1_500,
+    },
     schedule_d: { line_11_form2439: 10_000 },
     f2439: { f2439s: [item] },
   }, filer);
   assertStringIncludes(xml, "<IRS2439 documentId=");
   assertStringIncludes(xml, "<TaxPaidByRICOrREITAmt referenceDocumentId=");
+  assertStringIncludes(xml, "<OtherPaymentsAmt>1500</OtherPaymentsAmt>");
   assertStringIncludes(xml, 'referenceDocumentName="IRS2439"');
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

@@ -32,9 +32,10 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("Form 2439 box 2 reaches Schedule 3 line 13a, line 15 and Form 1040 line 31 once", () => {
+Deno.test("Form 2439 box 2 reaches Schedule 3 lines 13a, 14, 15 and Form 1040 line 31 once", () => {
   const result = compute({ line13a_tax_paid_by_ric_or_reit: [1_500, 750] });
   assertEquals(findOutput(result, "schedule3")?.fields.line13a_total, 2_250);
+  assertEquals(findOutput(result, "schedule3")?.fields.line14_total, 2_250);
   assertEquals(findOutput(result, "schedule3")?.fields.line15_total, 2_250);
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line31_additional_payments,

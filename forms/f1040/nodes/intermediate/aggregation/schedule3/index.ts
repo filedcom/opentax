@@ -276,7 +276,10 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (line1Total > 0) printFields.line1_total = line1Total;
     if (line6a(input) > 0) printFields.line6a_total = line6a(input);
     const line13a = sumAccumulable(input.line13a_tax_paid_by_ric_or_reit);
-    if (line13a > 0) printFields.line13a_total = line13a;
+    if (line13a > 0) {
+      printFields.line13a_total = line13a;
+      printFields.line14_total = line13a;
+    }
     if (cleanNew > 0) printFields.line6f_total = cleanNew;
     if (cleanUsed > 0) printFields.line6m_total = cleanUsed;
     if (line7(input) > 0) printFields.line7_total = line7(input);

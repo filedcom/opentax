@@ -17,4 +17,8 @@ Deno.test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines"
     fields.get("line12_fuel_tax_credit"),
     "topmostSubform[0].Page1[0].f1_29[0]",
   );
+  assertEquals(
+    fields.get("line14_total"),
+    "topmostSubform[0].Page1[0].f1_36[0]",
+  );
 });

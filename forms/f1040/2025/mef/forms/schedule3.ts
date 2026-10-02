@@ -31,6 +31,7 @@ export interface Fields {
   line11_excess_ss?: number | null;
   line12_fuel_tax_credit?: number | null;
   line13a_total?: number | null;
+  line14_total?: number | null;
   line15_total?: number | null;
 }
 
@@ -70,6 +71,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
   ["line12_fuel_tax_credit", "TotalFuelTaxCreditAmt"],
   ["line13a_total", "TaxPaidByRICOrREITAmt"],
+  ["line14_total", "OtherPaymentsAmt"],
   ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 

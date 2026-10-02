@@ -66,7 +66,7 @@ Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", (
     "must equal sourced Form 2439",
   );
   const xml = schedule3.build(
-    { line13a_total: 2_250 },
+    { line13a_total: 2_250, line14_total: 2_250, line15_total: 2_250 },
     {
       pending: { f2439: source },
       documentIdsByPendingKey: { f2439: ["IRS2439_1", "IRS2439_2"] },
@@ -76,6 +76,7 @@ Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", (
     xml,
     '<TaxPaidByRICOrREITAmt referenceDocumentId="IRS2439_1 IRS2439_2" referenceDocumentName="IRS2439">2250</TaxPaidByRICOrREITAmt>',
   );
+  assertStringIncludes(xml, "<OtherPaymentsAmt>2250</OtherPaymentsAmt>");
 });
 
 Deno.test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
