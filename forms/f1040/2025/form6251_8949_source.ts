@@ -139,12 +139,30 @@ export function assertForm6251Form8949Source(
     shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
     longRows.every((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
     regularNet > 0 && amtNet < 0;
+  const singleShortLossToAmtGain = rows.length === 1 &&
+    shortLosses.length === 1 && fields.filing_status === "single" &&
+    regularNet < 0 && regularNet >= -3_000 && amtNet > 0;
+  const twoShortLotsLossToGain = rows.length === 2 &&
+    shortLosses.length === 2 && fields.filing_status === "single" &&
+    rows.filter((row) => row.regular_gain < 0 && row.amt_gain > 0).length ===
+      1 &&
+    rows.filter((row) => row.regular_gain > 0 && row.amt_gain > 0).length ===
+      1 &&
+    regularNet > 0 && amtNet > 0;
   if (
     rows.some((row) => row.regular_gain > 0 && row.amt_gain < 0) &&
     !gainToAmtLoss && !mixedTermGainToAmtLoss
   ) {
     throw new Error(
       "Form 6251 gain-to-AMT-loss basis sale needs audited same-term lots or identified short-term losses offsetting one long-term regular gain with a fully deductible AMT net loss",
+    );
+  }
+  if (
+    rows.some((row) => row.regular_gain < 0 && row.amt_gain > 0) &&
+    !singleShortLossToAmtGain && !twoShortLotsLossToGain
+  ) {
+    throw new Error(
+      "Form 6251 regular-loss-to-AMT-gain basis sale needs one identified single-filer short-term lot within the regular loss limit",
     );
   }
   if (
@@ -177,6 +195,56 @@ export function assertForm6251Form8949Source(
     ) {
       throw new Error(
         "Form 6251 gain-to-AMT-loss basis sale needs a deductible AMT loss and matching Schedule 2 and Form 1040 capital gain and tax",
+      );
+    }
+  }
+  if (singleShortLossToAmtGain) {
+    const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+    const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const amt = fields.line11_amt;
+    if (
+      (fields.net_capital_gain ?? 0) !== 0 ||
+      (fields.qualified_dividends ?? 0) !== 0 ||
+      fields.prior_iso_sale_review !== undefined ||
+      (fields.form4952_regular_election ?? 0) !== 0 ||
+      (fields.form4952_amt_election ?? 0) !== 0 ||
+      (fields.unrecaptured_1250_gain ?? 0) !== 0 ||
+      (fields.rate_28_gain ?? 0) !== 0 ||
+      fields.line13 !== undefined || fields.line15 !== undefined ||
+      typeof amt !== "number" || amt <= 0 ||
+      schedule2?.line2_amt !== amt ||
+      form1040?.line7_capital_gain !== regularNet ||
+      form1040?.line15_taxable_income !== fields.regular_taxable_income ||
+      typeof form1040?.line17_additional_taxes !== "number" ||
+      form1040.line17_additional_taxes < amt
+    ) {
+      throw new Error(
+        "Form 6251 short-term loss-to-AMT-gain basis sale needs its regular Schedule D loss and matching Schedule 2 and Form 1040 tax",
+      );
+    }
+  }
+  if (twoShortLotsLossToGain) {
+    const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+    const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const amt = fields.line11_amt;
+    if (
+      (fields.net_capital_gain ?? 0) !== 0 ||
+      (fields.qualified_dividends ?? 0) !== 0 ||
+      fields.prior_iso_sale_review !== undefined ||
+      (fields.form4952_regular_election ?? 0) !== 0 ||
+      (fields.form4952_amt_election ?? 0) !== 0 ||
+      (fields.unrecaptured_1250_gain ?? 0) !== 0 ||
+      (fields.rate_28_gain ?? 0) !== 0 ||
+      fields.line13 !== undefined || fields.line15 !== undefined ||
+      typeof amt !== "number" || amt <= 0 ||
+      schedule2?.line2_amt !== amt ||
+      form1040?.line7_capital_gain !== regularNet ||
+      form1040?.line15_taxable_income !== fields.regular_taxable_income ||
+      typeof form1040?.line17_additional_taxes !== "number" ||
+      form1040.line17_additional_taxes < amt
+    ) {
+      throw new Error(
+        "Form 6251 two short-term basis lots need matching Schedule D, Schedule 2, and Form 1040 income and tax",
       );
     }
   }

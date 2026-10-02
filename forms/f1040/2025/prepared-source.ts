@@ -11,18 +11,25 @@ export async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 /** Bind a PDF projection to the source and filer serialized by MeF. */
-export async function preparedSourceSha256(
+export function preparedSourceBytes(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
-): Promise<string> {
+): Uint8Array {
   const normalized: Record<string, unknown> = normalizeAllPending(pending);
   // MeF keeps computed Form 8949 rows as a top-level array. Bind those rows
   // to the prepared source even though generic pending normalization omits it.
   if (Array.isArray(pending.form8949)) {
     normalized.form8949 = pending.form8949;
   }
-  const bytes = new TextEncoder().encode(
+  return new TextEncoder().encode(
     JSON.stringify({ pending: normalized, filer }),
   );
-  return sha256Hex(bytes);
+}
+
+/** Bind a PDF projection to the source and filer serialized by MeF. */
+export async function preparedSourceSha256(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+): Promise<string> {
+  return sha256Hex(preparedSourceBytes(pending, filer));
 }

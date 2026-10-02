@@ -101,6 +101,16 @@ Deno.test("two 1099-MISC box 3 payments retain descriptions through Form 1040 an
 
 Deno.test("1099-MISC box 3 other-income recipient must belong to the filer", async () => {
   const pending = buildPending({
+    f1099m: {
+      f1099ms: [{
+        payer_name: "Settlement Co",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        box3_other_income: 500,
+        box3_other_income_routing: "other_income",
+        box3_other_income_description: "Taxable settlement",
+      }],
+    },
     schedule1: {
       line9_total_other_income: 500,
       line10_total_additional_income: 500,
@@ -116,11 +126,11 @@ Deno.test("1099-MISC box 3 other-income recipient must belong to the filer", asy
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "recipient differs from the filer",
+    "1099-MISC box 3 issued source is invalid",
   );
   await assertRejects(
     () => buildPdfBytes(pending, filer),
     Error,
-    "recipient differs from the filer",
+    "1099-MISC box 3 issued source is invalid",
   );
 });

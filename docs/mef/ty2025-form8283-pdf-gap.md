@@ -1,5 +1,22 @@
 # TY2025 Form 8283 PDF boundary
 
+## Twelve distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+allow one or more Forms 8283 and require the full Form 8283 data in an electronic
+return. The existing bounded current-year purchased, noncapital, nonvehicle
+Section A route now accepts nine through twelve gifts with distinct
+similar-item-group identities. It requires the same complete acquisition,
+donee, valuation, Schedule A inventory, empty prior-carryover ledger, and
+itemized Form 1040 reconciliation as the five-through-eight gift route. The
+native document retains one property ID per gift, A through L. The PDF
+projects three official first-page copies, each with four actual rows, rather
+than omitting items after row H. A twelve-gift $8,400 case and changed twelfth
+item, duplicate group, changed final itemized total, and thirteenth-gift
+rejections are authored for the deferred bulk gate. Reduced gifts, vehicles,
+capital-gain property, mixed Section B, carryovers, actual source-byte
+authentication, and more than twelve Section A gifts remain closed.
+
 ## Two similar Section B art gifts (2026-10-01 build pass, unrun)
 
 The same two-copy path now also permits exactly one artwork to have a
@@ -266,3 +283,69 @@ every supplemental page is visually correct. Other AcroForm data, page
 appearance, and complete returns must be checked in the agreed PDF/full-test
 batch; local XSD, IRS
 business rules, and ATS acceptance remain separate gates.
+
+## Four distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The preview now projects up to four current-year purchased, noncapital gifts
+claimed at their unreduced FMV, one per official Section A row. Each row needs
+complete donee, acquisition, contribution, basis, and valuation-method facts;
+distinct declared similar-item groups must remain below the Section B
+appraisal threshold. Native MeF and the preview reconcile the complete Form
+8283 inventory with finalized Schedule A and itemized Form 1040, and native
+MeF rejects a changed item against the pending source. The authored four-row
+fixture totals $5,500 and includes changed return, changed native source, and
+changed group fixtures for the deferred bulk pass. The route does not cover
+mixed Section A/B, more than eight Section A rows, capital-gain property, or
+actual source authentication.
+
+## Five distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require all noncash gift data in the electronic submission; the checked-in
+TY2025 `IRS8283.xsd` permits repeated `InformationOnDonatedProperty` entries.
+The bounded fifth-item route requires five distinct current-year purchased,
+noncapital, nonvehicle Section A gifts, each claimed at its unreduced FMV with
+complete donee, acquisition, date, basis, valuation-method, and distinct
+similar-item-group facts. Native MeF keeps all five A–E items in one `IRS8283`
+document. The PDF preview fills two official first-page copies: rows A–D on the
+first and the fifth item in row A on the second. The source inventory is
+recomputed against Schedule A line 12 and itemized Form 1040 line 12e before
+either projection. A $6,400 case and changed fifth item, return total, and
+duplicate-sixth-group rejection cases are authored but unrun pending bulk validation.
+Reduced, capital-gain, vehicle, mixed Section B, carryover, and more than eight
+Section A gifts remain closed. These records are preparer-entered facts rather than
+authenticated donor/donee source bytes; PDF appearance, XSD/business rules,
+and IRS ATS acceptance are pending.
+
+## Eight distinct unreduced Section A gifts (2026-10-01, unrun)
+
+The same direct current-year route now allows five through eight distinct
+purchased, noncapital, nonvehicle Section A gifts with separate similar-item
+groups and each item claimed at its unreduced FMV. TY2025 `IRS8283.xsd`
+permits unbounded `InformationOnDonatedProperty` entries, so native MeF keeps
+the complete A–H source inventory on one form. The PDF preview repeats the
+official first page, placing A–D on its first copy and E–H in the four rows
+on its second copy. The source inventory, Schedule A line 12, and itemized
+Form 1040 line 12e must reconcile before export. A $9,600 eight-gift case and
+changed eighth item, repeated group, return-total, and ninth-item rejection
+fixtures are authored for the deferred bulk pass. Reduced gifts, vehicles,
+capital-gain property, mixed Section B, carryovers, source-byte authentication,
+and more than eight Section A gifts remain outside this bounded route.
+
+## Two distinct reduced Section B equipment groups (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require a separate Section B for each donee and each item or similar-item
+group claimed above $5,000. The existing two-equipment route already has a
+separate qualified appraisal, signed Form 8283, appraiser/donee signatures,
+purchase/basis record, FMV-reduction statement, and reviewed attachment-byte
+digest for each gift. It now accepts two different, nonempty similar-item
+group identities as well as the existing same-group case. The native writer
+uses each group's own deduction total on its separate `IRS8283` document; PDF
+projects two Section B copies. A $12,000 equipment claim and a $13,000
+equipment claim reach Schedule A line 12 and itemized Form 1040 line 12e as
+$25,000 of noncash gifts, with $61,000 of total itemized deductions in the
+authored return. Changed second-group and finalized-total fixtures reject
+through native and PDF preflight. These source and output fixtures are unrun
+pending the bulk gate. Mixed property types, more than two Section B items,
+carryovers, and real document/authenticity review remain outside this route.

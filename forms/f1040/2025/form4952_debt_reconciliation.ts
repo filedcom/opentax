@@ -1,6 +1,7 @@
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as dividendSourceSchema } from "../nodes/inputs/f1099div/index.ts";
 import { inputSchema as oidSourceSchema } from "../nodes/inputs/f1099oid/index.ts";
+import { inputSchema as miscSourceSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../nodes/types.ts";
 import {
@@ -87,6 +88,10 @@ export function reconcileForm4952DirectDebtExport(
   const interest = interestSourceSchema.safeParse(pending.f1099int);
   const dividend = dividendSourceSchema.safeParse(pending.f1099div);
   const oid = oidSourceSchema.safeParse(pending.f1099oid);
+  const misc = miscSourceSchema.safeParse(pending.f1099m);
+  const oneRoyalty = misc.success && misc.data.f1099ms.length === 1 &&
+    pending.f1099int === undefined && pending.f1099div === undefined &&
+    pending.f1099oid === undefined;
   const oneInterest = interest.success &&
     interest.data.f1099ints.length === 1 &&
     pending.f1099div === undefined && pending.f1099oid === undefined;
@@ -103,8 +108,29 @@ export function reconcileForm4952DirectDebtExport(
   const oneDividend = dividend.success &&
     dividend.data.f1099divs.length === 1 &&
     pending.f1099int === undefined && pending.f1099oid === undefined;
+  const twoDividends = dividend.success &&
+    dividend.data.f1099divs.length === 2 &&
+    pending.f1099int === undefined && pending.f1099oid === undefined &&
+    dividend.data.f1099divs.filter((item) => (item.box1b ?? 0) > 0).length ===
+      1 &&
+    dividend.data.f1099divs.every((item) =>
+      !!item.source_document_reference?.trim() && !!item.payerName?.trim()
+    ) &&
+    new Set(
+        dividend.data.f1099divs.map((item) => item.source_document_reference),
+      ).size === 2 &&
+    new Set(dividend.data.f1099divs.map((item) => item.payerName)).size === 2;
   const oneOid = oid.success && oid.data.f1099oids.length === 1 &&
     pending.f1099int === undefined && pending.f1099div === undefined;
+  const twoOid = oid.success && oid.data.f1099oids.length === 2 &&
+    pending.f1099int === undefined && pending.f1099div === undefined &&
+    oid.data.f1099oids.every((item) =>
+      !!item.source_document_reference?.trim() && !!item.payer_name?.trim()
+    ) &&
+    new Set(
+        oid.data.f1099oids.map((item) => item.source_document_reference),
+      ).size === 2 &&
+    new Set(oid.data.f1099oids.map((item) => item.payer_name)).size === 2;
   const oneTreasuryInterestAndOid = interest.success && oid.success &&
     interest.data.f1099ints.length === 1 &&
     oid.data.f1099oids.length === 1 &&
@@ -119,6 +145,32 @@ export function reconcileForm4952DirectDebtExport(
     !!oid.data.f1099oids[0].payer_name?.trim() &&
     interest.data.f1099ints[0].payer_name !==
       oid.data.f1099oids[0].payer_name;
+  const treasuryOidAndDividend = interest.success && oid.success &&
+    dividend.success && interest.data.f1099ints.length === 1 &&
+    oid.data.f1099oids.length === 1 && dividend.data.f1099divs.length === 1 &&
+    (interest.data.f1099ints[0].box1 ?? 0) === 0 &&
+    (interest.data.f1099ints[0].box3 ?? 0) > 0 &&
+    (dividend.data.f1099divs[0].box1b ?? 0) === 0 &&
+    [
+      interest.data.f1099ints[0].source_document_reference,
+      oid.data.f1099oids[0].source_document_reference,
+      dividend.data.f1099divs[0].source_document_reference,
+    ].every((reference) => !!reference?.trim()) &&
+    new Set([
+        interest.data.f1099ints[0].source_document_reference,
+        oid.data.f1099oids[0].source_document_reference,
+        dividend.data.f1099divs[0].source_document_reference,
+      ]).size === 3 &&
+    [
+      interest.data.f1099ints[0].payer_name,
+      oid.data.f1099oids[0].payer_name,
+      dividend.data.f1099divs[0].payerName,
+    ].every((name) => !!name?.trim()) &&
+    new Set([
+        interest.data.f1099ints[0].payer_name,
+        oid.data.f1099oids[0].payer_name,
+        dividend.data.f1099divs[0].payerName,
+      ]).size === 3;
   const oneInterestAndDividend = interest.success && dividend.success &&
     interest.data.f1099ints.length === 1 &&
     dividend.data.f1099divs.length === 1 &&
@@ -184,15 +236,17 @@ export function reconcileForm4952DirectDebtExport(
   if (
     !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
-    (!oneInterest && !twoInterest && !oneDividend && !oneOid &&
+    (!oneInterest && !twoInterest && !oneDividend && !twoDividends && !oneOid &&
+      !twoOid &&
       !oneTreasuryInterestAndOid &&
+      !treasuryOidAndDividend &&
       !oneInterestAndDividend && !oneOidAndDividend &&
       !twoInterestAndDividend && !interestAndTwoDividends &&
-      !twoInterestTwoDividends) ||
+      !twoInterestTwoDividends && !oneRoyalty) ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
-      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099-INT, 1099-DIV, or taxable 1099-OID investment payer inventory",
+      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099 investment payer or royalty inventory",
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");
@@ -278,7 +332,25 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_qualified_dividends !== "number" ||
         printed.data.source_1099_qualified_dividends !==
           retained.data.source_1099_qualified_dividends
-      : twoInterest || oneTreasuryInterestAndOid || twoInterestAndDividend
+      : twoDividends
+      ? printed.data.source_1099_interest !== undefined ||
+        retained.data.source_1099_interest !== undefined ||
+        !Array.isArray(printed.data.source_1099_dividends) ||
+        !Array.isArray(retained.data.source_1099_dividends) ||
+        printed.data.source_1099_dividends.length !== 2 ||
+        retained.data.source_1099_dividends.length !== 2 ||
+        JSON.stringify(
+            [...printed.data.source_1099_dividends].sort((a, b) => a - b),
+          ) !==
+          JSON.stringify(
+            [...retained.data.source_1099_dividends].sort((a, b) => a - b),
+          ) ||
+        typeof printed.data.source_1099_qualified_dividends !== "number" ||
+        typeof retained.data.source_1099_qualified_dividends !== "number" ||
+        printed.data.source_1099_qualified_dividends !==
+          retained.data.source_1099_qualified_dividends
+      : twoInterest || twoOid || oneTreasuryInterestAndOid ||
+          treasuryOidAndDividend || twoInterestAndDividend
       ? !Array.isArray(printed.data.source_1099_interest) ||
         !Array.isArray(retained.data.source_1099_interest) ||
         printed.data.source_1099_interest.length !== 2 ||
@@ -289,7 +361,7 @@ export function reconcileForm4952DirectDebtExport(
           JSON.stringify(
             [...retained.data.source_1099_interest].sort((a, b) => a - b),
           ) ||
-        (twoInterest || oneTreasuryInterestAndOid
+        (twoInterest || twoOid || oneTreasuryInterestAndOid
           ? printed.data.source_1099_dividends !== undefined ||
             retained.data.source_1099_dividends !== undefined
           : typeof printed.data.source_1099_dividends !== "number" ||
@@ -325,6 +397,15 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_interest !== "number" ||
         printed.data.source_1099_interest !==
           retained.data.source_1099_interest ||
+        printed.data.source_1099_dividends !== undefined ||
+        retained.data.source_1099_dividends !== undefined
+      : oneRoyalty
+      ? typeof printed.data.source_1099_royalties !== "number" ||
+        typeof retained.data.source_1099_royalties !== "number" ||
+        printed.data.source_1099_royalties !==
+          retained.data.source_1099_royalties ||
+        printed.data.source_1099_interest !== undefined ||
+        retained.data.source_1099_interest !== undefined ||
         printed.data.source_1099_dividends !== undefined ||
         retained.data.source_1099_dividends !== undefined
       : typeof printed.data.source_1099_dividends !== "number" ||

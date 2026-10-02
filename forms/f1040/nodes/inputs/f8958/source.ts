@@ -37,6 +37,9 @@ export enum AllocationBasis {
 
 const reference = z.string().trim().min(1);
 const wholeDollar = z.number().refine(Number.isSafeInteger);
+const nonnegativeWholeDollar = z.number().int().nonnegative().refine(
+  Number.isSafeInteger,
+);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(parsed.getTime()) &&
@@ -137,6 +140,22 @@ export const inputSchema = z.object({
   reviewed_by: reference,
   reviewed_on: date,
   return_wide_items_review_reference: reference,
+  reviewed_spouse_return: z.object({
+    tax_year: z.literal(2025),
+    form: z.literal("1040"),
+    filing_status: z.literal(FilingStatus.MFS),
+    first_name: reference,
+    last_name: reference,
+    ssn: z.string().regex(/^\d{9}$/),
+    return_document_reference: reference,
+    line1a_wages: wholeDollar,
+    line1z_total_wages: wholeDollar,
+    line9_total_income: wholeDollar,
+    line10_adjustments: wholeDollar,
+    line11_agi: wholeDollar,
+    line25a_w2_withheld: nonnegativeWholeDollar,
+    line25d_total_withholding: nonnegativeWholeDollar,
+  }).strict(),
   rows: z.array(allocationItemSchema).min(1),
 }).strict().superRefine((input, ctx) => {
   if (
@@ -159,6 +178,25 @@ export const inputSchema = z.object({
       code: "custom",
       path: ["rows"],
       message: "Allocation item IDs must be distinct",
+    });
+  }
+  if (
+    input.reviewed_spouse_return.ssn !== input.spouse.ssn ||
+    input.reviewed_spouse_return.first_name !== input.spouse.first_name ||
+    input.reviewed_spouse_return.last_name !== input.spouse.last_name ||
+    input.reviewed_spouse_return.line11_agi !==
+      input.reviewed_spouse_return.line9_total_income -
+        input.reviewed_spouse_return.line10_adjustments ||
+    input.rows.some((row) =>
+      row.source_document_id ===
+        input.reviewed_spouse_return.return_document_reference
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reviewed_spouse_return"],
+      message:
+        "Reviewed spouse return identity, AGI and document reference must reconcile",
     });
   }
   const lineCounts = new Map<Form8958Line, number>();

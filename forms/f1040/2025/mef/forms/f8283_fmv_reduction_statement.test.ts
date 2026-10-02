@@ -425,11 +425,151 @@ const unrelatedUseGift = {
   },
 };
 
+const privateFoundationGift = {
+  ...electedCapitalGift,
+  donee_organization_name: "Albany Private Foundation",
+  donee_organization_us_address: {
+    line1: "10 Foundation Lane",
+    city: "Albany",
+    state: "NY",
+    zip: "12201",
+  },
+  charitable_limit_category: "capital_gain_20" as const,
+  capital_gain_reduction_election_confirmed: undefined,
+  private_foundation_capital_gain_reduction: {
+    purchase_record_reference: "Coin purchase record COIN-20",
+    foundation_status_record_reference: "Foundation status record PF-20",
+    foundation_name: "Albany Private Foundation",
+    foundation_ein: "123456789",
+    foundation_us_address: {
+      line1: "10 Foundation Lane",
+      city: "Albany",
+      state: "NY",
+      zip: "12201",
+    },
+    private_nonoperating_foundation_not_50_percent_limit_verified:
+      true as const,
+    not_qualified_appreciated_stock_verified: true as const,
+    outright_contribution_verified: true as const,
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+Deno.test("Form 8283 private-foundation gift reduces long-term appreciation and reconciles the return", () => {
+  const form = { section_a_items: [privateFoundationGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(statement, "private nonoperating foundation");
+  assertStringIncludes(statement, "section 170(e)(1)(B)(ii)");
+  assertStringIncludes(statement, "Foundation status record PF-20");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["foundation-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="foundation-reduction"');
+  assertStringIncludes(xml, ">3000</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 3_000);
+  assertEquals(pending.f1040.line12e_itemized_deductions, 3_000);
+  assertThrows(
+    () =>
+      scheduleAMef.build(pending.schedule_a, {
+        pending: { ...pending, f8283: undefined },
+      }),
+    Error,
+    "needs its linked Form 8283 source",
+  );
+  assertThrows(
+    () =>
+      form8283.build(form, {
+        pending: {
+          ...pending,
+          schedule_a: {
+            ...pending.schedule_a,
+            line_12_noncash_contributions: 2_999,
+          },
+        },
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+});
+
+Deno.test("Form 8283 private-foundation reduction rejects wrong status, category, holding period and value", () => {
+  const reason =
+    privateFoundationGift.private_foundation_capital_gain_reduction;
+  for (
+    const gift of [
+      { ...privateFoundationGift, charitable_limit_category: "noncash_50" },
+      { ...privateFoundationGift, date_acquired: "2025-01-01" },
+      { ...privateFoundationGift, deduction_claimed: 3_001 },
+      {
+        ...privateFoundationGift,
+        private_foundation_capital_gain_reduction: {
+          ...reason,
+          foundation_ein: "bad",
+        },
+      },
+      {
+        ...privateFoundationGift,
+        private_foundation_capital_gain_reduction: {
+          ...reason,
+          foundation_name: "Other Foundation",
+        },
+      },
+      {
+        ...privateFoundationGift,
+        private_foundation_capital_gain_reduction: {
+          ...reason,
+          private_nonoperating_foundation_not_50_percent_limit_verified: false,
+        },
+      },
+      {
+        ...privateFoundationGift,
+        private_foundation_capital_gain_reduction: {
+          ...reason,
+          not_qualified_appreciated_stock_verified: false,
+        },
+      },
+      {
+        ...privateFoundationGift,
+        private_foundation_capital_gain_reduction: {
+          ...reason,
+          outright_contribution_verified: false,
+        },
+      },
+      {
+        ...privateFoundationGift,
+        capital_gain_reduction_election_confirmed: true as const,
+      },
+    ]
+  ) {
+    assertEquals(
+      inputSchema.safeParse({ section_a_items: [gift] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    inputSchema.safeParse({
+      section_a_items: [
+        { ...privateFoundationGift, similar_item_group: "coins" },
+        { ...privateFoundationGift, similar_item_group: "coins" },
+      ],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 8283 unrelated-use tangible property links reduced FMV to Schedule A", () => {
   const form = { section_a_items: [unrelatedUseGift] };
   const pending = nonElectionReturn(form);
   const [statement] = form8283FmvReductionStatement.build([], { pending });
-  assertStringIncludes(statement, "unrelated to the donee&apos;s exempt purpose");
+  assertStringIncludes(
+    statement,
+    "unrelated to the donee&apos;s exempt purpose",
+  );
   assertStringIncludes(statement, "Museum sale-plan letter USE-17");
   const [xml] = form8283.build(form, {
     pending,

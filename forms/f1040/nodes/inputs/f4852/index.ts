@@ -12,7 +12,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import { form5329 } from "../../intermediate/forms/form5329/index.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { tsSchema } from "../../types.ts";
 
@@ -242,27 +242,6 @@ function ficaOutputs(items: F4852Items): NodeOutput[] {
   ];
 }
 
-// Route W-2 substitute excess SS withholding to Schedule 3 line 11.
-// Only applicable when there are multiple W-2 substitutes and total SS withheld
-// exceeds the per-employer maximum. The ss_wage_base / ssTaxPerEmployer is not
-// available here (no NodeContext config access in helper scope), so we emit
-// the raw total and let schedule3 handle it — same pattern as w2 node's
-// excessSsOutput where we check for multiple employers.
-// Note: for a single-employer substitute the excess would be zero regardless.
-function excessSsOutputs(items: F4852Items): NodeOutput[] {
-  const w2s = w2Items(items);
-  if (w2s.length < 2) return [];
-  const totalSsWithheld = w2s.reduce(
-    (sum, item) => sum + (item.social_security_withheld ?? 0),
-    0,
-  );
-  if (totalSsWithheld <= 0) return [];
-  // We cannot compute the wage-base cap without config, so emit social_security_withheld
-  // as a signal; schedule3 accumulates and the excess is computed downstream.
-  // TODO: pass NodeContext into helper functions so we can apply the per-employer cap here.
-  return [output(schedule3, { line11_excess_ss: totalSsWithheld })];
-}
-
 // Route 1099-R substitute early distributions (distribution_code === "1") to form5329.
 function earlyDistOutputs(items: F4852Items): NodeOutput[] {
   const earlyItems = r1099Items(items).filter(
@@ -284,9 +263,9 @@ class F4852Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     f1040,
+    agi_aggregator,
     form8959,
     form5329,
-    schedule3,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -316,9 +295,25 @@ class F4852Node extends TaxNode<typeof inputSchema> {
       );
     }
 
+    const agiFields: Partial<z.infer<typeof agi_aggregator.inputSchema>> = {};
+    if (wages.line1a_wages !== undefined) {
+      agiFields.line1a_wages = wages.line1a_wages;
+    }
+    if (pension.line5b_pension_taxable !== undefined) {
+      agiFields.line5b_pension_taxable = pension.line5b_pension_taxable;
+    }
+    if (ira.line4b_ira_taxable !== undefined) {
+      agiFields.line4b_ira_taxable = ira.line4b_ira_taxable;
+    }
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiFields as AtLeastOne<z.infer<typeof agi_aggregator.inputSchema>>,
+      ));
+    }
+
     // FICA / Medicare routing for W-2 substitutes (boxes 3–6)
     outputs.push(...ficaOutputs(f4852s));
-    outputs.push(...excessSsOutputs(f4852s));
 
     // Early distribution penalty routing for 1099-R substitutes (code 1 → form5329)
     outputs.push(...earlyDistOutputs(f4852s));

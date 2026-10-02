@@ -57,6 +57,14 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  presidential_campaign_fund_taxpayer: z.boolean().optional(),
+  presidential_campaign_fund_spouse: z.boolean().optional(),
+  bank_routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/)
+    .optional(),
+  bank_account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/).optional(),
+  bank_account_type: z.enum(["checking", "savings"]).optional(),
+  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+    .optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
   schedule_r_disability_qualified: z.literal(true).optional(),
@@ -98,9 +106,9 @@ const inputSchema = z.object({
   // Line 4c(1) — source-confirmed IRA rollover
   line4c_ira_rollover: z.boolean().optional(),
   // Line 5a — Pensions and annuities, gross
-  line5a_pension_gross: z.number().nonnegative().optional(),
+  line5a_pension_gross: accumulable(z.number().nonnegative()).optional(),
   // Line 5b — Pensions and annuities, taxable amount
-  line5b_pension_taxable: z.number().optional(),
+  line5b_pension_taxable: accumulable(z.number()).optional(),
   // Line 5c(1) — payer-reported pension/plan direct rollover
   line5c_pension_rollover: z.boolean().optional(),
   line5b_form4972_ordinary: z.number().nonnegative().optional(),
@@ -178,6 +186,7 @@ const inputSchema = z.object({
   form8396_source: form8396SourceSchema.optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
+    empowermentCredit: z.number().finite().nonnegative().optional(),
     specifiedCredit: z.number().finite().nonnegative(),
     standardCarryforward: z.number().finite().nonnegative(),
     specifiedCarryforward: z.number().finite().nonnegative(),
@@ -219,6 +228,7 @@ const inputSchema = z.object({
   // Line 23 — Other taxes from Schedule 2 Part II
   line23_other_taxes: z.number().nonnegative().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   form8978_schedule2_line17z_reduction: z.number().int().nonnegative()
     .optional(),
   // Line 24 — Total tax (22 + 23)
@@ -237,6 +247,7 @@ const inputSchema = z.object({
   line26_estimated_tax: z.number().nonnegative().optional(),
   // Line 27 — Earned Income Credit (EITC)
   line27_eitc: z.number().nonnegative().optional(),
+  do_not_claim_eic: z.boolean().optional(),
   // Line 28 — Additional Child Tax Credit (Form 8812)
   line28_actc: z.number().nonnegative().optional(),
   // Line 29 — American Opportunity Credit, refundable portion (Form 8863)
@@ -253,6 +264,8 @@ const inputSchema = z.object({
   line34_overpayment: z.number().nonnegative().optional(),
   // Line 35a — Amount of refund
   line35a_refund: z.number().nonnegative().optional(),
+  // Line 36 — overpayment credited to this filer's 2026 estimated tax.
+  line36_applied_to_2026_estimated_tax: z.number().int().positive().optional(),
   // Line 37 — Amount owed (24 - 33)
   line37_amount_owed: z.number().nonnegative().optional(),
   // Line 38 — Estimated tax penalty (Form 2210) / amount paid with extension
@@ -298,7 +311,7 @@ function totalIncome(input: F1040Input): number {
     (input.line2b_taxable_interest ?? 0) +
     sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
-    (input.line5b_pension_taxable ?? 0) +
+    sumField(input.line5b_pension_taxable) +
     (input.line5b_form4972_ordinary ?? 0) +
     (input.line6b_ss_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
@@ -606,7 +619,8 @@ function businessCreditAllowance(
   const credits = input.form3800_source_credits;
   if (!credits) return undefined;
   if (
-    credits.standardCredit + credits.specifiedCredit +
+    credits.standardCredit + (credits.empowermentCredit ?? 0) +
+          credits.specifiedCredit +
           credits.passiveLines.line2 + credits.passiveLines.line23 +
           credits.passiveLines.line32 <= 0 ||
     input.filing_status === undefined ||
@@ -778,9 +792,7 @@ function reconciledForm2210FBoxB(
     );
   }
   if (
-    line23 !== 0 || (input.line23_other_taxes ?? 0) !== 0 ||
     (input.form8978_schedule2_line17z_reduction ?? 0) !== 0 ||
-    source.current_included_schedule2_taxes !== 0 ||
     line32 !== 0 ||
     source.current_line4_refundable_credits_excluding_schedule3_line11 !== 0 ||
     (input.line26_estimated_tax ?? 0) !== 0 ||
@@ -788,15 +800,16 @@ function reconciledForm2210FBoxB(
     source.current_excess_social_security_or_rrta_withholding !== 0
   ) {
     throw new Error(
-      "Form 2210-F box B public route currently needs no Schedule 2 other tax, refundable credit, estimated payment, or excess Social Security withholding",
+      "Form 2210-F box B public route currently needs no refundable credit, estimated payment, excess Social Security withholding, or section 965 reduction",
     );
   }
   if (
     source.current_line22_tax_after_credits !== Math.round(line22) ||
+    source.current_included_schedule2_taxes !== Math.round(line23) ||
     source.current_withholding !== Math.round(line25d)
   ) {
     throw new Error(
-      "Form 2210-F current tax or withholding does not match the finalized Form 1040",
+      "Form 2210-F current tax, Schedule 2 tax, or withholding does not match the finalized Form 1040",
     );
   }
   const lines = calculateForm2210FBoxB(source);
@@ -952,11 +965,11 @@ function assembleReturn(
   }
   const form4972Ordinary = input.line5b_form4972_ordinary ?? 0;
   if (input.line5a_pension_gross !== undefined || form4972Ordinary > 0) {
-    result.line5a_pension_gross = (input.line5a_pension_gross ?? 0) +
+    result.line5a_pension_gross = sumField(input.line5a_pension_gross) +
       form4972Ordinary;
   }
   if (input.line5b_pension_taxable !== undefined || form4972Ordinary > 0) {
-    result.line5b_pension_taxable = (input.line5b_pension_taxable ?? 0) +
+    result.line5b_pension_taxable = sumField(input.line5b_pension_taxable) +
       form4972Ordinary;
   }
   if (input.line6a_ss_gross !== undefined) {
@@ -1016,11 +1029,22 @@ function assembleReturn(
 
   if (balance >= 0) {
     result.line34_overpayment = balance;
-    result.line35a_refund = Math.max(0, balance - computed_line38);
+    const applied = input.apply_overpayment_to_2026_estimated_tax_amount ?? 0;
+    const available = Math.max(0, balance - Math.round(computed_line38));
+    if (applied > available) {
+      throw new Error(
+        "Form 1040 line 36 application exceeds overpayment after estimated-tax penalty",
+      );
+    }
+    if (applied > 0) result.line36_applied_to_2026_estimated_tax = applied;
+    result.line35a_refund = available - applied;
     if (computed_line38 > balance) {
       result.line37_amount_owed = computed_line38 - balance;
     }
   } else {
+    if (input.apply_overpayment_to_2026_estimated_tax_amount !== undefined) {
+      throw new Error("Form 1040 line 36 needs an overpayment");
+    }
     result.line37_amount_owed = Math.abs(balance) + computed_line38;
   }
 
@@ -1100,6 +1124,14 @@ class F1040Node extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (
+      input.presidential_campaign_fund_spouse === true &&
+      input.filing_status !== FilingStatus.MFJ
+    ) {
+      throw new Error(
+        "Form 1040 presidential campaign spouse mark requires a joint return",
+      );
+    }
     const schedule3 = input.credit_limit_schedule3_lines;
     const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
     if (schedule3 && elderlyCredit > 0) {
@@ -1219,6 +1251,27 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
       ...numericLines,
+      ...(effectiveInput.presidential_campaign_fund_taxpayer === undefined
+        ? {}
+        : {
+          presidential_campaign_fund_taxpayer:
+            effectiveInput.presidential_campaign_fund_taxpayer,
+        }),
+      ...(effectiveInput.presidential_campaign_fund_spouse === undefined
+        ? {}
+        : {
+          presidential_campaign_fund_spouse:
+            effectiveInput.presidential_campaign_fund_spouse,
+        }),
+      ...(effectiveInput.bank_routing_number === undefined ? {} : {
+        bank_routing_number: effectiveInput.bank_routing_number,
+      }),
+      ...(effectiveInput.bank_account_number === undefined ? {} : {
+        bank_account_number: effectiveInput.bank_account_number,
+      }),
+      ...(effectiveInput.bank_account_type === undefined ? {} : {
+        bank_account_type: effectiveInput.bank_account_type,
+      }),
       ...(effectiveInput.line4c_ira_rollover === true
         ? { line4c_ira_rollover: true }
         : {}),

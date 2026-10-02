@@ -7,6 +7,7 @@ import { buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { FilingStatus } from "../2025/mef/types.ts";
 import { buildPdfBytes } from "../2025/pdf/builder.ts";
+import { inputSchema as form1099mInputSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/index.ts";
 import { inputSchema as scheduleFInputSchema } from "../nodes/intermediate/forms/schedule_f/index.ts";
 
@@ -79,6 +80,13 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
       box3_other_income: 2_000,
       box3_other_income_routing: "schedule_f",
       farm_id: "north",
+    }, {
+      payer_name: "Farm Cooperative",
+      payer_tin: "323456789",
+      recipient_tin: "987654321",
+      box3_other_income: 750,
+      box3_other_income_routing: "schedule_f",
+      farm_id: "north",
     }],
     schedule_c: [{
       business_reference: "consulting",
@@ -97,14 +105,15 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "cash",
         line1_sales_livestock_resale: 0,
-        line8_other_income: 2_000,
+        line8_other_income: 2_750,
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f1040?.line8_additional_income, 5_000);
+  assertEquals(result.pending.f1040?.line8_additional_income, 5_750);
   assertEquals(
     scheduleCInputSchema.parse(result.pending.schedule_c)
       .f1099m_receipt_sources?.[0].box,
@@ -112,23 +121,85 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
   );
   assertEquals(
     scheduleFInputSchema.parse(result.pending.schedule_f)
-      .farm_sources?.[0].kind,
-    "1099m_box3_other_income",
+      .farm_sources?.map((source) => source.kind),
+    ["1099m_box3_other_income", "1099m_box3_other_income"],
   );
-  const xml = buildMefXml(buildPending(result.pending), filer);
+  const pending = buildPending(result.pending);
+  const xml = buildMefXml(pending, filer);
   await assertLocalReturnXsd(xml);
   assertEquals(
     xml.includes("<TotalGrossReceiptsAmt>3000</TotalGrossReceiptsAmt>"),
     true,
   );
-  const pdf = await PDFDocument.load(
-    await buildPdfBytes(result.pending, filer),
-  );
+  const pdfBytes = await buildPdfBytes(result.pending, filer);
+  const pdf = await PDFDocument.load(pdfBytes);
   assertEquals(pdf.getPageCount() >= 6, true);
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, pdfBytes);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+    }).output();
+    assertEquals(extracted.code, 0);
+    assertEquals(
+      /2,?750/.test(new TextDecoder().decode(extracted.stdout)),
+      true,
+    );
+  } finally {
+    await Deno.remove(pdfPath);
+  }
+
+  for (const field of ["amount", "payer_tin"] as const) {
+    const altered = structuredClone(pending);
+    const sources =
+      (altered.schedule_f as { farm_sources: Record<string, unknown>[] })
+        .farm_sources;
+    sources[1][field] = field === "amount" ? 749 : "999999999";
+    assertThrows(
+      () => buildMefXml(altered, filer),
+      Error,
+      "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
+    );
+    await assertRejects(
+      () => buildPdfBytes(altered, filer),
+      Error,
+      "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
+    );
+  }
+  const retained = form1099mInputSchema.parse(result.pending.f1099m);
+  const alteredPayerCopy = {
+    ...pending,
+    f1099m: {
+      f1099ms: retained.f1099ms.map((row, index) =>
+        index === 2 ? { ...row, box3_other_income: 751 } : row
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(alteredPayerCopy, filer),
+    Error,
+    "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
+  );
+  await assertRejects(
+    () => buildPdfBytes(alteredPayerCopy, filer),
+    Error,
+    "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
+  );
 });
 
 Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () => {
   const pending = buildPending({
+    schedule1: { line6_schedule_f: 500 },
+    f1099m: {
+      f1099ms: [{
+        farm_id: "north",
+        payer_name: "Farm Customer",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        box3_other_income: 500,
+        box3_other_income_routing: "schedule_f",
+      }],
+    },
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",
@@ -164,6 +235,17 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
 
 Deno.test("1099-NEC farm recipient must match its named proprietor", async () => {
   const pending = buildPending({
+    schedule1: { line6_schedule_f: 500 },
+    f1099nec: {
+      f1099necs: [{
+        farm_id: "north",
+        payer_name: "Farm Customer",
+        payer_tin: "123456789",
+        recipient_ssn: "111223333",
+        box1_nec: 500,
+        for_routing: "schedule_f",
+      }],
+    },
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",

@@ -1,5 +1,51 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { scheduleDPdf } from "./schedule_d.ts";
+import { buildPdfBytes } from "../builder.ts";
+
+Deno.test("Schedule D PDF finalized K-1 capital amounts cannot change or disappear", () => {
+  const pending = {
+    f1040: {},
+    k1_partnership: {
+      k1_partnerships: [{
+        partnership_name: "Example Partnership",
+        partnership_ein: "123456789",
+        source_document_reference: "2025 issued K-1",
+        box8_net_st_cap_gain: 100,
+        box9a_net_lt_cap_gain: 200,
+      }],
+    },
+  };
+  for (
+    const fields of [
+      { line_5_k1_st: 99, line_12_k1_lt: 200 },
+      { line_5_k1_st: 100 },
+    ]
+  ) {
+    assertThrows(
+      () => scheduleDPdf.projectFields?.(fields, pending),
+      Error,
+      "issued K-1 capital source",
+    );
+  }
+});
+
+Deno.test("PDF bundle rejects partnership K-1 capital when Schedule D is omitted", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        k1_partnership: {
+          k1_partnerships: [{
+            partnership_name: "Capital Partnership",
+            partnership_ein: "123456789",
+            source_document_reference: "2025 issued Capital Partnership K-1",
+            box8_net_st_cap_gain: 100,
+          }],
+        },
+      }, undefined),
+    Error,
+    "issued K-1 capital source",
+  );
+});
 
 Deno.test("Schedule D PDF groups computed Form 8949 sales by printed reporting row", () => {
   const rows = [

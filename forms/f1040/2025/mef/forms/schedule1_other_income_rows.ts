@@ -1,4 +1,7 @@
 import { box11CodeJSourceSchema } from "../../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { rtaaSourceSchema } from "../../../nodes/inputs/f1099g/rtaa-source.ts";
+import { taxableGrantSourceSchema } from "../../../nodes/inputs/f1099g/grant-source.ts";
+import { box10CodeJSourceSchema } from "../../../nodes/inputs/k1_s_corp/box10_code_j.ts";
 
 export interface Schedule1OtherIncomeRow {
   readonly label: string;
@@ -12,18 +15,8 @@ const SOURCED_COMPONENTS = [
   ["line8z_form8621_mtm", "Form 8621 mark-to-market gain or loss"],
   ["line8z_form8621_section1291", "Form 8621 section 1291 current-year income"],
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
-  [
-    "line8z_k1_s_corp_tax_benefit_recovery",
-    "S corporation tax-benefit recovery",
-  ],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
-  ["line8z_rtaa", "Trade adjustment assistance"],
-  ["line8z_taxable_grants", "Taxable grants"],
-  ["line8z_substitute_payments", "Substitute payments"],
-  ["line8z_golden_parachute", "Excess golden parachute"],
-  ["at_risk_disallowed_add_back", "At-risk loss add-back"],
-  ["at_risk_recapture", "At-risk recapture"],
   ["biz_interest_disallowed_add_back", "Disallowed business interest"],
 ] as const;
 
@@ -52,6 +45,32 @@ export function schedule1OtherIncomeRows(
   ) {
     throw new Error(
       "Schedule 1 line 8z generic income needs identified source types before filing",
+    );
+  }
+  if (
+    source.line8z_golden_parachute !== undefined &&
+    source.line8z_golden_parachute !== null &&
+    source.line8z_golden_parachute !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 excess golden parachute income needs a retained source",
+    );
+  }
+  if (
+    source.at_risk_recapture !== undefined &&
+    source.at_risk_recapture !== null && source.at_risk_recapture !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 at-risk recapture needs activity-level source facts",
+    );
+  }
+  if (
+    source.at_risk_disallowed_add_back !== undefined &&
+    source.at_risk_disallowed_add_back !== null &&
+    source.at_risk_disallowed_add_back !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 at-risk loss add-back needs activity-level source facts",
     );
   }
   const componentRows: Schedule1OtherIncomeRow[] = SOURCED_COMPONENTS.flatMap(
@@ -83,8 +102,124 @@ export function schedule1OtherIncomeRows(
       amount: row.taxable_amount,
     };
   });
+  const sCorpSources = source.k1_s_corp_box10_code_j_sources;
+  if (sCorpSources !== undefined && !Array.isArray(sCorpSources)) {
+    throw new Error("Schedule 1 S corporation K-1 code J sources must be rows");
+  }
+  const sCorpRows: Schedule1OtherIncomeRow[] =
+    ((sCorpSources ?? []) as unknown[])
+      .map((value) => {
+        const row = box10CodeJSourceSchema.parse(value);
+        return {
+          label: `S corporation K-1 code J recovery ${row.corporation_ein}`,
+          amount: row.taxable_amount,
+        };
+      });
+  const sCorpTotal = sCorpRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_k1_s_corp_tax_benefit_recovery !== sCorpTotal) {
+    if (
+      source.line8z_k1_s_corp_tax_benefit_recovery !== undefined ||
+      sCorpTotal > 0
+    ) {
+      throw new Error(
+        "Schedule 1 S corporation code J total differs from K-1 rows",
+      );
+    }
+  }
+  const substituteSources = source.f1099m_box8_substitute_sources;
+  if (
+    substituteSources !== undefined && !Array.isArray(substituteSources)
+  ) {
+    throw new Error("Schedule 1 1099-MISC box 8 sources must be rows");
+  }
+  const substituteRows: Schedule1OtherIncomeRow[] = (
+    (substituteSources ?? []) as unknown[]
+  ).map((value) => {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule 1 1099-MISC box 8 source is invalid");
+    }
+    const row = value as Record<string, unknown>;
+    if (
+      typeof row.payer_name !== "string" || !row.payer_name.trim() ||
+      typeof row.payer_tin !== "string" || !/^\d{9}$/.test(row.payer_tin) ||
+      typeof row.recipient_tin !== "string" ||
+      !/^\d{9}$/.test(row.recipient_tin) ||
+      typeof row.amount !== "number" ||
+      !Number.isSafeInteger(row.amount) || row.amount <= 0
+    ) {
+      throw new Error("Schedule 1 1099-MISC box 8 source is invalid");
+    }
+    return {
+      label: `Substitute payments ${row.payer_tin}`,
+      amount: row.amount as number,
+    };
+  });
+  const substituteTotal = substituteRows.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  if (source.line8z_substitute_payments !== substituteTotal) {
+    if (
+      source.line8z_substitute_payments !== undefined || substituteTotal > 0
+    ) {
+      throw new Error(
+        "Schedule 1 substitute payments differ from 1099-MISC box 8 sources",
+      );
+    }
+  }
+  const rtaaSources = source.f1099g_rtaa_sources;
+  if (rtaaSources !== undefined && !Array.isArray(rtaaSources)) {
+    throw new Error("Schedule 1 RTAA sources must be rows");
+  }
+  const rtaaRows: Schedule1OtherIncomeRow[] = (rtaaSources ?? []).map(
+    (value: unknown) => {
+      const row = rtaaSourceSchema.parse(value);
+      return {
+        label: `RTAA payments ${row.payer_tin}`,
+        amount: row.amount,
+      };
+    },
+  );
+  const rtaaTotal = rtaaRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_rtaa !== rtaaTotal) {
+    if (source.line8z_rtaa !== undefined || rtaaTotal > 0) {
+      throw new Error(
+        "Schedule 1 RTAA total differs from Form 1099-G box 5 rows",
+      );
+    }
+  }
+  const grantSources = source.f1099g_taxable_grant_sources;
+  if (grantSources !== undefined && !Array.isArray(grantSources)) {
+    throw new Error("Schedule 1 taxable-grant sources must be rows");
+  }
+  const grantRows: Schedule1OtherIncomeRow[] = (grantSources ?? []).map(
+    (value: unknown) => {
+      const row = taxableGrantSourceSchema.parse(value);
+      return {
+        label: `Taxable grant ${row.payer_tin}`,
+        amount: row.amount,
+      };
+    },
+  );
+  const grantTotal = grantRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_taxable_grants !== grantTotal) {
+    if (source.line8z_taxable_grants !== undefined || grantTotal > 0) {
+      throw new Error(
+        "Schedule 1 taxable-grant total differs from source rows",
+      );
+    }
+  }
   const rows = source.f1099m_box3_other_income_sources;
-  if (rows === undefined) return [...componentRows, ...partnershipRows];
+  if (rows === undefined) {
+    return [
+      ...componentRows,
+      ...partnershipRows,
+      ...sCorpRows,
+      ...substituteRows,
+      ...rtaaRows,
+      ...grantRows,
+    ];
+  }
   if (!Array.isArray(rows)) {
     throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
   }
@@ -107,7 +242,15 @@ export function schedule1OtherIncomeRows(
     }
     return { label: row.description, amount: row.amount };
   });
-  return [...componentRows, ...partnershipRows, ...box3Rows];
+  return [
+    ...componentRows,
+    ...partnershipRows,
+    ...sCorpRows,
+    ...substituteRows,
+    ...rtaaRows,
+    ...grantRows,
+    ...box3Rows,
+  ];
 }
 
 export function schedule1OtherIncomeTotal(

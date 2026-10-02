@@ -47,6 +47,8 @@ export const singleSourcePdfReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
   domestic_treasury_source_document_reference: z.string().trim().min(1)
     .optional(),
+  domestic_interest_source_document_reference: z.string().trim().min(1)
+    .optional(),
   all_foreign_tax_items_identified_confirmed: z.literal(true),
   all_worldwide_income_sources_identified_confirmed: z.literal(true),
   all_part_i_deductions_and_losses_except_standard_zero_confirmed: z.literal(
@@ -64,6 +66,7 @@ export const singleSourcePdfReviewSchema = z.object({
 
 export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
   no_foreign_tax_reduction_confirmed: true,
+  domestic_interest_source_document_reference: true,
 }).extend({
   only_identified_k3_line12_reduction_confirmed: z.literal(true),
 }).strict();
@@ -71,6 +74,7 @@ export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
 export const multiSourcePdfReviewSchema = singleSourcePdfReviewSchema.omit({
   source_document_reference: true,
   domestic_treasury_source_document_reference: true,
+  domestic_interest_source_document_reference: true,
 }).extend({
   payer_source_document_references: z.array(z.string().trim().min(1)).min(2),
 }).strict();
@@ -79,6 +83,7 @@ export const mixedInterestDividendPdfReviewSchema = singleSourcePdfReviewSchema
   .omit({
     source_document_reference: true,
     domestic_treasury_source_document_reference: true,
+    domestic_interest_source_document_reference: true,
   }).extend({
     interest_source_document_reference: z.string().trim().min(1),
     dividend_source_document_reference: z.string().trim().min(1),
@@ -88,6 +93,7 @@ export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
   .omit({
     source_document_reference: true,
     domestic_treasury_source_document_reference: true,
+    domestic_interest_source_document_reference: true,
   }).extend({
     column_a_source_document_reference: z.string().trim().min(1),
     column_a_irs_country_code: z.string().length(2),
@@ -164,6 +170,13 @@ export const alternativeCompensationSourcingSchema = z.object({
   alternative_foreign_source_usd: z.number().finite().nonnegative(),
   ordinary_us_source_usd: z.number().finite().nonnegative(),
   ordinary_foreign_source_usd: z.number().finite().nonnegative(),
+  ordinary_time_basis: z.object({
+    us_service_days: z.number().int().nonnegative(),
+    foreign_service_days: z.number().int().nonnegative(),
+    workday_ledger_document_reference: z.string().trim().min(1),
+    salary_only_no_fringe_benefits_confirmed: z.literal(true),
+    single_2025_compensation_period_confirmed: z.literal(true),
+  }).strict(),
   source_document_reference: z.string().trim().min(1),
 }).strict().superRefine((item, ctx) => {
   const cents = (amount: number) => Math.round(amount * 100);
@@ -179,6 +192,31 @@ export const alternativeCompensationSourcingSchema = z.object({
       path: ["compensation_item_total_usd"],
       message:
         "Form 1116 line 1b ordinary and alternative U.S./foreign amounts must each equal the specific compensation total",
+    });
+  }
+  const { us_service_days, foreign_service_days } = item.ordinary_time_basis;
+  const serviceDays = us_service_days + foreign_service_days;
+  if (serviceDays === 0 || serviceDays > 365) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ordinary_time_basis"],
+      message:
+        "Form 1116 ordinary time basis needs 1 to 365 service days in 2025",
+    });
+    return;
+  }
+  const ordinaryForeignCents = Math.round(
+    total * foreign_service_days / serviceDays,
+  );
+  if (
+    cents(item.ordinary_foreign_source_usd) !== ordinaryForeignCents ||
+    cents(item.ordinary_us_source_usd) !== total - ordinaryForeignCents
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ordinary_time_basis"],
+      message:
+        "Form 1116 ordinary U.S./foreign salary comparison must match the documented service-day allocation",
     });
   }
 });
@@ -505,6 +543,24 @@ export const priorYearCarryoverSchema = z.object({
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
+  filed_2024_schedule_b: z.object({
+    taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    tax_year: z.literal(2024),
+    income_category: z.nativeEnum(IncomeCategory),
+    form1040_source_document_id: z.string().trim().min(1),
+    schedule_b_source_document_id: z.string().trim().min(1),
+    line8_2015_ninth_preceding_amount: z.number().int().positive().optional(),
+    line8_2016_eighth_preceding_amount: z.number().int().positive().optional(),
+    line8_2017_seventh_preceding_amount: z.number().int().positive().optional(),
+    line8_2018_sixth_preceding_amount: z.number().int().positive().optional(),
+    line8_2019_fifth_preceding_amount: z.number().int().positive().optional(),
+    line8_2020_fourth_preceding_amount: z.number().int().positive().optional(),
+    line8_2021_third_preceding_amount: z.number().int().positive().optional(),
+    line8_2022_second_preceding_amount: z.number().int().positive().optional(),
+    line8_2023_first_preceding_amount: z.number().int().positive().optional(),
+    line8_2024_current_year_amount: z.number().int().positive().optional(),
+    line8_total: z.number().int().positive(),
+  }).strict().optional(),
 }).strict().superRefine((source, ctx) => {
   if (
     source.income_category !== IncomeCategory.Passive &&
@@ -602,9 +658,12 @@ export const inputSchema = z.object({
     singleSourceK3PdfReviewSchema,
   ]).optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
+  two_dividend_pdf_review: multiSourcePdfReviewSchema.optional(),
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
+    .optional(),
+  two_country_dividend_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
   three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
@@ -1176,14 +1235,18 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         category_summaries: categories,
         single_source_pdf_review: input.single_source_pdf_review,
         multi_source_pdf_review: input.multi_source_pdf_review,
+        two_dividend_pdf_review: input.two_dividend_pdf_review,
         mixed_interest_dividend_pdf_review:
           input.mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review: input.two_country_interest_pdf_review,
+        two_country_dividend_pdf_review: input.two_country_dividend_pdf_review,
         three_country_interest_pdf_review:
           input.three_country_interest_pdf_review,
         two_country_mixed_pdf_review: input.two_country_mixed_pdf_review,
         three_country_mixed_pdf_review: input.three_country_mixed_pdf_review,
         two_country_treasury_pdf_review: input.two_country_treasury_pdf_review,
+        foreign_preferential_income_review:
+          input.foreign_preferential_income_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });

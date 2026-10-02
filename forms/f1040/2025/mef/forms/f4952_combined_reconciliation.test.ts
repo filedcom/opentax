@@ -315,8 +315,13 @@ Deno.test("Form 4952 sums several identified interest and dividend payers throug
     { ...interest, payer_name: "Second Bank", box1: 250 },
   ];
   const dividendSources = [
-    dividend,
-    { ...dividend, payerName: "Second Fund", box1a: 300 },
+    { ...dividend, source_document_reference: "issued-investment-fund-1099-div" },
+    {
+      ...dividend,
+      payerName: "Second Fund",
+      box1a: 300,
+      source_document_reference: "issued-second-fund-1099-div",
+    },
   ];
   assertEquals(
     f1099int.compute(

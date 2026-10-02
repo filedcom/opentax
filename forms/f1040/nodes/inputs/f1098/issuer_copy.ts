@@ -1,5 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
+import { inputSchema as refinancePointsInputSchema } from "../mortgage_refinance_points/index.ts";
 import { inputSchema, itemSchema } from "./index.ts";
 
 export const form1098IssuerCopyReviewSchema = z.object({
@@ -120,18 +121,52 @@ export async function verifyForm1098IssuerCopy(
   }
 }
 
-/** Bind every positive box 6 source in the prepared Form 1098 input. */
+/** Bind positive Schedule A interest, taxable recovery, box 6, and reviewed loans. */
 export async function assertForm1098IssuerCopies(
   pending: Record<string, unknown>,
 ): Promise<void> {
   const raw = pending.f1098;
   if (raw === undefined) return;
-  const { f1098s } = inputSchema.parse(raw);
+  const {
+    f1098s,
+    mortgage_limit_review,
+    purchase_points_cross_loan_review,
+  } = inputSchema.parse(raw);
+  const reviewedLoans = new Set([
+    ...(mortgage_limit_review?.loans.map((loan) =>
+      loan.source_document_reference
+    ) ?? []),
+    ...(purchase_points_cross_loan_review
+      ? [
+        purchase_points_cross_loan_review.purchase_loan
+          .source_document_reference,
+        purchase_points_cross_loan_review.existing_loan
+          .source_document_reference,
+      ]
+      : []),
+  ]);
+  const filed1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const usesStandardDeduction =
+    filed1040?.line12a_standard_deduction !== undefined &&
+    filed1040.line12e_itemized_deductions === undefined;
+  const refinanceReferences = new Set(
+    !usesStandardDeduction && pending.mortgage_refinance_points !== undefined
+      ? refinancePointsInputSchema.parse(pending.mortgage_refinance_points)
+        .refinances.map((item) => item.form1098_source_document_reference)
+      : [],
+  );
   for (const item of f1098s) {
-    if ((item.box6_points_paid ?? 0) <= 0) continue;
+    if (
+      (usesStandardDeduction ||
+        (item.box1_current_year_deductible_interest ?? 0) <= 0) &&
+      (item.box4_taxable_recovery_verified_amount ?? 0) <= 0 &&
+      (item.box6_points_paid ?? 0) <= 0 &&
+      !refinanceReferences.has(item.source_document_reference ?? "") &&
+      !reviewedLoans.has(item.source_document_reference ?? "")
+    ) continue;
     if (!item.issuer_copy) {
       throw new Error(
-        "Positive Form 1098 box 6 needs the reviewed issuer Copy B bytes",
+        "Form 1098 positive Schedule A interest, taxable box 4 recovery, refinance points, box 6, or whole-return mortgage review needs the reviewed issuer Copy B bytes for each lender",
       );
     }
     await verifyForm1098IssuerCopy(

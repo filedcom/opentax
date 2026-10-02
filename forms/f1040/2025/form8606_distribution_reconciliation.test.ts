@@ -18,7 +18,7 @@ const general = {
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
   taxpayer_ssn: "111-22-3333",
-  taxpayer_dob: "1960-06-15",
+  taxpayer_dob: "1961-06-15",
   address_line1: "1 Main St",
   address_city: "Austin",
   address_state: "TX",
@@ -50,6 +50,7 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: general.taxpayer_ssn,
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 20_000,
       box2a_taxable_amount: 20_000,

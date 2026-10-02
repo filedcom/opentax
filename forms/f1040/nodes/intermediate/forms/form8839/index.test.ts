@@ -64,7 +64,7 @@ Deno.test("Form 8839: inactive input emits no credit", () => {
   assertEquals(form8839.compute(nodeContext, {}).outputs, []);
 });
 
-Deno.test("Form 8839: active typed child remains fail-closed before return credit", () => {
+Deno.test("Form 8839: base child node remains closed outside reviewed public route", () => {
   assertThrows(
     () =>
       form8839.compute(nodeContext, {
@@ -72,7 +72,7 @@ Deno.test("Form 8839: active typed child remains fail-closed before return credi
         filing_status: FilingStatus.Single,
       }),
     Error,
-    "source-verified adoption eligibility",
+    "reviewed adoption evidence",
   );
 });
 
@@ -80,7 +80,7 @@ Deno.test("Form 8839: employer benefits remain fail-closed", () => {
   assertThrows(
     () => form8839.compute(nodeContext, { adoption_benefits: 5_000 }),
     Error,
-    "source-verified adoption eligibility",
+    "reviewed adoption evidence",
   );
   assertThrows(
     () =>

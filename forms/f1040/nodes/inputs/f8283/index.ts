@@ -65,6 +65,78 @@ const vehicleSaleAcknowledgmentSchema = z.object({
   goods_or_services_received: z.literal(false),
 });
 
+export const vehicleSalePdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  gross_proceeds: z.number().positive(),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  unrelated_sale_certification_confirmed: z.literal(true),
+  deduction_limited_to_gross_proceeds_stated: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
+export const vehicleNeedyPdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  needy_transfer_box5b_confirmed: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
+export const vehicleSignificantUsePdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  intended_use_description: z.string().trim().min(1),
+  intended_use_duration: z.string().trim().min(1),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  no_transfer_before_use_box5a_confirmed: z.literal(true),
+  significant_use_box5c_confirmed: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
+export const vehicleMaterialImprovementPdfReviewSchema = z.object({
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  donee_name: z.string().trim().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
+  contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  intended_improvement_description: z.string().trim().min(1),
+  copy_b_or_equivalent_confirmed: z.literal(true),
+  no_transfer_before_improvement_box5a_confirmed: z.literal(true),
+  material_improvement_box5c_confirmed: z.literal(true),
+  no_additional_donor_payment_confirmed: z.literal(true),
+  no_goods_or_services_confirmed: z.literal(true),
+  reviewed_pdf_matches_source_confirmed: z.literal(true),
+}).strict();
+
 // Form 1098-C box 5b: the donee certifies a below-FMV transfer to a needy
 // person in direct furtherance of its charitable transportation purpose.
 const vehicleNeedyTransferAcknowledgmentSchema = z.object({
@@ -171,6 +243,46 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  private_foundation_capital_gain_reduction: z.object({
+    purchase_record_reference: z.string().trim().min(1),
+    foundation_status_record_reference: z.string().trim().min(1),
+    foundation_name: z.string().trim().min(1),
+    foundation_ein: z.string().regex(/^\d{9}$/),
+    foundation_us_address: usAddressSchema,
+    private_nonoperating_foundation_not_50_percent_limit_verified: z.literal(
+      true,
+    ),
+    not_qualified_appreciated_stock_verified: z.literal(true),
+    outright_contribution_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
+  taxidermy_capital_gain_reduction: z.object({
+    preparation_cost_record_reference: z.string().trim().min(1),
+    taxidermy_property_description_record_reference: z.string().trim().min(1),
+    eligible_preparation_stuffing_mounting_costs: z.number().positive(),
+    animal_body_part_present_verified: z.literal(true),
+    prepared_stuffed_or_mounted_verified: z.literal(true),
+    basis_only_preparation_stuffing_mounting_costs_verified: z.literal(true),
+    hunting_travel_equipment_and_labor_value_excluded_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
+  intellectual_property_capital_gain_reduction: z.object({
+    property_kind: z.literal("purchased_patent"),
+    patent_number: z.string().trim().min(1),
+    patent_registration_record_reference: z.string().trim().min(1),
+    purchase_record_reference: z.string().trim().min(1),
+    unamortized_basis_schedule_reference: z.string().trim().min(1),
+    unamortized_adjusted_basis: z.number().positive(),
+    donee_2025_net_income_statement_reference: z.string().trim().min(1),
+    donor_owned_full_patent_rights_verified: z.literal(true),
+    all_patent_rights_transferred_to_donee_verified: z.literal(true),
+    adjusted_basis_excludes_prior_amortization_verified: z.literal(true),
+    donee_2025_net_income_zero_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -185,12 +297,18 @@ const sectionAItemSchema = z.object({
   is_vehicle: z.boolean().optional(),
   vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/).optional(),
   vehicle_sale_acknowledgment: vehicleSaleAcknowledgmentSchema.optional(),
+  vehicle_sale_pdf_review: vehicleSalePdfReviewSchema.optional(),
   vehicle_needy_transfer_acknowledgment:
     vehicleNeedyTransferAcknowledgmentSchema.optional(),
+  vehicle_needy_pdf_review: vehicleNeedyPdfReviewSchema.optional(),
   vehicle_significant_use_acknowledgment:
     vehicleSignificantUseAcknowledgmentSchema.optional(),
+  vehicle_significant_use_pdf_review: vehicleSignificantUsePdfReviewSchema
+    .optional(),
   vehicle_material_improvement_acknowledgment:
     vehicleMaterialImprovementAcknowledgmentSchema.optional(),
+  vehicle_material_improvement_pdf_review:
+    vehicleMaterialImprovementPdfReviewSchema.optional(),
   // Name of the actual donee-issued Form 1098-C or contemporaneous written
   // acknowledgment PDF supplied to the MeF bundle. The native statement is
   // not a substitute for this binary attachment under F8283-029/031/032/033.
@@ -280,10 +398,29 @@ const sectionAItemSchema = z.object({
     const manuscript = item.manuscript_ordinary_income_reduction !== undefined;
     const unrelatedUse =
       item.unrelated_use_capital_gain_reduction !== undefined;
+    const privateFoundation =
+      item.private_foundation_capital_gain_reduction !== undefined;
+    const taxidermy = item.taxidermy_capital_gain_reduction !== undefined;
+    const intellectualProperty =
+      item.intellectual_property_capital_gain_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
     if (
-      (inventory || creator || manuscript || unrelatedUse) &&
+      privateFoundation &&
+      (shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        taxidermy || intellectualProperty ||
+        capitalGainElection || certifiedSaleReduction)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deduction_claimed"],
+        message:
+          "Form 8283 Section A supports one FMV reduction reason per gift",
+      });
+    }
+    if (
+      (inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty) &&
       reductionCents <= 0
     ) {
       ctx.addIssue({
@@ -295,6 +432,7 @@ const sectionAItemSchema = z.object({
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
+      !privateFoundation && !taxidermy && !intellectualProperty &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -340,6 +478,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -384,6 +523,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -416,6 +556,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -450,6 +591,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -484,6 +626,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection || certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -527,6 +670,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -538,12 +682,172 @@ const sectionAItemSchema = z.object({
         });
       }
     }
+    if (privateFoundation) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "capital_gain_20" ||
+        item.donee_organization_name !==
+          item.private_foundation_capital_gain_reduction!.foundation_name ||
+        item.donee_organization_us_address?.line1 !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.line1 ||
+        (item.donee_organization_us_address?.line2 ?? "") !==
+          (item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.line2 ?? "") ||
+        item.donee_organization_us_address?.city !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.city ||
+        item.donee_organization_us_address?.state !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.state ||
+        item.donee_organization_us_address?.zip !==
+          item.private_foundation_capital_gain_reduction!
+            .foundation_us_address.zip ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        taxidermy || intellectualProperty ||
+        capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["private_foundation_capital_gain_reduction"],
+          message:
+            "Form 8283 private-foundation reduction needs a purchased long-term nonvehicle capital item, a 20% limit foundation, and a basis claim below $5,000 FMV",
+        });
+      }
+    }
+    if (taxidermy) {
+      const completed = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const completedDate = Number.isFinite(completed)
+        ? new Date(completed)
+        : undefined;
+      const anniversary = completedDate
+        ? Date.UTC(
+          completedDate.getUTCFullYear() + 1,
+          completedDate.getUTCMonth(),
+          completedDate.getUTCDate(),
+        )
+        : NaN;
+      const costs = item.taxidermy_capital_gain_reduction!
+        .eligible_preparation_stuffing_mounting_costs;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        completedDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "created" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(costs * 100) !==
+          Math.round(item.cost_or_adjusted_basis * 100) ||
+        Math.round(costs * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        costs >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || intellectualProperty || capitalGainElection ||
+        certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["taxidermy_capital_gain_reduction"],
+          message:
+            "Form 8283 taxidermy reduction needs one long-term donor-prepared Section A mount, eligible preparation-only basis below FMV, and a 50% limit donee",
+        });
+      }
+    }
+    if (intellectualProperty) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      const basis = item.intellectual_property_capital_gain_reduction!
+        .unamortized_adjusted_basis;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(basis * 100) !==
+          Math.round(item.cost_or_adjusted_basis * 100) ||
+        Math.round(basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        basis >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || capitalGainElection ||
+        certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["intellectual_property_capital_gain_reduction"],
+          message:
+            "Form 8283 patent reduction needs one purchased long-term Section A patent, unamortized basis below FMV, zero donee-year income, and a 50% limit donee",
+        });
+      }
+    }
   }
   if (
     (item.inventory_ordinary_income_reduction !== undefined ||
       item.creator_ordinary_income_reduction !== undefined ||
       item.manuscript_ordinary_income_reduction !== undefined ||
-      item.unrelated_use_capital_gain_reduction !== undefined) &&
+      item.unrelated_use_capital_gain_reduction !== undefined ||
+      item.private_foundation_capital_gain_reduction !== undefined ||
+      item.taxidermy_capital_gain_reduction !== undefined ||
+      item.intellectual_property_capital_gain_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
     ctx.addIssue({
@@ -721,6 +1025,8 @@ const sectionBItemSchema = z.object({
       property_dates_basis_match_confirmed: z.literal(true),
       capital_asset_not_inventory_confirmed: z.literal(true),
       no_depreciation_or_recapture_confirmed: z.literal(true),
+      personal_use_non_depreciable_equipment_confirmed: z.literal(true)
+        .optional(),
     }).strict(),
     donee_use_attachment_file_name: z.string().trim().min(1),
     donee_use_review: z.object({
@@ -848,8 +1154,18 @@ const sectionBItemSchema = z.object({
         )
         : NaN;
     if (
-      item.property_type !== SectionBPropertyType.ArtUnder20000 ||
-      item.fmv <= 5_000 || item.fmv >= 20_000 ||
+      (item.property_type !== SectionBPropertyType.ArtUnder20000 &&
+        item.property_type !== SectionBPropertyType.ArtAtLeast20000 &&
+        item.property_type !== SectionBPropertyType.Equipment) ||
+      (item.property_type === SectionBPropertyType.Equipment &&
+        unrelatedReduction.purchase_record_review
+            .personal_use_non_depreciable_equipment_confirmed !== true) ||
+      item.fmv <= 5_000 || item.fmv > 500_000 ||
+      (item.property_type === SectionBPropertyType.ArtUnder20000 &&
+        item.fmv >= 20_000) ||
+      (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+        item.cost_or_adjusted_basis !== undefined &&
+        item.cost_or_adjusted_basis < 20_000) ||
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
       !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
@@ -877,7 +1193,7 @@ const sectionBItemSchema = z.object({
         code: "custom",
         path: ["unrelated_use_capital_gain_reduction"],
         message:
-          "Form 8283 Section B unrelated-use art needs purchased long-term capital property, donee-use evidence, reviewed basis/appraisal/signed-form/reduction PDFs, and a basis-limited claim",
+          "Form 8283 Section B unrelated-use tangible property needs purchased long-term capital property, donee-use evidence, reviewed basis/appraisal/signed-form/reduction PDFs, and a basis-limited claim",
       });
     }
   }
@@ -1227,6 +1543,22 @@ export const inputSchema = z.object({
       index,
     })),
   ].filter(({ item }) => (item.deduction_claimed ?? item.fmv ?? 0) > 0);
+  if (
+    sectionA.some((item) =>
+      item.private_foundation_capital_gain_reduction !== undefined ||
+      item.taxidermy_capital_gain_reduction !== undefined ||
+      item.intellectual_property_capital_gain_reduction !== undefined
+    ) &&
+    (positive.length !== 1 || sectionB.length > 0 ||
+      input.carryover_evidence !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["section_a_items"],
+      message:
+        "Form 8283 special capital-gain reduction supports one current Section A gift without a Section B item",
+    });
+  }
   if (positive.length > 1) {
     for (const { item, section, index } of positive) {
       if (!item.similar_item_group) {
@@ -1393,6 +1725,8 @@ type ClassifiedItem = {
   is_capital_gain_property?: boolean;
   capital_gain_reduction_election_confirmed?: true;
   unrelated_use_capital_gain_reduction?: unknown;
+  taxidermy_capital_gain_reduction?: unknown;
+  intellectual_property_capital_gain_reduction?: unknown;
   cost_or_adjusted_basis?: number;
 };
 
@@ -1442,7 +1776,10 @@ function validateCharitableLimitCategory(
       item.cost_or_adjusted_basis === item.fmv && claimed === item.fmv;
     if (
       (!item.capital_gain_reduction_election_confirmed &&
-        !item.unrelated_use_capital_gain_reduction && !noAppreciation) ||
+        !item.unrelated_use_capital_gain_reduction &&
+        !item.taxidermy_capital_gain_reduction &&
+        !item.intellectual_property_capital_gain_reduction &&
+        !noAppreciation) ||
       item.cost_or_adjusted_basis === undefined ||
       claimed > item.cost_or_adjusted_basis
     ) {
@@ -1480,6 +1817,21 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
         item.capital_gain_reduction_election_confirmed,
       unrelated_use_capital_gain_reduction_confirmed:
         item.unrelated_use_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      private_foundation_capital_gain_reduction_confirmed:
+        !("private_foundation_capital_gain_reduction" in item) ||
+          item.private_foundation_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      taxidermy_capital_gain_reduction_confirmed:
+        !("taxidermy_capital_gain_reduction" in item) ||
+          item.taxidermy_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      intellectual_property_capital_gain_reduction_confirmed:
+        !("intellectual_property_capital_gain_reduction" in item) ||
+          item.intellectual_property_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];

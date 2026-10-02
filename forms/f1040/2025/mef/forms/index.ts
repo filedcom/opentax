@@ -7,6 +7,7 @@ import { irs1040 } from "./f1040.ts";
 import { iraDistributionStatement } from "./ira_distribution_statement.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
+import { form2106 } from "./f2106.ts";
 import { form2210f } from "./f2210f_box_b.ts";
 import { form1116ScheduleB } from "./f1116_schedule_b.ts";
 import { form2439 } from "./f2439.ts";
@@ -47,6 +48,11 @@ import { form5471ScheduleQ } from "./f5471_schedule_q.ts";
 import { form5471ScheduleR } from "./f5471_schedule_r.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
+import { form8844 } from "./f8844.ts";
+import { form8881 } from "./f8881.ts";
+import { form8882 } from "./f8882.ts";
+import { form8941 } from "./f8941.ts";
+import { form8864 } from "./f8864.ts";
 import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
 import { form5884DeductionDifferentiationStatement } from "./f5884_deduction_differentiation_stmt.ts";
 import { form6198 } from "./f6198.ts";
@@ -104,8 +110,12 @@ import { form8960 } from "./f8960.ts";
 import { form8962 } from "./f8962.ts";
 import { form8978 } from "./f8978.ts";
 import { form8978ScheduleA } from "./f8978_schedule_a.ts";
+import { form8994 } from "./f8994.ts";
 import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
+import { scheduleAOtherTaxStatement } from "./schedule_a_other_tax_statement.ts";
+import { scheduleALine8bSellerStatement } from "./schedule_a_line8b_seller_statement.ts";
+import { scheduleALine16EstateStatement } from "./schedule_a_line16_estate_statement.ts";
 import { form8990 } from "./f8990.ts";
 import { form8992 } from "./f8992.ts";
 import { form8992ScheduleA } from "./f8992_schedule_a.ts";
@@ -184,6 +194,7 @@ export const ALL_MEF_FORMS = [
   form1116,
   // Form 1116 Schedule B follows Form 1116 in ReturnData1040.xsd.
   form1116ScheduleB,
+  form2106,
   // Form 2210-F follows Form 2210 and precedes Form 2439 in ReturnData1040.xsd.
   form2210f,
   // One native document per payer-issued Form 2439 with positive box 2.
@@ -275,6 +286,9 @@ export const ALL_MEF_FORMS = [
   form8835,
   // Form 8839
   form8839,
+  form8844,
+  form8881,
+  form8882,
   // Form 8853
   form8853,
   // Initial Form 8854 follows Form 8853 in ReturnData1040.xsd.
@@ -285,6 +299,7 @@ export const ALL_MEF_FORMS = [
   form8862,
   // Form 8863
   form8863,
+  form8864,
   form8874,
   // Form 8880
   form8880,
@@ -303,6 +318,7 @@ export const ALL_MEF_FORMS = [
   // Form 8936 and one Schedule A per clean vehicle follow Form 8911 Schedule A.
   form8936,
   form8936ScheduleA,
+  form8941,
   // Form 8949
   form8949,
   // Form 8959 (must come after 8949 per XSD sequence)
@@ -319,6 +335,7 @@ export const ALL_MEF_FORMS = [
   // One Category 5a shareholder Form 8992 and its single-CFC Schedule A.
   form8992,
   form8992ScheduleA,
+  form8994,
   // Form 8995
   form8995,
   // Form 8995A
@@ -332,6 +349,7 @@ export const ALL_MEF_FORMS = [
   // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
   w2g,
   fecRecord,
+  scheduleALine8bSellerStatement,
   // Form 1040 line 4c IRA statement precedes other income statements.
   iraDistributionStatement,
   // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
@@ -339,6 +357,8 @@ export const ALL_MEF_FORMS = [
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
   anyOtherTaxesStatement,
   wagesNotShownSchedule,
+  scheduleAOtherTaxStatement,
+  scheduleALine16EstateStatement,
   // Form 4835 line 4a statement follows wage statements in ReturnData1040.xsd.
   cccLoanAccrualStatement,
   cccLoanStatement,

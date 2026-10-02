@@ -127,14 +127,18 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
-    if (input.schedule_j_election_requested === true &&
-        input.schedule_j_calculated_tax === undefined) {
+    if (
+      input.schedule_j_election_requested === true &&
+      input.schedule_j_calculated_tax === undefined
+    ) {
       throw new Error(
         "Schedule J election requires a reconciled calculated line 23",
       );
     }
-    if (input.schedule_j_calculated_tax !== undefined &&
-        input.schedule_j_election_requested !== true) {
+    if (
+      input.schedule_j_calculated_tax !== undefined &&
+      input.schedule_j_election_requested !== true
+    ) {
       throw new Error(
         "Calculated Schedule J tax requires its source-backed election",
       );
@@ -175,13 +179,14 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       );
     }
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
-    if (input.schedule_j_calculated_tax !== undefined &&
-        (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
-          form4952Election > 0 || foreignExclusion > 0 ||
-          (input.form8814_tax ?? 0) > 0 ||
-          sumField(input.form4972_tax) > 0 ||
-          sumField(input.form8978_tax) > 0 ||
-          sumField(input.form8621_tax) > 0)) {
+    if (
+      input.schedule_j_calculated_tax !== undefined &&
+      (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
+        form4952Election > 0 || foreignExclusion > 0 ||
+        (input.form8814_tax ?? 0) > 0 ||
+        sumField(input.form8978_tax) > 0 ||
+        sumField(input.form8621_tax) > 0)
+    ) {
       throw new Error(
         "Schedule J ordinary-rate route cannot omit a current-year tax worksheet or line 16 add-on",
       );

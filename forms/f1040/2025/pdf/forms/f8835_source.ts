@@ -40,6 +40,13 @@ export function form8835PdfSources(
   const source = inputSchema.parse(raw);
   const rows = source.f8835s.map((item) => {
     const lines = calculateForm8835(item);
+    const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
+      (item.open_loop_cellulosic_source !== undefined ||
+        item.open_loop_livestock_source !== undefined) &&
+      item.open_loop_nonowner_lessee_source !== undefined &&
+      item.facility_owned_by_filer === false &&
+      item.facility_owner_business !== undefined &&
+      item.facility_owner_person === undefined;
     if (lines.line15 <= 0) {
       throw new Error(
         "Form 8835 PDF zero-credit facility needs a separately reviewed native filing decision",
@@ -59,9 +66,10 @@ export function form8835PdfSources(
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
       (item.transfer_election_amount ?? 0) !== 0 ||
       item.subject_to_passive_activity_limit ||
-      item.facility_owned_by_filer !== true ||
-      item.facility_owner_person !== undefined ||
-      item.facility_owner_business !== undefined ||
+      (item.facility_owned_by_filer !== true && !nonownerLessee) ||
+      (item.facility_owned_by_filer === true &&
+        (item.facility_owner_person !== undefined ||
+          item.facility_owner_business !== undefined)) ||
       item.existing_facility_expansion === true ||
       item.facility_us_address === undefined ||
       item.facility_latitude === undefined ||
@@ -107,6 +115,7 @@ export function form8835PdfSources(
   const sourceDetails = prepared.currentDetails.filter((row) =>
     row.line === "4e"
   );
+  const filedDocumentIds = prepared.form8835DocumentIds;
   if (
     entries.length !== rows.length ||
     entries.some((entry, index) =>
@@ -127,12 +136,14 @@ export function form8835PdfSources(
     currentAmounts[0].transferOutCredit !== 0 ||
     currentAmounts[0].appliedCredit !== totalCredit ||
     sourceDetails.length !== rows.length ||
+    filedDocumentIds?.length !== rows.length ||
     sourceDetails.some((detail, index) =>
       detail.credit !== rows[index].lines.line15 ||
       detail.appliedCredit !== rows[index].lines.line15 ||
       (detail.transferOutCredit ?? 0) !== 0 ||
-      !detail.sourceDocumentId
+      detail.sourceDocumentId !== filedDocumentIds?.[index]
     ) ||
+    new Set(filedDocumentIds).size !== rows.length ||
     currentRows[0].metadata.referenceDocumentId !==
       sourceDetails.map((detail) => detail.sourceDocumentId).join(" ") ||
     prepared.lines.line37 < totalCredit ||

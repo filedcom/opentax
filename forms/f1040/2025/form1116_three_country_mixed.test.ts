@@ -8,6 +8,7 @@ const canadaRef = "2025 Canadian bank interest copy";
 const franceRef = "2025 French corporation dividend copy";
 const germanyRef = "2025 German bank interest copy";
 const canada = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 20_000,
   box6: 2_000,
@@ -17,6 +18,7 @@ const canada = {
   foreign_tax_source_document_reference: canadaRef,
 };
 const germany = {
+  recipient_tin: "111223333",
   payer_name: "German Bank",
   box1: 10_000,
   box6: 1_000,
@@ -26,6 +28,7 @@ const germany = {
   foreign_tax_source_document_reference: germanyRef,
 };
 const france = {
+  recipient_tin: "111223333",
   payerName: "French Corporation",
   source_document_reference: franceRef,
   isNominee: false,

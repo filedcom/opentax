@@ -7,6 +7,7 @@ import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
+import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
@@ -18,15 +19,17 @@ Deno.test("recipient-owned K-1 portfolio interest and code H expense reach Form 
     registry,
     {
       ...base.inputs,
-      f1098: [{
-        lender_name: "Home Lender",
-        recipient_tin: "111223333",
-        source_document_reference: "Synthetic 2025 Form 1098 copy",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        for_routing: "A",
-      }],
+      f1098: [
+        await withSyntheticForm1098Copy("form4952-k1", {
+          lender_name: "Home Lender",
+          recipient_tin: "111223333",
+          source_document_reference: "Synthetic 2025 Form 1098 copy",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 interest workpaper",
+          for_routing: "A",
+        }),
+      ],
       k1_partnership: [{
         partnership_name: "Portfolio Partnership",
         partnership_ein: "123456789",

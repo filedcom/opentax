@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { W2Item } from "../../../nodes/inputs/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
 
 interface Fields {
   readonly w2s?: readonly W2Item[];
@@ -48,6 +49,11 @@ function employeeIdentity(
   const requestedSsn = digits(item.employee_ssn ?? filer.primarySSN);
   const spouseSsn = filer.spouse ? digits(filer.spouse.ssn) : undefined;
   if (spouseSsn === requestedSsn && filer.spouse) {
+    if (filer.filingStatus !== FilingStatus.MarriedFilingJointly) {
+      throw new Error(
+        `W-2 ${index + 1} spouse wages require a joint Form 1040`,
+      );
+    }
     return {
       ssn: requestedSsn,
       name: [
@@ -58,6 +64,12 @@ function employeeIdentity(
         .filter(Boolean)
         .join(" "),
     };
+  }
+
+  if (requestedSsn !== digits(filer.primarySSN)) {
+    throw new Error(
+      `W-2 ${index + 1} employee SSN must match the taxpayer or joint spouse`,
+    );
   }
 
   return {

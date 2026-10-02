@@ -1,8 +1,5 @@
-// UNRESOLVED ITEMS:
-//   - line_18_itemize_checkbox: not in schema
-
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleA } from "./index.ts";
+import { inputSchema, scheduleA } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 type ScheduleAInput = Parameters<typeof scheduleA.compute>[1];
@@ -249,6 +246,120 @@ Deno.test("scheduleA.inputSchema: negative numeric field rejected", () => {
 Deno.test("scheduleA.inputSchema: non-boolean force_itemized rejected", () => {
   const parsed = scheduleA.inputSchema.safeParse({ force_itemized: "yes" });
   assertEquals(parsed.success, false);
+});
+
+Deno.test("Schedule A rejects contradictory deduction choices", () => {
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      force_itemized: true,
+      force_standard: true,
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Schedule A mortgage-use warning requires reviewed loan and interest facts", () => {
+  const review = {
+    loan_document_reference: "2025 home equity loan statement",
+    outstanding_balance_2025: 100_000,
+    nonqualifying_proceeds_amount: 10_000,
+    interest_allocation_workpaper_reference: "Pub 936 tracing workpaper",
+    deductible_home_interest_reviewed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_8a_mortgage_interest_1098: 2_000,
+      home_mortgage_nonqualifying_use_review: review,
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      home_mortgage_nonqualifying_use_review: review,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8a_mortgage_interest_1098: 2_000,
+      home_mortgage_nonqualifying_use_review: {
+        ...review,
+        interest_allocation_workpaper_reference: "",
+      },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Schedule A line 6 tax types require distinct reviewed rows totaling the filed amount", () => {
+  const item = {
+    type: "foreign_income_tax",
+    amount: 500,
+    source_document_reference: "foreign tax receipt",
+    deductible_tax_reviewed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 500,
+      line_6_other_tax_items: [item],
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 501,
+      line_6_other_tax_items: [item],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 1_000,
+      line_6_other_tax_items: [item, item],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 500,
+      line_6_other_tax_items: [{ ...item, source_document_reference: "" }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Schedule A seller-financed line 8b needs exact interest and recipient evidence", () => {
+  const seller = {
+    amount: 2_000,
+    seller_name: "Seller Example",
+    tin_type: "ssn",
+    seller_tin: "222334444",
+    address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+    mortgage_contract_reference: "2025 mortgage contract",
+    interest_payment_workpaper_reference: "2025 interest ledger",
+    seller_received_taxpayer_tin_confirmed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_000,
+      line_8b_seller_financed: seller,
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_001,
+      line_8b_seller_financed: seller,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_000,
+      line_8b_seller_financed: { ...seller, seller_tin: "" },
+    }).success,
+    false,
+  );
 });
 
 Deno.test("scheduleA.inputSchema: string where number expected is rejected", () => {

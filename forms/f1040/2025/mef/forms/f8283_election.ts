@@ -38,25 +38,29 @@ export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
 }
 
-export function isSingleSectionANeedyVehicleUnreduced(
+export function isSingleSectionAExceptionVehicleUnreduced(
   form: F8283Input,
 ): boolean {
   const sectionA = form.section_a_items ?? [];
   const item = sectionA[0];
   return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
     item.is_vehicle === true &&
-    item.vehicle_needy_transfer_acknowledgment !== undefined &&
+    (item.vehicle_needy_transfer_acknowledgment !== undefined ||
+      item.vehicle_significant_use_acknowledgment !== undefined ||
+      item.vehicle_material_improvement_acknowledgment !== undefined) &&
     item.fmv !== undefined && item.deduction_claimed === item.fmv;
 }
 
-export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
-  if (!isSingleSectionANeedyVehicleUnreduced(form)) {
+export function assertExceptionVehicleUnreducedSource(form: F8283Input): void {
+  if (!isSingleSectionAExceptionVehicleUnreduced(form)) {
     throw new Error(
-      "Form 8283 needy-transfer Section A route needs one vehicle claimed at original FMV",
+      "Form 8283 exception Section A route needs one vehicle claimed at original FMV",
     );
   }
   const item = form.section_a_items![0];
-  const acknowledgment = item.vehicle_needy_transfer_acknowledgment!;
+  const acknowledgment = item.vehicle_needy_transfer_acknowledgment ??
+    item.vehicle_significant_use_acknowledgment ??
+    item.vehicle_material_improvement_acknowledgment!;
   const address = item.donee_organization_us_address;
   const certifiedAddress = acknowledgment.donee_us_address;
   const description = item.property_description?.toLowerCase() ?? "";
@@ -90,7 +94,7 @@ export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
     address.zip.trim() !== certifiedAddress.zip.trim()
   ) {
     throw new Error(
-      "Form 8283 needy-transfer Section A route needs complete purchased vehicle and matching donee facts",
+      "Form 8283 exception Section A route needs complete purchased vehicle and matching donee facts",
     );
   }
 }
@@ -106,7 +110,7 @@ export function hasSectionAShortTermReduction(form: F8283Input): boolean {
     );
 }
 
-/** Reconcile up to four current Section A gifts without a capital-gain election. */
+/** Reconcile up to twelve current Section A gifts without a capital-gain election. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
@@ -127,13 +131,32 @@ export function assertOrdinarySectionAReconciled(
   }
   const form = form8283InputSchema.parse(pending.f8283);
   const sectionA = form.section_a_items ?? [];
+  const repeatedPagePlainGifts = sectionA.length > 4 &&
+    sectionA.every((item) =>
+      item.is_vehicle !== true && item.is_capital_gain_property === false &&
+      item.charitable_limit_category === "noncash_50" &&
+      item.donor_acquisition_description?.trim().toLowerCase() ===
+        "purchase" &&
+      item.date_contributed?.startsWith("2025-") &&
+      !!item.date_acquired &&
+      item.date_acquired <= item.date_contributed &&
+      item.fmv !== undefined && item.fmv > 500 && item.fmv <= 5_000 &&
+      item.deduction_claimed === item.fmv &&
+      item.cost_or_adjusted_basis !== undefined &&
+      item.cost_or_adjusted_basis >= item.fmv &&
+      !!item.similar_item_group?.trim()
+    ) &&
+    new Set(
+        sectionA.map((item) => item.similar_item_group!.trim().toLowerCase()),
+      ).size === sectionA.length;
   if (
-    sectionA.length < 1 || sectionA.length > 4 ||
+    sectionA.length < 1 || sectionA.length > 12 ||
     (form.section_b_items ?? []).length !== 0 ||
-    sectionA.some((item) => !hasCompleteSectionAColumns(item))
+    sectionA.some((item) => !hasCompleteSectionAColumns(item)) ||
+    (sectionA.length > 4 && !repeatedPagePlainGifts)
   ) {
     throw new Error(
-      "Form 8283 ordinary Section A needs one to four fully sourced current-year gifts",
+      "Form 8283 ordinary Section A needs one to four sourced gifts, or five to twelve distinct unreduced nonvehicle gifts",
     );
   }
   if (
@@ -353,7 +376,7 @@ export function assertElectedSectionBReconciled(
   assertSectionBReconciled(context, filedScheduleA);
 }
 
-/** Reconcile a current-year Section B gift or the paired similar-art group. */
+/** Reconcile a current-year Section B gift or a bounded two-gift group. */
 export function assertOrdinarySectionBReconciled(
   context: MefBuildContext | undefined,
   propertyType: SectionBPropertyType,
@@ -450,13 +473,15 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
     new Set(documents).size === documents.length;
 }
 
-/** Two fully reviewed short-term equipment gifts in one similar-item group. */
-export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
+/** Two fully reviewed short-term equipment gifts with sourced group identities. */
+export function isTwoSectionBReducedEquipmentGifts(form: F8283Input): boolean {
   const items = form.section_b_items ?? [];
   if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
     return false;
   }
-  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const groups = items.map((item) =>
+    item.similar_item_group?.trim().toLowerCase()
+  );
   const documents = items.flatMap((item) => [
     item.signed_form_attachment_file_name,
     item.qualified_appraisal?.attachment_file_name,
@@ -465,9 +490,8 @@ export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
     item.ordinary_income_reduction?.purchase_record_attachment_file_name,
     item.ordinary_income_reduction?.reduction_statement_attachment_file_name,
   ]);
-  return !!group &&
+  return groups.every(Boolean) &&
     items.every((item) =>
-      item.similar_item_group?.trim().toLowerCase() === group &&
       item.property_type === SectionBPropertyType.Equipment &&
       item.fmv > 5_000 && item.fmv <= 500_000 &&
       item.deduction_claimed > 5_000 &&
@@ -531,7 +555,7 @@ function assertSectionBReconciled(
     isTwoSectionBSimilarArtGroup(form);
   const pairedEquipment = ordinary &&
     ordinaryPropertyType === SectionBPropertyType.Equipment &&
-    isTwoSectionBReducedEquipmentGroup(form);
+    isTwoSectionBReducedEquipmentGifts(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
     (!pairedArt && !pairedEquipment &&
@@ -546,7 +570,7 @@ function assertSectionBReconciled(
   ) {
     throw new Error(
       ordinary
-        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar gifts`
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced Section B gifts`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }

@@ -20,6 +20,25 @@ Deno.test("agi_aggregator: wages only", () => {
   assertEquals(agi(result), 60_000);
 });
 
+Deno.test("agi_aggregator: generic line 8z scalar cannot enter AGI", () => {
+  for (const value of [0, 25, -25]) {
+    assertThrows(() =>
+      compute(
+        { line8z_other: value } as unknown as Parameters<
+          typeof agi_aggregator.compute
+        >[1],
+      )
+    );
+  }
+});
+
+Deno.test("agi_aggregator: household wages enter line 11 once", () => {
+  assertEquals(
+    agi(compute({ line1b_household_wages: 2_000, line7_unemployment: 1_000 })),
+    3_000,
+  );
+});
+
 Deno.test("agi_aggregator: S corporation tax-benefit recovery reaches Form 1040 line 8 once", () => {
   const result = compute({
     line1a_wages: 60_000,
@@ -47,14 +66,13 @@ Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", (
     line6b_ss_taxable: 2_000,
     tax_exempt_interest: 500,
     line8d_foreign_earned_income_exclusion: 1_000,
-    line8d_foreign_housing_deduction: 300,
   });
-  assertEquals(agi(result), 30_700);
+  assertEquals(agi(result), 31_000);
   const form8962 = result.outputs.find((item) => item.nodeType === "form8962");
   assertEquals(form8962?.fields.taxpayer_modified_agi, 40_500);
   const form8880 = result.outputs.find((item) => item.nodeType === "form8880");
-  assertEquals(form8880?.fields.agi, 30_700);
-  assertEquals(form8880?.fields.foreign_agi_addback, 1_300);
+  assertEquals(form8880?.fields.agi, 31_000);
+  assertEquals(form8880?.fields.foreign_agi_addback, 1_000);
 });
 
 Deno.test("agi_aggregator: Pub 974 audit keeps income and adjustments separate", () => {
@@ -233,12 +251,17 @@ Deno.test("agi_aggregator: foreign earned income exclusion reduces AGI", () => {
   assertEquals(agi(result), 3_500);
 });
 
-Deno.test("agi_aggregator: foreign housing deduction reduces AGI", () => {
-  const result = compute({
-    line1a_wages: 50_000,
-    line8d_foreign_housing_deduction: 5_000,
-  });
-  assertEquals(agi(result), 45_000);
+Deno.test("agi_aggregator: unsupported housing deduction input is rejected before changing AGI", () => {
+  for (const amount of [0, 5_000]) {
+    assertThrows(
+      () => compute({
+        line1a_wages: 50_000,
+        line8d_foreign_housing_deduction: amount,
+      } as unknown as Parameters<typeof agi_aggregator.compute>[1]),
+      Error,
+      "Form 2555 line 50 housing deduction is unsupported",
+    );
+  }
 });
 
 Deno.test("agi_aggregator: gambling winnings increase AGI", () => {

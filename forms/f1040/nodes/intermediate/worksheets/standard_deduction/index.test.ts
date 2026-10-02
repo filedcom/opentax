@@ -24,6 +24,35 @@ Deno.test("Single: base standard deduction $15,750", () => {
   );
 });
 
+Deno.test("explicit Schedule A election files below-standard and zero deductions", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    itemized_deductions: 1_000,
+    itemized_taxes: 1_000,
+    force_itemized: true,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12e_itemized_deductions,
+    1_000,
+  );
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12a_standard_deduction,
+    undefined,
+  );
+  const zero = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    itemized_deductions: 0,
+    itemized_taxes: 0,
+    force_itemized: true,
+  });
+  assertEquals(
+    findOutput(zero, "f1040")?.fields.line12e_itemized_deductions,
+    0,
+  );
+});
+
 Deno.test("MFJ: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const f1040 = findOutput(result, "f1040");

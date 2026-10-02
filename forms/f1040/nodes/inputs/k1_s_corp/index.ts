@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  type Box10CodeJSource,
+  box10CodeJSourceSchema,
+} from "./box10_code_j.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -125,8 +129,8 @@ export const itemSchema = z.object({
   ),
   // Code J is a recovery only to the extent a prior-year deduction produced a
   // tax benefit. The reviewed taxable amount may be less than the K-1 amount.
-  box10_code_j_recovery: z.number().finite().positive().optional(),
-  box10_code_j_taxable_recovery: z.number().finite().positive().optional(),
+  box10_code_j_recovery: z.number().int().positive().optional(),
+  box10_code_j_taxable_recovery: z.number().int().positive().optional(),
   box10_code_j_tax_benefit_workpaper_reference: z.string().trim().min(1)
     .optional(),
   box10_code_j_prior_year_tax_benefit_reviewed: z.literal(true).optional(),
@@ -258,6 +262,7 @@ export const itemSchema = z.object({
       const key of [
         "corporation_ein",
         "source_document_reference",
+        "recipient_tin",
         "box10_code_j_recovery",
         "box10_code_j_taxable_recovery",
         "box10_code_j_tax_benefit_workpaper_reference",
@@ -528,17 +533,71 @@ function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
 
 // Only reviewed box 10 code J tax-benefit recoveries belong on line 8z.
 function codeJTaxBenefitRecoveryOutputs(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce(
-    (sum, item) => sum + (item.box10_code_j_taxable_recovery ?? 0),
-    0,
-  );
+  const sources = box10CodeJSources(items);
+  const total = sources.reduce((sum, row) => sum + row.taxable_amount, 0);
   if (total === 0) return [];
   return [
-    output(schedule1, { line8z_k1_s_corp_tax_benefit_recovery: total }),
+    output(schedule1, {
+      line8z_k1_s_corp_tax_benefit_recovery: total,
+      k1_s_corp_box10_code_j_sources: sources,
+    }),
     output(agi_aggregator, {
       line8z_k1_s_corp_tax_benefit_recovery: total,
     }),
   ];
+}
+
+function box10CodeJSources(items: K1SCorpItems): Box10CodeJSource[] {
+  return items.filter((item) =>
+    item.box10_code_j_taxable_recovery !== undefined
+  )
+    .map((item) =>
+      box10CodeJSourceSchema.parse({
+        corporation_ein: item.corporation_ein,
+        source_document_reference: item.source_document_reference,
+        recipient_tin: item.recipient_tin,
+        recovery: item.box10_code_j_recovery,
+        taxable_amount: item.box10_code_j_taxable_recovery,
+        tax_benefit_workpaper_reference:
+          item.box10_code_j_tax_benefit_workpaper_reference,
+        prior_year_tax_benefit_reviewed:
+          item.box10_code_j_prior_year_tax_benefit_reviewed,
+      })
+    );
+}
+
+export function assertSCorpK1CodeJSources(
+  raw: unknown,
+  retainedRows: unknown,
+  expectedAmount: number,
+  recipientSsns: readonly string[],
+): void {
+  const issued = raw === undefined
+    ? []
+    : box10CodeJSources(inputSchema.parse(raw).k1_s_corps);
+  const retained = z.array(box10CodeJSourceSchema).parse(retainedRows ?? []);
+  const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
+  const identities = issued.map((row) =>
+    JSON.stringify([
+      row.corporation_ein,
+      row.source_document_reference,
+      row.recipient_tin,
+    ])
+  );
+  const sorted = (rows: readonly Box10CodeJSource[]) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (
+    !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
+    issued.reduce((sum, row) => sum + row.taxable_amount, 0) !==
+      expectedAmount ||
+    new Set(identities).size !== identities.length ||
+    issued.some((row) => !owners.has(row.recipient_tin)) ||
+    JSON.stringify(sorted(issued)) !== JSON.stringify(sorted(retained))
+  ) {
+    throw new Error(
+      "Schedule 1 S corporation code J rows must match distinct K-1 copies and filer owners",
+    );
+  }
 }
 
 // Route Form 7203 basis data when stock or debt basis fields are provided

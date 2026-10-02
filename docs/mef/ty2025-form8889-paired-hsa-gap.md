@@ -1,5 +1,38 @@
 # TY2025 paired Form 8889 boundary
 
+## One spouse's other coverage leaves a current personal excess (written, unrun)
+
+The paired family-HDHP route now carries a retained current-year personal HSA
+excess through the other-coverage eligibility boundary. One spouse must have
+family eligibility until a sourced nonpermitted plan begins, then be ineligible
+for the remaining months; the other spouse must retain family eligibility for
+all twelve months and affirm they are not covered by that plan. Both owners
+must supply the same referenced agreement allocating the prorated family limit
+for their shared eligible months. The disqualified owner's contribution may
+exceed that owner's allocation, while the continuing owner's contribution must
+stay within their allocation plus the remaining family months. Both owners
+must be under 55 and have no employer funding, distributions, prior excess,
+timely withdrawal, IRA funding, or testing-period event. The excess owner must
+supply a December 31 HSA value.
+
+The calculator deducts only each owner's allowed contribution on separate
+Forms 8889 and emits one owner Form 5329 Part VII for the retained excess. The
+paired native and PDF exporters recompute both Forms 8889 from the entered
+monthly facts, compare the owner Form 5329 lines 42 and 47 to the sourced
+excess, and reconcile the combined deductions and 6% tax through Schedules 1
+and 2 to Form 1040. A full-return positive case and onset, owner-form, and tax
+tamper cases are authored for the deferred validation batch. The coverage
+notice, allocation agreement, contribution amount, and year-end balance are
+entered evidence; source document bytes are not authenticated. Wider mixed
+coverage and HSA-event combinations remain closed.
+
+The [2025 Publication 969](https://www.irs.gov/publications/p969) explains
+that non-HDHP coverage disqualifies the covered spouse but does not disqualify
+the spouse who remains covered only by an HDHP. The [2025 Form 5329
+instructions](https://www.irs.gov/instructions/i5329) place a current-year HSA
+excess on Part VII line 47 and apply the 6% tax to the lower of excess and the
+December 31 HSA value.
+
 ## One code-2 return plus the other owner's medical distribution (written, unrun)
 
 The paired full-year self-only route now accepts one owner's full timely
@@ -496,3 +529,58 @@ document bytes and the 2024 HSA year-end value are not authenticated. The
 single-owner source, calculation, MeF, PDF, and tamper fixtures are written but
 unrun. Multiple simultaneous prior excess carryovers and wider paired-owner
 combinations remain outside this bounded route.
+
+## January Medicare onset and current excess (written, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) assign
+zero contribution room for every month enrolled in Medicare. A paired self-only
+route now accepts Medicare enrollment effective January 1 for one owner with
+twelve ineligible months, while the other owner remains eligible for all twelve
+months. The first owner's retained personal contribution has zero deductible
+room and goes to that owner's Form 5329 Part VII; the other owner's contribution
+remains on their separate Form 8889 and reaches Schedule 1 line 13 once. The
+current-excess export guard also now admits the existing later-onset Medicare
+route, which was otherwise blocked by a full-year self-only predicate that
+excludes Medicare by design. Native and PDF export recompute both Forms 8889,
+compare the owner Form 5329, and reconcile Schedule 1, Schedule 2, and
+Form 1040. Positive and tamper fixtures are authored but unrun pending the
+coordinated bulk validation.
+
+The onset notice, contribution record, and HSA year-end balance are entered
+source facts rather than authenticated document bytes. January family coverage
+allocation, employer funding, timely withdrawals, age-65 distributions, and
+simultaneous prior excess remain outside this bounded route.
+
+## One HSA owner's medical receipt for the other spouse (2026-10-01, unrun)
+
+The paired full-year self-only personal-contribution route now accepts one
+primary-owner HSA medical receipt for the spouse on the same joint return.
+A receipt labeled `spouse` must name the patient's SSN, and native MeF and PDF
+projection require it to equal the other HSA owner's SSN. The two Form 1099-SA
+recipients remain tied to their own HSA owners; the primary owner's $300 spouse
+expense reaches only that owner's Form 8889 line 15, while the spouse owner's
+separate $500 expense reaches the second Form 8889. The authored full return
+reconciles $700 taxable distributions and $140 additional tax to Schedule 1,
+Schedule 2, and Form 1040, with separate Form 8889 native/PDF pages. Wrong,
+missing, and owner-self patient SSNs, plus final tax drift, reject. The
+[2025 Form 8889 line-15 instructions](https://www.irs.gov/instructions/i8889)
+permit an HSA beneficiary's spouse's unreimbursed qualified medical expenses.
+These fixtures are authored but unrun; receipt and trustee bytes remain
+unauthenticated, and nonjoint or more complex coverage paths remain open.
+
+## Spouse-owned HSA receipt for one claimed child (2026-10-01, unrun)
+
+The same paired self-only route now allows one spouse-owned HSA receipt to pay
+an expense for one child claimed on the joint return. A receipt labeled
+`dependent` must name the patient's SSN. Native MeF and PDF projection parse
+the retained general return source, require exactly one claimed dependent and
+one dependent-labeled receipt across the two HSA owners, and match those SSNs.
+The primary and spouse Form 1099-SA sources remain tied to their respective
+owners, while each Form 8889 line 15 uses only its owner's reviewed receipts.
+The authored full-return case keeps the $700 taxable distribution and $140
+additional tax reconciled to Schedule 1, Schedule 2, and Form 1040, with two
+separate native/PDF Form 8889 pages. Wrong, missing, owner-self, and unclaimed
+patient cases are authored to reject. The [2025 Form 8889 line-15 instructions](https://www.irs.gov/instructions/i8889)
+allow HSA funds for qualified expenses of dependents. These cases are unrun;
+special deemed-dependent exceptions, multiple patient receipts, receipt-byte
+authentication, and wider HSA combinations remain open.

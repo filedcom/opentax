@@ -9,6 +9,7 @@ import {
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
+import { assertForm8815FinalReturn } from "../../form8815_final_return.ts";
 
 type Input = Partial<Form8815Input & Form8815Lines>;
 
@@ -46,30 +47,6 @@ function reconciledLines(fields: Input) {
   return { source, lines };
 }
 
-function checkScheduleB(
-  line14: number,
-  worksheetInterest: number,
-  context?: MefBuildContext,
-): void {
-  if (!context?.pending) {
-    throw new Error(
-      "Form 8815 MeF requires Schedule B pending for reconciliation",
-    );
-  }
-  const scheduleB = context.pending.schedule_b as
-    | { ee_bond_exclusion?: unknown; print_line2_total?: unknown }
-    | undefined;
-  if (
-    typeof scheduleB !== "object" || scheduleB === null ||
-    scheduleB.ee_bond_exclusion !== line14 ||
-    scheduleB.print_line2_total !== worksheetInterest
-  ) {
-    throw new Error(
-      "Form 8815 worksheet and line 14 differ from Schedule B lines 2-3",
-    );
-  }
-}
-
 function buildIRS8815(fields: Input, context?: MefBuildContext): string {
   if (Object.keys(fields).length === 0) return "";
   if (fields.line14 === undefined) {
@@ -88,11 +65,7 @@ function buildIRS8815(fields: Input, context?: MefBuildContext): string {
   if (context?.filer && context.filer.filingStatus !== filedStatus) {
     throw new Error("Form 8815 filing status differs from the filed return");
   }
-  checkScheduleB(
-    lines.line14,
-    source.line9_worksheet.schedule_b_line2_interest,
-    context,
-  );
+  assertForm8815FinalReturn(source, lines, context?.pending);
   return elements("IRS8815", [
     ...source.eligible_students.map((student) =>
       elements("EligibleEducationInstnGrp", [

@@ -9,10 +9,12 @@ import {
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import {
   assertNoFiledForm8995,
+  assertOneBusinessReitSource,
   assertScheduleCLossSources,
   validateOneBusiness,
 } from "../../mef/forms/f8995a.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
+import { assertZeroReductionScheduleAReturn } from "../../mef/forms/f8995a_schedule_a.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
@@ -61,6 +63,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
         ({ 17: 1, 18: 4, 19: 7, 25: 30, 26: 33 } as const)[line],
       ).padStart(2, "0")
     }[0]`,
+    printZero: line === 19 || line === 25,
   })),
   ...([20, 21, 22, 23, 24] as const).map((line): PdfFieldEntry => ({
     kind: "text",
@@ -71,7 +74,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ).padStart(2, "0")
     }[0]`,
   })),
-  ...([27, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
+  ...([27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
       domainKey: `line${line}`,
@@ -141,10 +144,14 @@ export function projectOneBusiness8995A(
       );
     }
     return {
-      business_name: lines.positive.business_name,
-      business_ein: lines.positive.ein,
-      business_name_b: lines.negative.business_name,
-      business_ein_b: lines.negative.ein,
+      business_name: (lines.positive ?? lines.negative).business_name,
+      business_ein: (lines.positive ?? lines.negative).ein,
+      ...(lines.positive
+        ? {
+          business_name_b: lines.negative.business_name,
+          business_ein_b: lines.negative.ein,
+        }
+        : {}),
       ...lines.parent,
       ...Object.fromEntries(
         [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -176,6 +183,7 @@ export function projectOneBusiness8995A(
     }
     assertNoFiledForm8995(allPending);
     const lines = calculateOneSstb8995ALines(input);
+    assertZeroReductionScheduleAReturn(input, lines, allPending);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
       throw new Error(
         "Form 8995-A PDF Schedule A line 39 differs from Form 1040 line 13",
@@ -197,6 +205,7 @@ export function projectOneBusiness8995A(
     };
   }
   const { details, lines } = validateOneBusiness(input);
+  assertOneBusinessReitSource(input, allPending);
   if (allPending.form8995a_schedule_a !== undefined) {
     throw new Error("Form 8995-A PDF has Schedule A without an SSTB parent");
   }
@@ -226,6 +235,10 @@ export function projectOneBusiness8995A(
     patron: input.patron_of_specified_cooperative === true,
     ...lines,
     line27: lines.line16,
+    line28: lines.line28,
+    line29: lines.line29,
+    line30: lines.line30,
+    line31: lines.line31,
   };
 }
 

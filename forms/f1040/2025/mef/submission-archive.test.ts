@@ -1,16 +1,56 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { unzipSync, zipSync } from "fflate";
+import { unzipSync, Zip, ZipPassThrough, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
 import { buildMefBundle } from "./builder.ts";
+import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import type { MefPdfAttachment } from "./form-descriptor.ts";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import {
   buildMefSubmissionArchive,
   buildMefTransmissionPackage,
+  zipDirectoryEntryCount,
 } from "./submission-archive.ts";
+
+Deno.test("ZIP entry check accepts a valid data descriptor with placeholder local CRC", async () => {
+  const bytes = await new Promise<Uint8Array>((resolve, reject) => {
+    const chunks: Uint8Array[] = [];
+    const archive = new Zip((error, chunk, final) => {
+      if (error) return reject(error);
+      chunks.push(chunk);
+      if (final) {
+        const total = chunks.reduce((sum, item) => sum + item.length, 0);
+        const result = new Uint8Array(total);
+        let offset = 0;
+        for (const item of chunks) {
+          result.set(item, offset);
+          offset += item.length;
+        }
+        resolve(result);
+      }
+    });
+    const entry = new ZipPassThrough("fixture.txt");
+    archive.add(entry);
+    entry.push(new TextEncoder().encode("descriptor payload"), true);
+    archive.end();
+  });
+  assertEquals(new DataView(bytes.buffer).getUint16(6, true) & 0x0008, 0x0008);
+  assertEquals(zipDirectoryEntryCount(bytes, unzipSync(bytes)), 1);
+  assertEquals(
+    new TextDecoder().decode(unzipSync(bytes)["fixture.txt"]),
+    "descriptor payload",
+  );
+  const changed = Uint8Array.from(bytes);
+  const view = new DataView(changed.buffer);
+  const central = changed.findIndex((_, index) =>
+    index <= changed.length - 4 && view.getUint32(index, true) === 0x02014b50
+  );
+  if (central < 0) throw new Error("fixture lacks ZIP directory");
+  view.setUint32(central + 16, 0xdeadbeef, true);
+  assertEquals(zipDirectoryEntryCount(changed, unzipSync(changed)), undefined);
+});
 
 const processingDate = new Date("2026-09-26T10:00:00Z");
 const submissionId = "1234562026269abcdefg";
@@ -320,6 +360,365 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   );
 });
 
+Deno.test("A2A packaging rejects reordered inner submission ZIP entries", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([612, 792]);
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "AdditionalQMIDStatement.pdf",
+      description: "Additional QMID Statement",
+      bytes: await pdf.save(),
+    }],
+  });
+  const entries = unzipSync(submission.bytes);
+  assertEquals(Object.keys(entries), [
+    "manifest/manifest.xml",
+    "xml/submission.xml",
+    "attachment/AdditionalQMIDStatement.pdf",
+  ]);
+  const reordered = zipSync({
+    "attachment/AdditionalQMIDStatement.pdf":
+      entries["attachment/AdditionalQMIDStatement.pdf"],
+    "xml/submission.xml": entries["xml/submission.xml"],
+    "manifest/manifest.xml": entries["manifest/manifest.xml"],
+  });
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: reordered },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
+Deno.test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipSync", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const entries = unzipSync(submission.bytes);
+  const duplicateName = "attachment/Evidence.pdF";
+  const originalName = "attachment/Evidence.pdf";
+  const distinctZip = zipSync({
+    "manifest/manifest.xml": entries["manifest/manifest.xml"],
+    "xml/submission.xml": entries["xml/submission.xml"],
+    [originalName]: entries[originalName],
+    [duplicateName]: entries[originalName],
+  });
+  const duplicated = Uint8Array.from(distinctZip);
+  const oldName = new TextEncoder().encode(duplicateName);
+  const newName = new TextEncoder().encode(originalName);
+  let replacements = 0;
+  for (let index = 0; index <= duplicated.length - oldName.length; index++) {
+    if (oldName.every((byte, offset) => duplicated[index + offset] === byte)) {
+      duplicated.set(newName, index);
+      replacements++;
+    }
+  }
+  assertEquals(replacements, 2); // local and central directory names
+  assertEquals(Object.keys(unzipSync(duplicated)), Object.keys(entries));
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: duplicated },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
+Deno.test("A2A packaging rejects a local ZIP name that differs from its central name", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const changedZip = Uint8Array.from(submission.bytes);
+  const name = new TextEncoder().encode("attachment/Evidence.pdf");
+  let firstName = -1;
+  let occurrences = 0;
+  for (let index = 0; index <= changedZip.length - name.length; index++) {
+    if (name.every((byte, offset) => changedZip[index + offset] === byte)) {
+      if (firstName < 0) firstName = index;
+      occurrences++;
+    }
+  }
+  assertEquals(occurrences, 2); // local header and central directory
+  changedZip[firstName + name.length - 1] = "F".charCodeAt(0);
+  assertEquals(
+    Object.keys(unzipSync(changedZip)),
+    Object.keys(unzipSync(submission.bytes)),
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: changedZip },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
+Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  buildMefTransmissionPackage([{
+    archive: submission,
+    electronicPostmark: processingDate,
+  }]);
+  const changedXml = submission.bundle.xml.replace(
+    'documentCnt="1"',
+    'documentCnt="2"',
+  );
+  const entries = unzipSync(submission.bytes);
+  entries["xml/submission.xml"] = new TextEncoder().encode(
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + changedXml,
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bytes: zipSync(entries),
+          bundle: { ...submission.bundle, xml: changedXml },
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+});
+
+Deno.test("A2A package rejects a processing date changed after archive preparation", async () => {
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          processingDate: new Date("2026-09-27T10:00:00Z"),
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "Julian day",
+  );
+});
+
+Deno.test("A2A package replays source, XML, and PDF digests after joint archive changes", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const packaged = (archive: typeof submission) =>
+    buildMefTransmissionPackage([{
+      archive,
+      electronicPostmark: processingDate,
+    }]);
+  packaged(submission);
+
+  const changedXml = submission.bundle.xml.replace(
+    "<PrimarySSN>123456789</PrimarySSN>",
+    "<PrimarySSN>123456780</PrimarySSN>",
+  );
+  const xmlEntries = unzipSync(submission.bytes);
+  xmlEntries["xml/submission.xml"] = new TextEncoder().encode(
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + changedXml,
+  );
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bytes: zipSync(xmlEntries),
+        bundle: { ...submission.bundle, xml: changedXml },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bundle: {
+          ...submission.bundle,
+          pending: {
+            ...submission.bundle.pending,
+            f1040: {
+              ...submission.bundle.pending.f1040,
+              digital_assets: true,
+            },
+          },
+        },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+
+  const changedPdf = Uint8Array.from(submission.bundle.attachments[0].bytes);
+  changedPdf[changedPdf.length - 1] ^= 1;
+  const pdfEntries = unzipSync(submission.bytes);
+  pdfEntries["attachment/Evidence.pdf"] = changedPdf;
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bytes: zipSync(pdfEntries),
+        bundle: {
+          ...submission.bundle,
+          attachments: [{
+            ...submission.bundle.attachments[0],
+            bytes: changedPdf,
+          }],
+        },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+});
+
+Deno.test("MeF archive and A2A package reject non-PDF attachment bytes even when rehashed", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const identity = filer();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: identity,
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const invalidBytes = new TextEncoder().encode("not a PDF");
+  const changedBundle = {
+    ...submission.bundle,
+    attachments: [{ ...submission.bundle.attachments[0], bytes: invalidBytes }],
+    attachmentSha256ByFileName: {
+      "Evidence.pdf": await sha256Hex(invalidBytes),
+    },
+  };
+  const entries = unzipSync(submission.bytes);
+  entries["attachment/Evidence.pdf"] = invalidBytes;
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(changedBundle, {
+        filer: identity,
+        submissionId,
+        processingDate,
+        residencyReview,
+      }),
+    Error,
+    "not a complete PDF",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bundle: changedBundle,
+          bytes: zipSync(entries),
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "not a complete PDF",
+  );
+});
+
+Deno.test("A2A package replays retained PDF descriptions against the native manifest", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  buildMefTransmissionPackage([{
+    archive: submission,
+    electronicPostmark: processingDate,
+  }]);
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bundle: {
+            ...submission.bundle,
+            attachments: [{
+              ...submission.bundle.attachments[0],
+              description: "Changed after preparation",
+            }],
+          },
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "binary manifest differs from PDF attachment",
+  );
+});
+
 Deno.test("MeF submission rejects changes after bundle preparation", async () => {
   const identity = filer();
   const pdf = await PDFDocument.create();
@@ -376,7 +775,76 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
         attachments: [{ ...bundle.attachments[0], bytes: changedBytes }],
       }, options),
     Error,
-    "attachment differs from preparation",
+    "PDF bytes differ from digest",
+  );
+});
+
+Deno.test("MeF archive and A2A package reject a rehashed source that differs from native XML", async () => {
+  const identity = filer();
+  const original = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: identity,
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  const pending = {
+    ...original.bundle.pending,
+    f1040: { ...original.bundle.pending.f1040, digital_assets: true },
+  };
+  const changedBundle = {
+    ...original.bundle,
+    pending,
+    sourceSha256: await preparedSourceSha256(pending, identity),
+  };
+  const archiveOptions = {
+    filer: identity,
+    submissionId,
+    processingDate,
+    residencyReview,
+  };
+  await assertRejects(
+    () => buildMefSubmissionArchive(changedBundle, archiveOptions),
+    Error,
+    "retained source projection",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...original, bundle: changedBundle },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "retained source projection",
+  );
+});
+
+Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that differs from its manifest", async () => {
+  const identity = filer();
+  const bundle = await buildMefBundle({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, { filer: identity, attachments: [] });
+  const alteredXml = bundle.xml.replace(
+    "<EFIN>123456</EFIN>",
+    "<EFIN>654321</EFIN>",
+  );
+  assertEquals(alteredXml === bundle.xml, false);
+  const xmlSha256 = await sha256Hex(new TextEncoder().encode(alteredXml));
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive({
+        ...bundle,
+        xml: alteredXml,
+        xmlSha256,
+      }, {
+        filer: identity,
+        submissionId,
+        processingDate,
+        residencyReview,
+      }),
+    Error,
+    "retained source projection",
   );
 });
 

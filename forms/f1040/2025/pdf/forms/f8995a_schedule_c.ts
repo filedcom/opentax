@@ -90,10 +90,14 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
       row1_a: first.line1a,
       row1_b: first.line1b,
       row1_c: first.line1c,
-      row2_name: second.name,
-      row2_a: second.line1a,
-      row2_b: second.line1b,
-      row2_c: second.line1c,
+      ...(second
+        ? {
+          row2_name: second.name,
+          row2_a: second.line1a,
+          row2_b: second.line1b,
+          row2_c: second.line1c,
+        }
+        : {}),
       line2: lines.schedule.line2,
       line3: lines.schedule.line3,
       line4: lines.schedule.line4,

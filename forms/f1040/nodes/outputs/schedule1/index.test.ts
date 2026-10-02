@@ -44,6 +44,16 @@ Deno.test("schedule1: rejects the old unlinked 1099-NEC line 8z amount", () => {
   );
 });
 
+Deno.test("schedule1: generic line 8z scalars fail before totals are calculated", () => {
+  for (const key of ["line8z_other", "line8z_other_income"]) {
+    for (const value of [0, 25, -25]) {
+      assertThrows(() =>
+        compute({ [key]: value } as Parameters<typeof schedule1.compute>[1])
+      );
+    }
+  }
+});
+
 Deno.test("schedule1: empty input emits zero totals", () => {
   const f = fields({});
   assertEquals(f.line10_total_additional_income, 0);
@@ -239,24 +249,23 @@ Deno.test("schedule1: multiple line 8z items aggregated", () => {
   const f = fields({
     line8z_rtaa: 500,
     line8z_taxable_grants: 1_000,
-    line8z_nqdc: 10_000,
     line8z_golden_parachute: 5_000,
   });
-  assertEquals(f.line10_total_additional_income, 16_500);
+  assertEquals(f.line10_total_additional_income, 6_500);
 });
 
 Deno.test("schedule1: finalized detail lines reconcile to Part I and II totals", () => {
   const f = fields({
     line8c_cod_income: 700,
     line8z_rtaa: 300,
-    line8z_nqdc: 400,
+    line8i_prizes_awards: 400,
     line11_educator_expenses: 250,
     line16_sep_simple: 1_000,
     line21_student_loan_interest: 200,
   });
   assertEquals(f.line8c_cod_income, 700);
   assertEquals(f.line8z_rtaa, 300);
-  assertEquals(f.line8z_nqdc, 400);
+  assertEquals(f.line8i_prizes_awards, 400);
   assertEquals(f.line9_total_other_income, 1_400);
   assertEquals(f.line10_total_additional_income, 1_400);
   assertEquals(f.line11_educator_expenses, 250);
@@ -268,7 +277,6 @@ Deno.test("schedule1: finalized detail lines reconcile to Part I and II totals",
 Deno.test("schedule1: legacy fields with no valid 2025 line stop finalization", () => {
   for (
     const input of [
-      { line2a_alimony_received: 100 },
       { line8g_child_interest_dividends: 100 },
       { line8z_attorney_proceeds: 100 },
       { line13_depreciation: 100 },

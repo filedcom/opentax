@@ -26,9 +26,8 @@ const premiumMonthSchema = z.object({
   paid_premium: money,
   policy_source_reference: z.string().trim().min(1),
   payment_source_reference: z.string().trim().min(1),
-  // The bounded path covers only the taxpayer. Other covered people require
-  // separate employer-plan eligibility facts for each person.
-  covered_person: z.literal("taxpayer"),
+  // Each month identifies the person covered by this one policy.
+  covered_person: z.enum(["taxpayer", "spouse"]),
   eligible_for_subsidized_employer_plan: z.boolean(),
   employer_plan_review_reference: z.string().trim().min(1),
   marketplace_policy: z.boolean(),
@@ -41,11 +40,15 @@ const premiumMonthSchema = z.object({
 export const singleScheduleCPlanSchema = z.object({
   business_reference: z.string().trim().min(1),
   plan_identifier: z.string().trim().min(1),
-  recipient: z.literal(TS.T),
+  recipient: z.nativeEnum(TS),
   taxpayer_identity: z.object({
     name: z.string().trim().min(1),
     ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   }).strict(),
+  spouse_identity: z.object({
+    name: z.string().trim().min(1),
+    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  }).strict().optional(),
   premium_months: z.array(premiumMonthSchema).length(12).refine(
     (months) => months.every((record, index) => record.month === index + 1),
     "Form 7206 needs January through December premium records in order",
@@ -58,7 +61,25 @@ export const singleScheduleCPlanSchema = z.object({
   no_form2555: z.literal(true),
   no_schedule_se_optional_method: z.literal(true),
   no_other_earned_income: z.literal(true),
-}).strict();
+}).strict().superRefine((plan, ctx) => {
+  const coversSpouse = plan.premium_months.some((month) =>
+    month.covered_person === "spouse"
+  );
+  if (
+    (coversSpouse || plan.recipient === TS.S
+      ? !plan.spouse_identity ||
+        plan.spouse_identity.ssn.replaceAll("-", "") ===
+          plan.taxpayer_identity.ssn.replaceAll("-", "")
+      : plan.spouse_identity !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["premium_months"],
+      message:
+        "Form 7206 one-plan coverage needs an identified spouse for each spouse-covered month",
+    });
+  }
+});
 
 export type SingleScheduleCPlan = z.infer<typeof singleScheduleCPlanSchema>;
 
@@ -364,7 +385,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       input.schedule_c_source?.unadjusted_source !== true ||
       businesses?.length !== 1 || !business ||
       business.business_reference !== source.business_reference ||
-      business.proprietor_recipient !== TS.T ||
+      business.proprietor_recipient !== source.recipient ||
       business.line31_net_profit <= 0 ||
       business.line31_net_profit !== source.schedule_c_line31_net_profit ||
       !se || se.net_profit_schedule_c !== business.line31_net_profit ||
@@ -375,7 +396,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       (input.schedule1_line16_source ?? 0) !== 0
     ) {
       throw new Error(
-        "Form 7206 one-plan filing needs one taxpayer-owned Schedule C, its computed Schedule SE line 13, and zero retirement deduction",
+        "Form 7206 one-plan filing needs one owner-matched Schedule C, its computed Schedule SE line 13, and zero retirement deduction",
       );
     }
     const lines = calculateSingleScheduleCForm7206(source);
@@ -386,8 +407,13 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
           nodeType: this.nodeType,
           fields: {
             single_schedule_c_plan: source,
-            recipient_name: source.taxpayer_identity.name,
-            recipient_ssn: source.taxpayer_identity.ssn.replaceAll("-", ""),
+            recipient_name: source.recipient === TS.S
+              ? source.spouse_identity!.name
+              : source.taxpayer_identity.name,
+            recipient_ssn:
+              (source.recipient === TS.S
+                ? source.spouse_identity!.ssn
+                : source.taxpayer_identity.ssn).replaceAll("-", ""),
             ...lines,
           },
         },

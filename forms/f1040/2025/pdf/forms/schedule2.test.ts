@@ -3,9 +3,29 @@ import { schedule2Pdf } from "./schedule2.ts";
 
 Deno.test("Schedule 2 PDF includes filer identity on page 1", () => {
   assertEquals(schedule2Pdf.filerFields?.map((entry) => entry.domainKey), [
-    "nameLine1",
+    "nameShownOnForm1040",
     "primarySSN",
   ]);
+});
+
+Deno.test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.({
+        line10_homebuyer_credit_repayment: 500,
+      }, {}),
+    Error,
+    "line 10 is reserved",
+  );
+});
+
+Deno.test("2025 PDF Schedule 2 rejects unsourced dealer installment interest", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.({ line14_section453l_interest: 120 }, {}),
+    Error,
+    "line 14 needs",
+  );
 });
 
 Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
@@ -89,12 +109,15 @@ Deno.test("2025 Schedule 2 PDF rejects generic 3468 recapture", () => {
     Error,
     "requires a specific Form 4255 credit-line source",
   );
-  const nmcr = schedule2Pdf.projectFields?.(
-    { line17a_new_markets_credit_recapture: 3_100 },
-    {},
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17a_new_markets_credit_recapture: 3_100 },
+        {},
+      ),
+    Error,
+    "needs a Form 8874-B recapture source",
   );
-  assertEquals(nmcr?.line17a_description, "NMCR");
-  assertEquals(nmcr?.line17a_investment_credit_recapture, 3_100);
 });
 
 Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () => {

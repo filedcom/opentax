@@ -8,6 +8,7 @@ import { FilingStatus } from "../2025/mef/types.ts";
 import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/index.ts";
+import { inputSchema as form1099mInputSchema } from "../nodes/inputs/f1099m/index.ts";
 
 const filer = {
   primarySSN: "987654321",
@@ -116,11 +117,15 @@ Deno.test("1099-MISC box 10 client funds do not inflate Form 1040 income", async
 
 Deno.test("1099-MISC box 10 rejects a recipient who differs from the Schedule C proprietor", async () => {
   const pending = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "law-office",
         proprietor_recipient: "T",
+        line_a_principal_business: "LEGAL SERVICES",
+        line_b_business_code: "541110",
         line_f_accounting_method: "cash",
+        line_g_material_participation: true,
         line_1_gross_receipts: 5_000,
       }],
       attorney_fee_sources: [{
@@ -192,26 +197,87 @@ Deno.test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1
     2_000,
   ]);
   assertEquals(result.pending.f1040?.line8_additional_income, 5_000);
-  const xml = buildMefXml(buildPending(result.pending), filer);
+  const pending = buildPending(result.pending);
+  const xml = buildMefXml(pending, filer);
   await assertLocalReturnXsd(xml);
   assertEquals(
     xml.includes("<TotalGrossReceiptsAmt>5000</TotalGrossReceiptsAmt>"),
     true,
   );
-  const pdf = await PDFDocument.load(
-    await buildPdfBytes(result.pending, filer),
-  );
+  const pdfBytes = await buildPdfBytes(result.pending, filer);
+  const pdf = await PDFDocument.load(pdfBytes);
   assertEquals(pdf.getPageCount() >= 4, true);
+
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, pdfBytes);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+    }).output();
+    assertEquals(extracted.code, 0);
+    const printed = new TextDecoder().decode(extracted.stdout);
+    assertEquals(printed.includes("MEDICAL SERVICES"), true);
+    assertEquals(printed.includes("5000"), true);
+  } finally {
+    await Deno.remove(pdfPath);
+  }
+
+  const misc = form1099mInputSchema.parse(result.pending.f1099m);
+  const changedPayerCopy = {
+    ...pending,
+    f1099m: {
+      f1099ms: misc.f1099ms.map((row, index) =>
+        index === 1 ? { ...row, box6_medical_payments: 2_100 } : row
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedPayerCopy, filer),
+    Error,
+    "1099-MISC Schedule C sources differ from retained payer copies",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedPayerCopy, filer),
+    Error,
+    "1099-MISC Schedule C sources differ from retained payer copies",
+  );
+  const changedBusinessRow = {
+    ...pending,
+    schedule_c: {
+      ...pending.schedule_c,
+      f1099m_receipt_sources: (scheduleC.f1099m_receipt_sources ?? []).map(
+        (row, index) => index === 0 ? { ...row, payer_tin: "999999999" } : row,
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedBusinessRow, filer),
+    Error,
+    "1099-MISC Schedule C sources differ from retained payer copies",
+  );
 });
 
 Deno.test("1099-MISC receipt source and old top-level totals cannot bypass Schedule C export", async () => {
   const business = {
     business_reference: "clinic",
     proprietor_recipient: "T",
+    line_a_principal_business: "MEDICAL SERVICES",
+    line_b_business_code: "621111",
     line_f_accounting_method: "cash",
+    line_g_material_participation: true,
     line_1_gross_receipts: 5_000,
   };
   const wrongRecipient = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
+    f1099m: {
+      f1099ms: [{
+        payer_name: "Clinic Payer",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        schedule_c_business_reference: "clinic",
+        box6_medical_payments: 5_000,
+      }],
+    },
     schedule_c: {
       schedule_cs: [business],
       f1099m_receipt_sources: [{
@@ -235,6 +301,7 @@ Deno.test("1099-MISC receipt source and old top-level totals cannot bypass Sched
   );
 
   const oldTotal = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
     schedule_c: { schedule_cs: [business], line1_gross_receipts: 5_000 },
   });
   assertThrows(

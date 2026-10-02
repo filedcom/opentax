@@ -234,10 +234,20 @@ export const form8606Pdf: PdfFormDescriptor = {
       }];
     }
     const reviewed = reconcileForm8606Distribution(raw, allPending, filer);
+    const spouseNoActivity = !reviewed &&
+      printSchema.parse(raw).filing_details?.owner === "spouse";
     return [{
       ...raw,
-      print_owner_name: reviewed?.ownerName ?? filer.fullName,
-      print_owner_ssn: reviewed?.ownerSsn ?? filer.primarySSN,
+      print_owner_name: reviewed?.ownerName ??
+        (spouseNoActivity
+          ? [
+            filer.spouse?.firstName,
+            filer.spouse?.middleInitial,
+            filer.spouse?.lastName,
+          ].filter(Boolean).join(" ")
+          : filer.fullName),
+      print_owner_ssn: reviewed?.ownerSsn ??
+        (spouseNoActivity ? filer.spouse?.ssn : filer.primarySSN),
     }];
   },
   fields,

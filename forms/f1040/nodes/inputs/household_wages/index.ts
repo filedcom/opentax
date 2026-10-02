@@ -10,6 +10,7 @@ import {
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -113,13 +114,18 @@ function form8959Output(items: HouseholdWageItems): NodeOutput[] {
 class HouseholdWagesNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "household_wages";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form8959]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form8959]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     return {
       outputs: [
         ...f1040Output(parsed.household_wages),
+        ...(totalWages(parsed.household_wages) > 0
+          ? [output(agi_aggregator, {
+            line1b_household_wages: totalWages(parsed.household_wages),
+          })]
+          : []),
         ...form8959Output(parsed.household_wages),
       ],
     };

@@ -9,6 +9,8 @@ export function form3800PartIAndIIXml(
   lines: Form3800NonpassiveLines,
   carryforward: CarryforwardLink,
 ): string[] {
+  const hasEmpowermentSection = lines.line22 > 0 || lines.line23 > 0 ||
+    lines.line24 > 0;
   if (lines.line4 > 0 && carryforward.standardDocumentIds.length === 0) {
     throw new Error("Form 3800 line 4 needs its carryforward computation");
   }
@@ -41,24 +43,27 @@ export function form3800PartIAndIIXml(
     element("AdjustedExcessNetRegularTaxAmt", lines.line15),
     element("AdjustedNetIncomeTaxAmt", lines.line16),
     element("SmllrCYNotAllwTMTOrTotAdjAmt", lines.line17),
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("TentativeMinimunTaxTimesPctAmt", lines.line18)
       : "",
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("GreaterExcessOrTimesPctAmt", lines.line19)
       : "",
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("NetIncmTaxLessGreaterExcessAmt", lines.line20)
       : "",
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("SubSmllrFromNetLessGreaterAmt", lines.line21)
+      : "",
+    lines.line22 > 0
+      ? element("TotEmpwrZoneGenBusCreditsAmt", lines.line22)
       : "",
     lines.line23 > 0 ? element("GBCFromPssvActyAllPartsAmt", lines.line23) : "",
     lines.line24 > 0 ? element("PassiveActyAllowedForTYAmt", lines.line24) : "",
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("TotalPassiveActivityCreditAmt", lines.line25)
       : "",
-    lines.line23 > 0 || lines.line24 > 0
+    hasEmpowermentSection
       ? element("EmpwrZoneAndComEmploymentCrAmt", lines.line26)
       : "",
     element("NetIncomeTaxLessPctExcessAmt", lines.line27),

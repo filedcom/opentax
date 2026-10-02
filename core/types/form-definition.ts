@@ -3,6 +3,7 @@ import type { TaxNode } from "./tax-node.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
 import type { ExecuteResult } from "../runtime/executor.ts";
 import type { MefBundle } from "../../forms/f1040/2025/mef/builder.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 
 export interface PreparedFormReturn {
   readonly bundle: MefBundle;
@@ -35,6 +36,7 @@ export interface FormDefinition {
   readonly prepareReturn: (
     pending: Record<string, unknown>,
     filer: FilerIdentity | undefined,
+    attachments?: ReadonlyArray<MefPdfAttachment>,
   ) => Promise<PreparedFormReturn>;
   readonly buildMefXml: (
     pending: Record<string, unknown>,

@@ -13,8 +13,9 @@ import {
   recaptureSchema,
 } from "./recapture.ts";
 import { f8874_recapture } from "./recapture_node.ts";
+import { withReviewedForm8874RecaptureEvidence } from "./recapture_fixture.ts";
 
-const source: NewMarketsRecaptureInput = {
+const source: NewMarketsRecaptureInput = withReviewedForm8874RecaptureEvidence({
   notice_reference: "CDE 2025 Form 8874-B",
   investment_reference: "2022 QEI designation",
   cde_name: "Community Development Entity",
@@ -24,7 +25,7 @@ const source: NewMarketsRecaptureInput = {
   qualified_equity_investment_amount: 100_000,
   notice_credit_amount: 25_000,
   recapture_event_date: "2025-06-01",
-  recapture_event: "cde_redeemed_investment",
+  recapture_event: "cde_redeemed_investment" as const,
   prior_years: [{
     tax_year: 2024,
     original_return_due_date: "2025-04-15",
@@ -44,7 +45,7 @@ const source: NewMarketsRecaptureInput = {
       return_reference: "2024 filed Form 3800",
     }],
   }],
-};
+}, "Test Taxpayer");
 
 Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit", () => {
   const result = calculateNewMarketsRecapture({
@@ -127,12 +128,14 @@ Deno.test("New Markets recapture compounds through rate changes and leap year", 
     section38_credit_allowed_as_filed: 10_000,
     section38_credit_allowed_without_this_qei: 0,
   };
-  const result = calculateNewMarketsRecapture({
-    ...source,
-    qualified_equity_investment_amount: 200_000,
-    prior_years: [priorYear],
-    carryover_vintages: [],
-  });
+  const result = calculateNewMarketsRecapture(
+    withReviewedForm8874RecaptureEvidence({
+      ...source,
+      qualified_equity_investment_amount: 200_000,
+      prior_years: [priorYear],
+      carryover_vintages: [],
+    }, "Test Taxpayer"),
+  );
   const days = (from: string, to: string) =>
     (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) /
     86_400_000;
@@ -148,10 +151,10 @@ Deno.test("New Markets recapture compounds through rate changes and leap year", 
 });
 
 Deno.test("New Markets substantially-all recapture requires cure review", () => {
-  const failure = {
+  const failure = withReviewedForm8874RecaptureEvidence({
     ...source,
-    recapture_event: "substantially_all_requirement_failed",
-  };
+    recapture_event: "substantially_all_requirement_failed" as const,
+  }, "Test Taxpayer");
   assertEquals(recaptureSchema.safeParse(failure).success, false);
   assertEquals(
     recaptureSchema.safeParse({
@@ -204,7 +207,7 @@ Deno.test("New Markets recapture does not count one notice twice", () => {
 
 Deno.test("New Markets recapture totals separate investments once", () => {
   const first = { ...source, prior_years: [...source.prior_years] };
-  const second = {
+  const second = withReviewedForm8874RecaptureEvidence({
     ...source,
     notice_reference: "Second CDE 2025 Form 8874-B",
     investment_reference: "Second 2022 QEI designation",
@@ -213,7 +216,7 @@ Deno.test("New Markets recapture totals separate investments once", () => {
       section38_credit_allowed_as_filed: 10_000,
       section38_credit_allowed_without_this_qei: 9_500,
     }],
-  };
+  }, "Test Taxpayer");
   const result = f8874_recapture.compute(
     { taxYear: 2025, formType: "f1040" },
     { recaptures: [first, second] },
@@ -228,6 +231,7 @@ Deno.test("New Markets recapture totals separate investments once", () => {
 Deno.test("New Markets recapture reaches a filed 1040 without Form 8874", () => {
   const general = {
     filing_status: FilingStatus.Single,
+    digital_assets: false,
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",

@@ -76,6 +76,8 @@ const sourcedStudentMinor = {
 };
 const filer: FilerIdentity = {
   primarySSN: facts.taxpayer.ssn,
+  firstNameWithInitial: facts.taxpayer.firstName,
+  lastName: facts.taxpayer.lastName,
   nameLine1: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
   fullName: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
   nameControl: "BLAC",
@@ -119,7 +121,7 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
   const filerMap = new Map(
     scheduleHPdf.filerFields?.map((entry) => [entry.domainKey, entry.pdfField]),
   );
-  assertEquals(filerMap.get("nameLine1"), "topmostSubform[0].Page1[0].f1_1[0]");
+  assertEquals(filerMap.get("nameShownOnForm1040"), "topmostSubform[0].Page1[0].f1_1[0]");
   assertEquals(
     filerMap.get("primarySSN"),
     "topmostSubform[0].Page1[0].f1_2[0]",
@@ -197,6 +199,50 @@ Deno.test("synthetic sourced FICA-only Schedule H PDF reconciles its worker and 
       }),
     Error,
     "below the FUTA quarter threshold",
+  );
+});
+
+Deno.test("Schedule H PDF requires W-4 review for unrelated-worker withholding", () => {
+  const worker = sourcedFicaOnly.fica_only_payroll.employee_wages[0];
+  const withheld = {
+    ...sourcedFicaOnly,
+    federal_income_tax_withheld: 100,
+    fica_only_payroll: {
+      ...sourcedFicaOnly.fica_only_payroll,
+      employee_wages: [{
+        ...worker,
+        w2: { ...worker.w2, box2_federal_income_tax_withheld: 100 },
+        federal_withholding_agreement: {
+          w4_source_reference: "2025-household-w4-review",
+          employee_requested_and_employer_agreed: true as const,
+        },
+      }],
+    },
+  };
+  const projected = scheduleHPdf.projectFields!(withheld, {});
+  assertEquals(projected.federal_income_tax_withheld, 100);
+  assertEquals(projected.line8_fica_and_withholding, 574);
+  assertEquals(
+    scheduleHPdf.instances?.(projected, filer, {
+      schedule_h: withheld,
+      schedule2: { line9_household_employment: 574 },
+    })?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      scheduleHPdf.projectFields!({
+        ...withheld,
+        fica_only_payroll: {
+          ...withheld.fica_only_payroll,
+          employee_wages: [{
+            ...withheld.fica_only_payroll.employee_wages[0],
+            federal_withholding_agreement: undefined,
+          }],
+        },
+      }, {}),
+    Error,
+    "Form W-4 request",
   );
 });
 

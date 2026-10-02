@@ -21,6 +21,7 @@ export const itemSchema = z.object({
   payer_tin: z.string().optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   // Retained for the specified-cooperative QBI source cross-check.
   trade_or_business: z.boolean().optional(),
   distribution_treatment: z.discriminatedUnion("kind", [
@@ -56,6 +57,18 @@ export const itemSchema = z.object({
           "1099-PATR farm taxable amount must not exceed gross distributions or contradict business classification",
       });
     }
+    if (
+      gross > 0 &&
+      (!item.payer_name?.trim() ||
+        !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+        !item.recipient_tin || !item.source_document_reference)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "1099-PATR farm distribution needs payer, recipient, and issued-copy identity",
+      });
+    }
   }
   if (treatment?.kind === "personal_basis_adjustment") {
     if (
@@ -76,6 +89,37 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1099patrs: z.array(itemSchema).min(1),
+}).superRefine(({ f1099patrs }, ctx) => {
+  const issuedAccounts = new Set<string>();
+  const issuedReferences = new Set<string>();
+  for (const [index, item] of f1099patrs.entries()) {
+    if (!item.payer_tin || !item.recipient_tin) continue;
+    const identity = [item.payer_tin.replace(/\D/g, ""), item.recipient_tin];
+    if (item.account_number) {
+      const key = JSON.stringify([...identity, item.account_number.trim()]);
+      if (issuedAccounts.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1099patrs", index],
+          message:
+            "1099-PATR repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        });
+      }
+      issuedAccounts.add(key);
+    }
+    if (item.source_document_reference) {
+      const key = JSON.stringify([...identity, item.source_document_reference]);
+      if (issuedReferences.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1099patrs", index],
+          message:
+            "1099-PATR repeats the same payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+        });
+      }
+      issuedReferences.add(key);
+    }
+  }
 });
 
 export type PATRItem = z.infer<typeof itemSchema>;

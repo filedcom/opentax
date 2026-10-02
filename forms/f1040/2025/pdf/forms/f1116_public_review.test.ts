@@ -22,6 +22,20 @@ import {
 } from "../../mef/forms/f1116_schedule_b.ts";
 
 const bankReference = "2025 Canadian bank Form 1099-INT and source review";
+const filed2024Form1040Id = "filed-2024-form1040-111223333";
+const filed2024PassiveScheduleBId = "filed-2024-passive-schedule-b-111223333";
+
+function filed2024PassiveScheduleB(amount: number) {
+  return {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2015_ninth_preceding_amount: amount,
+    line8_total: amount,
+  };
+}
 
 const singleSourceReview = {
   source_document_reference: bankReference,
@@ -54,6 +68,7 @@ function inputs() {
       foreign_trust_question: false,
     },
     f1099int: [{
+      recipient_tin: "111223333",
       payer_name: "Canadian Bank",
       box1: 50_000,
       box6: 9_000,
@@ -160,8 +175,10 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [
-          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+          filed2024Form1040Id,
+          filed2024PassiveScheduleBId,
         ],
+        filed_2024_schedule_b: filed2024PassiveScheduleB(100),
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
@@ -222,6 +239,34 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
         form1116_schedule_b: {
           ...pending.form1116_schedule_b,
           current_year_excess_tax: summary.currentYearExcessTax + 1,
+        },
+      },
+      {
+        ...pending,
+        form1116_prior_carryover: {
+          carryovers: [{
+            ...((pending.form1116_prior_carryover as {
+              carryovers: Array<Record<string, unknown>>;
+            }).carryovers[0]),
+            filed_2024_schedule_b: {
+              ...filed2024PassiveScheduleB(100),
+              taxpayer_ssn: "999999999",
+            },
+          }],
+        },
+      },
+      {
+        ...pending,
+        form1116_prior_carryover: {
+          carryovers: [{
+            ...((pending.form1116_prior_carryover as {
+              carryovers: Array<Record<string, unknown>>;
+            }).carryovers[0]),
+            filed_2024_schedule_b: {
+              ...filed2024PassiveScheduleB(100),
+              line8_2015_ninth_preceding_amount: 99,
+            },
+          }],
         },
       },
     ]
@@ -427,8 +472,10 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [
-          "Filed 2024 passive Schedule B line 8, 2015-origin credit",
+          filed2024Form1040Id,
+          filed2024PassiveScheduleBId,
         ],
+        filed_2024_schedule_b: filed2024PassiveScheduleB(9_000),
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
@@ -489,6 +536,396 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
   );
 });
 
+Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identity at native and PDF export", async () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const filed2024 = {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2016_eighth_preceding_amount: 900,
+    line8_total: 900,
+  };
+  const carryover = {
+    income_category: "passive" as const,
+    vintages: [{
+      vintage_tax_year: 2016 as const,
+      prior_year_schedule_b_line8_vintage_amount: 900,
+    }],
+    prior_year_schedule_b_line8_total: 900,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      filed2024Form1040Id,
+      filed2024PassiveScheduleBId,
+    ],
+    filed_2024_schedule_b: filed2024,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: { carryovers: [carryover] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent && scheduleB);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assert(summary.usedPriorYearCarryover > 0);
+  assertEquals(
+    result.pending.schedule3.line1_foreign_tax_credit,
+    summary.allowedCredit,
+  );
+  assertEquals(
+    result.pending.f1040.line20_nonrefundable_credits,
+    result.pending.schedule3.line8_total,
+  );
+  const parentPdf = form1116Pdf.projectFields!(parent, result.pending);
+  const schedulePdf = form1116ScheduleBPdf.projectFields!(
+    scheduleB,
+    result.pending,
+  );
+  assertEquals(parentPdf.pdf_line10, 900);
+  assertEquals(schedulePdf.line1_2016, 900);
+  assertEquals(schedulePdf.line4_2016, -summary.usedPriorYearCarryover);
+  assertEquals(schedulePdf.line8_2016, 900 - summary.usedPriorYearCarryover);
+  const [parentXml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  const scheduleXml = form1116ScheduleB.build(
+    scheduleBFieldsSchema.parse(scheduleB),
+    { pending: result.pending },
+  );
+  assertStringIncludes(
+    parentXml,
+    "<ForeignTaxCrCarrybackOrOverAmt>900</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<NinthPrecedingTYAmt>900</NinthPrecedingTYAmt>",
+  );
+
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<IRS1116ScheduleB ");
+  assert(
+    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
+  );
+  const changed = [
+    { ...filed2024, line8_2016_eighth_preceding_amount: 899 },
+    { ...filed2024, taxpayer_ssn: "999999999" },
+    { ...filed2024, schedule_b_source_document_id: filed2024Form1040Id },
+  ];
+  for (const filed of changed) {
+    const tampered = {
+      ...pending,
+      form1116_prior_carryover: {
+        carryovers: [{ ...carryover, filed_2024_schedule_b: filed }],
+      },
+    };
+    await assertRejects(() =>
+      buildMefBundle(buildPending(tampered), { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(buildPending(tampered), filer, ".pdf-cache", bundle)
+    );
+  }
+  const noFiled = {
+    ...pending,
+    form1116_prior_carryover: {
+      carryovers: [{ ...carryover, filed_2024_schedule_b: undefined }],
+    },
+  };
+  await assertRejects(() =>
+    buildMefBundle(buildPending(noFiled), { filer, attachments: [] })
+  );
+});
+
+Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column through native and PDF", async () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const filed2024 = {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2017_seventh_preceding_amount: 900,
+    line8_total: 900,
+  };
+  const carryover = {
+    income_category: "passive" as const,
+    vintages: [{
+      vintage_tax_year: 2017 as const,
+      prior_year_schedule_b_line8_vintage_amount: 900,
+    }],
+    prior_year_schedule_b_line8_total: 900,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      filed2024Form1040Id,
+      filed2024PassiveScheduleBId,
+    ],
+    filed_2024_schedule_b: filed2024,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: { carryovers: [carryover] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent && scheduleB);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assert(summary.usedPriorYearCarryover > 0);
+  assertEquals(
+    result.pending.schedule3.line1_foreign_tax_credit,
+    summary.allowedCredit,
+  );
+  assertEquals(
+    result.pending.f1040.line20_nonrefundable_credits,
+    result.pending.schedule3.line8_total,
+  );
+  const parentPdf = form1116Pdf.projectFields!(parent, result.pending);
+  const schedulePdf = form1116ScheduleBPdf.projectFields!(
+    scheduleB,
+    result.pending,
+  );
+  assertEquals(parentPdf.pdf_line10, 900);
+  assertEquals(schedulePdf.line1_2017, 900);
+  assertEquals(schedulePdf.line4_2017, -summary.usedPriorYearCarryover);
+  assertEquals(schedulePdf.line8_2017, 900 - summary.usedPriorYearCarryover);
+  const [parentXml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  const scheduleXml = form1116ScheduleB.build(
+    scheduleBFieldsSchema.parse(scheduleB),
+    { pending: result.pending },
+  );
+  assertStringIncludes(
+    parentXml,
+    "<ForeignTaxCrCarrybackOrOverAmt>900</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<EighthPrecedingTYAmt>900</EighthPrecedingTYAmt>",
+  );
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<IRS1116ScheduleB ");
+  assert(
+    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
+  );
+
+  for (
+    const changed of [
+      { ...filed2024, line8_2017_seventh_preceding_amount: 899 },
+      { ...filed2024, taxpayer_ssn: "999999999" },
+      { ...filed2024, schedule_b_source_document_id: filed2024Form1040Id },
+    ]
+  ) {
+    const altered = {
+      ...pending,
+      form1116_prior_carryover: {
+        carryovers: [{ ...carryover, filed_2024_schedule_b: changed }],
+      },
+    };
+    await assertRejects(() =>
+      buildMefBundle(buildPending(altered), { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
+    );
+  }
+});
+
+Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PDF Schedule B", async () => {
+  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const filed2024 = {
+    taxpayer_ssn: "111223333",
+    tax_year: 2024 as const,
+    income_category: "passive" as const,
+    form1040_source_document_id: filed2024Form1040Id,
+    schedule_b_source_document_id: filed2024PassiveScheduleBId,
+    line8_2018_sixth_preceding_amount: 100,
+    line8_2019_fifth_preceding_amount: 100,
+    line8_2020_fourth_preceding_amount: 100,
+    line8_2021_third_preceding_amount: 100,
+    line8_2022_second_preceding_amount: 100,
+    line8_2023_first_preceding_amount: 100,
+    line8_2024_current_year_amount: 100,
+    line8_total: 700,
+  };
+  const vintageYears = [2018, 2019, 2020, 2021, 2022, 2023, 2024] as const;
+  const filedScheduleB = {
+    income_category: "passive" as const,
+    vintages: vintageYears.map((vintage_tax_year) => ({
+      vintage_tax_year,
+      prior_year_schedule_b_line8_vintage_amount: 100,
+    })),
+    prior_year_schedule_b_line8_total: 700,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      filed2024Form1040Id,
+      filed2024PassiveScheduleBId,
+    ],
+    filed_2024_schedule_b: filed2024,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...source,
+    f1099int: [{ ...source.f1099int[0], box6: 100 }],
+    form1116_review: {
+      ...source.form1116_review,
+      single_source_pdf_review: {
+        ...singleSourceReview,
+        no_prior_year_carryover_or_carryback_confirmed: false,
+      },
+    },
+    form1116_prior_carryover: { carryovers: [filedScheduleB] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const parent = result.pending.form_1116;
+  const scheduleB = result.pending.form1116_schedule_b;
+  assert(parent && scheduleB);
+  const summary =
+    (parent.category_summaries as Array<Record<string, number>>)[0];
+  assertEquals(summary.usedPriorYearCarryover, 700);
+  assertEquals(
+    result.pending.schedule3.line1_foreign_tax_credit,
+    summary.allowedCredit,
+  );
+  assertEquals(
+    result.pending.f1040.line20_nonrefundable_credits,
+    result.pending.schedule3.line8_total,
+  );
+  const parentPdf = form1116Pdf.projectFields!(parent, result.pending);
+  const schedulePdf = form1116ScheduleBPdf.projectFields!(
+    scheduleB,
+    result.pending,
+  ) as Record<string, unknown>;
+  assertEquals(parentPdf.pdf_line10, 700);
+  for (const year of vintageYears) {
+    assertEquals(schedulePdf[`line1_${year}`], 100);
+    assertEquals(schedulePdf[`line4_${year}`], -100);
+    assertEquals(schedulePdf[`line8_${year}`], 0);
+  }
+  const [parentXml] = form1116.build(
+    parent as Parameters<typeof form1116.build>[0],
+    { pending: result.pending },
+  );
+  const scheduleXml = form1116ScheduleB.build(
+    scheduleBFieldsSchema.parse(scheduleB),
+    { pending: result.pending },
+  );
+  assertStringIncludes(
+    parentXml,
+    "<ForeignTaxCrCarrybackOrOverAmt>700</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  for (
+    const tag of [
+      "SeventhPrecedingTYAmt",
+      "SixthPrecedingTYAmt",
+      "FifthPrecedingTYAmt",
+      "FourthPrecedingTYAmt",
+      "ThirdPrecedingTYAmt",
+      "SecondPrecedingTYAmt",
+      "FirstPrecedingTYAmt",
+    ]
+  ) {
+    assertStringIncludes(scheduleXml, `<${tag}>100</${tag}>`);
+  }
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<IRS1116ScheduleB ");
+  assert(
+    (await buildPdfBytes(pending, filer, ".pdf-cache", bundle)).length > 0,
+  );
+
+  const filedKeys = [
+    "line8_2018_sixth_preceding_amount",
+    "line8_2019_fifth_preceding_amount",
+    "line8_2020_fourth_preceding_amount",
+    "line8_2021_third_preceding_amount",
+    "line8_2022_second_preceding_amount",
+    "line8_2023_first_preceding_amount",
+    "line8_2024_current_year_amount",
+  ] as const;
+  for (const key of filedKeys) {
+    const altered = {
+      ...pending,
+      form1116_prior_carryover: {
+        carryovers: [{
+          ...filedScheduleB,
+          filed_2024_schedule_b: { ...filed2024, [key]: 101 },
+        }],
+      },
+    };
+    await assertRejects(() =>
+      buildMefBundle(buildPending(altered), { filer, attachments: [] })
+    );
+    assertThrows(
+      () =>
+        form1116ScheduleBPdf.projectFields!(
+          scheduleB,
+          altered as unknown as Record<string, Record<string, unknown>>,
+        ),
+      Error,
+    );
+  }
+  const extraYear = {
+    ...pending,
+    form1116_prior_carryover: {
+      carryovers: [{
+        ...filedScheduleB,
+        filed_2024_schedule_b: {
+          ...filed2024,
+          line8_2017_seventh_preceding_amount: 1,
+        },
+      }],
+    },
+  };
+  await assertRejects(() =>
+    buildMefBundle(buildPending(extraYear), { filer, attachments: [] })
+  );
+  assertThrows(
+    () =>
+      form1116ScheduleBPdf.projectFields!(
+        scheduleB,
+        extraYear as unknown as Record<string, Record<string, unknown>>,
+      ),
+    Error,
+  );
+});
+
 Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filedScheduleB = {
@@ -507,8 +944,19 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     prior_year_schedule_b_line8_other_vintages_total: 0,
     no_intervening_adjustments: true,
     source_document_references: [
-      "Filed 2024 passive Schedule B (Form 1116), line 8 2023 and 2024 columns and total",
+      filed2024Form1040Id,
+      filed2024PassiveScheduleBId,
     ],
+    filed_2024_schedule_b: {
+      taxpayer_ssn: "111223333",
+      tax_year: 2024 as const,
+      income_category: "passive" as const,
+      form1040_source_document_id: filed2024Form1040Id,
+      schedule_b_source_document_id: filed2024PassiveScheduleBId,
+      line8_2023_first_preceding_amount: 100,
+      line8_2024_current_year_amount: 9_000,
+      line8_total: 9_100,
+    },
   };
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,

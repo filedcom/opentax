@@ -2,6 +2,8 @@ import { element, elements } from "../../../mef/xml.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
+import { scheduleSeSpouseProprietor } from "../../schedule-se-proprietor.ts";
 
 export interface Fields {
   net_profit_schedule_c?: number | null;
@@ -53,13 +55,31 @@ function buildIRS1040ScheduleSE(
   // The printed 2025 Schedule SE directs the filer to stop at line 4c.
   if (optional && !lines) return "";
 
-  const ssn = context?.filer?.primarySSN.replaceAll("-", "");
+  const pending = context?.pending;
+  const spouseOwned = scheduleSeSpouseProprietor(pending, fields);
+  const ssn =
+    (spouseOwned ? context?.filer?.spouse?.ssn : context?.filer?.primarySSN)
+      ?.replaceAll("-", "");
   if (!ssn || !/^\d{9}$/.test(ssn) || ssn === "000000000") {
-    throw new Error("Schedule SE MeF needs the filer's nine-digit SSN");
+    throw new Error("Schedule SE MeF needs the proprietor's nine-digit SSN");
+  }
+  if (
+    spouseOwned && (
+      context?.filer?.filingStatus !== MefFilingStatus.MarriedFilingJointly ||
+      (pending?.general as { spouse_ssn?: string } | undefined)?.spouse_ssn
+          ?.replaceAll("-", "") !== ssn ||
+      (pending?.f1040 as { spouse_ssn?: string } | undefined)?.spouse_ssn
+          ?.replaceAll("-", "") !== ssn
+    )
+  ) {
+    throw new Error(
+      "Schedule SE spouse proprietor must match the joint return",
+    );
   }
   if (
     typeof fields["taxpayer_ssn"] === "string" &&
-    fields["taxpayer_ssn"].replaceAll("-", "") !== ssn
+    fields["taxpayer_ssn"].replaceAll("-", "") !==
+      context?.filer?.primarySSN.replaceAll("-", "")
   ) {
     throw new Error("Schedule SE SSN does not match the filer");
   }

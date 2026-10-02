@@ -18,6 +18,17 @@ const filed = {
   line15_threshold: 313_000 as const,
   line16_excess_business_loss: -87_000,
 };
+const general = {
+  form461_scope_review: {
+    only_schedule_c_and_f_business_items: true,
+    other_part_i_lines_zero: true,
+    part_ii_adjustments_zero: true,
+    post_at_risk_and_passive_limits_confirmed: true,
+    line2_schedule_c_amount: -200_000,
+    line6_schedule_f_amount: -200_000,
+    source_document_refs: ["signed Schedule C and F workpaper"],
+  },
+};
 
 Deno.test("Form 461 is absent when no business-loss source was filed", () => {
   assertEquals(form461.build([]), "");
@@ -26,6 +37,7 @@ Deno.test("Form 461 is absent when no business-loss source was filed", () => {
 Deno.test("Form 461 MeF serializes all filed lines in TY2025 native order", () => {
   const xml = form461.build(filed, {
     pending: {
+      general,
       f1040: { filing_status: "single" },
       schedule1: {
         line3_schedule_c: -200_000,
@@ -66,6 +78,7 @@ Deno.test("Form 461 MeF rejects a Schedule 1 reconciliation mismatch", () => {
   assertThrows(() =>
     form461.build(filed, {
       pending: {
+        general,
         f1040: { filing_status: "single" },
         schedule1: {
           line3_schedule_c: -199_000,
@@ -78,11 +91,37 @@ Deno.test("Form 461 MeF rejects a Schedule 1 reconciliation mismatch", () => {
   assertThrows(() =>
     form461.build(filed, {
       pending: {
+        general,
         f1040: { filing_status: "single" },
         schedule1: {
           line3_schedule_c: -200_000,
           line6_schedule_f: -200_000,
           line8p_excess_business_loss: 86_000,
+        },
+      },
+    })
+  );
+});
+
+Deno.test("Form 461 MeF rejects missing or changed signed C/F source review", () => {
+  const schedule1 = {
+    line3_schedule_c: -200_000,
+    line6_schedule_f: -200_000,
+    line8p_excess_business_loss: 87_000,
+  };
+  const pending = { general, f1040: { filing_status: "single" }, schedule1 };
+  assertThrows(() =>
+    form461.build(filed, { pending: { ...pending, general: {} } })
+  );
+  assertThrows(() =>
+    form461.build(filed, {
+      pending: {
+        ...pending,
+        general: {
+          form461_scope_review: {
+            ...general.form461_scope_review,
+            line6_schedule_f_amount: -199_999,
+          },
         },
       },
     })
@@ -128,7 +167,7 @@ Deno.test("Form 461 MeF rejects unclassified capital, other gain, and rental lin
     ]
   ) {
     assertThrows(
-      () => form461.build(filed, { pending }),
+      () => form461.build(filed, { pending: { ...pending, general } }),
       Error,
       "cannot classify",
     );
@@ -148,6 +187,7 @@ Deno.test("Form 461 MeF rejects unclassified source forms and missing filed retu
   );
   for (const key of ["schedule_e", "form4797", "form6252", "form4684"]) {
     const pending = {
+      general,
       f1040: { filing_status: "single" },
       schedule1,
       [key]: {},
@@ -164,6 +204,7 @@ Deno.test("Form 461 MeF rejects an inconsistent threshold or calculated line", (
   assertThrows(() =>
     form461.build(filed, {
       pending: {
+        general,
         f1040: { filing_status: "mfj" },
         schedule1: {
           line3_schedule_c: -200_000,

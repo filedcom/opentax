@@ -128,6 +128,7 @@ export const itemSchema = z.object({
   line_27b_other_expenses: z.number().nonnegative().optional(),
   line_30_home_office: z.number().nonnegative().optional(), // pre-computed dollar amount
   home_office_sq_ft: z.number().nonnegative().optional(), // simplified method sq ft input
+  home_total_sq_ft: z.number().int().positive().max(999_999).optional(),
   home_office_method: z.enum(["simplified", "actual"]).optional(),
   line_32_at_risk: z.enum(["a", "b"]).optional(),
   at_risk_simplified: simplifiedAtRiskSchema.optional(),
@@ -292,6 +293,15 @@ export const inputSchema = z.object({
   // Statutory employee wages (from W-2 Box 13)
   // IRC §3121(d)(3); W-2 box 13 statutory employee checkbox
   statutory_wages: z.number().nonnegative().optional(),
+  statutory_w2_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      employer_ein: z.string().regex(/^\d{9}$/),
+      employee_ssn: z.string().regex(/^\d{9}$/),
+      source_document_reference: z.string().trim().min(1),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
   // Federal withholding from statutory employee W-2 Box 2
   withholding: z.number().nonnegative().optional(),
   // Mortgage interest from 1098 Box 1 routed to Schedule C (business use)
@@ -416,6 +426,7 @@ export function projectForm8829ScheduleCItems(
     (item.line_30_home_office ?? 0) > 0 ||
     item.home_office_method === "simplified" ||
     item.home_office_sq_ft !== undefined ||
+    item.home_total_sq_ft !== undefined ||
     (item.line_15_insurance ?? 0) > 0 ||
     (item.line_20b_rent_other ?? 0) > 0 ||
     (item.line_21_repairs ?? 0) > 0 ||
@@ -483,12 +494,32 @@ export function homeOfficeDeduction(
   item: ScheduleCItem,
   tentativeProfit: number,
 ): number {
-  let deduction: number;
   if (
-    item.home_office_method === "simplified" &&
-    item.home_office_sq_ft !== undefined
+    item.home_office_method !== "simplified" &&
+    (item.home_office_sq_ft !== undefined ||
+      item.home_total_sq_ft !== undefined)
   ) {
-    const cappedSqFt = Math.min(item.home_office_sq_ft, HOME_OFFICE_MAX_SQ_FT);
+    throw new Error(
+      "Schedule C home-office square footage requires the simplified method",
+    );
+  }
+  let deduction: number;
+  if (item.home_office_method === "simplified") {
+    const businessSqFt = item.home_office_sq_ft;
+    if (
+      item.home_total_sq_ft === undefined ||
+      typeof businessSqFt !== "number" ||
+      !Number.isSafeInteger(businessSqFt) ||
+      businessSqFt <= 0 ||
+      businessSqFt > item.home_total_sq_ft ||
+      businessSqFt > 999_999 ||
+      item.line_30_home_office !== undefined
+    ) {
+      throw new Error(
+        "Schedule C simplified home office needs consistent total and business square footage",
+      );
+    }
+    const cappedSqFt = Math.min(businessSqFt, HOME_OFFICE_MAX_SQ_FT);
     deduction = cappedSqFt * HOME_OFFICE_SIMPLIFIED_RATE;
   } else {
     deduction = item.line_30_home_office ?? 0;

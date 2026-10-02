@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
+  assertForm1098Box1Sources,
   assertForm1098Box6Sources,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -13,7 +14,7 @@ import {
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
   isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
@@ -22,8 +23,14 @@ import {
   SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
+import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
+import { reviewedHomeMortgageNonqualifyingUse } from "../../../nodes/inputs/schedule_a/index.ts";
+import { scheduleAOtherTaxRows } from "../../schedule_a_other_tax_source.ts";
+import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
+import { scheduleALine16EstateTax } from "../../schedule_a_line16_estate_source.ts";
 
 export interface Fields {
+  force_itemized?: boolean;
   line_1_medical?: number | null;
   agi?: number | null;
   // IRC §164(b)(5) election: either income tax or sales tax — mutually exclusive.
@@ -128,6 +135,7 @@ function buildIRS1040ScheduleA(
       context.pending.mortgage_refinance_points !== undefined,
       context.pending.form8396 !== undefined,
     );
+    assertForm1098Box1Sources(context.pending.f1098, recipients);
   }
   if (context?.pending?.mortgage_refinance_points !== undefined) {
     const filer = context.filer;
@@ -154,15 +162,24 @@ function buildIRS1040ScheduleA(
     | Record<string, unknown>
     | undefined;
   const noncashItems = sourceScheduleA?.noncash_contribution_items;
-  const unrelatedUseGift = Array.isArray(noncashItems) &&
+  const linkedCapitalGainReductionGift = Array.isArray(noncashItems) &&
     noncashItems.some((item) =>
       item !== null && typeof item === "object" &&
-      (item as Record<string, unknown>)
-          .unrelated_use_capital_gain_reduction_confirmed === true
+      ((item as Record<string, unknown>)
+            .unrelated_use_capital_gain_reduction_confirmed === true ||
+        (item as Record<string, unknown>)
+            .private_foundation_capital_gain_reduction_confirmed === true ||
+        (item as Record<string, unknown>)
+            .taxidermy_capital_gain_reduction_confirmed === true ||
+        (item as Record<string, unknown>)
+            .intellectual_property_capital_gain_reduction_confirmed === true)
     );
-  if (unrelatedUseGift && context?.pending?.f8283 === undefined) {
+  if (
+    linkedCapitalGainReductionGift &&
+    context?.pending?.f8283 === undefined
+  ) {
     throw new Error(
-      "Schedule A unrelated-use capital-gain reduction needs its linked Form 8283 source",
+      "Schedule A capital-gain FMV reduction needs its linked Form 8283 source",
     );
   }
   const hasPriorCapitalGainProperty = [
@@ -187,9 +204,12 @@ function buildIRS1040ScheduleA(
     if (
       isSingleSectionAVehicleSale(form) ||
       hasSectionAShortTermReduction(form) ||
-      isSingleSectionANeedyVehicleUnreduced(form) ||
+      isSingleSectionAExceptionVehicleUnreduced(form) ||
       (form.section_a_items ?? []).some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined ||
+        item.intellectual_property_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context, fields);
@@ -280,7 +300,43 @@ function buildIRS1040ScheduleA(
     FIELD_MAP.some(([key]) =>
       key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
     ) || line5a !== 0;
-  if (!hasDeduction) return "";
+  if (!hasDeduction && fields.force_itemized !== true) return "";
+  const otherTaxRows = scheduleAOtherTaxRows(fields);
+  const line8bSeller = sellerFinancedLine8b(fields);
+  const line16EstateTax = scheduleALine16EstateTax(
+    context?.pending,
+    fields.line_16_other_deductions,
+  );
+  const line16StatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_line16_estate_statement ?? [];
+  if (
+    line16EstateTax > 0 && context?.documentIdsByPendingKey &&
+    line16StatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 16 needs its linked estate-tax statement");
+  }
+  const line8bStatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_line8b_seller_statement ?? [];
+  if (
+    line8bSeller && context?.documentIdsByPendingKey &&
+    line8bStatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 8b needs its linked seller statement");
+  }
+  const otherTaxStatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_other_tax_statement ?? [];
+  if (
+    otherTaxRows.length > 0 && context?.documentIdsByPendingKey &&
+    otherTaxStatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 6 needs its linked other-tax statement");
+  }
+  const itemizeBelowStandard = itemizeBelowStandardElection(
+    fields.force_itemized,
+    context?.pending?.standard_deduction,
+    returnFields?.line12e_itemized_deductions,
+  );
+  const filedItemized = returnFields?.line12e_itemized_deductions;
 
   // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
   //   MedicalAndDentalExpensesAmt → TaxReturnAGIAmt → ... → StateAndLocalTaxAmt → RealEstateTaxesAmt → ...
@@ -296,12 +352,36 @@ function buildIRS1040ScheduleA(
     ...(line5a > 0 ? [element("StateAndLocalTaxAmt", line5a)] : []),
     mapField(["line_5b_real_estate_tax", "RealEstateTaxesAmt"]),
     mapField(["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"]),
-    mapField(["line_6_other_taxes", "OtherTaxesAmt"]),
+    typeof fields.line_6_other_taxes === "number"
+      ? element(
+        "OtherTaxesAmt",
+        fields.line_6_other_taxes,
+        otherTaxStatementIds.length === 1
+          ? {
+            referenceDocumentId: otherTaxStatementIds[0],
+            referenceDocumentName: "OtherDeductibleTaxStatement",
+          }
+          : undefined,
+      )
+      : "",
+    reviewedHomeMortgageNonqualifyingUse(fields)
+      ? element("HomeMortgNotUsedInd", "X")
+      : "",
     fields.line_8a_mortgage_interest_1098 !== undefined
       ? element("RptHomeMortgIntAndPointsAmt", net8a)
       : "",
     fields.line_8b_mortgage_interest_no_1098 !== undefined
-      ? element("Form1098HomeMortgIntNotRptAmt", net8b)
+      ? element(
+        "Form1098HomeMortgIntNotRptAmt",
+        net8b,
+        line8bStatementIds.length === 1
+          ? {
+            referenceDocumentId: line8bStatementIds[0],
+            referenceDocumentName:
+              "Form1098RecipientNameAndAddressStatement Form1098RecipientNameTINAndAddressStatement",
+          }
+          : undefined,
+      )
       : "",
     mapField(["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"]),
     mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),
@@ -309,7 +389,22 @@ function buildIRS1040ScheduleA(
     mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),
     mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
     mapField(["line_15_casualty_theft_loss", "CasualtyAndTheftLossesAmt"]),
-    mapField(["line_16_other_deductions", "OtherMiscellaneousDedAmt"]),
+    typeof fields.line_16_other_deductions === "number"
+      ? element(
+        "OtherMiscellaneousDedAmt",
+        fields.line_16_other_deductions,
+        line16StatementIds.length === 1
+          ? {
+            referenceDocumentId: line16StatementIds[0],
+            referenceDocumentName: "OtherMiscellaneousDeductionsStatement",
+          }
+          : undefined,
+      )
+      : "",
+    fields.force_itemized === true && typeof filedItemized === "number"
+      ? element("TotalItemizedDeductionsAmt", filedItemized)
+      : "",
+    itemizeBelowStandard ? element("ItmzdDedLessThanStdDedInd", "X") : "",
   ];
   return elements("IRS1040ScheduleA", children);
 }

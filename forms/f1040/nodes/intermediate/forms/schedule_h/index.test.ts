@@ -447,11 +447,122 @@ Deno.test("combined: FICA + federal withholding + Section A FUTA", () => {
           box3_social_security_wages: 20_000,
           box5_medicare_wages: 20_000,
         },
+        federal_withholding_agreement: {
+          w4_source_reference: "2025-worker-w4",
+          employee_requested_and_employer_agreed: true,
+        },
       }],
     },
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2?.fields.line9_household_employment, 5_102);
+});
+
+Deno.test("Schedule H unrelated-worker withholding requires a distinct reviewed W-4 in both payroll routes", () => {
+  const ficaOnly = {
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: false,
+    ss_wages: 3_100,
+    medicare_wages: 3_100,
+    federal_income_tax_withheld: 100,
+    fica_only_payroll: {
+      all_household_employees_included: true,
+      prior_year_payroll_source_reference: "2024-payroll",
+      prior_year_quarter_cash_wages: [0, 0, 0, 0],
+      employee_wages: [{
+        employee_id: "worker",
+        payroll_source_reference: "2025-payroll",
+        relationship: "unrelated" as const,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true as const,
+        annual_cash_wages: 3_100,
+        quarterly_cash_wages: [775, 775, 775, 775],
+        w2: {
+          source_reference: "2025-w2",
+          box2_federal_income_tax_withheld: 100,
+          box3_social_security_wages: 3_100,
+          box5_medicare_wages: 3_100,
+        },
+      }],
+    },
+  };
+  assertThrows(() => compute(ficaOnly), Error, "Form W-4 request");
+  assertThrows(
+    () =>
+      compute({
+        ...ficaOnly,
+        fica_only_payroll: {
+          ...ficaOnly.fica_only_payroll,
+          employee_wages: [{
+            ...ficaOnly.fica_only_payroll.employee_wages[0],
+            federal_withholding_agreement: {
+              w4_source_reference: "2025-w2",
+              employee_requested_and_employer_agreed: true,
+            },
+          }],
+        },
+      }),
+    Error,
+    "distinct reviewed Form W-4",
+  );
+  const worker = {
+    ...ficaOnly.fica_only_payroll.employee_wages[0],
+    federal_withholding_agreement: {
+      w4_source_reference: "2025-w4",
+      employee_requested_and_employer_agreed: true,
+    },
+  };
+  assertEquals(
+    findOutput(
+      compute({
+        ...ficaOnly,
+        fica_only_payroll: {
+          ...ficaOnly.fica_only_payroll,
+          employee_wages: [worker],
+        },
+      }),
+      "schedule2",
+    )?.fields.line9_household_employment,
+    574,
+  );
+  const futa = {
+    ...ficaOnly,
+    cash_wages_over_quarter_limit: true,
+    fica_only_payroll: undefined,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 50,
+      taxable_wages: 3_100,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        ...worker,
+        quarterly_cash_wages: [1_000, 700, 700, 700],
+      }],
+    },
+  };
+  assertEquals(
+    findOutput(compute(futa), "schedule2")?.fields.line9_household_employment,
+    593,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...futa,
+        federal_unemployment: {
+          ...futa.federal_unemployment,
+          employee_wages: [{
+            ...futa.federal_unemployment.employee_wages[0],
+            federal_withholding_agreement: undefined,
+          }],
+        },
+      }),
+    Error,
+    "Form W-4 request",
+  );
 });
 
 // ─── Output Routing ───────────────────────────────────────────────────────────

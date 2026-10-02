@@ -1,4 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { assertScheduleDK1Source } from "../../schedule-d-k1-source.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
@@ -257,6 +258,7 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
   build(fields, context) {
+    assertScheduleDK1Source(fields, context?.pending);
     const trustSource = context?.pending?.k1_trust;
     if (
       trustSource === undefined &&

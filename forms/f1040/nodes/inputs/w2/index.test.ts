@@ -32,6 +32,17 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function statutoryItem(overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    employer_ein: "123456789",
+    employee_ssn: "111223333",
+    source_document_reference: "issued statutory W-2",
+    schedule_c_business_reference: "statutory-business",
+    box13_statutory_employee: true,
+    ...overrides,
+  });
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return w2.compute({ taxYear: 2025, formType: "f1040" }, { w2s: items });
 }
@@ -39,6 +50,63 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+function reviewedCodeDW2(ein: string, amount: number) {
+  return {
+    ...minimalItem(),
+    employer_ein: ein,
+    employee_ssn: "123-45-6789",
+    box1_wages: 50_000,
+    box13_retirement_plan: true,
+    box12_entries: [{ code: Box12Code.D, amount }],
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: `plan-${ein}`,
+      employee_birth_date: "1990-06-01",
+      birth_date_source_reference: "2025 identity review",
+      w2_source_reference: `w2-${ein}`,
+    },
+  };
+}
+
+Deno.test("distinct reviewed code D W-2s deposit only their 2025 excess on line 1h and AGI", () => {
+  const result = compute([
+    reviewedCodeDW2("12-3456789", 15_000),
+    reviewedCodeDW2("98-7654321", 12_000),
+  ]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1h_other_earned, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line1h_other_earned,
+    3_500,
+  );
+});
+
+Deno.test("code D excess rejects absent review, same employer, Roth, and age-50 facts", () => {
+  const first = reviewedCodeDW2("12-3456789", 15_000);
+  const second = reviewedCodeDW2("98-7654321", 12_000);
+  for (
+    const changed of [
+      { ...second, excess_deferral_review: undefined },
+      { ...second, employer_ein: "12-3456789" },
+      {
+        ...second,
+        box12_entries: [
+          { code: Box12Code.D, amount: 12_000 },
+          { code: Box12Code.AA, amount: 1_000 },
+        ],
+      },
+      {
+        ...second,
+        excess_deferral_review: {
+          ...(second.excess_deferral_review as Record<string, unknown>),
+          employee_birth_date: "1975-06-01",
+        },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([first, changed]), Error);
+  }
+});
 
 // ============================================================
 // 1. Input Schema — non-obvious constraints only
@@ -453,15 +521,197 @@ Deno.test("employer statement overtime rejects a different employee or duplicate
       furnished_to_employee: true as const,
     },
   };
-  assertThrows(() => compute([minimalItem({
-    employee_ssn: "111223333", employer_ein: "123456789",
-    box1_wages: 80_000, flsa_overtime_review: reviewed,
-  })]), Error, "matching source identities");
-  assertThrows(() => compute([minimalItem({
-    employee_ssn: "999887777", employer_ein: "123456789",
-    box1_wages: 80_000, flsa_overtime_review: reviewed,
-    box14_entries: [{ description: "FLSA Overtime Premium", amount: 4_000 }],
-  })]), Error, "one positive box 14 or employer-statement premium");
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        box1_wages: 80_000,
+        flsa_overtime_review: reviewed,
+      })]),
+    Error,
+    "matching source identities",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "999887777",
+        employer_ein: "123456789",
+        box1_wages: 80_000,
+        flsa_overtime_review: reviewed,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+        }],
+      })]),
+    Error,
+    "one positive box 14 or employer-statement premium",
+  );
+});
+
+Deno.test("full-year time-and-a-half payroll total yields one-third FLSA premium", () => {
+  const aggregate = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    aggregate_time_and_half_overtime_pay: 12_000,
+    time_and_half_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    premium_not_separately_stated: true as const,
+    statement_reference: "Full-year employer overtime payroll summary",
+    furnished_to_employee: true as const,
+  };
+  const review = {
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and box 1 review",
+    aggregate_overtime_statement: aggregate,
+  };
+  const item = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: review,
+  });
+  assertEquals(
+    fieldsOf(compute([item]).outputs, schedule1a)?.qualified_w2_overtime?.[0]
+      .amount,
+    4_000,
+  );
+  for (
+    const bad of [
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            aggregate_time_and_half_overtime_pay: 12_001,
+          },
+        },
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            employee_ssn: "999887777",
+          },
+        },
+      },
+      {
+        ...item,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+        }],
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          employer_statement: {
+            tax_year: 2025 as const,
+            employee_ssn: "111223333",
+            employer_ein: "123456789",
+            qualified_overtime_premium: 4_000,
+            statement_reference: "Duplicate premium",
+            furnished_to_employee: true as const,
+          },
+        },
+      },
+    ]
+  ) assertThrows(() => compute([bad]), Error);
+});
+
+Deno.test("full-year double-time excess statement yields half-rate FLSA premium", () => {
+  const doubleTime = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    excess_over_regular_pay: 10_000,
+    double_time_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    statement_reference: "Full-year double-time excess pay statement",
+    furnished_to_employee: true as const,
+  };
+  const review = {
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and box 1 review",
+    double_time_excess_statement: doubleTime,
+  };
+  const item = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: review,
+  });
+  assertEquals(
+    fieldsOf(compute([item]).outputs, schedule1a)?.qualified_w2_overtime,
+    [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      amount: 5_000,
+      box1_wages: 80_000,
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: review.source_reference,
+      double_time_excess_statement_reference: doubleTime.statement_reference,
+    }],
+  );
+  for (
+    const bad of [
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            excess_over_regular_pay: 10_001,
+          },
+        },
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            employer_ein: "999999999",
+          },
+        },
+      },
+      {
+        ...item,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 5_000,
+        }],
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            tax_year: 2025 as const,
+            employee_ssn: "111223333",
+            employer_ein: "123456789",
+            aggregate_time_and_half_overtime_pay: 15_000,
+            time_and_half_rate_confirmed: true as const,
+            all_hours_exceed_forty_per_workweek_confirmed: true as const,
+            covers_full_tax_year: true as const,
+            premium_not_separately_stated: true as const,
+            statement_reference: "Competing method",
+            furnished_to_employee: true as const,
+          },
+        },
+      },
+    ]
+  ) assertThrows(() => compute([bad]), Error);
 });
 
 Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
@@ -513,21 +763,26 @@ Deno.test("box13_retirement_plan_routes_ira_worksheet: covered_by_retirement_pla
 
 Deno.test("statutory_employee_wages_route_to_schedule_c: wages excluded from f1040 line1a", () => {
   const result = compute([
-    minimalItem({ box1_wages: 50000, box13_statutory_employee: true }),
+    statutoryItem({ box1_wages: 50000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    50000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, undefined);
 });
 
 Deno.test("statutory_employee_withholding_included_in_f1040_line25a: withholding still flows to f1040", () => {
   const result = compute([
-    minimalItem({
+    statutoryItem({
       box1_wages: 50000,
       box2_fed_withheld: 5000,
-      box13_statutory_employee: true,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    50000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
 });
 
@@ -619,7 +874,7 @@ Deno.test("W-2 Form 8880 deferral cannot lose employee identity", () => {
         box12_entries: [{ code: Box12Code.D, amount: 1_000 }],
       })]),
     Error,
-    "need the employee's nine-digit SSN",
+    "W-2 code D excess review needs the employee SSN",
   );
 });
 
@@ -802,8 +1057,7 @@ Deno.test("box12_code_m_n_routes_to_schedule2_uncollected_fica_gtl: M = $200 + N
 });
 
 Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", () => {
-  const result = compute([minimalItem({
-    box13_statutory_employee: true,
+  const result = compute([statutoryItem({
     box1_wages: 50_000,
     box5_medicare_wages: 50_000,
     box12_entries: [
@@ -813,7 +1067,10 @@ Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", 
       { code: Box12Code.N, amount: 10 },
     ],
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 50_000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    50_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica, 120);
   assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica_gtl, 50);
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 30);
@@ -1082,13 +1339,15 @@ Deno.test("Form 8959 gets W-2 box 5, not box 1, when the boxes differ", () => {
 });
 
 Deno.test("statutory employee W-2 box 5 enters Form 8959", () => {
-  const result = compute([minimalItem({
-    box13_statutory_employee: true,
+  const result = compute([statutoryItem({
     box1_wages: 220_000,
     box5_medicare_wages: 220_000,
     box6_medicare_withheld: 3_370,
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 220_000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    220_000,
+  );
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_wages, 220_000);
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 3_370);
   assertEquals(
@@ -1136,14 +1395,16 @@ Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 li
 
 Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regular go to line1a", () => {
   const result = compute([
-    minimalItem({
+    statutoryItem({
       box1_wages: 30000,
       box2_fed_withheld: 3000,
-      box13_statutory_employee: true,
     }),
     minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 30000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    30000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 50000);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 8000);
 });
@@ -1152,7 +1413,7 @@ Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regula
 // 7. Excess SS withholding (multiple employers)
 // ============================================================
 
-Deno.test("two_employers_at_max_ss_produce_exact_excess_on_schedule3: 2 × $10,918.20 → excess = $10,918.20", () => {
+Deno.test("two_employers_at_max_ss_round_excess_on_schedule3: 2 × $10,918.20 → filed excess = $10,918", () => {
   const result = compute([
     minimalItem({
       box1_wages: 176100,
@@ -1165,7 +1426,7 @@ Deno.test("two_employers_at_max_ss_produce_exact_excess_on_schedule3: 2 × $10,9
       box4_ss_withheld: 10918.20,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918.20);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918);
 });
 
 Deno.test("single_employer_at_max_ss_no_excess_schedule3: single employer does not produce schedule3", () => {
@@ -1281,6 +1542,14 @@ Deno.test("401k_age50_59_at_limit_valid: age 55, D = $31,000 is valid → electi
     box1_wages: 150000,
     box12_entries: [{ code: Box12Code.D, amount: 31000 }],
     taxpayer_age: 55,
+    box13_retirement_plan: true,
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: "2025 plan review",
+      employee_birth_date: "1970-06-01",
+      birth_date_source_reference: "reviewed employee birth date",
+      w2_source_reference: "issued 2025 W-2",
+    },
   })]);
   assertEquals(
     fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,

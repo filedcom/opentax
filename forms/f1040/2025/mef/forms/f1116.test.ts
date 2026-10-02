@@ -256,6 +256,13 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
     alternative_foreign_source_usd: 140_000,
     ordinary_us_source_usd: 180_000,
     ordinary_foreign_source_usd: 120_000,
+    ordinary_time_basis: {
+      us_service_days: 60,
+      foreign_service_days: 40,
+      workday_ledger_document_reference: "2025 employee workday ledger",
+      salary_only_no_fringe_benefits_confirmed: true as const,
+      single_2025_compensation_period_confirmed: true as const,
+    },
     source_document_reference: "2025 employer project ledger",
   };
   const currency = {
@@ -273,6 +280,9 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
       country_code: "DE",
       compensation_amount: 300_000,
       compensation_usd: 300_000,
+      compensation_owner_ssn: "123456789",
+      compensation_source_document_reference:
+        alternative.source_document_reference,
       foreign_tax_paid_usd: 2_000,
       foreign_service_compensation_usd: 140_000,
       foreign_tax_irs_country_code: "GM",
@@ -305,7 +315,7 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   const own = calculated.outputs.find((item) => item.nodeType === "form_1116");
   const formFields = own?.fields as Parameters<typeof form1116.build>[0];
   assertAlternativeCompensationSources(formFields.category_summaries ?? [], {
-    pending: { fec: fecSource },
+    pending: { fec: fecSource, general: { taxpayer_ssn: "123456789" } },
   });
   const filer = {
     primarySSN: "123456789",
@@ -475,7 +485,7 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   assertThrows(
     () =>
       form1116.build(formFields, {
-        pending: { fec: fecSource },
+        pending: { fec: fecSource, general: { taxpayer_ssn: "123456789" } },
         documentIdsByPendingKey: {
           form1116_alternative_compensation_statement: ["AltBasisStmt1"],
         },

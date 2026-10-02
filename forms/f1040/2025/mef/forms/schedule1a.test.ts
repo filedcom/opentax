@@ -14,6 +14,7 @@ import {
   FilingStatus as MefFilingStatus,
 } from "../types.ts";
 import { schedule1a } from "./schedule1a.ts";
+import { schedule1aPdf } from "../../pdf/forms/schedule1a.ts";
 
 Deno.test("Schedule 1-A omits context-only input before validating fractional return AGI", () => {
   assertEquals(
@@ -22,6 +23,21 @@ Deno.test("Schedule 1-A omits context-only input before validating fractional re
       { pending: { f1040: { line11_agi: 74_348.18 } } },
     ),
     "",
+  );
+});
+
+Deno.test("Schedule 1-A does not silently omit a positive senior source without Part I review", () => {
+  const claim = {
+    filing_status: FilingStatus.Single,
+    magi: 60_000,
+    taxpayer_age_65_or_older: true,
+    taxpayer_has_valid_ssn: true,
+    taxpayer_ssn: "111223333",
+  };
+  assertThrows(
+    () => schedule1a.build(claim, { pending: { f1040: {} } }),
+    Error,
+    "sourced Part I zero-exclusion review",
   );
 });
 
@@ -126,6 +142,27 @@ const singleOvertime = {
   ],
 };
 
+const overtimeW2 = (entry: typeof overtimeEntry) => ({
+  employee_ssn: entry.employee_ssn,
+  employer_ein: entry.employer_ein,
+  employer_name: "Test Employer",
+  box1_wages: entry.box1_wages,
+  box2_fed_withheld: 8_000,
+  box14_entries: [{
+    description: "FLSA Overtime Premium",
+    amount: entry.amount,
+    is_state_sdi_pfml: false,
+  }],
+  flsa_overtime_review: {
+    covered_nonexempt_employee: true as const,
+    premium_included_in_box1: true as const,
+    source_reference: entry.source_reference,
+  },
+});
+const singleOvertimeW2 = {
+  w2s: singleOvertime.qualified_w2_overtime.map(overtimeW2),
+};
+
 const singleOvertime1040 = {
   filing_status: FilingStatus.Single,
   line11_agi: 80_000,
@@ -211,6 +248,169 @@ Deno.test("Schedule 1-A employer statement overtime reconciles to W-2 and finali
   );
 });
 
+Deno.test("Schedule 1-A replays aggregate overtime payroll source at native and PDF export", () => {
+  const aggregate = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    aggregate_time_and_half_overtime_pay: 12_000,
+    time_and_half_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    premium_not_separately_stated: true as const,
+    statement_reference: "Full-year employer overtime payroll summary",
+    furnished_to_employee: true as const,
+  };
+  const w2 = {
+    w2s: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true as const,
+        premium_included_in_box1: true as const,
+        source_reference: "FLSA coverage and box 1 review",
+        aggregate_overtime_statement: aggregate,
+      },
+    }],
+  };
+  const claim = {
+    ...singleOvertime,
+    qualified_w2_overtime: [{
+      ...overtimeEntry,
+      source_reference: "FLSA coverage and box 1 review",
+      aggregate_overtime_statement_reference: aggregate.statement_reference,
+    }],
+  };
+  const pending = { f1040: singleOvertime1040, w2 };
+  const xml = schedule1a.build(claim, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeWagesAmt>4000</QualifiedOvertimeWagesAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(claim, pending).line21_overtime,
+    4_000,
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(claim, {
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [{
+              ...w2.w2s[0],
+              flsa_overtime_review: {
+                ...w2.w2s[0].flsa_overtime_review,
+                aggregate_overtime_statement: {
+                  ...aggregate,
+                  aggregate_time_and_half_overtime_pay: 9_000,
+                },
+              },
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not match the filed W-2",
+  );
+  const changed = {
+    ...pending,
+    w2: {
+      w2s: [{
+        ...w2.w2s[0],
+        flsa_overtime_review: {
+          ...w2.w2s[0].flsa_overtime_review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            aggregate_time_and_half_overtime_pay: 9_000,
+          },
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(claim, changed),
+    Error,
+    "does not match the filed W-2",
+  );
+});
+
+Deno.test("Schedule 1-A replays double-time excess pay at native and PDF export", () => {
+  const doubleTime = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    excess_over_regular_pay: 10_000,
+    double_time_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    statement_reference: "Full-year double-time excess statement",
+    furnished_to_employee: true as const,
+  };
+  const w2 = {
+    w2s: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true as const,
+        premium_included_in_box1: true as const,
+        source_reference: "FLSA coverage and box 1 review",
+        double_time_excess_statement: doubleTime,
+      },
+    }],
+  };
+  const claim = {
+    ...singleOvertime,
+    qualified_w2_overtime: [{
+      ...overtimeEntry,
+      amount: 5_000,
+      source_reference: "FLSA coverage and box 1 review",
+      double_time_excess_statement_reference: doubleTime.statement_reference,
+    }],
+  };
+  const form = { ...singleOvertime1040, line13b_additional_deductions: 5_000 };
+  const pending = { f1040: form, w2 };
+  assertStringIncludes(
+    schedule1a.build(claim, { pending }),
+    "<QualifiedOvertimeWagesAmt>5000</QualifiedOvertimeWagesAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(claim, pending).line21_overtime,
+    5_000,
+  );
+  const changed = {
+    ...pending,
+    w2: {
+      w2s: [{
+        ...w2.w2s[0],
+        flsa_overtime_review: {
+          ...w2.w2s[0].flsa_overtime_review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            excess_over_regular_pay: 8_000,
+          },
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1a.build(claim, { pending: changed }),
+    Error,
+    "does not match the filed W-2",
+  );
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(claim, changed),
+    Error,
+    "does not match the filed W-2",
+  );
+});
+
 const vehicleLoan = {
   vin: "1HGCM82633A004352",
   borrower_ssn: "111223333",
@@ -266,6 +466,37 @@ Deno.test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () 
     xml,
     "<QualifiedCarLoanInterestDedAmt>4000</QualifiedCarLoanInterestDedAmt>",
   );
+});
+
+Deno.test("Schedule 1-A refinanced loan keeps one VIN and its qualified interest", () => {
+  const refinanced = {
+    ...singleVehicle,
+    vehicle_loans: [{
+      ...vehicleLoan,
+      refinance: {
+        refinanced_date: "2025-07-01",
+        lender_name: "Second Credit Union",
+        interest_statement_reference: "2025 refinance lender statement",
+        refinance_and_first_lien_reference:
+          "2025 refinance first-lien agreement",
+        outstanding_original_principal_at_refinance: 20_000,
+        refinanced_principal: 20_000,
+        original_loan_interest_paid_before_refinance: 1_500,
+        refinanced_loan_interest_paid: 2_500,
+        first_lien_secured_on_same_vehicle: true as const,
+        no_cash_out_or_ineligible_debt: true as const,
+      },
+    }],
+  };
+  const xml = schedule1a.build(refinanced, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertStringIncludes(xml, `<VIN>${vehicleLoan.vin}</VIN>`);
+  assertStringIncludes(
+    xml,
+    "<QualifiedCarLoanInterestAmt>4000</QualifiedCarLoanInterestAmt>",
+  );
+  assertEquals(xml.match(/<QlfyPassengerVehicleLoanIntGrp>/g)?.length, 1);
 });
 
 Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseout", () => {
@@ -350,7 +581,7 @@ Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles"
   assertEquals(lines.line14a_w2_overtime, 4_000);
   assertEquals(lines.line21_overtime, 4_000);
   const xml = schedule1a.build(singleOvertime, {
-    pending: { f1040: singleOvertime1040 },
+    pending: { f1040: singleOvertime1040, w2: singleOvertimeW2 },
   });
   assertStringIncludes(
     xml,
@@ -363,6 +594,49 @@ Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles"
   assertStringIncludes(
     xml,
     "<QualifiedOvertimeCompDedAmt>4000</QualifiedOvertimeCompDedAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(singleOvertime, {
+        pending: {
+          f1040: singleOvertime1040,
+          w2: {
+            w2s: [
+              {
+                ...singleOvertimeW2.w2s[0],
+                box14_entries: [{
+                  description: "FLSA Overtime Premium",
+                  amount: 2_000,
+                  is_state_sdi_pfml: false,
+                }],
+              },
+              singleOvertimeW2.w2s[1],
+            ],
+          },
+        },
+      }),
+    Error,
+    "box 14 overtime does not match",
+  );
+  assertThrows(
+    () =>
+      schedule1aPdf.projectFields!(singleOvertime, {
+        f1040: singleOvertime1040,
+        w2: {
+          w2s: [
+            {
+              ...singleOvertimeW2.w2s[0],
+              flsa_overtime_review: {
+                ...singleOvertimeW2.w2s[0].flsa_overtime_review,
+                source_reference: "different review",
+              },
+            },
+            singleOvertimeW2.w2s[1],
+          ],
+        },
+      }),
+    Error,
+    "box 14 overtime does not match",
   );
 });
 
@@ -405,6 +679,7 @@ Deno.test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-th
         spouse_ssn_issued_before_due_date: true,
         spouse_tin_issued_by_due_date: true,
       },
+      w2: { w2s: jointOvertime.qualified_w2_overtime.map(overtimeW2) },
     },
   });
   assertStringIncludes(
@@ -426,7 +701,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
           overtimeEntry,
           { ...overtimeEntry, amount: 500 },
         ],
-      }, { pending: { f1040: singleOvertime1040 } }),
+      }, { pending: { f1040: singleOvertime1040, w2: singleOvertimeW2 } }),
     Error,
     "one W-2 premium per employee and employer",
   );
@@ -438,6 +713,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
             ...singleOvertime1040,
             taxpayer_ssn_issued_before_due_date: false,
           },
+          w2: singleOvertimeW2,
         },
       }),
     Error,
@@ -1031,6 +1307,100 @@ Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double coun
   );
 });
 
+Deno.test("Schedule 1-A native and PDF require every qualifying Form 4137 employer", () => {
+  const secondW2 = {
+    ...singleTipsW2.w2s[0],
+    employer_ein: "987654321",
+    employer_name: "Second Restaurant",
+    box1_wages: 20_000,
+    box5_medicare_wages: 20_000,
+    box7_ss_tips: 2_000,
+    box14b_tipped_code: "103",
+  };
+  const source = {
+    ...singleTips,
+    qualified_employee_tips: [
+      ...singleTips.qualified_employee_tips,
+      {
+        employee_ssn: "111223333",
+        employer_ein: "987654321",
+        employer_name: "Second Restaurant",
+        amount: 2_000,
+        box5_medicare_wages: 20_000,
+        occupation_code: "103",
+        source_type: "w2_box7" as const,
+      },
+    ],
+    qualified_form4137_tips: [
+      {
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        employer_name: "Test Restaurant",
+        amount: 6_500,
+        occupation_code: "102",
+      },
+      {
+        employee_ssn: "111223333",
+        employer_ein: "987654321",
+        employer_name: "Second Restaurant",
+        amount: 3_000,
+        occupation_code: "103",
+      },
+    ],
+  };
+  const pending = {
+    f1040: { ...singleTips1040, line13b_additional_deductions: 9_500 },
+    w2: { w2s: [singleTipsW2.w2s[0], secondW2] },
+    form4137: {
+      taxpayer_ssn: "111223333",
+      forms: [{
+        recipient: "taxpayer",
+        employers: [
+          {
+            name: "Test Restaurant",
+            ein: "123456789",
+            tips_received: 6_500,
+            tips_reported: 5_000,
+          },
+          {
+            name: "Second Restaurant",
+            ein: "987654321",
+            tips_received: 3_000,
+            tips_reported: 2_000,
+          },
+        ],
+      }],
+    },
+  };
+  assertStringIncludes(
+    schedule1a.build(source, { pending }),
+    "<QualifiedTipsEmployeeAmt>9500</QualifiedTipsEmployeeAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(source, pending)?.line38_total,
+    9_500,
+  );
+
+  const missingEmployer = {
+    ...source,
+    qualified_form4137_tips: [source.qualified_form4137_tips[0]],
+  };
+  const reducedReturn = {
+    ...pending,
+    f1040: { ...pending.f1040, line13b_additional_deductions: 8_500 },
+  };
+  assertThrows(
+    () => schedule1a.build(missingEmployer, { pending: reducedReturn }),
+    Error,
+    "do not match the filed employer",
+  );
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(missingEmployer, reducedReturn),
+    Error,
+    "do not match the filed employer",
+  );
+});
+
 const filer: FilerIdentity = {
   primarySSN: "111223333",
   nameLine1: "SENIOR TAXPAYER",
@@ -1119,10 +1489,18 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
     qualified_w2_overtime: [overtimeEntry],
     vehicle_loans: [vehicleLoan],
   };
+  const mixedW2 = {
+    w2s: [{
+      ...singleTipsW2.w2s[0],
+      box1_wages: overtimeEntry.box1_wages,
+      box14_entries: overtimeW2(overtimeEntry).box14_entries,
+      flsa_overtime_review: overtimeW2(overtimeEntry).flsa_overtime_review,
+    }],
+  };
   const xml = schedule1a.build(mixed, {
     pending: {
       f1040: { ...joint1040, line13b_additional_deductions: 23_800 },
-      w2: singleTipsW2,
+      w2: mixedW2,
     },
   });
   const tags = [
@@ -1172,7 +1550,7 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
   assertThrows(
     () =>
       schedule1a.build(mixed, {
-        pending: { f1040: joint1040, w2: singleTipsW2 },
+        pending: { f1040: joint1040, w2: mixedW2 },
       }),
     Error,
     "do not reconcile",
@@ -1187,10 +1565,15 @@ Deno.test("Schedule 1-A integration rejects incomplete and mismatched line 13b",
   );
   assertThrows(
     () =>
-      buildMefXml({
-        f1040: joint1040,
-        schedule1a: { ...joint, qualified_w2_overtime: [overtimeEntry] },
-      }, filer),
+      schedule1a.build({
+        ...joint,
+        qualified_w2_overtime: [overtimeEntry],
+      }, {
+        pending: {
+          f1040: joint1040,
+          w2: { w2s: [overtimeW2(overtimeEntry)] },
+        },
+      }),
     Error,
     "do not reconcile",
   );
@@ -1234,7 +1617,10 @@ Deno.test("Schedule 1-A senior MeF rejects missing review and mismatched return"
         ...joint,
         qualified_w2_overtime: [overtimeEntry],
       }, {
-        pending: { f1040: joint1040 },
+        pending: {
+          f1040: joint1040,
+          w2: { w2s: [overtimeW2(overtimeEntry)] },
+        },
       }),
     Error,
     "do not reconcile",

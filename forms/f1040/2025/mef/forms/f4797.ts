@@ -30,11 +30,13 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
+  assertMixedInvestment1245Return,
   calculateInvestment1245Disposition,
   type Investment1245Disposition,
   investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
+import { assertSingleFilerActiveEntireLoss } from "../../form8582_active_entire_loss.ts";
 import {
   type Box11Line10Source,
   box11Line10SourceSchema,
@@ -114,6 +116,10 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       schedule1?.line4_other_gains,
     );
     assertFullyRecapturedInvestment1245Return(
+      calculated,
+      (pending ?? {}) as Record<string, unknown>,
+    );
+    assertMixedInvestment1245Return(
       calculated,
       (pending ?? {}) as Record<string, unknown>,
     );
@@ -275,6 +281,9 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
           samePassiveSale(activity.passive_property_sales[0], sale)
         ? qualifiedEntireDispositionGain(activity)
         : undefined;
+      if (entireLoss !== undefined) {
+        assertSingleFilerActiveEntireLoss(activity, context?.pending);
+      }
       if (
         sale.entire_activity_interest_disposed === true &&
         entireLoss === undefined && entireGain === undefined

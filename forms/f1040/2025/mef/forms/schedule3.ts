@@ -1,11 +1,16 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { inputSchema as f2439InputSchema } from "../../../nodes/inputs/f2439/index.ts";
+import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
+import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
+import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
+import { assertSchedule3PrintedTotals } from "../../schedule3_printed_totals.ts";
+import { assertSchedule3Line12Source } from "../../schedule3_line12_source.ts";
+import { assertSchedule3PaymentSources } from "../../schedule3_payment_sources.ts";
 
 export interface Fields {
   line1_total?: number | null;
   line1_foreign_tax_credit?: number | null;
-  line1_foreign_tax_1099?: number | null;
+  line1_foreign_tax_1099?: number | number[] | null;
   line2_childcare_credit?: number | null;
   line3_education_credit?: number | null;
   line4_retirement_savings_credit?: number | null;
@@ -30,6 +35,7 @@ export interface Fields {
   line11_excess_ss?: number | null;
   line12_fuel_tax_credit?: number | null;
   line13a_total?: number | null;
+  line14_total?: number | null;
   line15_total?: number | null;
 }
 
@@ -69,6 +75,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
   ["line12_fuel_tax_credit", "TotalFuelTaxCreditAmt"],
   ["line13a_total", "TaxPaidByRICOrREITAmt"],
+  ["line14_total", "OtherPaymentsAmt"],
   ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 
@@ -76,6 +83,21 @@ function buildIRS1040Schedule3(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertSchedule3Line8Join(fields, context?.pending);
+  assertSchedule3Line12Source(
+    fields.line12_fuel_tax_credit,
+    context?.pending?.f4136,
+  );
+  assertSchedule3PrintedTotals(fields, context?.pending);
+  assertSchedule3PaymentSources(fields, context?.pending);
+  assertSchedule3Line6jSource(
+    fields.line6j_alt_fuel_vehicle_refueling,
+    context?.pending?.f8911,
+  );
+  const line13aSource = assertSchedule3Line13aSource(
+    fields.line13a_total,
+    context?.pending?.f2439,
+  );
   const children: string[] = [];
 
   // Direct mappings
@@ -151,29 +173,17 @@ function buildIRS1040Schedule3(
       continue;
     }
     if (key === "line13a_total") {
-      const source = context?.pending?.f2439;
-      if (!source) {
-        throw new Error("Schedule 3 line 13a needs sourced Form 2439");
-      }
-      const reportable = f2439InputSchema.parse(source).f2439s.filter((item) =>
-        (item.box1a ?? 0) > 0
-      );
-      const creditedIndices = reportable.flatMap((item, index) =>
-        (item.box2 ?? 0) > 0 ? [index] : []
-      );
-      const total = reportable.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
-      if (total !== value || creditedIndices.length === 0) {
-        throw new Error(
-          "Schedule 3 line 13a must equal sourced Form 2439 box 2 amounts",
-        );
-      }
       const allIds = context?.documentIdsByPendingKey?.f2439;
-      if (context?.documentIdsByPendingKey && allIds?.length !== reportable.length) {
+      if (
+        context?.documentIdsByPendingKey &&
+        allIds?.length !== line13aSource.reportableCount
+      ) {
         throw new Error(
           "Schedule 3 line 13a needs each linked IRS2439 document",
         );
       }
-      const ids = allIds && creditedIndices.map((index) => allIds[index]);
+      const ids = allIds &&
+        line13aSource.creditedIndices.map((index) => allIds[index]);
       children.push(
         element(
           tag,

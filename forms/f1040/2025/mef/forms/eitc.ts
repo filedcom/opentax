@@ -4,6 +4,7 @@ import {
   qualifyingChildDetailSchema,
 } from "../../../nodes/intermediate/forms/eitc/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { scheduleEicLine6Months } from "../../eic-birth-residency.ts";
 
 export interface Fields {
   credit_amount?: number;
@@ -14,9 +15,19 @@ export interface Fields {
 type Input = Partial<Fields> & Record<string, unknown>;
 
 const CHILD_RELATIONSHIP_CODES = new Set([
-  "SON", "DAUGHTER", "STEPCHILD", "FOSTER CHILD", "BROTHER", "SISTER",
-  "STEPBROTHER", "STEPSISTER", "HALF BROTHER", "HALF SISTER",
-  "GRANDCHILD", "NIECE", "NEPHEW",
+  "SON",
+  "DAUGHTER",
+  "STEPCHILD",
+  "FOSTER CHILD",
+  "BROTHER",
+  "SISTER",
+  "STEPBROTHER",
+  "STEPSISTER",
+  "HALF BROTHER",
+  "HALF SISTER",
+  "GRANDCHILD",
+  "NIECE",
+  "NEPHEW",
 ]);
 
 function birthYear(dob: string, label: string): string {
@@ -74,9 +85,7 @@ function childXml(
   ) {
     throw new Error(`${label} needs a qualifying IRS child relationship code`);
   }
-  if (child.months_in_home < 7 || child.months_in_home > 12) {
-    throw new Error(`${label} needs seven through twelve months in the home`);
-  }
+  const line6Months = scheduleEicLine6Months(child);
   if (child.ip_pin !== undefined && !/^\d{6}$/.test(child.ip_pin)) {
     throw new Error(`${label} needs a six-digit IP PIN`);
   }
@@ -99,7 +108,7 @@ function childXml(
     element("ChildRelationshipCd", child.irs_relationship_code),
     element(
       "MonthsChildLivedWithYouCnt",
-      String(child.months_in_home).padStart(2, "0"),
+      String(line6Months).padStart(2, "0"),
     ),
   ]);
 }
@@ -115,14 +124,18 @@ export const eitc: MefFormDescriptor<"eitc", Input> = {
       throw new Error("Schedule EIC credit amount must be nonnegative");
     }
     if (!Number.isInteger(count) || count < 0 || count > 3) {
-      throw new Error("Schedule EIC needs zero through three qualifying children");
+      throw new Error(
+        "Schedule EIC needs zero through three qualifying children",
+      );
     }
     if (credit === 0 || count === 0) return "";
     const children = qualifyingChildDetailSchema.array().max(3).parse(
       fields.qualifying_child_details ?? [],
     );
     if (children.length !== count) {
-      throw new Error("Schedule EIC qualifying-child count does not match child detail");
+      throw new Error(
+        "Schedule EIC qualifying-child count does not match child detail",
+      );
     }
     const seenSsns = new Set<string>();
     return elements(

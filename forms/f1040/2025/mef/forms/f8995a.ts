@@ -18,6 +18,8 @@ import {
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
+import { assertZeroReductionScheduleAReturn } from "./f8995a_schedule_a.ts";
+import { qualifiedReitDividends } from "./f8995-route.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -102,14 +104,13 @@ export function validateOneBusiness(fields: Form8995AInput) {
     (fields.sstb_qbi ?? 0) !== 0 ||
     (fields.sstb_w2_wages ?? 0) !== 0 ||
     (fields.sstb_unadjusted_basis ?? 0) !== 0 ||
-    (fields.line6_sec199a_dividends ?? 0) !== 0 ||
     (fields.qbi_loss_carryforward ?? 0) !== 0 ||
     (fields.reit_loss_carryforward ?? 0) !== 0 ||
     (fields.aggregation_groups ?? []).length !== 0 ||
     fields.net_capital_gain !== 0
   ) {
     throw new Error(
-      "Form 8995-A MeF does not yet support SSTB, aggregation, REIT/PTP, loss, or capital-gain paths",
+      "Form 8995-A MeF does not yet support SSTB, aggregation, loss, or capital-gain paths",
     );
   }
   if (
@@ -155,6 +156,41 @@ export function validateOneBusiness(fields: Form8995AInput) {
   return { details, lines };
 }
 
+export function assertOneBusinessReitSource(
+  fields: Form8995AInput,
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  const amount = fields.line6_sec199a_dividends ?? 0;
+  if (amount === 0) {
+    if (fields.reit_dividend_sources !== undefined) {
+      throw new Error("Form 8995-A REIT source needs a positive line 28");
+    }
+    return;
+  }
+  const issued = pending?.f1099div as
+    | { f1099divs?: unknown[] }
+    | undefined;
+  if (
+    fields.patron_of_specified_cooperative === true ||
+    !fields.reit_dividend_sources ||
+    fields.reit_dividend_sources.length !== 1 ||
+    issued?.f1099divs?.length !== 1 ||
+    amount !== qualifiedReitDividends(
+        pending?.f1099div,
+        fields.reit_dividend_sources,
+        0,
+      ) ||
+    (pending?.f1040 as Record<string, unknown> | undefined)
+        ?.line3b_ordinary_dividends !== amount ||
+    ((pending?.f1040 as Record<string, unknown> | undefined)
+        ?.line3a_qualified_dividends ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 8995-A REIT line 28 needs one reviewed issued 1099-DIV and matching Form 1040 ordinary dividends",
+    );
+  }
+}
+
 export function assertScheduleCLossSources(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -163,14 +199,14 @@ export function assertScheduleCLossSources(
   const source = scheduleCInputSchema.safeParse(pending?.schedule_c);
   if (
     !source.success || !source.data.schedule_cs ||
-    source.data.schedule_cs.length !== 2 ||
+    source.data.schedule_cs.length !== lines.businesses.length ||
     (pending?.general as Record<string, unknown> | undefined)
         ?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     fields.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     pending?.form8829 !== undefined || pending?.form5884 !== undefined
   ) {
     throw new Error(
-      "Form 8995-A Schedule C needs exactly two retained unadjusted Schedule C source items",
+      "Form 8995-A Schedule C needs all retained unadjusted Schedule C source items",
     );
   }
   for (const business of lines.businesses) {
@@ -188,6 +224,38 @@ export function assertScheduleCLossSources(
         "Form 8995-A Schedule C QBI, payroll, and business source differ from the retained Schedule C return",
       );
     }
+  }
+  const schedule1 = z.object({
+    line3_schedule_c: z.number(),
+    line10_total_additional_income: z.number(),
+    line15_se_deduction: z.number().nonnegative().optional(),
+    line16_sep_simple: z.number().nonnegative().optional(),
+    line17_se_health_insurance: z.number().nonnegative().optional(),
+  }).passthrough().safeParse(pending?.schedule1);
+  const form1040 = z.object({
+    line8_additional_income: z.number(),
+    line13_qbi_deduction: z.number().nonnegative(),
+    line13b_additional_deductions: z.number().nonnegative().optional(),
+    line15_taxable_income: z.number().nonnegative(),
+  }).passthrough().safeParse(pending?.f1040);
+  if (
+    !schedule1.success || !form1040.success ||
+    schedule1.data.line3_schedule_c !==
+      lines.businesses.reduce((sum, business) => sum + business.qbi, 0) ||
+    schedule1.data.line10_total_additional_income !==
+      form1040.data.line8_additional_income ||
+    form1040.data.line13_qbi_deduction !== lines.parent.line39 ||
+    form1040.data.line15_taxable_income +
+          form1040.data.line13_qbi_deduction +
+          (form1040.data.line13b_additional_deductions ?? 0) !==
+      fields.taxable_income ||
+    (schedule1.data.line15_se_deduction ?? 0) !== 0 ||
+    (schedule1.data.line16_sep_simple ?? 0) !== 0 ||
+    (schedule1.data.line17_se_health_insurance ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule C net profit and zero QBI adjustments must match filed Schedule 1 and Form 1040",
+    );
   }
 }
 
@@ -364,6 +432,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
   ) {
     const lines = calculateOneSstb8995ALines(fields);
     reconcileReturn(context, lines.line39, fields);
+    assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
     return elements("IRS8995A", [
       elements("QBIDeductionInformationGrp", [
         elements("TradeOrBusinessName", [
@@ -383,13 +452,9 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         element("W2WageQlfyPropLimitationAmt", lines.line11),
         element("QBIDedBeforePatronReductionAmt", lines.line13),
         element("QBIComponentAmt", lines.line15),
-        ...(lines.line19 > 0
-          ? [
-            element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
-            element("TotalPhaseInReductionAmt", lines.line25),
-            element("QBIAfterPhaseInReductionAmt", lines.line26),
-          ]
-          : []),
+        element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
+        element("TotalPhaseInReductionAmt", lines.line25),
+        element("QBIAfterPhaseInReductionAmt", lines.line26),
       ]),
       element("TotalQBIComponentAmt", lines.line16),
       element(
@@ -418,6 +483,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     ]);
   }
   const { details, lines } = validateOneBusiness(fields);
+  assertOneBusinessReitSource(fields, context?.pending);
   reconcileReturn(context, lines.line39, fields);
   return elements("IRS8995A", [
     elements("QBIDeductionInformationGrp", [
@@ -445,10 +511,10 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("QBIComponentAmt", lines.line15),
     ]),
     element("TotalQBIComponentAmt", lines.line16),
-    element("QlfyREITDivPTPIncomeLossAmt", 0),
-    element("PYQlfyREITDivPTPLossCfwdAmt", 0),
-    element("TotQlfyREITDivPTPIncomeAmt", 0),
-    element("REITPTPComponentAmt", 0),
+    element("QlfyREITDivPTPIncomeLossAmt", lines.line28),
+    element("PYQlfyREITDivPTPLossCfwdAmt", lines.line29),
+    element("TotQlfyREITDivPTPIncomeAmt", lines.line30),
+    element("REITPTPComponentAmt", lines.line31),
     element("QBIDedBfrIncomeLimitationAmt", lines.line32),
     element("TaxableIncomeBeforeQBIDedAmt", lines.line33),
     element("NetCapitalGainAmt", lines.line34),

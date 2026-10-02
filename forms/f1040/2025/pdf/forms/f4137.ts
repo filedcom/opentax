@@ -2,6 +2,10 @@ import { StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  form4137Sources,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
+import {
   calculateForm4137,
   type Form4137Calculation,
   inputSchema,
@@ -116,11 +120,44 @@ export const form4137Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4137--2025.pdf",
   fields,
   pageIndices: () => [0],
-  instances(raw) {
+  instances(raw, _filer, allPending) {
     const input = inputSchema.parse(raw);
-    return calculateForm4137(input, CONFIG_BY_YEAR[2025].ssWageBase).map(
-      projectedForm,
+    const calculated = calculateForm4137(
+      input,
+      CONFIG_BY_YEAR[2025].ssWageBase,
     );
+    if (calculated.length > 0 && allPending?.f1040) {
+      if (!allPending.w2) {
+        throw new Error("Form 4137 PDF needs its filed W-2 documents");
+      }
+      const filed = form4137Sources(w2InputSchema.parse(allPending.w2).w2s)
+        .map((source) => JSON.stringify(source)).sort();
+      const entered = (input.w2_tip_sources ?? []).map((source) =>
+        JSON.stringify(source)
+      ).sort();
+      if (JSON.stringify(filed) !== JSON.stringify(entered)) {
+        throw new Error(
+          "Form 4137 PDF W-2 tip sources disagree with filed W-2 documents",
+        );
+      }
+      const income = calculated.reduce(
+        (total, form) => total + form.unreportedTips,
+        0,
+      );
+      const tax = calculated.reduce(
+        (total, form) => total + form.totalTax,
+        0,
+      );
+      if (
+        (allPending.f1040.line1c_unreported_tips ?? 0) !== income ||
+        (allPending.schedule2?.line5_unreported_tip_tax ?? 0) !== tax
+      ) {
+        throw new Error(
+          "Form 4137 PDF tip income and tax do not reconcile to Form 1040 and Schedule 2",
+        );
+      }
+    }
+    return calculated.map(projectedForm);
   },
   decoratePages: async (document, pages, fields, filer) => {
     const page = pages[0];

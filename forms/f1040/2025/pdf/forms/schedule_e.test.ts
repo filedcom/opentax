@@ -268,7 +268,7 @@ Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals 
     activity_id: `rental-${index}`,
     street_address: `${12 + index} Main Street`,
   }));
-  const raw = { schedule_es: properties };
+  const raw = scheduleEInputSchema.parse({ schedule_es: properties });
   const projected = scheduleEPdf.projectFields?.(raw, {
     schedule_e: raw,
     schedule1: { line5_schedule_e: 33_400 },
@@ -292,9 +292,47 @@ Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals 
   assertEquals(copies[1].property_0_line3, 12_000);
   assertEquals(copies[1].line23a, undefined);
   assertEquals(copies[1].line26, undefined);
-  assertEquals(copies[1].payments_made, undefined);
+  assertEquals(copies[1].payments_made, false);
+  assertEquals(copies[1].forms_1099_filed, undefined);
   assertEquals(scheduleEPdf.pageIndices?.(copies[0]), [0]);
   assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
+});
+
+Deno.test("Schedule E PDF repeats sourced Form 1099 answers on each property copy", () => {
+  // https://www.irs.gov/instructions/i1040se requires enough Schedule E
+  // copies for every property and limits only lines 23a-26 to the first copy.
+  const properties = Array.from({ length: 4 }, (_, index) => ({
+    ...rental,
+    activity_id: `rental-${index}`,
+    street_address: `${12 + index} Main Street`,
+    form_1099_payments_made: index === 3,
+    form_1099_filed: index === 3 ? true : undefined,
+  }));
+  const raw = scheduleEInputSchema.parse({ schedule_es: properties });
+  const pending = {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 33_400 },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, pending) ?? {};
+  const copies = scheduleEPdf.instances?.(projected) ?? [];
+  assertEquals(copies.length, 2);
+  assertEquals(copies.map((copy) => copy.payments_made), [true, true]);
+  assertEquals(copies.map((copy) => copy.forms_1099_filed), [true, true]);
+  assertEquals(copies[0].line26, 33_400);
+  assertEquals(copies[1].line26, undefined);
+  const native = scheduleE.build(raw, { pending });
+  assertEquals(
+    native.includes(
+      "<PaymentRqrFilingForm1099Ind>true</PaymentRqrFilingForm1099Ind>",
+    ),
+    true,
+  );
+  assertEquals(
+    native.includes(
+      "<RequiredForms1099FiledInd>true</RequiredForms1099FiledInd>",
+    ),
+    true,
+  );
 });
 
 Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {

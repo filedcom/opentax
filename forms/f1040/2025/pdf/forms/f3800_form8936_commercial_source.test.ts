@@ -15,6 +15,7 @@ import {
   form3800PartIIIFields,
 } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
+import { form8936Pdf } from "./f8936.ts";
 
 const vehicle = {
   vin: "1HGCM82633A004352",
@@ -70,6 +71,7 @@ function filedReturn() {
       digital_assets: false,
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 120_000,
       box2_fed_withheld: 20_000,
       box3_ss_wages: 120_000,
@@ -114,6 +116,56 @@ Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040
   );
   assertEquals(printed[form3800PartIIIFields("1aa").e], 3_000);
   assertEquals(printed[form3800PartIAndIIFields.line38], 3_000);
+  const child = form8936Pdf.projectFields!(pending.f8936, pending);
+  assertEquals(child.line21, 3_000);
+  assertEquals(
+    form8936Pdf.instances!(
+      child,
+      finalFiler,
+      pending,
+      prepared.bundle.form3800Parts,
+    ),
+    [child],
+  );
+});
+
+Deno.test("commercial Form 8936 printable copy rejects changed parent document and final credit", async () => {
+  const result = filedReturn();
+  const pending = normalizeAllPending(result.pending);
+  const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
+  const parts = prepared.bundle.form3800Parts!;
+  const fields = form8936Pdf.projectFields!(pending.f8936, pending);
+  assertThrows(() => form8936Pdf.instances!(fields, finalFiler, pending));
+  assertThrows(() =>
+    form8936Pdf.instances!(fields, finalFiler, pending, {
+      ...parts,
+      currentRows: parts.currentRows.map((row) =>
+        row.line === "1aa"
+          ? {
+            ...row,
+            metadata: {
+              ...row.metadata,
+              referenceDocumentId: "IRS8936_OTHER",
+            },
+          }
+          : row
+      ),
+    })
+  );
+  assertThrows(() =>
+    form8936Pdf.instances!(fields, finalFiler, pending, {
+      ...parts,
+      currentDetails: parts.currentDetails.map((row) =>
+        row.line === "1aa" ? { ...row, credit: 2_999 } : row
+      ),
+    })
+  );
+  assertThrows(() =>
+    form8936Pdf.instances!(fields, finalFiler, {
+      ...pending,
+      f1040: { ...pending.f1040, line20_nonrefundable_credits: 2_999 },
+    }, parts)
+  );
 });
 
 Deno.test("commercial vehicle source, prepared row and Form 1040 tampering stop Form 3800 PDF", async () => {

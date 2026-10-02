@@ -8,6 +8,7 @@ import { testFiler } from "../test-filer.ts";
 import { form8995 } from "./f8995.ts";
 
 const dividend = {
+  recipient_tin: "123456789",
   payerName: "Farm Investment Fund",
   source_document_reference: "2025 issued Farm Investment Fund 1099-DIV",
   isNominee: false,
@@ -20,6 +21,7 @@ function filedFarm() {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -35,6 +37,7 @@ function filedFarm() {
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,

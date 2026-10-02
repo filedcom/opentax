@@ -16,6 +16,15 @@ wages; Social Security wages are capped at $176,100 per employee. Form W-2 boxes
 aggregate FICA and Additional Medicare wages, federal withholding, and line A
 must match the payroll ledger.
 
+Positive Form W-2 box 2 withholding for an unrelated employee now also needs a
+separately referenced Form W-4 and an affirmative review that the employee
+requested withholding and the employer agreed. The W-4 reference must differ
+from that employee's payroll and W-2 references; the one-worker FICA-only route
+also keeps it distinct from the prior-year payroll source. Both payroll routes
+replay this check at calculation, native MeF, and PDF projection. These are
+reviewed source assertions; the W-4, W-2, and payroll bytes still need
+authentication for broader positive filing.
+
 The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
 specify the per-employee $7,000 FUTA base and the exclusions for wages paid to
 a spouse, child under 21, or parent. This bounded ledger accepts unrelated

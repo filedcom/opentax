@@ -21,8 +21,17 @@ const business = {
 };
 
 Deno.test("Form 6251 line 2d replays retained Schedule C property depletion", () => {
-  const fields = { line2d_depletion: 400 };
-  const pending = { schedule_c: { schedule_cs: [business] } };
+  const fields = { line2d_depletion: 400, line11_amt: 100 };
+  const pending = {
+    schedule_c: { schedule_cs: [business] },
+    schedule1: { line3_schedule_c: 49_000 },
+    schedule2: { line2_amt: 100 },
+    f1040: {
+      line16_income_tax: 1_000,
+      line17_additional_taxes: 100,
+      line18_total_tax_before_credits: 1_100,
+    },
+  };
   assertForm6251DepletionSource(fields, pending);
   for (
     const altered of [
@@ -43,6 +52,7 @@ Deno.test("Form 6251 line 2d replays retained Schedule C property depletion", ()
     assertThrows(
       () =>
         assertForm6251DepletionSource(fields, {
+          ...pending,
           schedule_c: { schedule_cs: [altered] },
         }),
       Error,
@@ -59,4 +69,16 @@ Deno.test("Form 6251 line 2d replays retained Schedule C property depletion", ()
     Error,
     "matching retained Schedule C property-level AMT depletion",
   );
+  for (
+    const tampered of [
+      { ...pending, schedule1: { line3_schedule_c: 48_999 } },
+      { ...pending, schedule2: { line2_amt: 99 } },
+      {
+        ...pending,
+        f1040: { ...pending.f1040, line17_additional_taxes: 99 },
+      },
+    ]
+  ) {
+    assertThrows(() => assertForm6251DepletionSource(fields, tampered));
+  }
 });

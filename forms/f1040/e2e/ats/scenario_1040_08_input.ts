@@ -57,6 +57,7 @@ export function scenario104008Input(): Record<string, unknown> {
     // payer copy, so only the amount and no invented payer identity are used.
     f1099div: [{
       isNominee: false,
+      recipient_tin: facts.taxpayer.ssn.replace(/\D/g, ""),
       box11: false,
       box1a: 0,
       box2a: facts.realEstateInvestmentTrustCapitalGainDistribution,

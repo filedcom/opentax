@@ -25,10 +25,17 @@ line 3a.
 
 Foreign-source/tax facts, premium, accrued-interest, nominee and other
 adjustments, a capital-gain component, election components, or an AMT refigure
-outside zero adjustments still reject. A return combining box 3 with 1099-OID is
-expressly blocked, even with a dividend payer; that source combination needs
-separate reconciliation. The K-1/1099-INT path remains box-1-only. Positive
-source/MeF/PDF cases for box 3 alone and box 1 plus box 3, and negative cases
-for premium, finalized Form 1040 mismatch, and mixed OID are written but unrun.
-Debt tracing, taxpayer investment-purpose affirmation, source-document
-authentication, and IRS acceptance remain separate gates.
+outside zero adjustments still reject. The distinct, unadjusted Treasury box 3
+plus taxable 1099-OID box 1 combination is separately reconciled, including one
+ordinary 1099-DIV box 1a payer. For a directly traced, owner-owned
+taxable-securities loan, the three-payer route requires three distinct payer
+names and source-document references. It replays both interest amounts and the
+dividend into Form 4952 line 4a, Form 1040 lines 2b/3b, Schedule A line 9, and
+native/PDF Form 4952. A full-return positive and changed document, amount, and
+owner fixtures are authored but unrun. Qualified dividends, additional payers,
+and issuer/lender byte authentication remain outside this direct-loan
+combination. The K-1/1099-INT path remains box-1-only. Positive source/MeF/PDF
+cases for box 3 alone and box 1 plus box 3, and negative cases for premium and
+finalized Form 1040 mismatch are written but unrun. Debt tracing, taxpayer
+investment-purpose affirmation, source-document authentication, and IRS
+acceptance remain separate gates.

@@ -18,6 +18,8 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 
 type ItemOverrides = Partial<{
   payerName: string;
+  payerTin: string;
+  source_document_reference: string;
   isNominee: boolean;
   nominee_distribution: {
     box1a: number;
@@ -129,6 +131,85 @@ function compute(
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("1099-DIV changed issued copy cannot double dividends or withholding", () => {
+  const issued = minimalItem({
+    payerName: "Test Payer",
+    payerTin: "123456789",
+    source_document_reference: "issued-dividend-copy-1",
+    box1a: 200,
+    box4: 15,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        isNominee: true,
+        nominee_distribution: { box1a: 100, box4: 5 },
+      }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const twoCopies = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-dividend-copy-2" },
+  ]);
+  assertEquals(
+    fieldsOf(twoCopies.outputs, f1040)?.line3b_ordinary_dividends,
+    400,
+  );
+  assertEquals(fieldsOf(twoCopies.outputs, f1040)?.line25b_withheld_1099, 30);
+});
+
+Deno.test("1099-DIV rejects one issued copy repeated without a payer TIN", () => {
+  const issued = minimalItem({
+    source_document_reference: "issued-dividend-copy-no-tin",
+    box1a: 200,
+    box4: 15,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+});
+
+Deno.test("1099-DIV rejects multiple positive copies without source references", () => {
+  const unnamed = minimalItem({ box1a: 200, box4: 15 });
+  assertThrows(
+    () => compute([unnamed, { ...unnamed, box1a: 250, box4: 20 }]),
+    Error,
+    "multiple positive issued copies without source_document_reference",
+  );
+  assertThrows(
+    () => compute([minimalItem({ box1a: 0, box4: 15 }), unnamed]),
+    Error,
+    "multiple positive issued copies without source_document_reference",
+  );
+});
+
+Deno.test("1099-DIV permits one positive unreferenced copy and zero rows", () => {
+  const unnamed = minimalItem({ box1a: 200, box4: 15 });
+  const zero = minimalItem({ box1a: 0, box4: 0 });
+  const result = compute([zero, unnamed, zero]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 200);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 15);
+  const mixed = compute([
+    unnamed,
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 300,
+      box4: 10,
+    }),
+  ]);
+  assertEquals(fieldsOf(mixed.outputs, f1040)?.line3b_ordinary_dividends, 500);
+  assertEquals(fieldsOf(mixed.outputs, f1040)?.line25b_withheld_1099, 25);
+});
 
 Deno.test("f1099div: sourced foreign qualified dividends contradict a zero-preference review", () => {
   const result = compute([minimalItem({
@@ -534,9 +615,21 @@ Deno.test("box11=true produces no tax calculation impact (FATCA checkbox informa
 
 Deno.test("multiple payers — each listed separately on schedule_b when above threshold", () => {
   const result = compute([
-    minimalItem({ payerName: "Alpha Fund", box1a: 700 }),
-    minimalItem({ payerName: "Beta Fund", box1a: 800 }),
-    minimalItem({ payerName: "Gamma Fund", box1a: 600 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      payerName: "Alpha Fund",
+      box1a: 700,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      payerName: "Beta Fund",
+      box1a: 800,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-3",
+      payerName: "Gamma Fund",
+      box1a: 600,
+    }),
   ]);
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
   assertEquals(sbOutputs.length, 3);
@@ -554,8 +647,16 @@ Deno.test("multiple payers — each listed separately on schedule_b when above t
 
 Deno.test("multiple payers — box1b (qualified dividends) summed to single f1040 output", () => {
   const result = compute([
-    minimalItem({ box1a: 300, box1b: 200 }),
-    minimalItem({ box1a: 400, box1b: 350 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 300,
+      box1b: 200,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 400,
+      box1b: 350,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
@@ -565,8 +666,18 @@ Deno.test("multiple payers — box1b (qualified dividends) summed to single f104
 
 Deno.test("multiple payers — box2a summed for schedule_d when sub-amounts present", () => {
   const result = compute([
-    minimalItem({ box1a: 500, box2a: 300, box2b: 50 }),
-    minimalItem({ box1a: 600, box2a: 500, box2b: 50 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 500,
+      box2a: 300,
+      box2b: 50,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 600,
+      box2a: 500,
+      box2b: 50,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
@@ -576,8 +687,18 @@ Deno.test("multiple payers — box2a summed for schedule_d when sub-amounts pres
 
 Deno.test("multiple payers — box2b summed to unrecaptured_1250_worksheet", () => {
   const result = compute([
-    minimalItem({ box1a: 500, box2a: 500, box2b: 100 }),
-    minimalItem({ box1a: 500, box2a: 500, box2b: 150 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 500,
+      box2a: 500,
+      box2b: 100,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 500,
+      box2a: 500,
+      box2b: 150,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, unrecaptured_1250_worksheet)
@@ -588,16 +709,36 @@ Deno.test("multiple payers — box2b summed to unrecaptured_1250_worksheet", () 
 
 Deno.test("multiple payers — box2c summed to schedule_d QSBS field", () => {
   const result = compute([
-    minimalItem({ box1a: 400, box2a: 400, box2c: 200 }),
-    minimalItem({ box1a: 400, box2a: 400, box2c: 300 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 400,
+      box2a: 400,
+      box2c: 200,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 400,
+      box2a: 400,
+      box2c: 300,
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule_d)?.box2c_qsbs, 500);
 });
 
 Deno.test("multiple payers — box2d summed to rate_28_gain_worksheet", () => {
   const result = compute([
-    minimalItem({ box1a: 400, box2a: 400, box2d: 200 }),
-    minimalItem({ box1a: 400, box2a: 400, box2d: 300 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 400,
+      box2a: 400,
+      box2d: 200,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 400,
+      box2a: 400,
+      box2d: 300,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, rate_28_gain_worksheet)?.collectibles_gain,
@@ -607,9 +748,9 @@ Deno.test("multiple payers — box2d summed to rate_28_gain_worksheet", () => {
 
 Deno.test("multiple payers — box4 withholding summed to single f1040 output", () => {
   const result = compute([
-    minimalItem({ box4: 50 }),
-    minimalItem({ box4: 75 }),
-    minimalItem({ box4: 25 }),
+    minimalItem({ source_document_reference: "issued-copy-1", box4: 50 }),
+    minimalItem({ source_document_reference: "issued-copy-2", box4: 75 }),
+    minimalItem({ source_document_reference: "issued-copy-3", box4: 25 }),
   ]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 150);
 });
@@ -618,8 +759,18 @@ Deno.test("multiple payers — box5 (§199A) summed when holding period met", ()
   // box5 is clamped to box1a per normalization, so the second item's box5 (600)
   // is clamped to box1a (500) before routing. Total = 400 + 500 = 900.
   const result = compute([
-    minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 60 }),
-    minimalItem({ box1a: 500, box5: 600, holdingPeriodDays: 60 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box1a: 500,
+      box5: 400,
+      holdingPeriodDays: 60,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box1a: 500,
+      box5: 600,
+      holdingPeriodDays: 60,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends,
@@ -630,8 +781,9 @@ Deno.test("multiple payers — box5 (§199A) summed when holding period met", ()
 Deno.test("multiple payers retain separate Form 1116 country sources", () => {
   const result = compute(
     [
-      taxedDividend(100, 500),
+      taxedDividend(100, 500, { source_document_reference: "issued-copy-1" }),
       taxedDividend(150, 600, {
+        source_document_reference: "issued-copy-2",
         box8: "France",
         foreign_tax_irs_country_code: "FR",
       }),
@@ -648,16 +800,24 @@ Deno.test("multiple payers retain separate Form 1116 country sources", () => {
 
 Deno.test("multiple payers — box12 summed to f1040 line2a", () => {
   const result = compute([
-    minimalItem({ box12: 300 }),
-    minimalItem({ box12: 450 }),
+    minimalItem({ source_document_reference: "issued-copy-1", box12: 300 }),
+    minimalItem({ source_document_reference: "issued-copy-2", box12: 450 }),
   ]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 750);
 });
 
 Deno.test("multiple payers — box13 summed to form6251", () => {
   const result = compute([
-    minimalItem({ box12: 100, box13: 80 }),
-    minimalItem({ box12: 150, box13: 120 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      box12: 100,
+      box13: 80,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      box12: 150,
+      box13: 120,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, form6251)?.private_activity_bond_interest,
@@ -720,9 +880,21 @@ Deno.test("nominee=true forces schedule_b even when total below $1,500", () => {
 
 Deno.test("multi-payer total below $1,500 retains all payer facts for combined-source threshold", () => {
   const result = compute([
-    minimalItem({ payerName: "P1", box1a: 500 }),
-    minimalItem({ payerName: "P2", box1a: 499 }),
-    minimalItem({ payerName: "P3", box1a: 500 }),
+    minimalItem({
+      source_document_reference: "issued-copy-1",
+      payerName: "P1",
+      box1a: 500,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      payerName: "P2",
+      box1a: 499,
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-3",
+      payerName: "P3",
+      box1a: 500,
+    }),
   ]);
   assertEquals(
     (fieldsOf(result.outputs, schedule_b)?.dividend_info as unknown[]).length,
@@ -1012,6 +1184,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
   const result = compute(
     [
       minimalItem({
+        source_document_reference: "issued-copy-1",
         payerName: "Vanguard",
         box1a: 1000,
         box1b: 700,
@@ -1031,6 +1204,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
         foreign_tax_holding_review: foreignHoldingReview,
       }),
       minimalItem({
+        source_document_reference: "issued-copy-2",
         payerName: "Fidelity",
         box1a: 700,
         box1b: 400,
@@ -1138,8 +1312,15 @@ Deno.test("Form 1116 uses verified foreign-source dividends, not all box 1a", ()
 
 Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
   const result = compute([
-    taxedDividend(400, 5000, { payerName: "Foreign Fund" }),
-    minimalItem({ payerName: "Domestic Fund", box1a: 20000 }),
+    taxedDividend(400, 5000, {
+      source_document_reference: "issued-copy-1",
+      payerName: "Foreign Fund",
+    }),
+    minimalItem({
+      source_document_reference: "issued-copy-2",
+      payerName: "Domestic Fund",
+      box1a: 20000,
+    }),
   ]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]

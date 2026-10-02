@@ -166,7 +166,13 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
   });
   assertEquals(result.diagnostics, []);
   assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
-  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
   const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
@@ -245,7 +251,7 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
         },
       }),
     Error,
-    "distinct feedstock",
+    "distinct owner, construction, meter, and unrelated-sale sources",
   );
 });
 
@@ -260,7 +266,13 @@ Deno.test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and 
   });
   assertEquals(result.diagnostics, []);
   assert(Array.isArray(result.pending.f3800.f8835_credit_entries));
-  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
   assertEquals(result.pending.schedule3.line6a_total, 300);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
   const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
@@ -441,6 +453,7 @@ function preparedParts(
   const ids = credits.map((_, index) => `F8835-${index + 1}`);
   return {
     lines: { line37: total, line38: total } as Form3800DocumentParts["lines"],
+    form8835DocumentIds: ids,
     transferStatementIds: [],
     carryforwardSources: [],
     currentRows: [{
@@ -592,6 +605,59 @@ Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a misma
   );
 });
 
+Deno.test("Form 8835 PDF binds each facility to its reserved native document ID", () => {
+  const second = {
+    ...facility(),
+    facility_description: "Second geothermal production site",
+    facility_us_address: {
+      line1: "20 Plant Rd",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: 39.223456,
+    facility_longitude: -75.223456,
+  };
+  const source = pending([facility(), second]);
+  const prepared = preparedParts(source);
+  assertEquals(
+    form8835Pdf.instances?.({}, filer, source, prepared)?.length,
+    2,
+  );
+  const swappedIds = [...prepared.form8835DocumentIds!].reverse();
+  assertThrows(
+    () =>
+      form8835Pdf.instances?.({}, filer, source, {
+        ...prepared,
+        form8835DocumentIds: swappedIds,
+      }),
+    Error,
+    "disagrees with native Form 3800",
+  );
+  const counterfeitId = prepared.currentDetails.map((detail, index) => ({
+    ...detail,
+    sourceDocumentId: index === 1 ? "OTHER-DOCUMENT" : detail.sourceDocumentId,
+  }));
+  assertThrows(
+    () =>
+      form8835Pdf.instances?.({}, filer, source, {
+        ...prepared,
+        currentRows: prepared.currentRows.map((row) => ({
+          ...row,
+          metadata: {
+            ...row.metadata,
+            referenceDocumentId: counterfeitId.map((detail) =>
+              detail.sourceDocumentId
+            ).join(" "),
+          },
+        })),
+        currentDetails: counterfeitId,
+      }),
+    Error,
+    "disagrees with native Form 3800",
+  );
+});
+
 Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy on line 1c", () => {
   const wind = {
     ...facility(),
@@ -648,4 +714,243 @@ Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit"
     "zero-credit facility",
   );
   assertEquals(form8835Pdf.instances?.({}, filer, {}), []);
+});
+
+function nonownerCellulosicLessee(): F8835Item {
+  const item = openLoopCellulosicFacility();
+  return {
+    ...item,
+    facility_owned_by_filer: false,
+    facility_owner_business: {
+      name: "Owner Biomass LLC",
+      ein: "987654321",
+    },
+    open_loop_nonowner_lessee_source: {
+      facility_description: item.facility_description!,
+      facility_address_line1: item.facility_us_address!.line1,
+      facility_latitude: item.facility_latitude!,
+      facility_longitude: item.facility_longitude!,
+      owner_business_name: "Owner Biomass LLC",
+      owner_business_ein: "987654321",
+      lease_agreement_reference: "2024 biomass facility lease",
+      owner_producer_acknowledgment_reference:
+        "2025 owner production and credit acknowledgment",
+      filer_is_lessee_and_electricity_producer_verified: true,
+      owner_not_producer_or_claimant_for_2025_verified: true,
+    },
+  };
+}
+
+function nonownerLivestockLessee(): F8835Item {
+  const item = openLoopLivestockFacility();
+  return {
+    ...item,
+    facility_owned_by_filer: false,
+    facility_owner_business: {
+      name: "Owner Nutrient Energy LLC",
+      ein: "987654321",
+    },
+    open_loop_nonowner_lessee_source: {
+      facility_description: item.facility_description!,
+      facility_address_line1: item.facility_us_address!.line1,
+      facility_latitude: item.facility_latitude!,
+      facility_longitude: item.facility_longitude!,
+      owner_business_name: "Owner Nutrient Energy LLC",
+      owner_business_ein: "987654321",
+      lease_agreement_reference: "2024 nutrient facility lease",
+      owner_producer_acknowledgment_reference:
+        "2025 owner nonproduction and credit acknowledgment",
+      filer_is_lessee_and_electricity_producer_verified: true,
+      owner_not_producer_or_claimant_for_2025_verified: true,
+    },
+  };
+}
+
+Deno.test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, PDF, and Form 1040", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-geothermal-general-business-credit"
+  )!;
+  const source = nonownerLivestockLessee();
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8835: [source],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
+  assertEquals(result.pending.schedule3.line6a_total, 300);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<FacilityOwnerEIN>987654321</FacilityOwnerEIN>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdSoldOpenLopBmssCrAmt>300</KwHrsPrdcdSoldOpenLopBmssCrAmt>",
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].line, "4e");
+  assertEquals(parts.currentAmounts[0].appliedCredit, 300);
+  const pending = result.pending as Record<string, Record<string, unknown>>;
+  const [projected] = form8835Pdf.instances!({}, base.filer, pending, parts);
+  assertEquals(projected.owner_name, "Owner Nutrient Energy LLC");
+  assertEquals(projected.owner_tin, "987654321");
+  assertEquals(projected.line1f_credit, 300);
+  const changed = (item: F8835Item) => ({
+    ...pending,
+    f8835: { f8835s: [item] },
+  });
+  for (
+    const altered of [
+      {
+        ...source,
+        facility_owner_business: { name: "Other Owner", ein: "987654321" },
+      },
+      { ...source, open_loop_nonowner_lessee_source: undefined },
+      {
+        ...source,
+        open_loop_nonowner_lessee_source: {
+          ...source.open_loop_nonowner_lessee_source!,
+          lease_agreement_reference: source.open_loop_livestock_source!
+            .nameplate_capacity_record_reference,
+        },
+      },
+      {
+        ...source,
+        open_loop_nonowner_lessee_source: {
+          ...source.open_loop_nonowner_lessee_source!,
+          facility_latitude: source.facility_latitude! + 1,
+        },
+      },
+    ]
+  ) {
+    assertThrows(() => calculateForm8835(altered));
+    assertThrows(() =>
+      form8835Pdf.instances!({}, base.filer, changed(altered), parts)
+    );
+  }
+  assertThrows(() =>
+    form8835Pdf.instances!({}, base.filer, {
+      ...pending,
+      f1040: { ...pending.f1040, line20_nonrefundable_credits: 299 },
+    }, parts)
+  );
+});
+
+Deno.test("non-owner open-loop biomass lessee joins Form 8835 owner, Form 3800, native, and PDF", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-geothermal-general-business-credit"
+  )!;
+  const source = nonownerCellulosicLessee();
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8835: [source],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.f3800.f8835_credit_entries as { credit_amount: number }[])[
+      0
+    ]
+      .credit_amount,
+    300,
+  );
+  assertEquals(result.pending.schedule3.line6a_total, 300);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<FacilityOwnerEIN>987654321</FacilityOwnerEIN>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdSoldOpenLopBmssCrAmt>300</KwHrsPrdcdSoldOpenLopBmssCrAmt>",
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].line, "4e");
+  assertEquals(parts.currentAmounts[0].appliedCredit, 300);
+  const pendingSource = result.pending as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const [projected] = form8835Pdf.instances!(
+    {},
+    base.filer,
+    pendingSource,
+    parts,
+  );
+  assertEquals(projected.owner_name, "Owner Biomass LLC");
+  assertEquals(projected.owner_tin, "987654321");
+  assertEquals(projected.line1f_credit, 300);
+  assertEquals(projected.line15, 300);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "owner_tin")
+      ?.pdfField,
+    "topmostSubform[0].Page1[0].f1_7[0]",
+  );
+  const changed = (item: F8835Item) => ({
+    ...pendingSource,
+    f8835: { f8835s: [item] },
+  });
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({
+        ...source,
+        facility_owner_business: {
+          ...source.facility_owner_business!,
+          ein: "111223333",
+        },
+      }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({
+        ...source,
+        open_loop_nonowner_lessee_source: {
+          ...source.open_loop_nonowner_lessee_source!,
+          lease_agreement_reference:
+            source.open_loop_cellulosic_source!.feedstock_record_reference,
+        },
+      }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({ ...source, open_loop_nonowner_lessee_source: undefined }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      {
+        ...pendingSource,
+        f3800: {
+          ...pendingSource.f3800,
+          f8835_credit_entries: [{
+            form3800_line: "4e",
+            credit_amount: 299,
+            transfer_out_amount: 0,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+      },
+      parts,
+    )
+  );
 });

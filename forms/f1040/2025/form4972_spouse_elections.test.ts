@@ -149,3 +149,90 @@ Deno.test("Form 4972 joint spouse collection rejects source, plan, and return ta
     })
   );
 });
+
+function pairedNuaReturn() {
+  return execute(plan, registry, {
+    general,
+    f1099r: [
+      {
+        ...source("T", 30_000),
+        box1_gross_distribution: 35_000,
+        box6_nua: 5_000,
+      },
+      source("S", 40_000),
+    ],
+    form4972: {
+      elections: [
+        { ...election("T"), elect_include_nua: true },
+        election("S"),
+      ],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("Form 4972 spouse pair keeps one full-share NUA election on its own Part III form", () => {
+  const result = pairedNuaReturn();
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const forms = pending.form4972?.forms as Record<string, unknown>[];
+  assertEquals(forms.map((form) => form.recipient), ["T", "S"]);
+  assertEquals(forms[0].line8, 35_000);
+  assertEquals(forms[0].line8_nua_included, 5_000);
+  assertEquals(forms[1].line8, 40_000);
+  assertEquals(pending.f1040?.line5b_form4972_ordinary ?? 0, 0);
+  assertEquals(
+    pending.f1040?.form4972_tax,
+    Number(forms[0].line30) + Number(forms[1].line30),
+  );
+  const native = mef.build(pending.form4972!, { filer, pending });
+  assertEquals(native.length, 2);
+  assertEquals(
+    native[0].includes(
+      'netUnrealizedAppreciationAmt="5000"',
+    ),
+    true,
+  );
+  const pdf = form4972Pdf.instances?.(pending.form4972!, filer, pending);
+  assertEquals(pdf?.map((form) => form.recipient_ssn), [
+    "123456789",
+    "987654321",
+  ]);
+  assertEquals(pdf?.[0].line8_nua_included, 5_000);
+  assertEquals(pdf?.[1].line8_nua_included, undefined);
+});
+
+Deno.test("Form 4972 spouse NUA pair rejects altered source, form, and combined tax", () => {
+  const pending = pairedNuaReturn().pending;
+  const changedSource = {
+    ...pending,
+    f1099r: {
+      f1099rs: [
+        {
+          ...source("T", 30_000),
+          box1_gross_distribution: 35_000,
+          box6_nua: 4_999,
+        },
+        source("S", 40_000),
+      ],
+    },
+  };
+  assertThrows(() =>
+    mef.build(pending.form4972!, { filer, pending: changedSource })
+  );
+  assertThrows(() =>
+    form4972Pdf.instances?.(pending.form4972!, filer, changedSource)
+  );
+  const forms = pending.form4972?.forms as Record<string, unknown>[];
+  assertThrows(() =>
+    mef.build({
+      ...pending.form4972,
+      forms: [{ ...forms[0], line8: 34_999 }, forms[1]],
+    }, { filer, pending })
+  );
+  assertThrows(() =>
+    form4972Pdf.instances?.(pending.form4972!, filer, {
+      ...pending,
+      f1040: { ...pending.f1040, form4972_tax: 1 },
+    })
+  );
+});

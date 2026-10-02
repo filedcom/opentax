@@ -21,6 +21,22 @@ const source = {
   reviewed_by: "Reviewer",
   reviewed_on: "2026-04-01",
   return_wide_items_review_reference: "both-spouses-return-review",
+  reviewed_spouse_return: {
+    tax_year: 2025 as const,
+    form: "1040" as const,
+    filing_status: FilingStatus.MFS as const,
+    first_name: "Blair",
+    last_name: "Example",
+    ssn: "222334444",
+    return_document_reference: "spouse-1040-review",
+    line1a_wages: 50_000,
+    line1z_total_wages: 50_000,
+    line9_total_income: 50_000,
+    line10_adjustments: 0,
+    line11_agi: 50_000,
+    line25a_w2_withheld: 5_000,
+    line25d_total_withholding: 5_000,
+  },
   rows: [{
     item_id: "wage-1",
     form_line: Form8958Line.Wages,
@@ -87,6 +103,7 @@ Deno.test("f8958 staged XML and PDF are derived from the reconciled ledger", () 
   assertEquals(result.execution.diagnostics, []);
   assertEquals(result.execution.pending.f1040?.line1a_wages, 50_000);
   assertEquals(result.execution.pending.f1040?.line25a_w2_withheld, 5_000);
+  assertEquals(source.reviewed_spouse_return.line11_agi, 50_000);
   assertStringIncludes(
     result.xml,
     "<SpouseOrPartnerSSN>222334444</SpouseOrPartnerSSN>",
@@ -102,6 +119,47 @@ Deno.test("f8958 staged XML and PDF are derived from the reconciled ledger", () 
   assertStringIncludes(
     result.fieldMap.withholdingTotal,
     "BodyRow9[0].f2_40[0]",
+  );
+});
+
+Deno.test("f8958 staged projection requires the reviewed spouse return to match both allocated columns", () => {
+  for (
+    const reviewed_spouse_return of [
+      { ...source.reviewed_spouse_return, ssn: "999999999" },
+      { ...source.reviewed_spouse_return, line1a_wages: 100_000 },
+      {
+        ...source.reviewed_spouse_return,
+        line9_total_income: 49_999,
+        line11_agi: 49_999,
+      },
+      {
+        ...source.reviewed_spouse_return,
+        line10_adjustments: 1,
+        line11_agi: 49_999,
+      },
+      { ...source.reviewed_spouse_return, line25d_total_withholding: 10_000 },
+      { ...source.reviewed_spouse_return, return_document_reference: "w2-A" },
+    ]
+  ) {
+    assertThrows(() =>
+      projectStagedForm8958Documents(
+        { ...start, f8958: { ...source, reviewed_spouse_return } },
+        filer,
+      )
+    );
+  }
+  assertThrows(() =>
+    projectStagedForm8958Documents(
+      {
+        ...start,
+        f8958: {
+          ...source,
+          reviewed_spouse_return:
+            undefined as unknown as typeof source.reviewed_spouse_return,
+        },
+      },
+      filer,
+    )
   );
 });
 

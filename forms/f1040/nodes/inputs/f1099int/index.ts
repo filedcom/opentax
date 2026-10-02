@@ -29,6 +29,7 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().trim().min(1).max(40).optional(),
   box1_copy_review: z.object({
     source_document_reference: z.string().trim().min(1),
@@ -82,6 +83,23 @@ export const inputSchema = z.object({
 
 type INTItem = z.infer<typeof itemSchema>;
 type INTInput = z.infer<typeof inputSchema>;
+
+export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
+  const issuedAccounts = new Set<string>();
+  for (const item of items) {
+    if (!item.payer_tin || !item.account_number) continue;
+    const key = JSON.stringify([
+      item.payer_tin.replace(/\D/g, ""),
+      item.account_number.trim(),
+    ]);
+    if (issuedAccounts.has(key)) {
+      throw new Error(
+        "1099-INT repeats the same payer and account; corrected copies need a reviewed single current row",
+      );
+    }
+    issuedAccounts.add(key);
+  }
+}
 
 function validateIntItem(item: INTItem): void {
   const box8 = item.box8 ?? 0;
@@ -190,6 +208,7 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     for (const item of int1099s) {
       validateIntItem(item);
     }
+    assertDistinct1099INTCopies(int1099s);
 
     const totalBox2 = int1099s.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
     const totalBox4 = int1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);

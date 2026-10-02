@@ -121,6 +121,7 @@ const BASE_IDENTITY = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   child_eic_filer_review: {
     not_qualifying_child_of_another_taxpayer_verified: true,
     relationship_age_residence_record_reference:
@@ -166,6 +167,7 @@ function hohGeneral() {
 function w2Item(wages: number, withheld: number) {
   const ssWages = Math.min(wages, SS_WAGE_BASE_2025);
   return {
+    employee_ssn: BASE_IDENTITY.taxpayer_ssn,
     box1_wages: wages,
     box2_fed_withheld: withheld,
     box3_ss_wages: ssWages,
@@ -223,7 +225,13 @@ Deno.test({
   const result = runReturn({
     general: singleGeneral(),
     household_wages: [{ wages_received: 2_000 }],
-    f1099g: [{ box_1_unemployment: 1_000 }],
+    f1099g: [{
+      box_1_unemployment: 1_000,
+      recipient_tin: BASE_IDENTITY.taxpayer_ssn,
+      payer_name: "Illinois Department of Employment Security",
+      payer_tin: "123456789",
+      source_document_reference: "Synthetic 2025 Form 1099-G",
+    }],
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
@@ -253,7 +261,20 @@ Deno.test({
       taxpayer_dob: "1950-06-15",
       taxpayer_blind: true,
     },
-    w2: [w2Item(180_000, 20_000)],
+    w2: [w2Item(75_000, 10_000)],
+    schedule1a: {
+      senior_zero_exclusions_review: {
+        no_section933_puerto_rico_excluded_income: true,
+        section933_review_source_reference:
+          "Synthetic 2025 residency and income review",
+        no_form2555_filed: true,
+        form2555_review_source_reference:
+          "Synthetic 2025 foreign-income review",
+        no_form4563_filed: true,
+        form4563_review_source_reference:
+          "Synthetic 2025 Samoa-source income review",
+      },
+    },
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
@@ -265,8 +286,7 @@ Deno.test({
 });
 
 Deno.test({
-  name:
-    "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
+  name: "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
 }, () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
@@ -279,6 +299,7 @@ Deno.test({
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.Single,
+      digital_assets: false,
     },
     schedule_h: {
       employer_ein: facts.scheduleH.employerEin,
@@ -315,6 +336,7 @@ Deno.test({
       digital_assets: facts.taxpayer.digitalAssets,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -334,7 +356,7 @@ Deno.test({
     result.diagnostics.filter((entry) => entry.severity === "error"),
     [],
   );
-  const xml = buildXmlSlice(result, ["f1040", "w2"]);
+  const xml = buildXmlSlice(result, ["general", "f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
@@ -380,6 +402,7 @@ Deno.test({
           ? IRSDependentRelationshipCode.Son
           : IRSDependentRelationshipCode.Daughter,
         months_in_home: dependent.monthsInHome,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -388,6 +411,7 @@ Deno.test({
       })),
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -409,7 +433,7 @@ Deno.test({
     result.diagnostics[0].message,
     "needs complete Credit Limit Worksheet A and B answers",
   );
-  const xml = buildXmlSlice(result, ["f1040", "w2"]);
+  const xml = buildXmlSlice(result, ["general", "f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
   assertEquals(
     (xml.match(/<DependentDetail>/g) ?? []).length,
@@ -496,11 +520,18 @@ Deno.test({
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.MFJ,
+      digital_assets: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: facts.w2.map((form) => ({
       employee_ssn: form.employeeSsn,
+      source_document_reference: form.statutoryEmployee
+        ? "ATS02-STATUTORY-W2"
+        : undefined,
+      schedule_c_business_reference: form.statutoryEmployee
+        ? "ATS02-STATUTORY-C"
+        : undefined,
       box1_wages: form.box1Wages,
       box2_fed_withheld: form.box2FederalWithholding,
       box3_ss_wages: form.box3SocialSecurityWages,
@@ -620,6 +651,7 @@ Deno.test({
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -722,6 +754,7 @@ Deno.test({
       digital_assets: facts.taxpayer.digitalAssets,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -751,7 +784,35 @@ Deno.test({
   name: "XSD: ATS 1040 Scenario 8 1099-R statements conform to Return1040.xsd",
   ignore: !xsdAvailable,
 }, async () => {
-  const result = runReturn(scenario104008Input());
+  const input = scenario104008Input();
+  input.f1099r = (input.f1099r as Record<string, unknown>[]).map((form) => ({
+    ...form,
+    recipient_ssn: (input.general as Record<string, unknown>).taxpayer_ssn,
+  }));
+  // This schema fixture supplies synthetic statement metadata for the
+  // amount-only SSA benefit in the calculation scenario.
+  input.ssa1099 = (input.ssa1099 as Record<string, unknown>[]).map((form) => ({
+    ...form,
+    recipient_tin: (input.general as Record<string, unknown>).taxpayer_ssn,
+    source_document_reference: "synthetic-ats-104008-ssa1099",
+  }));
+  input.f1099div = (input.f1099div as Record<string, unknown>[]).map((
+    form,
+  ) => ({
+    ...form,
+    recipient_tin: (input.general as Record<string, unknown>).taxpayer_ssn,
+  }));
+  input.schedule1a = {
+    senior_zero_exclusions_review: {
+      no_section933_puerto_rico_excluded_income: true,
+      section933_review_source_reference: "Synthetic ATS residency review",
+      no_form2555_filed: true,
+      form2555_review_source_reference: "Synthetic ATS foreign-income review",
+      no_form4563_filed: true,
+      form4563_review_source_reference: "Synthetic ATS Samoa-source review",
+    },
+  };
+  const result = runReturn(input);
   assertEquals(
     result.diagnostics.filter((entry) => entry.severity === "error"),
     [],
@@ -759,6 +820,11 @@ Deno.test({
   const xml = buildXml(result);
   assertEquals((xml.match(/<IRS1099R documentId=/g) ?? []).length, 2);
   assertEquals(xml.includes("<IRS1040ScheduleD"), false);
+  assertEquals(
+    xml.includes("<IRADistributionsAmt>35800</IRADistributionsAmt>"),
+    true,
+  );
+  assertEquals(xml.includes("<TaxableIRAAmt>0</TaxableIRAAmt>"), true);
   assertEquals(xml.includes("<SocSecBnftAmt>1000</SocSecBnftAmt>"), true);
   assertEquals(xml.includes("<TaxableSocSecAmt>"), false);
   assertEquals(
@@ -858,6 +924,9 @@ Deno.test({
     w2: [w2Item(100_000, 18_000)],
     f1099int: [{
       payer_name: "Muni Bond Fund",
+      payer_tin: "123456789",
+      recipient_tin: BASE_IDENTITY.taxpayer_ssn,
+      source_document_reference: "Synthetic 2025 Form 1099-INT",
       box8: 100_000,
       box9: 100_000,
     }],
@@ -884,6 +953,7 @@ Deno.test({
           relationship: DependentRelationship.Son,
           irs_relationship_code: IRSDependentRelationshipCode.Son,
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -901,6 +971,7 @@ Deno.test({
           relationship: DependentRelationship.Daughter,
           irs_relationship_code: IRSDependentRelationshipCode.Daughter,
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,

@@ -280,6 +280,15 @@ Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse 
     () =>
       scheduleCPdf.instances!(projected, {
         ...filer,
+        spouse: { ...filer.spouse, firstName: "Jules" },
+      }),
+    Error,
+    "proprietor name differs from filer",
+  );
+  assertThrows(
+    () =>
+      scheduleCPdf.instances!(projected, {
+        ...filer,
         spouse: { ...filer.spouse, ssn: "999887777" },
       }),
     Error,
@@ -300,6 +309,29 @@ Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse 
   );
 });
 
+Deno.test("Schedule C PDF proprietor name matches the native filer on a single return", () => {
+  const filer = {
+    ...testFiler(),
+    primarySSN: "400001107",
+    fullName: "Pat Example",
+    nameLine1: "PAT EXAMPLE",
+  };
+  const projected = scheduleCPdf.projectFields!({
+    schedule_cs: [business()],
+  }, pending);
+  assertEquals(scheduleCPdf.instances!(projected, filer).length, 1);
+  const changedGeneral = scheduleCPdf.projectFields!({
+    schedule_cs: [business()],
+  }, {
+    general: { ...pending.general, taxpayer_first_name: "Other" },
+  });
+  assertThrows(
+    () => scheduleCPdf.instances!(changedGeneral, filer),
+    Error,
+    "proprietor name differs from filer",
+  );
+});
+
 Deno.test("2025 Schedule C PDF places home-office Form 8829 deduction on the linked business", () => {
   const [result] = copies({
     schedule_cs: [business()],
@@ -314,6 +346,48 @@ Deno.test("2025 Schedule C PDF places home-office Form 8829 deduction on the lin
   assertEquals(result.line29, 100_000);
   assertEquals(result.line30, 3_000);
   assertEquals(result.line31, 97_000);
+});
+
+Deno.test("2025 Schedule C PDF prints both simplified home-office areas and line 30", () => {
+  const [result] = copies({
+    schedule_cs: [business({
+      home_office_method: "simplified",
+      home_total_sq_ft: 1_200,
+      home_office_sq_ft: 200,
+    })],
+  });
+  assertEquals(result.line30_total_home_sq_ft, 1_200);
+  assertEquals(result.line30_business_use_sq_ft, 200);
+  assertEquals(result.line30, 1_000);
+  assertEquals(result.line31, 99_000);
+  const field = (key: string) =>
+    scheduleCPdf.fields.find((entry) => entry.domainKey === key);
+  assertEquals(
+    field("line30_total_home_sq_ft")?.pdfField,
+    "topmostSubform[0].Page1[0].Line30_ReadOrder[0].f1_43[0]",
+  );
+  assertEquals(
+    field("line30_business_use_sq_ft")?.pdfField,
+    "topmostSubform[0].Page1[0].Line30_ReadOrder[0].f1_44[0]",
+  );
+  for (
+    const areas of [
+      { home_office_sq_ft: 200 },
+      { home_total_sq_ft: 150, home_office_sq_ft: 200 },
+      { home_total_sq_ft: 1_200, home_office_sq_ft: 200.5 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        copies({
+          schedule_cs: [
+            business({ home_office_method: "simplified", ...areas }),
+          ],
+        }),
+      Error,
+      "consistent total and business square footage",
+    );
+  }
 });
 
 Deno.test("2025 Schedule C PDF maps required business and vehicle boxes to printed fields", () => {
@@ -363,7 +437,6 @@ Deno.test("2025 Schedule C PDF refuses source details that cannot be printed fai
     business({ line_34_inventory_change: true }),
     business({ line_27b_other_expenses: 100 }),
     business({ part_v_other_expenses: [{ description: "", amount: 100 }] }),
-    business({ home_office_method: "simplified", home_office_sq_ft: 200 }),
     business({ line_9_car_truck_expenses: 100 }),
   ];
   for (const item of unsupported) {

@@ -1,55 +1,160 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8941 } from "./index.ts";
+import { calculateForm8941, f8941 } from "./index.ts";
+import { form8941DirectFixture } from "./fixture.ts";
+import { f3800 } from "../f3800/index.ts";
 
-function compute(input: Parameters<typeof f8941.compute>[1]) {
-  return f8941.compute({ taxYear: 2025, formType: "f1040" }, input);
-}
+Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {
+  const lines = calculateForm8941(form8941DirectFixture());
+  assertEquals(lines.line1, 5);
+  assertEquals(lines.line2, 5);
+  assertEquals(lines.line3, 20_000);
+  assertEquals(lines.line4, 25_000);
+  assertEquals(lines.line5, 23_395);
+  assertEquals(lines.line6, 23_395);
+  assertEquals(lines.line7, 11_698);
+  assertEquals(lines.line12, 11_698);
+  assertEquals(lines.line13, 5);
+  assertEquals(lines.line14, 5);
+  assertEquals(lines.line16, 11_698);
+});
 
-const base = {
-  fte_count: 5,
-  average_annual_wages: 20_000,
-  premiums_paid: 50_000,
-};
-
-Deno.test("Form 8941 rejects a direct credit even when SHOP is affirmed", () => {
-  assertThrows(
-    () => compute({ ...base, shop_enrollment: true }),
-    Error,
-    "TY2025 Form 8941 credit needs verified SHOP and credit-period facts",
+Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
+  const source = form8941DirectFixture();
+  source.employees = Array.from({ length: 11 }, (_, index) => ({
+    ...source.employees[0],
+    employee_reference: `EMP-${index + 1}`,
+    enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+    social_security_medicare_wages: 34_000,
+  }));
+  source.shop_review.employee_premium_reviews = Array.from(
+    { length: 11 },
+    (_, index) => ({
+      ...source.shop_review.employee_premium_reviews[0],
+      employee_reference: `EMP-${index + 1}`,
+      enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+      monthly_premiums: source.shop_review.employee_premium_reviews[0]
+        .monthly_premiums.map((month) => ({
+          ...month,
+          shop_invoice_reference: `SHOP-INV-${index + 1}-${month.month}`,
+          employer_payment_reference: `SHOP-PAID-${index + 1}-${month.month}`,
+        })),
+    }),
   );
+  const lines = calculateForm8941(source);
+  assertEquals(lines.line2, 11);
+  assertEquals(lines.line3, 34_000);
+  if (!(lines.line9 < lines.line8 && lines.line8 < lines.line7)) {
+    throw new Error("Expected both Form 8941 reductions");
+  }
 });
 
-Deno.test("Form 8941 rejects missing or false SHOP rather than treating either as eligibility", () => {
-  assertThrows(() => compute(base), Error);
-  assertThrows(() => compute({ ...base, shop_enrollment: false }), Error);
-});
-
-Deno.test("Form 8941 does not turn $56,000 wages into an obsolete 2025 disqualification", () => {
+Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history and old override shape", () => {
+  const premium = form8941DirectFixture();
+  premium.employees[0].employer_premium_paid = 6000;
   assertThrows(
-    () => compute({ ...base, average_annual_wages: 56_000 }),
+    () => calculateForm8941(premium),
     Error,
-    "TY2025 Form 8941 credit needs verified SHOP and credit-period facts",
+    "monthly premiums differ from worksheet inputs",
   );
-});
-
-Deno.test("Form 8941 tax-exempt premium claim also cannot use Schedule 3 route", () => {
-  assertThrows(() => compute({ ...base, is_tax_exempt: true }), Error);
-});
-
-Deno.test("Form 8941 zero premiums make no claim; negative or unmodeled facts reject", () => {
-  assertEquals(compute({ ...base, premiums_paid: 0 }).outputs, []);
+  const rating = form8941DirectFixture();
+  rating.employees[0].irs_2025_rating_area_average_premium = 10_000;
+  assertThrows(
+    () => calculateForm8941(rating),
+    Error,
+    "employee rating area differs",
+  );
+  const incomplete = { ...form8941DirectFixture() };
+  delete (incomplete as Partial<typeof incomplete>)
+    .all_nonexcluded_employees_enrolled_verified;
+  assertEquals(f8941.inputSchema.safeParse(incomplete).success, false);
+  const history = {
+    ...form8941DirectFixture(),
+    credit_period_first_year: 2024 as const,
+  };
+  assertThrows(
+    () => calculateForm8941(history),
+    Error,
+    "credit-period history",
+  );
   assertEquals(
-    f8941.inputSchema.safeParse({ ...base, premiums_paid: -1 }).success,
+    f8941.inputSchema.safeParse({
+      fte_count: 5,
+      average_annual_wages: 20_000,
+      premiums_paid: 25_000,
+    }).success,
     false,
   );
+});
+
+Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premiums", () => {
+  const table = form8941DirectFixture();
+  table.shop_review.irs_table_employee_only_average_premium = 10_000;
+  assertThrows(() => calculateForm8941(table), Error, "not authenticated");
+
+  const area = form8941DirectFixture();
+  area.shop_review.irs_table_county = "Albany County";
+  assertThrows(() => calculateForm8941(area), Error, "not authenticated");
+
+  const omitted = form8941DirectFixture();
+  omitted.shop_review.employee_premium_reviews.pop();
   assertThrows(
-    () =>
-      compute(
-        { ...base, form3800_credit: 12_000 } as Parameters<
-          typeof f8941.compute
-        >[1],
-      ),
+    () => calculateForm8941(omitted),
     Error,
-    "Unrecognized key",
+    "employee set is incomplete",
+  );
+
+  const month = form8941DirectFixture();
+  month.shop_review.employee_premium_reviews[0].monthly_premiums[11].month = 11;
+  assertThrows(() => calculateForm8941(month), Error, "month is duplicated");
+
+  const payment = form8941DirectFixture();
+  payment.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .employer_payment = 418;
+  assertThrows(
+    () => calculateForm8941(payment),
+    Error,
+    "monthly employer contribution",
+  );
+
+  const reused = form8941DirectFixture();
+  reused.shop_review.employee_premium_reviews[1].monthly_premiums[0]
+    .shop_invoice_reference =
+      reused.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+        .shop_invoice_reference;
+  assertThrows(
+    () => calculateForm8941(reused),
+    Error,
+    "invoice or payment is reused",
+  );
+
+  const total = form8941DirectFixture();
+  total.employees[0].full_year_employee_only_shop_premium = 9998;
+  assertThrows(
+    () => calculateForm8941(total),
+    Error,
+    "monthly premiums differ",
+  );
+});
+
+Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
+  const result = f8941.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8941DirectFixture(),
+  );
+  assertEquals(result.outputs[0].fields.f8941_direct_employer_credit, {
+    credit_amount: 11_698,
+    schedule_c_business_reference: "SHOP-BUSINESS-1",
+    shop_plan_reference: "SHOP-PLAN-1",
+    subject_to_passive_activity_limit: false,
+  });
+  const generalBusiness = f3800.compute(
+    { taxYear: 2025, formType: "f1040" },
+    f3800.inputSchema.parse(result.outputs[0].fields),
+  );
+  assertEquals(
+    (generalBusiness.outputs[0].fields.form3800_source_credits as {
+      specifiedCredit: number;
+    }).specifiedCredit,
+    11_698,
   );
 });

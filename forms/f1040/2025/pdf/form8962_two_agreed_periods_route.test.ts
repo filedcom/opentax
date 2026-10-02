@@ -142,7 +142,7 @@ Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV,
         },
       }, { filer: fixture.filer, attachments: [] }),
     Error,
-    "differs from finalized return",
+    "Schedule 3 line 15 must equal lines 9 through 14",
   );
 });
 

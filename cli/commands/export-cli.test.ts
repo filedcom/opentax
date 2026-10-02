@@ -98,6 +98,7 @@ Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without f
       address_zip: "62701",
     };
     const w2 = {
+      employee_ssn: "111-22-3333",
       employer_ein: "12-3456789",
       employer_name: "ACME CORP",
       employer_address_line1: "500 Market St",

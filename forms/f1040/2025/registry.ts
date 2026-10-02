@@ -67,6 +67,7 @@ import { f8941 } from "../nodes/inputs/f8941/index.ts";
 import { f8834 } from "../nodes/inputs/f8834/index.ts";
 import { f8874 } from "../nodes/inputs/f8874/index.ts";
 import { f8874_recapture } from "../nodes/inputs/f8874/recapture_node.ts";
+import { f453a_interest } from "../nodes/inputs/f453a_interest/index.ts";
 import { f8911 } from "../nodes/inputs/f8911/index.ts";
 import { f8826 } from "../nodes/inputs/f8826/index.ts";
 import { f4136 } from "../nodes/inputs/f4136/index.ts";
@@ -141,6 +142,7 @@ import { f59e } from "../nodes/inputs/f59e/index.ts";
 import { f1040es } from "../nodes/inputs/f1040es/index.ts";
 import { f4970 } from "../nodes/inputs/f4970/index.ts";
 import { f8697 } from "../nodes/inputs/f8697/index.ts";
+import { f8858 } from "../nodes/inputs/f8858/index.ts";
 import { f8866 } from "../nodes/inputs/f8866/index.ts";
 import { f1098e } from "../nodes/inputs/f1098e/index.ts";
 import { educator_expenses } from "../nodes/inputs/educator_expenses/index.ts";
@@ -292,6 +294,7 @@ export const registry: NodeRegistry = {
   f8834,
   f8874,
   f8874_recapture,
+  f453a_interest,
   f8911,
   f8826,
   f4136,
@@ -366,6 +369,7 @@ export const registry: NodeRegistry = {
   f1040es,
   f4970,
   f8697,
+  f8858,
   f8866,
   f1098e,
   educator_expenses,

@@ -9,9 +9,10 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { inputSchema as form2106InputSchema } from "../nodes/inputs/f2106/index.ts";
 import type { PdfFieldEntry } from "./pdf/form-descriptor.ts";
 import { z } from "zod";
+import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
 
-// Staged only. Neither export registry includes this projection while source
-// provenance and finalized-return contribution joins are unavailable.
+// Shared canonical projection. Registered exporters currently admit only the
+// narrow fee-basis route guarded by reconcileFileableForm2106Return.
 export function prepareForm2106(raw: unknown) {
   const source = itemSchema.parse(raw);
   const lines = calculateForm2106Lines(source);
@@ -49,10 +50,25 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
+/** The one-job filing route with no vehicle, meal, travel, or reimbursement. */
+export function isSupportedForm2106Route(raw: unknown): boolean {
+  const parsed = form2106InputSchema.safeParse(raw);
+  if (!parsed.success || parsed.data.f2106s.length !== 1) return false;
+  const item = parsed.data.f2106s[0];
+  return item.job.owner === "taxpayer" &&
+    item.qualification.kind === EmployeeType.FEE_BASIS_OFFICIAL &&
+    item.vehicle.method === "NONE" &&
+    item.expenses.line2_parking_tolls_local_transportation === 0 &&
+    item.expenses.line3_overnight_travel_excluding_meals === 0 &&
+    item.expenses.line4_other_business_expenses > 0 &&
+    item.expenses.line5_meals === 0 &&
+    item.reimbursements.line7_column_a_nonmeals === 0 &&
+    item.reimbursements.line7_column_b_meals === 0;
+}
+
 /**
- * Strict pending-only join, staged for use by both exporters once reviewed
- * source bytes and every filing branch are supported. This is not a source
- * authenticity check and does not lift the attachment guard.
+ * Strict pending-only join for calculated jobs. This is not a source
+ * authenticity check; the registered route adds W-2 and filing-shape guards.
  */
 export function reconcileStagedForm2106Return(
   allPending: Readonly<Record<string, unknown>>,
@@ -141,6 +157,45 @@ export function reconcileStagedForm2106Return(
   return { jobs, schedule1Total, scheduleATotal } as const;
 }
 
+/** Native/PDF filing guard for the supported fee-basis route. */
+export function reconcileFileableForm2106Return(
+  allPending: Readonly<Record<string, unknown>>,
+) {
+  if (!isSupportedForm2106Route(allPending.f2106)) {
+    throw new Error(
+      "Form 2106 filing needs one sourced taxpayer fee-basis line-4 expense job",
+    );
+  }
+  const result = reconcileStagedForm2106Return(allPending);
+  const form1040 = pendingRecordSchema.parse(allPending.f1040);
+  const w2 = w2InputSchema.parse(allPending.w2);
+  const job = result.jobs[0]!.source.job;
+  const employer = w2.w2s.filter((item) =>
+    item.employee_ssn?.replaceAll("-", "") ===
+      job.employee_ssn.replaceAll("-", "") &&
+    item.employer_ein?.replaceAll("-", "") ===
+      job.employer_ein.replaceAll("-", "") &&
+    normalizedName(item.employer_name ?? "") ===
+      normalizedName(job.employer_name)
+  );
+  const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
+  if (
+    w2.w2s.length !== 1 || employer.length !== 1 ||
+    employer[0].box1_wages <= 0 ||
+    form1040.line1a_wages !== wages ||
+    form1040.line1z_total_wages !== wages ||
+    (form1040.line8_additional_income ?? 0) !== 0 ||
+    form1040.line9_total_income !== wages ||
+    typeof form1040.line10_adjustments !== "number" ||
+    form1040.line11_agi !== wages - form1040.line10_adjustments
+  ) {
+    throw new Error(
+      "Form 2106 fee-basis job must match one employer W-2 and final Form 1040 wages and AGI",
+    );
+  }
+  return result;
+}
+
 function vehicleXml(
   vehicle: NonNullable<Form2106Lines["vehicle_part_ii"]>,
 ): string[] {
@@ -181,7 +236,7 @@ function vehicleXml(
   ];
 }
 
-/** One document per sourced job; not called by the MeF registry yet. */
+/** One document per sourced job after the registered route's filing guard. */
 export function buildStagedIRS2106(raw: unknown): string {
   const { source, lines } = prepareForm2106(raw);
   return elements("IRS2106", [
@@ -228,7 +283,7 @@ const yesNo = (domainKey: string, row: number): PdfFieldEntry[] => [
   },
 ];
 
-/** Verified against the official TY2025 two-page AcroForm; unregistered. */
+/** Statically mapped against the official TY2025 two-page AcroForm. */
 export const stagedForm2106PdfFields: readonly PdfFieldEntry[] = [
   text("employee_name", `${page1}.f1_01[0]`),
   text("occupation", `${page1}.f1_02[0]`),
@@ -280,7 +335,7 @@ export const stagedForm2106PdfFields: readonly PdfFieldEntry[] = [
   text("line22_standard_mileage_deduction", `${page2}.f2_19[0]`),
 ];
 
-/** Canonical PDF values from the same line calculation; unregistered. */
+/** Canonical PDF values from the same line calculation. */
 export function projectStagedForm2106Pdf(
   raw: unknown,
 ): Record<string, unknown> {

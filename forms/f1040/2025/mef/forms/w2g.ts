@@ -28,7 +28,7 @@ function assertRecipient(
   item: W2GItem,
   filer: FilerIdentity | undefined,
 ): void {
-  if (!filer) throw new Error("W-2G withholding needs filer identity");
+  if (!filer) throw new Error("W-2G winnings need filer identity");
   const winner = item.winner_name;
   const address = item.winner_us_address;
   const filerAddress = filer.address;
@@ -60,8 +60,20 @@ function assertRecipient(
     address.state !== filerAddress.state || address.zip !== filerAddress.zip
   ) {
     throw new Error(
-      "W-2G withholding needs a payer-issued winner name, SSN, and address matching the taxpayer or joint-filing spouse",
+      "W-2G winnings or withholding needs a payer-issued winner name, SSN, and address matching the taxpayer or joint-filing spouse",
     );
+  }
+}
+
+/** Source every positive W-2G amount to the return's taxpayer or joint spouse. */
+export function assertPositiveW2GRecipient(
+  source: unknown,
+  filer: FilerIdentity | undefined,
+): void {
+  if (source === undefined) return;
+  const parsed = inputSchema.parse(source);
+  for (const item of parsed.w2gs) {
+    if ((item.box1_winnings ?? 0) > 0) assertRecipient(item, filer);
   }
 }
 

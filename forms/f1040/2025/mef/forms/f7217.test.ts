@@ -8,6 +8,7 @@ import {
   section731Form8949Transaction,
 } from "../../../nodes/inputs/f7217/index.ts";
 import { form7217Pdf } from "../../pdf/forms/f7217.ts";
+import { form7217NonliquidatingDecrease } from "../../form7217_732c_decrease.fixture.ts";
 
 const source = SCENARIO_1040_12_FACTS.form7217;
 const filer: FilerIdentity = {
@@ -160,6 +161,43 @@ Deno.test("Form 7217 native and PDF preserve section 732(c) liquidating property
     Error,
     "property basis conflicts with section 732(c)",
   );
+});
+
+Deno.test("Form 7217 nonliquidating basis decrease reaches native and PDF with exact property bases", () => {
+  const source = form7217NonliquidatingDecrease;
+  const [xml] = form7217.build({ form7217s: [source] }, { filer });
+  assertStringIncludes(
+    xml,
+    "<TotPrtnrBssAllocDistriPropAmt>400</TotPrtnrBssAllocDistriPropAmt>",
+  );
+  assertEquals(
+    xml.match(/<PrtnrBssPropAftrSect732Amt>\d+<\/PrtnrBssPropAftrSect732Amt>/g),
+    [
+      "<PrtnrBssPropAftrSect732Amt>100</PrtnrBssPropAftrSect732Amt>",
+      "<PrtnrBssPropAftrSect732Amt>150</PrtnrBssPropAftrSect732Amt>",
+      "<PrtnrBssPropAftrSect732Amt>150</PrtnrBssPropAftrSect732Amt>",
+    ],
+  );
+  const [pdf] = form7217Pdf.instances({ form7217s: [source] }, filer);
+  assertEquals(pdf?.line10, 400);
+  assertEquals(pdf?.row1_partner_basis, 100);
+  assertEquals(pdf?.row2_partner_basis, 150);
+  assertEquals(pdf?.row3_partner_basis, 150);
+  const tampered = {
+    ...source,
+    distributed_properties: source.distributed_properties.map((
+      property,
+      index,
+    ) =>
+      index === 1
+        ? { ...property, partner_basis_after_section_732: 149 }
+        : index === 2
+        ? { ...property, partner_basis_after_section_732: 151 }
+        : property
+    ),
+  };
+  assertThrows(() => form7217.build({ form7217s: [tampered] }, { filer }));
+  assertThrows(() => form7217Pdf.instances({ form7217s: [tampered] }, filer));
 });
 
 Deno.test("Form 7217 section 731 cash gain matches the filed Form 8949 row in MeF and PDF", () => {

@@ -7,12 +7,21 @@
  * xmllint accepts with exit code 0.
  */
 
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { withSyntheticForm1098Copy } from "../pdf/review-1098-copy.fixture.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "./builder.ts";
+import { buildPdfBytes } from "../pdf/builder.ts";
+import { f1040_2025 } from "../index.ts";
+import { normalizeAllPending } from "../pending.ts";
 import { buildPending } from "./pending.ts";
 import { w2gPdf } from "../pdf/forms/w2g.ts";
 import type { MefFormsPending } from "./types.ts";
@@ -26,6 +35,11 @@ import {
 } from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
+import { irs1040Pdf } from "../pdf/forms/f1040.ts";
+import { schedule3Pdf } from "../pdf/forms/schedule3.ts";
+import { scheduleDPdf } from "../pdf/forms/schedule_d.ts";
+import { scheduleEPdf } from "../pdf/forms/schedule_e.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/f8874/recapture_fixture.ts";
 import {
   calculateForm8396,
   CertifiedInterestDocumentKind,
@@ -35,7 +49,9 @@ import {
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
+import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+import { twoObligation453aFixture } from "../../nodes/inputs/f453a_interest/fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
 import {
@@ -82,6 +98,98 @@ const nonApplicableBelowFpl = {
   no_alternative_marriage_calculation: true,
 } as const;
 
+Deno.test({
+  name: "XSD/PDF: digital Form 8949 disposition requires Form 1040 Yes",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    digital_assets: true,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({
+    general,
+    f8949: [{
+      part: "G",
+      description: "Digital asset",
+      source_transaction_id: "2025 exchange sale 1",
+      date_acquired: "2025-01-10",
+      date_sold: "2025-05-10",
+      proceeds: 500,
+      cost_basis: 200,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+  );
+  await validateXsd(xml, "TY2025 digital asset disposition and Form 1040 Yes");
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+
+  const conflicting = {
+    ...pending,
+    general: { ...general, digital_assets: false },
+    f1040: { ...pending.f1040, digital_assets: false },
+  };
+  assertThrows(
+    () => buildMefXml(conflicting, filer),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+  await assertRejects(
+    () => buildPdfBytes(conflicting, filer),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+});
+
+Deno.test({
+  name:
+    "XSD/PDF: reviewed digital-assets No projects from retained general answer",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    digital_assets: false,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({ general });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+  );
+  await validateXsd(xml, "TY2025 reviewed digital-assets No");
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 2);
+});
+
 function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {
   return premiums.flatMap((premium, index) =>
     premium > 0
@@ -118,24 +226,135 @@ function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
 }
 
 Deno.test({
-  name: "XSD: TY2025 Schedule 2 tax lines retain schema order",
+  name: "XSD: Form 1040 line 12a MFJ spouse dependent with refund-only source",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    taxpayer_blind: false,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Example",
+    spouse_ssn: "444-55-6666",
+    spouse_dob: "1987-03-10",
+    spouse_blind: false,
+    spouse_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 800,
+    mfj_dependent_refund_only_review: {
+      review_reference: "2025 joint refund-only review",
+      joint_return_only_for_withholding_or_estimated_refund_verified: true,
+    },
+    digital_assets: false,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({
+    general,
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "Summer Employer",
+      employer_address_line1: "10 Employer Road",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: general.spouse_ssn,
+      box1_wages: 800,
+      box2_fed_withheld: 100,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    normalizeAllPending(result.pending) as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<SpouseClaimAsDependentInd>X</SpouseClaimAsDependentInd>",
+  );
+  await validateXsd(xml, "TY2025 Form 1040 line 12a MFJ spouse dependent");
+});
+
+Deno.test("TY2025 Schedule 2 rejects bare mortgage-credit recapture", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { line23_other_taxes: 1_000 },
+        schedule2: {
+          line17b_mortgage_subsidy_recapture: 1_000,
+        },
+      }, extractFilerIdentity(singleGeneral())),
+    Error,
+    "Schedule 2 line 17b differs from retained Form 8828 tax",
+  );
+});
+
+Deno.test({
+  name:
+    "XSD: section 453A obligation workpaper reaches Schedule 2 line 15 and Form 1040 line 23",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: 1_400 },
-    schedule2: {
-      uncollected_fica: 100,
-      line17b_mortgage_subsidy_recapture: 1_000,
-      line17c_hsa_penalty: 300,
-    },
+    f1040: { line23_other_taxes: 11_317 },
+    schedule2: { line15_section453a_interest: 11_317 },
+    f453a_interest: twoObligation453aFixture,
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(
     xml,
-    "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
+    "<IntDefrdTaxGainInstalSalesAmt>11317</IntDefrdTaxGainInstalSalesAmt>",
   );
-  await validateXsd(xml, "TY2025 Schedule 2 lines 17b and 17c");
+  assertEquals(xml.includes("<IntTaxDueInstalSaleIncmAmt>"), false);
+  assertStringIncludes(xml, "<TotalOtherTaxesAmt>11317</TotalOtherTaxesAmt>");
+  await validateXsd(xml, "TY2025 section 453A Schedule 2 line 15");
+});
+
+Deno.test({
+  name: "XSD: Form 1040 line 27c retained EIC opt-out",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    general: { ...singleGeneral(), do_not_claim_eic: true },
+    f1040: {
+      filing_status: FilingStatus.Single,
+      digital_assets: false,
+      do_not_claim_eic: true,
+      line27_eitc: 0,
+    },
+    eitc: { credit_amount: 0 },
+  } as MefFormsPending, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<DoNotClaimEICInd>X</DoNotClaimEICInd>");
+  await validateXsd(xml, "TY2025 Form 1040 line 27c EIC opt-out");
+});
+
+Deno.test({
+  name: "XSD: Form 1040 line 26 divorced spouse SSN on agreed joint payment",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const xml = buildMefXml({
+    general,
+    f1040es: agreedJointPayment,
+    f1040: {
+      filing_status: FilingStatus.Single,
+      digital_assets: false,
+      taxpayer_ssn: "111223333",
+      line26_estimated_tax: 300,
+    },
+  } as MefFormsPending, extractFilerIdentity(general));
+  assertStringIncludes(xml, 'divorcedSpouseSSN="222334444"');
+  await validateXsd(xml, "TY2025 Form 1040 agreed joint estimated payment");
 });
 
 Deno.test({
@@ -145,7 +364,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const source = {
-    recaptures: [{
+    recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
       investment_reference: "2022 QEI designation",
       cde_name: "Community Development Entity",
@@ -155,7 +374,7 @@ Deno.test({
       qualified_equity_investment_amount: 100_000,
       notice_credit_amount: 25_000,
       recapture_event_date: "2025-07-01",
-      recapture_event: "cde_redeemed_investment",
+      recapture_event: "cde_redeemed_investment" as const,
       prior_years: [{
         tax_year: 2024,
         original_return_due_date: "2025-04-15",
@@ -165,8 +384,8 @@ Deno.test({
       }],
       carryover_ledger_reference: "2024 QEI carryover ledger",
       carryover_vintages: [],
-    }],
-  } as const;
+    }, "Test Taxpayer")],
+  };
   const nmcr = calculateForm8874Recapture({
     recaptures: source.recaptures.map((recapture) => ({
       ...recapture,
@@ -175,7 +394,12 @@ Deno.test({
     })),
   });
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: nmcr },
+    f1040: {
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+      line23_other_taxes: nmcr,
+    },
     schedule2: { line17a_new_markets_credit_recapture: nmcr },
     f8874_recapture: source,
   } as MefFormsPending, extractFilerIdentity(singleGeneral()));
@@ -498,7 +722,11 @@ Deno.test({
       line20_nonrefundable_credits: 100,
       form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
     },
-    schedule3: { line6k_tax_credit_bonds: 100, line8_total: 100 },
+    schedule3: {
+      line6k_tax_credit_bonds: 100,
+      line7_total: 100,
+      line8_total: 100,
+    },
     form6251: { line11_amt: 0 },
     f8912: {
       f8912s: [{
@@ -595,14 +823,17 @@ Deno.test({
     },
   });
   const lines = calculateForm8396(source, 1_100);
+  const mortgage = await withSyntheticForm1098Copy("form8396-xsd", {
+    lender_name: "Test Home Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: "2025 Form 1098 loan A",
+    box1_mortgage_interest: 15_000,
+    box1_current_year_deductible_interest: 15_000,
+    box1_deduction_workpaper_reference: "2025 Pub. 936 loan A review",
+  });
   const xml = buildMefXml({
     f1098: {
-      f1098s: [{
-        source_document_reference: "2025 Form 1098 loan A",
-        box1_mortgage_interest: 15_000,
-        box1_current_year_deductible_interest: 15_000,
-        box1_deduction_workpaper_reference: "2025 Pub. 936 loan A review",
-      }],
+      f1098s: [mortgage],
     },
     f1040: {
       line12e_itemized_deductions: 13_000,
@@ -716,17 +947,14 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD: Form 4136 fuel credit links to refundable Schedule 3 line 12",
+  name: "XSD: Form 4136 cents reach rounded Schedule 3 and Form 1040 lines",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const xml = buildMefXml({
-    f1040: { line31_additional_payments: 43 },
-    schedule3: {
-      line12_fuel_tax_credit: 42.6,
-      line15_total: 42.6,
-    },
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
     f4136: {
       claimant_context: "business",
       additional_activities: [],
@@ -760,9 +988,49 @@ Deno.test({
         },
       ],
     },
-  }, extractFilerIdentity(singleGeneral()));
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule3?.line12_fuel_tax_credit, 42.6);
+  assertEquals(pending.schedule3?.line15_total, 42.6);
+  assertEquals(pending.f1040?.line31_additional_payments, 42.6);
+  assertEquals(
+    schedule3Pdf.projectFields?.(pending.schedule3!, result.pending)
+      ?.line15_total,
+    42.6,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(pending.f1040!, result.pending)
+      ?.line31_additional_payments,
+    42.6,
+  );
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
   assertStringIncludes(xml, "<IRS4136 ");
   assertStringIncludes(xml, 'referenceDocumentName="IRS4136"');
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>43</TotalFuelTaxCreditAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOtherPaymentsRfdblCrAmt>43</TotalOtherPaymentsRfdblCrAmt>",
+  );
+  assertEquals(
+    (xml.match(
+      /<TotalOtherPaymentsRfdblCrAmt>43<\/TotalOtherPaymentsRfdblCrAmt>/g,
+    ) ?? []).length,
+    2,
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.({
+        ...pending.schedule3,
+        line12_fuel_tax_credit: 42.5,
+        line15_total: 42.5,
+      }, result.pending),
+    Error,
+    "line 12 differs from sourced Form 4136 claims",
+  );
   await validateXsd(xml, "Form 4136 Schedule 3 line 12");
 });
 
@@ -2067,6 +2335,7 @@ Deno.test({
       },
       f8826: sourcedForm8826Interpreter(450, 100),
       schedule_c: sourcedForm8826ScheduleC(350),
+      schedule1: { line3_schedule_c: 99_650 },
       f3800: {
         passive_source_allocations: [{
           ...source,
@@ -2146,6 +2415,7 @@ Deno.test({
       },
       f8826: sourcedForm8826Interpreter(450, 100),
       schedule_c: sourcedForm8826ScheduleC(350),
+      schedule1: { line3_schedule_c: 99_650 },
       f3800: {
         passive_source_allocations: [{
           ...source,
@@ -3034,6 +3304,7 @@ Deno.test({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 2_400 },
     schedule3: { line6a_total: 2_400, line7_total: 2_400, line8_total: 2_400 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule1: { line3_schedule_c: 26_400 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -3147,6 +3418,7 @@ Deno.test({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 1_950 },
     schedule3: { line6a_total: 1_950, line7_total: 1_950, line8_total: 1_950 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule1: { line3_schedule_c: 25_950 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -3284,6 +3556,7 @@ Deno.test({
     f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 1_000 },
     schedule3: { line6a_total: 1_000, line7_total: 1_000, line8_total: 1_000 },
     form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
+    schedule1: { line3_schedule_c: 26_400 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -3371,6 +3644,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line17_additional_taxes: 6_200 },
     schedule2: {
       line1a_excess_advance_premium: 1_200,
       line2_amt: 5_000,
@@ -3596,7 +3870,7 @@ Deno.test({
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
-    "below-100% APTC-only filing differs",
+    "Form 1040 line 17 differs from its attached Schedule",
   );
   await validateXsd(xml, "below-100%-FPL APTC-only annual repayment");
 });
@@ -3840,7 +4114,7 @@ Deno.test({
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
-    "differs from finalized return",
+    "Form 1040 line 17 differs from its attached Schedule",
   );
   await validateXsd(xml, "shared MFS APTC-only allocation");
 });
@@ -4358,7 +4632,7 @@ Deno.test({
   };
   const result = runReturn({
     general,
-    w2: [w2Item(30_120, 3_000)],
+    w2: [{ ...w2Item(30_120, 3_000), employee_ssn: general.taxpayer_ssn }],
     f1095a: [
       {
         issuer_name: "First Marketplace Plan",
@@ -4439,7 +4713,11 @@ Deno.test({
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
-    f1099int: [{ payer_name: "Municipal Bond", box8: 5_000 }],
+    f1099int: [{
+      payer_name: "Municipal Bond",
+      recipient_tin: "111223333",
+      box8: 5_000,
+    }],
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "POLICY-TAX-EXEMPT",
@@ -4475,7 +4753,11 @@ Deno.test({
       buildMefXml({
         ...result.pending,
         f1099int: {
-          f1099ints: [{ payer_name: "Municipal Bond", box8: 4_999 }],
+          f1099ints: [{
+            payer_name: "Municipal Bond",
+            recipient_tin: "111223333",
+            box8: 4_999,
+          }],
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
@@ -4594,7 +4876,25 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const general = { ...singleGeneral(), digital_assets: false };
+  const agi_aggregator = {
+    line1a_wages: 30_000,
+    line1c_unreported_tips: 3_000,
+  };
   const xml = buildMefXml({
+    general,
+    f1040: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: general.taxpayer_ssn,
+      digital_assets: false,
+      line1a_wages: 30_000,
+      line1c_unreported_tips: 3_000,
+      line1z_total_wages: 33_000,
+      line9_total_income: 33_000,
+      line23_other_taxes: 230,
+    },
+    agi_aggregator,
+    schedule2: { line5_unreported_tip_tax: 230 },
     w2: {
       w2s: [{
         employer_name: "CAFE",
@@ -4603,12 +4903,14 @@ Deno.test({
         employer_address_city: "Austin",
         employer_address_state: "TX",
         employer_address_zip: "78701",
+        employee_ssn: general.taxpayer_ssn,
         box1_wages: 30_000,
         box2_fed_withheld: 0,
         box3_ss_wages: 30_000,
       }],
     },
     form4137: {
+      taxpayer_ssn: general.taxpayer_ssn,
       forms: [{
         recipient: "taxpayer",
         employers: [{
@@ -4620,13 +4922,14 @@ Deno.test({
         ss_wages_from_w2: 30_000,
       }],
       w2_tip_sources: [{
+        employee_ssn: general.taxpayer_ssn,
         employer_name: "CAFE",
         employer_ein: "123456789",
         allocated_tips: 0,
         ss_wages_and_tips: 30_000,
       }],
     },
-  }, extractFilerIdentity(singleGeneral()));
+  }, extractFilerIdentity(general));
   assertStringIncludes(xml, "<UnreportedTipIncomePerEmployer>");
   await validateXsd(xml, "Form 4137 employer tips");
 });
@@ -4643,6 +4946,7 @@ Deno.test({
     w2: [{
       employer_name: "CAFE",
       employer_ein: "123456789",
+      employee_ssn: general.taxpayer_ssn,
       employer_address_line1: "100 Main St",
       employer_address_city: "Austin",
       employer_address_state: "TX",
@@ -4993,6 +5297,15 @@ Deno.test({
     spouse_ssn: "222-33-4444",
   };
   const xml = buildMefXml({
+    f1040: {
+      filing_status: "mfj",
+      line1a_wages: 206_100,
+      line1c_unreported_tips: 4_000,
+      line1z_total_wages: 210_100,
+      line23_other_taxes: 245,
+    },
+    agi_aggregator: { line1c_unreported_tips: 4_000 },
+    schedule2: { line5_unreported_tip_tax: 245 },
     w2: {
       w2s: [
         {
@@ -5086,11 +5399,13 @@ Deno.test({
         ccc_loan_details: [{ description: "RENTAL WHEAT LOAN", amount: 1_000 }],
       }],
     },
+    schedule1: { line6_schedule_f: 2_000 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "cash",
         line1_sales_livestock_resale: 0,
         line5a_ccc_loans_election: 2_000,
@@ -5140,12 +5455,14 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 27_500 },
     schedule_f: {
       schedule_fs: [
         {
           line_a_principal_crop_activity: "GRAIN FARMING",
           line_b_agricultural_activity_code: "111100",
           line_e_material_participation: true,
+          line_f_made_1099_payments: false,
           accounting_method: "cash",
           line1_sales_livestock_resale: 50_000,
           line1b_cost_livestock_resale: 30_000,
@@ -5160,6 +5477,7 @@ Deno.test({
           line_a_principal_crop_activity: "BEEF CATTLE",
           line_b_agricultural_activity_code: "112111",
           line_e_material_participation: true,
+          line_f_made_1099_payments: false,
           accounting_method: "cash",
           line1_sales_livestock_resale: 0,
           line2_sales_products_raised: 1_000,
@@ -5169,11 +5487,11 @@ Deno.test({
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(
     xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF1">',
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
   );
   assertStringIncludes(
     xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF3">',
   );
   await validateXsd(xml, "two Schedule F cash-method farms");
 });
@@ -5185,11 +5503,13 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 23_000 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "accrual",
         part_iii: {
           line37_sales_products: 20_000,
@@ -8147,6 +8467,95 @@ function runReturn(inputs: Record<string, unknown>) {
   return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }
 
+Deno.test({
+  name:
+    "XSD: partnership entity Schedule D source reaches individual Schedule D and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Capital Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 issued Capital Partnership K-1",
+      box8_net_st_cap_gain: 100,
+      box9a_net_lt_cap_gain: 200,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  assertEquals(pending.schedule_d?.line_5_k1_st, 100);
+  assertEquals(pending.schedule_d?.line_12_k1_lt, 200);
+  const projected = scheduleDPdf.projectFields?.(
+    pending.schedule_d as Record<string, unknown>,
+    result.pending,
+  );
+  assertEquals(projected?.line_5_k1_st, 100);
+  assertEquals(projected?.line_12_k1_lt, 200);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<NetSTGainOrLossFromSchK1Amt>100</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NetLTGainOrLossFromSchK1Amt>200</NetLTGainOrLossFromSchK1Amt>",
+  );
+  assertEquals(xml.includes("<IRS1065ScheduleD"), false);
+  await validateXsd(xml, "partnership K-1 individual Schedule D");
+
+  assertThrows(
+    () => buildMefXml({ ...pending, schedule_d: undefined }, filer),
+    Error,
+    "issued K-1 capital source",
+  );
+});
+
+Deno.test({
+  name: "XSD: partnership Form 8825 rental share reaches individual Schedule E",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Rental Partnership",
+      partnership_ein: "123456789",
+      source_document_reference:
+        "2025 issued Rental Partnership K-1 and activity statement",
+      box2_rental_re: 500,
+      eic_passive_activity_review: {
+        box2: "passive",
+        recipient_tin: "111223333",
+        partnership_not_publicly_traded_verified: true,
+        activity_statement_reference: "2025 rental activity statement",
+        participation_workpaper_reference: "2025 passive review",
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  const projected = scheduleEPdf.projectFields?.(
+    (pending.schedule_e ?? {}) as Record<string, unknown>,
+    result.pending,
+  );
+  assertEquals(projected?.k1_0_name, "Rental Partnership");
+  assertEquals(projected?.k1_0_passive_income, 500);
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<BusinessPassiveIncomeAmt>500</BusinessPassiveIncomeAmt>",
+  );
+  assertEquals(xml.includes("<IRS8825"), false);
+  await validateXsd(xml, "partnership K-1 individual Schedule E");
+});
+
 function singleGeneral() {
   return {
     filing_status: FilingStatus.Single,
@@ -8154,6 +8563,7 @@ function singleGeneral() {
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
     taxpayer_dob: "1985-06-15",
+    digital_assets: false,
     address_line1: "1 Test Way",
     address_city: "Austin",
     address_state: "TX",
@@ -8401,7 +8811,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Home Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued Form 1098 copy 1",
@@ -8413,7 +8823,9 @@ Deno.test({
       box6_deduction_workpaper_reference:
         "2025 Pub. 936 purchase-points workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -8442,7 +8854,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Construction Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued construction Form 1098",
@@ -8467,7 +8879,9 @@ Deno.test({
       },
       refinance: true,
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -8496,7 +8910,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued refinance Form 1098",
@@ -8504,7 +8918,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2025-1",
@@ -8559,7 +8975,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 paid-off refinance Form 1098",
@@ -8567,7 +8983,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "paid-off-refinance-2025",
@@ -8624,7 +9042,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 improved-home refinance Form 1098",
@@ -8632,7 +9050,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "improved-home-refinance-2025",
@@ -8691,7 +9111,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 continuing-loan Form 1098",
@@ -8699,7 +9119,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2024-ledger",
@@ -8759,7 +9181,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 continuing-loan Form 1098",
@@ -8767,7 +9189,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2023-ledger",
@@ -8835,7 +9259,12 @@ Deno.test({
 }, async () => {
   const general = singleGeneral();
   const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
-  const result = runReturn({ general, ...fixture });
+  const issuedCopies = await Promise.all(
+    fixture.f1098.map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-purchase-loan-${index}`, source)
+    ),
+  );
+  const result = runReturn({ general, ...fixture, f1098: issuedCopies });
   assertEquals(result.diagnostics, []);
   assertEquals(
     result.pending.schedule_a?.line_8a_mortgage_interest_1098,
@@ -8862,7 +9291,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [
+    f1098: await Promise.all([
       {
         lender_name: "First Lender",
         recipient_tin: general.taxpayer_ssn,
@@ -8883,7 +9312,9 @@ Deno.test({
         box1_deduction_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
         for_routing: "A",
       },
-    ],
+    ].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     f1098_mortgage_limit_review: {
       mortgage_limit_review: {
         table1_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
@@ -9070,6 +9501,8 @@ Deno.test({
     () =>
       buildMefXml(
         {
+          f1040: { line23_other_taxes: 474 },
+          schedule2: { line9_household_employment: 474 },
           schedule_h: {
             employer_ein: source.employerEin,
             cash_wages_over_2025_limit: source.cashWagesOver2025Limit,
@@ -9098,6 +9531,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 1_572 },
+    schedule2: { line9_household_employment: 1_572 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: true,
@@ -9146,6 +9581,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 100 },
     schedule2: { line9_household_employment: 100 },
     schedule_h: {
       employer_ein: "123456789",
@@ -9198,6 +9634,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 126 },
+    schedule2: { line9_household_employment: 126 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: false,
@@ -9249,6 +9687,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 42 },
+    schedule2: { line9_household_employment: 42 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: false,
@@ -9296,6 +9736,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 28_438 },
     schedule2: { line9_household_employment: 28_438 },
     schedule_h: {
       employer_ein: "123456789",
@@ -9350,6 +9791,7 @@ function w2Item(wages: number, withheld: number) {
     box6_medicare_withheld: wages * 0.0145,
     employer_ein: "12-3456789",
     employer_name: "ACME Corp",
+    employee_ssn: "111-22-3333",
     employer_address_line1: "2 Payroll Road",
     employer_address_city: "Austin",
     employer_address_state: "TX",
@@ -9471,6 +9913,38 @@ Deno.test(
     await validateXsd(xml, "Single W-2 $75K");
   },
 );
+
+Deno.test({
+  name:
+    "XSD: two employer W-2 excess Social Security reaches Schedule 3 and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const first = {
+    ...w2Item(100_000, 0),
+    employee_ssn: general.taxpayer_ssn,
+  };
+  const result = runReturn({
+    general,
+    w2: [first, { ...first, employer_ein: "98-7654321" }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.schedule3?.line11_excess_ss, 1_482);
+  assertEquals(pending.schedule3?.line15_total, 1_482);
+  assertEquals(pending.f1040?.line31_additional_payments, 1_482);
+  const xml = buildMefXml(
+    pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<ExcessSocSecAndTier1RRTATaxAmt>1482</ExcessSocSecAndTier1RRTATaxAmt>",
+  );
+  await validateXsd(xml, "two employer W-2 excess Social Security");
+});
 
 // ── Scenario 2: Self-employed Schedule C $80K ───────────────────────────────
 
@@ -9673,14 +10147,16 @@ Deno.test(
 
 // ── returnVersion check ──────────────────────────────────────────────────────
 
-Deno.test("XSD: returnVersion matches 2025v5.4", () => {
+Deno.test("XSD: returnVersion matches 2025v5.4", async () => {
+  const general = singleGeneral();
   const result = runReturn({
-    general: singleGeneral(),
-    w2: [w2Item(50_000, 8_000)],
+    general,
+    w2: [{ ...w2Item(50_000, 8_000), employee_ssn: general.taxpayer_ssn }],
   });
   const xml = buildMefXml(
     result.pending as MefFormsPending,
-    extractFilerIdentity(singleGeneral()),
+    extractFilerIdentity(general),
   );
   assertStringIncludes(xml, 'returnVersion="2025v5.4"');
+  if (xsdAvailable) await validateXsd(xml, "TY2025 returnVersion");
 });

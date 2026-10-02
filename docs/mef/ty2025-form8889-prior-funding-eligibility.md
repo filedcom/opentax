@@ -1,5 +1,28 @@
 # TY2025 Form 8889 prior-year funding-transfer eligibility
 
+## December 2024 last-month election with one IRA funding transfer (2026-10-01, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) send
+failed last-month-rule contributions to Part III line 18 and failed qualified
+IRA-to-HSA funding distributions to line 19. One unmarried, under-55 primary
+owner with self-only HDHP coverage only in December 2024 can now combine the two
+source histories when the sole 2024 HSA funding was one December IRA transfer.
+Reviewed filed 2024 Form 8889 lines 2-10 and 13 must show a $4,150 elected
+limit, zero personal and employer contributions, and line 10 equal to the
+trustee transfer. The separate 2024 eligibility record must show the same twelve
+months, and the 2025 record must show a failure in the transfer testing period.
+This yields zero on 2025 line 18 and the transfer amount on line 19, with 10%
+additional tax on line 21. There is no HSA excess on Form 5329. Native and PDF
+preflights replay the source and require exact Schedule 1 income, Schedule 2
+tax, and final Form 1040 totals.
+
+This is a direct extension of the one filed-line-10 source field from zero to a
+nonnegative amount, with the positive amount admitted only for the narrow
+December transfer. The broader paired, mixed-month, age-55, multi-transfer, and
+overlapping-contribution combinations remain closed. Filed-return, trustee, and
+HDHP references are reviewed entries, not authenticated bytes; positive and
+altered-source/return fixtures await the bulk validation pass.
+
 The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
 describe the qualified HSA funding distribution testing period as beginning in
 the transfer month and ending on the last day of the twelfth following month.
@@ -18,8 +41,8 @@ testing periods fail in 2025 and reconcile their sum to line 19.
 
 This is a source reconciliation of supplied monthly facts and references. It
 does not authenticate HDHP enrollment, Medicare status, the filed 2024 return,
-or trustee records. The 2024 last-month-rule and qualified-funding-transfer
-combination remains outside this bounded calculation. Focused cases cover
+or trustee records. Apart from the narrow December case above, the 2024 last-month-rule and
+qualified-funding-transfer combination remains outside this calculation. Focused cases cover
 missing prior-year monthly facts, missing source reference, an ineligible month
 after transfer, and an ineligible month before transfer. They are written but
 unrun pending the coordinated validation batch.

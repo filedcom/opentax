@@ -16,6 +16,11 @@ import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { type RtaaSource, rtaaSourceSchema } from "./rtaa-source.ts";
+import {
+  type TaxableGrantSource,
+  taxableGrantSourceSchema,
+} from "./grant-source.ts";
 
 // Form 1099-G issuer reporting thresholds do not create recipient-side
 // taxable-income exclusions. Route any positive amount designated taxable.
@@ -32,7 +37,13 @@ export const itemSchema = z.object({
   box_4_federal_withheld: z.number().nonnegative().optional(),
   box_5_rtaa: z.number().nonnegative().optional(),
   box_6_taxable_grants: z.number().nonnegative().optional(),
+  box_6_schedule1_nonbusiness_reviewed: z.boolean().optional(),
   box_7_agriculture: z.number().nonnegative().optional(),
+  box_7_payment_kind: z.enum([
+    "agricultural_program",
+    "crop_disaster_current_taxable",
+  ]).optional(),
+  box_7_review_reference: z.string().trim().min(1).optional(),
   box_8_trade_or_business: z.boolean().optional(),
   box_9_market_gain: z.number().nonnegative().optional(),
   farm_id: z.string().min(1).optional(),
@@ -45,6 +56,87 @@ export const itemSchema = z.object({
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    (item.box_6_taxable_grants ?? 0) > 0 &&
+    item.box_6_schedule1_nonbusiness_reviewed !== true
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_6_schedule1_nonbusiness_reviewed"],
+      message:
+        "Form 1099-G box 6 needs a reviewed nonbusiness Schedule 1 classification; business and farm grants need their own route",
+    });
+  }
+  if ((item.box_6_taxable_grants ?? 0) > 0) {
+    if (
+      !Number.isSafeInteger(item.box_6_taxable_grants) ||
+      !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_6_taxable_grants"],
+        message:
+          "Form 1099-G box 6 needs a whole-dollar amount, payer, recipient, and issued-copy identity",
+      });
+    }
+  }
+  if ((item.box_5_rtaa ?? 0) > 0) {
+    if (!Number.isSafeInteger(item.box_5_rtaa)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_5_rtaa"],
+        message: "Form 1099-G box 5 RTAA needs a whole-dollar amount",
+      });
+    }
+    if (
+      !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_5_rtaa"],
+        message:
+          "Form 1099-G box 5 RTAA needs payer, recipient, and issued-copy identity",
+      });
+    }
+  }
+  if (
+    (item.box_7_agriculture ?? 0) > 0 ||
+    (item.box_9_market_gain ?? 0) > 0
+  ) {
+    if (
+      !item.farm_id || !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_7_agriculture"],
+        message:
+          "Form 1099-G farm payments need farm, payer, recipient, and issued-copy identity",
+      });
+    }
+  }
+  if ((item.box_7_agriculture ?? 0) > 0) {
+    if (!item.box_7_payment_kind || !item.box_7_review_reference) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_7_payment_kind"],
+        message:
+          "Form 1099-G box 7 needs reviewed agricultural-program or current-year-taxable crop-disaster classification",
+      });
+    }
+  } else if (item.box_7_payment_kind || item.box_7_review_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_7_payment_kind"],
+      message:
+        "Form 1099-G box 7 classification needs a positive box 7 payment",
+    });
+  }
   const refund = item.box_2_state_refund ?? 0;
   const taxable = item.box_2_taxable_recovery_verified_amount;
   if (refund === 0) {
@@ -84,6 +176,41 @@ export const inputSchema = z.object({
 
 type G99Items = z.infer<typeof itemSchema>[];
 
+export function assertDistinct1099GCopies(items: G99Items): void {
+  const seenAccounts = new Set<string>();
+  const seenReferences = new Set<string>();
+  for (const item of items) {
+    if (!item.payer_tin || !item.recipient_tin) continue;
+    const payer = item.payer_tin.replace(/\D/g, "");
+    if (item.account_number) {
+      const key = JSON.stringify([
+        payer,
+        item.recipient_tin,
+        item.account_number.trim(),
+      ]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-G repeats the same identified payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
+    }
+    if (item.source_document_reference) {
+      const key = JSON.stringify([
+        payer,
+        item.recipient_tin,
+        item.source_document_reference,
+      ]);
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "1099-G repeats the same identified payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+        );
+      }
+      seenReferences.add(key);
+    }
+  }
+}
+
 // Pure helpers — one concern each
 
 function netUnemployment(g99s: G99Items): number {
@@ -95,7 +222,12 @@ function netUnemployment(g99s: G99Items): number {
     (sum, item) => sum + (item.box_1_repaid ?? 0),
     0,
   );
-  return Math.max(0, totalReceived - totalRepaid);
+  if (totalRepaid > totalReceived) {
+    throw new Error(
+      "Form 1099-G same-year unemployment repayment exceeds retained current-year benefits",
+    );
+  }
+  return totalReceived - totalRepaid;
 }
 
 function totalStateRefundTaxable(g99s: G99Items): number {
@@ -116,8 +248,112 @@ function totalRtaa(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_5_rtaa ?? 0), 0);
 }
 
+export function rtaaSources(g99s: G99Items): RtaaSource[] {
+  return g99s.filter((item) => (item.box_5_rtaa ?? 0) > 0).map((item) =>
+    rtaaSourceSchema.parse({
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin?.replace(/\D/g, ""),
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+      ...(item.account_number ? { account_number: item.account_number } : {}),
+      amount: item.box_5_rtaa,
+    })
+  );
+}
+
+export function assertForm1099gRtaaSources(
+  raw: unknown,
+  retainedRows: unknown,
+  expectedAmount: number,
+  recipientSsns: readonly string[],
+): void {
+  const issued = raw === undefined
+    ? []
+    : rtaaSources(inputSchema.parse(raw).f1099gs);
+  const retained = z.array(rtaaSourceSchema).parse(retainedRows ?? []);
+  const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
+  const identities = issued.map((row) =>
+    JSON.stringify([
+      row.source_document_reference,
+      row.payer_tin,
+      row.recipient_tin,
+      row.account_number ?? "",
+    ])
+  );
+  const sortRows = (rows: readonly RtaaSource[]) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (
+    !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
+    issued.reduce((sum, row) => sum + row.amount, 0) !== expectedAmount ||
+    new Set(identities).size !== identities.length ||
+    issued.some((row) => !owners.has(row.recipient_tin)) ||
+    JSON.stringify(sortRows(issued)) !== JSON.stringify(sortRows(retained))
+  ) {
+    throw new Error(
+      "Schedule 1 RTAA rows must match distinct issued Form 1099-G box 5 copies and filer owners",
+    );
+  }
+}
+
 function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
+}
+
+function taxableGrantSources(g99s: G99Items): TaxableGrantSource[] {
+  return g99s.flatMap((item) =>
+    (item.box_6_taxable_grants ?? 0) > 0
+      ? [{
+        payer_name: item.payer_name!,
+        payer_tin: item.payer_tin!.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin!,
+        source_document_reference: item.source_document_reference!,
+        ...(item.account_number ? { account_number: item.account_number } : {}),
+        amount: item.box_6_taxable_grants!,
+      }]
+      : []
+  );
+}
+
+export function assertForm1099gTaxableGrantTotal(
+  raw: unknown,
+  retainedRows: unknown,
+  expectedAmount: number,
+  recipientSsns: readonly string[],
+): void {
+  const issued = raw === undefined ? [] : inputSchema.parse(raw).f1099gs;
+  const sources = taxableGrantSources(issued);
+  const retained = z.array(taxableGrantSourceSchema).parse(retainedRows ?? []);
+  const identities = sources.map((row) =>
+    JSON.stringify([
+      row.source_document_reference,
+      row.payer_tin,
+      row.recipient_tin,
+      row.account_number ?? "",
+    ])
+  );
+  const sorted = (rows: readonly TaxableGrantSource[]) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (
+    !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
+    totalTaxableGrants(issued) !== expectedAmount ||
+    new Set(identities).size !== identities.length ||
+    JSON.stringify(sorted(sources)) !== JSON.stringify(sorted(retained))
+  ) {
+    throw new Error(
+      "Schedule 1 taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
+    );
+  }
+  const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
+  if (
+    issued.some((item) =>
+      (item.box_6_taxable_grants ?? 0) > 0 &&
+      (!item.recipient_tin || !owners.has(item.recipient_tin))
+    )
+  ) {
+    throw new Error(
+      "Schedule 1 taxable grants need Form 1099-G box 6 recipients matching the filer or joint spouse",
+    );
+  }
 }
 
 function schedule1Output(g99s: G99Items): NodeOutput[] {
@@ -125,9 +361,23 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   const stateRefund = totalStateRefundTaxable(g99s);
   const rtaa = totalRtaa(g99s);
   const grants = totalTaxableGrants(g99s);
+  const unemploymentReceived = g99s.reduce(
+    (sum, item) => sum + (item.box_1_unemployment ?? 0),
+    0,
+  );
+  const unemploymentRepaid = g99s.reduce(
+    (sum, item) => sum + (item.box_1_repaid ?? 0),
+    0,
+  );
 
   const fields: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
-  if (unemploymentNet > 0) {
+  // A fully repaid current-year benefit still belongs on Schedule 1 line 7:
+  // the printed form needs its "Repaid" annotation beside the zero net amount.
+  if (
+    unemploymentNet > 0 ||
+    (unemploymentReceived > 0 &&
+      unemploymentReceived === unemploymentRepaid)
+  ) {
     fields.line7_unemployment = unemploymentNet;
   }
   if (stateRefund > 0) {
@@ -135,9 +385,11 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
   if (rtaa > 0) {
     fields.line8z_rtaa = rtaa;
+    fields.f1099g_rtaa_sources = rtaaSources(g99s);
   }
   if (grants > 0) {
     fields.line8z_taxable_grants = grants;
+    fields.f1099g_taxable_grant_sources = taxableGrantSources(g99s);
   }
 
   if (Object.keys(fields).length === 0) return [];
@@ -169,8 +421,14 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
     if (agriculture > 0) {
       sources.push({
         farm_id: item.farm_id,
-        kind: "1099g_agriculture",
+        kind: item.box_7_payment_kind === "crop_disaster_current_taxable"
+          ? "1099g_crop_disaster_current_taxable"
+          : "1099g_agriculture",
         amount: agriculture,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin?.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin,
+        source_document_reference: item.source_document_reference,
       });
     }
     if (marketGain > 0) {
@@ -178,6 +436,10 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
         farm_id: item.farm_id,
         kind: "1099g_ccc_market_gain",
         amount: marketGain,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin?.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin,
+        source_document_reference: item.source_document_reference,
       });
     }
   }
@@ -200,6 +462,8 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099gs: g99s } = parsed;
+
+    assertDistinct1099GCopies(g99s);
 
     if (g99s.length === 0) return { outputs: [] };
 

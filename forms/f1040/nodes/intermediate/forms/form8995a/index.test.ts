@@ -22,7 +22,7 @@ Deno.test("bounded source: one identified non-SSTB business retains its filing f
     business_ubia: 200_000,
     one_non_sstb_business_confirmed: true,
     no_aggregation_confirmed: true,
-    no_reit_ptp_or_loss_carryforward_confirmed: true,
+    no_ptp_or_loss_carryforward_confirmed: true,
     qualified_dividends_zero_confirmed: true,
     qbi_wages_ubia_sources_confirmed: true,
     taxable_income_before_qbi_confirmed: true,
@@ -368,7 +368,7 @@ Deno.test("Schedule D patron source emits a paired companion and reduced Form 10
       business_ubia: 0,
       one_non_sstb_business_confirmed: true,
       no_aggregation_confirmed: true,
-      no_reit_ptp_or_loss_carryforward_confirmed: true,
+      no_ptp_or_loss_carryforward_confirmed: true,
       qualified_dividends_zero_confirmed: true,
       qbi_wages_ubia_sources_confirmed: true,
       taxable_income_before_qbi_confirmed: true,
@@ -408,7 +408,7 @@ Deno.test("Schedule D rejects allocations beyond the identified business", () =>
       business_name: "Smith Farm", ein: "123456789",
       business_qbi: 100_000, business_w2_wages: 40_000, business_ubia: 0,
       one_non_sstb_business_confirmed: true, no_aggregation_confirmed: true,
-      no_reit_ptp_or_loss_carryforward_confirmed: true,
+      no_ptp_or_loss_carryforward_confirmed: true,
       qualified_dividends_zero_confirmed: true,
       qbi_wages_ubia_sources_confirmed: true,
       taxable_income_before_qbi_confirmed: true,
@@ -451,28 +451,21 @@ Deno.test("income cap: 20% × (TI - cap_gain) limits deduction", () => {
 
 // ── REIT dividends ────────────────────────────────────────────────────────────
 
-Deno.test("REIT: section 199A dividends — 20% applied, not subject to wage limit", () => {
-  // Above threshold; no QBI — only REIT dividends
-  // REIT = 50,000 → 20% = 10,000; income cap = 20% × 300,000 = 60,000
-  const result = compute({
+Deno.test("REIT: unreviewed dividends do not produce a deduction", () => {
+  assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
     line6_sec199a_dividends: 50_000,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
+  }), Error, "matching reviewed 1099-DIV source");
 });
 
-Deno.test("REIT: reit_loss_carryforward reduces dividends", () => {
-  const result = compute({
+Deno.test("REIT: loss carryforward still requires a reviewed dividend source", () => {
+  assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
     line6_sec199a_dividends: 30_000,
     reit_loss_carryforward: -10_000,
-  });
-  const out = findOutput(result, "f1040");
-  // net REIT = 20,000 → 20% = 4,000
-  assertEquals(out?.fields.line13_qbi_deduction, 4_000);
+  }), Error, "matching reviewed 1099-DIV source");
 });
 
 // ── Output routing ────────────────────────────────────────────────────────────
@@ -529,8 +522,6 @@ Deno.test("Schedule A rejects mixed SSTB before any deduction output", () => {
         sstb_qbi: 60_000,
         sstb_w2_wages: 20_000,
         sstb_unadjusted_basis: 0,
-        line6_sec199a_dividends: 20_000,
-        reit_loss_carryforward: -5_000,
       }),
     Error,
     "Schedule A",

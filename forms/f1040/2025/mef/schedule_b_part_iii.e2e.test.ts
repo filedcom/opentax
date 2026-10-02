@@ -15,6 +15,7 @@ const general = {
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   address_line1: "1 Test Way",
   address_city: "Austin",
   address_state: "TX",
@@ -109,6 +110,7 @@ Deno.test("1099-INT adjustments reach gross Schedule B rows and MeF deductions",
     {
       general,
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Bond Bank",
         box1: 2_000,
         nominee_interest: 100,
@@ -160,6 +162,7 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
     {
       general,
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Buyer mortgage",
         seller_financed: true,
         buyer_used_as_personal_residence: true,
@@ -202,6 +205,7 @@ Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
     {
       general,
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Buyer mortgage",
         seller_financed: true,
         buyer_used_as_personal_residence: true,
@@ -241,6 +245,7 @@ Deno.test("nonresidence seller financing below $1,500 does not force Schedule B"
     {
       general,
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Buyer mortgage",
         seller_financed: true,
         buyer_used_as_personal_residence: false,
@@ -266,6 +271,7 @@ Deno.test("nonresidence seller financing above $1,500 files an ordinary interest
     {
       general,
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Buyer mortgage",
         seller_financed: true,
         buyer_used_as_personal_residence: false,
@@ -298,6 +304,7 @@ Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", (
     {
       general,
       f1099oid: [{
+        recipient_tin: "111223333",
         payer_name: "Bond Broker",
         box1_oid: 1_000,
         box2_other_interest: 500,
@@ -346,6 +353,7 @@ Deno.test("1099-DIV nominee allocation reaches Schedule B and taxpayer-only retu
     {
       general,
       f1099div: [{
+        recipient_tin: "111223333",
         payerName: "Fund",
         isNominee: true,
         box11: false,

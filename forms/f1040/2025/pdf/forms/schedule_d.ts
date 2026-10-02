@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
+import { assertScheduleDK1Source } from "../../schedule-d-k1-source.ts";
 
 // IRS Schedule D (2025) AcroForm field names.
 // Verified against the f1040sd--2025.pdf AcroForm field dump.
@@ -192,12 +193,44 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_line21_loss",
     pdfField: "topmostSubform[0].Page2[0].f2_4[0]",
   },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line22_qualified_dividends",
+    pdfField: "topmostSubform[0].Page2[0].c2_3[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line22_qualified_dividends",
+    pdfField: "topmostSubform[0].Page2[0].c2_3[1]",
+    whenValue: "false",
+  },
 ];
 
 export const scheduleDPdf: PdfFormDescriptor = {
   pendingKey: "schedule_d",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sd--2025.pdf",
   projectFields(fields, allPending) {
+    assertScheduleDK1Source(fields, allPending);
+    const line16 = fields.print_line16_combined;
+    const needsLine22 = typeof line16 === "number" &&
+      (line16 <= 0 || fields.print_line17_both_gains === false);
+    let line22QualifiedDividends: boolean | undefined;
+    if (needsLine22) {
+      const form1040 = allPending.f1040;
+      if (!form1040) {
+        throw new Error("Schedule D line 22 needs its Form 1040 source");
+      }
+      const dividends = form1040.line3a_qualified_dividends;
+      if (
+        dividends !== undefined &&
+        (typeof dividends !== "number" || !Number.isFinite(dividends) ||
+          dividends < 0)
+      ) {
+        throw new Error("Schedule D line 22 needs valid Form 1040 line 3a");
+      }
+      line22QualifiedDividends = (dividends ?? 0) > 0;
+    }
     const rows = [
       ...(Array.isArray(fields.transaction)
         ? fields.transaction
@@ -263,6 +296,9 @@ export const scheduleDPdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...saleTotals,
+      ...(line22QualifiedDividends === undefined
+        ? {}
+        : { print_line22_qualified_dividends: line22QualifiedDividends }),
       print_form8814_line13_note: child.capitalGain > 0 &&
           typeof fields.print_line13_cap_gain_distrib === "number"
         ? `Form 8814 $${child.capitalGain}`

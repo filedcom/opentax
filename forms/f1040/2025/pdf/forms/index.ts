@@ -22,6 +22,7 @@ import { scheduleSePdf } from "./schedule_se.ts";
 import { form461Pdf } from "./f461.ts";
 import { form982Pdf } from "./f982.ts";
 import { form1116Pdf } from "./f1116.ts";
+import { form2106Pdf } from "./f2106.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import { form2210fPdf } from "./f2210f.ts";
 import { form2439Pdf } from "./f2439.ts";
@@ -51,6 +52,10 @@ import { form5471ScheduleQPdf } from "./f5471_schedule_q.ts";
 import { form5471ScheduleRPdf } from "./f5471_schedule_r.ts";
 import { form5695Pdf } from "./f5695.ts";
 import { form5884Pdf } from "./f5884.ts";
+import { form8844Pdf } from "./f8844.ts";
+import { form8881Pdf } from "./f8881.ts";
+import { form8882Pdf } from "./f8882.ts";
+import { form8941Pdf } from "./f8941.ts";
 import { form6198Pdf } from "./f6198.ts";
 import { form6251Pdf } from "./f6251.ts";
 import { form6252Pdf } from "./f6252.ts";
@@ -78,6 +83,7 @@ import { form8853Pdf } from "./f8853.ts";
 import { form8859Pdf } from "./f8859.ts";
 import { form8862Pdf } from "./f8862.ts";
 import { form8863Pdf } from "./f8863.ts";
+import { form8864Pdf } from "./f8864.ts";
 import { form8874Pdf } from "./f8874.ts";
 import { form8582crPdf } from "./f8582cr.ts";
 import { form8880Pdf } from "./f8880.ts";
@@ -97,6 +103,7 @@ import { form8962Pdf } from "./f8962.ts";
 import { form8978Pdf } from "./f8978.ts";
 import { form8978ScheduleAPdf } from "./f8978_schedule_a.ts";
 import { form8990Pdf } from "./f8990.ts";
+import { form8994Pdf } from "./f8994.ts";
 import { form8992Pdf } from "./f8992.ts";
 import { form8992ScheduleAPdf } from "./f8992_schedule_a.ts";
 import { form8995Pdf } from "./f8995.ts";
@@ -134,6 +141,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form982Pdf,
   form1116Pdf,
   form1116ScheduleBPdf,
+  form2106Pdf,
   form2210fPdf,
   form2439Pdf,
   form2441Pdf,
@@ -184,12 +192,16 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8834Pdf,
   form8835Pdf,
   form8839Pdf,
+  form8844Pdf,
+  form8881Pdf,
+  form8882Pdf,
   form8854InitialPdf,
   form8854AnnualPdf,
   form8853Pdf,
   form8859Pdf,
   form8862Pdf,
   form8863Pdf,
+  form8864Pdf,
   form8874Pdf,
   form8880Pdf,
   form8888Pdf,
@@ -201,6 +213,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8919Pdf,
   form8936Pdf,
   form8936ScheduleAPdf,
+  form8941Pdf,
   form8949Pdf,
   form8959Pdf,
   form8960Pdf,
@@ -210,6 +223,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8990Pdf,
   form8992Pdf,
   form8992ScheduleAPdf,
+  form8994Pdf,
   form8995Pdf,
   form965aPdf,
   form8995aPdf,

@@ -7,6 +7,10 @@ import {
 } from "../../../nodes/intermediate/forms/form8949/index.ts";
 import { form8949 as nativeForm8949 } from "../../mef/forms/f8949.ts";
 import { isQofCodeZRow } from "../../mef/forms/f8949.ts";
+import {
+  f8949 as directSaleNode,
+  inputSchema as directSaleSchema,
+} from "../../../nodes/inputs/f8949/index.ts";
 
 // The canonical Form 8949 node emits one transaction or an accumulated array.
 // Each official 2025 page holds 11 rows for exactly one reporting box.
@@ -42,6 +46,56 @@ type Transaction = z.infer<typeof transactionSchema>;
 function sourceRows(value: unknown): unknown[] {
   if (value === undefined) return [];
   return Array.isArray(value) ? value : [value];
+}
+
+function assertSaleSourcesOnScheduleD(
+  rawSource: unknown,
+  rawScheduleD: unknown,
+  hasFiledRows: boolean,
+): void {
+  const source = directSaleSchema.safeParse({ f8949s: sourceRows(rawSource) });
+  const scheduleDRows = rawScheduleD !== undefined &&
+      typeof rawScheduleD === "object" && rawScheduleD !== null
+    ? sourceRows((rawScheduleD as Record<string, unknown>).transaction)
+    : [];
+  if (!source.success || scheduleDRows.length === 0) {
+    throw new Error("Form 8949 PDF needs computed canonical transaction rows");
+  }
+  const calculated = directSaleNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source.data,
+  ).outputs.filter((output) => output.nodeType === "form8949")
+    .map((output) => transactionSchema.parse(output.fields.transaction));
+  const available = scheduleDRows.map((row) => transactionSchema.parse(row));
+  for (const sale of calculated) {
+    if (
+      !hasFiledRows &&
+      ((sale.part !== "A" && sale.part !== "D") ||
+        sale.adjustment_codes !== undefined ||
+        sale.adjustment_amount !== undefined)
+    ) {
+      throw new Error(
+        "Form 8949 PDF needs computed canonical transaction rows",
+      );
+    }
+    const match = available.findIndex((row) =>
+      row.part === sale.part && row.description === sale.description &&
+      row.source_transaction_id === sale.source_transaction_id &&
+      row.date_acquired === sale.date_acquired &&
+      row.date_sold === sale.date_sold && row.proceeds === sale.proceeds &&
+      row.cost_basis === sale.cost_basis &&
+      row.gain_loss === sale.gain_loss &&
+      row.adjustment_codes === sale.adjustment_codes &&
+      row.adjustment_amount === sale.adjustment_amount &&
+      row.is_long_term === sale.is_long_term
+    );
+    if (match < 0) {
+      throw new Error(
+        "Form 8949 sale source differs from computed Schedule D rows",
+      );
+    }
+    available.splice(match, 1);
+  }
 }
 
 function assertNoSection1202Rows(rows: readonly unknown[]): void {
@@ -233,9 +287,11 @@ export const form8949Pdf: PdfFormDescriptor = {
     const rows = sourceRows(fields.transaction);
     const source = sourceRows(allPending.f8949?.f8949s);
     assertNoSection1202Rows([...rows, ...source]);
-    if (rows.length === 0 && source.length > 0) {
-      throw new Error(
-        "Form 8949 PDF needs computed canonical transaction rows",
+    if (source.length > 0) {
+      assertSaleSourcesOnScheduleD(
+        source,
+        allPending.schedule_d,
+        rows.length > 0,
       );
     }
     if (rows.length > 0) {

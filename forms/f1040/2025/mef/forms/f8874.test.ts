@@ -1,25 +1,35 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { buildForm8874Document, form8874 } from "./f8874.ts";
+import { withReviewedForm8874A } from "../../../nodes/inputs/f8874/issuance_fixture.ts";
 
 const source = {
-  investments: [{
-    cde_name: "Community Development Entity",
-    cde_ein: "123456789",
-    cde_address: {
-      line1: "10 Main Street",
-      city: "Wilmington",
-      state: "DE",
-      zip: "19801",
+  investments: [withReviewedForm8874A(
+    {
+      cde_name: "Community Development Entity",
+      cde_ein: "123456789",
+      cde_address: {
+        line1: "10 Main Street",
+        city: "Wilmington",
+        state: "DE",
+        zip: "19801",
+      },
+      initial_investment_date: "2023-04-15",
+      credit_allowance_date: "2025-04-15",
+      qualified_equity_investment_amount: 1_000_000,
+      designation_notice_reference: "2023 QEI notice",
+      held_on_credit_allowance_date: true,
+      qualified_on_credit_allowance_date: true,
+      recapture_notice_received: false,
+      subject_to_passive_activity_limit: false,
     },
-    initial_investment_date: "2023-04-15",
-    credit_allowance_date: "2025-04-15",
-    qualified_equity_investment_amount: 1_000_000,
-    designation_notice_reference: "2023 QEI notice",
-    held_on_credit_allowance_date: true,
-    qualified_on_credit_allowance_date: true,
-    recapture_notice_received: false,
-    subject_to_passive_activity_limit: false,
-  }],
+    "Alex Owner",
+    "111223333",
+  )],
+};
+const filer = {
+  taxpayer_first_name: "Alex",
+  taxpayer_last_name: "Owner",
+  taxpayer_ssn: "111223333",
 };
 
 Deno.test("Form 8874 MeF records an identified investment and 5 percent credit", () => {
@@ -44,24 +54,42 @@ Deno.test("Form 8874 MeF records an identified investment and 5 percent credit",
 
 Deno.test("Form 8874 MeF requires matching linked Form 3800", () => {
   assertThrows(
-    () => form8874.build(source, { pending: { f8874: source } }),
+    () => form8874.build(source, { pending: { f8874: source, f1040: filer } }),
     Error,
     "does not reconcile",
   );
   assertThrows(
     () =>
       form8874.build(source, {
-        pending: { f3800: { f8874_credit: { credit_amount: 50_000 } } },
+        pending: {
+          f1040: filer,
+          f3800: { f8874_credit: { credit_amount: 50_000 } },
+        },
         documentIdsByPendingKey: {},
       }),
     Error,
     "needs attached Form 3800",
   );
   const xml = form8874.build(source, {
-    pending: { f3800: { f8874_credit: { credit_amount: 50_000 } } },
+    pending: {
+      f1040: filer,
+      f3800: { f8874_credit: { credit_amount: 50_000 } },
+    },
     documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
   });
   assertStringIncludes(xml, "<CDETotalCreditAmt>50000</CDETotalCreditAmt>");
+  assertThrows(
+    () =>
+      form8874.build(source, {
+        pending: {
+          f1040: { ...filer, taxpayer_ssn: "222334444" },
+          f3800: { f8874_credit: { credit_amount: 50_000 } },
+        },
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "investor differs",
+  );
 });
 
 Deno.test("Form 8874 MeF reconciles passive and direct investments separately", () => {
@@ -72,11 +100,18 @@ Deno.test("Form 8874 MeF reconciles passive and direct investments separately", 
     passive_source_document_reference: "2025 community venture QEI",
   };
   const mixed = {
-    investments: [passive, {
-      ...source.investments[0],
-      initial_investment_date: "2022-04-15",
-      designation_notice_reference: "2022 QEI notice",
-    }],
+    investments: [
+      passive,
+      withReviewedForm8874A(
+        {
+          ...source.investments[0],
+          initial_investment_date: "2022-04-15",
+          designation_notice_reference: "2022 QEI notice",
+        },
+        "Alex Owner",
+        "111223333",
+      ),
+    ],
   };
   const activity = {
     activity_reference: "Community venture",
@@ -91,6 +126,7 @@ Deno.test("Form 8874 MeF reconciles passive and direct investments separately", 
     publicly_traded_partnership: false,
   };
   const pending = {
+    f1040: filer,
     f3800: { f8874_credit: { credit_amount: 60_000 } },
     form8582cr: {
       credit_sources: [activity],
@@ -137,6 +173,7 @@ Deno.test("Form 8874 MeF reconciles passive and direct investments separately", 
 
 Deno.test("Form 8874 line 2 includes filed partnership and S-corporation credits", () => {
   const pending = {
+    f1040: filer,
     f3800: {
       f8874_credit: {
         credit_amount: 50_000,
@@ -219,6 +256,7 @@ Deno.test("Form 8874 line 2 reconciles a passive partnership credit", () => {
   };
   const context = {
     pending: {
+      f1040: filer,
       f3800: {
         f8874_credit: {
           credit_amount: 50_000,

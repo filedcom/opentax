@@ -792,6 +792,7 @@ export const SCENARIO_1040_04_FACTS = {
   w2: {
     employerName: "Capital One Bank",
     employerEin: "000000057",
+    employeeSsn: "400001037",
     employerAddress: {
       line1: "495 South Main Street",
       city: "Las Vegas",
@@ -886,6 +887,7 @@ export const SCENARIO_1040_05_FACTS = {
   w2: {
     employerName: "Apple Electronics & Technology",
     employerEin: "000000029",
+    employeeSsn: "400001039",
     employerAddress: {
       line1: "132 Christiana Mall",
       city: "Newark",
@@ -964,6 +966,7 @@ export const SCENARIO_1040_12_FACTS = {
   w2: {
     employerName: "DESIGN LLC",
     employerEin: "000000011",
+    employeeSsn: "400001212",
     employerAddress: {
       line1: "426 Build St",
       city: "Anytown",
@@ -1076,6 +1079,7 @@ export const SCENARIO_1040_13_FACTS = {
   w2: {
     employerName: "OAK SUPPLY CO",
     employerEin: "000000014",
+    employeeSsn: "400001313",
     employerAddress: {
       line1: "201 Elm Drive",
       city: "Anytown",
@@ -1149,6 +1153,7 @@ export const SCENARIO_1040_08_FACTS = {
   form1040: {
     digitalAssets: false,
     presidentialCampaignFundTaxpayer: true,
+    line4aBlank: true,
     line4cQcdChecked: true,
     line5cRolloverChecked: true,
     line6dMfsLivedApartChecked: true,

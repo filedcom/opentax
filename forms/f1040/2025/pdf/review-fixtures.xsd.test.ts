@@ -68,15 +68,73 @@ async function withheldW2GXml(
   return bundle.xml;
 }
 
+async function section1231ExchangeXml(
+  pending: ReturnType<typeof buildPending>,
+  filer: (typeof pdfReviewFixtures)[number]["filer"],
+): Promise<string> {
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(
+    bundle.attachments[0].fileName,
+    "Form8824RealizedRecognizedGainStatement.pdf",
+  );
+  assertEquals(
+    new TextDecoder().decode(bundle.attachments[0].bytes.slice(0, 5)),
+    "%PDF-",
+  );
+  const documentId = bundle.xml.match(
+    /<BinaryAttachment documentId="([^"]+)"/,
+  )?.[1];
+  if (!documentId) {
+    throw new Error("Form 8824 review fixture lost the gain statement ID");
+  }
+  assertStringIncludes(
+    bundle.xml,
+    `<AttachmentLocationTxt>Form8824RealizedRecognizedGainStatement.pdf</AttachmentLocationTxt>`,
+  );
+  assertStringIncludes(
+    bundle.xml,
+    `referenceDocumentId="${documentId}" referenceDocumentName="BinaryAttachment GeneralDependencySmall RealizedAndRecognizedGainInMultiAssetExchangesStmt"`,
+  );
+  return bundle.xml;
+}
+
+const directNewMarketsReviewIds = new Set([
+  "single-new-markets-business-credit",
+  "single-long-name-new-markets-investment",
+  "single-two-new-markets-investments",
+  "single-six-new-markets-investments",
+  "single-seven-new-markets-investments",
+  "single-twenty-four-new-markets-investments",
+  "single-geothermal-and-new-markets-credits",
+]);
+
 for (const fixture of pdfReviewFixtures) {
   Deno.test({
-    name: `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
+    name: fixture.id === "single-form461-schedule-c-excess-business-loss"
+      ? `filled-PDF source ${fixture.id} keeps the sourced loss and blocks unsupported QBI carryforward export`
+      : directNewMarketsReviewIds.has(fixture.id)
+      ? `filled-PDF source ${fixture.id} blocks unauthenticated direct Form 8874 export`
+      : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
     async fn() {
       const result = execute(plan, registry, { ...fixture.inputs }, {
         taxYear: 2025,
         formType: "f1040",
       });
+      if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
+        assertEquals(result.diagnostics.length, 1);
+        assertStringIncludes(
+          result.diagnostics[0].message,
+          "Form 8995 net QBI loss needs a sourced carryforward filing route",
+        );
+        assertEquals(
+          (result.pending.form461 as Record<string, unknown>)
+            .line16_excess_business_loss,
+          -87_000,
+        );
+        return;
+      }
       assertEquals(result.diagnostics, []);
       if (fixture.id === "single-8862-ctc-reinstatement") {
         assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
@@ -88,10 +146,54 @@ for (const fixture of pdfReviewFixtures) {
         return;
       }
       const pending = buildPending(result.pending);
+      if (directNewMarketsReviewIds.has(fixture.id)) {
+        const directInvestments = (pending.f8874 as
+          | { investments?: unknown[] }
+          | undefined)?.investments ?? [];
+        assertEquals(directInvestments.length > 0, true);
+        assertThrows(
+          () => buildMefXml(pending, fixture.filer),
+          Error,
+          "Form 8874 direct QEI needs authenticated CDE status",
+        );
+        return;
+      }
+      if (
+        fixture.id === "single-two-employers-excess-social-security" ||
+        fixture.id === "single-excess-social-security-plus-fuel-credit"
+      ) {
+        assertEquals(pending.schedule3?.line11_excess_ss, 1_482);
+        const fuel = fixture.id ===
+            "single-excess-social-security-plus-fuel-credit"
+          ? 426
+          : 0;
+        assertEquals(pending.schedule3?.line12_fuel_tax_credit ?? 0, fuel);
+        assertEquals(pending.schedule3?.line15_total, 1_482 + fuel);
+        assertEquals(pending.f1040?.line31_additional_payments, 1_482 + fuel);
+      }
+      if (fixture.id === "single-w2-overpayment-applied-2026") {
+        const filed = pending.f1040 as Record<string, number>;
+        assertEquals(filed.line36_applied_to_2026_estimated_tax, 500);
+        assertEquals(
+          filed.line35a_refund,
+          filed.line34_overpayment - 500 -
+            (filed.line38_underpayment_penalty ?? 0),
+        );
+        assertEquals(
+          irs1040Pdf.projectFields?.(filed, result.pending)
+            ?.line36_applied_to_2026_estimated_tax,
+          500,
+        );
+      }
       const xml = fixture.id === "single-withheld-w2g" ||
           fixture.id === "single-partnership-code-k-and-w2g"
         ? await withheldW2GXml(pending, fixture.filer)
+        : fixture.id === "single-form8824-section1231-exchange"
+        ? await section1231ExchangeXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
+      if (fixture.id === "single-w2-overpayment-applied-2026") {
+        assertStringIncludes(xml, "<AppliedToEsTaxAmt>500</AppliedToEsTaxAmt>");
+      }
       if (fixture.id === "single-section-a-capital-gain-reduction-gift") {
         assertEquals(
           result.pending.schedule_a.line_12_noncash_contributions,
@@ -205,7 +307,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "Schedule EIC child differs from reviewed general source",
+          "Schedule EIC child roster differs from reviewed general source",
         );
       }
       if (fixture.id === "mfs-w2-separated-spouse-eic") {
@@ -469,7 +571,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "differs from payer box 4",
+          "Form 1040 line 25b differs from retained 1099-family withholding",
         );
         assertThrows(
           () =>
@@ -617,7 +719,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "1099-K customer refunds differ from Schedule C line 2",
+          "Schedule 1 line 3 differs from filed Schedule C net profit or loss",
         );
       }
       if (fixture.id === "single-k-business-refund-and-fee") {
@@ -648,7 +750,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "1099-K processor fees differ from Schedule C line 10",
+          "Schedule 1 line 3 differs from filed Schedule C net profit or loss",
         );
       }
       if (fixture.id === "single-k-reported-error") {
@@ -712,7 +814,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "needs a reviewed income classification",
+          "1099-K receipt review must match its income route",
         );
         const kRows = result.pending.schedule_c
           .f1099k_receipt_sources as Array<Record<string, unknown>>;
@@ -981,6 +1083,29 @@ for (const fixture of pdfReviewFixtures) {
         );
         assertStringIncludes(xml, "<IRS4137 ");
       }
+      if (fixture.id === "single-two-employer-form4137-tips-schedule1a") {
+        assertEquals(result.pending.f1040.line1c_unreported_tips, 2_500);
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          9_500,
+        );
+        assertEquals(
+          (xml.match(/<UnreportedTipIncomePerEmployer>/g) ?? []).length,
+          2,
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsWagesAmt>0</QualifiedTipsWagesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsForm4137Amt>0</QualifiedTipsForm4137Amt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsEmployeeAmt>9500</QualifiedTipsEmployeeAmt>",
+        );
+      }
       if (fixture.id === "single-two-partnership-code-s-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 400);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 600);
@@ -1067,7 +1192,8 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.f1040,
           result.pending,
         );
-        assertEquals(projected?.print_form8814_line7a_included, false);
+        assertEquals(projected?.print_form8814_line7a_included, true);
+        assertEquals(projected?.print_form8814_line7b_amount, 179);
         assertStringIncludes(xml, "<IRS8814 ");
         assertStringIncludes(xml, "<IRS1040ScheduleD ");
       }
@@ -1343,7 +1469,8 @@ for (const fixture of pdfReviewFixtures) {
         fixture.id === "single-ira-2026-rollover" ||
         fixture.id === "single-ira-late-automatic-waiver" ||
         fixture.id === "single-ira-late-self-certification" ||
-        fixture.id === "single-ira-late-irs-ruling"
+        fixture.id === "single-ira-late-irs-ruling" ||
+        fixture.id === "single-ira-late-frozen-deposit"
       ) {
         assertEquals(result.pending.f1040.line4c_ira_rollover, true);
         assertStringIncludes(
@@ -1361,6 +1488,8 @@ for (const fixture of pdfReviewFixtures) {
             ? "Rev. Proc. 2020-46 self-certification"
             : fixture.id === "single-ira-late-irs-ruling"
             ? "private letter ruling PLR-2025-SYNTHETIC"
+            : fixture.id === "single-ira-late-frozen-deposit"
+            ? "frozen-deposit extension"
             : "2026-01-15",
         );
       }

@@ -108,3 +108,19 @@ Deno.test("Form 8888 PDF rejects amount and single-account routing conflicts", (
     "cannot also use Form 1040 direct deposit",
   );
 });
+
+Deno.test("Form 8888 PDF rejects a checksum-invalid routing number", () => {
+  assertThrows(
+    () =>
+      form8888Pdf.instances?.(
+        {
+          ...source,
+          account_2: { ...source.account_2, routing_number: "211000021" },
+        },
+        filer,
+        pending,
+      ),
+    Error,
+    "fails the banking checksum",
+  );
+});

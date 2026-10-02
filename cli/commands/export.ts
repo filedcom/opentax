@@ -10,6 +10,8 @@ import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
+import { loadForm8839Attachments } from "./form8839-attachments.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -93,7 +95,7 @@ const TRANSMISSION_ONLY_RULES = new Set([
   "R0000-229",
 ]);
 
-function isTransmissionOnlyRule(ruleNumber: string): boolean {
+export function isTransmissionOnlyRule(ruleNumber: string): boolean {
   if (TRANSMISSION_ONLY_RULES.has(ruleNumber)) return true;
   const indNumber = /^IND-(\d+)/.exec(ruleNumber);
   if (!indNumber) return false;
@@ -134,7 +136,7 @@ interface EmittedValidationScope {
   readonly returnVersion?: string;
 }
 
-function emittedValidationScope(xml: string): EmittedValidationScope {
+export function emittedValidationScope(xml: string): EmittedValidationScope {
   const prefixes = new Set<string>(ALWAYS_APPLICABLE_RULE_PREFIXES);
   const formCounts = new Map<string, number>();
   for (const match of xml.matchAll(/<(IRS[A-Za-z0-9]+) documentId=/g)) {
@@ -229,11 +231,12 @@ async function runReturnPipeline(
   }
 
   // Extract filer identity for output builders and validation.
-  const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
+  const pending = normalizeAllPending(result.pending);
+  const f1040 = pending["f1040"] ?? {};
   const filer = extractFilerIdentity(f1040);
 
   return {
-    pending: result.pending,
+    pending,
     def,
     filer,
     executorDiagnostics: result.diagnostics,
@@ -248,25 +251,18 @@ function draftXmlNotice(entries: readonly ExecutorDiagnosticEntry[]): string {
 async function addDraftWatermark(pdfBytes: Uint8Array): Promise<Uint8Array> {
   const doc = await PDFDocument.load(pdfBytes);
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  const label = "DRAFT / INCOMPLETE";
   for (const page of doc.getPages()) {
-    const { height } = page.getSize();
-    page.drawText("DRAFT / INCOMPLETE", {
-      x: 36,
-      y: height - 36,
-      size: 18,
+    const { width, height } = page.getSize();
+    const size = Math.min(36, width / 16);
+    page.drawText(label, {
+      x: (width - font.widthOfTextAtSize(label, size)) / 2,
+      y: height / 2,
+      size,
       font,
-      color: rgb(0.85, 0, 0),
+      color: rgb(0.4, 0.4, 0.4),
+      opacity: 0.14,
     });
-    page.drawText(
-      "Diagnostic review only. Not finalized or filing-ready.",
-      {
-        x: 36,
-        y: height - 58,
-        size: 9,
-        font,
-        color: rgb(0.85, 0, 0),
-      },
-    );
   }
   return doc.save();
 }
@@ -277,7 +273,11 @@ export async function exportMefCommand(
   const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
     args,
   );
-  const prepared = await def.prepareReturn(pending, filer);
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
+  const prepared = await def.prepareReturn(pending, filer, attachments);
   const xml = prepared.bundle.xml;
   validateBusinessRules(
     pending,
@@ -299,10 +299,14 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
   const prepared = args.draft && !filer
     ? undefined
-    : await def.prepareReturn(pending, filer);
+    : await def.prepareReturn(pending, filer, attachments);
   validateBusinessRules(
     pending,
     filer,

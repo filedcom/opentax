@@ -42,6 +42,22 @@ Deno.test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
   );
 });
 
+Deno.test("Schedule C MeF rejects top-level amounts that its business items do not carry", () => {
+  const cases = [
+    ["line_30_home_office", "home-office deduction"],
+    ["statutory_wages", "statutory wages"],
+    ["line_9_car_truck_expenses", "car and truck expenses"],
+    ["line_12_depletion", "depletion"],
+  ] as const;
+  for (const [key, label] of cases) {
+    assertThrows(
+      () => scheduleC.build({ schedule_cs: [item()], [key]: 100 }, { filer }),
+      Error,
+      `Schedule C top-level ${label} need business-linked source rows`,
+    );
+  }
+});
+
 Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [
@@ -112,6 +128,26 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
   );
   assertStringIncludes(xml, "<TotalExpensesAmt>10907</TotalExpensesAmt>");
   assertStringIncludes(xml, "<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>");
+});
+
+Deno.test("Schedule C MeF projects both simplified home-office areas before profit", () => {
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({
+      home_office_method: "simplified",
+      home_total_sq_ft: 1_200,
+      home_office_sq_ft: 200,
+    })],
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<HomeBusinessExpenseAmt>1000</HomeBusinessExpenseAmt>",
+  );
+  assertStringIncludes(xml, "<TotalAreaOfHomeCnt>1200</TotalAreaOfHomeCnt>");
+  assertStringIncludes(
+    xml,
+    "<HomeBusinessUseSquareFeetCnt>200</HomeBusinessUseSquareFeetCnt>",
+  );
+  assertStringIncludes(xml, "<NetProfitOrLossAmt>34235</NetProfitOrLossAmt>");
 });
 
 Deno.test("Schedule C uses the spouse proprietor identity on a joint return", () => {
@@ -245,6 +281,7 @@ Deno.test("Schedule C MeF accepts documented small-business-exempt interest", ()
 
 Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
+    schedule1: { line3_schedule_c: 29_853 },
     schedule_c: {
       schedule_cs: [
         item({
@@ -264,14 +301,14 @@ Deno.test("Schedule C emits inventory, cost of goods sold, and separate document
       ],
     },
   }, filer);
-  assertStringIncludes(xml, 'documentCnt="3"');
-  assertStringIncludes(
-    xml,
-    '<IRS1040ScheduleC documentId="IRS1040ScheduleC1">',
-  );
+  assertStringIncludes(xml, 'documentCnt="4"');
   assertStringIncludes(
     xml,
     '<IRS1040ScheduleC documentId="IRS1040ScheduleC2">',
+  );
+  assertStringIncludes(
+    xml,
+    '<IRS1040ScheduleC documentId="IRS1040ScheduleC3">',
   );
   assertStringIncludes(xml, "<CostOfGoodsSoldAmt>22950</CostOfGoodsSoldAmt>");
   assertStringIncludes(xml, "<TotalExpensesAmt>8197</TotalExpensesAmt>");

@@ -4,6 +4,14 @@ import {
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
+import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
+import {
+  assertNo2025Schedule2Line10,
+  assertNoUnsupportedSchedule2Line14,
+} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
+import { assertSection453aSchedule2Line } from "../../section453a-reconciliation.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
@@ -127,6 +135,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line15_section453a_interest",
+    pdfField: "form1[0].Page1[0].f1_26[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line16_lihtc_recapture",
     pdfField: "form1[0].Page1[0].f1_27[0]",
   },
@@ -219,7 +232,7 @@ export const schedule2Pdf: PdfFormDescriptor = {
   filerFields: [
     {
       kind: "text",
-      domainKey: "nameLine1",
+      domainKey: "nameShownOnForm1040",
       pdfField: "form1[0].Page1[0].f1_01[0]",
     },
     {
@@ -230,6 +243,13 @@ export const schedule2Pdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields(fields, allPending) {
+    assertNo2025Schedule2Line10(fields);
+    assertNoUnsupportedSchedule2Line14(fields);
+    assertSection453aSchedule2Line(
+      fields.line15_section453a_interest,
+      allPending.f453a_interest,
+      allPending.general?.taxpayer_ssn,
+    );
     const necExcise = typeof fields.line17k_golden_parachute_excise === "number"
       ? fields.line17k_golden_parachute_excise
       : 0;
@@ -317,6 +337,23 @@ export const schedule2Pdf: PdfFormDescriptor = {
       typeof fields.line17a_new_markets_credit_recapture === "number"
         ? fields.line17a_new_markets_credit_recapture
         : 0;
+    const newMarketsSource = allPending.f8874_recapture;
+    if (newMarketsSource !== undefined || newMarketsRecapture > 0) {
+      if (newMarketsSource === undefined) {
+        throw new Error(
+          "Schedule 2 PDF NMCR needs a Form 8874-B recapture source",
+        );
+      }
+      const calculated = calculateForm8874Recapture(
+        newMarketsSource as F8874RecaptureInput,
+      );
+      assertForm8874RecaptureOwners(newMarketsSource, allPending);
+      if (calculated !== newMarketsRecapture) {
+        throw new Error(
+          "Schedule 2 PDF NMCR differs from Form 8874-B recapture source",
+        );
+      }
+    }
     const recaptureCodes = [
       ...(investmentRecapture > 0 ? ["3468"] : []),
       ...(newMarketsRecapture > 0 ? ["NMCR"] : []),
@@ -381,7 +418,8 @@ export const schedule2Pdf: PdfFormDescriptor = {
       amount("line8_form5329_tax") +
       amount("line9_household_employment") +
       amount("line11_additional_medicare") +
-      amount("line12_niit") + line13 +
+      amount("line12_niit") +
+      amount("line15_section453a_interest") + line13 +
       amount("line16_lihtc_recapture") + line18 +
       amount("line19_form4255_net_epe");
     const line21 = typeof worksheet?.schedule2_line21 === "number"

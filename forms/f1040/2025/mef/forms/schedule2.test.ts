@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../../nodes/inputs/f8874/recapture_fixture.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 
@@ -47,6 +48,22 @@ function assertNotIncludes(actual: string, expected: string) {
 
 Deno.test("empty object returns empty string", () => {
   assertEquals(schedule2.build({}), "");
+});
+
+Deno.test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
+  assertThrows(
+    () => schedule2.build({ line10_homebuyer_credit_repayment: 500 }),
+    Error,
+    "line 10 is reserved",
+  );
+});
+
+Deno.test("2025 native Schedule 2 rejects unsourced dealer installment interest", () => {
+  assertThrows(
+    () => schedule2.build({ line14_section453l_interest: 120 }),
+    Error,
+    "line 14 needs",
+  );
 });
 
 Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
@@ -335,7 +352,7 @@ Deno.test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 cr
 
 Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   const source = {
-    recaptures: [{
+    recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
       investment_reference: "2022 QEI designation",
       cde_name: "Community Development Entity",
@@ -345,7 +362,7 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
       qualified_equity_investment_amount: 100_000,
       notice_credit_amount: 25_000,
       recapture_event_date: "2025-07-01",
-      recapture_event: "cde_redeemed_investment",
+      recapture_event: "cde_redeemed_investment" as const,
       prior_years: [{
         tax_year: 2024,
         original_return_due_date: "2025-04-15",
@@ -355,8 +372,8 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
       }],
       carryover_ledger_reference: "2024 QEI carryover ledger",
       carryover_vintages: [],
-    }],
-  } as const;
+    }, "Test Taxpayer")],
+  };
   const nmcr = calculateForm8874Recapture({
     recaptures: source.recaptures.map((recapture) => ({
       ...recapture,
@@ -366,7 +383,16 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   });
   const result = schedule2.build({
     line17a_new_markets_credit_recapture: nmcr,
-  }, { pending: { f8874_recapture: source } });
+  }, {
+    pending: {
+      f8874_recapture: source,
+      f1040: {
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+      },
+    },
+  });
   assertStringIncludes(
     result,
     `<RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>${nmcr}</OtherCreditsAmt></RecaptureOtherCreditsGrp>`,
@@ -384,7 +410,16 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
     () =>
       schedule2.build(
         { line17a_new_markets_credit_recapture: nmcr + 1 },
-        { pending: { f8874_recapture: source } },
+        {
+          pending: {
+            f8874_recapture: source,
+            f1040: {
+              taxpayer_first_name: "Test",
+              taxpayer_last_name: "Taxpayer",
+              taxpayer_ssn: "111223333",
+            },
+          },
+        },
       ),
     Error,
     "does not match",
@@ -465,10 +500,11 @@ Deno.test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be
 });
 
 Deno.test("source-free mapped Schedule 2 fields survive the schema-order builder", () => {
-  // Form 4255 amounts need their own source rows and are tested separately.
+  // Form 4255 and section 453A amounts need their own source rows.
   const mappings = FIELD_MAP.filter(([key]) =>
     key !== "line1d_form4255_net_epe" &&
-    key !== "line19_form4255_net_epe"
+    key !== "line19_form4255_net_epe" &&
+    key !== "line15_section453a_interest"
   );
   const fields = Object.fromEntries(mappings.map(([key]) => [key, 1]));
   const result = schedule2.build(fields);

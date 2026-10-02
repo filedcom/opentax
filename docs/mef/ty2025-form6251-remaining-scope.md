@@ -4,6 +4,44 @@ Status: coverage disposition only. This document does not turn an unsupported
 AMT situation into a supported return. The agreed full test batch, IRS XSD
 validation, filled-PDF review, and ATS acceptances have not run.
 
+## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
+
+The [2025 Form 6251 line 2g instructions](https://www.irs.gov/instructions/i6251)
+direct the filer to combine eligible specified-bond interest reported in Form
+1099-INT box 9 and the specified-bond portion of tax-exempt fund dividends
+reported in Form 1099-DIV box 13. A bounded mixed source now requires one
+reviewed, wholly specified 1099-INT box 8/9 copy and one reviewed, wholly
+specified 1099-DIV box 12/13 copy, with distinct issuer and workpaper
+references, no other PAB source or unrelated income boxes. A second bounded
+case has one separately reviewed $10,000 direct-bond allocable deduction on
+$150,000 of box 9 interest. The retained direct-bond preference is $140,000;
+adding the fund's $150,000 box 13 amount gives Form 6251 line 2g of $290,000,
+while both full receipts remain $300,000 on Form 1040 line 2a. Native
+and PDF preflight replay the copies and reconcile positive AMT to Schedule 2
+line 2 and Form 1040 line 17. The authored full-return positive and amount,
+review, duplicate-copy, line-2a, and tax-tamper fixtures await the bulk test.
+Issuer copies and review records are references, not authenticated bytes;
+other mixed expense and payer combinations remain open.
+
+## Two distinct bonds reported by one 1099-INT issuer (2026-10-01, unrun)
+
+The bounded Form 6251 line 2g path now accepts two separately issued 1099-INT
+copies with the same verified payer name and TIN when they identify distinct
+specified private-activity bonds. Each copy must have a distinct issued-copy
+reference, bond identifier, eligibility review, and allocable-deduction
+workpaper and expense record. Box 8 must equal box 9 on each copy; the retained
+source node subtracts each reviewed deduction once. The [2025 Form 6251 line
+2g instructions](https://www.irs.gov/instructions/i6251) require specified
+bond interest, after qualifying allocable deductions, and the [1099-INT
+instructions](https://www.irs.gov/instructions/i1099int) include box 9 in box
+8. Native MeF and PDF replay both copies and reconcile Form 6251 line 2g,
+Schedule 2 line 2, Form 1040 lines 2a and 17. The authored case has $200,000
+tax-exempt interest and two $10,000 allocable deductions, producing $180,000
+on line 2g. Positive and bond identity, copy, deduction, and final-tax tamper
+fixtures are authored but unrun. Reviewed references do not authenticate the
+issued statements or expense records; more than two copies and mixed PAB
+sources remain open.
+
 ## Mixed-term gain offset with separately capped losses (2026-10-01, unrun)
 
 The complete Form 8949 audit now admits identified short-term gains and
@@ -183,9 +221,15 @@ A nonzero Form 6251 line 2d now replays the retained Schedule C property-level
 AMT depletion workpapers at native and PDF export. It requires each business's
 regular Schedule C line 12 to equal its property regular allowances, rejects
 duplicate property references and passive or at-risk-limited activities, and
-matches the signed regular-minus-AMT total to line 2d. The source, native, and
-PDF fixtures await the agreed bulk pass. Reviewed figures are still not bound to
-workpaper bytes; other depletion sources and activity refigures remain open.
+matches the signed regular-minus-AMT total to line 2d. A mixed two-property
+case now retains a positive adjustment from one property and a negative
+adjustment from another, then checks total Schedule C profit on Schedule 1 and
+positive AMT on Schedule 2 and Form 1040 at both native and PDF export. The
+[2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251) direct
+the line 2d difference to be negative when the AMT depletion deduction exceeds
+the regular deduction. The source, native, and PDF fixtures await the agreed
+bulk pass. Reviewed figures are still not bound to workpaper bytes; other
+depletion sources, zero-AMT filings, and activity refigures remain open.
 
 # Property depreciation replay (staged, unrun)
 
@@ -195,13 +239,44 @@ native and PDF export. A direct amount without its reviewed workpaper rejects.
 The source and tamper fixtures await the combined pass; the underlying asset
 records and other AMT depreciation methods remain open.
 
+# Two current-year mining businesses on line 2q (written, unrun)
+
+The [2025 Form 6251 line 2q instructions](https://www.irs.gov/instructions/i6251)
+require mining exploration and development costs deducted in full for regular
+tax to be amortized over ten years for AMT. The bounded current-year Schedule C
+route now accepts two distinct, materially participating mine businesses with
+one separately named Part V expense and reviewed workpaper per mine. Intake
+requires distinct business references, property references, and workpaper
+references. The calculator sums each regular expense less its first ten-year
+AMT deduction into Form 6251 line 2q. Native MeF and PDF replay both source
+rows, compare the combined line 2q amount and Schedule 1 line 3 business
+income, and retain the Schedule 2/Form 1040 AMT join. Positive and expense,
+property-identity, and return-tamper fixtures are authored but unrun.
+
+The same reviewed-workpaper route now accepts more than two distinct current-year
+mine businesses without a count cap. An authored four-mine return has separate
+$100,000, $50,000, $30,000, and $20,000 expenses; the $200,000 regular
+deduction less $20,000 first-year AMT amortization yields Form 6251 line 2q of
+$180,000. Native and PDF replay each mine, compare Schedule 1 business income,
+and join positive AMT to Schedule 2 and Form 1040. Full-return positive and
+expense, property, Schedule 1, Schedule 2, and Form 1040 tamper cases are
+authored for the deferred bulk pass.
+
+Earlier-year amortization, multiple claims per business, other Schedule C
+businesses in the same return, property losses, source-document authentication,
+and full XSD/PDF/IRS filing gates remain open.
+
 # Trust K-1 code A replay (staged, unrun)
 
 Native and PDF Form 6251 line 2j now replays the signed total from distinct
 retained trust K-1 box 12 code A sources. Each source must name its trust,
-issued-copy reference and EIN, and affirm that other box 12 AMT codes are
-absent. Omitting or changing a source rejects; the focused fixtures await the
-bulk pass. This does not authenticate issued K-1 bytes or model codes B–I.
+issued-copy reference, EIN and matching Form 1040 beneficiary SSN, and affirm
+that other box 12 AMT codes are absent. A mixed positive and negative two-copy
+case now checks the signed line 2j sum and joins positive AMT to Schedule 2 and
+Form 1040 at native and PDF export. The [2025 beneficiary K-1 instructions](https://www.irs.gov/instructions/i1041sk1)
+assign code A to Form 6251 line 2j. Omitting or changing a source rejects; the
+focused fixtures await the bulk pass. This does not authenticate issued K-1
+bytes or model codes B–I or zero-AMT filings.
 
 # Private-activity-bond replay (staged, unrun)
 

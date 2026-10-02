@@ -150,3 +150,57 @@ export function assertFullyRecapturedInvestment1245Return(
     );
   }
 }
+
+/** One fully recaptured and one partly recaptured investment sale. */
+export function assertMixedInvestment1245Return(
+  calculated: ReadonlyArray<
+    ReturnType<typeof calculateInvestment1245Disposition>
+  >,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (
+    calculated.length !== 2 ||
+    calculated.filter((sale) => sale.excessCapitalGain === 0).length !== 1 ||
+    calculated.filter((sale) => sale.excessCapitalGain > 0).length !== 1
+  ) return;
+  const ordinary = calculated.reduce(
+    (sum, sale) => sum + sale.ordinaryRecapture,
+    0,
+  );
+  const excess = calculated.reduce(
+    (sum, sale) => sum + sale.excessCapitalGain,
+    0,
+  );
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const scheduleD = pending.schedule_d as Record<string, unknown> | undefined;
+  const form1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const w2 = pending.w2 as Record<string, unknown> | undefined;
+  const wageStatements = w2?.w2s;
+  const wages = Array.isArray(wageStatements) && wageStatements.length === 1
+    ? (wageStatements[0] as Record<string, unknown>).box1_wages
+    : undefined;
+  const adjustments = form1040?.line10_adjustments ?? 0;
+  if (
+    !schedule1 || !scheduleD || !form1040 ||
+    typeof wages !== "number" || !Number.isSafeInteger(wages) || wages <= 0 ||
+    schedule1.line4_other_gains !== ordinary ||
+    typeof schedule1.line10_total_additional_income !== "number" ||
+    scheduleD.print_line16_combined !== excess ||
+    form1040.line1a_wages !== wages ||
+    form1040.line1z_total_wages !== wages ||
+    form1040.line7_capital_gain !== excess ||
+    (form1040.line7a_cap_gain_distrib ?? 0) !== 0 ||
+    form1040.line8_additional_income !==
+      schedule1.line10_total_additional_income ||
+    typeof form1040.line9_total_income !== "number" ||
+    form1040.line9_total_income !==
+      wages + schedule1.line10_total_additional_income + excess ||
+    typeof adjustments !== "number" ||
+    !Number.isSafeInteger(adjustments) ||
+    form1040.line11_agi !== form1040.line9_total_income - adjustments
+  ) {
+    throw new Error(
+      "Form 4797 mixed investment recapture must reconcile one W-2, Schedule 1, Schedule D and final Form 1040",
+    );
+  }
+}

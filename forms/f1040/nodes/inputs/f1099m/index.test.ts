@@ -27,10 +27,30 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     payer_name: "Test Payer",
     payer_tin: "123456789",
     recipient_tin: "987654321",
+    source_document_reference: "issued-2025-1099misc-test-copy",
     farm_id: "farm-1",
     schedule_c_business_reference: "business-1",
     ...overrides,
   };
+}
+
+function reviewed409aItem(
+  amount: number,
+  interestAmount = 0,
+  overrides: Record<string, unknown> = {},
+) {
+  return minimalItem({
+    box3_other_income: amount,
+    box3_other_income_routing: "other_income",
+    box3_other_income_description: "Section 409A deferred compensation",
+    box15_nqdc: amount,
+    box15_409a_review: {
+      included_in_box3: true,
+      interest_amount: interestAmount,
+      interest_workpaper_reference: "reviewed 2025 section 409A interest",
+    },
+    ...overrides,
+  });
 }
 
 function compute(items: z.infer<typeof itemSchema>[]) {
@@ -47,6 +67,34 @@ function miscReceiptTotal(result: ReturnType<typeof compute>): number {
   return (fieldsOf(result.outputs, scheduleC)?.f1099m_receipt_sources ?? [])
     .reduce((sum, source) => sum + source.amount, 0);
 }
+
+Deno.test("1099-MISC repeated identified copy cannot double income or withholding", () => {
+  const issued = minimalItem({
+    account_number: "ACCT-1",
+    box3_other_income: 300,
+    box3_other_income_routing: "prizes_awards",
+    box4_federal_withheld: 20,
+  });
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        box3_other_income: 350,
+        box4_federal_withheld: 25,
+      }]),
+    Error,
+    "repeats the same payer, recipient, account",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, account_number: "ACCT-2" },
+  ]);
+  assertEquals(
+    fieldsOf(distinct.outputs, schedule1)?.line8i_prizes_awards,
+    600,
+  );
+  assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
+});
 
 Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
   const review = {
@@ -547,6 +595,33 @@ Deno.test("f1099m.compute: box8_substitute_payments routes to schedule1 line8z_s
     fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
     300,
   );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.f1099m_box8_substitute_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      amount: 300,
+    }],
+  );
+});
+
+Deno.test("f1099m.compute: two box 8 payers retain separate source rows", () => {
+  const result = compute([
+    minimalItem({ box8_substitute_payments: 300 }),
+    minimalItem({
+      payer_name: "Second Broker",
+      payer_tin: "234567890",
+      box8_substitute_payments: 450,
+    }),
+  ]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_substitute_payments, 750);
+  assertEquals(fields.f1099m_box8_substitute_sources?.length, 2);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
+    750,
+  );
 });
 
 // Box 8 — zero value produces no schedule1 substitute_payments output
@@ -559,8 +634,28 @@ Deno.test("f1099m.compute: box8_substitute_payments = 0 produces no schedule1 ou
 Deno.test("f1099m.compute: box9_crop_insurance retains its farm source", () => {
   const result = compute([minimalItem({ box9_crop_insurance: 7500 })]);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 7500 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 7500,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
+    },
   ]);
+});
+
+Deno.test("1099-MISC positive crop insurance needs an issued-copy reference", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box9_crop_insurance: 7500,
+        source_document_reference: undefined,
+      })]),
+    Error,
+    "1099-MISC crop insurance needs a named farm and issued-copy reference",
+  );
 });
 
 // Box 9 — zero value produces no Schedule F output
@@ -636,12 +731,65 @@ Deno.test("f1099m.compute: box11_fish_purchased = 0 produces no schedule_c outpu
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-// Box 15 — NQDC § 409A failure → Schedule 1 Line 8z + Schedule 2 Line 17h (exact values)
-Deno.test("f1099m.compute: box15_nqdc routes to schedule1 line8z_nqdc and schedule2 line17h at 20%", () => {
-  const result = compute([minimalItem({ box15_nqdc: 50000 })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 50000);
-  assertEquals(fieldsOf(result.outputs, agi_aggregator)!.line8z_nqdc, 50000);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10000);
+// Box 15 reports a §409A tax base already included in reviewed box 3 income.
+Deno.test("f1099m.compute: reviewed box 15 taxes box 3 income once with interest", () => {
+  const result = compute([reviewed409aItem(50_000, 75)]);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_nqdc,
+    undefined,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    50_000,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10_075);
+});
+
+Deno.test("f1099m.compute: externally sourced box 15 adds only Schedule 2 tax", () => {
+  const external = minimalItem({
+    box15_nqdc: 1_000,
+    box15_409a_review: {
+      income_source_form: "w2",
+      income_source_document_reference: "issued W-2 copy",
+      income_source_payer_tin: "123456789",
+      income_source_recipient_tin: "987654321",
+      income_inclusion_workpaper_reference: "reviewed W-2 inclusion",
+      interest_amount: 7,
+      interest_workpaper_reference: "reviewed 409A interest",
+    },
+  });
+  const result = compute([external]);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+  assertEquals(fieldsOf(result.outputs, agi_aggregator), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 207);
+  assertThrows(() =>
+    compute([{
+      ...external,
+      box3_other_income: 1_000,
+      box3_other_income_routing: "other_income",
+      box3_other_income_description: "unreviewed duplicate",
+    }])
+  );
+});
+
+Deno.test("f1099m.compute: box 15 without matched income and interest review rejects", () => {
+  for (
+    const item of [
+      minimalItem({ box15_nqdc: 1_000 }),
+      reviewed409aItem(1_000, 0, { box3_other_income: 999 }),
+      reviewed409aItem(1_000, 0, {
+        box3_other_income_routing: "prizes_awards",
+      }),
+      reviewed409aItem(1_000, 0, { source_document_reference: undefined }),
+    ]
+  ) {
+    assertThrows(
+      () => compute([item]),
+      Error,
+      "1099-MISC box 15 needs identified income already included once",
+    );
+  }
 });
 
 // Box 15 — zero value produces no outputs
@@ -710,13 +858,11 @@ Deno.test("f1099m.compute: box1_rents summed across multiple schedule_e items", 
 
 Deno.test("f1099m.compute: box15_nqdc 20% excise computed correctly for aggregated amount", () => {
   const result = compute([
-    minimalItem({
-      box15_nqdc: 20000,
+    reviewed409aItem(20000, 0, {
       payer_name: "CorpA",
       payer_tin: "111111111",
     }),
-    minimalItem({
-      box15_nqdc: 30000,
+    reviewed409aItem(30000, 0, {
       payer_name: "CorpB",
       payer_tin: "222222222",
     }),
@@ -796,12 +942,20 @@ Deno.test("f1099m.compute: box5_fishing_boat at $600 threshold routes to schedul
 Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to schedule_f", () => {
   const result = compute([minimalItem({ box9_crop_insurance: 600 })]);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 600 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 600,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
+    },
   ]);
 });
 
 Deno.test("f1099m.compute: box15_nqdc 20% excise equals exactly 20% of amount", () => {
-  const result = compute([minimalItem({ box15_nqdc: 10000 })]);
+  const result = compute([reviewed409aItem(10000)]);
   // 20% of 10,000 = 2,000 (§409A excise rate)
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 2000);
 });
@@ -951,6 +1105,10 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election retains it
       farm_id: "farm-1",
       kind: "1099m_crop_insurance",
       amount: 7500,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
       deferred: true,
     },
   ]);
@@ -992,14 +1150,18 @@ Deno.test("f1099m.compute: box3_other_income excluded (physical injury IRC §104
   assertEquals(!prizes && !other, true);
 });
 
-// Box 15 — NQDC produces BOTH ordinary income and excise tax simultaneously
-Deno.test("f1099m.compute: box15_nqdc produces both schedule1 and schedule2 outputs", () => {
-  const result = compute([minimalItem({ box15_nqdc: 40000 })]);
+// Box 15 supplies tax on box 3 income without a second income deposit.
+Deno.test("f1099m.compute: box15_nqdc taxes same-copy box 3 income once", () => {
+  const result = compute([reviewed409aItem(40000)]);
   const s1 = findOutput(result, "schedule1");
   const s2 = findOutput(result, "schedule2");
   assertEquals(s1 !== undefined, true);
   assertEquals(s2 !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 40000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    40000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 8000); // 20% of 40,000
 });
 
@@ -1108,6 +1270,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       farm_id: "farm-1",
       schedule_c_business_reference: "business-1",
       account_number: "ACC-001",
+      source_document_reference: "issued-2025-mega-1099misc",
       box1_rents: 18000,
       box2_royalties: 3600,
       box3_other_income: 750,
@@ -1126,7 +1289,6 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       box11_fish_purchased: 4500,
       box12_section_409a_deferrals: 10000, // informational only
       box13_fatca: false,
-      box15_nqdc: 25000,
       box16_state_tax_withheld: 500,
       box18_state_income: 18000,
     },
@@ -1174,7 +1336,15 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
   const schedF = findOutput(result, "schedule_f");
   assertEquals(schedF !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 8000 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 8000,
+      payer_name: "Mega Payer Inc",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-mega-1099misc",
+    },
   ]);
 
   // Box 10's $2,000 fee is linked to a specific Schedule C business.
@@ -1185,12 +1355,6 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
     amount: 2000,
     allocation_review_reference: "2025 settlement ledger",
   }]);
-
-  // box15_nqdc → schedule1 line8z_nqdc + schedule2 line17h_nqdc_tax
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 25000);
-  const sched2 = findOutput(result, "schedule2");
-  assertEquals(sched2 !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 5000); // 20% of 25,000
 
   // box12, box13, box7 produce no additional outputs (informational)
   // box16/18 produce no federal outputs (state-only)

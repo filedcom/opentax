@@ -25,7 +25,9 @@ export async function appendSchedule1AVehicleStatement(
   const sourceRows = z.array(rowSchema).min(3).max(50).parse(
     fields.line22_vehicles,
   );
-  if (!filer?.nameLine1 || !filer.primarySSN) {
+  const first = filer?.firstNameWithInitial?.trim();
+  const last = filer?.lastName?.trim();
+  if (!first || !last || !filer?.primarySSN) {
     throw new Error("Schedule 1-A line 22 statement needs filer identity");
   }
   const attachedInterest = rows.reduce(
@@ -68,7 +70,7 @@ export async function appendSchedule1AVehicleStatement(
       size: 11,
       font: bold,
     });
-    page.drawText(`Name: ${filer.nameLine1}`, {
+    page.drawText(`Name: ${first} ${last}`, {
       x: LEFT,
       y: 729,
       size: 9,

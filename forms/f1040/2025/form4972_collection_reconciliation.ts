@@ -170,7 +170,22 @@ export function reconcileForm4972Collection(
             fields.capital_gain_amount <= 0)) ||
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
-        (fields.box6_nua ?? 0) !== 0 ||
+        (typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
+          (sources.length !== 1 || fields.elect_include_nua !== true ||
+            fields.elect_10yr_averaging !== true ||
+            (fields.elect_capital_gain === true &&
+              (typeof fields.capital_gain_amount !== "number" ||
+                fields.capital_gain_amount <= 0 ||
+                typeof fields.lump_sum_amount !== "number" ||
+                !Number.isSafeInteger(fields.lump_sum_amount) ||
+                !Number.isSafeInteger(fields.capital_gain_amount) ||
+                typeof fields.box6_nua !== "number" ||
+                !Number.isSafeInteger(fields.box6_nua) ||
+                !Number.isSafeInteger(
+                  fields.box6_nua * fields.capital_gain_amount /
+                    fields.lump_sum_amount,
+                ))) ||
+            sources[0].box6_nua !== fields.box6_nua)) ||
         (fields.annuity_actuarial_value ?? 0) !== 0 ||
         (fields.federal_estate_tax ?? 0) !== 0 ||
         (fields.death_benefit_exclusion ?? 0) !== 0

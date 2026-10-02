@@ -38,7 +38,7 @@ Deno.test("Form 8839 MeF: receipt and decree identifiers do not bypass return re
         children: [sourcedChild],
       }),
     Error,
-    "source-verified adoption eligibility",
+    "reviewed prepared return route",
   );
 });
 
@@ -50,7 +50,7 @@ Deno.test("Form 8839 MeF: typed source facts still need reviewed contents and fi
         filing_status: FilingStatus.Single,
       }),
     Error,
-    "source-verified adoption eligibility",
+    "reviewed prepared return route",
   );
 });
 
@@ -58,6 +58,6 @@ Deno.test("Form 8839 MeF: employer benefit fails closed", () => {
   assertThrows(
     () => form8839.build({ adoption_benefits: 4_000 }),
     Error,
-    "source-verified adoption eligibility",
+    "employer adoption benefits",
   );
 });

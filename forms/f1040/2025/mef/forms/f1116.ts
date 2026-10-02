@@ -24,8 +24,11 @@ import {
 import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileForm1116TreasuryInterest } from "../../form1116_1099int_treasury_reconciliation.ts";
+import { reconcileForm1116DomesticInterest } from "../../form1116_domestic_interest.ts";
 import { reconcileForm1116MultiForeignInterest } from "../../form1116_multi_foreign_interest.ts";
 import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividend.ts";
+import { reconcileForm1116TwoForeignDividends } from "../../form1116_two_foreign_dividends.ts";
+import { reconcileForm1116TwoCountryDividends } from "../../form1116_two_country_dividends.ts";
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
@@ -413,6 +416,10 @@ function buildIRS1116(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
+  reconcileForm1116DomesticInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
   reconcileForm1116MultiForeignInterest(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
@@ -441,10 +448,20 @@ function buildIRS1116(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
-  reconcileForm1116ForeignDividend(
+  const twoDividend = reconcileForm1116TwoForeignDividends(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
+  const twoCountryDividend = reconcileForm1116TwoCountryDividends(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  if (!twoDividend && !twoCountryDividend) {
+    reconcileForm1116ForeignDividend(
+      fields as unknown as Readonly<Record<string, unknown>>,
+      (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+    );
+  }
   const k3Items = summaries.flatMap((summary) => summary.items).filter((item) =>
     item.schedule_k3_line12_reduction !== undefined ||
     item.partnership_k3_passive_interest !== undefined ||
@@ -808,6 +825,24 @@ function buildIRS1116(
       line1 !== claimedCredit && !(claimedCredit === 0 && line1 === undefined)
     ) {
       throw new Error("Form 1116 credit differs from Schedule 3 line 1");
+    }
+    const line8 = schedule3 && typeof schedule3 === "object" &&
+        "line8_total" in schedule3
+      ? schedule3.line8_total
+      : undefined;
+    const return1040 = context.pending.f1040;
+    const line20 = return1040 && typeof return1040 === "object" &&
+        "line20_nonrefundable_credits" in return1040
+      ? return1040.line20_nonrefundable_credits
+      : undefined;
+    if (
+      (line8 !== undefined || line20 !== undefined) &&
+      (typeof line8 !== "number" || typeof line20 !== "number" ||
+        line20 !== line8 || line20 < claimedCredit)
+    ) {
+      throw new Error(
+        "Form 1116 finalized credit differs from Schedule 3 line 8 and Form 1040 line 20",
+      );
     }
   }
   const partIV = [

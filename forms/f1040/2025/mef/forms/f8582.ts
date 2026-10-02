@@ -13,6 +13,7 @@ import {
   computePropertyNet,
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
+  qualifiedFirstYearRetainedPropertySale,
   qualifiedRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
@@ -94,6 +95,19 @@ function linkedActivities(context: MefBuildContext): Array<{
   ) {
     throw new Error(
       "Form 8582 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+    );
+  }
+  if (
+    scheduleE.schedule_es.some((item) =>
+      (item.passive_property_sales?.some((sale) =>
+        sale.entire_activity_interest_disposed === false
+      ) ?? false) &&
+      (item.prior_unallowed_passive_operating ?? 0) === 0 &&
+      !qualifiedFirstYearRetainedPropertySale(item)
+    )
+  ) {
+    throw new Error(
+      "Form 8582 retained first-year sale needs matching activity acquisition, closing, and current loss sources",
     );
   }
   if (
@@ -493,6 +507,57 @@ function buildOtherPassive(
       );
     }
   }
+  // The sole first-year rental retains its activity after a short-held Part II
+  // property sale. Its ordinary gain uses only the current rental loss; the
+  // remaining loss stays suspended under the same durable activity ID.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net < 0 &&
+    activities[0].prior_unallowed_operating === 0 &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 1 && saleGains[0].part === "II" &&
+    saleGains[0].entire_activity_interest_disposed === false &&
+    saleGains[0].gain > 0 &&
+    saleGains[0].gain < -activities[0].current_net
+  ) {
+    const pending = context?.pending;
+    const scheduleE = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const property = scheduleE.success &&
+        scheduleE.data.schedule_es.length === 1
+      ? scheduleE.data.schedule_es[0]
+      : undefined;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const gain = saleGains[0].gain;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !property || !qualifiedFirstYearRetainedPropertySale(property) ||
+      !w2.success || wages === undefined || !schedule1 || !f1040 ||
+      pending?.f4835 !== undefined ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      limit.allowed !== gain ||
+      limit.suspended !== -activities[0].current_net - gain ||
+      schedule1.line4_other_gains !== gain ||
+      schedule1.line5_schedule_e !== -gain ||
+      (schedule1.line10_total_additional_income ?? 0) !== 0 ||
+      (f1040.line7_capital_gain ?? 0) !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 retained Part II sale must reconcile its first-year rental, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   // One current Form 4835 loss offset by one unrelated Schedule E passive
   // rental profit must reach the finalized return exactly once. This narrow
   // no-prior, no-sale route has no special rental allowance.
@@ -523,7 +588,8 @@ function buildOtherPassive(
       : 0;
     if (
       (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
-      limit.allowed !== Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
+      limit.allowed !==
+        Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
       schedule1.line5_schedule_e !== net ||
       (f1040.line8_additional_income ?? 0) !== net ||
       (f1040.line1z_total_wages ?? 0) !== wages ||
@@ -531,6 +597,169 @@ function buildOtherPassive(
     ) {
       throw new Error(
         "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // A current Form 4835 passive profit may release the same amount of an
+  // unrelated Schedule E rental's current loss. Keep the remainder under the
+  // rental activity ID and reconcile the net zero Schedule 1/1040 result.
+  const farmProfit = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net > 0
+  );
+  const rentalLoss = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  if (
+    activities.length === 2 && farmProfit && rentalLoss &&
+    farmProfit.current_net < -rentalLoss.current_net &&
+    activities.every((activity) =>
+      activity.activity_type === "B" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const farmSource = form4835InputSchema.safeParse(pending?.f4835);
+    const rentalSource = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !farmSource.success || farmSource.data.f4835s.length !== 1 ||
+      farmSource.data.f4835s[0].some_investment_not_at_risk !== false ||
+      !rentalSource.success || rentalSource.data.schedule_es.length !== 1 ||
+      rentalSource.data.schedule_es[0].some_investment_not_at_risk !== false ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      wages === undefined || !Number.isSafeInteger(wages) ||
+      !f1040 || !schedule1 ||
+      limit.allowed !== farmProfit.current_net ||
+      limit.suspended !== -rentalLoss.current_net - farmProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-profit/rental-loss offset must reconcile both source activities, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // The same farm profit can be shared between two unrelated Schedule E
+  // losses. Part VII allocates the suspended balance by each rental's loss.
+  const twoRentalLosses = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  const twoRentalLossTotal = twoRentalLosses.reduce(
+    (sum, activity) => sum - activity.current_net,
+    0,
+  );
+  if (
+    activities.length === 3 && farmProfit &&
+    twoRentalLosses.length === 2 &&
+    farmProfit.current_net < twoRentalLossTotal &&
+    activities.every((activity) =>
+      activity.activity_type === "B" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const farmSource = form4835InputSchema.safeParse(pending?.f4835);
+    const rentalSource = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !farmSource.success || farmSource.data.f4835s.length !== 1 ||
+      farmSource.data.f4835s[0].some_investment_not_at_risk !== false ||
+      !rentalSource.success || rentalSource.data.schedule_es.length !== 2 ||
+      rentalSource.data.schedule_es.some((item) =>
+        item.some_investment_not_at_risk !== false
+      ) ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      wages === undefined || !Number.isSafeInteger(wages) ||
+      !f1040 || !schedule1 ||
+      limit.allowed !== farmProfit.current_net ||
+      limit.suspended !== twoRentalLossTotal - farmProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-profit/two-rental allocation must reconcile both loss sources, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // Two separate share-rent farms can use one other-passive rental's current
+  // profit. Reconcile the combined limit here; Part VII and each Form 4835
+  // retain their own activity-ID allocation below.
+  const farmLosses = activities.filter((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const farmSource = form4835InputSchema.safeParse(context?.pending?.f4835);
+  const rentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && farmLosses.length === 2 && rentalProfit &&
+    rentalProfit.current_net < -farmLosses.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 2 &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 1 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    if (!pending) {
+      throw new Error("Form 8582 two-farm passive offset needs source context");
+    }
+    const w2 = pending.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
+    const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
+    if (
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !== rentalProfit.current_net ||
+      limit.suspended !==
+        -farmLosses.reduce((sum, activity) => sum + activity.current_net, 0) -
+          rentalProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 two-farm passive offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
       );
     }
   }
@@ -595,6 +824,56 @@ function buildOtherPassive(
     ) {
       throw new Error(
         "Form 8582 three-rental passive offset must reconcile Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // One at-risk share-rent farm loss may use the current profit of two
+  // separately identified other-passive rentals. Their combined allowed
+  // amount must cancel on the final return while the farm retains its PAL.
+  if (
+    activities.length === 3 && farmLosses.length === 1 &&
+    scheduleEProfits.length === 2 &&
+    farmLosses[0].current_net < -scheduleEProfits.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 1 &&
+    farmSource.data.f4835s[0].some_investment_not_at_risk === false &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 2 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    const profits = scheduleEProfits.reduce(
+      (sum, activity) => sum + activity.current_net,
+      0,
+    );
+    if (
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      limit.suspended !== -farmLosses[0].current_net - profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 one-farm/two-rental offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
       );
     }
   }
@@ -1002,6 +1281,61 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       filingStatus: input.filing_status,
       mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
     });
+    // At or above the single-filer phaseout ceiling, a first-year active
+    // rental's retained Part II gain may release only an equal current loss.
+    // The remaining rental loss stays suspended under its activity ID.
+    if (
+      activities.length === 1 && activities[0].activity_type === "A" &&
+      activities[0].reporting_form === "schedule_e" &&
+      activities[0].current_net < 0 &&
+      activities[0].prior_unallowed_operating === 0 &&
+      activities[0].prior_unallowed_4797_part1 === 0 &&
+      activities[0].prior_unallowed_4797_part2 === 0 &&
+      saleGains.length === 1 && saleGains[0].part === "II" &&
+      saleGains[0].entire_activity_interest_disposed === false &&
+      saleGains[0].gain > 0 &&
+      saleGains[0].gain < -activities[0].current_net
+    ) {
+      const pending = context?.pending;
+      const scheduleE = scheduleEInputSchema.safeParse(pending?.schedule_e);
+      const property = scheduleE.success &&
+          scheduleE.data.schedule_es.length === 1
+        ? scheduleE.data.schedule_es[0]
+        : undefined;
+      const w2 = w2InputSchema.safeParse(pending?.w2);
+      const schedule1 = pending?.schedule1 as
+        | Record<string, unknown>
+        | undefined;
+      const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+      const gain = saleGains[0].gain;
+      const wages = w2.success && w2.data.w2s.length === 1
+        ? w2.data.w2s[0].box1_wages
+        : undefined;
+      if (
+        input.filing_status !== "single" || magi < 150_000 ||
+        !property || property.activity_type !== "A" ||
+        !qualifiedFirstYearRetainedPropertySale(property) ||
+        !w2.success || wages === undefined || !schedule1 || !f1040 ||
+        pending?.f4835 !== undefined ||
+        pending?.k1_partnership !== undefined ||
+        pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+        limit.allowed !== gain ||
+        limit.suspended !== -activities[0].current_net - gain ||
+        schedule1.line4_other_gains !== gain ||
+        schedule1.line5_schedule_e !== -gain ||
+        (schedule1.line10_total_additional_income ?? 0) !== 0 ||
+        (f1040.line7_capital_gain ?? 0) !== 0 ||
+        (f1040.line8_additional_income ?? 0) !== 0 ||
+        f1040.line1z_total_wages !== wages ||
+        f1040.line9_total_income !== wages ||
+        (f1040.line10_adjustments ?? 0) !== 0 ||
+        f1040.line11_agi !== wages
+      ) {
+        throw new Error(
+          "Form 8582 active retained Part II sale must reconcile its first-year rental, phaseout, Schedule 1 and final Form 1040",
+        );
+      }
+    }
     const losses = activities.map((activity) =>
       Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
       activity.prior_unallowed_4797_part1 +

@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -8,7 +11,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // TY2025 — Form 8288/8288-A: FIRPTA Withholding
 // Under IRC §1445, when a foreign person disposes of US real property, the buyer must
 // withhold a percentage of the gross sales price. The foreign seller claims the withheld
-// amount as a credit against US tax liability (Form 1040 Line 25b).
+// amount as a credit against US tax liability (Form 1040 Line 25c).
 // Reg. §1.1445-1; Rev. Proc. 2000-35.
 
 // FIRPTA withholding rates:
@@ -37,10 +40,26 @@ export const itemSchema = z.object({
   buyer_tin: z.string(),
   // Date of disposition (Form 8288-A line 7)
   disposition_date: z.string(),
+  // Seller identification and the IRS-stamped Copy B supporting the credit.
+  seller_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  stamped_copy_b_reference: z.string().trim().min(1).optional(),
 });
 
 export const inputSchema = z.object({
   f8288s: z.array(itemSchema).min(1),
+}).superRefine(({ f8288s }, ctx) => {
+  const references = new Set<string>();
+  f8288s.forEach((item, index) => {
+    const reference = item.stamped_copy_b_reference;
+    if (reference && references.has(reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f8288s", index, "stamped_copy_b_reference"],
+        message: "The same stamped Form 8288-A Copy B cannot be claimed twice",
+      });
+    }
+    if (reference) references.add(reference);
+  });
 });
 
 type F8288Item = z.infer<typeof itemSchema>;
@@ -53,8 +72,8 @@ function totalWithheld(items: F8288Items): number {
 function f1040Output(items: F8288Items): NodeOutput[] {
   const withheld = totalWithheld(items);
   if (withheld === 0) return [];
-  // FIRPTA withholding is a payment credit against tax — flows to Form 1040 Line 25b
-  return [output(f1040, { line25b_withheld_1099: withheld })];
+  // Form 8288-A is an "other form" for 2025 Form 1040 line 25c.
+  return [output(f1040, { line25c_other_withheld: withheld })];
 }
 
 class F8288Node extends TaxNode<typeof inputSchema> {

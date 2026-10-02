@@ -1,11 +1,17 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
+import {
+  assertForm1099gRtaaSources,
+  assertForm1099gTaxableGrantTotal,
+} from "../../../nodes/inputs/f1099g/index.ts";
+import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
+import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_received/index.ts";
 
 export interface Fields {
   form1099k_reported_error_or_loss?: number | null;
@@ -88,7 +94,6 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
   ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
-  ["line8z_nqdc", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
   ["line9_total_other_income", "TotalOtherIncomeAmt"],
   ["line10_total_additional_income", "TotalAdditionalIncomeAmt"],
@@ -114,6 +119,19 @@ function buildIRS1040Schedule1(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  const alimony = assertTaxableAlimonySchedule1(
+    fields.line2a_alimony_received,
+    context?.pending?.alimony_received,
+    context?.filer
+      ? [
+        context.filer.primarySSN,
+        ...(context.filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+            context.filer.spouse?.ssn
+          ? [context.filer.spouse.ssn]
+          : []),
+      ]
+      : undefined,
+  );
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (key === "line5_schedule_e" && Array.isArray(value)) {
@@ -193,6 +211,19 @@ function buildIRS1040Schedule1(
     }
     return element(tag, value);
   });
+  if (alimony) {
+    children.splice(
+      2,
+      0,
+      ...alimony.agreements.map((agreement) =>
+        elements("AlimonyReceivedGrp", [
+          element("AlimonyReceivedAmt", agreement.amount),
+          element("DivorceOrSeparationAgreementDt", agreement.agreementMonth),
+        ])
+      ),
+      element("TotalAlimonyReceivedAmt", alimony.amount),
+    );
+  }
   return elements("IRS1040Schedule1", children);
 }
 
@@ -201,6 +232,19 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (fields.line8z_nqdc !== undefined) {
+      throw new Error(
+        "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",
+      );
+    }
+    if (
+      fields.line8d_foreign_housing_deduction !== undefined &&
+      fields.line8d_foreign_housing_deduction !== 0
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction needs sourced Schedule 1 line 24j; it cannot be added to line 8d",
+      );
+    }
     if (
       (fields.line8n_section951a_inclusion ?? 0) > 0 ||
       (fields.line8o_section951aa_inclusion ?? 0) > 0
@@ -233,6 +277,58 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
         context?.pending?.f1098,
         recipients,
         fields.line8z_f1098_interest_recovery ?? 0,
+      );
+    }
+    if (
+      context?.pending?.f1099g !== undefined ||
+      (fields.line8z_rtaa ?? 0) > 0 ||
+      fields.f1099g_rtaa_sources !== undefined ||
+      (fields.line8z_taxable_grants ?? 0) !== 0 ||
+      fields.f1099g_taxable_grant_sources !== undefined
+    ) {
+      const filer = context?.filer;
+      if (!filer) throw new Error("Schedule 1 RTAA needs filer identity");
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertForm1099gRtaaSources(
+        context?.pending?.f1099g,
+        fields.f1099g_rtaa_sources,
+        fields.line8z_rtaa ?? 0,
+        recipients,
+      );
+      assertForm1099gTaxableGrantTotal(
+        context?.pending?.f1099g,
+        fields.f1099g_taxable_grant_sources,
+        fields.line8z_taxable_grants ?? 0,
+        recipients,
+      );
+    }
+    if (
+      context?.pending?.k1_s_corp !== undefined ||
+      (fields.line8z_k1_s_corp_tax_benefit_recovery ?? 0) > 0 ||
+      fields.k1_s_corp_box10_code_j_sources !== undefined
+    ) {
+      const filer = context?.filer;
+      if (!filer) {
+        throw new Error(
+          "Schedule 1 S corporation recovery needs filer identity",
+        );
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertSCorpK1CodeJSources(
+        context?.pending?.k1_s_corp,
+        fields.k1_s_corp_box10_code_j_sources,
+        fields.line8z_k1_s_corp_tax_benefit_recovery ?? 0,
+        recipients,
       );
     }
     if (
@@ -284,7 +380,6 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
       }
     }
     const unsupported = [
-      "line2a_alimony_received",
       "line8g_child_interest_dividends",
       "line8z_attorney_proceeds",
       "line13_depreciation",

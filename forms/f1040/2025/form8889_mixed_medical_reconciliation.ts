@@ -4,6 +4,7 @@ import {
   form8889,
   inputSchema,
 } from "../nodes/intermediate/forms/form8889/index.ts";
+import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
 
 /** Recompute one primary owner's personal contribution and partly medical HSA distribution. */
 export function reconcilePrimaryMixedMedicalForm8889(
@@ -60,6 +61,27 @@ export function reconcilePrimaryMixedMedicalForm8889(
   const item = source.data;
   const distributions = item.form1099_sa_distributions ?? [];
   const medicalReceipts = item.qualified_medical_expense_evidence ?? [];
+  const dependentReceipts = medicalReceipts.filter((receipt) =>
+    receipt.eligible_person === "dependent"
+  );
+  if (dependentReceipts.length > 0) {
+    const general = generalSchema.safeParse(allPending?.general);
+    const claimed = general.success
+      ? (general.data.dependents ?? []).filter((dependent) =>
+        dependent.dependent_on_another_return !== true
+      )
+      : [];
+    if (
+      dependentReceipts.length !== 1 || claimed.length !== 1 ||
+      !dependentReceipts[0].patient_ssn ||
+      dependentReceipts[0].patient_ssn.replaceAll("-", "") !==
+        claimed[0].ssn?.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8889 dependent medical receipt must name the one claimed dependent on this return",
+      );
+    }
+  }
   const references = [
     ...distributions.map((row) => row.source_reference),
     ...medicalReceipts.map((row) => row.source_reference),

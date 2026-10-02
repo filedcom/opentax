@@ -1,9 +1,18 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
+import {
+  assertForm1099gRtaaSources,
+  assertForm1099gTaxableGrantTotal,
+  inputSchema as form1099gInputSchema,
+} from "../../../nodes/inputs/f1099g/index.ts";
+import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
+import { appendSchedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
+import { appendSchedule1AlimonyStatement } from "./schedule1_alimony_statement.ts";
+import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_received/index.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
@@ -48,6 +57,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line2a_alimony_received",
+    pdfField: "topmostSubform[0].Page1[0].f1_05[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line2b_alimony_agreement_month",
+    pdfField: "topmostSubform[0].Page1[0].f1_06[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line3_schedule_c",
     pdfField: "topmostSubform[0].Page1[0].f1_07[0]",
   },
@@ -55,6 +74,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line4_other_gains",
     pdfField: "topmostSubform[0].Page1[0].f1_08[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_line4_form4797",
+    pdfField: "topmostSubform[0].Page1[0].c1_1[0]",
   },
   {
     kind: "text",
@@ -70,6 +94,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line7_unemployment",
     pdfField: "topmostSubform[0].Page1[0].f1_12[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_line7_unemployment_repayment",
+    pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].c1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line7_unemployment_repayment",
+    pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0]",
   },
   {
     kind: "text",
@@ -130,11 +164,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line8p_excess_business_loss",
     pdfField: "topmostSubform[0].Page1[0].f1_28[0]",
-  },
-  {
-    kind: "text",
-    domainKey: "line8z_nqdc",
-    pdfField: "topmostSubform[0].Page1[0].f1_32[0]",
   },
   {
     kind: "text",
@@ -246,7 +275,7 @@ export const schedule1Pdf: PdfFormDescriptor = {
   filerFields: [
     {
       kind: "text",
-      domainKey: "nameLine1",
+      domainKey: "nameShownOnForm1040",
       pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
     },
     {
@@ -256,6 +285,80 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    const line4 = fields.line4_other_gains;
+    const hasLine4 = typeof line4 === "number" && line4 !== 0;
+    if (hasLine4 && !all?.form4797) {
+      throw new Error(
+        "Schedule 1 PDF line 4 needs a retained Form 4797 source; direct Form 4684 reporting is not implemented",
+      );
+    }
+    // Form 4684 instructions reserve its Schedule 1 checkbox for a direct
+    // line 31 amount when Form 4797 is otherwise unnecessary. The supported
+    // casualty route passes through Form 4797, so only its box is checked.
+    const line4Fields = hasLine4 ? { print_line4_form4797: true } : {};
+    if (fields.line8z_nqdc !== undefined) {
+      throw new Error(
+        "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",
+      );
+    }
+    if (
+      fields.line8d_foreign_housing_deduction !== undefined &&
+      fields.line8d_foreign_housing_deduction !== 0
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction needs sourced Schedule 1 line 24j; it cannot be added to line 8d PDF",
+      );
+    }
+    const alimony = assertTaxableAlimonySchedule1(
+      fields.line2a_alimony_received,
+      all?.alimony_received,
+      filer
+        ? [
+          filer.primarySSN,
+          ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+              filer.spouse?.ssn
+            ? [filer.spouse.ssn]
+            : []),
+        ]
+        : undefined,
+    );
+    const alimonyFields = alimony
+      ? {
+        print_line2b_alimony_agreement_month: `${
+          alimony.agreementMonth.slice(5)
+        }/${alimony.agreementMonth.slice(0, 4)}`,
+      }
+      : {};
+    const unemploymentRows = all?.f1099g === undefined
+      ? []
+      : form1099gInputSchema.parse(all.f1099g).f1099gs;
+    const received = unemploymentRows.reduce(
+      (sum, row) => sum + (row.box_1_unemployment ?? 0),
+      0,
+    );
+    const repaid = unemploymentRows.reduce(
+      (sum, row) => sum + (row.box_1_repaid ?? 0),
+      0,
+    );
+    if (repaid > received) {
+      throw new Error(
+        "Schedule 1 PDF same-year unemployment repayment exceeds retained current-year benefits",
+      );
+    }
+    if (
+      (received > 0 || repaid > 0) &&
+      (fields.line7_unemployment ?? 0) !== received - repaid
+    ) {
+      throw new Error(
+        "Schedule 1 PDF line 7 differs from retained unemployment sources",
+      );
+    }
+    const repaymentFields = repaid > 0
+      ? {
+        print_line7_unemployment_repayment: true,
+        line7_unemployment_repayment: repaid,
+      }
+      : {};
     if (
       Number(fields.line8n_section951a_inclusion ?? 0) > 0 ||
       Number(fields.line8o_section951aa_inclusion ?? 0) > 0
@@ -285,23 +388,95 @@ export const schedule1Pdf: PdfFormDescriptor = {
         Number(fields.line8z_f1098_interest_recovery ?? 0),
       );
     }
+    if (
+      all?.f1099g !== undefined ||
+      Number(fields.line8z_rtaa ?? 0) > 0 ||
+      fields.f1099g_rtaa_sources !== undefined ||
+      Number(fields.line8z_taxable_grants ?? 0) !== 0 ||
+      fields.f1099g_taxable_grant_sources !== undefined
+    ) {
+      if (!filer) throw new Error("Schedule 1 PDF RTAA needs filer identity");
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertForm1099gRtaaSources(
+        all?.f1099g,
+        fields.f1099g_rtaa_sources,
+        Number(fields.line8z_rtaa ?? 0),
+        recipients,
+      );
+      assertForm1099gTaxableGrantTotal(
+        all?.f1099g,
+        fields.f1099g_taxable_grant_sources,
+        Number(fields.line8z_taxable_grants ?? 0),
+        recipients,
+      );
+    }
+    if (
+      all?.k1_s_corp !== undefined ||
+      Number(fields.line8z_k1_s_corp_tax_benefit_recovery ?? 0) > 0 ||
+      fields.k1_s_corp_box10_code_j_sources !== undefined
+    ) {
+      if (!filer) {
+        throw new Error(
+          "Schedule 1 PDF S corporation recovery needs filer identity",
+        );
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertSCorpK1CodeJSources(
+        all?.k1_s_corp,
+        fields.k1_s_corp_box10_code_j_sources,
+        Number(fields.line8z_k1_s_corp_tax_benefit_recovery ?? 0),
+        recipients,
+      );
+    }
     const rows = schedule1OtherIncomeRows(fields);
     const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
-    if (rows.length === 0 && activityNotForProfit === 0) return [fields];
+    if (rows.length === 0 && activityNotForProfit === 0) {
+      return [{
+        ...fields,
+        ...line4Fields,
+        ...alimonyFields,
+        ...repaymentFields,
+      }];
+    }
     return [{
       ...fields,
+      ...line4Fields,
+      ...alimonyFields,
+      ...repaymentFields,
       ...(activityNotForProfit > 0
         ? { line8j_f1099k_hobby_income: activityNotForProfit }
         : {}),
       ...(rows.length > 0
         ? {
           line8z_other: rows.reduce((sum, row) => sum + row.amount, 0),
-          line8z_description: rows.map((row) =>
-            row.label === "FORM 8814" ? "Form 8814" : row.label
-          ).join(", "),
+          line8z_description: "SEE STATEMENT",
         }
         : {}),
     }];
+  },
+  async appendSupplementalPages(document, fields, filer, allPending) {
+    await appendSchedule1AlimonyStatement(
+      document,
+      fields,
+      filer,
+      allPending?.alimony_received,
+    );
+    await appendSchedule1OtherIncomeStatement(
+      document,
+      fields,
+      filer,
+      allPending?.schedule1,
+    );
   },
   fields,
 };

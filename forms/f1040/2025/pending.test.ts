@@ -63,6 +63,20 @@ Deno.test("normalizePendingDict: single-element numeric array resolves to that e
   );
 });
 
+Deno.test("normalizePendingDict: AGI line 1h sums distinct retained wage sources only in AGI", () => {
+  assertEquals(
+    normalizePendingDict(
+      { line1h_other_earned: [3_000, 3_500] },
+      "agi_aggregator",
+    ),
+    { line1h_other_earned: 6_500 },
+  );
+  assertEquals(
+    normalizePendingDict({ line1h_other_earned: [3_000, 6_500] }, "f1040"),
+    { line1h_other_earned: 6_500 },
+  );
+});
+
 Deno.test("normalizePendingDict: mixed-type array is left as-is", () => {
   const input = { items: [1, "two", 3] };
   assertEquals(normalizePendingDict(input, "f1040"), { items: [1, "two", 3] });

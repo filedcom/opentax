@@ -18,7 +18,12 @@ export const form461ScopeReviewSchema = z.object({
   other_part_i_lines_zero: z.literal(true),
   part_ii_adjustments_zero: z.literal(true),
   post_at_risk_and_passive_limits_confirmed: z.literal(true),
-  source_document_refs: z.array(z.string().trim().min(1)).min(1),
+  line2_schedule_c_amount: z.number().finite(),
+  line6_schedule_f_amount: z.number().finite(),
+  source_document_refs: z.array(z.string().trim().min(1)).min(1).refine(
+    (refs) => new Set(refs).size === refs.length,
+    "Form 461 review source references must be distinct",
+  ),
 }).strict();
 
 export const inputSchema = z.object({
@@ -79,6 +84,14 @@ class Form461Node extends TaxNode<typeof inputSchema> {
     if (!input.scope_review) {
       throw new Error(
         "Form 461 C/F-only calculation needs a sourced review of other Part I items and Part II adjustments",
+      );
+    }
+    if (
+      input.scope_review.line2_schedule_c_amount !== line2 ||
+      input.scope_review.line6_schedule_f_amount !== line6
+    ) {
+      throw new Error(
+        "Form 461 signed Schedule C/F source review amounts differ from the calculated business lines",
       );
     }
     const line9 = line2 + line6;

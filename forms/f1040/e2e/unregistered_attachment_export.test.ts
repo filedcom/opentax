@@ -94,6 +94,22 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
         reviewed_by: "Reviewer",
         reviewed_on: "2026-04-01",
         return_wide_items_review_reference: "both-spouses-return-review",
+        reviewed_spouse_return: {
+          tax_year: 2025,
+          form: "1040",
+          filing_status: "mfs",
+          first_name: "Blair",
+          last_name: "Example",
+          ssn: "222334444",
+          return_document_reference: "spouse-1040-review",
+          line1a_wages: 50_000,
+          line1z_total_wages: 50_000,
+          line9_total_income: 50_000,
+          line10_adjustments: 0,
+          line11_agi: 50_000,
+          line25a_w2_withheld: 0,
+          line25d_total_withholding: 0,
+        },
         rows: [{
           item_id: "wage-1",
           form_line: 1,
@@ -110,7 +126,7 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
     },
     { taxYear: 2025, formType: "f1040" },
   );
-  const pending = buildPending(result.pending);
+  const pending = buildPending({ f8958: result.pending.f8958 });
   assertEquals(Object.hasOwn(pending, "f8958"), true);
   assertThrows(
     () =>
@@ -131,7 +147,7 @@ Deno.test("positive employee-business deduction cannot file without Form 2106", 
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 2106 employee expenses require a native attachment",
+    "Form 2106 needs the sourced one-job fee-basis filing route",
   );
 });
 
@@ -248,7 +264,7 @@ Deno.test("direct credit and disclosure sources require their missing native doc
   }
 });
 
-Deno.test("recapture and employer-credit sources cannot export without native forms", () => {
+Deno.test("incomplete recapture and employer-credit sources cannot export", () => {
   for (
     const [key, fields, reason] of [
       [
@@ -263,7 +279,7 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
             repayment_income_limit: 100_000,
           }],
         },
-        "Form 8828 mortgage-credit recapture needs a native attachment",
+        "source_transaction_id",
       ],
       [
         "f8844",
@@ -274,22 +290,32 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
             employee_works_in_zone: true,
           }],
         },
-        "Form 8844 direct employer wage credit needs a native attachment",
+        "Form 8844 needs a sourced direct Schedule C employer route",
       ],
       [
         "f8881",
         {
           plan_type: "401k",
-          non_hce_count: 5,
-          employee_count: 5,
-          startup_costs: 1_000,
+          startup: {
+            plan_effective_on: "2025-01-01",
+            first_credit_year: 2025,
+            preceding_first_credit_year_qualified_employee_count: 5,
+            eligible_non_hce_count: 5,
+            startup_costs: 1_000,
+            cost_record_reference: "plan-invoice-1",
+            costs_paid_or_incurred_on: "2025-02-15",
+            eligible_plan_confirmed: true,
+            no_substantially_same_employee_plan_in_prior_three_years_confirmed:
+              true,
+            startup_cost_deduction_reduced_by_credit_confirmed: true,
+          },
         },
-        "Form 8881 startup or auto-enrollment credit needs a native attachment",
+        "Form 8881 needs a positive linked direct Schedule C employer source",
       ],
       [
         "f8882",
         { qualified_childcare_expenses: 1_000 },
-        "Form 8882 employer child-care credit needs a native attachment",
+        "Form 8882 needs a sourced direct Schedule C employer route",
       ],
       [
         "f8908",
@@ -304,7 +330,7 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
       [
         "f8994",
         { employees: [{ fmla_wages: 1_000, wage_replacement_pct: 0.6 }] },
-        "Form 8994 paid-leave credit needs a native attachment",
+        "MeF Form 8994 requires validated policy and payroll attachment bytes",
       ],
     ] as const
   ) {

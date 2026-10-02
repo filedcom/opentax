@@ -20,7 +20,7 @@ import { f8812 } from "../f8812/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
 import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
 import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
-import { miningCostAdjustment } from "./mining.ts";
+import { assertDistinctMiningSources, miningCostAdjustment } from "./mining.ts";
 import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -165,6 +165,28 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+    assertDistinctMiningSources(input.schedule_cs);
+    const statutoryTotals = new Map<string, number>();
+    for (const source of input.statutory_w2_sources ?? []) {
+      statutoryTotals.set(
+        source.business_reference,
+        (statutoryTotals.get(source.business_reference) ?? 0) + source.amount,
+      );
+    }
+    for (const [reference, wages] of statutoryTotals) {
+      const matches = input.schedule_cs.filter((item) =>
+        item.business_reference === reference
+      );
+      if (
+        matches.length !== 1 || matches[0].statutory_employee !== true ||
+        !matches[0].proprietor_recipient ||
+        matches[0].line_1_gross_receipts !== wages
+      ) {
+        throw new Error(
+          "Statutory W-2 wages need one matching Schedule C activity with exact box 1 receipts",
+        );
+      }
+    }
     if ((input.line1_gross_receipts ?? 0) > 0) {
       throw new Error(
         "Schedule C top-level gross receipts need business-linked source rows",
@@ -456,9 +478,35 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    // Per-item downstream routing (passive, at-risk, depletion, interest)
+    // Per-item downstream routing (passive, at-risk, depletion, interest).
+    // Form 6251 takes one signed scalar for each line, even when several
+    // businesses contribute property workpapers to the same adjustment.
+    const amtAdjustments = {
+      line2d_depletion: 0,
+      line2p_long_term_contracts: 0,
+      line2q_mining_costs: 0,
+    };
     for (let i = 0; i < items.length; i++) {
-      outputs.push(...deductionOutputs(items[i], netProfits[i]));
+      for (const row of deductionOutputs(items[i], netProfits[i])) {
+        if (row.nodeType !== form6251.nodeType) {
+          outputs.push(row);
+          continue;
+        }
+        for (
+          const key of Object.keys(amtAdjustments) as Array<
+            keyof typeof amtAdjustments
+          >
+        ) {
+          const value = row.fields[key];
+          if (typeof value === "number") amtAdjustments[key] += value;
+        }
+      }
+    }
+    const combinedAmt = Object.fromEntries(
+      Object.entries(amtAdjustments).filter(([, value]) => value !== 0),
+    );
+    if (Object.keys(combinedAmt).length > 0) {
+      outputs.push({ nodeType: form6251.nodeType, fields: combinedAmt });
     }
 
     // Form 461 line 2 uses signed Schedule 1 line 3 after at-risk limits.

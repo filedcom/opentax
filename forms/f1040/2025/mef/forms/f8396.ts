@@ -6,6 +6,7 @@ import {
   form8396SourceSchema,
 } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { assertForm8396ReissueForm8828Join } from "./f8396_reissue_join.ts";
 
 type LineKey =
   | "line1"
@@ -43,6 +44,7 @@ const SOURCE_KEYS = [
   "home_in_issuer_jurisdiction",
   "interest_paid_to_related_person",
   "certificate_is_reissued",
+  "reviewed_reissued_mcc",
   "nonspouse_coowner",
   "nonspouse_coowner_share",
   "prior_2024_form8396",
@@ -67,7 +69,7 @@ const FIELD_MAP: ReadonlyArray<readonly [LineKey, string]> = [
   ["line17", "MortgIntNextYearsPYCfwdCrAmt"],
 ];
 
-function sourceFromPending(fields: Input): Form8396Source {
+export function sourceFromPending(fields: Input): Form8396Source {
   const source = Object.fromEntries(
     SOURCE_KEYS.filter((key) => fields[key] !== undefined).map((key) => [
       key,
@@ -154,6 +156,7 @@ export const form8396: MefFormDescriptor<"form8396", Input> = {
     const { source, lines } = reconciledLines(fields);
     checkFiledCredit(lines.line9, context);
     reconcileInterestEvidence(source, context);
+    assertForm8396ReissueForm8828Join(source, context?.pending);
     return elements("IRS8396", [
       source.qualified_home_address_if_different
         ? elements("QlfyMortgageCertUSAddress", [
@@ -178,7 +181,9 @@ export const form8396: MefFormDescriptor<"form8396", Input> = {
       element("MortgCrCertificateIssueDt", source.certificate_issue_date),
       ...FIELD_MAP.map(([key, tag]) => {
         const value = lines[key];
-        return typeof value === "number" ? element(tag, value) : "";
+        return typeof value === "number"
+          ? element(tag, key === "line2" ? value.toFixed(5) : value)
+          : "";
       }),
     ]);
   },

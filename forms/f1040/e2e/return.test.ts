@@ -478,8 +478,22 @@ Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AG
   const result = runReturn({
     general: singleGeneral(),
     f1099div: [
-      { payerName: "Broker A", isNominee: false, box11: false, box1a: 100 },
-      { payerName: "Broker B", isNominee: false, box11: false, box1a: 200 },
+      {
+        payerName: "Broker A",
+        recipient_tin: "123456789",
+        source_document_reference: "Broker A issued 1099-DIV",
+        isNominee: false,
+        box11: false,
+        box1a: 100,
+      },
+      {
+        payerName: "Broker B",
+        recipient_tin: "123456789",
+        source_document_reference: "Broker B issued 1099-DIV",
+        isNominee: false,
+        box11: false,
+        box1a: 200,
+      },
     ],
     k1_trust: [
       { estate_trust_name: "Trust A", box2a_ordinary_dividends: 300 },

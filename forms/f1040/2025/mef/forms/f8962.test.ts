@@ -793,7 +793,7 @@ Deno.test("Form 8962 two no-APTC policies reconcile two uncovered months to sour
         },
       }),
     Error,
-    "distinct same-state nonshared policies for one filer",
+    "two-policy uncovered month 2 must have zero policy and credit amounts",
   );
 });
 
@@ -1358,7 +1358,7 @@ Deno.test("Form 8962 annual line 11 reconciles a required-filing dependent's Wor
         },
       }),
     Error,
-    "source-backed not-required filing-threshold workpaper",
+    "verified general return source",
   );
 });
 

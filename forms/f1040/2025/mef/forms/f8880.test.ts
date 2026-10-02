@@ -271,8 +271,9 @@ Deno.test("Form 8880 calculated node output survives the full MeF assembly", () 
       filing_status: FilingStatus.Single,
       line11_agi: 20_000,
       line18_total_tax_before_credits: 800,
+      line20_nonrefundable_credits: 800,
     },
-    schedule3: { line4_retirement_savings_credit: 800 },
+    schedule3: { line4_retirement_savings_credit: 800, line8_total: 800 },
   }, testFiler());
   assertStringIncludes(xml, "<IRS8880 ");
   assertStringIncludes(
@@ -316,8 +317,9 @@ Deno.test("Form 8880 reviewed joint 2025 distribution prints in both columns", (
       filing_status: FilingStatus.MFJ,
       line11_agi: 40_000,
       line18_total_tax_before_credits: 1_000,
+      line20_nonrefundable_credits: 500,
     },
-    schedule3: { line4_retirement_savings_credit: 500 },
+    schedule3: { line4_retirement_savings_credit: 500, line8_total: 500 },
   }, testFiler(MefFilingStatus.MarriedFilingJointly));
   assertStringIncludes(
     xml,
@@ -339,8 +341,11 @@ Deno.test("Form 8880 MeF assembly rejects an invented credit-limit line", () => 
           taxpayer_student_five_months: false,
           taxpayer_claimed_as_dependent: false,
         },
-        f1040: { line18_total_tax_before_credits: 700 },
-        schedule3: { line4_retirement_savings_credit: 800 },
+        f1040: {
+          line18_total_tax_before_credits: 700,
+          line20_nonrefundable_credits: 800,
+        },
+        schedule3: { line4_retirement_savings_credit: 800, line8_total: 800 },
       }, testFiler()),
     Error,
     "differs from the finalized credit-limit worksheet",
@@ -362,8 +367,9 @@ Deno.test("Form 8880 MeF rejects an unfiled foreign AGI addback", () => {
           filing_status: FilingStatus.Single,
           line11_agi: 20_000,
           line18_total_tax_before_credits: 800,
+          line20_nonrefundable_credits: 800,
         },
-        schedule3: { line4_retirement_savings_credit: 800 },
+        schedule3: { line4_retirement_savings_credit: 800, line8_total: 800 },
       }, testFiler()),
     Error,
     "foreign AGI addback differs from filed Form 2555 and Schedule 1",
@@ -430,8 +436,11 @@ Deno.test("Form 8880 MeF assembly rejects positive credit without contributor el
     () =>
       buildMefXml({
         form8880: calculated,
-        f1040: { line18_total_tax_before_credits: 800 },
-        schedule3: { line4_retirement_savings_credit: 800 },
+        f1040: {
+          line18_total_tax_before_credits: 800,
+          line20_nonrefundable_credits: 800,
+        },
+        schedule3: { line4_retirement_savings_credit: 800, line8_total: 800 },
       }, testFiler()),
     Error,
     "needs birth date, five-month student answer, and dependent-claim answer",

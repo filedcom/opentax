@@ -27,6 +27,13 @@ const alternative = {
   alternative_foreign_source_usd: 140_000,
   ordinary_us_source_usd: 180_000,
   ordinary_foreign_source_usd: 120_000,
+  ordinary_time_basis: {
+    us_service_days: 60,
+    foreign_service_days: 40,
+    workday_ledger_document_reference: "2025 employee workday ledger",
+    salary_only_no_fringe_benefits_confirmed: true,
+    single_2025_compensation_period_confirmed: true,
+  },
   source_document_reference: wageReference,
 };
 const currency = {
@@ -56,6 +63,8 @@ const inputs = {
     currency: "EUR",
     compensation_amount: 240_000,
     compensation_usd: 300_000,
+    compensation_owner_ssn: "111-22-3333",
+    compensation_source_document_reference: wageReference,
     foreign_service_compensation_usd: 140_000,
     foreign_tax_paid_usd: 2_000,
     foreign_tax_irs_country_code: "GM",
@@ -87,11 +96,45 @@ const inputs = {
   },
 };
 
+function withIssuedForeignEmployerFacts<
+  T extends { fec: Record<string, unknown>[] },
+>(
+  source: T,
+) {
+  return {
+    ...source,
+    fec: source.fec.map((row, index) => ({
+      ...row,
+      service_residence: {
+        kind: "us" as const,
+        line1: "1 Example Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      employer_foreign_address: {
+        line1: `${index + 1} Payroll Way`,
+        city: "Payroll City",
+        country_code: row.country_code === "DE"
+          ? "GM"
+          : row.country_code as string,
+      },
+      employer_has_us_ein: false as const,
+      employer_issued_w2: false as const,
+    })),
+  };
+}
+
 Deno.test("one foreign employer alternative allocation reaches full return, MeF attachment and PDF", async () => {
-  const result = execute(buildExecutionPlan(registry), registry, inputs, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    withIssuedForeignEmployerFacts(inputs),
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.f1040?.line12a_standard_deduction, 15_750);
@@ -156,6 +199,58 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
     Error,
     "must match each identified foreign-employer wage item",
   );
+  const changedOwner = structuredClone(result.pending);
+  (changedOwner.fec as {
+    fecs: Array<{ compensation_owner_ssn: string }>;
+  }).fecs[0].compensation_owner_ssn = "999-88-7777";
+  assertThrows(
+    () => form1116Pdf.projectFields?.(changedOwner.form_1116!, changedOwner),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(buildPending(changedOwner), { filer, attachments: [] }),
+    Error,
+  );
+  const changedWageDocument = structuredClone(result.pending);
+  (changedWageDocument.fec as {
+    fecs: Array<{ compensation_source_document_reference: string }>;
+  }).fecs[0].compensation_source_document_reference = "unrelated wage record";
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        changedWageDocument.form_1116!,
+        changedWageDocument,
+      ),
+    Error,
+  );
+  const changedWorkdays = structuredClone(result.pending);
+  (changedWorkdays.fec as {
+    fecs: Array<{
+      alternative_compensation_sourcing: {
+        ordinary_time_basis: { foreign_service_days: number };
+      };
+    }>;
+  }).fecs[0].alternative_compensation_sourcing.ordinary_time_basis
+    .foreign_service_days = 50;
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        changedWorkdays.form_1116!,
+        changedWorkdays,
+      ),
+    Error,
+    "needs the foreign-employer compensation source",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(buildPending(changedWorkdays), {
+        filer,
+        attachments: [],
+      }),
+    Error,
+    "ordinary U.S./foreign salary comparison must match the documented service-day allocation",
+  );
 });
 
 Deno.test("two owner-matched foreign employers establish worldwide compensation for one alternative wage item", async () => {
@@ -173,6 +268,11 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
         compensation_item_total_usd: 200_000,
         alternative_us_source_usd: 60_000,
         ordinary_us_source_usd: 80_000,
+        ordinary_time_basis: {
+          ...alternative.ordinary_time_basis,
+          us_service_days: 40,
+          foreign_service_days: 60,
+        },
         alternative_allocation_computation:
           "140000 of 200000 salary sourced to Germany",
       },
@@ -191,7 +291,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
   const result = execute(
     buildExecutionPlan(registry),
     registry,
-    twoEmployerInputs,
+    withIssuedForeignEmployerFacts(twoEmployerInputs),
     {
       taxYear: 2025,
       formType: "f1040",
@@ -227,7 +327,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
   await assertRejects(
     () => buildMefBundle(buildPending(altered), { filer, attachments: [] }),
     Error,
-    "employee's $250,000 threshold",
+    "Standalone FEC needs distinct employer sources owned by the filer or joint spouse",
   );
 });
 
@@ -245,6 +345,11 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
         compensation_item_total_usd: 200_000,
         alternative_us_source_usd: 60_000,
         ordinary_us_source_usd: 80_000,
+        ordinary_time_basis: {
+          ...alternative.ordinary_time_basis,
+          us_service_days: 40,
+          foreign_service_days: 60,
+        },
         alternative_allocation_computation:
           "140000 of 200000 salary sourced to Germany",
       },
@@ -271,7 +376,7 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
   const result = execute(
     buildExecutionPlan(registry),
     registry,
-    threeEmployerInputs,
+    withIssuedForeignEmployerFacts(threeEmployerInputs),
     {
       taxYear: 2025,
       formType: "f1040",
@@ -338,12 +443,12 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
 });
 
 for (
-  const additionalWages of [[25_000, 25_000, 50_000], [
-    25_000,
-    25_000,
-    25_000,
-    25_000,
-  ]]
+  const additionalWages of [
+    [25_000, 25_000, 50_000],
+    [25_000, 25_000, 25_000, 25_000],
+    [20_000, 20_000, 20_000, 20_000, 20_000],
+    [14_000, 14_000, 14_000, 14_000, 14_000, 14_000, 16_000],
+  ]
 ) {
   Deno.test(`${additionalWages.length + 1} distinct same-owner foreign employers reconcile alternative compensation`, async () => {
     const owner = "111-22-3333";
@@ -361,6 +466,11 @@ for (
             compensation_item_total_usd: 200_000,
             alternative_us_source_usd: 60_000,
             ordinary_us_source_usd: 80_000,
+            ordinary_time_basis: {
+              ...alternative.ordinary_time_basis,
+              us_service_days: 40,
+              foreign_service_days: 60,
+            },
             alternative_allocation_computation:
               "140000 of 200000 salary sourced to Germany",
           },
@@ -382,7 +492,7 @@ for (
     const result = execute(
       buildExecutionPlan(registry),
       registry,
-      employerInputs,
+      withIssuedForeignEmployerFacts(employerInputs),
       { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(result.diagnostics, []);

@@ -1,6 +1,8 @@
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 import { form8992Pending } from "./form8992.fixture.ts";
+import { form8882Fixture } from "../nodes/inputs/f8882/fixture.ts";
+import { form8941FiledFixture } from "../nodes/inputs/f8941/fixture.ts";
 
 Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
   for (const kind of ["mef", "pdf"] as const) {
@@ -8,6 +10,26 @@ Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both 
       () => assertAttachmentCoverage(form8992Pending, kind),
       Error,
       "Schedule R all-zero treatment",
+    );
+  }
+});
+
+Deno.test("only a trust K-1 with box 13 code B needs the unregistered attachment", () => {
+  const ordinary = { estate_trust_name: "First Trust", box1_interest: 100 };
+  const backup = {
+    estate_trust_name: "Second Trust",
+    box13_code_b_backup_withholding: 125,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    assertAttachmentCoverage({ k1_trust: { k1_trusts: [ordinary] } }, kind);
+    assertThrows(
+      () =>
+        assertAttachmentCoverage(
+          { k1_trust: { k1_trusts: [ordinary, backup] } },
+          kind,
+        ),
+      Error,
+      "trust K-1 backup withholding",
     );
   }
 });
@@ -38,11 +60,13 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
       { f8938: { assets: [{}] } },
       { f8828: { f8828s: [{}] } },
       { f8844: { f8844s: [{}] } },
-      { f8881: { startup_costs: 100 } },
-      { f8881: { has_auto_enrollment: true } },
-      { f8882: { resource_referral_expenses: 100 } },
+      { f8881: { startup: { startup_costs: 100 } } },
+      { f8881: { auto_enrollment: { maintained_in_2025_confirmed: true } } },
+      { f3800: { f8881_credit: { part_i_credit: 750 } } },
+      { f8874: { investments: [{}] } },
+      { f8882: { facility_contract: {} } },
+      { f8941: {} },
       { f8908: { f8908s: [{}] } },
-      { f8994: { employees: [{}] } },
       { f1310: { claimant_type: "other" } },
       { f2120: { support_amount: 100 } },
       { f8332: { child_name: "Child" } },
@@ -82,6 +106,27 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   );
 });
 
+Deno.test("Form 8882 guard admits only its sourced direct employer contract", () => {
+  const source = form8882Fixture();
+  for (const kind of ["mef", "pdf"] as const) {
+    assertAttachmentCoverage({ f8882: source }, kind);
+    assertThrows(() => assertAttachmentCoverage({ f8882: {} }, kind));
+  }
+});
+
+Deno.test("Form 8941 guard binds source, allowed credit, and Schedule C", () => {
+  const pending = form8941FiledFixture();
+  for (const kind of ["mef", "pdf"] as const) {
+    assertAttachmentCoverage(pending, kind);
+    assertThrows(() =>
+      assertAttachmentCoverage({ f3800: pending.f3800 }, kind)
+    );
+    assertThrows(() =>
+      assertAttachmentCoverage({ ...pending, schedule_c: undefined }, kind)
+    );
+  }
+});
+
 Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => {
   for (const code of ["Z", "Y"]) {
     const row = {
@@ -110,6 +155,9 @@ Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => 
 });
 
 Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
+  // This is a raw attachment-coverage negative fixture, not a filed 1099-B:
+  // no recipient/filer is supplied because the reportable-transaction gate
+  // must reject before a source-owner claim is made.
   const row = {
     source_transaction_id: "sale-2025-large-loss",
     proceeds: 100_000,
@@ -267,7 +315,12 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     },
     "pdf",
   );
-  assertAttachmentCoverage({ f8874: { investments: [{}] } }, "pdf");
+  assertThrows(
+    () => assertAttachmentCoverage({ f8874: { investments: [{}] } }, "pdf"),
+    Error,
+    "authenticated CDE status and recapture history",
+  );
+  assertAttachmentCoverage({ f8874: { investments: [] } }, "pdf");
   assertAttachmentCoverage({ f8854: {} }, "pdf");
   assertAttachmentCoverage({ f8854_annual: {} }, "pdf");
 });

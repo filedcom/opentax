@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
-import { inputSchema } from "../../../nodes/inputs/schedule_lep/index.ts";
+import {
+  inputSchema,
+  LanguagePreferenceCode,
+} from "../../../nodes/inputs/schedule_lep/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = z.input<typeof inputSchema> | readonly [];
@@ -13,20 +16,33 @@ export function requestIdentity(
   context: MefBuildContext,
 ): { name: string; ssn: string } {
   const filer = context.filer;
-  if (!filer) throw new Error("Schedule LEP needs the filed Form 1040 identity");
-  if (person === "spouse" &&
-    (filer.filingStatus !== FilingStatus.MarriedFilingJointly || !filer.spouse)) {
-    throw new Error("Schedule LEP spouse request needs a joint Form 1040 and spouse identity");
+  if (!filer) {
+    throw new Error("Schedule LEP needs the filed Form 1040 identity");
+  }
+  if (
+    person === "spouse" &&
+    (filer.filingStatus !== FilingStatus.MarriedFilingJointly || !filer.spouse)
+  ) {
+    throw new Error(
+      "Schedule LEP spouse request needs a joint Form 1040 and spouse identity",
+    );
   }
   const source = person === "taxpayer" ? filer : filer.spouse!;
-  const name = [source.firstName, source.middleInitial, source.lastName, source.suffix]
+  const name = [
+    source.firstName,
+    source.middleInitial,
+    source.lastName,
+    source.suffix,
+  ]
     .filter((part) => part !== undefined && part !== "").join(" ");
   const ssn = person === "taxpayer" ? filer.primarySSN : filer.spouse!.ssn;
   if (
     !source.firstName || !source.lastName || name.length > 35 ||
     !personNamePattern.test(name) || !/^\d{9}$/.test(ssn)
   ) {
-    throw new Error("Schedule LEP person name and SSN must match the filed identity");
+    throw new Error(
+      "Schedule LEP person name and SSN must match the filed identity",
+    );
   }
   return { name, ssn };
 }
@@ -39,6 +55,19 @@ export function buildScheduleLep(
   const source = inputSchema.parse(raw);
   return source.requests.map((request) => {
     const identity = requestIdentity(request.person, context);
+    if (
+      request.prior_election_review &&
+      request.prior_election_review.person_ssn !== identity.ssn
+    ) {
+      throw new Error(
+        "Schedule LEP prior election owner SSN must match the requesting person",
+      );
+    }
+    if (request.language_preference_code === LanguagePreferenceCode.Cancel) {
+      throw new Error(
+        "Schedule LEP cancellation export needs authenticated prior IRS election or account evidence",
+      );
+    }
     return elements("IRS1040ScheduleLEP", [
       element("PersonNm", identity.name),
       element("SSN", identity.ssn),
@@ -47,7 +76,11 @@ export function buildScheduleLep(
   });
 }
 
-export const scheduleLep: MefFormDescriptor<"schedule_lep", Input, readonly string[]> = {
+export const scheduleLep: MefFormDescriptor<
+  "schedule_lep",
+  Input,
+  readonly string[]
+> = {
   pendingKey: "schedule_lep",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040lep.pdf",

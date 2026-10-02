@@ -123,6 +123,166 @@ function sharedFamilyCase() {
   return { fields, pending, policy, credit };
 }
 
+function nonenrolledOtherFamilyCase(taxpayerIncome: number) {
+  const base = sharedFamilyCase();
+  const { agreement_review: _enrolledAgreement, ...sourcePeriod } =
+    base.policy.shared_policy_periods[0];
+  const policy = {
+    ...base.policy,
+    covered_individual_ssns: ["123456789", "987654321", "333445555"],
+    shared_policy_periods: [{
+      ...sourcePeriod,
+      other_family_claim_review: {
+        covered_individual_ssn: "333445555",
+        other_taxpayer_ssn: "222334444",
+        policy_number: "SHARED-FAMILY-2025",
+        tax_year: 2025 as const,
+        other_taxpayer_claims_covered_individual: true as const,
+        marketplace_enrollment_reference: "2025 Marketplace family enrollment",
+        tax_family_review_reference: "2025 other-family claim review",
+        tax_family_review_sha256: "b".repeat(64),
+        allocation_agreement_reference: "2025 two-family allocation agreement",
+        allocation_agreement_sha256: "c".repeat(64),
+        filer_allocation_pct: 0.5,
+      },
+    }],
+  };
+  const policyFields = f1095a.compute(
+    nodeContext,
+    { f1095as: [policy] },
+  ).outputs.find((row) => row.nodeType === "form8962")?.fields;
+  const fields = calculate8962.compute(
+    nodeContext,
+    calculationSchema.parse({
+      ...policyFields,
+      taxpayer_modified_agi: taxpayerIncome,
+      dependents_modified_agi: 13_000,
+      dependent_income_complete: true,
+      household_size: 2,
+      fpl_region: "contiguous",
+      filing_status: "single" as const,
+    }),
+  ).outputs.find((row) => row.nodeType === "form8962")!.fields;
+  const credit = (fields.net_premium_tax_credit as number | undefined) ?? 0;
+  const repayment = (fields.excess_advance_premium as number | undefined) ?? 0;
+  const pending = {
+    general: base.pending.general,
+    f1095a: { f1095as: [policy] },
+    schedule2: { line1a_excess_advance_premium: repayment },
+    schedule3: { line9_premium_tax_credit: credit },
+    f1040: {
+      line11_agi: taxpayerIncome,
+      line17_additional_taxes: repayment,
+      line31_additional_payments: credit,
+    },
+  };
+  return { fields, pending, policy, credit, repayment };
+}
+
+Deno.test("Situation 4 shared policy joins a claimed dependent and the nonenrolled other taxpayer's covered child through native, PDF and final credit", () => {
+  const { fields, pending, credit } = nonenrolledOtherFamilyCase(20_000);
+  assertEquals(fields.dependents_modified_agi, 13_000);
+  assertEquals(fields.household_income, 33_000);
+  assertEquals(credit, 4_800);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, credit);
+  assertEquals(pending.f1040.line31_additional_payments, credit);
+  const xml = form8962.build(fields, { filer, pending });
+  assertStringIncludes(xml, "<SSN>222334444</SSN>");
+  assertStringIncludes(
+    xml,
+    "<TotalDependentsModifiedAGIAmt>13000</TotalDependentsModifiedAGIAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReconciledPremiumTaxCreditAmt>4800</ReconciledPremiumTaxCreditAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
+  assertEquals(projected.pdf_month_1_premium, "500");
+  assertEquals(projected.pdf_allocation_1_other_taxpayer_ssn, "222334444");
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+});
+
+Deno.test("Situation 4 nonenrolled other-family case reaches repayment and rejects claim, allocation, dependent and return drift", () => {
+  const { fields, pending, policy, repayment } = nonenrolledOtherFamilyCase(
+    75_000,
+  );
+  assertEquals(repayment, 1_200);
+  assertEquals(pending.schedule2.line1a_excess_advance_premium, repayment);
+  assertEquals(pending.f1040.line17_additional_taxes, repayment);
+  const xml = form8962.build(fields, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<PremiumTaxCreditTaxLiabAmt>1200</PremiumTaxCreditTaxLiabAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  const period = policy.shared_policy_periods[0];
+  const changedClaim = {
+    ...pending,
+    f1095a: {
+      f1095as: [{
+        ...policy,
+        shared_policy_periods: [{
+          ...period,
+          other_family_claim_review: {
+            ...period.other_family_claim_review,
+            covered_individual_ssn: "987654321",
+          },
+        }],
+      }],
+    },
+  };
+  assertThrows(
+    () => form8962.build(fields, { filer, pending: changedClaim }),
+    Error,
+  );
+  assertThrows(
+    () => form8962Pdf.instances?.(projected, filer, changedClaim),
+    Error,
+  );
+  assertThrows(() =>
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        f1095a: {
+          f1095as: [{
+            ...policy,
+            shared_policy_periods: [{
+              ...period,
+              other_family_claim_review: {
+                ...period.other_family_claim_review,
+                filer_allocation_pct: 0.6,
+              },
+            }],
+          }],
+        },
+      },
+    }), Error);
+  assertThrows(() =>
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        general: {
+          ...pending.general,
+          dependents: [{
+            ...pending.general.dependents[0],
+            ssn: "999887777",
+          }],
+        },
+      },
+    }), Error);
+  assertThrows(() =>
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        schedule2: { line1a_excess_advance_premium: repayment - 1 },
+      },
+    }), Error);
+});
+
 Deno.test("shared Situation 4 family policy binds the dependent return and both tax families through Form 8962 and PDF", () => {
   const { fields, pending, credit } = sharedFamilyCase();
   assertEquals(fields.household_size, 2);

@@ -24,9 +24,12 @@ export const inputSchema = z.object({
   no_amt_liability_verified: z.literal(true),
   single_source_pdf_review: singleSourcePdfReviewSchema.optional(),
   multi_source_pdf_review: multiSourcePdfReviewSchema.optional(),
+  two_dividend_pdf_review: multiSourcePdfReviewSchema.optional(),
   mixed_interest_dividend_pdf_review: mixedInterestDividendPdfReviewSchema
     .optional(),
   two_country_interest_pdf_review: twoCountryInterestPdfReviewSchema
+    .optional(),
+  two_country_dividend_pdf_review: twoCountryInterestPdfReviewSchema
     .optional(),
   three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
@@ -45,8 +48,10 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
     const {
       single_source_pdf_review,
       multi_source_pdf_review,
+      two_dividend_pdf_review,
       mixed_interest_dividend_pdf_review,
       two_country_interest_pdf_review,
+      two_country_dividend_pdf_review,
       three_country_interest_pdf_review,
       two_country_mixed_pdf_review,
       three_country_mixed_pdf_review,
@@ -57,8 +62,10 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
       [
         single_source_pdf_review,
         multi_source_pdf_review,
+        two_dividend_pdf_review,
         mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review,
+        two_country_dividend_pdf_review,
         three_country_interest_pdf_review,
         two_country_mixed_pdf_review,
         three_country_mixed_pdf_review,
@@ -74,8 +81,10 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         foreign_preferential_income_review: preferential,
         single_source_pdf_review,
         multi_source_pdf_review,
+        two_dividend_pdf_review,
         mixed_interest_dividend_pdf_review,
         two_country_interest_pdf_review,
+        two_country_dividend_pdf_review,
         three_country_interest_pdf_review,
         two_country_mixed_pdf_review,
         three_country_mixed_pdf_review,

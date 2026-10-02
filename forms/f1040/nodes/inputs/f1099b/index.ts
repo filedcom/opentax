@@ -14,19 +14,26 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-const LONG_TERM_PARTS = new Set(["D", "E", "F"]);
+const LONG_TERM_PARTS = new Set(["D", "E"]);
 
 // Noncovered securities shift the Form 8949 reporting category:
 // Part A (covered ST) → Part B (noncovered ST)
 // Part D (covered LT) → Part E (noncovered LT)
-// Other parts (B, C, E, F) are unchanged — they already represent noncovered/other.
+// Parts B and E are already noncovered broker sales.
 const NONCOVERED_PART_SHIFT: Partial<Record<string, string>> = {
   A: "B",
   D: "E",
 };
 
 export const itemSchema = z.object({
-  part: z.enum(["A", "B", "C", "D", "E", "F"]),
+  // Calculation-only records may lack the issued owner; final export requires it.
+  recipient_ssn: z.string().regex(/^\d{9}$/).optional(),
+  payer_tin: z.string().regex(/^\d{9}$/).optional(),
+  account_number: z.string().trim().min(1).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  transaction_id: z.string().trim().min(1).optional(),
+  // Form 8949 boxes C/F are only for sales without a Form 1099-B.
+  part: z.enum(["A", "B", "D", "E"]),
   description: z.string(),
   date_acquired: z.string(),
   date_sold: z.string(),
@@ -67,6 +74,29 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1099bs: z.array(itemSchema).min(1),
+}).superRefine(({ f1099bs }, ctx) => {
+  const seen = new Set<string>();
+  for (const [index, item] of f1099bs.entries()) {
+    if (
+      !item.payer_tin || !item.account_number ||
+      !item.recipient_ssn || !item.transaction_id
+    ) continue;
+    const key = JSON.stringify([
+      item.payer_tin,
+      item.recipient_ssn,
+      item.account_number,
+      item.transaction_id,
+    ]);
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1099bs", index],
+        message:
+          "1099-B repeats the same identified broker transaction; corrected copies need one reviewed current row",
+      });
+    }
+    seen.add(key);
+  }
 });
 
 type B99Item = z.infer<typeof itemSchema>;

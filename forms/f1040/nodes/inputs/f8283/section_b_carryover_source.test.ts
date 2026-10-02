@@ -25,7 +25,10 @@ const filedReturnBytes = new TextEncoder().encode(
   "%PDF-1.7 reviewed filed 2024 return with Schedule A fixture",
 );
 const acceptanceNoticeBytes = new TextEncoder().encode(
-  "<Acknowledgment><Status>Accepted</Status><TaxYr>2024</TaxYr></Acknowledgment>",
+  "<Acknowledgement><SubmissionId>2024-submission-1</SubmissionId><EFIN>123456</EFIN><TaxYr>2024</TaxYr><ExtndGovernmentCd>IRS</ExtndGovernmentCd><SubmissionTyp>1040</SubmissionTyp><AcceptanceStatusTxt>Accepted</AcceptanceStatusTxt><StatusDt>2025-02-01</StatusDt><TIN>123456789</TIN></Acknowledgement>",
+);
+const filedReturnXmlBytes = new TextEncoder().encode(
+  '<Return xmlns="http://www.irs.gov/efile"><ReturnHeader><TaxYr>2024</TaxYr><ReturnTypeCd>1040</ReturnTypeCd><Filer><PrimarySSN>123456789</PrimarySSN></Filer></ReturnHeader><ReturnData><IRS1040/><IRS1040ScheduleA><OtherThanByCashOrCheckAmt>15000</OtherThanByCashOrCheckAmt></IRS1040ScheduleA><IRS8283><ArtWorthAtLeast20000DollarsInd>X</ArtWorthAtLeast20000DollarsInd><PropertyInformation><DonatedPropertyDesc>Purchased oil painting</DonatedPropertyDesc><DonatedPropertyPhysicalCondTxt>Excellent</DonatedPropertyPhysicalCondTxt><AppraisedFairMarketValueAmt>30000</AppraisedFairMarketValueAmt><DonorAcquiredDt>2022-10</DonorAcquiredDt><DonorAcquisitionDesc>Purchase</DonorAcquisitionDesc><DonorCostOrAdjustedBasisAmt>20000</DonorCostOrAdjustedBasisAmt><DeductionClaimedAmt>30000</DeductionClaimedAmt></PropertyInformation><AppraiserName><PersonFirstNm>Alex</PersonFirstNm><PersonLastNm>Valuer</PersonLastNm></AppraiserName><AppraiserSignedDt>2024-12-15</AppraiserSignedDt><AppraiserUSAddress><AddressLine1Txt>10 Art Street</AddressLine1Txt><CityNm>Boston</CityNm><StateAbbreviationCd>MA</StateAbbreviationCd><ZIPCd>02108</ZIPCd></AppraiserUSAddress><AppraiserEIN>123456789</AppraiserEIN><ReceivedDt>2024-12-01</ReceivedDt><UsePropertyForUnrelatedUseInd>false</UsePropertyForUnrelatedUseInd><DoneeName><BusinessNameLine1Txt>Public Art Museum</BusinessNameLine1Txt></DoneeName><DoneeEIN>987654321</DoneeEIN><DoneeUSAddress><AddressLine1Txt>1 Museum Way</AddressLine1Txt><CityNm>Boston</CityNm><StateAbbreviationCd>MA</StateAbbreviationCd><ZIPCd>02108</ZIPCd></DoneeUSAddress></IRS8283></ReturnData></Return>',
 );
 
 Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to one carryover", async () => {
@@ -61,6 +64,13 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
         source_document_reference: "filed-2024-return-copy",
         file_name: "filed-2024-return.pdf",
         sha256: await sha256Hex(filedReturnBytes),
+        reviewed_by: "Reviewer A",
+        reviewed_on: "2026-09-30",
+      },
+      filed_return_xml: {
+        source_document_reference: "filed-2024-return-xml",
+        file_name: "filed-2024-return.xml",
+        sha256: await sha256Hex(filedReturnXmlBytes),
         reviewed_by: "Reviewer A",
         reviewed_on: "2026-09-30",
       },
@@ -130,6 +140,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
     prior: Uint8Array = priorFormBytes,
     appraisal: Uint8Array = appraisalBytes,
     row: unknown = carryover,
+    priorXml: Uint8Array = filedReturnXmlBytes,
   ) =>
     bindForm8283SectionBCarryoverSource(
       review,
@@ -139,8 +150,89 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       appraisal,
       filedReturnBytes,
       acceptanceNoticeBytes,
+      priorXml,
     );
   await bind(source);
+  for (
+    const [oldValue, newValue] of [
+      ["<PrimarySSN>123456789", "<PrimarySSN>999999999"],
+      [
+        "<OtherThanByCashOrCheckAmt>15000",
+        "<OtherThanByCashOrCheckAmt>14999",
+      ],
+      [
+        "<AppraisedFairMarketValueAmt>30000",
+        "<AppraisedFairMarketValueAmt>29999",
+      ],
+      [
+        "<DonorCostOrAdjustedBasisAmt>20000",
+        "<DonorCostOrAdjustedBasisAmt>19999",
+      ],
+      ["<DoneeEIN>987654321", "<DoneeEIN>987654320"],
+      ["<AppraiserEIN>123456789", "<AppraiserEIN>123456780"],
+    ]
+  ) {
+    const changedXml = new TextEncoder().encode(
+      new TextDecoder().decode(filedReturnXmlBytes).replace(oldValue, newValue),
+    );
+    const changedDigest = await sha256Hex(changedXml);
+    await assertRejects(() =>
+      bind(
+        {
+          ...source,
+          accepted_2024_filing: {
+            ...source.accepted_2024_filing,
+            filed_return_xml: {
+              ...source.accepted_2024_filing.filed_return_xml,
+              sha256: changedDigest,
+            },
+          },
+        },
+        priorFormBytes,
+        appraisalBytes,
+        carryover,
+        changedXml,
+      )
+    );
+  }
+  for (
+    const [oldValue, newValue] of [
+      ["<AcceptanceStatusTxt>Accepted", "<AcceptanceStatusTxt>Rejected"],
+      ["<TaxYr>2024", "<TaxYr>2023"],
+      ["<SubmissionId>2024-submission-1", "<SubmissionId>other-submission"],
+      ["<TIN>123456789", "<TIN>999999999"],
+      ["<SubmissionTyp>1040", "<SubmissionTyp>1041"],
+    ]
+  ) {
+    const changedNotice = new TextEncoder().encode(
+      new TextDecoder().decode(acceptanceNoticeBytes).replace(
+        oldValue,
+        newValue,
+      ),
+    );
+    const changedSha256 = await sha256Hex(changedNotice);
+    await assertRejects(() =>
+      bindForm8283SectionBCarryoverSource(
+        {
+          ...source,
+          accepted_2024_filing: {
+            ...source.accepted_2024_filing,
+            acceptance_notice: {
+              ...source.accepted_2024_filing.acceptance_notice,
+              sha256: changedSha256,
+            },
+          },
+        },
+        carryover,
+        "123456789",
+        priorFormBytes,
+        appraisalBytes,
+        filedReturnBytes,
+        changedNotice,
+        filedReturnXmlBytes,
+      )
+    );
+  }
   await assertRejects(() =>
     bind(source, new TextEncoder().encode("%PDF-1.7 changed prior form"))
   );
@@ -172,6 +264,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       appraisalBytes,
       new TextEncoder().encode("%PDF-1.7 changed filed return"),
       acceptanceNoticeBytes,
+      filedReturnXmlBytes,
     )
   );
   await assertRejects(() =>
@@ -183,6 +276,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       appraisalBytes,
       filedReturnBytes,
       new TextEncoder().encode("<Acknowledgment>changed</Acknowledgment>"),
+      filedReturnXmlBytes,
     )
   );
   await assertRejects(() =>
@@ -267,6 +361,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
     appraisalBytes,
     filedReturnBytes,
     acceptanceNoticeBytes,
+    filedReturnXmlBytes,
     context,
   );
   assertEquals(reviewed.contributionId, "artwork-2024-1");
@@ -281,6 +376,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       appraisalBytes,
       filedReturnBytes,
       acceptanceNoticeBytes,
+      filedReturnXmlBytes,
       {
         ...context,
         documentIdsByAttachmentFileName: {
@@ -299,6 +395,7 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       appraisalBytes,
       filedReturnBytes,
       acceptanceNoticeBytes,
+      filedReturnXmlBytes,
       {
         ...context,
         attachmentDescriptionsByFileName: {

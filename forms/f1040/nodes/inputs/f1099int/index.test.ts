@@ -16,6 +16,8 @@ import type { SellerFinancedBuyer } from "../../../seller_financed_buyer.ts";
 type ItemOverrides = Partial<{
   payer_name: string;
   payer_tin: string;
+  account_number: string;
+  source_document_reference: string;
   seller_financed: boolean;
   buyer_used_as_personal_residence: boolean;
   seller_financed_buyer: SellerFinancedBuyer;
@@ -94,6 +96,32 @@ function interestNet(fields: unknown): number | undefined {
   return (fields as { interest_detail?: { net: number } } | undefined)
     ?.interest_detail?.net;
 }
+
+Deno.test("1099-INT rejects corrected references on one identified payer/account", () => {
+  const issued = minimalItem({
+    payer_name: "Test Bank",
+    payer_tin: "123456789",
+    account_number: "SAV-1",
+    source_document_reference: "issued-1099int-2025-1",
+    box1: 200,
+  });
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        source_document_reference: "corrected-1099int-2025-2",
+        box1: 900,
+      }]),
+    Error,
+    "repeats the same payer and account",
+  );
+  const distinct = compute([issued, { ...issued, account_number: "SAV-2" }]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
+      .length,
+    2,
+  );
+});
 
 Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);

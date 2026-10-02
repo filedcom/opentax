@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { SCENARIO_1040_01_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
 import { form5695 } from "./f5695.ts";
 
 const filer: FilerIdentity = {
@@ -165,6 +166,38 @@ Deno.test("Form 5695 itemized Section A emits ordered QMID groups and exact cred
     "<EgyEffcntHmImprvCrAmt>553</EgyEffcntHmImprvCrAmt>",
   );
   assertEquals(xml.includes("ResidentialCleanEnergyCrGrp"), false);
+});
+
+Deno.test("ATS Scenario 1's three sourced doors do not create an 'all other' door amount", () => {
+  const facts = SCENARIO_1040_01_FACTS.form5695;
+  assertEquals(facts.exteriorDoors.map((door) => door.cost), [1_020, 920, 800]);
+  assertEquals(facts.line19eOtherDoorsCost, 2_740);
+  // Eligibility answers and tax limit below only exercise the Section A
+  // serializer. The packet does not support a complete Form 5695 claim.
+  const xml = form5695.build({
+    part_ii_section_a: {
+      main_home_in_us: true,
+      original_user: true,
+      five_year_use: true,
+      home_address: filer.address,
+      related_to_new_home: false,
+      exterior_doors: [...facts.exteriorDoors],
+    },
+    part_ii_tax_limit: 1_000,
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<MostExpnsExtrDoorCostAmt>1020</MostExpnsExtrDoorCostAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NextMostExpnsExtrDoorCostAmt>1720</NextMostExpnsExtrDoorCostAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOtherQlfyExtrDoorsCostAmt>1720</TotalOtherQlfyExtrDoorsCostAmt>",
+  );
+  assertEquals(xml.includes("<OtherQlfyExtrDoorsCostAmt>"), false);
 });
 
 Deno.test("Form 5695 puts door and window overflow totals on the printed lines", () => {

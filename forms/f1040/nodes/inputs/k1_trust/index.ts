@@ -37,6 +37,20 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // IRS Instructions for Schedule K-1 (Form 1041):
 // https://www.irs.gov/instructions/i1041sk1
 
+export const box13CodeBIssuedCopyReviewSchema = z.object({
+  pdf_reference: z.string().trim().min(1),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  tax_year: z.literal(2025),
+  estate_trust_ein: z.string().regex(/^\d{9}$/),
+  beneficiary_ssn: z.string().regex(/^\d{9}$/),
+  box13_code_b_backup_withholding: z.number().finite().positive().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    "Issued K-1 code B review needs cent precision",
+  ),
+}).strict();
+
 // Per-item schema — one Schedule K-1 (1041) from one trust or estate
 export const itemSchema = z.object({
   // Identification
@@ -51,6 +65,17 @@ export const itemSchema = z.object({
     .optional(),
   box14_code_m_form3468_part_v_statement: trustPartVStatementSchema.optional(),
   box13_code_m_orphan_drug_credit: z.never().optional(),
+  // Box 13 code B requires an issued K-1 copy attached to the beneficiary's
+  // return. Retain the amount so unsupported export cannot silently drop it.
+  box13_code_b_backup_withholding: z.number().finite().positive().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    { message: "K-1 box 13 code B needs cent precision" },
+  ).optional(),
+  // Review metadata binds selected source facts to retained PDF bytes. It
+  // does not prove the PDF's printed contents or fiduciary issuance.
+  box13_code_b_issued_copy_review: box13CodeBIssuedCopyReviewSchema.optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.never().optional(),
   box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
   box13_code_zz_new_markets_statement_reference: z.string().trim().min(1)
@@ -169,6 +194,24 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
+  if (item.box13_code_b_issued_copy_review) {
+    const review = item.box13_code_b_issued_copy_review;
+    if (
+      item.box13_code_b_backup_withholding === undefined ||
+      item.estate_trust_ein !== review.estate_trust_ein ||
+      item.beneficiary_ssn !== review.beneficiary_ssn ||
+      !item.source_document_reference ||
+      Math.round(item.box13_code_b_backup_withholding * 100) !==
+        Math.round(review.box13_code_b_backup_withholding * 100)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box13_code_b_issued_copy_review"],
+        message:
+          "Trust K-1 box 13 code B issued-copy review must match retained source, beneficiary, and amount",
+      });
+    }
+  }
   if (
     item.box14_code_m_clean_electricity_investment_information !== undefined ||
     item.box14_code_m_form3468_part_v_statement !== undefined

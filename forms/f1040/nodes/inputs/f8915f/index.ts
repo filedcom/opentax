@@ -54,6 +54,7 @@ export const itemSchema = z.object({
   source_1099r_document_reference: referenceSchema,
   source_1099r_payer_ein: z.string().regex(/^\d{9}$/),
   source_1099r_account_number: referenceSchema,
+  other_distribution_nonqualified_review_reference: referenceSchema.optional(),
   gross_distribution: z.number().int().positive().max(22_000),
   taxable_distribution: z.number().int().positive().max(22_000),
   full_inclusion_elected: z.boolean(),
@@ -141,7 +142,10 @@ export const inputSchema = z.object({
 export type Form8915FItem = z.infer<typeof itemSchema>;
 
 /** First-year values shared by MeF, PDF and Form 1040 reconciliation. */
-export function currentYearDistributionLines(raw: Form8915FItem) {
+export function currentYearDistributionLines(
+  raw: Form8915FItem,
+  other: { planGross: number; iraGross: number },
+) {
   const item = itemSchema.parse(raw);
   const amount = item.gross_distribution;
   const plan = item.retirement_source_kind === "plan";
@@ -153,10 +157,11 @@ export function currentYearDistributionLines(raw: Form8915FItem) {
     : 0;
   return {
     line1e_available: 22_000,
-    line2a_plan_distributions: plan ? amount : 0,
+    line2a_plan_distributions: (plan ? amount : 0) + other.planGross,
     line2b_qualified_plan_distributions: plan ? amount : 0,
-    line3a_ira_distributions: plan ? 0 : amount,
+    line3a_ira_distributions: (plan ? 0 : amount) + other.iraGross,
     line3b_qualified_ira_distributions: plan ? 0 : amount,
+    line5a_nonqualified_distributions: other.planGross + other.iraGross,
     line5b_qualified_distributions: amount,
     line6_total_qualified: amount,
     line8_plan_qualified: plan ? amount : 0,
@@ -179,7 +184,7 @@ export function verifyCurrentYearDistributionSource(
   raw: Form8915FItem,
   pending1099R: unknown,
   filer: FilerIdentity | undefined,
-): void {
+): { planGross: number; iraGross: number } {
   const item = itemSchema.parse(raw);
   const expectedSSN = item.owner === "T"
     ? filer?.primarySSN
@@ -223,14 +228,49 @@ export function verifyCurrentYearDistributionSource(
       source.no_distribution_received !== true
     )
     : [];
-  if (
-    matches.length !== 1 ||
-    (parsed.success && parsed.data.f1099rs.length !== 1)
-  ) {
+  if (matches.length !== 1 || !parsed.success) {
     throw new Error(
       "Form 8915-F needs one matching fully taxable Form 1099-R source",
     );
   }
+  const other = parsed.data.f1099rs.filter((source) => source !== matches[0]);
+  if (
+    other.length > 1 ||
+    (other.length === 0) !==
+      (item.other_distribution_nonqualified_review_reference === undefined) ||
+    other.some((source) =>
+      (source.ts ?? "T") !== item.owner ||
+      source.form8915f_treatment !== undefined ||
+      source.form8915f_repayment_amount !== undefined ||
+      source.box1_gross_distribution !== source.box2a_taxable_amount ||
+      source.box7_distribution_code !== "7" ||
+      source.exclude_4972 === true ||
+      source.exclude_8606_roth === true ||
+      source.rollover_code !== undefined ||
+      source.ira_rollover !== undefined ||
+      (source.prior_ira_basis ?? 0) !== 0 ||
+      source.box11_first_year_roth !== undefined ||
+      source.qcd_full === true ||
+      (source.qcd_partial_amount ?? 0) !== 0 ||
+      (source.pso_premium ?? 0) !== 0 ||
+      source.simplified_method_flag === true ||
+      source.disability_as_wages === true ||
+      source.altered_or_handwritten === true ||
+      source.no_distribution_received === true
+    )
+  ) {
+    throw new Error(
+      "Form 8915-F other Form 1099-R needs one reviewed ordinary nonqualified distribution",
+    );
+  }
+  return {
+    planGross: other[0]?.box7_ira_simple_indicator === true
+      ? 0
+      : (other[0]?.box1_gross_distribution ?? 0),
+    iraGross: other[0]?.box7_ira_simple_indicator === true
+      ? other[0].box1_gross_distribution
+      : 0,
+  };
 }
 
 /** Prevent a linked 1099-R from reducing taxable income without its form. */
@@ -277,7 +317,10 @@ class F8915FNode extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.f8915fs?.length ?? 0) > 0) {
-      currentYearDistributionLines(input.f8915fs![0]);
+      currentYearDistributionLines(input.f8915fs![0], {
+        planGross: 0,
+        iraGross: 0,
+      });
     }
     return { outputs: [] };
   }

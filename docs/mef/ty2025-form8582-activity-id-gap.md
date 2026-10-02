@@ -1,5 +1,107 @@
 # TY2025 Form 8582 durable activity identity
 
+## Active first-year retained Part II sale above phaseout (written, unrun)
+
+The first-year retained short-held sale source also supports one actively
+participated type-A rental for a single filer whose modified AGI is at least
+$150,000. With a $5,000 current rental loss and $2,000 ordinary Form 4797 Part
+II gain, Form 8582 Part IV allows $2,000 against the gain and carries $3,000 by
+activity ID. The 2025 acquisition and retained-interest sale records must
+match, with no prior loss, recapture, installment treatment, or grouping. The
+native Form 8582 builder checks the zero special allowance and exact Schedule
+E, Schedule 1, and final Form 1040 amounts; Form 8582, Form 4797, and Schedule
+E PDFs replay that check. Positive and acquisition, phaseout, and return-tamper
+fixtures are authored but unrun.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+state that the active rental special allowance is generally zero at modified
+AGI of $150,000 or more for a single filer and that less-than-entire sale gains
+remain current activity income. The [2025 Form 4797
+instructions](https://www.irs.gov/instructions/i4797) put short-held ordinary
+property gains in Part II. Below-phaseout amounts, other filing statuses,
+prior PALs, multiple activities, authenticated source documents, XSD,
+filled-PDF, business-rule and acceptance checks remain open.
+
+## First-year retained Part II property sale (written, unrun)
+
+One first-year type-B rental retains its activity after a short-held,
+no-depreciation property sale. A $2,000 ordinary Form 4797 Part II gain offsets
+$2,000 of its $5,000 current Schedule E loss; Form 8582 Part V carries the
+remaining $3,000 under the same activity ID. The direct source binds a 2025
+acquisition record to the sale, states that the activity interest was retained,
+and excludes prior losses, recapture, installment treatment, and grouping. The
+Form 8582 native builder reconciles Form 4797, Schedule E, Schedule 1, and the
+settled Form 1040. The three PDF projections replay the same source and final
+return checks. A full-return positive and acquisition, sale, and return-tamper
+fixture are authored but unrun.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+treat a less-than-entire disposition as current activity income. The [2025
+Form 4797 instructions](https://www.irs.gov/instructions/i4797) put a
+short-held ordinary property gain in Part II. Acquisition and closing
+references are reviewed text, not authenticated documents. Other dispositions,
+prior PALs, multiple activities, XSD, filled-PDF, business-rule, and filing
+acceptance checks remain open.
+
+## One farm profit allocated across two rental losses (written, unrun)
+
+One type-B Form 4835 farm's $3,000 current profit may offset two distinct
+type-B Schedule E rental losses of $2,000 and $4,000. Form 8582 Part V totals
+$3,000 income and $6,000 loss; Part VII allocates its $3,000 suspended balance
+in the rental losses' 1:2 ratio, leaving $1,000 and $2,000 under their own
+durable activity IDs. Parts VIII, Schedule E, Schedule 1 and Form 1040 retain
+the corresponding allowed amounts and net zero additional income. Native
+export now requires the one farm and two rental sources, no prior PAL or sale,
+explicit at-risk answers, one W-2 and exact settled-return amounts. The PDF
+replays that source check and projects both Part VII rows. A full-return
+positive fixture plus amount, duplicate-ID and return-tamper fixtures are
+authored but unrun. The [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) require Part VII ratios
+based on each activity's share of total overall losses and carry the unallowed
+amount into Part VIII.
+
+Document-byte authentication, prior losses, active-rental allowances, sales,
+and wider activity mixes remain outside this bound. XSD, filled PDF, business
+rules and filing acceptance are pending.
+
+## One current farm profit against one passive rental loss (written, unrun)
+
+One type-B Form 4835 share-rent farm's $3,000 current at-risk profit may
+offset $3,000 of a separately identified type-B Schedule E rental's $5,000
+current loss. Form 8582 Part V and Part VII retain the rental's remaining
+$2,000 PAL under its durable activity ID. Schedule 1 line 5 and Form 1040
+additional income net to zero while an independently sourced W-2 supplies
+$50,000 of wages. The native builder now requires exactly those two source
+activities, no prior PAL or sale, matching at-risk assertions, and exact
+Schedule 1/Form 1040 totals; the Form 8582 PDF replays that check. Form 4835
+native/PDF retains its $3,000 income. A full-return positive fixture and
+farm, rental, activity-ID, Schedule 1, and Form 1040 tamper fixtures are
+authored for the deferred bulk pass. The [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582) place other passive
+income and loss in Part V and allocate the unallowed remainder in Part VII.
+
+This route does not authenticate source-document bytes or add prior PAL,
+disposition, active-rental, or mixed-character treatment. Filled-PDF, XSD,
+IRS business rules and acceptance remain pending.
+
+## One current farm loss against two passive rental profits (written, unrun)
+
+The no-prior, no-sale Part V route now joins one Form 4835 share-rent farm's
+current at-risk loss to two separately identified type-B Schedule E rental
+profits. In the focused case, the farm's $5,000 loss uses $2,000 and $1,000 of
+rental profit, allowing $3,000 on its Form 4835 line 34c and retaining a $2,000
+PAL under the farm activity ID. The Form 8582 native builder requires the three
+source activities, one W-2, no K-1 or sale source, and exact Schedule 1 and
+Form 1040 totals; its PDF invokes the same check. Both Form 4835 outputs use
+the calculated allocation. A full-return positive case and farm, rental,
+identity, Schedule 1, and Form 1040 tamper cases are authored but unrun.
+
+This is a current-year other-passive offset under the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582). Prior PALs, active
+rental special allowance, dispositions, grouping, other passive sources,
+source-document authentication, durable accepted-year storage, filled-PDF
+review, and IRS filing acceptance remain open.
+
 ## Reviewed 2024 record joined to the 2025 return graph, unrun
 
 The public `form8582_prior_year_record` source now carries one typed, reviewed
@@ -532,3 +634,22 @@ nonrecaptured section 1231 loss. This slice needs reviewed document bytes and an
 authenticated accepted 2024 return before the prior PAL is proven; other Part I
 dispositions, prior Form 4797-character PALs, recapture, partial §1231 lookback
 balances, and multi-activity joins remain closed.
+
+## Two current farm losses against one passive rental profit (written, unrun)
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+combine other-passive income and loss in Part V and allocate the allowed loss
+back to the reporting forms. A bounded no-prior, no-sale route now joins two
+distinct Form 4835 share-rent farms with current at-risk losses to one type-B
+Schedule E rental profit. The $3,000 and $1,000 farm losses use $2,000 of
+rental profit, giving $1,500 and $500 allowed on their separate Form 4835
+line 34c copies and the same amounts suspended under their activity IDs.
+Native Form 8582 checks the combined loss limit, Schedule 1 zero net rental
+income, and Form 1040 wages and AGI; its PDF projection and both Form 4835
+PDF instances use the same calculated allocation. Positive and changed farm,
+rental, identity, and final-return fixtures are authored but unrun.
+
+This extends the existing one-farm offset with a source-checked three-activity
+case. Farm and rental document bytes, grouping, prior PALs, dispositions,
+extra passive sources, accepted-year ledger storage, filled PDF review, and
+IRS filing acceptance remain open.

@@ -317,6 +317,14 @@ Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", ()
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: SCENARIO_1040_02_FACTS.w2.map((form) => ({
+        employer_ein: form.employerEin,
+        employee_ssn: form.employeeSsn,
+        source_document_reference: form.statutoryEmployee
+          ? "ATS02-STATUTORY-W2"
+          : undefined,
+        schedule_c_business_reference: form.statutoryEmployee
+          ? "ATS02-STATUTORY-C"
+          : undefined,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -328,7 +336,10 @@ Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", ()
       })),
     },
   );
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 29_513);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    29_513,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)?.line1a_wages, 8_513);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 1_164);
 });
@@ -383,10 +394,12 @@ Deno.test("1040 Scenario 4 preserves the sourced credits and vehicle details", (
 
 Deno.test("1040 Scenario 4 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_04_FACTS.w2;
+  assertEquals(form.employeeSsn, SCENARIO_1040_04_FACTS.taxpayer.ssn);
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: [{
+        employee_ssn: form.employeeSsn,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -432,10 +445,12 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
 
 Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_05_FACTS.w2;
+  assertEquals(form.employeeSsn, SCENARIO_1040_05_FACTS.taxpayer.ssn);
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: [{
+        employee_ssn: form.employeeSsn,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -523,10 +538,12 @@ Deno.test("1040 Scenario 12 Schedule C computes its printed net profit", () => {
 
 Deno.test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_12_FACTS.w2;
+  assertEquals(form.employeeSsn, SCENARIO_1040_12_FACTS.taxpayer.ssn);
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: [{
+        employee_ssn: form.employeeSsn,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -651,6 +668,7 @@ Deno.test("1040 Scenario 8 preserves each 1099-R's code and taxable amount", () 
   assertEquals(facts.form1040, {
     digitalAssets: false,
     presidentialCampaignFundTaxpayer: true,
+    line4aBlank: true,
     line4cQcdChecked: true,
     line5cRolloverChecked: true,
     line6dMfsLivedApartChecked: true,

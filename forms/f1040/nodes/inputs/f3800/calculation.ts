@@ -54,6 +54,15 @@ export type Form3800NonpassiveCreditSources = {
   readonly form8826Credit?: number;
   readonly form8820Credit?: number;
   readonly form8874Credit?: number;
+  readonly form8881PartICredit?: number;
+  readonly form8881PartIICredit?: number;
+  readonly form8881PartIIICredit?: number;
+  readonly form8908Credit?: number;
+  readonly form8941Credit?: number;
+  readonly form8994Credit?: number;
+  readonly form8864Credit?: number;
+  readonly form8882Credit?: number;
+  readonly form8844Credit?: number;
   readonly form3468PartVCredit?: number;
   readonly form5884Credit?: number;
   readonly form8936NewVehicleCredit?: number;
@@ -82,6 +91,31 @@ export function form3800NonpassiveCreditUseRows(
       amount: sources.form8874Credit ?? 0,
     },
     {
+      sourceKey: "nonpassive:8881:i",
+      form3800CreditLine: "1j" as const,
+      amount: sources.form8881PartICredit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8908",
+      form3800CreditLine: "1p" as const,
+      amount: sources.form8908Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8864",
+      form3800CreditLine: "1l" as const,
+      amount: sources.form8864Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8882",
+      form3800CreditLine: "1k" as const,
+      amount: sources.form8882Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8844",
+      form3800CreditLine: "3" as const,
+      amount: sources.form8844Credit ?? 0,
+    },
+    {
       sourceKey: "nonpassive:3468-part-v",
       form3800CreditLine: "1v" as const,
       amount: sources.form3468PartVCredit ?? 0,
@@ -97,9 +131,29 @@ export function form3800NonpassiveCreditUseRows(
       amount: sources.form8936CommercialVehicleCredit ?? 0,
     },
     {
+      sourceKey: "nonpassive:8881:ii",
+      form3800CreditLine: "1dd" as const,
+      amount: sources.form8881PartIICredit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8881:iii",
+      form3800CreditLine: "1ee" as const,
+      amount: sources.form8881PartIIICredit ?? 0,
+    },
+    {
       sourceKey: "nonpassive:5884",
       form3800CreditLine: "4b" as const,
       amount: sources.form5884Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8941",
+      form3800CreditLine: "4h" as const,
+      amount: sources.form8941Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8994",
+      form3800CreditLine: "4j" as const,
+      amount: sources.form8994Credit ?? 0,
     },
     ...classifyForm8835Credits(sources.facilities).rows.map((row) => ({
       sourceKey: `nonpassive:8835:${row.line}`,
@@ -607,6 +661,8 @@ type Form3800TaxContext = {
   tentativeMinimumTax: number;
   /** Part I line 6: non-passive credits not allowed against TMT. */
   standardCredit: number;
+  /** Part II line 22: non-passive empowerment-zone employment credit. */
+  empowermentCredit?: number;
   /** Part II line 36: non-passive specified credits. */
   specifiedCredit: number;
   /** Part I line 4: source-vintage non-passive carryforwards. */
@@ -700,6 +756,7 @@ export function deriveForm3800NonpassiveInput(
   credits: Pick<
     Form3800TaxContext,
     | "standardCredit"
+    | "empowermentCredit"
     | "specifiedCredit"
     | "standardCarryforward"
     | "specifiedCarryforward"
@@ -747,6 +804,7 @@ export function deriveForm3800NonpassiveInput(
     priorAllowableCredits,
     tentativeMinimumTax: returnLines.form6251Line9,
     standardCredit: credits.standardCredit,
+    empowermentCredit: credits.empowermentCredit ?? 0,
     specifiedCredit: credits.specifiedCredit,
     standardCarryforward: credits.standardCarryforward,
     specifiedCarryforward: credits.specifiedCarryforward,
@@ -772,6 +830,7 @@ export function calculateForm3800Nonpassive(
       priorAllowableCredits: input.priorAllowableCredits,
       tentativeMinimumTax: input.tentativeMinimumTax,
       standardCredit: input.standardCredit,
+      empowermentCredit: input.empowermentCredit ?? 0,
       specifiedCredit: input.specifiedCredit,
       standardCarryforward: input.standardCarryforward,
       specifiedCarryforward: input.specifiedCarryforward,
@@ -823,7 +882,7 @@ export function calculateForm3800Nonpassive(
   const line19 = Math.max(line13, line18);
   const line20 = Math.max(0, line11 - line19);
   const line21 = Math.max(0, line20 - line17);
-  const line22 = 0;
+  const line22 = input.empowermentCredit ?? 0;
   const line23 = passive.line23;
   const line24 = passive.line24;
   const line25 = line22 + line24;

@@ -19,6 +19,23 @@ Marketplace-statement authentication remain outside this route. Publication
 [974](https://www.irs.gov/publications/p974) still governs special coverage
 and eligibility cases, which this narrow route does not infer.
 
+## Corrected SLCSP in the one-month transition (staged, unrun)
+
+The same one-person transition now admits a corrected overlap-month column B
+only when **both** identified policies carry distinct dated Marketplace-error
+determinations for that month, each with its own reference and SHA-256, and
+both agree on the corrected benchmark. Their reported column B and annual
+statement totals remain intact. The source graph counts the corrected $650
+benchmark once while adding both $900 in premiums and $350 in APTC; native
+MeF and PDF independently check the source against Form 8962 monthly rows,
+Schedule 2 line 1a, and Form 1040 line 17. The positive fixture expects
+$854 PTC and $1,396 excess APTC; mismatched correction, reused evidence, and
+return-tamper fixtures are authored but unrun. More than one overlap month,
+one-sided corrections, mixed coverage families, allocation, move, and external
+authentication of the Marketplace records remain closed. This follows the
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) for
+multiple same-state policies and an incorrect applicable SLCSP.
+
 ## One-policy corrected SLCSP month (build-first, unrun)
 
 The monthly single-filer route now accepts one identified, nonshared,
@@ -461,6 +478,27 @@ entered together without rejecting a documented midyear split. Distinct policies
 still aggregate normally. Focused positive and negative source cases are written
 but unrun; this check does not relax the remaining MeF/PDF overlap boundaries or
 settle the remaining Publication 974 routes.
+
+## One full-year Situation 4 policy without an agreement (2026-10-01, unrun)
+
+The [2025 Form 8962 Part IV instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+assign a percentage based on enrolled individuals when the two tax families
+cannot agree. A bounded full-year case now requires exactly two covered people:
+the Marketplace recipient/filer and one child claimed by a different,
+nonenrolled taxpayer. One reviewed source record names the policy, the filer,
+the other taxpayer, the claimed child's SSN, the enrollment and tax-family
+review records, the no-agreement review record, and the exact 1-of-2 enrolled
+count. The two review references and hashes must differ. The one-half
+percentage applies to each month's premium, SLCSP, and APTC and to Form 8962
+Part IV. Native and PDF projection recompute the source rows and join the net
+credit to Schedule 3 line 9 and Form 1040 line 31. A full-return $1,800 credit
+and changed claim, owner, count, review, and final-credit fixtures are authored
+for the deferred bulk gate.
+
+The reviewed references and hashes are entered metadata; the Marketplace,
+claim, and no-agreement document bytes are not independently authenticated.
+Other enrolled counts, periods, policies, household sizes, and allocation
+situations remain outside this route.
 
 ## Agreed Situation 4 shared-policy filing path (build-first, unrun)
 

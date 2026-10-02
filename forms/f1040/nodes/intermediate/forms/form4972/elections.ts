@@ -143,6 +143,25 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           (form.federal_estate_tax ?? 0) !== 0 ||
           (form.death_benefit_exclusion ?? 0) !== 0
         ) ||
+        forms.some((form, index) =>
+          typeof form.box6_nua === "number" && form.box6_nua > 0 &&
+          (sourceByElection[index].box6_nua !== form.box6_nua ||
+            elections[index].source_document_references.length !== 1 ||
+            form.elect_include_nua !== true ||
+            form.elect_10yr_averaging !== true ||
+            (form.elect_capital_gain === true &&
+              (typeof form.capital_gain_amount !== "number" ||
+                form.capital_gain_amount <= 0 ||
+                typeof form.lump_sum_amount !== "number" ||
+                typeof form.box6_nua !== "number" ||
+                !Number.isSafeInteger(form.lump_sum_amount) ||
+                !Number.isSafeInteger(form.capital_gain_amount) ||
+                !Number.isSafeInteger(form.box6_nua) ||
+                !Number.isSafeInteger(
+                  form.box6_nua * form.capital_gain_amount /
+                    form.lump_sum_amount,
+                ))))
+        ) ||
         plans.some((plan) => !plan || typeof plan !== "object") ||
         elections.some((election, index) => {
           const plan = sourceByElection[index].form4972_plan as Record<
@@ -165,7 +184,6 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
             source.multiple_1099r === undefined) ||
           (source.source_document_references.length === 1 &&
             source.multiple_1099r !== undefined) ||
-          (source.box6_nua ?? 0) !== 0 ||
           (source.annuity_actuarial_value ?? 0) !== 0
         )
       ) {

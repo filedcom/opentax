@@ -67,9 +67,8 @@ export function reconcilePreAdoptionForm8839Credit(
     prepared.perChild.length !== 1 || prepared.adoptionBenefits !== 0 ||
     input.line11_agi === undefined ||
     !Number.isFinite(input.line11_agi) ||
-    input.line19_child_tax_credit === undefined ||
-    !Number.isFinite(input.line19_child_tax_credit) ||
-    input.form8859_worksheet_b_applies !== false ||
+    !Number.isFinite(input.line19_child_tax_credit ?? 0) ||
+    input.form8859_worksheet_b_applies === true ||
     input.form8859_worksheet_b_line14 !== undefined ||
     input.form8839_form2555_line45 !== undefined ||
     input.form8839_form2555_line50 !== undefined ||
@@ -124,7 +123,7 @@ export function reconcilePreAdoptionForm8839Credit(
     output.line11_agi !==
       output.line9_total_income - output.line10_adjustments ||
     output.line21_credits_total !==
-      input.line19_child_tax_credit + expectedLine20
+      (input.line19_child_tax_credit ?? 0) + expectedLine20
   ) {
     throw new Error(
       "Form 8839 pre-adoption AGI or preceding credits differ from the computed Form 1040",
@@ -142,7 +141,7 @@ export function reconcilePreAdoptionForm8839Credit(
     },
     child_credit_priority: {
       basis: "form1040_line19" as const,
-      amount: input.line19_child_tax_credit,
+      amount: input.line19_child_tax_credit ?? 0,
     },
     schedule3_priority: {
       line1: schedule3.line1,

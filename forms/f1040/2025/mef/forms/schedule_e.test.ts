@@ -70,6 +70,13 @@ Deno.test("Schedule E long type 8 description is preserved in a bundled statemen
     "<Desc>Schedule E Type 8 Property Descriptions</Desc>",
   );
   assertEquals(bundle.xml.includes(description), false);
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  const replay = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(
+    replay.xml.slice(replay.xml.indexOf("<ReturnData")),
+    bundle.xml.slice(bundle.xml.indexOf("<ReturnData")),
+  );
+  assertEquals(replay.attachments[0].bytes, bundle.attachments[0].bytes);
 });
 
 Deno.test("Schedule E serializes property lines and totals in XSD order", () => {

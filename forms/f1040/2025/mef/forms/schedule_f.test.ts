@@ -10,11 +10,52 @@ function farm(overrides: Partial<ScheduleFItem> = {}): ScheduleFItem {
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100",
     line_e_material_participation: true,
+    line_f_made_1099_payments: false,
     accounting_method: "cash",
     line1_sales_livestock_resale: 0,
     ...overrides,
   };
 }
+
+Deno.test("Schedule F native export requires line F and conditional line G answers", () => {
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_made_1099_payments: undefined })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_made_1099_payments: true })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_filed_1099s: false })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  const [xml] = scheduleF.build({
+    schedule_fs: [
+      farm({ line_f_made_1099_payments: true, line_f_filed_1099s: false }),
+    ],
+  }, { filer: testFiler() });
+  assertStringIncludes(
+    xml,
+    "<RequiredToFileForms1099Ind>true</RequiredToFileForms1099Ind>",
+  );
+  assertStringIncludes(
+    xml,
+    "<RequiredForms1099FiledInd>false</RequiredForms1099FiledInd>",
+  );
+});
 
 Deno.test("Schedule F native header uses the named spouse proprietor", () => {
   const jointFiler = {
@@ -45,8 +86,30 @@ Deno.test("Schedule F native header uses the named spouse proprietor", () => {
   );
 });
 
+Deno.test("Schedule F native export rejects a blank line 32 expense description", () => {
+  assertThrows(() =>
+    scheduleF.build({
+      schedule_fs: [farm({
+        line32_other_expenses: [{ description: "  ", amount: 125 }],
+      })],
+    }, { filer: testFiler() })
+  );
+});
+
+Deno.test("Schedule F native export requires a line 36 answer for a farm loss", () => {
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line16_feed: 500 })],
+      }, { filer: testFiler() }),
+    Error,
+    "Schedule F loss requires a line 36 at-risk answer",
+  );
+});
+
 Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 20_000 },
     schedule_f: {
       schedule_fs: [
         farm({
@@ -67,14 +130,14 @@ Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
       ],
     },
   }, testFiler());
-  assertStringIncludes(xml, 'documentCnt="3"');
-  assertStringIncludes(
-    xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF1">',
-  );
+  assertStringIncludes(xml, 'documentCnt="4"');
   assertStringIncludes(
     xml,
     '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
+  );
+  assertStringIncludes(
+    xml,
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF3">',
   );
   assertStringIncludes(xml, "<PurchasedProfitAmt>20000</PurchasedProfitAmt>");
   assertStringIncludes(
@@ -159,6 +222,7 @@ Deno.test("Schedule F reports preliminary farm loss and links at-risk computatio
 
 Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral statements", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 2_000 },
     schedule_f: {
       schedule_fs: [
         farm({
@@ -191,14 +255,14 @@ Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral state
       ],
     },
   }, testFiler());
-  assertStringIncludes(xml, 'documentCnt="5"');
+  assertStringIncludes(xml, 'documentCnt="6"');
   assertStringIncludes(
     xml,
-    '<CCCLoanReportedElectionAmt referenceDocumentId="CCCLoanDetailCashMethodStmt3"',
+    '<CCCLoanReportedElectionAmt referenceDocumentId="CCCLoanDetailCashMethodStmt4"',
   );
   assertStringIncludes(
     xml,
-    '<ElectionDeferCropInsProcInd referenceDocumentId="PostponementCropInsDsstrStmt4"',
+    '<ElectionDeferCropInsProcInd referenceDocumentId="PostponementCropInsDsstrStmt5"',
   );
   assertStringIncludes(xml, "<LoanDesc>CORN LOAN</LoanDesc>");
   assertStringIncludes(xml, "<NormalBusPracticeStatementTxt>");
@@ -214,11 +278,13 @@ Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral state
 
 Deno.test("Schedule F emits accrual Part III and links its own CCC statement", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 12_500 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "accrual",
         part_iii: {
           line37_sales_products: 10_000,

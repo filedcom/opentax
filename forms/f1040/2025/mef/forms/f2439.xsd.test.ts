@@ -1,5 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
+import type { MefBundle } from "../builder.ts";
+import { assertPreparedDocumentInventory } from "../prepared-attachment-manifest.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { TS } from "../../../nodes/types.ts";
 import { form2439 } from "./f2439.ts";
@@ -47,6 +49,47 @@ const item = {
   tax_period_end: "2025-12-31",
 };
 
+Deno.test("two payer-issued Form 2439 copies retain named native references through prepared inventory", () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single", line31_additional_payments: 3_000 },
+    schedule3: {
+      line13a_total: 3_000,
+      line14_total: 3_000,
+      line15_total: 3_000,
+    },
+    schedule_d: { line_11_form2439: 20_000 },
+    f2439: {
+      f2439s: [item, {
+        ...item,
+        payer_name: "Second Growth Fund",
+        payer_ein: "98-7654321",
+      }],
+    },
+  }, filer);
+  const bundle = (returnXml: string): MefBundle => ({
+    xml: returnXml,
+    attachments: [],
+    pending: {},
+    sourceSha256: "",
+    xmlSha256: "",
+    attachmentSha256ByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="IRS24393 IRS24394" referenceDocumentName="IRS2439"',
+  );
+  assertPreparedDocumentInventory(bundle(xml));
+  const unnamed = xml.replace(
+    'referenceDocumentId="IRS24393 IRS24394" referenceDocumentName="IRS2439"',
+    'referenceDocumentId="IRS24393 IRS24394"',
+  );
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle(unnamed)),
+    Error,
+    "document count, order, IDs, references",
+  );
+});
+
 Deno.test("Form 2439 native document retains payer, shareholder, and box 2 source", () => {
   const [xml] = form2439.build(
     { f2439s: [item] },
@@ -71,7 +114,10 @@ Deno.test("Form 2439 gain-only Copy B is included without Schedule 3 credit", ()
     { f2439s: [{ ...item, box2: undefined }] },
     { filer },
   );
-  assertStringIncludes(xml, "<TotalUndistributedLTCapGainAmt>10000</TotalUndistributedLTCapGainAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalUndistributedLTCapGainAmt>10000</TotalUndistributedLTCapGainAmt>",
+  );
   assertEquals(xml.includes("TaxPaidByRICOrREITAmt"), false);
 });
 
@@ -193,12 +239,17 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single", line31_additional_payments: 1_500 },
-    schedule3: { line13a_total: 1_500, line15_total: 1_500 },
+    schedule3: {
+      line13a_total: 1_500,
+      line14_total: 1_500,
+      line15_total: 1_500,
+    },
     schedule_d: { line_11_form2439: 10_000 },
     f2439: { f2439s: [item] },
   }, filer);
   assertStringIncludes(xml, "<IRS2439 documentId=");
   assertStringIncludes(xml, "<TaxPaidByRICOrREITAmt referenceDocumentId=");
+  assertStringIncludes(xml, "<OtherPaymentsAmt>1500</OtherPaymentsAmt>");
   assertStringIncludes(xml, 'referenceDocumentName="IRS2439"');
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

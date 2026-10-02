@@ -1,5 +1,11 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleR } from "../../mef/forms/schedule_r.ts";
+import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
+import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
+import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
+import { assertSchedule3PrintedTotals } from "../../schedule3_printed_totals.ts";
+import { assertSchedule3Line12Source } from "../../schedule3_line12_source.ts";
+import { assertSchedule3PaymentSources } from "../../schedule3_payment_sources.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -103,6 +109,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line6j_alt_fuel_vehicle_refueling",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line6k_tax_credit_bonds",
     pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
   },
@@ -155,6 +166,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line14_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_36[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line15_total",
     pdfField: "topmostSubform[0].Page1[0].f1_37[0]",
   },
@@ -165,6 +181,23 @@ export const schedule3Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
   fields,
   projectFields(fields, allPending) {
+    assertSchedule3Line8Join(fields, allPending);
+    assertSchedule3Line12Source(
+      fields.line12_fuel_tax_credit,
+      allPending.f4136,
+    );
+    const worksheet = allPending.form8978_reporting_year;
+    const line6l = worksheet?.schedule3_line6l;
+    const projected = typeof line6l === "number" && line6l > 0
+      ? { ...fields, line6l_form8978_credit: line6l }
+      : fields;
+    assertSchedule3PrintedTotals(projected, allPending);
+    assertSchedule3PaymentSources(projected, allPending);
+    assertSchedule3Line6jSource(
+      fields.line6j_alt_fuel_vehicle_refueling,
+      allPending.f8911,
+    );
+    assertSchedule3Line13aSource(fields.line13a_total, allPending.f2439);
     if (
       typeof fields.line6d_elderly_disabled_credit === "number" &&
       fields.line6d_elderly_disabled_credit > 0
@@ -175,16 +208,12 @@ export const schedule3Pdf: PdfFormDescriptor = {
         throw new Error("Schedule 3 PDF line 6d needs a filed Schedule R");
       }
     }
-    const worksheet = allPending.form8978_reporting_year;
-    const line6l = worksheet?.schedule3_line6l;
-    return typeof line6l === "number" && line6l > 0
-      ? { ...fields, line6l_form8978_credit: line6l }
-      : fields;
+    return projected;
   },
   filerFields: [
     {
       kind: "text",
-      domainKey: "fullName",
+      domainKey: "nameShownOnForm1040",
       pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
     },
     {

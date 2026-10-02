@@ -1,5 +1,48 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased Section A capital property to a private nonoperating foundation (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526 (2025)](https://www.irs.gov/publications/p526)
+require a reduction of long-term appreciation when capital gain property other
+than qualified appreciated stock is given to certain private nonoperating
+foundations. One bounded current-year Section A route now takes a purchased,
+nonvehicle capital item with FMV no more than $5,000, held more than one year,
+and an outright gift to a 20% limit private nonoperating foundation. A typed
+foundation-status record identifies the same donee name and address plus EIN,
+and the source names both that record and the purchase record. It requires
+reviewed assertions that the 50% foundation exception and qualified-appreciated-
+stock exception do not apply, the hypothetical FMV sale gain is wholly long
+term, and no other reduction applies. The claim equals adjusted basis below
+FMV.
+
+Form 8283 Section A, its separate native FMV statement, the PDF explanation,
+Schedule A, and itemized Form 1040 all use the same $4,500 FMV/$3,000 basis
+example. The native and PDF Schedule A preflights require the linked Form 8283
+source; changed category, holding date, foundation status, amount, and return
+fixtures are authored for the deferred bulk pass. Status, purchase, and FMV
+records remain reviewed references rather than authenticated bytes. Larger
+Section B gifts, publicly traded stock, foundations with special 50% status,
+partial interests, other reduction reasons, carryovers, filled-PDF review,
+schema validation, and IRS acceptance remain open.
+
+## Purchased long-term Section B art at least $20,000 put to unrelated use (2026-10-01, unrun)
+
+The existing reviewed seven-PDF unrelated-use route now accepts one purchased
+painting appraised from $20,000 through $500,000 with a basis-limited claim of
+at least $20,000. The typed source requires a purchase more than one year before
+the 2025 gift, the donee's actual unrelated-use statement, an appraisal, the
+completed signed Form 8283, separate signatures, and a reviewed FMV reduction
+equal to appraised appreciation. Native Form 8283 selects
+`ArtWorthAtLeast20000DollarsInd` and attaches the reviewed evidence; the PDF
+prints that art box, appraised FMV, the reduced claim, and the unrelated-use
+answer. Schedule A and itemized Form 1040 retain the basis-limited amount. A
+$40,000 FMV/$30,000 basis full-return case and changed source bytes, claim,
+donee-use assertion, and itemized-total cases are authored for the deferred
+bulk pass. Actual acquisition, appraisal, charity-use and signature documents,
+other property types, multiple gifts, filled PDF, XSD, and IRS acceptance
+remain open.
+
 ## Purchased Section B inventory and shared ordinary-income evidence (2026-10-01, unrun)
 
 The Section B source now uses one required-reason `ordinary_income_reduction`
@@ -568,3 +611,63 @@ and $19,000/$13,000 pair produces a $25,000 Schedule A deduction, with
 changed reduction-PDF bytes, repeated donee EIN, and changed itemized-total
 fixtures for deferred bulk validation. Other combinations, carryovers, and
 actual taxpayer document review remain open.
+
+## Donor-prepared Section A taxidermy (implementation staged 2026-10-01)
+
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) limits a
+qualifying taxidermy gift to the lesser of FMV and basis consisting only of
+preparing, stuffing, and mounting costs. Hunting, travel, equipment, and the
+donor's labor value are excluded. The new one-gift Section A route requires a
+donor-prepared mount containing an animal body part, completion more than one
+year before a 2025 gift, a 50%-limit donee, original FMV no more than $5,000,
+reviewed preparation and property-description records, and eligible costs
+equal to the lower claimed deduction. It excludes other reduction reasons,
+vehicles, Section B, mixed gifts, and carryovers. The same basis claim flows to
+Schedule A and itemized Form 1040; native Form 8283 links a separate FMV
+statement and the official PDF preview explains the special cost limit.
+Positive and tampered source, Schedule A, native, and PDF fixtures are authored
+for the deferred bulk pass. The structured review references do not
+authenticate underlying preparation invoices or property photographs.
+
+## Purchased Section A patent (implementation staged 2026-10-01)
+
+[Publication 526 (2025)](https://www.irs.gov/publications/p526) and the
+[2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+limit the initial intellectual-property deduction to the lesser of FMV and
+adjusted basis, while separately allowing an income-based additional deduction
+when the donee reports qualifying net income on Form 8899. The bounded new
+route accepts one purchased patent held more than a year, given outright to a
+50%-limit public charity in 2025. Reviewed registration, purchase, full-rights
+transfer, and unamortized basis records must support a basis claim below original
+FMV of no more than $5,000. A distinct reviewed donee statement must confirm
+zero 2025 net income, so no same-year income-based addition is claimed. The
+basis claim runs through Schedule A and itemized Form 1040; native Form 8283
+links an FMV statement and the official PDF preview explains the reduction.
+Positive and altered-basis, ownership, donee-income, Schedule A, native, and
+PDF fixtures are authored for the deferred bulk pass. The record references do
+not authenticate the underlying documents or a filed Form 8899. Other
+intellectual property, nonzero donee income, Section B, multiple gifts, and
+carryovers remain unsupported.
+
+## Purchased long-term Section B equipment put to unrelated use (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526 (2025)](https://www.irs.gov/publications/p526) reduce the
+deduction for appreciated tangible personal property put to a donee use
+unrelated to its exempt purpose by its long-term appreciation. The existing
+reviewed Section B art route now also admits one purchased equipment item, such
+as personally held vintage camera equipment, held more than one year. The source
+requires capital-asset and no-depreciation/recapture review, a basis-limited
+claim, the donee's actual unrelated-use statement, the qualified appraisal, a
+completed signed Form 8283, a separate FMV-reduction computation, and separate
+appraiser/donee signatures. All seven named PDFs retain distinct document IDs
+and reviewed byte digests. The basis claim joins Schedule A and itemized Form
+1040; native Form 8283 selects `EquipmentInd` and prints appraised FMV and the
+reduced claim separately; the PDF projects the same fields and explanation.
+
+A synthetic $18,000 FMV/$12,000 basis return and changed donee-use bytes,
+unreduced amount, recapture review, and Form 1040 itemization fixtures are
+authored for the deferred bulk pass. The route depends on a real review of the
+purchase, use, valuation, and signed documents; a name or digest alone does not
+authenticate their contents. Other equipment histories, disposition-year
+reductions, multiple gifts, and carryovers remain closed.

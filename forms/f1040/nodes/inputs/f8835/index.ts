@@ -55,6 +55,18 @@ export const itemSchema = z.object({
     invoiced_kwh_sold: z.number().int().nonnegative(),
     unrelated_buyer_verified: z.literal(true),
   }).strict().optional(),
+  open_loop_nonowner_lessee_source: z.object({
+    facility_description: z.string().trim().min(1),
+    facility_address_line1: z.string().trim().min(1),
+    facility_latitude: z.number().min(-90).max(90),
+    facility_longitude: z.number().min(-180).max(180),
+    owner_business_name: z.string().trim().min(1),
+    owner_business_ein: z.string().regex(/^\d{9}$/),
+    lease_agreement_reference: z.string().trim().min(1),
+    owner_producer_acknowledgment_reference: z.string().trim().min(1),
+    filer_is_lessee_and_electricity_producer_verified: z.literal(true),
+    owner_not_producer_or_claimant_for_2025_verified: z.literal(true),
+  }).strict().optional(),
   open_loop_livestock_source: z.object({
     facility_description: z.string().trim().min(1),
     feedstock_record_reference: z.string().trim().min(1),
@@ -550,10 +562,30 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     item.open_loop_cellulosic_source !== undefined
   ) {
     const source = item.open_loop_cellulosic_source;
+    const lease = item.open_loop_nonowner_lessee_source;
     if (
       item.facility_construction_start_date >= "2025-01-01" ||
       item.facility_placed_in_service_date < "2022-01-01" ||
-      item.facility_owned_by_filer !== true ||
+      (item.facility_owned_by_filer === true
+        ? lease !== undefined || item.facility_owner_business !== undefined ||
+          item.facility_owner_person !== undefined
+        : item.facility_owned_by_filer !== false || !lease ||
+          !item.facility_owner_business ||
+          item.facility_owner_person !== undefined ||
+          lease.owner_business_name !== item.facility_owner_business.name ||
+          lease.owner_business_ein !== item.facility_owner_business.ein ||
+          lease.facility_description !== item.facility_description ||
+          lease.facility_address_line1 !== item.facility_us_address?.line1 ||
+          lease.facility_latitude !== item.facility_latitude ||
+          lease.facility_longitude !== item.facility_longitude ||
+          new Set([
+              lease.lease_agreement_reference,
+              lease.owner_producer_acknowledgment_reference,
+              source.feedstock_record_reference,
+              source.construction_record_reference,
+              source.production_meter_record_reference,
+              source.unrelated_sale_invoice_reference,
+            ]).size !== 6) ||
       item.existing_facility_expansion === true ||
       item.subject_to_passive_activity_limit ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
@@ -580,7 +612,7 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
         ]).size !== 4
     ) {
       throw new Error(
-        "Form 8835 open-loop cellulosic facility needs original filer-owned production, qualifying feedstock, and distinct feedstock, construction, meter, and unrelated-sale sources matching dates and kWh",
+        "Form 8835 open-loop cellulosic facility needs original producer entitlement, qualifying feedstock, and distinct owner, construction, meter, and unrelated-sale sources matching dates and kWh",
       );
     }
   } else if (
@@ -588,10 +620,31 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     item.open_loop_livestock_source !== undefined
   ) {
     const source = item.open_loop_livestock_source;
+    const lease = item.open_loop_nonowner_lessee_source;
     if (
       item.facility_construction_start_date >= "2025-01-01" ||
       item.facility_placed_in_service_date < "2022-01-01" ||
-      item.facility_owned_by_filer !== true ||
+      (item.facility_owned_by_filer === true
+        ? lease !== undefined || item.facility_owner_business !== undefined ||
+          item.facility_owner_person !== undefined
+        : item.facility_owned_by_filer !== false || !lease ||
+          !item.facility_owner_business ||
+          item.facility_owner_person !== undefined ||
+          lease.owner_business_name !== item.facility_owner_business.name ||
+          lease.owner_business_ein !== item.facility_owner_business.ein ||
+          lease.facility_description !== item.facility_description ||
+          lease.facility_address_line1 !== item.facility_us_address?.line1 ||
+          lease.facility_latitude !== item.facility_latitude ||
+          lease.facility_longitude !== item.facility_longitude ||
+          new Set([
+              lease.lease_agreement_reference,
+              lease.owner_producer_acknowledgment_reference,
+              source.feedstock_record_reference,
+              source.construction_record_reference,
+              source.nameplate_capacity_record_reference,
+              source.production_meter_record_reference,
+              source.unrelated_sale_invoice_reference,
+            ]).size !== 7) ||
       item.existing_facility_expansion === true ||
       item.subject_to_passive_activity_limit ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
@@ -628,7 +681,8 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     );
   } else if (
     item.open_loop_cellulosic_source !== undefined ||
-    item.open_loop_livestock_source !== undefined
+    item.open_loop_livestock_source !== undefined ||
+    item.open_loop_nonowner_lessee_source !== undefined
   ) {
     throw new Error(
       "Form 8835 open-loop source cannot classify another energy type",

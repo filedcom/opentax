@@ -17,6 +17,7 @@ const rentedHome: RentedHomeSource = {
   schedule_c_line29_tentative_profit: 50_000,
   insurance_indirect: 1_000,
   rent_indirect: 10_000,
+  repairs_direct: 0,
   repairs_indirect: 500,
   utilities_indirect: 2_000,
   other_indirect: 500,
@@ -30,6 +31,7 @@ const rentedHome: RentedHomeSource = {
   no_home_business_gain_or_other_trade_loss: true,
   no_casualty_mortgage_tax_or_depreciation: true,
   home_expenses_excluded_from_schedule_c_verified: true,
+  direct_repairs_business_area_only_verified: true,
 };
 
 function filing(source: RentedHomeSource, proprietor?: TS.T) {
@@ -111,4 +113,16 @@ Deno.test("Form 8829 mismatch and ambiguous owner fail closed at Schedule C", ()
     unspecified.diagnostics.some((entry) => entry.nodeType === "schedule_c"),
   );
   assertEquals(unspecified.pending.schedule1?.line3_schedule_c, undefined);
+});
+
+Deno.test("Form 8829 direct repairs reach Schedule C, SE, QBI, and 1040", () => {
+  const result = filing({ ...rentedHome, repairs_direct: 700 }, TS.T);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form_8829?.line20a, 700);
+  assertEquals(result.pending.form_8829?.line23a, 700);
+  assertEquals(result.pending.form_8829?.line36, 3_600);
+  assertEquals(result.pending.schedule1?.line3_schedule_c, 46_400);
+  assertEquals(result.pending.schedule_se?.net_profit_schedule_c, 46_400);
+  assertEquals(result.pending.form8995?.qbi_from_schedule_c, 46_400);
+  assertEquals(result.pending.f1040?.line8_additional_income, 46_400);
 });

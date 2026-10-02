@@ -38,6 +38,8 @@ const pendingSchema = z.object({
     line1a_wages: wholeDollar,
     line1z_total_wages: wholeDollar,
     line9_total_income: wholeDollar,
+    line10_adjustments: wholeDollar,
+    line11_agi: wholeDollar,
     line25a_w2_withheld: wholeDollar,
     line25d_total_withholding: wholeDollar,
   }).passthrough(),
@@ -105,7 +107,8 @@ export const form8958StagedPdfFieldMap = {
 /**
  * Unregistered projection of a single-W-2 community allocation. It executes
  * the actual return graph rather than accepting a caller-supplied final pending
- * snapshot. It does not authenticate source documents or the spouse's return.
+ * snapshot. It reconciles a reviewed spouse return record but cannot
+ * authenticate that return or its underlying documents.
  */
 export function projectStagedForm8958Documents(
   rawStart: z.infer<typeof stagedStartSchema>,
@@ -129,6 +132,7 @@ export function projectStagedForm8958Documents(
     row.form_line === Form8958Line.Withholding
   );
   const return1040 = pending.f1040;
+  const spouseReturn = source.reviewed_spouse_return;
   const w2 = pending.w2.w2s[0];
   if (
     source.rows.length !== 2 || !wages || !withholding ||
@@ -159,8 +163,17 @@ export function projectStagedForm8958Documents(
     return1040.line1a_wages !== wages.taxpayer_share ||
     return1040.line1z_total_wages !== wages.taxpayer_share ||
     return1040.line9_total_income !== wages.taxpayer_share ||
+    return1040.line10_adjustments !== 0 ||
+    return1040.line11_agi !== wages.taxpayer_share ||
     return1040.line25a_w2_withheld !== withholding.taxpayer_share ||
     return1040.line25d_total_withholding !== withholding.taxpayer_share ||
+    spouseReturn.line1a_wages !== wages.other_person_share ||
+    spouseReturn.line1z_total_wages !== wages.other_person_share ||
+    spouseReturn.line9_total_income !== wages.other_person_share ||
+    spouseReturn.line10_adjustments !== 0 ||
+    spouseReturn.line11_agi !== wages.other_person_share ||
+    spouseReturn.line25a_w2_withheld !== withholding.other_person_share ||
+    spouseReturn.line25d_total_withholding !== withholding.other_person_share ||
     prepared.totalsByLine.some((line) =>
       line.line !== Form8958Line.Wages &&
       line.line !== Form8958Line.Withholding && line.total !== 0

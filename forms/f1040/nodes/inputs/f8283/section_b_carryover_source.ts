@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
 import type { MefBuildContext } from "../../../2025/mef/form-descriptor.ts";
 import {
@@ -21,8 +22,16 @@ const pdfReview = z.object({
   reviewed_by: z.string().trim().min(1),
   reviewed_on: z.string().regex(/^2025-\d{2}-\d{2}$|^2026-\d{2}-\d{2}$/),
 }).strict();
+const xmlReview = z.object({
+  source_document_reference: z.string().trim().min(1),
+  file_name: z.string().trim().regex(/\.xml$/i),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^2025-\d{2}-\d{2}$|^2026-\d{2}-\d{2}$/),
+}).strict();
 const acceptedFilingReview = z.object({
   filed_return_copy: pdfReview,
+  filed_return_xml: xmlReview,
   acceptance_notice: z.object({
     source_document_reference: z.string().trim().min(1),
     file_name: z.string().trim().regex(/\.xml$/i),
@@ -109,6 +118,139 @@ function validDate(value: string): boolean {
     date.toISOString().startsWith(value);
 }
 
+const acknowledgementParser = new XMLParser({
+  ignoreAttributes: false,
+  removeNSPrefix: true,
+  parseTagValue: false,
+  parseAttributeValue: false,
+  processEntities: false,
+});
+
+const returnParser = new XMLParser({
+  ignoreAttributes: false,
+  removeNSPrefix: true,
+  parseTagValue: false,
+  parseAttributeValue: false,
+  processEntities: false,
+});
+
+function xmlRecord(raw: unknown): Record<string, unknown> | undefined {
+  return raw !== null && typeof raw === "object" && !Array.isArray(raw)
+    ? raw as Record<string, unknown>
+    : undefined;
+}
+
+function xmlAmount(raw: unknown): number | undefined {
+  if (typeof raw !== "string" || !/^(0|[1-9]\d*)$/.test(raw)) {
+    return undefined;
+  }
+  const value = Number(raw);
+  return Number.isSafeInteger(value) ? value : undefined;
+}
+
+function xmlAddressMatches(
+  raw: unknown,
+  expected: z.infer<typeof usAddress>,
+): boolean {
+  const address = xmlRecord(raw);
+  return address?.AddressLine1Txt === expected.line1 &&
+    address.AddressLine2Txt === expected.line2 &&
+    address.CityNm === expected.city &&
+    address.StateAbbreviationCd === expected.state &&
+    address.ZIPCd === expected.zip;
+}
+
+/** Compare the exact retained prior MeF return with the reviewed carried art. */
+function priorReturnXmlMatches(
+  bytes: Uint8Array,
+  source: z.infer<typeof form8283SectionBCarryoverSourceSchema>,
+): boolean {
+  try {
+    if (!(bytes instanceof Uint8Array) || bytes.length > 5_000_000) {
+      return false;
+    }
+    const xml = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    if (
+      /<!DOCTYPE|<!ENTITY|<!\[CDATA\[/i.test(xml) ||
+      XMLValidator.validate(xml) !== true ||
+      !/<Return\b[^>]*\bxmlns="http:\/\/www\.irs\.gov\/efile"/.test(xml)
+    ) return false;
+    const parsed = xmlRecord(returnParser.parse(xml));
+    if (!parsed || Object.keys(parsed).length !== 1) return false;
+    const filed = xmlRecord(parsed.Return);
+    const header = xmlRecord(filed?.ReturnHeader);
+    const filer = xmlRecord(header?.Filer);
+    const data = xmlRecord(filed?.ReturnData);
+    const scheduleA = xmlRecord(data?.IRS1040ScheduleA);
+    const form = xmlRecord(data?.IRS8283);
+    const property = xmlRecord(form?.PropertyInformation);
+    const appraiser = xmlRecord(form?.AppraiserName);
+    const donee = xmlRecord(form?.DoneeName);
+    const printed = source.prior_form_printed_facts;
+    return header?.TaxYr === "2024" &&
+      header?.ReturnTypeCd === "1040" &&
+      filer?.PrimarySSN === source.filed_taxpayer_ssn &&
+      data?.IRS1040 !== undefined &&
+      xmlAmount(scheduleA?.OtherThanByCashOrCheckAmt) ===
+        source.previously_deducted_through_2024 &&
+      form?.ArtWorthAtLeast20000DollarsInd === "X" &&
+      property?.DonatedPropertyDesc === printed.property_description &&
+      property?.DonatedPropertyPhysicalCondTxt === printed.physical_condition &&
+      xmlAmount(property?.AppraisedFairMarketValueAmt) ===
+        source.original_fmv &&
+      property?.DonorAcquisitionDesc === "Purchase" &&
+      property?.DonorAcquiredDt === source.donor_acquired_date.slice(0, 7) &&
+      xmlAmount(property?.DonorCostOrAdjustedBasisAmt) ===
+        source.adjusted_basis &&
+      xmlAmount(property?.DeductionClaimedAmt) ===
+        source.original_2024_deduction_claim &&
+      appraiser?.PersonFirstNm === printed.appraiser.first_name &&
+      appraiser?.PersonLastNm === printed.appraiser.last_name &&
+      form?.AppraiserSignedDt === printed.appraiser.signed_date &&
+      form?.AppraiserEIN === printed.appraiser.ein &&
+      form?.AppraiserSSN === printed.appraiser.ssn &&
+      xmlAddressMatches(
+        form?.AppraiserUSAddress,
+        printed.appraiser.us_address,
+      ) &&
+      form?.ReceivedDt === source.original_donation_date &&
+      form?.UsePropertyForUnrelatedUseInd === "false" &&
+      donee?.BusinessNameLine1Txt === source.donee_name &&
+      form?.DoneeEIN === printed.donee.ein &&
+      xmlAddressMatches(form?.DoneeUSAddress, printed.donee.us_address);
+  } catch {
+    return false;
+  }
+}
+
+function acceptedAcknowledgementMatches(
+  bytes: Uint8Array,
+  submissionId: string,
+  taxpayerSsn: string,
+): boolean {
+  try {
+    const xml = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    if (XMLValidator.validate(xml) !== true) return false;
+    const parsed = acknowledgementParser.parse(xml);
+    const acknowledgement = parsed?.Acknowledgement;
+    if (
+      !acknowledgement || typeof acknowledgement !== "object" ||
+      Array.isArray(acknowledgement)
+    ) return false;
+    const record = acknowledgement as Record<string, unknown>;
+    return record.SubmissionId === submissionId &&
+      record.TaxYr === "2024" &&
+      record.ExtndGovernmentCd === "IRS" &&
+      record.SubmissionTyp === "1040" &&
+      record.AcceptanceStatusTxt === "Accepted" &&
+      record.TIN === taxpayerSsn &&
+      typeof record.EFIN === "string" && record.EFIN.length > 0 &&
+      typeof record.StatusDt === "string" && validDate(record.StatusDt);
+  } catch {
+    return false;
+  }
+}
+
 /** Bind the required prior Section B form and appraisal to one carried gift. */
 export async function bindForm8283SectionBCarryoverSource(
   rawSource: unknown,
@@ -118,6 +260,7 @@ export async function bindForm8283SectionBCarryoverSource(
   appraisalBytes: Uint8Array,
   filedReturnBytes: Uint8Array,
   acceptanceNoticeBytes: Uint8Array,
+  filedReturnXmlBytes: Uint8Array,
 ): Promise<void> {
   const source = form8283SectionBCarryoverSourceSchema.parse(rawSource);
   const carryover = carryoverSchema.parse(rawCarryover);
@@ -135,6 +278,7 @@ export async function bindForm8283SectionBCarryoverSource(
     !validDate(source.completed_prior_form.reviewed_on) ||
     !validDate(source.required_qualified_appraisal.reviewed_on) ||
     !validDate(accepted.filed_return_copy.reviewed_on) ||
+    !validDate(accepted.filed_return_xml.reviewed_on) ||
     !validDate(accepted.acceptance_notice.reviewed_on) ||
     !validDate(printed.appraiser.signed_date) ||
     !validDate(printed.donee.received_date) ||
@@ -166,20 +310,23 @@ export async function bindForm8283SectionBCarryoverSource(
         source.completed_prior_form.source_document_reference,
         source.required_qualified_appraisal.source_document_reference,
         accepted.filed_return_copy.source_document_reference,
+        accepted.filed_return_xml.source_document_reference,
         accepted.acceptance_notice.source_document_reference,
-      ]).size !== 4 ||
+      ]).size !== 5 ||
     new Set([
         source.completed_prior_form.file_name,
         source.required_qualified_appraisal.file_name,
         accepted.filed_return_copy.file_name,
+        accepted.filed_return_xml.file_name,
         accepted.acceptance_notice.file_name,
-      ]).size !== 4 ||
+      ]).size !== 5 ||
     new Set([
         source.completed_prior_form.sha256,
         source.required_qualified_appraisal.sha256,
         accepted.filed_return_copy.sha256,
+        accepted.filed_return_xml.sha256,
         accepted.acceptance_notice.sha256,
-      ]).size !== 4
+      ]).size !== 5
   ) {
     throw new Error(
       "Form 8283 Section B prior artwork, appraisal, taxpayer, and Schedule A carryover do not reconcile",
@@ -203,13 +350,28 @@ export async function bindForm8283SectionBCarryoverSource(
     }
   }
   if (
-    !(acceptanceNoticeBytes instanceof Uint8Array) ||
-    acceptanceNoticeBytes.length < 8 ||
-    new TextDecoder().decode(acceptanceNoticeBytes.subarray(0, 1)) !== "<" ||
-    await sha256Hex(acceptanceNoticeBytes) !== accepted.acceptance_notice.sha256
+    !(filedReturnXmlBytes instanceof Uint8Array) ||
+    await sha256Hex(filedReturnXmlBytes) !==
+      accepted.filed_return_xml.sha256 ||
+    !priorReturnXmlMatches(filedReturnXmlBytes, source)
   ) {
     throw new Error(
-      "Form 8283 Section B acceptance notice bytes differ from reviewed SHA-256",
+      "Form 8283 Section B needs exact prior 2024 MeF return with matching artwork and Schedule A",
+    );
+  }
+  if (
+    !(acceptanceNoticeBytes instanceof Uint8Array) ||
+    acceptanceNoticeBytes.length < 8 ||
+    await sha256Hex(acceptanceNoticeBytes) !==
+      accepted.acceptance_notice.sha256 ||
+    !acceptedAcknowledgementMatches(
+      acceptanceNoticeBytes,
+      accepted.acceptance_notice.submission_id,
+      source.filed_taxpayer_ssn,
+    )
+  ) {
+    throw new Error(
+      "Form 8283 Section B needs exact reviewed IRS acknowledgment bytes with accepted 2024 Form 1040, submission ID, and taxpayer",
     );
   }
 }
@@ -224,6 +386,7 @@ export async function reviewForm8283SectionBCarryoverBundle(
   appraisalBytes: Uint8Array,
   filedReturnBytes: Uint8Array,
   acceptanceNoticeBytes: Uint8Array,
+  filedReturnXmlBytes: Uint8Array,
   context: MefBuildContext,
 ): Promise<
   Readonly<{
@@ -240,6 +403,7 @@ export async function reviewForm8283SectionBCarryoverBundle(
     appraisalBytes,
     filedReturnBytes,
     acceptanceNoticeBytes,
+    filedReturnXmlBytes,
   );
   const source = form8283SectionBCarryoverSourceSchema.parse(rawSource);
   const entries = [

@@ -2,28 +2,28 @@
 
 ## One self-only Medicare owner retains a current personal excess (written, unrun)
 
-The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
-assign no contribution limit to a Medicare-enrolled month and direct each HSA
-owner to a separate Form 8889. The [2025 Form 5329
-instructions](https://www.irs.gov/instructions/i5329) place personal
-contributions above Form 8889 line 12 on that owner's Part VII line 47 and tax
-the lesser of the ending excess or that HSA's December 31 value at 6%.
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) assign
+no contribution limit to a Medicare-enrolled month and direct each HSA owner to
+a separate Form 8889. The
+[2025 Form 5329 instructions](https://www.irs.gov/instructions/i5329) place
+personal contributions above Form 8889 line 12 on that owner's Part VII line 47
+and tax the lesser of the ending excess or that HSA's December 31 value at 6%.
 
 The paired self-only July-Medicare route now accepts $3,000 of personal
-contributions for the Medicare owner against a $2,150 six-month limit. The
-$850 retained excess and a sourced $5,000 year-end HSA value produce that
-owner's Form 5329 lines 47–49 and $51 Schedule 2 tax. The other owner has
-full-year self-only eligibility and a separate $3,000 deduction. A full-return
-fixture reconciles both Forms 8889, the single owner Form 5329, the $5,150
-Schedule 1/Form 1040 adjustment, and the $51 Schedule 2/Form 1040 tax through
-native MeF and PDF projections. Changed Medicare onset, printed owner excess,
-Schedule 2, and final-return tax reject. Cases remain unrun until the shared
-implementation batch ends.
+contributions for the Medicare owner against a $2,150 six-month limit. The $850
+retained excess and a sourced $5,000 year-end HSA value produce that owner's
+Form 5329 lines 47–49 and $51 Schedule 2 tax. The other owner has full-year
+self-only eligibility and a separate $3,000 deduction. A full-return fixture
+reconciles both Forms 8889, the single owner Form 5329, the $5,150 Schedule
+1/Form 1040 adjustment, and the $51 Schedule 2/Form 1040 tax through native MeF
+and PDF projections. Changed Medicare onset, printed owner excess, Schedule 2,
+and final-return tax reject. Cases remain unrun until the shared implementation
+batch ends.
 
-This bounded route has no prior excess, employer funding, distribution,
-timely excess withdrawal, or age-55 catch-up. The Medicare notice and HSA
-year-end value are entered references and amounts, not authenticated source
-bytes. Other owner-specific mixed-month and excess combinations remain open.
+This bounded route has no prior excess, employer funding, distribution, timely
+excess withdrawal, or age-55 catch-up. The Medicare notice and HSA year-end
+value are entered references and amounts, not authenticated source bytes. Other
+owner-specific mixed-month and excess combinations remain open.
 
 ## One self-only owner enrolls in Medicare midyear (2026-10-01 build pass, unrun)
 
@@ -94,3 +94,28 @@ other differing monthly patterns. The Medicare notice and allocation references
 are entered evidence, not independent document authentication. Focused
 computation cases are written but unrun. The full test, typecheck, XSD, PDF
 appearance, IRS-rule, and ATS gates remain pending.
+
+## January family coverage, one Medicare owner with retained personal excess (written, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) assign
+zero contribution room for each Medicare-enrolled month and allow spouses with
+separate HSAs to agree to a zero/full allocation of their family limit. The
+bounded paired route requires a sourced January Medicare onset for exactly one
+owner, twelve ineligible months for that owner, and twelve family HDHP months
+for the other. Both owner sources carry the same family allocation reference and
+zero shared eligible-month allocation. The continuing owner's Form 8889 line 6
+receives the full $8,550 unshared family limit. The Medicare owner's retained
+$1,200 personal contribution has no deductible room and flows to that owner's
+Form 5329 Part VII; its $2,000 year-end HSA value leaves a $72 tax. The
+continuing owner's separate $6,000 deduction reaches Schedule 1 line 13 and Form
+1040 line 10. Schedule 2 line 8 and Form 1040 line 23 receive the owner's $72
+excess tax once.
+
+Native and PDF preflight recompute both owner Form 8889 copies and the owner
+Form 5329, then compare Schedule 1, Schedule 2, and Form 1040 totals. Positive
+cases for either Medicare owner and onset, Form 5329, Schedule 2, and final tax
+tamper cases are authored but unrun pending the bulk validation. The onset
+notice, allocation agreement, and HSA value are entered source facts; document
+bytes are not authenticated. This slice excludes catch-up, W-2 employer funding,
+distributions, timely excess withdrawals, prior-year excess, and an onset after
+January.

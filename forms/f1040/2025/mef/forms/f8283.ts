@@ -13,13 +13,13 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
-  assertNeedyVehicleUnreducedSource,
+  assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
-  isTwoSectionBReducedEquipmentGroup,
+  isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
 import {
@@ -188,6 +188,86 @@ export function assertUnrelatedUseReductionSource(item: SectionAItem): void {
   }
 }
 
+export function assertPrivateFoundationReductionSource(
+  item: SectionAItem,
+): void {
+  const review = item.private_foundation_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.purchase_record_reference.trim() ||
+    !review.foundation_status_record_reference.trim() ||
+    review.foundation_name !== item.donee_organization_name ||
+    review.foundation_us_address.line1 !== address.line1 ||
+    (review.foundation_us_address.line2 ?? "") !== (address.line2 ?? "") ||
+    review.foundation_us_address.city !== address.city ||
+    review.foundation_us_address.state !== address.state ||
+    review.foundation_us_address.zip !== address.zip
+  ) {
+    throw new Error(
+      "Form 8283 private-foundation reduction needs matching donee status, purchase, property, dates, basis, and valuation records",
+    );
+  }
+}
+
+export function assertTaxidermyReductionSource(item: SectionAItem): void {
+  const review = item.taxidermy_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "created" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.preparation_cost_record_reference.trim() ||
+    !review.taxidermy_property_description_record_reference.trim() ||
+    Math.round(review.eligible_preparation_stuffing_mounting_costs * 100) !==
+      Math.round(item.cost_or_adjusted_basis * 100)
+  ) {
+    throw new Error(
+      "Form 8283 taxidermy reduction needs donee, mounted animal, completion, valuation, and preparation-only cost records",
+    );
+  }
+}
+
+export function assertIntellectualPropertyReductionSource(
+  item: SectionAItem,
+): void {
+  const review = item.intellectual_property_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.patent_number.trim() ||
+    !review.patent_registration_record_reference.trim() ||
+    !review.purchase_record_reference.trim() ||
+    !review.unamortized_basis_schedule_reference.trim() ||
+    !review.donee_2025_net_income_statement_reference.trim() ||
+    Math.round(review.unamortized_adjusted_basis * 100) !==
+      Math.round(item.cost_or_adjusted_basis * 100)
+  ) {
+    throw new Error(
+      "Form 8283 patent reduction needs matching patent ownership, purchase, unamortized basis, donee-income, and valuation records",
+    );
+  }
+}
+
 export function assertVehicleSaleReductionSource(item: SectionAItem): void {
   if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
     return;
@@ -276,6 +356,25 @@ export function fmvReductionExplanation(
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.private_foundation_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased long-term capital property contributed outright to private nonoperating foundation ${item.private_foundation_capital_gain_reduction.foundation_name} (EIN ${item.private_foundation_capital_gain_reduction.foundation_ein}). Foundation status record ${item.private_foundation_capital_gain_reduction.foundation_status_record_reference} and purchase record ${item.private_foundation_capital_gain_reduction.purchase_record_reference} support the section 170(e)(1)(B)(ii) reduction of long-term appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.taxidermy_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Donor-prepared taxidermy containing an animal body part is limited under section 170(e)(1)(B)(iv) to eligible preparation, stuffing, and mounting costs. Preparation record ${item.taxidermy_capital_gain_reduction.preparation_cost_record_reference} and property description record ${item.taxidermy_capital_gain_reduction.taxidermy_property_description_record_reference} support eligible costs ${
+      usd(item.cost_or_adjusted_basis)
+    }; hunting, travel, equipment, and labor value are excluded. FMV appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } is removed.`
+    : item.intellectual_property_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased patent ${item.intellectual_property_capital_gain_reduction.patent_number} is limited under section 170(e)(1)(B)(iii) to unamortized adjusted basis. Registration ${item.intellectual_property_capital_gain_reduction.patent_registration_record_reference}, purchase ${item.intellectual_property_capital_gain_reduction.purchase_record_reference}, and basis schedule ${item.intellectual_property_capital_gain_reduction.unamortized_basis_schedule_reference} support basis ${
+      usd(item.cost_or_adjusted_basis)
+    }. Donee statement ${item.intellectual_property_capital_gain_reduction.donee_2025_net_income_statement_reference} reports zero 2025 net income, so no income-based additional deduction is included. FMV appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } is removed.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -308,6 +407,9 @@ export function buildFmvReductionStatement(
   assertCreatorReductionSource(item);
   assertManuscriptReductionSource(item);
   assertUnrelatedUseReductionSource(item);
+  assertPrivateFoundationReductionSource(item);
+  assertTaxidermyReductionSource(item);
+  assertIntellectualPropertyReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -537,8 +639,19 @@ const BINARY_REFERENCE_NAME =
   "BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt";
 
 function requiredVehicleAttachment(
-  item: { vehicle_acknowledgment_attachment_file_name?: string },
+  item: {
+    vehicle_acknowledgment_attachment_file_name?: string;
+    vehicle_sale_acknowledgment?: unknown;
+    vehicle_sale_pdf_review?: { pdf_sha256: string };
+    vehicle_needy_transfer_acknowledgment?: unknown;
+    vehicle_needy_pdf_review?: { pdf_sha256: string };
+    vehicle_significant_use_acknowledgment?: unknown;
+    vehicle_significant_use_pdf_review?: { pdf_sha256: string };
+    vehicle_material_improvement_acknowledgment?: unknown;
+    vehicle_material_improvement_pdf_review?: { pdf_sha256: string };
+  },
   context: MefBuildContext,
+  section: "A" | "B",
 ): { fileName: string; id?: string } {
   const fileName = item.vehicle_acknowledgment_attachment_file_name;
   if (!fileName) {
@@ -562,6 +675,78 @@ function requiredVehicleAttachment(
       "Form 8283 vehicle acknowledgment PDF has no linked MeF document",
     );
   }
+  if (
+    section === "A" && item.vehicle_sale_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
+    if (!item.vehicle_sale_pdf_review) {
+      throw new Error(
+        "Form 8283 vehicle sale needs an exact-byte donee acknowledgment review",
+      );
+    }
+    if (
+      context.attachmentSha256ByFileName?.[fileName] !==
+        item.vehicle_sale_pdf_review.pdf_sha256
+    ) {
+      throw new Error(
+        "Form 8283 vehicle sale acknowledgment bytes differ from the reviewed PDF",
+      );
+    }
+  }
+  if (
+    section === "A" && item.vehicle_needy_transfer_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
+    if (!item.vehicle_needy_pdf_review) {
+      throw new Error(
+        "Form 8283 needy-transfer vehicle needs an exact-byte donee acknowledgment review",
+      );
+    }
+    if (
+      context.attachmentSha256ByFileName?.[fileName] !==
+        item.vehicle_needy_pdf_review.pdf_sha256
+    ) {
+      throw new Error(
+        "Form 8283 needy-transfer acknowledgment bytes differ from the reviewed PDF",
+      );
+    }
+  }
+  if (
+    section === "A" && item.vehicle_significant_use_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
+    if (!item.vehicle_significant_use_pdf_review) {
+      throw new Error(
+        "Form 8283 significant-use vehicle needs an exact-byte donee acknowledgment review",
+      );
+    }
+    if (
+      context.attachmentSha256ByFileName?.[fileName] !==
+        item.vehicle_significant_use_pdf_review.pdf_sha256
+    ) {
+      throw new Error(
+        "Form 8283 significant-use acknowledgment bytes differ from the reviewed PDF",
+      );
+    }
+  }
+  if (
+    section === "A" && item.vehicle_material_improvement_acknowledgment &&
+    context.documentIdsByPendingKey
+  ) {
+    if (!item.vehicle_material_improvement_pdf_review) {
+      throw new Error(
+        "Form 8283 material-improvement vehicle needs an exact-byte donee acknowledgment review",
+      );
+    }
+    if (
+      context.attachmentSha256ByFileName?.[fileName] !==
+        item.vehicle_material_improvement_pdf_review.pdf_sha256
+    ) {
+      throw new Error(
+        "Form 8283 material-improvement acknowledgment bytes differ from the reviewed PDF",
+      );
+    }
+  }
   return { fileName, id };
 }
 
@@ -573,10 +758,12 @@ function requiredSignatureAttachment(
   if (!fileName) {
     throw new Error(`Form 8283 needs ${description} PDF`);
   }
-  if (!matchesAttachmentDescription(
-    context.attachmentDescriptionsByFileName?.[fileName],
-    description,
-  )) {
+  if (
+    !matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[fileName],
+      description,
+    )
+  ) {
     throw new Error(
       `Form 8283 needs a matching PDF described exactly as ${description}`,
     );
@@ -725,10 +912,12 @@ function requiredOrdinaryIncomeAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (!matchesAttachmentDescription(
-      context.attachmentDescriptionsByFileName?.[name],
-      description,
-    )) {
+    if (
+      !matchesAttachmentDescription(
+        context.attachmentDescriptionsByFileName?.[name],
+        description,
+      )
+    ) {
       throw new Error(
         `Form 8283 ordinary-income Section B gift needs ${description}`,
       );
@@ -812,10 +1001,12 @@ function requiredUnrelatedUseAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (!matchesAttachmentDescription(
-      context.attachmentDescriptionsByFileName?.[name],
-      description,
-    )) {
+    if (
+      !matchesAttachmentDescription(
+        context.attachmentDescriptionsByFileName?.[name],
+        description,
+      )
+    ) {
       throw new Error(
         `Form 8283 unrelated-use Section B art needs ${description}`,
       );
@@ -1122,6 +1313,9 @@ export const form8283: MefFormDescriptor<
       assertCreatorReductionSource(item);
       assertManuscriptReductionSource(item);
       assertUnrelatedUseReductionSource(item);
+      assertPrivateFoundationReductionSource(item);
+      assertTaxidermyReductionSource(item);
+      assertIntellectualPropertyReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -1166,7 +1360,7 @@ export const form8283: MefFormDescriptor<
     }
     if (sectionB.length === 2) {
       const similarArt = isTwoSectionBSimilarArtGroup(parsed);
-      const reducedEquipment = isTwoSectionBReducedEquipmentGroup(parsed);
+      const reducedEquipment = isTwoSectionBReducedEquipmentGifts(parsed);
       if (!similarArt && !reducedEquipment) {
         throw new Error(
           "Form 8283 two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",
@@ -1180,15 +1374,33 @@ export const form8283: MefFormDescriptor<
       );
     }
     const sectionA = parsed.section_a_items ?? [];
-    if (isSingleSectionANeedyVehicleUnreduced(parsed)) {
-      assertNeedyVehicleUnreducedSource(parsed);
+    if (
+      sectionA.length > 1 && !elected &&
+      sectionA.every((item) => !needsFmvReductionStatement(item)) &&
+      context.pending?.f8283 !== undefined
+    ) {
+      if (
+        JSON.stringify(parsed) !==
+          JSON.stringify(inputSchema.parse(context.pending.f8283))
+      ) {
+        throw new Error(
+          "Form 8283 multiple ordinary Section A gifts differ from the pending source",
+        );
+      }
+      assertOrdinarySectionAReconciled(context);
+    }
+    if (isSingleSectionAExceptionVehicleUnreduced(parsed)) {
+      assertExceptionVehicleUnreducedSource(parsed);
     }
     if (
       isSingleSectionAVehicleSale(parsed) ||
       hasSectionAShortTermReduction(parsed) ||
-      isSingleSectionANeedyVehicleUnreduced(parsed) ||
+      isSingleSectionAExceptionVehicleUnreduced(parsed) ||
       sectionA.some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined ||
+        item.intellectual_property_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);
@@ -1203,10 +1415,10 @@ export const form8283: MefFormDescriptor<
     }
     const similarGroupTotals = similarItemGroupTotals(parsed);
     const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
-      .map((item) => requiredVehicleAttachment(item, context));
+      .map((item) => requiredVehicleAttachment(item, context, "A"));
     const sectionBVehicleAttachments = sectionB
       .filter(needsSectionBVehicleStatement)
-      .map((item) => requiredVehicleAttachment(item, context));
+      .map((item) => requiredVehicleAttachment(item, context, "B"));
     const sectionAAttachmentIds = [
       ...new Set(
         sectionAVehicleAttachments.map((attachment) => attachment.id),

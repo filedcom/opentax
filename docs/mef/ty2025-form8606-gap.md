@@ -5,10 +5,11 @@ native MeF/PDF routes, plus one spouse-owned prior-basis distribution on a joint
 return without a current contribution, written but unrun. One sourced 2025
 nondeductible contribution with the taxpayer distribution is also written. One
 spouse-owned prior-basis distribution with a sourced 2025 nondeductible
-contribution now covers both receipt windows, written but unrun. One
-first-year taxpayer Roth IRA code J distribution now has a sourced Part III
-native/PDF route. Tests, local XSD validation, filled PDF rendering, and IRS ATS
-remain outstanding.
+contribution now covers both receipt windows, written but unrun. One first-year
+taxpayer Roth IRA code J distribution now has a sourced Part III native/PDF
+route. A spouse-owned zero-opening-basis 2025 nondeductible contribution on a
+joint return now has a sourced no-activity native/PDF route. Tests, local XSD
+validation, filled PDF rendering, and IRS ATS remain outstanding.
 
 ## Structural mismatch
 
@@ -47,7 +48,15 @@ taxpayer and spouse Form 8606 claims remain closed.
    deduction. Its line 1, line 2, line 3, and line 14 pass through the
    calculation, native XML, and PDF projection. The PDF replays the same
    final-source gate. A full-return positive fixture and source/return tamper
-   cases are authored but unrun.
+   cases are authored but unrun. The same zero-opening-basis source shape now
+   supports one spouse-owned no-activity contribution on a joint return when the
+   issued Form 5498, filed 2024 Form 8606, and sole plan-covered W-2 identify
+   the spouse. The worksheet explicitly confirms that the taxpayer does not need
+   a separate Form 8606. Native and PDF output print the spouse's name and SSN,
+   while the joint return's AGI and IRA lines are reconciled. Positive and
+   separate-form, owner, source, wage, and return tamper fixtures are authored
+   but unrun. Spouse prior-basis no-activity contributions, dual-owner Forms
+   8606, multiple W-2 sources, and source-byte authentication remain open.
 2. One taxpayer-owned, single-Form-1099-R traditional IRA distribution with
    positive prior basis now requires a reviewed filed 2024 Form 8606 line 14, a
    distinct 2025 year-end statement covering all traditional IRA balances, and
@@ -75,25 +84,25 @@ taxpayer and spouse Form 8606 claims remain closed.
    return totals. Source, printed line, and owner tamper fixtures are authored
    but unrun. Current-year rollover/repayment, qualified-disaster,
    first-time-homebuyer, other contribution or distribution sources, and
-   mixed/multiple IRA sources remain open.
-   A spouse-owned variant now also accepts one 2025 nondeductible traditional
-   IRA contribution with that spouse's prior basis and one traditional IRA
-   payment on a joint return. The issued 2025 Form 5498, designated-year
-   custodian receipt, filed 2024 Form 8606, year-end all-IRA statement, W-2,
-   and Form 1099-R recipient SSN must identify the spouse; the 1099-R must
-   also be marked spouse-owned. The receipt, 5498, prior return, year-end
-   statement, and 1099-R references are distinct. A 2025 receipt enters
-   distribution basis immediately; a January 1–April 15, 2026 receipt prints
-   on line 4 and remains in line 14 rather than reducing the 2025 taxable
-   distribution. Both timings reconcile Form 8606 Part I and spouse native/PDF
-   identity with joint Form 1040 lines 4a/4b. Positive and owner, source,
-   receipt-date, worksheet, return, and printed-line tamper fixtures are
-   authored for the deferred gate. The [2025 instructions](https://www.irs.gov/instructions/i8606)
-   require separate owner forms on joint returns and line 4 for contributions
-   made after 2025; [Form 5498](https://www.irs.gov/pub/irs-prior/f5498--2025.pdf)
-   box 1 includes 2025 designated contributions received through April 15,
-   2026. Additional custodians, contributions, distributions, and source-byte
-   authentication remain open.
+   mixed/multiple IRA sources remain open. A spouse-owned variant now also
+   accepts one 2025 nondeductible traditional IRA contribution with that
+   spouse's prior basis and one traditional IRA payment on a joint return. The
+   issued 2025 Form 5498, designated-year custodian receipt, filed 2024 Form
+   8606, year-end all-IRA statement, W-2, and Form 1099-R recipient SSN must
+   identify the spouse; the 1099-R must also be marked spouse-owned. The
+   receipt, 5498, prior return, year-end statement, and 1099-R references are
+   distinct. A 2025 receipt enters distribution basis immediately; a January
+   1–April 15, 2026 receipt prints on line 4 and remains in line 14 rather than
+   reducing the 2025 taxable distribution. Both timings reconcile Form 8606 Part
+   I and spouse native/PDF identity with joint Form 1040 lines 4a/4b. Positive
+   and owner, source, receipt-date, worksheet, return, and printed-line tamper
+   fixtures are authored for the deferred gate. The
+   [2025 instructions](https://www.irs.gov/instructions/i8606) require separate
+   owner forms on joint returns and line 4 for contributions made after 2025;
+   [Form 5498](https://www.irs.gov/pub/irs-prior/f5498--2025.pdf) box 1 includes
+   2025 designated contributions received through April 15, 2026. Additional
+   custodians, contributions, distributions, and source-byte authentication
+   remain open.
 3. One first-year taxpayer Roth IRA route requires an opening statement
    confirming all Roth IRAs and no prior Roth activity, an issued 2025 Form 5498
    with positive box 10 and zero boxes 2/3, a separate dated contribution
@@ -105,13 +114,13 @@ taxpayer and spouse Form 8606 claims remain closed.
    earnings reach Form 1040 line 4b and Form 5329's early distribution line;
    gross reaches Form 1040 line 4a. Native and PDF export replay the source,
    owner, printed lines, Form 1040, and Form 5329. The same first-year source
-   shape now supports one spouse-owned code J payment on a joint return when
-   the spouse owns the opening statement, Form 5498, contribution receipt,
-   issued Form 1099-R, and sole Form 5329 early-distribution entry. The native
-   and PDF Form 8606 print the spouse's name and SSN; the return's IRA totals
-   remain joint. Taxpayer and spouse positives and source/owner/tax tamper
-   fixtures are authored but unrun. The generic Part III calculation remains unsupported
-   for export because it does not model qualifying distributions,
+   shape now supports one spouse-owned code J payment on a joint return when the
+   spouse owns the opening statement, Form 5498, contribution receipt, issued
+   Form 1099-R, and sole Form 5329 early-distribution entry. The native and PDF
+   Form 8606 print the spouse's name and SSN; the return's IRA totals remain
+   joint. Taxpayer and spouse positives and source/owner/tax tamper fixtures are
+   authored but unrun. The generic Part III calculation remains unsupported for
+   export because it does not model qualifying distributions,
    first-time-homebuyer expense, prior contribution or conversion basis, and
    taxable earnings ordering.
 4. Focused node and serializer tests now cover source-to-print routing, native

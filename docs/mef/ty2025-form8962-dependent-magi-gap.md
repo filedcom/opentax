@@ -1,5 +1,117 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## One required-filing wage dependent and one reviewed nonfiling interest dependent (2026-10-01, unrun)
+
+A three-person single-filer household may now combine one dependent whose
+identified W-2 wages exceed the 2025 filing threshold and reconcile to that
+dependent's filed Form 1040, with one under-65, nonblind dependent whose sole
+identified Form 1099-INT taxable interest is at most $1,350 and whose distinct
+filing-requirement workpaper confirms no return or other filing trigger. The
+first dependent's AGI enters Form 8962 Worksheet 1-2 line 2b; the second
+dependent's taxable and tax-exempt interest does not. This follows the
+[2025 Form 8962 dependent-income instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+and [2025 Publication 501 filing thresholds](https://www.irs.gov/pub/irs-prior/p501--2025.pdf).
+
+The existing single, paid, no-APTC three-person monthly policy route rechecks
+both source identities and document IDs, covered persons, the three-person
+poverty line, monthly SLCSP/credit, Schedule 3 line 9, and Form 1040 line 31
+for native MeF and PDF. The authored $35,640 parent wages, $16,000 dependent
+filed wages, and $1,350 excluded dependent interest give $51,640 household
+income, 200% FPL, and $7,968 PTC. W-2 amount, 1099-INT threshold, workpaper
+identity, and final-credit tamper fixtures are deferred to the bulk gate.
+Other required-filing income kinds mixed with a reviewed nonfiling dependent,
+two policies, shared allocation, and source-byte authenticity remain outside
+this bounded route.
+
+## Two separately reviewed dependents below the filing threshold (2026-10-01, unrun)
+
+One single filer with a three-person tax family may now combine exactly one
+under-65, nonblind dependent with a reviewed below-threshold W-2 and one with a
+reviewed below-threshold Form 1099-INT. Each has a distinct issued-document
+reference and post-year-end filing-requirement workpaper, separate SSN, and
+confirmed absence of other income, filing triggers, and a filed return. Their
+income is excluded from Form 8962 Worksheet 1-2 line 2b under the
+[2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+and [2025 Publication 501 Table 2 and Table 3](https://www.irs.gov/pub/irs-prior/p501--2025.pdf).
+
+For one fully paid, nonshared three-person Marketplace policy with no APTC,
+the existing monthly route now checks both dependent identities and document
+IDs, all covered SSNs, the three-person poverty line, each determined SLCSP,
+Form 8962 monthly credit, Schedule 3 line 9, and Form 1040 line 31 in native
+MeF and PDF projection. A $51,640 parent-income case reaches 200% FPL and
+$7,968 PTC; threshold, duplicate source, coverage identity, and final-credit
+tamper fixtures are authored for the deferred bulk gate. One required-filing
+dependent mixed with one not-required dependent, two dependents of the same
+source kind, multiple policies, shared policies, and external document-byte
+authentication remain outside this bounded route.
+
+## Reviewed interest-only dependent below the filing threshold (2026-10-01, unrun)
+
+The `not_required` source also accepts one identified 2025 Form 1099-INT for
+one under-65, nonblind single dependent when box 1 taxable interest is positive
+and at most $1,350. A distinct, post-year-end filing-requirement workpaper
+must identify the dependent and interest document, confirm no other income or
+separate filing trigger, and confirm no return was filed. Box 8 tax-exempt
+interest is recorded but does not make the dependent's income meet the filing
+threshold. The strict wage and interest records cannot be mixed. The existing
+one-policy no-APTC monthly route excludes the dependent's income from Form 8962
+line 2b, then reconciles household income, monthly credit, Schedule 3 line 9,
+and Form 1040 line 31 through native MeF and PDF projection. A $1,350 taxable
+plus $100 tax-exempt interest case and threshold, SSN, workpaper identity, and
+final-credit tamper fixtures are authored for the deferred bulk gate.
+
+This applies [2025 Publication 501 Table 2 and Table 3](https://www.irs.gov/pub/irs-prior/p501--2025.pdf)
+and [2025 Form 8962 Worksheet 1-2](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf).
+The document references and reviewed inventory do not authenticate the issued
+1099-INT or independently establish that no other filing trigger exists.
+Mixed wage/interest, multiple interest sources, older or blind dependents,
+required-filing interest, and wider policy/household configurations retain
+their separate bounds.
+
+## Reviewed wage-only dependent below the filing threshold (2026-10-01, unrun)
+
+The `not_required` source now takes one identified 2025 W-2 and a distinct
+reviewed filing-requirement workpaper for an under-65, nonblind single
+dependent. The workpaper names the dependent and W-2, records that the remaining
+income and separate filing triggers were reviewed and absent, and states that
+no return was filed. The identified W-2 wages must be at most $15,750; a dollar
+above it cannot enter this exclusion. An incomplete assertion, mismatched SSN,
+borrowed document ID, invalid review date, or a two-dependent not-required
+combination closes the route. The workpaper must be dated after tax year end.
+This uses [2025 Pub. 501 Table 2 and Table 3](https://www.irs.gov/publications/p501)
+and [2025 Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962).
+
+With one unchanged same-state, nonshared Form 1095-A policy covering the single
+filer and this dependent, the existing monthly no-APTC route now projects
+Form 8962 line 2b as zero. The dependent's W-2 stays out of the parent's AGI;
+household income, the two-person poverty line, each month's SLCSP and allowed
+credit, Schedule 3 line 9, and Form 1040 line 31 still reconcile. A $15,750
+dependent W-2 and $40,880 parent wage example computes $8,184 PTC, with
+threshold, workpaper identity, policy, SLCSP, and final-return tamper fixtures
+authored for the deferred bulk gate. The workpaper and W-2 references identify
+documents but do not authenticate their bytes or prove the income inventory
+independently. Refund-only dependent returns, interest/mixed income, more than
+one not-required dependent, shared policies, and wider household situations
+remain closed.
+
+## Two W-2 employers plus one Form 1099-INT (2026-10-01, unrun)
+
+One claimed dependent's referenced filed 2025 single return can now reconcile
+two distinct issued W-2 employers and one identified Form 1099-INT. The W-2
+box 1 amounts sum to filed wages, the 1099-INT boxes 1/8 match taxable and
+tax-exempt interest, and filed AGI equals wages plus taxable interest. The
+existing under-65, nonblind 2025 dependent earned/unearned filing-threshold
+check determines that the return is required; tax-exempt interest then joins
+Worksheet 1-2 MAGI. The one-policy annual Form 8962 route rechecks each source
+recipient and distinct document identity before native MeF or PDF projection
+and joins line 2b/household income to Schedule 2/3 and Form 1040. A $8,000
+plus $7,000 W-2 and $1,000 taxable/$100 tax-exempt interest case, in both
+credit and excess-APTC outcomes, and amount, identity, duplicate, threshold,
+MAGI, and final-return tamper fixtures are authored for the bulk validation.
+More than two employers, multiple interest forms, other dependent income or
+adjustments, issued-document authentication, monthly/overlap policy variants,
+filled-PDF/XSD review, and IRS acceptance remain open.
+
 ## One policy covering three family members for part of the year (2026-10-01, unrun)
 
 The monthly positive-APTC route now accepts one same-state Form 1095-A policy
@@ -185,3 +297,76 @@ only the filer, and an annual case also covers only the dependent. Focused
 missing, duplicate, and other-family SSN rejection cases were added but are
 unrun. This check establishes only consistency with captured Part II facts, not
 Marketplace authenticity, monthly MEC eligibility, or IRS acceptance.
+
+## Two distinct dependent W-2 employers (2026-10-01, unrun)
+
+The required-filing wage-only source now accepts two 2025 Forms W-2 for one
+claimed dependent when their document IDs and employer EINs are distinct. The
+combined box 1 wages must equal that dependent's referenced filed single Form
+1040 lines 1z and 11b; the dependent must be under 65, not blind, and have
+more than $15,750 of wages to establish a required 2025 filing. The existing
+one-policy annual and bounded monthly Form 8962 routes use the summed dependent
+MAGI and recheck each W-2 recipient SSN before native MeF or PDF projection.
+An authored $9,000 plus $7,000 annual-policy fixture reaches household income
+and both filing outputs, with changed wage amount, recipient, repeated employer
+or document, and exact-threshold rejection fixtures. All remain unrun pending
+the bulk validation pass. Two W-2s mixed with interest, more employers, other
+filing triggers, and source-byte authentication remain outside this slice.
+
+## One ordinary-dividend-only dependent return (2026-10-01, unrun)
+
+The bounded dependent source now also accepts one identified 2025 Form 1099-DIV
+with ordinary dividends only. The recipient SSN must equal the claimed
+dependent's SSN, its source document ID must differ from the filed dependent
+Form 1040, and boxes for qualified dividends, capital-gain distributions, and
+exempt-interest dividends must be zero. Filed Form 1040 line 3b and AGI must
+equal box 1a; wages, interest, other taxable income, and adjustments remain
+zero. The dividend amount must exceed the applicable 2025 single-dependent
+unearned-income filing threshold, including age/blind increments. This follows
+the [2025 Publication 501 dependent filing table](https://www.irs.gov/publications/p501)
+and [Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962), which
+includes only dependents required to file because income meets the threshold.
+The authored twelve-month no-APTC fixture keeps household income at $40,880
+and joins Form 8962's $8,184 credit to Schedule 3 line 9, Form 1040 line 31,
+native MeF, and the PDF. Recipient, filed line, document identity, and
+at-threshold tamper fixtures are authored but unrun. Mixed dividend income
+beyond the one-W-2 case below, other 1099-DIV boxes, issuer-byte
+authentication, and IRS acceptance remain outside this route.
+
+## One W-2 plus one ordinary-dividend 1099-DIV (2026-10-01, unrun)
+
+The same required-filing dependent source now supports one W-2 and one
+ordinary-dividend-only Form 1099-DIV on a single filed 2025 return. It rejects
+any Form 1099-INT, second W-2, other Form 1099-DIV box amount, or nonzero other
+filed-return income or adjustment. Both recipient SSNs and distinct source
+document IDs must match the dependent, and filed Form 1040 lines 1z, 3b, and
+11b must equal the two source amounts and their sum. For an under-65, nonblind
+single dependent, it applies all three [2025 Publication 501 filing tests](https://www.irs.gov/publications/p501):
+unearned income over $1,350, earned income over $15,750, or gross income over
+the larger of $1,350 and min(earned income, $15,300) plus $450. The
+[Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962) then includes
+the dependent's filed AGI in line 2b. An authored $15,000 W-2 plus $1,000
+dividend case yields the same $16,000 dependent MAGI and $8,184 monthly PTC
+through Schedule 3, Form 1040, native MeF, and PDF. At-threshold, owner, filed
+line, and duplicate-document rejection fixtures are written but unrun. Other
+dividend combinations beyond the interest case below and source-byte
+authentication remain open.
+
+## One interest form plus one ordinary-dividend form (2026-10-01, unrun)
+
+A claimed dependent's filed single 2025 return may now carry one Form 1099-INT
+and one ordinary-only Form 1099-DIV, with no wages or other income. Their
+taxable interest and dividends must equal filed Form 1040 lines 2b and 3b;
+the interest form's exempt interest must equal line 2a, and AGI must equal
+taxable interest plus dividends. The two source recipient SSNs must match the
+dependent and all three source document IDs, including the filed return, must
+be distinct. The combined taxable interest and dividends must exceed the
+single-dependent unearned-income filing threshold in [2025 Publication 501](https://www.irs.gov/publications/p501).
+Under [Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962),
+line 2b then includes filed AGI plus the dependent's tax-exempt interest.
+The authored $4,800 taxable interest, $200 exempt interest, and $11,000
+ordinary dividend case produces $16,000 dependent MAGI and joins the monthly
+$8,184 PTC to Schedule 3, Form 1040, native MeF, and PDF. At-threshold,
+recipient, exempt-interest, and duplicate-document tamper cases are authored
+but unrun. Multiple forms, wage combinations with both sources, other Form
+1099-DIV boxes, source-byte authenticity, and IRS acceptance remain open.

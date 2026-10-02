@@ -1,8 +1,19 @@
 import { unzipSync, zipSync } from "fflate";
+import { createHash } from "node:crypto";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
-import type { MefBundle } from "./builder.ts";
-import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertPreparedBundleProjection, type MefBundle } from "./builder.ts";
+import { assertMefPdfEnvelope } from "./pdf-attachment-envelope.ts";
+import {
+  preparedSourceBytes,
+  preparedSourceSha256,
+  sha256Hex,
+} from "../prepared-source.ts";
+import {
+  assertPreparedAttachmentManifest,
+  assertPreparedAttachmentMetadata,
+  assertPreparedDocumentInventory,
+} from "./prepared-attachment-manifest.ts";
 import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
 import {
   assertFilingResidencyReview,
@@ -26,6 +37,7 @@ export interface MefSubmissionArchive {
   readonly bytes: Uint8Array;
   readonly manifestXml: string;
   readonly bundle: MefBundle;
+  readonly filer: FilerIdentity;
   readonly residencyReview: FilingResidencyReview;
 }
 
@@ -47,7 +59,145 @@ function sameBytes(
     actual.every((byte, index) => byte === expected[index]);
 }
 
+function sha256HexSync(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit++) {
+    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  }
+  return value >>> 0;
+});
+
+function crc32(bytes: Uint8Array): number {
+  let value = 0xffffffff;
+  for (const byte of bytes) {
+    value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8);
+  }
+  return (value ^ 0xffffffff) >>> 0;
+}
+
+/** Check physical ZIP entries and decoded payloads before filing. */
+export function zipDirectoryEntryCount(
+  bytes: Uint8Array,
+  decoded: Readonly<Record<string, Uint8Array>>,
+): number | undefined {
+  if (bytes.length < 22) return undefined;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const firstCandidate = Math.max(0, bytes.length - 22 - 0xffff);
+  for (let end = bytes.length - 22; end >= firstCandidate; end--) {
+    if (
+      view.getUint32(end, true) !== 0x06054b50 ||
+      end + 22 + view.getUint16(end + 20, true) !== bytes.length
+    ) continue;
+    const count = view.getUint16(end + 10, true);
+    const size = view.getUint32(end + 12, true);
+    const offset = view.getUint32(end + 16, true);
+    if (
+      view.getUint16(end + 4, true) !== 0 ||
+      view.getUint16(end + 6, true) !== 0 ||
+      view.getUint16(end + 8, true) !== count ||
+      count === 0xffff || size === 0xffffffff || offset === 0xffffffff ||
+      offset + size !== end
+    ) return undefined;
+    let position = offset;
+    let seen = 0;
+    while (position < end) {
+      if (
+        position + 46 > end ||
+        view.getUint32(position, true) !== 0x02014b50
+      ) return undefined;
+      const nameLength = view.getUint16(position + 28, true);
+      const extraLength = view.getUint16(position + 30, true);
+      const commentLength = view.getUint16(position + 32, true);
+      const localOffset = view.getUint32(position + 42, true);
+      if (
+        localOffset + 30 > offset ||
+        view.getUint32(localOffset, true) !== 0x04034b50 ||
+        view.getUint16(localOffset + 6, true) !==
+          view.getUint16(position + 8, true) ||
+        view.getUint16(localOffset + 8, true) !==
+          view.getUint16(position + 10, true) ||
+        view.getUint16(localOffset + 26, true) !== nameLength ||
+        position + 46 + nameLength > end ||
+        localOffset + 30 + nameLength +
+              view.getUint16(localOffset + 28, true) > offset
+      ) return undefined;
+      let name: string;
+      try {
+        name = new TextDecoder("utf-8", { fatal: true }).decode(
+          bytes.subarray(position + 46, position + 46 + nameLength),
+        );
+      } catch {
+        return undefined;
+      }
+      const payload = decoded[name];
+      if (
+        !Object.hasOwn(decoded, name) ||
+        payload.length !== view.getUint32(position + 24, true) ||
+        crc32(payload) !== view.getUint32(position + 16, true)
+      ) return undefined;
+      // When bit 3 is set, the local CRC and sizes are placeholders followed
+      // by a data descriptor. Otherwise they must agree with the directory.
+      if (
+        (view.getUint16(position + 8, true) & 0x0008) === 0 &&
+        (view.getUint32(localOffset + 14, true) !==
+            view.getUint32(position + 16, true) ||
+          view.getUint32(localOffset + 18, true) !==
+            view.getUint32(position + 20, true) ||
+          view.getUint32(localOffset + 22, true) !==
+            view.getUint32(position + 24, true))
+      ) return undefined;
+      for (let index = 0; index < nameLength; index++) {
+        if (
+          bytes[position + 46 + index] !==
+            bytes[localOffset + 30 + index]
+        ) return undefined;
+      }
+      position += 46 + nameLength + extraLength + commentLength;
+      if (position > end) return undefined;
+      seen++;
+    }
+    return seen === count && seen === Object.keys(decoded).length
+      ? seen
+      : undefined;
+  }
+  return undefined;
+}
+
+function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
+  const { bundle } = archive;
+  const attachmentNames = bundle.attachments.map((item) => item.fileName);
+  const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
+  if (
+    sha256HexSync(encoder.encode(bundle.xml)) !== bundle.xmlSha256 ||
+    sha256HexSync(preparedSourceBytes(bundle.pending, archive.filer)) !==
+      bundle.sourceSha256 ||
+    attachmentNames.length !== digestNames.length ||
+    new Set(attachmentNames).size !== attachmentNames.length ||
+    attachmentNames.some((name) =>
+      !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
+    ) ||
+    bundle.attachments.some((attachment) =>
+      sha256HexSync(attachment.bytes) !==
+        bundle.attachmentSha256ByFileName[attachment.fileName]
+    )
+  ) {
+    throw new Error(
+      "MeF transmission bundle differs from its prepared source, XML, or PDF digests",
+    );
+  }
+}
+
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+  validateSubmissionIdentity(archive);
+  assertPreparedBundleDigests(archive);
+  archive.bundle.attachments.forEach(assertMefPdfEnvelope);
+  assertPreparedDocumentInventory(archive.bundle);
+  assertPreparedAttachmentMetadata(archive.bundle);
+  assertPreparedBundleProjection(archive.bundle, archive.filer);
   let entries: Record<string, Uint8Array>;
   try {
     entries = unzipSync(archive.bytes);
@@ -62,9 +212,9 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
     ),
   ];
   if (
+    zipDirectoryEntryCount(archive.bytes, entries) !== expectedFiles.length ||
     expectedFiles.length !== new Set(expectedFiles).size ||
-    Object.keys(entries).sort().join("\n") !==
-      expectedFiles.sort().join("\n") ||
+    Object.keys(entries).join("\n") !== expectedFiles.join("\n") ||
     !sameBytes(
       entries["manifest/manifest.xml"],
       encoder.encode(archive.manifestXml),
@@ -190,6 +340,7 @@ export async function buildMefSubmissionArchive(
   ) {
     throw new Error("MeF submission differs from its prepared return");
   }
+  assertPreparedBundleProjection(bundle, options.filer);
   assertF1040FinalHeader(bundle.pending.f1040 ?? {}, options.filer);
   const residencyReview = assertFilingResidencyReview(
     options.residencyReview,
@@ -199,27 +350,7 @@ export async function buildMefSubmissionArchive(
     options.processingDate,
     bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
   );
-  const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
-  const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
-  if (
-    new Set(attachmentNames).size !== attachmentNames.length ||
-    attachmentNames.length !== digestNames.length ||
-    attachmentNames.some((name) =>
-      !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
-    )
-  ) {
-    throw new Error("MeF submission attachment set differs from preparation");
-  }
-  for (const attachment of bundle.attachments) {
-    if (
-      await sha256Hex(attachment.bytes) !==
-        bundle.attachmentSha256ByFileName[attachment.fileName]
-    ) {
-      throw new Error(
-        `MeF submission attachment differs from preparation: ${attachment.fileName}`,
-      );
-    }
-  }
+  await assertPreparedAttachmentManifest(bundle);
   const manifestXml = buildManifestXml(options.submissionId, efin, tin);
   const files: Record<string, Uint8Array> = {
     "manifest/manifest.xml": encoder.encode(manifestXml),
@@ -228,15 +359,18 @@ export async function buildMefSubmissionArchive(
   for (const attachment of bundle.attachments) {
     files[`attachment/${attachment.fileName}`] = attachment.bytes;
   }
-  return {
+  const archive: MefSubmissionArchive = {
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
     processingDate: options.processingDate,
     bytes: zipSync(files, { level: 6 }),
     manifestXml,
     bundle,
+    filer: options.filer,
     residencyReview,
   };
+  assertPreparedArchiveContents(archive);
+  return archive;
 }
 
 /** Build the A2A SOAP body element and its uncompressed ZIP attachment. */

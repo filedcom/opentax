@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
@@ -330,6 +331,7 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     f1040,
+    agi_aggregator,
     schedule2,
     schedule_se,
     form8959,
@@ -347,6 +349,7 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         output(f1040, { line1g_wages_8919: line6 }),
+        output(agi_aggregator, { line1g_wages_8919: line6 }),
         output(schedule2, { line6_uncollected_8919: line13 }),
         output(schedule_se, { wages_8919: line10 }),
         output(form8959, { wages_8919: line6 }),

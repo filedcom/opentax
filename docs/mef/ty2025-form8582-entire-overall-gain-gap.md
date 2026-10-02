@@ -1,5 +1,29 @@
 # TY2025 Form 8582 entire disposition with overall gain
 
+## First-year active rental entire disposition with overall loss (2026-10-01, unrun)
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582) say a
+fully taxable disposition of the entire passive activity interest to an
+unrelated buyer releases an overall loss on the forms normally used, without a
+Form 8582 activity entry. A bounded type-A actively participated rental first
+acquired and sold in 2025 now follows that rule for one short-held,
+no-depreciation Form 4797 Part II sale. The same durable activity ID, purchase
+date and document, unrelated-buyer fully taxable noninstallment closing, and
+no-prior-grouping assertion must match the Schedule E property and sale. Entered
+prior PALs, at-risk/expense carryovers, other Form 4797 character, multiple
+properties, and Form 4835 activities remain closed.
+
+The $5,000 current Schedule E operating loss exceeds the $2,000 ordinary sale
+gain. Schedule E line 22 and Form 4797 retain their normal reporting character;
+Schedule 1 lines 5 and 4 give a net $3,000 reduction in Form 1040 additional
+income, with no Form 8582 activity. Native Schedule E/Form 4797 and their PDF
+preflights require a finalized single-filer return and exact source-specific
+Schedule 1 and Form 1040 totals, with no other Schedule 1 income. Positive and
+altered status, purchase, closing, and amount fixtures are authored for the
+deferred bulk pass. MFS and other filing statuses, prior-year activities,
+disposition document bytes, filled-PDF review, XSD, and IRS acceptance remain
+open.
+
 ## Direct Part I section 1231 sale prerequisite (2026-10-01, unrun)
 
 The requested first-year activity bought and sold in 2025 cannot have a

@@ -18,7 +18,14 @@ const priorYearEvidenceSchema = z.object({
     tax_year: z.literal(2024),
     filed_document_reference: z.string().trim().min(1),
     filed_taxpayer_ssn: z.string().regex(/^\d{9}$/),
+    filed_line1_amt: z.number().int().finite(),
+    filed_line2e_amt: z.number().int().finite(),
+    filed_line10_amt: z.number().int().finite().nonnegative(),
     filed_line11_amt: z.number().int().nonnegative(),
+  }).strict().optional(),
+  exclusion_part1_reconciliation: z.object({
+    form8801_line1_amt: z.number().int().finite(),
+    form8801_line14_amt: z.number().int().finite().nonnegative(),
   }).strict().optional(),
   form8801: z.object({
     tax_year: z.literal(2024),
@@ -51,13 +58,20 @@ export const inputSchema = z.object({
   const evidence = input.prior_year_evidence;
   if (
     !evidence ||
-    (amt > 0 && !evidence.form6251) ||
+    (amt > 0 &&
+      (!evidence.form6251 || !evidence.exclusion_part1_reconciliation)) ||
     (carryforward > 0 && !evidence.form8801) ||
     evidence.form6251?.filed_taxpayer_ssn !== undefined &&
       evidence.form6251.filed_taxpayer_ssn !== evidence.taxpayer_ssn ||
     evidence.form8801?.filed_taxpayer_ssn !== undefined &&
       evidence.form8801.filed_taxpayer_ssn !== evidence.taxpayer_ssn ||
     (evidence.form6251?.filed_line11_amt ?? 0) !== amt ||
+    evidence.form6251 !== undefined &&
+      (evidence.exclusion_part1_reconciliation?.form8801_line1_amt !==
+          evidence.form6251.filed_line1_amt +
+            evidence.form6251.filed_line2e_amt ||
+        evidence.exclusion_part1_reconciliation?.form8801_line14_amt !==
+          evidence.form6251.filed_line10_amt) ||
     (evidence.form8801?.filed_line26_credit_carryforward ?? 0) !==
       carryforward ||
     evidence.form6251?.filed_document_reference !== undefined &&
@@ -68,7 +82,7 @@ export const inputSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["prior_year_evidence"],
       message:
-        "Form 8801 prior AMT and carryforward need distinct reviewed 2024 Forms 6251/8801 for one taxpayer and exact source lines",
+        "Form 8801 prior AMT and carryforward need distinct reviewed 2024 Forms 6251/8801 for one taxpayer and reconciled source lines",
     });
   }
 });

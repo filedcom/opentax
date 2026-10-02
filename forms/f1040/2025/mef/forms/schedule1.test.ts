@@ -18,7 +18,6 @@ const nativeFields = [
   ["line8i_prizes_awards", "PrizesAwardsAmt", 900],
   ["line8j_f1099k_hobby_income", "ActivityNotForProfitIncmAmt", 1000],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt", 1100],
-  ["line8z_nqdc", "NonqlfyDeferredCompensationAmt", 1200],
   ["line9_total_other_income", "TotalOtherIncomeAmt", 1300],
   ["line10_total_additional_income", "TotalAdditionalIncomeAmt", 1400],
   ["line11_educator_expenses", "EducatorExpensesAmt", 1500],
@@ -218,10 +217,21 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     line8z_form8814: 50,
     line8z_hsa_excess_earnings: 100,
     line8z_hsa_excess_employer: 700,
-    line8z_rtaa: 300,
-    line8z_taxable_grants: 1200,
+    line8z_taxable_grants: 1500,
+    f1099g_taxable_grant_sources: [{
+      payer_name: "State Grant Agency",
+      payer_tin: "123456789",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-grant-1",
+      amount: 1500,
+    }],
     line8z_substitute_payments: 750,
-    line8z_golden_parachute: 500,
+    f1099m_box8_substitute_sources: [{
+      payer_name: "Broker Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      amount: 750,
+    }],
     line8z_form8621_qef: 200,
     line8z_form8621_mtm: -100,
     line8z_form8621_section1291: 25,
@@ -234,13 +244,37 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     }],
   };
   const xml = schedule1.build(fields, {
+    filer: {
+      primarySSN: "111223333",
+      nameLine1: "TEST TAXPAYER",
+      nameControl: "TAXP",
+      address: {
+        line1: "1 Test Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: {
+      f1099g: {
+        f1099gs: [{
+          box_6_taxable_grants: 1_500,
+          box_6_schedule1_nonbusiness_reviewed: true,
+          recipient_tin: "111223333",
+          payer_name: "State Grant Agency",
+          payer_tin: "123456789",
+          source_document_reference: "issued-grant-1",
+        }],
+      },
+    },
     documentIdsByPendingKey: {
       schedule1_other_income_statement: ["OtherIncomeTypeStatement-1"],
     },
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3725</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3225</OtherIncomeTotalAmt>',
   );
   assertStringIncludes(
     xml,
@@ -266,7 +300,7 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
       "generic income needs identified source types",
     );
   }
-  const typed = { line8z_rtaa: 300 };
+  const typed = { line8z_hsa_excess_earnings: 300 };
   for (const ids of [[], ["Statement-1", "Statement-2"]]) {
     assertThrows(
       () =>
@@ -279,10 +313,105 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
   }
 });
 
+Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const copies = {
+    f1099gs: [{
+      box_6_taxable_grants: 400,
+      box_6_schedule1_nonbusiness_reviewed: true,
+      recipient_tin: "111223333",
+      payer_name: "State Grant Agency A",
+      payer_tin: "123456789",
+      source_document_reference: "issued-grant-a",
+    }, {
+      box_6_taxable_grants: 600,
+      box_6_schedule1_nonbusiness_reviewed: true,
+      recipient_tin: "111223333",
+      payer_name: "State Grant Agency B",
+      payer_tin: "987654321",
+      source_document_reference: "issued-grant-b",
+    }],
+  };
+  const sourceRows = copies.f1099gs.map((copy) => ({
+    payer_name: copy.payer_name,
+    payer_tin: copy.payer_tin,
+    recipient_tin: copy.recipient_tin,
+    source_document_reference: copy.source_document_reference,
+    amount: copy.box_6_taxable_grants,
+  }));
+  const fields = {
+    line8z_taxable_grants: 1_000,
+    f1099g_taxable_grant_sources: sourceRows,
+  };
+  const xml = schedule1.build(fields, {
+    filer,
+    pending: { f1099g: copies },
+  });
+  assertStringIncludes(xml, "<OtherIncomeTotalAmt>1000</OtherIncomeTotalAmt>");
+  assertThrows(
+    () =>
+      schedule1.build({ ...fields, line8z_taxable_grants: 999 }, {
+        filer,
+        pending: { f1099g: copies },
+      }),
+    Error,
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
+  );
+  assertThrows(
+    () => schedule1.build(fields, { filer }),
+    Error,
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
+  );
+  assertThrows(
+    () => schedule1.build({ ...fields, line8z_taxable_grants: -1 }, { filer }),
+    Error,
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
+  );
+  for (const recipient of [undefined, "999887777"]) {
+    assertThrows(
+      () =>
+        schedule1.build(fields, {
+          filer,
+          pending: {
+            f1099g: {
+              f1099gs: [copies.f1099gs[0], {
+                ...copies.f1099gs[1],
+                recipient_tin: recipient,
+              }],
+            },
+          },
+        }),
+      Error,
+      "box 6",
+    );
+  }
+  assertThrows(
+    () =>
+      schedule1.build(fields, {
+        filer,
+        pending: {
+          f1099g: {
+            f1099gs: [{
+              ...copies.f1099gs[0],
+              box_6_schedule1_nonbusiness_reviewed: false,
+            }, copies.f1099gs[1]],
+          },
+        },
+      }),
+    Error,
+    "reviewed nonbusiness Schedule 1 classification",
+  );
+});
+
 Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {
   for (
     const field of [
-      "line2a_alimony_received",
       "line8g_child_interest_dividends",
       "line8z_attorney_proceeds",
       "line13_depreciation",
@@ -297,12 +426,20 @@ Deno.test("Schedule 1 rejects unsupported sources without required filing facts"
   }
 });
 
+Deno.test("Schedule 1 line 2a requires its dated alimony source", () => {
+  assertThrows(
+    () => schedule1.build({ line2a_alimony_received: 100 }),
+    Error,
+    "needs dated alimony agreement source",
+  );
+});
+
 Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
   const xml = schedule1.build({
     line1_state_refund: 100,
     line8a_nol_deduction: 50,
     line8c_cod_income: 20,
-    line8z_nqdc: 40,
+    line8i_prizes_awards: 40,
     line9_total_other_income: 40,
     line10_total_additional_income: 140,
     line11_educator_expenses: 10,
@@ -314,7 +451,7 @@ Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
     "StateLocalIncomeTaxRefundAmt",
     "NetOperatingLossDeductionAmt",
     "DebtCancellationAmt",
-    "NonqlfyDeferredCompensationAmt",
+    "PrizesAwardsAmt",
     "TotalOtherIncomeAmt",
     "TotalAdditionalIncomeAmt",
     "EducatorExpensesAmt",

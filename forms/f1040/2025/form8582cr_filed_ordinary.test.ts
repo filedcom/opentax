@@ -1,10 +1,12 @@
 import {
   assert,
   assertEquals,
+  assertRejects,
   assertStringIncludes,
   assertThrows,
 } from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
+import { withReviewedForm8874A } from "../nodes/inputs/f8874/issuance_fixture.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
 import {
   calculateForm8582CR,
@@ -46,26 +48,30 @@ const worksheet = {
   tax_including_passive: taxAll,
   tax_without_passive: taxWithout,
 };
-const investment = {
-  cde_name: "Community Development Entity",
-  cde_ein: "123456789",
-  cde_address: {
-    line1: "10 Community Way",
-    city: "Wilmington",
-    state: "DE",
-    zip: "19801",
+const investment = withReviewedForm8874A(
+  {
+    cde_name: "Community Development Entity",
+    cde_ein: "123456789",
+    cde_address: {
+      line1: "10 Community Way",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    initial_investment_date: "2025-04-15",
+    credit_allowance_date: "2025-04-15",
+    qualified_equity_investment_amount: 10_000,
+    designation_notice_reference: investmentReference,
+    held_on_credit_allowance_date: true,
+    qualified_on_credit_allowance_date: true,
+    recapture_notice_received: false,
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "community-investment-1",
+    passive_source_document_reference: investmentReference,
   },
-  initial_investment_date: "2025-04-15",
-  credit_allowance_date: "2025-04-15",
-  qualified_equity_investment_amount: 10_000,
-  designation_notice_reference: investmentReference,
-  held_on_credit_allowance_date: true,
-  qualified_on_credit_allowance_date: true,
-  recapture_notice_received: false,
-  subject_to_passive_activity_limit: true,
-  passive_activity_reference: "community-investment-1",
-  passive_source_document_reference: investmentReference,
-};
+  "Alex Owner",
+  "111223333",
+);
 const source = {
   activity_reference: "community-investment-1",
   source_form: "Form 8874",
@@ -91,6 +97,7 @@ const general = {
   address_zip: "78701",
 };
 const wage = {
+  employee_ssn: "111-22-3333",
   box1_wages: 100_000,
   box2_fed_withheld: 16_000,
   employer_ein: "12-3456789",
@@ -166,36 +173,50 @@ function filedReturn(
     }],
     f8874: {
       investments: [
-        {
-          ...investment,
-          qualified_equity_investment_amount: investmentAmount,
-        },
-        ...(nonpassiveInvestmentAmount > 0
-          ? [{
+        withReviewedForm8874A(
+          {
             ...investment,
-            initial_investment_date: "2022-04-15",
-            designation_notice_reference: "2022 nonpassive QEI notice",
-            qualified_equity_investment_amount: nonpassiveInvestmentAmount,
-            subject_to_passive_activity_limit: false,
-            passive_activity_reference: undefined,
-            passive_source_document_reference: undefined,
-          }]
+            qualified_equity_investment_amount: investmentAmount,
+          },
+          "Alex Owner",
+          "111223333",
+        ),
+        ...(nonpassiveInvestmentAmount > 0
+          ? [withReviewedForm8874A(
+            {
+              ...investment,
+              initial_investment_date: "2022-04-15",
+              designation_notice_reference: "2022 nonpassive QEI notice",
+              qualified_equity_investment_amount: nonpassiveInvestmentAmount,
+              subject_to_passive_activity_limit: false,
+              passive_activity_reference: undefined,
+              passive_source_document_reference: undefined,
+            },
+            "Alex Owner",
+            "111223333",
+          )]
           : []),
-        ...additionalPassiveInvestmentAmounts.map((amount, index) => ({
-          ...investment,
-          cde_name: `Community Development Entity ${index + 2}`,
-          cde_ein: String(987654321 - index),
-          initial_investment_date: "2025-06-15",
-          credit_allowance_date: "2025-06-15",
-          designation_notice_reference: `2025 community QEI notice ${
-            index + 2
-          }`,
-          qualified_equity_investment_amount: amount,
-          passive_activity_reference: `community-investment-${index + 2}`,
-          passive_source_document_reference: `2025 community QEI notice ${
-            index + 2
-          }`,
-        })),
+        ...additionalPassiveInvestmentAmounts.map((amount, index) =>
+          withReviewedForm8874A(
+            {
+              ...investment,
+              cde_name: `Community Development Entity ${index + 2}`,
+              cde_ein: String(987654321 - index),
+              initial_investment_date: "2025-06-15",
+              credit_allowance_date: "2025-06-15",
+              designation_notice_reference: `2025 community QEI notice ${
+                index + 2
+              }`,
+              qualified_equity_investment_amount: amount,
+              passive_activity_reference: `community-investment-${index + 2}`,
+              passive_source_document_reference: `2025 community QEI notice ${
+                index + 2
+              }`,
+            },
+            "Alex Owner",
+            "111223333",
+          )
+        ),
       ],
     },
     form8582cr: {
@@ -424,23 +445,35 @@ function filedSelfAndK1Return(
   additionalPartnershipCredits: number[] = [],
 ) {
   const investments = [
-    {
-      ...investment,
-      qualified_equity_investment_amount: 100_000,
-    },
-    ...additionalSelfInvestmentAmounts.map((amount, index) => ({
-      ...investment,
-      cde_name: `Additional Community Development Entity ${index + 1}`,
-      cde_ein: String(987654321 - index),
-      initial_investment_date: "2025-06-15",
-      credit_allowance_date: "2025-06-15",
-      designation_notice_reference: `2025 additional QEI notice ${index + 1}`,
-      qualified_equity_investment_amount: amount,
-      passive_activity_reference: `additional-self-investment-${index + 1}`,
-      passive_source_document_reference: `2025 additional QEI notice ${
-        index + 1
-      }`,
-    })),
+    withReviewedForm8874A(
+      {
+        ...investment,
+        qualified_equity_investment_amount: 100_000,
+      },
+      "Alex Owner",
+      "111223333",
+    ),
+    ...additionalSelfInvestmentAmounts.map((amount, index) =>
+      withReviewedForm8874A(
+        {
+          ...investment,
+          cde_name: `Additional Community Development Entity ${index + 1}`,
+          cde_ein: String(987654321 - index),
+          initial_investment_date: "2025-06-15",
+          credit_allowance_date: "2025-06-15",
+          designation_notice_reference: `2025 additional QEI notice ${
+            index + 1
+          }`,
+          qualified_equity_investment_amount: amount,
+          passive_activity_reference: `additional-self-investment-${index + 1}`,
+          passive_source_document_reference: `2025 additional QEI notice ${
+            index + 1
+          }`,
+        },
+        "Alex Owner",
+        "111223333",
+      )
+    ),
   ];
   const partnerships = [
     {
@@ -958,7 +991,7 @@ Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and
   );
 });
 
-Deno.test("self-earned Form 8874 and two passive code AD K-1 credits reconcile source form line 2 and mixed Part V details", async () => {
+Deno.test("self-earned and K-1 credits calculate together, then unauthenticated direct Form 8874 export is blocked", async () => {
   const result = filedSelfAndK1Return();
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -986,150 +1019,32 @@ Deno.test("self-earned Form 8874 and two passive code AD K-1 credits reconcile s
   assertEquals(sourcePdf.row_1_credit, 5_000);
   assertEquals(sourcePdf.line2, 4_000);
   assertEquals(sourcePdf.line3, 9_000);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.lines.line2, 9_000);
-  assertEquals(parts.lines.line3, 4_412);
-  assertEquals(parts.lines.line38, 4_412);
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 3);
-  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
-  const form8874Id = parts.currentRows[0].metadata.referenceDocumentId;
-  assert(form8874Id);
-  assertEquals(
-    parts.passiveCurrentDetails.map((detail) => [
-      detail.source.sourceOrigin.kind,
-      detail.source.afterPassiveLimit,
-      detail.sourceDocument?.documentId,
-    ]),
-    [
-      ["self", 2_451, form8874Id],
-      ["partnership", 1_226, undefined],
-      ["s_corporation", 735, undefined],
-    ],
-  );
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    3,
-  );
-  assertStringIncludes(prepared.bundle.xml, "<IRS8874 ");
-  assertStringIncludes(
-    prepared.bundle.xml,
-    "<PassThroughEntityEIN>345678901</PassThroughEntityEIN>",
-  );
-  assertStringIncludes(
-    prepared.bundle.xml,
-    "<PassThroughEntityEIN>567890123</PassThroughEntityEIN>",
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
-  assertEquals(printed?.[form3800PartVFields(1).c1], undefined);
-  assertEquals(printed?.[form3800PartVFields(2).c1], "345678901");
-  assertEquals(printed?.[form3800PartVFields(3).c1], "567890123");
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  const investments = filed.f8874.investments as Record<string, unknown>[];
-  assertThrows(
+  await assertRejects(
     () =>
-      form8582crPdf.projectFields!(filed.form8582cr, {
-        ...filed,
-        f8874: {
-          investments: [{
-            ...investments[0],
-            qualified_equity_investment_amount: 99_000,
-          }],
-        },
-      }),
-    Error,
-    "credit differs from the filed passive Form 8874 investment",
-  );
-  const partnership =
-    (filed.k1_partnership.k1_partnerships as Record<string, unknown>[])[0];
-  assertThrows(
-    () =>
-      form8582crPdf.projectFields!(filed.form8582cr, {
-        ...filed,
-        k1_partnership: {
-          k1_partnerships: [{
-            ...partnership,
-            box15_code_ad_new_markets_credit: 2_499,
-          }],
-        },
-      }),
-    Error,
-    "partnership code AD credits differ",
-  );
-  assertThrows(
-    () =>
-      form3800Pdf.instances?.(
-        filed.f3800,
+      f1040_2025.prepareReturn(
+        result.pending,
         extractFilerIdentity(general),
-        filed,
-        {
-          ...parts,
-          passiveCurrentDetails: [
-            parts.passiveCurrentDetails[0],
-            {
-              ...parts.passiveCurrentDetails[1],
-              source: {
-                ...parts.passiveCurrentDetails[1].source,
-                sourceDocumentReference: "wrong partnership K-1",
-              },
-            },
-            parts.passiveCurrentDetails[2],
-          ],
-        },
       ),
     Error,
-    "self-earned and K-1 New Markets activities",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("two self-earned investments and three K-1s keep mixed source identities", async () => {
+Deno.test("two self-earned investments and three K-1s retain source identities while direct export is blocked", async () => {
   const result = filedSelfAndK1Return([10_000], [800]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
   assertEquals(ledger.rows.length, 5);
   assertEquals(ledger.total_credit, 10_300);
   assertEquals(ledger.allowed_credit, 4_412);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 5);
-  assertEquals(parts.passiveCurrentDetails.length, 5);
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    5,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const sourcePdf = form8874Pdf.projectFields!(filed.f8874, filed);
-  assertEquals(sourcePdf.line2, 4_800);
-  assertEquals(sourcePdf.line3, 10_300);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(
-    [1, 2, 3, 4, 5].map((index) => printed?.[form3800PartVFields(index).c1]),
-    [undefined, undefined, "345678901", "456789012", "567890123"],
-  );
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
@@ -1157,7 +1072,7 @@ Deno.test("current-year passive New Markets credit and rental income reconcile F
   ));
 });
 
-Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 line 1i and final tax", async () => {
+Deno.test("passive and nonpassive Form 8874 investments calculate line 1i before direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 5_000);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const passive = form8582crInputSchema.parse(pending.form8582cr);
@@ -1170,101 +1085,18 @@ Deno.test("one passive and one nonpassive Form 8874 investment join Form 3800 li
   const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
   assertEquals(passivePdf.line4a, 500);
   assertEquals(passivePdf.line37, 500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.lines.line1, 300);
-  assertEquals(parts.lines.line2, 500);
-  assertEquals(parts.lines.line3, 500);
-  assertEquals(parts.lines.line6, 800);
-  assertEquals(parts.lines.line17, 800);
-  assertEquals(parts.lines.line38, 800);
-  const [row] = parts.currentRows;
-  const [amount] = parts.currentAmounts;
-  assertEquals(parts.currentRows.length, 1);
-  assertEquals(row.line, "1i");
-  assertEquals(row.metadata.sourceCount, 2);
-  assertEquals(row.metadata.referenceDocumentName, "IRS8874");
-  assertEquals(
-    parts.currentDetails[0].sourceDocumentId,
-    row.metadata.referenceDocumentId,
-  );
-  assertEquals(
-    parts.passiveCurrentDetails[0].sourceDocument?.documentId,
-    row.metadata.referenceDocumentId,
-  );
-  assertEquals(amount.nonpassiveCredit, 300);
-  assertEquals(amount.passiveBeforeLimit, 500);
-  assertEquals(amount.passiveAfterLimit, 500);
-  assertEquals(amount.appliedCredit, 800);
-  assertStringIncludes(prepared.bundle.xml, "<IRS8874 ");
-  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
-  assertStringIncludes(prepared.bundle.xml, "<Form8874CYCreditsGrp");
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    2,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1i").g], 800);
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], 800);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  assertThrows(
+  await assertRejects(
     () =>
-      form3800Pdf.instances?.(
-        filed.f3800,
+      f1040_2025.prepareReturn(
+        result.pending,
         extractFilerIdentity(general),
-        filed,
-        {
-          ...parts,
-          currentAmounts: [{ ...amount, passiveAfterLimit: 499 }],
-        },
       ),
     Error,
-    "mixed passive/nonpassive Form 8874 row",
-  );
-  const investments = pending.f8874.investments as Record<string, unknown>[];
-  const changedSource = {
-    ...pending,
-    f8874: {
-      investments: [investments[0], {
-        ...investments[1],
-        qualified_equity_investment_amount: 4_000,
-      }],
-    },
-  };
-  assertThrows(
-    () => form8582crPdf.projectFields!(pending.form8582cr, changedSource),
-    Error,
-    "current-year source allocation differ",
-  );
-  assertThrows(
-    () =>
-      form8582crPdf.projectFields!(pending.form8582cr, {
-        ...pending,
-        f3800: {
-          ...business,
-          f8874_credit: {
-            credit_amount: 299,
-            subject_to_passive_activity_limit: false,
-          },
-        },
-      }),
-    Error,
-    "current-year source allocation differ",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive investment and retains the 2025 remainder", async () => {
+Deno.test("partial passive Form 8874 allowance retains its 2025 remainder while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 5_000);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
@@ -1289,95 +1121,18 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
   assertEquals(passivePdf.line4a, 5_000);
   assertEquals(passivePdf.line7, 5_000 - allowedPassive);
   assertEquals(passivePdf.line37, allowedPassive);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.lines.line1, 300);
-  assertEquals(parts.lines.line2, 5_000);
-  assertEquals(parts.lines.line3, allowedPassive);
-  assertEquals(parts.lines.line6, allowedReturn);
-  assertEquals(parts.lines.line17, allowedReturn);
-  assertEquals(parts.lines.line38, allowedReturn);
-  assertEquals(parts.currentRows.length, 1);
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
-  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
-  assertEquals(parts.currentAmounts[0].nonpassiveCredit, 300);
-  assertEquals(parts.currentAmounts[0].passiveBeforeLimit, 5_000);
-  assertEquals(parts.currentAmounts[0].passiveAfterLimit, allowedPassive);
-  assertEquals(parts.currentAmounts[0].appliedCredit, allowedReturn);
-  assertEquals(parts.passiveCurrentDetails[0].source.beforePassiveLimit, 5_000);
-  assertEquals(
-    parts.passiveCurrentDetails[0].source.afterPassiveLimit,
-    allowedPassive,
-  );
-  assertEquals(parts.passiveCurrentDetails[0].source.unusedAfterTaxLimit, 0);
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    2,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1i").g], allowedReturn);
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], allowedReturn);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  const investments = pending.f8874.investments as Record<string, unknown>[];
-  assertThrows(
+  await assertRejects(
     () =>
-      form8582crPdf.projectFields!(pending.form8582cr, {
-        ...pending,
-        f8874: {
-          investments: [{
-            ...investments[0],
-            qualified_equity_investment_amount: 99_000,
-          }, investments[1]],
-        },
-      }),
-    Error,
-    "credit differs from the filed passive Form 8874 investment",
-  );
-  assertThrows(
-    () =>
-      form8582crPdf.projectFields!(pending.form8582cr, {
-        ...pending,
-        f8874: {
-          investments: [{
-            ...investments[0],
-            passive_activity_reference: "wrong-activity",
-          }, investments[1]],
-        },
-      }),
-    Error,
-    "credit differs from the filed passive Form 8874 investment",
-  );
-  assertThrows(
-    () =>
-      form3800Pdf.instances?.(
-        filed.f3800,
+      f1040_2025.prepareReturn(
+        result.pending,
         extractFilerIdentity(general),
-        filed,
-        {
-          ...parts,
-          currentAmounts: [{
-            ...parts.currentAmounts[0],
-            passiveAfterLimit: allowedPassive + 1,
-          }],
-        },
       ),
     Error,
-    "mixed passive/nonpassive Form 8874 row",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 Worksheet 9 balances", async () => {
+Deno.test("two passive Form 8874 activities calculate separate Worksheet 9 balances while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 0, [100_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
@@ -1404,101 +1159,18 @@ Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 
   assertEquals(passivePdf.line4a, 10_000);
   assertEquals(passivePdf.line7, 5_588);
   assertEquals(passivePdf.line37, 4_412);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.lines.line1, 0);
-  assertEquals(parts.lines.line2, 10_000);
-  assertEquals(parts.lines.line3, 4_412);
-  assertEquals(parts.lines.line6, 4_412);
-  assertEquals(parts.lines.line17, 4_412);
-  assertEquals(parts.lines.line38, 4_412);
-  assertEquals(parts.currentRows.length, 1);
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
-  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
-  assertEquals(parts.currentDetails.length, 0);
-  assertEquals(parts.passiveCurrentDetails.length, 2);
-  assertEquals(
-    parts.passiveCurrentDetails.map((detail) => [
-      detail.source.activityReference,
-      detail.source.beforePassiveLimit,
-      detail.source.afterPassiveLimit,
-      detail.sourceDocument?.documentId,
-    ]),
-    [
-      [
-        "community-investment-1",
-        5_000,
-        2_206,
-        parts.currentRows[0].metadata.referenceDocumentId,
-      ],
-      [
-        "community-investment-2",
-        5_000,
-        2_206,
-        parts.currentRows[0].metadata.referenceDocumentId,
-      ],
-    ],
-  );
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    2,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  const investments = pending.f8874.investments as Record<string, unknown>[];
-  assertThrows(
+  await assertRejects(
     () =>
-      form8582crPdf.projectFields!(pending.form8582cr, {
-        ...pending,
-        f8874: {
-          investments: [investments[0], {
-            ...investments[1],
-            qualified_equity_investment_amount: 99_000,
-          }],
-        },
-      }),
-    Error,
-    "credit differs from the filed passive Form 8874 investment",
-  );
-  assertThrows(
-    () =>
-      form3800Pdf.instances?.(
-        filed.f3800,
+      f1040_2025.prepareReturn(
+        result.pending,
         extractFilerIdentity(general),
-        filed,
-        {
-          ...parts,
-          passiveCurrentDetails: [
-            parts.passiveCurrentDetails[0],
-            {
-              ...parts.passiveCurrentDetails[1],
-              source: {
-                ...parts.passiveCurrentDetails[1].source,
-                activityReference: "wrong-activity",
-              },
-            },
-          ],
-        },
       ),
     Error,
-    "passive Form 8874 activities",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("three different passive Form 8874 credits allocate one ordinary line 6 by source through native and PDF", async () => {
+Deno.test("three passive Form 8874 credits allocate line 6 by source while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 0, [50_000, 50_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1519,72 +1191,18 @@ Deno.test("three different passive Form 8874 credits allocate one ordinary line 
   );
   assertEquals(pending.schedule3.line6a_total, 4_412);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 3);
-  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
-  assertEquals(
-    parts.passiveCurrentDetails.map((detail) => [
-      detail.source.activityReference,
-      detail.source.beforePassiveLimit,
-      detail.source.afterPassiveLimit,
-      detail.sourceDocument?.documentId,
-    ]),
-    ledger.rows.map((row) => [
-      row.source.activity_reference,
-      row.total_credit,
-      row.allowed_credit,
-      parts.currentRows[0].metadata.referenceDocumentId,
-    ]),
-  );
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    3,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
-  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  const filedAllocations = f3800InputSchema.parse(filed.f3800)
-    .passive_source_allocations!;
-  const changed = {
-    ...filed,
-    f3800: {
-      ...filed.f3800,
-      passive_source_allocations: [
-        ...filedAllocations.slice(0, 2),
-        {
-          ...filedAllocations[2],
-          source_document_reference: "wrong-third-QEI-notice",
-        },
-      ],
-    },
-  };
-  assertThrows(
+  await assertRejects(
     () =>
-      form3800Pdf.instances?.(
-        changed.f3800,
+      f1040_2025.prepareReturn(
+        result.pending,
         extractFilerIdentity(general),
-        changed,
-        parts,
       ),
     Error,
-    "line 37 and current-year source allocation differ",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("seven passive Form 8874 activities use investment overflow and all seven Form 3800 Part V rows", async () => {
+Deno.test("seven passive Form 8874 activities calculate investment overflow while direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 0, Array(6).fill(10_000));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1594,33 +1212,18 @@ Deno.test("seven passive Form 8874 activities use investment overflow and all se
   assertEquals(ledger.unallowed_credit, 0);
   assertEquals(pending.schedule3.line6a_total, 3_500);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 3_500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 7);
-  assertEquals(parts.passiveCurrentDetails.length, 7);
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    7,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
-  assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 2);
-  const form3800Printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(form3800Printed?.[form3800PartIIIFields("1i").g], 3_500);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth remains closed", async () => {
+Deno.test("fifteen passive Form 8874 activities calculate while direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 0, Array(14).fill(10_000));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1630,56 +1233,18 @@ Deno.test("fifteen passive Form 8874 activities fill Part V, while a sixteenth r
   assertEquals(ledger.unallowed_credit, 3_088);
   assertEquals(pending.schedule3.line6a_total, 4_412);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  const parts = prepared.bundle.form3800Parts!;
-  assertEquals(parts.currentRows[0].metadata.sourceCount, 15);
-  assertEquals(parts.passiveCurrentDetails.length, 15);
-  assertEquals(
-    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
-    15,
-  );
-  const filed = normalizeForm8582CRTestPending(prepared.bundle.pending);
-  const form8874Printed = form8874Pdf.projectFields!(filed.f8874, filed);
-  assertEquals((form8874Printed.print_overflow_rows as unknown[]).length, 10);
-  const form3800Printed = form3800Pdf.instances?.(
-    filed.f3800,
-    extractFilerIdentity(general),
-    filed,
-    parts,
-  )?.[0];
-  assertEquals(form3800Printed?.[form3800PartIIIFields("1i").g], 4_412);
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
-  );
-  const original = form8582crInputSchema.parse(pending.form8582cr);
-  const sixteenth = {
-    ...original.credit_sources[0],
-    activity_reference: "sixteenth-activity",
-    source_document_reference: "sixteenth-notice",
-  };
-  assertThrows(
+  await assertRejects(
     () =>
-      form8582crPdf.projectFields!({
-        ...pending.form8582cr,
-        credit_sources: [...original.credit_sources, sixteenth],
-        required_new_markets_self_credits: [
-          ...(original.required_new_markets_self_credits ?? []),
-          {
-            activity_reference: sixteenth.activity_reference,
-            source_document_reference: sixteenth.source_document_reference,
-            credit_amount: sixteenth.current_year_credit,
-          },
-        ],
-      }, pending),
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
     Error,
-    "within Form 3800 Part V capacity",
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
-Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Form 1040, native and PDF", async () => {
+Deno.test("one sourced 1099-INT joins passive rental line 6 while direct Form 8874 export is blocked", async () => {
   const result = filedReturn(10_000, [1_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
@@ -1703,14 +1268,14 @@ Deno.test("one sourced 1099-INT box 1 joins passive rental line 6, Form 3800, Fo
   const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
   assertEquals(pdf.line6, expectedAllTax - expectedWithout);
   assertEquals(pdf.line37, 500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
-  assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
@@ -1749,7 +1314,7 @@ Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed intere
   }
 });
 
-Deno.test("two distinct 1099-INT payers sum into passive rental line 6 and the complete native/PDF return", async () => {
+Deno.test("two distinct 1099-INT payers sum into passive rental line 6 while direct export is blocked", async () => {
   const result = filedReturn(10_000, [600, 400]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
@@ -1772,14 +1337,14 @@ Deno.test("two distinct 1099-INT payers sum into passive rental line 6 and the c
   const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
   assertEquals(pdf.line6, expectedAllTax - expectedWithout);
   assertEquals(pdf.line37, 500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
-  assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
@@ -1823,7 +1388,7 @@ Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return 
   }
 });
 
-Deno.test("two issued 1099-INT copies from one payer retain separate accounts through Form 8582-CR and the complete return", async () => {
+Deno.test("two 1099-INT copies retain separate accounts while direct Form 8874 export is blocked", async () => {
   const result = filedReturn(10_000, [600, 400], 0, [], true);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const rows = pending.f1099int.f1099ints as Record<string, unknown>[];
@@ -1853,14 +1418,14 @@ Deno.test("two issued 1099-INT copies from one payer retain separate accounts th
   const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
   assertEquals(pdf.line6, expectedAllTax - expectedWithout);
   assertEquals(pdf.line37, 500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
-  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
-  assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
-  assert(
-    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
 });
 
@@ -2024,13 +1589,15 @@ Deno.test("current-year excess credit retains an activity/year Worksheet 9 balan
   assertEquals(pdf.line37, ledger.allowed_credit);
 });
 
-Deno.test("filed passive Form 8582-CR is included in the complete printable return packet", async () => {
+Deno.test("unverified direct Form 8874 blocks the otherwise calculated passive Form 8582-CR return", async () => {
   const result = filedReturn();
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        result.pending,
+        extractFilerIdentity(general),
+      ),
+    Error,
+    "Form 8874 direct QEI needs authenticated CDE status",
   );
-  assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
-  const printable = await prepared.renderPdf();
-  assert((await PDFDocument.load(printable)).getPageCount() > 2);
 });

@@ -364,12 +364,62 @@ export const itemSchema = z.object({
   }
 });
 
-export const inputSchema = z.object({
-  f1099ks: z.array(itemSchema).min(1),
-});
-
 type K99Item = z.infer<typeof itemSchema>;
 type K99Items = K99Item[];
+
+function repeatedIssuedCopyIndex(items: readonly K99Item[]): number {
+  const seen = new Set<string>();
+  for (const [index, item] of items.entries()) {
+    if (
+      (item.box1a_gross_payments ?? 0) <= 0 &&
+      (item.box4_federal_withheld ?? 0) <= 0
+    ) continue;
+    const payer = item.pse_tin?.replace(/\D/g, "");
+    const recipient = item.recipient_tin?.replace(/\D/g, "");
+    const account = item.account_number?.trim();
+    if (!/^\d{9}$/.test(payer ?? "") || !recipient || !account) continue;
+    const key = JSON.stringify([payer, recipient, account]);
+    if (seen.has(key)) return index;
+    seen.add(key);
+  }
+  return -1;
+}
+
+export const inputSchema = z.object({
+  f1099ks: z.array(itemSchema).min(1),
+}).superRefine(({ f1099ks }, ctx) => {
+  const seen = new Set<string>();
+  f1099ks.forEach((item, index) => {
+    const key = JSON.stringify(
+      item,
+      (_key, value) =>
+        value && typeof value === "object" && !Array.isArray(value)
+          ? Object.fromEntries(
+            Object.entries(value).sort(([left], [right]) =>
+              left.localeCompare(right)
+            ),
+          )
+          : value,
+    );
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1099ks", index],
+        message: "The same Form 1099-K source row cannot be entered twice",
+      });
+    }
+    seen.add(key);
+  });
+  const repeatedIndex = repeatedIssuedCopyIndex(f1099ks);
+  if (repeatedIndex !== -1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["f1099ks", repeatedIndex],
+      message:
+        "1099-K repeats the same identified payer, recipient, and account; corrected copies need one reviewed current row",
+    });
+  }
+});
 
 const MONTHLY_FIELDS = [
   "box5a_january",

@@ -103,7 +103,11 @@ Deno.test({
         line22_tax_after_credits: 7_449,
         line24_total_tax: 7_449,
       },
-      schedule3: { line6l_form8978_credit: 500, line8_total: 500 },
+      schedule3: {
+        line6l_form8978_credit: 500,
+        line7_total: 500,
+        line8_total: 500,
+      },
       f8978: {
         ...negativeInput,
         calculated_filings: negativeInput.filings.map(calculateFiling),
@@ -166,6 +170,20 @@ Deno.test({
         line18_total_tax_before_credits: 0,
         line23_other_taxes: 0,
         line24_total_tax: 0,
+      },
+      w2: {
+        w2s: [{
+          employee_ssn: "123-45-6789",
+          employer_ein: "12-3456789",
+          employer_name: "Test Employer",
+          employer_address_line1: "2 Test Way",
+          employer_address_city: "Austin",
+          employer_address_state: "TX",
+          employer_address_zip: "78701",
+          box1_wages: 0,
+          box2_fed_withheld: 0,
+          box12_entries: [{ code: "Z", amount: 100 }],
+        }],
       },
       schedule2: { section409a_excise: 100 },
       f8978: {

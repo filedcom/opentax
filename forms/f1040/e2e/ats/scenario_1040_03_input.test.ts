@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { schedule_f } from "../../nodes/intermediate/forms/schedule_f/index.ts";
 import {
   scenario104003Input,
   SCENARIO_1040_03_RECONCILIATION,
@@ -68,6 +69,34 @@ Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed
       recon.sourceDerived.schedule1AdditionalIncomeBeforeOtherItems,
     recon.sourceDerived.grossIncomeBeforeOtherItems,
   );
+});
+
+Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the farm optional method", () => {
+  const input = scenario104003Input();
+  const farmInput = input.schedule_f as {
+    farm_optional_method_elected: boolean;
+    schedule_fs: Record<string, unknown>[];
+  };
+  const result = schedule_f.compute(
+    { taxYear: 2025, formType: "f1040" },
+    schedule_f.inputSchema.parse(farmInput),
+  );
+  const fields = (nodeType: string) =>
+    result.outputs.find((item) => item.nodeType === nodeType)?.fields;
+
+  assertEquals(
+    fields("schedule1")?.line6_schedule_f,
+    SCENARIO_1040_03_RECONCILIATION.sourceDerived.scheduleFNetProfit,
+  );
+  assertEquals(
+    fields("schedule_se")?.net_profit_schedule_f,
+    SCENARIO_1040_03_RECONCILIATION.sourceDerived.scheduleFNetProfit,
+  );
+  assertEquals(
+    fields("schedule_se")?.gross_farm_income,
+    SCENARIO_1040_03_RECONCILIATION.printedSource.scheduleFGrossSales,
+  );
+  assertEquals(fields("schedule_se")?.farm_optional_method_elected, true);
 });
 
 Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targets", () => {

@@ -37,6 +37,20 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
   );
 });
 
+Deno.test("direct Form 1040 MeF descriptor rejects deceased source and filer facts", () => {
+  assertThrows(
+    () =>
+      irs1040.build({}, { pending: { general: { spouse_deceased: true } } }),
+    Error,
+    "deceased Form 1040",
+  );
+  assertThrows(
+    () => irs1040.build({ taxpayer_death_date: "2025-02-01" }),
+    Error,
+    "deceased Form 1040",
+  );
+});
+
 Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
@@ -153,6 +167,7 @@ Deno.test("dependent rows preserve identity, relationship, residency, and credit
         relationship: DependentRelationship.Daughter,
         irs_relationship_code: IRSDependentRelationshipCode.Daughter,
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -642,12 +657,23 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
     f1099rs: [{
       payer_name: "IRA Custodian",
       payer_ein: "12-3456789",
+      source_document_reference: "2025 issued IRA rollover 1099-R",
+      account_number: "IRA-ROLLOVER-1",
+      recipient_ssn: "111223333",
+      ts: "T",
       box1_gross_distribution: 5000,
       box2a_taxable_amount: 0,
       box7_distribution_code: "7",
       box7_ira_simple_indicator: true,
       rollover_code: "S",
       ira_rollover: {
+        not_inherited_ira_confirmed: true,
+        account_registration_source_reference:
+          "2025-issued-ira-account-registration",
+        registered_account_number: "IRA-ROLLOVER-1",
+        registered_owner_ssn: "111223333",
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",
         destination: "ira",
         destination_ira_type: "traditional",
@@ -698,9 +724,17 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
     f1099rs: [{
       ...source.f1099rs[0],
       ira_rollover: {
+        not_inherited_ira_confirmed: true,
+        account_registration_source_reference:
+          "2025-issued-ira-account-registration",
+        registered_account_number: "IRA-ROLLOVER-1",
+        registered_owner_ssn: "111223333",
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",
         destination: "qualified_plan",
         destination_name: "Example 401(k)",
+        qualified_plan_acceptance_reference: "reviewed-plan-acceptance-1",
         distributed_on: "2025-06-01",
         completed_on: "2025-06-02",
         last_ira_to_ira_rollover_on: null,
@@ -756,6 +790,80 @@ Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   assertStringIncludes(
     result,
     "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>",
+  );
+});
+
+Deno.test("Form 1040 native line 27c prints only a retained EIC opt-out", () => {
+  const fields = {
+    filing_status: "single",
+    do_not_claim_eic: true,
+    line27_eitc: 0,
+  };
+  const context = {
+    pending: {
+      general: { filing_status: "single", do_not_claim_eic: true },
+      eitc: { credit_amount: 0 },
+    },
+  };
+  const xml = irs1040.build(fields, context);
+  assertStringIncludes(xml, "<DoNotClaimEICInd>X</DoNotClaimEICInd>");
+  assertNotIncludes(xml, "<EarnedIncomeCreditAmt>");
+  assertNotIncludes(irs1040.build({ line27_eitc: 0 }), "DoNotClaimEICInd");
+  assertThrows(
+    () => irs1040.build({ ...fields, line27_eitc: 1 }, context),
+    Error,
+    "requires zero line 27a credit",
+  );
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: {
+          ...context.pending,
+          eitc: { credit_amount: 1 },
+        },
+      }),
+    Error,
+    "requires zero line 27a credit",
+  );
+  assertThrows(
+    () => irs1040.build(fields),
+    Error,
+    "needs the retained general election",
+  );
+  assertThrows(
+    () => irs1040.build({ line27_eitc: 0 }, context),
+    Error,
+    "differs from the retained general election",
+  );
+});
+
+Deno.test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", () => {
+  const source = { f8812s: [{ do_not_claim_actc: true }] };
+  const xml = irs1040.build({
+    line28_actc: 0,
+    line29_refundable_aoc: 25,
+  }, {
+    pending: { f8812: source },
+  });
+  assertStringIncludes(xml, "<DoNotClaimACTCInd>X</DoNotClaimACTCInd>");
+  assertNotIncludes(xml, "<AdditionalChildTaxCreditAmt>");
+  assertEquals(
+    xml.indexOf("<DoNotClaimACTCInd>"),
+    xml.lastIndexOf("<DoNotClaimACTCInd>"),
+  );
+  assertEquals(
+    xml.indexOf("<DoNotClaimACTCInd>") <
+      xml.indexOf("<RefundableAmerOppCreditAmt>"),
+    true,
+  );
+  assertNotIncludes(irs1040.build({ line28_actc: 0 }), "DoNotClaimACTCInd");
+  assertThrows(
+    () =>
+      irs1040.build({ line28_actc: 1 }, {
+        pending: { f8812: source },
+      }),
+    Error,
+    "requires zero line 28 credit",
   );
 });
 
@@ -849,7 +957,7 @@ Deno.test("all fields ordering matches field map sequence", () => {
     line25b_withheld_1099: 12,
     line28_actc: 13,
     line29_refundable_aoc: 14,
-    line33_total_payments: 15,
+    line33_total_payments: 50,
   });
 
   const elementOrder = [
@@ -947,6 +1055,7 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
   };
   const result = irs1040.build({
     filing_status: "mfs",
+    taxpayer_ssn: "111223333",
     line5a_pension_gross: 20_300,
     line5b_pension_taxable: 10_300,
     line5c_pension_rollover: true,
@@ -955,7 +1064,20 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
     line11_agi: 17_800,
     taxpayer_age_65_or_older: true,
     line12c_deduction_total: 17_350,
-  }, { pending: { f1099r: source } });
+  }, {
+    pending: {
+      f1099r: source,
+      f1099div: {
+        f1099divs: [{
+          isNominee: false,
+          box11: false,
+          box1a: 0,
+          box2a: 7_500,
+          recipient_tin: "111223333",
+        }],
+      },
+    },
+  });
   const agi = result.indexOf("<AdjustedGrossIncomeAmt>");
   const age = result.indexOf("<Primary65OrOlderInd>");
   const deduction = result.indexOf("<TotalItemizedOrStandardDedAmt>");
@@ -1027,11 +1149,18 @@ Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
 });
 
 Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
+  const issuedW2G = {
+    box1_winnings: 1_000,
+    box4_federal_withheld: 250,
+    payer_name: "Example Casino",
+    payer_ein: "12-3456789",
+    source_document_reference: "2025 issued Example Casino W-2G",
+  };
   assertThrows(
     () =>
       irs1040.build({ line25c_total: 250 }, {
         pending: {
-          w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+          w2g: { w2gs: [issuedW2G] },
         },
         documentIdsByPendingKey: { w2g: [] },
       }),
@@ -1041,7 +1170,7 @@ Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
       pending: {
-        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 0 }] },
+        w2g: { w2gs: [{ ...issuedW2G, box4_federal_withheld: 0 }] },
       },
     }),
     "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",
@@ -1049,7 +1178,7 @@ Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
       pending: {
-        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+        w2g: { w2gs: [issuedW2G] },
       },
       documentIdsByPendingKey: { w2g: ["IRSW2G1"] },
     }),
@@ -1110,13 +1239,13 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line6a_ss_gross: 24000,
     line6b_ss_taxable: 20400,
     line7_capital_gain: -3000,
-    line9_total_income: 90000,
+    line9_total_income: 121900,
     line10_adjustments: 1000,
-    line11_agi: 89000,
+    line11_agi: 120900,
     line12c_deduction_total: 27700,
     line13_qbi_deduction: 5000,
     line14_deductions_qbi_total: 32700,
-    line15_taxable_income: 56300,
+    line15_taxable_income: 88200,
     line16_income_tax: 7000,
     line17_additional_taxes: 3200,
     line18_total_tax_before_credits: 10200,
@@ -1133,10 +1262,10 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line29_refundable_aoc: 2500,
     line30_refundable_adoption: 2000,
     line31_additional_payments: 1100,
-    line32_refundable_credits_total: 5200,
-    line33_total_payments: 12000,
-    line34_overpayment: 6000,
-    line35a_refund: 6000,
+    line32_refundable_credits_total: 7200,
+    line33_total_payments: 16550,
+    line34_overpayment: 10550,
+    line35a_refund: 10550,
   });
 
   assertStringIncludes(result, "<IRS1040>");
@@ -1187,12 +1316,12 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     result,
     "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>",
   );
-  assertStringIncludes(result, "<TotalIncomeAmt>90000</TotalIncomeAmt>");
+  assertStringIncludes(result, "<TotalIncomeAmt>121900</TotalIncomeAmt>");
   assertStringIncludes(
     result,
-    "<AdjustedGrossIncomeAmt>89000</AdjustedGrossIncomeAmt>",
+    "<AdjustedGrossIncomeAmt>120900</AdjustedGrossIncomeAmt>",
   );
-  assertStringIncludes(result, "<TaxableIncomeAmt>56300</TaxableIncomeAmt>");
+  assertStringIncludes(result, "<TaxableIncomeAmt>88200</TaxableIncomeAmt>");
   assertStringIncludes(
     result,
     "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>",
@@ -1230,7 +1359,7 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
   );
   assertStringIncludes(
     result,
-    "<RefundableCreditsAmt>5200</RefundableCreditsAmt>",
+    "<RefundableCreditsAmt>7200</RefundableCreditsAmt>",
   );
   assertStringIncludes(
     result,
@@ -1240,9 +1369,9 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     result,
     "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>",
   );
-  assertStringIncludes(result, "<TotalPaymentsAmt>12000</TotalPaymentsAmt>");
-  assertStringIncludes(result, "<OverpaidAmt>6000</OverpaidAmt>");
-  assertStringIncludes(result, "<RefundAmt>6000</RefundAmt>");
+  assertStringIncludes(result, "<TotalPaymentsAmt>16550</TotalPaymentsAmt>");
+  assertStringIncludes(result, "<OverpaidAmt>10550</OverpaidAmt>");
+  assertStringIncludes(result, "<RefundAmt>10550</RefundAmt>");
   assertStringIncludes(
     result,
     "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>",

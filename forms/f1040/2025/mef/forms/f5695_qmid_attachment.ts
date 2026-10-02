@@ -95,7 +95,7 @@ export async function buildAdditionalQmidAttachment(
     throw new Error("Form 5695 additional QMID statement needs filer identity");
   }
 
-  const pdf = await PDFDocument.create();
+  const pdf = await PDFDocument.create({ updateMetadata: false });
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const money = new Intl.NumberFormat("en-US", {

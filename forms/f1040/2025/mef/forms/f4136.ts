@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { PDFDocument } from "pdf-lib";
 import { element, elements } from "../../../mef/xml.ts";
-import { fillFormPdf } from "../../pdf/builder.ts";
 import { projectForm4136Fields } from "../../pdf/forms/f4136.ts";
 import {
   form4136ScheduleAFileName,
@@ -647,6 +646,9 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     );
   },
   async buildBinaryAttachments(raw, context) {
+    // Loading the PDF builder when this descriptor is first imported would
+    // cycle through the MeF descriptor registry before it is initialized.
+    const { fillFormPdf } = await import("../../pdf/builder.ts");
     if (!raw.claims?.length) return [];
     const input = inputSchema.parse(raw);
     if (input.claimant_context === "home_kerosene") return [];
@@ -669,7 +671,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ".pdf-cache",
       );
       if (!base) throw new Error("Schedule A (Form 4136) did not render");
-      const doc = await PDFDocument.load(base);
+      const doc = await PDFDocument.load(base, { updateMetadata: false });
       await form4136ScheduleAPdf.decoratePages?.(
         doc,
         doc.getPages(),

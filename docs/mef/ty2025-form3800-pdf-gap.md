@@ -7,6 +7,26 @@ geothermal and mixed wind/geothermal credit returns have local XSD and
 filled-PDF evidence. Other credit sources, transfers, carryovers, row
 combinations, and ATS acceptance remain open.
 
+The Form 8881 credit can occupy up to three Form 3800 Part III lines (1j,
+1dd, and 1ee), all sourced from one filed IRS8881 document. The native
+preparer reserves one document ID for those rows. The nine-page PDF preflight
+now requires every positive Form 8881 part to retain that same ID after its
+individual row/detail checks, while the existing line 38 to Schedule 3 and
+Form 1040 join checks the allowed total. A second-part document-ID tamper
+fixture is authored for the deferred bulk pass. The check binds in-memory
+document references; it does not authenticate the underlying plan records.
+
+The registered Form 8881 child PDF now repeats that positive-part check for
+lines 1j, 1dd, and 1ee before printing: it replays its source lines, rejects
+unclaimed rows, requires one IRS8881 document ID across the prepared rows and
+details, and follows line 38 through Schedule 3 and Form 1040. Startup plus
+enrollment and three-part military-spouse positives, with altered print,
+document ID, amount, line 38, and final-credit cases, await the bulk run.
+One valid contribution-only source can phase out to zero at 100 employees.
+Its child PDF source projection remains available without a prepared parent,
+with a source-line tamper fixture; public MeF/PDF export still rejects that
+zero-credit claim under the existing positive-credit guards.
+
 The direct PDF descriptor now requires the pending Form 3800 allowed-credit
 amount to match both its return-wide pending source and the prepared native
 line 38 at cent precision. A changed raw descriptor argument or changed pending
@@ -25,6 +45,14 @@ assign Form 8820 to Part III line 1h; the [official Form 8820](https://www.irs.g
 figures that source credit. The drug designation and clinical-testing records
 remain unauthenticated, and passive, pass-through, mixed-source, and unused
 credit carryover routes need separate evidence.
+
+The matching Form 8820 child PDF now checks its filed self-earned source and
+line 4 against the same prepared Form 3800 Part III line 1h IRS8820 document
+ID, credit amount, Part V detail, and line 38, then reconciles Schedule 3 and
+final Form 1040. The direct $1,975 case and changed source, document ID,
+amount, detail, and final-credit fixtures await the bulk run. Zero-credit
+reduced-election statements retain their separate printing path; pass-through
+credits do not create a self-earned Form 8820 child copy.
 
 One self-earned, nonpassive qualified commercial clean vehicle now has an
 additional direct Form 3800 PDF source check. The Form 8936 Part V and Schedule
@@ -100,6 +128,17 @@ line 1v is being wired to the reviewed box-14 property statement, Form 3468,
 and final tax; it must not consume a box-13 code M amount. Rejection and
 positive fixtures are authored for the deferred batch, with the full chain
 still under integration.
+
+The registered trust Form 3468 PDF now also checks its exact reviewed box-14
+source records against Form 3800 line 1v, the reserved `IRS3468` document IDs
+in property order, Part III source count and EINs, Part V credit and applied
+tax use, and the existing Form 3800 → Schedule 3 → Form 1040 final-credit join.
+A $3,000 trust-property full-return positive and changed source reference,
+counterfeit document ID, applied-credit, and final-tax fixtures await the bulk
+run. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+place Form 3468 Part V on line 1v and require Part V breakdowns for aggregate
+sources. Reviewed statement bytes, wider trust-property combinations, passive
+allocations, transfers, and carryovers retain their existing boundaries.
 
 The Form 8835 source calculation now rejects electricity sold on or after the
 tenth anniversary of the facility's placed-in-service date, including a 2025
@@ -331,6 +370,18 @@ IDs and three-page PDF copies, two $600 Form 3800 Part V rows, and $1,200 on
 line 38, Schedule 3 line 6a, and Form 1040 line 20. Its native XML passes
 local TY2025 v5.4 XSD. The 20-page packet was rendered and inspected; its PDF
 SHA-256 is `6136172eee20ac9e9ac76b139102547eb4ee4f4a55c0d25927fdb5e4aa1dd78f`.
+
+The registered Form 8835 child PDF now also checks the exact reserved native
+`IRS8835` document IDs in facility order against its Form 3800 Part V source
+details. Before this check, a forged nonempty second detail ID could pass if
+the Part III reference string was changed with it. A two-facility positive and
+swapped/counterfeit-ID fixtures are authored for the deferred bulk pass. The
+[2025 Form 8835 instructions](https://www.irs.gov/instructions/i8835) require
+a separate form for each qualified facility; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) require
+Part V breakdowns when a Part III amount aggregates multiple facilities.
+This binds prepared document references and does not authenticate production
+meter or electricity-sale records.
 The next mixed wind/geothermal source return prints wind on Form 8835 line 1a,
 geothermal on line 1c, two $600 Part V rows, and $1,200 through line 38,
 Schedule 3, and Form 1040. Its local TY2025 v5.4 XML check passes; the two
@@ -344,6 +395,28 @@ Form 1040. Its 15-page packet and local TY2025 v5.4 XML pass the bounded
 source-to-return check; Form 8874 and Part III were visually inspected. The
 expanded review set has 21 PDFs (170 pages) and 21 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`.
+For a direct nonpassive Form 8874 claim with no K-1 credit, the child PDF now
+replays its printed investment and line 3, then binds the claimed credit to
+the prepared Form 3800 Part III line 1i IRS8874 document ID, amount, Part V
+detail, line 38, Schedule 3, and Form 1040. The $500 return and altered
+source, print, claim, document ID, amount, detail, and final-credit fixtures
+await the bulk run. Passive Form 8874 routes retain their existing Form
+8582-CR checks; this child parity check covers the bounded direct nonpassive
+source.
+
+The Form 8874 child PDF now also checks one nonpassive direct QEI alongside
+one nonpassive partnership Schedule K-1 box 15 code AD amount printed on line
+2. It requires one Form 3800 Part III line 1i aggregate, two ordered Part V
+source details, the partnership EIN, exact reserved `IRS8874` document ID for
+the direct investment, applied tax use, and the final Schedule 3/Form 1040
+credit. An authored $500 + $1,250 full-return positive and changed line 2,
+Part V EIN, document ID, and final-tax fixtures await the bulk run. The
+[2025 partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+allow code AD on Form 8874 or Form 3800 line 1i; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+describe the aggregate Part V breakdown. Passive and multiple-K-1 routes
+retain their existing distinct evidence checks.
+
 The next two Form 8874 returns print two and six qualified equity investments
 on one source form each, with $1,100 and $3,000 on Part III line 1i and
 line 38. Their Form 8874 pages and one Part III page were visually checked;
@@ -596,3 +669,109 @@ credit tampering are rejected. Source/native/PDF and filled-packet fixtures
 remain unrun until the shared implementation batch ends. This combination
 adds no Part V rows because each Part III line has one source; Part V/VI
 overflow and transfer/carryforward evidence remain open.
+
+A separate line 1h route now covers one self-earned Form 8820 credit and one
+nonpassive partnership Schedule K-1 box 15 code Z credit reported directly on
+Form 3800. The [2025 partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+allow the orphan-drug credit on Form 8820 or Form 3800 Part III line 1h; the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) require
+Part V source detail when a credit has more than one source. The parent PDF
+recalculates the filed Form 8820, reconciles the K-1 EIN/reference and credit,
+checks the two distinct native Part V details and line 1h total, then joins
+line 38 to Schedule 3 and Form 1040. An authored $1,975 self-earned plus
+$1,250 partnership example prints $3,225 on line 1h/38 and two Part V rows;
+source, native EIN, and final-tax tampering is rejected. These fixtures await
+the shared bulk run. This route does not cover multiple K-1s, passive orphan
+credits, partial tax use, or Part V overflow.
+
+A bounded Part III line 1h path now accepts two separately sourced nonpassive
+partnership Schedule K-1 box 15 code Z orphan-drug credits without a self-earned
+Form 8820. The two partnership EINs and document references are distinct; the
+native current-year source rows and two Part V details retain each credit while
+line 1h sums them once. The parent PDF requires exact source/raw agreement, both
+EIN and credit details, the largest-credit EIN in Part III column (c), full
+current-year tax use on Parts I/II, Schedule 3 line 6a, and finalized Form 1040
+line 20. An authored $1,250 plus $800 example reaches $2,050; changed K-1 box
+15, Part III EIN, and Form 1040 tax fixtures are written but unrun. This route
+does not cover the self-earned-plus-K-1 combination above, passive allocations,
+more than two partnership sources, S corporation/estate/trust sources, partial
+tax use, or source-byte authentication.
+
+The Form 8882 printable copy now independently requires its prepared Form 3800
+Part III line 1k source row, current amount, and detail to retain one filed
+IRS8882 document ID and the exact Form 8882 line 7 credit. It also requires
+Form 3800 line 38 to reconcile through Schedule 3 line 6a/8 to finalized Form
+1040 line 20. Authored fixtures change the document ID, amount, and final tax
+credit; they await the shared bulk run. This check does not authenticate the
+underlying child-care invoices or widen the supported Form 8882 claim.
+
+The Form 8844 printable copy likewise requires the prepared Form 3800 Part III
+line 3 row, current amount, and detail to retain one IRS8844 document ID and
+the exact Form 8844 line 4 credit. Its Form 3800 line 38 must reach Schedule 3
+and finalized Form 1040 line 20. Authored fixtures alter the document ID,
+credit, and final return; they await the bulk run. The current
+[IRS Form 8844](https://www.irs.gov/pub/irs-pdf/f8844.pdf) directs its line 4
+to Form 3800 Part III line 3. This adds no new eligibility or payroll proof.
+
+The Form 8941 printable copy now checks the prepared Form 3800 Part III line
+4h row, current amount, and detail against its filed IRS8941 document ID,
+Form 8941 line 16 credit, and applied credit. It also follows Form 3800 line
+38 through Schedule 3 to finalized Form 1040 line 20. Positive and changed
+document-ID, applied-credit, and final-return fixtures await the bulk run.
+The [official 2025 Form 8941](https://www.irs.gov/pub/irs-prior/f8941--2025.pdf)
+directs its line 16 to Form 3800 Part III line 4h. This does not authenticate
+SHOP issuer records or widen the bounded direct-employer claim.
+
+The Form 8994 printable copy now checks the prepared Form 3800 Part III line
+4j source row, current amount, and detail against one IRS8994 document ID,
+Form 8994 line 3, and the applied credit. Its Form 3800 line 38 must reach
+Schedule 3 and finalized Form 1040 line 20. Positive and changed document-ID,
+applied-credit, and final-return fixtures await the bulk run. The current
+[IRS Form 8994](https://www.irs.gov/pub/irs-pdf/f8994.pdf) directs line 3 to
+Form 3800 Part III line 4j. This adds no payroll evidence or wider eligibility.
+
+Form 8864's printable copy already checked its prepared Form 3800 Part III
+line 1l document ID and claimed line 11 amount. It now also requires its
+applied-credit allocation to match the prepared row and follows Form 3800
+line 38 through Schedule 3 to finalized Form 1040 line 20. Authored fixtures
+alter the applied amount and final credit lines; they await the bulk run. The
+[December 2025 IRS Form 8864](https://www.irs.gov/pub/irs-pdf/f8864.pdf)
+routes line 11 to Form 3800. This does not add producer or transfer evidence.
+
+The retained Form 5884 printable copy now requires a prepared Form 3800 Part
+III line 4b source row with one IRS5884 document ID bound to the direct
+employer's line 2 credit. It checks the complete line 4 amount and applied
+Part V details, then follows Form 3800 line 38 through Schedule 3 to finalized
+Form 1040 line 20. Positive and altered document-ID, credit, and final-return
+fixtures await the bulk run. The current
+[IRS Form 5884](https://www.irs.gov/pub/irs-pdf/f5884.pdf) directs line 4 to
+Form 3800 Part III line 4b. Pass-through and controlled-group source evidence
+continues under their existing guards.
+
+The same Form 5884 child PDF now replays the exact filed source before
+printing and matches its prepared line 4b IRS5884 reference to the reserved
+native document ID. A changed certification reference with unchanged credit,
+and a forged matching Part III/Part V document ID, are rejected by authored
+fixtures. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+retain the work opportunity credit in the current-year business-credit order.
+These checks bind the prepared packet; they do not authenticate the state
+certification or payroll source bytes.
+
+The Form 8826 printable copy already reconciled its direct and optional one
+S-corporation source to Form 3800 and finalized tax. It now also requires the
+prepared Form 3800 Part III line 1e source row to carry one IRS8826 document
+ID, with matching self and optional K-1 Part V amounts and the same line 38
+total. Self-only and mixed positive fixtures plus altered document-ID,
+pass-through credit, and line 38 fixtures await the bulk run. The current
+[IRS Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) directs line 8 to
+Form 3800 Part III line 1e. Wider business and K-1 cases remain guarded.
+
+The Form 8936 printable copy now binds Part II line 8 and Part V line 21,
+when claimed, to the prepared Form 3800 Part III lines 1y and 1aa IRS8936
+document ID and credit amounts. It also checks prepared line 38 against
+Schedule 3 and finalized Form 1040. Direct commercial and mixed-use new-vehicle
+fixtures, with altered source, document-ID, amount, and final-return cases,
+await the bulk run. Personal-use Form 8936 remains on its separate Schedule 3
+route. The
+[official 2025 Form 8936](https://www.irs.gov/pub/irs-prior/f8936--2025.pdf)
+directs line 8 to Form 3800 Part III line 1y and line 21 to line 1aa.

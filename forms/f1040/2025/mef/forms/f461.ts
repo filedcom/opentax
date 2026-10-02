@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
-import { filedForm461Schema } from "../../../nodes/intermediate/forms/form461/index.ts";
+import {
+  filedForm461Schema,
+  form461ScopeReviewSchema,
+} from "../../../nodes/intermediate/forms/form461/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Fields = z.infer<typeof filedForm461Schema>;
@@ -67,6 +70,18 @@ function buildIRS461(rawFields: Input, context?: MefBuildContext): string {
   }
   const schedule1 = pending.schedule1;
   const f1040 = z.record(z.unknown()).parse(pending.f1040);
+  const general = z.object({
+    form461_scope_review: form461ScopeReviewSchema,
+  }).parse(pending.general);
+  const review = general.form461_scope_review;
+  if (
+    review.line2_schedule_c_amount !== fields.line2_business_income_loss ||
+    review.line6_schedule_f_amount !== fields.line6_net_farm_profit_loss
+  ) {
+    throw new Error(
+      "Form 461 filed lines differ from the signed C/F source review",
+    );
+  }
   if (!f1040.filing_status) {
     throw new Error("Form 461 needs the filed Form 1040 filing status");
   }
@@ -128,6 +143,15 @@ function buildIRS461(rawFields: Input, context?: MefBuildContext): string {
     "form8824",
   ] as const;
   for (const key of unsupportedSources) {
+    // The executor carries filing status into Form 8582 even when there is
+    // no passive activity. That identity field is not a source item.
+    if (
+      key === "form8582" &&
+      pending.form8582 !== null &&
+      typeof pending.form8582 === "object" &&
+      !Array.isArray(pending.form8582) &&
+      Object.keys(pending.form8582).every((field) => field === "filing_status")
+    ) continue;
     if (pending[key] !== undefined) {
       throw new Error(
         `Form 461 C/F-only route cannot classify ${key} source items`,

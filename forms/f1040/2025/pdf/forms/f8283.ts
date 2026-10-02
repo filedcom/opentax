@@ -8,9 +8,12 @@ import {
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   assertCreatorReductionSource,
+  assertIntellectualPropertyReductionSource,
   assertInventoryReductionSource,
   assertManuscriptReductionSource,
+  assertPrivateFoundationReductionSource,
   assertShortTermReductionSource,
+  assertTaxidermyReductionSource,
   assertUnrelatedUseReductionSource,
   assertVehicleSaleReductionSource,
   fmvReductionExplanation,
@@ -20,12 +23,12 @@ import {
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
-  assertNeedyVehicleUnreducedSource,
+  assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
-  isSingleSectionANeedyVehicleUnreduced,
+  isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
-  isTwoSectionBReducedEquipmentGroup,
+  isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
 } from "../../mef/forms/f8283_election.ts";
 import {
@@ -609,11 +612,6 @@ export const form8283Pdf: PdfFormDescriptor = {
       : [0],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    if (Array.isArray(raw.section_a_items) && raw.section_a_items.length > 4) {
-      throw new Error(
-        "Form 8283 PDF supports only four current Section A items; continuation pages remain unsupported",
-      );
-    }
     const source = inputSchema.parse(raw);
     if (source.carryover_evidence !== undefined) {
       if (
@@ -650,10 +648,22 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     const sectionA = source.section_a_items ?? [];
     const sectionB = source.section_b_items ?? [];
+    if (
+      sectionA.length > 12 ||
+      (sectionA.length > 4 &&
+        (sectionB.length > 0 ||
+          sectionA.some((item) =>
+            item.is_vehicle === true || needsFmvReductionStatement(item)
+          )))
+    ) {
+      throw new Error(
+        "Form 8283 PDF supports five to twelve Section A rows only as distinct unreduced nonvehicle gifts on repeated copies",
+      );
+    }
     if (sectionB.length > 0) {
       if (sectionB.length === 2) {
         const similarArt = isTwoSectionBSimilarArtGroup(source);
-        const reducedEquipment = isTwoSectionBReducedEquipmentGroup(source);
+        const reducedEquipment = isTwoSectionBReducedEquipmentGifts(source);
         if (!similarArt && !reducedEquipment) {
           throw new Error(
             "Form 8283 PDF two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",
@@ -731,13 +741,13 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     if (sectionA.length === 0) return [];
     const soldVehicle = isSingleSectionAVehicleSale(source);
-    const needyVehicle = isSingleSectionANeedyVehicleUnreduced(source);
+    const exceptionVehicle = isSingleSectionAExceptionVehicleUnreduced(source);
     if (
       sectionA.some((item) => item.is_vehicle === true) &&
-      !soldVehicle && !needyVehicle
+      !soldVehicle && !exceptionVehicle
     ) {
       throw new Error(
-        "Form 8283 PDF supports only one reconciled certified-sale or unreduced needy-transfer Section A vehicle",
+        "Form 8283 PDF supports only one reconciled certified-sale or unreduced exception Section A vehicle",
       );
     }
     const elected = sectionA.some((item) =>
@@ -763,32 +773,47 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.unrelated_use_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const privateFoundationReduction = sectionA.some((item) =>
+      item.private_foundation_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
+    const taxidermyReduction = sectionA.some((item) =>
+      item.taxidermy_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
+    const intellectualPropertyReduction = sectionA.some((item) =>
+      item.intellectual_property_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     if (
-      !elected &&
-      !shortTermReduction && !inventoryReduction && !creatorReduction &&
-      !manuscriptReduction &&
-      !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
-      sectionA.length !== 1
+      !elected && !shortTermReduction && !inventoryReduction &&
+      !creatorReduction && !manuscriptReduction &&
+      !unrelatedUseReduction && !soldVehicle && !exceptionVehicle &&
+      !privateFoundationReduction && !taxidermyReduction &&
+      !intellectualPropertyReduction &&
+      sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
-        "Form 8283 PDF needs a reconciled Section A election, sourced ordinary-income reduction, or one ordinary gift",
+        "Form 8283 PDF needs a sourced reduction for each reduced Section A gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
+      !privateFoundationReduction && !taxidermyReduction &&
+      !intellectualPropertyReduction &&
       !soldVehicle &&
-      !needyVehicle
+      !exceptionVehicle
     ) {
       assertUnreducedSectionACompanion(sectionA[0]);
     }
     if (soldVehicle) {
       assertVehicleSaleReductionSource(sectionA[0]);
     }
-    if (needyVehicle) assertNeedyVehicleUnreducedSource(source);
+    if (exceptionVehicle) assertExceptionVehicleUnreducedSource(source);
     for (const item of sectionA) {
-      if (soldVehicle || needyVehicle) continue;
+      if (soldVehicle || exceptionVehicle) continue;
       if (!elected && !needsFmvReductionStatement(item)) {
         assertUnreducedSectionACompanion(item);
       } else {
@@ -797,6 +822,9 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertCreatorReductionSource(item);
         assertManuscriptReductionSource(item);
         assertUnrelatedUseReductionSource(item);
+        assertPrivateFoundationReductionSource(item);
+        assertTaxidermyReductionSource(item);
+        assertIntellectualPropertyReductionSource(item);
       }
     }
     if (
@@ -806,33 +834,41 @@ export const form8283Pdf: PdfFormDescriptor = {
       throw new Error("Form 8283 PDF source differs from the pending return");
     }
     if (!elected) assertOrdinarySectionAReconciled({ pending: allPending });
-    const instance: Record<string, unknown> = {
-      ...identity(filer),
-      reduction_statements: sectionA.flatMap((item, index) =>
-        needsFmvReductionStatement(item)
-          ? [fmvReductionExplanation(item, index)]
-          : []
-      ),
-    };
-    sectionA.forEach((item, index) => {
-      const prefix = `row${index + 1}_`;
-      instance[`${prefix}donee`] = doneeLine(item);
-      instance[`${prefix}vehicle`] = item.is_vehicle === true;
-      instance[`${prefix}vin`] = item.is_vehicle ? item.vehicle_vin : undefined;
-      instance[`${prefix}description`] = item.property_description;
-      instance[`${prefix}contribution_date`] = printedDate(
-        item.date_contributed,
-      );
-      instance[`${prefix}acquired_date`] = printedDate(
-        item.date_acquired,
-        true,
-      );
-      instance[`${prefix}how_acquired`] = item.donor_acquisition_description;
-      instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
-      instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
-      instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
+    const pages = Array.from(
+      { length: Math.ceil(sectionA.length / 4) },
+      (_, index) => sectionA.slice(index * 4, (index + 1) * 4),
+    );
+    return pages.map((items, pageIndex) => {
+      const instance: Record<string, unknown> = {
+        ...identity(filer),
+        reduction_statements: items.flatMap((item, index) =>
+          needsFmvReductionStatement(item)
+            ? [fmvReductionExplanation(item, pageIndex * 4 + index)]
+            : []
+        ),
+      };
+      items.forEach((item, index) => {
+        const prefix = `row${index + 1}_`;
+        instance[`${prefix}donee`] = doneeLine(item);
+        instance[`${prefix}vehicle`] = item.is_vehicle === true;
+        instance[`${prefix}vin`] = item.is_vehicle
+          ? item.vehicle_vin
+          : undefined;
+        instance[`${prefix}description`] = item.property_description;
+        instance[`${prefix}contribution_date`] = printedDate(
+          item.date_contributed,
+        );
+        instance[`${prefix}acquired_date`] = printedDate(
+          item.date_acquired,
+          true,
+        );
+        instance[`${prefix}how_acquired`] = item.donor_acquisition_description;
+        instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
+        instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
+        instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
+      });
+      return instance;
     });
-    return [instance];
   },
   async appendSupplementalPages(document, instance) {
     const statements = instance.reduction_statements as string[] | undefined;

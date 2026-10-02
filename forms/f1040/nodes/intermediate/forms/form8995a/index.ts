@@ -108,7 +108,7 @@ export const businessFilingDetailsSchema = z.object({
   business_ubia: z.number().nonnegative(),
   one_non_sstb_business_confirmed: z.literal(true),
   no_aggregation_confirmed: z.literal(true),
-  no_reit_ptp_or_loss_carryforward_confirmed: z.literal(true),
+  no_ptp_or_loss_carryforward_confirmed: z.literal(true),
   qualified_dividends_zero_confirmed: z.literal(true),
   qbi_wages_ubia_sources_confirmed: z.literal(true),
   taxable_income_before_qbi_confirmed: z.literal(true),
@@ -184,6 +184,20 @@ export const inputSchema = z.object({
 
   // Section 199A dividends from REITs (Form 1099-DIV box 5)
   line6_sec199a_dividends: z.number().nonnegative().optional(),
+  reit_dividend_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      source_document_reference: z.string().trim().min(1),
+      box1a: z.number().positive().int(),
+      box5: z.number().positive().int(),
+      ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
+      diminished_risk_days_excluded: z.number().int().nonnegative(),
+      no_related_payment_obligation_confirmed: z.literal(true),
+      review_reference: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    }).strict(),
+  ).length(1).optional(),
 
   // Prior-year QBI net loss carryforward (zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
@@ -358,12 +372,14 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
 export function calculateScheduleCLossLines(input: Form8995AInput) {
   const businesses = input.schedule_c_qbi_businesses;
   if (
-    !businesses || businesses.length !== 2 ||
-    businesses.filter((business) => business.qbi > 0).length !== 1 ||
+    !businesses ||
+    (businesses.length !== 1 && businesses.length !== 2) ||
+    businesses.filter((business) => business.qbi > 0).length !==
+      (businesses.length === 2 ? 1 : 0) ||
     businesses.filter((business) => business.qbi < 0).length !== 1
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs one positive and one negative identified Schedule C business",
+      "Form 8995-A Schedule C bounded route needs one identified loss business, with at most one positive business",
     );
   }
   if (
@@ -386,9 +402,9 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     );
   }
   const refs = businesses.map((business) => business.business_reference);
-  if (refs.some((ref) => !ref) || new Set(refs).size !== 2) {
+  if (refs.some((ref) => !ref) || new Set(refs).size !== businesses.length) {
     throw new Error(
-      "Form 8995-A Schedule C needs two distinct business references",
+      "Form 8995-A Schedule C needs distinct business references",
     );
   }
   for (const business of businesses) {
@@ -412,19 +428,19 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       );
     }
   }
-  const positive = businesses.find((business) => business.qbi > 0)!;
+  const positive = businesses.find((business) => business.qbi > 0);
   const negative = businesses.find((business) => business.qbi < 0)!;
   const line3 = -negative.qbi;
-  const line4 = positive.qbi;
+  const line4 = positive?.qbi ?? 0;
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
     adjustedQbi >= 400 ||
-    (input.qbi ?? 0) !== positive.qbi + negative.qbi ||
-    (input.w2_wages ?? 0) !== positive.w2_wages + negative.w2_wages ||
-    (input.unadjusted_basis ?? 0) !== positive.ubia + negative.ubia ||
-    positive.w2_wages < 0 || negative.w2_wages !== 0 ||
+    (input.qbi ?? 0) !== line4 + negative.qbi ||
+    (input.w2_wages ?? 0) !== (positive?.w2_wages ?? 0) + negative.w2_wages ||
+    (input.unadjusted_basis ?? 0) !== (positive?.ubia ?? 0) + negative.ubia ||
+    negative.w2_wages !== 0 ||
     negative.ubia !== 0
   ) {
     throw new Error(
@@ -435,10 +451,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const line3Parent = line2 * QBI_RATE;
   // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
   // amounts on the parent; those limits cannot create a deduction by themselves.
-  const line4Parent = adjustedQbi > 0 ? positive.w2_wages : 0;
+  const line4Parent = adjustedQbi > 0 ? positive!.w2_wages : 0;
   const line5Parent = line4Parent * W2_LIMIT_A_RATE;
   const line6Parent = line4Parent * W2_LIMIT_B_WAGE_RATE;
-  const line7Parent = adjustedQbi > 0 ? positive.ubia : 0;
+  const line7Parent = adjustedQbi > 0 ? positive!.ubia : 0;
   const line8Parent = line7Parent * UBIA_RATE;
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);
@@ -566,11 +582,6 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
   const line19 = Math.max(0, line3 - line10);
-  if (line19 === 0) {
-    throw new Error(
-      "Form 8995-A Schedule A bounded route requires a phased-in wage-limit reduction",
-    );
-  }
   const line25 = line19 * phaseIn;
   const line26 = line3 - line25;
   const line13 = Math.max(line11, line26);
@@ -684,6 +695,14 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
   }
   const patr = source.source_1099patr;
   if (
+    (patr.box6_section199ag_deduction ?? 0) * 100 >
+      (patr.box7_qualified_payments ?? 0) * 9
+  ) {
+    throw new Error(
+      "Form 8995-A cooperative box 6 exceeds 9% of box 7 qualified payments",
+    );
+  }
+  if (
     patr.trade_or_business !== true ||
     patr.box13_specified_cooperative !== true ||
     !patr.payer_name ||
@@ -748,7 +767,11 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line14 = patronReduction;
   const line15 = Math.max(0, line13 - line14);
   const line16 = line15;
-  const line32 = line16;
+  const line28 = input.line6_sec199a_dividends ?? 0;
+  const line29 = 0;
+  const line30 = line28 + line29;
+  const line31 = line30 * QBI_RATE;
+  const line32 = line16 + line31;
   const line33 = input.taxable_income;
   const line34 = input.net_capital_gain ?? 0;
   const line35 = Math.max(0, line33 - line34);
@@ -779,6 +802,10 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     line14,
     line15,
     line16,
+    line28,
+    line29,
+    line30,
+    line31,
     line32,
     line33,
     line34,
@@ -928,6 +955,21 @@ function hasQbiActivity(input: Form8995AInput): boolean {
 
 /** Reject required Schedules A-D before a deduction reaches Form 1040. */
 function assertSupportedSchedulePath(input: Form8995AInput): void {
+  const reit = input.line6_sec199a_dividends ?? 0;
+  if (
+    reit > 0 &&
+      (!input.business_filing_details ||
+        input.patron_of_specified_cooperative === true ||
+        reit > 1_500 ||
+        input.reit_dividend_sources?.length !== 1 ||
+        input.reit_dividend_sources[0].box5 !== reit ||
+        input.reit_dividend_sources[0].box1a !== reit) ||
+    reit === 0 && input.reit_dividend_sources !== undefined
+  ) {
+    throw new Error(
+      "Form 8995-A REIT line 28 needs one identified business and one matching reviewed 1099-DIV source",
+    );
+  }
   if (
     (input.sstb_qbi ?? 0) !== 0 ||
     (input.sstb_w2_wages ?? 0) !== 0 ||

@@ -20,7 +20,24 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({
   items: z.array(itemSchema).min(1),
   marketplace_ptc_premium_overlap: z.boolean(),
-}).strict();
+}).strict().superRefine((input, ctx) => {
+  if (input.marketplace_ptc_premium_overlap) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["marketplace_ptc_premium_overlap"],
+      message:
+        "Marketplace PTC overlap requires the Publication 974 deduction calculation; do not enter a premium-only deduction",
+    });
+  }
+  if (input.items.some((item) => item.premiums_paid > 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["items"],
+      message:
+        "Positive self-employed health insurance premiums require an identified Form 7206 plan and business earnings calculation; enter form7206 instead",
+    });
+  }
+});
 
 type SehiInput = z.infer<typeof inputSchema>;
 

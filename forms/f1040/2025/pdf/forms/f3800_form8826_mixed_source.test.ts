@@ -15,6 +15,7 @@ import {
   form3800PartVFields,
 } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
+import { form8826Pdf } from "./f8826.ts";
 
 const form8826 = {
   eligible_expenditures: 5_000,
@@ -245,5 +246,41 @@ Deno.test("Form 3800 line 1e retains one self and one S corporation Form 8826 so
       }, prepared),
     Error,
     "Form 1040 line 20",
+  );
+});
+
+Deno.test("Form 8826 printable copy binds the prepared self and K-1 details", () => {
+  const prepared = prepareForm3800DocumentParts(form3800, {
+    pending,
+    documentIdsByPendingKey: ids,
+  });
+  if (!prepared) throw new Error("Expected a prepared Form 3800 credit");
+  const fields = form8826Pdf.projectFields!(form8826, pending);
+  assertEquals(form8826Pdf.instances!(fields, testFiler(), pending, prepared), [
+    fields,
+  ]);
+  assertThrows(() => form8826Pdf.instances!(fields, testFiler(), pending));
+  assertThrows(() =>
+    form8826Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentRows: prepared.currentRows.map((row) => ({
+        ...row,
+        metadata: { ...row.metadata, referenceDocumentId: "IRS8826_OTHER" },
+      })),
+    })
+  );
+  assertThrows(() =>
+    form8826Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      currentDetails: prepared.currentDetails.map((row, index) =>
+        index === 1 ? { ...row, credit: 1_249 } : row
+      ),
+    })
+  );
+  assertThrows(() =>
+    form8826Pdf.instances!(fields, testFiler(), pending, {
+      ...prepared,
+      lines: { ...prepared.lines, line38: 3_624 },
+    })
   );
 });

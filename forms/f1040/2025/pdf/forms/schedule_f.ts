@@ -2,6 +2,8 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import {
+  assertScheduleF1099Answers,
+  assertScheduleFLossAtRiskAnswer,
   computeAccrualIncome,
   computeGrossIncome,
   computeTotalExpenses,
@@ -207,6 +209,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
       }
     }
     return input.schedule_fs.map((item, index) => {
+      assertScheduleF1099Answers(item);
       const other = item.line32_other_expenses ?? [];
       const continuation = other.length > 6 ? other.slice(5) : [];
       const continuationTotal = continuation.reduce(
@@ -225,6 +228,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
       const gross = computeGrossIncome(item);
       const wotcReduction = reductions.get(item.farm_id ?? "") ?? 0;
       const expenses = computeTotalExpenses(item, gross, wotcReduction);
+      assertScheduleFLossAtRiskAnswer(item, wotcReduction);
       return {
         ...item,
         farm_copy_number: index + 1,

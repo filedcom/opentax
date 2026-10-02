@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
+  assertForm1098Box1Sources,
   assertForm1098Box6Sources,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -14,8 +15,16 @@ import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
 import {
   inputSchema as scheduleAInputSchema,
+  reviewedHomeMortgageNonqualifyingUse,
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
+import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
+import {
+  scheduleAOtherTaxDescription,
+  scheduleAOtherTaxRows,
+} from "../../schedule_a_other_tax_source.ts";
+import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
+import { scheduleALine16EstateTax } from "../../schedule_a_line16_estate_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -24,16 +33,6 @@ import {
 // numbers follow physical widget order, including unnumbered subtotal fields.
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  {
-    kind: "text",
-    domainKey: "filer_name",
-    pdfField: "form1[0].Page1[0].f1_1[0]",
-  },
-  {
-    kind: "text",
-    domainKey: "filer_ssn",
-    pdfField: "form1[0].Page1[0].f1_2[0]",
-  },
   // ── Medical and Dental Expenses ──────────────────────────────────────────────
   {
     kind: "text",
@@ -70,6 +69,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "form1[0].Page1[0].f1_7[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_line_5a_sales_tax_election",
+    pdfField: "form1[0].Page1[0].c1_1[0]",
+  },
+  {
     kind: "text",
     domainKey: "line_5b_real_estate_tax",
     pdfField: "form1[0].Page1[0].f1_8[0]",
@@ -91,6 +95,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "print_line_6_other_tax_description",
+    pdfField: "form1[0].Page1[0].f1_12[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line_6_other_taxes",
     pdfField: "form1[0].Page1[0].f1_13[0]",
   },
@@ -102,9 +111,19 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
   // ── Interest You Paid ────────────────────────────────────────────────────────
   {
+    kind: "checkbox",
+    domainKey: "print_line_8_mortgage_use_warning",
+    pdfField: "form1[0].Page1[0].Line8_ReadOrder[0].c1_2[0]",
+  },
+  {
     kind: "text",
     domainKey: "line_8a_mortgage_interest_1098",
     pdfField: "form1[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line_8b_seller_details",
+    pdfField: "form1[0].Page1[0].Line8b_ReadOrder[0].f1_16[0]",
   },
   {
     kind: "text",
@@ -115,6 +134,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line_8c_points_no_1098",
     pdfField: "form1[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_8e_mortgage_interest",
+    pdfField: "form1[0].Page1[0].f1_20[0]",
   },
   {
     kind: "text",
@@ -159,6 +183,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Other Itemized Deductions ────────────────────────────────────────────────
   {
     kind: "text",
+    domainKey: "print_line_16_description",
+    pdfField: "form1[0].Page1[0].f1_28[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line_16_other_deductions",
     pdfField: "form1[0].Page1[0].f1_29[0]",
   },
@@ -166,15 +195,37 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line_17_itemized",
     pdfField: "form1[0].Page1[0].f1_30[0]",
+    printZero: true,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_line_18_itemize_election",
+    pdfField: "form1[0].Page1[0].Line18_ReadOrder[0].c1_3[0]",
   },
 ];
 
 export const scheduleAPdf: PdfFormDescriptor = {
   pendingKey: "schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
+  filerFields: [
+    {
+      kind: "text",
+      domainKey: "nameShownOnForm1040",
+      pdfField: "form1[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "form1[0].Page1[0].f1_2[0]",
+    },
+  ],
   fields,
   instances(input, filer, all) {
-    if (!(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0)) {
+    if (
+      !(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0) &&
+      !(input.force_itemized === true &&
+        all?.f1040?.line12e_itemized_deductions === 0)
+    ) {
       return [];
     }
     if (all?.f1098 !== undefined) {
@@ -213,6 +264,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.mortgage_refinance_points !== undefined,
         all.form8396 !== undefined,
       );
+      assertForm1098Box1Sources(all.f1098, recipients);
     }
     if (all?.mortgage_refinance_points !== undefined) {
       if (!filer) {
@@ -271,20 +323,52 @@ export const scheduleAPdf: PdfFormDescriptor = {
       amount("line_5c_personal_property_tax");
     const taxes = Number(standard.itemized_taxes);
     const salt = taxes - amount("line_6_other_taxes");
-    const interest = Math.max(
-      0,
-      amount("line_8a_mortgage_interest_1098") +
-        amount("line_8b_mortgage_interest_no_1098") -
-        amount("form8396_interest_credit_reduction"),
-    ) + amount("line_8c_points_no_1098") +
-      amount("line_9_investment_interest");
+    const reduction = amount("form8396_interest_credit_reduction");
+    const reportingLine = input.form8396_interest_reporting_line;
+    const creditedInterest = reportingLine === "8a"
+      ? amount("line_8a_mortgage_interest_1098")
+      : amount("line_8b_mortgage_interest_no_1098");
+    const form8396 = all?.form8396;
+    if (
+      reduction > 0 &&
+      ((reportingLine !== "8a" && reportingLine !== "8b") ||
+        reduction > creditedInterest || form8396?.line3 !== reduction ||
+        form8396.interest_reporting_line !== reportingLine)
+    ) {
+      throw new Error(
+        "Schedule A PDF mortgage-interest reduction differs from Form 8396 line 3 or deductible interest",
+      );
+    }
+    const line8a = amount("line_8a_mortgage_interest_1098") -
+      (reportingLine === "8a" ? reduction : 0);
+    const line8b = amount("line_8b_mortgage_interest_no_1098") -
+      (reportingLine === "8b" ? reduction : 0);
+    const mortgageInterest = line8a + line8b +
+      amount("line_8c_points_no_1098");
+    const interest = mortgageInterest + amount("line_9_investment_interest");
     const charity = amount("line_11_cash_contributions") +
       amount("line_12_noncash_contributions") +
       amount("line_13_contribution_carryover");
+    const itemizeBelowStandard = itemizeBelowStandardElection(
+      input.force_itemized,
+      all?.standard_deduction,
+      standard.itemized_deductions,
+    );
+    const otherTaxRows = scheduleAOtherTaxRows(input);
+    const line8bSeller = sellerFinancedLine8b(input);
+    const line16EstateTax = scheduleALine16EstateTax(
+      all,
+      input.line_16_other_deductions,
+    );
     return [{
       ...input,
-      filer_name: filer?.nameLine1,
-      filer_ssn: filer?.primarySSN?.replace(/\D/g, ""),
+      line_8a_mortgage_interest_1098: line8a,
+      line_8b_mortgage_interest_no_1098: line8b,
+      print_line_8b_seller_details: line8bSeller?.description,
+      line_8e_mortgage_interest: mortgageInterest,
+      print_line_8_mortgage_use_warning: reviewedHomeMortgageNonqualifyingUse(
+        input,
+      ),
       line_3_medical_floor: amount("line_1_medical") > 0
         ? Math.max(0, amount("agi")) * 0.075
         : undefined,
@@ -293,19 +377,29 @@ export const scheduleAPdf: PdfFormDescriptor = {
         amount("line_1_medical") - Math.max(0, amount("agi")) * 0.075,
       ),
       line_5d_salt_before_cap: saltBeforeCap,
+      print_line_5a_sales_tax_election: amount("line_5a_sales_tax") > 0,
       line_5e_salt_deduction: salt,
       line_7_taxes: taxes,
+      print_line_6_other_tax_description: scheduleAOtherTaxDescription(
+        otherTaxRows,
+      ),
       line_10_interest: interest,
       line_14_charity: charity,
+      print_line_16_description: line16EstateTax > 0
+        ? `Federal estate tax: ${line16EstateTax}`
+        : undefined,
       line_17_itemized: standard.itemized_deductions,
+      print_line_18_itemize_election: itemizeBelowStandard,
     }];
   },
   // Schedule A is filed only when the return actually itemizes (1040 line 12
   // carries an itemized amount) — not merely because AGI was deposited here.
   includeWhen: (input, all) => {
-    const itemizes = (((all?.["f1040"]?.["line12e_itemized_deductions"]) as
+    const filed = (all?.["f1040"]?.["line12e_itemized_deductions"]) as
       | number
-      | undefined) ?? 0) > 0;
+      | undefined;
+    const itemizes = (filed ?? 0) > 0 ||
+      (input.force_itemized === true && filed === 0);
     if (!itemizes) return false;
     const hasPriorCarryover = [
       input["capital_gain_property_carryovers"],
@@ -318,15 +412,21 @@ export const scheduleAPdf: PdfFormDescriptor = {
       assertElectedSectionAReconciled({ pending: all }, input);
     }
     const noncashItems = all?.schedule_a?.noncash_contribution_items;
-    const hasUnrelatedUseGift = Array.isArray(noncashItems) &&
+    const hasLinkedCapitalGainReductionGift = Array.isArray(noncashItems) &&
       noncashItems.some((item) =>
         item !== null && typeof item === "object" &&
-        (item as Record<string, unknown>)
-            .unrelated_use_capital_gain_reduction_confirmed === true
+        ((item as Record<string, unknown>)
+              .unrelated_use_capital_gain_reduction_confirmed === true ||
+          (item as Record<string, unknown>)
+              .private_foundation_capital_gain_reduction_confirmed === true ||
+          (item as Record<string, unknown>)
+              .taxidermy_capital_gain_reduction_confirmed === true ||
+          (item as Record<string, unknown>)
+              .intellectual_property_capital_gain_reduction_confirmed === true)
       );
-    if (hasUnrelatedUseGift && !all?.f8283) {
+    if (hasLinkedCapitalGainReductionGift && !all?.f8283) {
       throw new Error(
-        "Schedule A unrelated-use capital-gain reduction PDF needs its linked Form 8283 source",
+        "Schedule A capital-gain FMV reduction PDF needs its linked Form 8283 source",
       );
     }
     const form8283Source = all?.f8283
@@ -334,7 +434,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
       : undefined;
     if (
       (form8283Source?.section_a_items ?? []).some((item) =>
-        item.unrelated_use_capital_gain_reduction !== undefined
+        item.unrelated_use_capital_gain_reduction !== undefined ||
+        item.private_foundation_capital_gain_reduction !== undefined ||
+        item.taxidermy_capital_gain_reduction !== undefined ||
+        item.intellectual_property_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled({ pending: all }, input);

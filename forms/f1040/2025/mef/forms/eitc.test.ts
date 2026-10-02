@@ -11,6 +11,7 @@ const child = {
   dob: "2017-06-15",
   irs_relationship_code: "DAUGHTER",
   months_in_home: 12,
+  months_lived_with_you_in_us: 12,
   ip_pin: "123456",
 };
 
@@ -32,12 +33,42 @@ Deno.test("Schedule EIC serializes qualifying child identity and IRS line answer
     ],
   });
   assertEquals((xml.match(/<QualifyingChildInformation>/g) ?? []).length, 2);
-  assertStringIncludes(xml, "<QualifyingChildNameControlTxt>TAXP</QualifyingChildNameControlTxt>");
-  assertStringIncludes(xml, "<QualifyingChildSSN>111223334</QualifyingChildSSN>");
+  assertStringIncludes(
+    xml,
+    "<QualifyingChildNameControlTxt>TAXP</QualifyingChildNameControlTxt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifyingChildSSN>111223334</QualifyingChildSSN>",
+  );
   assertStringIncludes(xml, "<ChildBirthYr>2017</ChildBirthYr>");
-  assertStringIncludes(xml, "<ChildRelationshipCd>DAUGHTER</ChildRelationshipCd>");
-  assertStringIncludes(xml, "<MonthsChildLivedWithYouCnt>12</MonthsChildLivedWithYouCnt>");
-  assertStringIncludes(xml, "<ChildIsAStudentUnder24Ind>true</ChildIsAStudentUnder24Ind>");
+  assertStringIncludes(
+    xml,
+    "<ChildRelationshipCd>DAUGHTER</ChildRelationshipCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthsChildLivedWithYouCnt>12</MonthsChildLivedWithYouCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ChildIsAStudentUnder24Ind>true</ChildIsAStudentUnder24Ind>",
+  );
+});
+
+Deno.test("Schedule EIC line 6 prints U.S. months when home months are greater", () => {
+  const xml = eitc.build({
+    credit_amount: 2_000,
+    qualifying_children: 1,
+    qualifying_child_details: [{
+      ...child,
+      months_lived_with_you_in_us: 8,
+    }],
+  });
+  assertStringIncludes(
+    xml,
+    "<MonthsChildLivedWithYouCnt>08</MonthsChildLivedWithYouCnt>",
+  );
 });
 
 Deno.test("childless EITC does not create Schedule EIC", () => {
@@ -45,11 +76,14 @@ Deno.test("childless EITC does not create Schedule EIC", () => {
 });
 
 Deno.test("unclaimed EITC does not create Schedule EIC", () => {
-  assertEquals(eitc.build({
-    credit_amount: 0,
-    qualifying_children: 1,
-    qualifying_child_details: [child],
-  }), "");
+  assertEquals(
+    eitc.build({
+      credit_amount: 0,
+      qualifying_children: 1,
+      qualifying_child_details: [child],
+    }),
+    "",
+  );
 });
 
 Deno.test("Schedule EIC rejects a child count without matching rows", () => {
@@ -62,35 +96,42 @@ Deno.test("Schedule EIC rejects a child count without matching rows", () => {
 
 Deno.test("Schedule EIC rejects duplicate SSNs and invalid residence", () => {
   assertThrows(
-    () => eitc.build({
-      credit_amount: 1_000,
-      qualifying_children: 2,
-      qualifying_child_details: [child, { ...child, first_name: "Ben" }],
-    }),
+    () =>
+      eitc.build({
+        credit_amount: 1_000,
+        qualifying_children: 2,
+        qualifying_child_details: [child, { ...child, first_name: "Ben" }],
+      }),
     Error,
     "unique nine-digit SSN",
   );
   assertThrows(
-    () => eitc.build({
-      credit_amount: 1_000,
-      qualifying_children: 1,
-      qualifying_child_details: [{ ...child, months_in_home: 6 }],
-    }),
+    () =>
+      eitc.build({
+        credit_amount: 1_000,
+        qualifying_children: 1,
+        qualifying_child_details: [{
+          ...child,
+          months_in_home: 7,
+          months_lived_with_you_in_us: 8,
+        }],
+      }),
     Error,
-    "seven through twelve months",
+    "seven through twelve U.S. months",
   );
 });
 
 Deno.test("Schedule EIC rejects an employment-invalid SSN", () => {
   assertThrows(
-    () => eitc.build({
-      credit_amount: 1_000,
-      qualifying_children: 1,
-      qualifying_child_details: [{
-        ...child,
-        ssn_valid_for_employment: false,
-      }],
-    }),
+    () =>
+      eitc.build({
+        credit_amount: 1_000,
+        qualifying_children: 1,
+        qualifying_child_details: [{
+          ...child,
+          ssn_valid_for_employment: false,
+        }],
+      }),
     Error,
     "timely employment-valid SSN",
   );

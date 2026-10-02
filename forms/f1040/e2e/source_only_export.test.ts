@@ -116,14 +116,28 @@ const stockLossInputs = {
   }],
 };
 
+const seniorZeroExclusionsReview = {
+  no_section933_puerto_rico_excluded_income: true,
+  section933_review_source_reference: "2025 residency and income review",
+  no_form2555_filed: true,
+  form2555_review_source_reference: "2025 foreign-income review",
+  no_form4563_filed: true,
+  form4563_review_source_reference: "2025 Samoa-source income review",
+};
+
 const dependentScheduleRInputs = {
+  schedule1a: { senior_zero_exclusions_review: seniorZeroExclusionsReview },
   general: {
     ...stockLossInputs.general,
     taxpayer_dob: "1960-06-15",
     taxpayer_can_be_claimed_as_dependent: true,
     dependent_earned_income: 0,
   },
-  f1099int: [{ payer_name: "Test Bank", box1: 9_500 }],
+  f1099int: [{
+    payer_name: "Test Bank",
+    recipient_tin: "111223333",
+    box1: 9_500,
+  }],
   schedule_b_part_iii: {
     foreign_accounts_question: false,
     foreign_trust_question: false,
@@ -174,7 +188,7 @@ Deno.test("Form 8888 split refund cannot export without a matching final refund"
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 8888 line 5 must equal finalized Form 1040 line 35a refund",
+    "Form 1040 refund distribution requires a positive refund",
   );
 });
 
@@ -263,6 +277,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
 
 Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    schedule1a: { senior_zero_exclusions_review: seniorZeroExclusionsReview },
     general: {
       ...stockLossInputs.general,
       taxpayer_dob: "1950-06-15",
@@ -275,6 +290,7 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
       employer_address_city: "Austin",
       employer_address_state: "TX",
       employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 10_000,
       box2_fed_withheld: 0,
       box3_ss_wages: 10_000,
@@ -402,6 +418,7 @@ Deno.test({
       employer_address_city: "Austin",
       employer_address_state: "TX",
       employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 5_000,
       box2_fed_withheld: 0,
       box3_ss_wages: 5_000,
@@ -524,6 +541,7 @@ Deno.test({
       employer_address_city: "Austin",
       employer_address_state: "TX",
       employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 30_000,
       box2_fed_withheld: 3_000,
       box3_ss_wages: 30_000,

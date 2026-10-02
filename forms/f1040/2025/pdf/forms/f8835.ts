@@ -41,6 +41,8 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("filer_tin", `${page1}.f1_2[0]`),
     text("facility_type", `${page1}.f1_4[0]`),
     text("facility_description", `${page1}.f1_5[0]`),
+    text("owner_name", `${page1}.f1_6[0]`),
+    text("owner_tin", `${page1}.f1_7[0]`),
     text("address_line1", `${page1}.f1_8[0]`),
     text("address_line2", `${page1}.f1_9[0]`),
     text("lat_sign", `${page1}.Latitude_CombFields[0].f1_10[0]`),
@@ -165,6 +167,8 @@ export const form8835Pdf: PdfFormDescriptor = {
             ? "Trash combustion (municipal solid waste)"
             : "Geothermal",
           facility_description: item.facility_description,
+          owner_name: item.facility_owner_business?.name,
+          owner_tin: item.facility_owner_business?.ein,
           address_line1: source.addressLine1,
           address_line2: source.addressLine2,
           lat_sign: lat.sign,

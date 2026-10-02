@@ -1,5 +1,28 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## Traced taxable-securities loan alongside a portfolio royalty (staged, unrun)
+
+The one-owner direct-use borrowing workpaper now also reconciles the existing
+single 1099-MISC portfolio royalty route. The loan must directly and entirely
+purchase identified taxable securities, with one lender, disbursement,
+purchase, and paid-interest record set. Its owner and $300 paid interest must
+match the final filer and Form 4952 line 1. The separate $800 royalty is
+reported once on Schedule E and Schedule 1 and contributes to Form 4952 line
+4a; the loan interest is limited on Form 4952 and reaches Schedule A line 9.
+Native MeF and PDF replay the loan and royalty sources and check the selected
+Form 1040 itemized deduction and line 8 income. The [2025 Publication
+550](https://www.irs.gov/publications/p550) allocates borrowed-fund interest
+by its actual use, and the [2025 Schedule E
+instructions](https://www.irs.gov/instructions/i1040se) distinguish interest
+attributable to royalties from investment-use interest.
+
+Positive full-return/native/PDF and changed owner, purchase, lender, and
+payment fixtures are authored but unrun. This reviewed direct-use workpaper
+does not authenticate lender, bank, or purchase bytes and covers no mixed-use
+loan or royalty-attributable debt. The K-1 box 20 code B export guard remains
+closed for the issued-supplement and partner-limitation evidence described in
+the [code B gap](ty2025-form4952-k1-code-b-gap.md).
+
 Sources:
 [2025 Form 4952 and its instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf),
 especially line 4a (royalties from property held for investment, outside the
@@ -631,3 +654,66 @@ identify Treasury interest in Form 1099-INT box 3 and taxable OID in Form
 dividends, prior carryover, mixed-use or second debt, and line 4g elections
 remain outside this pair. Issuer, lender, payment, and broker bytes have not
 been authenticated.
+
+## Traced qualified-dividend election (2026-10-01, unrun)
+
+One direct-use taxable-securities loan and one affirmed Form 1099-DIV box 1a/1b
+investment payer now support a positive line 4g election of up to the payer's
+qualified-dividend amount. The existing loan owner, lender total, payments,
+issued payer amount, Form 4952 lines 1–8, Schedule A line 9, and Form 1040
+lines 3a/3b/12e still reconcile. Native and PDF export additionally replay the
+election into the income-tax calculation and check finalized Form 1040 lines
+15/16 against the TY2025 Schedule D Tax Worksheet. The election does not
+reduce the reported Form 1040 line 3a amount. A sourced $34,000 ordinary /
+$15,000 qualified dividend case elects $1,000, increasing Form 4952 line 8
+from $19,000 to $20,000 and reducing line 7 from $1,000 to zero. A full-return
+native/PDF fixture and changed payer, election, and line-16 fixtures are
+authored for the deferred validation batch.
+
+The [2025 Form 4952 line 4g instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+permit including qualified dividends in investment income, require the
+Schedule D Tax Worksheet for Form 1040 line 16, keep Form 1040 line 3a intact,
+and say the election can be revoked only with IRS consent. This bounded route
+requires one traced loan, one qualified-dividend payer, no capital gain or
+foreign-income/tax source, and no other line-16 add-on or special worksheet.
+The source and loan references are reviewer-supplied, not authenticated issued
+bytes. Elections with capital gains, carryovers, AMT differences, or other tax
+worksheets remain closed. The two-payer route below is separately bounded.
+
+## Traced election with two dividend payers (written, unrun)
+
+The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+uses the total qualified dividends included on line 4a for line 4b, and permits
+an elected portion on line 4g. One direct-use, owner-identified loan now joins
+two distinct domestic Form 1099-DIV payers, exactly one reporting box 1b
+qualified dividends. Each payer needs a different name and issued-copy
+reference. The bounded $17,000 qualified first copy plus $18,000 ordinary
+second copy yields $35,000 on line 4a, $17,000 on line 4b, and a $2,000
+election on line 4g. Form 4952 line 8 and Schedule A line 9 are $20,000.
+Native and PDF export replay the two payer amounts and loan payments, compare
+the numbered Form 4952 lines and Form 1040 lines 3a/3b, then refigure line 16
+with the Schedule D Tax Worksheet using the election. Positive and duplicate
+copy, box 1b, and tax-tamper fixtures are authored but unrun.
+
+The issued dividend copies and lender records remain entered references, not
+authenticated bytes. Multiple qualified payers, interest/OID combinations,
+capital gains, foreign income/tax, carryovers, AMT differences, and other tax
+worksheets remain outside this bounded election route.
+
+## Traced loan with two taxable OID payers (2026-10-01, unrun)
+
+The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+includes interest from investment property on line 4a and limits line 8 to net
+investment income. One owner-identified, direct-use taxable-securities loan
+now accepts exactly two separately identified, unadjusted Form 1099-OID box 1
+payers. Both payer names and issued-copy references must differ. Their two
+source deposits must match Form 4952 line 4a and finalized Form 1040 line 2b;
+the traced $20,000 interest deduction joins Schedule A line 9, selected Form
+1040 itemization, native MeF, and PDF. A $60,000 plus $40,000 positive
+full-return fixture and duplicate-copy, changed-amount, and owner-tamper
+fixtures are authored for the deferred batch.
+
+The issued OID copies and lender records are entered references rather than
+authenticated bytes. OID acquisition premium, bond premium, market discount,
+Treasury box 8 OID, tax-exempt OID, foreign-source/tax facts, mixed-use debt,
+carryovers, and additional payer combinations remain outside this route.

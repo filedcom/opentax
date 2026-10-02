@@ -167,3 +167,25 @@ validation. More than twelve same-year policies cannot each own a distinct
 covered month in this nonoverlap route. Concurrent policies, changed coverage
 families, authenticated Marketplace determination bytes, IRS acceptance, and
 bulk test/XSD/filled-PDF/ATS verification remain open.
+
+## Alternating no-APTC policies (implementation staged)
+
+The same-state, one-filer no-APTC monthly route now admits a returning policy
+among two through twelve distinct identified policies when each month has at
+most one active policy. The Form 1095-A source retains each policy's original
+zero columns B and C, reconciles the annual premium to its twelve months, and
+requires an independently reviewed Marketplace SLCSP determination and timely
+premium-payment record for each covered policy month. A protected partial
+payment on a returning month is allowed only with issuer-confirmed continued
+coverage and a paid amount meeting the issuer's minimum. Native MeF checks
+every monthly row against its active policy, Schedule 3, and Form 1040; PDF
+projection invokes the same guard.
+
+An authored A-B-A-C source graph gives policy A January–February and
+July–August, policy B March–June, and policy C September–December. It yields
+$7,800 PTC at 200% FPL, or $7,601 when July's $900 premium has an evidenced
+$400.51 protected payment. Missing July payment evidence, a wrong covered SSN,
+and a payment below the issuer's threshold are authored rejection cases. These
+fixtures are deferred to the requested bulk validation pass. Shared families,
+overlapping policies, interstate moves, authenticated Marketplace/issuer
+bytes, IRS XSD/business-rule review, and filled-PDF visual review remain open.

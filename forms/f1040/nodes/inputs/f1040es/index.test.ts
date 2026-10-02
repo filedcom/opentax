@@ -1,23 +1,91 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f1040es } from "./index.ts";
+import { estimatedPaymentTotal, f1040es } from "./index.ts";
+import { agreedJointPayment } from "./agreed-payment.fixture.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f1040es.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f1040es.compute>[1]);
+  return f1040es.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input as Parameters<typeof f1040es.compute>[1],
+  );
 }
 
 function estimatedTax(result: ReturnType<typeof compute>) {
   return fieldsOf(result.outputs, f1040)?.line26_estimated_tax;
 }
 
+Deno.test("signed 2025 joint payment allocation routes only the taxpayer share", () => {
+  assertEquals(estimatedPaymentTotal(agreedJointPayment), 300);
+  assertEquals(estimatedTax(compute(agreedJointPayment)), 300);
+  assertThrows(
+    () => estimatedPaymentTotal({ ...agreedJointPayment, payment_q1: 301 }),
+    Error,
+    "agreed allocation must equal",
+  );
+  assertThrows(
+    () =>
+      estimatedPaymentTotal({
+        ...agreedJointPayment,
+        applied_from_prior_year: 1,
+      }),
+    Error,
+    "cannot include a prior-year applied payment",
+  );
+  assertThrows(
+    () =>
+      estimatedPaymentTotal({
+        ...agreedJointPayment,
+        payment_q1_date: "2025-04-16",
+      }),
+    Error,
+    "joint payment date",
+  );
+  assertEquals(
+    f1040es.inputSchema.safeParse({
+      ...agreedJointPayment,
+      joint_estimated_payment_allocation: {
+        ...agreedJointPayment.joint_estimated_payment_allocation,
+        allocation_method: "proportional_tax",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f1040es.inputSchema.safeParse({
+      ...agreedJointPayment,
+      joint_estimated_payment_allocation: {
+        ...agreedJointPayment.joint_estimated_payment_allocation,
+        not_remarried_in_2025_verified: false,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f1040es.inputSchema.safeParse({
+      ...agreedJointPayment,
+      joint_estimated_payment_allocation: {
+        ...agreedJointPayment.joint_estimated_payment_allocation,
+        no_name_change_since_payment_verified: false,
+      },
+    }).success,
+    false,
+  );
+});
+
 // =============================================================================
 // Schema Validation
 // =============================================================================
 
 Deno.test("f1040es.inputSchema: rejects negative quarterly payments", () => {
-  assertEquals(f1040es.inputSchema.safeParse({ payment_q1: -1 }).success, false);
-  assertEquals(f1040es.inputSchema.safeParse({ payment_q3: -0.01 }).success, false);
+  assertEquals(
+    f1040es.inputSchema.safeParse({ payment_q1: -1 }).success,
+    false,
+  );
+  assertEquals(
+    f1040es.inputSchema.safeParse({ payment_q3: -0.01 }).success,
+    false,
+  );
 });
 
 // =============================================================================
@@ -30,7 +98,8 @@ Deno.test("f1040es.compute: no payments — no output", () => {
 
 Deno.test("f1040es.compute: all quarters zero — no output", () => {
   assertEquals(
-    compute({ payment_q1: 0, payment_q2: 0, payment_q3: 0, payment_q4: 0 }).outputs,
+    compute({ payment_q1: 0, payment_q2: 0, payment_q3: 0, payment_q4: 0 })
+      .outputs,
     [],
   );
 });
@@ -68,18 +137,29 @@ Deno.test("f1040es.compute: q4 only → f1040 line26", () => {
 // =============================================================================
 
 Deno.test("f1040es.compute: all 4 quarters summed into single f1040 line26 output", () => {
-  const result = compute({ payment_q1: 1000, payment_q2: 1000, payment_q3: 1000, payment_q4: 1000 });
+  const result = compute({
+    payment_q1: 1000,
+    payment_q2: 1000,
+    payment_q3: 1000,
+    payment_q4: 1000,
+  });
   assertEquals(estimatedTax(result), 4000);
   assertEquals(result.outputs.length, 1);
 });
 
 Deno.test("f1040es.compute: partial quarters (q1 + q3) summed correctly", () => {
-  assertEquals(estimatedTax(compute({ payment_q1: 2500, payment_q3: 2500 })), 5000);
+  assertEquals(
+    estimatedTax(compute({ payment_q1: 2500, payment_q3: 2500 })),
+    5000,
+  );
 });
 
 Deno.test("f1040es.compute: unequal quarterly payments aggregated correctly", () => {
   // Taxpayer made larger Q1 and Q2 payments, skipped Q3 and Q4
-  assertEquals(estimatedTax(compute({ payment_q1: 3000, payment_q2: 4500 })), 7500);
+  assertEquals(
+    estimatedTax(compute({ payment_q1: 3000, payment_q2: 4500 })),
+    7500,
+  );
 });
 
 // =============================================================================
@@ -87,7 +167,12 @@ Deno.test("f1040es.compute: unequal quarterly payments aggregated correctly", ()
 // =============================================================================
 
 Deno.test("f1040es.compute: smoke — full year payments aggregate to line26", () => {
-  const result = compute({ payment_q1: 3000, payment_q2: 3000, payment_q3: 3000, payment_q4: 3000 });
+  const result = compute({
+    payment_q1: 3000,
+    payment_q2: 3000,
+    payment_q3: 3000,
+    payment_q4: 3000,
+  });
   assertEquals(estimatedTax(result), 12000);
   assertEquals(result.outputs.length, 1);
 });

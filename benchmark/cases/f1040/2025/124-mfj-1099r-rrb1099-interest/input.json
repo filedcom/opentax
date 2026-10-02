@@ -1,7 +1,7 @@
 {
   "year": 2025,
   "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64–65",
-  "scenario": "Married filing jointly — retired railroad worker (RRB Tier 1 SSEB portion) and government-worker spouse with pension and savings bond interest. SSEB $10,000 is not taxable because provisional income ($40,500 + $5,000 = $45,500) is below the $32,000 MFJ base threshold after applying the worksheet. Note: rrb1099r node used for RRB-1099 SSEB (Tier 1 SS-equivalent); treated identically to Social Security per IRC §86(d)(1).",
+  "scenario": "Married filing jointly — retired railroad worker with $10,000 RRB-1099 SSEB and government-worker spouse with pension and savings bond interest. SSEB uses the Social Security benefit worksheet and is partly taxable; RRB-1099-R reports separate pension components.",
   "forms": [
     {
       "node_type": "start",
@@ -42,11 +42,14 @@
       }
     },
     {
-      "node_type": "rrb1099r",
+      "node_type": "ssa1099",
       "data": {
         "payer_name": "Railroad Retirement Board",
-        "box5_sseb_net": 10000,
-        "box7_sseb_withheld": 0
+        "is_rrb": true,
+        "box3_gross_benefits": 10000,
+        "box4_repaid": 0,
+        "box5_net_benefits": 10000,
+        "rrb_box10_federal_withheld": 0
       }
     }
   ]

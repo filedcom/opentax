@@ -32,7 +32,9 @@ import {
   reviewedK1PassiveIncome,
 } from "../nodes/inputs/k1_passive_eic.ts";
 import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
+import { box11Line10SourceSchema } from "../nodes/inputs/k1_partnership/box11_line10.ts";
 import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
+import { EITC_INVESTMENT_INCOME_LIMIT_2025 } from "../nodes/config/2025.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -65,6 +67,30 @@ export function assertEicSource(
     return typeof current === "number" ? current : 0;
   };
   const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
+  const form4797 = pending?.form4797 as Record<string, unknown> | undefined;
+  if (form4797?.k1_box11_line10_rows !== undefined) {
+    const rows = box11Line10SourceSchema.array().parse(
+      form4797.k1_box11_line10_rows,
+    );
+    for (const row of rows) {
+      const review = row.eic_activity_review;
+      if (!review) {
+        throw new Error(
+          "Form 1040 EIC needs passive-activity classification for partnership K-1 Form 4797 line 10 amounts",
+        );
+      }
+      if (
+        review.classification === "passive" &&
+        (row.gain_loss < 0 ||
+          review.no_current_or_prior_unallowed_loss_for_activity_verified !==
+            true)
+      ) {
+        throw new Error(
+          "Form 1040 EIC passive partnership K-1 Form 4797 line 10 needs a finalized Form 8582 loss allocation",
+        );
+      }
+    }
+  }
   const allowedPartI = typeof agiFinal?.allowed_part_i === "number"
     ? agiFinal.allowed_part_i
     : undefined;
@@ -187,6 +213,9 @@ export function assertEicSource(
     throw new Error(
       "Form 1040 EIC investment income differs from filed interest, dividends, gains, royalties, and rent",
     );
+  }
+  if (investmentIncomeFloor > EITC_INVESTMENT_INCOME_LIMIT_2025) {
+    throw new Error("Form 1040 EIC investment income exceeds the 2025 limit");
   }
   const source = generalInputSchema.safeParse(pending?.general);
   const form8862 = f8862InputSchema.safeParse(pending?.f8862);

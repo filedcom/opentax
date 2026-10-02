@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FilerIdentity } from "../mef/header.ts";
 import { TS } from "../nodes/types.ts";
+import { FilingStatus } from "../mef/header.ts";
 import {
   CoverageType,
   form8889,
@@ -10,6 +11,7 @@ import {
   Box12Code,
   inputSchema as w2InputSchema,
 } from "../nodes/inputs/w2/index.ts";
+import { inputSchema as generalSchema } from "../nodes/inputs/general/index.ts";
 import {
   calculateOwnerForms as calculate5329OwnerForms,
   inputSchema as form5329InputSchema,
@@ -22,8 +24,16 @@ export function reconcilePrimaryLastMonthRuleForm8889(
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ): void {
-  if (forms.length !== 1 || !forms[0] || allPending === undefined) return;
+  if (forms.length !== 1 || !forms[0]) return;
   const filed = forms[0];
+  if (allPending === undefined) {
+    if (Number(filed.print_line19 ?? 0) > 0) {
+      throw new Error(
+        "Form 8889 line 19 needs retained funding-transfer source",
+      );
+    }
+    return;
+  }
   const raw = allPending.form8889;
   const rawFailure = raw && typeof raw === "object" && !Array.isArray(raw)
     ? (raw as Record<string, unknown>).testing_period_failure
@@ -66,7 +76,10 @@ export function reconcilePrimaryLastMonthRuleForm8889(
       "Form 8889 line 18 differs from prior-year source calculation",
     );
   }
-  if (Number(expected.print_line18 ?? 0) <= 0) return;
+  if (
+    Number(expected.print_line18 ?? 0) <= 0 &&
+    Number(expected.print_line19 ?? 0) <= 0
+  ) return;
   const schedule1 = z.object({
     line8f_hsa_income: z.number(),
     line10_total_additional_income: z.number(),
@@ -90,6 +103,27 @@ export function reconcilePrimaryLastMonthRuleForm8889(
     throw new Error(
       "Form 8889 line 18 income and tax differ from Schedule 1, Schedule 2, or Form 1040",
     );
+  }
+  if (prior.filed_form8889_line10 > 0) {
+    const final1040 = z.object({
+      line9_total_income: z.number(),
+      line10_adjustments: z.number(),
+      line11_agi: z.number(),
+    }).passthrough().parse(allPending.f1040);
+    if (
+      Number(filed.print_line18 ?? 0) !== 0 ||
+      Number(filed.print_line19 ?? 0) !==
+        prior.filed_form8889_line10 ||
+      allPending.form5329 !== undefined ||
+      return1040.line23_other_taxes !==
+        schedule2.line17d_hsa_eligibility_tax ||
+      final1040.line11_agi !==
+        final1040.line9_total_income - final1040.line10_adjustments
+    ) {
+      throw new Error(
+        "Form 8889 December funding recapture needs no Form 5329 excess and exact final Form 1040 totals",
+      );
+    }
   }
 }
 
@@ -167,6 +201,16 @@ export function reconcileDatedExceptionForm8889(
     print_line20: z.number().optional(),
     print_line21: z.number().optional(),
   }).passthrough().parse(filed);
+  const rollover = source.hsa_excluded_distributions?.rollover;
+  const postDisabilityCode3Rollover = rollover !== undefined &&
+    source.age_65_exception_evidence === undefined &&
+    source.disability_exception_evidence !== undefined &&
+    rollover.distribution_date >
+      source.disability_exception_evidence.disability_date &&
+    source.form1099_sa_distributions?.some((item) =>
+      item.source_reference === rollover.form1099_sa_source_reference &&
+      item.box3_distribution_code === "3"
+    );
   if (
     (schedule1.line13_hsa_deduction ?? 0) !==
       (printed.print_line13_deduction ?? 0) ||
@@ -179,8 +223,9 @@ export function reconcileDatedExceptionForm8889(
     schedule1.line10_total_additional_income !==
       return1040.line8_additional_income ||
     schedule1.line26_total_adjustments !== return1040.line10_adjustments ||
-    (source.age_65_exception_evidence !== undefined &&
-      source.disability_exception_evidence !== undefined &&
+    ((source.age_65_exception_evidence !== undefined &&
+        source.disability_exception_evidence !== undefined ||
+      postDisabilityCode3Rollover) &&
       return1040.line23_other_taxes !==
         (printed.print_line17b_penalty ?? 0) + (printed.print_line21 ?? 0))
   ) {
@@ -675,6 +720,44 @@ export function reconcilePairedForm8889(
           (source.spouse_hsa.allocated_family_limit ?? 0) ===
       Math.round(8_550 * deemedFamilyMonths / 12);
   const owners = [source, source.spouse_hsa];
+  for (const [index, owner] of owners.entries()) {
+    const otherOwner = owners[1 - index]!;
+    if (
+      owner.qualified_medical_expense_evidence?.some((receipt) =>
+        receipt.eligible_person === "spouse" &&
+        (filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          receipt.patient_ssn?.replaceAll("-", "") !==
+            otherOwner.beneficiary_identity.ssn.replaceAll("-", ""))
+      )
+    ) {
+      throw new Error(
+        "Form 8889 spouse medical receipt patient must match the other joint-return HSA owner",
+      );
+    }
+  }
+  const dependentReceipts = owners.flatMap((owner) =>
+    owner.qualified_medical_expense_evidence?.filter((receipt) =>
+      receipt.eligible_person === "dependent"
+    ) ?? []
+  );
+  if (dependentReceipts.length > 0) {
+    const general = generalSchema.safeParse(allPending?.general);
+    const claimed = general.success
+      ? (general.data.dependents ?? []).filter((dependent) =>
+        dependent.dependent_on_another_return !== true
+      )
+      : [];
+    if (
+      dependentReceipts.length !== 1 || claimed.length !== 1 ||
+      !dependentReceipts[0].patient_ssn ||
+      dependentReceipts[0].patient_ssn.replaceAll("-", "") !==
+        claimed[0].ssn?.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "Form 8889 paired dependent medical receipt must name the one claimed dependent on the joint return",
+      );
+    }
+  }
   const medicareOwner = owners.find((owner) => owner.medicare_enrollment);
   const continuingOwner = owners.find((owner) => owner !== medicareOwner);
   const firstIneligible = medicareOwner?.medicare_enrollment
@@ -874,24 +957,106 @@ export function reconcilePairedForm8889(
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
   );
-  const medicareOwnerLimit = firstIneligible === undefined ? 0 : Math.round(
-    (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
-      (firstIneligible - 1) / 12,
-  );
+  const medicareSelfOnlyOwnerLimit = firstIneligible === undefined
+    ? 0
+    : Math.round(
+      (4_300 + (medicareAge65Distribution ? 1_000 : 0)) *
+        (firstIneligible - 1) / 12,
+    );
+  const medicareJanuaryFamilyExcess = medicareMixedMonths &&
+    firstIneligible === 1 &&
+    medicareOwner?.allocated_family_limit === 0 &&
+    continuingOwner?.allocated_family_limit === 0 &&
+    owners.every((owner) =>
+      owner.age_55_or_older === false &&
+      owner.employer_hsa_contributions === undefined &&
+      owner.employer_contribution_years === undefined &&
+      owner.employer_excess_treatment === undefined &&
+      owner.prior_year_hsa_excess === undefined &&
+      owner.post_year_personal_excess_withdrawal === undefined &&
+      owner.qualified_hsa_funding_distributions === undefined &&
+      owner.hsa_excluded_distributions === undefined &&
+      owner.testing_period_failure === undefined &&
+      (owner.hsa_distributions ?? 0) === 0
+    ) &&
+    !source.w2_code_w_entries?.length &&
+    (continuingOwner?.taxpayer_hsa_contributions ?? 0) > 0 &&
+    (continuingOwner?.taxpayer_hsa_contributions ?? 0) <= 8_550;
+  const medicareOwnerLimit = medicareJanuaryFamilyExcess
+    ? 0
+    : medicareSelfOnlyOwnerLimit;
   // A current personal excess belongs only to the Medicare owner whose
   // monthly limit ended. Its Form 5329 tax uses that owner's HSA year-end value.
-  const medicareCurrentExcessOwner = medicareSelfOnlyMonths &&
+  const medicareCurrentExcessOwner =
+    (medicareSelfOnlyMonths || medicareJanuaryFamilyExcess) &&
       medicareOwner &&
       (medicareOwner.taxpayer_hsa_contributions ?? 0) > medicareOwnerLimit &&
       medicareOwner.hsa_december_31_value !== undefined &&
       medicareOwner.prior_year_hsa_excess === undefined &&
       !medicareAge65Distribution
-    ? medicareOwner
+      ? medicareOwner
+      : undefined;
+  const otherCoverageOwnerLimit = otherCoverageOwner
+    ?.allocated_family_limit ?? 0;
+  const otherCoverageContinuingLimit = 8_550 -
+    Math.round(8_550 * ((otherCoverageMonth ?? 1) - 1) / 12) +
+    (otherCoverageContinuingOwner?.allocated_family_limit ?? 0);
+  // A retained personal excess after nonpermitted other coverage ends one
+  // spouse's eligibility belongs only to that owner's Form 5329 Part VII.
+  const otherCoverageCurrentExcessOwner = otherCoverageMixedMonths &&
+      otherCoverageOwner && otherCoverageContinuingOwner &&
+      owners.every((owner) =>
+        owner.age_55_or_older === false &&
+        owner.employer_hsa_contributions === undefined &&
+        owner.employer_contribution_years === undefined &&
+        owner.employer_excess_treatment === undefined &&
+        owner.prior_year_hsa_excess === undefined &&
+        owner.post_year_personal_excess_withdrawal === undefined &&
+        owner.qualified_hsa_funding_distributions === undefined &&
+        owner.hsa_excluded_distributions === undefined &&
+        owner.testing_period_failure === undefined &&
+        (owner.hsa_distributions ?? 0) === 0
+      ) &&
+      !source.w2_code_w_entries?.length &&
+      (otherCoverageOwner.taxpayer_hsa_contributions ?? 0) >
+        otherCoverageOwnerLimit &&
+      (otherCoverageContinuingOwner.taxpayer_hsa_contributions ?? 0) <=
+        otherCoverageContinuingLimit &&
+      otherCoverageOwner.hsa_december_31_value !== undefined
+    ? otherCoverageOwner
     : undefined;
   const pairedExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined ||
-    owner === medicareCurrentExcessOwner
+    owner === medicareCurrentExcessOwner ||
+    owner === otherCoverageCurrentExcessOwner
   );
+  const priorExcessAndOtherCode2 = selfOnly &&
+    pairedPriorExcessOwners.length === 1 && pairedCode2Owners.length === 1 &&
+    pairedPriorExcessOwners[0] !== pairedCode2Owners[0] &&
+    pairedRollovers.length === 0 &&
+    !source.w2_code_w_entries?.length &&
+    owners.every((owner) =>
+      fullYearCoverage(
+        owner.eligible_hdhp_coverage_by_month,
+        CoverageType.SelfOnly,
+      ) &&
+      owner.age_55_or_older === false &&
+      owner.employer_hsa_contributions === undefined &&
+      owner.employer_contribution_years === undefined &&
+      owner.employer_excess_treatment === undefined &&
+      owner.post_year_personal_excess_withdrawal === undefined &&
+      owner.qualified_hsa_funding_distributions === undefined &&
+      owner.testing_period_failure === undefined &&
+      owner.other_disqualifying_coverage === undefined &&
+      owner.age_65_exception_evidence === undefined &&
+      owner.disability_exception_evidence === undefined &&
+      (owner.qualified_medical_expenses ?? 0) === 0 &&
+      (owner.exception_qualified_taxable_amount ?? 0) === 0 &&
+      (owner.taxpayer_hsa_contributions ?? 0) > 0 &&
+      (owner === pairedCode2Owners[0] ||
+        ((owner.hsa_distributions ?? 0) === 0 &&
+          owner.form1099_sa_distributions === undefined))
+    );
   const priorExcessReferences = pairedPriorExcessOwners.map((owner) =>
     owner.prior_year_hsa_excess!.filed_form5329_reference
   );
@@ -916,7 +1081,6 @@ export function reconcilePairedForm8889(
       ageOwner.age_65_exception_evidence!.birth_date_source_reference ===
         disabilityOwner.disability_exception_evidence!
           .disability_source_reference ||
-      pairedRollovers.length > 1 ||
       owners.some((owner) =>
         (owner.hsa_excluded_distributions !== undefined &&
           (owner.hsa_excluded_distributions.rollover === undefined ||
@@ -938,10 +1102,15 @@ export function reconcilePairedForm8889(
   if (
     new Set(priorExcessReferences).size !== priorExcessReferences.length ||
     (pairedPriorExcessOwners.length > 0 &&
-      (!selfOnly || pairedRollovers.length > 0 ||
-        pairedCode2Owners.length > 0 ||
+      (!selfOnly && !(medicareSelfOnlyMonths &&
+            pairedExcessOwners.every((owner) =>
+              owner === medicareCurrentExcessOwner
+            )) ||
+        pairedRollovers.length > 0 ||
+        (pairedCode2Owners.length > 0 && !priorExcessAndOtherCode2) ||
         owners.some((owner) =>
-          (owner.hsa_distributions ?? 0) > 0 ||
+          ((owner.hsa_distributions ?? 0) > 0 &&
+            !(priorExcessAndOtherCode2 && owner === pairedCode2Owners[0])) ||
           owner.testing_period_failure !== undefined
         ))) ||
     (pairedRollovers.length > 0 && pairedCode2Owners.length > 0) ||
@@ -1136,7 +1305,7 @@ export function reconcilePairedForm8889(
       expectedExcess.length !== pairedExcessOwners.length
     ) {
       throw new Error(
-        "Form 8889 paired excess needs an owner-specific current Medicare or reviewed prior-year Form 5329 source",
+        "Form 8889 paired excess needs an owner-specific current eligibility or reviewed prior-year Form 5329 source",
       );
     }
     const pending5329 = z.object({
@@ -1174,6 +1343,11 @@ export function reconcilePairedForm8889(
           ? form.hsa_part_vii?.line42_prior_excess !== 0 ||
             form.hsa_part_vii?.line47_current_year_excess !==
               (owner.taxpayer_hsa_contributions ?? 0) - medicareOwnerLimit
+          : owner === otherCoverageCurrentExcessOwner
+          ? form.hsa_part_vii?.line42_prior_excess !== 0 ||
+            form.hsa_part_vii?.line47_current_year_excess !==
+              (owner.taxpayer_hsa_contributions ?? 0) -
+                otherCoverageOwnerLimit
           : form.hsa_part_vii?.line47_current_year_excess !== 0;
       }) ||
       calculated5329.total <= 0
@@ -1254,9 +1428,10 @@ export function reconcilePairedForm8889(
         owner.eligible_hdhp_coverage_by_month,
         CoverageType.SelfOnly,
       ) &&
-      owner.age_65_exception_evidence === undefined &&
-      owner.disability_exception_evidence === undefined &&
-      owner.qualified_medical_expenses === undefined &&
+      (pairedAgeAndDisability ||
+        (owner.age_65_exception_evidence === undefined &&
+          owner.disability_exception_evidence === undefined &&
+          owner.qualified_medical_expenses === undefined)) &&
       owner.testing_period_failure === undefined
     ) ||
       forms.some((form) => {

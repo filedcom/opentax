@@ -5,6 +5,7 @@ import {
   inputSchema,
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
+  qualifiedFirstYearRetainedPropertySale,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
   scheduleE,
@@ -207,9 +208,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
   },
   fields,
   filerFields: [
-    text("fullName", `${page}.f1_1[0]`),
+    text("nameShownOnForm1040", `${page}.f1_1[0]`),
     text("primarySSN", `${page}.f1_2[0]`),
-    text("fullName", `${page2}.f2_1[0]`),
+    text("nameShownOnForm1040", `${page2}.f2_1[0]`),
     text("primarySSN", `${page2}.f2_2[0]`),
   ],
   projectFields(raw, allPending) {
@@ -398,7 +399,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
       if (
         (item.disposed_of === true ||
           (item.passive_property_sales?.length ?? 0) > 0) &&
-        entireLoss === undefined && entireGain === undefined
+        entireLoss === undefined && entireGain === undefined &&
+        !qualifiedFirstYearRetainedPropertySale(item)
       ) {
         throw new Error(
           "Schedule E PDF disposition needs the sourced entire-interest overall-loss route",
@@ -480,6 +482,11 @@ export const scheduleEPdf: PdfFormDescriptor = {
       );
     }
     const payments = items.some((item) => item.form_1099_payments_made);
+    const forms1099Filed = payments
+      ? items.every((item) =>
+        !item.form_1099_payments_made || item.form_1099_filed
+      )
+      : undefined;
     const pageFields = (start: number) =>
       Object.fromEntries(
         rows.slice(start, start + 3).flatMap((row, localIndex) =>
@@ -543,6 +550,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
       (_, index) => ({
         ...pageFields(3 + index * 3),
         ...pageDescriptions(3 + index * 3),
+        payments_made: payments,
+        forms_1099_filed: forms1099Filed,
       }),
     );
     return {
@@ -552,11 +561,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       partIContinuationPages: continuationPages,
       partIStatementRows: statementRows,
       payments_made: payments,
-      forms_1099_filed: payments
-        ? items.every((item) =>
-          !item.form_1099_payments_made || item.form_1099_filed
-        )
-        : undefined,
+      forms_1099_filed: forms1099Filed,
       ...pageDescriptions(0),
       line23a: sumRows("rent"),
       line23b: sumRows("royalty"),

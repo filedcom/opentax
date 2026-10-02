@@ -1267,6 +1267,32 @@ Deno.test("Form 4136 XML combines two activities and links both Schedule A PDFs"
   );
 });
 
+Deno.test("Form 4136 generated Schedule A attachment bytes are stable", async () => {
+  const input = {
+    ...fields,
+    additional_activities: [{
+      business: { ...fields.business, business_name: "Second Activity" },
+      claims: [{
+        ...certifications,
+        line: "1a" as const,
+        unit: "gallons" as const,
+        qualified_quantity: 50,
+        actual_fuel_cost: 150,
+      }],
+    }],
+  };
+  const first = await form4136.buildBinaryAttachments?.(input, {});
+  await new Promise((resolve) => setTimeout(resolve, 1_200));
+  const second = await form4136.buildBinaryAttachments?.(input, {});
+  assertEquals(first?.length, 2);
+  assertEquals(
+    first?.map((attachment) => attachment.bytes),
+    second?.map(
+      (attachment) => attachment.bytes,
+    ),
+  );
+});
+
 Deno.test("Form 4136 XML omits business fields for home-use kerosene", () => {
   const xml = form4136.build({
     claimant_context: "home_kerosene",

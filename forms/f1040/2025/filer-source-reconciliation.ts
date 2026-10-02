@@ -1,8 +1,36 @@
-import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import {
+  AccountType,
+  type FilerIdentity,
+  FilingStatus,
+} from "../mef/header.ts";
+import {
+  DependentCreditCategory,
+  dependentFilingSchema,
+  eicChildSourceProjection,
+  filedDependentsFromGeneral,
+  inputSchema as generalInputSchema,
+} from "../nodes/inputs/general/index.ts";
+import { inputSchema as form1099gSchema } from "../nodes/inputs/f1099g/index.ts";
+import { inputSchema as form1099necSchema } from "../nodes/inputs/f1099nec/index.ts";
+import { inputSchema as form1099mSchema } from "../nodes/inputs/f1099m/index.ts";
+import { inputSchema as form1099kSchema } from "../nodes/inputs/f1099k/index.ts";
+import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
+import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/index.ts";
+import {
+  distributionTotal,
+  inputSchema as form1099patrSchema,
+} from "../nodes/inputs/f1099patr/schema.ts";
+import {
+  calculateForm8814,
+  type Form8814Lines,
+} from "../nodes/inputs/f8814/index.ts";
 
 export function assertKIncomeClassification(
   pending: Record<string, unknown>,
 ): void {
+  if (pending.f1099k !== undefined) {
+    form1099kSchema.parse(pending.f1099k);
+  }
   const raw = (pending.f1099k as
     | { f1099ks?: Array<Record<string, unknown>> }
     | undefined)?.f1099ks ?? [];
@@ -395,6 +423,18 @@ export function assertEitcChildSources(
   ) {
     throw new Error("Schedule EIC child source differs from the filed credit");
   }
+  const projected = eicChildSourceProjection(generalInputSchema.parse(general));
+  if (
+    count !== projected.count ||
+    rows.some((value, index) =>
+      tin((value as Record<string, unknown>)?.ssn, "Schedule EIC child") !==
+        tin(projected.details[index]?.ssn, "reviewed EIC child")
+    )
+  ) {
+    throw new Error(
+      "Schedule EIC child roster differs from reviewed general source",
+    );
+  }
   const seen = new Set<string>();
   for (const value of rows) {
     const row = value as Record<string, unknown>;
@@ -405,6 +445,15 @@ export function assertEitcChildSources(
     );
     if (!ssn || seen.has(ssn) || matches.length !== 1) {
       throw new Error("Schedule EIC child needs one matching general source");
+    }
+    if (
+      ssn === tin(filer.primarySSN, "EIC filer") ||
+      (filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        ssn === tin(filer.spouse?.ssn, "EIC joint spouse"))
+    ) {
+      throw new Error(
+        "Schedule EIC child cannot use filer or joint-spouse SSN",
+      );
     }
     seen.add(ssn);
     const dep = matches[0] as Record<string, unknown>;
@@ -418,6 +467,10 @@ export function assertEitcChildSources(
       dep.dob !== row.dob ||
       dep.irs_relationship_code !== row.irs_relationship_code ||
       dep.months_in_home !== row.months_in_home ||
+      dep.months_lived_with_you_in_us !== row.months_lived_with_you_in_us ||
+      JSON.stringify(dep.eic_birth_residency_review) !==
+        JSON.stringify(row.eic_birth_residency_review) ||
+      dep.lived_in_us_over_half_year !== true ||
       dep.full_time_student !== row.full_time_student ||
       dep.disabled !== row.disabled || dep.ip_pin !== row.ip_pin ||
       dep.ssn_valid_for_employment !== true ||
@@ -444,6 +497,54 @@ export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const miscRows = pending.f1099m === undefined
+    ? []
+    : form1099mSchema.parse(pending.f1099m).f1099ms;
+  const expectedMisc = miscRows.flatMap((item) => {
+    const boxes = [
+      [
+        "box3_other_income",
+        item.box3_other_income_routing === "schedule_c"
+          ? item.box3_other_income
+          : 0,
+      ],
+      [
+        "box1_rents",
+        item.box1_rents_routing === "schedule_c" ? item.box1_rents : 0,
+      ],
+      [
+        "box2_royalties",
+        item.box2_royalties_routing === "schedule_c" ? item.box2_royalties : 0,
+      ],
+      ["box5_fishing_boat", item.box5_fishing_boat],
+      ["box6_medical_payments", item.box6_medical_payments],
+      ["box11_fish_purchased", item.box11_fish_purchased],
+    ] as const;
+    return boxes.flatMap(([box, amount]) =>
+      (amount ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          box,
+          amount,
+        }]
+        : []
+    );
+  });
+  const expectedNec = pending.f1099nec === undefined
+    ? []
+    : form1099necSchema.parse(pending.f1099nec).f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_c" && (item.box1_nec ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference,
+          payer_name: item.payer_name,
+          payer_tin: tin(item.payer_tin, "1099-NEC payer"),
+          recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+          amount: item.box1_nec,
+        }]
+        : []
+    );
   const rawK =
     (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
       ?.f1099ks ?? [];
@@ -635,9 +736,9 @@ export function assertScheduleCReceiptSourceIdentity(
   }
   const scheduleC = pending.schedule_c;
   if (!scheduleC || typeof scheduleC !== "object") {
-    if (expectedK.length) {
+    if (expectedK.length || expectedNec.length || expectedMisc.length) {
       throw new Error(
-        "1099-K Schedule C source differs from the filed business",
+        "1099 Schedule C source differs from the filed business",
       );
     }
     return;
@@ -663,6 +764,28 @@ export function assertScheduleCReceiptSourceIdentity(
         ),
       )
     ).sort();
+  if (
+    !Array.isArray(receiptSources) ||
+    JSON.stringify(sortRows(receiptSources)) !==
+      JSON.stringify(sortRows(expectedMisc))
+  ) {
+    if (receiptSources !== undefined || expectedMisc.length) {
+      throw new Error(
+        "1099-MISC Schedule C sources differ from retained payer copies",
+      );
+    }
+  }
+  if (
+    !Array.isArray(necSources) ||
+    JSON.stringify(sortRows(necSources)) !==
+      JSON.stringify(sortRows(expectedNec))
+  ) {
+    if (necSources !== undefined || expectedNec.length) {
+      throw new Error(
+        "1099-NEC Schedule C source differs from the retained payer copy",
+      );
+    }
+  }
   if (
     !Array.isArray(kSources) ||
     JSON.stringify(sortRows(kSources)) !== JSON.stringify(sortRows(expectedK))
@@ -822,30 +945,257 @@ export function assertScheduleCReceiptSourceIdentity(
   }
 }
 
+/** Replay every statutory W-2 box 1 copy to its named Schedule C business. */
+export function assertScheduleCStatutoryW2Sources(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const w2s = pending.w2 === undefined
+    ? []
+    : w2InputSchema.parse(pending.w2).w2s;
+  const expected = w2s.flatMap((row) => {
+    if (row.box13_statutory_employee !== true || row.box1_wages <= 0) {
+      return [];
+    }
+    if (
+      !row.schedule_c_business_reference || !row.employer_ein ||
+      !row.employee_ssn || !row.source_document_reference
+    ) {
+      throw new Error(
+        "Statutory W-2 box 1 needs an identified issued copy and Schedule C business reference",
+      );
+    }
+    return [{
+      business_reference: row.schedule_c_business_reference,
+      employer_ein: row.employer_ein.replace(/\D/g, ""),
+      employee_ssn: row.employee_ssn.replace(/\D/g, ""),
+      source_document_reference: row.source_document_reference,
+      amount: row.box1_wages,
+    }];
+  });
+  const scheduleC = pending.schedule_c === undefined
+    ? undefined
+    : scheduleCInputSchema.parse(pending.schedule_c);
+  const actual = scheduleC?.statutory_w2_sources ?? [];
+  const sorted = (rows: typeof expected) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (JSON.stringify(sorted(actual)) !== JSON.stringify(sorted(expected))) {
+    throw new Error(
+      "Schedule C statutory W-2 sources differ from retained issued copies",
+    );
+  }
+  const businessTotals = new Map<string, number>();
+  for (const row of expected) {
+    businessTotals.set(
+      row.business_reference,
+      (businessTotals.get(row.business_reference) ?? 0) + row.amount,
+    );
+  }
+  for (const [reference, wages] of businessTotals) {
+    const matches = scheduleC?.schedule_cs.filter((item) =>
+      item.business_reference === reference
+    ) ?? [];
+    const item = matches[0];
+    if (
+      matches.length !== 1 || item?.statutory_employee !== true ||
+      !item.proprietor_recipient || item.line_1_gross_receipts !== wages
+    ) {
+      throw new Error(
+        "Statutory W-2 wages need one matching Schedule C activity with exact box 1 receipts",
+      );
+    }
+    const owner = item.proprietor_recipient === "T"
+      ? filer.primarySSN.replace(/\D/g, "")
+      : filer.filingStatus === FilingStatus.MarriedFilingJointly
+      ? filer.spouse?.ssn.replace(/\D/g, "")
+      : undefined;
+    if (
+      !owner || expected.some((row) =>
+        row.business_reference === reference && row.employee_ssn !== owner
+      )
+    ) {
+      throw new Error(
+        "Statutory W-2 employee differs from the Schedule C proprietor",
+      );
+    }
+  }
+  if (
+    scheduleC?.schedule_cs.some((item) =>
+      item.statutory_employee === true && item.line_1_gross_receipts > 0 &&
+      !businessTotals.has(item.business_reference ?? "")
+    )
+  ) {
+    throw new Error(
+      "Statutory Schedule C receipts need retained W-2 box 1 sources",
+    );
+  }
+}
+
 export function assertSchedule1Box3SourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
-  const schedule1 = pending.schedule1;
-  if (!schedule1 || typeof schedule1 !== "object") return;
-  const rows = (schedule1 as Record<string, unknown>)
-    .f1099m_box3_other_income_sources;
-  if (rows === undefined) return;
-  if (!Array.isArray(rows)) {
-    throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
+  const raw = (pending.f1099m as
+    | { f1099ms?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ms ?? [];
+  const sourceRows = raw.filter((item) =>
+    item.box3_other_income_routing === "other_income" &&
+    typeof item.box3_other_income === "number" &&
+    item.box3_other_income > 0
+  );
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const rows = schedule1?.f1099m_box3_other_income_sources;
+  if (sourceRows.length === 0 && rows === undefined) return;
+  if (!Array.isArray(rows) || rows.length !== sourceRows.length) {
+    throw new Error(
+      "Schedule 1 needs one 1099-MISC box 3 row per issued other-income source",
+    );
   }
-  const recipients = [
-    tin(filer.primarySSN, "taxpayer"),
-    tin(filer.spouse?.ssn, "spouse"),
-  ];
-  for (const value of rows) {
-    if (!value || typeof value !== "object") {
-      throw new Error("Schedule 1 1099-MISC box 3 source is invalid");
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  const unmatched = [...rows] as Array<Record<string, unknown>>;
+  for (const item of sourceRows) {
+    const recipient = tin(item.recipient_tin, "1099-MISC recipient");
+    if (
+      !recipients.includes(recipient) ||
+      typeof item.payer_name !== "string" || !item.payer_name.trim() ||
+      !tin(item.payer_tin, "1099-MISC payer") ||
+      typeof item.box3_other_income_description !== "string" ||
+      !item.box3_other_income_description.trim() ||
+      !Number.isSafeInteger(item.box3_other_income)
+    ) {
+      throw new Error("1099-MISC box 3 issued source is invalid");
     }
-    const row = value as Record<string, unknown>;
-    if (!recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))) {
-      throw new Error("1099-MISC box 3 recipient differs from the filer");
+    const index = unmatched.findIndex((row) =>
+      row && typeof row === "object" &&
+      row.payer_name === item.payer_name &&
+      tin(row.payer_tin, "1099-MISC payer") ===
+        tin(item.payer_tin, "1099-MISC payer") &&
+      tin(row.recipient_tin, "1099-MISC recipient") === recipient &&
+      row.description === item.box3_other_income_description &&
+      row.amount === item.box3_other_income
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule 1 1099-MISC box 3 row differs from its issued source",
+      );
     }
+    unmatched.splice(index, 1);
+  }
+  if (unmatched.length !== 0) {
+    throw new Error(
+      "Schedule 1 1099-MISC box 3 row differs from its issued source",
+    );
+  }
+}
+
+export function assertSchedule1Form8814Source(
+  pending: Record<string, unknown>,
+): void {
+  const form8814 = pending.form8814 as
+    | { items?: readonly Form8814Lines[] }
+    | undefined;
+  const items = form8814?.items ?? [];
+  if (!Array.isArray(items)) {
+    throw new Error("Form 8814 retained child elections must be rows");
+  }
+  const sourceTotal = items.reduce((sum, line) => {
+    if (
+      !line || typeof line !== "object" || !line.item ||
+      typeof line.line12 !== "number" ||
+      !Number.isSafeInteger(line.line12) ||
+      line.line12 !== calculateForm8814(line.item).line12
+    ) {
+      throw new Error("Form 8814 line 12 differs from reviewed child election");
+    }
+    return sum + line.line12;
+  }, 0);
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const filed = schedule1?.line8z_form8814;
+  if (
+    (sourceTotal > 0 || filed !== undefined) &&
+    (typeof filed !== "number" || !Number.isSafeInteger(filed) ||
+      filed !== sourceTotal)
+  ) {
+    throw new Error(
+      "Schedule 1 Form 8814 line 8z differs from retained child elections",
+    );
+  }
+}
+
+export function assertSchedule1Box8SourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const raw = (pending.f1099m as
+    | { f1099ms?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ms ?? [];
+  if (
+    raw.some((item) =>
+      item.box8_substitute_payments !== undefined &&
+      (typeof item.box8_substitute_payments !== "number" ||
+        !Number.isSafeInteger(item.box8_substitute_payments) ||
+        item.box8_substitute_payments < 0)
+    )
+  ) {
+    throw new Error("1099-MISC box 8 needs a nonnegative whole-dollar amount");
+  }
+  const sourceRows = raw.filter((item) =>
+    typeof item.box8_substitute_payments === "number" &&
+    item.box8_substitute_payments > 0
+  );
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const filedRows = schedule1?.f1099m_box8_substitute_sources;
+  const filedTotal = schedule1?.line8z_substitute_payments;
+  if (
+    sourceRows.length === 0 && filedRows === undefined &&
+    filedTotal === undefined
+  ) return;
+  if (!Array.isArray(filedRows) || filedRows.length !== sourceRows.length) {
+    throw new Error(
+      "Schedule 1 substitute payments need one row per 1099-MISC box 8 source",
+    );
+  }
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  const unmatched = [...filedRows] as Record<string, unknown>[];
+  let expectedTotal = 0;
+  for (const item of sourceRows) {
+    const amount = item.box8_substitute_payments;
+    if (
+      typeof amount !== "number" || !Number.isSafeInteger(amount) ||
+      amount <= 0 || typeof item.payer_name !== "string" ||
+      !item.payer_name.trim() || !tin(item.payer_tin, "1099-MISC payer") ||
+      !tin(item.recipient_tin, "1099-MISC recipient") ||
+      !recipients.includes(tin(item.recipient_tin, "1099-MISC recipient"))
+    ) {
+      throw new Error("1099-MISC box 8 source identity or amount is invalid");
+    }
+    const index = unmatched.findIndex((row) =>
+      row && typeof row === "object" &&
+      row.payer_name === item.payer_name &&
+      tin(row.payer_tin, "1099-MISC payer") ===
+        tin(item.payer_tin, "1099-MISC payer") &&
+      tin(row.recipient_tin, "1099-MISC recipient") ===
+        tin(item.recipient_tin, "1099-MISC recipient") &&
+      row.amount === amount
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule 1 substitute payment row differs from its 1099-MISC source",
+      );
+    }
+    unmatched.splice(index, 1);
+    expectedTotal += amount;
+  }
+  if (unmatched.length !== 0 || filedTotal !== expectedTotal) {
+    throw new Error(
+      "Schedule 1 substitute payments differ from 1099-MISC box 8 sources",
+    );
   }
 }
 
@@ -934,12 +1284,185 @@ export function assertScheduleFFarmSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const necRows = pending.f1099nec === undefined
+    ? []
+    : form1099necSchema.parse(pending.f1099nec).f1099necs;
+  const expectedNec = necRows.flatMap((item) =>
+    item.for_routing === "schedule_f" && (item.box1_nec ?? 0) > 0
+      ? [{
+        farm_id: item.farm_id,
+        kind: "1099nec_farm_income",
+        amount: item.box1_nec,
+        payer_name: item.payer_name,
+        payer_tin: tin(item.payer_tin, "1099-NEC payer"),
+        recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+      }]
+      : []
+  );
+  const gRows = pending.f1099g === undefined
+    ? []
+    : form1099gSchema.parse(pending.f1099g).f1099gs;
+  const expectedG = gRows.flatMap((item) => {
+    const payerTin = item.payer_tin?.replace(/\D/g, "");
+    return ([
+      [
+        item.box_7_payment_kind === "crop_disaster_current_taxable"
+          ? "1099g_crop_disaster_current_taxable"
+          : "1099g_agriculture",
+        item.box_7_agriculture ?? 0,
+      ],
+      ["1099g_ccc_market_gain", item.box_9_market_gain ?? 0],
+    ] as const).filter(([, amount]) => amount > 0).map(([kind, amount]) => ({
+      farm_id: item.farm_id,
+      kind,
+      amount,
+      payer_name: item.payer_name,
+      payer_tin: payerTin,
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+    }));
+  });
+  const mRows = pending.f1099m === undefined
+    ? []
+    : form1099mSchema.parse(pending.f1099m).f1099ms;
+  const expectedM = mRows.filter((item) => (item.box9_crop_insurance ?? 0) > 0)
+    .map((item) => ({
+      farm_id: item.farm_id,
+      kind: "1099m_crop_insurance",
+      amount: item.box9_crop_insurance,
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin,
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+      deferred: item.box9_crop_insurance_deferred === true,
+    }));
+  const expectedMBox3 = mRows.flatMap((item) =>
+    item.box3_other_income_routing === "schedule_f" &&
+      (item.box3_other_income ?? 0) > 0
+      ? [{
+        farm_id: item.farm_id,
+        kind: "1099m_box3_other_income",
+        amount: item.box3_other_income,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin,
+        recipient_tin: item.recipient_tin,
+      }]
+      : []
+  );
+  const patrRows = pending.f1099patr === undefined
+    ? []
+    : form1099patrSchema.parse(pending.f1099patr).f1099patrs;
+  const expectedPatr = patrRows.flatMap((item) => {
+    const treatment = item.distribution_treatment;
+    if (treatment?.kind !== "farm" || distributionTotal(item) === 0) {
+      return [];
+    }
+    return [{
+      farm_id: treatment.farm_id,
+      kind: "1099patr_cooperative",
+      amount: distributionTotal(item),
+      taxable_amount: treatment.verified_taxable_amount,
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin?.replace(/\D/g, ""),
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+    }];
+  });
   const scheduleF = pending.schedule_f;
-  if (!scheduleF || typeof scheduleF !== "object") return;
+  if (!scheduleF || typeof scheduleF !== "object") {
+    if (
+      expectedNec.length + expectedG.length + expectedM.length +
+          expectedMBox3.length +
+          expectedPatr.length > 0
+    ) {
+      throw new Error("1099 farm payments need a Schedule F source");
+    }
+    return;
+  }
   const sources = (scheduleF as Record<string, unknown>).farm_sources;
-  if (sources === undefined) return;
+  if (sources === undefined) {
+    if (
+      expectedNec.length + expectedG.length + expectedM.length +
+          expectedMBox3.length +
+          expectedPatr.length > 0
+    ) {
+      throw new Error("Schedule F 1099 farm sources are missing");
+    }
+    return;
+  }
   if (!Array.isArray(sources)) {
     throw new Error("Schedule F farm sources must be rows");
+  }
+  const actualG = sources.filter((value) =>
+    value && typeof value === "object" &&
+    (value.kind === "1099g_agriculture" ||
+      value.kind === "1099g_crop_disaster_current_taxable" ||
+      value.kind === "1099g_ccc_market_gain")
+  );
+  const sourceKey = (value: Record<string, unknown>) =>
+    JSON.stringify([
+      value.farm_id,
+      value.kind,
+      value.amount,
+      value.payer_name,
+      value.payer_tin,
+      value.recipient_tin,
+      value.source_document_reference,
+      value.taxable_amount,
+      value.deferred === true,
+    ]);
+  const actualNec = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099nec_farm_income"
+  );
+  if (
+    JSON.stringify(actualNec.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedNec.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-NEC farm sources differ from retained payer copies",
+    );
+  }
+  if (
+    JSON.stringify(actualG.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedG.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-G farm sources differ from retained payer copies",
+    );
+  }
+  const actualM = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099m_crop_insurance"
+  );
+  if (
+    JSON.stringify(actualM.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedM.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-MISC crop-insurance sources differ from retained payer copies",
+    );
+  }
+  const actualMBox3 = sources.filter((value) =>
+    value && typeof value === "object" &&
+    value.kind === "1099m_box3_other_income"
+  );
+  if (
+    JSON.stringify(actualMBox3.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedMBox3.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
+    );
+  }
+  const actualPatr = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099patr_cooperative"
+  );
+  if (
+    JSON.stringify(actualPatr.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedPatr.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-PATR sources differ from retained cooperative copies",
+    );
   }
   const farms = (scheduleF as Record<string, unknown>).schedule_fs;
   if (!Array.isArray(farms)) {
@@ -952,7 +1475,12 @@ export function assertScheduleFFarmSourceIdentity(
     const row = value as Record<string, unknown>;
     if (
       row.kind !== "1099m_box3_other_income" &&
-      row.kind !== "1099nec_farm_income"
+      row.kind !== "1099nec_farm_income" &&
+      row.kind !== "1099g_agriculture" &&
+      row.kind !== "1099g_crop_disaster_current_taxable" &&
+      row.kind !== "1099g_ccc_market_gain" &&
+      row.kind !== "1099m_crop_insurance" &&
+      row.kind !== "1099patr_cooperative"
     ) continue;
     const matches = farms.filter((farm) =>
       farm && typeof farm === "object" &&
@@ -984,6 +1512,7 @@ export function assertF1040FinalHeader(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): void {
+  assertNoUnsupportedDeceasedReturn(fields, undefined, filer);
   if (fields.dual_status_return_2025 === true) {
     throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
   }
@@ -1014,5 +1543,189 @@ export function assertF1040FinalHeader(
   }
   if (typeof fields.digital_assets !== "boolean") {
     throw new Error("Form 1040 export needs the digital-assets answer");
+  }
+}
+
+/** Deceased returns need signer, representative, and refund review before export. */
+export function assertNoUnsupportedDeceasedReturn(
+  fields?: Record<string, unknown>,
+  general?: Record<string, unknown>,
+  filer?: FilerIdentity,
+): void {
+  const hasDeceasedFacts = (source?: Record<string, unknown>) =>
+    source?.taxpayer_deceased === true || source?.spouse_deceased === true ||
+    (typeof source?.taxpayer_death_date === "string" &&
+      source.taxpayer_death_date.trim().length > 0) ||
+    (typeof source?.spouse_death_date === "string" &&
+      source.spouse_death_date.trim().length > 0);
+  if (
+    hasDeceasedFacts(fields) || hasDeceasedFacts(general) ||
+    filer?.deceased === true || Boolean(filer?.deathDate) ||
+    filer?.spouse?.deceased === true || Boolean(filer?.spouse?.deathDate)
+  ) {
+    throw new Error(
+      "TY2025 deceased Form 1040 needs reviewed signer, representative, and refund facts before filing",
+    );
+  }
+}
+
+/** Keep the filed header answers tied to the retained general input. */
+export function assertGeneral1040HeaderSource(
+  pending: Record<string, unknown>,
+): void {
+  const general = pending.general as Record<string, unknown> | undefined;
+  const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+  assertNoUnsupportedDeceasedReturn(f1040, general);
+  if (!general || !f1040) return;
+  if (general.filing_status !== f1040.filing_status) {
+    throw new Error(
+      "Form 1040 filing status differs from the retained general source",
+    );
+  }
+  if (typeof general.digital_assets !== "boolean") {
+    throw new Error(
+      "Form 1040 export needs the digital-assets answer in the retained general source",
+    );
+  }
+  if (general.digital_assets !== f1040.digital_assets) {
+    throw new Error(
+      "Form 1040 digital-assets answer differs from the retained general source",
+    );
+  }
+}
+
+/** A reported digital-asset disposition requires Yes on Form 1040. */
+export function assertDigitalAssetDispositionAnswer(
+  pending: Record<string, unknown>,
+): void {
+  const source = pending.f8949 as { f8949s?: unknown } | undefined;
+  const prepared = pending.form8949;
+  const computed = !Array.isArray(prepared) && prepared !== null &&
+      typeof prepared === "object"
+    ? (prepared as { transaction?: unknown }).transaction
+    : undefined;
+  const rows = [
+    ...(Array.isArray(source?.f8949s) ? source.f8949s : []),
+    ...(Array.isArray(prepared) ? prepared : []),
+    ...(Array.isArray(computed) ? computed : computed ? [computed] : []),
+  ];
+  if (
+    rows.some((row) =>
+      row !== null && typeof row === "object" &&
+      typeof (row as { part?: unknown }).part === "string" &&
+      /^[G-L]$/.test((row as { part: string }).part)
+    ) &&
+    (pending.f1040 as { digital_assets?: unknown } | undefined)
+        ?.digital_assets !== true
+  ) {
+    throw new Error(
+      "Form 1040 digital-assets answer must be Yes for a Form 8949 digital-asset disposition",
+    );
+  }
+}
+
+/** Detect a changed or omitted dependent row after general input projection. */
+export function assertGeneral1040DependentSource(
+  pending: Record<string, unknown>,
+): void {
+  if (pending.general === undefined || pending.f1040 === undefined) return;
+  const source = generalInputSchema.parse(pending.general);
+  const filed = pending.f1040 as Record<string, unknown>;
+  const expected = filedDependentsFromGeneral(source);
+  const actual = dependentFilingSchema.array().parse(
+    filed.dependent_details ?? [],
+  );
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(
+      "Form 1040 dependent rows differ from the retained general source",
+    );
+  }
+  const ctc =
+    expected.filter((dep) =>
+      dep.credit_category === DependentCreditCategory.ChildTaxCredit
+    ).length;
+  const odc =
+    expected.filter((dep) =>
+      dep.credit_category === DependentCreditCategory.OtherDependentCredit
+    ).length;
+  if (
+    (filed.dependent_count ?? 0) !== expected.length ||
+    (filed.qualifying_child_tax_credit_count ?? 0) !== ctc ||
+    (filed.other_dependent_count ?? 0) !== odc
+  ) {
+    throw new Error(
+      "Form 1040 dependent counts differ from the retained general source",
+    );
+  }
+}
+
+/** Match the bank instruction retained on the general input to the filed refund. */
+export function assertGeneral1040DepositSource(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+): void {
+  const general = pending.general as Record<string, unknown> | undefined;
+  const routing = general?.bank_routing_number;
+  const account = general?.bank_account_number;
+  const type = general?.bank_account_type;
+  const filed = pending.f1040 as Record<string, unknown> | undefined;
+  if (routing === undefined && account === undefined && type === undefined) {
+    if (filer?.bankAccount) {
+      throw new Error(
+        "Form 1040 direct deposit needs the retained general bank source",
+      );
+    }
+    if (
+      ["bank_routing_number", "bank_account_number", "bank_account_type"]
+        .some((key) => filed?.[key] !== undefined && filed?.[key] !== null)
+    ) {
+      throw new Error(
+        "Form 1040 filed direct-deposit details need the retained general bank source",
+      );
+    }
+    return;
+  }
+  const expectedType = type === "checking"
+    ? AccountType.Checking
+    : type === "savings"
+    ? AccountType.Savings
+    : undefined;
+  if (
+    typeof routing !== "string" ||
+    !/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/.test(routing) ||
+    routing.split("").reduce(
+            (sum, digit, index) => sum + Number(digit) * [3, 7, 1][index % 3],
+            0,
+          ) % 10 !== 0 ||
+    typeof account !== "string" ||
+    !/^[A-Za-z0-9-]{1,17}$/.test(account)
+  ) {
+    throw new Error(
+      "Form 1040 direct deposit needs a valid U.S. routing and account number",
+    );
+  }
+  if (
+    expectedType === undefined || !filer?.bankAccount ||
+    routing !== filer.bankAccount.routingNumber ||
+    account !== filer.bankAccount.accountNumber ||
+    expectedType !== filer.bankAccount.accountType ||
+    routing !== filed?.bank_routing_number ||
+    account !== filed?.bank_account_number ||
+    type !== filed?.bank_account_type
+  ) {
+    throw new Error(
+      "Form 1040 direct-deposit account differs from the retained general source",
+    );
+  }
+  if (
+    !filed || typeof filed.line35a_refund !== "number" ||
+    filed.line35a_refund <= 0 ||
+    (typeof filed.line37_amount_owed === "number" &&
+      filed.line37_amount_owed > 0) ||
+    pending.f8888 !== undefined
+  ) {
+    throw new Error(
+      "Form 1040 direct deposit needs a positive refund without Form 8888 or amount owed",
+    );
   }
 }

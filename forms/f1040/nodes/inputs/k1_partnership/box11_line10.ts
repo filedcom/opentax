@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+const eicActivityReviewSchema = z.object({
+  classification: z.enum(["passive", "nonpassive"]),
+  activity_statement_reference: z.string().trim().min(1),
+  participation_workpaper_reference: z.string().trim().min(1),
+  partnership_not_publicly_traded_verified: z.literal(true),
+  // A passive loss or an unallowed loss requires a Form 8582 activity ledger.
+  no_current_or_prior_unallowed_loss_for_activity_verified: z.literal(true)
+    .optional(),
+}).strict();
+
 export const box11Line10ReviewSchema = z.object({
   code: z.enum(["L", "R"]),
   gain_loss: z.number().int().refine((amount) => amount !== 0),
@@ -7,6 +17,7 @@ export const box11Line10ReviewSchema = z.object({
   recipient_tin: z.string().regex(/^\d{9}$/),
   ordinary_character_reviewed: z.literal(true),
   character_workpaper_reference: z.string().trim().min(1),
+  eic_activity_review: eicActivityReviewSchema.optional(),
 }).strict();
 
 export const box11Line10SourceSchema = z.object({
@@ -18,6 +29,7 @@ export const box11Line10SourceSchema = z.object({
   statement_reference: z.string().trim().min(1),
   recipient_tin: z.string().regex(/^\d{9}$/),
   character_workpaper_reference: z.string().trim().min(1),
+  eic_activity_review: eicActivityReviewSchema.optional(),
 }).strict();
 
 export type Box11Line10Source = z.infer<typeof box11Line10SourceSchema>;
@@ -58,6 +70,9 @@ export function box11Line10SourceRows(
         statement_reference: review.statement_reference,
         recipient_tin: review.recipient_tin,
         character_workpaper_reference: review.character_workpaper_reference,
+        ...(review.eic_activity_review
+          ? { eic_activity_review: review.eic_activity_review }
+          : {}),
       });
     });
   });

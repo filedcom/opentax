@@ -7,7 +7,10 @@ import {
   form3800NonpassiveCreditUseRows,
   type Form8835CreditEntry,
 } from "../../../nodes/inputs/f3800/calculation.ts";
-import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import {
+  inputSchema as f3800InputSchema,
+  reconcileForm3800NonpassiveCarryforwards,
+} from "../../../nodes/inputs/f3800/index.ts";
 import { allocateDisabledAccessLine1eCredits } from "../../../nodes/inputs/f3800/disabled-access.ts";
 import {
   calculateForm8582CR,
@@ -61,6 +64,14 @@ import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
+import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
+import { reconcileForm8881DirectEmployer } from "./f8881.ts";
+import { reconcileForm8941ScheduleC } from "./f8941_source.ts";
+import { reconcileForm8994DirectEmployer } from "../../form8994_source.ts";
+import { reconcileForm8864DocumentSource } from "../../form8864_source.ts";
+import { reconcileForm8882DirectEmployer } from "./f8882_source.ts";
+import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
+import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -70,6 +81,7 @@ const taxBase = z.object({
   priorAllowableCredits: amount,
   tentativeMinimumTax: amount,
   standardCredit: amount,
+  empowermentCredit: amount.optional(),
   specifiedCredit: amount,
   standardCarryforward: amount,
   specifiedCarryforward: amount,
@@ -717,6 +729,13 @@ function prepareForm3800Base(fields: PendingForm3800) {
     fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
+    (fields.f8844_direct_employer_credit?.credit_amount ?? 0) > 0 ||
+    fields.f8881_credit !== undefined ||
+    fields.f8908_credit !== undefined ||
+    fields.f8941_direct_employer_credit !== undefined ||
+    fields.f8994_direct_employer_credit !== undefined ||
+    fields.f8864_direct_producer_credit !== undefined ||
+    fields.f8882_direct_employer_credit !== undefined ||
     fields.f8874_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8820_k1_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
@@ -763,10 +782,16 @@ export function prepareForm3800DocumentParts(
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
   const carryforwardEntries = parsed.carryforward_vintages ?? [];
+  const empowermentCarryforward = reconcileForm3800NonpassiveCarryforwards(
+    carryforwardEntries,
+  ).filter((entry) => entry.form3800CreditLine === "3").reduce(
+    (sum, entry) => sum + entry.availableAfterAdjustment,
+    0,
+  );
   reconcileFiledTaxContext(tax, allowedCredit, context);
   reconcilePassiveSources(parsed, context);
   if (
-    lines.line6 > 0 &&
+    (lines.line6 > 0 || lines.line22 > 0) &&
     context.documentIdsByPendingKey.form6251?.length !== 1
   ) {
     throw new Error("Form 3800 ordinary credit needs attached Form 6251");
@@ -774,6 +799,107 @@ export function prepareForm3800DocumentParts(
   const form8826 = sourceForm8826(parsed, context);
   const form8820 = sourceForm8820(parsed, context);
   const form8874 = sourceForm8874(parsed, context);
+  const form8844 = parsed.f8844_direct_employer_credit
+    ? reconcileForm8844DirectEmployer(context.pending ?? {})
+    : undefined;
+  const form8881 = parsed.f8881_credit
+    ? reconcileForm8881DirectEmployer(context.pending ?? {})
+    : undefined;
+  const form8908 = parsed.f8908_credit
+    ? reconciledForm8908Source(context.pending?.f8908, parsed)
+    : undefined;
+  const form8941 = parsed.f8941_direct_employer_credit
+    ? reconcileForm8941ScheduleC(context.pending ?? {}, context.filer)
+    : undefined;
+  const form8994 = parsed.f8994_direct_employer_credit
+    ? reconcileForm8994DirectEmployer(
+      context.pending?.f8994,
+      context.pending ?? {},
+    )
+    : undefined;
+  const form8864 = parsed.f8864_direct_producer_credit
+    ? reconcileForm8864DocumentSource(
+      context.pending?.f8864,
+      context.pending ?? {},
+    )
+    : undefined;
+  if (
+    form8864 && (
+      parsed.f8864_direct_producer_credit?.credit_amount !==
+        form8864.lines.line11 ||
+      parsed.f8864_direct_producer_credit?.schedule_c_business_reference !==
+        form8864.source.schedule_c_business_reference ||
+      parsed.f8864_direct_producer_credit?.form637_registration_number !==
+        form8864.source.form637_registration_number
+    )
+  ) {
+    throw new Error("Form 3800 line 1l differs from filed Form 8864 source");
+  }
+  if (
+    form8994 && (
+      parsed.f8994_direct_employer_credit?.credit_amount !==
+        form8994.lines.line3 ||
+      parsed.f8994_direct_employer_credit?.schedule_c_business_reference !==
+        form8994.source.schedule_c_business_reference ||
+      parsed.f8994_direct_employer_credit?.schedule_c_wage_ledger_reference !==
+        form8994.source.schedule_c_wage_ledger_reference
+    )
+  ) {
+    throw new Error("Form 3800 line 4j differs from filed Form 8994 source");
+  }
+  if (
+    form8941 && (
+      parsed.f8941_direct_employer_credit?.credit_amount !==
+        form8941.lines.line16 ||
+      parsed.f8941_direct_employer_credit?.schedule_c_business_reference !==
+        form8941.source.schedule_c_business_reference ||
+      parsed.f8941_direct_employer_credit?.shop_plan_reference !==
+        form8941.source.shop_plan_reference
+    )
+  ) {
+    throw new Error("Form 3800 line 4h differs from filed Form 8941 source");
+  }
+  const form8882 = parsed.f8882_direct_employer_credit
+    ? reconcileForm8882DirectEmployer(
+      context.pending?.f8882,
+      context.pending ?? {},
+    )
+    : undefined;
+  if (
+    form8882 && (
+      parsed.f8882_direct_employer_credit?.credit_amount !==
+        form8882.lines.line7 ||
+      parsed.f8882_direct_employer_credit?.schedule_c_business_reference !==
+        form8882.source.schedule_c_business_reference
+    )
+  ) {
+    throw new Error("Form 3800 line 1k differs from its filed Form 8882");
+  }
+  if (
+    form8882 && context.filer &&
+    form8882.source.proprietor_ssn !==
+      context.filer.primarySSN.replaceAll("-", "")
+  ) {
+    throw new Error("Form 3800 line 1k owner differs from filed taxpayer");
+  }
+  if (form8908) reconcileForm8908PwaAttachments(form8908.source, context);
+  if (
+    form8908 && context.filer &&
+    form8908.source.contractor_ssn !== context.filer.primarySSN &&
+    form8908.source.contractor_ssn !== context.filer.spouse?.ssn
+  ) {
+    throw new Error(
+      "Form 8908 line 1p contractor differs from filed taxpayer or spouse",
+    );
+  }
+  if (
+    (tax.empowermentCredit ?? 0) !==
+      (form8844?.lines.line2 ?? 0) + empowermentCarryforward
+  ) {
+    throw new Error(
+      "Form 3800 line 22 differs from sourced empowerment-zone credits",
+    );
+  }
   const newMarketsK1Credits = parsed.f8874_k1_credit_entries ?? [];
   reconcileNewMarketsK1Credits(newMarketsK1Credits, context.pending ?? {});
   const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
@@ -894,6 +1020,15 @@ export function prepareForm3800DocumentParts(
     form8826Credit,
     form8820Credit,
     form8874Credit,
+    form8881PartICredit: form8881?.line8,
+    form8881PartIICredit: form8881?.line11,
+    form8881PartIIICredit: form8881?.line15,
+    form8908Credit: form8908?.lines.line8,
+    form8941Credit: form8941?.lines.line16,
+    form8994Credit: form8994?.lines.line3,
+    form8864Credit: form8864?.lines.line11,
+    form8882Credit: form8882?.lines.line7,
+    form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
     form5884Credit: form5884?.credit,
     form8936NewVehicleCredit: form8936?.credit,
@@ -924,10 +1059,12 @@ export function prepareForm3800DocumentParts(
             !row.form3800CreditLine.startsWith("4")
           ? row.appliedAgainstTax
           : 0),
+      empowerment: sum.empowerment +
+        (row.form3800CreditLine === "3" ? row.appliedAgainstTax : 0),
       specified: sum.specified +
         (row.form3800CreditLine.startsWith("4") ? row.appliedAgainstTax : 0),
     }),
-    { standard: 0, specified: 0 },
+    { standard: 0, empowerment: 0, specified: 0 },
   );
   const sourceApplied = (
     exists: boolean,
@@ -961,6 +1098,56 @@ export function prepareForm3800DocumentParts(
     parsed.form8820_applied_credit,
   );
   const form8874Applied = applied("nonpassive:8874");
+  const form8844Applied = applied("nonpassive:8844");
+  const form8881Applied = {
+    i: applied("nonpassive:8881:i"),
+    ii: applied("nonpassive:8881:ii"),
+    iii: applied("nonpassive:8881:iii"),
+  };
+  const form8908Applied = applied("nonpassive:8908");
+  const form8941Applied = sourceApplied(
+    Boolean(form8941),
+    "nonpassive:8941",
+    parsed.form8941_applied_credit,
+  );
+  if (form8941) {
+    if (parsed.form8941_applied_credit === undefined) {
+      throw new Error(
+        "Form 8941 needs explicit Form 3800 allowed-credit allocation",
+      );
+    }
+    reconcileForm8941ScheduleC(
+      context.pending ?? {},
+      context.filer,
+      form8941Applied,
+    );
+  }
+  const form8994Applied = sourceApplied(
+    Boolean(form8994),
+    "nonpassive:8994",
+    parsed.form8994_applied_credit,
+  );
+  if (form8994) {
+    if (parsed.form8994_applied_credit === undefined) {
+      throw new Error(
+        "Form 8994 needs explicit Form 3800 allowed-credit allocation",
+      );
+    }
+    reconcileForm8994DirectEmployer(
+      context.pending?.f8994,
+      context.pending ?? {},
+      form8994Applied,
+    );
+  }
+  const form8864Applied = sourceApplied(
+    Boolean(form8864),
+    "nonpassive:8864",
+    parsed.form8864_applied_credit,
+  );
+  if (form8864 && parsed.form8864_applied_credit === undefined) {
+    throw new Error("Form 8864 needs explicit Form 3800 tax-use allocation");
+  }
+  const form8882Applied = applied("nonpassive:8882");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
     "nonpassive:3468-part-v",
@@ -1001,6 +1188,34 @@ export function prepareForm3800DocumentParts(
     : f8874InputSchema.parse(context.pending.f8874);
   if (form8874Ids.length !== (filedForm8874 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8874 document count differs from source");
+  }
+  const form8844Ids = context.documentIdsByPendingKey.f8844 ?? [];
+  if (form8844Ids.length !== (form8844 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8844 document count differs from source");
+  }
+  const form8881Ids = context.documentIdsByPendingKey.f8881 ?? [];
+  if (form8881Ids.length !== (form8881 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8881 document count differs from source");
+  }
+  const form8908Ids = context.documentIdsByPendingKey.f8908 ?? [];
+  if (form8908Ids.length !== (form8908 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8908 document count differs from source");
+  }
+  const form8941Ids = context.documentIdsByPendingKey.f8941 ?? [];
+  if (form8941Ids.length !== (form8941 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8941 document count differs from source");
+  }
+  const form8994Ids = context.documentIdsByPendingKey.f8994 ?? [];
+  if (form8994Ids.length !== (form8994 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8994 document count differs from source");
+  }
+  const form8864Ids = context.documentIdsByPendingKey.f8864 ?? [];
+  if (form8864Ids.length !== (form8864 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8864 document count differs from source");
+  }
+  const form8882Ids = context.documentIdsByPendingKey.f8882 ?? [];
+  if (form8882Ids.length !== (form8882 ? 1 : 0)) {
+    throw new Error("Form 3800 Form 8882 document count differs from source");
   }
   const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
   if (form8835Ids.length !== facilities.length) {
@@ -1098,6 +1313,70 @@ export function prepareForm3800DocumentParts(
           ),
         }
         : undefined,
+      form8844: form8844
+        ? {
+          credit: form8844.lines.line2,
+          documentId: form8844Ids[0],
+          appliedCredit: form8844Applied,
+        }
+        : undefined,
+      form8881: form8881
+        ? {
+          documentId: form8881Ids[0],
+          parts: [
+            {
+              line: "1j" as const,
+              credit: form8881.line8,
+              appliedCredit: form8881Applied.i,
+            },
+            {
+              line: "1dd" as const,
+              credit: form8881.line11,
+              appliedCredit: form8881Applied.ii,
+            },
+            {
+              line: "1ee" as const,
+              credit: form8881.line15,
+              appliedCredit: form8881Applied.iii,
+            },
+          ].filter((part) => part.credit > 0),
+        }
+        : undefined,
+      form8908: form8908
+        ? {
+          credit: form8908.lines.line8,
+          documentId: form8908Ids[0],
+          appliedCredit: form8908Applied,
+        }
+        : undefined,
+      form8941: form8941
+        ? {
+          credit: form8941.lines.line16,
+          documentId: form8941Ids[0],
+          appliedCredit: form8941Applied,
+        }
+        : undefined,
+      form8994: form8994
+        ? {
+          credit: form8994.lines.line3,
+          documentId: form8994Ids[0],
+          appliedCredit: form8994Applied,
+        }
+        : undefined,
+      form8864: form8864
+        ? {
+          credit: form8864.lines.line11,
+          documentId: form8864Ids[0],
+          appliedCredit: form8864Applied,
+        }
+        : undefined,
+      form8882: form8882
+        ? {
+          credit: form8882.lines.line7,
+          documentId: form8882Ids[0],
+          appliedCredit: form8882Applied,
+        }
+        : undefined,
       form3468PartV: form3468PartVCredit > 0
         ? {
           credit: form3468PartVCredit,
@@ -1185,7 +1464,13 @@ export function prepareForm3800DocumentParts(
       "Form 3800 carryforward needs authenticated prior-return evidence and an attached filed history statement",
     );
   }
-  return joined;
+  return {
+    ...joined,
+    form3468DocumentIds: form3468Ids,
+    form5884DocumentIds: form5884Ids,
+    form8835DocumentIds: form8835Ids,
+    form8874DocumentIds: form8874Ids,
+  };
 }
 
 export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {

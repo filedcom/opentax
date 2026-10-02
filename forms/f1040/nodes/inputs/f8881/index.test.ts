@@ -1,190 +1,203 @@
-import { assertEquals } from "@std/assert";
-import { f8881, PlanType } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { calculateForm8881, f8881, PlanType } from "./index.ts";
 
-function compute(input: Parameters<typeof f8881.compute>[1]) {
-  return f8881.compute({ taxYear: 2025, formType: "f1040" }, input);
-}
+const startup = {
+  plan_effective_on: "2025-01-01",
+  first_credit_year: 2025,
+  preceding_first_credit_year_qualified_employee_count: 20,
+  eligible_non_hce_count: 3,
+  startup_costs: 4_000,
+  cost_record_reference: "plan-invoice-1",
+  costs_paid_or_incurred_on: "2025-02-15",
+  eligible_plan_confirmed: true,
+  no_substantially_same_employee_plan_in_prior_three_years_confirmed: true,
+  startup_cost_deduction_reduced_by_credit_confirmed: true,
+} as const;
 
-function findSchedule3(result: ReturnType<typeof compute>) {
-  return result.outputs.find((o) => o.nodeType === "schedule3");
-}
+const contributions = {
+  plan_effective_on: "2023-01-01",
+  preceding_first_plan_year_qualified_employee_count: 20,
+  preceding_2025_employee_count: 60,
+  eligible_defined_contribution_plan_confirmed: true,
+  no_substantially_same_employee_plan_in_prior_three_years_confirmed: true,
+  contribution_deduction_reduced_by_credit_confirmed: true,
+  employees: [{
+    employee_reference: "worker-1",
+    contribution_record_reference: "payroll-1",
+    contributed_on: "2025-12-15",
+    wages_2025: 50_000,
+    qualified_employer_contribution: 1_500,
+    elective_deferrals_excluded_confirmed: true,
+  }],
+} as const;
 
-// ── Schema Validation ────────────────────────────────────────────────────────
+const autoEnrollment = {
+  first_credit_year: 2024,
+  preceding_first_credit_year_qualified_employee_count: 20,
+  arrangement_record_reference: "plan-amendment-1",
+  arrangement_first_included_on: "2024-01-01",
+  eligible_automatic_contribution_arrangement_confirmed: true,
+  qualified_employer_plan_confirmed: true,
+  maintained_in_2025_confirmed: true,
+} as const;
 
-Deno.test("schema_rejects_negative_startup_costs", () => {
-  const result = f8881.inputSchema.safeParse({
+const militarySpouses = {
+  preceding_2025_qualified_employee_count: 20,
+  eligible_defined_contribution_plan_confirmed: true,
+  participation_within_two_months_confirmed: true,
+  immediate_equal_contribution_and_vesting_confirmed: true,
+  employees: [{
+    employee_reference: "worker-2",
+    spouse_active_duty_certification_reference: "military-cert-1",
+    contribution_record_reference: "payroll-2",
+    contributed_on: "2025-11-15",
+    first_eligible_participation_year: 2024,
+    non_hce_confirmed: true,
+    active_duty_spouse_at_hire_confirmed: true,
+    participated_in_2025_confirmed: true,
+    qualified_employer_contribution: 400,
+    elective_deferrals_excluded_confirmed: true,
+  }],
+} as const;
+
+Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
+  const three = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
-    non_hce_count: 5,
-    employee_count: 20,
-    startup_costs: -100,
+    startup,
   });
-  assertEquals(result.success, false);
+  assertEquals(three.line3, 750);
+  assertEquals(three.line4, 750);
+  assertEquals(three.line5, 750);
+  const twenty = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
+    plan_type: PlanType.Plan401k,
+    startup: { ...startup, eligible_non_hce_count: 20, startup_costs: 8_000 },
+  });
+  assertEquals(twenty.line5, 5_000);
 });
 
-Deno.test("schema_accepts_valid_input", () => {
-  const result = f8881.inputSchema.safeParse({
-    plan_type: PlanType.Sep,
-    non_hce_count: 3,
-    employee_count: 10,
-    startup_costs: 3000,
-  });
-  assertEquals(result.success, true);
-});
-
-// ── Eligibility Gates ─────────────────────────────────────────────────────────
-
-Deno.test("over_100_employees_no_credit", () => {
-  const result = compute({
+Deno.test("Form 8881 larger employer startup rate and $500 floor", () => {
+  const lines = calculateForm8881({
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Simple,
-    non_hce_count: 50,
-    employee_count: 101,
-    startup_costs: 5000,
+    startup: {
+      ...startup,
+      preceding_first_credit_year_qualified_employee_count: 75,
+      eligible_non_hce_count: 1,
+      startup_costs: 3_000,
+    },
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(lines.line2, 1_500);
+  assertEquals(lines.line4, 500);
+  assertEquals(lines.line5, 500);
 });
 
-Deno.test("exactly_100_employees_qualifies", () => {
-  // 100 employees → 50% rate → $5000 × 50% = $2,500
-  const result = compute({
-    plan_type: PlanType.Simple,
-    non_hce_count: 50,
-    employee_count: 100,
-    startup_costs: 5000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 2500);
-});
-
-Deno.test("zero_non_hce_count_no_credit", () => {
-  const result = compute({
+Deno.test("Form 8881 contribution, auto-enrollment, and military spouse parts stay separate", () => {
+  const source = {
+    schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
-    non_hce_count: 0,
-    employee_count: 20,
-    startup_costs: 5000,
-  });
-  assertEquals(result.outputs.length, 0);
+    startup,
+    contributions: {
+      ...contributions,
+      employees: [...contributions.employees],
+    },
+    auto_enrollment: autoEnrollment,
+    military_spouses: {
+      ...militarySpouses,
+      employees: [...militarySpouses.employees],
+    },
+  };
+  const lines = calculateForm8881(source);
+  assertEquals(lines.line5, 750);
+  assertEquals(lines.line6c, 1_334);
+  assertEquals(lines.line6e3, 267);
+  assertEquals(lines.line6g, 800);
+  assertEquals(lines.line8, 1_550);
+  assertEquals(lines.line11, 500);
+  assertEquals(lines.line12, 200);
+  assertEquals(lines.line13, 300);
+  assertEquals(lines.line15, 500);
+  const result = f8881.compute({ taxYear: 2025, formType: "f1040" }, source);
+  assertEquals(result.outputs, [{
+    nodeType: "f3800",
+    fields: {
+      f8881_credit: {
+        schedule_c_business_reference: "PLAN-BUSINESS-1",
+        part_i_credit: 1_550,
+        part_ii_credit: 500,
+        part_iii_credit: 500,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  }]);
 });
 
-Deno.test("zero_startup_costs_no_credit", () => {
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 5,
-    employee_count: 20,
-    startup_costs: 0,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// ── Small Employer (≤50) — 100% Rate ─────────────────────────────────────────
-
-Deno.test("small_employer_50_or_fewer_100pct_rate", () => {
-  // 30 employees, $4,000 costs × 100% = $4,000
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 10,
-    employee_count: 30,
-    startup_costs: 4000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 4000);
-});
-
-Deno.test("small_employer_exactly_50_employees_100pct_rate", () => {
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 10,
-    employee_count: 50,
-    startup_costs: 3000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 3000);
-});
-
-Deno.test("startup_costs_capped_at_5000", () => {
-  // $8,000 × 100% → capped at $5,000
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 5,
-    employee_count: 20,
-    startup_costs: 8000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 5000);
-});
-
-// ── Larger Employer (51–100) — 50% Rate ──────────────────────────────────────
-
-Deno.test("employer_51_to_100_employees_50pct_rate", () => {
-  // 75 employees, $4,000 × 50% = $2,000
-  const result = compute({
-    plan_type: PlanType.Simple,
-    non_hce_count: 30,
-    employee_count: 75,
-    startup_costs: 4000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 2000);
-});
-
-Deno.test("51_employee_limit_50pct_rate_cap_at_5000", () => {
-  // 51 employees, $12,000 × 50% = $6,000 → capped at $5,000
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 20,
-    employee_count: 51,
-    startup_costs: 12000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 5000);
-});
-
-// ── Auto-Enrollment Credit ────────────────────────────────────────────────────
-
-Deno.test("auto_enrollment_adds_500_to_credit", () => {
-  // $3,000 × 100% = $3,000 + $500 = $3,500
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 5,
-    employee_count: 20,
-    startup_costs: 3000,
-    has_auto_enrollment: true,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 3500);
-});
-
-Deno.test("no_auto_enrollment_no_extra_credit", () => {
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 5,
-    employee_count: 20,
-    startup_costs: 3000,
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 3000);
-});
-
-Deno.test("auto_enrollment_only_qualifies_when_startup_eligible", () => {
-  // Over 100 employees → no credit even with auto-enrollment
-  const result = compute({
-    plan_type: PlanType.Plan401k,
-    non_hce_count: 50,
-    employee_count: 110,
-    startup_costs: 5000,
-    has_auto_enrollment: true,
-  });
-  // startup credit = 0, but auto-enrollment alone adds $500
-  // The auto-enrollment credit ($500) is still added
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 500);
-});
-
-Deno.test("routes_to_schedule3", () => {
-  const result = compute({
-    plan_type: PlanType.Sep,
-    non_hce_count: 3,
-    employee_count: 10,
-    startup_costs: 2000,
-  });
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
+Deno.test("Form 8881 rejects unsupported or unproven source facts", () => {
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      non_hce_count: 3,
+      employee_count: 20,
+      startup_costs: 4_000,
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      startup: {
+        ...startup,
+        startup_cost_deduction_reduced_by_credit_confirmed: false,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      startup: { ...startup, first_credit_year: 2022 },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      startup: { ...startup, costs_paid_or_incurred_on: "2024-12-31" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      auto_enrollment: {
+        ...autoEnrollment,
+        arrangement_first_included_on: "2023-01-01",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8881.inputSchema.safeParse({
+      plan_type: PlanType.Plan401k,
+      contributions: {
+        ...contributions,
+        employees: [
+          contributions.employees[0],
+          contributions.employees[0],
+        ],
+      },
+    }).success,
+    false,
+  );
+  assertThrows(() =>
+    calculateForm8881({
+      schedule_c_business_reference: "PLAN-BUSINESS-1",
+      plan_type: PlanType.DefBenefit,
+      contributions: {
+        ...contributions,
+        employees: [...contributions.employees],
+      },
+    })
+  );
 });

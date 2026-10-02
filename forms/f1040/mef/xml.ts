@@ -1,4 +1,19 @@
 export function escapeXml(value: string): string {
+  for (const char of value) {
+    const codePoint = char.codePointAt(0)!;
+    if (
+      (codePoint < 0x20 && codePoint !== 0x09 && codePoint !== 0x0a &&
+        codePoint !== 0x0d) ||
+      (codePoint >= 0xd800 && codePoint <= 0xdfff) ||
+      codePoint === 0xfffe || codePoint === 0xffff
+    ) {
+      throw new Error(
+        `MeF XML contains invalid character U+${
+          codePoint.toString(16).toUpperCase()
+        }`,
+      );
+    }
+  }
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -13,6 +28,9 @@ export function element(
   attrs?: Record<string, string>,
 ): string {
   if (value === undefined) return "";
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    throw new Error(`MeF XML ${tag} has a nonfinite numeric value`);
+  }
   const content = typeof value === "number"
     ? String(Math.round(value))
     : escapeXml(value);

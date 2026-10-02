@@ -1,6 +1,7 @@
 import { join } from "@std/path";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -172,10 +173,11 @@ export async function getReturnCommand(
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
   const result = def.executeReturn(engineInputs);
+  const pending = normalizeAllPending(result.pending);
 
-  const f1040 = result.pending["f1040"] ?? {};
+  const f1040 = pending["f1040"] ?? {};
 
-  const warnings = softValidationWarnings(result.pending);
+  const warnings = softValidationWarnings(pending);
   for (const d of result.diagnostics) {
     warnings.push(`[${d.code}] ${d.nodeType}: ${d.message}`);
   }
@@ -184,7 +186,7 @@ export async function getReturnCommand(
     returnId: meta.returnId,
     year: meta.year,
     summary: extractSummary(f1040),
-    forms: collectForms(result.pending),
+    forms: collectForms(pending),
     lines: f1040,
     warnings,
     carryforwards: result.carryforwards,

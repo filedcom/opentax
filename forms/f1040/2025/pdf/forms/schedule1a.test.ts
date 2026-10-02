@@ -1,12 +1,43 @@
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertFalse,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { buildMefBundle } from "../../mef/builder.ts";
+import { buildPending } from "../../mef/pending.ts";
+import { buildPdfBytes } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { irs1040Pdf } from "./f1040.ts";
+import { form4137Pdf } from "./f4137.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
+
+const overtimeW2 = (amount: number, box1Wages: number) => ({
+  w2s: [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Employer",
+    box1_wages: box1Wages,
+    box2_fed_withheld: 0,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount,
+      is_state_sdi_pfml: false,
+    }],
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: "Employer box 14 FLSA premium review",
+    },
+  }],
+});
 
 Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero employee line", () => {
   const fixture = pdfReviewFixtures.find((item) =>
@@ -32,6 +63,145 @@ Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero empl
     )?.pdfField,
     "form1[0].Page1[0].f1_13[0]",
   );
+});
+
+Deno.test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and Form 1040", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-employer-form4137-tips-schedule1a"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const projected = schedule1aPdf.projectFields?.(
+    pending.schedule1a,
+    pending,
+  );
+  assertEquals(projected?.line4a_w2_tips, 0);
+  assertEquals(projected?.line4b_form4137_tips, 0);
+  assertEquals(projected?.line4c_employee_tips, 9_500);
+  assertEquals(projected?.line38_total, 9_500);
+  assertEquals(
+    (projected?.pdf_tip_sources as Array<{
+      reported_amount: number;
+      form4137_amount: number;
+      amount: number;
+    }>).map((row) => [
+      row.reported_amount,
+      row.form4137_amount,
+      row.amount,
+    ]),
+    [[5_000, 6_500, 6_500], [2_000, 3_000, 3_000]],
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(pending.f1040, pending)
+      ?.line13b_additional_deductions,
+    9_500,
+  );
+  const [form4137] = form4137Pdf.instances?.(
+    pending.form4137,
+    fixture.filer,
+    pending,
+  ) ?? [];
+  assertEquals(form4137?.employer_1_received, 6_500);
+  assertEquals(form4137?.employer_2_received, 3_000);
+
+  const sourceRows = pending.schedule1a.qualified_form4137_tips as Array<
+    Record<string, unknown>
+  >;
+  const omitted = {
+    ...pending,
+    schedule1a: {
+      ...pending.schedule1a,
+      qualified_form4137_tips: sourceRows.slice(0, 1),
+    },
+    f1040: { ...pending.f1040, line13b_additional_deductions: 8_500 },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(omitted.schedule1a, omitted),
+    Error,
+    "do not match the filed employer",
+  );
+  const sourceForms = pending.form4137.forms as Array<{
+    recipient: string;
+    employers: Array<Record<string, unknown>>;
+  }>;
+  const changedEmployer = {
+    ...pending,
+    form4137: {
+      ...pending.form4137,
+      forms: [{
+        ...sourceForms[0],
+        employers: [
+          sourceForms[0].employers[0],
+          {
+            ...sourceForms[0].employers[1],
+            tips_received: 2_999,
+          },
+        ],
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(pending.schedule1a, changedEmployer),
+    Error,
+    "do not match the filed employer",
+  );
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line1c_unreported_tips: 2_499 },
+      }),
+    Error,
+    "tip income and tax do not reconcile",
+  );
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        schedule2: { ...pending.schedule2, line5_unreported_tip_tax: 190 },
+      }),
+    Error,
+    "tip income and tax do not reconcile",
+  );
+  const w2Rows = pending.w2.w2s as Array<Record<string, unknown>>;
+  assertThrows(
+    () =>
+      form4137Pdf.instances?.(pending.form4137, fixture.filer, {
+        ...pending,
+        w2: {
+          ...pending.w2,
+          w2s: [w2Rows[0], { ...w2Rows[1], box7_ss_tips: 1_999 }],
+        },
+      }),
+    Error,
+    "W-2 tip sources disagree",
+  );
+});
+
+Deno.test("2025 two-employer Form 4137 tips build one prepared filled return PDF", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-employer-form4137-tips-schedule1a"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  const pdf = await buildPdfBytes(pending, fixture.filer, ".pdf-cache", bundle);
+  assert((await PDFDocument.load(pdf)).getPageCount() >= 7);
 });
 
 const source = {
@@ -70,6 +240,18 @@ const return1040 = {
   spouse_tin_issued_by_due_date: true,
 };
 
+Deno.test("Schedule 1-A PDF does not silently omit a positive senior source without Part I review", () => {
+  assertThrows(
+    () =>
+      schedule1aPdf.projectFields?.(
+        { ...source, senior_zero_exclusions_review: undefined },
+        { f1040: {} },
+      ),
+    Error,
+    "sourced Part I zero-exclusion review",
+  );
+});
+
 Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", () => {
   const map = new Map(schedule1aPdf.fields.map((entry) => [
     entry.domainKey,
@@ -83,7 +265,7 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   assertEquals(map.get("line38_total"), "form1[0].Page2[0].f2_23[0]");
   assertEquals(
     schedule1aPdf.filerFields?.map((field) => field.domainKey),
-    ["nameLine1", "primarySSN"],
+    ["nameShownOnForm1040", "primarySSN"],
   );
 
   const pending = { schedule1a: source, f1040: return1040 };
@@ -120,6 +302,7 @@ Deno.test("2025 Schedule 1-A PDF fills senior and overtime parts together", () =
   const projected = schedule1aPdf.projectFields?.(mixed, {
     schedule1a: mixed,
     f1040: mixedReturn,
+    w2: overtimeW2(4_000, 160_000),
   });
   assertEquals(projected?.line21_overtime, 4_000);
   assertEquals(projected?.line37_senior, 10_800);
@@ -184,6 +367,32 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   assertEquals(projected?.line23_total_interest, 4_000);
   assertEquals(projected?.line30_vehicle_interest, 4_000);
   assertEquals(projected?.line38_total, 4_000);
+  const refinancedSource = {
+    ...vehicleSource,
+    vehicle_loans: [{
+      ...loan,
+      refinance: {
+        refinanced_date: "2025-07-01",
+        lender_name: "Second Credit Union",
+        interest_statement_reference: "2025 refinance lender statement",
+        refinance_and_first_lien_reference:
+          "2025 refinance first-lien agreement",
+        outstanding_original_principal_at_refinance: 20_000,
+        refinanced_principal: 20_000,
+        original_loan_interest_paid_before_refinance: 1_500,
+        refinanced_loan_interest_paid: 2_500,
+        first_lien_secured_on_same_vehicle: true as const,
+        no_cash_out_or_ineligible_debt: true as const,
+      },
+    }],
+  };
+  const refinancedProjected = schedule1aPdf.projectFields?.(
+    refinancedSource,
+    { schedule1a: refinancedSource, f1040: vehicleReturn },
+  );
+  assertEquals(refinancedProjected?.line22a_vin, loan.vin);
+  assertEquals(refinancedProjected?.line22a_interest, 4_000);
+  assertEquals(refinancedProjected?.line30_vehicle_interest, 4_000);
   const secondLoan = {
     ...loan,
     vin: "1HGCM82633A004353",
@@ -219,14 +428,38 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   await schedule1aPdf.appendSupplementalPages?.(
     document,
     threeLoanProjected,
-    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    {
+      nameLine1: "EXAMPLE ALEX B",
+      firstNameWithInitial: "Alex B",
+      lastName: "Example",
+      primarySSN: "111223333",
+    } as never,
   );
   assertEquals(document.getPageCount(), 1);
+  const statementPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(statementPath, await document.save());
+    const rendered = await new Deno.Command("pdftotext", {
+      args: ["-layout", statementPath, "-"],
+    }).output();
+    assertEquals(rendered.code, 0);
+    const printed = new TextDecoder().decode(rendered.stdout);
+    assertStringIncludes(printed, "Name: Alex B Example");
+    assertFalse(printed.includes("EXAMPLE ALEX B"));
+    assertStringIncludes(printed, "Attached VINs 2-3: 3,000");
+  } finally {
+    await Deno.remove(statementPath);
+  }
   await assertRejects(async () =>
     await schedule1aPdf.appendSupplementalPages?.(
       await PDFDocument.create(),
       { ...threeLoanProjected, line22b_interest: 2_999 },
-      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+      {
+        nameLine1: "EXAMPLE ALEX B",
+        firstNameWithInitial: "Alex B",
+        lastName: "Example",
+        primarySSN: "111223333",
+      } as never,
     )
   );
   await assertRejects(async () =>
@@ -245,7 +478,12 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
           (threeLoanProjected.line22_overflow_vehicles as unknown[])[1],
         ],
       },
-      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+      {
+        nameLine1: "EXAMPLE ALEX B",
+        firstNameWithInitial: "Alex B",
+        lastName: "Example",
+        primarySSN: "111223333",
+      } as never,
     )
   );
   const twentyLoanSource = {
@@ -264,7 +502,12 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   await schedule1aPdf.appendSupplementalPages?.(
     multipage,
     twentyLoanProjected,
-    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    {
+      nameLine1: "EXAMPLE ALEX B",
+      firstNameWithInitial: "Alex B",
+      lastName: "Example",
+      primarySSN: "111223333",
+    } as never,
   );
   assertEquals(multipage.getPageCount(), 2);
 });
@@ -283,7 +526,11 @@ Deno.test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
           premium_included_in_box1: true,
           source_reference: "Employer box 14 FLSA premium review",
         }],
-      }, { schedule1a: source, f1040: return1040 }),
+      }, {
+        schedule1a: source,
+        f1040: return1040,
+        w2: overtimeW2(100, 100_000),
+      }),
     Error,
     "do not reconcile",
   );
@@ -401,6 +648,7 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed W-2 overtime to Part III", () => 
   const projected = schedule1aPdf.projectFields?.(overtimeSource, {
     schedule1a: overtimeSource,
     f1040: overtimeReturn,
+    w2: overtimeW2(4_000, 80_000),
   });
   assertEquals(projected?.line14a_w2_overtime, 4_000);
   assertEquals(projected?.line14b_zero_1099, 0);

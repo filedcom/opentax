@@ -3,6 +3,8 @@ import {
   calculateLikeKindExchange,
 } from "../../../nodes/intermediate/forms/form8824/calculation.ts";
 import { form8824 } from "./f8824.ts";
+import { buildForm8824GainStatement } from "./f8824_gain_statement.ts";
+import { FilingStatus } from "../types.ts";
 import type {
   Form8824Input,
 } from "../../../nodes/intermediate/forms/form8824/index.ts";
@@ -24,6 +26,32 @@ const exchange = {
   relinquished_basis: 100_000,
   received_fmv: 200_000,
 } satisfies Form8824Input;
+
+Deno.test("Form 8824 generated gain statement replays exact bytes after time passes", async () => {
+  const source = {
+    ...exchange,
+    received_fmv: 150_000,
+    cash_received: 50_000,
+    gain_type: "section_1231" as const,
+  };
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "Test Taxpayer",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TEST",
+    filingStatus: FilingStatus.Single,
+    address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+  };
+  const first = await buildForm8824GainStatement(source, filer);
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  const second = await buildForm8824GainStatement(source, filer);
+  assertEquals(second?.bytes, first?.bytes);
+});
 
 Deno.test("Form 8824 uses IRS Part III line names and order", () => {
   const xml = form8824.build(exchange);

@@ -1035,6 +1035,20 @@ Deno.test("Situation 4 without agreement uses enrollee ratio for dollars", () =>
       end_month: 1,
       allocated_enrollees_in_tax_family: 1,
       total_enrollees: 3,
+      nonagreement_review: {
+        tax_year: 2025,
+        policy_number: "OTHER-POLICY-2",
+        filer_ssn: "123456789",
+        other_taxpayer_ssn: "222334444",
+        other_taxpayer_claimed_covered_ssn: "333445555",
+        marketplace_enrollment_reference: "marketplace-three-person-enrollment",
+        tax_family_review_reference: "reviewed-2025-tax-families",
+        tax_family_review_sha256: "a".repeat(64),
+        no_agreement_review_reference: "reviewed-2025-no-agreement",
+        no_agreement_review_sha256: "b".repeat(64),
+        filer_enrolled_count: 1,
+        policy_enrolled_count: 3,
+      },
     }],
   })]);
   const fields = findOutput(result, "form8962")?.fields;
@@ -1534,6 +1548,6 @@ Deno.test("protected partial no-APTC premium adjusts only its covered month", ()
         minimalItem({ ...sourceFields, policy_number: "POLICY-2" }),
       ]),
     Error,
-    "one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
+    "one nonshared zero-APTC policy or distinct nonoverlapping same-enrollee policies",
   );
 });

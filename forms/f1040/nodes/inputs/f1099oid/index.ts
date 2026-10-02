@@ -21,6 +21,7 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),
@@ -88,6 +89,23 @@ export const inputSchema = z.object({
 
 type OIDItem = z.infer<typeof itemSchema>;
 type OIDItems = OIDItem[];
+
+export function assertDistinct1099OIDCopies(items: OIDItems): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.source_document_reference || !item.payer_tin) continue;
+    const key = JSON.stringify([
+      item.source_document_reference,
+      item.payer_tin.replace(/\D/g, ""),
+    ]);
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-OID repeats the same identified payer and source reference; corrected copies need a reviewed single current row",
+      );
+    }
+    seen.add(key);
+  }
+}
 
 function taxableInterest(item: OIDItem): number {
   const gross = (item.box1_oid ?? 0) + (item.box8_oid_treasury ?? 0) +
@@ -269,6 +287,7 @@ class F1099oidNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1099oids } = inputSchema.parse(input);
+    assertDistinct1099OIDCopies(f1099oids);
     f1099oids.forEach(validateItem);
 
     const outputs: NodeOutput[] = [

@@ -22,9 +22,17 @@ import {
   inputSchema as f8936InputSchema,
 } from "../../../nodes/inputs/f8936/index.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
+import { reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
 import { reconcileDisabledAccessK1Credits } from "../../mef/forms/f8826_credit_evidence.ts";
 import { reconcileForm8826SelfSource } from "../../mef/forms/f8826_source.ts";
 import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
+import { reconcileForm8844DirectEmployer } from "../../mef/forms/f8844_source.ts";
+import { reconcileForm8881DirectEmployer } from "../../mef/forms/f8881.ts";
+import { reconcileForm8941ScheduleC } from "../../mef/forms/f8941_source.ts";
+import { reconcileForm8994DocumentSource } from "../../form8994_source.ts";
+import { reconcileForm8864DocumentSource } from "../../form8864_source.ts";
+import { reconcileForm8882DirectEmployer } from "../../mef/forms/f8882_source.ts";
+import { reconciledForm8908Source } from "../../mef/forms/f8908_source_reconciliation.ts";
 import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
@@ -118,8 +126,291 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    if (source.f8864_direct_producer_credit) {
+      const { lines } = reconcileForm8864DocumentSource(all.f8864, all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1l");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1l"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1l"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8864_direct_producer_credit) !==
+          JSON.stringify(source.f8864_direct_producer_credit) ||
+        rawSource.form8864_applied_credit !==
+          source.form8864_applied_credit ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8864" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line11 ||
+        amount.totalCredit !== lines.line11 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== source.form8864_applied_credit ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line11 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 1l differs from Form 8864 source");
+      }
+    }
+    if (source.f8908_credit) {
+      const { lines } = reconciledForm8908Source(all.f8908, source);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1p");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1p"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1p"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8908_credit) !==
+          JSON.stringify(source.f8908_credit) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8908" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line8 ||
+        amount.totalCredit !== lines.line8 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line8 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 1p differs from Form 8908 source");
+      }
+    }
+    if (source.f8941_direct_employer_credit) {
+      const { lines } = reconcileForm8941ScheduleC(
+        all,
+        undefined,
+        source.form8941_applied_credit,
+      );
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "4h");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "4h"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "4h"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8941_direct_employer_credit) !==
+          JSON.stringify(source.f8941_direct_employer_credit) ||
+        rawSource.form8941_applied_credit !==
+          source.form8941_applied_credit ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8941" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line16 ||
+        amount.totalCredit !== lines.line16 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== source.form8941_applied_credit ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line16 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 4h differs from Form 8941 source");
+      }
+    }
+    if (source.f8994_direct_employer_credit) {
+      const { lines } = reconcileForm8994DocumentSource(all.f8994, all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "4j");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "4j"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "4j"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8994_direct_employer_credit) !==
+          JSON.stringify(source.f8994_direct_employer_credit) ||
+        rawSource.form8994_applied_credit !==
+          source.form8994_applied_credit ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8994" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line3 ||
+        amount.totalCredit !== lines.line3 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== source.form8994_applied_credit ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line3 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 4j differs from Form 8994 source");
+      }
+    }
+    if (source.f8882_direct_employer_credit) {
+      const { lines } = reconcileForm8882DirectEmployer(all.f8882, all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1k");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1k"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1k"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [detail] = details;
+      if (
+        JSON.stringify(rawSource.f8882_direct_employer_credit) !==
+          JSON.stringify(source.f8882_direct_employer_credit) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8882" ||
+        !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line7 ||
+        amount.totalCredit !== lines.line7 ||
+        amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line7 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error("Form 3800 PDF line 1k differs from Form 8882 source");
+      }
+    }
+    if (source.f8881_credit) {
+      const lines = reconcileForm8881DirectEmployer(all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const parts = [
+        { line: "1j", credit: lines.line8 },
+        { line: "1dd", credit: lines.line11 },
+        { line: "1ee", credit: lines.line15 },
+      ];
+      const expected = parts.filter((part) => part.credit > 0);
+      if (
+        JSON.stringify(rawSource.f8881_credit) !==
+          JSON.stringify(source.f8881_credit)
+      ) {
+        throw new Error(
+          "Form 3800 PDF Form 8881 claim differs from filed source",
+        );
+      }
+      if (
+        parts.filter((part) => part.credit === 0).some((part) =>
+          prepared.currentRows.some((row) => row.line === part.line) ||
+          prepared.currentAmounts.some((row) => row.line === part.line) ||
+          prepared.currentDetails.some((row) => row.line === part.line)
+        )
+      ) {
+        throw new Error("Form 3800 PDF has an unclaimed Form 8881 part");
+      }
+      for (const part of expected) {
+        const rows = prepared.currentRows.filter((row) =>
+          row.line === part.line
+        );
+        const amounts = prepared.currentAmounts.filter((row) =>
+          row.line === part.line
+        );
+        const details = prepared.currentDetails.filter((row) =>
+          row.line === part.line
+        );
+        const [row] = rows;
+        const [amount] = amounts;
+        const [detail] = details;
+        if (
+          rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+          row.metadata.sourceCount !== 1 ||
+          row.metadata.referenceDocumentName !== "IRS8881" ||
+          !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+          amount.nonpassiveCredit !== part.credit ||
+          amount.totalCredit !== part.credit ||
+          amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
+          amount.passiveAfterLimit !== 0 ||
+          amount.appliedCredit !== detail.appliedCredit ||
+          detail.credit !== part.credit ||
+          detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+          detail.passThroughEin !== undefined
+        ) {
+          throw new Error(
+            `Form 3800 PDF ${part.line} differs from Form 8881 source`,
+          );
+        }
+      }
+      const partDocumentIds = expected.map((part) =>
+        prepared.currentRows.find((row) => row.line === part.line)!
+          .metadata.referenceDocumentId
+      );
+      if (
+        expected.length === 0 ||
+        new Set(partDocumentIds).size !== 1
+      ) {
+        throw new Error(
+          "Form 3800 PDF Form 8881 parts must reference one filed IRS8881 document",
+        );
+      }
+    }
+    if (source.f8844_direct_employer_credit) {
+      const { lines } = reconcileForm8844DirectEmployer(all);
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "3");
+      const amounts = prepared.currentAmounts.filter((row) => row.line === "3");
+      const details = prepared.currentDetails.filter((row) => row.line === "3");
+      const row = rows[0];
+      const amount = amounts[0];
+      const detail = details[0];
+      if (
+        JSON.stringify(rawSource.f8844_direct_employer_credit) !==
+          JSON.stringify(source.f8844_direct_employer_credit) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+        row.metadata.sourceCount !== 1 ||
+        row.metadata.referenceDocumentName !== "IRS8844" ||
+        !row.metadata.referenceDocumentId ||
+        row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line2 ||
+        amount.totalCredit !== lines.line2 ||
+        amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !== detail.appliedCredit ||
+        detail.credit !== lines.line2 ||
+        detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        detail.passThroughEin !== undefined
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 3 differs from direct employer Form 8844 source",
+        );
+      }
+    }
     if (
       source.f8820_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       !source.f8874_credit &&
       !source.f8835_credit_entries?.length &&
       !source.f8826_credit_entries?.length &&
@@ -334,6 +625,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       source.f8936_commercial_vehicle_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       !source.f8936_new_vehicle_credit &&
       !source.f8874_credit &&
       !source.f8835_credit_entries?.length &&
@@ -422,6 +720,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       source.f8820_credit && source.f8874_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       (source.f8820_k1_credit_entries?.length ?? 0) === 0 &&
       (source.f8874_k1_credit_entries?.length ?? 0) === 0 &&
       !(source.passive_source_allocations ?? []).some((entry) =>
@@ -491,6 +796,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       source.f8820_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       source.f8835_credit_entries?.length === 1 &&
       !source.f8874_credit && !source.f5884_credit &&
       !source.f8826_credit_entries?.length &&
@@ -568,6 +880,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       source.f8874_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       source.passive_source_allocations?.length === 1 &&
       !source.f8820_credit && !source.f5884_credit &&
       !source.f8835_credit_entries?.length &&
@@ -641,6 +960,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       !source.f8874_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
       source.passive_source_allocations.every((entry) =>
@@ -728,6 +1054,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       !source.f8874_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
       source.passive_source_allocations.every((entry) =>
@@ -817,6 +1150,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       !source.f8874_credit &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       source.passive_source_allocations !== undefined &&
       source.passive_source_allocations.length >= 2 &&
       source.passive_source_allocations.some((entry) =>
@@ -1045,6 +1385,13 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     if (
       directOrphanK1?.length === 1 &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
       directOrphanK1[0].source_type === "partnership" &&
       !source.f8820_credit &&
       !(source.passive_source_allocations ?? []).some((entry) =>
@@ -1084,6 +1431,220 @@ export const form3800Pdf: PdfFormDescriptor = {
       ) {
         throw new Error(
           "Form 3800 printable orphan-drug line 1h differs from its K-1 source",
+        );
+      }
+    }
+    if (
+      directOrphanK1?.length === 2 &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
+      directOrphanK1.every((entry) => entry.source_type === "partnership") &&
+      !source.f8820_credit && !source.f8874_credit &&
+      !source.f5884_credit && !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const entries = sourceOrphanDrugK1Credits(source, { pending: all });
+      const rawSource = f3800InputSchema.parse(raw);
+      const [row] = prepared.currentRows;
+      const [amount] = prepared.currentAmounts;
+      const details = prepared.currentDetails.filter((detail) =>
+        detail.line === "1h"
+      );
+      const total = entries.reduce(
+        (sum, entry) => sum + entry.credit_amount,
+        0,
+      );
+      const largest = entries[0].credit_amount >= entries[1].credit_amount
+        ? entries[0]
+        : entries[1];
+      if (
+        entries[0].source_ein === entries[1].source_ein ||
+        entries.some((entry) =>
+          entry.credit_amount <= 0 || entry.subject_to_passive_activity_limit
+        ) ||
+        JSON.stringify(rawSource.f8820_k1_credit_entries) !==
+          JSON.stringify(directOrphanK1) ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentAmounts.length !== 1 ||
+        prepared.currentDetails.length !== 2 ||
+        prepared.carryoverRows.length !== 0 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
+        row.entityCredits.length !== 2 ||
+        !(row.metadata.entity && "ein" in row.metadata.entity) ||
+        row.metadata.entity.ein !== largest.source_ein ||
+        row.entityCredits.some((entity, index) =>
+          !("ein" in entity.entity) ||
+          entity.entity.ein !== entries[index].source_ein ||
+          entity.credit !== entries[index].credit_amount
+        ) ||
+        details.length !== 2 ||
+        details.some((detail, index) =>
+          detail.credit !== entries[index].credit_amount ||
+          detail.appliedCredit !== entries[index].credit_amount ||
+          detail.passThroughEin !== entries[index].source_ein
+        ) ||
+        amount?.line !== "1h" ||
+        amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
+        amount.appliedCredit !== total || amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
+        prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
+        prepared.lines.line17 !== total ||
+        (prepared.lines.line37 ?? 0) !== 0 ||
+        prepared.lines.line38 !== total
+      ) {
+        throw new Error(
+          "Form 3800 PDF two partnership orphan-drug sources differ from Part V and filed K-1s",
+        );
+      }
+    }
+    if (
+      source.f8820_credit && directOrphanK1?.length === 1 &&
+      !source.f8844_direct_employer_credit &&
+      !source.f8881_credit &&
+      !source.f8908_credit &&
+      !source.f8941_direct_employer_credit &&
+      !source.f8994_direct_employer_credit &&
+      !source.f8864_direct_producer_credit &&
+      !source.f8882_direct_employer_credit &&
+      directOrphanK1[0].source_type === "partnership" &&
+      !source.f8874_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.f8936_new_vehicle_credit &&
+      !source.f8936_commercial_vehicle_credit &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.passive_source_allocations?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const filed = f8820InputSchema.parse(all.f8820);
+      const selfCredit = calculateForm8820(filed).line2c;
+      const [k1Credit] = sourceOrphanDrugK1Credits(source, {
+        pending: all,
+      });
+      const rawSource = f3800InputSchema.parse(raw);
+      const row = prepared.currentRows[0];
+      const amount = prepared.currentAmounts[0];
+      const [selfDetail, k1Detail] = prepared.currentDetails;
+      const total = selfCredit + k1Credit.credit_amount;
+      if (
+        filed.subject_to_passive_activity_limit ||
+        (filed.pass_through_credits?.length ?? 0) !== 0 ||
+        selfCredit <= 0 || k1Credit.credit_amount <= 0 ||
+        source.f8820_credit.subject_to_passive_activity_limit ||
+        source.f8820_credit.credit_amount !== selfCredit ||
+        JSON.stringify(rawSource.f8820_credit) !==
+          JSON.stringify(source.f8820_credit) ||
+        JSON.stringify(rawSource.f8820_k1_credit_entries) !==
+          JSON.stringify(directOrphanK1) ||
+        prepared.currentRows.length !== 1 ||
+        prepared.currentAmounts.length !== 1 ||
+        prepared.currentDetails.length !== 2 ||
+        prepared.carryoverRows.length !== 0 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
+        row.metadata.referenceDocumentName !== "IRS8820" ||
+        !row.metadata.referenceDocumentId ||
+        row.entityCredits.length !== 1 ||
+        !("ein" in row.entityCredits[0].entity) ||
+        row.entityCredits[0].entity.ein !== k1Credit.source_ein ||
+        row.entityCredits[0].credit !== k1Credit.credit_amount ||
+        amount?.line !== "1h" ||
+        amount.nonpassiveCredit !== total ||
+        amount.totalCredit !== total ||
+        amount.passiveBeforeLimit !== 0 ||
+        amount.passiveAfterLimit !== 0 ||
+        amount.transferOutCredit !== 0 ||
+        amount.appliedCredit !== total ||
+        selfDetail?.line !== "1h" ||
+        selfDetail.credit !== selfCredit ||
+        selfDetail.appliedCredit !== selfCredit ||
+        selfDetail.passThroughEin !== undefined ||
+        selfDetail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+        k1Detail?.line !== "1h" ||
+        k1Detail.credit !== k1Credit.credit_amount ||
+        k1Detail.appliedCredit !== k1Credit.credit_amount ||
+        k1Detail.passThroughEin !== k1Credit.source_ein ||
+        k1Detail.sourceDocumentId !== undefined ||
+        prepared.lines.line1 !== total ||
+        prepared.lines.line6 !== total ||
+        prepared.lines.line17 !== total ||
+        (prepared.lines.line37 ?? 0) !== 0 ||
+        prepared.lines.line38 !== total
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed self-earned and partnership orphan-drug line 1h differs from filed sources",
+        );
+      }
+    }
+    const mixedNewMarketsK1 = source.f8874_k1_credit_entries ?? [];
+    if (
+      source.f8874_credit && mixedNewMarketsK1.length === 1 &&
+      mixedNewMarketsK1[0].source_type === "partnership" &&
+      !mixedNewMarketsK1[0].subject_to_passive_activity_limit
+    ) {
+      const direct = calculateForm8874(f8874InputSchema.parse(all.f8874));
+      const k1 = reconciledForm8874K1Line2({ pending: all });
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1i");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const details = prepared.currentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      const [row] = rows;
+      const [amount] = amounts;
+      const [directDetail, k1Detail] = details;
+      const documentId = prepared.form8874DocumentIds?.[0];
+      const total = direct.line1 + k1;
+      if (
+        direct.line1 <= 0 || direct.nonpassiveCredit !== direct.line1 ||
+        direct.rows.some((item) =>
+          item.investment.subject_to_passive_activity_limit
+        ) ||
+        k1 !== mixedNewMarketsK1[0].credit_amount ||
+        source.f8874_credit.credit_amount !== direct.line1 ||
+        source.f8874_credit.subject_to_passive_activity_limit !== false ||
+        JSON.stringify(rawSource.f8874_credit) !==
+          JSON.stringify(source.f8874_credit) ||
+        JSON.stringify(rawSource.f8874_k1_credit_entries) !==
+          JSON.stringify(mixedNewMarketsK1) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        prepared.form8874DocumentIds?.length !== 1 ||
+        row.metadata.sourceCount !== 2 ||
+        row.metadata.referenceDocumentName !== "IRS8874" ||
+        row.metadata.referenceDocumentId !== documentId ||
+        !(row.metadata.entity && "ein" in row.metadata.entity) ||
+        row.metadata.entity.ein !== mixedNewMarketsK1[0].source_ein ||
+        row.entityCredits.length !== 1 ||
+        !("ein" in row.entityCredits[0].entity) ||
+        row.entityCredits[0].entity.ein !== mixedNewMarketsK1[0].source_ein ||
+        row.entityCredits[0].credit !== k1 ||
+        amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
+        amount.transferOutCredit !== 0 ||
+        amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
+        amount.appliedCredit !==
+          directDetail.appliedCredit + k1Detail.appliedCredit ||
+        directDetail.credit !== direct.line1 ||
+        directDetail.sourceDocumentId !== documentId ||
+        directDetail.passThroughEin !== undefined ||
+        k1Detail.credit !== k1 ||
+        k1Detail.sourceDocumentId !== undefined ||
+        k1Detail.passThroughEin !== mixedNewMarketsK1[0].source_ein
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed direct and partnership Form 8874 line 1i differs from filed sources",
         );
       }
     }

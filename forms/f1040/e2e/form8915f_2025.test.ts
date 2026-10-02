@@ -54,6 +54,7 @@ const inputs = {
   f1099r: [{
     payer_name: "Example Plan",
     payer_ein: "12-3456789",
+    recipient_ssn: "111-22-3333",
     account_number: "123",
     source_document_reference: "issued 2025 1099-R account 123",
     ts: "T",
@@ -65,6 +66,95 @@ const inputs = {
   }],
   f8915f: [disaster],
 };
+
+for (
+  const [qualifiedKind, otherKind] of [
+    ["plan", "plan"],
+    ["traditional_ira", "plan"],
+  ] as const
+) {
+  Deno.test(`Form 8915-F ${qualifiedKind} plus ordinary ${otherKind} 1099-R reaches both exports`, async () => {
+    const ordinary = {
+      ...inputs.f1099r[0],
+      payer_name: "Other Plan",
+      payer_ein: "98-7654321",
+      account_number: "456",
+      source_document_reference: "issued ordinary 2025 1099-R account 456",
+      box1_gross_distribution: 1_000,
+      box2a_taxable_amount: 1_000,
+      box7_ira_simple_indicator: false,
+      box13_date_of_payment: "2025-09-01",
+      form8915f_treatment: undefined,
+    };
+    const caseInputs = {
+      ...inputs,
+      f1099r: [{
+        ...inputs.f1099r[0],
+        box7_ira_simple_indicator: qualifiedKind === "traditional_ira",
+        form8915f_treatment: "three_years",
+      }, ordinary],
+      f8915f: [{
+        ...disaster,
+        retirement_source_kind: qualifiedKind,
+        ...(qualifiedKind === "traditional_ira"
+          ? { no_ira_basis_review_reference: "reviewed no IRA basis" }
+          : {}),
+        full_inclusion_elected: false,
+        other_distribution_nonqualified_review_reference:
+          "reviewed ordinary distribution outside the qualified disaster claim",
+      }],
+    };
+    const result = execute(plan, registry, caseInputs, {
+      taxYear: 2025,
+      formType: "f1040",
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(
+      qualifiedKind === "plan"
+        ? result.pending.f1040?.line5a_pension_gross
+        : result.pending.f1040?.line4a_ira_gross,
+      qualifiedKind === otherKind ? 21_000 : 20_000,
+    );
+    assertEquals(
+      qualifiedKind === "plan"
+        ? result.pending.f1040?.line5b_pension_taxable
+        : result.pending.f1040?.line4b_ira_taxable,
+      qualifiedKind === otherKind ? 7_667 : 6_667,
+    );
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const xml = buildMefXml(buildPending(result.pending), filer);
+    assertStringIncludes(
+      xml,
+      "<TotalNonqlfyDisasterDistriAmt>1000</TotalNonqlfyDisasterDistriAmt>",
+    );
+    assertStringIncludes(
+      xml,
+      `<CYTotalDistributionsAmt>${
+        qualifiedKind === otherKind ? 21_000 : 1_000
+      }</CYTotalDistributionsAmt>`,
+    );
+    assertStringIncludes(
+      xml,
+      "<QualifiedDistributionsAmt>20000</QualifiedDistributionsAmt>",
+    );
+    const pdf = await buildPdfBytes(result.pending, filer);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+    const tampered = structuredClone(result.pending);
+    (tampered.f1040 as Record<string, unknown>)[
+      qualifiedKind === "plan" ? "line5b_pension_taxable" : "line4b_ira_taxable"
+    ] = 6_666;
+    assertThrows(
+      () => buildMefXml(buildPending(tampered), filer),
+      Error,
+      "Form 1040 line 9 differs from its income lines",
+    );
+    await assertRejects(
+      () => buildPdfBytes(tampered, filer),
+      Error,
+      "Form 1040 line 9 differs from its income lines",
+    );
+  });
+}
 
 for (const sourceKind of ["plan", "traditional_ira"] as const) {
   Deno.test(`2025 Form 8915-F ${sourceKind} repayment reaches Form 1040 and attached worksheet`, async () => {
@@ -431,12 +521,12 @@ for (
       assertThrows(
         () => buildMefXml(buildPending(changed), filer),
         Error,
-        "must match Form 1040 lines 4a and 4b",
+        "Form 1040 line 9 differs from its income lines",
       );
       await assertRejects(
         () => buildPdfBytes(changed, filer),
         Error,
-        "must match Form 1040 lines 4a and 4b",
+        "Form 1040 line 9 differs from its income lines",
       );
     }
   });
@@ -456,6 +546,7 @@ Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", asyn
     f1099r: [{
       ...inputs.f1099r[0],
       ts: "S",
+      recipient_ssn: "444-55-6666",
       box7_ira_simple_indicator: true,
       form8915f_treatment: "three_years",
     }],

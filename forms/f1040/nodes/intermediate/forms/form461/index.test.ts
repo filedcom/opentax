@@ -6,6 +6,8 @@ const review = {
   other_part_i_lines_zero: true,
   part_ii_adjustments_zero: true,
   post_at_risk_and_passive_limits_confirmed: true,
+  line2_schedule_c_amount: -200_000,
+  line6_schedule_f_amount: -200_000,
   source_document_refs: ["reviewed Schedule 1 and Form 1040 workpapers"],
 } as const;
 
@@ -43,7 +45,11 @@ Deno.test("Form 461 offsets a C loss with F profit before the threshold", () => 
     filing_status: "single",
     line2_schedule_c: -400_000,
     line6_schedule_f: 300_000,
-    scope_review: review,
+    scope_review: {
+      ...review,
+      line2_schedule_c_amount: -400_000,
+      line6_schedule_f_amount: 300_000,
+    },
   });
   // A line 2 loss above $156,500 still requires a filed Form 461.
   assertEquals(fields(result)?.line9_total_income_loss, -100_000);
@@ -59,7 +65,11 @@ Deno.test("Form 461 MFJ uses one $626,000 threshold, not one per source", () => 
     filing_status: "mfj",
     line2_schedule_c: -400_000,
     line6_schedule_f: -300_000,
-    scope_review: review,
+    scope_review: {
+      ...review,
+      line2_schedule_c_amount: -400_000,
+      line6_schedule_f_amount: -300_000,
+    },
   });
   assertEquals(fields(result)?.line15_threshold, 626_000);
   assertEquals(fields(result)?.line16_excess_business_loss, -74_000);
@@ -70,7 +80,11 @@ Deno.test("Form 461 per-line $156,500 trigger applies to MFJ without an addback"
     filing_status: "mfj",
     line2_schedule_c: -156_501,
     line6_schedule_f: 156_501,
-    scope_review: review,
+    scope_review: {
+      ...review,
+      line2_schedule_c_amount: -156_501,
+      line6_schedule_f_amount: 156_501,
+    },
   });
   assertEquals(fields(result)?.line9_total_income_loss, 0);
   assertEquals(fields(result)?.line16_excess_business_loss, 626_000);
@@ -82,7 +96,11 @@ Deno.test("Form 461 omits the form at the exact per-line and net thresholds", ()
       filing_status: "single",
       line2_schedule_c: -156_500,
       line6_schedule_f: 0,
-      scope_review: review,
+      scope_review: {
+        ...review,
+        line2_schedule_c_amount: -156_500,
+        line6_schedule_f_amount: 0,
+      },
     })),
     undefined,
   );
@@ -100,6 +118,27 @@ Deno.test("Form 461 rejects C/F source data without a sourced scope review", () 
       filing_status: "single",
       line2_schedule_c: -400_000,
       scope_review: { ...review, source_document_refs: [] },
+    })
+  );
+  assertThrows(() =>
+    compute({
+      filing_status: "single",
+      line2_schedule_c: -400_000,
+      scope_review: {
+        ...review,
+        line2_schedule_c_amount: -399_999,
+        line6_schedule_f_amount: 0,
+      },
+    })
+  );
+  assertThrows(() =>
+    compute({
+      filing_status: "single",
+      line2_schedule_c: -400_000,
+      scope_review: {
+        ...review,
+        source_document_refs: ["same workpaper", "same workpaper"],
+      },
     })
   );
 });

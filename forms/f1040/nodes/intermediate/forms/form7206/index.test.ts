@@ -257,7 +257,7 @@ Deno.test("2025 Form 7206 does not trust asserted premium eligibility or spouse 
         },
       ),
     Error,
-    "needs one taxpayer-owned Schedule C",
+    "needs one owner-matched Schedule C",
   );
   assertEquals(
     singleScheduleCPlanSchema.safeParse({
@@ -437,7 +437,7 @@ Deno.test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", 
         marketplace_ptc_premium_overlap: false,
       }),
     Error,
-    "taxpayer-owned Schedule C",
+    "owner-matched Schedule C",
   );
   assertThrows(
     () =>

@@ -136,6 +136,8 @@ Deno.test("general passes Form 461 filing status and documented C/F scope review
     other_part_i_lines_zero: true,
     part_ii_adjustments_zero: true,
     post_at_risk_and_passive_limits_confirmed: true,
+    line2_schedule_c_amount: -200_000,
+    line6_schedule_f_amount: 0,
     source_document_refs: ["return-wide business income workpaper"],
   };
   const result = compute({
@@ -195,6 +197,7 @@ function qualifyingChildDep(overrides: Record<string, unknown> = {}) {
     dob: "2010-06-15", // age 15 at Dec 31 2025 → under 17
     relationship: DependentRelationship.Daughter,
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,
     us_citizen_national_or_resident: true,
     provided_over_half_own_support: false,
@@ -278,7 +281,31 @@ Deno.test("general excludes refund-only dependents and flags missing filing fact
   const result = compute({
     filing_status: FilingStatus.Single,
     dependents: [
-      qualifyingChildDep({ ptc_tax_return: { filing: "not_required" } }),
+      qualifyingChildDep({
+        ptc_tax_return: {
+          filing: "not_required",
+          wage_form_w2: {
+            source_document_id: "alice-2025-w2",
+            employer_name: "Summer Employer",
+            employer_ein: "112233445",
+            employee_ssn: "123456789",
+            box1_wages: 1_000,
+          },
+          filing_requirement_review: {
+            source_document_id: "alice-2025-filing-review",
+            dependent_ssn: "123456789",
+            tax_year: 2025,
+            filing_status: "single",
+            blind: false,
+            wage_source_document_id: "alice-2025-w2",
+            other_income_reviewed_absent: true,
+            other_filing_triggers_reviewed_absent: true,
+            return_filed: false,
+            reviewed_on: "2026-03-01",
+            reviewer_name: "Tax reviewer",
+          },
+        },
+      }),
       qualifyingChildDep({ first_name: "Bob", ssn: "123-45-6790" }),
     ],
   });
@@ -298,6 +325,7 @@ function nonCtcDep(overrides: Record<string, unknown> = {}) {
     dob: "2010-01-01",
     relationship: DependentRelationship.Son,
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,
     us_citizen_national_or_resident: true,
     provided_over_half_own_support: false,
@@ -585,7 +613,10 @@ Deno.test("six months of residency cannot claim CTC or an unverified relative OD
 Deno.test("ctc: child with months_in_home = 7 qualifies (> 6)", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    dependents: [qualifyingChildDep({ months_in_home: 7 })],
+    dependents: [qualifyingChildDep({
+      months_in_home: 7,
+      months_lived_with_you_in_us: 7,
+    })],
   });
   const out = findOutput(result, "f1040");
   const input = out?.fields as Record<string, unknown>;
@@ -717,7 +748,11 @@ Deno.test("multiple: 2 qualifying children + 1 other → ctc=2, odc=1, total=3",
     filing_status: FilingStatus.MFJ,
     dependents: [
       qualifyingChildDep({ first_name: "Child1" }),
-      qualifyingChildDep({ first_name: "Child2", dob: "2012-03-01" }),
+      qualifyingChildDep({
+        first_name: "Child2",
+        ssn: "123-45-6790",
+        dob: "2012-03-01",
+      }),
       nonCtcDep({ first_name: "OtherDep" }), // ITIN only
     ],
   });
@@ -733,8 +768,16 @@ Deno.test("multiple: 3 qualifying children → ctc=3, odc=0, total=3", () => {
     filing_status: FilingStatus.MFJ,
     dependents: [
       qualifyingChildDep({ first_name: "C1" }),
-      qualifyingChildDep({ first_name: "C2", dob: "2011-01-01" }),
-      qualifyingChildDep({ first_name: "C3", dob: "2014-06-15" }),
+      qualifyingChildDep({
+        first_name: "C2",
+        ssn: "123-45-6790",
+        dob: "2011-01-01",
+      }),
+      qualifyingChildDep({
+        first_name: "C3",
+        ssn: "123-45-6791",
+        dob: "2014-06-15",
+      }),
     ],
   });
   const out = findOutput(result, "f1040");
@@ -959,10 +1002,26 @@ Deno.test("qualifying EITC child identity reaches the Schedule EIC input", () =>
     dob: "2010-06-15",
     irs_relationship_code: "DAUGHTER",
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
+    eic_birth_residency_review: undefined,
     full_time_student: undefined,
     disabled: undefined,
     ip_pin: "123456",
   }]);
+});
+
+Deno.test("EITC child needs exact U.S. months; a U.S. residency Boolean alone is insufficient", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dependents: [qualifyingChildDep({
+          months_lived_with_you_in_us: undefined,
+        })],
+      }),
+    Error,
+    "needs exact U.S. months",
+  );
 });
 
 // ============================================================
@@ -1114,6 +1173,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
         dob: "2015-04-01",
         relationship: DependentRelationship.Daughter,
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -1130,6 +1190,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
         dob: "2017-08-20",
         relationship: DependentRelationship.Son,
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -1437,6 +1498,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
       qualifyingChildDep({ ip_pin: "111222" }),
       qualifyingChildDep({
         first_name: "StudentChild",
+        ssn: "123-45-6790",
         dob: "2002-01-01", // age 23 in 2025
         full_time_student: true,
       }),

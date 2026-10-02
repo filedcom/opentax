@@ -33,6 +33,7 @@ const priorEicEvidence = {
 };
 const generalEicSource = {
   filing_status: "single",
+  digital_assets: false,
   child_eic_filer_review: {
     not_qualifying_child_of_another_taxpayer_verified: true,
     relationship_age_residence_record_reference:
@@ -90,6 +91,7 @@ const claimedChild = {
   relationship: "daughter",
   irs_relationship_code: "DAUGHTER",
   months_in_home: 12,
+  months_lived_with_you_in_us: 12,
   lived_in_us_over_half_year: true,
   us_citizen_national_or_resident: true,
   provided_over_half_own_support: false,
@@ -212,6 +214,7 @@ Deno.test({
           },
           f1040: {
             filing_status: "single",
+            digital_assets: false,
             eic_tax_residency_review: generalEicSource.eic_tax_residency_review,
             taxpayer_ssn: "123456789",
             taxpayer_ssn_valid_for_employment: true,
@@ -223,6 +226,10 @@ Deno.test({
             line11_agi: 70_000,
             line18_total_tax_before_credits: 10_000,
             line19_child_tax_credit: 2_200,
+            line20_nonrefundable_credits: 1_500,
+            line21_credits_total: 3_700,
+            line22_tax_after_credits: 6_300,
+            line24_total_tax: 6_300,
             line27_eitc: 500,
             line29_refundable_aoc: 1_000,
           },
@@ -241,9 +248,13 @@ Deno.test({
               dob: "2017-07-04",
               irs_relationship_code: "DAUGHTER",
               months_in_home: 12,
+              months_lived_with_you_in_us: 12,
             }],
           },
-          schedule3: { line3_education_credit: 1_500 },
+          schedule3: {
+            line3_education_credit: 1_500,
+            line8_total: 1_500,
+          },
         }),
         filer,
       ),
@@ -274,6 +285,7 @@ Deno.test("Form 8862 childless EITC return remains blocked before XSD", () => {
           f1040: {
             taxpayer_ssn: "123456789",
             filing_status: "single",
+            digital_assets: false,
             eic_tax_residency_review:
               childlessEicSource.eic_tax_residency_review,
             main_home_in_us_over_half_year: true,
@@ -307,6 +319,7 @@ Deno.test("Form 8862 income-only EITC return remains blocked before XSD", () => 
           f1040: {
             taxpayer_ssn: "123456789",
             filing_status: "single",
+            digital_assets: false,
             eic_tax_residency_review:
               childlessEicSource.eic_tax_residency_review,
             main_home_in_us_over_half_year: true,

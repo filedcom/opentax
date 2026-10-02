@@ -13,6 +13,34 @@ type Input = Form8995AInput | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
+/** The newly admitted zero-reduction branch must match the settled return. */
+export function assertZeroReductionScheduleAReturn(
+  fields: Form8995AInput,
+  lines: ReturnType<typeof calculateOneSstb8995ALines>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+): void {
+  if (lines.line19 !== 0) return;
+  const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  const agi = f1040?.line11_agi;
+  const deduction = f1040?.line12c_deduction_total;
+  if (
+    !f1040 ||
+    typeof agi !== "number" || !Number.isSafeInteger(agi) ||
+    typeof deduction !== "number" || !Number.isSafeInteger(deduction) ||
+    f1040.line13b_additional_deductions !== undefined &&
+      f1040.line13b_additional_deductions !== 0 ||
+    agi - deduction !== fields.taxable_income ||
+    f1040.line13_qbi_deduction !== lines.line39 ||
+    f1040.line14_deductions_qbi_total !== deduction + lines.line39 ||
+    f1040.line15_taxable_income !==
+      Math.max(0, fields.taxable_income - lines.line39)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A zero-reduction claim differs from settled Form 1040 income and deduction lines",
+    );
+  }
+}
+
 function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
@@ -30,6 +58,7 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
     );
   }
   const lines = calculateOneSstb8995ALines(fields);
+  assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
   const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
     ? HeaderFilingStatus.MarriedFilingJointly
     : fields.filing_status === NodeFilingStatus.MFS

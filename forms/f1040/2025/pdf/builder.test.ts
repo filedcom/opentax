@@ -7,6 +7,8 @@ import {
 import { join } from "@std/path";
 import { PDFDocument } from "pdf-lib";
 import { buildPdfBytes, fillFormPdf } from "./builder.ts";
+import { buildMefBundle } from "../mef/builder.ts";
+import { sha256Hex } from "../prepared-source.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { FilingStatus } from "../../mef/header.ts";
@@ -32,6 +34,28 @@ const mockFiler: FilerIdentity = {
   },
   filingStatus: FilingStatus.Single,
 };
+
+Deno.test("PDF final export rejects non-withheld W-2G winnings for another winner", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-other-winner-w2g",
+            winner_name: "Another Winner",
+            box9_winner_tin: "999-88-7777",
+            winner_us_address: mockFiler.address,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "W-2G winnings or withholding needs",
+  );
+});
 
 Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-assets answer", async () => {
   const complete = {
@@ -91,6 +115,67 @@ Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async 
       ),
     Error,
     "spouse source TIN differs from the filer",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        general: { filing_status: "single", digital_assets: true },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, mockFiler),
+    Error,
+    "digital-assets answer differs from the retained general source",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects a digital-assets answer absent from retained general source", async () => {
+  for (const filedAnswer of [true, false]) {
+    await assertRejects(
+      () =>
+        buildPdfBytes({
+          general: { filing_status: "single" },
+          f1040: { filing_status: "single", digital_assets: filedAnswer },
+        }, mockFiler),
+      Error,
+      "digital-assets answer in the retained general source",
+    );
+  }
+});
+
+Deno.test("Form 1040 PDF rejects No with a digital Form 8949 sale", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1040: { filing_status: "single", digital_assets: false },
+        form8949: [{ part: "J" }],
+      }, mockFiler),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+});
+
+Deno.test("Form 1040 PDF rejects a dependent omitted after general source projection", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        general: {
+          filing_status: "single",
+          digital_assets: false,
+          dependents: [{
+            first_name: "Avery",
+            last_name: "Child",
+            ssn: "222-33-4444",
+            dob: "2015-03-12",
+            relationship: "daughter",
+            months_in_home: 12,
+          }],
+        },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, mockFiler),
+    Error,
+    "dependent rows differ from the retained general source",
   );
 });
 
@@ -289,6 +374,63 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
   }
 });
 
+Deno.test("prepared PDF accepts retained native XML after clock drift and rejects a changed answer with a fresh digest", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await makeMinimalF1040Pdf([]));
+    const pending = { f1040: printable1040({}) };
+    const bundle = await buildMefBundle(pending, {
+      filer: mockFiler,
+      attachments: [],
+    });
+
+    // A bundle prepared in an earlier second must still project to its source.
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    const validPdf = await buildPdfBytes(pending, mockFiler, tmpDir, bundle);
+    assertGreater((await PDFDocument.load(validPdf)).getPageCount(), 0);
+
+    const xml = bundle.xml.replace(
+      "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+      "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+    );
+    assertEquals(xml === bundle.xml, false);
+    const xmlSha256 = await sha256Hex(new TextEncoder().encode(xml));
+    await assertRejects(
+      () =>
+        buildPdfBytes(pending, mockFiler, tmpDir, {
+          ...bundle,
+          xml,
+          xmlSha256,
+        }),
+      Error,
+      "Prepared MeF XML differs from its retained source projection",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("buildPdfBytes: the same filled IRS form has stable bytes across builds", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf([
+        "topmostSubform[0].Page1[0].f1_47[0]",
+      ]),
+    );
+    const pending = { f1040: printable1040({ line1a_wages: 75_000 }) };
+    const first = await buildPdfBytes(pending, mockFiler, tmpDir);
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    const second = await buildPdfBytes(pending, mockFiler, tmpDir);
+    assertEquals(first, second);
+    assertEquals((await PDFDocument.load(second)).getPageCount(), 1);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -307,6 +449,301 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
       Error,
       'failed to fill field "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[0]"',
     );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf validates an unselected Form 1040 checkbox field", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const missingBox = "topmostSubform[0].Page1[0].c1_8[1]";
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [{
+      kind: "checkboxWhen" as const,
+      domainKey: "filing_status",
+      pdfField: missingBox,
+      whenValue: "mfj",
+    }],
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["unrelated_field"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(descriptor, { filing_status: "single" }, undefined, tmpDir),
+      Error,
+      `failed to fill field "${missingBox}"`,
+    );
+
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([612, 792]);
+    doc.getForm().createCheckBox(missingBox).addToPage(page, {
+      x: 10,
+      y: 700,
+      width: 20,
+      height: 20,
+    });
+    await seedCache(tmpDir, F1040_PDF_URL, await doc.save());
+    const filled = await fillFormPdf(
+      descriptor,
+      { filing_status: "single" },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(filled instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf validates present blank-zero text fields and extra fields", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [
+      { kind: "text" as const, domainKey: "total", pdfField: "total" },
+      {
+        kind: "text" as const,
+        domainKey: "zero_line",
+        pdfField: "zero_line",
+        extraPdfFields: ["zero_line_copy"],
+      },
+      { kind: "text" as const, domainKey: "optional", pdfField: "optional" },
+    ],
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["total"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { total: 100, zero_line: 0 },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'failed to fill field "zero_line"',
+    );
+
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["total", "zero_line"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { total: 100, zero_line: 0 },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'failed to fill extra field "zero_line_copy"',
+    );
+
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(
+        ["total", "zero_line", "zero_line_copy"],
+        false,
+      ),
+    );
+    const filled = await fillFormPdf(
+      descriptor,
+      { total: 100, zero_line: 0 },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(filled instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const fieldName = "topmostSubform[0].Page2[0].f2_01[0]";
+  const document = await PDFDocument.create();
+  document.addPage([612, 792]);
+  const second = document.addPage([612, 792]);
+  document.getForm().createTextField(fieldName).addToPage(second, {
+    x: 10,
+    y: 700,
+    width: 200,
+    height: 20,
+  });
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    const descriptor = {
+      pendingKey: "f1040",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: fieldName,
+      }],
+      pageIndices: () => [0],
+    };
+    await assertRejects(
+      () => fillFormPdf(descriptor, { amount: 25 }, undefined, tmpDir),
+      Error,
+      `populated field "${fieldName}" is not on a retained PDF page`,
+    );
+    const retained = await fillFormPdf(
+      { ...descriptor, pageIndices: () => [1] },
+      { amount: 25 },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(retained instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const wageField = "topmostSubform[0].Page1[0].f1_47[0]";
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [{
+      kind: "text" as const,
+      domainKey: "line1a_wages",
+      pdfField: wageField,
+    }],
+    rows: {
+      domainKey: "items",
+      maxRows: 1,
+      rowFields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfFieldPattern: "schedule_row_amount",
+      }],
+    },
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf([wageField, "schedule_row_amount"], false),
+    );
+    for (const value of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      await assertRejects(
+        () =>
+          fillFormPdf(descriptor, { line1a_wages: value }, undefined, tmpDir),
+        Error,
+        `failed to fill field "${wageField}"`,
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { line1a_wages: 75_000, items: [{ amount: value }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill row 1 field "schedule_row_amount"',
+      );
+    }
+    const filled = await fillFormPdf(
+      descriptor,
+      { line1a_wages: 75_000, items: [{ amount: 25 }] },
+      undefined,
+      tmpDir,
+    );
+    assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf rejects objects, arrays, and booleans in text widgets", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const descriptor = {
+    pendingKey: "sample_rows",
+    pdfUrl: F1040_PDF_URL,
+    fields: [{
+      kind: "text" as const,
+      domainKey: "total",
+      pdfField: "total",
+    }],
+    rows: {
+      domainKey: "items",
+      maxRows: 1,
+      rowFields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfFieldPattern: "row_amount",
+      }],
+    },
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["total", "row_amount"], false),
+    );
+    for (const value of [{ amount: 25 }, [25], true]) {
+      await assertRejects(
+        () => fillFormPdf(descriptor, { total: value }, undefined, tmpDir),
+        Error,
+        'failed to fill field "total"',
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: value, items: [{ amount: 25 }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill field "total"',
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: 100, items: [{ amount: value }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill row 1 field "row_amount"',
+      );
+    }
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { items: { amount: 25 } },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'row field "items" needs an array',
+    );
+    const filled = await fillFormPdf(
+      descriptor,
+      { total: 100, items: [{ amount: 25 }] },
+      undefined,
+      tmpDir,
+    );
+    assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

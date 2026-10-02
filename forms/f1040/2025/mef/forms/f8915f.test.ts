@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { itemSchema } from "../../../nodes/inputs/f8915f/index.ts";
 import { buildCurrentYearDistributionForm8915F } from "./f8915f.ts";
+import { buildForm8915FRepaymentWorksheet } from "./f8915f_repayment_worksheet.ts";
 
 const item = itemSchema.parse({
   retirement_source_kind: "plan",
@@ -60,6 +61,27 @@ const pending = {
     line5b_pension_taxable: 20_000,
   },
 };
+
+Deno.test("Form 8915-F repayment worksheet replays exact bytes after time passes", async () => {
+  const repaid = itemSchema.parse({
+    ...item,
+    full_inclusion_elected: false,
+    repayment: {
+      kind: "timely",
+      amount: 1_000,
+      date: "2025-08-01",
+      receiving_plan_review_reference: "reviewed receiving plan",
+      repayment_record_reference: "repayment confirmation",
+      return_filing_date: "2026-04-10",
+      filing_date_review_reference: "reviewed 2025 return filing date",
+      filing_deadline: { kind: "ordinary" },
+    },
+  });
+  const first = await buildForm8915FRepaymentWorksheet(repaid, filer);
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  const second = await buildForm8915FRepaymentWorksheet(repaid, filer);
+  assertEquals(second.bytes, first.bytes);
+});
 
 Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", async () => {
   const xml = buildCurrentYearDistributionForm8915F(item, { filer, pending });

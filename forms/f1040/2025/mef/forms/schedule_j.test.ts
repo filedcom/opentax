@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { FilingStatus, type FilerIdentity } from "../types.ts";
+import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { buildMefXml } from "../builder.ts";
 import { scheduleJ, type ScheduleJFields } from "./schedule_j.ts";
 
@@ -42,31 +42,103 @@ const pending = {
 Deno.test("Schedule J maps every native line in TY2025 schema order", () => {
   const xml = scheduleJ.build(lines, { pending });
   const tags = [
-    "TaxableIncomeAmt", "ElectedFarmIncomeAmt",
-    "ExcessNetLongTermCapGainAmt", "UnrecapturedPropertyGainAmt",
-    "NetIncomeAmt", "CurrentTaxAmt", "ThirdPYTxblFarmIncmDetail",
-    "SecondPYTxblFarmIncmDetail", "FirstPYTxblFarmIncmDetail",
-    "TotalTaxTableAmt", "TentativeTax3rdPYRtnAmt",
-    "TentativeTax2ndPYRtnAmt", "TentativeTax1stPYRtnAmt",
-    "GrossFarmIncomeTaxAmt", "AverageFarmIncomeTaxAmt",
+    "TaxableIncomeAmt",
+    "ElectedFarmIncomeAmt",
+    "ExcessNetLongTermCapGainAmt",
+    "UnrecapturedPropertyGainAmt",
+    "NetIncomeAmt",
+    "CurrentTaxAmt",
+    "ThirdPYTxblFarmIncmDetail",
+    "SecondPYTxblFarmIncmDetail",
+    "FirstPYTxblFarmIncmDetail",
+    "TotalTaxTableAmt",
+    "TentativeTax3rdPYRtnAmt",
+    "TentativeTax2ndPYRtnAmt",
+    "TentativeTax1stPYRtnAmt",
+    "GrossFarmIncomeTaxAmt",
+    "AverageFarmIncomeTaxAmt",
   ];
   for (let index = 1; index < tags.length; index++) {
-    assertEquals(xml.indexOf(`<${tags[index - 1]}>`) < xml.indexOf(`<${tags[index]}>`), true);
+    assertEquals(
+      xml.indexOf(`<${tags[index - 1]}>`) < xml.indexOf(`<${tags[index]}>`),
+      true,
+    );
   }
   assertStringIncludes(xml, "<AverageIncomeAmt>10000</AverageIncomeAmt>");
-  assertStringIncludes(xml, "<AverageFarmIncomeTaxAmt>13000</AverageFarmIncomeTaxAmt>");
+  assertStringIncludes(
+    xml,
+    "<AverageFarmIncomeTaxAmt>13000</AverageFarmIncomeTaxAmt>",
+  );
   assertEquals((xml.match(/<AverageIncomeAmt>/g) ?? []).length, 1);
   assertEquals((xml.match(/<TotalTaxTableAmt>/g) ?? []).length, 1);
 });
 
 Deno.test("Schedule J rejects incomplete, inconsistent, or unfiled lines", () => {
   assertEquals(scheduleJ.build([], { pending }), "");
-  assertThrows(() => scheduleJ.build({ ...lines, line12: undefined } as unknown as ScheduleJFields, { pending }), Error, "line12 needs");
-  assertThrows(() => scheduleJ.build({ ...lines, line17: 25_001 }, { pending }), Error, "do not reconcile");
-  assertThrows(() => scheduleJ.build({ ...lines, line6: 10_000.5 }, { pending }), Error, "line6 needs");
-  assertThrows(() => scheduleJ.build(lines, { pending: { f1040: { ...pending.f1040, line16_income_tax: 12_999 } } }), Error, "reconcile to Form 1040");
-  assertThrows(() => scheduleJ.build(lines, { pending: { f1040: { ...pending.f1040, line16_income_tax: 13_001 } } }), Error, "reconcile to Form 1040");
+  assertThrows(
+    () =>
+      scheduleJ.build(
+        { ...lines, line12: undefined } as unknown as ScheduleJFields,
+        { pending },
+      ),
+    Error,
+    "line12 needs",
+  );
+  assertThrows(
+    () => scheduleJ.build({ ...lines, line17: 25_001 }, { pending }),
+    Error,
+    "do not reconcile",
+  );
+  assertThrows(
+    () => scheduleJ.build({ ...lines, line6: 10_000.5 }, { pending }),
+    Error,
+    "line6 needs",
+  );
+  assertThrows(
+    () =>
+      scheduleJ.build(lines, {
+        pending: { f1040: { ...pending.f1040, line16_income_tax: 12_999 } },
+      }),
+    Error,
+    "reconcile to Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleJ.build(lines, {
+        pending: { f1040: { ...pending.f1040, line16_income_tax: 13_001 } },
+      }),
+    Error,
+    "reconcile to Form 1040",
+  );
   assertThrows(() => scheduleJ.build(lines), Error, "finalized Form 1040");
+});
+
+Deno.test("Schedule J native tax joins Form 4972 without changing its own line 23", () => {
+  const joint = {
+    ...pending,
+    f1040: { ...pending.f1040, line16_income_tax: 13_500, form4972_tax: 500 },
+    form4972: { elections: [{}] },
+  };
+  assertStringIncludes(
+    scheduleJ.build(lines, { pending: joint }),
+    "<AverageFarmIncomeTaxAmt>13000</AverageFarmIncomeTaxAmt>",
+  );
+  assertThrows(
+    () =>
+      scheduleJ.build(lines, {
+        pending: { ...joint, f1040: { ...joint.f1040, form4972_tax: 499 } },
+      }),
+    Error,
+    "reconcile to Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleJ.build(lines, {
+        pending: { ...joint, form4972: undefined },
+      }),
+    Error,
+    "sourced Form 4972",
+  );
 });
 
 const XSD_PATH = new URL(

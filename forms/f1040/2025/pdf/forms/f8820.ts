@@ -4,6 +4,7 @@ import {
   calculateForm8820,
   inputSchema,
 } from "../../../nodes/inputs/f8820/index.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { appendForm8820ExpenseStatement } from "./f8820_expense_statement.ts";
 
 // Form 8820 (Rev. September 2018) is the IRS continuous-use paper form.
@@ -92,6 +93,58 @@ export const form8820Pdf: PdfFormDescriptor = {
         );
       });
     return projected;
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending?.f8820) {
+      throw new Error("Form 8820 PDF needs the finalized source return");
+    }
+    const source = inputSchema.parse(allPending.f8820);
+    const lines = calculateForm8820(source);
+    if (
+      JSON.stringify(inputSchema.parse(fields)) !== JSON.stringify(source) ||
+      fields.line4 !== lines.line4
+    ) {
+      throw new Error("Form 8820 PDF source differs from filed return");
+    }
+    if (lines.line4 <= 0) return [fields];
+    if (!prepared || !allPending.f3800) {
+      throw new Error("Form 8820 PDF needs the prepared Form 3800 document");
+    }
+    const rows = prepared.currentRows.filter((row) => row.line === "1h");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1h");
+    const details = prepared.currentDetails.filter((row) => row.line === "1h");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    const claimed = allPending.f3800.f8820_credit;
+    if (
+      !claimed || typeof claimed !== "object" ||
+      !("credit_amount" in claimed) ||
+      claimed.credit_amount !== lines.line4 ||
+      !("subject_to_passive_activity_limit" in claimed) ||
+      claimed.subject_to_passive_activity_limit !== false ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8820" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      amount.nonpassiveCredit !== lines.line4 ||
+      amount.totalCredit !== lines.line4 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit ||
+      detail.credit !== lines.line4 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      prepared.lines.line38 !== allPending.f3800.allowed_credit
+    ) {
+      throw new Error(
+        "Form 8820 PDF differs from prepared Form 3800 line 1h",
+      );
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
   includeWhen(fields) {
     if (!Array.isArray(fields.f8820s)) return false;

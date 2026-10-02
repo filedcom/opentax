@@ -1,9 +1,24 @@
 # TY2025 Form 8995-A coverage gap
 
-Status: bounded one-business parent, one-SSTB Schedule A, two-business
+Status: bounded one-business parent with one sourced REIT dividend, one-SSTB Schedule A, two-business
 aggregation Schedule B, two-business current-loss Schedule C, and
 one-cooperative Schedule D native/PDF routes written but unrun. Local tests, XSD
 validation, filled-PDF rendering, and IRS ATS remain outstanding.
+
+## One above-phase-in business plus one REIT dividend (2026-10-01, unrun)
+
+One single filer fully above the phase-in range can combine one identified
+positive non-SSTB business with exactly one directly issued, reviewed Form
+1099-DIV box 5 REIT dividend of at most $1,500. The payer, document reference,
+and 91-day holding review remain attached to the source. Calculation now
+reconciles Form 8995-A lines 28-32 and line 39; native and PDF export compare
+the issued copy with Form 1040 lines 3b and 13. A full-return positive case and
+source/return tamper fixtures are authored for the deferred bulk run. The
+one-business attestation is now `no_ptp_or_loss_carryforward_confirmed` so a
+source with a REIT dividend does not also assert no REIT amount. This is a
+direct schema change, without a second accepted field shape. Multiple REIT
+copies, PTP income, capital-gain and qualified-dividend mixes, source-byte
+authentication, filled output, XSD, business rules, and ATS remain open.
 
 Unsupported broader Schedule A/B/C and broader Schedule D triggers reject at the
 Form 8995-A node **before** any Form 1040/standard-deduction output is produced.
@@ -174,7 +189,56 @@ loss, and prior-loss combinations. The asserted business source has not been
 independently authenticated. Focused cases are written but unrun; local XSD,
 filled-PDF inspection, IRS business rules, and ATS acceptance remain open.
 
+The same one-SSTB Schedule A source now admits the narrow case in which the
+applicable W-2 wage limit is at least 20% of applicable QBI. Schedule A is
+still required within the income phase-in range under the
+[2025 IRS instructions](https://www.irs.gov/instructions/i8995a). Form 8995-A
+Part III therefore shows zero excess and zero phase-in reduction on lines 19
+and 25, and carries the full applicable 20% QBI amount on line 26. The native
+parent writes all three values; parent and companion PDFs project the same
+amounts. For this branch, both exporters also reconcile Form 1040 AGI,
+deductions, QBI deduction, and taxable income to the source's pre-QBI taxable
+income. A single-filer, one-SSTB positive case with $100,000 QBI and $40,000
+W-2 wages and source/companion/final-return tamper cases are authored but
+unrun. The K-1 statement is identified by a reviewed source reference; its
+issued bytes and the upstream income source are not authenticated by this
+bounded route. The bulk test, XSD, filled-PDF, and IRS acceptance gates remain.
+
 ## Build-first Schedule C current-loss route (written, unrun)
+
+### Deferred cents boundary (2026-10-02)
+
+The issue #60 fix accepts cents in a single Schedule C business on the
+simplified Form 8995 route. It does not yet cover the advanced Form 8995-A
+Schedule C loss route. A direct node probe with taxable income of $250,000,
+one identified business at $1,000.25 QBI, and a second at −$100.10 QBI
+produces a $900.15 aggregate from Form 8995, then Form 8995-A rejects both
+business rows with `Expected integer, received float` at
+`schedule_c_qbi_businesses[*].qbi`. This is a rejected return, not an accepted
+wrong deduction. The bounded Form 8995-A Schedule C source schema requires
+whole-dollar QBI for each business, and its native/PDF route compares those
+rows with retained Schedule C net profit and final-return amounts. Resolve
+the per-business whole-dollar filing and source-reconciliation rule before
+admitting cents on this route; do not round the aggregate or each row without
+that review. The four focused issue #60 suites for CLI entry, node inspection,
+Form 7206, and simplified Form 8995 passed 93/93 tests separately; they do
+not exercise this advanced loss case.
+
+One identified Schedule C business with a current qualified loss now also
+files the bounded parent Form 8995-A and Schedule C companion without a
+positive offsetting business. Its single source row must match the retained
+Schedule C net loss, material participation, at-risk classification, zero
+W-2 wages/UBIA, and the final Schedule 1 business loss. Schedule C line 3 and
+line 6 retain the entire loss, parent line 39 and Form 1040 line 13 are zero,
+and the graph records that amount as an in-memory next-year QBI loss
+carryforward. Native MeF prints the one loss row; PDF leaves its second row
+empty. The [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+require Schedule C for a current qualified business loss and send line 6 to
+the next tax year. A $1,200 loss full-return/native/PDF fixture and altered
+business, Schedule 1, companion, and final-deduction fixtures are written but
+unrun. Importing the loss into a later filing still needs accepted-return
+provenance; prior suspended losses, SSTBs, other activities, and nonzero
+business-level QBI adjustments remain guarded.
 
 One single filer above the full 2025 wage-limit phase-in with exactly two
 distinct, identified Schedule C businesses can now produce a registered
@@ -203,6 +267,24 @@ native/PDF documents and rejects changed business, companion, or final-return
 figures. This does not authenticate source bytes, durably store the loss, or
 import it in 2026. Cases are written but unrun pending the bulk validation
 gate.
+
+The two-business Schedule C filing guard now also joins both retained Schedule
+C net results to filed Schedule 1 line 3 and joins Schedule 1 line 10 to Form
+1040 line 8. Its QBI deduction also reconciles Form 1040 line 13, and line
+15 plus lines 13a and 13b must equal the sourced taxable income before QBI.
+Because this narrow QBI route sets each business's QBI equal to
+its Schedule C net profit, it requires zero filed Schedule 1 lines 15–17 for
+deductible self-employment tax, qualified retirement contributions, and
+self-employed health insurance. Those deductions would otherwise reduce QBI
+and need a separately sourced allocation. Parent and Schedule C native and
+PDF projections share the check; positive and unused-current-loss fixtures
+now include changed business income, adjustment, and Form 1040 income and
+taxable-income cases.
+The [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+direct current business losses through Schedule C (Form 8995-A), while
+[2025 Schedule 1](https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf)
+places Schedule C business income on line 3. Cases remain unrun for the bulk
+validation gate.
 
 ## Build-first Schedule D patron route (written, unrun)
 
@@ -235,15 +317,17 @@ positive Form 1099-PATR box 6 section 199A(g) deduction when the retained
 source item names the primary recipient TIN and a reviewed cooperative written-notice
 reference confirms that recipient and amount. Box 7 and the reviewed QBI/W-2
 allocation still calculate Schedule D line 6 and parent line 14. Parent line
-38 then imports the exact box 6 amount, provided it does not exceed line 33
-less line 37; line 39 and Form 1040 line 13a add it to the limited QBI
+38 then imports the exact box 6 amount, provided it does not exceed 9% of box
+7 qualified payments or line 33 less line 37; line 39 and Form 1040 line 13a add it to the limited QBI
 component. Native Form 8995-A, Schedule D, and both PDF projections use that
 single retained source; parent and companion reject a changed recipient,
 source item, missing notice, or return amount. The [2025 Form 1099-PATR](https://www.irs.gov/pub/irs-prior/f1099ptr--2025.pdf)
 requires the cooperative to designate box 6 in a written notice, and the
 [2025 Form 8995-A](https://www.irs.gov/pub/irs-prior/f8995a--2025.pdf)
-caps line 38 at line 33 less line 37. A $2,000 box 6 positive and source,
-owner, notice, cap, and return tamper cases are authored for the bulk pass.
+caps line 38 at line 33 less line 37. The [2025 Form 1099-PATR instructions](https://www.irs.gov/instructions/i1099ptr)
+also cap box 6 at 9% of box 7. The exact $5,400 boundary on $60,000 of
+qualified payments and a $5,401 rejection join the existing $2,000 positive,
+source, owner, notice, and return tamper cases for the bulk pass.
 Issued-copy and written-notice bytes, multiple cooperatives, excess box 6
 carryover treatment, filled PDF, XSD, and IRS acceptance remain open.
 

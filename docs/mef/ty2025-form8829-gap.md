@@ -10,21 +10,25 @@ schema.
 
 The node models one identified rented home used regularly and exclusively for
 one Schedule C business, with actual-method indirect insurance, rent, repairs,
-utilities, and other operating expenses. It requires explicit eligibility and
-exclusion facts. It calculates applicable 2025 lines 1–3, 7–8, 18b–28, 32–36,
-and 43–44. A positive line 36 now emits a business-referenced claim to Schedule
-C. That node projects it onto the sole item before line 31, SE tax, and QBI; the
-Schedule C and Form 8829 MeF builders independently reconcile the same claim,
-source line 29, and filed line 30/31. The positive route requires the sole
-Schedule C item to identify the taxpayer as proprietor, matching the primary
-filer identity emitted by MeF. Spouse-owned or unspecified-owner businesses fail
-closed. A prior top-level line 30 amount or an existing item line 30 is rejected
-for this route. The source additionally affirms that all Schedule C gross income
-is attributable to business use of the home, which is required for the bounded
-line 8 calculation. Zero-deduction Form 8829 still retains and emits line 43
-carryover. The old flat expense input is rejected. Form 1098's former full-box-1
-routing to Form 8829 now fails explicitly because its mortgage-interest
-allocation is not modeled. The input is registered for the 2025 filing graph.
+utilities, and other operating expenses, plus direct repairs made solely to the
+business area in column (a). The direct repair amount is required (zero when
+none), with an affirmative business-area-only fact. It reaches lines 20a, 23a,
+and 26 at 100%, without the line 24 area proration. It requires explicit
+eligibility and exclusion facts. It calculates applicable 2025 lines 1–3, 7–8,
+18b–28, 32–36, and 43–44. A positive line 36 now emits a business-referenced
+claim to Schedule C. That node projects it onto the sole item before line 31, SE
+tax, and QBI; the Schedule C and Form 8829 MeF builders independently reconcile
+the same claim, source line 29, and filed line 30/31. The positive route
+requires the sole Schedule C item to identify the taxpayer as proprietor,
+matching the primary filer identity emitted by MeF. Spouse-owned or
+unspecified-owner businesses fail closed. A prior top-level line 30 amount or an
+existing item line 30 is rejected for this route. The source additionally
+affirms that all Schedule C gross income is attributable to business use of the
+home, which is required for the bounded line 8 calculation. Zero-deduction Form
+8829 still retains and emits line 43 carryover. The old flat expense input is
+rejected. Form 1098's former full-box-1 routing to Form 8829 now fails
+explicitly because its mortgage-interest allocation is not modeled. The input is
+registered for the 2025 filing graph.
 
 The MeF descriptor was rewritten for native TY2025 v5.4 `IRS8829` order. It
 requires proprietor name/SSN, recalculates every emitted line, and checks the
@@ -39,11 +43,12 @@ rejects mismatched amounts before printing.
 The earlier field audit corrected reversed area fields and several printed-line
 positions. For the currently supported rented-home route, the descriptor now
 maps business and total area to lines 1 and 2, percentages to lines 3 and 7,
-indirect operating expenses to lines 18–23, the prior operating carryover to
-line 25, and all computed limits and carryovers through line 44. Unsupported
-owner-home fields, including mortgage interest and depreciation basis, remain
-unmapped for this route. Focused field-name and projection cases are written,
-but have not been run or visually inspected.
+indirect operating expenses to lines 18–23, direct repairs to line 20 column (a)
+and line 23 column (a), the prior operating carryover to line 25, and all
+computed limits and carryovers through line 44. Unsupported owner-home fields,
+including mortgage interest and depreciation basis, remain unmapped for this
+route. Focused field-name and projection cases are written, but have not been
+run or visually inspected.
 
 This extends the bounded rented-home PDF projection only. It does not make an
 owned-home or another excluded route fileable, and the filled appearance is
@@ -52,9 +57,10 @@ still unverified.
 ## Remaining end-to-end boundaries
 
 - The bounded path excludes owned homes, all mortgage interest and real estate
-  taxes, casualty losses, depreciation, direct expenses, daycare, inventory
-  storage, and multiple homes or businesses. These need distinct sourced paths,
-  not an inferred zero expense in otherwise applicable returns.
+  taxes, casualty losses, depreciation, direct expenses other than repairs to
+  the exclusive business area, daycare, inventory storage, and multiple homes or
+  businesses. These need distinct sourced paths, not an inferred zero expense in
+  otherwise applicable returns.
 - The one-business taxpayer-owned projection is written but has not yet passed
   the agreed consolidated test, XSD, filled-PDF, or IRS ATS acceptance gates.
   Multiple businesses, multiple homes, or non-home business income remain
@@ -84,8 +90,8 @@ still unverified.
   but the instructions list exceptions requiring Pub. 946 or Pub. 534 rates.
   First use in 2025 can also require Form 4562.
 - The bounded calculator rejects a business area greater than the total area and
-  excludes daycare, direct expenses, excess interest and tax, casualty losses,
-  and depreciation rather than guessing those calculations.
+  excludes daycare, other direct expenses, excess interest and tax, casualty
+  losses, and depreciation rather than guessing those calculations.
 - Form 8829 line 8 is sourced from Schedule C line 29 only for the explicitly
   excluded no-home-gain/no-other-trade-loss case. A zero or negative line 8 does
   not suppress the filed Form 8829 or line 43 carryover.

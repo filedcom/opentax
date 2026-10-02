@@ -1,5 +1,146 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 at-risk recapture source boundary
+
+The direct `at_risk_recapture` amount had a printable line 8z label but no
+retained activity-level recapture workpaper. Native return assembly accepted a
+bare $300 amount before this audit. The shared native/PDF statement builder now
+rejects a nonzero scalar. Source-backed Schedule C and F loss-limitation Form
+6198 paths are unchanged. The [2025 Form 6198 instructions](https://www.irs.gov/instructions/i6198)
+explain that recapture depends on the activity's amount at risk becoming
+negative after prior allowed losses. A positive route needs the activity,
+prior-year allowed loss and at-risk history, current-year decreases, and a
+calculation tying the resulting income to Schedule 1. The existing aggregate
+`form6198` node's recapture input has none of those retained facts, and its
+native descriptor refuses aggregate Form 6198 fields. Issued/prior-return
+evidence and the source-to-attachment join remain open.
+
+The separate `at_risk_disallowed_add_back` scalar had the same direct-export
+gap: a bare $300 amount was accepted on line 8z without any Schedule C or F
+activity. Native and PDF statement assembly now reject it. The existing
+Schedule C and F routes compute each at-risk-limited net loss directly from
+its activity facts and file separate Form 6198 copies; those routes do not need
+this aggregate line 8z amount. The old aggregate Form 6198 node can still
+calculate the scalar internally, but it cannot establish a filed activity or
+justify an additional line 8z income item. A positive route would need a
+specific activity and a reconciled computation that avoids adding back a loss
+already reduced on its source schedule.
+
+## 2026-10-02 excess golden parachute source boundary
+
+`line8z_golden_parachute` had a fixed type label but no producer, payer record,
+or retained workpaper. A directly supplied $500 scalar was accepted by native
+return assembly before this audit. The shared line 8z row builder now rejects
+any nonzero amount in that slot, so both native and PDF final export refuse an
+unsourced type statement. A positive route needs a reviewed payment source,
+recipient and tax-character facts, and a calculation connected to Schedule 1
+and AGI. Neither an issued payment record nor an independent source-document
+authentication path exists for this slot yet.
+
+## 2026-10-02 Form 8814 child-election statement replay
+
+The shared native/PDF final check recalculates each retained Form 8814 line 12
+from its reviewed child-election facts, sums the child amounts, and requires
+Schedule 1 line 8z's `FORM 8814` amount to equal that sum. A changed Schedule 1
+amount was previously accepted by PDF export while the Form 8814 attachment
+remained unchanged. A synthetic positive child-election return now prints
+`FORM 8814` in the filled PDF, carries that type in the native statement, and
+validates against the local TY2025 v5.4 XSD. Altering either the Schedule 1
+amount alone or both it and the retained line 12 result rejects in both
+exporters. The child-interest continuation also requires the exact IRS
+`ChildTaxableInterestStatement` reference name for the
+`ChildTaxableInterestStmt` document root; the document validator permits only
+that verified pair and still rejects arbitrary names. The entered child income
+record and election review are still not
+authenticated against original issued income documents or the parent signature.
+
+## 2026-10-02 Form 1099-MISC box 3 final source replay
+
+Native and PDF final export now match every Schedule 1 box 3 other-income
+statement row to a positive retained Form 1099-MISC box 3 source. The replay
+compares payer name and TIN, filer or joint-spouse recipient TIN, whole-dollar
+amount, and reviewed payment description as a multiset. A missing, duplicated,
+or altered row rejects before filing. A two-payer box 3 case combined with
+Form 1099-G RTAA reaches Form 1040 line 8; both descriptions and the RTAA type
+appear in the native statement and extracted filled-PDF text, and the bundle
+passes local TY2025 v5.4 XSD. A negative case first demonstrated that a
+changed description was accepted by final export before this replay guard.
+The entered payer data and description still do not authenticate issued copy
+bytes or establish that the payment has the stated tax character.
+
+## 2026-10-02 Form 1099-G box 6 grant total replay (unrun)
+
+The existing taxable-grant route now replays the aggregate of retained Form
+1099-G box 6 entries at both native and PDF Schedule 1 export. A changed or
+unsourced line 8z grant amount rejects. Each positive box 6 copy now needs a
+recipient TIN matching the taxpayer or joint spouse at native and PDF export;
+missing and wrong-owner copies reject. Two-copy positive, joint-spouse, and
+altered-total/owner fixtures are authored for the deferred bulk gate. The
+source now also requires an affirmative review that each positive box 6 grant
+is nonbusiness income for Schedule 1; an unclassified or business/farm grant
+cannot automatically enter line 8z. The
+[Form 1099-G instructions](https://www.irs.gov/pub/irs-pdf/i1099g.pdf)
+identify box 6 as taxable grants. [2025 Publication 334](https://www.irs.gov/publications/p334)
+directs income connected with a sole proprietorship to Schedule C, while the
+[2025 Schedule F instructions](https://www.irs.gov/instructions/i1040sf)
+direct agricultural program payments to Schedule F. Form 1099-G box 8 only
+classifies certain box 2 business-tax refunds and cannot classify box 6.
+This narrow review flag does not independently establish each grant's tax
+character, payer-copy authenticity, or a business/farm route.
+Those source reviews and the filled PDF, XSD, and IRS
+acceptance checks remain open.
+
+## 2026-10-02 S corporation K-1 box 10 code J source rows (unrun)
+
+The existing tax-benefit recovery calculation now retains a separate row for
+each issued S corporation K-1 code J source: corporation EIN, source-document
+reference, shareholder TIN, reported recovery, reviewed taxable amount, and
+prior-year benefit workpaper reference. The taxable amount cannot exceed the
+reported recovery. Schedule 1 line 8z, AGI, and Form 1040 line 8 keep the
+sum; the native type statement prints one row per corporation. Native and PDF
+exports compare distinct source identities and complete retained rows to the
+entered K-1 copies, whole-dollar total, and taxpayer or joint-spouse owner.
+Two-corporation positive and changed-row, changed-copy, changed-total,
+wrong-owner, and missing-identity fixtures are authored for the deferred bulk
+gate. The [2025 shareholder K-1 instructions](https://www.irs.gov/pub/irs-prior/i1120ssk--2025.pdf)
+direct box 10 code J recoveries to Schedule 1 line 8z to the extent the
+earlier deduction reduced tax. The entered workpaper reference and review flag
+do not authenticate the prior filed return or issued K-1 bytes. Those checks,
+filled-PDF review, XSD validation, and IRS acceptance remain open.
+
+## 2026-10-02 Form 1099-G box 5 RTAA source rows (unrun)
+
+The bounded RTAA route now requires payer name/TIN, recipient TIN, and an
+issued-copy reference for every positive Form 1099-G box 5 entry. It retains
+one row per copy in Schedule 1, while the same summed amount reaches AGI and
+Form 1040 line 8. The native line 8z type statement prints a separately
+identified RTAA row for each payer. MeF and PDF export compare those rows,
+the filed line 8z total, the distinct issued-copy identities, and recipient
+ownership against the retained Form 1099-G sources. Two-payer positive and
+changed-row, changed-copy, changed-total, wrong-owner, and missing-identity
+fixtures are authored for the deferred implementation gate. The
+[TY2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+explicitly direct box 5 RTAA to Schedule 1 line 8z and require a type and
+amount; [2025 Publication 525](https://www.irs.gov/publications/p525) also
+states that state RTAA payments are included in income. Exact payer-copy PDF
+bytes, tax-program eligibility, visual parity, and IRS acceptance remain open.
+
+## 2026-10-01 Form 1099-MISC box 8 source rows (unrun)
+
+The box 8 substitute-payment route now carries one payer, recipient, and amount
+row from each positive Form 1099-MISC into Schedule 1. The Schedule 1 line 8z
+calculation retains the aggregate, while the native type statement prints one
+row per source. MeF and PDF export compare the row multiset and total to the
+original source copies and require each recipient to be the taxpayer or an MFJ
+spouse. Positive two-payer and missing, changed-payer, changed-total, and
+wrong-recipient fixtures are authored for the deferred implementation batch.
+Issued payer-copy bytes, payment character beyond the reported box, filled-PDF
+appearance, IRS business rules, and ATS acceptance remain open. The
+[2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
+and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
+substitute payments to Schedule 1 line 8z whether they replace dividends or
+tax-exempt interest; the underlying security type does not change this route.
+
 Build-stage audit, 2026-09-28. The checked-in TY2025 Schedule 1 schema has one
 `OtherIncomeTotalAmt` on line 8z and an optional linked
 `OtherIncomeTypeStatement` containing type-and-amount rows. The current build
@@ -18,12 +159,13 @@ $1,200 recovery in a full return passes local TY2025 v5.4 XSD and its
 five-page filled PDF was inspected; see the
 [Form 1098 review](ty2025-filled-pdf-review-2026-09-29.md).
 
-Two generic scalar keys, `line8z_other` and `line8z_other_income`, remain in
-the sink schemas, but the known producer nodes no longer emit them. The sink
-cannot infer the IRS statement's required type from a merged number. MeF and
-PDF projections reject a nonzero generic amount instead of inventing a label.
-That is a fail-closed boundary, not an approved exclusion or completion of
-these filing paths.
+Two generic scalar keys, `line8z_other` and `line8z_other_income`, have no
+known current producers. Schedule 1 now rejects either key, including a zero
+deposit, before calculating its totals. The AGI sink likewise rejects
+`line8z_other`. The sink cannot infer the IRS statement's required type from
+a merged number. MeF and PDF projections continue to reject a nonzero generic
+amount in directly supplied pending data. This is a fail-closed boundary, not
+an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -121,15 +263,13 @@ and ATS remain open.
 Other box 11 codes have distinct destinations and remain open, as do issued
 source bytes, prior-return authentication, IRS business rules, and ATS.
 
-The executor accumulates colliding scalar output keys as an array. These two
-sink schemas currently expect numbers, so a return with multiple generic
-producers may fail to parse before it even reaches the new export guard. A
-direct typed source ledger should replace the generic scalar deposits in the
-producer nodes, feed the same signed rows to AGI and Schedule 1, and create one
-statement row per supported source. This is not a request for a second accepted
-API shape or a scalar fallback. Source-document authenticity, correct tax
-character, a populated statement, full-batch tests, XSD, filled-PDF review, IRS
-business rules and ATS acceptance all remain open.
+The executor accumulates colliding scalar output keys as an array. Any future
+generic producer now fails at the Schedule 1 or AGI sink, before its amount can
+enter a return total. A direct typed source ledger should replace generic
+scalar deposits for each supported source, feed the same signed rows to AGI and
+Schedule 1, and create one statement row per source. Source-document
+authenticity, correct tax character, a populated statement, full-batch tests,
+XSD, filled-PDF review, IRS business rules and ATS acceptance all remain open.
 
 The former Form 1099-K gross-payment line-8z route is removed for TY2025.
 An explicitly classified hobby payment now enters line 8j with the same

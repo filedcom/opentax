@@ -1,5 +1,28 @@
 # TY2025 Form 1116 line 1b alternative compensation source
 
+## Ordinary time-basis workday reconciliation (staged, unrun)
+
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+require the line 1b statement to compare the U.S. and foreign amounts under the
+alternative basis with the ordinary time or geographical basis. [Publication
+514 (2025)](https://www.irs.gov/publications/p514) ordinarily sources employee
+salary, other than fringe benefits, by foreign service days divided by total
+service days. The source contract now admits only one 2025 salary compensation
+period with whole service days and an identified workday ledger. It recomputes
+the ordinary foreign amount from those days at cent precision and requires the
+ordinary U.S. amount to be the complement. Zero or more than 365 service days,
+missing ledger identity, fringe benefits, and a mismatched ordinary comparison
+fail before the Form 1116 credit is calculated. The existing native line 1b
+statement and PDF project the checked comparison, and both reject an altered
+foreign-employer source at filing time. Positive full-return and source/native/
+PDF tamper fixtures are authored for the deferred bulk gate.
+
+The workday ledger reference is a reviewed assertion, not authenticated
+document bytes. This does not prove that the alternative project-location basis
+is more accurate, or cover fractional service days, separate service periods,
+multi-year pay, fringe benefits, W-2 wages, and spouse compensation. Those
+cases remain outside the bounded route.
+
 Original build-pass checkpoint (2026-09-28; test status superseded below). The
 [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
 line 1b when an employee has at least $250,000 of worldwide compensation and
@@ -203,7 +226,30 @@ checks compare the alternative item, while the PDF and Form 1040 joins use all
 wages for line 3e, the standard-deduction ratio, and line 1h/1z.
 
 Four- and five-employer $300,000 full-return cases and owner, duplicate-document,
-and changed-wage rejection cases are authored for the deferred batch. A sixth
-record still rejects. Issued wage/tax bytes, mixed W-2 or spouse compensation,
+and changed-wage rejection cases are authored for the deferred batch. The same
+source and PDF checks now admit six and eight distinct wage records. Full-return
+positive cases and owner, duplicate-document, and changed-wage rejections are
+authored for the deferred batch. The wage inventory has no arbitrary count limit
+when every record has the same owner and its own source reference. Issued
+wage/tax bytes, mixed W-2 or spouse compensation,
 multiple alternatively sourced items, other income/categories/deductions,
 IRS acceptance, and bulk XSD/PDF validation remain open.
+
+## Single-employer employee and wage-document identity (staged, unrun)
+
+The same line 1b route now requires the alternative-basis foreign-employer pay
+item to identify the employee SSN and the wage-document reference even when it
+is the **only** compensation item. That reference must be the one on the
+alternative-basis statement. The source node rejects an ownerless or detached
+single item before Form 1116 is calculated; native and PDF filing checks match
+the employee SSN to the finalized Form 1040 filer while retaining the existing
+$250,000 threshold, country, paid-tax, conversion, Schedule 3, and Form 1040
+amount joins. The one-employer full-return fixture now includes the owner and
+source document, with owner and document-tamper cases; the PDF also requires
+the general source SSN to match the finalized Form 1040 SSN and rejects a
+changed return identity. Focused source, native, and PDF fixtures are updated
+for the deferred bulk pass. This follows the
+[2025 Form 1116 line 1b instructions](https://www.irs.gov/instructions/i1116),
+which require employee compensation and an attached statement identifying the
+taxpayer and the specific compensation item. Wage-document bytes and the
+substantive allocation method still need independent review.

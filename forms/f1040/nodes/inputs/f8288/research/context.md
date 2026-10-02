@@ -25,6 +25,8 @@ The withheld amount flows to Form 1040 as a payment/credit (similar to federal i
 | buyer_name | string | Yes | Name of buyer/transferee | Name of the buyer who withheld the tax | Form 8288-A line 2 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
 | buyer_tin | string | Yes | TIN of buyer | Buyer's TIN (EIN or SSN) | Form 8288-A line 3 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
 | disposition_date | string | Yes | Date of disposition | Date the property was transferred (YYYY-MM-DD) | Form 8288-A line 7; IRC §1445 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
+| seller_tin | string | For positive credit at final export | Transferor TIN on Copy B | Must match taxpayer or joint-filing spouse | [Form 8288 instructions](https://www.irs.gov/instructions/i8288) | https://www.irs.gov/instructions/i8288 |
+| stamped_copy_b_reference | string | For positive credit at final export | IRS-stamped Copy B | Distinct retained source reference for each credited copy | [Form 8288 instructions](https://www.irs.gov/instructions/i8288) | https://www.irs.gov/instructions/i8288 |
 
 ---
 
@@ -36,9 +38,9 @@ Sum `amount_withheld` across all Form 8288-A items. Each property sold produces 
 Source: Form 8288-A instructions; each 8288-A is a separate withholding certificate.
 
 ### Step 2 — Route to f1040 as withholding credit
-The total withheld flows to Form 1040 Line 25b (federal tax withheld from 1099 forms / other withholding). FIRPTA withholding is a credit against tax liability.
+The total withheld flows to Form 1040 Line 25c (federal tax withheld from other forms, including Form 8288-A). FIRPTA withholding is a credit against tax liability.
 
-Source: Form 1040 instructions, Line 25b — "Federal income tax withheld from Form 1099 and other forms"; Rev. Proc. 2000-35; IRC §1445(e).
+Source: [2025 Form 1040 instructions, Line 25c](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf) — tax withheld shown on Form 8288-A belongs on line 25c, not the Form 1099-only line 25b; Rev. Proc. 2000-35; IRC §1445(e).
 
 ---
 
@@ -46,7 +48,7 @@ Source: Form 1040 instructions, Line 25b — "Federal income tax withheld from F
 
 | Output Field | Destination Node | Condition | IRS Reference | URL |
 | ------------ | ---------------- | --------- | ------------- | --- |
-| line25b_withheld_1099 | f1040 | amount_withheld > 0 (total across items) | IRC §1445; Form 1040 Line 25b | https://www.irs.gov/instructions/i1040gi |
+| line25c_other_withheld | f1040 | amount_withheld > 0 (total across items) | IRC §1445; Form 1040 Line 25c | https://www.irs.gov/instructions/i1040gi |
 
 ---
 
@@ -71,7 +73,7 @@ flowchart LR
     sum["Sum amount_withheld across all items"]
   end
   subgraph outputs["Downstream Nodes"]
-    f1040["f1040 (line25b_withheld_1099)"]
+    f1040["f1040 (line25c_other_withheld)"]
   end
   inputs --> node --> f1040
 ```
@@ -86,6 +88,7 @@ flowchart LR
 4. **15% rate**: Standard rate for all other dispositions.
 5. **FIRPTA is a withholding credit**: Functions like income tax withholding — fully creditable against the tax liability.
 6. **Negative amounts invalid**: `amount_withheld` and `gross_sales_price` must be non-negative.
+7. **Credited Copy B**: Final native and PDF export require a stamped Copy B reference and owner-matched seller TIN for every positive withholding amount. Duplicate copy references are rejected. A reference alone does not verify the PDF bytes or attach Copy B to a return; attachment and byte authentication remain open.
 
 ---
 

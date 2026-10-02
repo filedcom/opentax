@@ -67,7 +67,7 @@ export async function buildConversionExplanation(
   if (!ssn || !name) {
     throw new Error("Form 1116 conversion explanation needs filer identity");
   }
-  const document = await PDFDocument.create();
+  const document = await PDFDocument.create({ updateMetadata: false });
   const regular = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
   let page: PDFPage;

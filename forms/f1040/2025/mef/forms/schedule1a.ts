@@ -17,6 +17,10 @@ import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/ind
 import { inputSchema as kInputSchema } from "../../../nodes/inputs/f1099k/index.ts";
 import { scheduleC } from "../../../nodes/inputs/schedule_c/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import {
+  calculatePhysicalPresence2555,
+  physicalPresenceFilingSchema,
+} from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 const form1040ReconciliationSchema = z.object({
@@ -41,24 +45,82 @@ type Input = z.infer<typeof inputSchema> | readonly [];
 function buildSchedule(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   const input = inputSchema.parse(raw);
-  if (!input.senior_zero_exclusions_review) {
+  const positive2555 = input.form2555_exclusion_review !== undefined;
+  if (positive2555 && input.senior_zero_exclusions_review) {
+    throw new Error("Schedule 1-A Part I reviews cannot conflict");
+  }
+  if (!input.senior_zero_exclusions_review && !positive2555) {
+    const hasDeductionSource = input.taxpayer_age_65_or_older === true ||
+      input.spouse_age_65_or_older === true ||
+      (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0 ||
+      (input.qualified_w2_overtime?.length ?? 0) > 0 ||
+      (input.vehicle_loans?.length ?? 0) > 0;
+    if (hasDeductionSource) {
+      throw new Error(
+        "Schedule 1-A positive source needs sourced Part I zero-exclusion review or a Form 2555 exclusion review",
+      );
+    }
     const claim = z.object({
       line13b_additional_deductions: z.number().optional(),
     }).passthrough().parse(context?.pending?.f1040);
     if ((claim.line13b_additional_deductions ?? 0) === 0) return "";
     throw new Error(
-      "Schedule 1-A positive line 13b needs sourced Part I zero-exclusion review",
+      "Schedule 1-A positive line 13b needs sourced Part I zero-exclusion review or a Form 2555 exclusion review",
     );
   }
   const form1040 = form1040ReconciliationSchema.parse(
     context?.pending?.f1040,
   );
   if (
-    context?.pending &&
-    ("form2555" in context.pending || "form4563" in context.pending)
+    context?.pending && ("form4563" in context.pending ||
+      (!positive2555 && "form2555" in context.pending))
   ) {
     throw new Error(
       "Schedule 1-A zero-exclusion review conflicts with a Form 2555 or Form 4563 source",
+    );
+  }
+  let form2555Line45 = 0;
+  if (positive2555) {
+    const hasTips = (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0;
+    const overtimeCount = input.qualified_w2_overtime?.length ?? 0;
+    const hasSeniorOrVehicle = input.taxpayer_age_65_or_older === true ||
+      input.spouse_age_65_or_older === true ||
+      (input.vehicle_loans?.length ?? 0) > 0;
+    const pending2555 = z.object({
+      filing_details: physicalPresenceFilingSchema,
+    })
+      .passthrough().parse(context?.pending?.form2555);
+    const lines = calculatePhysicalPresence2555(
+      pending2555.filing_details,
+      2025,
+    );
+    if (
+      lines.qualifyingDays !== 365 || lines.line45 <= 0 ||
+      lines.line50 !== 0 ||
+      input.form2555_line45_exclusion !== lines.line45 ||
+      input.form2555_line50_housing_deduction !== lines.line50 ||
+      hasTips || overtimeCount > 1 ||
+      (overtimeCount > 0 && hasSeniorOrVehicle)
+    ) {
+      throw new Error(
+        "Schedule 1-A positive Form 2555 Part I needs a matching full-year exclusion, zero housing deduction, and one supported deduction route",
+      );
+    }
+    form2555Line45 = lines.line45;
+  } else if (
+    input.form2555_line45_exclusion !== undefined ||
+    input.form2555_line50_housing_deduction !== undefined
+  ) {
+    throw new Error(
+      "Schedule 1-A zero-exclusion review conflicts with Form 2555 amounts",
     );
   }
   const parts: string[] = [];
@@ -163,7 +225,51 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     const form4137 = form4137InputSchema.parse(
       context?.pending?.form4137 ?? {},
     );
+    const expectedForm4137Entries = (form4137.forms ?? []).flatMap((form) => {
+      const employeeSsn = form.recipient === "taxpayer"
+        ? form4137.taxpayer_ssn
+        : form4137.spouse_ssn;
+      if (!employeeSsn) return [];
+      return form.employers.flatMap((employer) => {
+        if (!employer.ein || employer.tips_received <= 0) return [];
+        const matches = filedW2s.filter((source) =>
+          normalize(source.employee_ssn ?? "") === normalize(employeeSsn) &&
+          normalize(source.employer_ein ?? "") === normalize(employer.ein!) &&
+          source.employer_name === employer.name &&
+          source.box13_statutory_employee !== true
+        );
+        if (matches.length > 1) {
+          throw new Error(
+            "Schedule 1-A Form 4137 tips need one qualifying W-2 per employer",
+          );
+        }
+        const source = matches[0];
+        if (!source) return [];
+        if (
+          employer.tipped_occupation_code !== undefined &&
+          source.box14b_tipped_code !== undefined &&
+          employer.tipped_occupation_code !== source.box14b_tipped_code
+        ) {
+          throw new Error(
+            "Schedule 1-A Form 4137 occupation disagrees with W-2 box 14b",
+          );
+        }
+        const occupationCode = employer.tipped_occupation_code ??
+          source.box14b_tipped_code;
+        return occupationCode !== undefined &&
+            isQualifiedTipsOccupationCode(occupationCode)
+          ? [{
+            employee_ssn: employeeSsn,
+            employer_ein: employer.ein,
+            employer_name: employer.name,
+            amount: employer.tips_received,
+            occupation_code: occupationCode,
+          }]
+          : [];
+      });
+    });
     if (
+      form4137Entries.length !== expectedForm4137Entries.length ||
       !form4137Entries.every((entry) => {
         const recipient = entry.employee_ssn.replaceAll("-", "") ===
             form4137.taxpayer_ssn?.replaceAll("-", "")
@@ -190,6 +296,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           candidate.box13_statutory_employee !== true
         );
         return employer !== undefined && source !== undefined &&
+          expectedForm4137Entries.some((expected) =>
+            normalize(expected.employee_ssn) ===
+              normalize(entry.employee_ssn) &&
+            normalize(expected.employer_ein) ===
+              normalize(entry.employer_ein) &&
+            expected.employer_name === entry.employer_name &&
+            expected.amount === entry.amount &&
+            expected.occupation_code === entry.occupation_code
+          ) &&
           (employer.tipped_occupation_code ?? source.box14b_tipped_code) ===
             entry.occupation_code &&
           (source.box14b_tipped_code === undefined ||
@@ -423,14 +538,62 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       input,
     );
     const statementEntries = input.qualified_w2_overtime!.filter((entry) =>
-      entry.employer_statement_reference !== undefined
+      entry.employer_statement_reference !== undefined ||
+      entry.aggregate_overtime_statement_reference !== undefined ||
+      entry.double_time_excess_statement_reference !== undefined
     );
+    const box14Entries = input.qualified_w2_overtime!.filter((entry) =>
+      entry.employer_statement_reference === undefined &&
+      entry.aggregate_overtime_statement_reference === undefined &&
+      entry.double_time_excess_statement_reference === undefined
+    );
+    if (box14Entries.length > 0) {
+      const sourceW2s = context?.pending?.w2
+        ? w2InputSchema.parse(context.pending.w2).w2s
+        : [];
+      const sourceBox14W2s = sourceW2s.filter((w2) =>
+        w2.flsa_overtime_review !== undefined &&
+        w2.flsa_overtime_review.employer_statement === undefined &&
+        w2.flsa_overtime_review.aggregate_overtime_statement === undefined &&
+        w2.flsa_overtime_review.double_time_excess_statement === undefined
+      );
+      const normalize = (value: string) => value.replaceAll("-", "");
+      if (
+        sourceBox14W2s.length !== box14Entries.length ||
+        !box14Entries.every((entry) =>
+          sourceBox14W2s.filter((w2) => {
+            const premiums = (w2.box14_entries ?? []).filter((box14) =>
+              box14.description.trim().toLowerCase() ===
+                "flsa overtime premium"
+            );
+            return normalize(w2.employee_ssn ?? "") ===
+                normalize(entry.employee_ssn) &&
+              normalize(w2.employer_ein ?? "") ===
+                normalize(entry.employer_ein) &&
+              w2.box13_statutory_employee !== true &&
+              w2.box1_wages === entry.box1_wages &&
+              premiums.length === 1 && premiums[0].amount === entry.amount &&
+              premiums[0].is_state_sdi_pfml !== true &&
+              w2.flsa_overtime_review?.source_reference ===
+                entry.source_reference &&
+              w2.flsa_overtime_review?.covered_nonexempt_employee === true &&
+              w2.flsa_overtime_review?.premium_included_in_box1 === true;
+          }).length === 1
+        )
+      ) {
+        throw new Error(
+          "Schedule 1-A box 14 overtime does not match the filed W-2 premium and review",
+        );
+      }
+    }
     if (statementEntries.length > 0) {
       const sourceW2s = context?.pending?.w2
         ? w2InputSchema.parse(context.pending.w2).w2s
         : [];
       const sourceStatementW2s = sourceW2s.filter((w2) =>
-        w2.flsa_overtime_review?.employer_statement !== undefined
+        w2.flsa_overtime_review?.employer_statement !== undefined ||
+        w2.flsa_overtime_review?.aggregate_overtime_statement !== undefined ||
+        w2.flsa_overtime_review?.double_time_excess_statement !== undefined
       );
       const normalize = (value: string) => value.replaceAll("-", "");
       if (
@@ -439,20 +602,50 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           sourceStatementW2s.some((w2) => {
             const review = w2.flsa_overtime_review;
             const statement = review?.employer_statement;
-            return statement !== undefined &&
+            const aggregate = review?.aggregate_overtime_statement;
+            const doubleTime = review?.double_time_excess_statement;
+            const methodMatches = statement !== undefined &&
+                aggregate === undefined &&
+                doubleTime === undefined &&
+                entry.aggregate_overtime_statement_reference === undefined &&
+                entry.double_time_excess_statement_reference === undefined &&
+                statement.tax_year === 2025 &&
+                statement.furnished_to_employee === true &&
+                statement.qualified_overtime_premium === entry.amount &&
+                statement.statement_reference ===
+                  entry.employer_statement_reference ||
+              aggregate !== undefined && statement === undefined &&
+                doubleTime === undefined &&
+                entry.employer_statement_reference === undefined &&
+                entry.double_time_excess_statement_reference === undefined &&
+                aggregate.tax_year === 2025 &&
+                aggregate.furnished_to_employee === true &&
+                aggregate.aggregate_time_and_half_overtime_pay / 3 ===
+                  entry.amount &&
+                aggregate.statement_reference ===
+                  entry.aggregate_overtime_statement_reference ||
+              doubleTime !== undefined && statement === undefined &&
+                aggregate === undefined &&
+                entry.employer_statement_reference === undefined &&
+                entry.aggregate_overtime_statement_reference === undefined &&
+                doubleTime.tax_year === 2025 &&
+                doubleTime.furnished_to_employee === true &&
+                doubleTime.excess_over_regular_pay / 2 === entry.amount &&
+                doubleTime.statement_reference ===
+                  entry.double_time_excess_statement_reference;
+            return methodMatches &&
               normalize(w2.employee_ssn ?? "") ===
                 normalize(entry.employee_ssn) &&
               normalize(w2.employer_ein ?? "") ===
                 normalize(entry.employer_ein) &&
-              normalize(statement.employee_ssn) ===
+              normalize(
+                  (statement ?? aggregate ?? doubleTime)!.employee_ssn,
+                ) ===
                 normalize(entry.employee_ssn) &&
-              normalize(statement.employer_ein) ===
+              normalize(
+                  (statement ?? aggregate ?? doubleTime)!.employer_ein,
+                ) ===
                 normalize(entry.employer_ein) &&
-              statement.tax_year === 2025 &&
-              statement.furnished_to_employee === true &&
-              statement.qualified_overtime_premium === entry.amount &&
-              statement.statement_reference ===
-                entry.employer_statement_reference &&
               w2.box1_wages === entry.box1_wages &&
               review?.source_reference === entry.source_reference &&
               review?.covered_nonexempt_employee === true &&
@@ -644,9 +837,13 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     );
   }
   if (
+    !part1 && total === 0 &&
+    (form1040.line13b_additional_deductions ?? 0) === 0
+  ) return "";
+  if (
     !part1 || form1040.filing_status !== input.filing_status ||
     Math.round(form1040.line11_agi ?? NaN) !== part1.line1_agi ||
-    form1040.line13b_additional_deductions !== total ||
+    (form1040.line13b_additional_deductions ?? 0) !== total ||
     (form1040.schedule1a_line37_senior_deduction ?? 0) !== senior
   ) {
     throw new Error(
@@ -655,6 +852,12 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   return elements("IRS1040Schedule1A", [
     element("AdjustedGrossIncomeAmt", part1.line1_agi),
+    form2555Line45 > 0
+      ? element("TotalIncomeExclusionAmt", form2555Line45)
+      : "",
+    form2555Line45 > 0
+      ? element("TotalExclusionsDeductionAmt", form2555Line45)
+      : "",
     element("ModifiedAGIAmt", part1.line3_magi),
     ...parts,
     element("TotalAdditionalDeductionsAmt", total),

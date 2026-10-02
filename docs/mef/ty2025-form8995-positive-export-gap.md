@@ -1,5 +1,20 @@
 # TY2025 Form 8995 positive export boundary
 
+## REIT-only two or three issued payers (implementation authored; bulk validation pending)
+
+The positive Form 8995 route without trade or business QBI now accepts up to
+three separately identified Forms 1099-DIV with positive box 5 section 199A
+dividends, totaling at most $1,500. Each box 5 equals its box 1a, and the
+existing retained-source guard checks unique payer, document, and holding
+review references, the 91-day holding facts, and absence of other dividend
+components. The node sums the sources on lines 6/8, calculates line 9 and the
+taxable-income limit, and both MeF and PDF reconcile those lines to the issued
+copies and Form 1040 lines 3b/13. A three-payer positive graph/native/PDF case
+and payer, holding, source, fourth-payer, and return tamper cases are authored
+but unrun for the requested bulk validation. Trade or business combinations
+beyond the existing bounded route, aggregate dividends over $1,500, issued
+copy authentication, filled PDF, local XSD, and IRS acceptance remain open.
+
 Status: tightly bounded, positive one-business Schedule C, one-farm Schedule
 F, and one-issuer REIT-dividend-only routes are implemented for Form 8995 MeF
 and PDF. Other positive shapes still
@@ -130,7 +145,7 @@ open.
 
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the
-record only when the business has a name, EIN, reference, positive integer net
+record only when the business has a name, EIN, reference, positive net
 profit, an explicit no-other-adjustments confirmation, and an explicit no-prior-
 or-suspended-loss confirmation, plus confirmation that the filer is not a patron
 of a specified cooperative. The source Schedule C must independently recalculate
@@ -158,10 +173,47 @@ Schedule D and retirement-plan sources, plus any Form 7206 claim beyond its
 retained Schedule C and Schedule SE source records, even if their deposits were
 omitted from Form 8995 pending data.
 
+Schedule C may supply dollars and cents. The direct one-business Form 8995
+route keeps the exact Schedule C profit through Schedule 1 and its identified
+QBI source row, subtracts the attributable half-SE-tax or supported health
+deduction with cents intact, then rounds the Form 8995 line 1 total to whole
+dollars. The native and PDF guards replay that raw source and the filed
+integer lines. Authored 49-cent/50-cent calculation boundaries and a full
+Schedule C/native/PDF source-tamper fixture await the bulk pass. This follows
+the [2025 Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi):
+retain cents while adding amounts for a line, then round the line total; use
+the same whole-dollar policy across the return. Form 8995-A's separate
+advanced business-row schema remains integer-only pending its own source and
+rounding review.
+
 These zero-source conditions are an explicit supported boundary, not inferred
 zeros: export checks the final Schedule 1 and Form 1040 before producing a
 document. The synthetic profitable Schedule C fixture exercises the ordinary
 half-SE-tax route through calculation, native XML, and PDF projection.
+
+## Two small Schedule C businesses (authored, unrun)
+
+The bounded two-business route puts separately identified Schedule C profits
+on Form 8995 rows 1i and 1ii, combines them on line 2, and carries the
+computed line 15 deduction to Form 1040 line 13. It requires distinct
+business references, names, and EINs; positive whole-dollar profit for each;
+and combined profit below $400. The narrow bound avoids an attributable
+Schedule SE deduction. One identified ordinary W-2 source provides taxable
+income for the line 14 limit. Native XML emits two business groups, while the
+PDF maps both printed rows. The exporter replays both Schedule C items, the
+Schedule 1 and Form 7206 source records, the W-2, Form 8995 lines, and the
+settled Form 1040. A full-return positive fixture and source, row, return,
+and $400-boundary rejection fixtures are written but await the bulk test pass.
+The [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+require separate business rows and their line 2 total; the
+[2025 Schedule SE instructions](https://www.irs.gov/instructions/i1040sse)
+describe combined business earnings for the $400 filing test.
+
+This route leaves larger or fractional two-business profits, owner splits,
+other QBI sources, attributable health or retirement deductions, and
+Form 8995-A combinations outside the supported boundary. The source and
+calculated return are checked locally; external source authenticity remains
+outside this route.
 
 ## Implemented one-farm route
 

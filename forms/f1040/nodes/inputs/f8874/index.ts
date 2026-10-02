@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
+import { form8874AIssuanceSchema } from "./issuance_schema.ts";
 
 // Form 8874 line 1 is one row per qualified equity investment held on a
 // current-year credit allowance date. Prior-year carryovers belong on Form
@@ -32,6 +33,7 @@ export const investmentSchema = z.object({
   credit_allowance_date: isoDate,
   qualified_equity_investment_amount: money,
   designation_notice_reference: z.string().trim().min(1),
+  reviewed_form8874a: form8874AIssuanceSchema,
   held_on_credit_allowance_date: z.literal(true),
   qualified_on_credit_allowance_date: z.literal(true),
   recapture_notice_received: z.literal(false),
@@ -57,6 +59,24 @@ export const investmentSchema = z.object({
   const creditCents = Math.round(
     investment.qualified_equity_investment_amount * rate,
   );
+  const issuance = investment.reviewed_form8874a;
+  if (
+    issuance.notice_document_reference !==
+      investment.designation_notice_reference ||
+    issuance.cde_name !== investment.cde_name ||
+    issuance.cde_ein !== investment.cde_ein ||
+    issuance.initial_investment_date !== investment.initial_investment_date ||
+    issuance.qualified_equity_investment_amount !==
+      investment.qualified_equity_investment_amount ||
+    Math.round(issuance.annual_credit_amounts[year - 1] * 100) !== creditCents
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["reviewed_form8874a"],
+      message:
+        "Form 8874-A issuance facts and current credit must reconcile to this QEI",
+    });
+  }
   if (creditCents <= 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

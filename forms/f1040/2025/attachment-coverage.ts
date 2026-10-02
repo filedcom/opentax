@@ -6,6 +6,17 @@ import {
   casualtyLossLines,
   inputSchema as form4684InputSchema,
 } from "../nodes/intermediate/forms/form4684/index.ts";
+import { isSupportedForm2106Route } from "./form2106_staged.ts";
+import { isSupportedForm8844DirectEmployerInput } from "./mef/forms/f8844_source.ts";
+import { reconcileForm8941DocumentSource } from "./mef/forms/f8941_source.ts";
+import {
+  calculateForm8881,
+  inputSchema as f8881InputSchema,
+} from "../nodes/inputs/f8881/index.ts";
+import { inputSchema as f3800InputSchema } from "../nodes/inputs/f3800/index.ts";
+import { inputSchema as f8882InputSchema } from "../nodes/inputs/f8882/index.ts";
+import { hasForm8839Claim } from "../nodes/intermediate/forms/form8839/public_source.ts";
+import { reconcilePublicForm8839Pending } from "../nodes/intermediate/forms/form8839/pending_reconciliation.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -64,8 +75,9 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f2106",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 2106 employee expenses require a native attachment",
-    isActive: (fields) => nonempty(fields.f2106s),
+    reason: "Form 2106 needs the sourced one-job fee-basis filing route",
+    isActive: (fields) =>
+      nonempty(fields.f2106s) && !isSupportedForm2106Route(fields),
   },
   {
     pendingKey: "f2210",
@@ -151,24 +163,44 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8844",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 8844 direct employer wage credit needs a native attachment",
-    isActive: (fields) => nonempty(fields.f8844s),
+    reason: "Form 8844 needs a sourced direct Schedule C employer route",
+    isActive: (fields) =>
+      nonempty(fields.f8844s) &&
+      !isSupportedForm8844DirectEmployerInput(fields),
   },
   {
     pendingKey: "f8881",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 8881 startup or auto-enrollment credit needs a native attachment",
+      "Form 8881 needs a positive linked direct Schedule C employer source",
+    isActive: (fields) => {
+      if (Object.keys(fields).length === 0) return false;
+      const parsed = f8881InputSchema.safeParse(fields);
+      if (!parsed.success) return true;
+      const lines = calculateForm8881(parsed.data);
+      return lines.line8 + lines.line11 + lines.line15 <= 0;
+    },
+  },
+  {
+    pendingKey: "f3800",
+    exportKinds: ["mef", "pdf"],
+    reason: "Form 8881 credit needs a complete source claim",
     isActive: (fields) =>
-      positive(fields.startup_costs) || fields.has_auto_enrollment === true,
+      fields.f8881_credit !== undefined &&
+      !f3800InputSchema.safeParse(fields).success,
+  },
+  {
+    pendingKey: "f8874",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8874 direct QEI needs authenticated CDE status and recapture history",
+    isActive: (fields) => nonempty(fields.investments),
   },
   {
     pendingKey: "f8882",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 8882 employer child-care credit needs a native attachment",
-    isActive: (fields) =>
-      positive(fields.qualified_childcare_expenses) ||
-      positive(fields.resource_referral_expenses),
+    reason: "Form 8882 needs a sourced direct Schedule C employer route",
+    isActive: (fields) => !f8882InputSchema.safeParse(fields).success,
   },
   {
     pendingKey: "f8908",
@@ -177,16 +209,29 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => nonempty(fields.f8908s),
   },
   {
-    pendingKey: "f8994",
+    pendingKey: "f3800",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 8994 paid-leave credit needs a native attachment",
-    isActive: (fields) => nonempty(fields.employees),
+    reason:
+      "Form 8908 line 1p needs registered native/PDF Form 8908 and per-residence Form 7220 attachment support",
+    isActive: (fields) => fields.f8908_credit !== undefined,
   },
   {
     pendingKey: "f1310",
     exportKinds: ["mef", "pdf"],
     reason: "Form 1310 refund-claim authority needs a native filing review",
     isActive: (fields) => Object.keys(fields).length > 0,
+  },
+  {
+    pendingKey: "k1_trust",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "trust K-1 backup withholding needs Form 1040 line 25c and an issued Schedule K-1 attachment",
+    isActive: (fields) =>
+      Array.isArray(fields.k1_trusts) &&
+      fields.k1_trusts.some((row) =>
+        row !== null && typeof row === "object" &&
+        Object.hasOwn(row, "box13_code_b_backup_withholding")
+      ),
   },
   {
     pendingKey: "f2120",
@@ -399,6 +444,31 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (hasForm8839Claim(byKey)) {
+    try {
+      reconcilePublicForm8839Pending(byKey);
+    } catch (cause) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8839 needs its reviewed one-child source and settled return; export blocked`,
+        { cause },
+      );
+    }
+  }
+  const form3800 = byKey.f3800;
+  const hasForm8941Credit = form3800 !== null &&
+    typeof form3800 === "object" &&
+    ("f8941_direct_employer_credit" in form3800 ||
+      "form8941_applied_credit" in form3800);
+  if (byKey.f8941 !== undefined || hasForm8941Credit) {
+    try {
+      reconcileForm8941DocumentSource(byKey.f8941, byKey);
+    } catch (cause) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8941 needs a reconciled direct Schedule C source, Form 3800 allocation, and premium deduction; export blocked`,
+        { cause },
+      );
+    }
+  }
   // MeF's canonical pending projection stores Form 8949 rows as an array;
   // PDF uses the raw executor's transaction field. Neither may file a QOF
   // deferral or inclusion while the annual Form 8997 is unregistered.

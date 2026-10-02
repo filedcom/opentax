@@ -100,6 +100,6 @@ Deno.test("five independently corrected sequential policies reconcile through Fo
         f1040: { ...pending.f1040, line17_additional_taxes: 1_345 },
       }, { filer: fixture.filer, attachments: [] }),
     Error,
-    "differs from finalized Schedule 2/3 and Form 1040",
+    "Form 1040 line 18 differs from lines 16 and 17",
   );
 });

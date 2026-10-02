@@ -49,7 +49,7 @@ const beneficiaryInputSchema = z.object({
     .length(12).optional(),
   // Used for the paired route where Medicare ends one spouse's eligibility.
   medicare_enrollment: z.object({
-    first_ineligible_month: z.number().int().min(2).max(12),
+    first_ineligible_month: z.number().int().min(1).max(12),
     source_reference: z.string().trim().min(1),
   }).strict().optional(),
   other_disqualifying_coverage: z.object({
@@ -187,7 +187,20 @@ const beneficiaryInputSchema = z.object({
       incurred_after_hsa_established: z.literal(true),
       not_reimbursed_by_other_coverage: z.literal(true),
       eligible_person: z.enum(["owner", "spouse", "dependent"]),
-    }).strict(),
+      patient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+    }).strict().superRefine((receipt, ctx) => {
+      if (
+        (receipt.eligible_person === "dependent" ||
+          receipt.eligible_person === "spouse") && !receipt.patient_ssn
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["patient_ssn"],
+          message:
+            "Form 8889 spouse or dependent medical receipt needs patient SSN",
+        });
+      }
+    }),
   ).min(1).optional(),
   // Portion of line 16 distributed after death, disability, or age 65.
   // Must be answered explicitly when line 16 is positive, including zero.
@@ -254,7 +267,7 @@ const beneficiaryInputSchema = z.object({
       filed_form8889_line7: z.number().int().nonnegative().optional(),
       filed_form8889_line8: z.number().int().nonnegative(),
       filed_form8889_line9: z.number().int().nonnegative(),
-      filed_form8889_line10: z.literal(0),
+      filed_form8889_line10: z.number().int().nonnegative(),
       filed_form8889_line13: z.number().int().nonnegative(),
     }).strict().optional(),
     qualified_funding_distribution_amount: z.number().nonnegative(),
@@ -399,8 +412,8 @@ function verifyPriorYearSpouseFacts(
 // 2025 Part III line 18 uses the 2024 Line 3 Limitation Chart and Worksheet.
 // This path supports one beneficiary, including a married taxpayer whose
 // spouse had no separate HSA, plus the separately reconciled equal-allocation
-// 2024 paired-family case. Other paired allocations, Archer MSA, or 2024 IRA
-// funding require their own source reconstruction.
+// 2024 paired-family case. A sole December 2024 IRA funding transfer with no
+// other contribution is reconciled below; broader combinations stay closed.
 function lastMonthRuleIncome(
   input: Form8889Input,
   pairedPriorYear: boolean,
@@ -423,12 +436,39 @@ function lastMonthRuleIncome(
       "Form 8889 last-month rule needs a 2024 eligibility gap and December 1 HDHP coverage",
     );
   }
-  if (
-    input.testing_period_failure?.qualified_funding_transfer_evidence
-      ?.transfer_year === 2024
-  ) {
+  const transferEvidence = input.testing_period_failure
+    ?.qualified_funding_transfer_evidence;
+  if (transferEvidence?.transfer_year === 2024) {
+    const transfer = transferEvidence.transfers[0];
+    if (
+      pairedPriorYear || evidence.married_at_year_end ||
+      evidence.age_55_or_older || december !== CoverageType.SelfOnly ||
+      priorCoverage.some((month, index) =>
+        index === 11 ? month !== CoverageType.SelfOnly : month !== null
+      ) ||
+      transferEvidence.transfers.length !== 1 || !transfer ||
+      transfer.transfer_month !== 12 || transfer.amount > 4_150 ||
+      transferEvidence.filed_prior_year_form8889_line10 !== transfer.amount ||
+      JSON.stringify(
+          transferEvidence.prior_year_eligible_hdhp_coverage_by_month,
+        ) !== JSON.stringify(priorCoverage) ||
+      evidence.filed_form8889_line2 !== 0 ||
+      evidence.filed_form8889_line3 !== 4_150 ||
+      evidence.filed_form8889_line5 !== 4_150 ||
+      evidence.filed_form8889_line6 !== 4_150 ||
+      evidence.filed_form8889_line7 !== 0 ||
+      evidence.filed_form8889_line8 !== 4_150 ||
+      evidence.filed_form8889_line9 !== 0 ||
+      evidence.filed_form8889_line10 !== transfer.amount ||
+      evidence.filed_form8889_line13 !== 0
+    ) {
+      throw new Error(
+        "Form 8889 combined 2024 last-month-rule and IRA funding recapture needs one reconciled December self-only transfer and zero other contributions",
+      );
+    }
+  } else if (evidence.filed_form8889_line10 !== 0) {
     throw new Error(
-      "Form 8889 combined 2024 last-month-rule and IRA funding recapture needs separate source reconciliation",
+      "Form 8889 prior filed line 10 needs matching funding-transfer evidence",
     );
   }
   const annualLimit = (coverage: CoverageType | null): number => {
@@ -882,14 +922,23 @@ function verifyDistributionSources(
     const form = records?.find((record) =>
       record.source_reference === rollover.form1099_sa_source_reference
     );
+    const disability = input.disability_exception_evidence;
+    const sourcedPostDisabilityCode3 = form?.box3_distribution_code === "3" &&
+      input.beneficiary_identity.owner === TS.T &&
+      input.spouse_has_separate_hsa !== true &&
+      input.age_65_exception_evidence === undefined &&
+      disability !== undefined &&
+      rollover.distribution_date > disability.disability_date;
     if (
-      !form || form.box3_distribution_code !== "1" ||
+      !form ||
+      (form.box3_distribution_code !== "1" &&
+        !sourcedPostDisabilityCode3) ||
       form.box1_gross_distribution < rollover.amount ||
       rollover.form1099_sa_source_reference ===
         rollover.contribution_source_reference
     ) {
       throw new Error(
-        "Form 8889 rollover needs a linked code-1 Form 1099-SA with box 1 covering the excluded amount",
+        "Form 8889 rollover needs a linked code-1 Form 1099-SA or one strictly post-disability primary-owner code-3 source with box 1 covering the excluded amount",
       );
     }
   }

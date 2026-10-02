@@ -582,6 +582,11 @@ Deno.test("Form 8820 builds its own section 280C PDF attachment", async () => {
     (await PDFDocument.load(attachments[0].bytes)).getPageCount(),
     1,
   );
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
+  const replay =
+    await form8820.buildBinaryAttachments?.(fullCredit, { filer }) ??
+      [];
+  assertEquals(replay[0].bytes, attachments[0].bytes);
   assertEquals(
     (await form8820.buildBinaryAttachments?.(source, { filer }))?.length,
     0,

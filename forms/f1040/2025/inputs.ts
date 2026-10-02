@@ -271,6 +271,10 @@ import {
   inputSchema as f8874RecaptureInputSchema,
 } from "../nodes/inputs/f8874/recapture_node.ts";
 import {
+  f453a_interest,
+  inputSchema as f453aInterestInputSchema,
+} from "../nodes/inputs/f453a_interest/index.ts";
+import {
   f8911,
   inputSchema as f8911InputSchema,
 } from "../nodes/inputs/f8911/index.ts";
@@ -460,7 +464,7 @@ import {
 } from "../nodes/inputs/f8835/index.ts";
 import {
   f8844,
-  itemSchema as f8844ItemSchema,
+  inputSchema as f8844InputSchema,
 } from "../nodes/inputs/f8844/index.ts";
 import {
   f8864,
@@ -538,6 +542,10 @@ import {
   itemSchema as f8697ItemSchema,
 } from "../nodes/inputs/f8697/index.ts";
 import {
+  f8858,
+  inputSchema as f8858InputSchema,
+} from "../nodes/inputs/f8858/index.ts";
+import {
   f8866,
   itemSchema as f8866ItemSchema,
 } from "../nodes/inputs/f8866/index.ts";
@@ -591,7 +599,7 @@ import {
   preparer,
 } from "../nodes/inputs/preparer/index.ts";
 import {
-  itemSchema as sehiItemSchema,
+  inputSchema as sehiInputSchema,
   self_employed_health_insurance,
 } from "../nodes/inputs/self_employed_health_insurance/index.ts";
 import {
@@ -650,6 +658,8 @@ import {
   form8990,
   publicInputSchema as form8990InputSchema,
 } from "../nodes/intermediate/forms/form8990/index.ts";
+import { form8839 } from "../nodes/intermediate/forms/form8839/index.ts";
+import { publicForm8839SourceSchema } from "../nodes/intermediate/forms/form8839/public_source.ts";
 import {
   form8396,
   inputSchema as form8396InputSchema,
@@ -802,6 +812,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form7206, inputSchema: form7206InputSchema, isArray: false },
   { node: form_8829, inputSchema: form8829InputSchema, isArray: false },
   { node: form8990, inputSchema: form8990InputSchema, isArray: false },
+  { node: form8839, inputSchema: publicForm8839SourceSchema, isArray: false },
   { node: form8396, inputSchema: form8396InputSchema, isArray: false },
   { node: f8283, inputSchema: f8283InputSchema, isArray: false },
   { node: f8936, inputSchema: f8936InputSchema, isArray: false },
@@ -828,6 +839,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   {
     node: f8874_recapture,
     inputSchema: f8874RecaptureInputSchema,
+    isArray: false,
+  },
+  {
+    node: f453a_interest,
+    inputSchema: f453aInterestInputSchema,
     isArray: false,
   },
   { node: f8911, inputSchema: f8911InputSchema, isArray: false },
@@ -898,7 +914,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f5471, itemSchema: f5471ItemSchema, isArray: true },
   { node: f8828, itemSchema: f8828ItemSchema, isArray: true },
   { node: f8835, itemSchema: f8835ItemSchema, isArray: true },
-  { node: f8844, itemSchema: f8844ItemSchema, isArray: true },
+  { node: f8844, inputSchema: f8844InputSchema, isArray: false },
   { node: f8864, inputSchema: f8864InputSchema, isArray: false },
   { node: fec, itemSchema: fecItemSchema, isArray: true },
   { node: qsehra, inputSchema: qsehraInputSchema, isArray: false },
@@ -915,6 +931,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f3115, itemSchema: f3115ItemSchema, isArray: true },
   { node: f4970, itemSchema: f4970ItemSchema, isArray: true },
   { node: f8697, itemSchema: f8697ItemSchema, isArray: true },
+  { node: f8858, inputSchema: f8858InputSchema, isArray: false },
   { node: f8866, itemSchema: f8866ItemSchema, isArray: true },
   {
     node: qbiAggregation,
@@ -942,8 +959,8 @@ export const inputNodes: readonly InputNodeEntry[] = [
   },
   {
     node: self_employed_health_insurance,
-    itemSchema: sehiItemSchema,
-    isArray: true,
+    inputSchema: sehiInputSchema,
+    isArray: false,
   },
   { node: schedule_h, inputSchema: scheduleHInputSchema, isArray: false },
   {

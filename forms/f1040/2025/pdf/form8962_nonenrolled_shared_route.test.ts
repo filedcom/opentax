@@ -134,6 +134,6 @@ Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent th
         },
       }, { filer: fixture.filer, attachments: [] }),
     Error,
-    "differs from finalized return",
+    "Schedule 3 line 15 must equal lines 9 through 14",
   );
 });

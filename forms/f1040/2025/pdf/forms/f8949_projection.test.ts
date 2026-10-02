@@ -93,6 +93,32 @@ Deno.test("Form 8949 PDF requires canonical sale rows for every source category"
   );
 });
 
+Deno.test("unadjusted direct broker sale needs its exact computed Schedule D row", () => {
+  const source = {
+    part: "A",
+    description: "Broker sale",
+    source_transaction_id: "broker-sale-1",
+    date_acquired: "2025-01-15",
+    date_sold: "2025-06-20",
+    proceeds: 1_000,
+    cost_basis: 700,
+  };
+  const canonical = { ...source, gain_loss: 300, is_long_term: false };
+  form8949Pdf.projectFields?.({}, {
+    f8949: { f8949s: [source] },
+    schedule_d: { transaction: [canonical] },
+  });
+  assertThrows(
+    () =>
+      form8949Pdf.projectFields?.({}, {
+        f8949: { f8949s: [source] },
+        schedule_d: { transaction: [{ ...canonical, proceeds: 1_001 }] },
+      }),
+    Error,
+    "sale source differs from computed Schedule D rows",
+  );
+});
+
 Deno.test("Form 8949 PDF splits a reporting category after eleven rows", () => {
   const rows = Array.from({ length: 12 }, (_, index) => ({
     ...shortTerm,

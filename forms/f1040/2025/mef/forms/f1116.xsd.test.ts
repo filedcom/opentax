@@ -10,6 +10,7 @@ import {
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { FilingStatus as InputFilingStatus } from "../../../nodes/types.ts";
 import { form1116 } from "./f1116.ts";
 import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
@@ -28,6 +29,8 @@ try {
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
+  firstName: "Test",
+  lastName: "Taxpayer",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
@@ -138,6 +141,7 @@ Deno.test({
     },
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -148,6 +152,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,
@@ -163,6 +168,7 @@ Deno.test({
       box12_entries: [],
     }],
     f1099div: [{
+      recipient_tin: "123456789",
       payerName: "US Fund",
       isNominee: false,
       box11: false,
@@ -170,6 +176,7 @@ Deno.test({
       box1b: 20_000,
     }],
     f1099int: [{
+      recipient_tin: "123456789",
       payer_name: "Canadian Bank",
       box1: 1_000,
       box6: 100,
@@ -285,6 +292,13 @@ Deno.test({
           alternative_foreign_source_usd: 140_000,
           ordinary_us_source_usd: 180_000,
           ordinary_foreign_source_usd: 120_000,
+          ordinary_time_basis: {
+            us_service_days: 60,
+            foreign_service_days: 40,
+            workday_ledger_document_reference: "2025 employee workday ledger",
+            salary_only_no_fringe_benefits_confirmed: true,
+            single_2025_compensation_period_confirmed: true,
+          },
           source_document_reference: "2025 employer project ledger",
         },
       }],
@@ -297,12 +311,35 @@ Deno.test({
   assertThrows(
     () =>
       buildMefXml({
+        f1040: {
+          line1h_other_earned: 300_000,
+          line20_nonrefundable_credits: 2_000,
+        },
+        agi_aggregator: { line1h_other_earned: 300_000 },
         fec: {
           fecs: [{
             foreign_employer_name: "German Employer",
             country_code: "DE",
             compensation_amount: 300_000,
             compensation_usd: 300_000,
+            compensation_owner_ssn: "123456789",
+            compensation_source_document_reference:
+              "2025 employer project ledger",
+            service_residence: {
+              kind: "us",
+              line1: "1 Main St",
+              city: "Austin",
+              state: "TX",
+              zip: "78701",
+            },
+            employer_foreign_address: {
+              line1: "1 Arbeitgeber Strasse",
+              city: "Berlin",
+              country_code: "DE",
+              postal_code: "10115",
+            },
+            employer_has_us_ein: false,
+            employer_issued_w2: false,
             foreign_tax_paid_usd: 2_000,
             foreign_service_compensation_usd: 140_000,
             foreign_tax_irs_country_code: "GM",
@@ -321,6 +358,14 @@ Deno.test({
               alternative_foreign_source_usd: 140_000,
               ordinary_us_source_usd: 180_000,
               ordinary_foreign_source_usd: 120_000,
+              ordinary_time_basis: {
+                us_service_days: 60,
+                foreign_service_days: 40,
+                workday_ledger_document_reference:
+                  "2025 employee workday ledger",
+                salary_only_no_fringe_benefits_confirmed: true,
+                single_2025_compensation_period_confirmed: true,
+              },
               source_document_reference: "2025 employer project ledger",
             },
           }],
@@ -329,6 +374,7 @@ Deno.test({
         schedule3: {
           line1_foreign_tax_credit: 2_000,
           line1_total: 2_000,
+          line8_total: 2_000,
         },
       }, filer),
     Error,
@@ -401,6 +447,8 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const filedForm1040Id = "filed-2024-form1040-123456789";
+  const filedScheduleBId = "filed-2024-passive-schedule-b-123456789";
   const carryover = {
     income_category: IncomeCategory.Passive,
     vintages: [
@@ -424,9 +472,19 @@ Deno.test({
     prior_year_schedule_b_line8_total: 800,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
-    source_document_references: [
-      "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
-    ],
+    source_document_references: [filedForm1040Id, filedScheduleBId],
+    filed_2024_schedule_b: {
+      taxpayer_ssn: "123456789",
+      tax_year: 2024 as const,
+      income_category: IncomeCategory.Passive,
+      form1040_source_document_id: filedForm1040Id,
+      schedule_b_source_document_id: filedScheduleBId,
+      line8_2021_third_preceding_amount: 100,
+      line8_2022_second_preceding_amount: 100,
+      line8_2023_first_preceding_amount: 100,
+      line8_2024_current_year_amount: 500,
+      line8_total: 800,
+    },
   };
   const result = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -453,6 +511,11 @@ Deno.test({
   )?.fields;
   assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
   const xml = buildMefXml({
+    general: {
+      filing_status: InputFilingStatus.Single,
+      digital_assets: false,
+      taxpayer_ssn: "123456789",
+    },
     form1116_prior_carryover: { carryovers: [carryover] },
     form_1116: formFields as Parameters<typeof form1116.build>[0],
     form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
@@ -552,6 +615,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -564,6 +628,25 @@ Deno.test({
     fec: [{
       foreign_employer_name: "German Employer GmbH",
       country_code: "DE",
+      compensation_owner_ssn: "123456789",
+      compensation_source_document_reference: "2025 German employer payroll",
+      service_residence: {
+        kind: "foreign",
+        address: {
+          line1: "10 Hauptstrasse",
+          city: "Berlin",
+          country_code: "GM",
+          postal_code: "10115",
+        },
+      },
+      employer_foreign_address: {
+        line1: "20 Berliner Strasse",
+        city: "Berlin",
+        country_code: "GM",
+        postal_code: "10115",
+      },
+      employer_has_us_ein: false,
+      employer_issued_w2: false,
       foreign_tax_irs_country_code: "GM",
       compensation_amount: 60_000,
       compensation_usd: 60_000,
@@ -597,6 +680,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -607,6 +691,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,
@@ -622,6 +707,7 @@ Deno.test({
       box12_entries: [],
     }],
     f1099int: [{
+      recipient_tin: "123456789",
       payer_name: "Canadian Bank",
       box1: 1_000,
       box6: 100,
@@ -630,6 +716,7 @@ Deno.test({
       foreign_tax_irs_country_code: "CA",
     }],
     f1099div: [{
+      recipient_tin: "123456789",
       payerName: "Canadian Fund",
       isNominee: false,
       box11: false,
@@ -668,6 +755,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -678,6 +766,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,

@@ -1,5 +1,39 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Two ordinary foreign dividend payers in separate countries (implementation authored; bulk validation pending)
+
+Two separately identified Forms 1099-DIV with ordinary, entirely foreign-source
+box 1a dividends and box 7 paid tax now occupy passive Form 1116 country
+columns A and B when their reviewed IRS country codes differ. A distinct
+`two_country_dividend_pdf_review` binds each payer's source reference and
+country. The source guard checks distinct payer and document identities,
+holding-period reviews, no qualified dividends or unrelated boxes, each
+Form 1116 item's income/tax/country, pro rata standard-deduction columns,
+Schedule 3, and Form 1040. Native MeF prints separate country source groups;
+the PDF prints the two dividend tax rows and their respective income and
+deductions. Positive and tax/country/payer/holding/return tamper fixtures are
+authored but unrun. Other income or deductions, preferential dividends,
+more payers, underlying issued-document authentication, filled-PDF/XSD review,
+and IRS acceptance remain open.
+
+## Two ordinary foreign dividends from one country (implementation authored; bulk validation pending)
+
+Two distinct identified Forms 1099-DIV may now supply ordinary, entirely
+foreign-source box 1a dividends and box 7 paid foreign tax for one passive
+country. A separate `two_dividend_pdf_review` names both source references and
+affirms the existing Part I-IV inventory constraints. The two input rows must
+have distinct payer names and document references, the same IRS country code,
+qualifying holding-period reviews, and no qualified dividend, nominee, other
+monetary box, or unrelated income. Their box 1a and box 7 amounts reconcile
+one-to-one to the two Form 1116 tax items, the preference review, Schedule 3,
+and Form 1040. Native MeF groups their same-country 1099 taxes into its
+dividend withholding amount; the PDF prints the summed income and tax in
+country column A and Part II's dividend row. Positive and source/return tamper
+fixtures are authored but have not been run under the requested single bulk
+validation pass. Distinct countries, qualified dividends, other income or
+deductions, source-document byte authentication, and IRS acceptance remain
+outside this bound.
+
 **Three-country interest and ordinary dividends (written, unrun):** Two
 separately issued Forms 1099-INT with foreign box 1/box 6 interest in Canada
 and Germany and one French corporation Form 1099-DIV with nonqualified foreign
@@ -439,3 +473,32 @@ mismatch, missing preference/review, inactive-page and missing-Schedule-3-credit
 cases are written. The full tests, typecheck, local XSD, filled-PDF inspection,
 end-to-end return, IRS business rules and ATS acceptance are still pending. The
 shared PDF builder's older sparse-copy assertion must be migrated in that batch.
+
+**One foreign-interest payer plus a U.S. bank-interest payer (implementation
+staged, unrun):** A reviewed Form 1099-INT with entirely foreign-source box 1
+interest and positive box 6 tax can share the return with a distinct domestic
+bank Form 1099-INT whose only positive box is U.S.-source box 1 interest. The
+single-source review identifies both issued statement references separately.
+The native and parent PDF preflights replay the two statements, foreign Part I
+line 1a, worldwide Part I line 3e, five-decimal standard-deduction allocation,
+Schedule 3 line 1, and Form 1040 interest, income, taxable-income and tax lines.
+Positive and altered domestic amount, document reference, foreign tax, and
+final-return fixtures are authored for the deferred batch. The
+[2025 Form 1116 line 3e instructions](https://www.irs.gov/instructions/i1116)
+require gross income from both U.S. and foreign sources in the worldwide
+denominator. Other 1099 boxes, more payers, mixed income, source-byte
+authentication, filled-output/XSD review, and IRS acceptance remain open.
+
+**Current-year excess final-credit join (written, unrun):** For a sourced
+positive Form 1116 with current-year excess and no prior carryover, the parent
+native and PDF projections now compare a supplied final Schedule 3 line 8 to
+Form 1040 line 20 and require that total to cover the allowed foreign tax
+credit. This closes a parent-path gap where the two totals could differ even
+though Form 1116 line 35 matched Schedule 3 line 1; prior-carryover claims
+already had a final-total check. The check applies whenever either final-total
+field is present, while isolated calculation projections with neither field
+remain source components rather than complete returns. A full-return 1099-INT
+positive case and altered Schedule 3/Form 1040 totals are authored for the
+deferred pass. The [2025 Schedule 3](https://www.irs.gov/pub/irs-pdf/f1040s3.pdf)
+directs line 8 to Form 1040 line 20. This join does not authenticate the
+1099-INT or the filed prior-year Form 1116 reviewed for the excess carryover.

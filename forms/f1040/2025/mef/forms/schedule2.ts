@@ -3,10 +3,16 @@ import { FilingStatus } from "../../../mef/header.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
 import {
   calculateForm4255Routes,
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
+import {
+  assertNo2025Schedule2Line10,
+  assertNoUnsupportedSchedule2Line14,
+} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
+import { assertSection453aSchedule2Line } from "../../section453a-reconciliation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -24,6 +30,8 @@ export interface Fields {
   line9_household_employment?: number | null;
   line11_additional_medicare?: number | null;
   line12_niit?: number | null;
+  line14_section453l_interest?: number | null;
+  line15_section453a_interest?: number | null;
   uncollected_fica?: number | null;
   uncollected_fica_gtl?: number | null;
   section409a_excise?: number | null;
@@ -60,6 +68,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line9_household_employment", "HouseholdEmploymentTaxAmt"],
   ["line11_additional_medicare", "TotalAMRRTTaxAmt"],
   ["line12_niit", "IndivNetInvstIncomeTaxAmt"],
+  ["line15_section453a_interest", "IntDefrdTaxGainInstalSalesAmt"],
   ["line16_lihtc_recapture", "RecaptureTaxAmt"],
   ["line17b_mortgage_subsidy_recapture", "MortgSbsdyRecaptureTaxAmt"],
   ["line17c_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
@@ -102,6 +111,7 @@ const ELEMENT_ORDER = [
   "TotalAMRRTTaxAmt",
   "IndivNetInvstIncomeTaxAmt",
   "UncollSSMedcrRRTAGrpInsTxAmt",
+  "IntDefrdTaxGainInstalSalesAmt",
   "RecaptureTaxAmt",
   "RecaptureOtherCreditsGrp",
   "TotalRecaptureOtherCreditsAmt",
@@ -124,6 +134,13 @@ function buildIRS1040Schedule2(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertNo2025Schedule2Line10(fields);
+  assertNoUnsupportedSchedule2Line14(fields);
+  assertSection453aSchedule2Line(
+    fields.line15_section453a_interest,
+    context?.pending?.f453a_interest,
+    context?.filer?.primarySSN,
+  );
   const childrenByTag = new Map<string, string>();
 
   const necExcise = fields.line17k_golden_parachute_excise ?? 0;
@@ -317,6 +334,7 @@ function buildIRS1040Schedule2(
     const calculated = calculateForm8874Recapture(
       newMarketsSource as F8874RecaptureInput,
     );
+    assertForm8874RecaptureOwners(newMarketsSource, context!.pending!);
     if (calculated !== (newMarketsRecapture ?? 0)) {
       throw new Error("Schedule 2 NMCR does not match its recapture source");
     }
@@ -420,6 +438,7 @@ function buildIRS1040Schedule2(
   const calculatedPart2 = amount("line4_se_tax") + line7 +
     amount("line8_form5329_tax") + amount("line9_household_employment") +
     amount("line11_additional_medicare") + amount("line12_niit") +
+    amount("line15_section453a_interest") +
     amount("uncollected_fica") + amount("uncollected_fica_gtl") +
     amount("line16_lihtc_recapture") + line18 +
     amount("line19_form4255_net_epe");

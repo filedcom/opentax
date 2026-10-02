@@ -112,6 +112,22 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     end_month: z.number().int().min(1).max(12),
     allocated_enrollees_in_tax_family: z.number().int().min(0),
     total_enrollees: z.number().int().positive(),
+    nonagreement_review: z.object({
+      tax_year: z.literal(2025),
+      policy_number: z.string().trim().min(1),
+      filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      other_taxpayer_claimed_covered_ssn: z.string().regex(
+        /^\d{3}-?\d{2}-?\d{4}$/,
+      ),
+      marketplace_enrollment_reference: z.string().trim().min(1),
+      tax_family_review_reference: z.string().trim().min(1),
+      tax_family_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      no_agreement_review_reference: z.string().trim().min(1),
+      no_agreement_review_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      filer_enrolled_count: z.number().int().positive(),
+      policy_enrolled_count: z.number().int().positive(),
+    }).strict(),
   }).strict(),
 ]);
 
@@ -425,7 +441,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         evidence.premium_payment.status !== "paid_in_full"
       )
     );
-    const sequentialNoAptcPartial = f1095as.length >= 2 &&
+    const nonoverlappingNoAptcPartial = f1095as.length >= 2 &&
       f1095as.length <= 12 &&
       f1095as.every((item) => {
         const covered = item.monthly_premiums?.flatMap((premium, index) =>
@@ -443,9 +459,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
           item.no_aptc_monthly_evidence !== undefined &&
           item.shared_policy_periods === undefined &&
           item.alternative_marriage_owner === undefined &&
-          covered.length > 0 && covered.every((month, index) =>
-            index === 0 || month === covered[index - 1] + 1
-          );
+          covered.length > 0;
       }) &&
       Array.from(
         { length: 12 },
@@ -454,14 +468,14 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
             .length <= 1,
       ).every(Boolean);
     if (
-      hasProtectedPartial && !sequentialNoAptcPartial &&
+      hasProtectedPartial && !nonoverlappingNoAptcPartial &&
       (f1095as.length !== 1 ||
         f1095as[0].shared_policy_periods !== undefined ||
         !f1095as[0].monthly_premiums || !f1095as[0].monthly_aptcs ||
         f1095as[0].monthly_aptcs.some((amount) => amount !== 0))
     ) {
       throw new Error(
-        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct sequential same-enrollee policies",
+        "Form 1095-A protected partial payment needs one nonshared zero-APTC policy or distinct nonoverlapping same-enrollee policies",
       );
     }
     const hasMarriageOwner = f1095as.some((item) =>
@@ -684,11 +698,11 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         hasProtectedPartial = true;
       }
       const noAptcMonthlyClaim = (f1095as.length === 1 ||
-        sequentialNoAptcPartial) &&
+        nonoverlappingNoAptcPartial) &&
         item.no_aptc_monthly_evidence !== undefined &&
         item.monthly_aptcs.every((amount) => amount === 0) &&
         item.shared_policy_periods === undefined &&
-        (hasProtectedPartial || sequentialNoAptcPartial ||
+        (hasProtectedPartial || nonoverlappingNoAptcPartial ||
           adjustedPremiums.some((amount) => amount !== adjustedPremiums[0]) ||
           slcsps.some((amount) => amount !== slcsps[0]));
       return {
@@ -770,10 +784,14 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         }
         if (
           shared.basis === "other_no_agreement" &&
-          shared.allocated_enrollees_in_tax_family > shared.total_enrollees
+          (shared.allocated_enrollees_in_tax_family > shared.total_enrollees ||
+            shared.nonagreement_review.filer_enrolled_count !==
+              shared.allocated_enrollees_in_tax_family ||
+            shared.nonagreement_review.policy_enrolled_count !==
+              shared.total_enrollees)
         ) {
           throw new Error(
-            "Shared policy allocated enrollees cannot exceed total enrollees",
+            "Shared policy reviewed enrolled counts must match the allocated tax family and total policy enrollees",
           );
         }
         if (

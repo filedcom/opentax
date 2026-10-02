@@ -112,6 +112,11 @@ function effectiveTaxableAmount(
   // Rollover_code X: partial rollover — only the non-rolled portion is taxable
   if (item.rollover_code === "X") {
     const rolled = item.partial_rollover_amount ?? 0;
+    // Supported traditional/SEP IRA rollovers have no Form 8606 basis. The
+    // payer's blank or undetermined box 2a does not make the unrolled part free.
+    if (isIraRollover(item)) {
+      return Math.max(0, item.box1_gross_distribution - rolled);
+    }
     return Math.max(0, rawTaxable - rolled);
   }
 
@@ -204,6 +209,36 @@ export enum SelfCertificationReason {
   DelayedPlanInformation = "delayed_plan_information",
   StateUnclaimedProperty = "state_unclaimed_property",
 }
+
+// Counties named in IRS notice MO-2025-02 (June 9, 2025). Later additions
+// require their own published-notice review before they can be claimed here.
+const MISSOURI_2025_DISASTER_COUNTIES = [
+  "Bollinger",
+  "Butler",
+  "Callaway",
+  "Camden",
+  "Carter",
+  "Dunklin",
+  "Franklin",
+  "Howell",
+  "Iron",
+  "Jefferson",
+  "Madison",
+  "New Madrid",
+  "Oregon",
+  "Ozark",
+  "Perry",
+  "Phelps",
+  "Reynolds",
+  "Ripley",
+  "Scott",
+  "Shannon",
+  "St. Louis",
+  "Stoddard",
+  "Wayne",
+  "Webster",
+  "Wright",
+] as const;
 
 // Per-item schema — one 1099-R from one payer
 export const itemSchema = z.object({
@@ -312,25 +347,34 @@ export const itemSchema = z.object({
     ]).optional(),
     destination_name: z.string().min(1).max(120).regex(/^[!-~]+(?: [!-~]+)*$/)
       .optional(),
+    // A receiving plan may decline a traditional IRA rollover. Retain its
+    // reviewed acceptance for timely and late IRA-to-plan routes alike.
+    qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     distributed_on: z.string().date(),
     completed_on: z.string().date(),
     // Null means the owner's prior 12-month IRA-to-IRA history was reviewed
     // and no earlier rollover was found; omission is not a reviewed answer.
     last_ira_to_ira_rollover_on: z.string().date().nullable(),
+    // Every rollover, including timely and direct transfers, needs an
+    // eligibility review. A deadline waiver cannot waive these requirements.
+    not_inherited_ira_confirmed: z.literal(true),
+    // A separate IRA registration record must identify this payer account as
+    // the recipient's own account. A 1099-R recipient alone may be a beneficiary.
+    account_registration_source_reference: z.string().trim().min(1),
+    registered_account_number: z.string().trim().min(1),
+    registered_owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    not_required_minimum_distribution_confirmed: z.literal(true),
+    rollover_eligibility_review_reference: z.string().trim().min(1),
     // Publication 590-A automatic waiver: the institution timely received
     // funds and instructions, but its error alone delayed the deposit.
     automatic_late_waiver: z.object({
       institution_received_on: z.string().date(),
       deposit_instructions_on: z.string().date(),
       institution_error_only: z.literal(true),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
       institution_receipt_reference: z.string().trim().min(1),
       deposit_instructions_reference: z.string().trim().min(1),
       institution_error_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
     // Revenue Procedure 2020-46 written certification to the receiving IRA
     // trustee or plan administrator. The 30-day safe harbor is checked below.
@@ -345,10 +389,6 @@ export const itemSchema = z.object({
       certification_delivered_on: z.string().date(),
       signed_certification_reference: z.string().trim().min(1),
       contribution_confirmation_reference: z.string().trim().min(1),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
     // A favorable IRS private letter ruling grants only the 60-day waiver;
     // the distribution still has to qualify for rollover on other grounds.
@@ -360,10 +400,35 @@ export const itemSchema = z.object({
       issued_ruling_reference: z.string().trim().min(1),
       owner_distribution_match_review_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
+    }).strict().optional(),
+    // Publication 590-A excludes days a qualifying deposit is frozen from
+    // the 60-day period, with at least ten days after the funds are released.
+    frozen_deposit_extension: z.object({
+      frozen_on: z.string().date(),
+      // First calendar day on which the distributed funds were accessible.
+      unfrozen_on: z.string().date(),
+      cause: z.enum([
+        "institution_bankrupt_or_insolvent",
+        "state_insolvency_withdrawal_restriction",
+      ]),
+      funds_inaccessible_confirmed: z.literal(true),
+      qualifying_insolvency_evidence_reference: z.string().trim().min(1),
+      frozen_funds_record_reference: z.string().trim().min(1),
+      release_record_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
+    }).strict().optional(),
+    // Rev. Proc. 2018-58 section 8 includes the 60-day IRA rollover act.
+    // MO-2025-02 postpones eligible acts due March 14–November 2 to
+    // November 3, 2025, for residents of its named Missouri counties.
+    disaster_postponement: z.object({
+      irs_notice: z.literal("MO-2025-02"),
+      fema_declaration: z.literal("4867-DR"),
+      covered_county: z.enum(MISSOURI_2025_DISASTER_COUNTIES),
+      resident_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      resident_on: z.literal("2025-03-14"),
+      residence_record_reference: z.string().trim().min(1),
+      irs_notice_review_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
     }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
@@ -423,6 +488,29 @@ export const inputSchema = z.object({
 type R1099Item = z.infer<typeof itemSchema>;
 type R1099Items = R1099Item[];
 
+/** Reject an exact repeated identified payer copy before its amounts accumulate. */
+export function assertDistinct1099RCopies(
+  items: readonly R1099Item[],
+): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    const reference = item.source_document_reference?.trim();
+    const payer = item.payer_ein.replace(/\D/g, "");
+    const recipient = item.recipient_ssn?.replace(/\D/g, "");
+    const account = item.account_number?.trim();
+    if (!reference || !payer || !recipient || !account) continue;
+    // The retained source reference identifies the issued copy. Altering a
+    // box value cannot turn that same identified copy into a second payment.
+    const key = JSON.stringify([reference, payer, recipient, account]);
+    if (seen.has(key)) {
+      throw new Error(
+        "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+      );
+    }
+    seen.add(key);
+  }
+}
+
 // Form 1040 line 5c(1) follows a payer-reported pension/plan direct rollover,
 // not an IRA distribution, an excluded Form 4972 distribution, or a disability
 // payment reported as wages. Code G can have a taxable Roth portion in box 2a.
@@ -456,7 +544,9 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
       rollover.completed_on.startsWith("2026-") ||
       rollover.automatic_late_waiver !== undefined ||
       rollover.self_certified_late_waiver !== undefined ||
-      rollover.irs_private_letter_waiver !== undefined);
+      rollover.irs_private_letter_waiver !== undefined ||
+      rollover.frozen_deposit_extension !== undefined ||
+      rollover.disaster_postponement !== undefined);
 }
 
 export function iraDistributionExplanation(
@@ -503,10 +593,24 @@ export function iraDistributionExplanation(
     const rulingText = ruling
       ? ` IRS private letter ruling ${ruling.ruling_number}, issued ${ruling.issued_on}, grants a 60-day waiver for this owner and distribution with a deposit deadline of ${ruling.ruling_rollover_deadline_on}.`
       : "";
+    const frozen = rollover.frozen_deposit_extension;
+    const frozenText = frozen
+      ? ` Publication 590-A frozen-deposit extension: the funds were inaccessible from ${frozen.frozen_on} until ${frozen.unfrozen_on} because of ${
+        frozen.cause === "institution_bankrupt_or_insolvent"
+          ? "financial institution bankruptcy or insolvency"
+          : "a state withdrawal restriction due to financial institution insolvency"
+      }; the extended rollover deadline was ${
+        new Date(frozenDepositDeadline(rollover)).toISOString().slice(0, 10)
+      }. The source was reviewed as neither inherited nor an RMD.`
+      : "";
+    const disaster = rollover.disaster_postponement;
+    const disasterText = disaster
+      ? ` IRS disaster notice ${disaster.irs_notice} postponed the 60-day rollover deadline to November 3, 2025, for this resident of ${disaster.covered_county} County, Missouri (FEMA ${disaster.fema_declaration}).`
+      : "";
     return [
       `Distribution ${
         index + 1
-      }: ${opening}${waiverText}${certificationText}${rulingText}`,
+      }: ${opening}${waiverText}${certificationText}${rulingText}${frozenText}${disasterText}`,
     ];
   });
   if (rows.length === 0) return undefined;
@@ -548,11 +652,24 @@ function automaticWaiverDeadline(distributedOn: string): number {
   return deadline.getTime();
 }
 
+function frozenDepositDeadline(
+  rollover: NonNullable<R1099Item["ira_rollover"]>,
+): number {
+  const frozen = rollover.frozen_deposit_extension!;
+  const day = 86_400_000;
+  const originalDeadline = Date.parse(rollover.distributed_on) + 60 * day;
+  const released = Date.parse(frozen.unfrozen_on);
+  const frozenDays = (released - Date.parse(frozen.frozen_on)) / day;
+  return Math.max(originalDeadline + frozenDays * day, released + 10 * day);
+}
+
 function validateLateWaiver(item: R1099Item): void {
   const rollover = item.ira_rollover!;
   const waiver = rollover.automatic_late_waiver;
   const certification = rollover.self_certified_late_waiver;
   const ruling = rollover.irs_private_letter_waiver;
+  const frozen = rollover.frozen_deposit_extension;
+  const disaster = rollover.disaster_postponement;
   const distributed = Date.parse(rollover.distributed_on);
   const completed = Date.parse(rollover.completed_on);
   const elapsedDays = (completed - distributed) / 86_400_000;
@@ -560,6 +677,69 @@ function validateLateWaiver(item: R1099Item): void {
     item.box7_distribution_code === DistributionCode.CodeG;
   if ([waiver, certification, ruling].filter(Boolean).length > 1) {
     throw new Error("IRA late rollover cannot claim two waiver methods");
+  }
+  if (
+    [frozen, disaster, waiver, certification, ruling].filter(Boolean)
+      .length > 1
+  ) {
+    throw new Error(
+      "IRA late rollover cannot claim multiple extension or waiver methods",
+    );
+  }
+  if (disaster) {
+    const ordinaryDeadline = distributed + 60 * 86_400_000;
+    if (elapsedDays <= 60 || directPlanRollover) {
+      throw new Error(
+        "IRA disaster postponement needs an actual late 60-day rollover",
+      );
+    }
+    if (
+      ordinaryDeadline < Date.parse("2025-03-14") ||
+      ordinaryDeadline >= Date.parse("2025-11-03") ||
+      completed > Date.parse("2025-11-03") ||
+      disaster.resident_ssn.replaceAll("-", "") !==
+        item.recipient_ssn?.replaceAll("-", "") ||
+      new Set([
+          item.source_document_reference,
+          disaster.residence_record_reference,
+          disaster.irs_notice_review_reference,
+          disaster.deposit_confirmation_reference,
+        ]).size !== 4
+    ) {
+      throw new Error(
+        "IRA disaster postponement needs an eligible Missouri resident, distinct reviewed records, postponed original deadline, and deposit by November 3, 2025",
+      );
+    }
+    return;
+  }
+  if (frozen) {
+    const freezeStart = Date.parse(frozen.frozen_on);
+    const released = Date.parse(frozen.unfrozen_on);
+    if (elapsedDays <= 60 || directPlanRollover) {
+      throw new Error(
+        "IRA frozen-deposit extension needs an actual late 60-day rollover",
+      );
+    }
+    if (!item.source_document_reference || !item.account_number) {
+      throw new Error(
+        "IRA frozen-deposit extension needs its issued Form 1099-R reference and account",
+      );
+    }
+    if (
+      freezeStart < distributed ||
+      freezeStart > distributed + 60 * 86_400_000 ||
+      released <= freezeStart || completed < released
+    ) {
+      throw new Error(
+        "IRA frozen-deposit extension needs a qualifying frozen interval and deposit after release",
+      );
+    }
+    if (completed > frozenDepositDeadline(rollover)) {
+      throw new Error(
+        "IRA frozen-deposit rollover exceeds its extended deadline",
+      );
+    }
+    return;
   }
   if (ruling) {
     validatePrivateLetterWaiver(item);
@@ -583,22 +763,6 @@ function validateLateWaiver(item: R1099Item): void {
   if (!item.source_document_reference || !item.account_number) {
     throw new Error(
       "IRA automatic late waiver needs its issued Form 1099-R reference and account",
-    );
-  }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !waiver.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA automatic late waiver to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    waiver.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA automatic late waiver cannot claim plan acceptance for an IRA destination",
     );
   }
   for (
@@ -638,22 +802,6 @@ function validateSelfCertifiedLateWaiver(item: R1099Item): void {
   if (!item.source_document_reference || !item.account_number) {
     throw new Error(
       "IRA self-certification needs its issued Form 1099-R reference and account",
-    );
-  }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !certification.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA self-certification to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    certification.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA self-certification cannot claim plan acceptance for an IRA destination",
     );
   }
   if (
@@ -705,22 +853,6 @@ function validatePrivateLetterWaiver(item: R1099Item): void {
       "IRA private letter waiver needs deposit within the ruling deadline",
     );
   }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !ruling.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA private letter waiver to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    ruling.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA private letter waiver cannot claim plan acceptance for an IRA destination",
-    );
-  }
 }
 
 function validateIraRolloverEvidence(item: R1099Item): void {
@@ -740,6 +872,26 @@ function validateIraRolloverEvidence(item: R1099Item): void {
     if (!isIraRollover(item)) {
       throw new Error(
         "IRA rollover evidence needs an active IRA distribution and rollover code",
+      );
+    }
+    if (
+      !item.source_document_reference || !item.account_number?.trim() ||
+      !item.recipient_ssn || (item.ts !== "T" && item.ts !== "S")
+    ) {
+      throw new Error(
+        "IRA rollover needs one identified payer copy, account, recipient, and filed owner",
+      );
+    }
+    const registration = item.ira_rollover;
+    if (
+      registration.account_registration_source_reference ===
+        item.source_document_reference ||
+      registration.registered_account_number !== item.account_number ||
+      registration.registered_owner_ssn.replaceAll("-", "") !==
+        item.recipient_ssn.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "IRA rollover needs a distinct account registration identifying the payer account and recipient as owner",
       );
     }
     if (
@@ -764,10 +916,22 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       item.box7_distribution_code === DistributionCode.CodeS ||
       item.box7_distribution_code === DistributionCode.CodeJ ||
       item.box7_distribution_code === DistributionCode.CodeQ ||
-      item.box7_distribution_code === DistributionCode.CodeT
+      item.box7_distribution_code === DistributionCode.CodeT ||
+      item.box7_code2 === DistributionCode.CodeS ||
+      item.box7_code2 === DistributionCode.CodeJ ||
+      item.box7_code2 === DistributionCode.CodeQ ||
+      item.box7_code2 === DistributionCode.CodeT
     ) {
       throw new Error(
         "IRA rollover source conflicts with the payer distribution code",
+      );
+    }
+    if (
+      item.box7_distribution_code === DistributionCode.Code4 ||
+      item.box7_code2 === DistributionCode.Code4
+    ) {
+      throw new Error(
+        "Death-coded IRA distribution needs beneficiary and RMD eligibility evidence before rollover treatment",
       );
     }
     if (destination === "ira") {
@@ -793,8 +957,40 @@ function validateIraRolloverEvidence(item: R1099Item): void {
           "IRA-to-IRA rollover exceeds one rollover per owner in 12 months",
         );
       }
-    } else if (rollover.destination_ira_type !== undefined) {
-      throw new Error("Qualified-plan destination cannot be an IRA account");
+    } else {
+      // The payer must report zero in box 2a for a direct traditional IRA
+      // payment to an accepting employer plan (2025 Form 1099-R instructions).
+      // Do not silently turn a contrary or undetermined issued amount into zero.
+      if (
+        item.box7_distribution_code === DistributionCode.CodeG &&
+        (item.box2a_taxable_amount !== 0 ||
+          item.box2b_not_determined === true)
+      ) {
+        throw new Error(
+          "IRA code G direct plan payment needs payer box 2a zero and determined",
+        );
+      }
+      if (rollover.destination_ira_type !== undefined) {
+        throw new Error("Qualified-plan destination cannot be an IRA account");
+      }
+      if (!rollover.destination_name) {
+        throw new Error(
+          "IRA rollover to a qualified plan needs its destination name",
+        );
+      }
+      if (!rollover.qualified_plan_acceptance_reference) {
+        throw new Error(
+          "IRA rollover to a qualified plan needs plan acceptance evidence",
+        );
+      }
+    }
+    if (
+      destination === "ira" &&
+      rollover.qualified_plan_acceptance_reference
+    ) {
+      throw new Error(
+        "IRA-to-IRA rollover cannot claim plan acceptance evidence",
+      );
     }
     const elapsedDays =
       (Date.parse(completed_on) - Date.parse(distributed_on)) /
@@ -805,14 +1001,6 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       );
     }
     validateLateWaiver(item);
-    if (
-      destination === "qualified_plan" &&
-      !item.ira_rollover.destination_name
-    ) {
-      throw new Error(
-        "IRA rollover to a qualified plan needs its destination name",
-      );
-    }
     if (
       !completed_on.startsWith("2025-") &&
       !completed_on.startsWith("2026-")
@@ -828,11 +1016,44 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         "Partial IRA rollover needs an amount between zero and gross distribution",
       );
     }
+    if (
+      item.rollover_code === RolloverCode.X &&
+      item.box2a_taxable_amount !== undefined &&
+      item.box2a_taxable_amount !== item.box1_gross_distribution
+    ) {
+      throw new Error(
+        "Partial pretax IRA rollover needs payer box 2a equal to gross or undetermined",
+      );
+    }
   }
 }
 
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  if (
+    item.box7_distribution_code === DistributionCode.Code8 &&
+    item.box7_ira_simple_indicator !== true &&
+    item.no_distribution_received !== true &&
+    (
+      item.box7_code2 !== undefined ||
+      !item.recipient_ssn || !item.ts ||
+      !item.source_document_reference ||
+      !/^\d{2}-?\d{7}$/.test(item.payer_ein) ||
+      !Number.isSafeInteger(item.box2a_taxable_amount) ||
+      (item.box2a_taxable_amount ?? 0) <= 0 ||
+      (item.box2a_taxable_amount ?? 0) > item.box1_gross_distribution ||
+      item.disability_as_wages === true ||
+      item.rollover_code !== undefined ||
+      item.exclude_4972 === true ||
+      item.exclude_8606_roth === true ||
+      item.simplified_method_flag === true ||
+      (item.pso_premium ?? 0) > 0
+    )
+  ) {
+    throw new Error(
+      "Non-IRA code 8 corrective distribution needs one identified 2025 Form 1099-R, owner, payer and positive taxable box 2a",
+    );
+  }
   validateIraRolloverEvidence(item);
   if (
     item.exclude_8606_roth === true ||
@@ -928,14 +1149,30 @@ function activeItems(items: R1099Items): R1099Items {
   return items.filter((item) => item.no_distribution_received !== true);
 }
 
-// IRA items: box7_ira_simple_indicator = true
+// A code-Q qualified Roth IRA distribution is an IRA distribution even when
+// its payer leaves the IRA/SEP/SIMPLE box unchecked, as the IRS permits.
 function iraItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_simple_indicator === true);
+  return items.filter((item) =>
+    item.box7_ira_simple_indicator === true ||
+    item.box7_distribution_code === DistributionCode.CodeQ
+  );
 }
 
-// Pension/annuity items: box7_ira_simple_indicator !== true
+// Pension/annuity items exclude code-Q Roth IRA distributions.
 function pensionItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_simple_indicator !== true);
+  return items.filter((item) =>
+    item.box7_ira_simple_indicator !== true &&
+    item.box7_distribution_code !== DistributionCode.CodeQ &&
+    item.box7_distribution_code !== DistributionCode.Code8
+  );
+}
+
+/** Current-year corrective plan distributions shown on non-IRA code-8 copies. */
+export function correctivePlanItems(items: R1099Items): R1099Items {
+  return activeItems(items).filter((item) =>
+    item.box7_distribution_code === DistributionCode.Code8 &&
+    item.box7_ira_simple_indicator !== true
+  );
 }
 
 // Disability-as-wages items: disability routing to line1a
@@ -952,7 +1189,12 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
   if (item.exclude_8606_roth === true) return true;
-  if (ZERO_TAXABLE_CODES.has(item.box7_distribution_code)) return true;
+  // Code Q is zero taxable, but its gross Roth IRA distribution belongs on
+  // Form 1040 line 4a under the 2025 line 4a/4b Exception 2 instructions.
+  if (
+    item.box7_distribution_code !== DistributionCode.CodeQ &&
+    ZERO_TAXABLE_CODES.has(item.box7_distribution_code)
+  ) return true;
   return false;
 }
 
@@ -1088,6 +1330,14 @@ function disabilityWagesF1040Fields(
   return { line1a_wages: total };
 }
 
+function correctivePlanF1040Fields(items: R1099Items): Record<string, number> {
+  const amount = correctivePlanItems(items).reduce(
+    (sum, item) => sum + item.box2a_taxable_amount!,
+    0,
+  );
+  return amount > 0 ? { line1h_other_earned: amount } : {};
+}
+
 // Build f1040 withholding output (line25b)
 function withholdingF1040Fields(items: R1099Items): Record<string, number> {
   const total = activeItems(items).reduce(
@@ -1138,6 +1388,10 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
         ...form8606PartIInput(item),
         nondeductible_contributions: 0,
       })
+      // Form 5329 line 1 uses the early distribution included in income.
+      // A confirmed IRA rollover removes its rolled portion from that amount.
+      : isIraRollover(item)
+      ? effectiveTaxableAmount(item, 0, 0)
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
       owner_entries: [{
@@ -1433,6 +1687,21 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
+    assertDistinct1099RCopies(r1099s);
+    if (
+      ctx.taxYear === 2025 &&
+      r1099s.some((item) =>
+        (item.box7_distribution_code === DistributionCode.CodeP ||
+          item.box7_code2 === DistributionCode.CodeP) &&
+        (item.box1_gross_distribution > 0 ||
+          (item.box2a_taxable_amount ?? 0) > 0 ||
+          (item.box4_federal_withheld ?? 0) > 0)
+      )
+    ) {
+      throw new Error(
+        "TY2025 code P Form 1099-R needs prior-year correction and receipt-date review before current-year filing",
+      );
+    }
     if (
       ctx.taxYear !== 2025 &&
       r1099s.some((item) => item.form8915f_treatment !== undefined)
@@ -1443,6 +1712,17 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     // Cross-field validation
     for (const item of r1099s) {
       validateItem(item);
+    }
+    const corrective = correctivePlanItems(r1099s);
+    if (
+      corrective.length > 0 &&
+      (ctx.taxYear !== 2025 ||
+        new Set(corrective.map((item) => item.source_document_reference))
+            .size !== corrective.length)
+    ) {
+      throw new Error(
+        "TY2025 corrective plan distributions need distinct Form 1099-R source references",
+      );
     }
     assertIraRolloverEvidence(r1099s);
 
@@ -1466,6 +1746,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       cfg.qcdAnnualLimit,
       cfg.psoExclusionLimit,
     );
+    const correctiveFields = correctivePlanF1040Fields(r1099s);
     // Withholding fields
     const withholdingFields = withholdingF1040Fields(r1099s);
 
@@ -1474,6 +1755,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...iraFields,
       ...pensionFields,
       ...disWagesFields,
+      ...correctiveFields,
       ...withholdingFields,
     };
     if (r1099s.some(isPensionDirectRollover)) {
@@ -1505,6 +1787,9 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
     if ((disWagesFields.line1a_wages ?? 0) > 0) {
       agiFields.line1a_wages = disWagesFields.line1a_wages;
+    }
+    if ((correctiveFields.line1h_other_earned ?? 0) > 0) {
+      agiFields.line1h_other_earned = correctiveFields.line1h_other_earned;
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(

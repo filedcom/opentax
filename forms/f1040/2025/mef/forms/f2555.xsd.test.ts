@@ -383,6 +383,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: torontoHousing },
   }, { taxYear: 2025, formType: "f1040" });
@@ -408,28 +409,30 @@ Deno.test("Form 2555 aggregate facts cannot create invalid MeF XML", () => {
 });
 
 Deno.test("Form 2555 rejects wage and exclusion mismatches across documents", () => {
+  const wageMismatch = {
+    f1040: { line1h_other_earned: 90_000 },
+    agi_aggregator: { line1h_other_earned: 90_000 },
+    schedule1: { line8d_foreign_earned_income_exclusion: 100_000 },
+    form2555: { filing_details: filingDetails },
+  };
+  const exclusionMismatch = {
+    f1040: { line1h_other_earned: 100_000 },
+    agi_aggregator: { line1h_other_earned: 100_000 },
+    schedule1: { line8d_foreign_earned_income_exclusion: 90_000 },
+    form2555: { filing_details: filingDetails },
+  };
   assertThrows(
     () => buildMefXml({ form2555: { filing_details: filingDetails } }, filer),
     Error,
-    "exclusion differs",
+    "line 1h needs exactly one supported retained source",
   );
   assertThrows(
-    () =>
-      buildMefXml({
-        f1040: { line1h_other_earned: 90_000 },
-        schedule1: { line8d_foreign_earned_income_exclusion: 100_000 },
-        form2555: { filing_details: filingDetails },
-      }, filer),
+    () => buildMefXml(wageMismatch, filer),
     Error,
-    "wages differ",
+    "exactly one supported retained source",
   );
   assertThrows(
-    () =>
-      buildMefXml({
-        f1040: { line1h_other_earned: 100_000 },
-        schedule1: { line8d_foreign_earned_income_exclusion: 90_000 },
-        form2555: { filing_details: filingDetails },
-      }, filer),
+    () => buildMefXml(exclusionMismatch, filer),
     Error,
     "exclusion differs",
   );
@@ -452,6 +455,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: filingDetails },
   }, { taxYear: 2025, formType: "f1040" });
@@ -502,6 +506,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: partYear },
   }, { taxYear: 2025, formType: "f1040" });
@@ -536,6 +541,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: employeeHousingDetails },
   }, { taxYear: 2025, formType: "f1040" });

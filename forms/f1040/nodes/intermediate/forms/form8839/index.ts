@@ -257,8 +257,6 @@ export function settleForm8839Credit(
   };
 }
 
-// The active filing route is closed until source documents and finalized-return
-// facts can substantiate eligibility, expenses, MAGI, and credit capacity.
 class Form8839Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8839";
   readonly inputSchema = inputSchema;
@@ -270,7 +268,7 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
       (input.children?.length ?? 0) > 0 || (input.adoption_benefits ?? 0) > 0
     ) {
       throw new Error(
-        "Form 8839 filing needs source-verified adoption eligibility, unreimbursed expenses, finalized-return MAGI, and credit-limit capacity",
+        "Form 8839 filing needs reviewed adoption evidence and late return credit settlement",
       );
     }
     return { outputs: [] };

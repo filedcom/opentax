@@ -1,5 +1,10 @@
-import { qualifiedHomeAddressSchema } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
+import {
+  calculateForm8396,
+  qualifiedHomeAddressSchema,
+} from "../../../nodes/intermediate/forms/form8396/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { sourceFromPending } from "../../mef/forms/f8396.ts";
+import { assertForm8396ReissueForm8828Join } from "../../mef/forms/f8396_reissue_join.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const worksheet = "topmostSubform[0].Page2[0].Col2[0].Line8_Worksheet[0].";
@@ -42,7 +47,7 @@ export const form8396Pdf: PdfFormDescriptor = {
     text("nameLine1", `${page1}f1_1[0]`),
     text("primarySSN", `${page1}f1_2[0]`),
   ],
-  projectFields(fields) {
+  projectFields(fields, allPending) {
     if (fields.certificate_issuer_name === undefined) {
       if (fields.line7 !== undefined) {
         throw new Error("Form 8396 PDF needs the certificate issuer");
@@ -68,6 +73,20 @@ export const form8396Pdf: PdfFormDescriptor = {
       throw new Error(
         "Form 8396 PDF credit does not reconcile to its worksheet",
       );
+    }
+    if (fields.certificate_is_reissued === true) {
+      const source = sourceFromPending(fields);
+      const lines = calculateForm8396(source, fields.line8);
+      for (
+        const key of ["line1", "line2", "line3", "line7", "line9"] as const
+      ) {
+        if (fields[key] !== lines[key]) {
+          throw new Error(
+            `Form 8396 PDF reissued MCC ${key} differs from its source calculation`,
+          );
+        }
+      }
+      assertForm8396ReissueForm8828Join(source, allPending);
     }
     const rate = fields.line2;
     if (rate !== undefined && typeof rate !== "number") {

@@ -34,6 +34,11 @@ const noncashContributionItemSchema = z.object({
   adjusted_basis: z.number().nonnegative().optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
   unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
+  private_foundation_capital_gain_reduction_confirmed: z.literal(true)
+    .optional(),
+  taxidermy_capital_gain_reduction_confirmed: z.literal(true).optional(),
+  intellectual_property_capital_gain_reduction_confirmed: z.literal(true)
+    .optional(),
 });
 const capitalGainCarryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),
@@ -46,6 +51,59 @@ const capitalGainCarryoverSchema = z.object({
   // surviving-spouse cases as requiring special carryover treatment.
   ordinary_carryover_rules_confirmed: z.literal(true),
 });
+
+export const homeMortgageNonqualifyingUseReviewSchema = z.object({
+  loan_document_reference: z.string().trim().min(1),
+  outstanding_balance_2025: z.number().positive(),
+  nonqualifying_proceeds_amount: z.number().positive(),
+  interest_allocation_workpaper_reference: z.string().trim().min(1),
+  deductible_home_interest_reviewed: z.literal(true),
+});
+
+export const otherTaxItemSchema = z.object({
+  type: z.enum(["foreign_income_tax", "gst_income_distribution_tax"]),
+  amount: z.number().int().positive(),
+  source_document_reference: z.string().trim().min(1),
+  deductible_tax_reviewed: z.literal(true),
+});
+
+export const sellerFinancedLine8bSchema = z.object({
+  amount: z.number().int().positive(),
+  seller_name: z.string().trim().min(1).max(35)
+    .regex(/^([A-Za-z0-9'-] ?)*[A-Za-z0-9'-]$/),
+  tin_type: z.enum(["ssn", "ein"]),
+  seller_tin: z.string().regex(/^\d{9}$/),
+  address: z.object({
+    line1: z.string().trim().min(1).max(35)
+      .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
+    city: z.string().trim().min(1).max(22)
+      .regex(/^([A-Za-z] ?)*[A-Za-z]$/),
+    state: z.string().regex(/^[A-Z]{2}$/),
+    zip: z.string().regex(/^\d{5}(-?\d{4})?$/),
+  }),
+  mortgage_contract_reference: z.string().trim().min(1),
+  interest_payment_workpaper_reference: z.string().trim().min(1),
+  seller_received_taxpayer_tin_confirmed: z.literal(true),
+});
+
+/** Source-backed Schedule A line 8 warning; the amount is the filed interest. */
+export function reviewedHomeMortgageNonqualifyingUse(
+  source: Record<string, unknown>,
+): boolean {
+  if (source.home_mortgage_nonqualifying_use_review === undefined) return false;
+  homeMortgageNonqualifyingUseReviewSchema.parse(
+    source.home_mortgage_nonqualifying_use_review,
+  );
+  if (
+    Number(source.line_8a_mortgage_interest_1098 ?? 0) +
+        Number(source.line_8b_mortgage_interest_no_1098 ?? 0) <= 0
+  ) {
+    throw new Error(
+      "Schedule A line 8 mortgage-use review needs positive filed home interest",
+    );
+  }
+  return true;
+}
 
 // 7.5% AGI floor for medical deductions
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
@@ -66,8 +124,13 @@ export const inputSchema = z.object({
   line_5b_real_estate_tax: z.number().nonnegative().optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
+  line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
+    .optional(),
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
+  line_8b_seller_financed: sellerFinancedLine8bSchema.optional(),
+  home_mortgage_nonqualifying_use_review:
+    homeMortgageNonqualifyingUseReviewSchema.optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
   form8396_interest_credit_reduction: z.number().int().nonnegative()
     .optional(),
@@ -98,6 +161,60 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  if (
+    data.line_8b_seller_financed &&
+    data.line_8b_seller_financed.amount !==
+      data.line_8b_mortgage_interest_no_1098
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["line_8b_seller_financed"],
+      message:
+        "Schedule A seller-financed line 8b must equal its interest source",
+    });
+  }
+  const otherTaxItems = data.line_6_other_tax_items;
+  if (otherTaxItems) {
+    if (
+      new Set(otherTaxItems.map((item) => item.type)).size !==
+        otherTaxItems.length
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["line_6_other_tax_items"],
+        message: "Schedule A line 6 reviewed tax categories must be distinct",
+      });
+    }
+    if (
+      otherTaxItems.reduce((sum, item) => sum + item.amount, 0) !==
+        data.line_6_other_taxes
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["line_6_other_tax_items"],
+        message: "Schedule A line 6 reviewed taxes must equal the filed total",
+      });
+    }
+  }
+  if (
+    data.home_mortgage_nonqualifying_use_review !== undefined &&
+    (data.line_8a_mortgage_interest_1098 ?? 0) +
+          (data.line_8b_mortgage_interest_no_1098 ?? 0) <= 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["home_mortgage_nonqualifying_use_review"],
+      message:
+        "Schedule A line 8 mortgage-use review needs positive filed home interest",
+    });
+  }
+  if (data.force_itemized === true && data.force_standard === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["force_itemized"],
+      message: "Schedule A cannot elect both itemized and standard deductions",
+    });
+  }
   const gifts = data.noncash_contribution_items ?? [];
   const election = data.capital_gain_50_percent_election_confirmed === true ||
     gifts.some((item) =>
@@ -111,13 +228,15 @@ export const inputSchema = z.object({
       item.is_capital_gain_property === true &&
       item.category === "noncash_50" && !noAppreciation &&
       item.capital_gain_reduction_election_confirmed !== true &&
-      item.unrelated_use_capital_gain_reduction_confirmed !== true
+      item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+      item.taxidermy_capital_gain_reduction_confirmed !== true &&
+      item.intellectual_property_capital_gain_reduction_confirmed !== true
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["noncash_contribution_items", index],
         message:
-          "Appreciated capital-gain property in the 50% category needs an elected or unrelated-use basis reduction",
+          "Appreciated capital-gain property in the 50% category needs a sourced basis reduction",
       });
     }
   }
@@ -188,6 +307,9 @@ export const inputSchema = z.object({
         if (
           (item.capital_gain_reduction_election_confirmed !== true &&
             item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+            item.taxidermy_capital_gain_reduction_confirmed !== true &&
+            item.intellectual_property_capital_gain_reduction_confirmed !==
+              true &&
             !noAppreciation) ||
           item.category !== "noncash_50" ||
           item.original_fmv === undefined ||
@@ -502,6 +624,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
+        force_itemized: input.force_itemized,
         itemized_taxes: taxesTotal,
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,

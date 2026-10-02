@@ -33,6 +33,7 @@ export function scenario104013Input(): Record<string, unknown> {
     w2: [{
       employer_name: facts.w2.employerName,
       employer_ein: facts.w2.employerEin,
+      employee_ssn: facts.w2.employeeSsn,
       employer_address_line1: facts.w2.employerAddress.line1,
       employer_address_city: facts.w2.employerAddress.city,
       employer_address_state: facts.w2.employerAddress.state,

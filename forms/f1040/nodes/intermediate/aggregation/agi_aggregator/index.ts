@@ -66,6 +66,8 @@ export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2 and f1099r can both route here)
   line1a_wages: accumulable(z.number()).optional(),
+  // Line 1b — Household employee wages also enter total income and AGI.
+  line1b_household_wages: accumulable(z.number().nonnegative()).optional(),
   // Line 1h — Other earned income from clergy, foreign employers, and Form 2555
   line1h_other_earned: accumulable(z.number()).optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
@@ -84,7 +86,7 @@ export const inputSchema = z.object({
   // Line 4b — IRA distributions, taxable amount (Form 1099-R)
   line4b_ira_taxable: z.number().optional(),
   // Line 5b — Pensions and annuities, taxable amount (Form 1099-R)
-  line5b_pension_taxable: z.number().optional(),
+  line5b_pension_taxable: z.union([z.number(), z.array(z.number())]).optional(),
   // Form 4972 Part II-only ordinary income remains on Form 1040 line 5b.
   line5b_form4972_ordinary: z.number().nonnegative().optional(),
   // Line 6a — Social security benefits, gross (from SSA-1099 — for taxability worksheet)
@@ -169,8 +171,8 @@ export const inputSchema = z.object({
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
   // Line 8f — Form 8889 taxable distributions and testing-period income.
   line8f_hsa_income: z.number().nonnegative().optional(),
-  // Line 8z — Other income (1099-NEC line 8z, etc.)
-  line8z_other: z.number().optional(),
+  // Unlabeled line 8z amounts cannot bypass Schedule 1 source/description proof.
+  line8z_other: z.never().optional(),
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
@@ -182,7 +184,7 @@ export const inputSchema = z.object({
   line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
   line8z_substitute_payments: z.number().nonnegative().optional(),
-  line8z_nqdc: z.number().nonnegative().optional(),
+  line8z_nqdc: z.never().optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
@@ -211,8 +213,6 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Exclusions ────────────────────────────────────────
   // Line 8d — Foreign earned income exclusion (Form 2555)
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
-  // Line 8d — Foreign housing deduction (Form 2555)
-  line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part II — Above-the-line deductions ────────────────────────
   // Line 13 — HSA deduction (Form 8889)
@@ -354,6 +354,7 @@ function computeSsaTaxable(
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     sumField(input.line1a_wages as number | number[] | undefined) +
+    sumField(input.line1b_household_wages) +
     sumField(input.line1h_other_earned) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +
@@ -362,7 +363,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line2b_taxable_interest ?? 0) +
     sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
-    (input.line5b_pension_taxable ?? 0) +
+    sumField(input.line5b_pension_taxable) +
     (input.line5b_form4972_ordinary ?? 0) +
     (input.line7_capital_gain ?? 0) +
     (input.line7a_cap_gain_distrib ?? 0) +
@@ -386,7 +387,6 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     ) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
-    (input.line8z_other ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
@@ -470,10 +470,7 @@ function grossIncome(
 // Sum IRC §911 exclusions. Form 8815 savings-bond interest is excluded
 // before taxable interest reaches this node, not on Schedule 1 line 8b.
 function exclusions(input: AgiInput): number {
-  return (
-    (input.line8d_foreign_earned_income_exclusion ?? 0) +
-    (input.line8d_foreign_housing_deduction ?? 0)
-  );
+  return input.line8d_foreign_earned_income_exclusion ?? 0;
 }
 
 // Sum above-the-line deductions excluding SLI (used to compute MAGI for SLI phase-out).
@@ -606,6 +603,7 @@ function nonSsaIncome(input: AgiInput): number {
 function scheduleOnePartI(input: AgiInput): number {
   return (
     (input.line1_state_refund ?? 0) +
+    (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     sumField(input.line5_schedule_e) +
@@ -624,7 +622,6 @@ function scheduleOnePartI(input: AgiInput): number {
     ) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
-    (input.line8z_other ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
@@ -652,8 +649,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) -
     remainingAllowedPassiveLoss(input) -
-    (input.line8d_foreign_earned_income_exclusion ?? 0) -
-    (input.line8d_foreign_housing_deduction ?? 0)
+    (input.line8d_foreign_earned_income_exclusion ?? 0)
   );
 }
 
@@ -694,6 +690,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    // Reject the obsolete input before Zod silently strips unknown keys.
+    // Form 2555 line 50 requires a separately supported Schedule 1 line 24j source.
+    if (
+      Object.hasOwn(rawInput as object, "line8d_foreign_housing_deduction")
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction is unsupported in the AGI aggregator",
+      );
+    }
     const input = inputSchema.parse(rawInput);
     if (input.pal_pending_active_4797 === true) {
       return {
@@ -800,7 +805,6 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8962, {
         taxpayer_modified_agi: agi + (input.tax_exempt_interest ?? 0) +
           (input.line8d_foreign_earned_income_exclusion ?? 0) +
-          (input.line8d_foreign_housing_deduction ?? 0) +
           Math.max(0, ssaGross - ssaTaxable),
         pub974_income_audit: {
           schedule1_line3_schedule_c: input.line3_schedule_c ?? 0,
@@ -811,8 +815,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             ssaGross - ssaTaxable,
           ),
           form2555_lines45_and_50:
-            (input.line8d_foreign_earned_income_exclusion ?? 0) +
-            (input.line8d_foreign_housing_deduction ?? 0),
+            input.line8d_foreign_earned_income_exclusion ?? 0,
           schedule1_adjustments_except_line17: line10 -
             (input.line17_se_health_insurance ?? 0),
           schedule1_line15_se_tax_deduction: input.line15_se_deduction ?? 0,

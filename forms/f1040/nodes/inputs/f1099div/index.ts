@@ -55,7 +55,9 @@ const nomineeDistributionSchema = z.object({
 
 export const itemSchema = z.object({
   payerName: z.string().optional(),
+  payerTin: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   isNominee: z.boolean(),
   nominee_distribution: nomineeDistributionSchema.optional(),
   box11: z.boolean(),
@@ -83,6 +85,15 @@ export const itemSchema = z.object({
   box10: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
   box13: z.number().nonnegative().optional(),
+  pab_dividend_review: z.object({
+    specified_bond_dividend_confirmed: z.literal(true),
+    box13_net_of_fund_expenses_confirmed: z.literal(true),
+    no_allocable_taxpayer_deduction_confirmed: z.literal(true),
+    not_claimed_elsewhere_on_return_confirmed: z.literal(true),
+    bond_eligibility_review_reference: z.string().trim().min(1),
+    taxpayer_expense_review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
   box14: z.string().optional(),
   box15: z.string().optional(),
   box16: z.number().nonnegative().optional(),
@@ -137,6 +148,31 @@ const nomineeFields = [
   "foreign_source_dividends_usd",
   "foreign_source_qualified_dividends_usd",
 ] as const;
+
+export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
+  const seen = new Set<string>();
+  let unreferencedPositiveCopies = 0;
+  for (const item of items) {
+    if (!item.source_document_reference) {
+      if (nomineeFields.some((key) => (item[key] ?? 0) > 0)) {
+        unreferencedPositiveCopies++;
+        if (unreferencedPositiveCopies > 1) {
+          throw new Error(
+            "1099-DIV has multiple positive issued copies without source_document_reference; identify each distinct copy",
+          );
+        }
+      }
+      continue;
+    }
+    const key = item.source_document_reference;
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-DIV repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+      );
+    }
+    seen.add(key);
+  }
+}
 
 function taxpayerShare(item: DIVItem): DIVItem {
   if (!item.isNominee) {
@@ -306,6 +342,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
+    assertDistinct1099DIVCopies(parsed.f1099divs);
     const { taxableIncome, filingStatus } = parsed;
     // Normalize items first (clamp sub-box values that payers occasionally report
     // over their parent box due to data entry errors), then validate the rest.
@@ -489,6 +526,24 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       )
       .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
     if (totalBox5 > 0) {
+      const reitSources = div1099s
+        .filter((item) => (item.box5 ?? 0) > 0)
+        .map((item) => ({
+          payer_name: item.payerName ?? "",
+          source_document_reference: item.source_document_reference ?? "",
+          box1a: item.box1a,
+          box5: item.box5 ?? 0,
+          ex_dividend_date: item.section199a_holding_review?.ex_dividend_date,
+          qualified_held_days_in_91_day_window: item
+            .section199a_holding_review?.qualified_held_days_in_91_day_window,
+          diminished_risk_days_excluded: item.section199a_holding_review
+            ?.diminished_risk_days_excluded,
+          no_related_payment_obligation_confirmed: item
+            .section199a_holding_review
+            ?.no_related_payment_obligation_confirmed,
+          review_reference: item.section199a_holding_review?.review_reference,
+          reviewed_on: item.section199a_holding_review?.reviewed_on,
+        }));
       const useForm8995a = isAbove199AThreshold(
         taxableIncome,
         filingStatus,
@@ -498,30 +553,14 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       if (useForm8995a) {
         outputs.push({
           nodeType: form8995a.nodeType,
-          fields: { line6_sec199a_dividends: totalBox5 },
+          fields: {
+            line6_sec199a_dividends: totalBox5,
+            reit_dividend_sources: reitSources,
+          },
         });
       } else {
         form8995Fields.line6_sec199a_dividends = totalBox5;
-        form8995Fields.reit_dividend_sources = div1099s
-          .filter((item) => (item.box5 ?? 0) > 0)
-          .map((item) => ({
-            payer_name: item.payerName ?? "",
-            source_document_reference: item.source_document_reference ?? "",
-            box1a: item.box1a,
-            box5: item.box5 ?? 0,
-            ex_dividend_date: item.section199a_holding_review
-              ?.ex_dividend_date,
-            qualified_held_days_in_91_day_window: item
-              .section199a_holding_review
-              ?.qualified_held_days_in_91_day_window,
-            diminished_risk_days_excluded: item.section199a_holding_review
-              ?.diminished_risk_days_excluded,
-            no_related_payment_obligation_confirmed: item
-              .section199a_holding_review
-              ?.no_related_payment_obligation_confirmed,
-            review_reference: item.section199a_holding_review?.review_reference,
-            reviewed_on: item.section199a_holding_review?.reviewed_on,
-          }));
+        form8995Fields.reit_dividend_sources = reitSources;
       }
     }
     if (Object.keys(form8995Fields).length > 0) {

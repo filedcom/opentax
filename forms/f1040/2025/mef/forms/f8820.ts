@@ -180,7 +180,7 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     ) {
       throw new Error("Form 8820 expense statement needs filer identity");
     }
-    const document = await PDFDocument.create();
+    const document = await PDFDocument.create({ updateMetadata: false });
     await appendForm8820ExpenseStatement(document, source, context.filer);
     return [{
       fileName: source.expense_reduction_statement_file_name!,

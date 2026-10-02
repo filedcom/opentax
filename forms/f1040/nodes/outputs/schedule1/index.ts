@@ -8,6 +8,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { box11CodeJSourceSchema } from "../../inputs/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../inputs/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k.ts";
+import { rtaaSourceSchema } from "../../inputs/f1099g/rtaa-source.ts";
+import { taxableGrantSourceSchema } from "../../inputs/f1099g/grant-source.ts";
+import { box10CodeJSourceSchema } from "../../inputs/k1_s_corp/box10_code_j.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly
 //
@@ -45,7 +48,10 @@ const inputSchema = z.object({
   line8b_gambling_winnings: z.number().nonnegative().optional(),
   line8c_cod_income: z.number().optional(),
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
-  line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
+  // Form 2555 line 50 belongs on Schedule 1 line 24j, not line 8d. The
+  // structured source currently computes zero; positive housing deduction
+  // requires a separately sourced Part IX and line 24j route.
+  line8d_foreign_housing_deduction: z.literal(0).optional(),
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
   // Form 8889 lines 16 and 20, Schedule 1 line 8f.
   line8f_hsa_income: z.number().nonnegative().optional(),
@@ -58,16 +64,19 @@ const inputSchema = z.object({
   line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
+  f1099g_rtaa_sources: z.array(rtaaSourceSchema).optional(),
   line8z_taxable_grants: z.number().optional(),
+  f1099g_taxable_grant_sources: z.array(taxableGrantSourceSchema).optional(),
   line8z_substitute_payments: z.number().optional(),
   line8z_attorney_proceeds: z.number().optional(),
-  line8z_nqdc: z.number().optional(),
+  line8z_nqdc: z.never().optional(),
   line8z_golden_parachute: z.number().optional(),
-  line8z_other_income: z.number().optional(),
+  // An unlabeled scalar cannot supply the required line 8z type statement.
+  line8z_other_income: z.never().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
-  line8z_other: z.number().optional(),
+  line8z_other: z.never().optional(),
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
@@ -90,8 +99,17 @@ const inputSchema = z.object({
       amount: z.number().positive(),
     }).strict(),
   ).optional(),
+  f1099m_box8_substitute_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().int().positive(),
+    }).strict(),
+  ).optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
+  k1_s_corp_box10_code_j_sources: z.array(box10CodeJSourceSchema).optional(),
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
     .optional(),
   k1_partnership_box11_code_e_sources: z.array(box11CodeESourceSchema)
@@ -171,9 +189,6 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8d_foreign_earned_income_exclusion !== undefined
       ? -(input.line8d_foreign_earned_income_exclusion)
       : 0) +
-    (input.line8d_foreign_housing_deduction !== undefined
-      ? -(input.line8d_foreign_housing_deduction)
-      : 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
     (input.line8g_child_interest_dividends ?? 0) +
@@ -189,11 +204,9 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_attorney_proceeds ?? 0) +
     (input.line8z_nqdc ?? 0) +
     (input.line8z_golden_parachute ?? 0) +
-    (input.line8z_other_income ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
-    (input.line8z_other ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
@@ -382,12 +395,6 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
         0,
       );
   }
-  if (input.line8d_foreign_housing_deduction !== undefined) {
-    result.line8d_foreign_earned_income_exclusion =
-      (input.line8d_foreign_earned_income_exclusion ?? 0) +
-      input.line8d_foreign_housing_deduction;
-  }
-
   return {
     ...result,
     ...(input.f1099nec_nonbusiness_sources !== undefined
@@ -399,11 +406,25 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
           input.f1099m_box3_other_income_sources,
       }
       : {}),
+    ...(input.f1099m_box8_substitute_sources !== undefined
+      ? {
+        f1099m_box8_substitute_sources: input.f1099m_box8_substitute_sources,
+      }
+      : {}),
+    ...(input.f1099g_rtaa_sources !== undefined
+      ? { f1099g_rtaa_sources: input.f1099g_rtaa_sources }
+      : {}),
+    ...(input.f1099g_taxable_grant_sources !== undefined
+      ? { f1099g_taxable_grant_sources: input.f1099g_taxable_grant_sources }
+      : {}),
     ...(input.k1_partnership_box11_code_j_sources !== undefined
       ? {
         k1_partnership_box11_code_j_sources:
           input.k1_partnership_box11_code_j_sources,
       }
+      : {}),
+    ...(input.k1_s_corp_box10_code_j_sources !== undefined
+      ? { k1_s_corp_box10_code_j_sources: input.k1_s_corp_box10_code_j_sources }
       : {}),
     ...(input.k1_partnership_box11_code_e_sources !== undefined
       ? {
@@ -430,7 +451,6 @@ class Schedule1Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Schedule1Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (
-      (input.line2a_alimony_received ?? 0) !== 0 ||
       (input.line8g_child_interest_dividends ?? 0) !== 0 ||
       (input.line8z_attorney_proceeds ?? 0) !== 0 ||
       (input.line13_depreciation ?? 0) !== 0 ||

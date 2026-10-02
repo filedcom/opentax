@@ -7,6 +7,7 @@ import { buildMefBundle } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
+import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
@@ -18,21 +19,25 @@ Deno.test("1099 interest and qualified dividends reach a sourced Form 4952 retur
     registry,
     {
       ...base.inputs,
-      f1098: [{
-        lender_name: "Home Lender",
-        recipient_tin: "111223333",
-        source_document_reference: "Synthetic 2025 Form 1098 copy",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        for_routing: "A",
-      }],
+      f1098: [
+        await withSyntheticForm1098Copy("form4952-combined", {
+          lender_name: "Home Lender",
+          recipient_tin: "111223333",
+          source_document_reference: "Synthetic 2025 Form 1098 copy",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 interest workpaper",
+          for_routing: "A",
+        }),
+      ],
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Investment Bank",
         box1: 500,
         investment_property_for_form4952: true,
       }],
       f1099div: [{
+        recipient_tin: "111223333",
         payerName: "Investment Fund",
         isNominee: false,
         box11: false,

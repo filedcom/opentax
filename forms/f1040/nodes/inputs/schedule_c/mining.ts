@@ -5,6 +5,34 @@ import {
   wotcReductionsByBusiness,
 } from "./model.ts";
 
+/** Keep each line-2q mine and claim tied to one distinct retained workpaper. */
+export function assertDistinctMiningSources(
+  items: readonly ScheduleCItem[],
+): void {
+  const mining = items.filter((item) => item.amt_mining_cost_workpaper);
+  if (mining.length === 0) return;
+  if (
+    items.length !== mining.length ||
+    mining.some((item) => !item.business_reference) ||
+    new Set(mining.map((item) => item.business_reference)).size !==
+      mining.length ||
+    new Set(
+        mining.map((item) =>
+          item.amt_mining_cost_workpaper!.property_reference
+        ),
+      ).size !== mining.length ||
+    new Set(
+        mining.map((item) =>
+          item.amt_mining_cost_workpaper!.reviewed_workpaper_reference
+        ),
+      ).size !== mining.length
+  ) {
+    throw new Error(
+      "Form 6251 mining costs need distinct Schedule C businesses, properties, and reviewed workpapers",
+    );
+  }
+}
+
 /** One identified current-year Schedule C expense, with ten-year AMT cost. */
 export function miningCostAdjustment(item: ScheduleCItem): number {
   const workpaper = item.amt_mining_cost_workpaper;
@@ -37,7 +65,7 @@ export function miningCostAdjustment(item: ScheduleCItem): number {
   return expense - expense / 10;
 }
 
-/** Replay line 2q against the original expense and finalized Schedule C join. */
+/** Replay line 2q against identified expenses and finalized Schedule C. */
 export function assertForm6251MiningSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -46,23 +74,36 @@ export function assertForm6251MiningSource(
   const items = parsed.success ? parsed.data.schedule_cs : [];
   const mining = items.filter((item) => item.amt_mining_cost_workpaper);
   const filed = fields.line2q_mining_costs;
+  const amt = fields.line11_amt;
+  const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+  const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   if (
     (filed === undefined || filed === null || filed === 0) &&
     mining.length === 0
   ) {
     return;
   }
+  if (parsed.success) assertDistinctMiningSources(items);
   if (
-    !parsed.success || items.length !== 1 || mining.length !== 1 ||
+    !parsed.success || mining.length === 0 ||
     typeof filed !== "number" ||
-    filed !== miningCostAdjustment(mining[0]) ||
+    filed !== mining.reduce(
+        (sum, item) => sum + miningCostAdjustment(item),
+        0,
+      ) ||
     (pending?.schedule1 as Record<string, unknown> | undefined)
-        ?.line3_schedule_c !== calculateScheduleCAtRiskNet(
-          mining[0],
+        ?.line3_schedule_c !==
+      mining.reduce((sum, item) =>
+        sum + calculateScheduleCAtRiskNet(
+          item,
           wotcReductionsByBusiness(parsed.data).get(
-            mining[0].business_reference ?? "",
+            item.business_reference ?? "",
           ) ?? 0,
-        ).atRiskNet
+        ).atRiskNet, 0) ||
+    (typeof amt === "number" && amt > 0 &&
+      (schedule2?.line2_amt !== amt ||
+        typeof form1040?.line17_additional_taxes !== "number" ||
+        Number(form1040.line17_additional_taxes) < amt))
   ) {
     throw new Error(
       "Form 6251 line 2q needs the retained mining workpaper, named Schedule C expense, and finalized Schedule 1 business income",

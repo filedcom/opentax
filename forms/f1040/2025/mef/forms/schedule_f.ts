@@ -1,5 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  assertScheduleF1099Answers,
+  assertScheduleFLossAtRiskAnswer,
   calculateScheduleFAtRiskNet,
   computeAccrualIncome,
   computeGrossIncome,
@@ -38,6 +40,7 @@ function buildFarm(
   accrualLoanStatementId?: string,
   wotcReduction = 0,
 ): string {
+  assertScheduleF1099Answers(item);
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule F ${index + 1} needs filer identity`);
   if (
@@ -67,6 +70,7 @@ function buildFarm(
   const gross = computeGrossIncome(item);
   const expenses = computeTotalExpenses(item, gross, wotcReduction);
   const preliminaryNet = gross - expenses;
+  assertScheduleFLossAtRiskAnswer(item, wotcReduction);
   calculateScheduleFAtRiskNet(item, wotcReduction);
   const otherExpenses = item.line32_other_expenses ?? [];
   const income = item.accounting_method === "accrual"

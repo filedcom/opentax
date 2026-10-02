@@ -1,0 +1,202 @@
+# TY2025 return-wide ordering and reconciliation audit
+
+The Form 1040 sink calculates tax, credit, withholding, refundable-payment, and
+balance subtotals from its retained graph inputs. Native MeF and PDF export are
+separate projections; a changed filed subtotal could otherwise reach one or both
+outputs without replaying the sink calculation.
+
+## Bounded export replay staged in this batch
+
+`return-wide-arithmetic.ts` checks the retained Form 1040 lines 11, 14, 15,
+18, 21, 22, 24, 25d, 32, 33, 34, and 37 against their immediate component lines whenever the subtotal is
+supplied. Both Form 1040 native and PDF descriptors call the same check before
+projection. The replay catches a changed AGI, deduction, taxable-income, tax,
+credit, withholding, or payment
+subtotal, including a changed Schedule 3 deposit on line 20 or line 31 when the
+final 1040 component is present. It accepts unsupplied optional line components
+as zero, matching the sink's arithmetic. Positive and per-subtotal tamper
+fixtures are authored for the bulk test gate.
+It also replays line 1z from retained wage lines 1a–1h when a wage component is
+present, and line 9 from retained taxable income components when line 1z has a
+retained wage component or another taxable income component is present. Line 1i
+nontaxable combat pay, line 2a tax-exempt interest, and line 3a qualified
+dividends are excluded from these sums as directed by the
+[official 2025 Form 1040](https://www.irs.gov/pub/irs-prior/f1040--2025.pdf).
+Sparse direct descriptor calls that supply only a subtotal remain outside this
+component replay. Source identity and completeness remain open.
+Lines 34 and 37 use the filed whole-dollar difference of lines 33 and 24;
+line 37 includes a reported line 38 penalty, including when that penalty
+exceeds an overpayment. This does not establish a 2026 application election
+or refund-account allocation.
+
+The next bounded pass checks attached Schedule 1 line 10/26 against Form 1040
+lines 8/10; Schedule 1-A line 38 against line 13b; Schedule 2 Part I against
+line 17; and Schedule 3 line 15 against line 31. Both native and PDF Form 1040
+entry points use the same pending-graph replay. This rejects a conflicting final
+return deposit even when its own Form 1040 arithmetic remains coherent. Schedule
+2 Part I reuses its calculator rather than maintaining a second sum.
+
+The 2025 Schedule 2 line-structure review also blocks any positive legacy Form
+5405 repayment on line 10 at graph calculation and direct native/PDF projection.
+The
+[official 2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf)
+marks line 10 reserved, and the
+[Form 5405 instructions](https://www.irs.gov/instructions/i5405) say 2024 was
+the final repayment filing year. The guarded source cannot silently increase
+Form 1040 line 23 without a printable 2025 line. Positive and direct-export
+rejection fixtures are authored but unrun.
+
+Schedule 2 Part II now replays its retained source rows into Form 1040 line 23
+at both final native and PDF entry points. The replay subtracts the retained
+Form 8978 Schedule 2 line 17z reduction, checks the worksheet's adjusted line 21
+when present, and matches the filed line 23. It excludes Schedule 2 line 20, as
+directed by line 21 on the
+[official 2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf).
+The
+[2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+place the bounded negative Form 8978 adjustment on Schedule 2 line 17z. Fixtures
+cover a positive reduced total and tampering with the Schedule 2 source,
+adjusted worksheet, or Form 1040 amount. This proves the retained arithmetic; it
+does not authenticate the partner audit source for Form 8978. The bounded
+section 453A [obligation workpaper](ty2025-section453a-interest-workpaper.md)
+now sources and prints Schedule 2 line 15. Section 453(l)(3) line 14 rejects
+unsupported amounts; its source route and external sale/evidence joins remain
+open.
+
+### Schedule 2 installment-sale interest source boundary
+
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+put section 453(l)(3) interest for certain residential-lot and timeshare dealer
+sales on Schedule 2 line 14, and section 453A(c) interest for qualifying
+nondealer installment obligations on line 15. The [2025 Form 6252
+instructions](https://www.irs.gov/pub/irs-pdf/f6252.pdf) explicitly say the
+interest is **not** calculated on Form 6252. [Publication 537
+(2025)](https://www.irs.gov/publications/p537) gives the section 453A test and
+calculation: sale price above $150,000, an aggregate year-of-origin outstanding
+face amount above $5 million, exceptions for farm and individual personal-use
+property, unrecognized gain at the close of the return year multiplied by the
+applicable maximum tax rate, the **fixed sale-year applicable percentage**, and
+the underpayment rate for the month containing the taxpayer's year end.
+Interest continues in later years while an originally qualifying obligation
+remains outstanding.
+
+The current `form6252.f6252s` rows supply gain, sale price, and payments for
+each attached Form 6252, with a 2024 filed-form check for some later-year
+sales. They do not inventory **all** outstanding obligations by origin year,
+identify sales belonging to one transaction, establish dealer/residential-lot
+or timeshare status for line 14, preserve the origin-year aggregate face amount
+and percentage for line 15, prove the year-end unpaid balance and unrecognized
+gain for every obligation, identify the statutory exceptions, or retain a
+year-end rate source. Partnership and S corporation pass-through information
+can also require an owner-level interest computation (see the [2025 Form 1065
+instructions](https://www.irs.gov/instructions/i1065) and [2025 Schedule K-1
+shareholder instructions](https://www.irs.gov/instructions/i1120ssk), codes M
+and N). Deriving interest from
+the Form 6252 current payment alone would therefore produce an unsupported
+Schedule 2 amount; accepting a bare interest figure would leave the source
+unauthenticated. The new line 15 route replays a retained obligation inventory
+at graph, native, and PDF boundaries, but does not authenticate its cited
+records or join every row to a filed Form 6252. Line 14 now rejects direct
+graph, native, and PDF claims rather than silently dropping them. Under
+[section 453(l)(2)(B) and (3)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/pdf/USCODE-2024-title26-subtitleA-chap1-subchapE-partII-subpartB-sec453.pdf),
+the seller must elect installment treatment for a qualifying dealer sale to an
+individual of a residential lot or specified timeshare right. A residential lot
+does not qualify if the seller or a related person is to improve it, and a
+guarantee by someone other than an individual disqualifies the obligation.
+Interest is due only for payments received after the sale year. It applies to
+the tax attributable to each such payment, from sale date to payment date, at
+the sale-date section 1274 AFR compounded semiannually. Current Form 6252
+rows do not preserve the election, classification, guarantee/improvement facts,
+payment dates, sale-date AFR, or payment-specific tax calculation. These are
+needed before a positive line 14 can be computed.
+
+A positive line 14 cannot yet be made source-backed merely by supplying a
+payment-level amount. Section 453(l)(3) uses the **tax attributable to each
+2025 payment**, excluding the line 14 interest itself, rather than a maximum
+tax rate or a tax on the year-end obligation balance. The current Form 6252
+input has one annual payment total and routes income as capital gain or section
+1231 gain; it has no dealer-inventory election or Schedule C income join. Thus
+there is no filed dealer gain from which to replay the payment-specific tax
+counterfactual. The note's payment schedule is also needed to select the
+sale-date AFR term; [Treasury Regulation §1.1273-1(e)(3)](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol13/pdf/CFR-2025-title26-vol13-sec1-1273-1.pdf)
+defines weighted-average maturity, and [§1.1274-4(c)(1)](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol13/pdf/CFR-2025-title26-vol13-sec1-1274-4.pdf)
+uses it to select the AFR term for an installment obligation. A bounded
+positive route needs a qualifying dealer-sale source, dated note payment
+schedule and 2025 receipts, the published sale-month AFR for the resulting
+term, and a replayable with/without-payment chapter 1 tax calculation. Until
+those joins exist, line 14 remains closed at graph, native, and PDF export.
+
+Remaining gates include authenticated obligation and balance records, the
+Form 6252 sale-key and accepted prior-year workpaper join, pass-through
+allocations, and a section 453(l)(3) line 14 source and calculation. The bounded
+line 15 tests cover two obligations, a later-year balance, exclusions,
+tampering, native XSD, and filled PDF text. They do not establish those
+remaining facts or IRS acceptance.
+
+### Form 1040 line 26 estimated-payment amount
+
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+include 2025 estimated federal income-tax payments and any 2024 return or
+amended-return overpayment applied to 2025 on line 26. The existing `f1040es`
+input holds four quarterly amounts and one prior-year applied amount. A shared
+calculator now sums those five fields in both the graph node and final
+native/PDF Form 1040 export, rejecting a positive filed line 26 without the
+retained source or any changed source/line amount. Positive and tampered export
+fixtures are authored for the bulk gate.
+
+The source still lacks an IRS payment confirmation, posted tax period, payer
+identity, and reference to the accepted prior-year overpayment election. It
+also cannot allocate joint payments on separate returns or establish whether
+an applied credit was later changed by an amended return. The amount replay
+does not authenticate that these dollars were paid, credited to 2025, or owned
+by the filer. Those receipt/ownership joins remain before line 26 can be
+treated as externally verified.
+
+The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+put withholding shown on Form 8288-A in line 25c (other forms), not line 25b
+(Forms 1099). The existing `f8288` graph deposit now uses the line 25c input;
+final native/PDF export checks that its retained sum does not exceed filed line
+25c. The same lower-bound check now includes retained W-2G box 4, Form 8805's
+selected section 1446 or total withholding amount, and Form 8959 line 24.
+Their combined sum must fit in filed line 25c; this remains a bucket and
+lower-bound reconciliation, not complete Form
+8288-A filing support: the raw `f8288` source has no seller taxpayer identity,
+issued certificate byte binding, or filed Form 8288-A attachment. Those facts
+and cross-source duplicate/period checks remain before the credit is verified.
+Other line 25c source families cannot yet be added to this lower bound. The
+public partnership, S corporation, and trust Schedule K-1 inputs have no typed
+federal-withholding amount. In particular, the trust K-1 has no box 13 code B
+backup-withholding amount or required beneficiary-copy attachment, although
+the [2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
+require that copy when code B is claimed. The public railroad and SSA inputs
+are not RRB-1042-S or SSA-1042-S recipient copies with withholding and
+residency facts. Annual Form 8854's narrowly typed code 38/39 Form 1042-S
+source summaries document expatriation distributions; they cannot establish
+a current resident Form 1040 withholding credit. Add those source types,
+recipient and tax-year identity, required copy/declaration evidence, and
+duplicate checks before counting their amounts or claiming exact line 25c
+equality. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+explicitly place K-1 and Form 1042-S withholding on line 25c.
+
+The [2025 Form 1040 line 38 instructions](https://www.irs.gov/instructions/i1040gi)
+also require an overpayment on line 34 to be allocated between refund on line
+35a, the line 36 next-year election, and any self-computed estimated-tax
+penalty on line 38. Final native and PDF export now replay this balance when
+the overpayment and refund lines are present, including a penalty larger than
+the overpayment. This catches a changed refund without a line 36 election;
+the separate line 36 source guard still checks a positive election. The
+arithmetic does not establish receipt ownership or IRS account posting.
+
+## Remaining return-wide work
+
+| Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 1z, 9, 11, and 15. Final export replays line 1z and line 9 from retained components when enough rows are present, line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |
+| Schedule 1 and 1-A             | Bounded source routes deposit Schedule 1 income/adjustments and Schedule 1-A line 38; final schedule totals now reconcile to Form 1040.                                                                                        | Replay every contributing child source and detect duplicate documents across Schedule 1/1-A and the filed pages; exact source authenticity remains open.                                                                                     |
+| Schedule 2 and 3               | Schedule 2 Parts I and II and Schedule 3 nonrefundable/payment totals now reconcile to Form 1040, including the retained Form 8978 line 17z reduction and bounded section 453A line 15 workpaper; several credits are finalized in the Form 1040 sink after tax is known. | Authenticate child sources, including the Form 8978 partner audit and corrected return facts. Section 453(l)(3) line 14 and the line 15 external sale/evidence joins remain open. |
+| Withholding and payments       | Form 1040 line 25d/32/33 are calculated from deposits, and staged export replay now checks their immediate component lines.                                                                                                    | De-duplicate payer statements and extension/estimated-payment receipts by issued identity and tax period, then reconcile each to lines 25–31.                                                                                                |
+| Multiple copies and carryovers | Several child descriptors create multiple owner/source-specific native and PDF copies; credit and loss carryovers have route-specific ledgers.                                                                                 | Require a complete per-copy source inventory and origin-year/earlier-use ledger across the final return. One arithmetic total cannot establish that all copies belong to the taxpayer or that a carryover is available.                      |
+
+This note records a bounded internal consistency improvement. It does not
+establish complete source authenticity, 2025 business-rule acceptance, or IRS
+ATS acceptance.

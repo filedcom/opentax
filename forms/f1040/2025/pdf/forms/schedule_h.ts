@@ -83,7 +83,7 @@ export const scheduleHPdf: PdfFormDescriptor = {
   pendingKey: "schedule_h",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sh--2025.pdf",
   filerFields: [
-    text("nameLine1", `${page1}f1_1[0]`),
+    text("nameShownOnForm1040", `${page1}f1_1[0]`),
     text("primarySSN", `${page1}f1_2[0]`),
   ],
   fields: [

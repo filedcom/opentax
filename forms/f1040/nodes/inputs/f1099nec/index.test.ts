@@ -389,6 +389,18 @@ Deno.test("routing: box4_federal_withheld > 0 → f1040 line25b_withheld_1099", 
   assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 750);
 });
 
+Deno.test("1099-NEC box 4 needs an issued recipient before withholding posts", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box4_federal_withheld: 75,
+        recipient_ssn: undefined,
+      })]),
+    Error,
+    "box 4 withholding needs the issued recipient SSN",
+  );
+});
+
 Deno.test("routing: box4_federal_withheld = 0 produces no f1040 output", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 0 })]);
   assertEquals(findOutput(result, "f1040"), undefined);

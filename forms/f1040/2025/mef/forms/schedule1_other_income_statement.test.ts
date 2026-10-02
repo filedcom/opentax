@@ -5,8 +5,7 @@ import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statemen
 const sourced = {
   line8z_form8814: 200,
   line8z_hsa_excess_earnings: 100,
-  line8z_rtaa: 300,
-  line9_total_other_income: 600,
+  line9_total_other_income: 300,
 };
 
 Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
@@ -21,7 +20,7 @@ Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
     statement,
     "<OtherIncomeCodeTxt>HSA excess earnings</OtherIncomeCodeTxt>",
   );
-  assertStringIncludes(statement, "<OtherIncomeAmt>300</OtherIncomeAmt>");
+  assertStringIncludes(statement, "<OtherIncomeAmt>200</OtherIncomeAmt>");
   const xml = schedule1.build(sourced, {
     documentIdsByPendingKey: {
       schedule1_other_income_statement: ["OtherIncomeTypeStatement4"],
@@ -29,7 +28,7 @@ Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement4" referenceDocumentName="OtherIncomeTypeStatement">600</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement4" referenceDocumentName="OtherIncomeTypeStatement">300</OtherIncomeTotalAmt>',
   );
 });
 
@@ -53,6 +52,50 @@ Deno.test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
     "needs its linked other-income type statement",
   );
   assertEquals(schedule1OtherIncomeStatement.build({}, { pending: {} }), "");
+});
+
+Deno.test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", () => {
+  const fields = {
+    line8z_substitute_payments: 750,
+    f1099m_box8_substitute_sources: [
+      {
+        payer_name: "Broker One",
+        payer_tin: "123456789",
+        recipient_tin: "987654321",
+        amount: 300,
+      },
+      {
+        payer_name: "Broker Two",
+        payer_tin: "234567890",
+        recipient_tin: "987654321",
+        amount: 450,
+      },
+    ],
+  };
+  const statement = schedule1OtherIncomeStatement.build({}, {
+    pending: { schedule1: fields },
+  });
+  assertEquals((statement.match(/<OtherIncomeAmt>/g) ?? []).length, 2);
+  assertStringIncludes(statement, "Substitute payments 123456789");
+  assertStringIncludes(statement, "Substitute payments 234567890");
+  assertStringIncludes(statement, "<OtherIncomeAmt>300</OtherIncomeAmt>");
+  assertStringIncludes(statement, "<OtherIncomeAmt>450</OtherIncomeAmt>");
+  assertThrows(
+    () =>
+      schedule1OtherIncomeStatement.build({}, {
+        pending: { schedule1: { ...fields, line8z_substitute_payments: 749 } },
+      }),
+    Error,
+    "differ from 1099-MISC box 8 sources",
+  );
+  assertThrows(
+    () =>
+      schedule1OtherIncomeStatement.build({}, {
+        pending: { schedule1: { line8z_substitute_payments: 750 } },
+      }),
+    Error,
+    "differ from 1099-MISC box 8 sources",
+  );
 });
 
 Deno.test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z", () => {
@@ -109,16 +152,24 @@ Deno.test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 
 });
 
 Deno.test("TY2025 S corporation K-1 tax-benefit recovery has a typed line 8z row", () => {
-  const fields = { line8z_k1_s_corp_tax_benefit_recovery: 400 };
+  const fields = {
+    line8z_k1_s_corp_tax_benefit_recovery: 400,
+    k1_s_corp_box10_code_j_sources: [{
+      corporation_ein: "123456789",
+      source_document_reference: "2025 K-1 code J",
+      recipient_tin: "111223333",
+      recovery: 500,
+      taxable_amount: 400,
+      tax_benefit_workpaper_reference: "2024 benefit review",
+      prior_year_tax_benefit_reviewed: true,
+    }],
+  };
   const statement = schedule1OtherIncomeStatement.build({}, {
     pending: { schedule1: fields },
   });
-  assertStringIncludes(statement, "S corporation tax-benefit recovery");
+  assertStringIncludes(
+    statement,
+    "S corporation K-1 code J recovery 123456789",
+  );
   assertStringIncludes(statement, "<OtherIncomeAmt>400</OtherIncomeAmt>");
-  const xml = schedule1.build(fields, {
-    documentIdsByPendingKey: {
-      schedule1_other_income_statement: ["OtherIncomeTypeStatement1"],
-    },
-  });
-  assertStringIncludes(xml, ">400</OtherIncomeTotalAmt>");
 });

@@ -428,8 +428,28 @@ Deno.test("f1098.compute: positive box4 needs identified lender, recipient, and 
 });
 
 Deno.test("f1098 box4 filing reconciles payer recipient and taxable recovery", () => {
-  const source = { f1098s: [reviewedRecovery(2_000, 1_200)] };
+  const source = {
+    f1098s: [{
+      ...reviewedRecovery(2_000, 1_200),
+      // Source assertion checks presence; final builders verify exact PDF bytes.
+      issuer_copy: {
+        file_name: "Test1098.pdf",
+        pdf_sha256: "0".repeat(64),
+        bytes: new Uint8Array(),
+      },
+    }],
+  };
   assertForm1098Box4Sources(source, ["111223333"], 1_200);
+  assertThrows(
+    () =>
+      assertForm1098Box4Sources(
+        { f1098s: [reviewedRecovery(2_000, 1_200)] },
+        ["111223333"],
+        1_200,
+      ),
+    Error,
+    "needs the reviewed issuer Copy B",
+  );
   assertThrows(
     () => assertForm1098Box4Sources(source, ["999887777"], 1_200),
     Error,

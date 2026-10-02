@@ -22,6 +22,7 @@ const farm = {
   line_a_principal_crop_activity: "GRAIN FARMING",
   line_b_agricultural_activity_code: "111100" as const,
   line_e_material_participation: true,
+  line_f_made_1099_payments: false,
   accounting_method: "cash" as const,
   line1_sales_livestock_resale: 0,
   line6a_crop_insurance: 3_000,
@@ -64,6 +65,82 @@ Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
       }, jointFiler),
     Error,
     "joint return needs an explicit proprietor",
+  );
+});
+
+Deno.test("Schedule F PDF requires line F and conditional line G answers", async () => {
+  assertThrows(
+    () =>
+      scheduleFPdf.instances!({
+        schedule_fs: [{ ...farm, line_f_made_1099_payments: undefined }],
+      }, jointFiler),
+    Error,
+    "required Forms 1099 answers",
+  );
+  assertThrows(
+    () =>
+      scheduleFPdf.instances!({
+        schedule_fs: [{ ...farm, line_f_made_1099_payments: true }],
+      }, jointFiler),
+    Error,
+    "required Forms 1099 answers",
+  );
+  const [fields] = scheduleFPdf.instances!({
+    schedule_fs: [{
+      ...farm,
+      line_f_made_1099_payments: true,
+      line_f_filed_1099s: false,
+    }],
+  }, jointFiler);
+  const bytes = await fillFormPdf(
+    scheduleFPdf,
+    fields,
+    jointFiler,
+    ".pdf-cache",
+  );
+  const filled = await PDFDocument.load(bytes!);
+  const page = "topmostSubform[0].Page1[0].";
+  assertEquals(
+    scheduleFPdf.fields.find((field) =>
+      field.domainKey === "line_f_made_1099_payments" &&
+      field.kind === "checkboxWhen" && field.whenValue === "true"
+    )?.pdfField,
+    `${page}c1_3[0]`,
+  );
+  assertEquals(
+    scheduleFPdf.fields.find((field) =>
+      field.domainKey === "line_f_filed_1099s" &&
+      field.kind === "checkboxWhen" && field.whenValue === "false"
+    )?.pdfField,
+    `${page}c1_4[1]`,
+  );
+  assertEquals(filled.getPageCount(), 2);
+});
+
+Deno.test("Schedule F PDF needs a visible line 32 expense description", () => {
+  assertThrows(() =>
+    scheduleFPdf.instances!({
+      schedule_fs: [{
+        ...farm,
+        line32_other_expenses: [{ description: "  ", amount: 125 }],
+      }],
+    }, jointFiler)
+  );
+});
+
+Deno.test("Schedule F PDF requires a line 36 answer for a farm loss", () => {
+  assertThrows(
+    () =>
+      scheduleFPdf.instances!({
+        schedule_fs: [{
+          ...farm,
+          line6a_crop_insurance: undefined,
+          line6b_crop_insurance_taxable: undefined,
+          line8_other_income: undefined,
+        }],
+      }, jointFiler),
+    Error,
+    "Schedule F loss requires a line 36 at-risk answer",
   );
 });
 

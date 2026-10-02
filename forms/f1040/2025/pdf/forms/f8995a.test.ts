@@ -18,7 +18,7 @@ const patron = {
     business_ubia: 0,
     one_non_sstb_business_confirmed: true,
     no_aggregation_confirmed: true,
-    no_reit_ptp_or_loss_carryforward_confirmed: true,
+    no_ptp_or_loss_carryforward_confirmed: true,
     qualified_dividends_zero_confirmed: true,
     qbi_wages_ubia_sources_confirmed: true,
     taxable_income_before_qbi_confirmed: true,

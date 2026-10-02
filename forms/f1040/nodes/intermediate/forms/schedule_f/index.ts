@@ -164,7 +164,7 @@ export const itemSchema = z.object({
   line31_vet: z.number().nonnegative().optional(),
   line32_other_expenses: z.array(
     z.object({
-      description: z.string().min(1),
+      description: z.string().trim().min(1),
       amount: z.number().nonnegative(),
     }).strict(),
   ).optional(),
@@ -207,6 +207,7 @@ export const farmSourceSchema = z.object({
   farm_id: z.string().min(1),
   kind: z.enum([
     "1099g_agriculture",
+    "1099g_crop_disaster_current_taxable",
     "1099g_ccc_market_gain",
     "1099m_crop_insurance",
     "1099m_box3_other_income",
@@ -218,6 +219,7 @@ export const farmSourceSchema = z.object({
   payer_name: z.string().trim().min(1).optional(),
   payer_tin: z.string().regex(/^\d{9}$/).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   taxable_amount: z.number().nonnegative().optional(),
   deferred: z.boolean().optional(),
 }).strict().superRefine((source, ctx) => {
@@ -240,12 +242,26 @@ export const farmSourceSchema = z.object({
   }
   if (
     (source.kind === "1099m_box3_other_income" ||
-      source.kind === "1099nec_farm_income") &&
+      source.kind === "1099nec_farm_income" ||
+      source.kind === "1099g_agriculture" ||
+      source.kind === "1099g_crop_disaster_current_taxable" ||
+      source.kind === "1099g_ccc_market_gain") &&
     (!source.payer_name || !source.payer_tin || !source.recipient_tin)
   ) {
     ctx.addIssue({
       code: "custom",
       message: "1099 farm source needs payer and recipient identity",
+    });
+  }
+  if (
+    (source.kind === "1099g_agriculture" ||
+      source.kind === "1099g_crop_disaster_current_taxable" ||
+      source.kind === "1099g_ccc_market_gain") &&
+    !source.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "1099-G farm source needs an issued-copy reference",
     });
   }
 });
@@ -266,6 +282,18 @@ export const inputSchema = z.object({
 }).strict();
 
 export type ScheduleFItem = z.infer<typeof itemSchema>;
+
+export function assertScheduleF1099Answers(item: ScheduleFItem): void {
+  if (
+    typeof item.line_f_made_1099_payments !== "boolean" ||
+    (item.line_f_made_1099_payments &&
+      typeof item.line_f_filed_1099s !== "boolean") ||
+    (!item.line_f_made_1099_payments &&
+      item.line_f_filed_1099s !== undefined)
+  ) {
+    throw new Error("Schedule F needs required Forms 1099 answers");
+  }
+}
 
 export function laborLessEmploymentCredits(
   item: ScheduleFItem,
@@ -340,7 +368,10 @@ export function reconcileFarmSources(
     }
     if (
       (source.kind === "1099m_box3_other_income" ||
-        source.kind === "1099nec_farm_income") &&
+        source.kind === "1099nec_farm_income" ||
+        source.kind === "1099g_agriculture" ||
+        source.kind === "1099g_crop_disaster_current_taxable" ||
+        source.kind === "1099g_ccc_market_gain") &&
       !farm.proprietor_recipient
     ) {
       throw new Error(
@@ -349,6 +380,7 @@ export function reconcileFarmSources(
     }
     const current = totals.get(source.farm_id) ?? {
       "1099g_agriculture": 0,
+      "1099g_crop_disaster_current_taxable": 0,
       "1099g_ccc_market_gain": 0,
       "1099m_crop_insurance": 0,
       "1099m_box3_other_income": 0,
@@ -389,7 +421,8 @@ export function reconcileFarmSources(
         [
           "line 6a",
           farm.line6a_crop_insurance ?? 0,
-          source["1099m_crop_insurance"],
+          source["1099m_crop_insurance"] +
+          source["1099g_crop_disaster_current_taxable"],
         ],
         [
           "line 8",
@@ -417,7 +450,8 @@ export function reconcileFarmSources(
         [
           "line 41",
           accrual?.line41_crop_insurance ?? 0,
-          source["1099m_crop_insurance"],
+          source["1099m_crop_insurance"] +
+          source["1099g_crop_disaster_current_taxable"],
         ],
         [
           "line 43",
@@ -434,6 +468,14 @@ export function reconcileFarmSources(
       }
     }
     const marketGain = source["1099g_ccc_market_gain"];
+    if (
+      source["1099g_crop_disaster_current_taxable"] > 0 &&
+      farm.line6c_defer_crop_insurance === true
+    ) {
+      throw new Error(
+        `Schedule F farm ${farmId} cannot defer a reviewed current-year-taxable crop disaster payment`,
+      );
+    }
     if (marketGain > 0) {
       if (farm.ccc_loan_election_in_effect === undefined) {
         throw new Error(
@@ -635,6 +677,16 @@ export function computeNetProfit(
   const grossIncome = computeGrossIncome(item);
   const totalExpenses = computeTotalExpenses(item, grossIncome, wotcReduction);
   return grossIncome - totalExpenses;
+}
+
+/** The printed 2025 Schedule F requires line 36a or 36b for a loss. */
+export function assertScheduleFLossAtRiskAnswer(
+  item: ScheduleFItem,
+  wotcReduction = 0,
+): void {
+  if (computeNetProfit(item, wotcReduction) < 0 && !item.line36_at_risk) {
+    throw new Error("Schedule F loss requires a line 36 at-risk answer");
+  }
 }
 
 export function calculateScheduleFAtRiskNet(

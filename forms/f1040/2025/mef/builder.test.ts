@@ -10,6 +10,9 @@ import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
+import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
+import { sha256Hex } from "../prepared-source.ts";
+import { buildPdfBytes } from "../pdf/builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
 import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
@@ -20,7 +23,24 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { Box12Code } from "../../nodes/inputs/w2/index.ts";
+import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
+import {
+  calculateForm4137,
+  inputSchema as form4137InputSchema,
+} from "../../nodes/intermediate/forms/form4137/index.ts";
+import {
+  calculateForm8919,
+  inputSchema as form8919InputSchema,
+} from "../../nodes/intermediate/forms/form8919/index.ts";
+import { scheduleSELines } from "../../nodes/intermediate/forms/schedule_se/calculation.ts";
+import { Form8949Part } from "../../nodes/intermediate/forms/form8949/index.ts";
+import {
+  schedule2Part1Total,
+  schedule2Part2Total,
+} from "../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { buildIsoAmtBasisLedger } from "../../nodes/inputs/f3921/index.ts";
+import { DependentRelationship } from "../../nodes/inputs/general/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -62,6 +82,7 @@ const sampleScheduleF = {
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100" as const,
     line_e_material_participation: true,
+    line_f_made_1099_payments: false,
     accounting_method: "cash" as const,
     line1_sales_livestock_resale: 0,
     line2_sales_products_raised: 2_000,
@@ -184,6 +205,8 @@ function sampleFiler(): FilerIdentity {
   return {
     primarySSN: "123456789",
     fullName: "John A Smith",
+    firstNameWithInitial: "John A",
+    lastName: "Smith",
     nameLine1: "SMITH JOHN A",
     nameControl: "SMIT",
     address: {
@@ -218,6 +241,7 @@ const qualifiedForm4972Source = {
     f1099rs: [{
       payer_name: "Qualified Plan",
       payer_ein: "123456789",
+      recipient_ssn: "123456789",
       source_document_reference: "qualified-4972-source",
       box1_gross_distribution: 30_000,
       box2a_taxable_amount: 30_000,
@@ -251,8 +275,23 @@ const sampleForm8919 = {
 };
 
 function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
+  // Routing fixtures use sparse Form 1040 data. Supply the corresponding
+  // filed tax lines so the return-wide schedule joins still run on valid data.
+  const pending = args[0];
+  const schedule2 = pending.schedule2;
+  const part1 = schedule2 ? schedule2Part1Total(schedule2) : 0;
+  const part2 = schedule2 ? schedule2Part2Total(schedule2) : 0;
+  const f1040 = {
+    ...pending.f1040,
+    ...(part1 > 0 && pending.f1040?.line17_additional_taxes === undefined
+      ? { line17_additional_taxes: part1 }
+      : {}),
+    ...(part2 > 0 && pending.f1040?.line23_other_taxes === undefined
+      ? { line23_other_taxes: part2 }
+      : {}),
+  };
   return rawBuildMefXml(
-    args[0],
+    schedule2 ? { ...pending, f1040 } : pending,
     args[1] ?? sampleFiler(),
     args[2],
     args[3],
@@ -267,6 +306,28 @@ function assertNotIncludes(actual: string, expected: string) {
     `Expected NOT to include: ${expected}`,
   );
 }
+
+Deno.test("MeF final export rejects non-withheld W-2G winnings for another winner", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-other-winner-w2g",
+            winner_name: "Another Winner",
+            box9_winner_tin: "999-88-7777",
+            winner_us_address: sampleFiler().address,
+          }],
+        },
+      }),
+    Error,
+    "W-2G winnings or withholding needs",
+  );
+});
 
 Deno.test("MeF export rejects Form 3800 credit without finalized source facts", () => {
   assertThrows(
@@ -338,6 +399,289 @@ Deno.test("MeF bundle pairs a readable PDF with one BinaryAttachment document", 
   assertStringIncludes(buildMefXml({}), 'binaryAttachmentCnt="0"');
 });
 
+Deno.test("prepared PDF and submission manifest reject changed attachment bytes or metadata", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "SourceStatement.pdf",
+      description: "Reviewed source statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const changedDescription = {
+    ...bundle,
+    attachments: [{
+      ...bundle.attachments[0],
+      description: "Different source statement",
+    }],
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(changedDescription),
+    Error,
+    "binary manifest differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes({}, sampleFiler(), ".pdf-cache", changedDescription),
+    Error,
+    "binary manifest differs",
+  );
+  const blankDescriptionXml = bundle.xml.replace(
+    "<Desc>Reviewed source statement</Desc>",
+    "<Desc>   </Desc>",
+  );
+  const blankDescriptionXmlSha256 = await sha256Hex(
+    new TextEncoder().encode(blankDescriptionXml),
+  );
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        xml: blankDescriptionXml,
+        xmlSha256: blankDescriptionXmlSha256,
+        attachments: [{ ...bundle.attachments[0], description: "   " }],
+      }),
+    Error,
+    "PDF attachment set differs",
+  );
+  const changedBytes = Uint8Array.from(bundle.attachments[0].bytes);
+  changedBytes[changedBytes.length - 1] ^= 1;
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        attachments: [{ ...bundle.attachments[0], bytes: changedBytes }],
+      }),
+    Error,
+    "PDF bytes differ from digest",
+  );
+});
+
+Deno.test("prepared BinaryAttachment IDs keep their retained PDF order", async () => {
+  const pending = {
+    f1040: { filing_status: "single", digital_assets: false },
+  };
+  const filer = sampleFiler();
+  const secondPdf = await PDFDocument.create();
+  secondPdf.addPage([300, 400]).drawText("Second reviewed statement", {
+    x: 40,
+    y: 350,
+  });
+  const bundle = await buildMefBundle(pending, {
+    filer,
+    attachments: [{
+      fileName: "FirstStatement.pdf",
+      description: "First reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }, {
+      fileName: "SecondStatement.pdf",
+      description: "Second reviewed statement",
+      bytes: await secondPdf.save(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const originalPdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(originalPdf)).getPageCount() > 0, true);
+  const binaryBodies = [...bundle.xml.matchAll(
+    /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
+  )].map((match) => match[1]);
+  assertEquals(binaryBodies.length, 2);
+  const xml = bundle.xml.replace(binaryBodies[0], "BINARY_BODY_SWAP_TEMP")
+    .replace(binaryBodies[1], binaryBodies[0])
+    .replace("BINARY_BODY_SWAP_TEMP", binaryBodies[1]);
+  const forged = {
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+    attachments: [bundle.attachments[1], bundle.attachments[0]],
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(forged),
+    Error,
+    "BinaryAttachment order differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer, ".pdf-cache", forged),
+    Error,
+    "BinaryAttachment order differs",
+  );
+});
+
+Deno.test("prepared PDF rejects bundle pending changed after native return preparation", async () => {
+  const pending = {
+    f1040: { filing_status: "single", digital_assets: false },
+  };
+  const filer = sampleFiler();
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  await assertRejects(
+    () =>
+      buildPdfBytes(pending, filer, ".pdf-cache", {
+        ...bundle,
+        pending: {
+          ...bundle.pending,
+          f1040: { ...bundle.pending.f1040, digital_assets: true },
+        },
+      }),
+    Error,
+    "bundle pending differs from the prepared MeF return",
+  );
+});
+
+Deno.test("prepared manifest rejects unsafe PDF names even if XML and digests are recomputed", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "SafeStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  const unsafeName = "../escaped.pdf";
+  const xml = bundle.xml.replaceAll("SafeStatement.pdf", unsafeName);
+  const forged = {
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+    attachments: [{ ...bundle.attachments[0], fileName: unsafeName }],
+    attachmentSha256ByFileName: {
+      [unsafeName]: bundle.attachmentSha256ByFileName["SafeStatement.pdf"],
+    },
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(forged),
+    Error,
+    "PDF attachment set differs",
+  );
+});
+
+Deno.test("prepared manifest replays document inventory and references after XML digest changes", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "ReviewedStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const changedXml = async (xml: string) => ({
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+  });
+  for (
+    const [xml, reason] of [
+      [
+        bundle.xml.replace('documentCnt="2"', 'documentCnt="3"'),
+        "document count",
+      ],
+      [
+        bundle.xml.replace(
+          'binaryAttachmentCnt="1"',
+          'binaryAttachmentCnt="0"',
+        ),
+        "attachment count",
+      ],
+      [
+        bundle.xml.replace(
+          'documentId="BinaryAttachment1"',
+          'documentId="IRS10400"',
+        ),
+        "IDs",
+      ],
+      [
+        bundle.xml.replace(
+          "<IRS1040 documentId=",
+          '<IRS1040 referenceDocumentId="missing" documentId=',
+        ),
+        "references",
+      ],
+    ] as const
+  ) {
+    await assertRejects(
+      () => changedXml(xml).then(assertPreparedAttachmentManifest),
+      Error,
+      reason,
+    );
+  }
+});
+
+Deno.test("prepared manifest keeps native tag-position IDs for repeated W-2 copies", async () => {
+  const w2 = {
+    employer_name: "Example Employer",
+    employer_ein: "12-3456789",
+    employee_ssn: sampleFiler().primarySSN,
+    employer_address_line1: "1 Main Street",
+    employer_address_city: "Austin",
+    employer_address_state: "TX",
+    employer_address_zip: "78701",
+    box1_wages: 3_000,
+    box2_fed_withheld: 300,
+  };
+  const pending = {
+    f1040: {
+      filing_status: "single",
+      digital_assets: false,
+      line1a_wages: 6_000,
+      line1z_total_wages: 6_000,
+      line9_total_income: 6_000,
+      line10_adjustments: 0,
+      line11_agi: 6_000,
+      line25a_w2_withheld: 600,
+    },
+    w2: { w2s: [w2, { ...w2, employer_ein: "98-7654321" }] },
+  };
+  const filer = sampleFiler();
+  const bundle = await buildMefBundle(pending, {
+    filer,
+    attachments: [{
+      fileName: "ReviewedStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  assertStringIncludes(bundle.xml, '<IRS1040 documentId="IRS10400"');
+  assertStringIncludes(bundle.xml, '<IRSW2 documentId="IRSW21"');
+  assertStringIncludes(bundle.xml, '<IRSW2 documentId="IRSW22"');
+  assertStringIncludes(
+    bundle.xml,
+    '<BinaryAttachment documentId="BinaryAttachment3"',
+  );
+  await assertPreparedAttachmentManifest(bundle);
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
+
+  // Swap rather than duplicate the IDs, so uniqueness alone cannot catch it.
+  const swapped = bundle.xml.replace(
+    'documentId="IRSW21"',
+    'documentId="W2_SWAP_TEMP"',
+  ).replace('documentId="IRSW22"', 'documentId="IRSW21"').replace(
+    'documentId="W2_SWAP_TEMP"',
+    'documentId="IRSW22"',
+  );
+  const xmlSha256 = await sha256Hex(new TextEncoder().encode(swapped));
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        xml: swapped,
+        xmlSha256,
+      }),
+    Error,
+    "canonical tag and position order",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(pending, filer, ".pdf-cache", {
+        ...bundle,
+        xml: swapped,
+        xmlSha256,
+      }),
+    Error,
+    "canonical tag and position order",
+  );
+});
+
 Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => {
   const bytes = await sampleAttachmentBytes();
   const valid = {
@@ -365,6 +709,17 @@ Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => 
     () => buildMefBundle({}, { attachments: [valid, valid] }),
     Error,
     "Invalid or duplicate MeF PDF filename",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        f1040: { filing_status: "single", digital_assets: false },
+      }, {
+        filer: sampleFiler(),
+        attachments: [{ ...valid, description: "   " }],
+      }),
+    Error,
+    "Invalid or duplicate MeF PDF description",
   );
 });
 
@@ -712,6 +1067,94 @@ Deno.test("Form 1040 MeF preserves the digital-asset answer", () => {
   );
 });
 
+Deno.test("Form 1040 MeF replays retained general status and digital-assets source", () => {
+  const source = {
+    filing_status: NodeFilingStatus.Single,
+    digital_assets: true,
+  };
+  const xml = buildMefXml({
+    general: source,
+    f1040: { filing_status: "single", digital_assets: true },
+  }, sampleFiler());
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: source,
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "digital-assets answer differs from the retained general source",
+  );
+  for (const filedAnswer of [true, false]) {
+    assertThrows(
+      () =>
+        buildMefXml({
+          general: { filing_status: NodeFilingStatus.Single },
+          f1040: { filing_status: "single", digital_assets: filedAnswer },
+        }, sampleFiler()),
+      Error,
+      "digital-assets answer in the retained general source",
+    );
+  }
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: { filing_status: NodeFilingStatus.MFJ },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "filing status differs from the retained general source",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects No with a digital Form 8949 sale", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { filing_status: "single", digital_assets: false },
+        form8949: [{
+          part: Form8949Part.G,
+          description: "Digital asset",
+          date_acquired: "2025-01-10",
+          date_sold: "2025-05-10",
+          proceeds: 500,
+          cost_basis: 200,
+          gain_loss: 300,
+          is_long_term: false,
+        }],
+      }, sampleFiler()),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects a dependent omitted after general source projection", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        general: {
+          filing_status: NodeFilingStatus.Single,
+          digital_assets: false,
+          dependents: [{
+            first_name: "Avery",
+            last_name: "Child",
+            ssn: "222-33-4444",
+            dob: "2015-03-12",
+            relationship: DependentRelationship.Daughter,
+            months_in_home: 12,
+          }],
+        },
+        f1040: { filing_status: "single", digital_assets: false },
+      }, sampleFiler()),
+    Error,
+    "dependent rows differ from the retained general source",
+  );
+});
+
 Deno.test("Form 1040 MeF rejects a filing status that conflicts with the header", () => {
   assertThrows(
     () => buildMefXml({ f1040: { filing_status: "mfj" } }, sampleFiler()),
@@ -922,10 +1365,10 @@ Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
 
 Deno.test("documentCnt=4 when all four forms have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { line1a_wages: 50000, line20_nonrefundable_credits: 1200 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule3: { line2_childcare_credit: 1200, line8_total: 1200 },
   });
   assertStringIncludes(xml, 'documentCnt="4"');
 });
@@ -962,8 +1405,9 @@ Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", 
 
 Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", () => {
   const xml = buildMefXml({
+    f1040: { line20_nonrefundable_credits: 1200 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule3: { line2_childcare_credit: 1200, line8_total: 1200 },
   });
   const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
   const sched3Idx = xml.indexOf("<IRS1040Schedule3 ");
@@ -994,6 +1438,23 @@ Deno.test("schedule3 CreditForChildAndDepdCareAmt value appears in assembled out
 
 Deno.test("schedule2 aggregated UncollSSMedcrRRTAGrpInsTxAmt appears in assembled output", () => {
   const xml = buildMefXml({
+    w2: {
+      w2s: [{
+        employer_name: "Example Employer",
+        employer_ein: "12-3456789",
+        employer_address_line1: "1 Main Street",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        employee_ssn: sampleFiler().primarySSN,
+        box1_wages: 0,
+        box2_fed_withheld: 0,
+        box12_entries: [
+          { code: Box12Code.A, amount: 3000 },
+          { code: Box12Code.M, amount: 500 },
+        ],
+      }],
+    },
     schedule2: { uncollected_fica: 3000, uncollected_fica_gtl: 500 },
   });
   assertStringIncludes(
@@ -1216,26 +1677,34 @@ const form4137W2 = {
 };
 
 Deno.test("IRS4137 present when form4137 has data", () => {
+  const source = {
+    forms: [{
+      recipient: "taxpayer" as const,
+      employers: [{
+        name: "CAFE",
+        ein: "123456789",
+        tips_received: 500,
+        tips_reported: 0,
+      }],
+      ss_wages_from_w2: 0,
+    }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 0,
+    }],
+  };
+  const tipTax = calculateForm4137(
+    form4137InputSchema.parse(source),
+    SS_WAGE_BASE_2025,
+  ).reduce((sum, form) => sum + form.totalTax, 0);
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
-    form4137: {
-      forms: [{
-        recipient: "taxpayer",
-        employers: [{
-          name: "CAFE",
-          ein: "123456789",
-          tips_received: 500,
-          tips_reported: 0,
-        }],
-        ss_wages_from_w2: 0,
-      }],
-      w2_tip_sources: [{
-        employer_name: "CAFE",
-        employer_ein: "123456789",
-        allocated_tips: 0,
-        ss_wages_and_tips: 0,
-      }],
-    },
+    form4137: source,
+    f1040: { line1c_unreported_tips: 500 },
+    agi_aggregator: { line1c_unreported_tips: 500 },
+    schedule2: { line5_unreported_tip_tax: tipTax },
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS4137 ");
 });
@@ -1246,7 +1715,18 @@ Deno.test("IRS4137 absent when form4137 missing from pending", () => {
 });
 
 Deno.test("IRS8919 present when form8919 has data", () => {
-  const xml = buildMefXml({ form8919: sampleForm8919 });
+  const calculated = calculateForm8919(
+    form8919InputSchema.parse(sampleForm8919),
+    SS_WAGE_BASE_2025,
+  );
+  const tax = calculated.reduce((sum, form) => sum + form.line13, 0);
+  const wages = calculated.reduce((sum, form) => sum + form.line6, 0);
+  const xml = buildMefXml({
+    form8919: sampleForm8919,
+    f1040: { line1g_wages_8919: wages },
+    agi_aggregator: { line1g_wages_8919: wages },
+    schedule2: { line6_uncollected_8919: tax },
+  });
   assertStringIncludes(xml, "<IRS8919 ");
 });
 
@@ -1291,7 +1771,12 @@ Deno.test("IRS4972 absent when form4972 missing from pending", () => {
 });
 
 Deno.test("IRS1040ScheduleSE present when schedule_se has data", () => {
-  const xml = buildMefXml({ schedule_se: { net_profit_schedule_c: 30000 } });
+  const scheduleSE = { net_profit_schedule_c: 30000 };
+  const tax = scheduleSELines(scheduleSE, SS_WAGE_BASE_2025)?.line12 ?? 0;
+  const xml = buildMefXml({
+    schedule_se: scheduleSE,
+    schedule2: { line4_se_tax: tax },
+  });
   assertStringIncludes(xml, "<IRS1040ScheduleSE ");
 });
 
@@ -1379,7 +1864,19 @@ Deno.test("IRS8582 absent when form8582 missing from pending", () => {
 });
 
 Deno.test("IRS1040ScheduleF present when schedule_f has data", () => {
-  const xml = buildMefXml({ schedule_f: sampleScheduleF });
+  const xml = buildMefXml({
+    schedule_f: sampleScheduleF,
+    schedule1: {
+      line6_schedule_f: 2_000,
+      line10_total_additional_income: 2_000,
+    },
+    f1040: {
+      line8_additional_income: 2_000,
+      line9_total_income: 2_000,
+      line10_adjustments: 0,
+      line11_agi: 2_000,
+    },
+  });
   assertStringIncludes(xml, "<IRS1040ScheduleF ");
 });
 
@@ -1425,8 +1922,9 @@ Deno.test("IRS8880 present when form8880 has data", () => {
       filing_status: "single",
       line11_agi: 20_000,
       line18_total_tax_before_credits: 1_000,
+      line20_nonrefundable_credits: 1_000,
     },
-    schedule3: { line4_retirement_savings_credit: 1_000 },
+    schedule3: { line4_retirement_savings_credit: 1_000, line8_total: 1_000 },
     form8880: {
       ira_contributions_taxpayer: 1_000,
       elective_deferrals_taxpayer: 1_000,
@@ -1461,7 +1959,7 @@ Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
   assertThrows(
     () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
     Error,
-    "REIT-only filing needs one reviewed issued 1099-DIV",
+    "REIT-only filing needs one to three reviewed issued 1099-DIV copies",
   );
 });
 
@@ -1656,11 +2154,12 @@ Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags presen
   assertNotIncludes(xml, "<IRS8839>");
 });
 
-Deno.test("multiple W-2s become separate documents with unique IDs and an exact document count", () => {
+Deno.test("multiple W-2s become separate documents with unique IDs and an exact document count", async () => {
   const filerIdentity = sampleFiler();
   const baseW2 = {
     employer_ein: "12-3456789",
     employer_name: "ACME CORP",
+    employee_ssn: filerIdentity.primarySSN,
     employer_address_line1: "500 MARKET ST",
     employer_address_city: "SPRINGFIELD",
     employer_address_state: "IL",
@@ -1669,6 +2168,14 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
     box2_fed_withheld: 3_000,
   };
   const xml = buildMefXml({
+    f1040: {
+      line1a_wages: 60_000,
+      line1z_total_wages: 60_000,
+      line9_total_income: 60_000,
+      line10_adjustments: 0,
+      line11_agi: 60_000,
+      line25a_w2_withheld: 6_000,
+    },
     w2: {
       w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }],
     },
@@ -1677,6 +2184,105 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   assertStringIncludes(xml, 'documentCnt="3"');
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW21">');
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW22">');
+  const tampered = {
+    f1040: {
+      filing_status: "single",
+      digital_assets: false,
+      line1a_wages: 60_000,
+      line1z_total_wages: 60_000,
+      line9_total_income: 60_000,
+      line10_adjustments: 0,
+      line11_agi: 60_000,
+      line25a_w2_withheld: 5_999,
+    },
+    w2: { w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }] },
+  };
+  assertThrows(
+    () => buildMefXml(tampered, filerIdentity),
+    Error,
+    "line 25a differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(tampered, filerIdentity),
+    Error,
+    "line 25a differs",
+  );
+});
+
+Deno.test("joint zero-withholding W-2 wages need an identified employee in both exports", async () => {
+  const filerIdentity: FilerIdentity = {
+    ...sampleFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "222334444",
+      firstName: "Joint",
+      lastName: "Smith",
+      nameControl: "SMIT",
+    },
+  };
+  const pending = {
+    f1040: {
+      filing_status: "mfj",
+      digital_assets: false,
+      line25a_w2_withheld: 0,
+    },
+    w2: {
+      w2s: [{
+        employer_ein: "12-3456789",
+        employer_name: "ACME CORP",
+        employee_ssn: "999887777",
+        employer_address_line1: "500 MARKET ST",
+        employer_address_city: "SPRINGFIELD",
+        employer_address_state: "IL",
+        employer_address_zip: "62701",
+        box1_wages: 30_000,
+        box2_fed_withheld: 0,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filerIdentity),
+    Error,
+    "identified joint spouse",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filerIdentity),
+    Error,
+    "identified joint spouse",
+  );
+});
+
+Deno.test("final MeF and PDF exports reject 1099 withholding changed after source calculation", async () => {
+  const payer = {
+    f1099int: {
+      f1099ints: [{ payer_name: "Bank", recipient_tin: "123456789", box4: 80 }],
+    },
+    f1040: {
+      filing_status: "single",
+      taxpayer_ssn: "123456789",
+      digital_assets: false,
+      line25b_withheld_1099: 80,
+    },
+  };
+  const filerIdentity = sampleFiler();
+  assertStringIncludes(
+    buildMefXml(payer, filerIdentity),
+    "<Form1099WithheldTaxAmt>80</Form1099WithheldTaxAmt>",
+  );
+  const tampered = {
+    ...payer,
+    f1040: { ...payer.f1040, line25b_withheld_1099: 79 },
+  };
+  assertThrows(
+    () => buildMefXml(tampered, filerIdentity),
+    Error,
+    "line 25b differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(tampered, filerIdentity),
+    Error,
+    "line 25b differs",
+  );
 });
 
 Deno.test("context-only supporting forms are not emitted", () => {

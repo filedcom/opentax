@@ -15,6 +15,14 @@ function desc(schema: ZodTypeAny): string {
   return typeof d === "string" && d.length > 0 ? `  — ${d}` : "";
 }
 
+function unwrapEffects(schema: ZodTypeAny): ZodTypeAny {
+  let current = schema;
+  while (typeName(current) === "ZodEffects") {
+    current = def(current).schema as ZodTypeAny;
+  }
+  return current;
+}
+
 /**
  * Recursively converts a Zod schema into human-readable lines for CLI display.
  * Fields annotated with .describe("...") show their description inline.
@@ -72,13 +80,17 @@ export function zodToLines(
   if (tn === "ZodBoolean") return [`${prefix}boolean${d}`];
 
   if (tn === "ZodNumber") {
-    const checks = (def(schema).checks as Array<{ kind: string; value: number }>) ?? [];
+    const checks =
+      (def(schema).checks as Array<{ kind: string; value: number }>) ?? [];
     const min = checks.find((c) => c.kind === "min");
     const max = checks.find((c) => c.kind === "max");
-    const parts = [min ? `≥${min.value}` : "", max ? `≤${max.value}` : ""].filter(
-      Boolean,
-    );
-    return [`${prefix}number${parts.length ? "  " + parts.join("  ") : ""}${d}`];
+    const parts = [min ? `≥${min.value}` : "", max ? `≤${max.value}` : ""]
+      .filter(
+        Boolean,
+      );
+    return [
+      `${prefix}number${parts.length ? "  " + parts.join("  ") : ""}${d}`,
+    ];
   }
 
   if (tn === "ZodEnum") {
@@ -88,11 +100,12 @@ export function zodToLines(
 
   if (tn === "ZodNativeEnum") {
     const raw = def(schema).values as Record<string, unknown>;
-    const values = Object.values(raw).filter((v): v is string => typeof v === "string");
-    const display =
-      values.length > 8
-        ? `${values.slice(0, 8).join(" | ")} | ...`
-        : values.join(" | ");
+    const values = Object.values(raw).filter((v): v is string =>
+      typeof v === "string"
+    );
+    const display = values.length > 8
+      ? `${values.slice(0, 8).join(" | ")} | ...`
+      : values.join(" | ");
     return [`${prefix}enum  ${display}${d}`];
   }
 
@@ -102,7 +115,9 @@ export function zodToLines(
 
   if (tn === "ZodUnion") {
     const options = def(schema).options as ZodTypeAny[];
-    const names = options.map((o) => typeName(o).replace("Zod", "").toLowerCase());
+    const names = options.map((o) =>
+      typeName(o).replace("Zod", "").toLowerCase()
+    );
     return [`${prefix}${names.join(" | ")}${d}`];
   }
 
@@ -118,16 +133,13 @@ export function zodToLines(
   }
 
   if (tn === "ZodArray") {
-    const inner = def(schema).type as ZodTypeAny;
+    const inner = unwrapEffects(def(schema).type as ZodTypeAny);
     const minLen = (def(schema).minLength as { value: number } | null)?.value;
     const constraints = minLen != null ? ` (min ${minLen})` : "";
     const lines: string[] = [`${prefix}array${constraints}${d}`];
     if (typeName(inner) === "ZodObject") {
       lines.push(`${"  ".repeat(indent + 1)}items:`);
-      const shape = (def(inner).shape as () => Record<string, ZodTypeAny>)();
-      for (const [key, val] of Object.entries(shape)) {
-        lines.push(...zodToLines(val, key, indent + 2));
-      }
+      lines.push(...zodToLines(inner, undefined, indent + 2));
     }
     return lines;
   }

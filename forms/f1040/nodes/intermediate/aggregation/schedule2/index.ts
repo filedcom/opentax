@@ -30,7 +30,7 @@ export const inputSchema = z.object({
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
-  // Pre-2025 Form 5405 repayment posted to Schedule 2 line 10.
+  // Pre-2025 Form 5405 repayment posted to Schedule 2 line 10; 2025 reserves it.
   line10_homebuyer_credit_repayment: z.number().nonnegative().optional(),
   // Only Form 5329 Parts I/II are chapter 1 taxes. The later parts include
   // several different excise-tax sections, not just section 4973, and cannot
@@ -70,6 +70,10 @@ export const inputSchema = z.object({
   // Line 12 — Net Investment Income Tax (from Form 8960 line 17)
   // IRC §1411; Form 8960 line 17 → Schedule 2 line 12
   line12_niit: z.number().nonnegative().optional(),
+  // Line 14 needs payment-level dealer-sale tax and sale-date AFR evidence.
+  line14_section453l_interest: z.number().int().safe().nonnegative().optional(),
+  // Line 15 — interest on deferred tax on qualifying nondealer installment sales.
+  line15_section453a_interest: z.number().int().safe().nonnegative().optional(),
   // Line 4 — Self-employment tax (from Schedule SE line 12)
   // IRC §1401; Schedule SE line 12 → Schedule 2 line 4
   line4_se_tax: z.number().nonnegative().optional(),
@@ -155,10 +159,48 @@ function part1Total(input: Schedule2Input): number {
     (input.line1f_form4255_20_percent_ep ?? 0);
 }
 
+export function schedule2Part1Total(raw: unknown): number {
+  const input = inputSchema.parse(raw);
+  assertNo2025Schedule2Line10(input);
+  return part1Total(input);
+}
+
+/** 2025 line 21 before the separately calculated Form 8978 line 17z offset. */
+export function schedule2Part2Total(raw: unknown): number {
+  const input = inputSchema.parse(raw);
+  assertNoUnsupportedSchedule2Line14(input);
+  return part2Total(input);
+}
+
+export function assertNoUnsupportedSchedule2Line14(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const claim = fields.line14_section453l_interest;
+  if (claim !== undefined && claim !== null && claim !== 0) {
+    throw new Error(
+      "Schedule 2 line 14 needs a section 453(l)(3) payment-level tax, sale-date AFR, and elapsed-period workpaper",
+    );
+  }
+}
+
+export function assertNo2025Schedule2Line10(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  if (
+    typeof fields.line10_homebuyer_credit_repayment === "number" &&
+    fields.line10_homebuyer_credit_repayment > 0
+  ) {
+    throw new Error(
+      "2025 Schedule 2 line 10 is reserved; Form 5405 repayment ended in 2024",
+    );
+  }
+}
+
 function part2Total(input: Schedule2Input): number {
+  assertNo2025Schedule2Line10(input);
+  assertNoUnsupportedSchedule2Line14(input);
   return (input.line4_se_tax ?? 0) +
     (input.line5_unreported_tip_tax ?? 0) +
-    (input.line10_homebuyer_credit_repayment ?? 0) +
     line8(input) +
     line13(input) +
     line17h(input) +
@@ -170,6 +212,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17d_hsa_eligibility_tax ?? 0) +
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
+    (input.line15_section453a_interest ?? 0) +
     (input.line9_household_employment ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line17a_new_markets_credit_recapture ?? 0) +
@@ -206,6 +249,7 @@ function part2UnclassifiedTax(input: Schedule2Input): number {
       ? input.line8_form5329_tax ?? 0
       : 0;
   return form5329WithoutBreakdown +
+    (input.line15_section453a_interest ?? 0) +
     (input.line19_form4255_net_epe ?? 0) +
     (input.line17z_other_additional_taxes ?? 0);
 }
@@ -219,6 +263,7 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertNoUnsupportedSchedule2Line14(input);
     if ((input.line17a_investment_credit_recapture ?? 0) > 0) {
       throw new Error(
         "Schedule 2 generic 3468 recapture requires a specific Form 4255 credit-line source",

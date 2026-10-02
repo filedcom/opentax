@@ -97,5 +97,23 @@ beneficiary/institution checks. No such pass is recorded here.
 The PDF instance path now also checks the final filer's status and Schedule B
 line 2 interest and line 3 exclusion against its Form 8815 source and printed
 line 14, matching the native MeF gate. Positive and mismatch cases are authored
-but unrun. Return-wide MAGI and underlying bond/tuition document authentication
-remain open.
+but unrun.
+
+### Final-return MAGI reconciliation slice
+
+Native MeF and PDF now replay the line 9 worksheet against finalized Schedule B
+lines 2-4, Form 1040 taxable interest, total income, adjustments, and AGI.
+The bounded route also requires one reviewed 1099-INT source with box 3 equal
+to the form's current-year line 6 bond interest, and no unrelated taxable
+interest or payer adjustment on that source.
+The worksheet's other income must equal Form 1040 total income less taxable
+interest; its Schedule 1 adjustment amount must equal the filed adjustment
+total less line 21 student-loan interest, which is omitted by the Form 8815
+worksheet. The gross-to-taxable interest difference must equal the calculated
+line 14 exclusion. Positive foreign/adoption/Puerto Rico addbacks and filed
+Form 2555/4563/8839 are rejected until their underlying sources can be
+reconciled. A W-2 and 1099-INT full-return fixture plus native/PDF tamper
+cases are authored but unrun pending the agreed bulk validation. Bond and
+tuition document authentication beyond retained references, multiple interest
+payers, any Form 8815 line 9 special royalty
+computation, and the remaining bounded routes are still open.

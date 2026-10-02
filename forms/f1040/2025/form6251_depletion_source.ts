@@ -1,4 +1,8 @@
-import { inputSchema as scheduleCSourceSchema } from "../nodes/inputs/schedule_c/index.ts";
+import {
+  calculateScheduleCAtRiskNet,
+  inputSchema as scheduleCSourceSchema,
+  wotcReductionsByBusiness,
+} from "../nodes/inputs/schedule_c/index.ts";
 
 /** Recompute the signed Schedule C AMT depletion refigure at export. */
 export function assertForm6251DepletionSource(
@@ -40,6 +44,21 @@ export function assertForm6251DepletionSource(
     (amount === undefined || amount === null || amount === 0) &&
     regular - amt === 0 && !unreviewedDepletion
   ) return;
+  const reductions = source.success
+    ? wotcReductionsByBusiness(source.data)
+    : new Map<string, number>();
+  const scheduleCProfit = businesses.reduce(
+    (sum, business) =>
+      sum + calculateScheduleCAtRiskNet(
+        business,
+        reductions.get(business.business_reference ?? "") ?? 0,
+      ).atRiskNet,
+    0,
+  );
+  const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+  const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+  const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  const filedAmt = fields.line11_amt;
   if (
     !source.success || worksheets.length === 0 ||
     unreviewedDepletion ||
@@ -54,10 +73,18 @@ export function assertForm6251DepletionSource(
         )
     ) ||
     new Set(propertyReferences).size !== propertyReferences.length ||
-    regular - amt !== amount
+    regular - amt !== amount ||
+    schedule1?.line3_schedule_c !== scheduleCProfit ||
+    typeof filedAmt !== "number" || filedAmt <= 0 ||
+    schedule2?.line2_amt !== filedAmt ||
+    typeof form1040?.line17_additional_taxes !== "number" ||
+    form1040.line17_additional_taxes < filedAmt ||
+    typeof form1040.line16_income_tax !== "number" ||
+    form1040.line18_total_tax_before_credits !==
+      form1040.line16_income_tax + form1040.line17_additional_taxes
   ) {
     throw new Error(
-      "Form 6251 line 2d needs matching retained Schedule C property-level AMT depletion",
+      "Form 6251 line 2d needs matching retained Schedule C property-level AMT depletion and final-return tax",
     );
   }
 }

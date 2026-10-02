@@ -8,7 +8,10 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { form8826 } from "../../mef/forms/f8826_draft.ts";
-import { form3800 } from "../../mef/forms/f3800.ts";
+import {
+  form3800,
+  prepareForm3800DocumentParts,
+} from "../../mef/forms/f3800.ts";
 import { registry } from "../../registry.ts";
 import { form8826Pdf } from "./f8826.ts";
 
@@ -120,6 +123,22 @@ Deno.test("sourced interpreter expense and reduced Schedule C deduction reach Fo
   assertEquals(result.pending.f3800?.allowed_credit, 2_375);
   assertEquals(result.pending.schedule3?.line6a_total, 2_375);
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 2_375);
+});
+
+Deno.test("Form 8826 self-only printable copy binds its prepared Form 3800 document", () => {
+  const prepared = prepareForm3800DocumentParts(parent, {
+    pending,
+    documentIdsByPendingKey: {
+      f8826: ["IRS8826_1"],
+      f8835: [],
+      form6251: ["IRS6251_1"],
+    },
+  });
+  if (!prepared) throw new Error("Expected prepared Form 3800 credit");
+  const fields = form8826Pdf.projectFields!(source, pending);
+  assertEquals(form8826Pdf.instances!(fields, undefined, pending, prepared), [
+    fields,
+  ]);
 });
 
 Deno.test("self-earned Form 8826 prints the same source credit as native Form 3800 and final tax", () => {

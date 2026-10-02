@@ -81,6 +81,7 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividend = {
+    recipient_tin: "111223333",
     payerName: "Example Dividend Fund",
     source_document_reference: "2025 issued Example Dividend Fund 1099-DIV",
     isNominee: false,
@@ -152,6 +153,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const qualified = {
+    recipient_tin: "111223333",
     payerName: "Qualified Dividend Fund",
     source_document_reference: "2025 qualified-dividend 1099-DIV",
     isNominee: false,
@@ -160,6 +162,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
     box1b: 500,
   };
   const reit = {
+    recipient_tin: "111223333",
     payerName: "Separate REIT",
     source_document_reference: "2025 REIT 1099-DIV",
     isNominee: false,
@@ -240,6 +243,7 @@ Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividend = {
+    recipient_tin: "111223333",
     payerName: "Example REIT",
     source_document_reference: "2025 issued Example REIT Form 1099-DIV",
     isNominee: false,
@@ -340,6 +344,7 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividends = [
     {
+      recipient_tin: "111223333",
       payerName: "North REIT",
       source_document_reference: "2025 issued North REIT 1099-DIV",
       isNominee: false,
@@ -357,6 +362,7 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
       },
     },
     {
+      recipient_tin: "111223333",
       payerName: "South REIT",
       source_document_reference: "2025 issued South REIT 1099-DIV",
       isNominee: false,
@@ -449,6 +455,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -464,6 +471,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,
@@ -576,6 +584,7 @@ Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and fu
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -591,6 +600,7 @@ Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and fu
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "accrual",
+        line_f_made_1099_payments: false,
         part_iii: {
           line37_sales_products: 80_000,
           line45_beginning_inventory: 0,
@@ -625,6 +635,7 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -639,6 +650,7 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
         line_c_farm_name: "North Farm",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,
@@ -689,6 +701,7 @@ Deno.test("sole Schedule C business without EIN uses the filed taxpayer SSN", ()
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Builder",
       taxpayer_ssn: "123-45-6789",
@@ -787,7 +800,7 @@ Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports
   assertThrows(
     () => form8995Pdf.projectFields?.(fields, {}),
     Error,
-    "needs one reviewed issued 1099-DIV",
+    "needs one to three reviewed issued 1099-DIV",
   );
 });
 
@@ -800,7 +813,7 @@ Deno.test("Form 8995 rejects a positive deduction even without other source fiel
   assertThrows(
     () => form8995Pdf.projectFields?.({ qbi_deduction: 1 }, {}),
     Error,
-    "needs one reviewed issued 1099-DIV",
+    "needs one to three reviewed issued 1099-DIV",
   );
 });
 

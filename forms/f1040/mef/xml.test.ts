@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { element, elements, escapeXml } from "./xml.ts";
 
 // ---------------------------------------------------------------------------
@@ -57,6 +57,28 @@ Deno.test("escapeXml: multi-char: multiple different specials", () => {
   assertEquals(escapeXml("O'Brien & Sons"), "O&apos;Brien &amp; Sons");
 });
 
+Deno.test("escapeXml rejects XML 1.0 control characters and unpaired surrogates", () => {
+  for (
+    const invalid of [
+      "\u0000",
+      "\u0001",
+      "\u001f",
+      "\ud800",
+      "\udfff",
+      "\ufffe",
+      "\uffff",
+    ]
+  ) {
+    assertThrows(() => escapeXml(`A${invalid}B`), Error, "invalid character");
+    assertThrows(
+      () => element("Nm", "A", { note: invalid }),
+      Error,
+      "invalid character",
+    );
+  }
+  assertEquals(escapeXml("A\tB\nC\rD 😀"), "A\tB\nC\rD 😀");
+});
+
 // ---------------------------------------------------------------------------
 // 3. element — undefined value
 // ---------------------------------------------------------------------------
@@ -75,6 +97,22 @@ Deno.test("element: zero renders as 0", () => {
 
 Deno.test("element: positive integer renders without decimal", () => {
   assertEquals(element("Amt", 50000), "<Amt>50000</Amt>");
+});
+
+Deno.test("element rejects nonfinite amounts", () => {
+  for (
+    const invalid of [
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+    ]
+  ) {
+    assertThrows(
+      () => element("WagesAmt", invalid),
+      Error,
+      "nonfinite numeric value",
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------

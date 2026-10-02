@@ -23,6 +23,7 @@ export const rentedHomeSourceSchema = z.object({
   ).max(999_999_999_999_999),
   insurance_indirect: amount,
   rent_indirect: amount,
+  repairs_direct: amount,
   repairs_indirect: amount,
   utilities_indirect: amount,
   other_indirect: amount,
@@ -36,6 +37,7 @@ export const rentedHomeSourceSchema = z.object({
   no_home_business_gain_or_other_trade_loss: z.literal(true),
   no_casualty_mortgage_tax_or_depreciation: z.literal(true),
   home_expenses_excluded_from_schedule_c_verified: z.literal(true),
+  direct_repairs_business_area_only_verified: z.literal(true),
 }).strict();
 
 export type RentedHomeSource = z.infer<typeof rentedHomeSourceSchema>;
@@ -52,9 +54,11 @@ export const form8829LinesSchema = z.object({
   line8: z.number().int().finite(),
   line18b: amount,
   line19b: amount,
+  line20a: amount,
   line20b: amount,
   line21b: amount,
   line22b: amount,
+  line23a: amount,
   line23b: amount,
   line24: amount,
   line25: amount,
@@ -85,7 +89,8 @@ export function calculateRentedHomeForm8829(
   const line23b = source.insurance_indirect + source.rent_indirect +
     source.repairs_indirect + source.utilities_indirect + source.other_indirect;
   const line24 = Math.round(line23b * pct);
-  const line26 = line24 + source.prior_operating_carryover;
+  const line23a = source.repairs_direct;
+  const line26 = line23a + line24 + source.prior_operating_carryover;
   const line27 = Math.min(
     Math.max(0, source.schedule_c_line29_tentative_profit),
     line26,
@@ -102,9 +107,11 @@ export function calculateRentedHomeForm8829(
     line8: source.schedule_c_line29_tentative_profit,
     line18b: source.insurance_indirect,
     line19b: source.rent_indirect,
+    line20a: source.repairs_direct,
     line20b: source.repairs_indirect,
     line21b: source.utilities_indirect,
     line22b: source.other_indirect,
+    line23a,
     line23b,
     line24,
     line25: source.prior_operating_carryover,

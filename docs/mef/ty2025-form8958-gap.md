@@ -14,15 +14,17 @@ The old all-optional `state`/`allocation_items`/summary/withholding input was
 replaced directly, without compatibility aliases. The public `f8958` node now
 accepts a strict one-taxpayer/one-spouse MFS ledger for nine U.S.
 community-property states. It requires both identities, a 2025 domicile period,
-review references, and distinct per-item source/record/workpaper references.
-Each row identifies its numbered Form 8958 line and allocation basis and must
-use safe whole dollars with A = B + C. Equal-community rows allow only one
-dollar of rounding difference, wholly separate rows allocate to one person,
-exceptional rows require a separate federal workpaper, and married-spouse
-self-employment tax/deduction cannot be presumed half-community. The checked-in
-TY2025 v5.4 `IRS8958.xsd` permits at most 40 rows per line; the input enforces
-that bound. Focused cases and the existing export-guard fixture were updated but
-not run.
+review references, and distinct per-item source/record/workpaper references. The
+one direct source shape now also requires a reviewed 2025 MFS Form 1040 record
+for the named spouse, with a distinct return-document reference and exact wage,
+income, adjustment, AGI, and withholding lines. Each row identifies its numbered
+Form 8958 line and allocation basis and must use safe whole dollars with A = B +
+C. Equal-community rows allow only one dollar of rounding difference, wholly
+separate rows allocate to one person, exceptional rows require a separate
+federal workpaper, and married-spouse self-employment tax/deduction cannot be
+presumed half-community. The checked-in TY2025 v5.4 `IRS8958.xsd` permits at
+most 40 rows per line; the input enforces that bound. Focused cases and the
+existing export-guard fixture were updated but not run.
 
 This is **not a filed allocation**. Source IDs and review strings do not
 authenticate either spouse's documents or state-law conclusions. The node passes
@@ -32,29 +34,36 @@ share, not the full boxes, to both Form 1040 and AGI (and the taxpayer's share
 of withholding to Form 1040). Ordinary W-2 returns without an allocation retain
 their existing computation. The bounded path rejects other W-2s, spouse-owned
 W-2s, tips, employer benefits/deferrals, retirement flags and positive state or
-local withholding rather than partially allocating those tax effects. There is
-no second-return reconciliation. Form 8958 line 12 can describe many unrelated
-1040/schedule destinations, so a single aggregate cannot prove completeness.
-RDP, HOH, special separation/disregard, foreign jurisdiction, partial-year
-ownership, and complex state-law routes remain unsupported.
+local withholding rather than partially allocating those tax effects. The staged
+one-W-2 route reconciles reviewed spouse-return amounts as described below, but
+the registered export does not invoke that comparison. Form 8958 line 12 can
+describe many unrelated 1040/schedule destinations, so a single aggregate cannot
+prove completeness. RDP, HOH, special separation/disregard, foreign
+jurisdiction, partial-year ownership, and complex state-law routes remain
+unsupported.
 
 `nodes/inputs/f8958/staged_documents.ts` adds an **unregistered** comparison for
 one full-year MFS community W-2 wage row and its matching withholding row. It
 now runs the actual executor from the strict `general`, `w2` and `f8958` start
 sources instead of accepting a caller-supplied final pending object. It requires
 the executed W-2 employee, employer, Box 1 and Box 2 to match the ledger and
-Form 1040 lines 1a/1z/9 to equal the taxpayer wage share, with lines 25a/25d
-equal to the taxpayer withholding share. The executed W-2 allocation is the only
-deposit of these two shares; a full gross deposit or second income or
-withholding source fails the comparison. The staged function emits TY2025
-`IRS8958` groups in XSD order and values for the first wage and first
-withholding row on the official two-page PDF, including both allocation-column
-SSNs. AcroForm field names and row positions were inspected read-only; no filled
-PDF was rendered. Focused projection and rejection cases are written but unrun.
-Executor ownership of the arithmetic does **not** verify W-2 bytes or the
-ledger's source-document ID (W-2 has no matching document ID), prove state-law
-characterization, or review the other spouse's complete return. No native or PDF
-descriptor invokes it, and the both-export guard remains unchanged.
+Form 1040 lines 1a/1z/9/11 to equal the taxpayer wage share, line 10 to be zero,
+and lines 25a/25d to equal the taxpayer withholding share. The reviewed spouse
+return must show the spouse wage share on lines 1a/1z/9/11, zero on line 10, and
+the spouse withholding share on lines 25a/25d. Its identity must match the
+ledger and its document reference must differ from the W-2. The executed W-2
+allocation is the only deposit of these two shares; a full gross deposit or
+second income or withholding source fails the comparison. The staged function
+emits TY2025 `IRS8958` groups in XSD order and values for the first wage and
+first withholding row on the official two-page PDF, including both
+allocation-column SSNs. AcroForm field names and row positions were inspected
+read-only; no filled PDF was rendered. Focused projection and rejection cases
+are written but unrun. Executor ownership of the arithmetic does **not** verify
+W-2 bytes or the ledger's source-document ID (W-2 has no matching document ID),
+prove state-law characterization, or authenticate the other spouse's reviewed
+return or its complete contents. Those reviewed amounts remain source assertions
+rather than an executed second return. No native or PDF descriptor invokes it,
+and the both-export guard remains unchanged.
 
 Opening a bounded route requires source-backed **both-person** item ingestion,
 item classification under applicable state/federal law, one owner for each

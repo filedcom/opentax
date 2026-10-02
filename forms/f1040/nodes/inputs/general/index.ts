@@ -47,6 +47,11 @@ import { scheduleA } from "../schedule_a/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  eicBirthResidencyReviewSchema,
+  reviewedEicBirthResidence,
+  scheduleEicLine6Months,
+} from "../../../2025/eic-birth-residency.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -116,6 +121,9 @@ export const dependentSchema = z.object({
   irs_relationship_code: z.nativeEnum(IRSDependentRelationshipCode).optional(),
   months_in_home: z.number().int().min(0).max(12),
   lived_in_us_over_half_year: z.boolean().optional(),
+  // Actual calendar months; Schedule EIC line 6 prints 12 for reviewed births.
+  months_lived_with_you_in_us: z.number().int().min(0).max(12).optional(),
+  eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
   us_citizen_national_or_resident: z.boolean().optional(),
   provided_over_half_own_support: z.boolean().optional(),
   filed_joint_return_except_refund_only: z.boolean().optional(),
@@ -125,8 +133,54 @@ export const dependentSchema = z.object({
   gross_income: z.number().nonnegative().optional(), // For qualifying relative test
   // Form 8962 Worksheet 1-2. A dependent's MAGI counts only when a return is
   // required because income meets the filing threshold, not for refund-only returns.
-  ptc_tax_return: z.discriminatedUnion("filing", [
-    z.object({ filing: z.literal("not_required") }),
+  ptc_tax_return: z.union([
+    z.object({
+      filing: z.literal("not_required"),
+      // Bounded wage-only Table 2 determination. The reviewed inventory also
+      // rules out the separate Pub. 501 Table 3 filing triggers.
+      wage_form_w2: z.object({
+        source_document_id: z.string().min(1),
+        employer_name: z.string().trim().min(1),
+        employer_ein: z.string().regex(/^\d{9}$/),
+        employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1_wages: z.number().positive(),
+      }).strict(),
+      filing_requirement_review: z.object({
+        source_document_id: z.string().min(1),
+        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        tax_year: z.literal(2025),
+        filing_status: z.literal("single"),
+        blind: z.literal(false),
+        wage_source_document_id: z.string().min(1),
+        other_income_reviewed_absent: z.literal(true),
+        other_filing_triggers_reviewed_absent: z.literal(true),
+        return_filed: z.literal(false),
+        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reviewer_name: z.string().trim().min(1),
+      }).strict(),
+    }).strict(),
+    z.object({
+      filing: z.literal("not_required"),
+      interest_form1099: z.object({
+        source_document_id: z.string().min(1),
+        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1_taxable_interest: z.number().positive().max(1_350),
+        box8_tax_exempt_interest: z.number().nonnegative(),
+      }).strict(),
+      filing_requirement_review: z.object({
+        source_document_id: z.string().min(1),
+        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        tax_year: z.literal(2025),
+        filing_status: z.literal("single"),
+        blind: z.literal(false),
+        interest_source_document_id: z.string().min(1),
+        other_income_reviewed_absent: z.literal(true),
+        other_filing_triggers_reviewed_absent: z.literal(true),
+        return_filed: z.literal(false),
+        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reviewer_name: z.string().trim().min(1),
+      }).strict(),
+    }).strict(),
     z.object({ filing: z.literal("form8814") }),
     z.object({
       filing: z.literal("required"),
@@ -139,7 +193,7 @@ export const dependentSchema = z.object({
         line1z_wages: z.number().nonnegative(),
         line2a_tax_exempt_interest: z.number().nonnegative(),
         line2b_taxable_interest: z.number().nonnegative(),
-        line3b_dividends: z.literal(0),
+        line3b_dividends: z.number().nonnegative(),
         line4b_ira: z.literal(0),
         line5b_pensions: z.literal(0),
         line6b_social_security: z.literal(0),
@@ -156,6 +210,15 @@ export const dependentSchema = z.object({
           box8_tax_exempt_interest: z.number().nonnegative(),
         }).strict(),
       ),
+      dividend_form1099: z.object({
+        source_document_id: z.string().min(1),
+        payer_ein: z.string().regex(/^\d{9}$/),
+        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1a_ordinary_dividends: z.number().positive(),
+        box1b_qualified_dividends: z.literal(0),
+        box2a_capital_gain_distributions: z.literal(0),
+        box12_exempt_interest_dividends: z.literal(0),
+      }).strict().optional(),
       wage_forms_w2: z.array(
         z.object({
           source_document_id: z.string().min(1),
@@ -164,7 +227,7 @@ export const dependentSchema = z.object({
           employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
           box1_wages: z.number().positive(),
         }).strict(),
-      ).length(1).optional(),
+      ).min(1).max(2).optional(),
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
@@ -195,6 +258,7 @@ export const inputSchema = z.object({
   prior_aotc_disallowance_review: priorCreditDisallowanceReviewSchema
     .optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
+  do_not_claim_eic: z.boolean().optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
@@ -236,6 +300,13 @@ export const inputSchema = z.object({
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
+  mfj_dependent_refund_only_review: z.object({
+    review_reference: z.string().trim().min(1),
+    joint_return_only_for_withholding_or_estimated_refund_verified: z.literal(
+      true,
+    ),
+  }).strict().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),
@@ -311,9 +382,13 @@ export const inputSchema = z.object({
   qss_spouse_death_year: z.number().int().optional(),
   qss_qualifying_child_ssn: z.string().optional(),
   // Refund direct deposit
-  bank_routing_number: z.string().length(9).optional(),
-  bank_account_number: z.string().min(4).max(17).optional(),
+  bank_routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/)
+    .optional(),
+  bank_account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
+  // Form 1040 line 36: irrevocable application to this filer's 2026 account.
+  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+    .optional(),
   // Dependents
   dependents: z.array(dependentSchema).optional(),
 });
@@ -326,6 +401,60 @@ type DependentItem = z.infer<typeof dependentSchema>;
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
   return dependents.reduce((total, dep) => {
     const taxReturn = dep.ptc_tax_return;
+    if (taxReturn?.filing === "not_required") {
+      const review = taxReturn.filing_requirement_review;
+      const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
+        ? new Date(`${dep.dob}T00:00:00Z`)
+        : new Date(Number.NaN);
+      const reviewed = new Date(`${review.reviewed_on}T00:00:00Z`);
+      if (
+        Number.isNaN(birth.getTime()) ||
+        birth.toISOString().slice(0, 10) !== dep.dob
+      ) {
+        throw new Error("Form 8962 dependent needs a valid birth date");
+      }
+      if (
+        birth.getTime() < Date.UTC(1961, 0, 2) ||
+        Number.isNaN(reviewed.getTime()) ||
+        reviewed.toISOString().slice(0, 10) !== review.reviewed_on ||
+        reviewed.getTime() < Date.UTC(2026, 0, 1) ||
+        review.dependent_ssn.replaceAll("-", "") !==
+          dep.ssn?.replaceAll("-", "") ||
+        !dep.ssn
+      ) {
+        throw new Error(
+          "Form 8962 dependent not-required review must match the under-65 dependent and 2025 filing threshold",
+        );
+      }
+      if ("wage_form_w2" in taxReturn) {
+        const wage = taxReturn.wage_form_w2;
+        if (
+          wage.box1_wages > 15_750 ||
+          !("wage_source_document_id" in review) ||
+          review.wage_source_document_id !== wage.source_document_id ||
+          review.source_document_id === wage.source_document_id ||
+          wage.employee_ssn.replaceAll("-", "") !== dep.ssn.replaceAll("-", "")
+        ) {
+          throw new Error(
+            "Form 8962 dependent wage-only not-required review must match the W-2 and filing threshold",
+          );
+        }
+      } else {
+        const interest = taxReturn.interest_form1099;
+        if (
+          !("interest_source_document_id" in review) ||
+          review.interest_source_document_id !== interest.source_document_id ||
+          review.source_document_id === interest.source_document_id ||
+          interest.recipient_ssn.replaceAll("-", "") !==
+            dep.ssn.replaceAll("-", "")
+        ) {
+          throw new Error(
+            "Form 8962 dependent interest-only not-required review must match the Form 1099-INT",
+          );
+        }
+      }
+      return total;
+    }
     if (!taxReturn || taxReturn.filing !== "required") return total;
     const filed = taxReturn.filed_form1040;
     const taxableInterest = taxReturn.interest_forms1099.reduce(
@@ -340,26 +469,59 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box1_wages,
       0,
     ) ?? 0;
-    const wageOnly = wages > 0 && taxableInterest === 0 &&
-      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
-    const interestOnly = wages === 0 && taxableInterest > 0 &&
-      taxReturn.wage_forms_w2 === undefined;
-    const mixedWagesAndInterest = wages > 0 && taxableInterest > 0 &&
-      taxReturn.wage_forms_w2?.length === 1 &&
-      taxReturn.interest_forms1099.length === 1;
-    if (!wageOnly && !interestOnly && !mixedWagesAndInterest) {
+    const dividends = taxReturn.dividend_form1099?.box1a_ordinary_dividends ??
+      0;
+    if (
+      taxReturn.wage_forms_w2 &&
+      (new Set(taxReturn.wage_forms_w2.map((form) => form.source_document_id))
+            .size !== taxReturn.wage_forms_w2.length ||
+        new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein))
+            .size !== taxReturn.wage_forms_w2.length)
+    ) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports one W-2 wage-only, Form 1099-INT interest-only, or one W-2 plus one Form 1099-INT return",
+        "Form 8962 dependent W-2 wage sources need distinct documents and employers",
+      );
+    }
+    const dividendOnly = dividends > 0 && wages === 0 &&
+      taxableInterest === 0 && exemptInterest === 0 &&
+      taxReturn.interest_forms1099.length === 0 &&
+      taxReturn.wage_forms_w2 === undefined;
+    const wageOnly = dividends === 0 && wages > 0 && taxableInterest === 0 &&
+      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
+    const interestOnly = dividends === 0 && wages === 0 &&
+      taxableInterest > 0 &&
+      taxReturn.wage_forms_w2 === undefined;
+    const mixedWagesAndInterest = dividends === 0 && wages > 0 &&
+      taxableInterest > 0 &&
+      (taxReturn.wage_forms_w2?.length === 1 ||
+        taxReturn.wage_forms_w2?.length === 2) &&
+      taxReturn.interest_forms1099.length === 1;
+    const mixedWagesAndDividends = wages > 0 && dividends > 0 &&
+      taxReturn.wage_forms_w2?.length === 1 &&
+      taxableInterest === 0 && exemptInterest === 0 &&
+      taxReturn.interest_forms1099.length === 0;
+    const mixedInterestAndDividends = wages === 0 &&
+      taxReturn.wage_forms_w2 === undefined &&
+      taxableInterest > 0 && dividends > 0 &&
+      taxReturn.interest_forms1099.length === 1;
+    if (
+      !wageOnly && !interestOnly && !mixedWagesAndInterest &&
+      !dividendOnly && !mixedWagesAndDividends &&
+      !mixedInterestAndDividends
+    ) {
+      throw new Error(
+        "Form 8962 dependent required-filing source supports bounded W-2, Form 1099-INT, and ordinary-only Form 1099-DIV combinations",
       );
     }
     if (
       filed.line1z_wages !== wages ||
       filed.line2a_tax_exempt_interest !== exemptInterest ||
       filed.line2b_taxable_interest !== taxableInterest ||
-      filed.line11b_agi !== wages + taxableInterest
+      filed.line3b_dividends !== dividends ||
+      filed.line11b_agi !== wages + taxableInterest + dividends
     ) {
       throw new Error(
-        "Form 8962 dependent filed Form 1040 wages, interest, and AGI must reconcile to W-2 or Forms 1099-INT",
+        "Form 8962 dependent filed Form 1040 wages, interest, dividends, and AGI must reconcile to W-2 or Forms 1099",
       );
     }
     const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
@@ -372,10 +534,50 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
     const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
+    if (dividendOnly) {
+      const unearnedThreshold = 1_350 +
+        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+      if (dividends <= unearnedThreshold) {
+        throw new Error(
+          "Form 8962 dependent ordinary dividends do not establish the 2025 filing requirement",
+        );
+      }
+      return total + filed.line11b_agi;
+    }
+    if (mixedInterestAndDividends) {
+      const unearnedThreshold = 1_350 +
+        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+      if (taxableInterest + dividends <= unearnedThreshold) {
+        throw new Error(
+          "Form 8962 dependent combined interest and dividends do not establish the 2025 filing requirement",
+        );
+      }
+      return total + filed.line11b_agi + exemptInterest;
+    }
     if (wageOnly) {
       if (age65 || filed.blind || wages <= 15_750) {
         throw new Error(
           "Form 8962 dependent W-2 wages do not establish the 2025 single-dependent filing requirement",
+        );
+      }
+      return total + filed.line11b_agi;
+    }
+    if (mixedWagesAndDividends) {
+      if (age65 || filed.blind) {
+        throw new Error(
+          "Form 8962 dependent mixed W-2 and 1099-DIV filing requirement needs under-65, nonblind evidence",
+        );
+      }
+      const combinedThreshold = Math.max(
+        1_350,
+        Math.min(wages, 15_300) + 450,
+      );
+      if (
+        dividends <= 1_350 && wages <= 15_750 &&
+        wages + dividends <= combinedThreshold
+      ) {
+        throw new Error(
+          "Form 8962 dependent mixed W-2 and 1099-DIV income does not establish the 2025 filing requirement",
         );
       }
       return total + filed.line11b_agi;
@@ -499,7 +701,7 @@ function ageAtYearEnd(dob: string): number {
 // For federal tax purposes, a person reaches age 65 on the day before their
 // 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
 // a birth date before January 2, 1961.
-function isAge65ByEndOfTaxYear(
+export function isAge65ByEndOfTaxYear(
   dob: string | undefined,
   taxYear: number,
   owner: "taxpayer" | "spouse",
@@ -549,7 +751,14 @@ function passesAgeTest(dep: DependentItem): boolean {
 
 // IRS CTC residency test: lived with taxpayer MORE than 6 months.
 function passesResidencyTest(dep: DependentItem): boolean {
-  return dep.months_in_home > 6;
+  return dependentLivedWithFilerOverHalfYear(dep);
+}
+
+export function dependentLivedWithFilerOverHalfYear(
+  dep: DependentItem,
+): boolean {
+  const reviewedBirth = reviewedEicBirthResidence(dep);
+  return dep.months_in_home > 6 || reviewedBirth;
 }
 
 function passesJointReturnTest(dep: DependentItem): boolean {
@@ -672,6 +881,19 @@ function dependentCounts(
   };
 }
 
+/** Claimable dependent rows exactly as the general node sends to Form 1040. */
+export function filedDependentsFromGeneral(
+  input: GeneralInput,
+): DependentFiling[] {
+  const filer = filerCreditEligibility(input);
+  return (input.dependents ?? [])
+    .filter((dep) => dep.dependent_on_another_return !== true)
+    .map((dep) => ({
+      ...dep,
+      credit_category: dependentCreditCategory(dep, filer),
+    }));
+}
+
 // EITC age test: under 19 at year-end, OR full-time student under 24, OR permanently disabled.
 // IRC §32(c)(3)(A); broader than CTC age test (< 17).
 function passesEitcAgeTest(dep: DependentItem): boolean {
@@ -687,27 +909,97 @@ function passesEitcAgeTest(dep: DependentItem): boolean {
 // test, and a noncustodial parent's CTC release does not confer EITC eligibility.
 function isEitcQualifyingChild(
   dep: DependentItem,
-): dep is DependentItem & { ssn: string } {
-  return (
-    passesResidencyTest(dep) &&
-    dep.lived_in_us_over_half_year === true &&
+): dep is DependentItem & {
+  ssn: string;
+  months_lived_with_you_in_us: number;
+} {
+  const qualifyingIdentity = dep.lived_in_us_over_half_year === true &&
     dep.ssn !== undefined && dep.ssn.length > 0 &&
     dep.ssn_valid_for_employment === true &&
     dep.tin_issued_by_due_date === true &&
     passesJointReturnTest(dep) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep)
-  );
+    passesEitcAgeTest(dep);
+  if (
+    qualifyingIdentity && dep.dob.startsWith("2025-") &&
+    dep.months_in_home <= 6 &&
+    dep.eic_birth_residency_review === undefined
+  ) {
+    throw new Error(
+      "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
+    );
+  }
+  const otherwiseQualified = passesResidencyTest(dep) && qualifyingIdentity;
+  if (
+    otherwiseQualified &&
+    dep.months_lived_with_you_in_us === undefined
+  ) {
+    throw new Error(
+      "EIC qualifying child needs exact U.S. months no greater than home months",
+    );
+  }
+  if (otherwiseQualified) scheduleEicLine6Months(dep);
+  return otherwiseQualified;
 }
 
 function eitcQualifyingChildren(
   deps: DependentItem[],
-): Array<DependentItem & { ssn: string }> {
-  return deps.filter((dep) =>
+  ownerSsns: ReadonlySet<string>,
+): Array<
+  DependentItem & {
+    ssn: string;
+    months_lived_with_you_in_us: number;
+  }
+> {
+  const children = deps.filter((dep) =>
     dep.dependent_on_another_return !== true ||
     dep.custodial_eitc_release_review !== undefined
   )
     .filter(isEitcQualifyingChild);
+  const seenSsns = new Set<string>();
+  for (const child of children) {
+    const ssn = child.ssn.replaceAll("-", "");
+    if (ownerSsns.has(ssn)) {
+      throw new Error(
+        "Schedule EIC child cannot use filer or joint-spouse SSN",
+      );
+    }
+    if (seenSsns.has(ssn)) {
+      throw new Error("Schedule EIC qualifying children need unique SSNs");
+    }
+    seenSsns.add(ssn);
+  }
+  return children;
+}
+
+/** The exact child rows projected by the general source into Schedule EIC. */
+export function eicChildSourceProjection(parsed: GeneralInput) {
+  const ownerSsns = new Set(
+    [parsed.taxpayer_ssn, parsed.spouse_ssn]
+      .filter((ssn): ssn is string => ssn !== undefined)
+      .map((ssn) => ssn.replaceAll("-", "")),
+  );
+  const children = eitcQualifyingChildren(parsed.dependents ?? [], ownerSsns);
+  return {
+    children,
+    count: Math.min(children.length, 3),
+    details: children.slice(0, 3).map((dep) => ({
+      first_name: dep.first_name,
+      last_name: dep.last_name,
+      name_control: dep.name_control,
+      ssn: dep.ssn,
+      ssn_valid_for_employment: dep.ssn_valid_for_employment,
+      tin_issued_by_due_date: dep.tin_issued_by_due_date,
+      dob: dep.dob,
+      irs_relationship_code: dep.irs_relationship_code,
+      months_in_home: dep.months_in_home,
+      months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
+      eic_birth_residency_review: dep.eic_birth_residency_review,
+      full_time_student: dep.full_time_student,
+      disabled: dep.disabled,
+      ip_pin: dep.ip_pin,
+    })),
+  };
 }
 
 // Optional field helper — adds key/value to obj only if value is not undefined.
@@ -740,12 +1032,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     input.spouse_has_business_credit,
   );
   if (counts.dependent_count > 0) {
-    fields.dependent_details = deps
-      .filter((dep) => dep.dependent_on_another_return !== true)
-      .map((dep) => ({
-        ...dep,
-        credit_category: dependentCreditCategory(dep, filer),
-      }));
+    fields.dependent_details = filedDependentsFromGeneral(input);
   }
 
   // Taxpayer personal info pass-throughs
@@ -786,6 +1073,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Spouse info pass-throughs
   addIfDefined(fields, "spouse_first_name", input.spouse_first_name);
+  addIfDefined(fields, "spouse_middle_initial", input.spouse_middle_initial);
   addIfDefined(fields, "spouse_last_name", input.spouse_last_name);
   addIfDefined(fields, "spouse_ssn", input.spouse_ssn);
   addIfDefined(
@@ -845,6 +1133,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     "eic_tax_residency_review",
     input.eic_tax_residency_review,
   );
+  addIfDefined(fields, "do_not_claim_eic", input.do_not_claim_eic);
   addIfDefined(
     fields,
     "presidential_campaign_fund_taxpayer",
@@ -876,6 +1165,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   );
   addIfDefined(
     fields,
+    "spouse_can_be_claimed_as_dependent",
+    input.spouse_can_be_claimed_as_dependent,
+  );
+  addIfDefined(
+    fields,
     "hoh_paid_more_than_half_home_costs",
     input.hoh_paid_more_than_half_home_costs,
   );
@@ -895,6 +1189,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "bank_routing_number", input.bank_routing_number);
   addIfDefined(fields, "bank_account_number", input.bank_account_number);
   addIfDefined(fields, "bank_account_type", input.bank_account_type);
+  addIfDefined(
+    fields,
+    "apply_overpayment_to_2026_estimated_tax_amount",
+    input.apply_overpayment_to_2026_estimated_tax_amount,
+  );
 
   return fields;
 }
@@ -934,8 +1233,28 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.dual_status_return_2025 === true) {
       throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
     }
+    const jointDependent = parsed.filing_status === FilingStatus.MFJ &&
+      (parsed.taxpayer_can_be_claimed_as_dependent === true ||
+        parsed.spouse_can_be_claimed_as_dependent === true);
     if (
-      parsed.taxpayer_can_be_claimed_as_dependent === true &&
+      parsed.spouse_can_be_claimed_as_dependent === true &&
+      (parsed.filing_status !== FilingStatus.MFJ || !parsed.spouse_ssn)
+    ) {
+      throw new Error(
+        "Form 1040 line 12a spouse dependent requires MFJ and identified spouse",
+      );
+    }
+    if (
+      jointDependent !==
+        (parsed.mfj_dependent_refund_only_review !== undefined)
+    ) {
+      throw new Error(
+        "MFJ dependent line 12a needs a reviewed refund-only joint return",
+      );
+    }
+    if (
+      (parsed.taxpayer_can_be_claimed_as_dependent === true ||
+        parsed.spouse_can_be_claimed_as_dependent === true) &&
       parsed.dependent_earned_income === undefined
     ) {
       throw new Error(
@@ -944,6 +1263,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     }
     if (
       parsed.taxpayer_can_be_claimed_as_dependent !== true &&
+      parsed.spouse_can_be_claimed_as_dependent !== true &&
       parsed.dependent_earned_income !== undefined
     ) {
       throw new Error(
@@ -1002,7 +1322,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.mfs_spouse_itemizing !== undefined) {
       sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
     }
-    if (parsed.taxpayer_can_be_claimed_as_dependent === true) {
+    if (
+      parsed.taxpayer_can_be_claimed_as_dependent === true ||
+      parsed.spouse_can_be_claimed_as_dependent === true
+    ) {
       sdInput["taxpayer_can_be_claimed_as_dependent"] = true;
       sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
     }
@@ -1025,7 +1348,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       dep.ptc_tax_return !== undefined
     );
     const dependentsModifiedAgi = ptcDependentsModifiedAgi(claimedDeps);
-    const eitcChildren = eitcQualifyingChildren(deps);
+    const eicChildProjection = eicChildSourceProjection(parsed);
+    const eitcChildren = eicChildProjection.children;
     if (parsed.mfs_eitc_separation_review) {
       if (parsed.filing_status !== FilingStatus.MFS) {
         throw new Error(
@@ -1066,28 +1390,18 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         main_home_in_us_over_half_year: parsed.main_home_in_us_over_half_year,
         taxpayer_can_be_claimed_as_dependent:
           parsed.taxpayer_can_be_claimed_as_dependent,
+        spouse_can_be_claimed_as_dependent:
+          parsed.spouse_can_be_claimed_as_dependent,
         childless_eic_review: parsed.childless_eic_review,
         child_eic_filer_review: parsed.child_eic_filer_review,
         prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,
         eic_tax_residency_review: parsed.eic_tax_residency_review,
+        do_not_claim_eic: parsed.do_not_claim_eic,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,
-        qualifying_children: Math.min(eitcChildren.length, 3),
-        qualifying_child_details: eitcChildren.slice(0, 3).map((dep) => ({
-          first_name: dep.first_name,
-          last_name: dep.last_name,
-          name_control: dep.name_control,
-          ssn: dep.ssn,
-          ssn_valid_for_employment: dep.ssn_valid_for_employment,
-          tin_issued_by_due_date: dep.tin_issued_by_due_date,
-          dob: dep.dob,
-          irs_relationship_code: dep.irs_relationship_code,
-          months_in_home: dep.months_in_home,
-          full_time_student: dep.full_time_student,
-          disabled: dep.disabled,
-          ip_pin: dep.ip_pin,
-        })),
+        qualifying_children: eicChildProjection.count,
+        qualifying_child_details: eicChildProjection.details,
       }),
       // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
       this.outputNodes.output(agi_aggregator, {
@@ -1194,6 +1508,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         filing_status: parsed.filing_status,
         ...(parsed.taxpayer_ssn !== undefined && {
           taxpayer_ssn: parsed.taxpayer_ssn,
+        }),
+        ...(parsed.spouse_ssn !== undefined && {
+          spouse_ssn: parsed.spouse_ssn,
         }),
         ...(parsed.qbi_no_prior_loss_or_suspended_loss_confirmed === true && {
           qbi_no_prior_loss_or_suspended_loss_confirmed: true,

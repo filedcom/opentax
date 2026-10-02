@@ -15,6 +15,7 @@ const holdingReview = {
   reviewed_on: "2026-02-01",
 };
 const dividend = {
+  recipient_tin: "111223333",
   payerName: "Canadian Fund",
   source_document_reference: sourceReference,
   isNominee: false,

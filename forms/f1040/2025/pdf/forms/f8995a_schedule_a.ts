@@ -6,6 +6,7 @@ import {
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
+import { assertZeroReductionScheduleAReturn } from "../../mef/forms/f8995a_schedule_a.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const partI = `${page}Table_PartI[0].`;
@@ -15,8 +16,16 @@ const ratioRow = (line: number, field: number): string =>
   `${partI}Row${line}[0].Ln${line}[0].f1_${field}[0]`;
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "business_name", pdfField: `${partI}Row1a[0].f1_3[0]` },
-  { kind: "text", domainKey: "business_ein", pdfField: `${partI}Row1b[0].f1_6[0]` },
+  {
+    kind: "text",
+    domainKey: "business_name",
+    pdfField: `${partI}Row1a[0].f1_3[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "business_ein",
+    pdfField: `${partI}Row1b[0].f1_6[0]`,
+  },
   { kind: "text", domainKey: "line2", pdfField: row(2, 9) },
   { kind: "text", domainKey: "line3", pdfField: row(3, 12) },
   { kind: "text", domainKey: "line4", pdfField: row(4, 15) },
@@ -38,15 +47,32 @@ export function projectOneSstbScheduleA(
   if (Object.keys(raw).length === 0) return {};
   const input = inputSchema.strict().parse(raw);
   const parent = inputSchema.strict().safeParse(allPending.form8995a);
-  if (!parent.success || JSON.stringify(parent.data) !== JSON.stringify(input)) {
-    throw new Error("Form 8995-A Schedule A PDF needs matching parent pending source");
+  const companion = inputSchema.strict().safeParse(
+    allPending.form8995a_schedule_a,
+  );
+  if (
+    !parent.success || !companion.success ||
+    JSON.stringify(parent.data) !== JSON.stringify(input) ||
+    JSON.stringify(companion.data) !== JSON.stringify(input)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A PDF needs matching parent pending source",
+    );
   }
-  if (allPending.form8995 !== undefined || allPending.form8995a_schedule_d !== undefined) {
-    throw new Error("Form 8995-A Schedule A PDF cannot accompany Form 8995 or Schedule D");
+  if (
+    allPending.form8995 !== undefined ||
+    allPending.form8995a_schedule_d !== undefined
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A PDF cannot accompany Form 8995 or Schedule D",
+    );
   }
   const lines = calculateOneSstb8995ALines(input);
+  assertZeroReductionScheduleAReturn(input, lines, allPending);
   if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
-    throw new Error("Form 8995-A Schedule A PDF parent line 39 differs from Form 1040 line 13");
+    throw new Error(
+      "Form 8995-A Schedule A PDF parent line 39 differs from Form 1040 line 13",
+    );
   }
   return {
     business_name: lines.source.business_name,
@@ -79,8 +105,13 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(raw);
     if (input.filing_status === NodeFilingStatus.MFS) {
-      if (!filer || filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately) {
-        throw new Error("Form 8995-A Schedule A PDF MFS status differs from the final filer");
+      if (
+        !filer ||
+        filer.filingStatus !== HeaderFilingStatus.MarriedFilingSeparately
+      ) {
+        throw new Error(
+          "Form 8995-A Schedule A PDF MFS status differs from the final filer",
+        );
       }
       assertMfsSstbOwner(input, filer.primarySSN);
     }

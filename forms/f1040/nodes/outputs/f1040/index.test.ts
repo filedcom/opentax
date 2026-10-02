@@ -819,6 +819,47 @@ Deno.test("f1040: subtracts an underpayment penalty from a refund", () => {
   assertEquals(f.line35a_refund, 1_750);
 });
 
+Deno.test("f1040: applies a sourced overpayment to 2026 estimated tax", () => {
+  const base = {
+    line16_income_tax: 5_000,
+    line25a_w2_withheld: 7_000,
+    line38_underpayment_penalty: 250,
+  };
+  const partial = fields({
+    ...base,
+    apply_overpayment_to_2026_estimated_tax_amount: 750,
+  });
+  assertEquals(partial.line34_overpayment, 2_000);
+  assertEquals(partial.line35a_refund, 1_000);
+  assertEquals(partial.line36_applied_to_2026_estimated_tax, 750);
+  const full = fields({
+    ...base,
+    apply_overpayment_to_2026_estimated_tax_amount: 1_750,
+  });
+  assertEquals(full.line35a_refund, 0);
+  assertEquals(full.line36_applied_to_2026_estimated_tax, 1_750);
+  assertThrows(
+    () =>
+      fields({
+        ...base,
+        apply_overpayment_to_2026_estimated_tax_amount: 1_751,
+      }),
+    Error,
+    "exceeds overpayment",
+  );
+  assertThrows(
+    () =>
+      fields({
+        line16_income_tax: 7_000,
+        line25a_w2_withheld: 5_000,
+        apply_overpayment_to_2026_estimated_tax_amount: 1,
+      }),
+    Error,
+    "needs an overpayment",
+  );
+  assertEquals(fields(base).line36_applied_to_2026_estimated_tax, undefined);
+});
+
 Deno.test("f1040: penalty above overpayment becomes amount owed", () => {
   const f = fields({
     line16_income_tax: 5_000,

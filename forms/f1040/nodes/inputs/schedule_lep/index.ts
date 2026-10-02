@@ -1,7 +1,10 @@
 import { z } from "zod";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts";
+import {
+  type NodeResult,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 
 // Schedule LEP (Rev. December 2024) is the current preference form in the
 // TY2025 Form 1040 schema. A cancellation is an affirmative 000 request.
@@ -29,27 +32,38 @@ export enum LanguagePreferenceCode {
   ChineseSimplified = "020",
 }
 
+const priorElectionReviewSchema = z.object({
+  prior_tax_year: z.number().int().min(2020).max(2024),
+  person_ssn: z.string().regex(/^\d{9}$/),
+  language_preference_code: z.nativeEnum(LanguagePreferenceCode)
+    .refine((code) => code !== LanguagePreferenceCode.Cancel),
+  record_kind: z.enum(["filed_schedule_lep", "irs_account_record"]),
+  record_reference: z.string().trim().min(1),
+  reviewed_by: z.string().trim().min(1),
+  reviewed_on: z.string().date(),
+}).strict();
+
 export const itemSchema = z.object({
   person: z.enum(["taxpayer", "spouse"]),
   language_preference_code: z.nativeEnum(LanguagePreferenceCode),
   request_confirmed_by_person: z.literal(true),
   request_record_reference: z.string().trim().min(1),
-  prior_language_preference_code: z.nativeEnum(LanguagePreferenceCode)
-    .refine((code) => code !== LanguagePreferenceCode.Cancel).optional(),
-  prior_election_record_reference: z.string().trim().min(1).optional(),
+  prior_election_review: priorElectionReviewSchema.optional(),
 }).strict().superRefine((request, context) => {
-  const hasPrior = request.prior_language_preference_code !== undefined &&
-    request.prior_election_record_reference !== undefined;
-  if (request.language_preference_code === LanguagePreferenceCode.Cancel &&
-    !hasPrior) {
+  if (
+    request.language_preference_code === LanguagePreferenceCode.Cancel &&
+    !request.prior_election_review
+  ) {
     context.addIssue({
       code: "custom",
-      message: "Schedule LEP cancellation needs the previous election code and record",
+      message:
+        "Schedule LEP cancellation needs the previous election code and record",
     });
   }
-  if (request.language_preference_code !== LanguagePreferenceCode.Cancel &&
-    (request.prior_language_preference_code !== undefined ||
-      request.prior_election_record_reference !== undefined)) {
+  if (
+    request.language_preference_code !== LanguagePreferenceCode.Cancel &&
+    request.prior_election_review !== undefined
+  ) {
     context.addIssue({
       code: "custom",
       message: "Schedule LEP prior election facts belong only to cancellation",
@@ -59,11 +73,14 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   requests: z.array(itemSchema).min(1).max(2),
-}).strict().refine((source) =>
-  new Set(source.requests.map((request) => request.person)).size ===
-    source.requests.length, {
-  message: "Schedule LEP needs at most one request per person",
-});
+}).strict().refine(
+  (source) =>
+    new Set(source.requests.map((request) => request.person)).size ===
+      source.requests.length,
+  {
+    message: "Schedule LEP needs at most one request per person",
+  },
+);
 
 class ScheduleLepNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_lep";

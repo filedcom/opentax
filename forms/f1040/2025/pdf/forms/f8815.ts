@@ -6,6 +6,7 @@ import {
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
+import { assertForm8815FinalReturn } from "../../form8815_final_return.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const text = (
@@ -122,20 +123,13 @@ export const form8815Pdf: PdfFormDescriptor = {
       [NodeFilingStatus.HOH]: MefFilingStatus.HeadOfHousehold,
       [NodeFilingStatus.QSS]: MefFilingStatus.QualifyingSurvivingSpouse,
     }[source.filing_status];
-    const scheduleB = allPending.schedule_b as
-      | { ee_bond_exclusion?: unknown; print_line2_total?: unknown }
-      | undefined;
-    if (
-      filer.filingStatus !== filedStatus ||
-      !scheduleB ||
-      scheduleB.ee_bond_exclusion !== projected.line14 ||
-      scheduleB.print_line2_total !==
-        source.line9_worksheet.schedule_b_line2_interest
-    ) {
+    if (filer.filingStatus !== filedStatus) {
       throw new Error(
-        "Form 8815 PDF filing status or Schedule B differs from the final return",
+        "Form 8815 PDF filing status differs from the final return",
       );
     }
+    const lines = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
+    assertForm8815FinalReturn(source, lines, allPending);
     return [projected];
   },
 };

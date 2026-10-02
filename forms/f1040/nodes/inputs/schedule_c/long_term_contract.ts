@@ -49,7 +49,7 @@ export function longTermContractAdjustment(item: ScheduleCItem): number {
   return amtProfit;
 }
 
-/** Replay Form 6251 line 2p against the source and final Schedule C join. */
+/** Replay Form 6251 line 2p against one or two reviewed Schedule C contracts. */
 export function assertForm6251LongTermContractSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -64,10 +64,28 @@ export function assertForm6251LongTermContractSource(
     (filed === undefined || filed === null || filed === 0) &&
     contracts.length === 0
   ) return;
+  const multiContractReferences = contracts.flatMap((item) => [
+    item.business_reference,
+    item.amt_long_term_contract_workpaper!.contract_reference,
+    item.amt_long_term_contract_workpaper!.signed_contract_reference,
+    item.amt_long_term_contract_workpaper!.cost_records_reference,
+    item.amt_long_term_contract_workpaper!.cost_estimate_review_reference,
+  ]);
+  const amt = fields.line11_amt;
+  const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+  const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   if (
-    !parsed.success || items.length !== 1 || contracts.length !== 1 ||
+    !parsed.success || items.length !== contracts.length ||
+    contracts.length < 1 || contracts.length > 2 ||
+    (contracts.length === 2 &&
+      (multiContractReferences.some((reference) => !reference) ||
+        new Set(multiContractReferences).size !==
+          multiContractReferences.length)) ||
     typeof filed !== "number" ||
-    filed !== longTermContractAdjustment(contracts[0]) ||
+    filed !== contracts.reduce(
+        (sum, item) => sum + longTermContractAdjustment(item),
+        0,
+      ) ||
     (parsed.data.line1_gross_receipts ?? 0) !== 0 ||
     (parsed.data.statutory_wages ?? 0) !== 0 ||
     (parsed.data.line_30_home_office ?? 0) !== 0 ||
@@ -82,7 +100,11 @@ export function assertForm6251LongTermContractSource(
     (parsed.data.wotc_wage_reductions?.length ?? 0) !== 0 ||
     parsed.data.form8829_line30 !== undefined ||
     (pending?.schedule1 as Record<string, unknown> | undefined)
-        ?.line3_schedule_c !== 0
+        ?.line3_schedule_c !== 0 ||
+    (typeof amt === "number" && amt > 0 &&
+      (schedule2?.line2_amt !== amt ||
+        typeof form1040?.line17_additional_taxes !== "number" ||
+        Number(form1040.line17_additional_taxes) < amt))
   ) {
     throw new Error(
       "Form 6251 line 2p needs the retained contract workpaper and zero regular Schedule C income",

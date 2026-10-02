@@ -46,7 +46,42 @@ const vehicleLoanSchema = z.object({
   qualified_interest_paid: z.number().int().positive(),
   interest_deducted_elsewhere: z.literal(0),
   no_other_interest_deduction_review_reference: z.string().trim().min(1),
-}).strict();
+  refinance: z.object({
+    refinanced_date: vehiclePurchaseDateSchema,
+    lender_name: z.string().trim().min(1),
+    interest_statement_reference: z.string().trim().min(1),
+    refinance_and_first_lien_reference: z.string().trim().min(1),
+    outstanding_original_principal_at_refinance: z.number().int().positive(),
+    refinanced_principal: z.number().int().positive(),
+    original_loan_interest_paid_before_refinance: z.number().int()
+      .nonnegative(),
+    refinanced_loan_interest_paid: z.number().int().positive(),
+    first_lien_secured_on_same_vehicle: z.literal(true),
+    no_cash_out_or_ineligible_debt: z.literal(true),
+  }).strict().optional(),
+}).strict().superRefine((loan, context) => {
+  const refinance = loan.refinance;
+  if (!refinance) return;
+  if (
+    refinance.refinanced_date <= loan.loan_originated_date ||
+    refinance.refinanced_date < loan.vehicle_purchased_date ||
+    refinance.refinanced_principal >
+      refinance.outstanding_original_principal_at_refinance ||
+    refinance.original_loan_interest_paid_before_refinance +
+          refinance.refinanced_loan_interest_paid !==
+      loan.qualified_interest_paid ||
+    refinance.interest_statement_reference ===
+      loan.lender_interest_statement_reference ||
+    refinance.refinance_and_first_lien_reference ===
+      loan.purchase_and_lien_reference
+  ) {
+    context.addIssue({
+      code: "custom",
+      message:
+        "Schedule 1-A refinance needs later secured debt within the original qualified balance and reconciled distinct interest sources",
+    });
+  }
+});
 
 /** Fields a taxpayer supplies directly for Schedule 1-A. */
 export const seniorZeroExclusionsReviewSchema = z.object({
@@ -58,9 +93,18 @@ export const seniorZeroExclusionsReviewSchema = z.object({
   form4563_review_source_reference: z.string().trim().min(1),
 }).strict();
 
+export const form2555ExclusionReviewSchema = z.object({
+  no_section933_puerto_rico_excluded_income: z.literal(true),
+  section933_review_source_reference: z.string().trim().min(1),
+  form2555_source_reference: z.string().trim().min(1),
+  no_form4563_filed: z.literal(true),
+  form4563_review_source_reference: z.string().trim().min(1),
+}).strict();
+
 export const claimInputSchema = z.object({
   vehicle_loans: z.array(vehicleLoanSchema).min(1).max(50).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
+  form2555_exclusion_review: form2555ExclusionReviewSchema.optional(),
   form4070_reports: z.array(
     z.object({
       employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -105,6 +149,10 @@ export const inputSchema = claimInputSchema.extend({
       premium_included_in_box1: z.literal(true),
       source_reference: z.string().trim().min(1),
       employer_statement_reference: z.string().trim().min(1).optional(),
+      aggregate_overtime_statement_reference: z.string().trim().min(1)
+        .optional(),
+      double_time_excess_statement_reference: z.string().trim().min(1)
+        .optional(),
     }).strict(),
   ).optional(),
   qualified_employee_tips: z.array(z.object({
@@ -153,6 +201,8 @@ export const inputSchema = claimInputSchema.extend({
   qualified_tips_schedule_f_profit: z.number().optional(),
   qualified_tips_farm_optional_method: z.boolean().optional(),
   magi: z.number().optional(),
+  form2555_line45_exclusion: z.number().int().positive().optional(),
+  form2555_line50_housing_deduction: z.literal(0).optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_ssn: z.string().optional(),
   spouse_ssn: z.string().optional(),
@@ -246,6 +296,12 @@ const TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ = 300_000;
 const VEHICLE_INTEREST_CAP = 10_000;
 const VEHICLE_PHASEOUT_THRESHOLD = 100_000;
 const VEHICLE_PHASEOUT_THRESHOLD_MFJ = 200_000;
+
+function schedule1APart1Magi(input: Schedule1AInput): number | undefined {
+  if (input.magi === undefined) return undefined;
+  return input.magi + (input.form2555_line45_exclusion ?? 0) +
+    (input.form2555_line50_housing_deduction ?? 0);
+}
 
 // IRS.gov/TippedOccupations, TY2025 list (the published codes are contiguous
 // within each of these occupation groups).
@@ -433,7 +489,9 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  return Math.floor(Math.max(0, input.magi - threshold) / 1_000) * 100;
+  return Math.floor(
+    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
+  ) * 100;
 }
 
 /** TY2025 line 5, limited to one cash-basis Schedule C business. */
@@ -587,7 +645,9 @@ export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
     : VEHICLE_PHASEOUT_THRESHOLD;
-  const phaseout = Math.ceil(Math.max(0, input.magi - threshold) / 1_000) * 200;
+  const phaseout = Math.ceil(
+    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
+  ) * 200;
   return Math.max(
     0,
     Math.min(qualifiedInterest, VEHICLE_INTEREST_CAP) - phaseout,
@@ -619,11 +679,12 @@ export function seniorDeduction(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
+  const part1Magi = schedule1APart1Magi(input)!;
   const perPerson = Math.max(
     0,
     cfg.seniorDeductionMax -
       Math.round(
-        Math.max(0, input.magi - threshold) *
+        Math.max(0, part1Magi - threshold) *
           cfg.seniorDeductionPhaseoutRate,
       ),
   );
@@ -639,7 +700,10 @@ export function calculateSeniorOnlySchedule1A(
     throw new Error("Schedule 1-A senior-only filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
       "Schedule 1-A senior filing needs sourced zero-exclusion review for Part I",
     );
@@ -656,7 +720,8 @@ export function calculateSeniorOnlySchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const reduction = Math.round(excess * cfg.seniorDeductionPhaseoutRate);
   const perPerson = Math.max(0, cfg.seniorDeductionMax - reduction);
   const taxpayer = input.taxpayer_age_65_or_older === true &&
@@ -675,7 +740,7 @@ export function calculateSeniorOnlySchedule1A(
   }
   return seniorOnlyLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line32_threshold: threshold,
     line33_excess_magi: excess,
     line34_reduction: reduction,
@@ -771,7 +836,8 @@ export function calculateQualifiedTipsSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.floor(excess / 1_000);
   const reduction = thousands * 100;
   const capped = Math.min(tips, QUALIFIED_TIPS_CAP);
@@ -783,7 +849,7 @@ export function calculateQualifiedTipsSchedule1A(
   }
   return qualifiedTipsLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line4a_w2_tips: rows.length === 1 ? rows[0].reported_amount : 0,
     line4b_form4137_tips: rows.length === 1 ? rows[0].form4137_amount : 0,
     line4c_employee_tips: employeeTips,
@@ -808,9 +874,12 @@ export function calculateW2OvertimeSchedule1A(
     throw new Error("Schedule 1-A overtime filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
-      "Schedule 1-A overtime filing needs sourced zero-exclusion review for Part I",
+      "Schedule 1-A overtime filing needs sourced Part I exclusion review",
     );
   }
   if (!input.qualified_w2_overtime?.length) {
@@ -861,7 +930,8 @@ export function calculateW2OvertimeSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.floor(excess / 1_000);
   const reduction = thousands * 100;
   const cap = input.filing_status === FilingStatus.MFJ
@@ -876,7 +946,7 @@ export function calculateW2OvertimeSchedule1A(
   }
   return w2OvertimeLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line14a_w2_overtime: total,
     line14c_total_overtime: total,
     line15_capped_overtime: capped,
@@ -889,7 +959,7 @@ export function calculateW2OvertimeSchedule1A(
   });
 }
 
-/** Reviewed 2025 purchase loans with no interest deducted elsewhere. */
+/** Reviewed 2025 purchase loans and bounded same-vehicle refinances. */
 export function calculateVehicleInterestSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
@@ -898,9 +968,12 @@ export function calculateVehicleInterestSchedule1A(
     throw new Error("Schedule 1-A vehicle interest filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
-      "Schedule 1-A vehicle interest needs sourced zero-exclusion review for Part I",
+      "Schedule 1-A vehicle interest needs sourced Part I exclusion review",
     );
   }
   if (!input.vehicle_loans?.length) {
@@ -937,7 +1010,8 @@ export function calculateVehicleInterestSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
     : VEHICLE_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.ceil(excess / 1_000);
   const reduction = thousands * 200;
   const capped = Math.min(total, VEHICLE_INTEREST_CAP);
@@ -949,7 +1023,7 @@ export function calculateVehicleInterestSchedule1A(
   }
   return vehicleInterestLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line22_vehicles: input.vehicle_loans.map((loan) => ({
       vin: loan.vin.toUpperCase(),
       deducted_elsewhere: 0,

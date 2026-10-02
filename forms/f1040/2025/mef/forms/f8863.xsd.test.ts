@@ -331,9 +331,10 @@ Deno.test({
       filing_status: "single",
       line11_agi: 70_000,
       line18_total_tax_before_credits: 10_000,
+      line20_nonrefundable_credits: 2_500,
       line29_refundable_aoc: 1_000,
     },
-    schedule3: { line3_education_credit: 2_500 },
+    schedule3: { line3_education_credit: 2_500, line8_total: 2_500 },
   }, filer);
   await validateXsd(xml);
 });

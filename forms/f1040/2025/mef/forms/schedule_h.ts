@@ -54,6 +54,10 @@ export interface Fields {
         box3_social_security_wages: number;
         box5_medicare_wages: number;
       };
+      federal_withholding_agreement?: {
+        w4_source_reference: string;
+        employee_requested_and_employer_agreed: true;
+      };
     }>;
   } | {
     paid_only_one_state: boolean;
@@ -90,6 +94,10 @@ export interface Fields {
         box2_federal_income_tax_withheld: number;
         box3_social_security_wages: number;
         box5_medicare_wages: number;
+      };
+      federal_withholding_agreement?: {
+        w4_source_reference: string;
+        employee_requested_and_employer_agreed: true;
       };
     }>;
     state_rows: Array<{

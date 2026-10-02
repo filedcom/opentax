@@ -10,6 +10,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { lookupEic2025 } from "./table_2025.ts";
+import { eicBirthResidencyReviewSchema } from "../../../../2025/eic-birth-residency.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ export const qualifyingChildDetailSchema = z.object({
   dob: z.string(),
   irs_relationship_code: z.string().optional(),
   months_in_home: z.number().int().min(0).max(12),
+  months_lived_with_you_in_us: z.number().int().min(0).max(12),
+  eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
   full_time_student: z.boolean().optional(),
   disabled: z.boolean().optional(),
   ip_pin: z.string().optional(),
@@ -133,10 +136,12 @@ export const inputSchema = z.object({
   spouse_death_date: z.string().date().optional(),
   main_home_in_us_over_half_year: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   childless_eic_review: childlessEicReviewSchema.optional(),
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
+  do_not_claim_eic: z.boolean().optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
@@ -185,6 +190,10 @@ function meetsChildlessAgeTest(
 
 export function childlessEicEligible(input: EitcInput): boolean {
   if (
+    input.taxpayer_can_be_claimed_as_dependent === true ||
+    input.spouse_can_be_claimed_as_dependent === true
+  ) return false;
+  if (
     input.filing_status === undefined ||
     input.filing_status === FilingStatus.MFS
   ) return false;
@@ -206,6 +215,10 @@ export function childlessEicEligible(input: EitcInput): boolean {
 }
 
 export function childEicFilerEligible(input: EitcInput): boolean {
+  if (
+    input.taxpayer_can_be_claimed_as_dependent === true ||
+    input.spouse_can_be_claimed_as_dependent === true
+  ) return false;
   if (input.filing_status === FilingStatus.MFJ) return true;
   if (input.filing_status === FilingStatus.MFS) {
     return input.mfs_separation_reviewed === true;
@@ -247,6 +260,7 @@ function computeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
 ): number {
+  if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +
     (input.se_net_profit ?? 0) - (input.se_tax_deduction ?? 0);
   const agi = input.agi ?? earnedIncome;

@@ -4,7 +4,9 @@ Sources:
 [2025 Schedule 1-A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf),
 [2025 Form 1040 instructions, including Schedule 1-A](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),
 [IRS list of qualifying tipped occupations](https://www.irs.gov/forms-pubs/occupations-that-customarily-and-regularly-received-tips-on-or-before-dec-31-2024),
-and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
+and the ignored local v5.4 IRS schema cache at
+`Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`. The schema package is not
+checked in; reproducible provenance remains open.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
 line 13b. MeF includes identified W-2-box-7 and Form 4137 tips, reviewed Form 4070 employer reports, and reviewed W-2-box-14 FLSA
@@ -14,14 +16,42 @@ only when that source review is present and the second pass has exactly one
 attached Schedule 1-A. The descriptor independently rejects unsupported
 components and reconciles their combined line 38 to line 13b. All four routes have a
 two-page PDF field map and inspected synthetic full-return packets.
+An age-eligible senior source can create a provisional graph deduction before
+filing review. Native and PDF Schedule 1-A export now reject that source when
+the Part I zero-exclusion review is missing, even if Form 1040 line 13b was
+also omitted. Context-only MAGI/status input can still omit the form. This
+prevents a provisional deduction source from disappearing silently at export;
+the qualifying senior source, review, and final return must reconcile.
 
 ## Source and line blockers
 
 - Part I lines 1–3 use Form 1040 line 11b plus Puerto Rico excluded income, Form
   2555 lines 45/50, and Form 4563 line 15. The node receives `magi` from the AGI
-  aggregator, and each positive route requires a source-referenced review that
-  all those adjustments are zero. Positive exclusions still need their own
-  source routes; `magi` cannot be assumed to be line 3 without this review.
+  aggregator as line 1 AGI. A bounded positive Form 2555 line 45 path now adds
+  the structured full-year physical-presence exclusion to line 2b/2e/3 for a
+  senior or qualified vehicle-interest Schedule 1-A claim. It replays the
+  pending Form 2555 calculation,
+  requires line 50 zero, and retains separate sourced zero reviews for Puerto
+  Rico and Form 4563. The deduction phaseout uses the increased MAGI, and
+  native/PDF export reconcile to Form 1040 line 13b. The focused joint return
+  has $160,000 AGI, $20,000 Form 2555 line 45, $180,000 line 3 MAGI, and
+  $8,400 on line 38/1040 line 13b; its full native return passed local TY2025
+  v5.4 XSD. A nine-page filled packet includes Form 1040, Schedule 1,
+  Schedule 1-A, and Form 2555; Schedule 1-A Part I and all Form 2555 pages were
+  rendered and visually reviewed (SHA-256
+  `b321afa905c708bfa40df3eaa8a45d8747ca9ce82962ece2e17b83201de99700`).
+  A second focused joint return combines $50,000 Form 2555 line 45 with a
+  reviewed $4,000 vehicle loan and two senior claims. Its $160,000 AGI becomes
+  $210,000 Schedule 1-A MAGI. The vehicle phaseout reduces line 30 to $2,000,
+  the senior deduction is $4,800, and line 38/1040 line 13b is $6,800. The
+  native return passed local TY2025 v5.4 XSD; the nine-page PDF was generated,
+  and both Schedule 1-A pages were rendered and visually reviewed (SHA-256
+  `08b6a05ff1225334be9b378a69e6d427e008d127065f2db1f677268755599d4c`).
+  This route does not cover part-year Form 2555, a positive housing deduction
+  (see the [line 50 source contract](ty2025-form2555-line50-schedule1a-source-gap.md)),
+  Form 2555 with tips/overtime, positive Puerto Rico or Form
+  4563 exclusions, issuer/source-document authentication, IRS business rules,
+  or ATS acceptance. Other positive routes still need their own sources.
 - Part II has source-backed W-2 box 7, reviewed W-2 box 14 or separate employer tip statements, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit
   tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
@@ -37,8 +67,12 @@ two-page PDF field map and inspected synthetic full-return packets.
   for the W-2 box 7-only route, and an
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
-  multiple Schedule C businesses, multiple Form 4137 employers in a
-  full packet, and underlying record authentication remain open.
+  multiple Schedule C businesses, multi-employer full-packet validation, and
+  underlying record authentication remain open. Native and PDF
+  export also require every qualifying Form 4137 employer with a matching W-2
+  to appear in the Schedule 1-A claim. The two-employer positive and
+  omission-tamper fixtures await the bulk test gate; they do not authenticate
+  source documents.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
   nonexempt under the FLSA and that the premium is included in box 1. The W-2
@@ -56,8 +90,17 @@ two-page PDF field map and inspected synthetic full-return packets.
   [Notice 2025-69, section II.B.2](https://www.irs.gov/pub/irs-drop/n-25-69.pdf)
   and the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
   permit a separately furnished employer accounting for 2025. Raw
-  taxpayer-entered overtime totals remain rejected. Payroll-method calculations
-  without an employer accounting, deferred W-2 amounts, Forms 1099-NEC/MISC,
+  taxpayer-entered overtime totals remain rejected. A bounded full-year
+  employer payroll summary may instead supply aggregate time-and-a-half pay
+  for hours over 40 per workweek; exactly one-third becomes the FLSA premium
+  under Notice 2025-69 method B. Its owner and employer must match the W-2,
+  the pay must be included in box 1, and a box 14 or separately stated premium
+  cannot also be claimed. Native/PDF export replays the source amount and
+  reference. A second bounded Notice 2025-69 method C uses an employer's
+  full-year statement of double-time pay above regular wages for hours over
+  40; one-half is the deductible FLSA premium, subject to the same W-2 owner,
+  employer, box 1, and single-method checks. Other payroll methods, deferred
+  W-2 amounts, Forms 1099-NEC/MISC,
   full combined packets, and authenticated employer statement bytes remain open.
 - Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower
@@ -67,24 +110,33 @@ two-page PDF field map and inspected synthetic full-return packets.
   elsewhere. Bare VIN/interest assertions and positive Schedule C/E/F amounts
   are rejected. The native v5.4 schema permits 50
   vehicle groups; the PDF prints one VIN plus an attached subtotal and paginated
-  statement when there are more than two. Refinance, inherited-obligor, mixed
-  business-use interest, document authentication, and cross-schedule deduction
+  statement when there are more than two. A bounded same-vehicle 2025
+  refinance retains the original purchase-loan facts plus the later lender
+  and first-lien references, original outstanding qualified principal, new
+  principal no greater than that balance, and separate before/after interest
+  amounts summing to line 22 interest. Cash-out and other ineligible debt
+  reject. The calculator, native group, and PDF retain one VIN and the same
+  line 23/30/38 total; positive and tamper cases are authored but unrun.
+  This follows the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+  for refinanced qualifying loans. Inherited obligors, mixed business-use
+  interest, document authentication, and cross-schedule deduction
   reconciliation remain open.
 - Part V's senior calculation computes per-person lines 36a/36b and
-  intermediate lines 32–35. Its zero-exclusion review does not establish the
-  positive Part I exclusion paths or authenticate the underlying documents.
+  intermediate lines 32–35. Its zero-exclusion review and the separate bounded
+  Form 2555 review do not authenticate the underlying documents.
 
 The v5.4 XSD has distinct elements for these source lines and Part VI line 38.
 The registered Schedule 1-A MeF descriptor
-requires an explicit source-referenced review that there was no section 933
-Puerto Rico exclusion and no Form 2555 or Form 4563 filing. It uses the AGI
+requires an explicit source-referenced Part I review. The zero route confirms
+no section 933 Puerto Rico exclusion and no Form 2555 or Form 4563 filing; the
+bounded positive route replays structured Form 2555 line 45. It uses the AGI
 calculated upstream, computes each positive deduction and emits Parts I–VI
 in native XSD order, including the Part V phaseout and each spouse's line 36
 amount. It checks
 the filing status, each claimed senior's SSN/age/timely employment-valid SSN
 facts, AGI, and the senior/total deduction against the pending Form 1040 lines
-11b and 13b, and rejects a conflicting Form 2555/4563 pending source. Positive Part I
-exclusions remain unsupported. These references are review evidence, not
+11b and 13b, and rejects a conflicting or unreviewed Form 2555/4563 source.
+Other positive Part I exclusions remain unsupported. These references are review evidence, not
 independent authentication of the underlying taxpayer documents.
 
 The source, document, return integration, and PDF field-map cases are written.
@@ -201,8 +253,22 @@ in the [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md).
 This route requires a matching employer, W-2 occupation code, recipient
 SSN, and Form 4137 amount at export. Multiple-employer greater-of
 arithmetic and the worksheet pass focused tests. Form 4070 employer-report bytes,
-multiple Form 4137 employers in a full packet, source-byte authentication,
+multi-employer full-packet validation, source-byte authentication,
 IRS rules, and ATS remain open.
+
+The `single-two-employer-form4137-tips-schedule1a` fixture now stages a full
+two-employer packet with distinct issued W-2 sources and Form 4137 line 1
+rows. Under the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),
+the employer worksheet selects the greater of W-2/4070 and Form 4137 tips
+per employer. The staged native and PDF assertions expect $6,500 and $3,000
+in its two rows, zero on lines 4a/4b, $9,500 on line 4c and Form 1040 line
+13b, and $2,500 of unreported tips on Form 1040 line 1c. They also reject
+an omitted Schedule 1-A employer or changed Form 4137 amount. The filled
+Form 4137 PDF projector also rechecks all W-2 tip sources and its calculated
+unreported income and tax against Form 1040 line 1c and Schedule 2 line 5
+when the return is present. A prepared MeF/PDF bundle assertion is authored
+but awaits the bulk test gate and
+visual PDF review; no acceptance or source-byte authentication is claimed.
 
 The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
 monthly employer reports totaling $20,000, matched by recipient, employer,
