@@ -141,15 +141,19 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
-    assertEquals(/2,?750/.test(new TextDecoder().decode(extracted.stdout)), true);
+    assertEquals(
+      /2,?750/.test(new TextDecoder().decode(extracted.stdout)),
+      true,
+    );
   } finally {
     await Deno.remove(pdfPath);
   }
 
   for (const field of ["amount", "payer_tin"] as const) {
     const altered = structuredClone(pending);
-    const sources = (altered.schedule_f as { farm_sources: Record<string, unknown>[] })
-      .farm_sources;
+    const sources =
+      (altered.schedule_f as { farm_sources: Record<string, unknown>[] })
+        .farm_sources;
     sources[1][field] = field === "amount" ? 749 : "999999999";
     assertThrows(
       () => buildMefXml(altered, filer),
@@ -185,6 +189,7 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
 
 Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () => {
   const pending = buildPending({
+    schedule1: { line6_schedule_f: 500 },
     f1099m: {
       f1099ms: [{
         farm_id: "north",
@@ -230,6 +235,7 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
 
 Deno.test("1099-NEC farm recipient must match its named proprietor", async () => {
   const pending = buildPending({
+    schedule1: { line6_schedule_f: 500 },
     f1099nec: {
       f1099necs: [{
         farm_id: "north",

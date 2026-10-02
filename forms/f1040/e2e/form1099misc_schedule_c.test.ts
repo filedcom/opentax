@@ -117,11 +117,15 @@ Deno.test("1099-MISC box 10 client funds do not inflate Form 1040 income", async
 
 Deno.test("1099-MISC box 10 rejects a recipient who differs from the Schedule C proprietor", async () => {
   const pending = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "law-office",
         proprietor_recipient: "T",
+        line_a_principal_business: "LEGAL SERVICES",
+        line_b_business_code: "541110",
         line_f_accounting_method: "cash",
+        line_g_material_participation: true,
         line_1_gross_receipts: 5_000,
       }],
       attorney_fee_sources: [{
@@ -257,10 +261,14 @@ Deno.test("1099-MISC receipt source and old top-level totals cannot bypass Sched
   const business = {
     business_reference: "clinic",
     proprietor_recipient: "T",
+    line_a_principal_business: "MEDICAL SERVICES",
+    line_b_business_code: "621111",
     line_f_accounting_method: "cash",
+    line_g_material_participation: true,
     line_1_gross_receipts: 5_000,
   };
   const wrongRecipient = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
     f1099m: {
       f1099ms: [{
         payer_name: "Clinic Payer",
@@ -293,6 +301,7 @@ Deno.test("1099-MISC receipt source and old top-level totals cannot bypass Sched
   );
 
   const oldTotal = buildPending({
+    schedule1: { line3_schedule_c: 5_000 },
     schedule_c: { schedule_cs: [business], line1_gross_receipts: 5_000 },
   });
   assertThrows(
