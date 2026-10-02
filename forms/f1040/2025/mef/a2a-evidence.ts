@@ -118,6 +118,36 @@ function oneXmlValue(source: string, tag: string): string | undefined {
   return matches.length === 1 ? matches[0][1] : undefined;
 }
 
+function manifestValues(
+  source: string,
+): Readonly<Record<string, string>> | undefined {
+  if (XMLValidator.validate(source) !== true) return undefined;
+  const parsed = requestParser.parse(source) as Record<string, unknown>;
+  const roots = Object.keys(parsed).filter((name) => name !== "?xml");
+  if (roots.length !== 1 || roots[0] !== "IRSSubmissionManifest") {
+    return undefined;
+  }
+  const body = parsed.IRSSubmissionManifest;
+  if (body === null || Array.isArray(body) || typeof body !== "object") {
+    return undefined;
+  }
+  const fields = body as Record<string, unknown>;
+  const names = [
+    "SubmissionId",
+    "EFIN",
+    "TaxYr",
+    "GovernmentCd",
+    "FederalSubmissionTypeCd",
+    "TIN",
+  ];
+  if (names.some((name) => typeof fields[name] !== "string")) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    names.map((name) => [name, fields[name] as string]),
+  );
+}
+
 function assertSendSubmissionArchive(
   submissionId: string,
   bytes: Uint8Array,
@@ -138,19 +168,20 @@ function assertSendSubmissionArchive(
   const decoder = new TextDecoder("utf-8", { fatal: true });
   const manifest = decoder.decode(manifestBytes);
   const xml = decoder.decode(xmlBytes);
-  const tin = oneXmlValue(manifest, "TIN");
-  const efin = oneXmlValue(manifest, "EFIN");
+  const fields = manifestValues(manifest);
+  const tin = fields?.TIN;
+  const efin = fields?.EFIN;
   const year = Number(submissionId.slice(6, 10));
   const julianDay = Number(submissionId.slice(10, 13));
   const leapYear = year % 4 === 0 &&
     (year % 100 !== 0 || year % 400 === 0);
   if (
-    oneXmlValue(manifest, "SubmissionId") !== submissionId ||
+    fields?.SubmissionId !== submissionId ||
     efin !== submissionId.slice(0, 6) ||
     julianDay < 1 || julianDay > (leapYear ? 366 : 365) ||
-    oneXmlValue(manifest, "TaxYr") !== "2025" ||
-    oneXmlValue(manifest, "GovernmentCd") !== "IRS" ||
-    oneXmlValue(manifest, "FederalSubmissionTypeCd") !== "1040" ||
+    fields?.TaxYr !== "2025" ||
+    fields?.GovernmentCd !== "IRS" ||
+    fields?.FederalSubmissionTypeCd !== "1040" ||
     !tin || !/^\d{9}$/.test(tin) ||
     oneXmlValue(xml, "PrimarySSN") !== tin
   ) {
@@ -458,14 +489,15 @@ export async function readA2aArchivedSubmission(
     manifestBytes,
   );
   const xml = new TextDecoder("utf-8", { fatal: true }).decode(xmlBytes);
+  const fields = manifestValues(manifest);
   assertArchivedDocumentInventory(xml, archive);
   const xmlSha256 = await sha256(xmlBytes);
   if (
-    oneXmlValue(manifest, "SubmissionId") !== identity.submissionId ||
-    oneXmlValue(manifest, "TIN") !== identity.taxpayerSsn ||
-    oneXmlValue(manifest, "TaxYr") !== "2025" ||
-    oneXmlValue(manifest, "GovernmentCd") !== "IRS" ||
-    oneXmlValue(manifest, "FederalSubmissionTypeCd") !== "1040" ||
+    fields?.SubmissionId !== identity.submissionId ||
+    fields?.TIN !== identity.taxpayerSsn ||
+    fields?.TaxYr !== "2025" ||
+    fields?.GovernmentCd !== "IRS" ||
+    fields?.FederalSubmissionTypeCd !== "1040" ||
     oneXmlValue(xml, "PrimarySSN") !== identity.taxpayerSsn ||
     xmlSha256 !== identity.submissionXmlSha256
   ) {

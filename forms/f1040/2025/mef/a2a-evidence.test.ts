@@ -181,6 +181,77 @@ Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission 
   }
 });
 
+Deno.test("A2A Send evidence requires manifest identity in direct IRS manifest fields", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const source = packageFor();
+    const archive = unzipSync(
+      unzipSync(source.containerZipBytes)[`${submissionId}.zip`],
+    );
+    const original = new TextDecoder().decode(archive["manifest/manifest.xml"]);
+    const mutations = [
+      original.replaceAll("IRSSubmissionManifest", "OtherManifest"),
+      original.replace(
+        "<TIN>111223333</TIN>",
+        "<!-- <TIN>111223333</TIN> -->",
+      ),
+    ];
+    for (const [index, manifest] of mutations.entries()) {
+      const changedArchive = zipSync({
+        ...archive,
+        "manifest/manifest.xml": encoder.encode(manifest),
+      });
+      await assertRejects(
+        () =>
+          recordA2aSendPackage(root, {
+            messageId: `${messageId}-manifest-${index}`,
+            submissionIds: [submissionId],
+            package: {
+              ...source,
+              containerZipBytes: zipSync({
+                [`${submissionId}.zip`]: changedArchive,
+              }),
+            },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
+          }),
+        Error,
+        "manifest or taxpayer differs",
+      );
+    }
+    const recorded = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: source,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const changedContainer = zipSync({
+      [`${submissionId}.zip`]: zipSync({
+        ...archive,
+        "manifest/manifest.xml": encoder.encode(mutations[0]),
+      }),
+    });
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...recorded,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "manifest or taxpayer differs",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
   const root = await Deno.makeTempDir();
   try {
