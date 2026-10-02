@@ -1239,13 +1239,13 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line6a_ss_gross: 24000,
     line6b_ss_taxable: 20400,
     line7_capital_gain: -3000,
-    line9_total_income: 90000,
+    line9_total_income: 121900,
     line10_adjustments: 1000,
-    line11_agi: 89000,
+    line11_agi: 120900,
     line12c_deduction_total: 27700,
     line13_qbi_deduction: 5000,
     line14_deductions_qbi_total: 32700,
-    line15_taxable_income: 56300,
+    line15_taxable_income: 88200,
     line16_income_tax: 7000,
     line17_additional_taxes: 3200,
     line18_total_tax_before_credits: 10200,
@@ -1316,12 +1316,12 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     result,
     "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>",
   );
-  assertStringIncludes(result, "<TotalIncomeAmt>90000</TotalIncomeAmt>");
+  assertStringIncludes(result, "<TotalIncomeAmt>121900</TotalIncomeAmt>");
   assertStringIncludes(
     result,
-    "<AdjustedGrossIncomeAmt>89000</AdjustedGrossIncomeAmt>",
+    "<AdjustedGrossIncomeAmt>120900</AdjustedGrossIncomeAmt>",
   );
-  assertStringIncludes(result, "<TaxableIncomeAmt>56300</TaxableIncomeAmt>");
+  assertStringIncludes(result, "<TaxableIncomeAmt>88200</TaxableIncomeAmt>");
   assertStringIncludes(
     result,
     "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>",

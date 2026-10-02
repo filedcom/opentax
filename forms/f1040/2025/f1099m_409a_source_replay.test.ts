@@ -258,8 +258,11 @@ for (const form of ["w2", "1099nec"] as const) {
       : (overCap as unknown as {
         f1099nec: { f1099necs: Array<{ box1_nec: number }> };
       }).f1099nec.f1099necs[0];
-    if ("box1_wages" in source) source.box1_wages = 999;
-    else source.box1_nec = 999;
+    if ("box1_wages" in source) {
+      source.box1_wages = 999;
+      (overCap.f1040 as Record<string, unknown>).line1a_wages = 999;
+      (overCap.agi_aggregator as Record<string, unknown>).line1a_wages = 999;
+    } else source.box1_nec = 999;
     await assertRejects(
       () => buildMefBundle(overCap, { filer, attachments: [] }),
       Error,
