@@ -413,28 +413,40 @@ Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF
     ...await reviewedPdf("foreign-refund-notice-2"),
     reviewed_by: "Tax reviewer",
   };
+  const preparedAmendment = {
+    ...input.prepared_amendment!,
+    line7_nonrefundable_credits: {
+      column_a: 150,
+      column_b: -40,
+      column_c: 110,
+    },
+    line8_tax_after_credits: {
+      column_a: 4_850,
+      column_b: 40,
+      column_c: 4_890,
+    },
+    line11_total_tax: {
+      column_a: 4_850,
+      column_b: 40,
+      column_c: 4_890,
+    },
+  };
+  const preparedPdf = await reviewedPdf(
+    "prepared-1040x-2024",
+    preparedAmendment,
+  );
   const reviewed = await reviewScheduleCDocuments({
     ledger,
     filed_year_evidence: evidence,
-    prepared_amendment: {
-      ...input.prepared_amendment!,
-      line7_nonrefundable_credits: {
-        column_a: 150,
-        column_b: -40,
-        column_c: 110,
-      },
-      line8_tax_after_credits: {
-        column_a: 4_850,
-        column_b: 40,
-        column_c: 4_890,
-      },
-      line11_total_tax: {
-        column_a: 4_850,
-        column_b: 40,
-        column_c: 4_890,
-      },
-    },
-    documents: [...input.documents, secondDocument],
+    prepared_amendment: preparedAmendment,
+    documents: [
+      ...input.documents.map((document) =>
+        document.role === ScheduleCDocumentRole.PreparedForm1040X
+          ? { ...document, ...preparedPdf }
+          : document
+      ),
+      secondDocument,
+    ],
   });
   assertEquals(reviewed.documents.length, 9);
   assertEquals(reviewed.pdf_fields_candidate.part2_row2_col2b, "BANK2");
