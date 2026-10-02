@@ -230,7 +230,7 @@ Deno.test("schema: negative cost_basis is rejected", () => {
   assertThrows(() => compute([minimalItem({ cost_basis: -50 })]), Error);
 });
 
-Deno.test("schema: invalid part G is rejected (only A-F valid for traditional securities)", () => {
+Deno.test("schema: digital-asset part G is rejected for Form 1099-B", () => {
   assertThrows(() => compute([minimalItem({ part: "G" })]), Error);
 });
 
@@ -238,8 +238,8 @@ Deno.test("schema: invalid part Z is rejected", () => {
   assertThrows(() => compute([minimalItem({ part: "Z" })]), Error);
 });
 
-Deno.test("schema: all valid parts A through F are accepted", () => {
-  for (const part of ["A", "B", "C", "D", "E", "F"]) {
+Deno.test("schema: broker-reported parts A, B, D, E are accepted", () => {
+  for (const part of ["A", "B", "D", "E"]) {
     assertEquals(
       Array.isArray(compute([minimalItem({ part })]).outputs),
       true,
@@ -268,11 +268,8 @@ Deno.test("routing: part B routes to form8949 as short-term", () => {
   assertEquals(getTx(result)!.is_long_term, false);
 });
 
-Deno.test("routing: part C routes to form8949 as short-term", () => {
-  const result = compute([minimalItem({ part: "C" })]);
-  const out = findOutput(result, "form8949");
-  assertEquals(out !== undefined, true);
-  assertEquals(getTx(result)!.is_long_term, false);
+Deno.test("Form 1099-B rejects box C reserved for a sale without a broker statement", () => {
+  assertThrows(() => compute([minimalItem({ part: "C" })]), Error);
 });
 
 Deno.test("routing: part D routes to form8949 as long-term", () => {
@@ -289,11 +286,8 @@ Deno.test("routing: part E routes to form8949 as long-term", () => {
   assertEquals(getTx(result)!.is_long_term, true);
 });
 
-Deno.test("routing: part F routes to form8949 as long-term", () => {
-  const result = compute([minimalItem({ part: "F" })]);
-  const out = findOutput(result, "form8949");
-  assertEquals(out !== undefined, true);
-  assertEquals(getTx(result)!.is_long_term, true);
+Deno.test("Form 1099-B rejects box F reserved for a sale without a broker statement", () => {
+  assertThrows(() => compute([minimalItem({ part: "F" })]), Error);
 });
 
 Deno.test("routing: zero proceeds and zero basis routes to form8949 with gain_loss = 0", () => {
@@ -480,7 +474,7 @@ Deno.test("1099-B positive market discount needs a real interest payer", () => {
 
 // ─── 5. Hard validation rules ──────────────────────────────────────────────
 
-Deno.test("validation: part G (digital asset checkbox) is rejected — only A-F for 1099-B", () => {
+Deno.test("validation: part G (digital asset checkbox) is rejected for 1099-B", () => {
   // Context: G-L are for Form 1099-DA (digital assets), never for traditional 1099-B
   assertThrows(() => compute([minimalItem({ part: "G" })]), Error);
 });
@@ -616,7 +610,7 @@ Deno.test("edge: QSBS exclusion (code Q) — negative adjustment reduces recogni
   // QSBS: proceeds=200000, basis=50000 → gain=150000; Q exclusion=-150000
   // col h = 200000 - 50000 + (-150000) = 0
   const result = compute([minimalItem({
-    part: "F",
+    part: "E",
     proceeds: 200000,
     cost_basis: 50000,
     adjustment_codes: "Q",
@@ -629,7 +623,7 @@ Deno.test("edge: home sale exclusion (code H) — negative adjustment reduces ga
   // IRC §121: up to $250,000 excluded; proceeds=500000, basis=200000, excl=-250000
   // col h = 500000 - 200000 + (-250000) = 50000
   const result = compute([minimalItem({
-    part: "F",
+    part: "E",
     proceeds: 500000,
     cost_basis: 200000,
     adjustment_codes: "H",
@@ -654,7 +648,7 @@ Deno.test("edge: QOF deferral (code Z) — negative adjustment defers current ga
   // Code Z: deferred gain is negative in col g
   // proceeds=100000, basis=60000, gain=40000; Z deferral=-40000 → col h=0
   const result = compute([minimalItem({
-    part: "F",
+    part: "E",
     proceeds: 100000,
     cost_basis: 60000,
     adjustment_codes: "Z",

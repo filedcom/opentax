@@ -175,3 +175,63 @@ Deno.test("the same sale label from separately referenced broker statements rema
   );
   assert((await buildPdfBytes(pending, filer)).length > 100_000);
 });
+
+Deno.test("broker copies reject no-1099 boxes while direct nonbroker sales keep them", async () => {
+  const base = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(base.diagnostics, []);
+  for (const part of ["C", "F"] as const) {
+    const invalid = f1040_2025.executeReturn({
+      general,
+      f1099b: [{ ...brokerRows[0], part }],
+    });
+    assert(
+      invalid.diagnostics.some((diagnostic) =>
+        diagnostic.nodeType === "start" && diagnostic.severity === "error" &&
+        diagnostic.message.includes('"f1099b"') &&
+        diagnostic.message.includes('"part"')
+      ),
+    );
+    const changed = {
+      ...buildPending(base.pending),
+      f1099b: { f1099bs: [{ ...brokerRows[0], part }] },
+    };
+    assertThrows(
+      () =>
+        buildMefXml(
+          changed as unknown as Parameters<typeof buildMefXml>[0],
+          filer,
+        ),
+      Error,
+    );
+    await assertRejects(() => buildPdfBytes(changed, filer), Error);
+  }
+
+  const direct = f1040_2025.executeReturn({
+    general,
+    f8949: [{
+      part: Form8949Part.C,
+      description: "Unreported short sale",
+      source_transaction_id: "direct-short",
+      date_acquired: "2025-01-10",
+      date_sold: "2025-06-20",
+      proceeds: 1_000,
+      cost_basis: 700,
+    }, {
+      part: Form8949Part.F,
+      description: "Unreported long sale",
+      source_transaction_id: "direct-long",
+      date_acquired: "2020-01-10",
+      date_sold: "2025-06-20",
+      proceeds: 2_000,
+      cost_basis: 1_000,
+    }],
+  });
+  assertEquals(direct.diagnostics, []);
+  assertEquals(direct.pending.f1040.line7_capital_gain, 1_300);
+  const pending = buildPending(direct.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>1300</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+});
