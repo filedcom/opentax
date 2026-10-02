@@ -18,8 +18,15 @@ import { parsePublicForm8839Source } from "../nodes/intermediate/forms/form8839/
 import { finalizeStagedForm8839Sink } from "../nodes/intermediate/forms/form8839/staged_sink_finalizer.ts";
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { schedule3 } from "../nodes/intermediate/aggregation/schedule3/index.ts";
+import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  if (inputs.f1099b !== undefined && inputs.f8949 !== undefined) {
+    assertNoRepeatedBrokerSaleSources(
+      { f1099bs: inputs.f1099b },
+      { f8949s: inputs.f8949 },
+    );
+  }
   if (inputs.form8839 !== undefined) {
     if (inputs.form8990 !== undefined) {
       throw new Error(
