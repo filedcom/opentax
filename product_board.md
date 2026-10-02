@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **795 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **796 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 165-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 795 bounded routes and
+**Implemented coverage.** The completed ledger records 796 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -340,6 +340,10 @@ Positive direct capital-gain distributions on Form 1040 line 7a now replay
 retained Form 1099-DIV box 2a net of nominee pass-through and calculated Form
 8814 child gain in both native and PDF projection; Schedule D routes need a
 separate complete reconciliation.
+Individual partnership K-1 box 8/9a capital now replays to Schedule D lines
+5/12 in native XML and PDF, rejecting omitted or changed filed amounts. The
+entity's Form 1065 Schedule D and Form 8825 are inventoried separately from
+the individual's received K-1; wider source and loss-limit proof remains open.
 Form 8288-A withholding now deposits to Form 1040 line 25c; final native/PDF
 export checks the combined retained Form 8288-A, W-2G, Form 8805, and Form
 8959 withholding lower bound. Positive Form 8288-A credit also requires a
