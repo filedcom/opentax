@@ -181,7 +181,7 @@ Deno.test("Form 8995-A Schedule C: altered source, companion, parent line, and u
         },
       }),
     Error,
-    "Form 1040 line 13",
+    "net profit and zero QBI adjustments must match filed Schedule 1 and Form 1040",
   );
   assertThrows(
     () =>
