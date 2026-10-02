@@ -121,6 +121,7 @@ const BASE_IDENTITY = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   child_eic_filer_review: {
     not_qualifying_child_of_another_taxpayer_verified: true,
     relationship_age_residence_record_reference:
@@ -279,6 +280,7 @@ Deno.test({
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.Single,
+      digital_assets: false,
     },
     schedule_h: {
       employer_ein: facts.scheduleH.employerEin,
@@ -315,6 +317,7 @@ Deno.test({
       digital_assets: facts.taxpayer.digitalAssets,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -629,6 +632,7 @@ Deno.test({
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,

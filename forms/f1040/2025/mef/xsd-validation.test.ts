@@ -325,6 +325,7 @@ Deno.test({
     general: { ...singleGeneral(), do_not_claim_eic: true },
     f1040: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       do_not_claim_eic: true,
       line27_eitc: 0,
     },
@@ -346,6 +347,7 @@ Deno.test({
     f1040es: agreedJointPayment,
     f1040: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       taxpayer_ssn: "111223333",
       line26_estimated_tax: 300,
     },
@@ -8535,6 +8537,7 @@ function singleGeneral() {
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
     taxpayer_dob: "1985-06-15",
+    digital_assets: false,
     address_line1: "1 Test Way",
     address_city: "Austin",
     address_state: "TX",
