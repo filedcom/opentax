@@ -10,6 +10,7 @@ const finalFiler = {
   ...testFiler(),
   firstNameWithInitial: "Alex",
   lastName: "Taxpayer",
+  fullName: "Alex Taxpayer",
   nameLine1: "TAXPAYER ALEX",
 };
 import {

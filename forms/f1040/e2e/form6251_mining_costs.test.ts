@@ -112,6 +112,7 @@ Deno.test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, n
     ...testFiler(),
     firstNameWithInitial: "Alex",
     lastName: "Taxpayer",
+    fullName: "Alex Taxpayer",
   };
   const bundle = await buildMefBundle(pending, {
     filer: finalFiler,

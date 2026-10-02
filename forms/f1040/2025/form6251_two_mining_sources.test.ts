@@ -106,6 +106,7 @@ Deno.test("four distinct current-year mines reconcile Form 6251, Schedule 2, For
     ...testFiler(),
     firstNameWithInitial: "Alex",
     lastName: "Taxpayer",
+    fullName: "Alex Taxpayer",
   };
   const bundle = await buildMefBundle(buildPending(pending), {
     filer: finalFiler,
