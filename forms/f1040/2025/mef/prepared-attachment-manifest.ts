@@ -1,6 +1,7 @@
 import { element } from "../../mef/xml.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import type { MefBundle } from "./builder.ts";
+import { documentId } from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 
 /** Replay the prepared return's document and reference inventory. */
@@ -34,6 +35,13 @@ export function assertPreparedDocumentInventory(
   ) {
     throw new Error(
       "Prepared MeF document count, order, IDs, references, or attachment count differs from its return",
+    );
+  }
+  if (
+    documents.some((match, index) => match[2] !== documentId(match[1], index))
+  ) {
+    throw new Error(
+      "Prepared MeF document IDs differ from canonical tag and position order",
     );
   }
 }

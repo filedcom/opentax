@@ -502,6 +502,76 @@ Deno.test("prepared manifest replays document inventory and references after XML
   }
 });
 
+Deno.test("prepared manifest keeps native tag-position IDs for repeated W-2 copies", async () => {
+  const w2 = {
+    employer_name: "Example Employer",
+    employer_ein: "12-3456789",
+    employer_address_line1: "1 Main Street",
+    employer_address_city: "Austin",
+    employer_address_state: "TX",
+    employer_address_zip: "78701",
+    box1_wages: 3_000,
+    box2_fed_withheld: 300,
+  };
+  const pending = {
+    f1040: {
+      filing_status: "single",
+      digital_assets: false,
+      line25a_w2_withheld: 600,
+    },
+    w2: { w2s: [w2, { ...w2, employer_ein: "98-7654321" }] },
+  };
+  const filer = sampleFiler();
+  const bundle = await buildMefBundle(pending, {
+    filer,
+    attachments: [{
+      fileName: "ReviewedStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  assertStringIncludes(bundle.xml, '<IRS1040 documentId="IRS10400"');
+  assertStringIncludes(bundle.xml, '<IRSW2 documentId="IRSW21"');
+  assertStringIncludes(bundle.xml, '<IRSW2 documentId="IRSW22"');
+  assertStringIncludes(
+    bundle.xml,
+    '<BinaryAttachment documentId="BinaryAttachment3"',
+  );
+  await assertPreparedAttachmentManifest(bundle);
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
+
+  // Swap rather than duplicate the IDs, so uniqueness alone cannot catch it.
+  const swapped = bundle.xml.replace(
+    'documentId="IRSW21"',
+    'documentId="W2_SWAP_TEMP"',
+  ).replace('documentId="IRSW22"', 'documentId="IRSW21"').replace(
+    'documentId="W2_SWAP_TEMP"',
+    'documentId="IRSW22"',
+  );
+  const xmlSha256 = await sha256Hex(new TextEncoder().encode(swapped));
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        xml: swapped,
+        xmlSha256,
+      }),
+    Error,
+    "canonical tag and position order",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(pending, filer, ".pdf-cache", {
+        ...bundle,
+        xml: swapped,
+        xmlSha256,
+      }),
+    Error,
+    "canonical tag and position order",
+  );
+});
+
 Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => {
   const bytes = await sampleAttachmentBytes();
   const valid = {
