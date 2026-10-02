@@ -115,13 +115,14 @@ const sources: readonly Source[] = [
   {
     key: "rrb1099r",
     rows: "rrb1099rs",
-    fields: ["box7_sseb_withheld", "box10_tier2_withheld"],
+    fields: ["box9_federal_withheld"],
     schema: railroadSchema,
+    recipient: "recipient_tin",
   },
   {
     key: "ssa1099",
     rows: "ssas",
-    fields: ["box6_federal_withheld"],
+    fields: ["box6_federal_withheld", "rrb_box10_federal_withheld"],
     schema: socialSecuritySchema,
   },
 ];

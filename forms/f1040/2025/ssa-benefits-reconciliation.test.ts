@@ -3,6 +3,9 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { assertSocialSecurityBenefitSource } from "./ssa-benefits-reconciliation.ts";
+import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import { execute } from "../../../core/runtime/executor.ts";
+import { registry } from "./registry.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -86,11 +89,13 @@ Deno.test("SSA-1099 contradictory box 5 rejects final native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("SSA line 6a replay includes railroad and lump-sum source nodes", () => {
+Deno.test("SSA line 6a replay includes RRB-1099 and lump-sum source rows", () => {
   const pending = {
-    ssa1099,
-    rrb1099r: {
-      rrb1099rs: [{ payer_name: "RRB", box3_sseb_gross: 3_000 }],
+    ssa1099: {
+      ssas: [
+        ...ssa1099.ssas,
+        { is_rrb: true, box3_gross_benefits: 3_000 },
+      ],
     },
     lump_sum_ss: {
       lump_sum_sss: [{
@@ -104,23 +109,98 @@ Deno.test("SSA line 6a replay includes railroad and lump-sum source nodes", () =
   assertEquals(pending.f1040.line6a_ss_gross, 9_000);
 });
 
-Deno.test("negative SSA aggregate remains review-blocked even with railroad benefits", () => {
+Deno.test("negative SSA box 5 offsets positive RRB-1099 box 5", () => {
+  assertSocialSecurityBenefitSource({
+    ssa1099: {
+      ssas: [
+        {
+          box3_gross_benefits: 1_000,
+          box4_repaid: 2_000,
+          box5_net_benefits: -1_000,
+        },
+        { is_rrb: true, box3_gross_benefits: 5_000 },
+      ],
+    },
+    f1040: filed(4_000),
+  });
+});
+
+Deno.test("RRB-1099 box 10 withholding replays at native and PDF export", async () => {
+  const source = {
+    ssas: [{
+      is_rrb: true,
+      box3_gross_benefits: 5_000,
+      rrb_box10_federal_withheld: 100,
+    }],
+  };
+  const changed = {
+    ssa1099: source,
+    f1040: { ...filed(5_000), line25b_withheld_1099: 99 },
+  };
+  const message = "line 25b differs from retained 1099-family withholding";
   assertThrows(
-    () =>
-      assertSocialSecurityBenefitSource({
-        ssa1099: {
-          ssas: [{
-            box3_gross_benefits: 1_000,
-            box4_repaid: 2_000,
-            box5_net_benefits: -1_000,
-          }],
-        },
-        rrb1099r: {
-          rrb1099rs: [{ payer_name: "RRB", box3_sseb_gross: 5_000 }],
-        },
-        f1040: filed(5_000),
-      }),
+    () => buildMefXml(changed as Parameters<typeof buildMefXml>[0], filer),
     Error,
-    "Negative total SSA-1099 benefits need repayment deduction or credit review",
+    message,
   );
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+  const wrongBox = {
+    ssa1099: {
+      ssas: [{
+        is_rrb: true,
+        box3_gross_benefits: 5_000,
+        box6_federal_withheld: 100,
+      }],
+    },
+    f1040: { ...filed(5_000), line25b_withheld_1099: 100 },
+  };
+  assertThrows(
+    () => buildMefXml(wrongBox as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    "RRB-1099 withholding belongs in box 10",
+  );
+  await assertRejects(
+    () => buildPdfBytes(wrongBox, filer),
+    Error,
+    "RRB-1099 withholding belongs in box 10",
+  );
+});
+
+Deno.test("SSA repayment and RRB-1099 benefits reach full-graph line 6a and taxability", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Taxpayer",
+      taxpayer_last_name: "Test",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_dob: "1960-01-01",
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+    f1099int: [{ payer_name: "Bank", box1: 30_000 }],
+    ssa1099: [
+      {
+        box3_gross_benefits: 1_000,
+        box4_repaid: 2_000,
+        box5_net_benefits: -1_000,
+      },
+      {
+        is_rrb: true,
+        box3_gross_benefits: 5_000,
+        box5_net_benefits: 5_000,
+        rrb_box10_federal_withheld: 100,
+      },
+    ],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line6a_ss_gross, 4_000);
+  assertEquals(result.pending.f1040?.line6b_ss_taxable, 2_000);
+  assertEquals(result.pending.f1040?.line25b_withheld_1099, 100);
+  assertSocialSecurityBenefitSource(result.pending);
 });

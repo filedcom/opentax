@@ -232,8 +232,10 @@ Deno.test("1099-family box withholding replays once across distinct taxpayer and
     rrb1099r: {
       rrb1099rs: [{
         payer_name: "RRB",
-        box7_sseb_withheld: 50,
-        box10_tier2_withheld: 60,
+        recipient_tin: "111223333",
+        box4_contributory_amount_paid: 1_000,
+        box7_total_gross_paid: 1_000,
+        box9_federal_withheld: 110,
       }],
     },
     f4852: {

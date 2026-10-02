@@ -50,6 +50,7 @@ import {
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assertSocialSecurityBenefitSource } from "../ssa-benefits-reconciliation.ts";
+import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -204,6 +205,7 @@ function buildReturnXml(
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);
   assertSocialSecurityBenefitSource(pending);
+  assertRrb1099rPensionSource(pending, filer);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);

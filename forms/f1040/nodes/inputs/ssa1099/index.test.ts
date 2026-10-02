@@ -103,6 +103,41 @@ Deno.test("ssa1099 compares issued boxes at cent precision", () => {
   );
 });
 
+Deno.test("RRB-1099 box 5 offsets SSA-1099 box 5 and box 10 carries withholding", () => {
+  const result = compute([
+    minimalItem({ box3_gross_benefits: 5_000 }),
+    minimalItem({
+      is_rrb: true,
+      box3_gross_benefits: 1_000,
+      box4_repaid: 2_000,
+      box5_net_benefits: -1_000,
+      rrb_box10_federal_withheld: 100,
+    }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line6a_ss_gross, 4_000);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 100);
+});
+
+Deno.test("SSA and RRB issued withholding boxes cannot be exchanged", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        is_rrb: true,
+        box6_federal_withheld: 100,
+      })]),
+    Error,
+    "RRB-1099 withholding belongs in box 10",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        rrb_box10_federal_withheld: 100,
+      })]),
+    Error,
+    "SSA-1099 withholding belongs in box 6",
+  );
+});
+
 // =============================================================================
 // 2. Per-Box Routing
 // =============================================================================

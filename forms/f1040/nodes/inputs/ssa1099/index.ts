@@ -35,6 +35,9 @@ export const itemSchema = z.object({
   // Source: IRS Form 1040 instructions, Line 25b — "box 6, of Form SSA-1099"
   box6_federal_withheld: z.number().nonnegative().optional(),
 
+  // Form RRB-1099 reports SSEB withholding in box 10, not SSA-1099 box 6.
+  rrb_box10_federal_withheld: z.number().nonnegative().optional(),
+
   // Informational: true if this is RRB-1099 (Railroad Retirement Board)
   // Treated identically to SSA-1099 for federal taxability purposes
   is_rrb: z.boolean().optional(),
@@ -49,6 +52,22 @@ export const itemSchema = z.object({
       code: "custom",
       path: ["box5_net_benefits"],
       message: "SSA-1099 box 5 must equal box 3 minus box 4",
+    });
+  }
+  if (item.is_rrb === true && item.box6_federal_withheld !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box6_federal_withheld"],
+      message: "RRB-1099 withholding belongs in box 10, not SSA-1099 box 6",
+    });
+  }
+  if (
+    item.is_rrb !== true && item.rrb_box10_federal_withheld !== undefined
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["rrb_box10_federal_withheld"],
+      message: "SSA-1099 withholding belongs in box 6, not RRB-1099 box 10",
     });
   }
 });
@@ -79,7 +98,11 @@ function totalNetBenefits(items: SsaItem[]): number {
 // IRS Form 1040 instructions, Line 25b: "box 6, of Form SSA-1099"
 function totalWithheld(items: SsaItem[]): number {
   return items.reduce(
-    (sum, item) => sum + (item.box6_federal_withheld ?? 0),
+    (sum, item) =>
+      sum +
+      (item.is_rrb === true
+        ? (item.rrb_box10_federal_withheld ?? 0)
+        : (item.box6_federal_withheld ?? 0)),
     0,
   );
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This screen captures Social Security (and equivalent Railroad Retirement Board) benefit amounts from Form SSA-1099 / RRB-1099. It routes the net benefit amount (Box 5) to Form 1040 line 6a and voluntary federal withholding (Box 6) to Form 1040 line 25b. Multiple SSA-1099s (e.g., taxpayer + spouse, or multiple corrections) are aggregated before routing. The taxability worksheet (determining how much of line 6a is taxable, shown on line 6b) is computed by a downstream intermediate node — not here.
+This screen captures Social Security (and equivalent Railroad Retirement Board) benefit amounts from Form SSA-1099 / RRB-1099. It routes signed net benefits (box 5) to Form 1040 line 6a and federal withholding from SSA-1099 box 6 or RRB-1099 box 10 to line 25b. Multiple statements are aggregated before routing, so a negative SSA-1099 box 5 can offset a positive RRB-1099 box 5. The downstream taxability worksheet computes line 6b.
 
 **IRS Form:** SSA-1099 / RRB-1099
 **Drake Screen:** SSA
@@ -19,6 +19,7 @@ This screen captures Social Security (and equivalent Railroad Retirement Board) 
 | box3_gross_benefits | number ≥0 | yes | Box 3 — Gross Benefits | Total social security benefits paid to you in 2025 | i1040gi.pdf, Lines 6a/6b instructions | .research/docs/i1040gi.pdf |
 | box4_repaid | number ≥0 | no | Box 4 — Benefits Repaid | Total benefits you repaid to SSA or RRB in 2025 | i1040gi.pdf, Lines 6a/6b instructions | .research/docs/i1040gi.pdf |
 | box6_federal_withheld | number ≥0 | no | Box 6 — Federal Tax Withheld | Voluntary federal income tax withheld (W-4V); shown in box 6 of Form SSA-1099 | i1040gi.pdf, Line 25b instructions | .research/docs/i1040gi.pdf |
+| rrb_box10_federal_withheld | number ≥0 | no | RRB-1099 box 10 — Federal Tax Withheld | Required withholding field when `is_rrb` is true; box 6 cannot be used for that statement | Pub. 915, 2025 | https://www.irs.gov/publications/p915 |
 | is_rrb | boolean | no | RRB-1099 | Check if this is a Railroad Retirement Board (RRB-1099) rather than SSA-1099; treated identically for federal taxability | i1040gi.pdf, Lines 6a/6b instructions | .research/docs/i1040gi.pdf |
 
 ---
@@ -28,7 +29,7 @@ This screen captures Social Security (and equivalent Railroad Retirement Board) 
 | Field | Destination | How Used | Triggers | Limit / Cap | IRS Reference | URL |
 | ----- | ----------- | -------- | -------- | ----------- | ------------- | --- |
 | box3_gross_benefits − box4_repaid (= box5 net) | f1040 line6a_ss_gross | Sum signed box 5 amounts; a negative statement offsets a positive one. Supplied box 5 must equal boxes 3 minus 4. | Sum > 0 | Negative aggregate requires repayment review | Pub. 915, 2025 | https://www.irs.gov/publications/p915 |
-| box6_federal_withheld | f1040 line25b_withheld_1099 | Sum of all items' Box 6 amounts | Sum > 0 | None | i1040gi.pdf, Line 25b | .research/docs/i1040gi.pdf |
+| SSA box 6 or RRB box 10 withheld | f1040 line25b_withheld_1099 | Sum the field matching each issued statement type | Sum > 0 | None | Pub. 915, 2025 | https://www.irs.gov/publications/p915 |
 | box3_gross_benefits | (informational) | Not separately routed; only used internally to compute net = box3 - box4 | — | — | — | — |
 | box4_repaid | (informational) | Used to compute net; if sum of box4 > sum of box3 across all items, no benefits are taxable | — | — | Pub 915; i1040gi.pdf | .research/docs/i1040gi.pdf |
 
@@ -54,8 +55,8 @@ total_net = sum(net_i for all items)
 ```
 
 Publication 915 directs that a negative box 5 offsets a positive box 5 on
-another statement. The current SSA input node combines its own statements;
-negative SSA totals and cross-node SSA/RRB offset need further filing review.
+another SSA-1099 or RRB-1099. Both statement types are rows in this node.
+Only a negative combined total requires further repayment review.
 
 > **Source:** IRS Form 1040 Instructions (i1040gi.pdf), Social Security Benefits Worksheet Line 1. `.research/docs/i1040gi.pdf`
 
@@ -73,7 +74,7 @@ Line 6a shows the gross (net-of-repayments) Social Security amount. Line 6b (tax
 ### Step 4 — Route federal withholding to Form 1040 line 25b
 
 ```
-total_withheld = sum(box6_federal_withheld_i ?? 0 for all items)
+total_withheld = sum(is_rrb_i ? rrb_box10_federal_withheld_i ?? 0 : box6_federal_withheld_i ?? 0)
 if total_withheld > 0:
   emit f1040 { line25b_withheld_1099: total_withheld }
 ```
@@ -127,13 +128,12 @@ flowchart LR
 ## Edge Cases & Special Rules
 
 1. **Repayments exceed gross for a single item**: Preserve its negative box 5
-   to offset another statement. A negative total within the SSA node stops
-   filing pending repayment deduction or credit review; cross-node SSA/RRB
-   offsets also remain unsupported.
+   to offset another SSA-1099 or RRB-1099 row. A negative combined total stops
+   filing pending repayment deduction or credit review.
 
 2. **Multiple SSA-1099s (e.g., taxpayer + spouse, or corrected forms)**: Sum all items' net benefits before routing. The worksheet says "all your Forms SSA-1099 and RRB-1099."
 
-3. **RRB-1099**: Treated identically to SSA-1099 for federal taxability. The `is_rrb` flag is informational; it does not change routing logic in this node.
+3. **RRB-1099**: Treated identically to SSA-1099 for federal taxability. The `is_rrb` flag selects box 10, instead of SSA box 6, for withholding.
 
 4. **Zero or negative net benefits**: Zero emits no line 6a amount. Negative
    aggregate benefits stop graph calculation and final export for review.
