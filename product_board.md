@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **785 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **786 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 785 bounded routes and
+**Implemented coverage.** The completed ledger records 786 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -239,6 +239,8 @@ W-2G source input now rejects reuse of the same issued-copy PDF bytes under
 different references before duplicate gambling income or withholding can accrue.
 Every positive W-2G now checks the winner against the final taxpayer or joint
 spouse, including copies with no withholding; blank-TIN copies remain unsupported.
+The focused W-2G source/native/PDF/bundle audit now passes after correcting a
+stale expected error, while identity-free distinct wagers remain unresolved.
 Positive Form 1040 line 26 estimated payments now replay the retained 1040-ES
 quarter amounts and applied prior-year overpayment at native/PDF export;
 external receipt and owner proof remain open. Final Form 1040 export also checks
