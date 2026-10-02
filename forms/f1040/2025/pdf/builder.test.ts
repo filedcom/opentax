@@ -507,6 +507,64 @@ Deno.test("fillFormPdf validates present blank-zero text fields and extra fields
   }
 });
 
+Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const wageField = "topmostSubform[0].Page1[0].f1_47[0]";
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [{
+      kind: "text" as const,
+      domainKey: "line1a_wages",
+      pdfField: wageField,
+    }],
+    rows: {
+      domainKey: "items",
+      maxRows: 1,
+      rowFields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfFieldPattern: "schedule_row_amount",
+      }],
+    },
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf([wageField, "schedule_row_amount"], false),
+    );
+    for (const value of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      await assertRejects(
+        () =>
+          fillFormPdf(descriptor, { line1a_wages: value }, undefined, tmpDir),
+        Error,
+        `failed to fill field "${wageField}"`,
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { line1a_wages: 75_000, items: [{ amount: value }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill row 1 field "schedule_row_amount"',
+      );
+    }
+    const filled = await fillFormPdf(
+      descriptor,
+      { line1a_wages: 75_000, items: [{ amount: 25 }] },
+      undefined,
+      tmpDir,
+    );
+    assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {

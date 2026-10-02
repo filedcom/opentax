@@ -100,6 +100,9 @@ function fillEntry(
   formKey: string,
 ): void {
   try {
+    if (typeof value === "number" && !Number.isFinite(value)) {
+      throw new Error(`nonfinite projected value ${String(value)}`);
+    }
     if (entry.kind === "text") {
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
@@ -265,6 +268,9 @@ export async function fillFormPdf(
           const value = row[rf.domainKey];
           if (value === undefined || value === null) continue;
           try {
+            if (typeof value === "number" && !Number.isFinite(value)) {
+              throw new Error(`nonfinite projected value ${String(value)}`);
+            }
             if (rf.kind === "checkbox") {
               const box = form.getCheckBox(pdfField);
               value ? box.check() : box.uncheck();
