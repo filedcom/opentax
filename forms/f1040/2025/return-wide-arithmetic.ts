@@ -223,6 +223,23 @@ export function assertReturnWideArithmetic(
       throw new Error("Form 1040 line 37 differs from balance and penalty");
     }
   }
+
+  const overpayment = amount("line34_overpayment");
+  const refund = amount("line35a_refund");
+  if (overpayment !== undefined && refund !== undefined) {
+    const applied = amount("line36_applied_to_2026_estimated_tax") ?? 0;
+    const penalty = amount("line38_underpayment_penalty") ?? 0;
+    if (
+      !matches(
+        refund + applied + Math.min(overpayment, penalty),
+        overpayment,
+      )
+    ) {
+      throw new Error(
+        "Form 1040 lines 35a, 36, and 38 do not reconcile to line 34",
+      );
+    }
+  }
 }
 
 /** Match attached Schedule totals to the final return after graph execution. */

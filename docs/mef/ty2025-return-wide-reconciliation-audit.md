@@ -152,6 +152,15 @@ duplicate checks before counting their amounts or claiming exact line 25c
 equality. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
 explicitly place K-1 and Form 1042-S withholding on line 25c.
 
+The [2025 Form 1040 line 38 instructions](https://www.irs.gov/instructions/i1040gi)
+also require an overpayment on line 34 to be allocated between refund on line
+35a, the line 36 next-year election, and any self-computed estimated-tax
+penalty on line 38. Final native and PDF export now replay this balance when
+the overpayment and refund lines are present, including a penalty larger than
+the overpayment. This catches a changed refund without a line 36 election;
+the separate line 36 source guard still checks a positive election. The
+arithmetic does not establish receipt ownership or IRS account posting.
+
 ## Remaining return-wide work
 
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |

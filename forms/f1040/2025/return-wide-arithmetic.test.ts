@@ -173,6 +173,43 @@ Deno.test("Form 1040 export replays overpayment and amount owed", () => {
   });
 });
 
+Deno.test("Form 1040 refund and applied amount exhaust the overpayment after penalty", () => {
+  const fields = {
+    line24_total_tax: 1_000,
+    line33_total_payments: 1_200,
+    line34_overpayment: 200,
+    line35a_refund: 150,
+    line38_underpayment_penalty: 50,
+  };
+  assertReturnWideArithmetic(fields);
+  irs1040.build(fields, { pending: {} });
+  irs1040Pdf.projectFields?.(fields, {});
+
+  const changed = { ...fields, line35a_refund: 151 };
+  assertThrows(
+    () => assertReturnWideArithmetic(changed),
+    Error,
+    "lines 35a, 36, and 38",
+  );
+  assertThrows(
+    () => irs1040.build(changed, { pending: {} }),
+    Error,
+    "lines 35a, 36, and 38",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(changed, {}),
+    Error,
+    "lines 35a, 36, and 38",
+  );
+
+  assertReturnWideArithmetic({
+    ...fields,
+    line35a_refund: 0,
+    line38_underpayment_penalty: 250,
+    line37_amount_owed: 50,
+  });
+});
+
 Deno.test("Form 1040 line 33 replays a payment component when zero subtotals are omitted", () => {
   const fields = {
     line25a_w2_withheld: 125,
