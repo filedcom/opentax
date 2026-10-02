@@ -47,7 +47,10 @@ const inputSchema = z.object({
   line8b_gambling_winnings: z.number().nonnegative().optional(),
   line8c_cod_income: z.number().optional(),
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
-  line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
+  // Form 2555 line 50 belongs on Schedule 1 line 24j, not line 8d. The
+  // structured source currently computes zero; positive housing deduction
+  // requires a separately sourced Part IX and line 24j route.
+  line8d_foreign_housing_deduction: z.literal(0).optional(),
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
   // Form 8889 lines 16 and 20, Schedule 1 line 8f.
   line8f_hsa_income: z.number().nonnegative().optional(),
@@ -183,9 +186,6 @@ function otherIncome(input: Schedule1Input): number {
     ) +
     (input.line8d_foreign_earned_income_exclusion !== undefined
       ? -(input.line8d_foreign_earned_income_exclusion)
-      : 0) +
-    (input.line8d_foreign_housing_deduction !== undefined
-      ? -(input.line8d_foreign_housing_deduction)
       : 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
@@ -393,12 +393,6 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
         0,
       );
   }
-  if (input.line8d_foreign_housing_deduction !== undefined) {
-    result.line8d_foreign_earned_income_exclusion =
-      (input.line8d_foreign_earned_income_exclusion ?? 0) +
-      input.line8d_foreign_housing_deduction;
-  }
-
   return {
     ...result,
     ...(input.f1099nec_nonbusiness_sources !== undefined

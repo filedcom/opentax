@@ -285,6 +285,14 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    if (
+      fields.line8d_foreign_housing_deduction !== undefined &&
+      fields.line8d_foreign_housing_deduction !== 0
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction needs sourced Schedule 1 line 24j; it cannot be added to line 8d PDF",
+      );
+    }
     const alimony = assertTaxableAlimonySchedule1(
       fields.line2a_alimony_received,
       all?.alimony_received,

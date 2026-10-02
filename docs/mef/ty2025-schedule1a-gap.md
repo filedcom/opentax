@@ -39,7 +39,8 @@ the qualifying senior source, review, and final return must reconcile.
   Schedule 1-A, and Form 2555; Schedule 1-A Part I and all Form 2555 pages were
   rendered and visually reviewed (SHA-256
   `b321afa905c708bfa40df3eaa8a45d8747ca9ce82962ece2e17b83201de99700`).
-  This route does not cover part-year Form 2555, a positive housing deduction,
+  This route does not cover part-year Form 2555, a positive housing deduction
+  (see the [line 50 source contract](ty2025-form2555-line50-schedule1a-source-gap.md)),
   Form 2555 with tips/overtime/vehicle interest, positive Puerto Rico or Form
   4563 exclusions, issuer/source-document authentication, IRS business rules,
   or ATS acceptance. Other positive routes still need their own sources.

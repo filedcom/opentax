@@ -234,6 +234,14 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
     if (
+      fields.line8d_foreign_housing_deduction !== undefined &&
+      fields.line8d_foreign_housing_deduction !== 0
+    ) {
+      throw new Error(
+        "Form 2555 line 50 housing deduction needs sourced Schedule 1 line 24j; it cannot be added to line 8d",
+      );
+    }
+    if (
       (fields.line8n_section951a_inclusion ?? 0) > 0 ||
       (fields.line8o_section951aa_inclusion ?? 0) > 0
     ) {
