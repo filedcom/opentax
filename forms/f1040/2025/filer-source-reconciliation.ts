@@ -495,6 +495,41 @@ export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const miscRows = pending.f1099m === undefined
+    ? []
+    : form1099mSchema.parse(pending.f1099m).f1099ms;
+  const expectedMisc = miscRows.flatMap((item) => {
+    const boxes = [
+      [
+        "box3_other_income",
+        item.box3_other_income_routing === "schedule_c"
+          ? item.box3_other_income
+          : 0,
+      ],
+      [
+        "box1_rents",
+        item.box1_rents_routing === "schedule_c" ? item.box1_rents : 0,
+      ],
+      [
+        "box2_royalties",
+        item.box2_royalties_routing === "schedule_c" ? item.box2_royalties : 0,
+      ],
+      ["box5_fishing_boat", item.box5_fishing_boat],
+      ["box6_medical_payments", item.box6_medical_payments],
+      ["box11_fish_purchased", item.box11_fish_purchased],
+    ] as const;
+    return boxes.flatMap(([box, amount]) =>
+      (amount ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          box,
+          amount,
+        }]
+        : []
+    );
+  });
   const expectedNec = pending.f1099nec === undefined
     ? []
     : form1099necSchema.parse(pending.f1099nec).f1099necs.flatMap((item) =>
@@ -699,7 +734,7 @@ export function assertScheduleCReceiptSourceIdentity(
   }
   const scheduleC = pending.schedule_c;
   if (!scheduleC || typeof scheduleC !== "object") {
-    if (expectedK.length || expectedNec.length) {
+    if (expectedK.length || expectedNec.length || expectedMisc.length) {
       throw new Error(
         "1099 Schedule C source differs from the filed business",
       );
@@ -727,6 +762,17 @@ export function assertScheduleCReceiptSourceIdentity(
         ),
       )
     ).sort();
+  if (
+    !Array.isArray(receiptSources) ||
+    JSON.stringify(sortRows(receiptSources)) !==
+      JSON.stringify(sortRows(expectedMisc))
+  ) {
+    if (receiptSources !== undefined || expectedMisc.length) {
+      throw new Error(
+        "1099-MISC Schedule C sources differ from retained payer copies",
+      );
+    }
+  }
   if (
     !Array.isArray(necSources) ||
     JSON.stringify(sortRows(necSources)) !==

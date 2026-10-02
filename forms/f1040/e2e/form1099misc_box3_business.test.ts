@@ -97,6 +97,7 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "cash",
         line1_sales_livestock_resale: 0,
         line8_other_income: 2_000,
@@ -164,6 +165,16 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
 
 Deno.test("1099-NEC farm recipient must match its named proprietor", async () => {
   const pending = buildPending({
+    f1099nec: {
+      f1099necs: [{
+        farm_id: "north",
+        payer_name: "Farm Customer",
+        payer_tin: "123456789",
+        recipient_ssn: "111223333",
+        box1_nec: 500,
+        for_routing: "schedule_f",
+      }],
+    },
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",

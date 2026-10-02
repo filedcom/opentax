@@ -114,6 +114,16 @@ Deno.test("two 1099-NEC payers reconcile to a reviewed Schedule C and Form 1040"
 
 Deno.test("1099-NEC export rejects a recipient who differs from the business proprietor", async () => {
   const pending = buildPending({
+    f1099nec: {
+      f1099necs: [{
+        payer_name: "Client One",
+        payer_tin: "123456789",
+        recipient_ssn: "111223333",
+        box1_nec: 5_000,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "consulting",
+      }],
+    },
     schedule_c: {
       schedule_cs: [{
         business_reference: "consulting",
@@ -144,6 +154,26 @@ Deno.test("1099-NEC export rejects a recipient who differs from the business pro
 
 Deno.test("1099-NEC and 1099-MISC receipts cannot exceed one business's gross receipts", async () => {
   const pending = buildPending({
+    f1099nec: {
+      f1099necs: [{
+        payer_name: "Client One",
+        payer_tin: "123456789",
+        recipient_ssn: "987654321",
+        box1_nec: 3_000,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "consulting",
+      }],
+    },
+    f1099m: {
+      f1099ms: [{
+        payer_name: "Property Client",
+        payer_tin: "223456789",
+        recipient_tin: "987654321",
+        box1_rents: 3_000,
+        box1_rents_routing: "schedule_c",
+        schedule_c_business_reference: "consulting",
+      }],
+    },
     schedule_c: {
       schedule_cs: [{
         business_reference: "consulting",
