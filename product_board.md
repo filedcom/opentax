@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **744 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **747 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 744 bounded routes and
+**Implemented coverage.** The completed ledger records 747 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -160,7 +160,8 @@ and derives binary-attachment references through the same ID function.
 Reopening an archived outbound A2A submission now also replays document order,
 counts, IDs, references, and PDF attachment entries against its stored ZIP.
 Recording outbound Send evidence now rejects malformed or misidentified inner
-submission ZIPs before storage. A source-backed two-account Form 8888 fixture
+submission ZIPs before storage, including noncanonical tag/position IDs inside
+the archived return. A source-backed two-account Form 8888 fixture
 and a payer-issued Form 2439 Copy B fixture are prepared for the filled-PDF
 review batch. Reopening stored A2A evidence now replays submission IDs and
 inbound correlation against archived bytes.
@@ -277,6 +278,8 @@ Form 8288-A withholding now deposits to Form 1040 line 25c; final native/PDF
 export checks the combined retained Form 8288-A, W-2G, Form 8805, and Form
 8959 withholding lower bound. Unmodeled families and exact source equality
 remain open.
+Final native/PDF export also reconciles Form 1040 refund line 35a, any line 36
+election, and line 38 penalty to line 34 overpayment.
 Schedule H positive unrelated-worker withholding now requires a distinct
 reviewed W-4 request and employer agreement for FICA-only and FUTA payroll.
 Scenario 8's code-Q Roth IRA gross now prints on line 4a in native/PDF; the
