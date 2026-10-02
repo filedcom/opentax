@@ -944,6 +944,7 @@ function isEitcQualifyingChild(
 
 function eitcQualifyingChildren(
   deps: DependentItem[],
+  ownerSsns: ReadonlySet<string>,
 ): Array<
   DependentItem & {
     ssn: string;
@@ -958,6 +959,11 @@ function eitcQualifyingChildren(
   const seenSsns = new Set<string>();
   for (const child of children) {
     const ssn = child.ssn.replaceAll("-", "");
+    if (ownerSsns.has(ssn)) {
+      throw new Error(
+        "Schedule EIC child cannot use filer or joint-spouse SSN",
+      );
+    }
     if (seenSsns.has(ssn)) {
       throw new Error("Schedule EIC qualifying children need unique SSNs");
     }
@@ -1311,7 +1317,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       dep.ptc_tax_return !== undefined
     );
     const dependentsModifiedAgi = ptcDependentsModifiedAgi(claimedDeps);
-    const eitcChildren = eitcQualifyingChildren(deps);
+    const ownerSsns = new Set(
+      [parsed.taxpayer_ssn, parsed.spouse_ssn]
+        .filter((ssn): ssn is string => ssn !== undefined)
+        .map((ssn) => ssn.replaceAll("-", "")),
+    );
+    const eitcChildren = eitcQualifyingChildren(deps, ownerSsns);
     if (parsed.mfs_eitc_separation_review) {
       if (parsed.filing_status !== FilingStatus.MFS) {
         throw new Error(

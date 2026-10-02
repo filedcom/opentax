@@ -29,6 +29,17 @@ source-backed three-child fixture exercises ordinary 12 and 8 months plus a
 December-born child with one actual month and printed 12, including TY2025
 schema validation and a rendered filled PDF review.
 
+The three-child source audit also found that a child's SSN could equal the
+taxpayer's SSN and still reach the EIC graph and PDF projection. The general
+EIC child selection now rejects an SSN reused by the taxpayer or spouse; the
+shared final-export source check rejects a child SSN reused by the filer or
+joint spouse before either native or PDF filing. A source-preserving
+three-child graph/PDF/XML case validates against the local TY2025 v5.4 XSD;
+negative cases cover a taxpayer collision in calculation and both filer and
+joint-spouse collisions at final export. The native Schedule EIC serializer
+already rejected filer/spouse collisions; the added shared check closes the
+PDF/final-bundle gap.
+
 The route does not yet model the printed **7** when actual U.S. residence
 exceeded half the year but was under seven calendar months, a birth-year child
 whose home was the filer's for more than half their life but less than the

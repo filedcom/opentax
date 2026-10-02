@@ -426,6 +426,15 @@ export function assertEitcChildSources(
     if (!ssn || seen.has(ssn) || matches.length !== 1) {
       throw new Error("Schedule EIC child needs one matching general source");
     }
+    if (
+      ssn === tin(filer.primarySSN, "EIC filer") ||
+      (filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        ssn === tin(filer.spouse?.ssn, "EIC joint spouse"))
+    ) {
+      throw new Error(
+        "Schedule EIC child cannot use filer or joint-spouse SSN",
+      );
+    }
     seen.add(ssn);
     const dep = matches[0] as Record<string, unknown>;
     const release = dep.custodial_eitc_release_review as

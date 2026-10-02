@@ -117,7 +117,7 @@ Deno.test("Schedule EIC rejects duplicate SSNs and invalid residence", () => {
         }],
       }),
     Error,
-    "seven through twelve U.S. residence months",
+    "seven through twelve U.S. months",
   );
 });
 
