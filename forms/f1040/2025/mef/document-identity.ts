@@ -24,6 +24,8 @@ const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
   EligDeferredCompItemStmt: "EligibleDeferredCompensationItemStatement",
   F1098RecpntNmTINAddrStatement: "Form1098RecipientNameTINAndAddressStatement",
   InlgblDeferredCompItemStmt: "IneligibleDeferredCompensationItemStatement",
+  MultipleTransfereeStmt: "MultipleTransfereeStatement",
+  NetAdjustmentTransferStmt: "NetAdjustmentTransferStatement",
   NongrantorTrBeneficialIntStmt: "NongrantorTrustsBeneficialInterestStatement",
   NontxUseFuelsCrCardUsersStmt: "NontaxableUseFuelsCreditCardUsersStatement",
   OtherAssetsNotIncludedStmt: "OtherAssetsNotIncludedStatement",
@@ -35,6 +37,7 @@ const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
     "PostponementOfCropInsuranceAndDisasterPaymentsStatement",
   SpecifiedTaxDeferredAcctStmt: "SpecifiedTaxDeferredAccountsStatement",
   TaxationOfExcessDistriStmt: "TaxationOfExcessDistributionStmt",
+  ToWhomKeroseneFuelSoldStmt: "ToWhomKeroseneFuelSoldStatement",
 };
 
 /** Match each referenced document to a declared schema document name. */
