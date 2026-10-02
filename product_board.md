@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **781 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **782 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 781 bounded routes and
+**Implemented coverage.** The completed ledger records 782 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -300,8 +300,9 @@ income types remain open.
 Native and PDF Form 1040 now reject a positive line 1h with no supported
 retained source, overlapping source types, or a mismatch with filed/AGI totals.
 Exact identified duplicate 1099-R payer copies now reject before their income
-or withholding accumulates and again at native/PDF projection; changed-copy
-correction lineage remains open.
+or withholding accumulates and again at native/PDF projection. The identity key
+now ignores changed box amounts under the same explicit issued-copy reference;
+corrected-copy lineage remains open.
 The retained ACTC opt-out
 now reaches the Form 1040 line 28 native indicator and PDF checkbox, and
 conflicting Form 8812 item answers reject. The wider core-return and PDF
