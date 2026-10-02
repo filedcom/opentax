@@ -329,8 +329,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **65 distinct
-registered PDF keys out of 112**; **47 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **67 distinct
+registered PDF keys out of 112**; **45 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -407,14 +407,14 @@ on Form 8396 linked to Schedule 3. Existing full-return graph tests establish
 the source shapes and cross-form joins; the held bulk run must still establish
 the new fixtures' XML validity and filled-page output.
 
-Uncovered registered PDF keys at this checkpoint (47):
+Uncovered registered PDF keys at this checkpoint (45):
 
 ```text
-f2106 f2210f f2439 f4136 f4255 f4835
+f2106 f2210f f4136 f4255 f4835
 f5471_parent f5471_schedule_e f5471_schedule_h f5471_schedule_i1
 f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
 f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
-f8859 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
+f8859 f8864 f8881 f8882 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
 form8582cr
 form8839 form8853
@@ -456,8 +456,9 @@ owner. Run it only after human review:
 deno run --allow-read --allow-run=xmllint scripts/check-ty2025-pdf-review.ts /absolute/review-directory /absolute/path/Return1040.xsd
 ```
 
-The checker compares the manifest against the checked-in fixture list and
-source records, recomputes PDF/XML/source hashes, checks PDF page counts, and
+The checker compares the manifest's expected forms, owners, and review focus
+against the checked-in fixture list and source records, recomputes
+PDF/XML/source hashes, checks PDF page counts, and
 reruns the XML schema validation against the recorded XSD digest. It does not
 inspect visual correctness or set any review flag itself. A successful command
 means the recorded human checklist is complete and the named artifacts have

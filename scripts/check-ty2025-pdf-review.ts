@@ -119,6 +119,11 @@ for (const [index, rawCase] of cases.entries()) {
     fixture.expectedPdfForms,
     `${id} expected PDF forms`,
   );
+  expectedStrings(
+    entry.reviewFocus,
+    fixture.reviewFocus,
+    `${id} review focus`,
+  );
   checked(entry.xsdValidated, `${id} recorded XSD result`);
 
   const expectedOwners: Data[] = [{
@@ -154,6 +159,11 @@ for (const [index, rawCase] of cases.entries()) {
     sourceData.expectedPdfForms,
     fixture.expectedPdfForms,
     `${id} source PDF forms`,
+  );
+  expectedStrings(
+    sourceData.reviewFocus,
+    fixture.reviewFocus,
+    `${id} source review focus`,
   );
   if (
     JSON.stringify(sourceData.filer) !== JSON.stringify(fixture.filer) ||

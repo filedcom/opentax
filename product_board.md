@@ -115,7 +115,9 @@ and a deterministic per-page review manifest; the 45 uncovered keys remain open.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
 human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
-results without auto-certifying visual correctness.
+results without auto-certifying visual correctness. The checker now also
+requires the manifest and source record to preserve each fixture's exact
+review focus before accepting a completed checklist.
 The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
 smoke of each compiled asset before upload, limits write permission to the
 publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios
