@@ -12,6 +12,27 @@ if (!asset || !expectedVersion || Deno.args.length !== 2) {
 const binary = resolve(asset);
 const decoder = new TextDecoder();
 const workingDir = await Deno.makeTempDir({ prefix: "opentax-release-smoke-" });
+const wages = 40_000;
+const withholding = 5_000;
+
+function oneDocument(xml: string, tag: string): string {
+  const matches = [
+    ...xml.matchAll(new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?<\\/${tag}>`, "g")),
+  ];
+  if (matches.length !== 1) {
+    throw new Error(`Built asset MeF return needs exactly one ${tag} document`);
+  }
+  return matches[0][0];
+}
+
+function assertXmlValue(xml: string, tag: string, expected: string): void {
+  const matches = [
+    ...xml.matchAll(new RegExp(`<${tag}>([^<]*)<\\/${tag}>`, "g")),
+  ];
+  if (matches.length !== 1 || matches[0][1] !== expected) {
+    throw new Error(`Built asset MeF ${tag} differs from synthetic source`);
+  }
+}
 
 async function invoke(...args: string[]): Promise<string> {
   const result = await new Deno.Command(binary, {
@@ -59,14 +80,17 @@ try {
     address_state: "TX",
     address_zip: "78701",
     digital_assets: false,
+    taxpayer_signature_pin: "12345",
+    taxpayer_signature_date: "2026-04-15",
   };
   const w2 = {
-    box1_wages: 75_000,
-    box2_fed_withheld: 11_000,
-    box3_ss_wages: 75_000,
-    box4_ss_withheld: 4_650,
-    box5_medicare_wages: 75_000,
-    box6_medicare_withheld: 1_087.5,
+    employee_ssn: "111-22-3333",
+    box1_wages: wages,
+    box2_fed_withheld: withholding,
+    box3_ss_wages: wages,
+    box4_ss_withheld: 2_480,
+    box5_medicare_wages: wages,
+    box6_medicare_withheld: 580,
     employer_ein: "12-3456789",
     employer_name: "Example Employer",
     employer_address_line1: "10 Employer Road",
@@ -99,12 +123,28 @@ try {
     await invoke("return", "get", "--returnId", returnId),
   );
   if (
-    computed.summary?.line1z_total_wages !== 75_000 ||
-    computed.summary?.line33_total_payments !== 11_000 ||
-    computed.lines?.line25a_w2_withheld !== 11_000
+    computed.summary?.line1z_total_wages !== wages ||
+    computed.summary?.line33_total_payments !== withholding ||
+    computed.lines?.line25a_w2_withheld !== withholding
   ) {
     throw new Error(
       "Built asset W-2 calculation differs from synthetic source",
+    );
+  }
+
+  const validation = JSON.parse(
+    await invoke("return", "validate", "--returnId", returnId),
+  );
+  if (
+    validation.canFile !== true ||
+    !Array.isArray(validation.entries) ||
+    typeof validation.summary?.total !== "number" ||
+    validation.summary?.rejected !== 0
+  ) {
+    throw new Error(
+      `Built asset CLI validation rejected the synthetic return (${
+        validation.summary?.rejected ?? "invalid"
+      } rule failures)`,
     );
   }
 
@@ -116,12 +156,21 @@ try {
     "--type",
     "mef",
   );
-  if (
-    !xml.includes("<Return") || !xml.includes("<IRS1040 documentId=") ||
-    !xml.includes("<IRSW2 documentId=") || xml.includes("DRAFT/INCOMPLETE")
-  ) {
+  if (!xml.includes("<Return") || xml.includes("DRAFT/INCOMPLETE")) {
     throw new Error("Built asset did not export a finalized W-2 MeF return");
   }
+  const form1040 = oneDocument(xml, "IRS1040");
+  const formW2 = oneDocument(xml, "IRSW2");
+  assertXmlValue(xml, "PrimarySSN", "111223333");
+  assertXmlValue(form1040, "IndividualReturnFilingStatusCd", "1");
+  assertXmlValue(form1040, "WagesAmt", String(wages));
+  assertXmlValue(form1040, "WagesSalariesAndTipsAmt", String(wages));
+  assertXmlValue(form1040, "FormW2WithheldTaxAmt", String(withholding));
+  assertXmlValue(form1040, "TotalPaymentsAmt", String(withholding));
+  assertXmlValue(formW2, "EmployeeSSN", "111223333");
+  assertXmlValue(formW2, "EmployerEIN", "123456789");
+  assertXmlValue(formW2, "WagesAmt", String(wages));
+  assertXmlValue(formW2, "WithholdingAmt", String(withholding));
 
   const pdfPath = join(workingDir, "synthetic-return.pdf");
   await invoke(

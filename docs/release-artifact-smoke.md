@@ -16,9 +16,12 @@ identity.
 `scripts/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
 source CLI, from an isolated temporary working directory. It checks the injected
 version, creates a synthetic TY2025 Single return, adds full filer and W-2
-source facts, checks computed wages and withholding, exports finalized MeF XML
-with both `IRS1040` and `IRSW2` documents, and loads the exported PDF to require
-at least two pages. It never passes `--force` or `--draft`. The temporary return,
+source facts, checks computed wages and withholding, requires CLI validation to
+find no applicable rule failures, and exports finalized MeF XML with exactly one
+`IRS1040` and one `IRSW2` document. It checks filer identity, filing status,
+employer identity, wages, and withholding against the synthetic source in those
+documents, then loads the exported PDF to require at least two pages. It never
+passes `--force` or `--draft`. The temporary return,
 XML output, PDF and downloaded IRS template cache are deleted after the run.
 
 For a manually built native asset on a matching machine, run:

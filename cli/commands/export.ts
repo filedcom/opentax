@@ -95,7 +95,7 @@ const TRANSMISSION_ONLY_RULES = new Set([
   "R0000-229",
 ]);
 
-function isTransmissionOnlyRule(ruleNumber: string): boolean {
+export function isTransmissionOnlyRule(ruleNumber: string): boolean {
   if (TRANSMISSION_ONLY_RULES.has(ruleNumber)) return true;
   const indNumber = /^IND-(\d+)/.exec(ruleNumber);
   if (!indNumber) return false;
@@ -136,7 +136,7 @@ interface EmittedValidationScope {
   readonly returnVersion?: string;
 }
 
-function emittedValidationScope(xml: string): EmittedValidationScope {
+export function emittedValidationScope(xml: string): EmittedValidationScope {
   const prefixes = new Set<string>(ALWAYS_APPLICABLE_RULE_PREFIXES);
   const formCounts = new Map<string, number>();
   for (const match of xml.matchAll(/<(IRS[A-Za-z0-9]+) documentId=/g)) {
