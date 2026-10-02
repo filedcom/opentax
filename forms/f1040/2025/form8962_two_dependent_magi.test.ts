@@ -204,7 +204,7 @@ Deno.test("Form 8962 two-dependent family rejects changed source, identity, poli
         }),
       }),
     Error,
-    "filed Form 1040 wages, interest, and AGI",
+    "filed Form 1040 wages, interest, dividends, and AGI",
   );
   assertThrows(
     () =>

@@ -371,7 +371,7 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
         },
       }),
     Error,
-    "needs its K-1",
+    "needs one K-1, filed Schedule E royalty row, finalized Schedule 1, Schedule A, and Form 1040",
   );
   assertThrows(
     () =>

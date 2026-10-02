@@ -300,7 +300,7 @@ Deno.test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return
         }),
       }),
     Error,
-    "filed Form 1040 wages, interest, and AGI",
+    "filed Form 1040 wages, interest, dividends, and AGI",
   );
   assertThrows(
     () =>
