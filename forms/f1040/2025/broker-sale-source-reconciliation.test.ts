@@ -148,3 +148,30 @@ Deno.test("identified sale cannot be counted through both 1099-B and direct 8949
     "repeat the same identified broker sale",
   );
 });
+
+Deno.test("the same sale label from separately referenced broker statements remains distinct", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [
+      { ...brokerRows[0], source_document_reference: "broker-a-2025" },
+    ],
+    f8949: [{
+      part: Form8949Part.A,
+      description: "Other broker sale",
+      source_transaction_id: "sale1",
+      broker_statement_reference: "broker-b-2025",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 200,
+      cost_basis: 100,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line7_capital_gain, 400);
+  const pending = buildPending(result.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>400</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+});

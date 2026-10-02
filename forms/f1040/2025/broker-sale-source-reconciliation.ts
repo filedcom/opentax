@@ -9,13 +9,23 @@ export function assertNoRepeatedBrokerSaleSources(
   if (brokerSource === undefined || directSaleSource === undefined) return;
   const brokerRows = brokerSchema.parse(brokerSource).f1099bs;
   const directRows = saleSchema.parse(directSaleSource).f8949s;
-  const brokerIds = new Set(
-    brokerRows.map((row) => row.transaction_id).filter((id) =>
-      id !== undefined
-    ),
-  );
+  const brokerById = new Map<string, Array<string | undefined>>();
+  for (const row of brokerRows) {
+    if (!row.transaction_id) continue;
+    const references = brokerById.get(row.transaction_id) ?? [];
+    references.push(row.source_document_reference);
+    brokerById.set(row.transaction_id, references);
+  }
   for (const row of directRows) {
-    if (row.source_transaction_id && brokerIds.has(row.source_transaction_id)) {
+    const references = row.source_transaction_id
+      ? brokerById.get(row.source_transaction_id)
+      : undefined;
+    if (
+      references?.some((reference) =>
+        !reference || !row.broker_statement_reference ||
+        reference === row.broker_statement_reference
+      )
+    ) {
       throw new Error(
         "Form 1099-B and direct Form 8949 repeat the same identified broker sale",
       );
