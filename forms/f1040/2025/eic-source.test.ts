@@ -69,3 +69,19 @@ Deno.test("export rejects EIC when K-1 Form 4797 line 10 passive character is un
     );
   }
 });
+
+Deno.test("export rejects a positive EIC with a matching over-limit Worksheet 1 total", () => {
+  assertThrows(
+    () =>
+      assertEicSource("single", 500, true, {
+        f1040: { line2a_tax_exempt: 11_951 },
+        eitc: {
+          credit_amount: 500,
+          qualifying_children: 0,
+          investment_income_floor: 11_951,
+        },
+      }),
+    Error,
+    "investment income exceeds the 2025 limit",
+  );
+});

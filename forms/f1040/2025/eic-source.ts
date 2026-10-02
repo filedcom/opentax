@@ -33,6 +33,7 @@ import {
 } from "../nodes/inputs/k1_passive_eic.ts";
 import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
+import { EITC_INVESTMENT_INCOME_LIMIT_2025 } from "../nodes/config/2025.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -197,6 +198,9 @@ export function assertEicSource(
     throw new Error(
       "Form 1040 EIC investment income differs from filed interest, dividends, gains, royalties, and rent",
     );
+  }
+  if (investmentIncomeFloor > EITC_INVESTMENT_INCOME_LIMIT_2025) {
+    throw new Error("Form 1040 EIC investment income exceeds the 2025 limit");
   }
   const source = generalInputSchema.safeParse(pending?.general);
   const form8862 = f8862InputSchema.safeParse(pending?.f8862);
