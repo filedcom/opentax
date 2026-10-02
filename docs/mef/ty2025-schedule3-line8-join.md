@@ -41,3 +41,17 @@ exporters. A bare or changed fuel credit, or an omitted positive Form 4136
 credit, rejects. The Form 4136 source validator remains responsible for its
 claim details; this check proves only that the filed Schedule 3 amount equals
 the retained calculated total.
+
+Finalized Schedule 3 payment lines 9–11 now have a shared native/PDF source
+check. Line 9 equals the retained Form 8962 net credit, with its calculation
+validated by the Form 8962 descriptor. Line 10 equals the reviewed extension
+payment and its evidence amount; the final builders also check the payer,
+year, and Form 1040 lines 31–33. Line 11 is calculated from retained W-2 box 4
+amounts by employee and distinct employer, using the [2025 Form 1040 line 11
+instructions](https://www.irs.gov/instructions/i1040gi) maximum of $10,918.20
+and $176,100 wage base. The graph now rounds the credit to the whole-dollar
+amount carried to Form 1040. A single employer's overcollection and a joint
+couple's combined withholding cannot create the credit. The Form 4852 graph
+no longer emits total substitute Social Security withholding as if it were an
+excess credit; a positive substitute-backed claim remains closed until owner
+and employer-level calculation facts can be proved.

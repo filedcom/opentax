@@ -1391,7 +1391,7 @@ Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regula
 // 7. Excess SS withholding (multiple employers)
 // ============================================================
 
-Deno.test("two_employers_at_max_ss_produce_exact_excess_on_schedule3: 2 × $10,918.20 → excess = $10,918.20", () => {
+Deno.test("two_employers_at_max_ss_round_excess_on_schedule3: 2 × $10,918.20 → filed excess = $10,918", () => {
   const result = compute([
     minimalItem({
       box1_wages: 176100,
@@ -1404,7 +1404,7 @@ Deno.test("two_employers_at_max_ss_produce_exact_excess_on_schedule3: 2 × $10,9
       box4_ss_withheld: 10918.20,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918.20);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918);
 });
 
 Deno.test("single_employer_at_max_ss_no_excess_schedule3: single employer does not produce schedule3", () => {

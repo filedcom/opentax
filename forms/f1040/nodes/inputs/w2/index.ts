@@ -657,7 +657,7 @@ function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
     (sum, item) => sum + (item.box4_ss_withheld ?? 0),
     0,
   );
-  const excess = totalSsWithheld - ssTaxPerEmployer;
+  const excess = Math.round(totalSsWithheld - ssTaxPerEmployer);
   if (w2s.length < 2 || excess <= 0) return [];
   return [output(schedule3, { line11_excess_ss: excess })];
 }

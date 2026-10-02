@@ -4489,7 +4489,7 @@ Deno.test({
   };
   const result = runReturn({
     general,
-    w2: [w2Item(30_120, 3_000)],
+    w2: [{ ...w2Item(30_120, 3_000), employee_ssn: general.taxpayer_ssn }],
     f1095a: [
       {
         issuer_name: "First Marketplace Plan",
@@ -9612,6 +9612,38 @@ Deno.test(
     await validateXsd(xml, "Single W-2 $75K");
   },
 );
+
+Deno.test({
+  name:
+    "XSD: two employer W-2 excess Social Security reaches Schedule 3 and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const first = {
+    ...w2Item(100_000, 0),
+    employee_ssn: general.taxpayer_ssn,
+  };
+  const result = runReturn({
+    general,
+    w2: [first, { ...first, employer_ein: "98-7654321" }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.schedule3?.line11_excess_ss, 1_482);
+  assertEquals(pending.schedule3?.line15_total, 1_482);
+  assertEquals(pending.f1040?.line31_additional_payments, 1_482);
+  const xml = buildMefXml(
+    pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<ExcessSocSecAndTier1RRTATaxAmt>1482</ExcessSocSecAndTier1RRTATaxAmt>",
+  );
+  await validateXsd(xml, "two employer W-2 excess Social Security");
+});
 
 // ── Scenario 2: Self-employed Schedule C $80K ───────────────────────────────
 

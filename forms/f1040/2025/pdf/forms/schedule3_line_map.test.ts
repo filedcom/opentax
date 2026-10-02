@@ -103,6 +103,105 @@ Deno.test("finalized Schedule 3 PDF rejects omitted and changed subtotals", () =
   );
 });
 
+Deno.test("finalized Schedule 3 PDF rejects unsourced premium, extension, and excess SS payments", () => {
+  for (
+    const line of [
+      "line9_premium_tax_credit",
+      "line10_amount_paid_extension",
+      "line11_excess_ss",
+    ]
+  ) {
+    assertThrows(
+      () =>
+        schedule3Pdf.projectFields?.(
+          { [line]: 100, line15_total: 100 },
+          { f1040: { line31_additional_payments: 100 } },
+        ),
+      Error,
+      "source",
+    );
+  }
+});
+
+Deno.test("finalized Schedule 3 PDF line 11 replays W-2 source", () => {
+  const w2 = {
+    w2s: [
+      {
+        employer_ein: "111111111",
+        employee_ssn: "123456789",
+        box1_wages: 100_000,
+        box2_fed_withheld: 0,
+        box3_ss_wages: 100_000,
+        box4_ss_withheld: 6_200,
+      },
+      {
+        employer_ein: "222222222",
+        employee_ssn: "123456789",
+        box1_wages: 100_000,
+        box2_fed_withheld: 0,
+        box3_ss_wages: 100_000,
+        box4_ss_withheld: 6_200,
+      },
+    ],
+  };
+  const fields = { line11_excess_ss: 1_482, line15_total: 1_482 };
+  const pending = { f1040: { line31_additional_payments: 1_482 }, w2 };
+  assertEquals(schedule3Pdf.projectFields?.(fields, pending), fields);
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { line11_excess_ss: 1_481, line15_total: 1_481 },
+        { ...pending, f1040: { line31_additional_payments: 1_481 } },
+      ),
+    Error,
+    "differs from W-2 source",
+  );
+});
+
+Deno.test("finalized Schedule 3 PDF replays Form 8962 and extension payments", () => {
+  const fields = {
+    line9_premium_tax_credit: 100,
+    line10_amount_paid_extension: 100,
+    line15_total: 200,
+  };
+  const pending = {
+    f1040: { line31_additional_payments: 200 },
+    form8962: { net_premium_tax_credit: 100 },
+    ext: {
+      produce_4868: "X",
+      line_7_amount_paying: 100,
+      payment_evidence: {
+        tax_year: 2025,
+        primary_ssn: "123456789",
+        payment_date: "2026-04-15",
+        amount: 100,
+        payment_confirmation_reference: "payment-100",
+        extension_request_reference: "extension-100",
+        extension_request_accepted_confirmed: true,
+      },
+    },
+  };
+  assertEquals(schedule3Pdf.projectFields?.(fields, pending), fields);
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { ...fields, line9_premium_tax_credit: 99, line15_total: 199 },
+        { ...pending, f1040: { line31_additional_payments: 199 } },
+      ),
+    Error,
+    "differs from Form 8962 source",
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { ...fields, line10_amount_paid_extension: 99, line15_total: 199 },
+        { ...pending, f1040: { line31_additional_payments: 199 } },
+      ),
+    Error,
+    "differs from extension payment source",
+  );
+});
+
 Deno.test("Schedule 3 PDF line 12 rejects a bare Form 4136 credit", () => {
   assertThrows(
     () => schedule3Pdf.projectFields?.({ line12_fuel_tax_credit: 125 }, {}),

@@ -44,6 +44,14 @@ function f1040Fields(result: ReturnType<typeof compute>) {
   return (findOutput(result, "f1040")?.fields ?? {}) as Record<string, unknown>;
 }
 
+Deno.test("Form 4852 withholding does not become an uncalculated Schedule 3 excess credit", () => {
+  const result = compute([
+    w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
+    w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
+  ]);
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
 Deno.test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () => {
   const result = compute([w2Item({
     wages: 220_000,
@@ -322,10 +330,11 @@ Deno.test("f4852: code-1 substitute identifies the recipient of Form 5329", () =
 
 Deno.test("f4852: code-1 substitute without a recipient fails closed", () => {
   assertThrows(
-    () => compute([r1099Item({
-      gross_distribution: 5_000,
-      distribution_code: "1",
-    })]),
+    () =>
+      compute([r1099Item({
+        gross_distribution: 5_000,
+        distribution_code: "1",
+      })]),
     Error,
     "Form 5329 recipient",
   );

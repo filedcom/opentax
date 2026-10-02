@@ -93,6 +93,184 @@ Deno.test("finalized Schedule 3 rejects changed credit and payment subtotals", (
   );
 });
 
+Deno.test("finalized Schedule 3 rejects unsourced premium, extension, and excess SS payments", () => {
+  for (
+    const line of [
+      "line9_premium_tax_credit",
+      "line10_amount_paid_extension",
+      "line11_excess_ss",
+    ]
+  ) {
+    assertThrows(
+      () =>
+        schedule3.build(
+          { [line]: 100, line15_total: 100 },
+          { pending: { f1040: { line31_additional_payments: 100 } } },
+        ),
+      Error,
+      "source",
+    );
+  }
+});
+
+Deno.test("finalized Schedule 3 line 11 replays separate W-2 employers", () => {
+  const w2 = {
+    w2s: [
+      {
+        employer_ein: "111111111",
+        employee_ssn: "123456789",
+        box1_wages: 100_000,
+        box2_fed_withheld: 0,
+        box3_ss_wages: 100_000,
+        box4_ss_withheld: 6_200,
+      },
+      {
+        employer_ein: "222222222",
+        employee_ssn: "123456789",
+        box1_wages: 100_000,
+        box2_fed_withheld: 0,
+        box3_ss_wages: 100_000,
+        box4_ss_withheld: 6_200,
+      },
+    ],
+  };
+  const pending = { f1040: { line31_additional_payments: 1_482 }, w2 };
+  assertStringIncludes(
+    schedule3.build({ line11_excess_ss: 1_482, line15_total: 1_482 }, {
+      pending,
+    }),
+    "<ExcessSocSecAndTier1RRTATaxAmt>1482</ExcessSocSecAndTier1RRTATaxAmt>",
+  );
+  for (const changed of [0, 1_481]) {
+    assertThrows(
+      () =>
+        schedule3.build(
+          { line11_excess_ss: changed, line15_total: changed },
+          {
+            pending: {
+              ...pending,
+              f1040: { line31_additional_payments: changed },
+            },
+          },
+        ),
+      Error,
+      "differs from W-2 source",
+    );
+  }
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line11_excess_ss: 1_482, line15_total: 1_482 },
+        {
+          pending: {
+            ...pending,
+            w2: {
+              w2s: [w2.w2s[0], { ...w2.w2s[1], employee_ssn: "987654321" }],
+            },
+          },
+        },
+      ),
+    Error,
+    "differs from W-2 source",
+  );
+});
+
+Deno.test("finalized Schedule 3 rejects raw Form 4852 withholding as excess credit", () => {
+  const source = {
+    f4852s: [
+      {
+        form_type: "W2",
+        payer_name: "First employer",
+        wages: 100_000,
+        federal_withheld: 0,
+        social_security_wages: 100_000,
+        social_security_withheld: 6_200,
+      },
+      {
+        form_type: "W2",
+        payer_name: "Second employer",
+        wages: 100_000,
+        federal_withheld: 0,
+        social_security_wages: 100_000,
+        social_security_withheld: 6_200,
+      },
+    ],
+  };
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line11_excess_ss: 12_400, line15_total: 12_400 },
+        {
+          pending: {
+            f1040: { line31_additional_payments: 12_400 },
+            f4852: source,
+          },
+        },
+      ),
+    Error,
+    "Form 4852 source needs reviewed excess",
+  );
+});
+
+Deno.test("finalized Schedule 3 line 9 replays Form 8962 net credit", () => {
+  const pending = {
+    f1040: { line31_additional_payments: 100 },
+    form8962: { net_premium_tax_credit: 100 },
+  };
+  assertStringIncludes(
+    schedule3.build({ line9_premium_tax_credit: 100, line15_total: 100 }, {
+      pending,
+    }),
+    "<ReconciledPremiumTaxCreditAmt>100</ReconciledPremiumTaxCreditAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line9_premium_tax_credit: 99, line15_total: 99 },
+        { pending: { ...pending, f1040: { line31_additional_payments: 99 } } },
+      ),
+    Error,
+    "differs from Form 8962 source",
+  );
+  assertThrows(
+    () => schedule3.build({}, { pending: { ...pending, f1040: {} } }),
+    Error,
+    "differs from Form 8962 source",
+  );
+});
+
+Deno.test("finalized Schedule 3 line 10 replays reviewed extension payment", () => {
+  const ext = {
+    produce_4868: "X",
+    line_7_amount_paying: 100,
+    payment_evidence: {
+      tax_year: 2025,
+      primary_ssn: "123456789",
+      payment_date: "2026-04-15",
+      amount: 100,
+      payment_confirmation_reference: "payment-100",
+      extension_request_reference: "extension-100",
+      extension_request_accepted_confirmed: true,
+    },
+  };
+  const pending = { f1040: { line31_additional_payments: 100 }, ext };
+  assertStringIncludes(
+    schedule3.build({ line10_amount_paid_extension: 100, line15_total: 100 }, {
+      pending,
+    }),
+    "<RequestForExtensionAmt>100</RequestForExtensionAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line10_amount_paid_extension: 99, line15_total: 99 },
+        { pending: { ...pending, f1040: { line31_additional_payments: 99 } } },
+      ),
+    Error,
+    "differs from extension payment source",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------

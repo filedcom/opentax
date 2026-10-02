@@ -5,6 +5,7 @@ import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts"
 import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
 import { assertSchedule3PrintedTotals } from "../../schedule3_printed_totals.ts";
 import { assertSchedule3Line12Source } from "../../schedule3_line12_source.ts";
+import { assertSchedule3PaymentSources } from "../../schedule3_payment_sources.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -191,6 +192,7 @@ export const schedule3Pdf: PdfFormDescriptor = {
       ? { ...fields, line6l_form8978_credit: line6l }
       : fields;
     assertSchedule3PrintedTotals(projected, allPending);
+    assertSchedule3PaymentSources(projected, allPending);
     assertSchedule3Line6jSource(
       fields.line6j_alt_fuel_vehicle_refueling,
       allPending.f8911,

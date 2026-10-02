@@ -11,6 +11,7 @@ const foreignTaxCredit = {
 };
 const pending = {
   schedule3: foreignTaxCredit,
+  form8962: { net_premium_tax_credit: 100 },
   f1040: {
     line20_nonrefundable_credits: 75,
     line31_additional_payments: 100,
@@ -56,7 +57,10 @@ Deno.test("Schedule 3 native and PDF reject changed or missing Form 1040 line 20
 
 Deno.test("Schedule 3 line 8 join leaves a Part II only payment unchanged", () => {
   const partII = { line9_premium_tax_credit: 100, line15_total: 100 };
-  const paymentPending = { f1040: { line31_additional_payments: 100 } };
+  const paymentPending = {
+    f1040: { line31_additional_payments: 100 },
+    form8962: { net_premium_tax_credit: 100 },
+  };
   assertStringIncludes(
     schedule3.build(partII, { pending: paymentPending }),
     "<TotalOtherPaymentsRfdblCrAmt>100</TotalOtherPaymentsRfdblCrAmt>",
