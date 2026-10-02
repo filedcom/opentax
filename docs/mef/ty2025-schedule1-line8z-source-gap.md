@@ -1,5 +1,20 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 at-risk recapture source boundary
+
+The direct `at_risk_recapture` amount had a printable line 8z label but no
+retained activity-level recapture workpaper. Native return assembly accepted a
+bare $300 amount before this audit. The shared native/PDF statement builder now
+rejects a nonzero scalar. Source-backed Schedule C and F loss-limitation Form
+6198 paths are unchanged. The [2025 Form 6198 instructions](https://www.irs.gov/instructions/i6198)
+explain that recapture depends on the activity's amount at risk becoming
+negative after prior allowed losses. A positive route needs the activity,
+prior-year allowed loss and at-risk history, current-year decreases, and a
+calculation tying the resulting income to Schedule 1. The existing aggregate
+`form6198` node's recapture input has none of those retained facts, and its
+native descriptor refuses aggregate Form 6198 fields. Issued/prior-return
+evidence and the source-to-attachment join remain open.
+
 ## 2026-10-02 excess golden parachute source boundary
 
 `line8z_golden_parachute` had a fixed type label but no producer, payer record,
