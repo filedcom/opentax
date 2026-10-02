@@ -90,9 +90,22 @@ Deno.test("two S corporation code J sources reach line 8z, 1040, native statemen
     pending as unknown as Record<string, Record<string, unknown>>,
   );
   assertEquals(projected.line8z_other, 1_000);
-  assertStringIncludes(String(projected.line8z_description), "123456789");
-  assertStringIncludes(String(projected.line8z_description), "987654321");
-  await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assertEquals(projected.line8z_description, "SEE STATEMENT");
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  const extraction = new Deno.Command("pdftotext", {
+    args: ["-", "-"],
+    stdin: "piped",
+    stdout: "piped",
+    stderr: "piped",
+  }).spawn();
+  const writer = extraction.stdin.getWriter();
+  await writer.write(pdf);
+  await writer.close();
+  const output = await extraction.output();
+  assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
+  const text = new TextDecoder().decode(output.stdout);
+  assertStringIncludes(text, "123456789");
+  assertStringIncludes(text, "987654321");
 });
 
 Deno.test("S corporation code J rejects changed rows, K-1 copy, total and owner", async () => {
