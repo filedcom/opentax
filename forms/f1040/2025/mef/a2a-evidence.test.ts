@@ -27,7 +27,7 @@ async function digest(bytes: Uint8Array): Promise<string> {
 function packageFor(id = submissionId) {
   const archive = zipSync({
     "manifest/manifest.xml": encoder.encode(
-      `<IRSSubmissionManifest><SubmissionId>${id}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+      `<IRSSubmissionManifest><SubmissionId>${id}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
     ),
     "xml/submission.xml": encoder.encode(
       `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040></ReturnData></Return>`,
@@ -40,11 +40,52 @@ function packageFor(id = submissionId) {
   };
 }
 
+Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission ID day", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const impossibleDayId = "1234562026999abcdefg";
+    for (
+      const [index, id, replacement] of [
+        [0, submissionId, ""],
+        [1, submissionId, "<EFIN>654321</EFIN>"],
+        [2, impossibleDayId, "<EFIN>123456</EFIN>"],
+      ] as const
+    ) {
+      const source = packageFor(id);
+      const inner = unzipSync(
+        unzipSync(source.containerZipBytes)[`${id}.zip`],
+      );
+      inner["manifest/manifest.xml"] = encoder.encode(
+        new TextDecoder().decode(inner["manifest/manifest.xml"]).replace(
+          "<EFIN>123456</EFIN>",
+          replacement,
+        ),
+      );
+      await assertRejects(
+        () =>
+          recordA2aSendPackage(root, {
+            messageId: `${messageId}-identity-${index}`,
+            submissionIds: [id],
+            package: {
+              ...source,
+              containerZipBytes: zipSync({ [`${id}.zip`]: zipSync(inner) }),
+            },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
+          }),
+        Error,
+        "manifest or taxpayer differs",
+      );
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
   const root = await Deno.makeTempDir();
   try {
     const manifest = encoder.encode(
-      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
     );
     const xml = encoder.encode(
       `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><IRS8990 documentId="IRS89901"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
@@ -110,7 +151,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
   const root = await Deno.makeTempDir();
   try {
     const manifest = encoder.encode(
-      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
+      `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
     );
     const variants: Array<{
       xml: string;

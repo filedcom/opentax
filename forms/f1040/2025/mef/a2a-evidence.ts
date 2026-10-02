@@ -99,8 +99,15 @@ function assertSendSubmissionArchive(
   const manifest = decoder.decode(manifestBytes);
   const xml = decoder.decode(xmlBytes);
   const tin = oneXmlValue(manifest, "TIN");
+  const efin = oneXmlValue(manifest, "EFIN");
+  const year = Number(submissionId.slice(6, 10));
+  const julianDay = Number(submissionId.slice(10, 13));
+  const leapYear = year % 4 === 0 &&
+    (year % 100 !== 0 || year % 400 === 0);
   if (
     oneXmlValue(manifest, "SubmissionId") !== submissionId ||
+    efin !== submissionId.slice(0, 6) ||
+    julianDay < 1 || julianDay > (leapYear ? 366 : 365) ||
     oneXmlValue(manifest, "TaxYr") !== "2025" ||
     oneXmlValue(manifest, "GovernmentCd") !== "IRS" ||
     oneXmlValue(manifest, "FederalSubmissionTypeCd") !== "1040" ||
