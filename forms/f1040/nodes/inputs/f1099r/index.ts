@@ -210,6 +210,36 @@ export enum SelfCertificationReason {
   StateUnclaimedProperty = "state_unclaimed_property",
 }
 
+// Counties named in IRS notice MO-2025-02 (June 9, 2025). Later additions
+// require their own published-notice review before they can be claimed here.
+const MISSOURI_2025_DISASTER_COUNTIES = [
+  "Bollinger",
+  "Butler",
+  "Callaway",
+  "Camden",
+  "Carter",
+  "Dunklin",
+  "Franklin",
+  "Howell",
+  "Iron",
+  "Jefferson",
+  "Madison",
+  "New Madrid",
+  "Oregon",
+  "Ozark",
+  "Perry",
+  "Phelps",
+  "Reynolds",
+  "Ripley",
+  "Scott",
+  "Shannon",
+  "St. Louis",
+  "Stoddard",
+  "Wayne",
+  "Webster",
+  "Wright",
+] as const;
+
 // Per-item schema — one 1099-R from one payer
 export const itemSchema = z.object({
   // Required identifiers
@@ -387,6 +417,19 @@ export const itemSchema = z.object({
       release_record_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
     }).strict().optional(),
+    // Rev. Proc. 2018-58 section 8 includes the 60-day IRA rollover act.
+    // MO-2025-02 postpones eligible acts due March 14–November 2 to
+    // November 3, 2025, for residents of its named Missouri counties.
+    disaster_postponement: z.object({
+      irs_notice: z.literal("MO-2025-02"),
+      fema_declaration: z.literal("4867-DR"),
+      covered_county: z.enum(MISSOURI_2025_DISASTER_COUNTIES),
+      resident_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      resident_on: z.literal("2025-03-14"),
+      residence_record_reference: z.string().trim().min(1),
+      irs_notice_review_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
+    }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
@@ -502,7 +545,8 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
       rollover.automatic_late_waiver !== undefined ||
       rollover.self_certified_late_waiver !== undefined ||
       rollover.irs_private_letter_waiver !== undefined ||
-      rollover.frozen_deposit_extension !== undefined);
+      rollover.frozen_deposit_extension !== undefined ||
+      rollover.disaster_postponement !== undefined);
 }
 
 export function iraDistributionExplanation(
@@ -559,10 +603,14 @@ export function iraDistributionExplanation(
         new Date(frozenDepositDeadline(rollover)).toISOString().slice(0, 10)
       }. The source was reviewed as neither inherited nor an RMD.`
       : "";
+    const disaster = rollover.disaster_postponement;
+    const disasterText = disaster
+      ? ` IRS disaster notice ${disaster.irs_notice} postponed the 60-day rollover deadline to November 3, 2025, for this resident of ${disaster.covered_county} County, Missouri (FEMA ${disaster.fema_declaration}).`
+      : "";
     return [
       `Distribution ${
         index + 1
-      }: ${opening}${waiverText}${certificationText}${rulingText}${frozenText}`,
+      }: ${opening}${waiverText}${certificationText}${rulingText}${frozenText}${disasterText}`,
     ];
   });
   if (rows.length === 0) return undefined;
@@ -621,18 +669,48 @@ function validateLateWaiver(item: R1099Item): void {
   const certification = rollover.self_certified_late_waiver;
   const ruling = rollover.irs_private_letter_waiver;
   const frozen = rollover.frozen_deposit_extension;
+  const disaster = rollover.disaster_postponement;
   const distributed = Date.parse(rollover.distributed_on);
   const completed = Date.parse(rollover.completed_on);
   const elapsedDays = (completed - distributed) / 86_400_000;
   const directPlanRollover = rollover.destination === "qualified_plan" &&
     item.box7_distribution_code === DistributionCode.CodeG;
-  if (frozen && [waiver, certification, ruling].some(Boolean)) {
+  if ([waiver, certification, ruling].filter(Boolean).length > 1) {
+    throw new Error("IRA late rollover cannot claim two waiver methods");
+  }
+  if (
+    [frozen, disaster, waiver, certification, ruling].filter(Boolean)
+      .length > 1
+  ) {
     throw new Error(
       "IRA late rollover cannot claim multiple extension or waiver methods",
     );
   }
-  if ([waiver, certification, ruling].filter(Boolean).length > 1) {
-    throw new Error("IRA late rollover cannot claim two waiver methods");
+  if (disaster) {
+    const ordinaryDeadline = distributed + 60 * 86_400_000;
+    if (elapsedDays <= 60 || directPlanRollover) {
+      throw new Error(
+        "IRA disaster postponement needs an actual late 60-day rollover",
+      );
+    }
+    if (
+      ordinaryDeadline < Date.parse("2025-03-14") ||
+      ordinaryDeadline >= Date.parse("2025-11-03") ||
+      completed > Date.parse("2025-11-03") ||
+      disaster.resident_ssn.replaceAll("-", "") !==
+        item.recipient_ssn?.replaceAll("-", "") ||
+      new Set([
+          item.source_document_reference,
+          disaster.residence_record_reference,
+          disaster.irs_notice_review_reference,
+          disaster.deposit_confirmation_reference,
+        ]).size !== 4
+    ) {
+      throw new Error(
+        "IRA disaster postponement needs an eligible Missouri resident, distinct reviewed records, postponed original deadline, and deposit by November 3, 2025",
+      );
+    }
+    return;
   }
   if (frozen) {
     const freezeStart = Date.parse(frozen.frozen_on);
