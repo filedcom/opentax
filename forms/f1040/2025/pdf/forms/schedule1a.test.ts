@@ -1,4 +1,11 @@
-import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertFalse,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildMefBundle } from "../../mef/builder.ts";
 import { buildPending } from "../../mef/pending.ts";
@@ -421,14 +428,38 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   await schedule1aPdf.appendSupplementalPages?.(
     document,
     threeLoanProjected,
-    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    {
+      nameLine1: "EXAMPLE ALEX B",
+      firstNameWithInitial: "Alex B",
+      lastName: "Example",
+      primarySSN: "111223333",
+    } as never,
   );
   assertEquals(document.getPageCount(), 1);
+  const statementPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(statementPath, await document.save());
+    const rendered = await new Deno.Command("pdftotext", {
+      args: ["-layout", statementPath, "-"],
+    }).output();
+    assertEquals(rendered.code, 0);
+    const printed = new TextDecoder().decode(rendered.stdout);
+    assertStringIncludes(printed, "Name: Alex B Example");
+    assertFalse(printed.includes("EXAMPLE ALEX B"));
+    assertStringIncludes(printed, "Attached VINs 2-3: 3,000");
+  } finally {
+    await Deno.remove(statementPath);
+  }
   await assertRejects(async () =>
     await schedule1aPdf.appendSupplementalPages?.(
       await PDFDocument.create(),
       { ...threeLoanProjected, line22b_interest: 2_999 },
-      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+      {
+        nameLine1: "EXAMPLE ALEX B",
+        firstNameWithInitial: "Alex B",
+        lastName: "Example",
+        primarySSN: "111223333",
+      } as never,
     )
   );
   await assertRejects(async () =>
@@ -447,7 +478,12 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
           (threeLoanProjected.line22_overflow_vehicles as unknown[])[1],
         ],
       },
-      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+      {
+        nameLine1: "EXAMPLE ALEX B",
+        firstNameWithInitial: "Alex B",
+        lastName: "Example",
+        primarySSN: "111223333",
+      } as never,
     )
   );
   const twentyLoanSource = {
@@ -466,7 +502,12 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   await schedule1aPdf.appendSupplementalPages?.(
     multipage,
     twentyLoanProjected,
-    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    {
+      nameLine1: "EXAMPLE ALEX B",
+      firstNameWithInitial: "Alex B",
+      lastName: "Example",
+      primarySSN: "111223333",
+    } as never,
   );
   assertEquals(multipage.getPageCount(), 2);
 });

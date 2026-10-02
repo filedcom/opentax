@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import {
+  assertEquals,
+  assertFalse,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { appendSchedule1ATipsWorksheet } from "./schedule1a_tips_worksheet.ts";
 
@@ -21,12 +26,28 @@ Deno.test("Schedule 1-A employer tips worksheet paginates and reconciles", async
     line7_capped_tips: 6_000,
   };
   const filer = {
-    nameLine1: "Alex Example",
+    nameLine1: "EXAMPLE ALEX B",
+    firstNameWithInitial: "Alex B",
+    lastName: "Example",
     primarySSN: "111223333",
   } as never;
   const document = await PDFDocument.create();
   await appendSchedule1ATipsWorksheet(document, fields, filer);
   assertEquals(document.getPageCount(), 2);
+  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(path, await document.save());
+    const rendered = await new Deno.Command("pdftotext", {
+      args: ["-layout", path, "-"],
+    }).output();
+    assertEquals(rendered.code, 0);
+    const printed = new TextDecoder().decode(rendered.stdout);
+    assertEquals(printed.match(/Name: Alex B Example/g)?.length, 2);
+    assertFalse(printed.includes("EXAMPLE ALEX B"));
+    assertStringIncludes(printed, "Line 2: 6,000 to Schedule 1-A line 4c");
+  } finally {
+    await Deno.remove(path);
+  }
   await assertRejects(async () =>
     await appendSchedule1ATipsWorksheet(
       await PDFDocument.create(),
@@ -65,7 +86,9 @@ Deno.test("Schedule 1-A employer worksheet prints greater W-2 or Form 4137 amoun
     line6_total_tips: 8_500,
     line7_capped_tips: 8_500,
   }, {
-    nameLine1: "Alex Example",
+    nameLine1: "EXAMPLE ALEX B",
+    firstNameWithInitial: "Alex B",
+    lastName: "Example",
     primarySSN: "111223333",
   } as never);
   assertEquals(document.getPageCount(), 1);

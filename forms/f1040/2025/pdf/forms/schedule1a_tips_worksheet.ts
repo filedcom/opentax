@@ -24,7 +24,9 @@ export async function appendSchedule1ATipsWorksheet(
   const rows = z.array(rowSchema).min(2).parse(
     fields.pdf_tip_sources,
   );
-  if (!filer?.nameLine1 || !filer.primarySSN) {
+  const first = filer?.firstNameWithInitial?.trim();
+  const last = filer?.lastName?.trim();
+  if (!first || !last || !filer?.primarySSN) {
     throw new Error("Schedule 1-A tips worksheet needs filer identity");
   }
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
@@ -59,7 +61,7 @@ export async function appendSchedule1ATipsWorksheet(
       size: 9,
       font,
     });
-    page.drawText(`Name: ${filer.nameLine1}`, {
+    page.drawText(`Name: ${first} ${last}`, {
       x: 36,
       y: 710,
       size: 9,
