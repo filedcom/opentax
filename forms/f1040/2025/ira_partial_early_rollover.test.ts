@@ -34,6 +34,10 @@ Deno.test("partial early IRA rollover reconciles Form 1040, Form 5329, native XM
         ...original,
         source_document_reference: "2025 issued early IRA Form 1099-R",
         account_number: "IRA-EARLY-1",
+        ira_rollover: {
+          ...original.ira_rollover!,
+          registered_account_number: "IRA-EARLY-1",
+        },
         ts: "T" as const,
         box7_distribution_code: DistributionCode.Code1,
         box1_gross_distribution: 10_000,
