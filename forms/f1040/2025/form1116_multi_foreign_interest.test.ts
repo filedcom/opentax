@@ -26,6 +26,7 @@ const sources = [
 ];
 
 const rows = sources.map((source) => ({
+  recipient_tin: "111223333",
   payer_name: source.payer_name,
   box1: source.box1,
   box6: source.box6,

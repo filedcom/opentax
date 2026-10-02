@@ -28,11 +28,13 @@ Deno.test("1099 interest and qualified dividends reach a sourced Form 4952 retur
         for_routing: "A",
       }],
       f1099int: [{
+        recipient_tin: "111223333",
         payer_name: "Investment Bank",
         box1: 500,
         investment_property_for_form4952: true,
       }],
       f1099div: [{
+        recipient_tin: "111223333",
         payerName: "Investment Fund",
         isNominee: false,
         box11: false,

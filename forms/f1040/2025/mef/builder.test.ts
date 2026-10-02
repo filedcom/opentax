@@ -2133,9 +2133,12 @@ Deno.test("joint zero-withholding W-2 wages need an identified employee in both 
 
 Deno.test("final MeF and PDF exports reject 1099 withholding changed after source calculation", async () => {
   const payer = {
-    f1099int: { f1099ints: [{ payer_name: "Bank", box4: 80 }] },
+    f1099int: {
+      f1099ints: [{ payer_name: "Bank", recipient_tin: "123456789", box4: 80 }],
+    },
     f1040: {
       filing_status: "single",
+      taxpayer_ssn: "123456789",
       digital_assets: false,
       line25b_withheld_1099: 80,
     },

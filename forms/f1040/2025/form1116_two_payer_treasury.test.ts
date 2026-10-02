@@ -8,6 +8,7 @@ const foreignReference = "2025 Canadian bank Form 1099-INT";
 const treasuryReference = "2025 Treasury broker Form 1099-INT";
 
 const foreignPayer = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 50_000,
   box6: 9_000,
@@ -18,6 +19,7 @@ const foreignPayer = {
 };
 
 const treasuryPayer = {
+  recipient_tin: "111223333",
   payer_name: "Treasury Broker",
   source_document_reference: treasuryReference,
   box3: 10_000,

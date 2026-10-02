@@ -16,6 +16,7 @@ import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const bond = {
+  recipient_tin: "111223333",
   payer_name: "Direct Private Bond Issuer",
   payer_tin: "111111111",
   source_document_reference: "2025-direct-PAB-1099-INT",
@@ -34,6 +35,7 @@ const bond = {
   },
 };
 const fund = {
+  recipient_tin: "111223333",
   payerName: "Private Bond Fund",
   payerTin: "222222222",
   source_document_reference: "2025-fund-PAB-1099-DIV",

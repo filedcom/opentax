@@ -16,6 +16,7 @@ import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const payer = {
+  recipient_tin: "111223333",
   payerName: "Tax Exempt Bond Fund",
   payerTin: "123456789",
   source_document_reference: "2025 issued bond-fund 1099-DIV",

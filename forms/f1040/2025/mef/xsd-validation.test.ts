@@ -4566,7 +4566,11 @@ Deno.test({
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
-    f1099int: [{ payer_name: "Municipal Bond", box8: 5_000 }],
+    f1099int: [{
+      payer_name: "Municipal Bond",
+      recipient_tin: "111223333",
+      box8: 5_000,
+    }],
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "POLICY-TAX-EXEMPT",
@@ -4602,7 +4606,11 @@ Deno.test({
       buildMefXml({
         ...result.pending,
         f1099int: {
-          f1099ints: [{ payer_name: "Municipal Bond", box8: 4_999 }],
+          f1099ints: [{
+            payer_name: "Municipal Bond",
+            recipient_tin: "111223333",
+            box8: 4_999,
+          }],
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,

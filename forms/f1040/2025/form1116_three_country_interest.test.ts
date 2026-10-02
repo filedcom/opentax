@@ -12,6 +12,7 @@ import { FilingStatus } from "../nodes/types.ts";
 const canadaRef = "2025 Canadian Bank 1099-INT";
 const franceRef = "2025 French Bank 1099-INT";
 const canada = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 20_000,
   box6: 4_000,
@@ -21,6 +22,7 @@ const canada = {
   foreign_tax_source_document_reference: canadaRef,
 };
 const france = {
+  recipient_tin: "111223333",
   payer_name: "French Bank",
   box1: 30_000,
   box6: 5_000,
@@ -31,6 +33,7 @@ const france = {
 };
 const germanyRef = "2025 German Bank 1099-INT";
 const germany = {
+  recipient_tin: "111223333",
   payer_name: "German Bank",
   box1: 10_000,
   box6: 2_000,

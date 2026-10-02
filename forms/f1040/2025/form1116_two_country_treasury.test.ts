@@ -8,6 +8,7 @@ const canadaRef = "2025 Canadian Bank 1099-INT";
 const franceRef = "2025 French Bank 1099-INT";
 const treasuryRef = "2025 Treasury Broker 1099-INT";
 const canada = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 20_000,
   box6: 4_000,
@@ -17,6 +18,7 @@ const canada = {
   foreign_tax_source_document_reference: canadaRef,
 };
 const france = {
+  recipient_tin: "111223333",
   payer_name: "French Bank",
   box1: 30_000,
   box6: 5_000,
@@ -26,6 +28,7 @@ const france = {
   foreign_tax_source_document_reference: franceRef,
 };
 const treasury = {
+  recipient_tin: "111223333",
   payer_name: "Treasury Broker",
   source_document_reference: treasuryRef,
   box3: 10_000,

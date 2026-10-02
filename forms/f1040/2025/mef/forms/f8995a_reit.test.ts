@@ -13,6 +13,7 @@ import { form8995aPdf } from "../../pdf/forms/f8995a.ts";
 import { form8995a } from "./f8995a.ts";
 
 const dividend = {
+  recipient_tin: "123456789",
   payerName: "Example Qualified REIT",
   source_document_reference: "2025 issued Example Qualified REIT 1099-DIV",
   isNominee: false,

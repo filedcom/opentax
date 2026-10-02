@@ -8,6 +8,7 @@ const foreignReference = "2025 Canadian bank Form 1099-INT";
 const domesticReference = "2025 U.S. bank Form 1099-INT";
 
 const foreignPayer = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 50_000,
   box6: 9_000,
@@ -18,6 +19,7 @@ const foreignPayer = {
 };
 
 const domesticPayer = {
+  recipient_tin: "111223333",
   payer_name: "Domestic Bank",
   source_document_reference: domesticReference,
   box1: 10_000,

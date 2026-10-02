@@ -166,6 +166,7 @@ Deno.test({
       box12_entries: [],
     }],
     f1099div: [{
+      recipient_tin: "123456789",
       payerName: "US Fund",
       isNominee: false,
       box11: false,
@@ -173,6 +174,7 @@ Deno.test({
       box1b: 20_000,
     }],
     f1099int: [{
+      recipient_tin: "123456789",
       payer_name: "Canadian Bank",
       box1: 1_000,
       box6: 100,
@@ -678,6 +680,7 @@ Deno.test({
       box12_entries: [],
     }],
     f1099int: [{
+      recipient_tin: "123456789",
       payer_name: "Canadian Bank",
       box1: 1_000,
       box6: 100,
@@ -686,6 +689,7 @@ Deno.test({
       foreign_tax_irs_country_code: "CA",
     }],
     f1099div: [{
+      recipient_tin: "123456789",
       payerName: "Canadian Fund",
       isNominee: false,
       box11: false,

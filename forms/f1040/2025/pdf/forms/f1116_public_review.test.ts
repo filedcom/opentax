@@ -68,6 +68,7 @@ function inputs() {
       foreign_trust_question: false,
     },
     f1099int: [{
+      recipient_tin: "111223333",
       payer_name: "Canadian Bank",
       box1: 50_000,
       box6: 9_000,

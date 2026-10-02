@@ -7,6 +7,7 @@ import { FilingStatus } from "../nodes/types.ts";
 const interestRef = "2025 Canadian Bank 1099-INT";
 const dividendRef = "2025 Canadian Fund 1099-DIV";
 const interest = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 20_000,
   box6: 2_000,
@@ -25,6 +26,7 @@ const holdingReview = {
   reviewed_on: "2026-02-01",
 };
 const dividend = {
+  recipient_tin: "111223333",
   payerName: "Canadian Fund",
   source_document_reference: dividendRef,
   isNominee: false,

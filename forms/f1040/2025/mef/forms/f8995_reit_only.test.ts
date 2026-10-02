@@ -10,6 +10,7 @@ import { form8995 } from "./f8995.ts";
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 
 const reit = {
+  recipient_tin: "111223333",
   payerName: "Example Qualified REIT",
   source_document_reference: "2025 issued Example Qualified REIT 1099-DIV",
   isNominee: false,

@@ -7,6 +7,7 @@ import { FilingStatus } from "../nodes/types.ts";
 const canadaRef = "2025 Canadian Bank combined Form 1099-INT";
 const franceRef = "2025 French Bank Form 1099-INT";
 const canada = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   source_document_reference: canadaRef,
   foreign_tax_source_document_reference: canadaRef,
@@ -18,6 +19,7 @@ const canada = {
   foreign_tax_irs_country_code: "CA",
 };
 const france = {
+  recipient_tin: "111223333",
   payer_name: "French Bank",
   foreign_tax_source_document_reference: franceRef,
   box1: 30_000,

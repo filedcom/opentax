@@ -31,6 +31,7 @@ for (
       name: "1099-INT",
       payer: {
         f1099int: [{
+          recipient_tin: "111223333",
           payer_name: "Investment Bank",
           box1: 500,
           investment_property_for_form4952: true,
@@ -43,6 +44,7 @@ for (
       name: "1099-OID",
       payer: {
         f1099oid: [{
+          recipient_tin: "111223333",
           payer_name: "Taxable OID Bond",
           box1_oid: 500,
           investment_property_for_form4952: true,
@@ -55,6 +57,7 @@ for (
       name: "1099-DIV",
       payer: {
         f1099div: [{
+          recipient_tin: "111223333",
           payerName: "Investment Fund",
           isNominee: false,
           box11: false,
@@ -70,11 +73,13 @@ for (
       name: "1099-OID/DIV",
       payer: {
         f1099oid: [{
+          recipient_tin: "111223333",
           payer_name: "Taxable OID Bond",
           box1_oid: 200,
           investment_property_for_form4952: true,
         }],
         f1099div: [{
+          recipient_tin: "111223333",
           payerName: "Investment Fund",
           isNominee: false,
           box11: false,

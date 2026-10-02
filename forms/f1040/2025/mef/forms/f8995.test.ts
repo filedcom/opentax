@@ -81,6 +81,7 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividend = {
+    recipient_tin: "111223333",
     payerName: "Example Dividend Fund",
     source_document_reference: "2025 issued Example Dividend Fund 1099-DIV",
     isNominee: false,
@@ -152,6 +153,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const qualified = {
+    recipient_tin: "111223333",
     payerName: "Qualified Dividend Fund",
     source_document_reference: "2025 qualified-dividend 1099-DIV",
     isNominee: false,
@@ -160,6 +162,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
     box1b: 500,
   };
   const reit = {
+    recipient_tin: "111223333",
     payerName: "Separate REIT",
     source_document_reference: "2025 REIT 1099-DIV",
     isNominee: false,
@@ -240,6 +243,7 @@ Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and
   );
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividend = {
+    recipient_tin: "111223333",
     payerName: "Example REIT",
     source_document_reference: "2025 issued Example REIT Form 1099-DIV",
     isNominee: false,
@@ -340,6 +344,7 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
   if (!fixture) throw new Error("missing Schedule C review fixture");
   const dividends = [
     {
+      recipient_tin: "111223333",
       payerName: "North REIT",
       source_document_reference: "2025 issued North REIT 1099-DIV",
       isNominee: false,
@@ -357,6 +362,7 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
       },
     },
     {
+      recipient_tin: "111223333",
       payerName: "South REIT",
       source_document_reference: "2025 issued South REIT 1099-DIV",
       isNominee: false,

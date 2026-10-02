@@ -8,6 +8,7 @@ import { testFiler } from "../test-filer.ts";
 import { form8995 } from "./f8995.ts";
 
 const dividend = {
+  recipient_tin: "123456789",
   payerName: "Farm Investment Fund",
   source_document_reference: "2025 issued Farm Investment Fund 1099-DIV",
   isNominee: false,

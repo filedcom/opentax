@@ -16,6 +16,7 @@ const holding = {
 };
 const dividends = [
   {
+    recipient_tin: "111223333",
     payerName: "Canada Fund A",
     source_document_reference: refs[0],
     isNominee: false,
@@ -29,6 +30,7 @@ const dividends = [
     foreign_tax_holding_review: holding,
   },
   {
+    recipient_tin: "111223333",
     payerName: "Canada Fund B",
     source_document_reference: refs[1],
     isNominee: false,

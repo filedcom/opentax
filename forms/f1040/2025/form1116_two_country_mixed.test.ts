@@ -7,6 +7,7 @@ import { form1116Pdf } from "./pdf/forms/f1116.ts";
 const interestRef = "2025 Canadian interest copy";
 const dividendRef = "2025 French dividend copy";
 const interest = {
+  recipient_tin: "111223333",
   payer_name: "Canadian Bank",
   box1: 20_000,
   box6: 2_000,
@@ -25,6 +26,7 @@ const holding = {
   reviewed_on: "2026-02-01",
 };
 const dividend = {
+  recipient_tin: "111223333",
   payerName: "French Corporation",
   source_document_reference: dividendRef,
   isNominee: false,

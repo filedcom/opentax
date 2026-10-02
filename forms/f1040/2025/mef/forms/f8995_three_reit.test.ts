@@ -21,6 +21,7 @@ function reit(
   excluded: number,
 ) {
   return {
+    recipient_tin: "111223333",
     payerName: `${name} REIT`,
     source_document_reference: `2025 issued ${name} REIT 1099-DIV`,
     isNominee: false,

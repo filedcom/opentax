@@ -34,8 +34,16 @@ Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repay
   const all = {
     f1099g: {
       f1099gs: [
-        { box_1_unemployment: 5_000, box_1_repaid: 600 },
-        { box_1_unemployment: 2_000, box_1_repaid: 100 },
+        {
+          recipient_tin: "111223333",
+          box_1_unemployment: 5_000,
+          box_1_repaid: 600,
+        },
+        {
+          recipient_tin: "111223333",
+          box_1_unemployment: 2_000,
+          box_1_repaid: 100,
+        },
       ],
     },
   };
@@ -50,7 +58,11 @@ Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repay
   const noRepayment = schedule1Pdf.instances?.(
     { line7_unemployment: 5_000 },
     filer,
-    { f1099g: { f1099gs: [{ box_1_unemployment: 5_000 }] } },
+    {
+      f1099g: {
+        f1099gs: [{ recipient_tin: "111223333", box_1_unemployment: 5_000 }],
+      },
+    },
   )?.[0];
   assertEquals(noRepayment?.print_line7_unemployment_repayment, undefined);
   assertEquals(noRepayment?.line7_unemployment_repayment, undefined);
@@ -81,7 +93,11 @@ Deno.test("fully repaid unemployment alone still creates Schedule 1 and its PDF 
   )!;
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
-    f1099g: [{ box_1_unemployment: 5_000, box_1_repaid: 5_000 }],
+    f1099g: [{
+      recipient_tin: "111223333",
+      box_1_unemployment: 5_000,
+      box_1_repaid: 5_000,
+    }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line7_unemployment, 0);
