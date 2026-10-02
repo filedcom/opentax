@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **774 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **776 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 774 bounded routes and
+**Implemented coverage.** The completed ledger records 776 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -97,6 +97,9 @@ This includes three generic attachment-export tests for Forms 8958, 2106, and
 8844, whose source or expected guard fails before the intended assertion; no
 independent nonnamed return, payment, PDF assembly, or A2A production failure
 was found in this run. The full command still has no passing result.
+Six subsequently reported focused failures were resolved as stale assertions
+or incomplete source fixtures; their selected reruns now pass 108 cases. The
+agreed next full command remains deferred until non-named implementation ends.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
@@ -340,7 +343,9 @@ Schedule 2 Part II now reconciles to Form 1040 line 23 after the retained
 Form 8978 reduction; Schedule 3 line 8 reconciles to Form 1040 line 20.
 Schedule 3 PDF now prints the supported Form 8911 personal-use credit on line 6j.
 Sourced Form 2439 box 2 now also prints Schedule 3 line 14 in the canonical PDF
-and native XML before its line 15 total; other line 13 sources remain open.
+and native XML before its line 15 total. Both outputs now reject an absent or
+changed line 13a Form 2439 credit against the retained box 2 copies; other
+line 13 sources remain open.
 Form 1040 PDF now marks source-backed QCD line 4c and PSO line 5c boxes.
 Its line 12e now prints the selected standard or itemized deduction once.
 Its single-account refund fields now print finalized bank routing, account
