@@ -89,7 +89,14 @@ Deno.test("general direct deposit survives the full graph and CLI filer extracti
     Error,
     "needs the retained general bank source",
   );
-  for (const routingNumber of ["001000021", "331000021", "02A000021"]) {
+  for (
+    const routingNumber of [
+      "001000021",
+      "331000021",
+      "02A000021",
+      "211000021", // valid prefix and length, invalid banking checksum
+    ]
+  ) {
     assertThrows(
       () =>
         assertGeneral1040DepositSource({

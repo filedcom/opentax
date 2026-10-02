@@ -93,6 +93,26 @@ Deno.test("Form 1040 refund bank source reaches native return and filled PDF; or
     Error,
     "filed direct-deposit details need the retained general bank source",
   );
+
+  const invalidRouting = {
+    ...pending,
+    general: { ...pending.general, bank_routing_number: "211000021" },
+    f1040: { ...pending.f1040, bank_routing_number: "211000021" },
+  } as typeof pending;
+  const invalidRoutingFiler = {
+    ...filer,
+    bankAccount: { ...filer.bankAccount!, routingNumber: "211000021" },
+  };
+  assertThrows(
+    () => buildMefXml(invalidRouting, invalidRoutingFiler),
+    Error,
+    "needs a valid U.S. routing and account number",
+  );
+  await assertRejects(
+    () => buildPdfBytes(invalidRouting, invalidRoutingFiler, ".pdf-cache"),
+    Error,
+    "needs a valid U.S. routing and account number",
+  );
 });
 
 Deno.test("Form 1040 Form 8888 attachment is linked in native XML and marked on filled PDF", async () => {
