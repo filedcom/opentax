@@ -826,6 +826,14 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         "IRA rollover source conflicts with the payer distribution code",
       );
     }
+    if (
+      item.box7_distribution_code === DistributionCode.Code4 ||
+      item.box7_code2 === DistributionCode.Code4
+    ) {
+      throw new Error(
+        "Death-coded IRA distribution needs beneficiary and RMD eligibility evidence before rollover treatment",
+      );
+    }
     if (destination === "ira") {
       if (
         rollover.destination_ira_type !== "traditional" &&

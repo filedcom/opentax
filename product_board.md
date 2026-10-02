@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 713 bounded routes and
+**Implemented coverage.** The completed ledger records 716 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -122,6 +122,11 @@ Schedule 1 line 8z PDF now prints a short statement reference and appends its
 source-reconciled type/amount rows, matching the native other-income statement
 without crowding the canonical description field. The filled-page visual gate
 remains open.
+Schedule C simplified home-office claims now carry reviewed total-home and
+business-use square footage into the TY2025 native document and the two
+canonical PDF widgets, alongside the capped line 30 deduction. A source-backed
+packet passed XSD and its Schedule C page was inspected; wider coverage remains
+open.
 The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
 smoke of each compiled asset before upload, limits write permission to the
 publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios
@@ -213,6 +218,10 @@ acceptance reference, including timely and direct rollovers. The single
 acceptance field applies to the rollover itself rather than each late-waiver
 method; IRA-to-IRA routes reject that field. Issued acceptance bytes and wider
 eligibility evidence remain open.
+An IRA Form 1099-R carrying payer death code 4 in either Box 7 position now
+rejects a rollover claim until beneficiary and RMD eligibility can be reviewed.
+Ordinary death-coded distributions still follow their existing income route;
+spouse-beneficiary rollovers and RMD allocations remain open.
 The core PDF now prints a source-reconciled line 1h FEC type when standalone
 foreign employer wages or physical Form 2555 facts exactly explain that
 amount and its retained AGI counterpart. Source-complete standalone FEC wages
@@ -343,7 +352,7 @@ These gates and a filing-ready release remain open.
 ## Core return and source paths
 
 - [ ] Audit Form 1040 identity, filing status, dependents, digital assets, wages, pensions/rollovers/QCD, taxable Social Security, interest/dividends, capital gains, business/farm/rental income, adjustments, deduction choice, credits, taxes, withholding, payments, refund, and amount owed against source records and 2025 instructions.
-  - [ ] Finish Form 1040 line 4c(1) for other valid late-rollover exceptions and wider IRA rollover eligibility evidence, including authenticated source and prior-return records, inherited/RMD status, and plan acceptance. Keep the IRA mark distinct from pension line 5c. See the [late-waiver](docs/mef/ty2025-ira-rollover-automatic-waiver.md), [self-certification](docs/mef/ty2025-ira-rollover-self-certification.md), and [IRS-ruling](docs/mef/ty2025-ira-rollover-irs-ruling.md) notes.
+  - [ ] Finish Form 1040 line 4c(1) for other valid late-rollover exceptions and wider IRA rollover eligibility evidence, including authenticated source and prior-return records, spouse-beneficiary status, and RMD allocations. Payer death code 4 is now guarded in both Box 7 positions. Keep the IRA mark distinct from pension line 5c. See the [eligibility gap](docs/mef/ty2025-ira-rollover-eligibility-gap.md), [late-waiver](docs/mef/ty2025-ira-rollover-automatic-waiver.md), [self-certification](docs/mef/ty2025-ira-rollover-self-certification.md), and [IRS-ruling](docs/mef/ty2025-ira-rollover-irs-ruling.md) notes.
 - [ ] Audit source classifications and ownership for Forms W-2, W-2G, 1099-INT/DIV/OID/B/R/G/NEC/K/MISC/PATR/SA, 1098, 1095-A, 3921, K-1s, foreign employer records, and reviewed prior returns. Require joins to the correct recipient and destination, and reject duplicates or ambiguous matches.
 - [ ] Complete Schedule 1 line 8z source/description handling, Schedule 1-A deduction variants and filled PDF, Schedule 2's 2025 line structure, Schedule 3 joins, and Schedule EIC child identity/residency projection. See the [Schedule 1-A gap](docs/mef/ty2025-schedule1a-gap.md) and [line 8z source gap](docs/mef/ty2025-schedule1-line8z-source-gap.md).
   - [ ] Complete Form 5471 section 951(a) income on Schedule 1 line 8n and an individual's section 951A inclusion on Form 8992 for line 8o, including all required Form 5471/8992 native and PDF documents and export evidence. Resolve legacy Forms 8873 and 8915-D in the [coverage queue](docs/mef/ty2025-form1040-coverage-decisions.md).

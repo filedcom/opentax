@@ -1232,6 +1232,40 @@ Deno.test("f1099r.compute: code S rollover produces zero taxable", () => {
   assertEquals(input.line4c_ira_rollover, true);
 });
 
+Deno.test("f1099r.compute: death-coded IRA distribution cannot claim an unreviewed rollover", () => {
+  const rollover = {
+    source_ira_type: "traditional" as const,
+    destination: "ira" as const,
+    destination_ira_type: "traditional" as const,
+    distributed_on: "2025-06-01",
+    completed_on: "2025-06-02",
+    last_ira_to_ira_rollover_on: null,
+  };
+  for (
+    const deathCode of [
+      { box7_distribution_code: DistributionCode.Code4 },
+      { box7_code2: DistributionCode.Code4 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute([minimalIraItem({
+          ...deathCode,
+          rollover_code: RolloverCode.S,
+          ira_rollover: rollover,
+        })]),
+      Error,
+      "Death-coded IRA distribution needs beneficiary and RMD eligibility evidence",
+    );
+  }
+  assertEquals(
+    f1040Input(compute([minimalIraItem({
+      box7_distribution_code: DistributionCode.Code4,
+    })])).line4c_ira_rollover,
+    undefined,
+  );
+});
+
 Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
   const item = minimalIraItem({ rollover_code: RolloverCode.S });
   assertThrows(() => compute([item]), Error, "needs destination");
