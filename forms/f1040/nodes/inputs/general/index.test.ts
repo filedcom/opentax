@@ -748,7 +748,11 @@ Deno.test("multiple: 2 qualifying children + 1 other → ctc=2, odc=1, total=3",
     filing_status: FilingStatus.MFJ,
     dependents: [
       qualifyingChildDep({ first_name: "Child1" }),
-      qualifyingChildDep({ first_name: "Child2", dob: "2012-03-01" }),
+      qualifyingChildDep({
+        first_name: "Child2",
+        ssn: "123-45-6790",
+        dob: "2012-03-01",
+      }),
       nonCtcDep({ first_name: "OtherDep" }), // ITIN only
     ],
   });
@@ -764,8 +768,16 @@ Deno.test("multiple: 3 qualifying children → ctc=3, odc=0, total=3", () => {
     filing_status: FilingStatus.MFJ,
     dependents: [
       qualifyingChildDep({ first_name: "C1" }),
-      qualifyingChildDep({ first_name: "C2", dob: "2011-01-01" }),
-      qualifyingChildDep({ first_name: "C3", dob: "2014-06-15" }),
+      qualifyingChildDep({
+        first_name: "C2",
+        ssn: "123-45-6790",
+        dob: "2011-01-01",
+      }),
+      qualifyingChildDep({
+        first_name: "C3",
+        ssn: "123-45-6791",
+        dob: "2014-06-15",
+      }),
     ],
   });
   const out = findOutput(result, "f1040");
@@ -991,6 +1003,7 @@ Deno.test("qualifying EITC child identity reaches the Schedule EIC input", () =>
     irs_relationship_code: "DAUGHTER",
     months_in_home: 12,
     months_lived_with_you_in_us: 12,
+    eic_birth_residency_review: undefined,
     full_time_student: undefined,
     disabled: undefined,
     ip_pin: "123456",
@@ -1485,6 +1498,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
       qualifyingChildDep({ ip_pin: "111222" }),
       qualifyingChildDep({
         first_name: "StudentChild",
+        ssn: "123-45-6790",
         dob: "2002-01-01", // age 23 in 2025
         full_time_student: true,
       }),
