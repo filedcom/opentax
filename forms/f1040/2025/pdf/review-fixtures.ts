@@ -14,6 +14,7 @@ import { CertifiedInterestDocumentKind } from "../../nodes/intermediate/forms/fo
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
 import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
+import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -349,6 +350,20 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Single and digital-assets No boxes, with no unrelated header box checked",
       "Lines 1a, 1z, 25a, 33 and 35a match the computed return",
       "A zero-valued line stays blank where the IRS form requires a blank",
+    ],
+  },
+  {
+    id: "single-divorced-agreed-joint-estimated-payment",
+    inputs: {
+      general: singleGeneral,
+      f1040es: agreedJointPayment,
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 26 prints the taxpayer's $300 agreed share of the $500 joint estimated payment",
+      "The former spouse SSN 222334444 appears in the line 26 SSN box and native amount attribute",
+      "The signed allocation and identified Q1 payment match the retained source",
     ],
   },
   {

@@ -565,7 +565,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line26_estimated_tax",
     pdfField: "topmostSubform[0].Page2[0].f2_21[0]",
   },
-  // f2_22 skipped (SSN field)
+  {
+    kind: "text",
+    domainKey: "print_former_spouse_estimated_tax_ssn",
+    pdfField: "topmostSubform[0].Page2[0].SSN_ReadOrder[0].f2_22[0]",
+  },
   {
     kind: "text",
     domainKey: "line27_eitc",
@@ -767,7 +771,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
         "Form 1040 PDF line 12e differs from the selected deduction",
       );
     }
-    assertEstimatedPaymentLine26(fields, allPending);
+    const printFormerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
+      fields,
+      allPending,
+    );
     assertF8288OtherWithholding(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);
     assertSchedule2Line23(fields, allPending);
@@ -940,6 +947,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_former_spouse_estimated_tax_ssn: printFormerSpouseEstimatedTaxSsn,
       print_foreign_country_name: typeof fields.address_foreign_country ===
             "string" && fields.address_foreign_country.length > 0
         ? new Intl.DisplayNames(["en"], { type: "region" }).of(

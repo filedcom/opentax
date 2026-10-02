@@ -460,7 +460,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertLine36EstimatedTaxSource(fields, context?.pending);
   assertPresidentialCampaignSource(fields, context?.pending);
   assertReturnWideArithmetic(fields);
-  assertEstimatedPaymentLine26(fields, context?.pending);
+  const formerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
+    fields,
+    context?.pending,
+  );
   assertF8288OtherWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);
   assertSchedule2Line23(fields, context?.pending);
@@ -726,6 +729,14 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   );
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
+    if (key === "line26_estimated_tax" && formerSpouseEstimatedTaxSsn) {
+      if (value === undefined) {
+        throw new Error("Form 1040 line 26 joint payment needs a filed amount");
+      }
+      return element(tag, value, {
+        divorcedSpouseSSN: formerSpouseEstimatedTaxSsn,
+      });
+    }
     if (key === "line27_eitc" && eicOptOut) return "";
     if (key === "line28_actc" && actcOptOut) return "";
     if (key === "line6b_ss_taxable") {

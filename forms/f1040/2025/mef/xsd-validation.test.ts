@@ -38,6 +38,7 @@ import {
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
+import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
@@ -214,6 +215,26 @@ Deno.test({
   } as MefFormsPending, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<DoNotClaimEICInd>X</DoNotClaimEICInd>");
   await validateXsd(xml, "TY2025 Form 1040 line 27c EIC opt-out");
+});
+
+Deno.test({
+  name: "XSD: Form 1040 line 26 divorced spouse SSN on agreed joint payment",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const xml = buildMefXml({
+    general,
+    f1040es: agreedJointPayment,
+    f1040: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: "111223333",
+      line26_estimated_tax: 300,
+    },
+  } as MefFormsPending, extractFilerIdentity(general));
+  assertStringIncludes(xml, 'divorcedSpouseSSN="222334444"');
+  await validateXsd(xml, "TY2025 Form 1040 agreed joint estimated payment");
 });
 
 Deno.test({
