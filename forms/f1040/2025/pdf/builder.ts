@@ -54,6 +54,7 @@ import { assertSchedule2Form8960Tax } from "../schedule2-form8960-reconciliation
 import { assertSchedule2ScheduleSETax } from "../schedule2-schedule-se-reconciliation.ts";
 import { assertSchedule2Form8828Tax } from "../schedule2-form8828-reconciliation.ts";
 import { assertSchedule2Form8936Repayment } from "../schedule2-form8936-reconciliation.ts";
+import { assertSchedule3Form8859Credit } from "../schedule3-form8859-reconciliation.ts";
 import {
   assertSchedule2Line17HSources,
   assertSchedule2W2Line13Sources,
@@ -368,6 +369,7 @@ export async function buildPdfBytes(
   assertSchedule2ScheduleSETax(normalized);
   assertSchedule2Form8828Tax(normalized);
   assertSchedule2Form8936Repayment(normalized);
+  assertSchedule3Form8859Credit(normalized);
   assert1099WithholdingSource(normalized, filer);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);

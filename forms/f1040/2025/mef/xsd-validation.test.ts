@@ -157,7 +157,8 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD/PDF: reviewed digital-assets No projects from retained general answer",
+  name:
+    "XSD/PDF: reviewed digital-assets No projects from retained general answer",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
