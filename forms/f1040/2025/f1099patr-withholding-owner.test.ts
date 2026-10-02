@@ -62,3 +62,31 @@ Deno.test("1099-PATR box 4 without a filed recipient rejects in both exports", a
     );
   }
 });
+
+Deno.test("1099-PATR repeated issued account rejects direct native and PDF export", async () => {
+  const issued = {
+    ...row,
+    account_number: "P-1",
+    box1_patronage_dividends: 300,
+    distribution_treatment: {
+      kind: "farm" as const,
+      farm_id: "FARM-1",
+      verified_taxable_amount: 300,
+    },
+  };
+  const pending = {
+    f1099patr: {
+      f1099patrs: [issued, { ...issued, box4_federal_withheld: 30 }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "1099-PATR repeats the same payer, recipient, and account",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "1099-PATR repeats the same payer, recipient, and account",
+  );
+});

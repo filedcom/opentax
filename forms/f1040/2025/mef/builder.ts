@@ -42,7 +42,10 @@ import { assertExtensionPaymentSource } from "../extension-payment-reconciliatio
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
-import { assertPatrWithholdingRecipient } from "../f1099patr-withholding-owner.ts";
+import {
+  assertPatrIssuedCopies,
+  assertPatrWithholdingRecipient,
+} from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import {
@@ -218,6 +221,7 @@ function buildReturnXml(
   assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
   assert1099BRecipientOwner(pending.f1099b, filer);
+  assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);

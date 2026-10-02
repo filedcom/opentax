@@ -161,6 +161,30 @@ Deno.test("1099-PATR withholding aggregates independently of distribution treatm
   assertEquals(field(result, "f1040", "line25b_withheld_1099"), 50);
 });
 
+Deno.test("1099-PATR rejects repeated identified payer accounts before income or withholding sums", () => {
+  const issued = {
+    payer_name: "Farm Cooperative",
+    payer_tin: "12-3456789",
+    recipient_tin: "111223333",
+    account_number: "P-1",
+    box1_patronage_dividends: 300,
+    box4_federal_withheld: 20,
+    distribution_treatment: farm("FARM-1", 300),
+  };
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        box1_patronage_dividends: 350,
+        distribution_treatment: farm("FARM-1", 350),
+      }]),
+    Error,
+    "1099-PATR repeats the same payer, recipient, and account",
+  );
+  const distinct = compute([issued, { ...issued, account_number: "P-2" }]);
+  assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 40);
+});
+
 Deno.test("1099-PATR retains specified-cooperative QBI source only for business facts", () => {
   const business = {
     box7_qualified_payments: 100,

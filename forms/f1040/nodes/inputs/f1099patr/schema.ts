@@ -76,6 +76,27 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1099patrs: z.array(itemSchema).min(1),
+}).superRefine(({ f1099patrs }, ctx) => {
+  const issuedAccounts = new Set<string>();
+  for (const [index, item] of f1099patrs.entries()) {
+    if (!item.payer_tin || !item.recipient_tin || !item.account_number) {
+      continue;
+    }
+    const key = JSON.stringify([
+      item.payer_tin.replace(/\D/g, ""),
+      item.recipient_tin,
+      item.account_number.trim(),
+    ]);
+    if (issuedAccounts.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f1099patrs", index],
+        message:
+          "1099-PATR repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+      });
+    }
+    issuedAccounts.add(key);
+  }
 });
 
 export type PATRItem = z.infer<typeof itemSchema>;
