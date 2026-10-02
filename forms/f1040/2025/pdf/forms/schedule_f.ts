@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import {
+  assertScheduleFLossAtRiskAnswer,
   computeAccrualIncome,
   computeGrossIncome,
   computeTotalExpenses,
@@ -225,6 +226,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
       const gross = computeGrossIncome(item);
       const wotcReduction = reductions.get(item.farm_id ?? "") ?? 0;
       const expenses = computeTotalExpenses(item, gross, wotcReduction);
+      assertScheduleFLossAtRiskAnswer(item, wotcReduction);
       return {
         ...item,
         farm_copy_number: index + 1,

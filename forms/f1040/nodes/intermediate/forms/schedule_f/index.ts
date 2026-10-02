@@ -667,6 +667,16 @@ export function computeNetProfit(
   return grossIncome - totalExpenses;
 }
 
+/** The printed 2025 Schedule F requires line 36a or 36b for a loss. */
+export function assertScheduleFLossAtRiskAnswer(
+  item: ScheduleFItem,
+  wotcReduction = 0,
+): void {
+  if (computeNetProfit(item, wotcReduction) < 0 && !item.line36_at_risk) {
+    throw new Error("Schedule F loss requires a line 36 at-risk answer");
+  }
+}
+
 export function calculateScheduleFAtRiskNet(
   item: ScheduleFItem,
   wotcReduction = 0,

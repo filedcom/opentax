@@ -55,6 +55,17 @@ Deno.test("Schedule F native export rejects a blank line 32 expense description"
   );
 });
 
+Deno.test("Schedule F native export requires a line 36 answer for a farm loss", () => {
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line16_feed: 500 })],
+      }, { filer: testFiler() }),
+    Error,
+    "Schedule F loss requires a line 36 at-risk answer",
+  );
+});
+
 Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({
     schedule_f: {

@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  assertScheduleFLossAtRiskAnswer,
   calculateScheduleFAtRiskNet,
   computeAccrualIncome,
   computeGrossIncome,
@@ -67,6 +68,7 @@ function buildFarm(
   const gross = computeGrossIncome(item);
   const expenses = computeTotalExpenses(item, gross, wotcReduction);
   const preliminaryNet = gross - expenses;
+  assertScheduleFLossAtRiskAnswer(item, wotcReduction);
   calculateScheduleFAtRiskNet(item, wotcReduction);
   const otherExpenses = item.line32_other_expenses ?? [];
   const income = item.accounting_method === "accrual"

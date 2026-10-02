@@ -78,6 +78,22 @@ Deno.test("Schedule F PDF needs a visible line 32 expense description", () => {
   );
 });
 
+Deno.test("Schedule F PDF requires a line 36 answer for a farm loss", () => {
+  assertThrows(
+    () =>
+      scheduleFPdf.instances!({
+        schedule_fs: [{
+          ...farm,
+          line6a_crop_insurance: undefined,
+          line6b_crop_insurance_taxable: undefined,
+          line8_other_income: undefined,
+        }],
+      }, jointFiler),
+    Error,
+    "Schedule F loss requires a line 36 at-risk answer",
+  );
+});
+
 Deno.test("Schedule F accrual PDF prints Part III income and inventory on page 2", async () => {
   const accrualFarm = {
     ...farm,
