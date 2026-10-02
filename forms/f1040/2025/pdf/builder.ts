@@ -361,6 +361,14 @@ export async function buildPdfBytes(
     throw new Error("PDF source differs from the prepared MeF return");
   }
   if (preparedBundle) {
+    if (
+      await preparedSourceSha256(preparedBundle.pending, filer) !==
+        preparedBundle.sourceSha256
+    ) {
+      throw new Error(
+        "PDF bundle pending differs from the prepared MeF return",
+      );
+    }
     await assertPreparedAttachmentManifest(preparedBundle);
   }
   const form8283Source = normalized.f8283

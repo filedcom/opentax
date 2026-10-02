@@ -494,6 +494,26 @@ Deno.test("prepared BinaryAttachment IDs keep their retained PDF order", async (
   );
 });
 
+Deno.test("prepared PDF rejects bundle pending changed after native return preparation", async () => {
+  const pending = {
+    f1040: { filing_status: "single", digital_assets: false },
+  };
+  const filer = sampleFiler();
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  await assertRejects(
+    () =>
+      buildPdfBytes(pending, filer, ".pdf-cache", {
+        ...bundle,
+        pending: {
+          ...bundle.pending,
+          f1040: { ...bundle.pending.f1040, digital_assets: true },
+        },
+      }),
+    Error,
+    "bundle pending differs from the prepared MeF return",
+  );
+});
+
 Deno.test("prepared manifest rejects unsafe PDF names even if XML and digests are recomputed", async () => {
   const bundle = await buildMefBundle({}, {
     filer: sampleFiler(),
