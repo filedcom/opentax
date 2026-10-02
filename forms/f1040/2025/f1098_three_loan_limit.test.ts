@@ -37,7 +37,7 @@ async function lenderCopy(
   return doc.save();
 }
 
-async function threeLoans(principal: number) {
+async function threeLoans(principal: number, deductible = 1_000) {
   return Promise.all([1, 2, 3].map(async (number) => {
     const lender = `Example Lender ${number}`;
     const bytes = await lenderCopy(lender, principal);
@@ -52,7 +52,7 @@ async function threeLoans(principal: number) {
       recipient_tin: "111-22-3333",
       source_document_reference: `2025 ${lender} Copy B`,
       box1_mortgage_interest: 1_000,
-      box1_current_year_deductible_interest: 1_000,
+      box1_current_year_deductible_interest: deductible,
       box1_deduction_workpaper_reference: `${lender} Pub. 936 review`,
       box2_outstanding_principal: principal,
       box3_origination_date: "01/15/2020",
@@ -65,11 +65,11 @@ async function threeLoans(principal: number) {
   }));
 }
 
-async function resultFor(principal: number) {
+async function resultFor(principal: number, deductible = 1_000) {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     schedule_a: { force_itemized: true },
-    f1098: await threeLoans(principal),
+    f1098: await threeLoans(principal, deductible),
   });
   assertEquals(result.diagnostics, []);
   return {
@@ -78,7 +78,7 @@ async function resultFor(principal: number) {
   };
 }
 
-Deno.test("three sourced mortgages under the debt limit print, while over-limit full interest fails closed", async () => {
+Deno.test("three sourced mortgages under the debt limit print, while over-limit full or partial interest fails closed", async () => {
   const { pending, filer } = await resultFor(200_000);
   assertEquals(pending.schedule_a?.line_8a_mortgage_interest_1098, 3_000);
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
@@ -150,6 +150,39 @@ Deno.test("three sourced mortgages under the debt limit print, while over-limit 
   );
   await assertRejects(
     () => buildPdfBytes(overLimit.pending, overLimit.filer, ".pdf-cache"),
+    Error,
+    message,
+  );
+
+  const partialUnderLimit = await resultFor(200_000, 900);
+  assertEquals(
+    buildMefXml(partialUnderLimit.pending, partialUnderLimit.filer).includes(
+      "<RptHomeMortgIntAndPointsAmt>2700</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const partialOverLimit = await resultFor(300_000, 900);
+  assertThrows(
+    () => buildMefXml(partialOverLimit.pending, partialOverLimit.filer),
+    Error,
+    message,
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(partialOverLimit.pending, {
+        filer: partialOverLimit.filer,
+        attachments: [],
+      }),
+    Error,
+    message,
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        partialOverLimit.pending,
+        partialOverLimit.filer,
+        ".pdf-cache",
+      ),
     Error,
     message,
   );

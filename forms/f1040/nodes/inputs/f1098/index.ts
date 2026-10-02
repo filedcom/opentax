@@ -624,8 +624,7 @@ export function assertForm1098MortgageLimitSources(
       item.binding_contract_exception !== true &&
       (item.box2_outstanding_principal ?? 0) > 0 &&
       item.box1_mortgage_interest > 0 &&
-      item.box1_current_year_deductible_interest ===
-        item.box1_mortgage_interest;
+      (item.box1_current_year_deductible_interest ?? 0) > 0;
   });
   if (
     singleFiler && fullYearPost2017.length >= 3 &&
