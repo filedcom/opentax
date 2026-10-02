@@ -279,25 +279,18 @@ Deno.test({
   await validateXsd(xml, "TY2025 Form 1040 line 12a MFJ spouse dependent");
 });
 
-Deno.test({
-  name: "XSD: TY2025 Schedule 2 tax lines retain schema order",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
-  const xml = buildMefXml({
-    f1040: { line23_other_taxes: 1_400 },
-    schedule2: {
-      uncollected_fica: 100,
-      line17b_mortgage_subsidy_recapture: 1_000,
-      line17c_hsa_penalty: 300,
-    },
-  }, extractFilerIdentity(singleGeneral()));
-  assertStringIncludes(
-    xml,
-    "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
+Deno.test("TY2025 Schedule 2 rejects bare mortgage-credit recapture", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { line23_other_taxes: 1_000 },
+        schedule2: {
+          line17b_mortgage_subsidy_recapture: 1_000,
+        },
+      }, extractFilerIdentity(singleGeneral())),
+    Error,
+    "Schedule 2 line 17b differs from retained Form 8828 tax",
   );
-  await validateXsd(xml, "TY2025 Schedule 2 lines 17b and 17c");
 });
 
 Deno.test({
