@@ -5,6 +5,7 @@ import { registry } from "../2025/registry.ts";
 import { assertGeneral1040DepositSource } from "../2025/filer-source-reconciliation.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { AccountType } from "../mef/header.ts";
+import { inputSchema as generalInputSchema } from "../nodes/inputs/general/index.ts";
 import { FilingStatus } from "../nodes/types.ts";
 
 const general = {
@@ -107,5 +108,25 @@ Deno.test("general direct deposit survives the full graph and CLI filer extracti
       Error,
       "needs a valid U.S. routing and account number",
     );
+  }
+});
+
+Deno.test("direct-deposit source syntax follows Form 1040 lines 35b and 35d", () => {
+  assertEquals(generalInputSchema.safeParse({
+    ...general,
+    bank_routing_number: "211000021",
+    bank_account_number: "AB12-3456",
+  }).success, true);
+  for (const bank_routing_number of ["001000021", "331000021", "02A000021"]) {
+    assertEquals(generalInputSchema.safeParse({
+      ...general,
+      bank_routing_number,
+    }).success, false);
+  }
+  for (const bank_account_number of ["111 222333", "111/222333"]) {
+    assertEquals(generalInputSchema.safeParse({
+      ...general,
+      bank_account_number,
+    }).success, false);
   }
 });
