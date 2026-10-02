@@ -629,10 +629,13 @@ function validateLateWaiver(item: R1099Item): void {
   const elapsedDays = (completed - distributed) / 86_400_000;
   const directPlanRollover = rollover.destination === "qualified_plan" &&
     item.box7_distribution_code === DistributionCode.CodeG;
-  if ([waiver, certification, ruling, frozen].filter(Boolean).length > 1) {
+  if (frozen && [waiver, certification, ruling].some(Boolean)) {
     throw new Error(
       "IRA late rollover cannot claim multiple extension or waiver methods",
     );
+  }
+  if ([waiver, certification, ruling].filter(Boolean).length > 1) {
+    throw new Error("IRA late rollover cannot claim two waiver methods");
   }
   if (frozen) {
     const freezeStart = Date.parse(frozen.frozen_on);
