@@ -446,14 +446,9 @@ export function assertDistinct1099RCopies(
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
     const account = item.account_number?.trim();
     if (!reference || !payer || !recipient || !account) continue;
-    // Only issued 1099-R boxes distinguish copies here. Taxpayer-entered
-    // routing, basis, and review flags cannot turn one payer copy into two.
-    const boxes = Object.entries(item)
-      .filter(([field, value]) =>
-        field.startsWith("box") && value !== undefined
-      )
-      .sort(([left], [right]) => left.localeCompare(right));
-    const key = JSON.stringify([reference, payer, recipient, account, boxes]);
+    // The retained source reference identifies the issued copy. Altering a
+    // box value cannot turn that same identified copy into a second payment.
+    const key = JSON.stringify([reference, payer, recipient, account]);
     if (seen.has(key)) {
       throw new Error(
         "Form 1099-R repeats the same payer, recipient, account, and issued source copy",

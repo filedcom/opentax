@@ -1,5 +1,6 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
+  assertDistinct1099RCopies,
   assertIraRolloverEvidence,
   inputSchema,
 } from "../nodes/inputs/f1099r/index.ts";
@@ -18,6 +19,7 @@ export function assert1099RRecipientOwner(
   if (!parsed.success) {
     throw new Error("1099-R owner review needs valid payer source rows");
   }
+  assertDistinct1099RCopies(parsed.data.f1099rs);
   assertIraRolloverEvidence(parsed.data.f1099rs);
   for (const [index, item] of parsed.data.f1099rs.entries()) {
     if (

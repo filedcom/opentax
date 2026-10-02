@@ -153,6 +153,11 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
     Error,
     "repeats the same payer, recipient, account, and issued source copy",
   );
+  assertThrows(
+    () => compute([copy, { ...copy, box4_federal_withheld: 600 }]),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
   const iraCopy = minimalIraItem({
     recipient_ssn: "111223333",
     source_document_reference: "2025 IRA 1099-R",

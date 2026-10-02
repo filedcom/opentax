@@ -125,6 +125,39 @@ Deno.test("1099-R native export rejects an exact repeated identified source copy
   );
 });
 
+Deno.test("one identified 1099-R copy cannot replay changed withholding in either exporter", async () => {
+  const [source] = items();
+  const copy = {
+    ...source,
+    source_document_reference: "2025 issued pension 1099-R",
+    account_number: "PENSION-1",
+  };
+  const pending = {
+    f1099r: {
+      f1099rs: [copy, { ...copy, box4_federal_withheld: 999 }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+  assertEquals(
+    f1099r.build({
+      f1099rs: [copy, {
+        ...copy,
+        source_document_reference: "separate issued copy",
+      }],
+    }, { filer }).length,
+    2,
+  );
+});
+
 Deno.test("1099-R for a spouse does not use the taxpayer's SSN", () => {
   const [first] = items();
   assertThrows(
