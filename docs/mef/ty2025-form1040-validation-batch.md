@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-162 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+165 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -329,8 +329,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **67 distinct
-registered PDF keys out of 112**; **45 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **72 distinct
+registered PDF keys out of 112**; **40 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -418,6 +418,19 @@ also caught a document-discovery bug: its native builder now reconciles its
 source during discovery and requires the linked Form 3800 ID during the final
 pass.
 
+Three further prepared review fixtures cover an identified Form 4835 crop-share
+rental profit, a Form 4136 farm-equipment fuel credit, and a first-year joint
+Form 2210-F farm-income underpayment election. Each source return passed focused
+TY2025 v5.4 full-return XSD validation, and all three produced filled PDF
+packets (6, 7, and 3 pages). The Form 4835, Form 4136, and Form 2210-F pages
+were rasterized and inspected for identity and the stated amounts; the full
+page-by-page review matrix remains open. The packets are retained under
+`.state/research/ty2025-filled-pdf-review/2026-10-02-nonnamed-3/`. The Form
+4136 fixture uses a whole-dollar $426 claim. A separate $42.60 source claim
+currently fails the Form 1040 line 31/Schedule 3 exact join after Form 1040
+rounds to $43; that fractional-credit route needs a calculation/serialization
+decision before this coverage can be generalized.
+
 An attempted Form 5884 Work Opportunity Tax Credit review case exposed an
 unresolved combined route. Its correctly reduced Schedule C wage deduction
 leads to positive business QBI, but the positive Form 8995 filing validator
@@ -426,13 +439,13 @@ business loss-making instead triggers separate Form 461 and QBI-loss carryover
 requirements. No Form 5884 review fixture was added until that interaction is
 implemented and verified.
 
-Uncovered registered PDF keys at this checkpoint (43):
+Uncovered registered PDF keys at this checkpoint (40):
 
 ```text
-f2106 f2210f f4136 f4255 f4835
+f2106 f4255
 f5471_parent f5471_schedule_e f5471_schedule_h f5471_schedule_i1
 f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
-f5471_schedule_r f8611 f8820 f8834 f8844 f8854 f8854_annual
+f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
 f8859 f8864 f8882 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
 form8582cr
