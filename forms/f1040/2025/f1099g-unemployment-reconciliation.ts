@@ -13,11 +13,11 @@ export function assert1099GUnemploymentSource(
   const repaid = rows.reduce((sum, row) => sum + (row.box_1_repaid ?? 0), 0);
   if (received === 0 && repaid === 0) return;
   if (
-    !Number.isSafeInteger(received) || !Number.isSafeInteger(repaid) ||
+    !Number.isFinite(received) || !Number.isFinite(repaid) ||
     repaid > received
   ) {
     throw new Error(
-      "1099-G current-year unemployment and repayment need valid whole-dollar payer totals",
+      "1099-G current-year unemployment and repayment need valid payer totals",
     );
   }
   const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;

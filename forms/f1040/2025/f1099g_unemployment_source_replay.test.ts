@@ -12,6 +12,7 @@ import { registry } from "./registry.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { assert1099GUnemploymentSource } from "./f1099g-unemployment-reconciliation.ts";
 
 const general = {
   filing_status: "single",
@@ -24,6 +25,54 @@ const general = {
   address_state: "TX",
   address_zip: "78701",
 };
+
+Deno.test("1099-G unemployment replay retains cents allowed by its source schema", () => {
+  const pending = {
+    f1099g: {
+      f1099gs: [{
+        box_1_unemployment: 100.25,
+        box_1_repaid: 0.05,
+      }],
+    },
+    schedule1: {
+      line7_unemployment: 100.2,
+      line10_total_additional_income: 100.2,
+    },
+    f1040: { line8_additional_income: 100.2 },
+  };
+  assert1099GUnemploymentSource(pending);
+  assertThrows(
+    () =>
+      assert1099GUnemploymentSource({
+        ...pending,
+        schedule1: { ...pending.schedule1, line7_unemployment: 100.21 },
+      }),
+    Error,
+    "1099-G unemployment must reconcile",
+  );
+});
+
+Deno.test("1099-G unemployment cents reconcile before whole-dollar native export", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    f1099g: [{
+      payer_name: "State Agency",
+      payer_tin: "123456789",
+      recipient_tin: "111223333",
+      source_document_reference: "2025 agency unemployment copy with cents",
+      box_1_unemployment: 100.25,
+      box_1_repaid: 0.05,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule1?.line7_unemployment, 100.2);
+  assertEquals(pending.f1040?.line8_additional_income, 100.2);
+  assertStringIncludes(
+    buildMefXml(pending, extractFilerIdentity(general)),
+    "<UnemploymentCompAmt>100</UnemploymentCompAmt>",
+  );
+});
 
 Deno.test("two 1099-G unemployment copies and repayments reach native and PDF return", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
