@@ -1,5 +1,8 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
-import { inputSchema } from "../nodes/inputs/f1099r/index.ts";
+import {
+  assertIraRolloverEvidence,
+  inputSchema,
+} from "../nodes/inputs/f1099r/index.ts";
 import { TS } from "../nodes/types.ts";
 
 /** Require a positive payer copy's recipient to match the filed owner. */
@@ -15,6 +18,7 @@ export function assert1099RRecipientOwner(
   if (!parsed.success) {
     throw new Error("1099-R owner review needs valid payer source rows");
   }
+  assertIraRolloverEvidence(parsed.data.f1099rs);
   for (const [index, item] of parsed.data.f1099rs.entries()) {
     if (
       (item.box1_gross_distribution > 0 ||

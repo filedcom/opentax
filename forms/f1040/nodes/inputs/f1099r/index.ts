@@ -320,15 +320,17 @@ export const itemSchema = z.object({
     // Null means the owner's prior 12-month IRA-to-IRA history was reviewed
     // and no earlier rollover was found; omission is not a reviewed answer.
     last_ira_to_ira_rollover_on: z.string().date().nullable(),
+    // Every rollover, including timely and direct transfers, needs an
+    // eligibility review. A deadline waiver cannot waive these requirements.
+    not_inherited_ira_confirmed: z.literal(true),
+    not_required_minimum_distribution_confirmed: z.literal(true),
+    rollover_eligibility_review_reference: z.string().trim().min(1),
     // Publication 590-A automatic waiver: the institution timely received
     // funds and instructions, but its error alone delayed the deposit.
     automatic_late_waiver: z.object({
       institution_received_on: z.string().date(),
       deposit_instructions_on: z.string().date(),
       institution_error_only: z.literal(true),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
       institution_receipt_reference: z.string().trim().min(1),
       deposit_instructions_reference: z.string().trim().min(1),
       institution_error_reference: z.string().trim().min(1),
@@ -347,9 +349,6 @@ export const itemSchema = z.object({
       certification_delivered_on: z.string().date(),
       signed_certification_reference: z.string().trim().min(1),
       contribution_confirmation_reference: z.string().trim().min(1),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
     }).strict().optional(),
     // A favorable IRS private letter ruling grants only the 60-day waiver;
     // the distribution still has to qualify for rollover on other grounds.
@@ -361,9 +360,6 @@ export const itemSchema = z.object({
       issued_ruling_reference: z.string().trim().min(1),
       owner_distribution_match_review_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
     }).strict().optional(),
     // Publication 590-A excludes days a qualifying deposit is frozen from
     // the 60-day period, with at least ten days after the funds are released.
@@ -380,9 +376,6 @@ export const itemSchema = z.object({
       frozen_funds_record_reference: z.string().trim().min(1),
       release_record_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
-      not_inherited_ira_confirmed: z.literal(true),
-      not_required_minimum_distribution_confirmed: z.literal(true),
-      rollover_eligibility_review_reference: z.string().trim().min(1),
     }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
@@ -820,7 +813,11 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       item.box7_distribution_code === DistributionCode.CodeS ||
       item.box7_distribution_code === DistributionCode.CodeJ ||
       item.box7_distribution_code === DistributionCode.CodeQ ||
-      item.box7_distribution_code === DistributionCode.CodeT
+      item.box7_distribution_code === DistributionCode.CodeT ||
+      item.box7_code2 === DistributionCode.CodeS ||
+      item.box7_code2 === DistributionCode.CodeJ ||
+      item.box7_code2 === DistributionCode.CodeQ ||
+      item.box7_code2 === DistributionCode.CodeT
     ) {
       throw new Error(
         "IRA rollover source conflicts with the payer distribution code",

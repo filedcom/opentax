@@ -4606,6 +4606,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4637,6 +4640,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "qualified_plan",
           destination_name: "Example 401(k)",
@@ -4669,6 +4675,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4701,6 +4710,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4711,10 +4723,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             institution_received_on: "2025-06-20",
             deposit_instructions_on: "2025-06-20",
             institution_error_only: true,
-            not_inherited_ira_confirmed: true,
-            not_required_minimum_distribution_confirmed: true,
-            rollover_eligibility_review_reference:
-              "synthetic-eligibility-review",
             institution_receipt_reference: "synthetic-custodian-receipt",
             deposit_instructions_reference: "synthetic-deposit-instructions",
             institution_error_reference: "synthetic-custodian-error",
@@ -4746,6 +4754,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4764,10 +4775,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             signed_certification_reference: "synthetic-signed-certification",
             contribution_confirmation_reference:
               "synthetic-deposit-confirmation",
-            not_inherited_ira_confirmed: true,
-            not_required_minimum_distribution_confirmed: true,
-            rollover_eligibility_review_reference:
-              "synthetic-rollover-eligibility",
           },
         },
       }],
@@ -4795,6 +4802,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4810,10 +4820,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             owner_distribution_match_review_reference:
               "synthetic-ruling-owner-source-match",
             deposit_confirmation_reference: "synthetic-ruling-deposit",
-            not_inherited_ira_confirmed: true,
-            not_required_minimum_distribution_confirmed: true,
-            rollover_eligibility_review_reference:
-              "synthetic-ruling-eligibility",
           },
         },
       }],
@@ -4841,6 +4847,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_ira_simple_indicator: true,
         rollover_code: RolloverCode.S,
         ira_rollover: {
+          not_inherited_ira_confirmed: true as const,
+          not_required_minimum_distribution_confirmed: true as const,
+          rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
           destination: "ira",
           destination_ira_type: "traditional",
@@ -4857,10 +4866,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             frozen_funds_record_reference: "synthetic-freeze-record",
             release_record_reference: "synthetic-release-record",
             deposit_confirmation_reference: "synthetic-deposit-confirmation",
-            not_inherited_ira_confirmed: true,
-            not_required_minimum_distribution_confirmed: true,
-            rollover_eligibility_review_reference:
-              "synthetic-eligibility-review",
           },
         },
       }],

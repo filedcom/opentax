@@ -663,6 +663,9 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
       box7_ira_simple_indicator: true,
       rollover_code: "S",
       ira_rollover: {
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",
         destination: "ira",
         destination_ira_type: "traditional",
@@ -713,6 +716,9 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
     f1099rs: [{
       ...source.f1099rs[0],
       ira_rollover: {
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",
         destination: "qualified_plan",
         destination_name: "Example 401(k)",
