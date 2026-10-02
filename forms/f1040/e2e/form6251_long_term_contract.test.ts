@@ -108,6 +108,7 @@ Deno.test("Form 6251 first-year long-term contract uses AMT percentage of comple
   const pending = buildPending(result.pending);
   const finalFiler = {
     ...testFiler(),
+    nameLine1: "ALEX TAXPAYER",
     firstNameWithInitial: "Alex",
     lastName: "Taxpayer",
   };

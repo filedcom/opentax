@@ -36,6 +36,7 @@ Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", as
     },
     f1099div: [{
       payerName: "Fund A",
+      recipient_tin: filer.primarySSN,
       isNominee: false,
       box11: false,
       box1a: 1_200,
@@ -58,7 +59,11 @@ Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", as
         child_ssn: "987654321",
         electing_parent_ssn: filer.primarySSN,
         eligibility_reviewed: true,
-        income: { interest_income: 1_850, dividend_income: 1_850, qualified_dividends: 1_850 },
+        income: {
+          interest_income: 1_850,
+          dividend_income: 1_850,
+          qualified_dividends: 1_850,
+        },
       },
       dividend_income: 1_850,
       qualified_dividends: 1_850,
@@ -133,11 +138,13 @@ Deno.test("Form 8814 investment income cannot enter the limited Form 4952 export
     },
     f1099int: [{
       payer_name: "Savings Bank",
+      recipient_tin: filer.primarySSN,
       box1: 100,
       investment_property_for_form4952: true,
     }],
     f1099div: [{
       payerName: "Fund B",
+      recipient_tin: filer.primarySSN,
       isNominee: false,
       box11: false,
       box1a: 200,
@@ -163,7 +170,11 @@ Deno.test("Form 8814 investment income cannot enter the limited Form 4952 export
         child_ssn: "987654321",
         electing_parent_ssn: filer.primarySSN,
         eligibility_reviewed: true,
-        income: { interest_income: 1_850, dividend_income: 1_850, qualified_dividends: 1_850 },
+        income: {
+          interest_income: 1_850,
+          dividend_income: 1_850,
+          qualified_dividends: 1_850,
+        },
       },
       dividend_income: 1_850,
       qualified_dividends: 1_850,
