@@ -15,8 +15,14 @@ verified residence with the filer from birth through December 31, and verified
 survival through December 31 support the narrower full-life birth route. The
 actual months must equal the calendar months from the birth month through
 December; the native MeF and filled PDF then print **12** on line 6 as the
-Schedule EIC instructions require. Form 1040 dependent residency uses the same
-reviewed birth fact. An EIC candidate born late in 2025 with an affirmative
+Schedule EIC instructions require. A second, explicitly reviewed birth route
+records one continuous U.S. home interval within the child's lifetime in 2025.
+Its inclusive days must exceed half of the days from birth through December 31,
+and both actual-month fields must equal the calendar months in that interval.
+The native and PDF line 6 also print **12** for this narrower partial-life case,
+as the [2025 Schedule EIC](https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf)
+directs. Form 1040 dependent residency uses the same reviewed birth fact. An
+EIC candidate born late in 2025 with an affirmative
 U.S. residency answer and no birth review fails calculation so the return does
 not silently become childless EIC. An inconsistent review cannot manufacture
 residence months beyond the birth date.
@@ -60,11 +66,11 @@ and filed projection after calculation.
 
 The route does not yet model the printed **7** when actual U.S. residence
 exceeded half the year but was under seven calendar months, a birth-year child
-whose home was the filer's for more than half their life but less than the
-entire remaining year, or the printed **12** for a child deceased in 2025 who
-met the special home test. Kidnapping and other special residence rules also
-need their own reviewed facts. A record reference is not authentication of
-the source document; source-document authentication remains open. The official
+with multiple separated U.S. home intervals totaling more than half their
+life, or the printed **12** for a child deceased in 2025 who met the special
+home test. Kidnapping and other special residence rules also need their own
+reviewed facts. A record reference is not authentication of the source
+document; source-document authentication remains open. The official
 [TY2025 IRS ATS Scenario 5](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-5-10202025.pdf)
 shows 12 U.S. months for both qualifying children used by the corresponding
 source fixture. Other synthetic fixtures explicitly state their own U.S. month
