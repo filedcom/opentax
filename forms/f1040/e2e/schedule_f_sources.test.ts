@@ -24,6 +24,7 @@ function farm(line4a: number) {
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100" as const,
     line_e_material_participation: true,
+    line_f_made_1099_payments: false,
     accounting_method: "cash" as const,
     line1_sales_livestock_resale: 0,
     line4a_ag_program_payments: line4a,
@@ -536,6 +537,7 @@ Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "accrual",
         ccc_loan_election_in_effect: false,
         part_iii: {
