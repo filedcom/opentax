@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **773 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **774 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 773 bounded routes and
+**Implemented coverage.** The completed ledger records 774 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -378,6 +378,9 @@ native, and PDF boundaries until payment-level tax, sale-date rate, and elapsed
 period evidence can be sourced.
 A bounded same-vehicle Schedule 1-A refinance now retains original and
 refinanced loan facts and reconciles the combined eligible interest to one VIN.
+Native and PDF Schedule 1-A projection now reject a deduction source lacking
+the Part I zero-exclusion review, including a senior claim that the graph would
+otherwise count while the export silently omitted the schedule.
 Schedule 1-A Part III now also derives a 2025 FLSA premium as one-third of a
 reviewed full-year employer time-and-a-half overtime pay statement. It binds
 the statement to the W-2 owner and employer, excludes simultaneous premium
