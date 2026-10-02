@@ -16,6 +16,15 @@ and `BinaryAttachment3`. Its PDF builds from the unchanged bundle; a swapped
 W-2 ID pair rejects at both manifest validation and prepared-PDF export, even
 after the XML digest is updated.
 
+The binary side also keeps attachment digests in document order. A prepared
+bundle with two distinct PDF attachments could previously exchange both its
+attachment array entries and XML BinaryAttachment bodies while retaining the
+original digest map and recomputing the XML digest. All byte and description
+checks passed, but the same BinaryAttachment IDs now named the opposite PDFs.
+The manifest now requires the attachment array order to match the retained
+digest key order. A focused two-PDF case builds the unchanged packet and
+rejects the exchanged order at both manifest validation and PDF export.
+
 This check binds document IDs to their prepared order. It does not prove
 issued W-2 bytes, compare each PDF form page to every native document, or
 authenticate a caller-supplied bundle. Those and wider repeated-owner forms,

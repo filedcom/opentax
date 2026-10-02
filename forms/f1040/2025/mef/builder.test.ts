@@ -426,6 +426,56 @@ Deno.test("prepared PDF and submission manifest reject changed attachment bytes 
   );
 });
 
+Deno.test("prepared BinaryAttachment IDs keep their retained PDF order", async () => {
+  const pending = {
+    f1040: { filing_status: "single", digital_assets: false },
+  };
+  const filer = sampleFiler();
+  const secondPdf = await PDFDocument.create();
+  secondPdf.addPage([300, 400]).drawText("Second reviewed statement", {
+    x: 40,
+    y: 350,
+  });
+  const bundle = await buildMefBundle(pending, {
+    filer,
+    attachments: [{
+      fileName: "FirstStatement.pdf",
+      description: "First reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }, {
+      fileName: "SecondStatement.pdf",
+      description: "Second reviewed statement",
+      bytes: await secondPdf.save(),
+    }],
+  });
+  await assertPreparedAttachmentManifest(bundle);
+  const originalPdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(originalPdf)).getPageCount() > 0, true);
+  const binaryBodies = [...bundle.xml.matchAll(
+    /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
+  )].map((match) => match[1]);
+  assertEquals(binaryBodies.length, 2);
+  const xml = bundle.xml.replace(binaryBodies[0], "BINARY_BODY_SWAP_TEMP")
+    .replace(binaryBodies[1], binaryBodies[0])
+    .replace("BINARY_BODY_SWAP_TEMP", binaryBodies[1]);
+  const forged = {
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+    attachments: [bundle.attachments[1], bundle.attachments[0]],
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(forged),
+    Error,
+    "BinaryAttachment order differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer, ".pdf-cache", forged),
+    Error,
+    "BinaryAttachment order differs",
+  );
+});
+
 Deno.test("prepared manifest rejects unsafe PDF names even if XML and digests are recomputed", async () => {
   const bundle = await buildMefBundle({}, {
     filer: sampleFiler(),

@@ -69,6 +69,11 @@ export async function assertPreparedAttachmentManifest(
   ) {
     throw new Error("Prepared MeF PDF attachment set differs from its digests");
   }
+  if (names.some((name, index) => name !== digestNames[index])) {
+    throw new Error(
+      "Prepared MeF BinaryAttachment order differs from its retained PDF digest order",
+    );
+  }
   const filedDescriptions = [...bundle.xml.matchAll(
     /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
   )].map((match) => match[1]);
