@@ -1150,6 +1150,21 @@ export function assertScheduleFFarmSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const necRows = pending.f1099nec === undefined
+    ? []
+    : form1099necSchema.parse(pending.f1099nec).f1099necs;
+  const expectedNec = necRows.flatMap((item) =>
+    item.for_routing === "schedule_f" && (item.box1_nec ?? 0) > 0
+      ? [{
+        farm_id: item.farm_id,
+        kind: "1099nec_farm_income",
+        amount: item.box1_nec,
+        payer_name: item.payer_name,
+        payer_tin: tin(item.payer_tin, "1099-NEC payer"),
+        recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+      }]
+      : []
+  );
   const gRows = pending.f1099g === undefined
     ? []
     : form1099gSchema.parse(pending.f1099g).f1099gs;
@@ -1208,14 +1223,20 @@ export function assertScheduleFFarmSourceIdentity(
   });
   const scheduleF = pending.schedule_f;
   if (!scheduleF || typeof scheduleF !== "object") {
-    if (expectedG.length + expectedM.length + expectedPatr.length > 0) {
+    if (
+      expectedNec.length + expectedG.length + expectedM.length +
+          expectedPatr.length > 0
+    ) {
       throw new Error("1099 farm payments need a Schedule F source");
     }
     return;
   }
   const sources = (scheduleF as Record<string, unknown>).farm_sources;
   if (sources === undefined) {
-    if (expectedG.length + expectedM.length + expectedPatr.length > 0) {
+    if (
+      expectedNec.length + expectedG.length + expectedM.length +
+          expectedPatr.length > 0
+    ) {
       throw new Error("Schedule F 1099 farm sources are missing");
     }
     return;
@@ -1241,6 +1262,17 @@ export function assertScheduleFFarmSourceIdentity(
       value.taxable_amount,
       value.deferred === true,
     ]);
+  const actualNec = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099nec_farm_income"
+  );
+  if (
+    JSON.stringify(actualNec.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedNec.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-NEC farm sources differ from retained payer copies",
+    );
+  }
   if (
     JSON.stringify(actualG.map((value) => sourceKey(value)).sort()) !==
       JSON.stringify(expectedG.map((value) => sourceKey(value)).sort())

@@ -184,6 +184,90 @@ Deno.test("issued 1099-G farm payments bind to the proprietor and retained sourc
   );
 });
 
+Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF export", async () => {
+  const inputs = sourceInputs(4_100);
+  const result = execute(plan, registry, {
+    ...inputs,
+    schedule_f: {
+      schedule_fs: [{ ...farm(4_100), line_f_made_1099_payments: false }],
+    },
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  const filer = {
+    ...testFiler(),
+    nameLine1: "SAM FARMER",
+    nameControl: "FARM",
+    firstName: "Sam",
+    firstNameWithInitial: "Sam",
+    lastName: "Farmer",
+    fullName: "Sam Farmer",
+  };
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(xml, "<IRS1040ScheduleF ");
+  const xsdPath = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsdPath);
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, xml);
+      const validation = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+      }).output();
+      assertEquals(
+        validation.code,
+        0,
+        new TextDecoder().decode(validation.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals(pdf.subarray(0, 5), new TextEncoder().encode("%PDF-"));
+
+  const nec = pending.f1099nec!;
+  const changedCopy = {
+    ...pending,
+    f1099nec: {
+      f1099necs: [{ ...nec.f1099necs[0], box1_nec: 7_999 }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedCopy, filer),
+    Error,
+    "Schedule F 1099-NEC farm sources differ from retained payer copies",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedCopy, filer),
+    Error,
+    "Schedule F 1099-NEC farm sources differ from retained payer copies",
+  );
+
+  const farmPending = scheduleFInputSchema.parse(result.pending.schedule_f);
+  const changedFarm = {
+    ...pending,
+    schedule_f: {
+      ...farmPending,
+      farm_sources: (farmPending.farm_sources ?? []).map((row) =>
+        row.kind === "1099nec_farm_income"
+          ? { ...row, payer_tin: "999999999" }
+          : row
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedFarm, filer),
+    Error,
+    "Schedule F 1099-NEC farm sources differ from retained payer copies",
+  );
+});
+
 Deno.test("issued 1099-MISC crop insurance binds to the Schedule F proprietor in both exports", async () => {
   const result = execute(plan, registry, sourceInputs(4_100), ctx);
   assertEquals(result.diagnostics, []);
