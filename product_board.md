@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **830 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **831 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 830 bounded routes and
+**Implemented coverage.** The completed ledger records 831 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -168,6 +168,8 @@ Schedule A now prints its line 5a election checkbox, and bounded two-loan
 Form 1098 reviews require byte-verified lender copies for both loans.
 Its filled PDF now also prints line 8e mortgage-interest subtotal and the
 Form 8396-net amount on line 8a or 8b, matching native XML.
+Form 1040 native XML now prints reviewed direct-deposit bank fields or its
+Form 8888 attachment mark in schema order, matching the filled PDF.
 Reviewed seller-financed Schedule A line 8b interest now carries seller identity,
 TIN, address, and exact amount into its native statement and printable fields;
 other positive line 8b variants remain blocked pending distinct source routes.
