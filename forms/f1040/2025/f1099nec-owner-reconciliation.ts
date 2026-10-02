@@ -1,4 +1,7 @@
-import { inputSchema } from "../nodes/inputs/f1099nec/index.ts";
+import {
+  assertDistinct1099NecCopies,
+  inputSchema,
+} from "../nodes/inputs/f1099nec/index.ts";
 
 /** Require each positive NEC payer copy to belong to a filed owner. */
 export function assertPositive1099NecOwner(
@@ -7,6 +10,7 @@ export function assertPositive1099NecOwner(
 ): void {
   if (pending?.f1099nec === undefined) return;
   const rows = inputSchema.parse(pending.f1099nec).f1099necs;
+  assertDistinct1099NecCopies(rows);
   const primary = typeof fields.taxpayer_ssn === "string"
     ? fields.taxpayer_ssn.replace(/\D/g, "")
     : undefined;

@@ -19,6 +19,7 @@ export const itemSchema = z.object({
   payer_name: z.string(),
   payer_tin: z.string(),
   recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   box1_nec: z.number().nonnegative().optional(),
   box2_direct_sales: z.boolean().optional(),
   box3_golden_parachute: z.number().nonnegative().optional(),
@@ -128,6 +129,25 @@ export const inputSchema = z.object({
 });
 
 type NECItem = z.infer<typeof itemSchema>;
+
+/** One issued payer copy may contribute to the return only once. */
+export function assertDistinct1099NecCopies(items: readonly NECItem[]): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.source_document_reference) continue;
+    const key = JSON.stringify([
+      item.payer_tin.replaceAll("-", ""),
+      item.recipient_ssn?.replaceAll("-", "") ?? null,
+      item.source_document_reference,
+    ]);
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-NEC repeats the same payer, recipient, and issued source reference; corrected copies need one reviewed current row",
+      );
+    }
+    seen.add(key);
+  }
+}
 
 export function necBox3ExciseFromSources(
   source: unknown,

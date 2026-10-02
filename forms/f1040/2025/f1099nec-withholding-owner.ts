@@ -1,5 +1,8 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
-import { inputSchema } from "../nodes/inputs/f1099nec/index.ts";
+import {
+  assertDistinct1099NecCopies,
+  inputSchema,
+} from "../nodes/inputs/f1099nec/index.ts";
 
 /** Bind positive NEC backup withholding to a recipient on this return. */
 export function assertNecWithholdingRecipient(
@@ -11,6 +14,7 @@ export function assertNecWithholdingRecipient(
   if (!parsed.success) {
     throw new Error("1099-NEC withholding needs valid issued payer rows");
   }
+  assertDistinct1099NecCopies(parsed.data.f1099necs);
   const withheld = parsed.data.f1099necs.filter((item) =>
     (item.box4_federal_withheld ?? 0) > 0
   );

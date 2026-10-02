@@ -83,3 +83,29 @@ Deno.test("positive 1099-NEC withholding cannot belong to another recipient", ()
     "recipient SSN must match",
   );
 });
+
+Deno.test("one identified 1099-NEC issued copy cannot replay changed income at native or PDF export", () => {
+  const issued = {
+    payer_name: "Payer",
+    payer_tin: "123456789",
+    recipient_ssn: "111223333",
+    source_document_reference: "2025 issuer copy 1",
+    box1_nec: 100,
+    for_routing: "form_8919" as const,
+  };
+  const pending = {
+    f1099nec: {
+      f1099necs: [issued, { ...issued, box1_nec: 150 }],
+    },
+  };
+  assertThrows(
+    () => irs1040.build(filed, { pending }),
+    Error,
+    "1099-NEC repeats the same payer, recipient, and issued source reference",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    "1099-NEC repeats the same payer, recipient, and issued source reference",
+  );
+});
