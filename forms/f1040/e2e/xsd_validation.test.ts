@@ -225,7 +225,13 @@ Deno.test({
   const result = runReturn({
     general: singleGeneral(),
     household_wages: [{ wages_received: 2_000 }],
-    f1099g: [{ box_1_unemployment: 1_000 }],
+    f1099g: [{
+      box_1_unemployment: 1_000,
+      recipient_tin: BASE_IDENTITY.taxpayer_ssn,
+      payer_name: "Illinois Department of Employment Security",
+      payer_tin: "123456789",
+      source_document_reference: "Synthetic 2025 Form 1099-G",
+    }],
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
@@ -255,7 +261,20 @@ Deno.test({
       taxpayer_dob: "1950-06-15",
       taxpayer_blind: true,
     },
-    w2: [w2Item(180_000, 20_000)],
+    w2: [w2Item(75_000, 10_000)],
+    schedule1a: {
+      senior_zero_exclusions_review: {
+        no_section933_puerto_rico_excluded_income: true,
+        section933_review_source_reference:
+          "Synthetic 2025 residency and income review",
+        no_form2555_filed: true,
+        form2555_review_source_reference:
+          "Synthetic 2025 foreign-income review",
+        no_form4563_filed: true,
+        form4563_review_source_reference:
+          "Synthetic 2025 Samoa-source income review",
+      },
+    },
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
@@ -882,6 +901,9 @@ Deno.test({
     w2: [w2Item(100_000, 18_000)],
     f1099int: [{
       payer_name: "Muni Bond Fund",
+      payer_tin: "123456789",
+      recipient_tin: BASE_IDENTITY.taxpayer_ssn,
+      source_document_reference: "Synthetic 2025 Form 1099-INT",
       box8: 100_000,
       box9: 100_000,
     }],
