@@ -62,7 +62,7 @@ function sha256HexSync(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-/** Count physical ZIP entries before unzipSync collapses duplicate filenames. */
+/** Check physical ZIP entries before unzipSync collapses or renames them. */
 function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
   if (bytes.length < 22) return undefined;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -92,6 +92,20 @@ function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
       const nameLength = view.getUint16(position + 28, true);
       const extraLength = view.getUint16(position + 30, true);
       const commentLength = view.getUint16(position + 32, true);
+      const localOffset = view.getUint32(position + 42, true);
+      if (
+        localOffset + 30 > offset ||
+        view.getUint32(localOffset, true) !== 0x04034b50 ||
+        view.getUint16(localOffset + 26, true) !== nameLength ||
+        localOffset + 30 + nameLength +
+              view.getUint16(localOffset + 28, true) > offset
+      ) return undefined;
+      for (let index = 0; index < nameLength; index++) {
+        if (
+          bytes[position + 46 + index] !==
+            bytes[localOffset + 30 + index]
+        ) return undefined;
+      }
       position += 46 + nameLength + extraLength + commentLength;
       if (position > end) return undefined;
       seen++;

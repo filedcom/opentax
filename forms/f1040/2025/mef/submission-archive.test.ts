@@ -406,6 +406,48 @@ Deno.test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipS
   );
 });
 
+Deno.test("A2A packaging rejects a local ZIP name that differs from its central name", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const changedZip = Uint8Array.from(submission.bytes);
+  const name = new TextEncoder().encode("attachment/Evidence.pdf");
+  let firstName = -1;
+  let occurrences = 0;
+  for (let index = 0; index <= changedZip.length - name.length; index++) {
+    if (name.every((byte, offset) => changedZip[index + offset] === byte)) {
+      if (firstName < 0) firstName = index;
+      occurrences++;
+    }
+  }
+  assertEquals(occurrences, 2); // local header and central directory
+  changedZip[firstName + name.length - 1] = "F".charCodeAt(0);
+  assertEquals(
+    Object.keys(unzipSync(changedZip)),
+    Object.keys(unzipSync(submission.bytes)),
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: changedZip },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
 Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
