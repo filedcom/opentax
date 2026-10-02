@@ -343,6 +343,10 @@ passed `scripts/smoke-release-binary.ts` as version `dev`: source-backed W-2,
 clean CLI validation, finalized MeF XML, and a two-page PDF. This verifies the
 local compiled asset only; the five release-workflow platform artifacts and
 downloaded release assets have not been built or smoked.
+After the smoke was strengthened to inspect the flattened Form 1040 filer,
+line 1a wages, and line 25a withholding, a freshly compiled local CLI passed
+the same synthetic return on 2026-10-02. The five platform artifacts still
+need their release-workflow run.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
@@ -599,6 +603,16 @@ and this classification does not close the 28-key coverage or full-review gate.
 ```sh
 deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
+
+An initial complete-scope generator attempt on 2026-10-02 wrote 21
+source-backed PDF/XML/source trios, then stopped at a Form 8862 CTC/ODC and
+AOTC fixture requiring executor-owned authentication of prior IRS notice
+issuance and contents. Its partial directory is
+`.state/research/ty2025-filled-pdf-review/2026-10-02-pr59-nonnamed-attempt1`
+and the local log is `.state/research/ty2025-filled-pdf-review-attempt1.log`.
+It has no completed manifest and is not a visual-review pass. A declared
+nonnamed review scope is being prepared so deferred named cases are recorded
+as exclusions while included cases retain all source, schema, and PDF checks.
 
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
