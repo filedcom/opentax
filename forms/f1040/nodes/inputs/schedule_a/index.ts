@@ -60,6 +60,13 @@ export const homeMortgageNonqualifyingUseReviewSchema = z.object({
   deductible_home_interest_reviewed: z.literal(true),
 });
 
+export const otherTaxItemSchema = z.object({
+  type: z.enum(["foreign_income_tax", "gst_income_distribution_tax"]),
+  amount: z.number().int().positive(),
+  source_document_reference: z.string().trim().min(1),
+  deductible_tax_reviewed: z.literal(true),
+});
+
 /** Source-backed Schedule A line 8 warning; the amount is the filed interest. */
 export function reviewedHomeMortgageNonqualifyingUse(
   source: Record<string, unknown>,
@@ -98,6 +105,8 @@ export const inputSchema = z.object({
   line_5b_real_estate_tax: z.number().nonnegative().optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
+  line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
+    .optional(),
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   home_mortgage_nonqualifying_use_review:
@@ -132,6 +141,29 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  const otherTaxItems = data.line_6_other_tax_items;
+  if (otherTaxItems) {
+    if (
+      new Set(otherTaxItems.map((item) => item.type)).size !==
+        otherTaxItems.length
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["line_6_other_tax_items"],
+        message: "Schedule A line 6 reviewed tax categories must be distinct",
+      });
+    }
+    if (
+      otherTaxItems.reduce((sum, item) => sum + item.amount, 0) !==
+        data.line_6_other_taxes
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["line_6_other_tax_items"],
+        message: "Schedule A line 6 reviewed taxes must equal the filed total",
+      });
+    }
+  }
   if (
     data.home_mortgage_nonqualifying_use_review !== undefined &&
     (data.line_8a_mortgage_interest_1098 ?? 0) +

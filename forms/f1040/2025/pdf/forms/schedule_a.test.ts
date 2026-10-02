@@ -12,6 +12,106 @@ import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { buildMefXml } from "../../mef/builder.ts";
 import type { MefFormsPending } from "../../mef/types.ts";
 
+Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement and PDF", async () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general: {
+        filing_status: "single",
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+        digital_assets: false,
+      },
+      schedule_a: {
+        line_5b_real_estate_tax: 18_000,
+        line_6_other_taxes: 3_000,
+        line_6_other_tax_items: [
+          {
+            type: "foreign_income_tax",
+            amount: 2_000,
+            source_document_reference: "2025 foreign tax receipt",
+            deductible_tax_reviewed: true,
+          },
+          {
+            type: "gst_income_distribution_tax",
+            amount: 1_000,
+            source_document_reference: "2025 GST trustee statement",
+            deductible_tax_reviewed: true,
+          },
+        ],
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 21_000);
+  const xml = buildMefXml(result.pending as MefFormsPending, filer);
+  assertEquals(xml.includes("<OtherTaxesAmt referenceDocumentId="), true);
+  assertEquals(xml.includes("<OtherDeductibleTaxStmt "), true);
+  assertEquals(
+    xml.includes("<Desc>Foreign income tax</Desc><Amt>2000</Amt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<Desc>GST tax on income distributions</Desc><Amt>1000</Amt>"),
+    true,
+  );
+  const [instance] = scheduleAPdf.instances?.(
+    result.pending.schedule_a,
+    filer,
+    result.pending,
+  ) ?? [];
+  assertEquals(
+    instance?.print_line_6_other_tax_description,
+    "Foreign income tax: 2000; GST tax on income distributions: 1000",
+  );
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    result.pending,
+  );
+  assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+
+  const aggregateOnly = {
+    ...result.pending,
+    schedule_a: {
+      ...result.pending.schedule_a,
+      line_6_other_tax_items: undefined,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(aggregateOnly as MefFormsPending, filer),
+    Error,
+    "needs reviewed other-tax item sources",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(aggregateOnly.schedule_a, filer, aggregateOnly),
+    Error,
+    "needs reviewed other-tax item sources",
+  );
+  const wrongTotal = {
+    ...result.pending,
+    schedule_a: { ...result.pending.schedule_a, line_6_other_taxes: 3_001 },
+  };
+  assertThrows(
+    () => buildMefXml(wrongTotal as MefFormsPending, filer),
+    Error,
+    "differ from filed total",
+  );
+});
+
 Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF line 8", async () => {
   const filer = {
     primarySSN: "111223333",

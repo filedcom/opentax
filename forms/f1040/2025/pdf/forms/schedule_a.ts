@@ -18,6 +18,10 @@ import {
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
 import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
+import {
+  scheduleAOtherTaxDescription,
+  scheduleAOtherTaxRows,
+} from "../../schedule_a_other_tax_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -95,6 +99,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line_5e_salt_deduction",
     pdfField: "form1[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line_6_other_tax_description",
+    pdfField: "form1[0].Page1[0].f1_12[0]",
   },
   {
     kind: "text",
@@ -329,6 +338,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
       all?.standard_deduction,
       standard.itemized_deductions,
     );
+    const otherTaxRows = scheduleAOtherTaxRows(input);
     return [{
       ...input,
       line_8a_mortgage_interest_1098: line8a,
@@ -350,6 +360,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
       print_line_5a_sales_tax_election: amount("line_5a_sales_tax") > 0,
       line_5e_salt_deduction: salt,
       line_7_taxes: taxes,
+      print_line_6_other_tax_description: scheduleAOtherTaxDescription(
+        otherTaxRows,
+      ),
       line_10_interest: interest,
       line_14_charity: charity,
       line_17_itemized: standard.itemized_deductions,

@@ -291,6 +291,43 @@ Deno.test("Schedule A mortgage-use warning requires reviewed loan and interest f
   );
 });
 
+Deno.test("Schedule A line 6 tax types require distinct reviewed rows totaling the filed amount", () => {
+  const item = {
+    type: "foreign_income_tax",
+    amount: 500,
+    source_document_reference: "foreign tax receipt",
+    deductible_tax_reviewed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 500,
+      line_6_other_tax_items: [item],
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 501,
+      line_6_other_tax_items: [item],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 1_000,
+      line_6_other_tax_items: [item, item],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_6_other_taxes: 500,
+      line_6_other_tax_items: [{ ...item, source_document_reference: "" }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("scheduleA.inputSchema: string where number expected is rejected", () => {
   const parsed = scheduleA.inputSchema.safeParse({ line_1_medical: "5000" });
   assertEquals(parsed.success, false);

@@ -24,6 +24,7 @@ import {
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
 import { reviewedHomeMortgageNonqualifyingUse } from "../../../nodes/inputs/schedule_a/index.ts";
+import { scheduleAOtherTaxRows } from "../../schedule_a_other_tax_source.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -296,6 +297,15 @@ function buildIRS1040ScheduleA(
       key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
     ) || line5a !== 0;
   if (!hasDeduction && fields.force_itemized !== true) return "";
+  const otherTaxRows = scheduleAOtherTaxRows(fields);
+  const otherTaxStatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_other_tax_statement ?? [];
+  if (
+    otherTaxRows.length > 0 && context?.documentIdsByPendingKey &&
+    otherTaxStatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 6 needs its linked other-tax statement");
+  }
   const itemizeBelowStandard = itemizeBelowStandardElection(
     fields.force_itemized,
     context?.pending?.standard_deduction,
@@ -317,7 +327,17 @@ function buildIRS1040ScheduleA(
     ...(line5a > 0 ? [element("StateAndLocalTaxAmt", line5a)] : []),
     mapField(["line_5b_real_estate_tax", "RealEstateTaxesAmt"]),
     mapField(["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"]),
-    mapField(["line_6_other_taxes", "OtherTaxesAmt"]),
+    typeof fields.line_6_other_taxes === "number"
+      ? element(
+        "OtherTaxesAmt",
+        fields.line_6_other_taxes,
+        otherTaxStatementIds.length === 1
+          ? {
+            referenceDocumentId: otherTaxStatementIds[0],
+          }
+          : undefined,
+      )
+      : "",
     reviewedHomeMortgageNonqualifyingUse(fields)
       ? element("HomeMortgNotUsedInd", "X")
       : "",
