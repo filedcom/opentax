@@ -302,6 +302,9 @@ Deno.test("MeF final export rejects non-withheld W-2G winnings for another winne
           w2gs: [{
             box1_winnings: 1_000,
             box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-other-winner-w2g",
             winner_name: "Another Winner",
             box9_winner_tin: "999-88-7777",
             winner_us_address: sampleFiler().address,

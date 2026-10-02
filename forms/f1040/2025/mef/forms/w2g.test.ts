@@ -75,7 +75,7 @@ Deno.test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", 
 });
 
 Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
-  const xml = w2g.build({ w2gs: [issued, { box1_winnings: 500 }] }, context);
+  const xml = w2g.build({ w2gs: [issued, { box1_winnings: 0 }] }, context);
   assertEquals(xml.length, 1);
   const tags = [
     "<CalendarYr>",

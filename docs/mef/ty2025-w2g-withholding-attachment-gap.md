@@ -13,6 +13,16 @@ Form 1040 line 25c. Schedule 1 native XML uses the TY2025
 field. Wrongly numbered legacy W-2G box keys are rejected by the strict source
 schema, with no compatibility alias.
 
+Every positive winnings or withholding row now needs a named payer, valid EIN,
+and distinct issued-copy reference before the graph sums amounts. A repeated
+identified payer/winner transaction rejects even when its reference or box 1
+amount changes. Final native and PDF preflight parse the same source schema;
+a non-withheld $1,000 winnings fixture reaches Schedule 1 line 8b and Form
+1040 line 8, and both exports reject a removed payer EIN or source reference.
+Sparse zero-only W-2G rows remain informational. Non-withheld rows do not
+require an attached payer PDF; their issuer origin and any two distinct copies
+without a shared transaction identifier still need external verification.
+
 Withheld W-2G now has a bounded native `IRSW2G` route. The source requires the
 2025 payer-issued form reference, payer name/control/EIN and structured US
 address, winner name/SSN/address matching the taxpayer or the spouse on a joint

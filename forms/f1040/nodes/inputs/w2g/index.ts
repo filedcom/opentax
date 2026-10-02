@@ -51,7 +51,23 @@ export const itemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional(),
   issued_copy_attachment_file_name: z.string().trim().min(1).optional(),
   issued_copy_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
-}).strict();
+}).strict().superRefine((item, ctx) => {
+  if (
+    (item.box1_winnings ?? 0) <= 0 && (item.box4_federal_withheld ?? 0) <= 0
+  ) {
+    return;
+  }
+  if (
+    !item.source_document_reference || !item.payer_name?.trim() ||
+    !item.payer_ein || !/^\d{2}-?\d{7}$/.test(item.payer_ein)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Positive W-2G winnings or withholding need an issued-copy reference and identified payer name and EIN",
+    });
+  }
+});
 
 export const inputSchema = z.object({
   w2gs: z.array(itemSchema).min(1),
@@ -59,6 +75,7 @@ export const inputSchema = z.object({
   const references = new Set<string>();
   const copyFiles = new Set<string>();
   const copyHashes = new Set<string>();
+  const transactions = new Set<string>();
   w2gs.forEach((item, index) => {
     const reference = item.source_document_reference?.trim();
     if (reference && references.has(reference)) {
@@ -89,6 +106,25 @@ export const inputSchema = z.object({
       });
     }
     if (hash) copyHashes.add(hash);
+    if (
+      (item.box1_winnings ?? 0) > 0 || (item.box4_federal_withheld ?? 0) > 0
+    ) {
+      const payer = item.payer_ein?.replace(/\D/g, "");
+      const winner = item.box9_winner_tin?.replace(/\D/g, "");
+      const transaction = item.box5_transaction?.trim().toUpperCase();
+      if (payer && winner && transaction) {
+        const key = JSON.stringify([payer, winner, transaction]);
+        if (transactions.has(key)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["w2gs", index, "box5_transaction"],
+            message:
+              "The same identified W-2G payer transaction cannot be entered twice",
+          });
+        }
+        transactions.add(key);
+      }
+    }
   });
 });
 

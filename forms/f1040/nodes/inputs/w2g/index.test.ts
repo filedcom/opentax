@@ -5,8 +5,14 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
+let issuedCopyNumber = 0;
 function minimalItem(overrides: Record<string, unknown> = {}) {
-  return { ...overrides };
+  return {
+    payer_name: "Test Casino",
+    payer_ein: "12-3456789",
+    source_document_reference: `issued-w2g-test-${++issuedCopyNumber}`,
+    ...overrides,
+  };
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
@@ -67,9 +73,42 @@ Deno.test("w2g.inputSchema: duplicate payer-issued copy reference fails", () => 
   assertEquals(parsed.success, false);
 });
 
+Deno.test("w2g.inputSchema: positive winnings need an identified payer copy", () => {
+  assertEquals(
+    w2g.inputSchema.safeParse({ w2gs: [{ box1_winnings: 1000 }] }).success,
+    false,
+  );
+  assertEquals(
+    w2g.inputSchema.safeParse({ w2gs: [{ box4_federal_withheld: 250 }] })
+      .success,
+    false,
+  );
+  assertEquals(w2g.inputSchema.safeParse({ w2gs: [{}] }).success, true);
+});
+
+Deno.test("w2g.inputSchema: an identified payer transaction cannot be entered with a new reference", () => {
+  const first = minimalItem({
+    box1_winnings: 1000,
+    box5_transaction: "casino-ticket-42",
+    box9_winner_tin: "123456789",
+  });
+  assertEquals(
+    w2g.inputSchema.safeParse({
+      w2gs: [first, {
+        ...first,
+        source_document_reference: "issued-copy-relabelled",
+        box1_winnings: 1100,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("w2g.inputSchema: duplicate payer-issued PDF bytes fail even with different filenames", () => {
   const first = {
     source_document_reference: "Casino copy 1",
+    payer_name: "Test Casino",
+    payer_ein: "12-3456789",
     issued_copy_attachment_file_name: "CasinoCopy1.pdf",
     issued_copy_pdf_sha256: "a".repeat(64),
     box1_winnings: 1_000,
@@ -109,6 +148,7 @@ Deno.test("w2g.inputSchema: valid full item passes", () => {
       box15_state_withheld: 50,
       payer_name: "Casino ABC",
       payer_ein: "12-3456789",
+      source_document_reference: "issued-full-w2g",
     }],
   });
   assertEquals(parsed.success, true);
