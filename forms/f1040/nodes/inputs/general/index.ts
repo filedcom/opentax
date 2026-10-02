@@ -1073,6 +1073,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Spouse info pass-throughs
   addIfDefined(fields, "spouse_first_name", input.spouse_first_name);
+  addIfDefined(fields, "spouse_middle_initial", input.spouse_middle_initial);
   addIfDefined(fields, "spouse_last_name", input.spouse_last_name);
   addIfDefined(fields, "spouse_ssn", input.spouse_ssn);
   addIfDefined(

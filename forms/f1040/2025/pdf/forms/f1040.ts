@@ -84,6 +84,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_25[0]",
   },
   {
+    kind: "text",
+    domainKey: "print_spouse_first_name_with_initial",
+    pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+  },
+  {
     kind: "checkbox",
     domainKey: "main_home_in_us_over_half_year",
     pdfField: "topmostSubform[0].Page1[0].c1_5[0]",
@@ -1020,6 +1025,24 @@ export const irs1040Pdf: PdfFormDescriptor = {
     };
   },
   fields,
+  instances(fields, filer) {
+    const spouse = filer?.spouse;
+    return [{
+      ...fields,
+      print_spouse_first_name_with_initial: spouse
+        ? [spouse.firstName, spouse.middleInitial].filter(Boolean).join(" ")
+        : undefined,
+      ...(fields.filing_status === "mfs" && spouse
+        ? {
+          print_mfs_spouse_full_name: [
+            spouse.firstName,
+            spouse.middleInitial,
+            spouse.lastName,
+          ].filter(Boolean).join(" "),
+        }
+        : {}),
+    }];
+  },
   async decoratePages(document, pages, fields) {
     const note = fields.print_form8814_line7a_note;
     const page = pages[0];
@@ -1121,11 +1144,6 @@ export const irs1040Pdf: PdfFormDescriptor = {
     },
     // ── Spouse ──────────────────────────────────────────────────────────────
     // f1_17 = "Spouse's first name and middle initial", f1_18 = "Last name", f1_19 = spouse SSN
-    {
-      kind: "text",
-      domainKey: "spouse.firstName",
-      pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
-    },
     {
       kind: "text",
       domainKey: "spouse.lastName",
