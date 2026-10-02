@@ -49,7 +49,10 @@ export function reconcilePublicForm8839Pending(
   if (
     !final1040 || !finalSchedule3 || !preSchedule3 ||
     typeof preSchedule3 !== "object" || Array.isArray(preSchedule3) ||
-    canonical(final1040) !== canonical(settled.final1040) ||
+    canonical(final1040) !== canonical({
+      ...(route.pre_adoption_sink_input as Record<string, unknown>),
+      ...settled.final1040,
+    }) ||
     canonical(finalSchedule3) !== canonical({
         ...preSchedule3,
         ...settled.finalSchedule3,

@@ -110,7 +110,10 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
           ...preSchedule3,
           ...settled.finalSchedule3,
         },
-        f1040: settled.final1040,
+        f1040: {
+          ...preSink,
+          ...settled.final1040,
+        },
       },
     };
   }
