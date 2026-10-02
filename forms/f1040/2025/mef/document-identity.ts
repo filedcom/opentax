@@ -53,10 +53,14 @@ export function validateDocumentReferences(
   if (knownIds.size !== ids.length) {
     throw new Error("MeF document IDs collide after root-name truncation");
   }
-  const referencedIds = fragments.flatMap((fragment) =>
+  const referenceGroups = fragments.flatMap((fragment) =>
     [...fragment.xml.matchAll(/\breferenceDocumentId="([^"]+)"/g)]
-      .flatMap((match) => match[1].trim().split(/\s+/))
+      .map((match) => match[1].trim().split(/\s+/))
   );
+  if (referenceGroups.some((group) => new Set(group).size !== group.length)) {
+    throw new Error("MeF referenceDocumentId list repeats one document");
+  }
+  const referencedIds = referenceGroups.flat();
   for (const id of referencedIds) {
     if (!knownIds.has(id)) {
       throw new Error(`MeF referenceDocumentId ${id} has no document`);

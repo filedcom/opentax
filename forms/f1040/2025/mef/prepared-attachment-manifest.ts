@@ -23,15 +23,17 @@ export function assertPreparedDocumentInventory(
   const tagsById = new Map(
     documents.map((document) => [document.id, document.tag]),
   );
-  const referencedIds = [...bundle.xml.matchAll(
+  const referenceGroups = [...bundle.xml.matchAll(
     /\breferenceDocumentId="([^"]+)"/g,
-  )].flatMap((match) => match[1].trim().split(/\s+/));
+  )].map((match) => match[1].trim().split(/\s+/));
+  const referencedIds = referenceGroups.flat();
   if (
     returnData.length !== 1 || headerCounts.length !== 1 ||
     documents.length === 0 ||
     Number(returnData[0][1]) !== documents.length ||
     documents[0]?.tag !== "IRS1040" ||
     new Set(documentIds).size !== documentIds.length ||
+    referenceGroups.some((group) => new Set(group).size !== group.length) ||
     referencedIds.some((id) => !documentIds.includes(id)) ||
     hasMismatchedSingleReferenceName(bundle.xml, tagsById) ||
     documents.filter((document) => document.tag === "BinaryAttachment")

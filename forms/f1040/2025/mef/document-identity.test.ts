@@ -39,6 +39,8 @@ Deno.test("repeated MeF form references keep their declared document name", () =
     '<Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/>';
   const goodReference =
     '<Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS2439"/>';
+  const repeatedReference =
+    '<Statement referenceDocumentId="IRS24391 IRS24391" referenceDocumentName="IRS2439"/>';
   const fragments = (reference: string) => [{
     pendingKey: "f1040",
     tag: "IRS1040",
@@ -58,6 +60,11 @@ Deno.test("repeated MeF form references keep their declared document name", () =
     Error,
     "referenceDocumentName differs",
   );
+  assertThrows(
+    () => validateDocumentReferences(fragments(repeatedReference)),
+    Error,
+    "referenceDocumentId list repeats one document",
+  );
 
   const bundle = (reference: string): MefBundle => ({
     xml:
@@ -71,6 +78,11 @@ Deno.test("repeated MeF form references keep their declared document name", () =
   assertPreparedDocumentInventory(bundle(goodReference));
   assertThrows(
     () => assertPreparedDocumentInventory(bundle(badReference)),
+    Error,
+    "document count, order, IDs, references",
+  );
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle(repeatedReference)),
     Error,
     "document count, order, IDs, references",
   );
