@@ -1076,6 +1076,7 @@ export const SCENARIO_1040_13_FACTS = {
   w2: {
     employerName: "OAK SUPPLY CO",
     employerEin: "000000014",
+    employeeSsn: "400001313",
     employerAddress: {
       line1: "201 Elm Drive",
       city: "Anytown",

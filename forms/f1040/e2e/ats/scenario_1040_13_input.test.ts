@@ -21,6 +21,7 @@ Deno.test("ATS 1040 Scenario 13 maps every printed source form into one input", 
   assertEquals(general.taxpayer_ssn, facts.taxpayer.ssn);
   assertEquals(general.spouse_ssn, facts.spouse.ssn);
   assertEquals(w2.employer_ein, facts.w2.employerEin);
+  assertEquals(w2.employee_ssn, facts.taxpayer.ssn);
   assertEquals(w2.box1_wages, facts.w2.box1Wages);
   assertEquals(w2.box2_fed_withheld, facts.w2.box2FederalWithholding);
   assertEquals(refueling.cost, facts.form8911ScheduleA.qualifiedCost);
