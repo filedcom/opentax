@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-172 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+174 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -329,8 +329,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **80 distinct
-registered PDF keys out of 112**; **32 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **82 distinct
+registered PDF keys out of 112**; **30 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -362,7 +362,7 @@ checked in the filled packets. Artifacts are under
 These are synthetic source records; prior-year carryforward and passive-credit
 documentation still need external authentication. A graph-valid Form 8611
 case was excluded from the PDF matrix because its historical credit and basis
-records fail the existing printable-filing source-verification gate. The
+records fail the existing printable-filing source-verification gate.
 Two further full returns cover Form 5884 and Form 8912. The W-2-backed,
 certified work opportunity case has $6,000 qualifying wages, a $2,400 credit,
 and a matching Schedule C wage deduction reduction, Form 3800 line 4b, Schedule
@@ -376,8 +376,23 @@ and Form 8912 target pages were rendered and inspected for source identity,
 amounts, page order, and legibility. Artifacts are under
 `.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-3/`.
 The synthetic SWA certification and Form 1097-BTC facts do not authenticate
-external issued records. The remaining 32 keys still need source-backed
-coverage or a documented fail-closed scope decision; the full 172-case render
+external issued records.
+
+Two more full returns cover Form 8820 and Form 8844. The orphan-drug case has
+$10,000 of qualified clinical testing costs and a reduced-section-280C credit
+of $1,975 on Form 3800 line 1h. The empowerment-zone case has $10,000 of
+qualified wages and a $2,000 credit on Form 3800 line 3, with the matching
+Schedule C wage deduction reduction. Both credits join Schedule 3 line 6a
+and Form 1040 line 20. The focused graph/native tests and both prepared bundles
+passed local TY2025 v5.4 XSD validation. Their prepared PDFs have 16 and 17
+pages; the Form 8820, Form 8844, and Schedule C target pages were rendered and
+visually inspected for identity, amounts, page order, and legibility. Filled
+packet text also confirms the Form 3800, Schedule 3, and Form 1040 amounts.
+Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-4/`.
+The synthetic FDA designation and zone/employment records do not authenticate
+external issued records. The remaining 30 keys still need source-backed
+coverage or a documented fail-closed scope decision; the full 174-case render
 batch remains open.
 
 The later `single-refinanced-car-loan-schedule1a` source case keeps one VIN and
