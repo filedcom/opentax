@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-167 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+170 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -329,8 +329,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **75 distinct
-registered PDF keys out of 112**; **37 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **78 distinct
+registered PDF keys out of 112**; **34 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -348,8 +348,23 @@ PDF builds produced seven pages each; the Form 8911, Form 8936, and both
 Schedule A page sets were rendered and visually checked for source identity,
 amounts, checkboxes, page order, and legibility. The packets are retained
 locally under `.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage/`.
-The remaining 37 keys still need source-backed coverage or an explicit
-fail-closed scope decision; the full 167-case render batch remains open.
+Three further full returns cover Form 2106, Form 8859, and Form 8834. The
+fee-basis county officer has one W-2-matched job, $1,200 of unreimbursed
+expenses, and $48,800 AGI. The $1,200 DC homebuyer carryforward and $450
+qualified-electric-vehicle prior passive credit each join Schedule 3 and Form
+1040 against $3,875 of current income tax. All three passed their focused
+graph/native local TY2025 v5.4 XSD cases and separate prepared-bundle XSD
+checks. Their prepared PDF packets contain six, four, and six pages; the
+Form 2106, 8859, and 8834 pages were rendered and visually checked for filer,
+amounts, page order, and legibility, with the Schedule/1040 transfer amounts
+checked in the filled packets. Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-2/`.
+These are synthetic source records; prior-year carryforward and passive-credit
+documentation still need external authentication. A graph-valid Form 8611
+case was excluded from the PDF matrix because its historical credit and basis
+records fail the existing printable-filing source-verification gate. The
+remaining 34 keys still need source-backed coverage or a documented
+fail-closed scope decision; the full 170-case render batch remains open.
 
 The later `single-refinanced-car-loan-schedule1a` source case keeps one VIN and
 splits $4,000 of qualified interest between the original 2025 purchase loan

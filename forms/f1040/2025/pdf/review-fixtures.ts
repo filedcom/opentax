@@ -7866,4 +7866,94 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "The allowed credit reaches Schedule 3 line 6f and Form 1040 line 20 once",
     ],
   },
+  {
+    id: "single-fee-basis-employee-expenses",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(50_000, 7_000, "Sample County", "12-3456789"),
+        employee_ssn: "111-22-3333",
+      }],
+      f2106: [{
+        job: {
+          tax_year: 2025,
+          owner: "taxpayer",
+          employee_name: "Alex Example",
+          employee_ssn: "111-22-3333",
+          occupation: "County hearing officer",
+          employer_name: "Sample County",
+          employer_ein: "12-3456789",
+          employment_record_reference:
+            "Synthetic 2025 county appointment and W-2",
+        },
+        qualification: {
+          kind: "FEE_BASIS_OFFICIAL",
+          state_or_local_government_employer: true,
+          compensated_on_fee_basis: true,
+          qualifying_service_reference: "Synthetic 2025 county fee schedule",
+        },
+        vehicle: { method: "NONE" },
+        expenses: {
+          line2_parking_tolls_local_transportation: 0,
+          line3_overnight_travel_excluding_meals: 0,
+          line4_other_business_expenses: 1_200,
+          line5_meals: 0,
+          standard_50_percent_meal_limit_confirmed: true,
+          expense_records_reference: "Synthetic 2025 county expense ledger",
+          job_business_purpose: "Hearing preparation",
+        },
+        reimbursements: {
+          line7_column_a_nonmeals: 0,
+          line7_column_b_meals: 0,
+          employer_reimbursement_record_reference:
+            "Synthetic 2025 reimbursement ledger",
+          excluded_from_w2_box1_confirmed: true,
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f2106", "schedule1"],
+    reviewFocus: [
+      "Form 2106 identifies one fee-basis county job and 1,200 unreimbursed expenses",
+      "The 1,200 deduction reaches Schedule 1 line 12 and reduces Form 1040 AGI to 48,800",
+    ],
+  },
+  {
+    id: "single-dc-homebuyer-credit-carryforward",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(50_000, 7_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+      }],
+      f8859: [{ carryforward_amount: 1_200 }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f8859", "schedule3"],
+    reviewFocus: [
+      "Form 8859 carries forward a documented 1,200 prior-year DC homebuyer credit",
+      "The 3,875 W-2-backed income tax allows 1,200 on Schedule 3 line 6h and Form 1040 line 20",
+    ],
+  },
+  {
+    id: "single-passive-electric-vehicle-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(50_000, 7_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+      }],
+      f8834: [{
+        source_form: "8582-CR",
+        source_activity_id: "synthetic-passive-rental-a",
+        allowed_passive_activity_credit: 450,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f8834", "schedule3"],
+    reviewFocus: [
+      "Form 8834 reports 450 allowed prior-year passive activity credit from an identified activity",
+      "The 3,875 W-2-backed tax limit permits all 450 on Schedule 3 line 6i and Form 1040 line 20",
+    ],
+  },
 ];
