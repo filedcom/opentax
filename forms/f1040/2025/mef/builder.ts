@@ -31,6 +31,7 @@ import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
+import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
@@ -236,6 +237,7 @@ function buildReturnXml(
   assertBox11CodeESources(pending, k1Recipients);
   assertBox11CodeKSources(pending, k1Recipients);
   assertBox11CodeSSources(pending, k1Recipients);
+  assertScheduleDK1Source(pending.schedule_d ?? {}, pending);
   assertBox11Line10Sources(pending, k1Recipients);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&

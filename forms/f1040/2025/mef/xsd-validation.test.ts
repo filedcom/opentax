@@ -30,6 +30,8 @@ import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
 import { irs1040Pdf } from "../pdf/forms/f1040.ts";
 import { schedule3Pdf } from "../pdf/forms/schedule3.ts";
+import { scheduleDPdf } from "../pdf/forms/schedule_d.ts";
+import { scheduleEPdf } from "../pdf/forms/schedule_e.ts";
 import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/f8874/recapture_fixture.ts";
 import {
   calculateForm8396,
@@ -8324,6 +8326,95 @@ Deno.test({
 function runReturn(inputs: Record<string, unknown>) {
   return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }
+
+Deno.test({
+  name:
+    "XSD: partnership entity Schedule D source reaches individual Schedule D and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Capital Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 issued Capital Partnership K-1",
+      box8_net_st_cap_gain: 100,
+      box9a_net_lt_cap_gain: 200,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  assertEquals(pending.schedule_d?.line_5_k1_st, 100);
+  assertEquals(pending.schedule_d?.line_12_k1_lt, 200);
+  const projected = scheduleDPdf.projectFields?.(
+    pending.schedule_d as Record<string, unknown>,
+    result.pending,
+  );
+  assertEquals(projected?.line_5_k1_st, 100);
+  assertEquals(projected?.line_12_k1_lt, 200);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<NetSTGainOrLossFromSchK1Amt>100</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NetLTGainOrLossFromSchK1Amt>200</NetLTGainOrLossFromSchK1Amt>",
+  );
+  assertEquals(xml.includes("<IRS1065ScheduleD"), false);
+  await validateXsd(xml, "partnership K-1 individual Schedule D");
+
+  assertThrows(
+    () => buildMefXml({ ...pending, schedule_d: undefined }, filer),
+    Error,
+    "issued K-1 capital source",
+  );
+});
+
+Deno.test({
+  name: "XSD: partnership Form 8825 rental share reaches individual Schedule E",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Rental Partnership",
+      partnership_ein: "123456789",
+      source_document_reference:
+        "2025 issued Rental Partnership K-1 and activity statement",
+      box2_rental_re: 500,
+      eic_passive_activity_review: {
+        box2: "passive",
+        recipient_tin: "111223333",
+        partnership_not_publicly_traded_verified: true,
+        activity_statement_reference: "2025 rental activity statement",
+        participation_workpaper_reference: "2025 passive review",
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  const projected = scheduleEPdf.projectFields?.(
+    (pending.schedule_e ?? {}) as Record<string, unknown>,
+    result.pending,
+  );
+  assertEquals(projected?.k1_0_name, "Rental Partnership");
+  assertEquals(projected?.k1_0_passive_income, 500);
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<BusinessPassiveIncomeAmt>500</BusinessPassiveIncomeAmt>",
+  );
+  assertEquals(xml.includes("<IRS8825"), false);
+  await validateXsd(xml, "partnership K-1 individual Schedule E");
+});
 
 function singleGeneral() {
   return {

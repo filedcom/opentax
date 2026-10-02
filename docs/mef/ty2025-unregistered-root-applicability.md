@@ -360,6 +360,12 @@ separately classifies `IRS1065ScheduleD` and `IRS8825` as other-filer documents
 for a K-1-only individual, and identifies the box 13 code B exception that
 makes `IRS1041ScheduleK1` a required individual attachment. These are scoped
 filing rules, not blanket exclusions or a completed source-to-return audit.
+The [Schedule D reconciliation](ty2025-entity-issued-root-disposition.md)
+now checks issued partnership K-1 box 8/9a totals against both finalized
+individual exports and rejects an omitted personal Schedule D. Reviewed
+positive K-1 rental box 2 already projects to personal Schedule E Part II in
+native and PDF; neither source requires the entity's own form in the personal
+packet.
 
 | Root(s)                                                                                                                                                                                                  | Why separate review is needed                                                                                                                                                                                                          | Product decision still owed                                                                                                                                                                                                     |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
