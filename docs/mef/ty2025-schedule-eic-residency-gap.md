@@ -49,6 +49,15 @@ a forged Ada/Cora-only attachment. The positive review fixture now includes
 the W-2 employee SSN matching its filer, so its withholding evidence can
 reach final-bundle and local XSD validation.
 
+A post-calculation residence audit confirms that native and PDF final export
+reject source-only changes to Ben's U.S. months or U.S. residence status through
+the Form 1040 dependent-source check, and reject an EIC-row-only month change
+through the EIC source check. Changing the filed child count to zero while
+retaining the child-based EIC is already blocked by the Form 1040 childless EIC
+source check. These checks replay the retained source; they do not authenticate
+the original residence record or detect a coordinated rewrite of every source
+and filed projection after calculation.
+
 The route does not yet model the printed **7** when actual U.S. residence
 exceeded half the year but was under seven calendar months, a birth-year child
 whose home was the filer's for more than half their life but less than the

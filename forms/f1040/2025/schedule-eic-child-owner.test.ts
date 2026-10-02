@@ -116,6 +116,102 @@ Deno.test("Schedule EIC final exports reject a dropped reviewed child with uncha
   );
 });
 
+Deno.test("Schedule EIC final exports reject childless status after reviewed child calculation", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const altered = {
+    ...pending,
+    eitc: {
+      ...pending.eitc!,
+      qualifying_children: 0,
+      qualifying_child_details: [],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(altered, fixture.filer),
+    Error,
+    "Form 1040 childless EIC needs reviewed general source facts",
+  );
+  await assertRejects(
+    () => buildPdfBytes(altered, fixture.filer),
+    Error,
+    "Form 1040 childless EIC needs reviewed general source facts",
+  );
+});
+
+Deno.test("Schedule EIC final exports reject changed U.S. residence facts with unchanged EIC", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const general = pending.general!;
+  const dependents = general.dependents!;
+  const eitc = pending.eitc!;
+  const children = eitc.qualifying_child_details!;
+  const cases = [
+    {
+      pending: {
+        ...pending,
+        general: {
+          ...general,
+          dependents: dependents.map((dep, index) =>
+            index === 1 ? { ...dep, months_lived_with_you_in_us: 7 } : dep
+          ),
+        },
+      },
+      reason:
+        "Form 1040 dependent rows differ from the retained general source",
+    },
+    {
+      pending: {
+        ...pending,
+        eitc: {
+          ...eitc,
+          qualifying_child_details: children.map((child, index) =>
+            index === 1 ? { ...child, months_lived_with_you_in_us: 7 } : child
+          ),
+        },
+      },
+      reason: "Schedule EIC child differs from reviewed general source",
+    },
+    {
+      pending: {
+        ...pending,
+        general: {
+          ...general,
+          dependents: dependents.map((dep, index) =>
+            index === 1 ? { ...dep, lived_in_us_over_half_year: false } : dep
+          ),
+        },
+      },
+      reason:
+        "Form 1040 dependent rows differ from the retained general source",
+    },
+  ];
+  for (const altered of cases) {
+    assertThrows(
+      () => buildMefXml(altered.pending, fixture.filer),
+      Error,
+      altered.reason,
+    );
+    await assertRejects(
+      () => buildPdfBytes(altered.pending, fixture.filer),
+      Error,
+      altered.reason,
+    );
+  }
+});
+
 Deno.test("Schedule EIC graph cannot use taxpayer SSN as one of three child identities", () => {
   const general = fixture.inputs.general as Record<string, unknown> & {
     dependents: Array<Record<string, unknown>>;
