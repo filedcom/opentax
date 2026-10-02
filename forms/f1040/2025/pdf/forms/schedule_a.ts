@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
+  assertForm1098Box1Sources,
   assertForm1098Box6Sources,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -261,6 +262,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.mortgage_refinance_points !== undefined,
         all.form8396 !== undefined,
       );
+      assertForm1098Box1Sources(all.f1098, recipients);
     }
     if (all?.mortgage_refinance_points !== undefined) {
       if (!filer) {

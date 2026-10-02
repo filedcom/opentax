@@ -120,7 +120,7 @@ export async function verifyForm1098IssuerCopy(
   }
 }
 
-/** Bind claimed box 6 and both loans in a whole-return mortgage review. */
+/** Bind positive Schedule A interest, claimed box 6, and reviewed loans. */
 export async function assertForm1098IssuerCopies(
   pending: Record<string, unknown>,
 ): Promise<void> {
@@ -144,14 +144,20 @@ export async function assertForm1098IssuerCopies(
       ]
       : []),
   ]);
+  const filed1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const usesStandardDeduction =
+    filed1040?.line12a_standard_deduction !== undefined &&
+    filed1040.line12e_itemized_deductions === undefined;
   for (const item of f1098s) {
     if (
+      (usesStandardDeduction ||
+        (item.box1_current_year_deductible_interest ?? 0) <= 0) &&
       (item.box6_points_paid ?? 0) <= 0 &&
       !reviewedLoans.has(item.source_document_reference ?? "")
     ) continue;
     if (!item.issuer_copy) {
       throw new Error(
-        "Form 1098 box 6 or whole-return mortgage review needs the reviewed issuer Copy B bytes for each lender",
+        "Form 1098 positive Schedule A interest, box 6, or whole-return mortgage review needs the reviewed issuer Copy B bytes for each lender",
       );
     }
     await verifyForm1098IssuerCopy(

@@ -621,7 +621,15 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
 Deno.test("Schedule A PDF replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {
-    f1098s: fixture.f1098,
+    f1098s: fixture.f1098.map((item) => ({
+      ...item,
+      // Direct descriptor test; the final PDF builder verifies the exact bytes.
+      issuer_copy: {
+        file_name: "Test1098.pdf",
+        pdf_sha256: "0".repeat(64),
+        bytes: new Uint8Array(),
+      },
+    })),
     ...fixture.f1098_purchase_points_cross_loan_review,
   };
   const filer = {
@@ -696,6 +704,12 @@ Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed
       box6_points_paid: 2_400,
       box6_current_year_deductible_points: 2_400,
       box6_deduction_workpaper_reference: "2025 points workpaper",
+      // Direct descriptor test; the final PDF builder verifies the exact bytes.
+      issuer_copy: {
+        file_name: "Test1098.pdf",
+        pdf_sha256: "0".repeat(64),
+        bytes: new Uint8Array(),
+      },
     }],
   };
   const pending = {

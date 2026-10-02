@@ -3,10 +3,20 @@ import { FilingStatus } from "../../../mef/header.ts";
 import { scheduleA } from "./schedule_a.ts";
 import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
 
+// Descriptor tests exercise source ownership; final bundle tests verify Copy B bytes.
+const descriptorCopy = {
+  file_name: "Test1098.pdf",
+  pdf_sha256: "0".repeat(64),
+  bytes: new Uint8Array(),
+};
+
 Deno.test("Schedule A native replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {
-    f1098s: fixture.f1098,
+    f1098s: fixture.f1098.map((item) => ({
+      ...item,
+      issuer_copy: descriptorCopy,
+    })),
     ...fixture.f1098_purchase_points_cross_loan_review,
   };
   const fields = { line_8a_mortgage_interest_1098: 21_000 };
@@ -66,6 +76,7 @@ const pointsSource = {
     box6_points_paid: 2_400,
     box6_current_year_deductible_points: 2_400,
     box6_deduction_workpaper_reference: "2025 points workpaper",
+    issuer_copy: descriptorCopy,
   }],
 };
 

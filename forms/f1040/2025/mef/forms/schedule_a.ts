@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
+  assertForm1098Box1Sources,
   assertForm1098Box6Sources,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -134,6 +135,7 @@ function buildIRS1040ScheduleA(
       context.pending.mortgage_refinance_points !== undefined,
       context.pending.form8396 !== undefined,
     );
+    assertForm1098Box1Sources(context.pending.f1098, recipients);
   }
   if (context?.pending?.mortgage_refinance_points !== undefined) {
     const filer = context.filer;

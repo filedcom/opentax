@@ -659,6 +659,32 @@ export function assertForm1098Box6Sources(
   }
 }
 
+/** Bind a positive box 1 Schedule A claim to a filer-owned lender copy. */
+export function assertForm1098Box1Sources(
+  source: unknown,
+  recipientTins: readonly string[],
+): void {
+  if (source === undefined) return;
+  const items = inputSchema.parse(source).f1098s;
+  const claimed = items.filter((item) =>
+    (item.for_routing ?? ForRouting.A) === ForRouting.A &&
+    (item.box1_current_year_deductible_interest ?? 0) > 0
+  );
+  if (claimed.length === 0) return;
+  const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
+  if (
+    claimed.some((item) =>
+      !item.lender_name?.trim() || !item.recipient_tin ||
+      !allowed.has(item.recipient_tin.replaceAll("-", "")) ||
+      !item.source_document_reference || !item.issuer_copy
+    )
+  ) {
+    throw new Error(
+      "Schedule A Form 1098 box 1 needs an identified issuer Copy B owned by the taxpayer or joint-filing spouse",
+    );
+  }
+}
+
 export function assertForm1098Box4Sources(
   source: unknown,
   recipientTins: readonly string[],
