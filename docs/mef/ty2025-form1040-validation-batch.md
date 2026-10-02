@@ -265,6 +265,10 @@ stopped before test execution with 32 TypeScript errors. It used Deno 2.7.7,
 V8 14.6.202.9-rusty, and TypeScript 5.9.2; the log is retained locally at
 `.state/research/ty2025-pr59-bulk-test-2026-10-02.log`. The same full command
 must be rerun after type repairs. This is not a test pass.
+The type-repaired rerun at `f63302d8` completed in 27m05s with 10,287 passed
+and 216 failed (none ignored reported). Its local log is
+`.state/research/ty2025-pr59-bulk-test-retry-2026-10-02.log`. Failures are
+under source/fixture triage; the result does not pass the release gate.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
