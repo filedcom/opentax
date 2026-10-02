@@ -23,6 +23,7 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { Form8949Part } from "../../nodes/intermediate/forms/form8949/index.ts";
 import {
   schedule2Part1Total,
   schedule2Part2Total,
@@ -1078,6 +1079,27 @@ Deno.test("Form 1040 MeF replays retained general status and digital-assets sour
       }, sampleFiler()),
     Error,
     "filing status differs from the retained general source",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects No with a digital Form 8949 sale", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { filing_status: "single", digital_assets: false },
+        form8949: [{
+          part: Form8949Part.G,
+          description: "Digital asset",
+          date_acquired: "2025-01-10",
+          date_sold: "2025-05-10",
+          proceeds: 500,
+          cost_basis: 200,
+          gain_loss: 300,
+          is_long_term: false,
+        }],
+      }, sampleFiler()),
+    Error,
+    "digital-assets answer must be Yes",
   );
 });
 

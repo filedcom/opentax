@@ -7,12 +7,13 @@
  * xmllint accepts with exit code 0.
  */
 
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "./builder.ts";
+import { buildPdfBytes } from "../pdf/builder.ts";
 import { f1040_2025 } from "../index.ts";
 import { normalizeAllPending } from "../pending.ts";
 import { buildPending } from "./pending.ts";
@@ -90,6 +91,65 @@ const nonApplicableBelowFpl = {
   no_self_employed_health_insurance_deduction: true,
   no_alternative_marriage_calculation: true,
 } as const;
+
+Deno.test({
+  name: "XSD/PDF: digital Form 8949 disposition requires Form 1040 Yes",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    digital_assets: true,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({
+    general,
+    f8949: [{
+      part: "G",
+      description: "Digital asset",
+      source_transaction_id: "2025 exchange sale 1",
+      date_acquired: "2025-01-10",
+      date_sold: "2025-05-10",
+      proceeds: 500,
+      cost_basis: 200,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+  );
+  await validateXsd(xml, "TY2025 digital asset disposition and Form 1040 Yes");
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+
+  const conflicting = {
+    ...pending,
+    general: { ...general, digital_assets: false },
+    f1040: { ...pending.f1040, digital_assets: false },
+  };
+  assertThrows(
+    () => buildMefXml(conflicting, filer),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+  await assertRejects(
+    () => buildPdfBytes(conflicting, filer),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+});
 
 function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {
   return premiums.flatMap((premium, index) =>

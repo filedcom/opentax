@@ -12,6 +12,7 @@ import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
+  assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
   assertF1040SourceIdentity,
   assertGeneral1040DependentSource,
@@ -217,6 +218,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assertGeneral1040HeaderSource(pending);
+  assertDigitalAssetDispositionAnswer(pending);
   assertGeneral1040DependentSource(pending);
   assertGeneral1040DepositSource(pending, filer);
   assert1099RRecipientOwner(pending.f1099r, filer);

@@ -9,6 +9,7 @@ import type { MefBundle } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/prepared-attachment-manifest.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
+  assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
   assertF1040FinalHeader,
   assertGeneral1040DependentSource,
@@ -337,6 +338,7 @@ export async function buildPdfBytes(
   pageOrigins?: PdfPageOrigin[],
 ): Promise<Uint8Array> {
   assertForm8858FilingSource(pending.f8858);
+  assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
   if (normalized.f1040) {

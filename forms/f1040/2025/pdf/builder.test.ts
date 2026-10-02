@@ -128,6 +128,18 @@ Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", asyn
   );
 });
 
+Deno.test("Form 1040 PDF rejects No with a digital Form 8949 sale", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1040: { filing_status: "single", digital_assets: false },
+        form8949: [{ part: "J" }],
+      }, mockFiler),
+    Error,
+    "digital-assets answer must be Yes",
+  );
+});
+
 Deno.test("Form 1040 PDF rejects a dependent omitted after general source projection", async () => {
   await assertRejects(
     () =>

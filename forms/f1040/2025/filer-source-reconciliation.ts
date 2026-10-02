@@ -1374,6 +1374,36 @@ export function assertGeneral1040HeaderSource(
   }
 }
 
+/** A reported digital-asset disposition requires Yes on Form 1040. */
+export function assertDigitalAssetDispositionAnswer(
+  pending: Record<string, unknown>,
+): void {
+  const source = pending.f8949 as { f8949s?: unknown } | undefined;
+  const prepared = pending.form8949;
+  const computed = !Array.isArray(prepared) && prepared !== null &&
+      typeof prepared === "object"
+    ? (prepared as { transaction?: unknown }).transaction
+    : undefined;
+  const rows = [
+    ...(Array.isArray(source?.f8949s) ? source.f8949s : []),
+    ...(Array.isArray(prepared) ? prepared : []),
+    ...(Array.isArray(computed) ? computed : computed ? [computed] : []),
+  ];
+  if (
+    rows.some((row) =>
+      row !== null && typeof row === "object" &&
+      typeof (row as { part?: unknown }).part === "string" &&
+      /^[G-L]$/.test((row as { part: string }).part)
+    ) &&
+    (pending.f1040 as { digital_assets?: unknown } | undefined)
+        ?.digital_assets !== true
+  ) {
+    throw new Error(
+      "Form 1040 digital-assets answer must be Yes for a Form 8949 digital-asset disposition",
+    );
+  }
+}
+
 /** Detect a changed or omitted dependent row after general input projection. */
 export function assertGeneral1040DependentSource(
   pending: Record<string, unknown>,
