@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **921 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **924 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 921 bounded routes and
+**Implemented coverage.** The completed ledger records 924 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -46,6 +46,10 @@ Prepared MeF archive and A2A packet gates now replay retained source into the
 native XML instead of accepting matching hashes alone.
 Form 1040 line 2b now joins retained Schedule B line 4, and Schedule F 1099-NEC
 farm receipts replay against their retained payer-copy fields.
+Schedule C's supported 1099-MISC receipt boxes now replay across multiple payer
+copies. Schedule 1's filled PDF marks its Form 4797 line 4 source box, while a
+direct Form 4684 route remains open. MeF submission ZIPs reject duplicate
+physical entries before packaging.
 The MeF builder's Schedule F presence fixture now supplies its required Form
 1099 answer; its 148 focused tests pass on the current worktree.
 
