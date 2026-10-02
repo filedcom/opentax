@@ -21,6 +21,7 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),

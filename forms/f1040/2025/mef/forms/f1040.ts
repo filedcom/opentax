@@ -3,6 +3,7 @@ import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../f1099int-owner-reconciliation.ts";
+import { assertPositive1099OidOwner } from "../../f1099oid-owner-reconciliation.ts";
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
@@ -456,6 +457,10 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertIdentified1099IntOwner(
+    fields as Record<string, unknown>,
+    context?.pending,
+  );
+  assertPositive1099OidOwner(
     fields as Record<string, unknown>,
     context?.pending,
   );
