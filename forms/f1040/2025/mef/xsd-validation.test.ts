@@ -28,6 +28,8 @@ import {
 } from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
+import { irs1040Pdf } from "../pdf/forms/f1040.ts";
+import { schedule3Pdf } from "../pdf/forms/schedule3.ts";
 import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/f8874/recapture_fixture.ts";
 import {
   calculateForm8396,
@@ -846,17 +848,14 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD: Form 4136 fuel credit links to refundable Schedule 3 line 12",
+  name: "XSD: Form 4136 cents reach rounded Schedule 3 and Form 1040 lines",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const xml = buildMefXml({
-    f1040: { line31_additional_payments: 43 },
-    schedule3: {
-      line12_fuel_tax_credit: 42.6,
-      line15_total: 42.6,
-    },
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
     f4136: {
       claimant_context: "business",
       additional_activities: [],
@@ -890,9 +889,49 @@ Deno.test({
         },
       ],
     },
-  }, extractFilerIdentity(singleGeneral()));
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule3?.line12_fuel_tax_credit, 42.6);
+  assertEquals(pending.schedule3?.line15_total, 42.6);
+  assertEquals(pending.f1040?.line31_additional_payments, 42.6);
+  assertEquals(
+    schedule3Pdf.projectFields?.(pending.schedule3!, result.pending)
+      ?.line15_total,
+    42.6,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(pending.f1040!, result.pending)
+      ?.line31_additional_payments,
+    42.6,
+  );
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
   assertStringIncludes(xml, "<IRS4136 ");
   assertStringIncludes(xml, 'referenceDocumentName="IRS4136"');
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>43</TotalFuelTaxCreditAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOtherPaymentsRfdblCrAmt>43</TotalOtherPaymentsRfdblCrAmt>",
+  );
+  assertEquals(
+    (xml.match(
+      /<TotalOtherPaymentsRfdblCrAmt>43<\/TotalOtherPaymentsRfdblCrAmt>/g,
+    ) ?? []).length,
+    2,
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.({
+        ...pending.schedule3,
+        line12_fuel_tax_credit: 42.5,
+        line15_total: 42.5,
+      }, result.pending),
+    Error,
+    "line 12 differs from sourced Form 4136 claims",
+  );
   await validateXsd(xml, "Form 4136 Schedule 3 line 12");
 });
 

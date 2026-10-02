@@ -297,8 +297,10 @@ export function assertReturnScheduleJoins(
 
   const schedule3 = record("schedule3");
   if (schedule3) {
+    // The graph retains cents for Schedule 3 and Form 1040 arithmetic. Both
+    // export paths print whole dollars, so compare their filed amounts here.
     match(
-      amount(fields, "line31_additional_payments"),
+      Math.round(amount(fields, "line31_additional_payments")),
       Math.round(amount(schedule3, "line15_total")),
       "line 31",
     );
