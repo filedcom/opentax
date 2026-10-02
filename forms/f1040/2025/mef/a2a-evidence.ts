@@ -1,5 +1,6 @@
 import { join } from "@std/path";
 import { unzipSync } from "fflate";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { z } from "zod";
 import type { MefTransmissionPackage } from "./submission-archive.ts";
 import {
@@ -74,6 +75,41 @@ export interface A2aInboundEvidenceInput {
 }
 
 const encoder = new TextEncoder();
+const requestParser = new XMLParser({
+  ignoreAttributes: false,
+  parseTagValue: false,
+});
+
+function requestSubmissionIds(requestBody: string): string[] {
+  const invalid =
+    "A2A Send package body must be a valid SendSubmissionsRequest";
+  if (XMLValidator.validate(requestBody) !== true) throw new Error(invalid);
+  const parsed = requestParser.parse(requestBody) as Record<string, unknown>;
+  const roots = Object.keys(parsed).filter((name) => name !== "?xml");
+  if (roots.length !== 1 || roots[0] !== "SendSubmissionsRequest") {
+    throw new Error(invalid);
+  }
+  const ids: string[] = [];
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+    } else if (value !== null && typeof value === "object") {
+      for (const [name, child] of Object.entries(value)) {
+        if (name === "SubmissionId") {
+          if (typeof child === "string") ids.push(child);
+          else if (
+            Array.isArray(child) && child.every((id) => typeof id === "string")
+          ) ids.push(...child);
+          else throw new Error(invalid);
+        } else if (!name.startsWith("@_") && !name.startsWith("#")) {
+          visit(child);
+        }
+      }
+    }
+  };
+  visit(parsed.SendSubmissionsRequest);
+  return ids;
+}
 
 function oneXmlValue(source: string, tag: string): string | undefined {
   const matches = [
@@ -130,9 +166,7 @@ function assertSendPackageIdentity(
   requestBody: string,
   container: Readonly<Record<string, Uint8Array>>,
 ): void {
-  const bodyIds = [...requestBody.matchAll(
-    /<SubmissionId>([^<]+)<\/SubmissionId>/g,
-  )].map((match) => match[1]);
+  const bodyIds = requestSubmissionIds(requestBody);
   const archiveNames = Object.keys(container);
   if (
     bodyIds.length !== submissionIds.length ||
@@ -382,10 +416,7 @@ export async function readA2aArchivedSubmission(
   const requestBody = new TextDecoder("utf-8", { fatal: true }).decode(
     requestBytes,
   );
-  const bodyIds = [
-    ...requestBody.matchAll(/<SubmissionId>([^<]+)<\/SubmissionId>/g),
-  ]
-    .map((match) => match[1]);
+  const bodyIds = requestSubmissionIds(requestBody);
   if (
     bodyIds.length !== send.submissionIds.length ||
     new Set(bodyIds).size !== bodyIds.length ||

@@ -100,6 +100,46 @@ Deno.test("A2A Send evidence preserves request and container submission order", 
   }
 });
 
+Deno.test("A2A Send evidence rejects a false request root or commented Submission ID", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const source = packageFor();
+    for (
+      const [index, body, reason] of [
+        [
+          0,
+          `<OtherRequest><SubmissionId>${submissionId}</SubmissionId></OtherRequest>`,
+          "valid SendSubmissionsRequest",
+        ],
+        [
+          1,
+          `<SendSubmissionsRequest><!-- <SubmissionId>${submissionId}</SubmissionId> --></SendSubmissionsRequest>`,
+          "body and container Submission IDs differ",
+        ],
+        [
+          2,
+          `<SendSubmissionsRequest><SubmissionId>${submissionId}</SendSubmissionsRequest>`,
+          "valid SendSubmissionsRequest",
+        ],
+      ] as const
+    ) {
+      await assertRejects(
+        () =>
+          recordA2aSendPackage(root, {
+            messageId: `${messageId}-invalid-body-${index}`,
+            submissionIds: [submissionId],
+            package: { ...source, sendSubmissionsRequestXml: body },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
+          }),
+        Error,
+        reason,
+      );
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission ID day", async () => {
   const root = await Deno.makeTempDir();
   try {
