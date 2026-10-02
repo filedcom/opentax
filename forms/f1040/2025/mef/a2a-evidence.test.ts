@@ -40,6 +40,66 @@ function packageFor(id = submissionId) {
   };
 }
 
+Deno.test("A2A Send evidence preserves request and container submission order", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const secondId = "1234562026269abcdefh";
+    const first = packageFor(submissionId);
+    const second = packageFor(secondId);
+    const containerZipBytes = zipSync({
+      [`${submissionId}.zip`]:
+        unzipSync(first.containerZipBytes)[`${submissionId}.zip`],
+      [`${secondId}.zip`]:
+        unzipSync(second.containerZipBytes)[`${secondId}.zip`],
+    });
+    const orderedBody =
+      `<SendSubmissionsRequest><SubmissionData><SubmissionId>${submissionId}</SubmissionId></SubmissionData>` +
+      `<SubmissionData><SubmissionId>${secondId}</SubmissionId></SubmissionData></SendSubmissionsRequest>`;
+    const swappedBody =
+      `<SendSubmissionsRequest><SubmissionData><SubmissionId>${secondId}</SubmissionId></SubmissionData>` +
+      `<SubmissionData><SubmissionId>${submissionId}</SubmissionId></SubmissionData></SendSubmissionsRequest>`;
+    const recorded = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId, secondId],
+      package: { sendSubmissionsRequestXml: orderedBody, containerZipBytes },
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-swapped`,
+          submissionIds: [submissionId, secondId],
+          package: {
+            sendSubmissionsRequestXml: swappedBody,
+            containerZipBytes,
+          },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "body and container Submission IDs differ",
+    );
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/request.xml`,
+      swappedBody,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...recorded,
+        requestBodySha256: await digest(encoder.encode(swappedBody)),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "body and container Submission IDs differ",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission ID day", async () => {
   const root = await Deno.makeTempDir();
   try {

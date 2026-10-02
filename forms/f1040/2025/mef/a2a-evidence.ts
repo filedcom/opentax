@@ -139,8 +139,8 @@ function assertSendPackageIdentity(
     archiveNames.length !== submissionIds.length ||
     new Set(bodyIds).size !== bodyIds.length ||
     new Set(submissionIds).size !== submissionIds.length ||
-    submissionIds.some((id) =>
-      !bodyIds.includes(id) || !archiveNames.includes(`${id}.zip`)
+    submissionIds.some((id, index) =>
+      bodyIds[index] !== id || archiveNames[index] !== `${id}.zip`
     )
   ) {
     throw new Error(
@@ -389,7 +389,7 @@ export async function readA2aArchivedSubmission(
   if (
     bodyIds.length !== send.submissionIds.length ||
     new Set(bodyIds).size !== bodyIds.length ||
-    send.submissionIds.some((id) => !bodyIds.includes(id))
+    send.submissionIds.some((id, index) => bodyIds[index] !== id)
   ) {
     throw new Error("A2A outbound Send body differs from its Submission IDs");
   }
