@@ -107,3 +107,33 @@ Deno.test("line 1b exports reject changed or missing household wage sources", as
     );
   }
 });
+
+Deno.test("line 1b household federal withholding needs an issued wage source", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general: base.inputs.general,
+      household_wages: [{
+        wages_received: 2_000,
+        federal_income_tax_withheld: 100,
+        employer_name: "Household Employer",
+      }],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1b_household_wages, 2_000);
+  assertEquals(result.pending.f1040?.line25a_w2_withheld, 100);
+  const pending = buildPending(result.pending);
+  assertThrows(
+    () => buildMefXml(pending, base.filer),
+    Error,
+    "Household federal withholding must use a W-2 or Form 4852 line 1a source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, base.filer),
+    Error,
+    "Household federal withholding must use a W-2 or Form 4852 line 1a source",
+  );
+});

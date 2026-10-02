@@ -7,6 +7,15 @@ export function assertLine1bHouseholdWageSource(
   const source = pending.household_wages === undefined
     ? undefined
     : householdWagesSchema.parse(pending.household_wages);
+  if (
+    source?.household_wages.some((row) =>
+      (row.federal_income_tax_withheld ?? 0) > 0
+    )
+  ) {
+    throw new Error(
+      "Household federal withholding must use a W-2 or Form 4852 line 1a source",
+    );
+  }
   const expected = source?.household_wages.reduce(
     (sum, row) => sum + row.wages_received,
     0,
