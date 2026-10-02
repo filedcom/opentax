@@ -281,7 +281,31 @@ Deno.test("general excludes refund-only dependents and flags missing filing fact
   const result = compute({
     filing_status: FilingStatus.Single,
     dependents: [
-      qualifyingChildDep({ ptc_tax_return: { filing: "not_required" } }),
+      qualifyingChildDep({
+        ptc_tax_return: {
+          filing: "not_required",
+          wage_form_w2: {
+            source_document_id: "alice-2025-w2",
+            employer_name: "Summer Employer",
+            employer_ein: "112233445",
+            employee_ssn: "123456789",
+            box1_wages: 1_000,
+          },
+          filing_requirement_review: {
+            source_document_id: "alice-2025-filing-review",
+            dependent_ssn: "123456789",
+            tax_year: 2025,
+            filing_status: "single",
+            blind: false,
+            wage_source_document_id: "alice-2025-w2",
+            other_income_reviewed_absent: true,
+            other_filing_triggers_reviewed_absent: true,
+            return_filed: false,
+            reviewed_on: "2026-03-01",
+            reviewer_name: "Tax reviewer",
+          },
+        },
+      }),
       qualifyingChildDep({ first_name: "Bob", ssn: "123-45-6790" }),
     ],
   });
@@ -589,7 +613,10 @@ Deno.test("six months of residency cannot claim CTC or an unverified relative OD
 Deno.test("ctc: child with months_in_home = 7 qualifies (> 6)", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    dependents: [qualifyingChildDep({ months_in_home: 7 })],
+    dependents: [qualifyingChildDep({
+      months_in_home: 7,
+      months_lived_with_you_in_us: 7,
+    })],
   });
   const out = findOutput(result, "f1040");
   const input = out?.fields as Record<string, unknown>;

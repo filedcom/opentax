@@ -277,6 +277,31 @@ export function codeDExcessDeferral(w2s: W2Items): {
     );
     const date = dates[0];
     const birth = date ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
+    const reviewedAge = Number.isFinite(birth.getTime()) &&
+        birth.toISOString().slice(0, 10) === date
+      ? 2025 - birth.getUTCFullYear()
+      : undefined;
+    const reviewedCatchUp = reviewedAge !== undefined && reviewedAge >= 50 &&
+      reviewedAge <= 100 &&
+      sourceItems.every((item) =>
+        item.box13_retirement_plan === true &&
+        item.excess_deferral_review?.plan_type === "non_simple_401k" &&
+        item.excess_deferral_review?.plan_review_reference &&
+        item.excess_deferral_review?.birth_date_source_reference &&
+        item.excess_deferral_review?.w2_source_reference &&
+        item.excess_deferral_review?.employee_birth_date === date &&
+        item.taxpayer_age === reviewedAge
+      ) &&
+      !items.some((item) =>
+        (item.box12_entries ?? []).some((entry) =>
+          entry.amount > 0 && ELECTIVE_DEFERRAL_CODES.has(entry.code) &&
+          entry.code !== Box12Code.D
+        )
+      );
+    if (
+      reviewedCatchUp && Number.isSafeInteger(codeD) &&
+      codeD <= (reviewedAge >= 60 && reviewedAge <= 63 ? 34_750 : 31_000)
+    ) continue;
     if (
       items.some((item) =>
         (item.box12_entries ?? []).some((entry) =>

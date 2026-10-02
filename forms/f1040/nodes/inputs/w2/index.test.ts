@@ -693,7 +693,7 @@ Deno.test("W-2 Form 8880 deferral cannot lose employee identity", () => {
         box12_entries: [{ code: Box12Code.D, amount: 1_000 }],
       })]),
     Error,
-    "need the employee's nine-digit SSN",
+    "W-2 code D excess review needs the employee SSN",
   );
 });
 
@@ -1355,6 +1355,14 @@ Deno.test("401k_age50_59_at_limit_valid: age 55, D = $31,000 is valid → electi
     box1_wages: 150000,
     box12_entries: [{ code: Box12Code.D, amount: 31000 }],
     taxpayer_age: 55,
+    box13_retirement_plan: true,
+    excess_deferral_review: {
+      plan_type: "non_simple_401k",
+      plan_review_reference: "2025 plan review",
+      employee_birth_date: "1970-06-01",
+      birth_date_source_reference: "reviewed employee birth date",
+      w2_source_reference: "issued 2025 W-2",
+    },
   })]);
   assertEquals(
     fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,
