@@ -582,6 +582,10 @@ against the checked-in fixture list and source records, recomputes
 PDF/XML/source hashes, checks PDF page counts, and
 replays each checked-in source through the current return graph and native MeF
 builder so saved pending data and XML must match that calculation. It then
+requires the entire saved source JSON byte sequence to match the generator's
+canonical serialization of the checked-in fixture and current graph result;
+extra top-level fields, reordered fields, and edited ignored source fields
+cannot pass by updating only the manifest hash. It then
 reruns the XML schema validation against the recorded root XSD digest and the
 reviewed local v5.4 root/tree pins described in
 `ty2025-v54-schema-provenance.md`. It also
@@ -639,6 +643,12 @@ that packet, changing one recorded origin to `schedule3` while keeping page
 count and PDF bytes fixed made the checker reject the manifest with `recorded
 PDF page origins differ from replay`. This exercises the new manifest format
 on two cases; it does not expand the full-review count.
+
+The same focused packet exposed an additional source identity gap: adding
+`unsupportedReviewClaim` to one source JSON and updating only its manifest
+SHA-256 passed the earlier checker with unchanged XML and PDF. Exact source
+serialization replay now rejects that mutation with `source JSON differs from
+current source replay`; the original two-case/four-page packet still passes.
 
 An initial focused attempt stopped at `single-w2-refund`: its positive W-2
 source lacks `employee_ssn`, which the current W-2 source guard requires.

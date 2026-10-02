@@ -16,6 +16,7 @@ import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 import {
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,
+  reviewSourceFileContents,
 } from "./ty2025-pdf-review-source.ts";
 import { reviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
 import { assertReviewPageOrigins } from "./ty2025-pdf-review-page-origins.ts";
@@ -124,19 +125,11 @@ for (const fixture of pdfReviewFixtures) {
     fixture.expectedPdfForms,
     pageOrigins,
   );
-  const sourceFileContents = JSON.stringify(
-    {
-      id: fixture.id,
-      synthetic: true,
-      inputs: fixture.inputs,
-      filer,
-      expectedPdfForms: fixture.expectedPdfForms,
-      reviewFocus: fixture.reviewFocus,
-      pending: result.pending,
-    },
-    null,
-    2,
-  ) + "\n";
+  const sourceFileContents = reviewSourceFileContents(
+    fixture,
+    filer,
+    result.pending,
+  );
   reviewManifest.push({
     id: fixture.id,
     pdfFile: `${fixture.id}.pdf`,

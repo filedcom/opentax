@@ -14,8 +14,10 @@ import {
 } from "../forms/f1040/2025/pdf/builder.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 import {
+  assertReviewSourceFileContents,
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,
+  reviewSourceFileContents,
 } from "./ty2025-pdf-review-source.ts";
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
@@ -230,6 +232,11 @@ for (const [index, rawCase] of cases.entries()) {
       `${id}: saved pending data differs from current source calculation`,
     );
   }
+  assertReviewSourceFileContents(
+    id,
+    source,
+    reviewSourceFileContents(fixture, filer, result.pending),
+  );
   const rebuilt = await buildMefBundle(buildPending(result.pending), {
     filer,
     attachments: [],
