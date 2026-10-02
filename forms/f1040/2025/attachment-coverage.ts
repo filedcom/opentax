@@ -222,6 +222,18 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
+    pendingKey: "k1_trust",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "trust K-1 backup withholding needs Form 1040 line 25c and an issued Schedule K-1 attachment",
+    isActive: (fields) =>
+      Array.isArray(fields.k1_trusts) &&
+      fields.k1_trusts.some((row) =>
+        row !== null && typeof row === "object" &&
+        Object.hasOwn(row, "box13_code_b_backup_withholding")
+      ),
+  },
+  {
     pendingKey: "f2120",
     exportKinds: ["mef", "pdf"],
     reason: "Form 2120 multiple-support claim needs a native filing review",

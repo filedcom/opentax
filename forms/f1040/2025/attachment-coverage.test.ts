@@ -14,6 +14,26 @@ Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both 
   }
 });
 
+Deno.test("only a trust K-1 with box 13 code B needs the unregistered attachment", () => {
+  const ordinary = { estate_trust_name: "First Trust", box1_interest: 100 };
+  const backup = {
+    estate_trust_name: "Second Trust",
+    box13_code_b_backup_withholding: 125,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    assertAttachmentCoverage({ k1_trust: { k1_trusts: [ordinary] } }, kind);
+    assertThrows(
+      () =>
+        assertAttachmentCoverage(
+          { k1_trust: { k1_trusts: [ordinary, backup] } },
+          kind,
+        ),
+      Error,
+      "trust K-1 backup withholding",
+    );
+  }
+});
+
 Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   for (
     const pending of [

@@ -51,6 +51,14 @@ export const itemSchema = z.object({
     .optional(),
   box14_code_m_form3468_part_v_statement: trustPartVStatementSchema.optional(),
   box13_code_m_orphan_drug_credit: z.never().optional(),
+  // Box 13 code B requires an issued K-1 copy attached to the beneficiary's
+  // return. Retain the amount so unsupported export cannot silently drop it.
+  box13_code_b_backup_withholding: z.number().finite().positive().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    { message: "K-1 box 13 code B needs cent precision" },
+  ).optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.never().optional(),
   box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
   box13_code_zz_new_markets_statement_reference: z.string().trim().min(1)
