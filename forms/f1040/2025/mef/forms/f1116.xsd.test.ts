@@ -141,6 +141,7 @@ Deno.test({
     },
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -511,6 +512,7 @@ Deno.test({
   const xml = buildMefXml({
     general: {
       filing_status: InputFilingStatus.Single,
+      digital_assets: false,
       taxpayer_ssn: "123456789",
     },
     form1116_prior_carryover: { carryovers: [carryover] },
@@ -612,6 +614,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -676,6 +679,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -749,6 +753,7 @@ Deno.test({
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",

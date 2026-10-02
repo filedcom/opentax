@@ -48,6 +48,8 @@ Deno.test({
       : {}),
   }));
   const xml = buildMefXml({
+    general: { filing_status: "single", digital_assets: true },
+    f1040: { filing_status: "single", digital_assets: true },
     schedule_d: { transaction: transactions },
     form8949: transactions,
   }, filer);

@@ -50,6 +50,7 @@ Deno.test("Schedule 2 line 4 retains calculated Schedule SE tax in native and PD
   const pending = {
     general: {
       filing_status: NodeFilingStatus.Single,
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111223333",

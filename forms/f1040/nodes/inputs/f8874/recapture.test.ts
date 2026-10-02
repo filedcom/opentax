@@ -231,6 +231,7 @@ Deno.test("New Markets recapture totals separate investments once", () => {
 Deno.test("New Markets recapture reaches a filed 1040 without Form 8874", () => {
   const general = {
     filing_status: FilingStatus.Single,
+    digital_assets: false,
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",

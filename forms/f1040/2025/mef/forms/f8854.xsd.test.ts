@@ -389,6 +389,7 @@ Deno.test("covered Form 8854 and deemed sale reach the return through the calcul
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -504,6 +505,7 @@ Deno.test("covered Form 8854 Section D reaches a PDF-backed bundle through the g
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -604,6 +606,7 @@ Deno.test("annual Form 8854 source reaches the filed return through the graph", 
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
@@ -663,6 +666,7 @@ Deno.test("annual Form 8854 capital disposition reaches the PDF-backed return th
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",

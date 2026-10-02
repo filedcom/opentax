@@ -80,6 +80,7 @@ Deno.test({
 }, async () => {
   const general = {
     filing_status: "single",
+    digital_assets: false,
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",

@@ -12,6 +12,7 @@ import { normalizeAllPending } from "./pending.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
+  digital_assets: false,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "111-22-3333",

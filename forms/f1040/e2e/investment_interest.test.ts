@@ -33,7 +33,7 @@ const amtRefigure = {
 
 function run(inputs: Record<string, unknown>) {
   return execute(plan, registry, {
-    general: { filing_status: "single" },
+    general: { filing_status: "single", digital_assets: false },
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       foreign_trust_question: false,

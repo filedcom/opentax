@@ -24,6 +24,7 @@ Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", as
     },
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111223333",
@@ -106,6 +107,7 @@ Deno.test("Form 8814 investment income cannot enter the limited Form 4952 export
     },
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111223333",

@@ -11,6 +11,7 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 const plan = buildExecutionPlan(registry);
 const general = {
   filing_status: "single",
+  digital_assets: false,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Example",
   taxpayer_ssn: "111-22-3333",

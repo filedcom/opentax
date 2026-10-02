@@ -455,6 +455,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -582,6 +583,7 @@ Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and fu
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -631,6 +633,7 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
@@ -695,6 +698,7 @@ Deno.test("sole Schedule C business without EIN uses the filed taxpayer SSN", ()
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Builder",
       taxpayer_ssn: "123-45-6789",

@@ -21,6 +21,7 @@ function filedFarm() {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
+      digital_assets: false,
       taxpayer_first_name: "Sam",
       taxpayer_last_name: "Farmer",
       taxpayer_ssn: "123-45-6789",
