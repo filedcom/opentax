@@ -328,6 +328,40 @@ Deno.test("Schedule A line 6 tax types require distinct reviewed rows totaling t
   );
 });
 
+Deno.test("Schedule A seller-financed line 8b needs exact interest and recipient evidence", () => {
+  const seller = {
+    amount: 2_000,
+    seller_name: "Seller Example",
+    tin_type: "ssn",
+    seller_tin: "222334444",
+    address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+    mortgage_contract_reference: "2025 mortgage contract",
+    interest_payment_workpaper_reference: "2025 interest ledger",
+    seller_received_taxpayer_tin_confirmed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_000,
+      line_8b_seller_financed: seller,
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_001,
+      line_8b_seller_financed: seller,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8b_mortgage_interest_no_1098: 2_000,
+      line_8b_seller_financed: { ...seller, seller_tin: "" },
+    }).success,
+    false,
+  );
+});
+
 Deno.test("scheduleA.inputSchema: string where number expected is rejected", () => {
   const parsed = scheduleA.inputSchema.safeParse({ line_1_medical: "5000" });
   assertEquals(parsed.success, false);

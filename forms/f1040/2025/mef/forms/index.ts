@@ -114,6 +114,7 @@ import { form8994 } from "./f8994.ts";
 import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 import { scheduleAOtherTaxStatement } from "./schedule_a_other_tax_statement.ts";
+import { scheduleALine8bSellerStatement } from "./schedule_a_line8b_seller_statement.ts";
 import { form8990 } from "./f8990.ts";
 import { form8992 } from "./f8992.ts";
 import { form8992ScheduleA } from "./f8992_schedule_a.ts";
@@ -347,6 +348,7 @@ export const ALL_MEF_FORMS = [
   // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
   w2g,
   fecRecord,
+  scheduleALine8bSellerStatement,
   // Form 1040 line 4c IRA statement precedes other income statements.
   iraDistributionStatement,
   // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.

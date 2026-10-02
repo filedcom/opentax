@@ -22,6 +22,7 @@ import {
   scheduleAOtherTaxDescription,
   scheduleAOtherTaxRows,
 } from "../../schedule_a_other_tax_source.ts";
+import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -126,6 +127,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line_8a_mortgage_interest_1098",
     pdfField: "form1[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line_8b_seller_details",
+    pdfField: "form1[0].Page1[0].Line8b_ReadOrder[0].f1_16[0]",
   },
   {
     kind: "text",
@@ -339,10 +345,12 @@ export const scheduleAPdf: PdfFormDescriptor = {
       standard.itemized_deductions,
     );
     const otherTaxRows = scheduleAOtherTaxRows(input);
+    const line8bSeller = sellerFinancedLine8b(input);
     return [{
       ...input,
       line_8a_mortgage_interest_1098: line8a,
       line_8b_mortgage_interest_no_1098: line8b,
+      print_line_8b_seller_details: line8bSeller?.description,
       line_8e_mortgage_interest: mortgageInterest,
       print_line_8_mortgage_use_warning: reviewedHomeMortgageNonqualifyingUse(
         input,

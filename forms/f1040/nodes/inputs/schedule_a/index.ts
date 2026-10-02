@@ -67,6 +67,25 @@ export const otherTaxItemSchema = z.object({
   deductible_tax_reviewed: z.literal(true),
 });
 
+export const sellerFinancedLine8bSchema = z.object({
+  amount: z.number().int().positive(),
+  seller_name: z.string().trim().min(1).max(35)
+    .regex(/^([A-Za-z0-9'-] ?)*[A-Za-z0-9'-]$/),
+  tin_type: z.enum(["ssn", "ein"]),
+  seller_tin: z.string().regex(/^\d{9}$/),
+  address: z.object({
+    line1: z.string().trim().min(1).max(35)
+      .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
+    city: z.string().trim().min(1).max(22)
+      .regex(/^([A-Za-z] ?)*[A-Za-z]$/),
+    state: z.string().regex(/^[A-Z]{2}$/),
+    zip: z.string().regex(/^\d{5}(-?\d{4})?$/),
+  }),
+  mortgage_contract_reference: z.string().trim().min(1),
+  interest_payment_workpaper_reference: z.string().trim().min(1),
+  seller_received_taxpayer_tin_confirmed: z.literal(true),
+});
+
 /** Source-backed Schedule A line 8 warning; the amount is the filed interest. */
 export function reviewedHomeMortgageNonqualifyingUse(
   source: Record<string, unknown>,
@@ -109,6 +128,7 @@ export const inputSchema = z.object({
     .optional(),
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
+  line_8b_seller_financed: sellerFinancedLine8bSchema.optional(),
   home_mortgage_nonqualifying_use_review:
     homeMortgageNonqualifyingUseReviewSchema.optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
@@ -141,6 +161,18 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  if (
+    data.line_8b_seller_financed &&
+    data.line_8b_seller_financed.amount !==
+      data.line_8b_mortgage_interest_no_1098
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["line_8b_seller_financed"],
+      message:
+        "Schedule A seller-financed line 8b must equal its interest source",
+    });
+  }
   const otherTaxItems = data.line_6_other_tax_items;
   if (otherTaxItems) {
     if (

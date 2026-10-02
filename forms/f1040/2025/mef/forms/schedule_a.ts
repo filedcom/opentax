@@ -25,6 +25,7 @@ import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
 import { reviewedHomeMortgageNonqualifyingUse } from "../../../nodes/inputs/schedule_a/index.ts";
 import { scheduleAOtherTaxRows } from "../../schedule_a_other_tax_source.ts";
+import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -298,6 +299,15 @@ function buildIRS1040ScheduleA(
     ) || line5a !== 0;
   if (!hasDeduction && fields.force_itemized !== true) return "";
   const otherTaxRows = scheduleAOtherTaxRows(fields);
+  const line8bSeller = sellerFinancedLine8b(fields);
+  const line8bStatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_line8b_seller_statement ?? [];
+  if (
+    line8bSeller && context?.documentIdsByPendingKey &&
+    line8bStatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 8b needs its linked seller statement");
+  }
   const otherTaxStatementIds = context?.documentIdsByPendingKey
     ?.schedule_a_other_tax_statement ?? [];
   if (
@@ -345,7 +355,13 @@ function buildIRS1040ScheduleA(
       ? element("RptHomeMortgIntAndPointsAmt", net8a)
       : "",
     fields.line_8b_mortgage_interest_no_1098 !== undefined
-      ? element("Form1098HomeMortgIntNotRptAmt", net8b)
+      ? element(
+        "Form1098HomeMortgIntNotRptAmt",
+        net8b,
+        line8bStatementIds.length === 1
+          ? { referenceDocumentId: line8bStatementIds[0] }
+          : undefined,
+      )
       : "",
     mapField(["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"]),
     mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),

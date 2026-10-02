@@ -12,6 +12,94 @@ import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { buildMefXml } from "../../mef/builder.ts";
 import type { MefFormsPending } from "../../mef/types.ts";
 
+Deno.test("Schedule A line 8b seller details reach native statement and PDF", async () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general: {
+        filing_status: "single",
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+        digital_assets: false,
+      },
+      schedule_a: {
+        line_8b_mortgage_interest_no_1098: 20_000,
+        line_8b_seller_financed: {
+          amount: 20_000,
+          seller_name: "Seller Example",
+          tin_type: "ssn",
+          seller_tin: "222334444",
+          address: {
+            line1: "1 Main St",
+            city: "Austin",
+            state: "TX",
+            zip: "78701",
+          },
+          mortgage_contract_reference: "2025 seller mortgage contract",
+          interest_payment_workpaper_reference: "2025 seller interest ledger",
+          seller_received_taxpayer_tin_confirmed: true,
+        },
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 20_000);
+  const xml = buildMefXml(result.pending as MefFormsPending, filer);
+  assertEquals(
+    xml.includes("<Form1098HomeMortgIntNotRptAmt referenceDocumentId="),
+    true,
+  );
+  assertEquals(xml.includes("<F1098RecpntNmTINAddrStatement "), true);
+  assertEquals(xml.includes("<PersonNm>Seller Example</PersonNm>"), true);
+  assertEquals(xml.includes("<SSN>222334444</SSN>"), true);
+  const [instance] = scheduleAPdf.instances?.(
+    result.pending.schedule_a,
+    filer,
+    result.pending,
+  ) ?? [];
+  assertEquals(
+    instance?.print_line_8b_seller_details,
+    "Seller Example / 222334444 / 1 Main St, Austin, TX 78701",
+  );
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    result.pending,
+  );
+  assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+
+  const aggregateOnly = {
+    ...result.pending,
+    schedule_a: {
+      ...result.pending.schedule_a,
+      line_8b_seller_financed: undefined,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(aggregateOnly as MefFormsPending, filer),
+    Error,
+    "needs reviewed seller-financed recipient details",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(aggregateOnly.schedule_a, filer, aggregateOnly),
+    Error,
+    "needs reviewed seller-financed recipient details",
+  );
+});
+
 Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement and PDF", async () => {
   const filer = {
     primarySSN: "111223333",
@@ -281,6 +369,21 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
   const source = {
     line_8a_mortgage_interest_1098: 21_000,
     line_8b_mortgage_interest_no_1098: 1_000,
+    line_8b_seller_financed: {
+      amount: 1_000,
+      seller_name: "Seller Example",
+      tin_type: "ssn" as const,
+      seller_tin: "222334444",
+      address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      mortgage_contract_reference: "2025 seller mortgage contract",
+      interest_payment_workpaper_reference: "2025 seller interest ledger",
+      seller_received_taxpayer_tin_confirmed: true,
+    },
     line_8c_points_no_1098: 500,
     line_9_investment_interest: 300,
     form8396_interest_credit_reduction: 2_000,
@@ -322,6 +425,10 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
       ...source,
       line_8a_mortgage_interest_1098: 1_000,
       line_8b_mortgage_interest_no_1098: 21_000,
+      line_8b_seller_financed: {
+        ...source.line_8b_seller_financed,
+        amount: 21_000,
+      },
       form8396_interest_reporting_line: "8b",
     },
     filer,
