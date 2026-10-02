@@ -1,9 +1,9 @@
 # TY2025 nonnamed product-board dependency audit
 
-Status: 2026-10-02. This maps all **32 open checklist rows outside the
+Status: 2026-10-03. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 994
+the other 20 are deferred named-form parents. Its completed ledger records 996
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-02 (the same inputs used by
@@ -11,8 +11,9 @@ filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 descriptors, and 178 source fixtures covering 84 of 112 unique PDF keys; the
 other 28 keys map to deferred named
 families. Those are inventory and preparation counts, not end-to-end passes.
-The latest recorded full command reached 10,736 passes and 147 failures at
-`f1820bca`; this is a diagnostic failure, not a full-suite pass.
+The latest recorded full `deno task test` passed 10,886/10,886 at `3506a188`
+on 2026-10-03. It establishes local stability for retained routes, while
+scope decisions, visual review, complete route evidence, and ATS remain open.
 
 **Key.** `I` = work that can advance without a new product decision or IRS ATS
 credentials; `D` = the user's workflow/evidence/scope decision is needed before
@@ -48,7 +49,7 @@ close during the nonnamed phase.
 | P2 · Every registered PDF descriptor | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) plans 178 fixtures, covers 84/112 PDF keys, and classifies the other 28 as deferred named families. The current two-case review is insufficient: render and inspect each nondeferred key/copy/overflow branch and compare canonical fields, owners, and page origins. Named-key coverage follows its implementation phase. |
 | P3 · One finalized graph/instance set | I, N, V | Shared native/PDF preflight and prepared manifest replay exist. Add repeated-owner/form/source-attachment cases and compare exact instance and reference sets through XML, PDF and package; signed Form 8283 and other named source-issued attachments remain deferred. |
 | V1 · Implementation and decisions before bulk gate | I, D, N | Continue nonnamed implementation and obtain workflow/evidence dispositions; do not infer a phase pass from historical tests. The 20 named parents are deferred, so record their explicit boundary in the phase result instead of silently treating them as supported. |
-| V2 · Full `deno task test` gate | V, I, N | The `f1820bca` full command reached 10,736/147. Fix remaining nonnamed regressions, then rerun the same command; deferred named-form failures and incomplete product decisions still prevent a phase pass. Record commit, versions, time, totals, failures, and ignored reasons for each run. |
+| V2 · Full `deno task test` gate | V, I, N | The `3506a188` full command passed 10,886/10,886 on 2026-10-03. After the next implementation freeze, rerun the same command and record commit, versions, time, totals, failures, and ignored reasons. A local pass does not settle named-form coverage or product decisions. |
 | V3 · Source-backed full returns and XSD | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) provides a fixture/manifest path and locally cached TY2025 schema but no exhaustive positive-route result. Generate a complete return and conflicting negatives for every retained nonnamed route; separately verify source totals, references and business rules. Repeat for named routes when implemented. |
 | V4 · 178 filled-PDF cases | I, N, V | The planner has 178 sources and 84/112 keys; full generation, per-page render, and human checklist are still open. Run the batch after implementation freeze, inspect every generated page, and expand fixtures as nondeferred branches demand; 28 named-family keys are a later phase dependency. |
 | V5 · PDF/source/XML comparison | I, N, V | The manifest checker can replay source JSON, graph, native XML, artifact hashes, page origins and exact review focus, but cannot make a human visual judgment. Complete the per-page source/pending/XML/Form-1040 comparison and retain discrepancy/fix records; named forms extend the required packet set. |
@@ -56,7 +57,7 @@ close during the nonnamed phase.
 | A2 · ATS credentials/service package | A | [ATS preparation](../ats/ty2025.md) records no confirmed issued certificate, enrolled ASID/Test ETIN, current endpoint/WSDL/trust package, or operator authorization in inspected metadata. Obtain and verify these outside the repository; offline ZIP construction does not establish the A2A service contract. |
 | A3 · ATS transmission and acknowledgments | A, I, N, V | The repo builds offline packages and an opaque local evidence journal, not a validated signed SOAP/MTOM client. After the IRS service package and credentials are available, implement/authenticate transport and response correlation, then submit validated scenarios and retain accepted acknowledgments. This also depends on required form routes and packet checks. |
 | A4 · Filing-ready review | D, A, N, V | Review the complete diff, explicit scope/evidence decisions, privacy/security handling, manual PDF packet, passing bulk/visual checks, and IRS acceptance. PR mergeability alone does not close this gate. |
-| A5 · Filing-ready release and linked issues | A, D, N, V | The [release artifact smoke plan](../release-artifact-smoke.md) prepares a proposed v2.0.6 and binary/checksum checks; publication is still gated by A4 and required IRS acceptance. Then tag/publish, download-smoke every artifact, verify notes, and update linked issues. |
+| A5 · Filing-ready release and linked issues | A, D, N, V | CLI v2.0.6 is published and its bounded artifact smoke is recorded in the [release artifact smoke plan](../release-artifact-smoke.md). A separate filing-ready release remains gated by A4 and required IRS acceptance. Verify its artifacts and notes, then update linked issues. |
 
 ## Immediate independent queue
 
@@ -85,8 +86,8 @@ close during the nonnamed phase.
    named-form parents and their conditional attachments in the following
    implementation phase. Obtain the IRS ATS service package, enrollment,
    scenario clarification, and eventual accepted acknowledgments for A1–A3
-   separately. The full command, XSD, filled-PDF review, and release remain
-   V/A gates after their prerequisites.
+   separately. Re-run the full command after new implementation; complete
+   route XSD, filled-PDF review, and filing-ready release remain V/A gates.
 
 No independent source-complete positive tax route remains specified by these
 32 open rows alone. The immediately executable work is targeted cross-route
