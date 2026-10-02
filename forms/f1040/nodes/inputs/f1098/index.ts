@@ -720,6 +720,11 @@ export function assertForm1098Box4Sources(
       "Schedule 1 Form 1098 box 4 recovery must match sourced taxable recovery",
     );
   }
+  if (claimed.some((item) => !item.issuer_copy)) {
+    throw new Error(
+      "Schedule 1 Form 1098 box 4 taxable recovery needs the reviewed issuer Copy B",
+    );
+  }
 }
 
 // Interest routed to Schedule A from a single item
