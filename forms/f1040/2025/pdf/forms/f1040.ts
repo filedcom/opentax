@@ -17,6 +17,7 @@ import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../f1099oid-owner-reconciliation.ts";
+import { assertPositive1099DivOwner } from "../../f1099div-owner-reconciliation.ts";
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
@@ -752,6 +753,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     assertIdentified1099IntOwner(fields, allPending);
     assertPositive1099OidOwner(fields, allPending);
+    assertPositive1099DivOwner(fields, allPending);
     assertJointDependentRefundSource(fields, allPending);
     assertNoUnsupportedDeceasedReturn(
       fields,

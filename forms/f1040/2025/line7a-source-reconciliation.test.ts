@@ -7,12 +7,19 @@ Deno.test("direct Form 1040 capital-gain distributions replay retained payer and
   const pending = {
     f1099div: {
       f1099divs: [
-        { isNominee: false, box11: false, box1a: 0, box2a: 700 },
+        {
+          isNominee: false,
+          box11: false,
+          box1a: 0,
+          box2a: 700,
+          recipient_tin: "111223333",
+        },
         {
           isNominee: true,
           box11: false,
           box1a: 100,
           box2a: 500,
+          recipient_tin: "111223333",
           nominee_distribution: { box1a: 100, box2a: 200 },
         },
       ],
@@ -55,19 +62,25 @@ Deno.test("direct Form 1040 capital-gain distributions replay retained payer and
 Deno.test("native and PDF Form 1040 reject a changed direct capital-gain distribution", () => {
   const pending = {
     f1099div: {
-      f1099divs: [{ isNominee: false, box11: false, box1a: 0, box2a: 100 }],
+      f1099divs: [{
+        isNominee: false,
+        box11: false,
+        box1a: 0,
+        box2a: 100,
+        recipient_tin: "111223333",
+      }],
     },
   };
-  const fields = { line7a_cap_gain_distrib: 100 };
+  const fields = { taxpayer_ssn: "111223333", line7a_cap_gain_distrib: 100 };
   irs1040.build(fields, { pending });
   irs1040Pdf.projectFields?.(fields, pending);
   assertThrows(
-    () => irs1040.build({ line7a_cap_gain_distrib: 101 }, { pending }),
+    () => irs1040.build({ ...fields, line7a_cap_gain_distrib: 101 }, { pending }),
     Error,
     "line 7a differs",
   );
   assertThrows(
-    () => irs1040Pdf.projectFields?.({ line7a_cap_gain_distrib: 101 }, pending),
+    () => irs1040Pdf.projectFields?.({ ...fields, line7a_cap_gain_distrib: 101 }, pending),
     Error,
     "line 7a differs",
   );

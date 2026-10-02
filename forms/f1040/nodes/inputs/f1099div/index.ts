@@ -57,6 +57,7 @@ export const itemSchema = z.object({
   payerName: z.string().optional(),
   payerTin: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   isNominee: z.boolean(),
   nominee_distribution: nomineeDistributionSchema.optional(),
   box11: z.boolean(),

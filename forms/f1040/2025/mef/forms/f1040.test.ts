@@ -1043,6 +1043,7 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
   };
   const result = irs1040.build({
     filing_status: "mfs",
+    taxpayer_ssn: "111223333",
     line5a_pension_gross: 20_300,
     line5b_pension_taxable: 10_300,
     line5c_pension_rollover: true,
@@ -1055,7 +1056,13 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
     pending: {
       f1099r: source,
       f1099div: {
-        f1099divs: [{ isNominee: false, box11: false, box1a: 0, box2a: 7_500 }],
+        f1099divs: [{
+          isNominee: false,
+          box11: false,
+          box1a: 0,
+          box2a: 7_500,
+          recipient_tin: "111223333",
+        }],
       },
     },
   });
