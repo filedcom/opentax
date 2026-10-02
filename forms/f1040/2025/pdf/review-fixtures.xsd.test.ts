@@ -268,7 +268,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "Schedule EIC child differs from reviewed general source",
+          "Schedule EIC child roster differs from reviewed general source",
         );
       }
       if (fixture.id === "mfs-w2-separated-spouse-eic") {
