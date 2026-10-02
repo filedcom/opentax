@@ -60,6 +60,8 @@ export type MefFormsPending =
     // Form 1116 line 1b needs the source compensation record for a filing check.
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;
+    // Form 1040 line 1h reconciles retained earned-income sources to finalized AGI.
+    agi_aggregator?: { line1h_other_earned?: number | number[] };
     // Marketplace statements remain available for Form 8962 month-by-month
     // reconciliation even though they are not themselves native attachments.
     f1095a?: z.infer<typeof f1095aInputSchema>;

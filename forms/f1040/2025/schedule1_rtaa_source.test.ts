@@ -13,6 +13,7 @@ import { buildMefBundle } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { schedule1Pdf } from "./pdf/forms/schedule1.ts";
+import { schedule1OtherIncomeRows } from "./mef/forms/schedule1_other_income_rows.ts";
 
 const general = {
   filing_status: "single",
@@ -78,8 +79,16 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
     pending as unknown as Record<string, Record<string, unknown>>,
   );
   assertEquals(projected.line8z_other, 1_000);
-  assertStringIncludes(String(projected.line8z_description), "123456789");
-  assertStringIncludes(String(projected.line8z_description), "987654321");
+  assertEquals(projected.line8z_description, "SEE STATEMENT");
+  assertEquals(
+    schedule1OtherIncomeRows(pending.schedule1!).filter((row) =>
+      row.label.startsWith("RTAA payments")
+    ),
+    [
+      { label: "RTAA payments 123456789", amount: 400 },
+      { label: "RTAA payments 987654321", amount: 600 },
+    ],
+  );
   await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
 });
 

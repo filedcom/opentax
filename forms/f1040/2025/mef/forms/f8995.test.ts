@@ -793,7 +793,7 @@ Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports
   assertThrows(
     () => form8995Pdf.projectFields?.(fields, {}),
     Error,
-    "needs one reviewed issued 1099-DIV",
+    "needs one to three reviewed issued 1099-DIV",
   );
 });
 
@@ -806,7 +806,7 @@ Deno.test("Form 8995 rejects a positive deduction even without other source fiel
   assertThrows(
     () => form8995Pdf.projectFields?.({ qbi_deduction: 1 }, {}),
     Error,
-    "needs one reviewed issued 1099-DIV",
+    "needs one to three reviewed issued 1099-DIV",
   );
 });
 

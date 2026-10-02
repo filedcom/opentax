@@ -1137,11 +1137,18 @@ Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
 });
 
 Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
+  const issuedW2G = {
+    box1_winnings: 1_000,
+    box4_federal_withheld: 250,
+    payer_name: "Example Casino",
+    payer_ein: "12-3456789",
+    source_document_reference: "2025 issued Example Casino W-2G",
+  };
   assertThrows(
     () =>
       irs1040.build({ line25c_total: 250 }, {
         pending: {
-          w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+          w2g: { w2gs: [issuedW2G] },
         },
         documentIdsByPendingKey: { w2g: [] },
       }),
@@ -1151,7 +1158,7 @@ Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
       pending: {
-        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 0 }] },
+        w2g: { w2gs: [{ ...issuedW2G, box4_federal_withheld: 0 }] },
       },
     }),
     "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",
@@ -1159,7 +1166,7 @@ Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   assertStringIncludes(
     irs1040.build({ line25c_total: 250 }, {
       pending: {
-        w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] },
+        w2g: { w2gs: [issuedW2G] },
       },
       documentIdsByPendingKey: { w2g: ["IRSW2G1"] },
     }),

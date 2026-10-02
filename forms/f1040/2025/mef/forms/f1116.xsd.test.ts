@@ -309,6 +309,8 @@ Deno.test({
   assertThrows(
     () =>
       buildMefXml({
+        f1040: { line1h_other_earned: 300_000 },
+        agi_aggregator: { line1h_other_earned: 300_000 },
         fec: {
           fecs: [{
             foreign_employer_name: "German Employer",
@@ -318,6 +320,21 @@ Deno.test({
             compensation_owner_ssn: "123456789",
             compensation_source_document_reference:
               "2025 employer project ledger",
+            service_residence: {
+              kind: "us",
+              line1: "1 Main St",
+              city: "Austin",
+              state: "TX",
+              zip: "78701",
+            },
+            employer_foreign_address: {
+              line1: "1 Arbeitgeber Strasse",
+              city: "Berlin",
+              country_code: "DE",
+              postal_code: "10115",
+            },
+            employer_has_us_ein: false,
+            employer_issued_w2: false,
             foreign_tax_paid_usd: 2_000,
             foreign_service_compensation_usd: 140_000,
             foreign_tax_irs_country_code: "GM",
