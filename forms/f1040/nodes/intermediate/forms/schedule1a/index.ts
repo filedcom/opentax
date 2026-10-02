@@ -297,7 +297,7 @@ const VEHICLE_INTEREST_CAP = 10_000;
 const VEHICLE_PHASEOUT_THRESHOLD = 100_000;
 const VEHICLE_PHASEOUT_THRESHOLD_MFJ = 200_000;
 
-function seniorPart1Magi(input: Schedule1AInput): number | undefined {
+function schedule1APart1Magi(input: Schedule1AInput): number | undefined {
   if (input.magi === undefined) return undefined;
   return input.magi + (input.form2555_line45_exclusion ?? 0) +
     (input.form2555_line50_housing_deduction ?? 0);
@@ -643,7 +643,9 @@ export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
     : VEHICLE_PHASEOUT_THRESHOLD;
-  const phaseout = Math.ceil(Math.max(0, input.magi - threshold) / 1_000) * 200;
+  const phaseout = Math.ceil(
+    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
+  ) * 200;
   return Math.max(
     0,
     Math.min(qualifiedInterest, VEHICLE_INTEREST_CAP) - phaseout,
@@ -675,7 +677,7 @@ export function seniorDeduction(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
-  const part1Magi = seniorPart1Magi(input)!;
+  const part1Magi = schedule1APart1Magi(input)!;
   const perPerson = Math.max(
     0,
     cfg.seniorDeductionMax -
@@ -716,7 +718,7 @@ export function calculateSeniorOnlySchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
-  const part1Magi = seniorPart1Magi(input)!;
+  const part1Magi = schedule1APart1Magi(input)!;
   const excess = Math.max(0, part1Magi - threshold);
   const reduction = Math.round(excess * cfg.seniorDeductionPhaseoutRate);
   const perPerson = Math.max(0, cfg.seniorDeductionMax - reduction);
@@ -959,9 +961,12 @@ export function calculateVehicleInterestSchedule1A(
     throw new Error("Schedule 1-A vehicle interest filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
-      "Schedule 1-A vehicle interest needs sourced zero-exclusion review for Part I",
+      "Schedule 1-A vehicle interest needs sourced Part I exclusion review",
     );
   }
   if (!input.vehicle_loans?.length) {
@@ -998,7 +1003,8 @@ export function calculateVehicleInterestSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
     : VEHICLE_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.ceil(excess / 1_000);
   const reduction = thousands * 200;
   const capped = Math.min(total, VEHICLE_INTEREST_CAP);
@@ -1010,7 +1016,7 @@ export function calculateVehicleInterestSchedule1A(
   }
   return vehicleInterestLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line22_vehicles: input.vehicle_loans.map((loan) => ({
       vin: loan.vin.toUpperCase(),
       deducted_elsewhere: 0,

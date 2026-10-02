@@ -29,7 +29,8 @@ the qualifying senior source, review, and final return must reconcile.
   2555 lines 45/50, and Form 4563 line 15. The node receives `magi` from the AGI
   aggregator as line 1 AGI. A bounded positive Form 2555 line 45 path now adds
   the structured full-year physical-presence exclusion to line 2b/2e/3 for a
-  senior-only Schedule 1-A claim. It replays the pending Form 2555 calculation,
+  senior or qualified vehicle-interest Schedule 1-A claim. It replays the
+  pending Form 2555 calculation,
   requires line 50 zero, and retains separate sourced zero reviews for Puerto
   Rico and Form 4563. The deduction phaseout uses the increased MAGI, and
   native/PDF export reconcile to Form 1040 line 13b. The focused joint return
@@ -39,9 +40,16 @@ the qualifying senior source, review, and final return must reconcile.
   Schedule 1-A, and Form 2555; Schedule 1-A Part I and all Form 2555 pages were
   rendered and visually reviewed (SHA-256
   `b321afa905c708bfa40df3eaa8a45d8747ca9ce82962ece2e17b83201de99700`).
+  A second focused joint return combines $50,000 Form 2555 line 45 with a
+  reviewed $4,000 vehicle loan and two senior claims. Its $160,000 AGI becomes
+  $210,000 Schedule 1-A MAGI. The vehicle phaseout reduces line 30 to $2,000,
+  the senior deduction is $4,800, and line 38/1040 line 13b is $6,800. The
+  native return passed local TY2025 v5.4 XSD; the nine-page PDF was generated,
+  and both Schedule 1-A pages were rendered and visually reviewed (SHA-256
+  `08b6a05ff1225334be9b378a69e6d427e008d127065f2db1f677268755599d4c`).
   This route does not cover part-year Form 2555, a positive housing deduction
   (see the [line 50 source contract](ty2025-form2555-line50-schedule1a-source-gap.md)),
-  Form 2555 with tips/overtime/vehicle interest, positive Puerto Rico or Form
+  Form 2555 with tips/overtime, positive Puerto Rico or Form
   4563 exclusions, issuer/source-document authentication, IRS business rules,
   or ATS acceptance. Other positive routes still need their own sources.
 - Part II has source-backed W-2 box 7, reviewed W-2 box 14 or separate employer tip statements, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit

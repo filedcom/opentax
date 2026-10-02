@@ -103,11 +103,10 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       (input.form4070_reports?.length ?? 0) > 0 ||
       (input.employer_tip_statements?.length ?? 0) > 0 ||
       (input.qualified_trade_business_tips?.length ?? 0) > 0 ||
-      (input.qualified_w2_overtime?.length ?? 0) > 0 ||
-      (input.vehicle_loans?.length ?? 0) > 0
+      (input.qualified_w2_overtime?.length ?? 0) > 0
     ) {
       throw new Error(
-        "Schedule 1-A positive Form 2555 Part I needs a matching full-year senior-only source and zero housing deduction",
+        "Schedule 1-A positive Form 2555 Part I needs a matching full-year senior or vehicle-interest source and zero housing deduction",
       );
     }
     form2555Line45 = lines.line45;
