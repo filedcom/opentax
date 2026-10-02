@@ -17,6 +17,7 @@ import {
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
 import { assertReviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
+import { assertReviewSchemaDigest } from "./ty2025-pdf-review-schema.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -107,6 +108,7 @@ if (manifest.reviewReturnTimestamp !== REVIEW_RETURN_TIMESTAMP) {
   );
 }
 const schemaDigest = await sha256Hex(await Deno.readFile(xsdPath));
+assertReviewSchemaDigest(schemaDigest);
 if (manifest.xsdSha256 !== schemaDigest) {
   throw new Error("TY2025 XSD SHA-256 differs from the recorded schema");
 }

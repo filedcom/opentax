@@ -25,6 +25,7 @@ is a local sharing route, not proof that its copy came from SOR.
 | Outer ZIP member `IMF_05-28-2026_Release-2/IMF_Series_2025v5.4.zip` | `92fda5b7d6e5933fcf412fdd9348b93eb1d1719fb080f6cc95cc5e6886922797` | Contains the TY2025 v5.4 series. |
 | Series ZIP member `1040x_Schema_2025v5.4.zip` | `cb135657f0b47dfd7434918d074566c6c1d5f47d23cc1e5be4b9cefb64f37e8f` | Matches ignored `.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4.zip`. |
 | Schema ZIP member `2025v5.4/IndividualIncomeTax/Ind1040/ReturnData1040.xsd` | `3e38929827717ebb7c6fa17277b6844b1cc0264d3a87f12d83dc68ab1a455397` | Matches the extracted ignored XSD at `.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/ReturnData1040.xsd` and the loose copy inside the outer ZIP. |
+| Schema ZIP member `2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd` | `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c` | Reviewed local root XSD bytes pinned by the filled-PDF review generator and checker. The pin does not authenticate the imported XSD tree or prove IRS origin. |
 
 To reproduce the byte comparison after obtaining the package from an
 **authorized IRS SOR mailbox**, keep it outside Git and run this standard-library
