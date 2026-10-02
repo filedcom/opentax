@@ -118,6 +118,9 @@ bounded registrations from staged guarded routes. Filled-PDF review preparation
 now has 178 source fixtures, 84 of 112 unique registered PDF keys represented,
 and a deterministic per-page review manifest; all 28 uncovered keys map to the
 deferred named-form families and remain open.
+The live registry and crosswalk census now agree on 148 native MeF descriptors,
+115 PDF descriptors, and 32 native supporting rows; registration remains a
+static inventory rather than a positive filing claim.
 The generator now requires an explicit TY2025 XSD and checks every native XML
 before writing that case's filled PDF. A read-only checker can later verify the
 human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
