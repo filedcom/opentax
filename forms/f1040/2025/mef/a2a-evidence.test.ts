@@ -654,6 +654,34 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       Error,
       "not a complete PDF",
     );
+    for (
+      const [index, malformed] of [
+        "%PDF-%%EOF",
+        "%PDF-1.7\n%%EOF",
+      ].entries()
+    ) {
+      await assertRejects(
+        () =>
+          recordA2aSendPackage(root, {
+            messageId: `${messageId}-incomplete-pdf-${index}`,
+            submissionIds: [submissionId],
+            package: {
+              sendSubmissionsRequestXml:
+                `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+              containerZipBytes: zipSync({
+                [`${submissionId}.zip`]: zipSync({
+                  "manifest/manifest.xml": manifest,
+                  "xml/submission.xml": validXml,
+                  "attachment/evidence.pdf": encoder.encode(malformed),
+                }),
+              }),
+            },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
+          }),
+        Error,
+        "not a complete PDF",
+      );
+    }
     const pdf = await PDFDocument.create();
     pdf.addPage();
     const validPdfBytes = await pdf.save();
