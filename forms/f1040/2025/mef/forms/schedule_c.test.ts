@@ -281,6 +281,7 @@ Deno.test("Schedule C MeF accepts documented small-business-exempt interest", ()
 
 Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
+    schedule1: { line3_schedule_c: 29_853 },
     schedule_c: {
       schedule_cs: [
         item({
@@ -300,14 +301,14 @@ Deno.test("Schedule C emits inventory, cost of goods sold, and separate document
       ],
     },
   }, filer);
-  assertStringIncludes(xml, 'documentCnt="3"');
-  assertStringIncludes(
-    xml,
-    '<IRS1040ScheduleC documentId="IRS1040ScheduleC1">',
-  );
+  assertStringIncludes(xml, 'documentCnt="4"');
   assertStringIncludes(
     xml,
     '<IRS1040ScheduleC documentId="IRS1040ScheduleC2">',
+  );
+  assertStringIncludes(
+    xml,
+    '<IRS1040ScheduleC documentId="IRS1040ScheduleC3">',
   );
   assertStringIncludes(xml, "<CostOfGoodsSoldAmt>22950</CostOfGoodsSoldAmt>");
   assertStringIncludes(xml, "<TotalExpensesAmt>8197</TotalExpensesAmt>");

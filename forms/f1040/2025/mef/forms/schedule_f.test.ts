@@ -109,6 +109,7 @@ Deno.test("Schedule F native export requires a line 36 answer for a farm loss", 
 
 Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 20_000 },
     schedule_f: {
       schedule_fs: [
         farm({
@@ -129,14 +130,14 @@ Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
       ],
     },
   }, testFiler());
-  assertStringIncludes(xml, 'documentCnt="3"');
-  assertStringIncludes(
-    xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF1">',
-  );
+  assertStringIncludes(xml, 'documentCnt="4"');
   assertStringIncludes(
     xml,
     '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
+  );
+  assertStringIncludes(
+    xml,
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF3">',
   );
   assertStringIncludes(xml, "<PurchasedProfitAmt>20000</PurchasedProfitAmt>");
   assertStringIncludes(
@@ -221,6 +222,7 @@ Deno.test("Schedule F reports preliminary farm loss and links at-risk computatio
 
 Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral statements", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 2_000 },
     schedule_f: {
       schedule_fs: [
         farm({
@@ -253,14 +255,14 @@ Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral state
       ],
     },
   }, testFiler());
-  assertStringIncludes(xml, 'documentCnt="5"');
+  assertStringIncludes(xml, 'documentCnt="6"');
   assertStringIncludes(
     xml,
-    '<CCCLoanReportedElectionAmt referenceDocumentId="CCCLoanDetailCashMethodStmt3"',
+    '<CCCLoanReportedElectionAmt referenceDocumentId="CCCLoanDetailCashMethodStmt4"',
   );
   assertStringIncludes(
     xml,
-    '<ElectionDeferCropInsProcInd referenceDocumentId="PostponementCropInsDsstrStmt4"',
+    '<ElectionDeferCropInsProcInd referenceDocumentId="PostponementCropInsDsstrStmt5"',
   );
   assertStringIncludes(xml, "<LoanDesc>CORN LOAN</LoanDesc>");
   assertStringIncludes(xml, "<NormalBusPracticeStatementTxt>");
@@ -276,6 +278,7 @@ Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral state
 
 Deno.test("Schedule F emits accrual Part III and links its own CCC statement", () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 12_500 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
