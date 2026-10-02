@@ -7,12 +7,14 @@ import { registry } from "../forms/f1040/2025/registry.ts";
 import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
+import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 import {
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,
 } from "./ty2025-pdf-review-source.ts";
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
+import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -120,6 +122,11 @@ if (fixtures.size !== pdfReviewFixtures.length) {
   throw new Error("Checked-in review fixture IDs are not unique");
 }
 await assertReviewArtifactInventory(directory, [...fixtures.keys()]);
+const templateCache = join(directory, "irs-pdf-cache");
+const templateCacheInfo = await Deno.stat(templateCache).catch(() => undefined);
+if (!templateCacheInfo?.isDirectory) {
+  throw new Error("Retained IRS PDF template cache is not a directory");
+}
 const seen = new Set<string>();
 const executionPlan = buildExecutionPlan(registry);
 let reviewedPages = 0;
@@ -210,6 +217,13 @@ for (const [index, rawCase] of cases.entries()) {
   if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {
     throw new Error(`${id}: saved XML differs from current source calculation`);
   }
+  const replayedPdf = await buildPdfBytes(
+    rebuilt.pending,
+    filer,
+    templateCache,
+    rebuilt,
+  );
+  await assertReviewPdfReplay(id, replayedPdf, entry.pdfSha256);
 
   const validation = await new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsdPath, join(directory, `${id}.xml`)],
