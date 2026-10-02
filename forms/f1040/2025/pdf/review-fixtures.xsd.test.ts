@@ -68,6 +68,37 @@ async function withheldW2GXml(
   return bundle.xml;
 }
 
+async function section1231ExchangeXml(
+  pending: ReturnType<typeof buildPending>,
+  filer: (typeof pdfReviewFixtures)[number]["filer"],
+): Promise<string> {
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(
+    bundle.attachments[0].fileName,
+    "Form8824RealizedRecognizedGainStatement.pdf",
+  );
+  assertEquals(
+    new TextDecoder().decode(bundle.attachments[0].bytes.slice(0, 5)),
+    "%PDF-",
+  );
+  const documentId = bundle.xml.match(
+    /<BinaryAttachment documentId="([^"]+)"/,
+  )?.[1];
+  if (!documentId) {
+    throw new Error("Form 8824 review fixture lost the gain statement ID");
+  }
+  assertStringIncludes(
+    bundle.xml,
+    `<AttachmentLocationTxt>Form8824RealizedRecognizedGainStatement.pdf</AttachmentLocationTxt>`,
+  );
+  assertStringIncludes(
+    bundle.xml,
+    `referenceDocumentId="${documentId}" referenceDocumentName="BinaryAttachment GeneralDependencySmall RealizedAndRecognizedGainInMultiAssetExchangesStmt"`,
+  );
+  return bundle.xml;
+}
+
 for (const fixture of pdfReviewFixtures) {
   Deno.test({
     name: `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
@@ -105,6 +136,8 @@ for (const fixture of pdfReviewFixtures) {
       const xml = fixture.id === "single-withheld-w2g" ||
           fixture.id === "single-partnership-code-k-and-w2g"
         ? await withheldW2GXml(pending, fixture.filer)
+        : fixture.id === "single-form8824-section1231-exchange"
+        ? await section1231ExchangeXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
       if (fixture.id === "single-w2-overpayment-applied-2026") {
         assertStringIncludes(xml, "<AppliedToEsTaxAmt>500</AppliedToEsTaxAmt>");
