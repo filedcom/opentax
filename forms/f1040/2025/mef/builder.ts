@@ -1,5 +1,6 @@
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
+import { F1040_2025_CONFIG } from "../config.ts";
 import { PDFDocument } from "pdf-lib";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
@@ -188,6 +189,11 @@ function buildReturnXml(
   if (year !== 2025 || returnType !== "1040") {
     throw new Error(
       "TY2025 Form 1040 export requires year 2025 and return type 1040",
+    );
+  }
+  if (schemaVersion !== F1040_2025_CONFIG.mefSchemaVersion) {
+    throw new Error(
+      "TY2025 Form 1040 export requires the reviewed MeF schema version",
     );
   }
   if (!filer) {
