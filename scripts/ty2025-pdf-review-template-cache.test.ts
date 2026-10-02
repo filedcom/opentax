@@ -51,3 +51,29 @@ Deno.test("review template cache rejects unknown or non-IRS entries", async () =
     await Deno.remove(directory, { recursive: true });
   }
 });
+
+Deno.test("review template cache rejects symlinked directories and files", async () => {
+  const parent = await Deno.makeTempDir();
+  try {
+    const cache = join(parent, "cache");
+    await Deno.mkdir(cache);
+    const template = join(parent, "template.pdf");
+    await Deno.writeTextFile(template, "%PDF-1.7 original");
+    await Deno.symlink(template, join(cache, cacheName));
+    await assertRejects(
+      () => reviewTemplateCacheEvidence(cache, [sourceUrl]),
+      Error,
+      "Unexpected IRS template cache entry",
+    );
+
+    const linkedCache = join(parent, "linked-cache");
+    await Deno.symlink(cache, linkedCache);
+    await assertRejects(
+      () => reviewTemplateCacheEvidence(linkedCache, [sourceUrl]),
+      Error,
+      "IRS template cache is not a regular directory",
+    );
+  } finally {
+    await Deno.remove(parent, { recursive: true });
+  }
+});

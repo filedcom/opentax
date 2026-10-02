@@ -16,6 +16,10 @@ export async function reviewTemplateCacheEvidence(
   cacheDirectory: string,
   registeredUrls: readonly string[],
 ): Promise<ReviewTemplateCacheEntry[]> {
+  const directoryInfo = await Deno.lstat(cacheDirectory);
+  if (!directoryInfo.isDirectory || directoryInfo.isSymlink) {
+    throw new Error("IRS template cache is not a regular directory");
+  }
   const sourceByFileName = new Map<string, string>();
   for (const sourceUrl of registeredUrls) {
     const url = new URL(sourceUrl);
@@ -38,10 +42,15 @@ export async function reviewTemplateCacheEvidence(
   const evidence: ReviewTemplateCacheEntry[] = [];
   for await (const entry of Deno.readDir(cacheDirectory)) {
     const sourceUrl = sourceByFileName.get(entry.name);
-    if (!sourceUrl || !entry.isFile) {
+    if (!sourceUrl || !entry.isFile || entry.isSymlink) {
       throw new Error("Unexpected IRS template cache entry: " + entry.name);
     }
-    const bytes = await Deno.readFile(join(cacheDirectory, entry.name));
+    const cachePath = join(cacheDirectory, entry.name);
+    const fileInfo = await Deno.lstat(cachePath);
+    if (!fileInfo.isFile || fileInfo.isSymlink) {
+      throw new Error("Unexpected IRS template cache entry: " + entry.name);
+    }
+    const bytes = await Deno.readFile(cachePath);
     if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") {
       throw new Error("IRS template cache entry is not a PDF: " + entry.name);
     }
