@@ -141,6 +141,7 @@ function wage(
   return {
     box1_wages: wages,
     box2_fed_withheld: withholding,
+    employee_ssn: singleGeneral.taxpayer_ssn,
     box3_ss_wages: Math.min(wages, 176_100),
     box4_ss_withheld: Math.min(wages, 176_100) * 0.062,
     box5_medicare_wages: wages,
@@ -300,7 +301,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         foreign_accounts_question: false,
         foreign_trust_question: false,
       },
-      f1099int: [{ payer_name: "Domestic Bank", box1: 5_000 }],
+      f1099int: [{
+        payer_name: "Domestic Bank",
+        recipient_tin: childFiler.primarySSN,
+        box1: 5_000,
+      }],
       f8615: {
         eligibility_confirmed: true,
         parent_name: "Jane Parent",
@@ -489,7 +494,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: singleGeneral,
       w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
-      f1099g: [{ box_1_unemployment: 5_000, box_1_repaid: 5_000 }],
+      f1099g: [{
+        recipient_tin: singleFiler.primarySSN,
+        box_1_unemployment: 5_000,
+        box_1_repaid: 5_000,
+      }],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040", "schedule1"],
@@ -6092,6 +6101,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
       f1099int: [{
         payer_name: "Canadian Bank",
+        recipient_tin: singleFiler.primarySSN,
         box1: 50_000,
         box6: 9_000,
         box7: "Canada",
@@ -7010,6 +7020,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
       f1099int: [{
         payer_name: "Treasury Savings Bonds",
+        recipient_tin: singleFiler.primarySSN,
         source_document_reference:
           "Synthetic 2025 redeemed Series EE bond 1099-INT",
         box3: 2_000,

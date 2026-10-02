@@ -684,6 +684,23 @@ copies test source-byte joining and filled output; they are not authentic
 issuer records. The remaining pages and all 178 fixtures still need the full
 review checklist and release gate.
 
+A separate 178-fixture owner scan checked 189 positive W-2/1099 source rows
+against their filer identity. It found 90 missing owner fields before fixture
+repair. The ordinary `wage()` review helper now names the primary taxpayer;
+explicit joint-spouse rows retain their own employee SSN. Three positive 1099-INT
+rows and one 1099-G row now name the correct nine-digit recipient TIN. The
+rescan found no wrong-owner row and three remaining missing fields:
+`single-k-blank-tin-withholding` deliberately exercises 1099-K's separate
+recipient-identity review; the W-2 rows in
+`single-form7203-capital-and-debt-basis-loss` (distinct `123456789` filer) and
+`single-form8995a-two-business-loss-netting` belong to deferred named-form
+fixture work. Four representative nondeferred source-backed cases (child
+interest, high-wage W-2, repaid unemployment W-2/1099-G, and MFS W-2/EIC)
+passed graph, prepared MeF, local v5.4 XSD, and PDF generation: 17 pages and
+eight retained templates at
+`.state/research/ty2025-owner-fixture-sample-2026-10-02/packet/`. This is a
+focused fixture check, not the 178-case generation or visual signoff.
+
 An initial focused attempt stopped at `single-w2-refund`: its positive W-2
 source lacks `employee_ssn`, which the current W-2 source guard requires.
 Inspection found the same missing field in
