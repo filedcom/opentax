@@ -27,7 +27,7 @@ failed run is diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,393 passes and 112 failures. |
+| Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,428 passes and 103 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** The completed ledger records 703 bounded routes and
@@ -85,7 +85,12 @@ set of shared fixture/export defects. Focused repairs after that run corrected
 two 1099-K review assertions, two HSA dependent fixtures, a Form 2555
 assertion, two Form 5329 tax joins, and a retained-sale Schedule E allocation.
 Their focused tests pass; the full command has not yet been rerun at those
-commits and remains the gate.
+commits and remains the gate. The subsequent full `deno task test` at
+`b4e01e51` completed with **10,428 passed and 103 failed** in 30m09s. The
+new EIC opt-out, spouse-dependent, frozen-deposit rollover, line 36, and
+former-spouse payment fixtures passed in that run. Remaining failures are
+mostly deferred named-form routes; a small set of nonnamed fixture/assertion
+repairs is in progress. The full command still has no passing result.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph

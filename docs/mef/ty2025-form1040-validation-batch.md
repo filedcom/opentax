@@ -279,6 +279,15 @@ the Schedule E retained-sale allocation (33/33 passing). Most remaining
 failures concern the deferred named-form parents; a fresh full run is required
 to establish the exact residual count.
 The full gate still has no passing result.
+A later full `deno task test` at `b4e01e51` completed on 2026-10-02 in
+30m09s with 10,428 passed and 103 failed. It used Deno 2.7.7 (V8
+14.6.202.9-rusty, TypeScript 5.9.2), `xmllint` libxml 2.9.13, and Poppler
+26.03.0; its local log is
+`.state/research/ty2025-pr59-bulk-test-retry4-2026-10-02.log`. The new
+source-backed EIC opt-out, spouse-dependent refund, frozen IRA deposit,
+overpayment-to-2026, and divorced estimated-payment PDF review/XSD cases
+passed. Most failures concern the deferred named-form routes; nonnamed
+fixture/assertion failures are being repaired. This is not a release pass.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
