@@ -554,7 +554,8 @@ is only for the review batch; ordinary exports keep their actual build time.
 Each case writes a filled PDF and a JSON record of its synthetic source,
 identity, expected forms, review focus and raw computed pending data. On a fully
 successful run, the generator also writes `review-manifest.json` with exact PDF
-and native XML hashes, the rendered page count, expected owner and form-copy
+and native XML hashes, the retained IRS template cache filenames, descriptor
+source URLs and SHA-256 digests, the rendered page count, expected owner and form-copy
 lists, and one unreviewed checklist slot for **every actual page**. Reviewers
 must identify each page's observed form and owner, compare amounts and
 checkboxes with source/XML, and inspect continuation order and clipping before
@@ -586,7 +587,14 @@ the manifest; the generator's IRS template cache directory is the only extra
 top-level entry. Missing files, unlisted files, and symlink artifacts fail.
 The checker rebuilds each filled PDF from the replayed prepared bundle using
 that retained IRS template cache and rejects a different PDF even if its
-manifest digest was updated. It does not
+manifest digest was updated. It also rejects a cache entry whose name, registered
+IRS URL, or bytes differ from the generation manifest. Earlier review manifests
+without template-cache evidence need regeneration; no old-format acceptance is
+provided. The recorded URL and digest prove only that the retained bytes match
+the generator's cache. They do not independently authenticate the original IRS
+download, because the repository has no trusted template digests or signed IRS
+template archive against which an edited cache and manifest can be checked.
+It does not
 inspect visual correctness or set any review flag itself. A successful command
 means the recorded human checklist is complete and the named artifacts have
 not changed; the visual observations remain the reviewer's responsibility.

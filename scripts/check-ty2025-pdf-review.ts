@@ -7,6 +7,7 @@ import { registry } from "../forms/f1040/2025/registry.ts";
 import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
+import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
 import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 import {
@@ -15,6 +16,7 @@ import {
 } from "./ty2025-pdf-review-source.ts";
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
+import { assertReviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -127,6 +129,11 @@ const templateCacheInfo = await Deno.stat(templateCache).catch(() => undefined);
 if (!templateCacheInfo?.isDirectory) {
   throw new Error("Retained IRS PDF template cache is not a directory");
 }
+await assertReviewTemplateCacheEvidence(
+  templateCache,
+  ALL_PDF_FORMS.map((form) => form.pdfUrl),
+  manifest.templateCache,
+);
 const seen = new Set<string>();
 const executionPlan = buildExecutionPlan(registry);
 let reviewedPages = 0;

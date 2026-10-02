@@ -14,6 +14,7 @@ import {
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,
 } from "./ty2025-pdf-review-source.ts";
+import { reviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
 
 const [outputDir, xsdArg] = Deno.args;
 if (!outputDir || !xsdArg || Deno.args.length !== 2) {
@@ -173,6 +174,10 @@ await Deno.writeTextFile(
       taxYear: 2025,
       reviewReturnTimestamp: REVIEW_RETURN_TIMESTAMP,
       xsdSha256,
+      templateCache: await reviewTemplateCacheEvidence(
+        cacheDir,
+        ALL_PDF_FORMS.map((form) => form.pdfUrl),
+      ),
       fixtureCount: reviewManifest.length,
       cases: reviewManifest,
     },
