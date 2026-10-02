@@ -54,6 +54,7 @@ import {
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
 import { assertSchedule2Form4137Tax } from "../schedule2-form4137-reconciliation.ts";
 import { assertSchedule2Form8919Tax } from "../schedule2-form8919-reconciliation.ts";
+import { assertSchedule2ScheduleHTax } from "../schedule2-schedule-h-reconciliation.ts";
 import {
   assertSchedule2Line17HSources,
   assertSchedule2W2Line13Sources,
@@ -229,6 +230,7 @@ function buildReturnXml(
   assertSchedule2Line17HSources(pending, filer);
   assertSchedule2Form4137Tax(pending);
   assertSchedule2Form8919Tax(pending);
+  assertSchedule2ScheduleHTax(pending);
   assert1099WithholdingSource(pending, filer);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
