@@ -123,6 +123,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line_8e_mortgage_interest",
+    pdfField: "form1[0].Page1[0].f1_20[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line_9_investment_interest",
     pdfField: "form1[0].Page1[0].f1_21[0]",
   },
@@ -276,18 +281,37 @@ export const scheduleAPdf: PdfFormDescriptor = {
       amount("line_5c_personal_property_tax");
     const taxes = Number(standard.itemized_taxes);
     const salt = taxes - amount("line_6_other_taxes");
-    const interest = Math.max(
-      0,
-      amount("line_8a_mortgage_interest_1098") +
-        amount("line_8b_mortgage_interest_no_1098") -
-        amount("form8396_interest_credit_reduction"),
-    ) + amount("line_8c_points_no_1098") +
-      amount("line_9_investment_interest");
+    const reduction = amount("form8396_interest_credit_reduction");
+    const reportingLine = input.form8396_interest_reporting_line;
+    const creditedInterest = reportingLine === "8a"
+      ? amount("line_8a_mortgage_interest_1098")
+      : amount("line_8b_mortgage_interest_no_1098");
+    const form8396 = all?.form8396;
+    if (
+      reduction > 0 &&
+      ((reportingLine !== "8a" && reportingLine !== "8b") ||
+        reduction > creditedInterest || form8396?.line3 !== reduction ||
+        form8396.interest_reporting_line !== reportingLine)
+    ) {
+      throw new Error(
+        "Schedule A PDF mortgage-interest reduction differs from Form 8396 line 3 or deductible interest",
+      );
+    }
+    const line8a = amount("line_8a_mortgage_interest_1098") -
+      (reportingLine === "8a" ? reduction : 0);
+    const line8b = amount("line_8b_mortgage_interest_no_1098") -
+      (reportingLine === "8b" ? reduction : 0);
+    const mortgageInterest = line8a + line8b +
+      amount("line_8c_points_no_1098");
+    const interest = mortgageInterest + amount("line_9_investment_interest");
     const charity = amount("line_11_cash_contributions") +
       amount("line_12_noncash_contributions") +
       amount("line_13_contribution_carryover");
     return [{
       ...input,
+      line_8a_mortgage_interest_1098: line8a,
+      line_8b_mortgage_interest_no_1098: line8b,
+      line_8e_mortgage_interest: mortgageInterest,
       filer_name: filer?.nameLine1,
       filer_ssn: filer?.primarySSN?.replace(/\D/g, ""),
       line_3_medical_floor: amount("line_1_medical") > 0

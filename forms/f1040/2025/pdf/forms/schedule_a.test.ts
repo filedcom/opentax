@@ -8,6 +8,80 @@ import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
 import { PDFDocument } from "pdf-lib";
 import { fillFormPdf } from "../builder.ts";
+import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
+
+Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage interest", async () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const source = {
+    line_8a_mortgage_interest_1098: 21_000,
+    line_8b_mortgage_interest_no_1098: 1_000,
+    line_8c_points_no_1098: 500,
+    line_9_investment_interest: 300,
+    form8396_interest_credit_reduction: 2_000,
+    form8396_interest_reporting_line: "8a" as const,
+  };
+  const pending = {
+    f1040: { line12e_itemized_deductions: 20_800 },
+    form8396: { line3: 2_000, interest_reporting_line: "8a" },
+  };
+  const [instance] = scheduleAPdf.instances?.(source, filer, pending) ?? [];
+  assertEquals(instance?.line_8a_mortgage_interest_1098, 19_000);
+  assertEquals(instance?.line_8b_mortgage_interest_no_1098, 1_000);
+  assertEquals(instance?.line_8e_mortgage_interest, 20_500);
+  assertEquals(instance?.line_10_interest, 20_800);
+  const xml = scheduleAMef.build(source, { pending });
+  assertEquals(
+    xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>19000</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    pending,
+  );
+  const document = await PDFDocument.load(filled!);
+  assertEquals(document.getPageCount(), 1);
+  const official = await PDFDocument.load(
+    await Deno.readFile(
+      ".pdf-cache/https_www_irs_gov_pub_irs_prior_f1040sa_2025_pdf.pdf",
+    ),
+  );
+  official.getForm().getTextField("form1[0].Page1[0].f1_20[0]");
+  const [line8b] = scheduleAPdf.instances?.(
+    {
+      ...source,
+      line_8a_mortgage_interest_1098: 1_000,
+      line_8b_mortgage_interest_no_1098: 21_000,
+      form8396_interest_reporting_line: "8b",
+    },
+    filer,
+    {
+      ...pending,
+      form8396: { line3: 2_000, interest_reporting_line: "8b" },
+    },
+  ) ?? [];
+  assertEquals(line8b?.line_8b_mortgage_interest_no_1098, 19_000);
+  assertEquals(line8b?.line_8e_mortgage_interest, 20_500);
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(source, filer, {
+        ...pending,
+        form8396: { line3: 1_999, interest_reporting_line: "8a" },
+      }),
+    Error,
+    "reduction differs from Form 8396 line 3",
+  );
+});
 
 Deno.test("Schedule A PDF replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
