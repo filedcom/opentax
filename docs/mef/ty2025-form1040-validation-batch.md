@@ -581,7 +581,9 @@ against the checked-in fixture list and source records, recomputes
 PDF/XML/source hashes, checks PDF page counts, and
 replays each checked-in source through the current return graph and native MeF
 builder so saved pending data and XML must match that calculation. It then
-reruns the XML schema validation against the recorded XSD digest. It also
+reruns the XML schema validation against the recorded root XSD digest and the
+reviewed local v5.4 root/tree pins described in
+`ty2025-v54-schema-provenance.md`. It also
 requires exactly one PDF, XML, and source JSON file per checked-in case plus
 the manifest; the generator's IRS template cache directory is the only extra
 top-level entry. Missing files, unlisted files, and symlink artifacts fail.
@@ -598,6 +600,41 @@ It does not
 inspect visual correctness or set any review flag itself. A successful command
 means the recorded human checklist is complete and the named artifacts have
 not changed; the visual observations remain the reviewer's responsibility.
+
+### Focused review-packet smoke, 2026-10-02
+
+A temporary copy of each script imported only the existing
+`single-divorced-agreed-joint-estimated-payment` and `single-w2-eic-opt-out`
+fixtures; the checked-in 178-fixture list was not changed. From the repository
+root, the focused copies ran with these exact command shapes and the local
+schema path below (the temporary copies were removed after the run):
+
+```sh
+deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/.withholding-generate.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+deno run --allow-read --allow-run=xmllint scripts/.withholding-check.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+```
+
+The packet and all four rendered page PNGs are retained locally at
+`.state/research/ty2025-focused-review-2026-10-02/` (`packet/` and
+`renders/`). It contains two source JSON files, two native XML files, two
+filled Form 1040 PDFs, four pages, a manifest, and one retained IRS template.
+Both native returns passed the local v5.4 XSD, and the generator/checker
+accepted the root-XSD and 746-file schema-tree pins. All four pages were
+rendered and inspected for form/year, primary identity, amounts, boxes, order,
+and legibility. The first case shows the former spouse SSN and $300 estimated
+payment/refund; the second shows $15,000 wages and the EIC opt-out mark. The
+completed read-only checker reported `Review checklist complete: 2 cases, 4
+pages; artifact hashes and TY2025 XSD validation confirmed.` Its PDF replay,
+source/XML hashes, page count, and template-cache evidence also passed.
+
+An initial focused attempt stopped at `single-w2-refund`: its positive W-2
+source lacks `employee_ssn`, which the current W-2 source guard requires.
+Inspection found the same missing field in
+`single-w2-overpayment-applied-2026` and `single-1098-purchase-points`; those
+two were not executed in this smoke. Correct their fixtures before the full
+batch. This two-case smoke is not the 178-case filled-PDF review, repository
+test batch, IRS rule validation, ATS acceptance, or a release gate.
+
 Schedule 1 line 8z now prints `SEE STATEMENT` on its IRS page and appends the
 same identified type/amount rows used by the native OtherIncomeTypeStatement.
 Its PDF total must match the printed line amount; mixed-source cases need a
