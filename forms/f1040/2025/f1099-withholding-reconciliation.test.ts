@@ -143,6 +143,32 @@ Deno.test("1099-DIV repeated issued copy without payer TIN rejects native and PD
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("multiple positive 1099-DIV copies without references reject native and PDF export", async () => {
+  const first = {
+    recipient_tin: filer.primarySSN,
+    isNominee: false,
+    box11: false,
+    box1a: 200,
+    box4: 15,
+  };
+  const pending = {
+    f1099div: { f1099divs: [first, { ...first, box1a: 250 }] },
+  };
+  const message =
+    "1099-DIV has multiple positive issued copies without source_document_reference";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {
   const cases = [
     {

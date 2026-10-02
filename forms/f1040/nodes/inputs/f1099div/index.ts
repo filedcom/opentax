@@ -151,8 +151,19 @@ const nomineeFields = [
 
 export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
   const seen = new Set<string>();
+  let unreferencedPositiveCopies = 0;
   for (const item of items) {
-    if (!item.source_document_reference) continue;
+    if (!item.source_document_reference) {
+      if (nomineeFields.some((key) => (item[key] ?? 0) > 0)) {
+        unreferencedPositiveCopies++;
+        if (unreferencedPositiveCopies > 1) {
+          throw new Error(
+            "1099-DIV has multiple positive issued copies without source_document_reference; identify each distinct copy",
+          );
+        }
+      }
+      continue;
+    }
     const key = item.source_document_reference;
     if (seen.has(key)) {
       throw new Error(
