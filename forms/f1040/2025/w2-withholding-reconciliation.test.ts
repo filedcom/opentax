@@ -80,8 +80,44 @@ Deno.test("W-2 withholding replays both identified joint owners into line 25a", 
         },
       }, filer),
     Error,
-    "identified joint spouse",
+    "positive box 2 withholding needs the issued employee SSN",
   );
+});
+
+Deno.test("positive W-2 box 2 withholding needs an identified employee on a single return", () => {
+  const single = {
+    ...filer,
+    filingStatus: FilingStatus.Single,
+    spouse: undefined,
+  };
+  const source = {
+    w2: {
+      w2s: [{
+        employer_name: "Employer A",
+        box1_wages: 1_000,
+        box2_fed_withheld: 100,
+      }],
+    },
+    f1040: { line25a_w2_withheld: 100 },
+  };
+  assertThrows(
+    () => assertW2WithholdingSource(source, single),
+    Error,
+    "positive box 2 withholding needs the issued employee SSN",
+  );
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        ...source,
+        w2: { w2s: [{ ...source.w2.w2s[0], employee_ssn: "11122" }] },
+      }, single),
+    Error,
+    "positive box 2 withholding needs the issued employee SSN",
+  );
+  assertW2WithholdingSource({
+    ...source,
+    w2: { w2s: [{ ...source.w2.w2s[0], employee_ssn: "111-22-3333" }] },
+  }, single);
 });
 
 Deno.test("joint W-2 wages without withholding still need an identified employee", () => {

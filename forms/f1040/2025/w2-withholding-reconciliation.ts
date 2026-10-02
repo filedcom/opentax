@@ -25,6 +25,13 @@ export function assertW2WithholdingSource(
   for (const [index, row] of source.w2s.entries()) {
     if (row.box1_wages <= 0 && row.box2_fed_withheld <= 0) continue;
     const ssn = row.employee_ssn?.replace(/\D/g, "");
+    if (row.box2_fed_withheld > 0 && !/^\d{9}$/.test(ssn ?? "")) {
+      throw new Error(
+        `W-2 ${
+          index + 1
+        } positive box 2 withholding needs the issued employee SSN`,
+      );
+    }
     if (
       (filer.filingStatus === FilingStatus.MarriedFilingJointly && !ssn) ||
       (ssn !== undefined && !recipients.has(ssn))
