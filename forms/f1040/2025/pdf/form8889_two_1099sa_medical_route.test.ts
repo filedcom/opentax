@@ -12,7 +12,10 @@ import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
 import { form8889Pdf } from "./forms/f8889.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
-import { DependentRelationship } from "../../nodes/inputs/general/index.ts";
+import {
+  DependentRelationship,
+  IRSDependentRelationshipCode,
+} from "../../nodes/inputs/general/index.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const hsa = {
@@ -187,6 +190,7 @@ Deno.test("primary HSA owner pays one claimed dependent's medical receipt throug
     ssn: "777889999",
     dob: "2012-06-15",
     relationship: DependentRelationship.Daughter,
+    irs_relationship_code: IRSDependentRelationshipCode.Daughter,
     months_in_home: 12,
     months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,

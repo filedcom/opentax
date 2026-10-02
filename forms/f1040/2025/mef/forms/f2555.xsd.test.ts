@@ -423,7 +423,7 @@ Deno.test("Form 2555 rejects wage and exclusion mismatches across documents", ()
   assertThrows(
     () => buildMefXml({ form2555: { filing_details: filingDetails } }, filer),
     Error,
-    "exclusion differs",
+    "line 1h needs exactly one supported retained source",
   );
   assertThrows(
     () => buildMefXml(wageMismatch, filer),
