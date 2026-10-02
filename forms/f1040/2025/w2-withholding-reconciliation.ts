@@ -2,6 +2,31 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
 import { Form8958Line } from "../nodes/inputs/f8958/source.ts";
 
+const reportedAmountKeys = [
+  "box1_wages",
+  "box2_fed_withheld",
+  "box3_ss_wages",
+  "box4_ss_withheld",
+  "box5_medicare_wages",
+  "box6_medicare_withheld",
+  "box7_ss_tips",
+  "box8_allocated_tips",
+  "box10_dep_care",
+  "box11_nonqual_plans",
+  "box16_state_wages",
+  "box17_state_withheld",
+  "box18_local_wages",
+  "box19_local_withheld",
+] as const;
+
+function hasReportedAmount(
+  row: ReturnType<typeof w2InputSchema.parse>["w2s"][number],
+): boolean {
+  return reportedAmountKeys.some((key) => (row[key] ?? 0) > 0) ||
+    (row.box12_entries ?? []).some((entry) => entry.amount > 0) ||
+    (row.box14_entries ?? []).some((entry) => entry.amount > 0);
+}
+
 /** Replay retained W-2 box 2 withholding into the filed Form 1040 line 25a. */
 export function assertW2WithholdingSource(
   pending: Record<string, unknown>,
@@ -10,9 +35,7 @@ export function assertW2WithholdingSource(
   if (pending.w2 === undefined) return;
   const source = w2InputSchema.parse(pending.w2);
   const hasWithholding = source.w2s.some((row) => row.box2_fed_withheld > 0);
-  const hasPositiveW2 = source.w2s.some((row) =>
-    row.box1_wages > 0 || row.box2_fed_withheld > 0
-  );
+  const hasPositiveW2 = source.w2s.some(hasReportedAmount);
   if (pending.f1040 === undefined && !hasPositiveW2) return;
   if (!filer) throw new Error("W-2 withholding needs Form 1040 filer identity");
   const recipients = new Set([filer.primarySSN.replace(/\D/g, "")]);
@@ -21,7 +44,7 @@ export function assertW2WithholdingSource(
     filer.spouse?.ssn
   ) recipients.add(filer.spouse.ssn.replace(/\D/g, ""));
   for (const [index, row] of source.w2s.entries()) {
-    if (row.box1_wages <= 0 && row.box2_fed_withheld <= 0) continue;
+    if (!hasReportedAmount(row)) continue;
     const ssn = row.employee_ssn?.replace(/\D/g, "");
     if (!/^\d{9}$/.test(ssn ?? "")) {
       throw new Error(

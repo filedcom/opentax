@@ -186,6 +186,40 @@ Deno.test("positive wages without withholding need an issued employee SSN on a s
   }, single);
 });
 
+Deno.test("Social Security and Medicare-only W-2 amounts need the filed employee owner", () => {
+  const row = {
+    employer_name: "Employer A",
+    box1_wages: 0,
+    box2_fed_withheld: 0,
+    box3_ss_wages: 1_000,
+    box5_medicare_wages: 1_000,
+  };
+  const pending = { w2: { w2s: [row] }, f1040: { line25a_w2_withheld: 0 } };
+  assertThrows(
+    () => assertW2WithholdingSource(pending, filer),
+    Error,
+    "need the issued employee SSN",
+  );
+  assertThrows(
+    () => assertW2WithholdingSource({ w2: { w2s: [row] } }, filer),
+    Error,
+    "need the issued employee SSN",
+  );
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        ...pending,
+        w2: { w2s: [{ ...row, employee_ssn: "999887777" }] },
+      }, filer),
+    Error,
+    "recipient must match",
+  );
+  assertW2WithholdingSource({
+    ...pending,
+    w2: { w2s: [{ ...row, employee_ssn: "222334444" }] },
+  }, filer);
+});
+
 Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 25a", () => {
   const allocation = {
     domicile_state: CommunityPropertyState.CA,
