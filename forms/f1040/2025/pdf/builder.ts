@@ -131,6 +131,9 @@ function fillEntry(
       throw new Error(`nonfinite projected value ${String(value)}`);
     }
     if (entry.kind === "text") {
+      if (typeof value !== "string" && typeof value !== "number") {
+        throw new Error("text field needs a string or finite number");
+      }
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
       const blankZero = typeof value === "number" && Math.round(value) === 0 &&
@@ -210,6 +213,29 @@ export async function fillFormPdf(
   if (descriptor.presenceKey !== undefined) {
     const gate = fields[descriptor.presenceKey];
     if (gate === undefined || gate === null) return undefined;
+  }
+
+  for (const entry of descriptor.fields) {
+    const value = fields[entry.domainKey];
+    if (value === undefined || value === null || entry.kind !== "text") {
+      continue;
+    }
+    if (
+      (typeof value !== "string" && typeof value !== "number") ||
+      (typeof value === "number" && !Number.isFinite(value))
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: failed to fill field "${entry.pdfField}" (text): expected a string or finite number`,
+      );
+    }
+  }
+  if (
+    descriptor.rows && fields[descriptor.rows.domainKey] !== undefined &&
+    !Array.isArray(fields[descriptor.rows.domainKey])
+  ) {
+    throw new Error(
+      `[PDF] ${descriptor.pendingKey}: row field "${descriptor.rows.domainKey}" needs an array`,
+    );
   }
 
   // A form is only emitted when it carries at least one *meaningful* value:
@@ -302,6 +328,11 @@ export async function fillFormPdf(
               const box = form.getCheckBox(pdfField);
               value ? box.check() : box.uncheck();
             } else {
+              if (typeof value !== "string" && typeof value !== "number") {
+                throw new Error(
+                  "row text field needs a string or finite number",
+                );
+              }
               form.getTextField(pdfField).setText(
                 typeof value === "number"
                   ? Math.round(value).toString()
