@@ -35,9 +35,12 @@ export async function appendSchedule1OtherIncomeStatement(
   ) {
     throw new Error("Schedule 1 line 8z PDF differs from source statement");
   }
-  if (!filer?.nameLine1 || !filer.primarySSN) {
+  const first = filer?.firstNameWithInitial?.trim();
+  const last = filer?.lastName?.trim();
+  if (!first || !last || !filer?.primarySSN) {
     throw new Error("Schedule 1 line 8z PDF statement needs filer identity");
   }
+  const displayedName = `${first} ${last}`;
 
   const regular = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
@@ -64,7 +67,7 @@ export async function appendSchedule1OtherIncomeStatement(
     }
     return lines;
   };
-  if (regular.widthOfTextAtSize(filer.nameLine1, size) > 440) {
+  if (regular.widthOfTextAtSize(displayedName, size) > 440) {
     throw new Error("Schedule 1 line 8z statement filer name cannot fit");
   }
   const pageHeight = 792;
@@ -83,7 +86,7 @@ export async function appendSchedule1OtherIncomeStatement(
         font: bold,
       },
     );
-    page.drawText(filer.nameLine1, { x: 40, y: 729, size, font: regular });
+    page.drawText(displayedName, { x: 40, y: 729, size, font: regular });
     page.drawText(`SSN ${filer.primarySSN}`, {
       x: 40,
       y: 713,

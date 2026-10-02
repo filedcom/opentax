@@ -96,6 +96,11 @@ Deno.test("two taxable grant copies retain payer rows through 1040, native state
   const text = new TextDecoder().decode((await extracted.output()).stdout);
   assertStringIncludes(text, "Taxable grant 123456789");
   assertStringIncludes(text, "Taxable grant 987654321");
+  const statementHeading = "2025 Schedule 1 (Form 1040) line 8z";
+  assertStringIncludes(text, statementHeading);
+  const statement = text.slice(text.indexOf(statementHeading));
+  assertStringIncludes(statement, "Alex Example");
+  assertEquals(statement.includes("EXAMPLE ALEX"), false);
   try {
     Deno.statSync(xsd);
   } catch {
