@@ -49,7 +49,10 @@ import {
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
-import { assertSocialSecurityBenefitSource } from "../ssa-benefits-reconciliation.ts";
+import {
+  assertBenefitStatementOwner,
+  assertSocialSecurityBenefitSource,
+} from "../ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
 import {
   hasForm8994Claim,
@@ -205,6 +208,7 @@ function buildReturnXml(
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);
   assertSocialSecurityBenefitSource(pending);
+  assertBenefitStatementOwner(pending, filer);
   assertRrb1099rPensionSource(pending, filer);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);

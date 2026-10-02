@@ -106,9 +106,9 @@ const inputSchema = z.object({
   // Line 4c(1) — source-confirmed IRA rollover
   line4c_ira_rollover: z.boolean().optional(),
   // Line 5a — Pensions and annuities, gross
-  line5a_pension_gross: z.number().nonnegative().optional(),
+  line5a_pension_gross: accumulable(z.number().nonnegative()).optional(),
   // Line 5b — Pensions and annuities, taxable amount
-  line5b_pension_taxable: z.number().optional(),
+  line5b_pension_taxable: accumulable(z.number()).optional(),
   // Line 5c(1) — payer-reported pension/plan direct rollover
   line5c_pension_rollover: z.boolean().optional(),
   line5b_form4972_ordinary: z.number().nonnegative().optional(),
@@ -311,7 +311,7 @@ function totalIncome(input: F1040Input): number {
     (input.line2b_taxable_interest ?? 0) +
     sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
-    (input.line5b_pension_taxable ?? 0) +
+    sumField(input.line5b_pension_taxable) +
     (input.line5b_form4972_ordinary ?? 0) +
     (input.line6b_ss_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
@@ -965,11 +965,11 @@ function assembleReturn(
   }
   const form4972Ordinary = input.line5b_form4972_ordinary ?? 0;
   if (input.line5a_pension_gross !== undefined || form4972Ordinary > 0) {
-    result.line5a_pension_gross = (input.line5a_pension_gross ?? 0) +
+    result.line5a_pension_gross = sumField(input.line5a_pension_gross) +
       form4972Ordinary;
   }
   if (input.line5b_pension_taxable !== undefined || form4972Ordinary > 0) {
-    result.line5b_pension_taxable = (input.line5b_pension_taxable ?? 0) +
+    result.line5b_pension_taxable = sumField(input.line5b_pension_taxable) +
       form4972Ordinary;
   }
   if (input.line6a_ss_gross !== undefined) {

@@ -13,6 +13,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import { form5329 } from "../../intermediate/forms/form5329/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { tsSchema } from "../../types.ts";
 
@@ -284,6 +285,7 @@ class F4852Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     f1040,
+    agi_aggregator,
     form8959,
     form5329,
     schedule3,
@@ -314,6 +316,23 @@ class F4852Node extends TaxNode<typeof inputSchema> {
           f1040Fields as AtLeastOne<F1040Input>,
         ),
       );
+    }
+
+    const agiFields: Partial<z.infer<typeof agi_aggregator.inputSchema>> = {};
+    if (wages.line1a_wages !== undefined) {
+      agiFields.line1a_wages = wages.line1a_wages;
+    }
+    if (pension.line5b_pension_taxable !== undefined) {
+      agiFields.line5b_pension_taxable = pension.line5b_pension_taxable;
+    }
+    if (ira.line4b_ira_taxable !== undefined) {
+      agiFields.line4b_ira_taxable = ira.line4b_ira_taxable;
+    }
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiFields as AtLeastOne<z.infer<typeof agi_aggregator.inputSchema>>,
+      ));
     }
 
     // FICA / Medicare routing for W-2 substitutes (boxes 3–6)
