@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **699 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **700 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 151-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 699 bounded routes and
+**Implemented coverage.** The completed ledger records 700 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -205,6 +205,8 @@ The retained ACTC opt-out
 now reaches the Form 1040 line 28 native indicator and PDF checkbox, and
 conflicting Form 8812 item answers reject. The wider core-return and PDF
 parents below remain open.
+An explicit EIC opt-out now reaches line 27c, its native indicator, and the
+canonical PDF checkbox while suppressing a positive line 27a credit.
 Form 8288-A withholding now deposits to Form 1040 line 25c, with a retained
 source lower-bound check at final native/PDF export.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
