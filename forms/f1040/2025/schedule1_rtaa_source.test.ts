@@ -7,6 +7,7 @@ import {
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
+import { inputSchema as f1099gInputSchema } from "../nodes/inputs/f1099g/index.ts";
 import { registry } from "./registry.ts";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
@@ -19,6 +20,7 @@ const general = {
   taxpayer_last_name: "Example",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   address_line1: "1 Example Way",
   address_city: "Austin",
   address_state: "TX",
@@ -47,6 +49,11 @@ function filing(f1099g: Record<string, unknown>[] = issued) {
     w2: [{
       employer_ein: "12-3456789",
       employer_name: "Example Employer",
+      employer_address_line1: "10 Work St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 50_000,
       box2_fed_withheld: 5_000,
     }],
@@ -139,9 +146,9 @@ Deno.test("RTAA export rejects changed rows, source copies, line total and recip
       }, { filer, attachments: [] }),
     Error,
   );
-  const missingIdentity = filing([{ box_5_rtaa: 400 }]);
-  assertEquals(
-    missingIdentity.diagnostics.some((entry) => entry.nodeType === "f1099g"),
-    true,
+  assertThrows(
+    () => f1099gInputSchema.parse({ f1099gs: [{ box_5_rtaa: 400 }] }),
+    Error,
+    "Form 1099-G box 5 RTAA needs payer, recipient, and issued-copy identity",
   );
 });

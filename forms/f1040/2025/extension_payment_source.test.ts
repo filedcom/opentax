@@ -16,6 +16,7 @@ const general = {
   taxpayer_last_name: "Example",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   address_line1: "1 Main St",
   address_city: "Austin",
   address_state: "TX",

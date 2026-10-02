@@ -7,6 +7,7 @@ import {
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
+import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { registry } from "./registry.ts";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
@@ -19,6 +20,7 @@ const general = {
   taxpayer_last_name: "Example",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   address_line1: "1 Example Way",
   address_city: "Austin",
   address_state: "TX",
@@ -51,6 +53,11 @@ function filing(k1_s_corps: Record<string, unknown>[] = issued) {
     w2: [{
       employer_ein: "12-3456789",
       employer_name: "Example Employer",
+      employer_address_line1: "10 Work St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 50_000,
       box2_fed_withheld: 5_000,
     }],
@@ -151,10 +158,12 @@ Deno.test("S corporation code J rejects changed rows, K-1 copy, total and owner"
       }, { filer, attachments: [] }),
     Error,
   );
-  assertEquals(
-    filing([{ ...issued[0], recipient_tin: undefined }]).diagnostics.some((
-      entry,
-    ) => entry.nodeType === "k1_s_corp"),
-    true,
+  assertThrows(
+    () =>
+      k1SCorpInputSchema.parse({
+        k1_s_corps: [{ ...issued[0], recipient_tin: undefined }],
+      }),
+    Error,
+    "recipient_tin",
   );
 });
