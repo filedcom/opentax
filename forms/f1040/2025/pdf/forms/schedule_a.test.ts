@@ -11,6 +11,174 @@ import { fillFormPdf } from "../builder.ts";
 import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { buildMefXml } from "../../mef/builder.ts";
 import type { MefFormsPending } from "../../mef/types.ts";
+import { buildPending } from "../../mef/pending.ts";
+import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
+import { scheduleALine16EstateStatement } from "../../mef/forms/schedule_a_line16_estate_statement.ts";
+
+Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and PDF", async () => {
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "Alex Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const election = {
+    source_document_references: ["issued-1099r-estate-2025"],
+    born_before_1936: true,
+    entire_balance_distributed: true,
+    rolled_over_any: false,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    federal_estate_tax: 2_000,
+    partial_estate_tax_source: {
+      administrator_statement_reference: "estate administrator allocation 2025",
+      estate_tax_return_reference: "filed estate Form 706 tax workpaper",
+      full_distribution_taxable_amount: 40_000,
+      full_distribution_federal_estate_tax: 2_000,
+      recipient_allocated_federal_estate_tax: 1_000,
+    },
+    elect_capital_gain: true,
+    elect_10yr_averaging: false,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123456789",
+      taxpayer_dob: "1970-01-01",
+    },
+    schedule_a: { force_itemized: true },
+    f1099r: [{
+      payer_name: "Qualified Plan",
+      payer_ein: "123456789",
+      recipient_ssn: "123456789",
+      source_document_reference: "issued-1099r-estate-2025",
+      form4972_plan: {
+        participant_name: "Pat Participant",
+        participant_ssn: "444556666",
+        plan_reference: "plan-2025",
+        full_balance_statement_reference: "full-balance-2025",
+        all_qualified_distributions_included: true,
+      },
+      box1_gross_distribution: 20_000,
+      box2a_taxable_amount: 20_000,
+      box3_capital_gain: 4_000,
+      box7_distribution_code: DistributionCode.CodeA,
+      box9a_pct_total: 50,
+      ts: "T",
+      exclude_4972: true,
+    }],
+    form4972: { elections: [election] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  assertEquals(pending.schedule_a?.line_16_other_deductions, 800);
+  assertEquals(pending.f1040?.line12e_itemized_deductions, 800);
+  const fullXml = buildMefXml(buildPending(pending), filer);
+  assertEquals(fullXml.includes("<OtherMiscDeductionsStmt "), true);
+  assertEquals(
+    fullXml.includes("<OtherMiscellaneousDedAmt referenceDocumentId="),
+    true,
+  );
+  const xsdPath = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, fullXml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  assertEquals(
+    scheduleAMef.build(pending.schedule_a, { pending }).includes(
+      "<OtherMiscellaneousDedAmt>800</OtherMiscellaneousDedAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    scheduleALine16EstateStatement.build({}, { pending }).includes(
+      "<MiscellaneousDeductionTypeDesc>FEDERAL ESTATE TAX</MiscellaneousDeductionTypeDesc>",
+    ),
+    true,
+  );
+  const [instance] = scheduleAPdf.instances?.(
+    pending.schedule_a,
+    filer,
+    pending,
+  ) ?? [];
+  assertEquals(instance?.print_line_16_description, "Federal estate tax: 800");
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    pending,
+  );
+  assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, filled!);
+    const rendered = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(rendered.code, 0, new TextDecoder().decode(rendered.stderr));
+    assertEquals(
+      new TextDecoder().decode(rendered.stdout).includes(
+        "Federal estate tax: 800",
+      ),
+      true,
+    );
+  } finally {
+    await Deno.remove(pdfPath);
+  }
+  assertThrows(
+    () =>
+      scheduleAMef.build({ line_16_other_deductions: 800 }, {
+        pending: { ...pending, form4972: {} },
+      }),
+    Error,
+    "needs one sourced Form 4972",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        pending.schedule_a,
+        filer,
+        { ...pending, form4972: {} },
+      ),
+    Error,
+    "needs one sourced Form 4972",
+  );
+  const altered = {
+    ...pending,
+    schedule_a: { ...pending.schedule_a, line_16_other_deductions: 900 },
+  };
+  assertThrows(
+    () => scheduleAMef.build(altered.schedule_a, { pending: altered }),
+    Error,
+    "differs from Form 4972 estate tax",
+  );
+  assertThrows(
+    () => scheduleAPdf.instances?.(altered.schedule_a, filer, altered),
+  );
+});
 
 Deno.test("Schedule A line 8b seller details reach native statement and PDF", async () => {
   const filer = {

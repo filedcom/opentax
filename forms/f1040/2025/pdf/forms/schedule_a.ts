@@ -23,6 +23,7 @@ import {
   scheduleAOtherTaxRows,
 } from "../../schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
+import { scheduleALine16EstateTax } from "../../schedule_a_line16_estate_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -191,6 +192,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Other Itemized Deductions ────────────────────────────────────────────────
   {
     kind: "text",
+    domainKey: "print_line_16_description",
+    pdfField: "form1[0].Page1[0].f1_28[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line_16_other_deductions",
     pdfField: "form1[0].Page1[0].f1_29[0]",
   },
@@ -346,6 +352,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
     );
     const otherTaxRows = scheduleAOtherTaxRows(input);
     const line8bSeller = sellerFinancedLine8b(input);
+    const line16EstateTax = scheduleALine16EstateTax(
+      all,
+      input.line_16_other_deductions,
+    );
     return [{
       ...input,
       line_8a_mortgage_interest_1098: line8a,
@@ -373,6 +383,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
       ),
       line_10_interest: interest,
       line_14_charity: charity,
+      print_line_16_description: line16EstateTax > 0
+        ? `Federal estate tax: ${line16EstateTax}`
+        : undefined,
       line_17_itemized: standard.itemized_deductions,
       print_line_18_itemize_election: itemizeBelowStandard,
     }];

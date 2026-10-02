@@ -115,6 +115,7 @@ import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 import { scheduleAOtherTaxStatement } from "./schedule_a_other_tax_statement.ts";
 import { scheduleALine8bSellerStatement } from "./schedule_a_line8b_seller_statement.ts";
+import { scheduleALine16EstateStatement } from "./schedule_a_line16_estate_statement.ts";
 import { form8990 } from "./f8990.ts";
 import { form8992 } from "./f8992.ts";
 import { form8992ScheduleA } from "./f8992_schedule_a.ts";
@@ -357,6 +358,7 @@ export const ALL_MEF_FORMS = [
   anyOtherTaxesStatement,
   wagesNotShownSchedule,
   scheduleAOtherTaxStatement,
+  scheduleALine16EstateStatement,
   // Form 4835 line 4a statement follows wage statements in ReturnData1040.xsd.
   cccLoanAccrualStatement,
   cccLoanStatement,

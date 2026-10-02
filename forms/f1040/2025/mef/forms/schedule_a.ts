@@ -26,6 +26,7 @@ import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.t
 import { reviewedHomeMortgageNonqualifyingUse } from "../../../nodes/inputs/schedule_a/index.ts";
 import { scheduleAOtherTaxRows } from "../../schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../schedule_a_line8b_source.ts";
+import { scheduleALine16EstateTax } from "../../schedule_a_line16_estate_source.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -300,6 +301,18 @@ function buildIRS1040ScheduleA(
   if (!hasDeduction && fields.force_itemized !== true) return "";
   const otherTaxRows = scheduleAOtherTaxRows(fields);
   const line8bSeller = sellerFinancedLine8b(fields);
+  const line16EstateTax = scheduleALine16EstateTax(
+    context?.pending,
+    fields.line_16_other_deductions,
+  );
+  const line16StatementIds = context?.documentIdsByPendingKey
+    ?.schedule_a_line16_estate_statement ?? [];
+  if (
+    line16EstateTax > 0 && context?.documentIdsByPendingKey &&
+    line16StatementIds.length !== 1
+  ) {
+    throw new Error("Schedule A line 16 needs its linked estate-tax statement");
+  }
   const line8bStatementIds = context?.documentIdsByPendingKey
     ?.schedule_a_line8b_seller_statement ?? [];
   if (
@@ -369,7 +382,15 @@ function buildIRS1040ScheduleA(
     mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),
     mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
     mapField(["line_15_casualty_theft_loss", "CasualtyAndTheftLossesAmt"]),
-    mapField(["line_16_other_deductions", "OtherMiscellaneousDedAmt"]),
+    typeof fields.line_16_other_deductions === "number"
+      ? element(
+        "OtherMiscellaneousDedAmt",
+        fields.line_16_other_deductions,
+        line16StatementIds.length === 1
+          ? { referenceDocumentId: line16StatementIds[0] }
+          : undefined,
+      )
+      : "",
     fields.force_itemized === true && typeof filedItemized === "number"
       ? element("TotalItemizedDeductionsAmt", filedItemized)
       : "",
