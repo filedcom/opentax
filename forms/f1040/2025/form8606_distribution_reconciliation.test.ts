@@ -50,6 +50,7 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: general.taxpayer_ssn,
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 20_000,
       box2a_taxable_amount: 20_000,

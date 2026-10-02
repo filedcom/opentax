@@ -23,6 +23,7 @@ const copies = [
 ].map(({ amount, gain, nua, gross }, index) => ({
   payer_name: "Old Stock Bonus Plan",
   payer_ein: "123456789",
+  recipient_ssn: plan.participant_ssn,
   source_document_reference: `2025-1099-R-stock-${index + 1}`,
   form4972_plan: plan,
   box1_gross_distribution: gross,

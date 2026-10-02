@@ -121,6 +121,6 @@ Deno.test("code-8 correction cannot mask a second line 1h wage source", () => {
   assertThrows(
     () => buildMefXml(buildPending(result.pending), base.filer),
     Error,
-    "Standalone FEC",
+    "line 1h needs exactly one supported retained source",
   );
 });

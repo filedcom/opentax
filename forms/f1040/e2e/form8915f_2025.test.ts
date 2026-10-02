@@ -54,6 +54,7 @@ const inputs = {
   f1099r: [{
     payer_name: "Example Plan",
     payer_ein: "12-3456789",
+    recipient_ssn: "111-22-3333",
     account_number: "123",
     source_document_reference: "issued 2025 1099-R account 123",
     ts: "T",
@@ -545,6 +546,7 @@ Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", asyn
     f1099r: [{
       ...inputs.f1099r[0],
       ts: "S",
+      recipient_ssn: "444-55-6666",
       box7_ira_simple_indicator: true,
       form8915f_treatment: "three_years",
     }],

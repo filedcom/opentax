@@ -74,6 +74,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: filer.primarySSN,
         source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
@@ -148,6 +149,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: filer.primarySSN,
         source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
@@ -218,6 +220,7 @@ Deno.test({
       f1099rs: [{
         payer_name: "Qualified Plan",
         payer_ein: "123456789",
+        recipient_ssn: filer.primarySSN,
         source_document_reference: "form4972-source",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
