@@ -383,10 +383,12 @@ Deno.test("1040 Scenario 4 preserves the sourced credits and vehicle details", (
 
 Deno.test("1040 Scenario 4 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_04_FACTS.w2;
+  assertEquals(form.employeeSsn, SCENARIO_1040_04_FACTS.taxpayer.ssn);
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: [{
+        employee_ssn: form.employeeSsn,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -432,10 +434,12 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
 
 Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_05_FACTS.w2;
+  assertEquals(form.employeeSsn, SCENARIO_1040_05_FACTS.taxpayer.ssn);
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: [{
+        employee_ssn: form.employeeSsn,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,

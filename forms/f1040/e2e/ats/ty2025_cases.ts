@@ -792,6 +792,7 @@ export const SCENARIO_1040_04_FACTS = {
   w2: {
     employerName: "Capital One Bank",
     employerEin: "000000057",
+    employeeSsn: "400001037",
     employerAddress: {
       line1: "495 South Main Street",
       city: "Las Vegas",
@@ -886,6 +887,7 @@ export const SCENARIO_1040_05_FACTS = {
   w2: {
     employerName: "Apple Electronics & Technology",
     employerEin: "000000029",
+    employeeSsn: "400001039",
     employerAddress: {
       line1: "132 Christiana Mall",
       city: "Newark",
