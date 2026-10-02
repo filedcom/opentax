@@ -1,7 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { inputSchema as f2439InputSchema } from "../../../nodes/inputs/f2439/index.ts";
 import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
+import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
 
 export interface Fields {
   line1_total?: number | null;
@@ -80,6 +80,10 @@ function buildIRS1040Schedule3(
   context?: MefBuildContext,
 ): string {
   assertSchedule3Line8Join(fields, context?.pending);
+  const line13aSource = assertSchedule3Line13aSource(
+    fields.line13a_total,
+    context?.pending?.f2439,
+  );
   const children: string[] = [];
 
   // Direct mappings
@@ -155,31 +159,17 @@ function buildIRS1040Schedule3(
       continue;
     }
     if (key === "line13a_total") {
-      const source = context?.pending?.f2439;
-      if (!source) {
-        throw new Error("Schedule 3 line 13a needs sourced Form 2439");
-      }
-      const reportable = f2439InputSchema.parse(source).f2439s.filter((item) =>
-        (item.box1a ?? 0) > 0
-      );
-      const creditedIndices = reportable.flatMap((item, index) =>
-        (item.box2 ?? 0) > 0 ? [index] : []
-      );
-      const total = reportable.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
-      if (total !== value || creditedIndices.length === 0) {
-        throw new Error(
-          "Schedule 3 line 13a must equal sourced Form 2439 box 2 amounts",
-        );
-      }
       const allIds = context?.documentIdsByPendingKey?.f2439;
       if (
-        context?.documentIdsByPendingKey && allIds?.length !== reportable.length
+        context?.documentIdsByPendingKey &&
+        allIds?.length !== line13aSource.reportableCount
       ) {
         throw new Error(
           "Schedule 3 line 13a needs each linked IRS2439 document",
         );
       }
-      const ids = allIds && creditedIndices.map((index) => allIds[index]);
+      const ids = allIds &&
+        line13aSource.creditedIndices.map((index) => allIds[index]);
       children.push(
         element(
           tag,

@@ -79,6 +79,17 @@ Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", (
   assertStringIncludes(xml, "<OtherPaymentsAmt>2250</OtherPaymentsAmt>");
 });
 
+Deno.test("Schedule 3 native rejects omitted Form 2439 box 2 credit", () => {
+  assertThrows(
+    () =>
+      schedule3.build({}, {
+        pending: { f2439: { f2439s: [{ box1a: 10_000, box2: 1_500 }] } },
+      }),
+    Error,
+    "must equal sourced Form 2439",
+  );
+});
+
 Deno.test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
   const xml = schedule3.build(
     { line13a_total: 2_250 },

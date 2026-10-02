@@ -14,3 +14,10 @@ This join confirms the carry to the final return. Credit-specific eligibility,
 ordering, and tax-liability caps remain with each credit calculator and its
 source reconciliation. It does not independently authenticate payer records
 or establish IRS business-rule acceptance.
+
+Schedule 3 line 13a now replays retained Form 2439 box 2 amounts in both the
+native XML and PDF projectors. A bare or changed line 13a claim, or a positive
+box 2 source omitted from Schedule 3, rejects at either boundary. The native
+builder still links the credited Form 2439 documents; the Form 2439 descriptor
+checks the payer-issued Copy B identity and tax period. The shared Schedule 3
+check proves amount parity, not authenticity of the issued copy.
