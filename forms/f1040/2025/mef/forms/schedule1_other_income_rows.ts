@@ -17,7 +17,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
   ["line8z_taxable_grants", "Taxable grants"],
-  ["at_risk_disallowed_add_back", "At-risk loss add-back"],
   ["biz_interest_disallowed_add_back", "Disallowed business interest"],
 ] as const;
 
@@ -63,6 +62,15 @@ export function schedule1OtherIncomeRows(
   ) {
     throw new Error(
       "Schedule 1 at-risk recapture needs activity-level source facts",
+    );
+  }
+  if (
+    source.at_risk_disallowed_add_back !== undefined &&
+    source.at_risk_disallowed_add_back !== null &&
+    source.at_risk_disallowed_add_back !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 at-risk loss add-back needs activity-level source facts",
     );
   }
   const componentRows: Schedule1OtherIncomeRow[] = SOURCED_COMPONENTS.flatMap(

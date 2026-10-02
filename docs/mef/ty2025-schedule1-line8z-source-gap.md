@@ -15,6 +15,17 @@ calculation tying the resulting income to Schedule 1. The existing aggregate
 native descriptor refuses aggregate Form 6198 fields. Issued/prior-return
 evidence and the source-to-attachment join remain open.
 
+The separate `at_risk_disallowed_add_back` scalar had the same direct-export
+gap: a bare $300 amount was accepted on line 8z without any Schedule C or F
+activity. Native and PDF statement assembly now reject it. The existing
+Schedule C and F routes compute each at-risk-limited net loss directly from
+its activity facts and file separate Form 6198 copies; those routes do not need
+this aggregate line 8z amount. The old aggregate Form 6198 node can still
+calculate the scalar internally, but it cannot establish a filed activity or
+justify an additional line 8z income item. A positive route would need a
+specific activity and a reconciled computation that avoids adding back a loss
+already reduced on its source schedule.
+
 ## 2026-10-02 excess golden parachute source boundary
 
 `line8z_golden_parachute` had a fixed type label but no producer, payer record,
