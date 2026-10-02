@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-174 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+176 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -329,8 +329,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **82 distinct
-registered PDF keys out of 112**; **30 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **84 distinct
+registered PDF keys out of 112**; **28 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -391,8 +391,23 @@ packet text also confirms the Form 3800, Schedule 3, and Form 1040 amounts.
 Artifacts are under
 `.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-4/`.
 The synthetic FDA designation and zone/employment records do not authenticate
-external issued records. The remaining 30 keys still need source-backed
-coverage or a documented fail-closed scope decision; the full 174-case render
+external issued records.
+
+Two further full returns cover Form 8882 and Schedule R. The childcare case
+reports $40,000 of qualified facility spending and $10,000 of referral spending,
+with the $39,000 net Schedule C deduction after the $11,000 tentative credit.
+Form 3800 allows $9,573 in the current year, matching Schedule 3 line 6a and
+Form 1040 line 20. The under-65 disabled worker reports $17,000 of taxable
+disability wages and a $38 Schedule R credit on Schedule 3 line 6d and Form
+1040 line 20. Both focused graph/native tests and prepared bundles passed local
+TY2025 v5.4 XSD validation. Their prepared PDFs have 17 and five pages; the
+Form 8882, Schedule C, and both Schedule R pages were rendered and inspected
+for owner identity, line amounts, selected disability box, and legibility.
+Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-5/`.
+The synthetic childcare contracts and signed physician statement need
+external authentication. The remaining 28 keys still need source-backed
+coverage or a documented fail-closed scope decision; the full 176-case render
 batch remains open.
 
 The later `single-refinanced-car-loan-schedule1a` source case keeps one VIN and

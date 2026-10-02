@@ -15,6 +15,10 @@ import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts
 import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
 import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
 import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
+import {
+  form8882Fixture,
+  form8882ScheduleCFixture,
+} from "../../nodes/inputs/f8882/fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -8142,6 +8146,73 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Form 8844 identifies one employee with 10,000 of qualified empowerment-zone wages",
       "The 2,000 credit matches Schedule C's wage reduction, Form 3800 line 3, Schedule 3 line 6a, and Form 1040 line 20",
+    ],
+  },
+  {
+    id: "single-employer-childcare-facility-and-referral-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(120_000, 20_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      schedule_c: form8882ScheduleCFixture().schedule_cs.map((business) => ({
+        ...business,
+        line_1_gross_receipts: 39_000,
+        line_i_made_1099_payments: false,
+        line_j_filed_1099s: false,
+      })),
+      f8882: form8882Fixture(),
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "f8882",
+      "f3800",
+      "schedule3",
+      "form6251",
+    ],
+    reviewFocus: [
+      "Form 8882 records 40,000 of qualified facility and 10,000 of referral expenses",
+      "The 11,000 tentative credit matches Schedule C's net 39,000 expense; 9,573 allowed by Form 3800 reaches Schedule 3 and Form 1040",
+    ],
+  },
+  {
+    id: "single-disabled-worker-schedule-r-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(17_000, 1_700, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      schedule_r: {
+        filing_status: SourceFilingStatus.Single,
+        taxpayer_disabled: true,
+        taxpayer_disability_income: 17_000,
+        agi: 17_000,
+        taxpayer_disability_evidence: {
+          retired_on_permanent_total_disability: true,
+          below_mandatory_retirement_age_on_january_1: true,
+          unable_to_perform_substantial_gainful_activity: true,
+          condition_expected_to_last_one_year_or_result_in_death_verified: true,
+          disability_income_source_reference:
+            "Synthetic 2025 employer disability wage statement",
+          disability_income_reported_on: "wages",
+          eligibility_source_reference:
+            "Synthetic 2025 retirement and eligibility review",
+          physician_statement: "current_year",
+          physician_statement_source_reference:
+            "Synthetic signed 2025 physician statement",
+          physician_or_va_statement_signed_verified: true,
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_r", "schedule3"],
+    reviewFocus: [
+      "Schedule R identifies the under-65 permanently disabled worker and 17,000 of taxable disability wages",
+      "The 38 credit after AGI phaseout joins Schedule 3 line 6d and Form 1040 line 20",
     ],
   },
 ];

@@ -10,6 +10,12 @@ const filer = {
 
 Deno.test("staged Form 8882 native XML projects direct employer lines 1-7", () => {
   const { source, pending } = form8882PreparedFixture();
+  const discovery = form8882.build(source, {
+    phase: "discovery",
+    pending,
+    filer,
+  });
+  assertStringIncludes(discovery, "<IRS8882>");
   const xml = form8882.build(source, {
     pending,
     filer,
@@ -48,6 +54,14 @@ Deno.test("staged Form 8882 native XML projects direct employer lines 1-7", () =
 
 Deno.test("staged Form 8882 refuses tampered Schedule C deduction and owner", () => {
   const { source, pending } = form8882PreparedFixture();
+  assertThrows(() =>
+    form8882.build(source, {
+      phase: "final",
+      pending,
+      filer,
+      documentIdsByPendingKey: { f3800: [] },
+    })
+  );
   assertThrows(() =>
     form8882.build(source, {
       pending: {
