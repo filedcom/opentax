@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **734 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **735 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 160-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 734 bounded routes and
+**Implemented coverage.** The completed ledger records 735 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -181,6 +181,10 @@ Identified Form 1099-G agricultural and CCC receipts now bind payer, recipient,
 issued-copy reference, reviewed purpose, and named farm to Schedule F and
 Form 1040. A reviewed current-year-taxable crop disaster payment reaches
 Schedule F lines 6a/6b; unclassified or incompatible deferral claims reject.
+The bounded Schedule SE native/PDF identity now follows same-owner Schedule C
+and F income to a joint spouse and rejects mixed or unnamed joint proprietors;
+separate-owner calculations remain open. Joint positive W-2 wages now need
+an identified employee even with zero withholding.
 Positive 1099-NEC withholding now requires a matching taxpayer or joint-spouse
 recipient SSN at native/PDF export. Form 1099-B sales now require recipient
 identity for finalized export and reject identified duplicate transactions;
