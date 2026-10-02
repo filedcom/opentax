@@ -316,7 +316,15 @@ export function form4797EicPassiveOrdinary(
   const input = inputSchema.parse(rawInput);
   const gross = (input.passive_property_sales ?? [])
     .filter((sale) => sale.part === "II")
-    .reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
+    .reduce((sum, sale) => sum + passiveSaleGain(sale), 0) +
+    (input.k1_box11_line10_rows ?? []).reduce(
+      (sum, row) =>
+        sum +
+        (row.eic_activity_review?.classification === "passive"
+          ? row.gain_loss
+          : 0),
+      0,
+    );
   const allocation = activeRentalMixedSale(input)
     ? undefined
     : mixedPassiveAllocation(input);

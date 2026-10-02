@@ -6,6 +6,7 @@ import { buildMefBundle, buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { form4835Pdf } from "../2025/pdf/forms/f4835.ts";
+import { form4797Pdf } from "../2025/pdf/forms/f4797.ts";
 import { irs1040Pdf } from "../2025/pdf/forms/f1040.ts";
 import { schedule1Pdf } from "../2025/pdf/forms/schedule1.ts";
 import { scheduleEPdf } from "../2025/pdf/forms/schedule_e.ts";
@@ -68,7 +69,7 @@ function run(
     w2: [w2],
     f1099int: [{
       payer_name: "Example Bank",
-      recipient_ssn: "111-22-3333",
+      recipient_tin: "111223333",
       box1: taxableInterest,
       box8: taxExemptInterest,
     }],
@@ -76,6 +77,7 @@ function run(
       ? {
         f1099div: [{
           payerName: "Example Broker",
+          recipient_tin: "111223333",
           isNominee: false,
           box11: false,
           box1a: ordinaryDividends,
@@ -96,6 +98,7 @@ function runCapital(
       ? {
         f1099div: [{
           payerName: "Example Broker",
+          recipient_tin: "111223333",
           isNominee: false,
           box11: false,
           box1a: 0,
@@ -420,6 +423,156 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
     () => scheduleEPdf.projectFields?.({}, wrongRecipient),
     Error,
     "recipient needs the filer or joint spouse",
+  );
+});
+
+function runPartnershipLine10(
+  gain: number,
+  classification: "passive" | "nonpassive",
+  taxableInterest = 0,
+) {
+  return execute(plan, registry, {
+    general,
+    w2: [{
+      ...w2,
+      box1_wages: 1_000,
+      box3_ss_wages: 1_000,
+      box4_ss_withheld: 62,
+      box5_medicare_wages: 1_000,
+      box6_medicare_withheld: 14.5,
+    }],
+    ...(taxableInterest > 0
+      ? {
+        schedule_b_part_iii: {
+          foreign_accounts_question: false,
+          foreign_trust_question: false,
+        },
+        f1099int: [{
+          payer_name: "Synthetic Bank",
+          recipient_tin: "111223333",
+          box1: taxableInterest,
+        }],
+      }
+      : {}),
+    k1_partnership: [{
+      partnership_name: "Example Activity Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "Synthetic 2025 partnership K-1",
+      box11_line10_ordinary: [{
+        code: "R",
+        gain_loss: gain,
+        statement_reference: "Synthetic box 11 code R statement",
+        recipient_tin: "111223333",
+        ordinary_character_reviewed: true,
+        character_workpaper_reference: "Synthetic ordinary character review",
+        eic_activity_review: {
+          classification,
+          activity_statement_reference: "Synthetic single-activity statement",
+          participation_workpaper_reference: "Synthetic participation review",
+          partnership_not_publicly_traded_verified: true,
+          no_current_or_prior_unallowed_loss_for_activity_verified: true,
+        },
+      }],
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit", async () => {
+  const atLimit = runPartnershipLine10(11_950, "passive");
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(
+    typeof atLimit.pending.f1040.line27_eitc === "number" &&
+      atLimit.pending.f1040.line27_eitc > 0,
+    true,
+  );
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes("<OtherGainLossAmt>11950</OtherGainLossAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes(
+      `<EarnedIncomeCreditAmt>${atLimit.pending.f1040.line27_eitc}</EarnedIncomeCreditAmt>`,
+    ),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  assertEquals(
+    irs1040Pdf.projectFields?.(atLimit.pending.f1040, atLimit.pending)
+      ?.line27_eitc,
+    atLimit.pending.f1040.line27_eitc,
+  );
+  assertEquals(
+    form4797Pdf.projectFields?.(atLimit.pending.form4797, atLimit.pending)
+      ?.pdf_sale_gain,
+    11_950,
+  );
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+
+  const overLimit = runPartnershipLine10(11_951, "passive");
+  assertEquals(overLimit.diagnostics, []);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+
+  const nonpassive = runPartnershipLine10(11_951, "nonpassive");
+  assertEquals(nonpassive.diagnostics, []);
+  assertEquals(nonpassive.pending.eitc.investment_income_floor, 0);
+  assertEquals(
+    typeof nonpassive.pending.f1040.line27_eitc === "number" &&
+      nonpassive.pending.f1040.line27_eitc > 0,
+    true,
+  );
+
+  const combinedAtLimit = runPartnershipLine10(10_000, "passive", 1_950);
+  assertEquals(combinedAtLimit.diagnostics, []);
+  assertEquals(combinedAtLimit.pending.eitc.investment_income_floor, 11_950);
+  const combinedOverLimit = runPartnershipLine10(10_000, "passive", 1_951);
+  assertEquals(combinedOverLimit.diagnostics, []);
+  assertEquals(combinedOverLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(combinedOverLimit.pending.f1040.line27_eitc, undefined);
+
+  const changed = buildPending(atLimit.pending);
+  const k1 = changed.k1_partnership as {
+    k1_partnerships: Array<Record<string, unknown>>;
+  };
+  const row = (k1.k1_partnerships[0].box11_line10_ordinary as Array<
+    Record<string, unknown>
+  >)[0];
+  k1.k1_partnerships[0] = {
+    ...k1.k1_partnerships[0],
+    box11_line10_ordinary: [{
+      ...row,
+      eic_activity_review: {
+        ...(row.eic_activity_review as Record<string, unknown>),
+        classification: "nonpassive",
+      },
+    }],
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "do not match the issued K-1 facts",
   );
 });
 
