@@ -24,6 +24,16 @@ import {
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
 import { Box12Code } from "../../nodes/inputs/w2/index.ts";
+import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
+import {
+  calculateForm4137,
+  inputSchema as form4137InputSchema,
+} from "../../nodes/intermediate/forms/form4137/index.ts";
+import {
+  calculateForm8919,
+  inputSchema as form8919InputSchema,
+} from "../../nodes/intermediate/forms/form8919/index.ts";
+import { scheduleSELines } from "../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { Form8949Part } from "../../nodes/intermediate/forms/form8949/index.ts";
 import {
   schedule2Part1Total,
@@ -1661,26 +1671,32 @@ const form4137W2 = {
 };
 
 Deno.test("IRS4137 present when form4137 has data", () => {
+  const source = {
+    forms: [{
+      recipient: "taxpayer" as const,
+      employers: [{
+        name: "CAFE",
+        ein: "123456789",
+        tips_received: 500,
+        tips_reported: 0,
+      }],
+      ss_wages_from_w2: 0,
+    }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 0,
+    }],
+  };
+  const tipTax = calculateForm4137(
+    form4137InputSchema.parse(source),
+    SS_WAGE_BASE_2025,
+  ).reduce((sum, form) => sum + form.totalTax, 0);
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
-    form4137: {
-      forms: [{
-        recipient: "taxpayer",
-        employers: [{
-          name: "CAFE",
-          ein: "123456789",
-          tips_received: 500,
-          tips_reported: 0,
-        }],
-        ss_wages_from_w2: 0,
-      }],
-      w2_tip_sources: [{
-        employer_name: "CAFE",
-        employer_ein: "123456789",
-        allocated_tips: 0,
-        ss_wages_and_tips: 0,
-      }],
-    },
+    form4137: source,
+    schedule2: { line5_unreported_tip_tax: tipTax },
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS4137 ");
 });
@@ -1691,7 +1707,14 @@ Deno.test("IRS4137 absent when form4137 missing from pending", () => {
 });
 
 Deno.test("IRS8919 present when form8919 has data", () => {
-  const xml = buildMefXml({ form8919: sampleForm8919 });
+  const tax = calculateForm8919(
+    form8919InputSchema.parse(sampleForm8919),
+    SS_WAGE_BASE_2025,
+  ).reduce((sum, form) => sum + form.line13, 0);
+  const xml = buildMefXml({
+    form8919: sampleForm8919,
+    schedule2: { line6_uncollected_8919: tax },
+  });
   assertStringIncludes(xml, "<IRS8919 ");
 });
 
@@ -1736,7 +1759,12 @@ Deno.test("IRS4972 absent when form4972 missing from pending", () => {
 });
 
 Deno.test("IRS1040ScheduleSE present when schedule_se has data", () => {
-  const xml = buildMefXml({ schedule_se: { net_profit_schedule_c: 30000 } });
+  const scheduleSE = { net_profit_schedule_c: 30000 };
+  const tax = scheduleSELines(scheduleSE, SS_WAGE_BASE_2025)?.line12 ?? 0;
+  const xml = buildMefXml({
+    schedule_se: scheduleSE,
+    schedule2: { line4_se_tax: tax },
+  });
   assertStringIncludes(xml, "<IRS1040ScheduleSE ");
 });
 
