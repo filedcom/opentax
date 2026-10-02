@@ -97,9 +97,24 @@ export function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
       if (
         localOffset + 30 > offset ||
         view.getUint32(localOffset, true) !== 0x04034b50 ||
+        view.getUint16(localOffset + 6, true) !==
+          view.getUint16(position + 8, true) ||
+        view.getUint16(localOffset + 8, true) !==
+          view.getUint16(position + 10, true) ||
         view.getUint16(localOffset + 26, true) !== nameLength ||
         localOffset + 30 + nameLength +
               view.getUint16(localOffset + 28, true) > offset
+      ) return undefined;
+      // When bit 3 is set, the local CRC and sizes are placeholders followed
+      // by a data descriptor. Otherwise they must agree with the directory.
+      if (
+        (view.getUint16(position + 8, true) & 0x0008) === 0 &&
+        (view.getUint32(localOffset + 14, true) !==
+            view.getUint32(position + 16, true) ||
+          view.getUint32(localOffset + 18, true) !==
+            view.getUint32(position + 20, true) ||
+          view.getUint32(localOffset + 22, true) !==
+            view.getUint32(position + 24, true))
       ) return undefined;
       for (let index = 0; index < nameLength; index++) {
         if (

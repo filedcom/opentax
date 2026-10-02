@@ -41,6 +41,86 @@ function packageFor(id = submissionId) {
   };
 }
 
+Deno.test("A2A Send record and reopen reject a changed local ZIP CRC", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const source = packageFor();
+    const validInner =
+      unzipSync(source.containerZipBytes)[`${submissionId}.zip`];
+    const changedInner = Uint8Array.from(validInner);
+    // Local file header CRC byte; central directory and payload stay intact.
+    changedInner[14] ^= 0xff;
+    assertEquals(Object.keys(unzipSync(changedInner)), [
+      "manifest/manifest.xml",
+      "xml/submission.xml",
+    ]);
+    const changedContainer = zipSync({ [`${submissionId}.zip`]: changedInner });
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-changed-local-crc`,
+          submissionIds: [submissionId],
+          package: { ...source, containerZipBytes: changedContainer },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "physical ZIP entries",
+    );
+    const changedOuter = Uint8Array.from(source.containerZipBytes);
+    changedOuter[14] ^= 0xff;
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-changed-outer-crc`,
+          submissionIds: [submissionId],
+          package: { ...source, containerZipBytes: changedOuter },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "container physical ZIP entries",
+    );
+
+    const recorded = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: source,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...recorded,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "physical ZIP entries",
+    );
+    await Deno.writeFile(`${root}/requests/${key}/container.zip`, changedOuter);
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...recorded,
+        containerSha256: await digest(changedOuter),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "container physical ZIP entries",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A Send evidence preserves request and container submission order", async () => {
   const root = await Deno.makeTempDir();
   try {

@@ -217,10 +217,16 @@ function assertSendSubmissionArchive(
 function assertSendPackageIdentity(
   submissionIds: ReadonlyArray<string>,
   requestBody: string,
+  containerBytes: Uint8Array,
   container: Readonly<Record<string, Uint8Array>>,
 ): void {
   const bodyIds = requestSubmissionIds(requestBody);
   const archiveNames = Object.keys(container);
+  if (zipDirectoryEntryCount(containerBytes) !== archiveNames.length) {
+    throw new Error(
+      "A2A Send container physical ZIP entries differ from decoded archive",
+    );
+  }
   if (
     bodyIds.length !== submissionIds.length ||
     archiveNames.length !== submissionIds.length ||
@@ -398,6 +404,7 @@ export async function recordA2aSendPackage(
   assertSendPackageIdentity(
     record.submissionIds,
     input.package.sendSubmissionsRequestXml,
+    input.package.containerZipBytes,
     container,
   );
   for (const id of record.submissionIds) {
@@ -433,6 +440,7 @@ export async function readA2aSendRecord(
   assertSendPackageIdentity(
     record.submissionIds,
     new TextDecoder("utf-8", { fatal: true }).decode(requestBytes),
+    containerBytes,
     container,
   );
   for (const id of record.submissionIds) {
