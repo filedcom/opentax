@@ -208,7 +208,7 @@ Deno.test("Form 8962 one-policy three-person monthly route rejects altered depen
         },
       }),
     Error,
-    "filed Form 1040 wages, interest, and AGI",
+    "filed Form 1040 wages, interest, dividends, and AGI",
   );
   const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
   assertThrows(

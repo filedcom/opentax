@@ -137,12 +137,12 @@ Deno.test("two sequential Situation 4 policies reconcile repayment and reject so
         policies[0],
         {
           ...policies[1],
-          monthly_premiums: policies[1].monthly_premiums.map(Number),
+          monthly_aptcs: policies[1].monthly_aptcs.map(Number),
         },
       ],
     },
   };
-  changedPolicy.f1095a.f1095as[1].monthly_premiums[6] = 999;
+  changedPolicy.f1095a.f1095as[1].monthly_aptcs[6] = 0;
   assertThrows(
     () => form8962.build(fields, { filer, pending: changedPolicy }),
     Error,
