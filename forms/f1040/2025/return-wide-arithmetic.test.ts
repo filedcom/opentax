@@ -72,14 +72,13 @@ Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => 
     line11_agi: 68_000,
     line12c_deduction_total: 15_000,
     line13_qbi_deduction: 1_000,
-    line13b_additional_deductions: 500,
-    line14_deductions_qbi_total: 16_500,
-    line15_taxable_income: 51_500,
+    line14_deductions_qbi_total: 16_000,
+    line15_taxable_income: 52_000,
   };
   assertReturnWideArithmetic(income);
   assertStringIncludes(
     irs1040.build(income, { pending: {} }),
-    "<TaxableIncomeAmt>51500</TaxableIncomeAmt>",
+    "<TaxableIncomeAmt>52000</TaxableIncomeAmt>",
   );
   irs1040Pdf.projectFields?.(income, {});
   for (

@@ -206,7 +206,7 @@ Deno.test("standalone FEC native filing rejects missing facts, changed totals an
         },
       }),
     Error,
-    "Too big",
+    "Array must contain at most 10 element(s)",
   );
   const physical = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-form2555-full-year-physical-presence"
