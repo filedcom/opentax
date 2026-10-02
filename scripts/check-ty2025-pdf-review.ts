@@ -1,6 +1,11 @@
 /** Read-only audit of a human-completed TY2025 filled-PDF review manifest. */
 import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
+import { buildExecutionPlan } from "../core/runtime/planner.ts";
+import { execute } from "../core/runtime/executor.ts";
+import { registry } from "../forms/f1040/2025/registry.ts";
+import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
+import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 
@@ -105,6 +110,7 @@ if (fixtures.size !== pdfReviewFixtures.length) {
   throw new Error("Checked-in review fixture IDs are not unique");
 }
 const seen = new Set<string>();
+const executionPlan = buildExecutionPlan(registry);
 let reviewedPages = 0;
 
 for (const [index, rawCase] of cases.entries()) {
@@ -172,6 +178,25 @@ for (const [index, rawCase] of cases.entries()) {
     throw new Error(
       `${id}: source identity or inputs differ from the checked-in fixture`,
     );
+  }
+  const result = execute(executionPlan, registry, { ...fixture.inputs }, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  if (result.diagnostics.length > 0) {
+    throw new Error(`${id}: current source calculation has diagnostics`);
+  }
+  if (JSON.stringify(sourceData.pending) !== JSON.stringify(result.pending)) {
+    throw new Error(
+      `${id}: saved pending data differs from current source calculation`,
+    );
+  }
+  const rebuilt = await buildMefBundle(buildPending(result.pending), {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {
+    throw new Error(`${id}: saved XML differs from current source calculation`);
   }
 
   const validation = await new Deno.Command("xmllint", {
