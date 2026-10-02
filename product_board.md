@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **913 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **915 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,12 +30,15 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 913 bounded routes and
+**Implemented coverage.** The completed ledger records 915 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
 reconciliation, authored fixtures, and remaining limits. The checklist below
 contains only open parent work; a completed slice does not close its parent form.
+The [32-row nonnamed dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
+maps independent implementation and review work separately from user decisions,
+deferred named forms, validation, and IRS ATS prerequisites.
 
 **Merged checkpoint.** [PR #56](https://github.com/filedcom/opentax/pull/56)
 was merged as `48f69237` on 2026-10-01. Its full local suite at `c0d45cb0`
@@ -242,6 +245,9 @@ Positive 1099-MISC income or withholding copies now also require a matching
 taxpayer or joint-spouse recipient at final native/PDF export.
 Positive 1099-NEC box 1, 3, or 4 copies likewise require a matched recipient
 SSN before filing output.
+Schedule C's positive 1099-NEC receipt rows now also replay exactly against
+retained payer-copy business, payer, recipient, and amount fields at native and
+PDF export; issued-copy byte authentication remains open.
 Positive 1099-PATR distribution, withholding, and cooperative/QBI copies now
 require a matched recipient TIN at final native/PDF export.
 Their identified payer/recipient/account copies now also reject changed
