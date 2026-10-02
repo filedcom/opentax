@@ -1,9 +1,11 @@
 # TY2025 Form 1040 product board
 
-**Status: 2026-10-03.** This is the open-work queue, not a filing-readiness
-claim. It has **52 open checkboxes**: **32 outside** Named tax-form gaps and
-**20 in** that section. A completed bounded route does not close its parent
-form or release gate.
+## Compacted status (2026-10-03)
+
+The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
+inside** that section. The 996 bounded completed slices are recorded in the
+[completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
+A completed slice does not close its parent form or release gate.
 
 Work the non-named queue first where source evidence and scope are settled.
 The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
@@ -11,13 +13,28 @@ maps those 32 rows to independent work, product decisions, named-form
 prerequisites, validation, and IRS ATS needs. Keep the named-form parents open
 until their full routes or approved rejection boundaries are established.
 
-| Checkpoint | Current evidence or next gate |
-| --- | --- |
-| Implemented slices | [Completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md): 996 bounded items. [Dated status archive](docs/mef/ty2025-product-board-status-2026-10-03.md) preserves the detailed progress trail. |
-| Coverage inventory | 148 native MeF descriptors, 115 PDF descriptors, 211 TY2025 schema roots; registry counts alone do not prove positive filing coverage. |
-| Local validation | `deno task test` passed 10,886/10,886 at `3506a188` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type check, native compilation, and a synthetic W-2 → MeF → PDF smoke also passed. Re-run after new implementation. |
-| Published CLI | [v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is published. This is not a filing-ready release. |
-| Remaining gates | Source and owner evidence, route and PDF coverage, manual filled-page review, product scope decisions, IRS ATS credentials and accepted acknowledgments, then filing-ready review and release. |
+| Workstream | Open TODOs | Current state |
+| --- | ---: | --- |
+| Scope and completion rules | 3 | End-to-end filing boundaries and acceptance remain open. |
+| Coverage inventory and decisions | 8 | Applicability, source evidence, and unsupported-path dispositions need review. |
+| Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
+| Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
+| Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
+| Automated and artifact validation | 5 | The local suite passed; wider route evidence and human page review remain open. |
+| IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
+
+**Implemented coverage.** Retained routes include source and owner checks for
+W-2, 1099, payment, and Form 1040 component totals; shared native/PDF preflight;
+PDF field and filer-name corrections; and prepared archive/A2A integrity checks.
+The live inventory has 148 native MeF descriptors, 115 PDF descriptors, and 211
+TY2025 schema roots. These counts are inventories, not positive filing claims.
+
+**Validation and release.** `deno task test` passed 10,886/10,886 at
+`3506a188` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type
+check, native compilation, and a synthetic W-2 → MeF → PDF smoke also passed.
+[CLI v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is
+published. Manual page review, complete route/XSD/business-rule evidence, IRS
+ATS acceptance, and a filing-ready release remain open.
 
 **Phase order.** Finish independently actionable non-named source, graph,
 packet, and PDF work; settle the workflow and evidence decisions; then run one
