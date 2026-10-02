@@ -349,3 +349,47 @@ Deno.test("schedule_se: sole spouse farm uses spouse SSN in native XML", () => {
     "<NetFarmProfitLossAmt>50000</NetFarmProfitLossAmt>",
   );
 });
+
+Deno.test("schedule_se: multiple spouse-owned businesses and farms share spouse SSN", () => {
+  const joint = {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "Jane",
+      lastName: "Farmer",
+      nameControl: "FARM",
+    },
+  };
+  const result = rawScheduleSE.build({
+    net_profit_schedule_c: 30_000,
+    net_profit_schedule_f: 50_000,
+  }, {
+    filer: joint,
+    pending: {
+      schedule_c: {
+        schedule_cs: [
+          { proprietor_recipient: "S" },
+          { proprietor_recipient: "S" },
+        ],
+      },
+      schedule_f: {
+        schedule_fs: [
+          { proprietor_recipient: "S" },
+          { proprietor_recipient: "S" },
+        ],
+      },
+      general: { spouse_ssn: "111223333", filing_status: "mfj" },
+      f1040: { spouse_ssn: "111223333", filing_status: "mfj" },
+    },
+  });
+  assertStringIncludes(result, "<SSN>111223333</SSN>");
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>50000</NetFarmProfitLossAmt>",
+  );
+});

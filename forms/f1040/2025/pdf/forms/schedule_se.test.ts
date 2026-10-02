@@ -179,6 +179,106 @@ Deno.test("Schedule SE rejects a spouse farm mixed with another owner's business
         schedule_c: { schedule_cs: [{ proprietor_recipient: "T" }] },
       }),
     Error,
-    "mixed business and farm proprietor",
+    "mixed proprietors",
   );
+});
+
+Deno.test("Schedule SE rejects mixed owners within multiple Schedule C rows", () => {
+  assertThrows(
+    () =>
+      scheduleSePdf.projectFields!({ net_profit_schedule_c: 30_000 }, {
+        ...taxpayerIdentity,
+        schedule_c: {
+          schedule_cs: [
+            { proprietor_recipient: "T" },
+            { proprietor_recipient: "S" },
+          ],
+        },
+      }),
+    Error,
+    "mixed proprietors",
+  );
+});
+
+Deno.test("Schedule SE filled PDF keeps spouse owner across multiple spouse businesses and farms", async () => {
+  const pending = {
+    general: {
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Filer",
+      taxpayer_ssn: "123456789",
+      spouse_first_name: "Jane",
+      spouse_last_name: "Farmer",
+      spouse_ssn: "111223333",
+      filing_status: "mfj",
+    },
+    f1040: {
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Filer",
+      taxpayer_ssn: "123456789",
+      spouse_first_name: "Jane",
+      spouse_last_name: "Farmer",
+      spouse_ssn: "111223333",
+      filing_status: "mfj",
+    },
+    schedule_c: {
+      schedule_cs: [
+        { proprietor_recipient: "S" },
+        { proprietor_recipient: "S" },
+      ],
+    },
+    schedule_f: {
+      schedule_fs: [
+        { proprietor_recipient: "S" },
+        { proprietor_recipient: "S" },
+      ],
+    },
+    schedule2: { line4_se_tax: 11_304 },
+  };
+  const projected = scheduleSePdf.projectFields!({
+    net_profit_schedule_c: 30_000,
+    net_profit_schedule_f: 50_000,
+  }, pending);
+  assertEquals(projected.owner_name, "Jane Farmer");
+  assertEquals(projected.owner_ssn, "111223333");
+  assertEquals(projected.line3, 80_000);
+  const bytes = await fillFormPdf(
+    scheduleSePdf,
+    projected,
+    {
+      primarySSN: "123456789",
+      nameLine1: "Test Filer",
+      nameControl: "FILE",
+      filingStatus: MefFilingStatus.MarriedFilingJointly,
+      spouse: {
+        ssn: "111223333",
+        firstName: "Jane",
+        lastName: "Farmer",
+        nameControl: "FARM",
+      },
+      address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+    ".pdf-cache",
+    pending,
+  );
+  const file = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(file, bytes!);
+    const result = await new Deno.Command("pdftotext", {
+      args: ["-layout", file, "-"],
+    }).output();
+    assertEquals(result.code, 0);
+    const text = new TextDecoder().decode(result.stdout);
+    assertStringIncludes(text, "Jane Farmer");
+    assertStringIncludes(text, "111223333");
+    assertStringIncludes(text, "30000");
+    assertStringIncludes(text, "50000");
+    assertStringIncludes(text, "80000");
+  } finally {
+    await Deno.remove(file);
+  }
 });
