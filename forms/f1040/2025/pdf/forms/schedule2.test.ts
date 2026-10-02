@@ -100,12 +100,15 @@ Deno.test("2025 Schedule 2 PDF rejects generic 3468 recapture", () => {
     Error,
     "requires a specific Form 4255 credit-line source",
   );
-  const nmcr = schedule2Pdf.projectFields?.(
-    { line17a_new_markets_credit_recapture: 3_100 },
-    {},
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17a_new_markets_credit_recapture: 3_100 },
+        {},
+      ),
+    Error,
+    "needs a Form 8874-B recapture source",
   );
-  assertEquals(nmcr?.line17a_description, "NMCR");
-  assertEquals(nmcr?.line17a_investment_credit_recapture, 3_100);
 });
 
 Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () => {
