@@ -15,6 +15,9 @@ export function assertReviewPageOrigins(
     expectedCopies.set(key, (expectedCopies.get(key) ?? 0) + 1);
   }
   const emittedCopies = new Map<string, Set<number>>();
+  const nextCopy = new Map<string, number>();
+  const finishedCopies = new Set<string>();
+  let currentCopy: string | undefined;
   for (const [index, origin] of actual.entries()) {
     if (origin.pageNumber !== index + 1) {
       throw new Error(`${caseId}: PDF page origins are out of order`);
@@ -24,6 +27,22 @@ export function assertReviewPageOrigins(
       throw new Error(
         `${caseId}: unexpected PDF form origin ${origin.formKey}`,
       );
+    }
+    const copyKey = `${origin.formKey}\u0000${origin.formCopy}`;
+    if (copyKey !== currentCopy) {
+      if (finishedCopies.has(copyKey)) {
+        throw new Error(
+          `${caseId}: PDF pages for ${origin.formKey} copy ${origin.formCopy} are not contiguous`,
+        );
+      }
+      if (origin.formCopy !== (nextCopy.get(origin.formKey) ?? 1)) {
+        throw new Error(
+          `${caseId}: PDF copies of ${origin.formKey} are out of order`,
+        );
+      }
+      nextCopy.set(origin.formKey, origin.formCopy + 1);
+      if (currentCopy !== undefined) finishedCopies.add(currentCopy);
+      currentCopy = copyKey;
     }
     const copies = emittedCopies.get(origin.formKey) ?? new Set<number>();
     copies.add(origin.formCopy);

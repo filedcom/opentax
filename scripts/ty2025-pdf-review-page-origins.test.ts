@@ -36,3 +36,41 @@ Deno.test("review rejects a replaced page-origin manifest even with matching pag
     "recorded PDF page origins differ from replay",
   );
 });
+
+Deno.test("review rejects pages of one form copy split around another form", () => {
+  const actual = [
+    { pageNumber: 1, formKey: "f1040", formCopy: 1 },
+    { pageNumber: 2, formKey: "schedule3", formCopy: 1 },
+    { pageNumber: 3, formKey: "f1040", formCopy: 1 },
+  ];
+  assertThrows(
+    () =>
+      assertReviewPageOrigins(
+        "case-three",
+        actual,
+        ["f1040", "schedule3"],
+        actual,
+      ),
+    Error,
+    "PDF pages for f1040 copy 1 are not contiguous",
+  );
+});
+
+Deno.test("review rejects form copies emitted in reverse order", () => {
+  const actual = [
+    { pageNumber: 1, formKey: "f1040", formCopy: 1 },
+    { pageNumber: 2, formKey: "f8949", formCopy: 2 },
+    { pageNumber: 3, formKey: "f8949", formCopy: 1 },
+  ];
+  assertThrows(
+    () =>
+      assertReviewPageOrigins(
+        "case-four",
+        actual,
+        ["f1040", "f8949", "f8949"],
+        actual,
+      ),
+    Error,
+    "PDF copies of f8949 are out of order",
+  );
+});
