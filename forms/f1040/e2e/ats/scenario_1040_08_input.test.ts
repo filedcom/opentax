@@ -19,9 +19,9 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   assertEquals(form?.line4a_ira_gross, 35_800);
   assertEquals(form?.line4b_ira_taxable, 0);
   const projected = irs1040Pdf.projectFields?.(form ?? {}, result.pending);
-  assertEquals(projected?.line4a_ira_gross, "35,800");
-  assertEquals(projected?.line4b_ira_taxable, "0");
-  assertEquals(projected?.print_ira_qcd, undefined);
+  assertEquals(projected?.line4a_ira_gross, 35_800);
+  assertEquals(projected?.line4b_ira_taxable, 0);
+  assertEquals(projected?.print_ira_qcd, false);
   assertEquals(form?.line5a_pension_gross, 20_300);
   assertEquals(form?.line5b_pension_taxable, 10_300);
   assertEquals(form?.line5c_pension_rollover, true);
