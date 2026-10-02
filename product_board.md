@@ -10,14 +10,12 @@ the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-3
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
-**Current order of work.** Implement code and prepare evidence for the 32 open
-TODOs outside **Named tax-form gaps** first, including core return paths,
-native/PDF parity, validation preparation, and delivery prerequisites. The 20
-named-form parent gaps remain on this board for the following implementation
-phase. Cross-cutting scope, inventory, and release parents that require named
-forms or external decisions remain open through that phase. Finish this
-non-named implementation phase before another bulk test run; the failed runs
-are diagnostic evidence, not release passes.
+**Current order of work.** Stabilize the retained broad changes, including the
+board, with a full test run and compiled CLI/PDF smoke checks. Fix failures in
+supported routes and make unsupported routes reject clearly. The 32 open TODOs
+outside **Named tax-form gaps** and 20 named-form parent gaps remain visible
+for subsequent coverage and evidence work; passing local tests will not by
+itself close a filing or IRS acceptance gate.
 
 | Workstream | Open TODOs | Current state |
 | --- | ---: | --- |
@@ -75,8 +73,8 @@ Form 8958 taxpayer shares, against retained source and AGI at both exports.
 Identified repeated W-2 issued copies now reject before graph calculation and
 at both exports. Main Schedule 1, 1-A, 2, 3, and E PDF headers now print the
 filer name in Form 1040 display order.
-The planned v2.0.6 workflow now fails absent artifact uploads and requires all
-five nonempty platform binaries before checksums or release publication.
+The v2.0.6 artifact checks are documented as a release plan; the GitHub release
+workflow remains unchanged while this broad branch is stabilized.
 The release smoke guide now states that the CLI update-check cache can remain
 in the runner home directory after temporary return artifacts are removed.
 Claimed Form 1040 line 1i now replays retained W-2 code-Q combat pay at both
@@ -241,13 +239,13 @@ business-use square footage into the TY2025 native document and the two
 canonical PDF widgets, alongside the capped line 30 deduction. A source-backed
 packet passed XSD and its Schedule C page was inspected; wider coverage remains
 open.
-The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
-smoke of each compiled asset before upload, limits write permission to the
-publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios
+The local release smoke runs a native-platform synthetic W-2, MeF, and PDF
+check of a compiled asset; five-platform artifact and checksum verification
+remains open. The eight Form 1040 ATS scenarios
 have source-backed assertion and attachment plans; Scenario 1 and 8 source
 conflicts remain unresolved after official-packet recheck, with exact IRS
-clarification questions recorded. The release workflow's five published-asset
-smokes and ATS submission have not run.
+clarification questions recorded. Published-asset smokes and ATS submission
+have not run.
 The [release artifact smoke plan](docs/release-artifact-smoke.md) records the
 proposed `v2.0.6` CLI tag, dry-run, expected binaries and checksum manifest,
 and downloaded-binary smoke; the version is not published yet.
@@ -637,7 +635,7 @@ rebase is needed at this checkpoint; repeat the ancestry check at work freeze.
 
 ## Automated and artifact validation
 
-- [ ] Finish the non-named implementation and coverage decisions for this phase before the agreed single full-batch gate. The 20 named-form parent gaps are deferred to the following phase; existing focused cases and historical passes are not evidence for the current worktree.
+- [ ] Complete the remaining non-named implementation and coverage decisions for the filing-ready gate. The 20 named-form parent gaps remain open; passing tests on the retained routes do not close those decisions.
 - [ ] Run `deno task test` as the full batch for this phase after its retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until this phase passes.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the locally cached TY2025 IRS schema, recording its provenance and digest. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the 178 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
