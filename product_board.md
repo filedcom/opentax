@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **742 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **744 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 742 bounded routes and
+**Implemented coverage.** The completed ledger records 744 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -187,7 +187,8 @@ separate-owner calculations remain open. Joint positive W-2 wages now need
 an identified employee even with zero withholding.
 Positive 1099-NEC withholding now requires a matching taxpayer or joint-spouse
 recipient SSN at native/PDF export. Form 1099-B sales now require recipient
-identity for finalized export and reject identified duplicate transactions;
+identity for finalized export and reject repeated identified broker transactions
+even when a second copy changes its document reference or proceeds;
 ownerless historical benchmarks can still calculate pending gains. A 14-route evidence matrix records where
 reviewed facts, retained source bytes, signatures, and IRS acceptance differ;
 the overall evidence policy still needs a user decision.
@@ -398,7 +399,7 @@ These gates and a filing-ready release remain open.
   - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the native `CarryforwardGeneralBusinessCr` computation, the revised-carryforward history statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the completed filer-owned facility routes to every other retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
-- [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
+- [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including Form 5884 WOTC wage-reduction coexistence, election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
 - [ ] **Form 8990:** obtain authenticated debt tracing and filed-year interest/ATI inputs, reconcile its return-wide ordering, and design a durable accepted-filing carryforward ledger before allowing a positive nonexcepted-interest export. See the [Form 8990 gap](docs/mef/ty2025-form8990-gap.md).
 - [ ] **Form 8839:** complete unused-credit carryforward, exclusion, Form 2555, wider credit ordering, and external decree/expense/reimbursement authenticity beyond the bounded reviewed one-child CLI route. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).
 - [ ] **Form 7203 / Form 9465 / Schedule J:** complete shareholder debt and other basis paths beyond the bounded stock-only loss; resolve Form 9465 attached electronic authorization and linked filing review before opening its fail-closed route; complete Schedule J fishing attribution and mixed farm/fishing cases beyond its bounded Schedule F-only election. See [7203](docs/mef/ty2025-form7203-stock-loss-gap.md), [9465](docs/mef/ty2025-form9465-filing-boundary.md), and [Schedule J](docs/mef/ty2025-schedule-j-integration-gap.md).
