@@ -202,10 +202,12 @@ Pub. 936 mortgage-limit review now require exact issuer Copy B PDF bytes for
 existing readable-field verifier checks the reviewed PDF digest, 2025 year,
 lender, recipient TIN, origination date, and reported boxes 1, 2, 4, 5, and
 6 against each claimed source. A second loan with only a structured
-transcription can no longer enter either final export. A focused three-case
+transcription can no longer enter either final export. A focused four-case
 verifier/export suite passes, including a valid two-copy cross-loan source,
 missing second copy at both exporters, and a byte-authenticated second copy
-whose box 1 differs. The synchronous XML construction function still cannot
+whose box 1 differs. The two-copy source also passes full-return execution,
+native MeF-bundle construction, and a three-page filled-PDF build. The
+synchronous XML construction function still cannot
 authenticate external bytes; filing uses the asynchronous bundle path.
 
 The issuer's provenance and any flattened/scanned Copy B remain unresolved.
