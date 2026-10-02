@@ -13,6 +13,43 @@ Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   ]);
 });
 
+Deno.test("Schedule 1 PDF marks only sourced Form 4797 on line 4", () => {
+  // 2025 Schedule 1: https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
+  // 2025 Form 4684 instructions: https://www.irs.gov/instructions/i4684
+  // Form 4684 line 31 uses its own box only when Form 4797 is otherwise
+  // unnecessary. The bounded business-casualty route files Form 4797.
+  assertEquals(
+    schedule1Pdf.fields.find((field) =>
+      field.domainKey === "print_line4_form4797"
+    )?.pdfField,
+    "topmostSubform[0].Page1[0].c1_1[0]",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.({ line4_other_gains: -30_000 }, undefined, {}),
+    Error,
+    "needs a retained Form 4797 source",
+  );
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-form4684-business-casualty-loss"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1?.line4_other_gains, -30_000);
+  const projected = schedule1Pdf.instances?.(
+    result.pending.schedule1,
+    fixture.filer,
+    result.pending,
+  )?.[0];
+  assertEquals(projected?.print_line4_form4797, true);
+  assertEquals(projected?.print_line4_form4684, undefined);
+});
+
 Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repayment", () => {
   const byKey = (key: string) =>
     schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;

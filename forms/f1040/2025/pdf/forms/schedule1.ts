@@ -76,6 +76,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].f1_08[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_line4_form4797",
+    pdfField: "topmostSubform[0].Page1[0].c1_1[0]",
+  },
+  {
     kind: "text",
     domainKey: "line5_schedule_e",
     pdfField: "topmostSubform[0].Page1[0].f1_09[0]",
@@ -280,6 +285,17 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    const line4 = fields.line4_other_gains;
+    const hasLine4 = typeof line4 === "number" && line4 !== 0;
+    if (hasLine4 && !all?.form4797) {
+      throw new Error(
+        "Schedule 1 PDF line 4 needs a retained Form 4797 source; direct Form 4684 reporting is not implemented",
+      );
+    }
+    // Form 4684 instructions reserve its Schedule 1 checkbox for a direct
+    // line 31 amount when Form 4797 is otherwise unnecessary. The supported
+    // casualty route passes through Form 4797, so only its box is checked.
+    const line4Fields = hasLine4 ? { print_line4_form4797: true } : {};
     if (fields.line8z_nqdc !== undefined) {
       throw new Error(
         "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",
@@ -425,10 +441,16 @@ export const schedule1Pdf: PdfFormDescriptor = {
     const rows = schedule1OtherIncomeRows(fields);
     const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
     if (rows.length === 0 && activityNotForProfit === 0) {
-      return [{ ...fields, ...alimonyFields, ...repaymentFields }];
+      return [{
+        ...fields,
+        ...line4Fields,
+        ...alimonyFields,
+        ...repaymentFields,
+      }];
     }
     return [{
       ...fields,
+      ...line4Fields,
       ...alimonyFields,
       ...repaymentFields,
       ...(activityNotForProfit > 0
