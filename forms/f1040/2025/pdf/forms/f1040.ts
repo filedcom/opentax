@@ -663,7 +663,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 function line1hType(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
-): "FEC" | "EXCESS DEFERRALS" | "CORRECTIVE DISTRIBUTION" | undefined {
+):
+  | "FEC"
+  | "EXCESS DEFERRALS"
+  | "CORRECTIVE DISTRIBUTION"
+  | "FEC + EXCESS DEFERRALS"
+  | undefined {
   const fecSource = allPending.fec;
   const physicalSource = allPending.form2555?.filing_details;
   const sources: Array<{
@@ -725,12 +730,16 @@ function line1hType(
     }
   }
   if (sources.length === 0) return undefined;
-  if (sources.length > 1) {
+  const mixedFecExcess = sources.length === 2 &&
+    sources[0].type === "FEC" &&
+    sources[1].type === "EXCESS DEFERRALS" &&
+    fecSource !== undefined && physicalSource === undefined;
+  if (sources.length > 1 && !mixedFecExcess) {
     throw new Error(
       "Form 1040 PDF line 1h needs separate attribution for mixed earned-income types",
     );
   }
-  const sourceWages = sources[0].amount;
+  const sourceWages = sources.reduce((sum, source) => sum + source.amount, 0);
   const agiLine1h = allPending.agi_aggregator?.line1h_other_earned;
   const agiWages = typeof agiLine1h === "number"
     ? agiLine1h
@@ -746,7 +755,7 @@ function line1hType(
       "Form 1040 PDF line 1h source must equal finalized and AGI line 1h",
     );
   }
-  return sources[0].type;
+  return mixedFecExcess ? "FEC + EXCESS DEFERRALS" : sources[0].type;
 }
 
 export const irs1040Pdf: PdfFormDescriptor = {

@@ -8,13 +8,16 @@ import {
   inputSchema as w2InputSchema,
 } from "../nodes/inputs/w2/index.ts";
 import { physicalPresenceFilingSchema } from "../nodes/intermediate/forms/form2555/calculation.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
-/** A positive line 1h must be explained by exactly one retained 2025 route. */
+/** Replay retained 2025 line 1h routes without counting FEC/2555 wages twice. */
 export function assertLine1hSupportedSource(
   fields: Readonly<Record<string, unknown>>,
   pending?: Readonly<Record<string, unknown>>,
+  filer?: FilerIdentity,
 ): void {
   const sources: number[] = [];
+  const owners = new Set<string>();
   if (pending?.fec !== undefined) {
     sources.push(
       nativeFecInputSchema.parse(pending.fec).fecs.reduce(
@@ -25,22 +28,27 @@ export function assertLine1hSupportedSource(
   }
   const filing = (pending?.form2555 as Record<string, unknown> | undefined)
     ?.filing_details;
+  let correctiveAmount = 0;
   if (filing !== undefined) {
     sources.push(physicalPresenceFilingSchema.parse(filing).foreign_wages);
   }
   if (pending?.w2 !== undefined) {
     const excess = codeDExcessDeferral(w2InputSchema.parse(pending.w2).w2s);
-    if (excess.amount > 0) sources.push(excess.amount);
+    if (excess.amount > 0) {
+      sources.push(excess.amount);
+      excess.owners.forEach((owner) => owners.add(owner));
+    }
   }
   if (pending?.f1099r !== undefined) {
     const corrections = correctivePlanItems(
       f1099rInputSchema.parse(pending.f1099r).f1099rs,
     );
     if (corrections.length > 0) {
-      sources.push(corrections.reduce(
+      correctiveAmount = corrections.reduce(
         (sum, item) => sum + (item.box2a_taxable_amount ?? 0),
         0,
-      ));
+      );
+      sources.push(correctiveAmount);
     }
   }
   const filed = fields.line1h_other_earned;
@@ -50,12 +58,36 @@ export function assertLine1hSupportedSource(
   ) {
     return;
   }
+  if (pending?.fec !== undefined && filing !== undefined) {
+    throw new Error(
+      "Form 1040 line 1h standalone FEC and Form 2555 wages need overlap reconciliation",
+    );
+  }
+  if (owners.size > 0 && filer !== undefined) {
+    const allowed = new Set([filer.primarySSN.replace(/\D/g, "")]);
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
+    ) {
+      allowed.add(filer.spouse.ssn.replace(/\D/g, ""));
+    }
+    if ([...owners].some((owner) => !allowed.has(owner))) {
+      throw new Error(
+        "Form 1040 line 1h W-2 excess owner must match taxpayer or joint spouse",
+      );
+    }
+  }
+  const supportedMix = sources.length === 1 ||
+    (sources.length === 2 && pending?.fec !== undefined &&
+      pending?.w2 !== undefined && filing === undefined &&
+      correctiveAmount === 0);
+  const total = sources.reduce((sum, amount) => sum + amount, 0);
   if (
-    sources.length !== 1 || !Number.isSafeInteger(sources[0]) ||
-    sources[0] <= 0 || filed !== sources[0]
+    !supportedMix ||
+    sources.some((amount) => !Number.isSafeInteger(amount) || amount <= 0) ||
+    !Number.isSafeInteger(total) || filed !== total
   ) {
     throw new Error(
-      "Form 1040 line 1h needs exactly one supported retained source matching its filed amount",
+      "Form 1040 line 1h needs exactly one supported retained source or reviewed FEC plus W-2 excess matching its filed amount",
     );
   }
   const agiRaw = (pending?.agi_aggregator as
@@ -65,7 +97,7 @@ export function assertLine1hSupportedSource(
       agiRaw.every((value) => typeof value === "number")
     ? agiRaw.reduce((sum, value) => sum + value, 0)
     : undefined;
-  if (agi !== sources[0]) {
+  if (agi !== total) {
     throw new Error(
       "Form 1040 line 1h retained source must match the finalized AGI amount",
     );

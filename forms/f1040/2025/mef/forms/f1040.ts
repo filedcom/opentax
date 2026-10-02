@@ -30,6 +30,7 @@ import {
   codeDExcessDeferral,
   inputSchema as w2InputSchema,
 } from "../../../nodes/inputs/w2/index.ts";
+import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
 import {
   DistributionCode,
   inputSchema as f1099rInputSchema,
@@ -545,21 +546,27 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
             agiRaw.every((value) => typeof value === "number")
         ? agiRaw.reduce((sum, value) => sum + value, 0)
         : undefined;
+      const fecAmount = context.pending.fec === undefined
+        ? 0
+        : nativeFecInputSchema.parse(context.pending.fec).fecs.reduce(
+          (sum, item) => sum + item.compensation_usd,
+          0,
+        );
+      const expected = excess.amount + fecAmount;
       if (
         excess.owners.some((owner) => !allowedOwners.includes(owner)) ||
-        context.pending.fec !== undefined ||
         context.pending.form2555 !== undefined ||
         hasCorrectiveDistribution ||
-        fields.line1h_other_earned !== excess.amount ||
-        agiAmount !== excess.amount
+        fields.line1h_other_earned !== expected ||
+        agiAmount !== expected
       ) {
         throw new Error(
-          "Form 1040 line 1h W-2 excess must be sole-source, filer-owned, and match filed and AGI amounts",
+          "Form 1040 line 1h W-2 excess must be sole-source or combined with reviewed FEC, filer-owned, and match filed and AGI amounts",
         );
       }
     }
   }
-  assertLine1hSupportedSource(fields, context?.pending);
+  assertLine1hSupportedSource(fields, context?.pending, context?.filer);
   const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
   if (

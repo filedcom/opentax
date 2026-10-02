@@ -13,6 +13,10 @@ import {
   inputSchema as f1099rInputSchema,
 } from "../../../nodes/inputs/f1099r/index.ts";
 import { assert1099RRecipientOwner } from "../../f1099r-recipient-owner.ts";
+import {
+  codeDExcessDeferral,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import type { z } from "zod";
 
@@ -43,6 +47,13 @@ function foreignAddress(
 }
 
 type NativeFecItem = z.infer<typeof nativeFecItemSchema>;
+
+function w2Excess(context?: MefBuildContext): number {
+  const raw = context?.pending?.w2;
+  return raw === undefined
+    ? 0
+    : codeDExcessDeferral(w2InputSchema.parse(raw).w2s).amount;
+}
 
 function standaloneFec(context?: MefBuildContext): readonly NativeFecItem[] {
   const raw = context?.pending?.fec;
@@ -91,9 +102,10 @@ function standaloneFec(context?: MefBuildContext): readonly NativeFecItem[] {
         agiWages.every((value) => typeof value === "number")
     ? (agiWages as number[]).reduce((sum, value) => sum + value, 0)
     : undefined;
-  if (line1h !== amount || agiTotal !== amount) {
+  const expected = amount + w2Excess(context);
+  if (line1h !== expected || agiTotal !== expected) {
     throw new Error(
-      "Standalone FEC wages must equal Form 1040 and AGI line 1h without other wage sources",
+      "Standalone FEC wages must equal Form 1040 and AGI line 1h after reviewed W-2 excess",
     );
   }
   return items;
@@ -265,11 +277,18 @@ export const wagesNotShownSchedule: MefFormDescriptor<
       ? fecItems.reduce((sum, item) => sum + item.compensation_usd, 0)
       : filing?.foreign_wages;
     if (amount === undefined) return "";
+    const excess = w2Excess(context);
     return elements("WagesNotShownSchedule", [
       elements("WagesNotShownSch", [
         element("WagesLiteralCd", "FEC"),
         element("WagesNotShownAmt", amount),
       ]),
+      ...(excess > 0
+        ? [elements("WagesNotShownSch", [
+          element("OtherWagesNotShownTxt", "EXCESS DEFERRALS"),
+          element("WagesNotShownAmt", excess),
+        ])]
+        : []),
     ]);
   },
 };

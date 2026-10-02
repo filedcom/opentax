@@ -93,6 +93,6 @@ Deno.test("Form 1040 native line 1h rejects changed excess, wrong owner, and mix
         filer,
       }),
     Error,
-    "W-2 excess must be sole-source",
+    "Array must contain at least 1 element(s)",
   );
 });

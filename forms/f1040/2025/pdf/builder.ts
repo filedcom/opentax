@@ -48,6 +48,7 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import { assertLine1hSupportedSource } from "../line1h-source.ts";
 import { assertSchedule2Form4137Tax } from "../schedule2-form4137-reconciliation.ts";
 import { assertSchedule2Form8919Tax } from "../schedule2-form8919-reconciliation.ts";
 import { assertSchedule2ScheduleHTax } from "../schedule2-schedule-h-reconciliation.ts";
@@ -351,6 +352,7 @@ export async function buildPdfBytes(
   const normalized = normalizeAllPending(pending);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
+    assertLine1hSupportedSource(normalized.f1040, normalized, filer);
   }
   assertGeneral1040HeaderSource(normalized);
   assertGeneral1040DependentSource(normalized);
