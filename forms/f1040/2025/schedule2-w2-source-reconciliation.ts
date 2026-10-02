@@ -3,6 +3,7 @@ import {
   inputSchema as w2InputSchema,
 } from "../nodes/inputs/w2/index.ts";
 import { inputSchema as f1099mInputSchema } from "../nodes/inputs/f1099m/index.ts";
+import { inputSchema as f1099necInputSchema } from "../nodes/inputs/f1099nec/index.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
 /** Replays the two distinct W-2 box 12 sources printed together on line 13. */
@@ -110,5 +111,72 @@ export function assertSchedule2Line17HSources(
     throw new Error(
       "Schedule 2 line 17h sources must belong to the taxpayer or joint spouse",
     );
+  }
+  const nec = pending.f1099nec === undefined
+    ? []
+    : f1099necInputSchema.parse(pending.f1099nec).f1099necs;
+  const allocatedIncome = new Map<string, number>();
+  for (const miscRow of box15Rows) {
+    const review = miscRow.box15_409a_review!;
+    if ("included_in_box3" in review) continue;
+    const sourceOwner = review.income_source_recipient_tin;
+    if (sourceOwner !== miscRow.recipient_tin || !owners.has(sourceOwner)) {
+      throw new Error(
+        "1099-MISC box 15 income source recipient differs from the return owner",
+      );
+    }
+    const sourceKey = JSON.stringify([
+      review.income_source_form,
+      review.income_source_document_reference,
+      review.income_source_payer_tin,
+      sourceOwner,
+    ]);
+    let income: number;
+    if (review.income_source_form === "w2") {
+      const matches = w2s.filter((row) =>
+        row.source_document_reference ===
+          review.income_source_document_reference &&
+        row.employer_ein?.replaceAll("-", "") ===
+          review.income_source_payer_tin &&
+        row.employee_ssn?.replaceAll("-", "") === sourceOwner
+      );
+      if (matches.length !== 1) {
+        throw new Error(
+          "1099-MISC box 15 needs one identified issued W-2 or 1099-NEC income source",
+        );
+      }
+      if (
+        (matches[0].box12_entries ?? []).some((entry) =>
+          entry.code === Box12Code.Z && entry.amount > 0
+        )
+      ) {
+        throw new Error(
+          "1099-MISC box 15 cannot repeat a W-2 code Z section 409A tax base",
+        );
+      }
+      income = matches[0].box1_wages;
+    } else {
+      const matches = nec.filter((row) =>
+        row.source_document_reference ===
+          review.income_source_document_reference &&
+        row.payer_tin.replaceAll("-", "") ===
+          review.income_source_payer_tin &&
+        row.recipient_ssn?.replaceAll("-", "") === sourceOwner
+      );
+      if (matches.length !== 1) {
+        throw new Error(
+          "1099-MISC box 15 needs one identified issued W-2 or 1099-NEC income source",
+        );
+      }
+      income = matches[0].box1_nec ?? 0;
+    }
+    const total = (allocatedIncome.get(sourceKey) ?? 0) +
+      (miscRow.box15_nqdc ?? 0);
+    if (!Number.isSafeInteger(income) || total > income) {
+      throw new Error(
+        "1099-MISC box 15 exceeds identified W-2 or 1099-NEC income already reported",
+      );
+    }
+    allocatedIncome.set(sourceKey, total);
   }
 }

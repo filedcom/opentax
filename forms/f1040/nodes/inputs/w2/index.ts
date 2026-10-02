@@ -119,6 +119,9 @@ export const w2ItemSchema = z.object({
   employee_ssn: z.string().optional().describe(
     "Employee SSN; required for W-2 retirement deferrals and spouse ownership",
   ),
+  source_document_reference: z.string().trim().min(1).optional().describe(
+    "Issued W-2 copy reference for reviewed cross-form income inclusions",
+  ),
   box1_wages: z.number().nonnegative().describe(
     "Wages, tips, other compensation",
   ),

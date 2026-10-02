@@ -746,6 +746,33 @@ Deno.test("f1099m.compute: reviewed box 15 taxes box 3 income once with interest
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10_075);
 });
 
+Deno.test("f1099m.compute: externally sourced box 15 adds only Schedule 2 tax", () => {
+  const external = minimalItem({
+    box15_nqdc: 1_000,
+    box15_409a_review: {
+      income_source_form: "w2",
+      income_source_document_reference: "issued W-2 copy",
+      income_source_payer_tin: "123456789",
+      income_source_recipient_tin: "987654321",
+      income_inclusion_workpaper_reference: "reviewed W-2 inclusion",
+      interest_amount: 7,
+      interest_workpaper_reference: "reviewed 409A interest",
+    },
+  });
+  const result = compute([external]);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+  assertEquals(fieldsOf(result.outputs, agi_aggregator), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 207);
+  assertThrows(() =>
+    compute([{
+      ...external,
+      box3_other_income: 1_000,
+      box3_other_income_routing: "other_income",
+      box3_other_income_description: "unreviewed duplicate",
+    }])
+  );
+});
+
 Deno.test("f1099m.compute: box 15 without matched income and interest review rejects", () => {
   for (
     const item of [
@@ -760,7 +787,7 @@ Deno.test("f1099m.compute: box 15 without matched income and interest review rej
     assertThrows(
       () => compute([item]),
       Error,
-      "1099-MISC box 15 needs identified box 3 income",
+      "1099-MISC box 15 needs identified income already included once",
     );
   }
 });

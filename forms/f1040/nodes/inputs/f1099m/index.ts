@@ -116,13 +116,25 @@ export const itemSchema = z.object({
   // Box 13 — FATCA checkbox (informational only)
   box13_fatca: z.boolean().optional(),
   // Box 14 — Reserved for future use in TY2025 (not accepted)
-  // Box 15 — §409A inclusion already in box 3, plus Schedule 2 line 17h tax.
+  // Box 15 is a §409A tax base, not another income payment. The reviewed
+  // inclusion must already be present in box 3 or an identified W-2/1099-NEC.
   box15_nqdc: z.number().nonnegative().optional(),
-  box15_409a_review: z.object({
-    included_in_box3: z.literal(true),
-    interest_amount: z.number().int().nonnegative(),
-    interest_workpaper_reference: z.string().trim().min(1),
-  }).strict().optional(),
+  box15_409a_review: z.union([
+    z.object({
+      included_in_box3: z.literal(true),
+      interest_amount: z.number().int().nonnegative(),
+      interest_workpaper_reference: z.string().trim().min(1),
+    }).strict(),
+    z.object({
+      income_source_form: z.enum(["w2", "1099nec"]),
+      income_source_document_reference: z.string().trim().min(1),
+      income_source_payer_tin: tinSchema,
+      income_source_recipient_tin: tinSchema,
+      income_inclusion_workpaper_reference: z.string().trim().min(1),
+      interest_amount: z.number().int().nonnegative(),
+      interest_workpaper_reference: z.string().trim().min(1),
+    }).strict(),
+  ]).optional(),
   // Boxes 16–18 — State info only (no federal impact)
   box16_state_tax_withheld: z.number().nonnegative().optional(),
   box17_state_payer_id: z.string().optional(),
@@ -133,14 +145,18 @@ export const itemSchema = z.object({
       !Number.isSafeInteger(item.box15_nqdc) ||
       !item.source_document_reference ||
       !item.box15_409a_review ||
-      item.box3_other_income_routing !== "other_income" ||
-      (item.box3_other_income ?? 0) < (item.box15_nqdc ?? 0)
+      ("included_in_box3" in item.box15_409a_review &&
+        (item.box3_other_income_routing !== "other_income" ||
+          (item.box3_other_income ?? 0) < (item.box15_nqdc ?? 0))) ||
+      ("income_source_form" in item.box15_409a_review &&
+        (item.box15_409a_review.income_source_recipient_tin !==
+            item.recipient_tin || (item.box3_other_income ?? 0) > 0))
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["box15_nqdc"],
         message:
-          "1099-MISC box 15 needs identified box 3 income already included once and a reviewed section 409A interest workpaper",
+          "1099-MISC box 15 needs identified income already included once and a reviewed section 409A interest workpaper",
       });
     }
   } else if (item.box15_409a_review) {
