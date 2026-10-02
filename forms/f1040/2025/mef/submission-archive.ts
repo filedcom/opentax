@@ -2,7 +2,7 @@ import { unzipSync, zipSync } from "fflate";
 import { createHash } from "node:crypto";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
-import type { MefBundle } from "./builder.ts";
+import { assertPreparedBundleProjection, type MefBundle } from "./builder.ts";
 import {
   preparedSourceBytes,
   preparedSourceSha256,
@@ -91,6 +91,7 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   assertPreparedBundleDigests(archive);
   assertPreparedDocumentInventory(archive.bundle);
   assertPreparedAttachmentMetadata(archive.bundle);
+  assertPreparedBundleProjection(archive.bundle, archive.filer);
   let entries: Record<string, Uint8Array>;
   try {
     entries = unzipSync(archive.bytes);
@@ -232,6 +233,7 @@ export async function buildMefSubmissionArchive(
   ) {
     throw new Error("MeF submission differs from its prepared return");
   }
+  assertPreparedBundleProjection(bundle, options.filer);
   assertF1040FinalHeader(bundle.pending.f1040 ?? {}, options.filer);
   const residencyReview = assertFilingResidencyReview(
     options.residencyReview,

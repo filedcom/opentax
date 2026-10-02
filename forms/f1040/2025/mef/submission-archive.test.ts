@@ -4,7 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
 import { buildMefBundle } from "./builder.ts";
-import { sha256Hex } from "../prepared-source.ts";
+import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import type { MefPdfAttachment } from "./form-descriptor.ts";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
@@ -599,6 +599,47 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
   );
 });
 
+Deno.test("MeF archive and A2A package reject a rehashed source that differs from native XML", async () => {
+  const identity = filer();
+  const original = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: identity,
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  const pending = {
+    ...original.bundle.pending,
+    f1040: { ...original.bundle.pending.f1040, digital_assets: true },
+  };
+  const changedBundle = {
+    ...original.bundle,
+    pending,
+    sourceSha256: await preparedSourceSha256(pending, identity),
+  };
+  const archiveOptions = {
+    filer: identity,
+    submissionId,
+    processingDate,
+    residencyReview,
+  };
+  await assertRejects(
+    () => buildMefSubmissionArchive(changedBundle, archiveOptions),
+    Error,
+    "retained source projection",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...original, bundle: changedBundle },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "retained source projection",
+  );
+});
+
 Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that differs from its manifest", async () => {
   const identity = filer();
   const bundle = await buildMefBundle({
@@ -623,7 +664,7 @@ Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that diff
         residencyReview,
       }),
     Error,
-    "manifest differs from its ID or prepared return",
+    "retained source projection",
   );
 });
 

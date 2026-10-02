@@ -394,6 +394,27 @@ function buildReturnXml(
   };
 }
 
+/** Verify the retained native return still represents its prepared source. */
+export function assertPreparedBundleProjection(
+  bundle: MefBundle,
+  filer: FilerIdentity,
+): void {
+  const projected = buildReturnXml(
+    bundle.pending,
+    filer,
+    F1040_2025_CONFIG.mefSchemaVersion,
+    2025,
+    "1040",
+    bundle.attachments,
+    bundle.attachmentSha256ByFileName,
+  );
+  if (projected.xml !== bundle.xml) {
+    throw new Error(
+      "Prepared MeF XML differs from its retained source projection",
+    );
+  }
+}
+
 export function buildMefXml(
   pending: MefFormsPending,
   filer?: FilerIdentity,
