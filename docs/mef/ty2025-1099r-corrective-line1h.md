@@ -20,3 +20,15 @@ correction is taxable. Mixed line 1h sources, including FEC, Form 2555 wages,
 and W-2 excess deferrals, require separate source attribution before a native
 statement can describe them together. The focused fixtures are authored; the
 shared bulk test, XSD, PDF render, and IRS acceptance checks remain pending.
+
+The W-2 excess-deferral and code-8 correction combination remains fail closed.
+In a focused source probe, two reviewed code-D W-2s generated $2,500 of excess
+deferrals and a separate identified non-IRA code-8 Form 1099-R had $3,000 in
+taxable box 2a. The graph produced $5,500 on Form 1040 and AGI line 1h, while
+both final native and PDF exports rejected the mixed route. The
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) list
+both categories on line 1h, but the retained sources do not establish whether
+the code-8 amount corrects the same W-2 excess or a separate contribution.
+Opening this route needs an explicit plan and contribution link, plus a reviewed
+nonoverlap amount, before one filed line and native description can be
+reconciled without double counting.
