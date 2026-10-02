@@ -27,7 +27,7 @@ This screen captures Social Security (and equivalent Railroad Retirement Board) 
 
 | Field | Destination | How Used | Triggers | Limit / Cap | IRS Reference | URL |
 | ----- | ----------- | -------- | -------- | ----------- | ------------- | --- |
-| box3_gross_benefits − box4_repaid (= box5 net) | f1040 line6a_ss_gross | Sum of all items' net benefits (Box 5 = Box 3 - Box 4); if Box 4 > Box 3 for any item, clamp that item's net to 0 | Sum > 0 | None | i1040gi.pdf, Line 6a | .research/docs/i1040gi.pdf |
+| box3_gross_benefits − box4_repaid (= box5 net) | f1040 line6a_ss_gross | Sum signed box 5 amounts; a negative statement offsets a positive one. Supplied box 5 must equal boxes 3 minus 4. | Sum > 0 | Negative aggregate requires repayment review | Pub. 915, 2025 | https://www.irs.gov/publications/p915 |
 | box6_federal_withheld | f1040 line25b_withheld_1099 | Sum of all items' Box 6 amounts | Sum > 0 | None | i1040gi.pdf, Line 25b | .research/docs/i1040gi.pdf |
 | box3_gross_benefits | (informational) | Not separately routed; only used internally to compute net = box3 - box4 | — | — | — | — |
 | box4_repaid | (informational) | Used to compute net; if sum of box4 > sum of box3 across all items, no benefits are taxable | — | — | Pub 915; i1040gi.pdf | .research/docs/i1040gi.pdf |
@@ -39,10 +39,11 @@ This screen captures Social Security (and equivalent Railroad Retirement Board) 
 ### Step 1 — Compute net benefit (Box 5) per item
 
 ```
-net_i = max(0, box3_gross_benefits_i - (box4_repaid_i ?? 0))
+net_i = box5_net_benefits_i ?? (box3_gross_benefits_i - (box4_repaid_i ?? 0))
 ```
 
-Each item's net is clamped to zero if repayments exceed gross for that item.
+When supplied, box 5 must equal box 3 minus box 4. A negative box 5 remains
+negative while statements are combined.
 
 > **Source:** IRS Form 1040 Instructions (i1040gi.pdf), Lines 6a and 6b section — "box 5" defined as Box 3 minus Box 4. `.research/docs/i1040gi.pdf`
 
@@ -52,7 +53,9 @@ Each item's net is clamped to zero if repayments exceed gross for that item.
 total_net = sum(net_i for all items)
 ```
 
-Form 1040 Worksheet Line 1 states: "Enter the total amount from box 5 of **all** your Forms SSA-1099 and RRB-1099."
+Publication 915 directs that a negative box 5 offsets a positive box 5 on
+another statement. The current SSA input node combines its own statements;
+negative SSA totals and cross-node SSA/RRB offset need further filing review.
 
 > **Source:** IRS Form 1040 Instructions (i1040gi.pdf), Social Security Benefits Worksheet Line 1. `.research/docs/i1040gi.pdf`
 
@@ -123,13 +126,17 @@ flowchart LR
 
 ## Edge Cases & Special Rules
 
-1. **Repayments exceed gross for a single item**: If `box4_repaid > box3_gross_benefits` for an individual item, clamp that item's net to 0. (The overall-return exception in i1040gi.pdf — "your total repayments (box 4) were more than your total benefits for 2025 (box 3)" — applies at the return level across all SSA items, handled by the downstream taxability node.)
+1. **Repayments exceed gross for a single item**: Preserve its negative box 5
+   to offset another statement. A negative total within the SSA node stops
+   filing pending repayment deduction or credit review; cross-node SSA/RRB
+   offsets also remain unsupported.
 
 2. **Multiple SSA-1099s (e.g., taxpayer + spouse, or corrected forms)**: Sum all items' net benefits before routing. The worksheet says "all your Forms SSA-1099 and RRB-1099."
 
 3. **RRB-1099**: Treated identically to SSA-1099 for federal taxability. The `is_rrb` flag is informational; it does not change routing logic in this node.
 
-4. **Zero net benefits**: If `total_net <= 0`, do not emit `line6a_ss_gross` output (no SS income to report).
+4. **Zero or negative net benefits**: Zero emits no line 6a amount. Negative
+   aggregate benefits stop graph calculation and final export for review.
 
 5. **Lump-sum prior-year election (Pub 915 Method)**: Taxpayers may elect to treat lump-sum retroactive benefits under a special method (Worksheets 2–4 in Pub 915). This election is out of scope for this input node; it is handled by the downstream SS taxability intermediate node using the `lump_sum_year` flag passed through. However, the `box3_gross_benefits` still reflects the full amount received (including lump-sum portions).
 

@@ -44,6 +44,7 @@ import {
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
+import { assertSocialSecurityBenefitSource } from "../ssa-benefits-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "../mef/forms/w2g.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
@@ -321,6 +322,7 @@ export async function buildPdfBytes(
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
   assert1099WithholdingSource(normalized, filer);
+  assertSocialSecurityBenefitSource(normalized);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {

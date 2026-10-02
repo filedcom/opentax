@@ -77,6 +77,32 @@ Deno.test("ssa1099.inputSchema: accepts item with box4_repaid omitted (treats as
   assertEquals(parsed.success, true);
 });
 
+Deno.test("ssa1099 rejects a box 5 that contradicts boxes 3 and 4", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box3_gross_benefits: 10_000,
+        box4_repaid: 2_000,
+        box5_net_benefits: 9_000,
+      })]),
+    Error,
+    "SSA-1099 box 5 must equal box 3 minus box 4",
+  );
+});
+
+Deno.test("ssa1099 compares issued boxes at cent precision", () => {
+  assertEquals(
+    ssa1099.inputSchema.safeParse({
+      ssas: [{
+        box3_gross_benefits: 0.3,
+        box4_repaid: 0.2,
+        box5_net_benefits: 0.1,
+      }],
+    }).success,
+    true,
+  );
+});
+
 // =============================================================================
 // 2. Per-Box Routing
 // =============================================================================
@@ -150,13 +176,13 @@ Deno.test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amoun
   assertEquals(input.line25b_withheld_1099, 1200);
 });
 
-Deno.test("ssa.compute: repayment exceeds gross on one item — that item contributes 0 to line6a", () => {
+Deno.test("ssa.compute: a negative statement offsets another statement before line6a", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 1000, box4_repaid: 2000 }), // net = 0 (clamped)
     minimalItem({ box3_gross_benefits: 5000 }), // net = 5000
   ]);
   const input = fieldsOf(result.outputs, f1040)!;
-  assertEquals(input.line6a_ss_gross, 5000);
+  assertEquals(input.line6a_ss_gross, 4000);
 });
 
 Deno.test("ssa.compute: two items — single merged f1040 output regardless of source", () => {
@@ -253,22 +279,26 @@ Deno.test("ssa.compute: all items have net=0 — no f1040 output", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("ssa.compute: single item where box4 > box3 — net clamped to 0, no line6a output", () => {
-  const result = compute([
-    minimalItem({ box3_gross_benefits: 1000, box4_repaid: 5000 }),
-  ]);
-  // net = max(0, 1000-5000) = 0 → no f1040 output at all
-  const f1040Fields2 = fieldsOf(result.outputs, f1040);
-  assertEquals(f1040Fields2, undefined);
+Deno.test("ssa.compute: negative aggregate needs repayment review", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box3_gross_benefits: 1000,
+        box4_repaid: 5000,
+        box5_net_benefits: -4000,
+      })]),
+    Error,
+    "Negative total SSA-1099 benefits need repayment deduction or credit review",
+  );
 });
 
-Deno.test("ssa.compute: repayment on one item does not affect other item's net", () => {
+Deno.test("ssa.compute: repayment on one item offsets the other item's net", () => {
   const result = compute([
-    minimalItem({ box3_gross_benefits: 500, box4_repaid: 1000 }), // net = 0
+    minimalItem({ box3_gross_benefits: 500, box4_repaid: 1000 }), // net = -500
     minimalItem({ box3_gross_benefits: 8000 }), // net = 8000
   ]);
   const input = fieldsOf(result.outputs, f1040)!;
-  assertEquals(input.line6a_ss_gross, 8000);
+  assertEquals(input.line6a_ss_gross, 7500);
 });
 
 Deno.test("ssa.compute: box3 and box6 on different items produce single merged f1040 output with both fields", () => {
