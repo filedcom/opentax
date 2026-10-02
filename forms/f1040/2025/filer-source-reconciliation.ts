@@ -872,26 +872,59 @@ export function assertSchedule1Box3SourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
-  const schedule1 = pending.schedule1;
-  if (!schedule1 || typeof schedule1 !== "object") return;
-  const rows = (schedule1 as Record<string, unknown>)
-    .f1099m_box3_other_income_sources;
-  if (rows === undefined) return;
-  if (!Array.isArray(rows)) {
-    throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
+  const raw = (pending.f1099m as
+    | { f1099ms?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ms ?? [];
+  const sourceRows = raw.filter((item) =>
+    item.box3_other_income_routing === "other_income" &&
+    typeof item.box3_other_income === "number" &&
+    item.box3_other_income > 0
+  );
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const rows = schedule1?.f1099m_box3_other_income_sources;
+  if (sourceRows.length === 0 && rows === undefined) return;
+  if (!Array.isArray(rows) || rows.length !== sourceRows.length) {
+    throw new Error(
+      "Schedule 1 needs one 1099-MISC box 3 row per issued other-income source",
+    );
   }
-  const recipients = [
-    tin(filer.primarySSN, "taxpayer"),
-    tin(filer.spouse?.ssn, "spouse"),
-  ];
-  for (const value of rows) {
-    if (!value || typeof value !== "object") {
-      throw new Error("Schedule 1 1099-MISC box 3 source is invalid");
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  const unmatched = [...rows] as Array<Record<string, unknown>>;
+  for (const item of sourceRows) {
+    const recipient = tin(item.recipient_tin, "1099-MISC recipient");
+    if (
+      !recipients.includes(recipient) ||
+      typeof item.payer_name !== "string" || !item.payer_name.trim() ||
+      !tin(item.payer_tin, "1099-MISC payer") ||
+      typeof item.box3_other_income_description !== "string" ||
+      !item.box3_other_income_description.trim() ||
+      !Number.isSafeInteger(item.box3_other_income)
+    ) {
+      throw new Error("1099-MISC box 3 issued source is invalid");
     }
-    const row = value as Record<string, unknown>;
-    if (!recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))) {
-      throw new Error("1099-MISC box 3 recipient differs from the filer");
+    const index = unmatched.findIndex((row) =>
+      row && typeof row === "object" &&
+      row.payer_name === item.payer_name &&
+      tin(row.payer_tin, "1099-MISC payer") ===
+        tin(item.payer_tin, "1099-MISC payer") &&
+      tin(row.recipient_tin, "1099-MISC recipient") === recipient &&
+      row.description === item.box3_other_income_description &&
+      row.amount === item.box3_other_income
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule 1 1099-MISC box 3 row differs from its issued source",
+      );
     }
+    unmatched.splice(index, 1);
+  }
+  if (unmatched.length !== 0) {
+    throw new Error(
+      "Schedule 1 1099-MISC box 3 row differs from its issued source",
+    );
   }
 }
 

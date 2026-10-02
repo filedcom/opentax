@@ -1,5 +1,19 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 Form 1099-MISC box 3 final source replay
+
+Native and PDF final export now match every Schedule 1 box 3 other-income
+statement row to a positive retained Form 1099-MISC box 3 source. The replay
+compares payer name and TIN, filer or joint-spouse recipient TIN, whole-dollar
+amount, and reviewed payment description as a multiset. A missing, duplicated,
+or altered row rejects before filing. A two-payer box 3 case combined with
+Form 1099-G RTAA reaches Form 1040 line 8; both descriptions and the RTAA type
+appear in the native statement and extracted filled-PDF text, and the bundle
+passes local TY2025 v5.4 XSD. A negative case first demonstrated that a
+changed description was accepted by final export before this replay guard.
+The entered payer data and description still do not authenticate issued copy
+bytes or establish that the payment has the stated tax character.
+
 ## 2026-10-02 Form 1099-G box 6 grant total replay (unrun)
 
 The existing taxable-grant route now replays the aggregate of retained Form
