@@ -78,7 +78,10 @@ The post-implementation full `deno task test` at `b168d9bb` on 2026-10-02
 stopped in TypeScript checking with 32 errors, before any test executed.
 Those type errors were repaired. The rerun at `f63302d8` completed with
 **10,287 passed and 216 failed** in 27m05s; failures are being triaged by
-source/fixture cause. The same full command remains the gate.
+source/fixture cause. After focused repairs, the full rerun at `c7b3be71`
+completed with **10,393 passed and 112 failed** in 30m15s. The remaining
+failures are being classified against the deferred named-form section; the
+same full command remains the gate.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph

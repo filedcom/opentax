@@ -269,6 +269,12 @@ The type-repaired rerun at `f63302d8` completed in 27m05s with 10,287 passed
 and 216 failed (none ignored reported). Its local log is
 `.state/research/ty2025-pr59-bulk-test-retry-2026-10-02.log`. Failures are
 under source/fixture triage; the result does not pass the release gate.
+A second type-clean full `deno task test` at `c7b3be71` completed in 30m15s
+with 10,393 passed and 112 failed. Its local log is
+`.state/research/ty2025-pr59-bulk-test-retry2-2026-10-02.log`. The two
+1099-K review assertions failing in that run were subsequently repaired and
+passed a nine-case focused rerun; other failures remain under classification.
+The full gate still has no passing result.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
