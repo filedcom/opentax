@@ -11,6 +11,39 @@ function minimalItem(
   return { farm_id: "farm-1", ...overrides };
 }
 
+function identifiedFarmItem(overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    payer_name: "USDA Farm Service Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-farm-1099g-1",
+    ...(typeof overrides.box_7_agriculture === "number" &&
+        overrides.box_7_agriculture > 0
+      ? {
+        box_7_payment_kind: "agricultural_program",
+        box_7_review_reference: "reviewed USDA payment classification",
+      }
+      : {}),
+    ...overrides,
+  });
+}
+
+function identifiedFarmSource(
+  kind: string,
+  amount: number,
+  reference = "issued-farm-1099g-1",
+) {
+  return {
+    farm_id: "farm-1",
+    kind,
+    amount,
+    payer_name: "USDA Farm Service Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: reference,
+  };
+}
+
 function reviewedNonbusinessGrant(amount: number) {
   return minimalItem({
     box_6_taxable_grants: amount,
@@ -243,13 +276,40 @@ Deno.test("f1099g.compute: unclassified box 6 grant cannot silently become line 
 });
 
 Deno.test("f1099g.compute: box_7_agriculture retains its farm source", () => {
-  const result = compute([minimalItem({ box_7_agriculture: 3500 })]);
+  const result = compute([identifiedFarmItem({ box_7_agriculture: 3500 })]);
   const out = findOutput(result, "schedule_f");
-  assertEquals(out?.fields.farm_sources, [{
-    farm_id: "farm-1",
-    kind: "1099g_agriculture",
-    amount: 3500,
-  }]);
+  assertEquals(out?.fields.farm_sources, [
+    identifiedFarmSource("1099g_agriculture", 3500),
+  ]);
+});
+
+Deno.test("1099-G positive farm payments reject missing issued payer or recipient identity", () => {
+  for (
+    const field of [
+      "payer_name",
+      "payer_tin",
+      "recipient_tin",
+      "source_document_reference",
+    ]
+  ) {
+    const source = identifiedFarmItem({ box_7_agriculture: 3500 });
+    delete source[field];
+    assertThrows(
+      () => compute([source]),
+      Error,
+      "Form 1099-G farm payments need farm, payer, recipient, and issued-copy identity",
+    );
+  }
+});
+
+Deno.test("1099-G box 7 requires reviewed payment character", () => {
+  const source = identifiedFarmItem({ box_7_agriculture: 3500 });
+  delete source.box_7_payment_kind;
+  assertThrows(
+    () => compute([source]),
+    Error,
+    "Form 1099-G box 7 needs reviewed agricultural-program or current-year-taxable crop-disaster classification",
+  );
 });
 
 Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () => {
@@ -263,13 +323,11 @@ Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () 
 });
 
 Deno.test("f1099g.compute: box_9_market_gain retains its farm source", () => {
-  const result = compute([minimalItem({ box_9_market_gain: 600 })]);
+  const result = compute([identifiedFarmItem({ box_9_market_gain: 600 })]);
   const out = findOutput(result, "schedule_f");
-  assertEquals(out?.fields.farm_sources, [{
-    farm_id: "farm-1",
-    kind: "1099g_ccc_market_gain",
-    amount: 600,
-  }]);
+  assertEquals(out?.fields.farm_sources, [
+    identifiedFarmSource("1099g_ccc_market_gain", 600),
+  ]);
 });
 
 Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output", () => {
@@ -338,13 +396,16 @@ Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when bot
 
 Deno.test("f1099g.compute: multiple agricultural payments retain separate source records", () => {
   const result = compute([
-    minimalItem({ box_7_agriculture: 1000 }),
-    minimalItem({ box_7_agriculture: 2500 }),
+    identifiedFarmItem({ box_7_agriculture: 1000 }),
+    identifiedFarmItem({
+      box_7_agriculture: 2500,
+      source_document_reference: "issued-farm-1099g-2",
+    }),
   ]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out?.fields.farm_sources, [
-    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 1000 },
-    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 2500 },
+    identifiedFarmSource("1099g_agriculture", 1000),
+    identifiedFarmSource("1099g_agriculture", 2500, "issued-farm-1099g-2"),
   ]);
 });
 
@@ -575,6 +636,8 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
       box_6_taxable_grants: 750,
       box_6_schedule1_nonbusiness_reviewed: true,
       box_7_agriculture: 4000,
+      box_7_payment_kind: "agricultural_program",
+      box_7_review_reference: "reviewed USDA payment classification",
       box_8_trade_or_business: false,
       box_9_market_gain: 300,
       box_10a_state: "TX",
@@ -605,7 +668,23 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
   // Schedule F: agriculture payments and CCC market gain
   const schedF = findOutput(result, "schedule_f");
   assertEquals(schedF?.fields.farm_sources, [
-    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 4000 },
-    { farm_id: "farm-1", kind: "1099g_ccc_market_gain", amount: 300 },
+    {
+      farm_id: "farm-1",
+      kind: "1099g_agriculture",
+      amount: 4000,
+      payer_name: "Texas Workforce Commission",
+      payer_tin: "746000001",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-2025-1099g-all-boxes",
+    },
+    {
+      farm_id: "farm-1",
+      kind: "1099g_ccc_market_gain",
+      amount: 300,
+      payer_name: "Texas Workforce Commission",
+      payer_tin: "746000001",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-2025-1099g-all-boxes",
+    },
   ]);
 });

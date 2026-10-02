@@ -35,6 +35,11 @@ export const itemSchema = z.object({
   box_6_taxable_grants: z.number().nonnegative().optional(),
   box_6_schedule1_nonbusiness_reviewed: z.boolean().optional(),
   box_7_agriculture: z.number().nonnegative().optional(),
+  box_7_payment_kind: z.enum([
+    "agricultural_program",
+    "crop_disaster_current_taxable",
+  ]).optional(),
+  box_7_review_reference: z.string().trim().min(1).optional(),
   box_8_trade_or_business: z.boolean().optional(),
   box_9_market_gain: z.number().nonnegative().optional(),
   farm_id: z.string().min(1).optional(),
@@ -78,6 +83,40 @@ export const itemSchema = z.object({
           "Form 1099-G box 5 RTAA needs payer, recipient, and issued-copy identity",
       });
     }
+  }
+  if (
+    (item.box_7_agriculture ?? 0) > 0 ||
+    (item.box_9_market_gain ?? 0) > 0
+  ) {
+    if (
+      !item.farm_id || !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_7_agriculture"],
+        message:
+          "Form 1099-G farm payments need farm, payer, recipient, and issued-copy identity",
+      });
+    }
+  }
+  if ((item.box_7_agriculture ?? 0) > 0) {
+    if (!item.box_7_payment_kind || !item.box_7_review_reference) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_7_payment_kind"],
+        message:
+          "Form 1099-G box 7 needs reviewed agricultural-program or current-year-taxable crop-disaster classification",
+      });
+    }
+  } else if (item.box_7_payment_kind || item.box_7_review_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_7_payment_kind"],
+      message:
+        "Form 1099-G box 7 classification needs a positive box 7 payment",
+    });
   }
   const refund = item.box_2_state_refund ?? 0;
   const taxable = item.box_2_taxable_recovery_verified_amount;
@@ -317,8 +356,14 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
     if (agriculture > 0) {
       sources.push({
         farm_id: item.farm_id,
-        kind: "1099g_agriculture",
+        kind: item.box_7_payment_kind === "crop_disaster_current_taxable"
+          ? "1099g_crop_disaster_current_taxable"
+          : "1099g_agriculture",
         amount: agriculture,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin?.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin,
+        source_document_reference: item.source_document_reference,
       });
     }
     if (marketGain > 0) {
@@ -326,6 +371,10 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
         farm_id: item.farm_id,
         kind: "1099g_ccc_market_gain",
         amount: marketGain,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin?.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin,
+        source_document_reference: item.source_document_reference,
       });
     }
   }

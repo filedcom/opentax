@@ -254,3 +254,23 @@ the PDF prints five directly, carries the remaining total on line 32f as
 An eight-expense filled packet was inspected against line 33 and line 34;
 the 85-expense pagination case passes. Other Schedule F PDF scenarios need
 separate review.
+
+Positive Form 1099-G box 7 farm payments and box 9 CCC market gain now require
+an identified payer, recipient, issued-copy reference, and named farm. A
+reviewed box 7 classification distinguishes agricultural program payments on
+Schedule F line 4a from current-year-taxable crop disaster payments on cash
+lines 6a/6b or accrual line 41, following the [2025 Schedule F
+instructions](https://www.irs.gov/instructions/i1040sf). The graph carries the
+source identity into the farm row; final native and PDF export compares each
+row back to the retained 1099-G and matches its recipient to the farm
+proprietor. A cash-method fixture with $3,500 of taxable crop-disaster
+payments, $7,500 of crop insurance, and $600 of CCC market gain reaches
+Schedule F lines 6a/6b $11,000, Schedule 1 line 6 and Form 1040 line 8
+$16,100, matching the native XML while the full PDF packet builds. Missing
+identity, changed payer/farm rows, and a coordinated wrong owner reject in
+focused graph/export tests. Deferral of a source explicitly reviewed as
+current-year taxable also rejects. The reviewed classification does not
+authenticate the USDA award or issued payer bytes. Other disaster-payment
+purposes, a valid crop-disaster deferral, prior-year crop-income timing and
+election history, source copies, local XSD, filled-PDF visual review, IRS
+business rules, and ATS remain open.
