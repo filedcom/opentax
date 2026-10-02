@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **782 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **784 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 782 bounded routes and
+**Implemented coverage.** The completed ledger records 784 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -177,6 +177,8 @@ Archived Send evidence now also applies the prepared PDF filename rule, so a
 tampered `bad..pdf` attachment location rejects at record and reopen.
 It now rechecks canonical BinaryAttachment metadata, distinct descriptions,
 and unique IDs within each reference group in the archived XML.
+The raw archived manifest EFIN must match the Submission ID, whose Julian day
+must exist in its encoded calendar year.
 Recording outbound Send evidence now rejects malformed or misidentified inner
 submission ZIPs before storage, including noncanonical tag/position IDs inside
 the archived return. A source-backed two-account Form 8888 fixture
@@ -199,6 +201,8 @@ identified 1099-G and 1099-MISC copies have equivalent bounded guards. Every
 positive 1099-G copy now requires a taxpayer or joint-spouse recipient TIN at
 final native/PDF export. These INT/OID/DIV/G owner guards normalize filed SSNs
 to digits so a dashed filed value matches the same nine-digit recipient.
+An identified 1099-G copy with no account now also rejects replay under the
+same payer, recipient, and issued-source reference after a box amount changes.
 Positive 1099-MISC income or withholding copies now also require a matching
 taxpayer or joint-spouse recipient at final native/PDF export.
 Positive 1099-NEC box 1, 3, or 4 copies likewise require a matched recipient
