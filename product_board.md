@@ -1,18 +1,18 @@
 # TY2025 Form 1040 product board
 
-## Full status summary (2026-10-02)
+## Full status summary (2026-10-03)
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **994 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **995 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
-**Current order of work.** Stabilize the retained broad changes, including the
-board, with a full test run and compiled CLI/PDF smoke checks. Fix failures in
-supported routes and make unsupported routes reject clearly. The 32 open TODOs
+**Current order of work.** The retained broad changes, including the board,
+passed the full local suite and compiled CLI/PDF smoke checks. Prepare the next
+patch release while keeping unsupported routes guarded. The 32 open TODOs
 outside **Named tax-form gaps** and 20 named-form parent gaps remain visible
 for subsequent coverage and evidence work; passing local tests will not by
 itself close a filing or IRS acceptance gate.
@@ -22,13 +22,13 @@ itself close a filing or IRS acceptance gate.
 | Scope and completion rules | 3 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | Return-wide joins and source classification remain incomplete. |
-| Reported CLI issues | 0 | Four issue #60 code slices passed 93 focused tests; advanced Form 8995-A cents loss remains in the named-form gap. Bulk validation is pending. |
+| Reported CLI issues | 0 | Four issue #60 code slices passed focused tests and the full suite; advanced Form 8995-A cents loss remains in the named-form gap. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,736 passes and 147 failures under current guards. |
+| Automated and artifact validation | 5 | The full local suite passed 10,886/10,886, including all 178 filled-PDF/XML fixtures; manual page review and wider route evidence remain open. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 994 bounded routes and
+**Implemented coverage.** The completed ledger records 995 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -123,7 +123,7 @@ suite, and a downloaded-binary smoke. It exports a return but does not transmit
 one. The [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence.
 
-**Current implementation batch.** Draft [PR #59](https://github.com/filedcom/opentax/pull/59)
+**Current implementation batch.** [PR #59](https://github.com/filedcom/opentax/pull/59)
 extends sourced routes and reconciliation, including the recent Forms 4562, 4797,
 8815, 7206, 8606, 8829, 6252, 4972, 8915-F, 461, 2210-F, and 7217 slices.
 Reviewed-source prerequisites cover Forms 172, 8801, and 2210 box E. Draft return
@@ -139,7 +139,9 @@ reaches Form 3800, Form 6251, native MeF, and PDF. Form 8994 now requires
 reviewed policy/payroll metadata matched to validated attachment bytes in a
 prepared MeF bundle and PDF; direct XML and standalone PDF claims stay closed. The other
 positive routes remain closed.
-The new positive and tamper fixtures are authored. The first agreed full-batch
+**Historical validation trail.** The following red runs guided the fixes and
+have been superseded by the passing 2026-10-03 run recorded below. The new
+positive and tamper fixtures are authored. The first agreed full-batch
 `deno task test` at `1c1cc6dc` on 2026-10-01 stopped before test execution with
 185 TypeScript errors. After repairs, the same full command ran on `bd4280b9`
 and reported **10,168 passed, 174 failed** in 28m54s. Failing routes are under
@@ -192,10 +194,15 @@ Focused W-2, Schedule C/F, digital-answer, reference-name, and employer-address
 repairs after that snapshot are recorded in the completed ledger. They require
 a fresh full run to establish the remaining count. The full command at
 `f1820bca` then completed with **10,736 passed and 147 failed** in 35m38s,
-down 74 failures. Its residuals are being classified; no release pass is
-claimed.
+down 74 failures. That result was a diagnostic snapshot.
+On 2026-10-03 at `3506a188`, `deno task test` passed **10,886/10,886** in
+59m47s, including all 178 filled-PDF/XML review fixtures. `deno check
+cli/main.ts`, native compilation, and a compiled synthetic W-2 → MeF →
+two-page PDF smoke passed. This establishes local patch stability for the
+retained routes; manual PDF page review and IRS ATS acceptance remain open.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
-are implemented with focused fixtures; they await the same bulk test gate.
+are included in that passing run. Advanced Form 8995-A cents loss remains a
+named-form gap.
 CLI `return get` and `return validate` now read the same finalized pending graph
 used for export.
 Every positive 1099-R gross, taxable, or withholding amount now requires an
