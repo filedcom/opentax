@@ -62,6 +62,10 @@ const futaEmployeeSchema = z.object({
     box3_social_security_wages: z.number().nonnegative(),
     box5_medicare_wages: z.number().nonnegative(),
   }).strict().optional(),
+  federal_withholding_agreement: z.object({
+    w4_source_reference: z.string().trim().min(1),
+    employee_requested_and_employer_agreed: z.literal(true),
+  }).strict().optional(),
 }).strict();
 const familyWithholdingEmployeeBaseSchema = z.object({
   employee_id: z.string().trim().min(1),
@@ -326,6 +330,21 @@ export function computeScheduleHAmounts(
         "Schedule H FICA-only wages and withholding differ from the employee Form W-2",
       );
     }
+    if (
+      employee.w2.box2_federal_income_tax_withheld > 0 &&
+      (!employee.federal_withholding_agreement ||
+        [
+          employee.payroll_source_reference,
+          ficaOnly.prior_year_payroll_source_reference,
+          employee.w2.source_reference,
+        ].includes(
+          employee.federal_withholding_agreement.w4_source_reference,
+        ))
+    ) {
+      throw new Error(
+        "Schedule H FICA-only federal withholding needs a distinct reviewed Form W-4 request and employer agreement",
+      );
+    }
   }
   if (unemployment) {
     if (
@@ -419,6 +438,20 @@ export function computeScheduleHAmounts(
       ) {
         throw new Error(
           "Schedule H employee Form W-2 FICA wages differ from payroll",
+        );
+      }
+      if (
+        (employee.w2?.box2_federal_income_tax_withheld ?? 0) > 0 &&
+        (!employee.federal_withholding_agreement ||
+          [
+            employee.payroll_source_reference,
+            employee.w2!.source_reference,
+          ].includes(
+            employee.federal_withholding_agreement.w4_source_reference,
+          ))
+      ) {
+        throw new Error(
+          "Schedule H federal withholding needs a distinct reviewed Form W-4 request and employer agreement",
         );
       }
       sourcedSocialSecurityWages += expectedSS;

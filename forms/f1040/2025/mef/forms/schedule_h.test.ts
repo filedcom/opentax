@@ -45,6 +45,49 @@ const ficaOnlySource = {
   },
 };
 
+Deno.test("Schedule H native FICA-only withholding replays the reviewed W-4", () => {
+  const worker = ficaOnlySource.fica_only_payroll.employee_wages[0];
+  const withWithholding = {
+    ...ficaOnlySource,
+    federal_income_tax_withheld: 100,
+    fica_only_payroll: {
+      ...ficaOnlySource.fica_only_payroll,
+      employee_wages: [{
+        ...worker,
+        w2: { ...worker.w2, box2_federal_income_tax_withheld: 100 },
+        federal_withholding_agreement: {
+          w4_source_reference: "2025-household-w4-review",
+          employee_requested_and_employer_agreed: true as const,
+        },
+      }],
+    },
+  };
+  const xml = scheduleH.build(withWithholding, { filer });
+  assertStringIncludes(
+    xml,
+    "<FederalIncomeTaxWithheldAmt>100</FederalIncomeTaxWithheldAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CombinedFUTATaxPlusNetTaxesAmt>574</CombinedFUTATaxPlusNetTaxesAmt>",
+  );
+  assertThrows(
+    () =>
+      scheduleH.build({
+        ...withWithholding,
+        fica_only_payroll: {
+          ...withWithholding.fica_only_payroll,
+          employee_wages: [{
+            ...withWithholding.fica_only_payroll.employee_wages[0],
+            federal_withholding_agreement: undefined,
+          }],
+        },
+      }, { filer }),
+    Error,
+    "Form W-4 request",
+  );
+});
+
 Deno.test("Schedule H uses the form's required identity and line-level tax amounts", () => {
   const xml = scheduleH.build(ficaOnlySource, { filer });
   assertStringIncludes(
