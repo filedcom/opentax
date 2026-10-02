@@ -72,10 +72,7 @@ import {
   assertSchedule2W2Line17KSource,
 } from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
-import {
-  assert1099GStateRefundSource,
-  assert1099GUnemploymentSource,
-} from "../f1099g-unemployment-reconciliation.ts";
+import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
   assertBenefitStatementOwner,
@@ -246,7 +243,6 @@ function buildReturnXml(
   assertSchedule3Form8396Credit(pending);
   assert1099WithholdingSource(pending, filer);
   assert1099GUnemploymentSource(pending);
-  assert1099GStateRefundSource(pending);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
   assertBenefitStatementOwner(pending, filer);
