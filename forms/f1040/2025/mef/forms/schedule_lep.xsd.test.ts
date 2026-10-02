@@ -1,6 +1,6 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
-import { buildMefXml } from "../builder.ts";
+import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { LanguagePreferenceCode } from "../../../nodes/inputs/schedule_lep/index.ts";
 
 const xsdPath = new URL(
@@ -39,22 +39,33 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const xml = buildMefXml({ schedule_lep: { requests: [
-    {
-      person: "taxpayer",
-      language_preference_code: LanguagePreferenceCode.Spanish,
-      request_confirmed_by_person: true,
-      request_record_reference: "Ada 2025 language request",
+  const xml = buildMefXml({
+    schedule_lep: {
+      requests: [
+        {
+          person: "taxpayer",
+          language_preference_code: LanguagePreferenceCode.Spanish,
+          request_confirmed_by_person: true,
+          request_record_reference: "Ada 2025 language request",
+        },
+        {
+          person: "spouse",
+          language_preference_code: LanguagePreferenceCode.Cancel,
+          request_confirmed_by_person: true,
+          request_record_reference: "Grace 2025 cancellation request",
+          prior_election_review: {
+            prior_tax_year: 2024,
+            person_ssn: "987654321",
+            language_preference_code: LanguagePreferenceCode.French,
+            record_kind: "filed_schedule_lep",
+            record_reference: "Grace filed 2024 Schedule LEP",
+            reviewed_by: "preparer-1",
+            reviewed_on: "2026-01-15",
+          },
+        },
+      ],
     },
-    {
-      person: "spouse",
-      language_preference_code: LanguagePreferenceCode.Cancel,
-      request_confirmed_by_person: true,
-      request_record_reference: "Grace 2025 cancellation request",
-      prior_language_preference_code: LanguagePreferenceCode.French,
-      prior_election_record_reference: "Grace filed 2024 Schedule LEP",
-    },
-  ] } }, filer);
+  }, filer);
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(tmpPath, xml);
@@ -67,4 +78,44 @@ Deno.test({
   } finally {
     await Deno.remove(tmpPath);
   }
+});
+
+Deno.test("Schedule LEP cancellation owner review gates the prepared full return", async () => {
+  const request = {
+    person: "spouse" as const,
+    language_preference_code: LanguagePreferenceCode.Cancel,
+    request_confirmed_by_person: true as const,
+    request_record_reference: "Grace 2025 cancellation request",
+    prior_election_review: {
+      prior_tax_year: 2024,
+      person_ssn: "987654321",
+      language_preference_code: LanguagePreferenceCode.French,
+      record_kind: "filed_schedule_lep" as const,
+      record_reference: "Grace filed 2024 Schedule LEP",
+      reviewed_by: "preparer-1",
+      reviewed_on: "2026-01-15",
+    },
+  };
+  const pending = { schedule_lep: { requests: [request] } };
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(
+    bundle.xml,
+    "<LanguagePreferenceCd>000</LanguagePreferenceCd>",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        schedule_lep: {
+          requests: [{
+            ...request,
+            prior_election_review: {
+              ...request.prior_election_review,
+              person_ssn: filer.primarySSN,
+            },
+          }],
+        },
+      }, { filer, attachments: [] }),
+    Error,
+    "prior election owner SSN",
+  );
 });
