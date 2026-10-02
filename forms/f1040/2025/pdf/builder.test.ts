@@ -534,6 +534,47 @@ Deno.test("fillFormPdf validates present blank-zero text fields and extra fields
   }
 });
 
+Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const fieldName = "topmostSubform[0].Page2[0].f2_01[0]";
+  const document = await PDFDocument.create();
+  document.addPage([612, 792]);
+  const second = document.addPage([612, 792]);
+  document.getForm().createTextField(fieldName).addToPage(second, {
+    x: 10,
+    y: 700,
+    width: 200,
+    height: 20,
+  });
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    const descriptor = {
+      pendingKey: "f1040",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: fieldName,
+      }],
+      pageIndices: () => [0],
+    };
+    await assertRejects(
+      () => fillFormPdf(descriptor, { amount: 25 }, undefined, tmpDir),
+      Error,
+      `populated field "${fieldName}" is not on a retained PDF page`,
+    );
+    const retained = await fillFormPdf(
+      { ...descriptor, pageIndices: () => [1] },
+      { amount: 25 },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(retained instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
   const tmpDir = await Deno.makeTempDir();
   const wageField = "topmostSubform[0].Page1[0].f1_47[0]";

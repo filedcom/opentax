@@ -203,6 +203,60 @@ function fillEntry(
   }
 }
 
+/** A mapped value must appear on at least one page retained in the packet. */
+function assertRetainedPdfFields(
+  doc: PDFDocument,
+  descriptor: PdfFormDescriptor,
+  fields: Record<string, unknown>,
+): void {
+  const indices = descriptor.pageIndices?.(fields);
+  if (indices === undefined) return;
+  const pages = doc.getPages();
+  if (
+    indices.length === 0 || new Set(indices).size !== indices.length ||
+    indices.some((index) =>
+      !Number.isInteger(index) || index < 0 || index >= pages.length
+    )
+  ) {
+    throw new Error(
+      `[PDF] ${descriptor.pendingKey}: invalid retained page selection`,
+    );
+  }
+  const retained = new Set(indices.map((index) => String(pages[index].ref)));
+  const form = doc.getForm();
+  for (const entry of descriptor.fields) {
+    const value = fields[entry.domainKey];
+    const printable = entry.kind === "checkboxWhen"
+      ? value !== undefined && String(value) === entry.whenValue
+      : entry.kind === "checkbox"
+      ? value === true
+      : typeof value === "number"
+      ? Math.round(value) !== 0 ||
+        ("printZero" in entry && entry.printZero === true)
+      : typeof value === "string" && value.length > 0;
+    if (!printable) continue;
+    for (
+      const name of [
+        entry.pdfField,
+        ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
+      ]
+    ) {
+      const widgets = form.getField(name).acroField.getWidgets();
+      if (
+        widgets.length === 0 ||
+        !widgets.some((widget) => {
+          const page = widget.P();
+          return page !== undefined && retained.has(String(page));
+        })
+      ) {
+        throw new Error(
+          `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
+        );
+      }
+    }
+  }
+}
+
 export async function fillFormPdf(
   descriptor: PdfFormDescriptor,
   fields: Record<string, unknown>,
@@ -351,6 +405,8 @@ export async function fillFormPdf(
       }
     }
   }
+
+  assertRetainedPdfFields(doc, descriptor, fields);
 
   // IRS PDFs reference non-embedded fonts (e.g. HelveticaLTStd-Bold) in their
   // field DA strings. pdf-lib cannot synthesize these, so form.flatten() would
