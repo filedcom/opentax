@@ -20,6 +20,7 @@ import { assertPositive1099OidOwner } from "../../f1099oid-owner-reconciliation.
 import { assertPositive1099DivOwner } from "../../f1099div-owner-reconciliation.ts";
 import { assertPositive1099GOwner } from "../../f1099g-owner-reconciliation.ts";
 import { assertPositive1099MOwner } from "../../f1099m-owner-reconciliation.ts";
+import { assertPositive1099NecOwner } from "../../f1099nec-owner-reconciliation.ts";
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
@@ -758,6 +759,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertPositive1099DivOwner(fields, allPending);
     assertPositive1099GOwner(fields, allPending);
     assertPositive1099MOwner(fields, allPending);
+    assertPositive1099NecOwner(fields, allPending);
     assertJointDependentRefundSource(fields, allPending);
     assertNoUnsupportedDeceasedReturn(
       fields,
