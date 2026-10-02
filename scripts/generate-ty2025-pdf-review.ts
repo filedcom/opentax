@@ -15,7 +15,10 @@ import {
   reviewFiler,
 } from "./ty2025-pdf-review-source.ts";
 import { reviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
-import { assertReviewSchemaDigest } from "./ty2025-pdf-review-schema.ts";
+import {
+  assertReviewSchemaDigest,
+  assertReviewSchemaTree,
+} from "./ty2025-pdf-review-schema.ts";
 
 const [outputDir, xsdArg] = Deno.args;
 if (!outputDir || !xsdArg || Deno.args.length !== 2) {
@@ -29,6 +32,7 @@ if (!(await Deno.stat(xsdPath)).isFile) {
 }
 const xsdSha256 = await sha256Hex(await Deno.readFile(xsdPath));
 assertReviewSchemaDigest(xsdSha256);
+await assertReviewSchemaTree(xsdPath);
 
 async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
   const xmlPath = await Deno.makeTempFile({ dir: outputDir, suffix: ".xml" });
