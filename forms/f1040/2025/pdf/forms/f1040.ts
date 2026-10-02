@@ -755,6 +755,15 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const hasForm8888 = allPending.f8888 !== undefined;
+    if (
+      hasForm8888 &&
+      (typeof fields.line35a_refund !== "number" ||
+        !Number.isFinite(fields.line35a_refund) ||
+        fields.line35a_refund <= 0)
+    ) {
+      throw new Error("Form 1040 Form 8888 requires a positive refund");
+    }
     assertIdentified1099IntOwner(fields, allPending);
     assertPositive1099OidOwner(fields, allPending);
     assertPositive1099DivOwner(fields, allPending);
@@ -992,7 +1001,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       ...(rollover && fields.line5b_pension_taxable === 0
         ? { line5b_pension_taxable: "0" }
         : {}),
-      print_form8888_attached: Object.keys(allPending.f8888 ?? {}).length > 0,
+      print_form8888_attached: hasForm8888,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
       print_form8814_line7a_included: childGainDirect,

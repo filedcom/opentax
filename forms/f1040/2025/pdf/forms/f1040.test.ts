@@ -843,6 +843,17 @@ Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
       ?.print_form8888_attached,
     false,
   );
+  for (const refund of [undefined, 0, -1, Number.NaN]) {
+    assertThrows(
+      () =>
+        irs1040Pdf.projectFields?.(
+          { line35a_refund: refund },
+          { f8888: { account_1: {}, account_2: {} } },
+        ),
+      Error,
+      "Form 8888 requires a positive refund",
+    );
+  }
 });
 
 Deno.test("Form 1040 page 2 prints spouse-itemization and age/blindness boxes", () => {
