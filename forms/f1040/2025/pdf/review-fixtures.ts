@@ -253,6 +253,33 @@ function noAptcPolicyForMonths(
 
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
+    id: "mfj-spouse-dependent-refund-only",
+    inputs: {
+      general: {
+        ...jointGeneral,
+        taxpayer_blind: false,
+        spouse_blind: false,
+        spouse_can_be_claimed_as_dependent: true,
+        dependent_earned_income: 800,
+        mfj_dependent_refund_only_review: {
+          review_reference: "Synthetic 2025 joint refund-only dependent review",
+          joint_return_only_for_withholding_or_estimated_refund_verified: true,
+        },
+      },
+      w2: [{
+        ...wage(800, 100, "Summer Employer", "12-3456789"),
+        employee_ssn: jointGeneral.spouse_ssn,
+      }],
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 12a spouse dependent checkbox is marked",
+      "The dependent standard deduction worksheet uses 800 of spouse W-2 earned income",
+      "The joint return claims only a 100 withholding refund with zero tax and no EIC",
+    ],
+  },
+  {
     id: "single-child-unearned-income",
     inputs: {
       general: {

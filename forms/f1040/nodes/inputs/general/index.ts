@@ -294,6 +294,13 @@ export const inputSchema = z.object({
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
+  mfj_dependent_refund_only_review: z.object({
+    review_reference: z.string().trim().min(1),
+    joint_return_only_for_withholding_or_estimated_refund_verified: z.literal(
+      true,
+    ),
+  }).strict().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),
@@ -684,7 +691,7 @@ function ageAtYearEnd(dob: string): number {
 // For federal tax purposes, a person reaches age 65 on the day before their
 // 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
 // a birth date before January 2, 1961.
-function isAge65ByEndOfTaxYear(
+export function isAge65ByEndOfTaxYear(
   dob: string | undefined,
   taxYear: number,
   owner: "taxpayer" | "spouse",
@@ -1086,6 +1093,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   );
   addIfDefined(
     fields,
+    "spouse_can_be_claimed_as_dependent",
+    input.spouse_can_be_claimed_as_dependent,
+  );
+  addIfDefined(
+    fields,
     "hoh_paid_more_than_half_home_costs",
     input.hoh_paid_more_than_half_home_costs,
   );
@@ -1144,8 +1156,28 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.dual_status_return_2025 === true) {
       throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
     }
+    const jointDependent = parsed.filing_status === FilingStatus.MFJ &&
+      (parsed.taxpayer_can_be_claimed_as_dependent === true ||
+        parsed.spouse_can_be_claimed_as_dependent === true);
     if (
-      parsed.taxpayer_can_be_claimed_as_dependent === true &&
+      parsed.spouse_can_be_claimed_as_dependent === true &&
+      (parsed.filing_status !== FilingStatus.MFJ || !parsed.spouse_ssn)
+    ) {
+      throw new Error(
+        "Form 1040 line 12a spouse dependent requires MFJ and identified spouse",
+      );
+    }
+    if (
+      jointDependent !==
+        (parsed.mfj_dependent_refund_only_review !== undefined)
+    ) {
+      throw new Error(
+        "MFJ dependent line 12a needs a reviewed refund-only joint return",
+      );
+    }
+    if (
+      (parsed.taxpayer_can_be_claimed_as_dependent === true ||
+        parsed.spouse_can_be_claimed_as_dependent === true) &&
       parsed.dependent_earned_income === undefined
     ) {
       throw new Error(
@@ -1154,6 +1186,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     }
     if (
       parsed.taxpayer_can_be_claimed_as_dependent !== true &&
+      parsed.spouse_can_be_claimed_as_dependent !== true &&
       parsed.dependent_earned_income !== undefined
     ) {
       throw new Error(
@@ -1212,7 +1245,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.mfs_spouse_itemizing !== undefined) {
       sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
     }
-    if (parsed.taxpayer_can_be_claimed_as_dependent === true) {
+    if (
+      parsed.taxpayer_can_be_claimed_as_dependent === true ||
+      parsed.spouse_can_be_claimed_as_dependent === true
+    ) {
       sdInput["taxpayer_can_be_claimed_as_dependent"] = true;
       sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
     }
@@ -1276,6 +1312,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         main_home_in_us_over_half_year: parsed.main_home_in_us_over_half_year,
         taxpayer_can_be_claimed_as_dependent:
           parsed.taxpayer_can_be_claimed_as_dependent,
+        spouse_can_be_claimed_as_dependent:
+          parsed.spouse_can_be_claimed_as_dependent,
         childless_eic_review: parsed.childless_eic_review,
         child_eic_filer_review: parsed.child_eic_filer_review,
         prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,

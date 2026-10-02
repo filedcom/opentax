@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import {
   DependentCreditCategory,
@@ -94,6 +95,7 @@ export interface Fields {
   line11_agi?: number | null;
   mfs_spouse_itemizing?: boolean;
   taxpayer_can_be_claimed_as_dependent?: boolean;
+  spouse_can_be_claimed_as_dependent?: boolean;
   taxpayer_age_65_or_older?: boolean;
   taxpayer_blind?: boolean;
   spouse_age_65_or_older?: boolean;
@@ -446,6 +448,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  assertJointDependentRefundSource(fields, context?.pending);
   assertNoUnsupportedDeceasedReturn(
     fields,
     context?.pending?.general as Record<string, unknown> | undefined,
@@ -909,6 +912,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     key:
       | "mfs_spouse_itemizing"
       | "taxpayer_can_be_claimed_as_dependent"
+      | "spouse_can_be_claimed_as_dependent"
       | "taxpayer_age_65_or_older"
       | "taxpayer_blind"
       | "spouse_age_65_or_older"
@@ -934,6 +938,9 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   const deductionIndicators = [
     checked("taxpayer_can_be_claimed_as_dependent")
       ? element("PrimaryClaimAsDependentInd", "X")
+      : "",
+    checked("spouse_can_be_claimed_as_dependent")
+      ? element("SpouseClaimAsDependentInd", "X")
       : "",
     mustItemize ? element("MustItemizeInd", "X") : "",
     ...ageBoxes.map(([key, tag]) => checked(key) ? element(tag, "X") : ""),

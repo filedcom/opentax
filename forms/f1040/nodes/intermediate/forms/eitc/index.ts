@@ -134,6 +134,7 @@ export const inputSchema = z.object({
   spouse_death_date: z.string().date().optional(),
   main_home_in_us_over_half_year: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   childless_eic_review: childlessEicReviewSchema.optional(),
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
@@ -187,6 +188,10 @@ function meetsChildlessAgeTest(
 
 export function childlessEicEligible(input: EitcInput): boolean {
   if (
+    input.taxpayer_can_be_claimed_as_dependent === true ||
+    input.spouse_can_be_claimed_as_dependent === true
+  ) return false;
+  if (
     input.filing_status === undefined ||
     input.filing_status === FilingStatus.MFS
   ) return false;
@@ -208,6 +213,10 @@ export function childlessEicEligible(input: EitcInput): boolean {
 }
 
 export function childEicFilerEligible(input: EitcInput): boolean {
+  if (
+    input.taxpayer_can_be_claimed_as_dependent === true ||
+    input.spouse_can_be_claimed_as_dependent === true
+  ) return false;
   if (input.filing_status === FilingStatus.MFJ) return true;
   if (input.filing_status === FilingStatus.MFS) {
     return input.mfs_separation_reviewed === true;

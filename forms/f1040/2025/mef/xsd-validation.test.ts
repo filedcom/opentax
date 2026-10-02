@@ -13,6 +13,8 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "./builder.ts";
+import { f1040_2025 } from "../index.ts";
+import { normalizeAllPending } from "../pending.ts";
 import { buildPending } from "./pending.ts";
 import { w2gPdf } from "../pdf/forms/w2g.ts";
 import type { MefFormsPending } from "./types.ts";
@@ -117,6 +119,62 @@ function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
       : []
   );
 }
+
+Deno.test({
+  name: "XSD: Form 1040 line 12a MFJ spouse dependent with refund-only source",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    taxpayer_blind: false,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Example",
+    spouse_ssn: "444-55-6666",
+    spouse_dob: "1987-03-10",
+    spouse_blind: false,
+    spouse_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 800,
+    mfj_dependent_refund_only_review: {
+      review_reference: "2025 joint refund-only review",
+      joint_return_only_for_withholding_or_estimated_refund_verified: true,
+    },
+    digital_assets: false,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({
+    general,
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "Summer Employer",
+      employer_address_line1: "10 Employer Road",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: general.spouse_ssn,
+      box1_wages: 800,
+      box2_fed_withheld: 100,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    normalizeAllPending(result.pending) as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<SpouseClaimAsDependentInd>X</SpouseClaimAsDependentInd>",
+  );
+  await validateXsd(xml, "TY2025 Form 1040 line 12a MFJ spouse dependent");
+});
 
 Deno.test({
   name: "XSD: TY2025 Schedule 2 tax lines retain schema order",

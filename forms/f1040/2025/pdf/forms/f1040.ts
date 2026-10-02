@@ -16,6 +16,7 @@ import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
+import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
 import { physicalPresenceFilingSchema } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import {
@@ -419,6 +420,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkbox",
+    domainKey: "spouse_can_be_claimed_as_dependent",
+    pdfField: "topmostSubform[0].Page2[0].c2_2[0]",
+  },
+  {
+    kind: "checkbox",
     domainKey: "mfs_spouse_itemizing",
     pdfField: "topmostSubform[0].Page2[0].c2_3[0]",
   },
@@ -730,6 +736,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertJointDependentRefundSource(fields, allPending);
     assertNoUnsupportedDeceasedReturn(
       fields,
       allPending?.general as Record<string, unknown> | undefined,
