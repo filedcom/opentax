@@ -31,6 +31,7 @@ import type { inputSchema as extInputSchema } from "../../nodes/inputs/ext/index
 import type { inputSchema as f8812InputSchema } from "../../nodes/inputs/f8812/index.ts";
 import type { inputSchema as f8863InputSchema } from "../../nodes/inputs/f8863/index.ts";
 import type { inputSchema as generalInputSchema } from "../../nodes/inputs/general/index.ts";
+import type { inputSchema as householdWagesInputSchema } from "../../nodes/inputs/household_wages/index.ts";
 import type { inputSchema as standardDeductionInputSchema } from "../../nodes/intermediate/worksheets/standard_deduction/index.ts";
 import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099patr/index.ts";
 import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
@@ -64,7 +65,12 @@ export type MefFormsPending =
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;
     // Form 1040 line 1h reconciles retained earned-income sources to finalized AGI.
-    agi_aggregator?: { line1h_other_earned?: number | number[] };
+    agi_aggregator?: {
+      line1b_household_wages?: number;
+      line1h_other_earned?: number | number[];
+    };
+    // Unreported household-employment wages support the line 1b source replay.
+    household_wages?: z.infer<typeof householdWagesInputSchema>;
     // Marketplace statements remain available for Form 8962 month-by-month
     // reconciliation even though they are not themselves native attachments.
     f1095a?: z.infer<typeof f1095aInputSchema>;

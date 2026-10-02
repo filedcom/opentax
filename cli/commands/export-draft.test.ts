@@ -29,6 +29,7 @@ Deno.test("explicit draft XML remains labeled after clean calculation", async ()
     });
     await appendInput(`${baseDir}/${returnId}`, "f2441", {});
     await appendInput(`${baseDir}/${returnId}`, "w2", {
+      employee_ssn: "111-22-3333",
       box1_wages: 85000,
       box2_fed_withheld: 10000,
       employer_ein: "12-3456789",

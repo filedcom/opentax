@@ -41,6 +41,7 @@ import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
+import { assertLine1bHouseholdWageSource } from "../line1b-household-wages.ts";
 import { assertPositiveW2GRecipient } from "./forms/w2g.ts";
 import { reconciledForm8908Source } from "./forms/f8908_source_reconciliation.ts";
 import { assertForm8908PwaSubmittedPdfs } from "./forms/f8908_pwa.ts";
@@ -233,6 +234,7 @@ function buildReturnXml(
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertW2WithholdingSource(pending, filer);
   assertLine1aWageSource(pending);
+  assertLine1bHouseholdWageSource(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
