@@ -861,7 +861,7 @@ export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
   return { allowed, suspended: loss - allowed };
 }
 
-function passiveActivity(input: Form8582Input): PassiveActivity {
+export function passiveActivity(input: Form8582Input): PassiveActivity {
   const activeNames = new Set(
     (input.activities ?? [])
       .filter((activity) => activity.activity_type === "A")

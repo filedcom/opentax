@@ -64,15 +64,21 @@ Deno.test({
     able_value: 1_000,
   }];
   const xml = buildMefXml({
-    form5329: { owner_entries, owner_forms: calculateOwnerForms({ owner_entries }).forms },
-    form8889: { forms: [{
-      owner: "primary",
-      beneficiary_name: "Test Taxpayer",
-      beneficiary_ssn: "123456789",
-      print_line2_taxpayer_contributions: 600,
-      print_line12: 0,
-      print_line16_taxable: 0,
-    }] },
+    f1040: { line23_other_taxes: 1_180 },
+    form5329: {
+      owner_entries,
+      owner_forms: calculateOwnerForms({ owner_entries }).forms,
+    },
+    form8889: {
+      forms: [{
+        owner: "primary",
+        beneficiary_name: "Test Taxpayer",
+        beneficiary_ssn: "123456789",
+        print_line2_taxpayer_contributions: 600,
+        print_line12: 0,
+        print_line16_taxable: 0,
+      }],
+    },
     schedule2: { line8_form5329_tax: 1180 },
   }, filer);
   assertStringIncludes(xml, "<IRS5329 ");
@@ -139,6 +145,7 @@ Deno.test({
   );
   assertEquals(pending.schedule2.line8_form5329_tax, 1_000);
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 1_000 },
     form5329: pending.form5329,
     schedule2: pending.schedule2,
   }, filer);

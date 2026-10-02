@@ -14,6 +14,7 @@ import type { MefBuildContext } from "../form-descriptor.ts";
 import {
   allocatePassiveActivityLosses,
   inputSchema as form8582InputSchema,
+  passiveActivity,
   passiveLossLimit,
 } from "../../../nodes/intermediate/forms/form8582/index.ts";
 import { form8582 } from "./f8582.ts";
@@ -447,24 +448,23 @@ export function validatePassiveActivityLink(
   }
   // The linked form proves the limitation and its per-activity worksheets.
   form8582.build(linked as Record<string, unknown>, context);
-  const allowed = passiveLossLimit({
-    currentIncome: input.current_income ?? 0,
-    currentLoss: input.current_loss ?? 0,
-    priorUnallowed: input.prior_unallowed ?? 0,
-    rentalLoss: (input.rental_current_loss ?? 0) +
-      (input.rental_prior_eligible_loss ?? 0),
-    rentalIncome: input.rental_current_income ?? 0,
-    activeParticipation: input.active_participation === true,
-    modifiedAgi: input.modified_agi,
-    filingStatus: input.filing_status,
-  }).allowed;
+  const allowed = passiveLossLimit(passiveActivity(input)).allowed;
+  const gainsFor = (activityId: string) =>
+    (input.current_4797_sale_gains ?? [])
+      .filter((sale) => sale.activity_id === activityId)
+      .reduce((sum, sale) => sum + sale.gain, 0);
   const allocations = allocatePassiveActivityLosses(
-    (input.activities ?? []).map((activity) => ({
-      currentNet: activity.current_net,
-      priorUnallowed: activity.prior_unallowed_operating,
-      specialEligible: activity.activity_type === "A",
-      priorSpecialEligible: activity.prior_active_participation === true,
-    })),
+    (input.activities ?? []).map((activity) => {
+      const gain = gainsFor(activity.activity_id);
+      return {
+        currentNet: activity.current_net + gain,
+        currentIncome: Math.max(0, activity.current_net) + gain,
+        currentLoss: Math.max(0, -activity.current_net),
+        priorUnallowed: activity.prior_unallowed_operating,
+        specialEligible: activity.activity_type === "A",
+        priorSpecialEligible: activity.prior_active_participation === true,
+      };
+    }),
     allowed,
   ).allowed;
   return new Map(
