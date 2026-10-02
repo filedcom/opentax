@@ -4865,7 +4865,25 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const general = { ...singleGeneral(), digital_assets: false };
+  const agi_aggregator = {
+    line1a_wages: 30_000,
+    line1c_unreported_tips: 3_000,
+  };
   const xml = buildMefXml({
+    general,
+    f1040: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: general.taxpayer_ssn,
+      digital_assets: false,
+      line1a_wages: 30_000,
+      line1c_unreported_tips: 3_000,
+      line1z_total_wages: 33_000,
+      line9_total_income: 33_000,
+      line23_other_taxes: 230,
+    },
+    agi_aggregator,
+    schedule2: { line5_unreported_tip_tax: 230 },
     w2: {
       w2s: [{
         employer_name: "CAFE",
@@ -4874,12 +4892,14 @@ Deno.test({
         employer_address_city: "Austin",
         employer_address_state: "TX",
         employer_address_zip: "78701",
+        employee_ssn: general.taxpayer_ssn,
         box1_wages: 30_000,
         box2_fed_withheld: 0,
         box3_ss_wages: 30_000,
       }],
     },
     form4137: {
+      taxpayer_ssn: general.taxpayer_ssn,
       forms: [{
         recipient: "taxpayer",
         employers: [{
@@ -4891,13 +4911,14 @@ Deno.test({
         ss_wages_from_w2: 30_000,
       }],
       w2_tip_sources: [{
+        employee_ssn: general.taxpayer_ssn,
         employer_name: "CAFE",
         employer_ein: "123456789",
         allocated_tips: 0,
         ss_wages_and_tips: 30_000,
       }],
     },
-  }, extractFilerIdentity(singleGeneral()));
+  }, extractFilerIdentity(general));
   assertStringIncludes(xml, "<UnreportedTipIncomePerEmployer>");
   await validateXsd(xml, "Form 4137 employer tips");
 });
