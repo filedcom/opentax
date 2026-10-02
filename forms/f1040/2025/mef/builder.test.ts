@@ -23,6 +23,7 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { Box12Code } from "../../nodes/inputs/w2/index.ts";
 import { Form8949Part } from "../../nodes/intermediate/forms/form8949/index.ts";
 import {
   schedule2Part1Total,
@@ -598,6 +599,7 @@ Deno.test("prepared manifest keeps native tag-position IDs for repeated W-2 copi
   const w2 = {
     employer_name: "Example Employer",
     employer_ein: "12-3456789",
+    employee_ssn: sampleFiler().primarySSN,
     employer_address_line1: "1 Main Street",
     employer_address_city: "Austin",
     employer_address_state: "TX",
@@ -1347,10 +1349,10 @@ Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
 
 Deno.test("documentCnt=4 when all four forms have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { line1a_wages: 50000, line20_nonrefundable_credits: 1200 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule3: { line2_childcare_credit: 1200, line8_total: 1200 },
   });
   assertStringIncludes(xml, 'documentCnt="4"');
 });
@@ -1387,8 +1389,9 @@ Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", 
 
 Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", () => {
   const xml = buildMefXml({
+    f1040: { line20_nonrefundable_credits: 1200 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule3: { line2_childcare_credit: 1200, line8_total: 1200 },
   });
   const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
   const sched3Idx = xml.indexOf("<IRS1040Schedule3 ");
@@ -1419,6 +1422,23 @@ Deno.test("schedule3 CreditForChildAndDepdCareAmt value appears in assembled out
 
 Deno.test("schedule2 aggregated UncollSSMedcrRRTAGrpInsTxAmt appears in assembled output", () => {
   const xml = buildMefXml({
+    w2: {
+      w2s: [{
+        employer_name: "Example Employer",
+        employer_ein: "12-3456789",
+        employer_address_line1: "1 Main Street",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        employee_ssn: sampleFiler().primarySSN,
+        box1_wages: 0,
+        box2_fed_withheld: 0,
+        box12_entries: [
+          { code: Box12Code.A, amount: 3000 },
+          { code: Box12Code.M, amount: 500 },
+        ],
+      }],
+    },
     schedule2: { uncollected_fica: 3000, uncollected_fica_gtl: 500 },
   });
   assertStringIncludes(
@@ -1850,8 +1870,9 @@ Deno.test("IRS8880 present when form8880 has data", () => {
       filing_status: "single",
       line11_agi: 20_000,
       line18_total_tax_before_credits: 1_000,
+      line20_nonrefundable_credits: 1_000,
     },
-    schedule3: { line4_retirement_savings_credit: 1_000 },
+    schedule3: { line4_retirement_savings_credit: 1_000, line8_total: 1_000 },
     form8880: {
       ira_contributions_taxpayer: 1_000,
       elective_deferrals_taxpayer: 1_000,
@@ -2086,6 +2107,7 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   const baseW2 = {
     employer_ein: "12-3456789",
     employer_name: "ACME CORP",
+    employee_ssn: filerIdentity.primarySSN,
     employer_address_line1: "500 MARKET ST",
     employer_address_city: "SPRINGFIELD",
     employer_address_state: "IL",
@@ -2144,6 +2166,7 @@ Deno.test("joint zero-withholding W-2 wages need an identified employee in both 
       w2s: [{
         employer_ein: "12-3456789",
         employer_name: "ACME CORP",
+        employee_ssn: "999887777",
         employer_address_line1: "500 MARKET ST",
         employer_address_city: "SPRINGFIELD",
         employer_address_state: "IL",
