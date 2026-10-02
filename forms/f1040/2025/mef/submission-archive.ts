@@ -106,8 +106,7 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   ];
   if (
     expectedFiles.length !== new Set(expectedFiles).size ||
-    Object.keys(entries).sort().join("\n") !==
-      expectedFiles.sort().join("\n") ||
+    Object.keys(entries).join("\n") !== expectedFiles.join("\n") ||
     !sameBytes(
       entries["manifest/manifest.xml"],
       encoder.encode(archive.manifestXml),

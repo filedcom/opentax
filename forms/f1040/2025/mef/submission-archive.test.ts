@@ -320,6 +320,44 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   );
 });
 
+Deno.test("A2A packaging rejects reordered inner submission ZIP entries", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([612, 792]);
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "AdditionalQMIDStatement.pdf",
+      description: "Additional QMID Statement",
+      bytes: await pdf.save(),
+    }],
+  });
+  const entries = unzipSync(submission.bytes);
+  assertEquals(Object.keys(entries), [
+    "manifest/manifest.xml",
+    "xml/submission.xml",
+    "attachment/AdditionalQMIDStatement.pdf",
+  ]);
+  const reordered = zipSync({
+    "attachment/AdditionalQMIDStatement.pdf":
+      entries["attachment/AdditionalQMIDStatement.pdf"],
+    "xml/submission.xml": entries["xml/submission.xml"],
+    "manifest/manifest.xml": entries["manifest/manifest.xml"],
+  });
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: reordered },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
 Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
