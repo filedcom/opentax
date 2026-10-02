@@ -3,6 +3,7 @@ import { unzipSync } from "fflate";
 import { z } from "zod";
 import type { MefTransmissionPackage } from "./submission-archive.ts";
 import { documentId } from "./document-identity.ts";
+import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 
 const requestRecordSchema = z.object({
   messageId: z.string().min(1),
@@ -183,7 +184,8 @@ function assertArchivedDocumentInventory(
     Number(headerCounts[0][1]) !== binaries.length ||
     new Set(fileNames).size !== fileNames.length ||
     fileNames.some((name) =>
-      !name || !Object.hasOwn(archive, `attachment/${name}`)
+      !name || !isValidMefPdfFilename(name) ||
+      !Object.hasOwn(archive, `attachment/${name}`)
     ) ||
     archivedAttachments.length !== fileNames.length ||
     Object.keys(archive).join("\n") !== expectedArchiveOrder.join("\n") ||

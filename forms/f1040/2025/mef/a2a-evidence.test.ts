@@ -138,6 +138,13 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
           "attachment/unlisted.pdf": encoder.encode("%PDF-unlisted"),
         },
       },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>bad..pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+        attachments: {
+          "attachment/bad..pdf": encoder.encode("%PDF-invalid-name"),
+        },
+      },
     ];
     for (const [index, variant] of variants.entries()) {
       const xml = encoder.encode(variant.xml);
