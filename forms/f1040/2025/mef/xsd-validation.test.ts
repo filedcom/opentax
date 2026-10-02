@@ -3377,6 +3377,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line17_additional_taxes: 6_200 },
     schedule2: {
       line1a_excess_advance_premium: 1_200,
       line2_amt: 5_000,
@@ -3602,7 +3603,7 @@ Deno.test({
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
-    "below-100% APTC-only filing differs",
+    "Form 1040 line 17 differs from its attached Schedule",
   );
   await validateXsd(xml, "below-100%-FPL APTC-only annual repayment");
 });
@@ -3846,7 +3847,7 @@ Deno.test({
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
-    "differs from finalized return",
+    "Form 1040 line 17 differs from its attached Schedule",
   );
   await validateXsd(xml, "shared MFS APTC-only allocation");
 });
