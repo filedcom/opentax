@@ -8,7 +8,7 @@ import { pdfReviewFixtures } from "../review-fixtures.ts";
 
 Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
-    "nameLine1",
+    "nameShownOnForm1040",
     "primarySSN",
   ]);
 });

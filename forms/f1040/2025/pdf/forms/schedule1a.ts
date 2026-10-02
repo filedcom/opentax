@@ -353,7 +353,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
   filerFields: [
     {
       kind: "text",
-      domainKey: "nameLine1",
+      domainKey: "nameShownOnForm1040",
       pdfField: `${page1}.f1_01[0]`,
     },
     {

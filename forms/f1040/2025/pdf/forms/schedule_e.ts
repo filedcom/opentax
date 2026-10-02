@@ -208,9 +208,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
   },
   fields,
   filerFields: [
-    text("nameLine1", `${page}.f1_1[0]`),
+    text("nameShownOnForm1040", `${page}.f1_1[0]`),
     text("primarySSN", `${page}.f1_2[0]`),
-    text("nameLine1", `${page2}.f2_1[0]`),
+    text("nameShownOnForm1040", `${page2}.f2_1[0]`),
     text("primarySSN", `${page2}.f2_2[0]`),
   ],
   projectFields(raw, allPending) {

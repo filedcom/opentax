@@ -258,7 +258,7 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   assertEquals(map.get("line38_total"), "form1[0].Page2[0].f2_23[0]");
   assertEquals(
     schedule1aPdf.filerFields?.map((field) => field.domainKey),
-    ["nameLine1", "primarySSN"],
+    ["nameShownOnForm1040", "primarySSN"],
   );
 
   const pending = { schedule1a: source, f1040: return1040 };

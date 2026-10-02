@@ -3,7 +3,7 @@ import { schedule2Pdf } from "./schedule2.ts";
 
 Deno.test("Schedule 2 PDF includes filer identity on page 1", () => {
   assertEquals(schedule2Pdf.filerFields?.map((entry) => entry.domainKey), [
-    "nameLine1",
+    "nameShownOnForm1040",
     "primarySSN",
   ]);
 });
