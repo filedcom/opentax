@@ -489,7 +489,9 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  return Math.floor(Math.max(0, input.magi - threshold) / 1_000) * 100;
+  return Math.floor(
+    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
+  ) * 100;
 }
 
 /** TY2025 line 5, limited to one cash-basis Schedule C business. */
@@ -834,7 +836,8 @@ export function calculateQualifiedTipsSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.floor(excess / 1_000);
   const reduction = thousands * 100;
   const capped = Math.min(tips, QUALIFIED_TIPS_CAP);
@@ -846,7 +849,7 @@ export function calculateQualifiedTipsSchedule1A(
   }
   return qualifiedTipsLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line4a_w2_tips: rows.length === 1 ? rows[0].reported_amount : 0,
     line4b_form4137_tips: rows.length === 1 ? rows[0].form4137_amount : 0,
     line4c_employee_tips: employeeTips,
@@ -871,9 +874,12 @@ export function calculateW2OvertimeSchedule1A(
     throw new Error("Schedule 1-A overtime filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
-      "Schedule 1-A overtime filing needs sourced zero-exclusion review for Part I",
+      "Schedule 1-A overtime filing needs sourced Part I exclusion review",
     );
   }
   if (!input.qualified_w2_overtime?.length) {
@@ -924,7 +930,8 @@ export function calculateW2OvertimeSchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = schedule1APart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.floor(excess / 1_000);
   const reduction = thousands * 100;
   const cap = input.filing_status === FilingStatus.MFJ
@@ -939,7 +946,7 @@ export function calculateW2OvertimeSchedule1A(
   }
   return w2OvertimeLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line14a_w2_overtime: total,
     line14c_total_overtime: total,
     line15_capped_overtime: capped,

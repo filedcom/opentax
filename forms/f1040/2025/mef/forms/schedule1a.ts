@@ -85,6 +85,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   let form2555Line45 = 0;
   if (positive2555) {
+    const hasTips = (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0;
+    const overtimeCount = input.qualified_w2_overtime?.length ?? 0;
+    const hasSeniorOrVehicle = input.taxpayer_age_65_or_older === true ||
+      input.spouse_age_65_or_older === true ||
+      (input.vehicle_loans?.length ?? 0) > 0;
     const pending2555 = z.object({
       filing_details: physicalPresenceFilingSchema,
     })
@@ -98,15 +107,11 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       lines.line50 !== 0 ||
       input.form2555_line45_exclusion !== lines.line45 ||
       input.form2555_line50_housing_deduction !== lines.line50 ||
-      (input.qualified_employee_tips?.length ?? 0) > 0 ||
-      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
-      (input.form4070_reports?.length ?? 0) > 0 ||
-      (input.employer_tip_statements?.length ?? 0) > 0 ||
-      (input.qualified_trade_business_tips?.length ?? 0) > 0 ||
-      (input.qualified_w2_overtime?.length ?? 0) > 0
+      hasTips || overtimeCount > 1 ||
+      (overtimeCount > 0 && hasSeniorOrVehicle)
     ) {
       throw new Error(
-        "Schedule 1-A positive Form 2555 Part I needs a matching full-year senior or vehicle-interest source and zero housing deduction",
+        "Schedule 1-A positive Form 2555 Part I needs a matching full-year exclusion, zero housing deduction, and one supported deduction route",
       );
     }
     form2555Line45 = lines.line45;
