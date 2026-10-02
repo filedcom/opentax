@@ -184,7 +184,7 @@ export const inputSchema = z.object({
   line8o_section951aa_inclusion: z.number().int().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
   line8z_substitute_payments: z.number().nonnegative().optional(),
-  line8z_nqdc: z.number().nonnegative().optional(),
+  line8z_nqdc: z.never().optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)

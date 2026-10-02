@@ -162,11 +162,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
-    domainKey: "line8z_nqdc",
-    pdfField: "topmostSubform[0].Page1[0].f1_32[0]",
-  },
-  {
-    kind: "text",
     domainKey: "line8z_description",
     pdfField: "topmostSubform[0].Page1[0].Line8z_ReadOrder[0].f1_35[0]",
   },
@@ -285,6 +280,11 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    if (fields.line8z_nqdc !== undefined) {
+      throw new Error(
+        "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",
+      );
+    }
     if (
       fields.line8d_foreign_housing_deduction !== undefined &&
       fields.line8d_foreign_housing_deduction !== 0

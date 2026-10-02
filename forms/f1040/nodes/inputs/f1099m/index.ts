@@ -116,13 +116,40 @@ export const itemSchema = z.object({
   // Box 13 — FATCA checkbox (informational only)
   box13_fatca: z.boolean().optional(),
   // Box 14 — Reserved for future use in TY2025 (not accepted)
-  // Box 15 — NQDC §409A failure → Schedule 1 Line 8z + Schedule 2 Line 17h
+  // Box 15 — §409A inclusion already in box 3, plus Schedule 2 line 17h tax.
   box15_nqdc: z.number().nonnegative().optional(),
+  box15_409a_review: z.object({
+    included_in_box3: z.literal(true),
+    interest_amount: z.number().int().nonnegative(),
+    interest_workpaper_reference: z.string().trim().min(1),
+  }).strict().optional(),
   // Boxes 16–18 — State info only (no federal impact)
   box16_state_tax_withheld: z.number().nonnegative().optional(),
   box17_state_payer_id: z.string().optional(),
   box18_state_income: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if ((item.box15_nqdc ?? 0) > 0) {
+    if (
+      !Number.isSafeInteger(item.box15_nqdc) ||
+      !item.source_document_reference ||
+      !item.box15_409a_review ||
+      item.box3_other_income_routing !== "other_income" ||
+      (item.box3_other_income ?? 0) < (item.box15_nqdc ?? 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box15_nqdc"],
+        message:
+          "1099-MISC box 15 needs identified box 3 income already included once and a reviewed section 409A interest workpaper",
+      });
+    }
+  } else if (item.box15_409a_review) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box15_409a_review"],
+      message: "1099-MISC section 409A review needs positive box 15",
+    });
+  }
   if (
     item.qualified_tips_box3_review &&
     (item.box3_other_income_routing !== "schedule_c" ||
@@ -359,7 +386,6 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   const prizes = prizesAwardsTotal(items);
   const other = otherIncomeTotal(items);
   const substitute = totalOf(items, "box8_substitute_payments");
-  const nqdc = totalOf(items, "box15_nqdc");
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (prizes > 0) s1Input.line8i_prizes_awards = prizes;
@@ -390,7 +416,6 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
         : []
     );
   }
-  if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
   return output(
     schedule1,
@@ -551,7 +576,8 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       }));
     }
 
-    // schedule1 — prizes, other income, substitute payments, NQDC ordinary income
+    // Schedule 1 receives box 3 income once. Box 15 describes its §409A tax
+    // base and cannot independently establish another income payment.
     const sched1 = schedule1Output(m99s);
     if (sched1) outputs.push(sched1);
 
@@ -559,12 +585,10 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // reach AGI without collapsing line 8i prizes into line 8z other income.
     const prizes = prizesAwardsTotal(m99s);
     const substitute = totalOf(m99s, "box8_substitute_payments");
-    const nqdc = totalOf(m99s, "box15_nqdc");
     const other = otherIncomeTotal(m99s);
     const agiIncome = {
       ...(prizes > 0 ? { line8i_prizes_awards: prizes } : {}),
       ...(substitute > 0 ? { line8z_substitute_payments: substitute } : {}),
-      ...(nqdc > 0 ? { line8z_nqdc: nqdc } : {}),
       ...(other > 0 ? { line8z_f1099m_box3_other: other } : {}),
     };
     if (prizes > 0) {
@@ -576,11 +600,6 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(agi_aggregator, {
         ...agiIncome,
         line8z_substitute_payments: substitute,
-      }));
-    } else if (nqdc > 0) {
-      outputs.push(this.outputNodes.output(agi_aggregator, {
-        ...agiIncome,
-        line8z_nqdc: nqdc,
       }));
     } else if (other > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
@@ -629,12 +648,16 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    // schedule2 — §409A excise tax (20% of NQDC includible amount)
+    // Schedule 2 line 17h is 20% of the §409A inclusion plus reviewed interest.
     const totalNqdc = totalOf(m99s, "box15_nqdc");
     if (totalNqdc > 0) {
+      const interest = m99s.reduce(
+        (sum, item) => sum + (item.box15_409a_review?.interest_amount ?? 0),
+        0,
+      );
       outputs.push(
         this.outputNodes.output(schedule2, {
-          line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE,
+          line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE + interest,
         }),
       );
     }

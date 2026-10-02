@@ -69,7 +69,7 @@ const inputSchema = z.object({
   f1099g_taxable_grant_sources: z.array(taxableGrantSourceSchema).optional(),
   line8z_substitute_payments: z.number().optional(),
   line8z_attorney_proceeds: z.number().optional(),
-  line8z_nqdc: z.number().optional(),
+  line8z_nqdc: z.never().optional(),
   line8z_golden_parachute: z.number().optional(),
   // An unlabeled scalar cannot supply the required line 8z type statement.
   line8z_other_income: z.never().optional(),

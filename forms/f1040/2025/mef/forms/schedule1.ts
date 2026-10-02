@@ -94,7 +94,6 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
   ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
-  ["line8z_nqdc", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
   ["line9_total_other_income", "TotalOtherIncomeAmt"],
   ["line10_total_additional_income", "TotalAdditionalIncomeAmt"],
@@ -233,6 +232,11 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (fields.line8z_nqdc !== undefined) {
+      throw new Error(
+        "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",
+      );
+    }
     if (
       fields.line8d_foreign_housing_deduction !== undefined &&
       fields.line8d_foreign_housing_deduction !== 0

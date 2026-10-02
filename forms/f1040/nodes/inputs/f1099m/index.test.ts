@@ -34,6 +34,25 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function reviewed409aItem(
+  amount: number,
+  interestAmount = 0,
+  overrides: Record<string, unknown> = {},
+) {
+  return minimalItem({
+    box3_other_income: amount,
+    box3_other_income_routing: "other_income",
+    box3_other_income_description: "Section 409A deferred compensation",
+    box15_nqdc: amount,
+    box15_409a_review: {
+      included_in_box3: true,
+      interest_amount: interestAmount,
+      interest_workpaper_reference: "reviewed 2025 section 409A interest",
+    },
+    ...overrides,
+  });
+}
+
 function compute(items: z.infer<typeof itemSchema>[]) {
   return f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: items,
@@ -712,12 +731,38 @@ Deno.test("f1099m.compute: box11_fish_purchased = 0 produces no schedule_c outpu
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-// Box 15 — NQDC § 409A failure → Schedule 1 Line 8z + Schedule 2 Line 17h (exact values)
-Deno.test("f1099m.compute: box15_nqdc routes to schedule1 line8z_nqdc and schedule2 line17h at 20%", () => {
-  const result = compute([minimalItem({ box15_nqdc: 50000 })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 50000);
-  assertEquals(fieldsOf(result.outputs, agi_aggregator)!.line8z_nqdc, 50000);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10000);
+// Box 15 reports a §409A tax base already included in reviewed box 3 income.
+Deno.test("f1099m.compute: reviewed box 15 taxes box 3 income once with interest", () => {
+  const result = compute([reviewed409aItem(50_000, 75)]);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_nqdc,
+    undefined,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    50_000,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10_075);
+});
+
+Deno.test("f1099m.compute: box 15 without matched income and interest review rejects", () => {
+  for (
+    const item of [
+      minimalItem({ box15_nqdc: 1_000 }),
+      reviewed409aItem(1_000, 0, { box3_other_income: 999 }),
+      reviewed409aItem(1_000, 0, {
+        box3_other_income_routing: "prizes_awards",
+      }),
+      reviewed409aItem(1_000, 0, { source_document_reference: undefined }),
+    ]
+  ) {
+    assertThrows(
+      () => compute([item]),
+      Error,
+      "1099-MISC box 15 needs identified box 3 income",
+    );
+  }
 });
 
 // Box 15 — zero value produces no outputs
@@ -786,13 +831,11 @@ Deno.test("f1099m.compute: box1_rents summed across multiple schedule_e items", 
 
 Deno.test("f1099m.compute: box15_nqdc 20% excise computed correctly for aggregated amount", () => {
   const result = compute([
-    minimalItem({
-      box15_nqdc: 20000,
+    reviewed409aItem(20000, 0, {
       payer_name: "CorpA",
       payer_tin: "111111111",
     }),
-    minimalItem({
-      box15_nqdc: 30000,
+    reviewed409aItem(30000, 0, {
       payer_name: "CorpB",
       payer_tin: "222222222",
     }),
@@ -885,7 +928,7 @@ Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to sched
 });
 
 Deno.test("f1099m.compute: box15_nqdc 20% excise equals exactly 20% of amount", () => {
-  const result = compute([minimalItem({ box15_nqdc: 10000 })]);
+  const result = compute([reviewed409aItem(10000)]);
   // 20% of 10,000 = 2,000 (§409A excise rate)
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 2000);
 });
@@ -1080,14 +1123,18 @@ Deno.test("f1099m.compute: box3_other_income excluded (physical injury IRC §104
   assertEquals(!prizes && !other, true);
 });
 
-// Box 15 — NQDC produces BOTH ordinary income and excise tax simultaneously
-Deno.test("f1099m.compute: box15_nqdc produces both schedule1 and schedule2 outputs", () => {
-  const result = compute([minimalItem({ box15_nqdc: 40000 })]);
+// Box 15 supplies tax on box 3 income without a second income deposit.
+Deno.test("f1099m.compute: box15_nqdc taxes same-copy box 3 income once", () => {
+  const result = compute([reviewed409aItem(40000)]);
   const s1 = findOutput(result, "schedule1");
   const s2 = findOutput(result, "schedule2");
   assertEquals(s1 !== undefined, true);
   assertEquals(s2 !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 40000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    40000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 8000); // 20% of 40,000
 });
 
@@ -1215,7 +1262,6 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       box11_fish_purchased: 4500,
       box12_section_409a_deferrals: 10000, // informational only
       box13_fatca: false,
-      box15_nqdc: 25000,
       box16_state_tax_withheld: 500,
       box18_state_income: 18000,
     },
@@ -1282,12 +1328,6 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
     amount: 2000,
     allocation_review_reference: "2025 settlement ledger",
   }]);
-
-  // box15_nqdc → schedule1 line8z_nqdc + schedule2 line17h_nqdc_tax
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 25000);
-  const sched2 = findOutput(result, "schedule2");
-  assertEquals(sched2 !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 5000); // 20% of 25,000
 
   // box12, box13, box7 produce no additional outputs (informational)
   // box16/18 produce no federal outputs (state-only)

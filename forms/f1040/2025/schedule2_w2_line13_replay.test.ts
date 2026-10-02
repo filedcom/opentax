@@ -244,11 +244,26 @@ Deno.test("Schedule 2 line 17h replays distinct W-2 and 1099-MISC sources", asyn
         payer_name: "Example Payer",
         payer_tin: "987654321",
         recipient_tin: "111223333",
+        source_document_reference: "issued 2025 1099-MISC",
+        box3_other_income: 1_000,
+        box3_other_income_routing: "other_income",
+        box3_other_income_description: "Section 409A deferred compensation",
         box15_nqdc: 1_000,
+        box15_409a_review: {
+          included_in_box3: true,
+          interest_amount: 7,
+          interest_workpaper_reference: "reviewed section 409A interest",
+        },
       }],
     },
     schedule1: {
-      line8z_nqdc: 1_000,
+      f1099m_box3_other_income_sources: [{
+        payer_name: "Example Payer",
+        payer_tin: "987654321",
+        recipient_tin: "111223333",
+        description: "Section 409A deferred compensation",
+        amount: 1_000,
+      }],
       line9_total_other_income: 1_000,
       line10_total_additional_income: 1_000,
     },
@@ -257,14 +272,14 @@ Deno.test("Schedule 2 line 17h replays distinct W-2 and 1099-MISC sources", asyn
       taxpayer_ssn: "111223333",
       digital_assets: false,
       line8_additional_income: 1_000,
-      line23_other_taxes: 300,
+      line23_other_taxes: 307,
     },
-    schedule2: { section409a_excise: 100, line17h_nqdc_tax: 200 },
+    schedule2: { section409a_excise: 100, line17h_nqdc_tax: 207 },
   };
   const native = await buildMefBundle(pending, { filer, attachments: [] });
   assertStringIncludes(
     native.xml,
-    "<IncmNonqlfyDefrdCompPlanAmt>300</IncmNonqlfyDefrdCompPlanAmt>",
+    "<IncmNonqlfyDefrdCompPlanAmt>307</IncmNonqlfyDefrdCompPlanAmt>",
   );
   await assertTy2025Xsd(native.xml);
   const pdf = await buildPdfBytes(pending, filer);
@@ -273,7 +288,7 @@ Deno.test("Schedule 2 line 17h replays distinct W-2 and 1099-MISC sources", asyn
     () =>
       buildMefBundle({
         ...pending,
-        schedule2: { section409a_excise: 100, line17h_nqdc_tax: 199 },
+        schedule2: { section409a_excise: 100, line17h_nqdc_tax: 206 },
       }, { filer, attachments: [] }),
     Error,
     "Schedule 2 line 17h differs from retained 1099-MISC box 15 tax",
