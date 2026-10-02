@@ -75,7 +75,7 @@ export interface A2aInboundEvidenceInput {
 }
 
 const encoder = new TextEncoder();
-const requestParser = new XMLParser({
+const xmlParser = new XMLParser({
   ignoreAttributes: false,
   parseTagValue: false,
 });
@@ -84,7 +84,7 @@ function requestSubmissionIds(requestBody: string): string[] {
   const invalid =
     "A2A Send package body must be a valid SendSubmissionsRequest";
   if (XMLValidator.validate(requestBody) !== true) throw new Error(invalid);
-  const parsed = requestParser.parse(requestBody) as Record<string, unknown>;
+  const parsed = xmlParser.parse(requestBody) as Record<string, unknown>;
   const roots = Object.keys(parsed).filter((name) => name !== "?xml");
   if (roots.length !== 1 || roots[0] !== "SendSubmissionsRequest") {
     throw new Error(invalid);
@@ -111,18 +111,11 @@ function requestSubmissionIds(requestBody: string): string[] {
   return ids;
 }
 
-function oneXmlValue(source: string, tag: string): string | undefined {
-  const matches = [
-    ...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g")),
-  ];
-  return matches.length === 1 ? matches[0][1] : undefined;
-}
-
 function manifestValues(
   source: string,
 ): Readonly<Record<string, string>> | undefined {
   if (XMLValidator.validate(source) !== true) return undefined;
-  const parsed = requestParser.parse(source) as Record<string, unknown>;
+  const parsed = xmlParser.parse(source) as Record<string, unknown>;
   const roots = Object.keys(parsed).filter((name) => name !== "?xml");
   if (roots.length !== 1 || roots[0] !== "IRSSubmissionManifest") {
     return undefined;
@@ -146,6 +139,26 @@ function manifestValues(
   return Object.fromEntries(
     names.map((name) => [name, fields[name] as string]),
   );
+}
+
+function returnPrimarySsn(source: string): string | undefined {
+  if (XMLValidator.validate(source) !== true) return undefined;
+  const parsed = xmlParser.parse(source) as Record<string, unknown>;
+  const roots = Object.keys(parsed).filter((name) => name !== "?xml");
+  if (roots.length !== 1 || roots[0] !== "Return") return undefined;
+  const returnData = (parsed.Return as Record<string, unknown> | undefined)
+    ?.ReturnData;
+  if (
+    returnData === null || Array.isArray(returnData) ||
+    typeof returnData !== "object"
+  ) return undefined;
+  const form1040 = (returnData as Record<string, unknown>).IRS1040;
+  if (
+    form1040 === null || Array.isArray(form1040) ||
+    typeof form1040 !== "object"
+  ) return undefined;
+  const primarySsn = (form1040 as Record<string, unknown>).PrimarySSN;
+  return typeof primarySsn === "string" ? primarySsn : undefined;
 }
 
 function assertSendSubmissionArchive(
@@ -183,7 +196,7 @@ function assertSendSubmissionArchive(
     fields?.GovernmentCd !== "IRS" ||
     fields?.FederalSubmissionTypeCd !== "1040" ||
     !tin || !/^\d{9}$/.test(tin) ||
-    oneXmlValue(xml, "PrimarySSN") !== tin
+    returnPrimarySsn(xml) !== tin
   ) {
     throw new Error(
       `A2A Send submission manifest or taxpayer differs: ${submissionId}`,
@@ -498,7 +511,7 @@ export async function readA2aArchivedSubmission(
     fields?.TaxYr !== "2025" ||
     fields?.GovernmentCd !== "IRS" ||
     fields?.FederalSubmissionTypeCd !== "1040" ||
-    oneXmlValue(xml, "PrimarySSN") !== identity.taxpayerSsn ||
+    returnPrimarySsn(xml) !== identity.taxpayerSsn ||
     xmlSha256 !== identity.submissionXmlSha256
   ) {
     throw new Error(

@@ -252,6 +252,63 @@ Deno.test("A2A Send evidence requires manifest identity in direct IRS manifest f
   }
 });
 
+Deno.test("A2A Send evidence requires PrimarySSN on the archived Form 1040", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const source = packageFor();
+    const archive = unzipSync(
+      unzipSync(source.containerZipBytes)[`${submissionId}.zip`],
+    );
+    const xml = new TextDecoder().decode(archive["xml/submission.xml"]);
+    const changedXml = xml.replace(
+      "<PrimarySSN>111223333</PrimarySSN>",
+      "<!-- <PrimarySSN>111223333</PrimarySSN> -->",
+    );
+    const changedContainer = zipSync({
+      [`${submissionId}.zip`]: zipSync({
+        ...archive,
+        "xml/submission.xml": encoder.encode(changedXml),
+      }),
+    });
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-commented-primary`,
+          submissionIds: [submissionId],
+          package: { ...source, containerZipBytes: changedContainer },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "manifest or taxpayer differs",
+    );
+    const recorded = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: source,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...recorded,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "manifest or taxpayer differs",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
   const root = await Deno.makeTempDir();
   try {
