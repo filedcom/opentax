@@ -62,6 +62,45 @@ function sha256HexSync(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+/** Count physical ZIP entries before unzipSync collapses duplicate filenames. */
+function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
+  if (bytes.length < 22) return undefined;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const firstCandidate = Math.max(0, bytes.length - 22 - 0xffff);
+  for (let end = bytes.length - 22; end >= firstCandidate; end--) {
+    if (
+      view.getUint32(end, true) !== 0x06054b50 ||
+      end + 22 + view.getUint16(end + 20, true) !== bytes.length
+    ) continue;
+    const count = view.getUint16(end + 10, true);
+    const size = view.getUint32(end + 12, true);
+    const offset = view.getUint32(end + 16, true);
+    if (
+      view.getUint16(end + 4, true) !== 0 ||
+      view.getUint16(end + 6, true) !== 0 ||
+      view.getUint16(end + 8, true) !== count ||
+      count === 0xffff || size === 0xffffffff || offset === 0xffffffff ||
+      offset + size !== end
+    ) return undefined;
+    let position = offset;
+    let seen = 0;
+    while (position < end) {
+      if (
+        position + 46 > end ||
+        view.getUint32(position, true) !== 0x02014b50
+      ) return undefined;
+      const nameLength = view.getUint16(position + 28, true);
+      const extraLength = view.getUint16(position + 30, true);
+      const commentLength = view.getUint16(position + 32, true);
+      position += 46 + nameLength + extraLength + commentLength;
+      if (position > end) return undefined;
+      seen++;
+    }
+    return seen === count ? seen : undefined;
+  }
+  return undefined;
+}
+
 function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
   const { bundle } = archive;
   const attachmentNames = bundle.attachments.map((item) => item.fileName);
@@ -106,6 +145,7 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
     ),
   ];
   if (
+    zipDirectoryEntryCount(archive.bytes) !== expectedFiles.length ||
     expectedFiles.length !== new Set(expectedFiles).size ||
     Object.keys(entries).join("\n") !== expectedFiles.join("\n") ||
     !sameBytes(

@@ -359,6 +359,53 @@ Deno.test("A2A packaging rejects reordered inner submission ZIP entries", async 
   );
 });
 
+Deno.test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipSync", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const entries = unzipSync(submission.bytes);
+  const duplicateName = "attachment/Evidence.pdF";
+  const originalName = "attachment/Evidence.pdf";
+  const distinctZip = zipSync({
+    "manifest/manifest.xml": entries["manifest/manifest.xml"],
+    "xml/submission.xml": entries["xml/submission.xml"],
+    [originalName]: entries[originalName],
+    [duplicateName]: entries[originalName],
+  });
+  const duplicated = Uint8Array.from(distinctZip);
+  const oldName = new TextEncoder().encode(duplicateName);
+  const newName = new TextEncoder().encode(originalName);
+  let replacements = 0;
+  for (let index = 0; index <= duplicated.length - oldName.length; index++) {
+    if (oldName.every((byte, offset) => duplicated[index + offset] === byte)) {
+      duplicated.set(newName, index);
+      replacements++;
+    }
+  }
+  assertEquals(replacements, 2); // local and central directory names
+  assertEquals(Object.keys(unzipSync(duplicated)), Object.keys(entries));
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: { ...submission, bytes: duplicated },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "submission ZIP differs from its prepared return",
+  );
+});
+
 Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
