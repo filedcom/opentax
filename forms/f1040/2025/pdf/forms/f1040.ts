@@ -15,6 +15,7 @@ import { assertPresidentialCampaignSource } from "../../presidential-campaign-so
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
@@ -757,6 +758,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertReturnWideArithmetic(fields);
     const printLine1hType = line1hType(fields, allPending);
     assertLine1hSupportedSource(fields, allPending);
+    assertDirectCapitalGainDistributionSource(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;
     const selected = typeof standard === "number"

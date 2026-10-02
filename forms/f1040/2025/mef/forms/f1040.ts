@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
@@ -719,6 +720,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
 
   const capitalGain = resolveNumber(fields.line7_capital_gain);
   const directDistribution = resolveNumber(fields.line7a_cap_gain_distrib);
+  assertDirectCapitalGainDistributionSource(
+    fields as Record<string, unknown>,
+    context?.pending,
+  );
   if (capitalGain !== undefined && (directDistribution ?? 0) > 0) {
     throw new Error(
       "Form 1040 line 7a cannot contain both a Schedule D gain and direct capital-gain distributions",

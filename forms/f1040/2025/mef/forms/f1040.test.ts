@@ -1051,7 +1051,14 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
     line11_agi: 17_800,
     taxpayer_age_65_or_older: true,
     line12c_deduction_total: 17_350,
-  }, { pending: { f1099r: source } });
+  }, {
+    pending: {
+      f1099r: source,
+      f1099div: {
+        f1099divs: [{ isNominee: false, box11: false, box1a: 0, box2a: 7_500 }],
+      },
+    },
+  });
   const agi = result.indexOf("<AdjustedGrossIncomeAmt>");
   const age = result.indexOf("<Primary65OrOlderInd>");
   const deduction = result.indexOf("<TotalItemizedOrStandardDedAmt>");
