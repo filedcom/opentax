@@ -34,6 +34,17 @@ function compute(input: Record<string, unknown>) {
   });
 }
 
+Deno.test("explicit Form 1040 line 27c election suppresses an otherwise eligible EIC", () => {
+  const claim = {
+    earned_income: 15_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+  };
+  assertEquals(getCredit(claim) > 0, true);
+  noCredit({ ...claim, do_not_claim_eic: true });
+  assertEquals(getCredit({ ...claim, do_not_claim_eic: false }) > 0, true);
+});
+
 Deno.test("EITC needs verified filer SSNs", () => {
   noCredit({
     earned_income: 12_730,

@@ -27,6 +27,45 @@ Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
 });
 
+Deno.test("Form 1040 PDF line 27c checks the canonical opt-out box from retained source", () => {
+  const entry = irs1040Pdf.fields.find((field) =>
+    field.domainKey === "print_do_not_claim_eic"
+  );
+  assertEquals(entry?.kind, "checkbox");
+  assertEquals(
+    entry?.pdfField,
+    "topmostSubform[0].Page2[0].c2_13[0]",
+  );
+  const source = {
+    general: { filing_status: "single", do_not_claim_eic: true },
+    eitc: { credit_amount: 0 },
+  };
+  const fields = {
+    filing_status: "single",
+    do_not_claim_eic: true,
+    line27_eitc: 0,
+  };
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, source)?.print_do_not_claim_eic,
+    true,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({ line27_eitc: 0 }, {})
+      ?.print_do_not_claim_eic,
+    false,
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ ...fields, line27_eitc: 1 }, source),
+    Error,
+    "requires zero line 27a credit",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(fields, {}),
+    Error,
+    "needs the retained general election",
+  );
+});
+
 Deno.test("Form 1040 PDF maps retained IP PIN, contact, and address source to exact widgets", () => {
   const source = {
     filing_status: "mfj",

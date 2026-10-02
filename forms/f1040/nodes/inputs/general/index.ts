@@ -252,6 +252,7 @@ export const inputSchema = z.object({
   prior_aotc_disallowance_review: priorCreditDisallowanceReviewSchema
     .optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
+  do_not_claim_eic: z.boolean().optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
@@ -1053,6 +1054,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     "eic_tax_residency_review",
     input.eic_tax_residency_review,
   );
+  addIfDefined(fields, "do_not_claim_eic", input.do_not_claim_eic);
   addIfDefined(
     fields,
     "presidential_campaign_fund_taxpayer",
@@ -1278,6 +1280,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         child_eic_filer_review: parsed.child_eic_filer_review,
         prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,
         eic_tax_residency_review: parsed.eic_tax_residency_review,
+        do_not_claim_eic: parsed.do_not_claim_eic,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,

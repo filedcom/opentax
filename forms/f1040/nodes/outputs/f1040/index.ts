@@ -243,6 +243,7 @@ const inputSchema = z.object({
   line26_estimated_tax: z.number().nonnegative().optional(),
   // Line 27 — Earned Income Credit (EITC)
   line27_eitc: z.number().nonnegative().optional(),
+  do_not_claim_eic: z.boolean().optional(),
   // Line 28 — Additional Child Tax Credit (Form 8812)
   line28_actc: z.number().nonnegative().optional(),
   // Line 29 — American Opportunity Credit, refundable portion (Form 8863)

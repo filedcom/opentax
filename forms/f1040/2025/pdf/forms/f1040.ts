@@ -13,6 +13,7 @@ import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconcilia
 import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
+import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
@@ -564,6 +565,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_23[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_do_not_claim_eic",
+    pdfField: "topmostSubform[0].Page2[0].c2_13[0]",
+  },
+  {
     kind: "text",
     domainKey: "line28_actc",
     pdfField: "topmostSubform[0].Page2[0].f2_24[0]",
@@ -752,6 +758,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertReturnScheduleJoins(fields, allPending);
     assertSchedule2Line23(fields, allPending);
     const residentElection = residentElectionName(fields, allPending);
+    const printEicOptOut = retainedEicOptOut(fields, allPending);
     assertMfsEitcSource(
       fields.filing_status,
       fields.mfs_eitc_separation_rule,
@@ -930,6 +937,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
         allPending.f8812,
         fields.line28_actc,
       ),
+      print_do_not_claim_eic: printEicOptOut,
       print_ira_qcd: printIraQcd,
       print_pension_pso: printPensionPso,
       print_resident_election: residentElection !== undefined,

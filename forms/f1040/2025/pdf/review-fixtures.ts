@@ -325,6 +325,36 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-eic-opt-out",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        main_home_in_us_over_half_year: true,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+        taxpayer_can_be_claimed_as_dependent: false,
+        childless_eic_review: {
+          not_qualifying_child_of_another_taxpayer_verified: true,
+          qualifying_child_status_record_reference:
+            "Synthetic 2025 family status review",
+        },
+        do_not_claim_eic: true,
+      },
+      w2: [{
+        ...wage(15_000, 0, "Example Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 27c is checked from the explicit EIC opt-out election",
+      "Line 27a is blank and no Schedule EIC is attached despite otherwise eligible childless wages",
+      "The native DoNotClaimEICInd and printed checkbox agree with retained source",
+    ],
+  },
+  {
     id: "single-form8888-two-account-refund",
     inputs: {
       general: singleGeneral,

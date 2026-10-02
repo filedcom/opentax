@@ -138,6 +138,7 @@ export const inputSchema = z.object({
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
+  do_not_claim_eic: z.boolean().optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
@@ -248,6 +249,7 @@ function computeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
 ): number {
+  if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +
     (input.se_net_profit ?? 0) - (input.se_tax_deduction ?? 0);
   const agi = input.agi ?? earnedIncome;

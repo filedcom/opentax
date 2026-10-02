@@ -774,6 +774,50 @@ Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   );
 });
 
+Deno.test("Form 1040 native line 27c prints only a retained EIC opt-out", () => {
+  const fields = {
+    filing_status: "single",
+    do_not_claim_eic: true,
+    line27_eitc: 0,
+  };
+  const context = {
+    pending: {
+      general: { filing_status: "single", do_not_claim_eic: true },
+      eitc: { credit_amount: 0 },
+    },
+  };
+  const xml = irs1040.build(fields, context);
+  assertStringIncludes(xml, "<DoNotClaimEICInd>X</DoNotClaimEICInd>");
+  assertNotIncludes(xml, "<EarnedIncomeCreditAmt>");
+  assertNotIncludes(irs1040.build({ line27_eitc: 0 }), "DoNotClaimEICInd");
+  assertThrows(
+    () => irs1040.build({ ...fields, line27_eitc: 1 }, context),
+    Error,
+    "requires zero line 27a credit",
+  );
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: {
+          ...context.pending,
+          eitc: { credit_amount: 1 },
+        },
+      }),
+    Error,
+    "requires zero line 27a credit",
+  );
+  assertThrows(
+    () => irs1040.build(fields),
+    Error,
+    "needs the retained general election",
+  );
+  assertThrows(
+    () => irs1040.build({ line27_eitc: 0 }, context),
+    Error,
+    "differs from the retained general election",
+  );
+});
+
 Deno.test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", () => {
   const source = { f8812s: [{ do_not_claim_actc: true }] };
   const xml = irs1040.build({

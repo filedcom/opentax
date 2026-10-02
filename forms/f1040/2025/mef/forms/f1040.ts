@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
+import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import {
@@ -127,6 +128,7 @@ export interface Fields {
   line25d_total_withholding?: number | null;
   line26_estimated_tax?: number | null;
   line27_eitc?: number | null;
+  do_not_claim_eic?: boolean;
   line28_actc?: number | null;
   line29_refundable_aoc?: number | null;
   line30_refundable_adoption?: number | null;
@@ -686,6 +688,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     ...dependentXml(fields, context),
   ];
 
+  const eicOptOut = retainedEicOptOut(
+    fields as Record<string, unknown>,
+    context?.pending,
+  );
   assertMfsEitcSource(
     fields.filing_status,
     fields.mfs_eitc_separation_rule,
@@ -713,6 +719,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   );
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
+    if (key === "line27_eitc" && eicOptOut) return "";
     if (key === "line28_actc" && actcOptOut) return "";
     if (key === "line6b_ss_taxable") {
       return (value === undefined ? "" : element(tag, value)) +
@@ -763,6 +770,14 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       actcIndex + 1,
       0,
       element("DoNotClaimACTCInd", "X"),
+    );
+  }
+  if (eicOptOut) {
+    const eicIndex = FIELD_MAP.findIndex(([key]) => key === "line27_eitc");
+    incomeChildren.splice(
+      eicIndex + 1,
+      0,
+      element("DoNotClaimEICInd", "X"),
     );
   }
   if (rollover) {

@@ -140,6 +140,25 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 1040 line 27c retained EIC opt-out",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    general: { ...singleGeneral(), do_not_claim_eic: true },
+    f1040: {
+      filing_status: FilingStatus.Single,
+      do_not_claim_eic: true,
+      line27_eitc: 0,
+    },
+    eitc: { credit_amount: 0 },
+  } as MefFormsPending, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<DoNotClaimEICInd>X</DoNotClaimEICInd>");
+  await validateXsd(xml, "TY2025 Form 1040 line 27c EIC opt-out");
+});
+
+Deno.test({
   name: "XSD: New Markets recapture source reaches Schedule 2 NMCR",
   sanitizeOps: false,
   sanitizeResources: false,
