@@ -83,7 +83,7 @@ export const eitcPdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf",
   pageIndices: () => [0],
   filerFields: [
-    text("nameLine1", "f1_01[0]"),
+    text("nameShownOnForm1040", "f1_01[0]"),
     text("primarySSN", "f1_02[0]"),
   ],
   projectFields(source) {

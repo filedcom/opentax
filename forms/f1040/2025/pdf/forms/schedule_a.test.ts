@@ -20,6 +20,8 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
     primarySSN: "123456789",
     fullName: "Alex Taxpayer",
     nameLine1: "Alex Taxpayer",
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -50,6 +52,7 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",
       taxpayer_dob: "1970-01-01",
+      digital_assets: false,
     },
     schedule_a: { force_itemized: true },
     f1099r: [{
@@ -184,6 +187,8 @@ Deno.test("Schedule A line 8b seller details reach native statement and PDF", as
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -272,6 +277,8 @@ Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement an
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -372,6 +379,8 @@ Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF 
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -428,6 +437,8 @@ Deno.test("Schedule A election below standard reaches line 12e, native form, and
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -530,6 +541,8 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -635,6 +648,8 @@ Deno.test("Schedule A PDF replays purchase points and the second mortgage", () =
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
     filingStatus: FilingStatus.Single,
@@ -684,6 +699,8 @@ Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     nameControl: "TAXP",
     address: {
       line1: "1 Test Way",
@@ -785,7 +802,12 @@ Deno.test("Schedule A PDF prints the ordinary gift on the official line 12 widge
     fixture.filer,
     result.pending,
   ) ?? [];
-  assertEquals(instance?.filer_name, "ALEX EXAMPLE");
+  assertEquals(
+    scheduleAPdf.filerFields?.find((field) =>
+      field.domainKey === "nameShownOnForm1040"
+    )?.pdfField,
+    "form1[0].Page1[0].f1_1[0]",
+  );
   assertEquals(instance?.line_5e_salt_deduction, 24_000);
   assertEquals(instance?.line_12_noncash_contributions, 1_200);
   assertEquals(instance?.line_17_itemized, 37_200);

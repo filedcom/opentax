@@ -13,7 +13,10 @@ import { schedule1Pdf } from "./schedule1.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { schedule2Pdf } from "./schedule2.ts";
 import { schedule3Pdf } from "./schedule3.ts";
+import { scheduleAPdf } from "./schedule_a.ts";
 import { scheduleEPdf } from "./schedule_e.ts";
+import { scheduleHPdf } from "./schedule_h.ts";
+import { eitcPdf } from "./eitc.ts";
 
 const source = {
   taxpayer_ssn: "123456789",
@@ -42,11 +45,26 @@ Deno.test("official main schedules print the Form 1040 display-name order", asyn
         [schedule1aPdf, { line38_total: 12 }, 1],
         [schedule2Pdf, { line4_se_tax: 12 }, 1],
         [schedule3Pdf, { line9_premium_tax_credit: 12 }, 1],
+        [scheduleAPdf, { line_17_itemized: 12 }, 1],
         [scheduleEPdf, { line26: 12 }, 1],
         [scheduleEPdf, { trust_line37: 12 }, 2],
+        [scheduleHPdf, { line8_fica_and_withholding: 12 }, 1],
+        [eitcPdf, { child1_name: "Ada Example", qualifying_children: 1 }, 1],
       ] as const
     ) {
-      const bytes = await fillFormPdf(descriptor, fields, filer, ".pdf-cache");
+      const pending: Record<string, Record<string, unknown>> =
+        descriptor === scheduleAPdf
+          ? { f1040: { line12e_itemized_deductions: 12 } }
+          : descriptor === eitcPdf
+          ? { f1040: { line27_eitc: 12 } }
+          : {};
+      const bytes = await fillFormPdf(
+        descriptor,
+        fields,
+        filer,
+        ".pdf-cache",
+        pending,
+      );
       if (!bytes) throw new Error(`${descriptor.pendingKey} was not rendered`);
       const path = join(temp, `${descriptor.pendingKey}-${page}-owner.pdf`);
       await Deno.writeFile(path, bytes);

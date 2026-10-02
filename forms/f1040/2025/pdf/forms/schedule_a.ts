@@ -33,16 +33,6 @@ import { scheduleALine16EstateTax } from "../../schedule_a_line16_estate_source.
 // numbers follow physical widget order, including unnumbered subtotal fields.
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  {
-    kind: "text",
-    domainKey: "filer_name",
-    pdfField: "form1[0].Page1[0].f1_1[0]",
-  },
-  {
-    kind: "text",
-    domainKey: "filer_ssn",
-    pdfField: "form1[0].Page1[0].f1_2[0]",
-  },
   // ── Medical and Dental Expenses ──────────────────────────────────────────────
   {
     kind: "text",
@@ -217,6 +207,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const scheduleAPdf: PdfFormDescriptor = {
   pendingKey: "schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
+  filerFields: [
+    {
+      kind: "text",
+      domainKey: "nameShownOnForm1040",
+      pdfField: "form1[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "form1[0].Page1[0].f1_2[0]",
+    },
+  ],
   fields,
   instances(input, filer, all) {
     if (
@@ -367,8 +369,6 @@ export const scheduleAPdf: PdfFormDescriptor = {
       print_line_8_mortgage_use_warning: reviewedHomeMortgageNonqualifyingUse(
         input,
       ),
-      filer_name: filer?.nameLine1,
-      filer_ssn: filer?.primarySSN?.replace(/\D/g, ""),
       line_3_medical_floor: amount("line_1_medical") > 0
         ? Math.max(0, amount("agi")) * 0.075
         : undefined,

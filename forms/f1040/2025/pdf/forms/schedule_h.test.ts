@@ -76,6 +76,8 @@ const sourcedStudentMinor = {
 };
 const filer: FilerIdentity = {
   primarySSN: facts.taxpayer.ssn,
+  firstNameWithInitial: facts.taxpayer.firstName,
+  lastName: facts.taxpayer.lastName,
   nameLine1: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
   fullName: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
   nameControl: "BLAC",
@@ -119,7 +121,7 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
   const filerMap = new Map(
     scheduleHPdf.filerFields?.map((entry) => [entry.domainKey, entry.pdfField]),
   );
-  assertEquals(filerMap.get("nameLine1"), "topmostSubform[0].Page1[0].f1_1[0]");
+  assertEquals(filerMap.get("nameShownOnForm1040"), "topmostSubform[0].Page1[0].f1_1[0]");
   assertEquals(
     filerMap.get("primarySSN"),
     "topmostSubform[0].Page1[0].f1_2[0]",
