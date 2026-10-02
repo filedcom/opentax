@@ -2331,6 +2331,7 @@ Deno.test({
       },
       f8826: sourcedForm8826Interpreter(450, 100),
       schedule_c: sourcedForm8826ScheduleC(350),
+      schedule1: { line3_schedule_c: 99_650 },
       f3800: {
         passive_source_allocations: [{
           ...source,
@@ -2410,6 +2411,7 @@ Deno.test({
       },
       f8826: sourcedForm8826Interpreter(450, 100),
       schedule_c: sourcedForm8826ScheduleC(350),
+      schedule1: { line3_schedule_c: 99_650 },
       f3800: {
         passive_source_allocations: [{
           ...source,
@@ -3298,6 +3300,7 @@ Deno.test({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 2_400 },
     schedule3: { line6a_total: 2_400, line7_total: 2_400, line8_total: 2_400 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule1: { line3_schedule_c: 26_400 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -3411,6 +3414,7 @@ Deno.test({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 1_950 },
     schedule3: { line6a_total: 1_950, line7_total: 1_950, line8_total: 1_950 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule1: { line3_schedule_c: 25_950 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -3548,6 +3552,7 @@ Deno.test({
     f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 1_000 },
     schedule3: { line6a_total: 1_000, line7_total: 1_000, line8_total: 1_000 },
     form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
+    schedule1: { line3_schedule_c: 26_400 },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",
@@ -4937,6 +4942,7 @@ Deno.test({
     w2: [{
       employer_name: "CAFE",
       employer_ein: "123456789",
+      employee_ssn: general.taxpayer_ssn,
       employer_address_line1: "100 Main St",
       employer_address_city: "Austin",
       employer_address_state: "TX",
@@ -5380,11 +5386,13 @@ Deno.test({
         ccc_loan_details: [{ description: "RENTAL WHEAT LOAN", amount: 1_000 }],
       }],
     },
+    schedule1: { line6_schedule_f: 2_000 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "cash",
         line1_sales_livestock_resale: 0,
         line5a_ccc_loans_election: 2_000,
@@ -5434,12 +5442,14 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 27_500 },
     schedule_f: {
       schedule_fs: [
         {
           line_a_principal_crop_activity: "GRAIN FARMING",
           line_b_agricultural_activity_code: "111100",
           line_e_material_participation: true,
+          line_f_made_1099_payments: false,
           accounting_method: "cash",
           line1_sales_livestock_resale: 50_000,
           line1b_cost_livestock_resale: 30_000,
@@ -5454,6 +5464,7 @@ Deno.test({
           line_a_principal_crop_activity: "BEEF CATTLE",
           line_b_agricultural_activity_code: "112111",
           line_e_material_participation: true,
+          line_f_made_1099_payments: false,
           accounting_method: "cash",
           line1_sales_livestock_resale: 0,
           line2_sales_products_raised: 1_000,
@@ -5463,11 +5474,11 @@ Deno.test({
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(
     xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF1">',
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
   );
   assertStringIncludes(
     xml,
-    '<IRS1040ScheduleF documentId="IRS1040ScheduleF2">',
+    '<IRS1040ScheduleF documentId="IRS1040ScheduleF3">',
   );
   await validateXsd(xml, "two Schedule F cash-method farms");
 });
@@ -5479,11 +5490,13 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    schedule1: { line6_schedule_f: 23_000 },
     schedule_f: {
       schedule_fs: [{
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "accrual",
         part_iii: {
           line37_sales_products: 20_000,
@@ -9744,6 +9757,7 @@ function w2Item(wages: number, withheld: number) {
     box6_medicare_withheld: wages * 0.0145,
     employer_ein: "12-3456789",
     employer_name: "ACME Corp",
+    employee_ssn: "111-22-3333",
     employer_address_line1: "2 Payroll Road",
     employer_address_city: "Austin",
     employer_address_state: "TX",
