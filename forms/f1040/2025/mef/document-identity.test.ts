@@ -75,3 +75,20 @@ Deno.test("repeated MeF form references keep their declared document name", () =
     "document count, order, IDs, references",
   );
 });
+
+Deno.test("prepared MeF inventory counts only direct ReturnData documents", () => {
+  const bundle: MefBundle = {
+    xml:
+      '<Return><ReturnHeader binaryAttachmentCnt="0"/><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Decoy documentId="Decoy1"/></IRS1040></ReturnData></Return>',
+    attachments: [],
+    pending: {},
+    sourceSha256: "",
+    xmlSha256: "",
+    attachmentSha256ByFileName: {},
+  };
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle),
+    Error,
+    "document count, order, IDs, references",
+  );
+});

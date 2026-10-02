@@ -8,6 +8,7 @@ import {
 } from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 import { escapeXml } from "../../mef/xml.ts";
+import { returnDataDocuments } from "./return-document-inventory.ts";
 
 const requestRecordSchema = z.object({
   messageId: z.string().min(1),
@@ -158,13 +159,11 @@ function assertArchivedDocumentInventory(
   const headerCounts = [...xml.matchAll(
     /<ReturnHeader\b[^>]*\bbinaryAttachmentCnt="(\d+)"/g,
   )];
-  const documents = returnData.length === 1
-    ? [...returnData[0][2].matchAll(
-      /<([A-Za-z0-9]+)\b[^>]*\bdocumentId="([^"]+)"[^>]*>/g,
-    )]
-    : [];
-  const ids = documents.map((match) => match[2]);
-  const tagsById = new Map(documents.map((match) => [match[2], match[1]]));
+  const documents = returnDataDocuments(xml) ?? [];
+  const ids = documents.map((document) => document.id);
+  const tagsById = new Map(
+    documents.map((document) => [document.id, document.tag]),
+  );
   const referenceGroups = [...xml.matchAll(
     /\breferenceDocumentId="([^"]+)"/g,
   )].map((match) => match[1].trim().split(/\s+/));
@@ -188,17 +187,19 @@ function assertArchivedDocumentInventory(
   ];
   if (
     returnData.length !== 1 || headerCounts.length !== 1 ||
+    documents.length === 0 ||
     Number(returnData[0][1]) !== documents.length ||
-    documents[0]?.[1] !== "IRS1040" ||
+    documents[0]?.tag !== "IRS1040" ||
     new Set(ids).size !== ids.length ||
-    documents.some((match, index) =>
-      match[2] !== documentId(match[1], index)
+    documents.some((document, index) =>
+      document.id !== documentId(document.tag, index)
     ) ||
     referenceGroups.some((group) => new Set(group).size !== group.length) ||
     references.some((id) => !ids.includes(id)) ||
     hasMismatchedSingleReferenceName(xml, tagsById) ||
     binaries.length !==
-      documents.filter((match) => match[1] === "BinaryAttachment").length ||
+      documents.filter((document) => document.tag === "BinaryAttachment")
+        .length ||
     Number(headerCounts[0][1]) !== binaries.length ||
     binaryMetadata.some((match) => !match) ||
     new Set(descriptions).size !== descriptions.length ||
