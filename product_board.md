@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **865 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **866 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 865 bounded routes and
+**Implemented coverage.** The completed ledger records 866 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -149,6 +149,9 @@ have source-backed assertion and attachment plans; Scenario 1 and 8 source
 conflicts remain unresolved after official-packet recheck, with exact IRS
 clarification questions recorded. The release workflow's five published-asset
 smokes and ATS submission have not run.
+The [release artifact smoke plan](docs/release-artifact-smoke.md) records the
+proposed `v2.0.6` CLI tag, dry-run, expected binaries and checksum manifest,
+and downloaded-binary smoke; the version is not published yet.
 CLI validation now applies only rules for emitted native documents and reports
 assembly failures as rejects; a fresh locally compiled ARM binary passes the
 stronger source-backed validation, native XML, and PDF smoke. The published
