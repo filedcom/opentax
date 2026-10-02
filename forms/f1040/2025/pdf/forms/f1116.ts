@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   alternativeCompensationWorldwideTotal,
@@ -242,8 +243,10 @@ export const form1116Pdf: PdfFormDescriptor = {
           );
           const source = matches[0];
           return matches.length !== 1 || !source ||
-            JSON.stringify(source.alternative_compensation_sourcing) !==
-              JSON.stringify(alternative) ||
+            !isDeepStrictEqual(
+              source.alternative_compensation_sourcing,
+              alternative,
+            ) ||
             alternativeCompensationWorldwideTotal(
                 fec.data.fecs,
                 source,

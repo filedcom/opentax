@@ -159,7 +159,7 @@ Deno.test("Form 7217 PDF rejects a 31st property row pending continuation suppor
           distributed_properties: Array.from({ length: 31 }, (_, index) => ({
             description: `Property ${index + 1}`,
             property_treatment: Form7217PropertyTreatment.Section732Property,
-            partnership_basis_before_distribution: index === 0 ? 7_000 : 0,
+            partnership_basis_before_distribution: index === 0 ? 6_000 : 0,
             fair_market_value: index === 0 ? 9_000 : 0,
             partner_basis_after_section_732: index === 0 ? 6_000 : 0,
           })),

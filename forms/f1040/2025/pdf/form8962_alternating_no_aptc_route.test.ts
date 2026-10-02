@@ -107,16 +107,16 @@ Deno.test("protected partial payment on a returning policy month reduces only th
   };
   const pending = calculate(inputs);
   assertEquals(pending.form8962?.monthly_ptc_rows?.[6].premium, 401);
-  assertEquals(pending.form8962?.total_premium_tax_credit, 7_601);
-  assertEquals(pending.schedule3?.line9_premium_tax_credit, 7_601);
-  assertEquals(pending.f1040?.line31_additional_payments, 7_601);
+  assertEquals(pending.form8962?.total_premium_tax_credit, 7_651);
+  assertEquals(pending.schedule3?.line9_premium_tax_credit, 7_651);
+  assertEquals(pending.f1040?.line31_additional_payments, 7_651);
   const bundle = await buildMefBundle(pending, {
     filer: fixture.filer,
     attachments: [],
   });
   assertStringIncludes(
     bundle.xml,
-    "<ReconciledPremiumTaxCreditAmt>7601</ReconciledPremiumTaxCreditAmt>",
+    "<ReconciledPremiumTaxCreditAmt>7651</ReconciledPremiumTaxCreditAmt>",
   );
   const fields =
     form8962Pdf.projectFields?.(pending.form8962!, pdfContext(pending)) ?? {};

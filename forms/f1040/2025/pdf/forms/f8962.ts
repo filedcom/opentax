@@ -217,6 +217,24 @@ function projectFields(
   const hasPolicy = fields.annual_premium !== undefined ||
     fields.annual_aptc !== undefined || fields.annual_slcsp !== undefined ||
     Array.isArray(fields.monthly_ptc_rows);
+  if (hasPolicy && typeof fields.net_premium_tax_credit === "number") {
+    const credit = fields.net_premium_tax_credit;
+    const schedule3 = allPending.schedule3;
+    const form1040 = allPending.f1040;
+    if (
+      (credit > 0 &&
+        (!isRecord(schedule3) ||
+          schedule3.line9_premium_tax_credit !== credit ||
+          !isRecord(form1040) ||
+          form1040.line31_additional_payments !== credit)) ||
+      (credit === 0 && isRecord(schedule3) &&
+        (schedule3.line9_premium_tax_credit ?? 0) !== 0)
+    ) {
+      throw new Error(
+        "Form 8962 PDF net credit differs from finalized Schedule 3 and Form 1040",
+      );
+    }
+  }
   if (hasPolicy && allPending.f1095a !== undefined) {
     const policies = current1095AStatements(
       form1095aSchema.parse(allPending.f1095a).f1095as,

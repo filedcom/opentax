@@ -52,27 +52,28 @@ Deno.test("Form 8962 PDF line 2b uses the same verified dependent source as MeF"
   }, { general: dependentSource }) ?? {};
   assertEquals(projected.dependents_modified_agi, 13_300);
   assertThrows(
-    () => form8962Pdf.projectFields?.({
-      household_size: 2,
-      taxpayer_modified_agi: 75_300,
-      dependents_modified_agi: 13_300,
-      household_income: 88_600,
-      annual_premium: 6_000,
-    }, {
-      general: {
-        ...dependentSource,
-        dependents: [{
-          ...dependentSource.dependents[0],
-          ptc_tax_return: {
-            ...dependentSource.dependents[0].ptc_tax_return,
-            filed_form1040: {
-              ...dependentSource.dependents[0].ptc_tax_return.filed_form1040,
-              taxpayer_ssn: "111223333",
+    () =>
+      form8962Pdf.projectFields?.({
+        household_size: 2,
+        taxpayer_modified_agi: 75_300,
+        dependents_modified_agi: 13_300,
+        household_income: 88_600,
+        annual_premium: 6_000,
+      }, {
+        general: {
+          ...dependentSource,
+          dependents: [{
+            ...dependentSource.dependents[0],
+            ptc_tax_return: {
+              ...dependentSource.dependents[0].ptc_tax_return,
+              filed_form1040: {
+                ...dependentSource.dependents[0].ptc_tax_return.filed_form1040,
+                taxpayer_ssn: "111223333",
+              },
             },
-          },
-        }],
-      },
-    }),
+          }],
+        },
+      }),
     Error,
     "filed return and interest forms naming the covered person",
   );
@@ -87,6 +88,39 @@ Deno.test("Form 8962 PDF line 2b uses the same verified dependent source as MeF"
       }, { general: dependentSource }),
     Error,
     "dependent MAGI differs from Worksheet 1-2 source facts",
+  );
+});
+
+Deno.test("Form 8962 PDF checks the finalized Schedule 3 and Form 1040 premium credit", () => {
+  const fields = {
+    annual_premium: 6_000,
+    net_premium_tax_credit: 100,
+  };
+  const pending = {
+    schedule3: { line9_premium_tax_credit: 100 },
+    f1040: { line31_additional_payments: 100 },
+  };
+  assertEquals(
+    form8962Pdf.projectFields?.(fields, pending)?.net_premium_tax_credit,
+    100,
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.(fields, {
+        ...pending,
+        schedule3: { line9_premium_tax_credit: 0 },
+      }),
+    Error,
+    "differs from finalized Schedule 3 and Form 1040",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.(fields, {
+        ...pending,
+        f1040: { line31_additional_payments: 0 },
+      }),
+    Error,
+    "differs from finalized Schedule 3 and Form 1040",
   );
 });
 

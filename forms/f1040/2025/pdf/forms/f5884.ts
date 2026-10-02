@@ -1,4 +1,5 @@
 import { rgb, StandardFonts } from "pdf-lib";
+import { isDeepStrictEqual } from "node:util";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
@@ -87,7 +88,7 @@ export const form5884Pdf: PdfFormDescriptor = {
       detail.passThroughEin === undefined
     );
     if (
-      JSON.stringify(fields) !== JSON.stringify(expectedFields) ||
+      !isDeepStrictEqual(fields, expectedFields) ||
       lines.line2 <= 0 ||
       fields.line2 !== lines.line2 || fields.line4 !== lines.line4 ||
       rows.length !== 1 || amounts.length !== 1 ||

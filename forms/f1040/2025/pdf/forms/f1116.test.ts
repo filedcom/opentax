@@ -159,6 +159,9 @@ Deno.test("Form 1116 PDF line 1b requires the same identified compensation sourc
       country_code: "DE",
       compensation_amount: 300_000,
       compensation_usd: 300_000,
+      compensation_owner_ssn: "111223333",
+      compensation_source_document_reference:
+        alternative.source_document_reference,
       foreign_tax_paid_usd: 2_000,
       foreign_service_compensation_usd: 140_000,
       alternative_compensation_sourcing: alternative,

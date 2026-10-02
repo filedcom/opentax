@@ -251,7 +251,7 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
         },
       }),
     Error,
-    "distinct feedstock",
+    "distinct owner, construction, meter, and unrelated-sale sources",
   );
 });
 
