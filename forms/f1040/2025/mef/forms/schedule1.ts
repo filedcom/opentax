@@ -123,6 +123,15 @@ function buildIRS1040Schedule1(
   const alimony = assertTaxableAlimonySchedule1(
     fields.line2a_alimony_received,
     context?.pending?.alimony_received,
+    context?.filer
+      ? [
+        context.filer.primarySSN,
+        ...(context.filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+            context.filer.spouse?.ssn
+          ? [context.filer.spouse.ssn]
+          : []),
+      ]
+      : undefined,
   );
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
@@ -207,10 +216,12 @@ function buildIRS1040Schedule1(
     children.splice(
       2,
       0,
-      elements("AlimonyReceivedGrp", [
-        element("AlimonyReceivedAmt", alimony.amount),
-        element("DivorceOrSeparationAgreementDt", alimony.agreementMonth),
-      ]),
+      ...alimony.agreements.map((agreement) =>
+        elements("AlimonyReceivedGrp", [
+          element("AlimonyReceivedAmt", agreement.amount),
+          element("DivorceOrSeparationAgreementDt", agreement.agreementMonth),
+        ])
+      ),
       element("TotalAlimonyReceivedAmt", alimony.amount),
     );
   }

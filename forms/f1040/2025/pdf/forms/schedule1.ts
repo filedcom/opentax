@@ -11,6 +11,7 @@ import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
 import { appendSchedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
+import { appendSchedule1AlimonyStatement } from "./schedule1_alimony_statement.ts";
 import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_received/index.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
@@ -287,6 +288,15 @@ export const schedule1Pdf: PdfFormDescriptor = {
     const alimony = assertTaxableAlimonySchedule1(
       fields.line2a_alimony_received,
       all?.alimony_received,
+      filer
+        ? [
+          filer.primarySSN,
+          ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+              filer.spouse?.ssn
+            ? [filer.spouse.ssn]
+            : []),
+        ]
+        : undefined,
     );
     const alimonyFields = alimony
       ? {
@@ -422,8 +432,14 @@ export const schedule1Pdf: PdfFormDescriptor = {
         : {}),
     }];
   },
-  appendSupplementalPages(document, fields, filer, allPending) {
-    return appendSchedule1OtherIncomeStatement(
+  async appendSupplementalPages(document, fields, filer, allPending) {
+    await appendSchedule1AlimonyStatement(
+      document,
+      fields,
+      filer,
+      allPending?.alimony_received,
+    );
+    await appendSchedule1OtherIncomeStatement(
       document,
       fields,
       filer,
