@@ -387,7 +387,6 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
 Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {
   for (
     const field of [
-      "line2a_alimony_received",
       "line8g_child_interest_dividends",
       "line8z_attorney_proceeds",
       "line13_depreciation",
@@ -400,6 +399,14 @@ Deno.test("Schedule 1 rejects unsupported sources without required filing facts"
       "source needs its TY2025 line identity",
     );
   }
+});
+
+Deno.test("Schedule 1 line 2a requires its dated alimony source", () => {
+  assertThrows(
+    () => schedule1.build({ line2a_alimony_received: 100 }),
+    Error,
+    "needs dated alimony agreement source",
+  );
 });
 
 Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {

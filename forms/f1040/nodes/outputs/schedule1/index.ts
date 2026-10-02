@@ -453,7 +453,6 @@ class Schedule1Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Schedule1Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (
-      (input.line2a_alimony_received ?? 0) !== 0 ||
       (input.line8g_child_interest_dividends ?? 0) !== 0 ||
       (input.line8z_attorney_proceeds ?? 0) !== 0 ||
       (input.line13_depreciation ?? 0) !== 0 ||

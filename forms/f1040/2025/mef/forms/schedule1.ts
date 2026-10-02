@@ -11,6 +11,7 @@ import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
+import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_received/index.ts";
 
 export interface Fields {
   form1099k_reported_error_or_loss?: number | null;
@@ -119,6 +120,10 @@ function buildIRS1040Schedule1(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  const alimony = assertTaxableAlimonySchedule1(
+    fields.line2a_alimony_received,
+    context?.pending?.alimony_received,
+  );
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (key === "line5_schedule_e" && Array.isArray(value)) {
@@ -198,6 +203,17 @@ function buildIRS1040Schedule1(
     }
     return element(tag, value);
   });
+  if (alimony) {
+    children.splice(
+      2,
+      0,
+      elements("AlimonyReceivedGrp", [
+        element("AlimonyReceivedAmt", alimony.amount),
+        element("DivorceOrSeparationAgreementDt", alimony.agreementMonth),
+      ]),
+      element("TotalAlimonyReceivedAmt", alimony.amount),
+    );
+  }
   return elements("IRS1040Schedule1", children);
 }
 
@@ -339,7 +355,6 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
       }
     }
     const unsupported = [
-      "line2a_alimony_received",
       "line8g_child_interest_dividends",
       "line8z_attorney_proceeds",
       "line13_depreciation",

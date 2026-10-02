@@ -609,6 +609,7 @@ function nonSsaIncome(input: AgiInput): number {
 function scheduleOnePartI(input: AgiInput): number {
   return (
     (input.line1_state_refund ?? 0) +
+    (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     sumField(input.line5_schedule_e) +

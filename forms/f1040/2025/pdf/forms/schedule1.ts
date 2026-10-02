@@ -11,6 +11,7 @@ import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
 import { appendSchedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
+import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_received/index.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
@@ -52,6 +53,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line1_state_refund",
     pdfField: "topmostSubform[0].Page1[0].f1_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line2a_alimony_received",
+    pdfField: "topmostSubform[0].Page1[0].f1_05[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line2b_alimony_agreement_month",
+    pdfField: "topmostSubform[0].Page1[0].f1_06[0]",
   },
   {
     kind: "text",
@@ -273,6 +284,17 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    const alimony = assertTaxableAlimonySchedule1(
+      fields.line2a_alimony_received,
+      all?.alimony_received,
+    );
+    const alimonyFields = alimony
+      ? {
+        print_line2b_alimony_agreement_month: `${
+          alimony.agreementMonth.slice(5)
+        }/${alimony.agreementMonth.slice(0, 4)}`,
+      }
+      : {};
     const unemploymentRows = all?.f1099g === undefined
       ? []
       : form1099gInputSchema.parse(all.f1099g).f1099gs;
@@ -383,10 +405,11 @@ export const schedule1Pdf: PdfFormDescriptor = {
     const rows = schedule1OtherIncomeRows(fields);
     const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
     if (rows.length === 0 && activityNotForProfit === 0) {
-      return [{ ...fields, ...repaymentFields }];
+      return [{ ...fields, ...alimonyFields, ...repaymentFields }];
     }
     return [{
       ...fields,
+      ...alimonyFields,
       ...repaymentFields,
       ...(activityNotForProfit > 0
         ? { line8j_f1099k_hobby_income: activityNotForProfit }

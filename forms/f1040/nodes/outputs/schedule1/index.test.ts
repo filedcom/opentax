@@ -268,7 +268,6 @@ Deno.test("schedule1: finalized detail lines reconcile to Part I and II totals",
 Deno.test("schedule1: legacy fields with no valid 2025 line stop finalization", () => {
   for (
     const input of [
-      { line2a_alimony_received: 100 },
       { line8g_child_interest_dividends: 100 },
       { line8z_attorney_proceeds: 100 },
       { line13_depreciation: 100 },
