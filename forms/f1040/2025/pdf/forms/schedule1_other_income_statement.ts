@@ -97,12 +97,23 @@ export async function appendSchedule1OtherIncomeStatement(
   startPage();
   for (const row of rows) {
     const lines = wrap(row.label);
-    if (y - lines.length * 13 < 90) startPage();
     const amount = Math.round(row.amount).toLocaleString("en-US");
     if (regular.widthOfTextAtSize(amount, size) > 60) {
       throw new Error("Schedule 1 line 8z statement amount cannot fit");
     }
     for (const [index, text] of lines.entries()) {
+      if (y < 90) {
+        startPage();
+        if (index > 0) {
+          page.drawText("Line 8z type continued from prior page", {
+            x: 40,
+            y,
+            size,
+            font: bold,
+          });
+          y -= 13;
+        }
+      }
       page.drawText(text, { x: 40, y, size, font: regular });
       if (index === 0) {
         page.drawText(amount, {

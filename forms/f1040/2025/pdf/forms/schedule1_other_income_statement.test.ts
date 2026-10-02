@@ -26,6 +26,26 @@ Deno.test("Schedule 1 PDF appends a source-reconciled line 8z continuation", asy
   assertEquals((await document.save()).length > 0, true);
 });
 
+Deno.test("Schedule 1 PDF carries one very long income type across pages", async () => {
+  const document = await PDFDocument.create();
+  await appendSchedule1OtherIncomeStatement(
+    document,
+    { line8z_other: 20, line8z_description: "SEE STATEMENT" },
+    filer,
+    {
+      f1099m_box3_other_income_sources: [{
+        description: Array(900).fill("sourced").join(" "),
+        amount: 20,
+        payer_name: "Synthetic Payer",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+      }],
+    },
+  );
+  assertEquals(document.getPageCount() > 1, true);
+  assertEquals((await document.save()).length > 0, true);
+});
+
 Deno.test("Schedule 1 PDF refuses a line 8z continuation with changed amount, label, or source", async () => {
   for (
     const [printed, raw] of [
