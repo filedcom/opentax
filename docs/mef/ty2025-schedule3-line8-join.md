@@ -21,3 +21,10 @@ box 2 source omitted from Schedule 3, rejects at either boundary. The native
 builder still links the credited Form 2439 documents; the Form 2439 descriptor
 checks the payer-issued Copy B identity and tax period. The shared Schedule 3
 check proves amount parity, not authenticity of the issued copy.
+
+Schedule 3 line 6j now also replays the Form 8911 personal-use credit
+calculation in both exporters. A positive line without Form 8911, a changed
+credit, or an omitted line when the retained source allows a positive credit
+rejects. The existing Form 8911 calculation supplies the property and
+tax-liability limits; this shared check establishes equality with the filed
+Schedule 3 amount, not authentication of property records or IRS acceptance.

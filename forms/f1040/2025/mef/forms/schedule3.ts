@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
+import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
 
 export interface Fields {
   line1_total?: number | null;
@@ -80,6 +81,10 @@ function buildIRS1040Schedule3(
   context?: MefBuildContext,
 ): string {
   assertSchedule3Line8Join(fields, context?.pending);
+  assertSchedule3Line6jSource(
+    fields.line6j_alt_fuel_vehicle_refueling,
+    context?.pending?.f8911,
+  );
   const line13aSource = assertSchedule3Line13aSource(
     fields.line13a_total,
     context?.pending?.f2439,

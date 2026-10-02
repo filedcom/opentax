@@ -1,6 +1,25 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule3 } from "./schedule3.ts";
 
+const form8911Source = {
+  cost: 1_000,
+  business_use_pct: 0,
+  property_description: "Home charging station",
+  property_us_address: {
+    line1: "1 Test Way",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  },
+  construction_began: "2025-01-01",
+  placed_in_service: "2025-06-01",
+  eligible_census_tract: true,
+  census_tract_geoid: "48021000100",
+  main_home_property: true,
+  regular_tax_before_credits: 162,
+  tentative_minimum_tax: 0,
+};
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),
@@ -158,10 +177,35 @@ Deno.test("line6c_adoption_credit maps to NonrefundableAdoptionCreditAmt", () =>
 });
 
 Deno.test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => {
-  const result = schedule3.build({ line6j_alt_fuel_vehicle_refueling: 162 });
+  const result = schedule3.build(
+    { line6j_alt_fuel_vehicle_refueling: 162 },
+    { pending: { f8911: form8911Source } },
+  );
   assertStringIncludes(
     result,
     "<TotalPersonalUsePartOfCrAmt>162</TotalPersonalUsePartOfCrAmt>",
+  );
+});
+
+Deno.test("Schedule 3 line 6j rejects a bare or changed Form 8911 credit", () => {
+  assertThrows(
+    () => schedule3.build({ line6j_alt_fuel_vehicle_refueling: 162 }),
+    Error,
+    "Form 8911",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line6j_alt_fuel_vehicle_refueling: 161 },
+        { pending: { f8911: form8911Source } },
+      ),
+    Error,
+    "differs from the sourced Form 8911",
+  );
+  assertThrows(
+    () => schedule3.build({}, { pending: { f8911: form8911Source } }),
+    Error,
+    "differs from the sourced Form 8911",
   );
 });
 

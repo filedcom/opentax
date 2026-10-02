@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleR } from "../../mef/forms/schedule_r.ts";
 import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
+import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -178,6 +179,10 @@ export const schedule3Pdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     assertSchedule3Line8Join(fields, allPending);
+    assertSchedule3Line6jSource(
+      fields.line6j_alt_fuel_vehicle_refueling,
+      allPending.f8911,
+    );
     assertSchedule3Line13aSource(fields.line13a_total, allPending.f2439);
     if (
       typeof fields.line6d_elderly_disabled_credit === "number" &&
