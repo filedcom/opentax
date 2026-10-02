@@ -32,6 +32,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
+import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
@@ -192,6 +193,7 @@ function buildReturnXml(
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
+  assertForm8858FilingSource(pending.f8858);
   if (pending.f1040?.dual_status_return_2025 === true) {
     throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
   }

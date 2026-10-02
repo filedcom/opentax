@@ -542,6 +542,10 @@ import {
   itemSchema as f8697ItemSchema,
 } from "../nodes/inputs/f8697/index.ts";
 import {
+  f8858,
+  inputSchema as f8858InputSchema,
+} from "../nodes/inputs/f8858/index.ts";
+import {
   f8866,
   itemSchema as f8866ItemSchema,
 } from "../nodes/inputs/f8866/index.ts";
@@ -927,6 +931,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f3115, itemSchema: f3115ItemSchema, isArray: true },
   { node: f4970, itemSchema: f4970ItemSchema, isArray: true },
   { node: f8697, itemSchema: f8697ItemSchema, isArray: true },
+  { node: f8858, inputSchema: f8858InputSchema, isArray: false },
   { node: f8866, itemSchema: f8866ItemSchema, isArray: true },
   {
     node: qbiAggregation,

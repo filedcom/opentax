@@ -33,6 +33,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
+import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertExtensionPaymentSource } from "../extension-payment-reconciliation.ts";
@@ -311,6 +312,7 @@ export async function buildPdfBytes(
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
 ): Promise<Uint8Array> {
+  assertForm8858FilingSource(pending.f8858);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
   if (normalized.f1040) {

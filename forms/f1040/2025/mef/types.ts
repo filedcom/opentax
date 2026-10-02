@@ -42,6 +42,7 @@ import type { inputSchema as form8949SourceInputSchema } from "../../nodes/input
 import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs/f59e/index.ts";
 import type { inputSchema as form8908InputSchema } from "../../nodes/inputs/f8908/index.ts";
 import type { inputSchema as f453aInterestInputSchema } from "../../nodes/inputs/f453a_interest/index.ts";
+import type { inputSchema as f8858InputSchema } from "../../nodes/inputs/f8858/index.ts";
 import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/form1116_prior_carryover/index.ts";
 import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
 import type { PublicForm8839Source } from "../../nodes/intermediate/forms/form8839/public_source.ts";
@@ -105,6 +106,8 @@ export type MefFormsPending =
     f8908?: z.infer<typeof form8908InputSchema>;
     // Section 453A origin-year and obligation inventory supports Schedule 2 line 15.
     f453a_interest?: z.infer<typeof f453aInterestInputSchema>;
+    // Category 1 foreign-activity filing facts remain identifiable at export.
+    f8858?: z.infer<typeof f8858InputSchema>;
     // Accepted prior Form 1116 Schedule B rows remain available for carryover replay.
     form1116_prior_carryover?: z.infer<
       typeof form1116PriorCarryoverInputSchema
