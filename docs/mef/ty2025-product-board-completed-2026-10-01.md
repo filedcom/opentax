@@ -497,6 +497,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## IRS ATS and delivery
 
+- [x] Squash-merge [PR #59](https://github.com/filedcom/opentax/pull/59) as `5f47829f` and publish bounded CLI [v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) from that exact tested tree. The unchanged release workflow passed five platform builds and published five assets. The downloaded macOS ARM asset matched its published SHA-256 and passed the synthetic W-2 → finalized MeF → two-page PDF smoke at version 2.0.6. Manual page review, wider coverage decisions, IRS ATS acceptance, and a filing-ready release remain open.
+
 - [x] Squash-merge PR #56 as `48f69237` and publish the bounded CLI [v2.0.5](https://github.com/filedcom/opentax/releases/tag/v2.0.5) from that commit with five platform binaries. The focused pre-merge export/archive/PDF suite passed 34/34; the downloaded macOS ARM release binary reported version 2.0.5 and 211 registered nodes, exported a synthetic W-2 MeF document valid against the local TY2025 v5.4 schema, and produced a parseable two-page PDF. The GitHub Actions release run passed. This confirms the CLI artifact and supported source-backed route only; manual packet review, IRS ATS acceptance, and a filing-ready release remain open.
 
 ## 2026-10-01 follow-up implementation batch (unrun)
