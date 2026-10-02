@@ -1599,7 +1599,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-geothermal-general-business-credit",
     inputs: {
       general: singleGeneral,
-      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(150_000, 30_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
       f8835: [geothermalFacility(
         "Geothermal production site",
         "10 Plant Rd",
