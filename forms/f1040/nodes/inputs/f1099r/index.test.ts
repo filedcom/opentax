@@ -2114,6 +2114,50 @@ Deno.test("f1099r.compute: partial IRA rollover marks line 4c and taxes the rema
   assertEquals(input.line4c_ira_rollover, true);
 });
 
+Deno.test("f1099r.compute: early IRA rollover sends only unrolled income to Form 5329", () => {
+  const rollover = {
+    not_inherited_ira_confirmed: true as const,
+    not_required_minimum_distribution_confirmed: true as const,
+    rollover_eligibility_review_reference: "reviewed-early-ira-eligibility",
+    source_ira_type: "traditional" as const,
+    destination: "ira" as const,
+    destination_ira_type: "traditional" as const,
+    distributed_on: "2025-09-01",
+    completed_on: "2025-09-30",
+    last_ira_to_ira_rollover_on: null,
+  };
+  const source = minimalIraItem({
+    box7_distribution_code: DistributionCode.Code1,
+    box1_gross_distribution: 10_000,
+    box2a_taxable_amount: 10_000,
+    ira_rollover: rollover,
+  });
+  const partial = compute([{
+    ...source,
+    rollover_code: RolloverCode.X,
+    partial_rollover_amount: 6_000,
+  }]);
+  assertEquals(f1040Input(partial).line4a_ira_gross, 10_000);
+  assertEquals(f1040Input(partial).line4b_ira_taxable, 4_000);
+  assertEquals(f1040Input(partial).line4c_ira_rollover, true);
+  assertEquals(
+    (partial.outputs.find((o) => o.nodeType === "form5329")!.fields
+      .owner_entries as Array<Record<string, unknown>>)[0]!
+      .early_distribution,
+    4_000,
+  );
+
+  const full = compute([{ ...source, rollover_code: RolloverCode.S }]);
+  assertEquals(f1040Input(full).line4b_ira_taxable, 0);
+  assertEquals(f1040Input(full).line4c_ira_rollover, true);
+  assertEquals(
+    (full.outputs.find((o) => o.nodeType === "form5329")!.fields
+      .owner_entries as Array<Record<string, unknown>>)[0]!
+      .early_distribution,
+    0,
+  );
+});
+
 Deno.test("f1099r.compute: code S taxable SIMPLE IRA distribution reaches the 25% Form 5329 line", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 8_000,

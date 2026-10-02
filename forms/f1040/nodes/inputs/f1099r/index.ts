@@ -1271,6 +1271,10 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
         ...form8606PartIInput(item),
         nondeductible_contributions: 0,
       })
+      // Form 5329 line 1 uses the early distribution included in income.
+      // A confirmed IRA rollover removes its rolled portion from that amount.
+      : isIraRollover(item)
+      ? effectiveTaxableAmount(item, 0, 0)
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
       owner_entries: [{
