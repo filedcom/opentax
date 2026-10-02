@@ -42,7 +42,7 @@ export async function buildForm8978Statements(
     }).format(value);
   return await Promise.all(input.filings.map(async (filing, index) => {
     const calculation = calculateFiling(filing);
-    const pdf = await PDFDocument.create();
+    const pdf = await PDFDocument.create({ updateMetadata: false });
     const regular = await pdf.embedFont(StandardFonts.Helvetica);
     const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     let page: PDFPage = pdf.addPage([612, 792]);

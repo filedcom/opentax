@@ -669,7 +669,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ".pdf-cache",
       );
       if (!base) throw new Error("Schedule A (Form 4136) did not render");
-      const doc = await PDFDocument.load(base);
+      const doc = await PDFDocument.load(base, { updateMetadata: false });
       await form4136ScheduleAPdf.decoratePages?.(
         doc,
         doc.getPages(),

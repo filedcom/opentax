@@ -345,6 +345,27 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
   }
 });
 
+Deno.test("buildPdfBytes: the same filled IRS form has stable bytes across builds", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf([
+        "topmostSubform[0].Page1[0].f1_47[0]",
+      ]),
+    );
+    const pending = { f1040: printable1040({ line1a_wages: 75_000 }) };
+    const first = await buildPdfBytes(pending, mockFiler, tmpDir);
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    const second = await buildPdfBytes(pending, mockFiler, tmpDir);
+    assertEquals(first, second);
+    assertEquals((await PDFDocument.load(second)).getPageCount(), 1);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {

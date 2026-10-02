@@ -210,7 +210,10 @@ export async function fillFormPdf(
   }
 
   const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
-  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const doc = await PDFDocument.load(pdfBytes, {
+    ignoreEncryption: true,
+    updateMetadata: false,
+  });
   const form = doc.getForm();
 
   // Fill computed fields
@@ -450,7 +453,7 @@ export async function buildPdfBytes(
     throw new Error("Form 3800 PDF parts differ from the prepared MeF return");
   }
   assertAttachmentCoverage(normalized, "pdf");
-  const merged = await PDFDocument.create();
+  const merged = await PDFDocument.create({ updateMetadata: false });
 
   for (const descriptor of ALL_PDF_FORMS) {
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
@@ -485,7 +488,9 @@ export async function buildPdfBytes(
       );
       if (!filledBytes) continue;
 
-      const filledDoc = await PDFDocument.load(filledBytes);
+      const filledDoc = await PDFDocument.load(filledBytes, {
+        updateMetadata: false,
+      });
       const pageIndices = [
         ...(descriptor.pageIndices?.(instance) ??
           filledDoc.getPageIndices()),
