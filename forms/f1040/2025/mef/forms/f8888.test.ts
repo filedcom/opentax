@@ -161,6 +161,18 @@ Deno.test("Form 8888 rejects incomplete account fields or a zero allocation", ()
   );
 });
 
+Deno.test("Form 8888 native document rejects a checksum-invalid routing number", () => {
+  assertThrows(
+    () =>
+      build({
+        account_1: first,
+        account_2: { ...second, routing_number: "211000021" },
+      }),
+    Error,
+    "fails the banking checksum",
+  );
+});
+
 Deno.test("Form 8888 rejects duplicate or unowned deposit accounts", () => {
   assertThrows(
     () =>

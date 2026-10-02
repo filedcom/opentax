@@ -80,6 +80,17 @@ export function reconcileForm8888(
     .filter((account): account is Form8888Source["account_1"] =>
       account !== undefined
     );
+  for (const account of accounts) {
+    const checksum = account.routing_number.split("").reduce(
+      (sum, digit, index) => sum + Number(digit) * [3, 7, 1][index % 3],
+      0,
+    );
+    if (checksum === 0 || checksum % 10 !== 0) {
+      throw new Error(
+        "Form 8888 account routing number fails the banking checksum",
+      );
+    }
+  }
   assertAccountOwnership(accounts, filer);
   const total = accounts.reduce((sum, account) => sum + account.amount, 0);
   if (
