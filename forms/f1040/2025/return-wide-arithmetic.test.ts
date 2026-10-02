@@ -63,6 +63,52 @@ Deno.test("Form 1040 export replays retained wage and total-income components", 
     line1z_total_wages: 40_000,
     line9_total_income: 40_000,
   });
+  assertReturnWideArithmetic({
+    line2b_taxable_interest: 500,
+    line9_total_income: 500,
+  });
+  assertThrows(
+    () =>
+      assertReturnWideArithmetic({
+        line2b_taxable_interest: 500,
+        line9_total_income: 501,
+      }),
+    Error,
+    "line 9",
+  );
+  assertThrows(
+    () =>
+      irs1040.build({
+        line2b_taxable_interest: 500,
+        line9_total_income: 501,
+      }, { pending: {} }),
+    Error,
+    "line 9",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({
+        line2b_taxable_interest: 500,
+        line9_total_income: 501,
+      }, {}),
+    Error,
+    "line 9",
+  );
+  assertReturnWideArithmetic({
+    line1a_wages: 1_000,
+    line2b_taxable_interest: 500,
+    line9_total_income: 1_500,
+  });
+  assertThrows(
+    () =>
+      assertReturnWideArithmetic({
+        line1a_wages: 1_000,
+        line2b_taxable_interest: 500,
+        line9_total_income: 500,
+      }),
+    Error,
+    "line 9",
+  );
 });
 
 Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {

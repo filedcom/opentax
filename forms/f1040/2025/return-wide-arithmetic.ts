@@ -51,17 +51,6 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 1z differs from lines 1a through 1h");
   }
 
-  const income = components([
-    "line1z_total_wages",
-    "line2b_taxable_interest",
-    "line3b_ordinary_dividends",
-    "line4b_ira_taxable",
-    "line5b_pension_taxable",
-    "line6b_ss_taxable",
-    "line7_capital_gain",
-    "line7a_cap_gain_distrib",
-    "line8_additional_income",
-  ]);
   const incomeComponents = components([
     "line2b_taxable_interest",
     "line3b_ordinary_dividends",
@@ -74,10 +63,13 @@ export function assertReturnWideArithmetic(
   ]);
   const line9 = amount("line9_total_income");
   if (
-    line9 !== undefined && line1z !== undefined &&
-    (wages !== undefined || incomeComponents !== undefined) &&
-    income !== undefined &&
-    !matches(line9, income)
+    line9 !== undefined &&
+    (line1z !== undefined || wages !== undefined ||
+      incomeComponents !== undefined) &&
+    !matches(
+      line9,
+      (line1z ?? wages ?? 0) + (incomeComponents ?? 0),
+    )
   ) {
     throw new Error("Form 1040 line 9 differs from its income lines");
   }
