@@ -356,6 +356,29 @@ Deno.test("A2A package rechecks the archived Form 1040 document inventory", asyn
   );
 });
 
+Deno.test("A2A package rejects a processing date changed after archive preparation", async () => {
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [],
+  });
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          processingDate: new Date("2026-09-27T10:00:00Z"),
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "Julian day",
+  );
+});
+
 Deno.test("A2A package replays source, XML, and PDF digests after joint archive changes", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();

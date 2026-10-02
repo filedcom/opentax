@@ -87,6 +87,7 @@ function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
 }
 
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+  validateSubmissionIdentity(archive);
   assertPreparedBundleDigests(archive);
   assertPreparedDocumentInventory(archive.bundle);
   assertPreparedAttachmentMetadata(archive.bundle);
