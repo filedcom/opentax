@@ -8215,4 +8215,73 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "The 38 credit after AGI phaseout joins Schedule 3 line 6d and Form 1040 line 20",
     ],
   },
+  {
+    id: "single-two-employers-excess-social-security",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(100_000, 0, "First Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }, {
+        ...wage(100_000, 0, "Second Example Employer", "98-7654321"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule3"],
+    reviewFocus: [
+      "Two distinct employer W-2 sources each report 100,000 of wages and 6,200 Social Security withheld",
+      "The 1,482 excess Social Security withholding reaches Schedule 3 line 11 and Form 1040 line 31 once",
+    ],
+  },
+  {
+    id: "single-excess-social-security-plus-fuel-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(100_000, 0, "First Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }, {
+        ...wage(100_000, 0, "Second Example Employer", "98-7654321"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f4136: {
+        claimant_context: "business",
+        additional_activities: [],
+        primary_activity_has_most_credit: true,
+        business: {
+          qualifying_business_activity: true,
+          claimant_is_ultimate_purchaser: true,
+          business_name: "Example Farm",
+          principal_activity_code: "111000",
+          equipment_make: "Example",
+          equipment_model: "Tractor",
+          equipment_type: "farm tractor",
+          purchase_records_confirmed: true,
+          no_duplicate_excise_claim: true,
+        },
+        claims: [{
+          line: "1a",
+          unit: "gallons",
+          qualified_quantity: 1_000,
+          actual_fuel_cost: 3_000,
+          not_highway_vehicle: true,
+          not_noncommercial_motorboat: true,
+        }, {
+          line: "3b",
+          unit: "gallons",
+          qualified_quantity: 1_000,
+          actual_fuel_cost: 4_000,
+          undyed_fuel_confirmed: true,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f4136", "schedule3"],
+    reviewFocus: [
+      "Two employer W-2 sources produce 1,482 on Schedule 3 line 11",
+      "The separate Form 4136 fuel record produces 426 on Schedule 3 line 12",
+      "Schedule 3 line 15 and Form 1040 line 31 sum these payments to 1,908",
+    ],
+  },
 ];

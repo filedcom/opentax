@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-176 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+178 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -406,9 +406,21 @@ for owner identity, line amounts, selected disability box, and legibility.
 Artifacts are under
 `.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-5/`.
 The synthetic childcare contracts and signed physician statement need
-external authentication. The remaining 28 keys still need source-backed
-coverage or a documented fail-closed scope decision; the full 176-case render
-batch remains open.
+external authentication.
+
+Two W-2-backed cases add filled-PDF review of Schedule 3 payment aggregation.
+Two distinct $100,000 employers withhold $12,400 of Social Security tax,
+producing $1,482 of excess withholding on Schedule 3 line 11 and Form 1040
+line 31. The second case adds a separately sourced $426 Form 4136 fuel credit
+on Schedule 3 line 12, bringing line 15 and Form 1040 line 31 to $1,908.
+Focused graph/native tests, prepared-bundle TY2025 v5.4 XSD validation, and
+three- and seven-page PDF builds passed. Schedule 3, Form 1040 page 2, and
+Form 4136 target pages were rendered and inspected for source identity,
+amounts, page order, and legibility. Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-02-extra-coverage-6/`.
+The remaining 28 registry keys still need source-backed coverage or a
+documented fail-closed scope decision; the full 178-case render batch remains
+open.
 
 The later `single-refinanced-car-loan-schedule1a` source case keeps one VIN and
 splits $4,000 of qualified interest between the original 2025 purchase loan

@@ -119,6 +119,19 @@ for (const fixture of pdfReviewFixtures) {
         return;
       }
       const pending = buildPending(result.pending);
+      if (
+        fixture.id === "single-two-employers-excess-social-security" ||
+        fixture.id === "single-excess-social-security-plus-fuel-credit"
+      ) {
+        assertEquals(pending.schedule3?.line11_excess_ss, 1_482);
+        const fuel = fixture.id ===
+            "single-excess-social-security-plus-fuel-credit"
+          ? 426
+          : 0;
+        assertEquals(pending.schedule3?.line12_fuel_tax_credit ?? 0, fuel);
+        assertEquals(pending.schedule3?.line15_total, 1_482 + fuel);
+        assertEquals(pending.f1040?.line31_additional_payments, 1_482 + fuel);
+      }
       if (fixture.id === "single-w2-overpayment-applied-2026") {
         const filed = pending.f1040 as Record<string, number>;
         assertEquals(filed.line36_applied_to_2026_estimated_tax, 500);
