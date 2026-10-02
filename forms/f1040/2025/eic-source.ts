@@ -65,6 +65,16 @@ export function assertEicSource(
     return typeof current === "number" ? current : 0;
   };
   const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
+  const form4797 = pending?.form4797 as Record<string, unknown> | undefined;
+  if (
+    form4797?.k1_box11_line10_rows !== undefined &&
+    (!Array.isArray(form4797.k1_box11_line10_rows) ||
+      form4797.k1_box11_line10_rows.length > 0)
+  ) {
+    throw new Error(
+      "Form 1040 EIC needs passive-activity classification for partnership K-1 Form 4797 line 10 amounts",
+    );
+  }
   const allowedPartI = typeof agiFinal?.allowed_part_i === "number"
     ? agiFinal.allowed_part_i
     : undefined;

@@ -40,3 +40,32 @@ Deno.test("export rejects a positive EIC without reviewed prior history", () => 
     "reviewed prior-disallowance history",
   );
 });
+
+Deno.test("export rejects EIC when K-1 Form 4797 line 10 passive character is unknown", () => {
+  for (const amount of [12_000, -500]) {
+    assertThrows(
+      () =>
+        assertEicSource("single", 500, true, {
+          eitc: {
+            credit_amount: 500,
+            qualifying_children: 0,
+            investment_income_floor: 0,
+          },
+          form4797: {
+            k1_box11_line10_rows: [{
+              partnership_name: "Sample Partnership",
+              partnership_ein: "123456789",
+              source_document_reference: "reviewed-k1",
+              code: "R",
+              gain_loss: amount,
+              statement_reference: "box11-statement",
+              recipient_tin: "123456789",
+              character_workpaper_reference: "ordinary-character-workpaper",
+            }],
+          },
+        }),
+      Error,
+      "needs passive-activity classification for partnership K-1 Form 4797 line 10 amounts",
+    );
+  }
+});
