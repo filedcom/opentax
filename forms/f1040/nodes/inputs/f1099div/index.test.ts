@@ -143,7 +143,7 @@ Deno.test("1099-DIV changed issued copy cannot double dividends or withholding",
   assertThrows(
     () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
     Error,
-    "repeats the same identified payer and source reference",
+    "repeats the same issued-copy source reference",
   );
   assertThrows(
     () =>
@@ -153,7 +153,7 @@ Deno.test("1099-DIV changed issued copy cannot double dividends or withholding",
         nominee_distribution: { box1a: 100, box4: 5 },
       }]),
     Error,
-    "repeats the same identified payer and source reference",
+    "repeats the same issued-copy source reference",
   );
   const twoCopies = compute([
     issued,
@@ -164,6 +164,19 @@ Deno.test("1099-DIV changed issued copy cannot double dividends or withholding",
     400,
   );
   assertEquals(fieldsOf(twoCopies.outputs, f1040)?.line25b_withheld_1099, 30);
+});
+
+Deno.test("1099-DIV rejects one issued copy repeated without a payer TIN", () => {
+  const issued = minimalItem({
+    source_document_reference: "issued-dividend-copy-no-tin",
+    box1a: 200,
+    box4: 15,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
 });
 
 Deno.test("f1099div: sourced foreign qualified dividends contradict a zero-preference review", () => {

@@ -68,8 +68,7 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
           },
         ],
       },
-      message:
-        "1099-DIV repeats the same identified payer and source reference",
+      message: "1099-DIV repeats the same issued-copy source reference",
     },
     {
       f1099oid: {
@@ -107,6 +106,41 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
     );
     await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
   }
+});
+
+Deno.test("1099-DIV repeated issued copy without payer TIN rejects native and PDF export", async () => {
+  const pending = {
+    f1099div: {
+      f1099divs: [
+        {
+          source_document_reference: "issued-copy-no-tin",
+          isNominee: false,
+          box11: false,
+          box1a: 200,
+          box4: 15,
+        },
+        {
+          source_document_reference: "issued-copy-no-tin",
+          isNominee: false,
+          box11: false,
+          box1a: 250,
+          box4: 20,
+        },
+      ],
+    },
+  };
+  const message = "1099-DIV repeats the same issued-copy source reference";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
 Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {

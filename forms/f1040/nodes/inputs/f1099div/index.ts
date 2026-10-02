@@ -151,14 +151,11 @@ const nomineeFields = [
 export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
   const seen = new Set<string>();
   for (const item of items) {
-    if (!item.source_document_reference || !item.payerTin) continue;
-    const key = JSON.stringify([
-      item.source_document_reference,
-      item.payerTin,
-    ]);
+    if (!item.source_document_reference) continue;
+    const key = item.source_document_reference;
     if (seen.has(key)) {
       throw new Error(
-        "1099-DIV repeats the same identified payer and source reference; corrected copies need a reviewed single current row",
+        "1099-DIV repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
       );
     }
     seen.add(key);
