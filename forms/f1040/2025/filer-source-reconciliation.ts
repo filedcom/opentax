@@ -1418,15 +1418,23 @@ export function assertGeneral1040DepositSource(
   const routing = general?.bank_routing_number;
   const account = general?.bank_account_number;
   const type = general?.bank_account_type;
+  const filed = pending.f1040 as Record<string, unknown> | undefined;
   if (routing === undefined && account === undefined && type === undefined) {
     if (filer?.bankAccount) {
       throw new Error(
         "Form 1040 direct deposit needs the retained general bank source",
       );
     }
+    if (
+      ["bank_routing_number", "bank_account_number", "bank_account_type"]
+        .some((key) => filed?.[key] !== undefined && filed?.[key] !== null)
+    ) {
+      throw new Error(
+        "Form 1040 filed direct-deposit details need the retained general bank source",
+      );
+    }
     return;
   }
-  const filed = pending.f1040 as Record<string, unknown> | undefined;
   const expectedType = type === "checking"
     ? AccountType.Checking
     : type === "savings"

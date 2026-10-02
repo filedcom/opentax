@@ -1020,6 +1020,55 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     ...deductionIndicators,
   );
 
+  const bank = context?.filer?.bankAccount;
+  const hasForm8888 = context?.pending?.f8888 !== undefined;
+  if (bank && hasForm8888) {
+    throw new Error(
+      "Form 1040 refund cannot use both direct deposit and Form 8888",
+    );
+  }
+  if (bank || hasForm8888) {
+    const refundIndex = incomeChildren.findIndex((xml) =>
+      xml.startsWith("<RefundAmt>")
+    );
+    const refundAmount = resolveNumber(fields.line35a_refund);
+    if (
+      refundIndex < 0 || refundAmount === undefined || refundAmount <= 0
+    ) {
+      throw new Error(
+        "Form 1040 refund distribution requires a positive refund",
+      );
+    }
+    const form8888Ids = context?.documentIdsByPendingKey?.f8888 ?? [];
+    if (
+      hasForm8888 && context?.phase === "final" &&
+      form8888Ids.length !== 1
+    ) {
+      throw new Error(
+        "Form 1040 Form 8888 indicator needs one linked Form 8888",
+      );
+    }
+    incomeChildren.splice(
+      refundIndex + 1,
+      0,
+      hasForm8888
+        ? element(
+          "Form8888Ind",
+          "X",
+          form8888Ids.length === 1
+            ? {
+              referenceDocumentId: form8888Ids[0],
+              referenceDocumentName: "IRS8888",
+            }
+            : undefined,
+        )
+        : "",
+      bank ? element("RoutingTransitNum", bank.routingNumber) : "",
+      bank ? element("BankAccountTypeCd", bank.accountType) : "",
+      bank ? element("DepositorAccountNum", bank.accountNumber) : "",
+    );
+  }
+
   // RefundProductCd is REQUIRED by IRS1040.xsd §1894 (minOccurs defaults to 1).
   // "NO FINANCIAL PRODUCT" indicates the filer is not using a refund anticipation
   // loan or refund transfer product — the correct value for direct refunds.
