@@ -97,6 +97,7 @@ Deno.test("Schedule SE filled PDF prints the sole spouse farm proprietor", async
       line_a_principal_crop_activity: "GRAIN FARMING",
       line_b_agricultural_activity_code: "111100" as const,
       line_e_material_participation: true,
+      line_f_made_1099_payments: false,
       accounting_method: "cash" as const,
       line1_sales_livestock_resale: 0,
       line2_sales_products_raised: 50_000,

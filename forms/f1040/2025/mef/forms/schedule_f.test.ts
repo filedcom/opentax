@@ -10,11 +10,52 @@ function farm(overrides: Partial<ScheduleFItem> = {}): ScheduleFItem {
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100",
     line_e_material_participation: true,
+    line_f_made_1099_payments: false,
     accounting_method: "cash",
     line1_sales_livestock_resale: 0,
     ...overrides,
   };
 }
+
+Deno.test("Schedule F native export requires line F and conditional line G answers", () => {
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_made_1099_payments: undefined })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_made_1099_payments: true })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm({ line_f_filed_1099s: false })],
+      }, { filer: testFiler() }),
+    Error,
+    "required Forms 1099 answers",
+  );
+  const [xml] = scheduleF.build({
+    schedule_fs: [
+      farm({ line_f_made_1099_payments: true, line_f_filed_1099s: false }),
+    ],
+  }, { filer: testFiler() });
+  assertStringIncludes(
+    xml,
+    "<RequiredToFileForms1099Ind>true</RequiredToFileForms1099Ind>",
+  );
+  assertStringIncludes(
+    xml,
+    "<RequiredForms1099FiledInd>false</RequiredForms1099FiledInd>",
+  );
+});
 
 Deno.test("Schedule F native header uses the named spouse proprietor", () => {
   const jointFiler = {
@@ -240,6 +281,7 @@ Deno.test("Schedule F emits accrual Part III and links its own CCC statement", (
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
+        line_f_made_1099_payments: false,
         accounting_method: "accrual",
         part_iii: {
           line37_sales_products: 10_000,

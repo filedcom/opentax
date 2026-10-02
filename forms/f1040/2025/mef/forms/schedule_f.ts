@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  assertScheduleF1099Answers,
   assertScheduleFLossAtRiskAnswer,
   calculateScheduleFAtRiskNet,
   computeAccrualIncome,
@@ -39,6 +40,7 @@ function buildFarm(
   accrualLoanStatementId?: string,
   wotcReduction = 0,
 ): string {
+  assertScheduleF1099Answers(item);
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule F ${index + 1} needs filer identity`);
   if (

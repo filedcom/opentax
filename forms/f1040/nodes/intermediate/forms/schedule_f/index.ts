@@ -283,6 +283,18 @@ export const inputSchema = z.object({
 
 export type ScheduleFItem = z.infer<typeof itemSchema>;
 
+export function assertScheduleF1099Answers(item: ScheduleFItem): void {
+  if (
+    typeof item.line_f_made_1099_payments !== "boolean" ||
+    (item.line_f_made_1099_payments &&
+      typeof item.line_f_filed_1099s !== "boolean") ||
+    (!item.line_f_made_1099_payments &&
+      item.line_f_filed_1099s !== undefined)
+  ) {
+    throw new Error("Schedule F needs required Forms 1099 answers");
+  }
+}
+
 export function laborLessEmploymentCredits(
   item: ScheduleFItem,
   wotcReduction = 0,
