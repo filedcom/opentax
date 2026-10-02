@@ -222,6 +222,7 @@ const qualifiedForm4972Source = {
     f1099rs: [{
       payer_name: "Qualified Plan",
       payer_ein: "123456789",
+      recipient_ssn: "123456789",
       source_document_reference: "qualified-4972-source",
       box1_gross_distribution: 30_000,
       box2a_taxable_amount: 30_000,
