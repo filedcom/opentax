@@ -88,10 +88,27 @@ for (const fixture of pdfReviewFixtures) {
         return;
       }
       const pending = buildPending(result.pending);
+      if (fixture.id === "single-w2-overpayment-applied-2026") {
+        const filed = pending.f1040 as Record<string, number>;
+        assertEquals(filed.line36_applied_to_2026_estimated_tax, 500);
+        assertEquals(
+          filed.line35a_refund,
+          filed.line34_overpayment - 500 -
+            (filed.line38_underpayment_penalty ?? 0),
+        );
+        assertEquals(
+          irs1040Pdf.projectFields?.(filed, result.pending)
+            ?.line36_applied_to_2026_estimated_tax,
+          500,
+        );
+      }
       const xml = fixture.id === "single-withheld-w2g" ||
           fixture.id === "single-partnership-code-k-and-w2g"
         ? await withheldW2GXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
+      if (fixture.id === "single-w2-overpayment-applied-2026") {
+        assertStringIncludes(xml, "<AppliedToEsTaxAmt>500</AppliedToEsTaxAmt>");
+      }
       if (fixture.id === "single-section-a-capital-gain-reduction-gift") {
         assertEquals(
           result.pending.schedule_a.line_12_noncash_contributions,

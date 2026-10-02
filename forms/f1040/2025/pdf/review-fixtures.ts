@@ -352,6 +352,22 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-overpayment-applied-2026",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        apply_overpayment_to_2026_estimated_tax_amount: 500,
+      },
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 36 prints the filer-owned $500 application to 2026 estimated tax",
+      "Line 35a refund is exactly $500 below the available overpayment; line 34 and withholding remain unchanged",
+    ],
+  },
+  {
     id: "single-w2-eic-opt-out",
     inputs: {
       general: {

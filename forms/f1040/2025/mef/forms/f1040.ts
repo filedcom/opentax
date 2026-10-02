@@ -3,6 +3,7 @@ import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
+import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import {
   DependentCreditCategory,
@@ -139,6 +140,7 @@ export interface Fields {
   line33_total_payments?: number | null;
   line34_overpayment?: number | null;
   line35a_refund?: number | null;
+  line36_applied_to_2026_estimated_tax?: number | null;
   line37_amount_owed?: number | null;
   line38_underpayment_penalty?: number | null;
 }
@@ -211,6 +213,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line33_total_payments", "TotalPaymentsAmt"],
   ["line34_overpayment", "OverpaidAmt"],
   ["line35a_refund", "RefundAmt"],
+  ["line36_applied_to_2026_estimated_tax", "AppliedToEsTaxAmt"],
   ["line37_amount_owed", "OwedAmt"],
   ["line38_underpayment_penalty", "EsPenaltyAmt"],
 ];
@@ -454,6 +457,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     context?.pending?.general as Record<string, unknown> | undefined,
     context?.filer,
   );
+  assertLine36EstimatedTaxSource(fields, context?.pending);
   assertPresidentialCampaignSource(fields, context?.pending);
   assertReturnWideArithmetic(fields);
   assertEstimatedPaymentLine26(fields, context?.pending);

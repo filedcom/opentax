@@ -379,6 +379,9 @@ export const inputSchema = z.object({
   bank_routing_number: z.string().length(9).optional(),
   bank_account_number: z.string().min(4).max(17).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
+  // Form 1040 line 36: irrevocable application to this filer's 2026 account.
+  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+    .optional(),
   // Dependents
   dependents: z.array(dependentSchema).optional(),
 });
@@ -1117,6 +1120,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "bank_routing_number", input.bank_routing_number);
   addIfDefined(fields, "bank_account_number", input.bank_account_number);
   addIfDefined(fields, "bank_account_type", input.bank_account_type);
+  addIfDefined(
+    fields,
+    "apply_overpayment_to_2026_estimated_tax_amount",
+    input.apply_overpayment_to_2026_estimated_tax_amount,
+  );
 
   return fields;
 }

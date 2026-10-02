@@ -62,6 +62,8 @@ const inputSchema = z.object({
   bank_routing_number: z.string().length(9).optional(),
   bank_account_number: z.string().min(4).max(17).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
+  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+    .optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
   schedule_r_disability_qualified: z.literal(true).optional(),
@@ -261,6 +263,8 @@ const inputSchema = z.object({
   line34_overpayment: z.number().nonnegative().optional(),
   // Line 35a — Amount of refund
   line35a_refund: z.number().nonnegative().optional(),
+  // Line 36 — overpayment credited to this filer's 2026 estimated tax.
+  line36_applied_to_2026_estimated_tax: z.number().int().positive().optional(),
   // Line 37 — Amount owed (24 - 33)
   line37_amount_owed: z.number().nonnegative().optional(),
   // Line 38 — Estimated tax penalty (Form 2210) / amount paid with extension
@@ -1024,11 +1028,22 @@ function assembleReturn(
 
   if (balance >= 0) {
     result.line34_overpayment = balance;
-    result.line35a_refund = Math.max(0, balance - computed_line38);
+    const applied = input.apply_overpayment_to_2026_estimated_tax_amount ?? 0;
+    const available = Math.max(0, balance - Math.round(computed_line38));
+    if (applied > available) {
+      throw new Error(
+        "Form 1040 line 36 application exceeds overpayment after estimated-tax penalty",
+      );
+    }
+    if (applied > 0) result.line36_applied_to_2026_estimated_tax = applied;
+    result.line35a_refund = available - applied;
     if (computed_line38 > balance) {
       result.line37_amount_owed = computed_line38 - balance;
     }
   } else {
+    if (input.apply_overpayment_to_2026_estimated_tax_amount !== undefined) {
+      throw new Error("Form 1040 line 36 needs an overpayment");
+    }
     result.line37_amount_owed = Math.abs(balance) + computed_line38;
   }
 

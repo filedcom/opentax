@@ -17,6 +17,7 @@ import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
+import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
 import { physicalPresenceFilingSchema } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import {
@@ -623,6 +624,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_31[0]",
   },
   {
+    kind: "text",
+    domainKey: "line36_applied_to_2026_estimated_tax",
+    pdfField: "topmostSubform[0].Page2[0].f2_34[0]",
+  },
+  {
     kind: "checkbox",
     domainKey: "print_form8888_attached",
     // The 2025 line 35a attachment box is c2_15 at x467.2, y290.
@@ -741,6 +747,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       fields,
       allPending?.general as Record<string, unknown> | undefined,
     );
+    assertLine36EstimatedTaxSource(fields, allPending);
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
     const printLine1hType = line1hType(fields, allPending);
