@@ -41,6 +41,13 @@ zero established by this inventory**. No exact supported-route count can be
 derived from registry or literal counts; the per-row trigger/source/output
 review and final validation are still open.
 
+Reproduce the live registry counts with
+`deno eval 'import {ALL_MEF_FORMS} from "./forms/f1040/2025/mef/forms/index.ts"; import {ALL_PDF_FORMS} from "./forms/f1040/2025/pdf/forms/index.ts"; console.log(ALL_MEF_FORMS.length, ALL_PDF_FORMS.length)'`.
+The census table independently has 211 IRS-root rows: 122 marked `Yes`
+and 89 marked `No`. The 116/six split is a source-file classification, not a
+registry or taxpayer-claim count. Recheck those file classes whenever a staged
+builder is registered or a root token moves between files.
+
 The earlier registered-document matrix omitted Form 2106 and the six newly
 registered Forms 8844, 8864, 8881, 8882, 8941 and 8994; its seven new rows
 now account for 145/145 entries. The root census had ten stale `No` flags:
@@ -93,7 +100,12 @@ spouse language request has a typed public input, native serializer, and
 one-page-per-person PDF projection. A joint source return now passes local
 TY2025 v5.4 full-return XSD with two distinct LEP documents, and all four
 PDF pages were inspected for owner identity and separate language selections.
-IRS business-rule and ATS gates remain open. This is not an exclusion decision.
+Codes 001–020 retain that bounded path. Code 000 cancellation now fails native,
+prepared-bundle and PDF export: its reviewed prior record cannot prove an
+accepted prior filing or genuine IRS account election. Retained exact bytes and
+trusted prior-election provenance matched to the person and code are needed
+before positive cancellation export. IRS business-rule and ATS gates remain
+open. This is not an exclusion decision.
 
 ### Evidence that code cannot infer
 
