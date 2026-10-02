@@ -288,6 +288,19 @@ source-backed EIC opt-out, spouse-dependent refund, frozen IRA deposit,
 overpayment-to-2026, and divorced estimated-payment PDF review/XSD cases
 passed. Most failures concern the deferred named-form routes; nonnamed
 fixture/assertion failures are being repaired. This is not a release pass.
+A full rerun at `d22ab027` completed on 2026-10-02 in 29m09s with 10,432
+passed and 99 failed (none ignored reported). The local log is
+`.state/research/ty2025-pr59-bulk-test-retry5-2026-10-02.log`. The repaired
+packet/Form 8994 assertions and source-backed Form 8824 bundle/XSD case pass
+in that run. Residual failures are under named-form classification; this is
+not a release pass.
+
+A fresh local ARM64 CLI compiled from `d22ab027` with `deno compile` and SHA-256
+`f80caffb31d473b311e6134b3e57ae3853ec0d976d40892f64f8f0508aef751a`
+passed `scripts/smoke-release-binary.ts` as version `dev`: source-backed W-2,
+clean CLI validation, finalized MeF XML, and a two-page PDF. This verifies the
+local compiled asset only; the five release-workflow platform artifacts and
+downloaded release assets have not been built or smoked.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not

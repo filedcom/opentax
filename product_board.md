@@ -27,7 +27,7 @@ failed run is diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | All four issue #60 code slices are implemented; bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,428 passes and 103 failures. |
+| Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** The completed ledger records 705 bounded routes and
@@ -84,16 +84,16 @@ failures were classified against the deferred named-form section and a small
 set of shared fixture/export defects. Focused repairs after that run corrected
 two 1099-K review assertions, two HSA dependent fixtures, a Form 2555
 assertion, two Form 5329 tax joins, and a retained-sale Schedule E allocation.
-Their focused tests pass; the full command has not yet been rerun at those
-commits and remains the gate. The subsequent full `deno task test` at
+Their focused tests passed. The subsequent full `deno task test` at
 `b4e01e51` completed with **10,428 passed and 103 failed** in 30m09s. The
 new EIC opt-out, spouse-dependent, frozen-deposit rollover, line 36, and
 former-spouse payment fixtures passed in that run. Remaining failures are
 mostly deferred named-form routes; a small set of nonnamed fixture/assertion
-repairs is in progress. The full command still has no passing result.
-Focused post-run fixes now pass for the Form 8824 bundle/XSD harness and the
-packet/Form 8994 assertion contracts; the full command has not yet been rerun
-after those fixture fixes.
+repairs were then made to the Form 8824 bundle/XSD harness and packet/Form
+8994 assertions. The full rerun at `d22ab027` completed with **10,432 passed
+and 99 failed** in 29m09s; all four repaired assertions pass in that run.
+The remaining failures are under final named-form classification, and the full
+command still has no passing result.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
@@ -118,7 +118,8 @@ smoke of each compiled asset before upload, limits write permission to the
 publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios
 have source-backed assertion and attachment plans; Scenario 1 and 8 source
 conflicts remain unresolved after official-packet recheck, with exact IRS
-clarification questions recorded. Neither smoke nor ATS submission has run.
+clarification questions recorded. The release workflow's five published-asset
+smokes and ATS submission have not run.
 CLI validation now applies only rules for emitted native documents and reports
 assembly failures as rejects; a fresh locally compiled ARM binary passes the
 stronger source-backed validation, native XML, and PDF smoke. The published
