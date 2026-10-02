@@ -10,6 +10,7 @@ import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
+import { appendSchedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
@@ -393,12 +394,18 @@ export const schedule1Pdf: PdfFormDescriptor = {
       ...(rows.length > 0
         ? {
           line8z_other: rows.reduce((sum, row) => sum + row.amount, 0),
-          line8z_description: rows.map((row) =>
-            row.label === "FORM 8814" ? "Form 8814" : row.label
-          ).join(", "),
+          line8z_description: "SEE STATEMENT",
         }
         : {}),
     }];
+  },
+  appendSupplementalPages(document, fields, filer, allPending) {
+    return appendSchedule1OtherIncomeStatement(
+      document,
+      fields,
+      filer,
+      allPending?.schedule1,
+    );
   },
   fields,
 };

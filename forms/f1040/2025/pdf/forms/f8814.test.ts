@@ -1,6 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { calculateForm8814, type F8814Item } from "../../../nodes/inputs/f8814/index.ts";
+import {
+  calculateForm8814,
+  type F8814Item,
+} from "../../../nodes/inputs/f8814/index.ts";
 import type { FilerIdentity } from "../../mef/types.ts";
 import {
   form8814DottedNotes,
@@ -52,8 +55,11 @@ const reviewed = (item: F8814Item): F8814Item => ({
 
 Deno.test("Form 8814 PDF expands one copy for each elected child", () => {
   const first = calculateForm8814(reviewed(election));
-  const second = calculateForm8814(reviewed({ ...election, child_ssn: "111223333" }));
-  const instances = form8814Pdf.instances?.({ items: [first, second] }, filer) ?? [];
+  const second = calculateForm8814(
+    reviewed({ ...election, child_ssn: "111223333" }),
+  );
+  const instances =
+    form8814Pdf.instances?.({ items: [first, second] }, filer) ?? [];
   assertEquals(instances.length, 2);
   assertEquals(instances[0].line12, 1000);
   assertEquals(instances[0].line15, 135);
@@ -62,14 +68,16 @@ Deno.test("Form 8814 PDF expands one copy for each elected child", () => {
 
 Deno.test("Form 8814 PDF rejects an unreviewed or wrong-owner child source", () => {
   assertThrows(
-    () => form8814Pdf.instances?.({ items: [calculateForm8814(election)] }, filer),
+    () =>
+      form8814Pdf.instances?.({ items: [calculateForm8814(election)] }, filer),
     Error,
     "reviewed child-income source",
   );
   assertThrows(
-    () => form8814Pdf.instances?.({
-      items: [calculateForm8814(reviewed(election))],
-    }, { ...filer, primarySSN: "111223333" }),
+    () =>
+      form8814Pdf.instances?.({
+        items: [calculateForm8814(reviewed(election))],
+      }, { ...filer, primarySSN: "111223333" }),
     Error,
     "child/parent owner differs",
   );
@@ -77,7 +85,7 @@ Deno.test("Form 8814 PDF rejects an unreviewed or wrong-owner child source", () 
 
 Deno.test("Schedule 1 PDF prints Form 8814 on line 8z amount field", () => {
   const instances = schedule1Pdf.instances?.({ line8z_form8814: 1000 }) ?? [];
-  assertEquals(instances[0].line8z_description, "Form 8814");
+  assertEquals(instances[0].line8z_description, "SEE STATEMENT");
   assertEquals(instances[0].line8z_other, 1000);
   const amount = schedule1Pdf.fields.find((field) =>
     field.domainKey === "line8z_other"
@@ -225,24 +233,26 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
   assertEquals(withScheduleD.print_form8814_line7a_note, undefined);
   assertEquals(withScheduleD.print_form8814_line7a_included, false);
   assertThrows(
-    () => irs1040Pdf.projectFields?.({
-      line3a_qualified_dividends: 120,
-      line3b_ordinary_dividends: 120,
-      line7_capital_gain: 200,
-    }, pending),
+    () =>
+      irs1040Pdf.projectFields?.({
+        line3a_qualified_dividends: 120,
+        line3b_ordinary_dividends: 120,
+        line7_capital_gain: 200,
+      }, pending),
     Error,
     "needs the Form 8814 amount",
   );
   assertThrows(
-    () => irs1040Pdf.projectFields?.(
-      {
-        line3a_qualified_dividends: 120,
-        line3b_ordinary_dividends: 120,
-        line7a_cap_gain_distrib: 200,
-        line7_capital_gain: 200,
-      },
-      { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
-    ),
+    () =>
+      irs1040Pdf.projectFields?.(
+        {
+          line3a_qualified_dividends: 120,
+          line3b_ordinary_dividends: 120,
+          line7a_cap_gain_distrib: 200,
+          line7_capital_gain: 200,
+        },
+        { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
+      ),
     Error,
     "cannot use direct line 7a and Schedule D together",
   );
@@ -252,11 +262,12 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
   ) ?? {};
   assertEquals(scheduleD.print_form8814_line13_note, "Form 8814 $200");
   assertThrows(
-    () => irs1040Pdf.projectFields?.({
-      line3a_qualified_dividends: 119,
-      line3b_ordinary_dividends: 120,
-      line7a_cap_gain_distrib: 200,
-    }, pending),
+    () =>
+      irs1040Pdf.projectFields?.({
+        line3a_qualified_dividends: 119,
+        line3b_ordinary_dividends: 120,
+        line7a_cap_gain_distrib: 200,
+      }, pending),
     Error,
     "child-dividend marks need the Form 8814 amount",
   );

@@ -463,6 +463,10 @@ reruns the XML schema validation against the recorded XSD digest. It does not
 inspect visual correctness or set any review flag itself. A successful command
 means the recorded human checklist is complete and the named artifacts have
 not changed; the visual observations remain the reviewer's responsibility.
+Schedule 1 line 8z now prints `SEE STATEMENT` on its IRS page and appends the
+same identified type/amount rows used by the native OtherIncomeTypeStatement.
+Its PDF total must match the printed line amount; mixed-source cases need a
+fresh filled-page check for wrapping and page order.
 The table below records the earlier starting subset; the plan script enumerates
 all current fixtures. This subset is not coverage of all registered PDF
 descriptors:

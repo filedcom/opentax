@@ -94,7 +94,11 @@ Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", 
 
 Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficiary", () => {
   const source = {
-    beneficiary_identity: { owner: "T" as const, name: "Alex Taxpayer", ssn: "123456789" },
+    beneficiary_identity: {
+      owner: "T" as const,
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
     allocated_family_limit: 4_275,
     family_allocation_source_reference: "2025 HSA allocation agreement",
@@ -104,7 +108,11 @@ Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficia
     spouse_has_separate_hsa: true,
     taxpayer_hsa_contributions: 4_000,
     spouse_hsa: {
-      beneficiary_identity: { owner: "S" as const, name: "Sam Taxpayer", ssn: "987654321" },
+      beneficiary_identity: {
+        owner: "S" as const,
+        name: "Sam Taxpayer",
+        ssn: "987654321",
+      },
       eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
       allocated_family_limit: 4_275,
       family_allocation_source_reference: "2025 HSA allocation agreement",
@@ -128,7 +136,12 @@ Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficia
     nameControl: "TAXP",
     filingStatus: FilingStatus.MarriedFilingJointly,
     address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
-    spouse: { ssn: "987654321", firstName: "Sam", lastName: "Taxpayer", nameControl: "TAXP" },
+    spouse: {
+      ssn: "987654321",
+      firstName: "Sam",
+      lastName: "Taxpayer",
+      nameControl: "TAXP",
+    },
   };
   const instances = form8889Pdf.instances?.({ forms }, filer, {
     form8889: { ...source, forms },
@@ -215,17 +228,14 @@ Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z",
     line8z_hsa_excess_earnings: 100,
   }) ?? [];
   assertEquals(hsaOnly.line8z_other, 100);
-  assertEquals(hsaOnly.line8z_description, "HSA excess earnings");
+  assertEquals(hsaOnly.line8z_description, "SEE STATEMENT");
 
   const [combined] = schedule1Pdf.instances?.({
     line8z_hsa_excess_earnings: 100,
     line8z_form8814: 50,
   }) ?? [];
   assertEquals(combined.line8z_other, 150);
-  assertEquals(
-    combined.line8z_description,
-    "Form 8814, HSA excess earnings",
-  );
+  assertEquals(combined.line8z_description, "SEE STATEMENT");
 });
 
 Deno.test("Schedule 1 PDF identifies employer HSA excess on line 8z", () => {
@@ -234,8 +244,5 @@ Deno.test("Schedule 1 PDF identifies employer HSA excess on line 8z", () => {
     line8z_hsa_excess_earnings: 100,
   }) ?? [];
   assertEquals(projected.line8z_other, 800);
-  assertEquals(
-    projected.line8z_description,
-    "HSA excess earnings, HSA excess employer contributions",
-  );
+  assertEquals(projected.line8z_description, "SEE STATEMENT");
 });

@@ -118,6 +118,10 @@ human-completed page checklist, copy coverage, artifact hashes, and fresh XSD
 results without auto-certifying visual correctness. The checker now also
 requires the manifest and source record to preserve each fixture's exact
 review focus before accepting a completed checklist.
+Schedule 1 line 8z PDF now prints a short statement reference and appends its
+source-reconciled type/amount rows, matching the native other-income statement
+without crowding the canonical description field. The filled-page visual gate
+remains open.
 The release workflow now requires a native-platform synthetic W-2, MeF, and PDF
 smoke of each compiled asset before upload, limits write permission to the
 publish job, and prepares a SHA-256 asset manifest. The eight Form 1040 ATS scenarios

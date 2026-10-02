@@ -262,7 +262,7 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
   assertEquals(projected?.line8z_other, 600);
   assertEquals(
     projected?.line8z_description,
-    "Form 8814, HSA excess earnings, Taxable grants",
+    "SEE STATEMENT",
   );
 });
 
@@ -290,7 +290,7 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
     all,
   )?.[0];
   assertEquals(projected?.line8z_other, 1_000);
-  assertEquals(projected?.line8z_description, "Taxable grants");
+  assertEquals(projected?.line8z_description, "SEE STATEMENT");
   assertThrows(
     () =>
       schedule1Pdf.instances?.(
