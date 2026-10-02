@@ -668,12 +668,29 @@ SHA-256 passed the earlier checker with unchanged XML and PDF. Exact source
 serialization replay now rejects that mutation with `source JSON differs from
 current source replay`; the original two-case/four-page packet still passes.
 
+Seven existing positive Form 1098 review fixtures now include distinct,
+deterministic synthetic issuer Copy B PDFs, each bound to its source reference,
+borrower TIN, lender, reported box amounts, filename, and SHA-256. The focused
+generator run on only those seven fixtures completed graph execution, prepared
+MeF, local TY2025 v5.4 XSD validation, PDF build, and emitted-page-origin
+checks. It wrote seven source/XML/PDF triplets, **27 pages**, and six retained
+IRS templates to `.state/research/ty2025-form1098-copy-review-2026-10-02/packet/`.
+The six Schedule A pages and the Form 8396 page were rendered and inspected;
+their PNGs are under the sibling `renders/` directory. The seven Copy B
+digests are distinct and stable across Deno processes. The initial focused
+attempt caught incorrectly formatted Form 4952 1099-INT/DIV recipient TINs;
+the corrected nine-digit values passed the second run. These synthetic issuer
+copies test source-byte joining and filled output; they are not authentic
+issuer records. The remaining pages and all 178 fixtures still need the full
+review checklist and release gate.
+
 An initial focused attempt stopped at `single-w2-refund`: its positive W-2
 source lacks `employee_ssn`, which the current W-2 source guard requires.
 Inspection found the same missing field in
 `single-w2-overpayment-applied-2026` and `single-1098-purchase-points`; those
-two were not executed in this smoke. Correct their fixtures before the full
-batch. This two-case smoke is not the 178-case filled-PDF review, repository
+two were not executed in that smoke. Their W-2 employee SSNs were subsequently
+added to the fixtures; the purchase-points case also passed the seven-case Form
+1098 run above. This two-case smoke is not the 178-case filled-PDF review, repository
 test batch, IRS rule validation, ATS acceptance, or a release gate.
 
 Schedule 1 line 8z now prints `SEE STATEMENT` on its IRS page and appends the

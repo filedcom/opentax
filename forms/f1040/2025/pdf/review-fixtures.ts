@@ -19,6 +19,7 @@ import {
   form8882Fixture,
   form8882ScheduleCFixture,
 } from "../../nodes/inputs/f8882/fixture.ts";
+import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -808,18 +809,20 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
         employee_ssn: singleGeneral.taxpayer_ssn,
       }],
-      f1098: [{
-        lender_name: "Home Lender",
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "Synthetic 2025 Form 1098 copy 1",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        box6_points_paid: 2_400,
-        box6_current_year_deductible_points: 2_400,
-        box6_deduction_workpaper_reference: "2025 purchase-points workpaper",
-        for_routing: "A",
-      }],
+      f1098: [
+        await withSyntheticForm1098Copy("single-1098-purchase-points", {
+          lender_name: "Home Lender",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference: "Synthetic 2025 Form 1098 copy 1",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 interest workpaper",
+          box6_points_paid: 2_400,
+          box6_current_year_deductible_points: 2_400,
+          box6_deduction_workpaper_reference: "2025 purchase-points workpaper",
+          for_routing: "A",
+        }),
+      ],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040", "schedule_a"],
@@ -833,34 +836,42 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-1098-construction-refinance-points",
     inputs: {
       general: singleGeneral,
-      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        lender_name: "Construction Lender",
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "Synthetic 2025 construction Form 1098",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        box6_points_paid: 2_000,
-        box6_deduction_workpaper_reference:
-          "2025 construction points workpaper",
-        box6_construction_refinance_review: {
-          construction_loan_record_reference: "2025 construction loan",
-          closing_disclosure_reference: "2025 refinance closing",
-          original_construction_debt: 100_000,
-          refinanced_principal: 100_000,
-          loan_term_months: 180,
-          monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
-            month,
-            document_reference: `payment-${month}`,
-          })),
-          principal_residence_when_complete_verified: true,
-          points_paid_directly_verified: true,
-          reportable_points_within_acquisition_limit_verified: true,
-        },
-        refinance: true,
-        for_routing: "A",
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy(
+          "single-1098-construction-refinance-points",
+          {
+            lender_name: "Construction Lender",
+            recipient_tin: singleGeneral.taxpayer_ssn,
+            source_document_reference: "Synthetic 2025 construction Form 1098",
+            box1_mortgage_interest: 18_000,
+            box1_current_year_deductible_interest: 18_000,
+            box1_deduction_workpaper_reference: "2025 interest workpaper",
+            box6_points_paid: 2_000,
+            box6_deduction_workpaper_reference:
+              "2025 construction points workpaper",
+            box6_construction_refinance_review: {
+              construction_loan_record_reference: "2025 construction loan",
+              closing_disclosure_reference: "2025 refinance closing",
+              original_construction_debt: 100_000,
+              refinanced_principal: 100_000,
+              loan_term_months: 180,
+              monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+                month,
+                document_reference: `payment-${month}`,
+              })),
+              principal_residence_when_complete_verified: true,
+              points_paid_directly_verified: true,
+              reportable_points_within_acquisition_limit_verified: true,
+            },
+            refinance: true,
+            for_routing: "A",
+          },
+        ),
+      ],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040", "schedule_a"],
@@ -874,16 +885,21 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-unreported-refinance-points",
     inputs: {
       general: singleGeneral,
-      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        lender_name: "Refinance Lender",
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "Synthetic 2025 refinance Form 1098",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        for_routing: "A",
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy("single-unreported-refinance-points", {
+          lender_name: "Refinance Lender",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference: "Synthetic 2025 refinance Form 1098",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 interest workpaper",
+          for_routing: "A",
+        }),
+      ],
       mortgage_refinance_points: {
         refinances: [{
           mortgage_id: "refinance-2025-1",
@@ -923,16 +939,21 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-2023-refinance-points-ledger",
     inputs: {
       general: singleGeneral,
-      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        lender_name: "Refinance Lender",
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "2025 continuing-loan Form 1098",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        for_routing: "A",
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy("single-2023-refinance-points-ledger", {
+          lender_name: "Refinance Lender",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference: "2025 continuing-loan Form 1098",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference: "2025 interest workpaper",
+          for_routing: "A",
+        }),
+      ],
       mortgage_refinance_points: {
         refinances: [{
           mortgage_id: "refinance-2023-ledger",
@@ -989,21 +1010,27 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-1098-prior-year-recovery",
     inputs: {
       general: singleGeneral,
-      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        lender_name: "Home Lender",
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "Synthetic 2025 Form 1098 recovery copy",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 Pub. 936 interest workpaper",
-        box4_refund_overpaid: 2_000,
-        box4_prior_year_refund: true,
-        box4_taxable_recovery_verified_amount: 1_200,
-        box4_recovery_workpaper_reference:
-          "2025 Pub. 525 tax-benefit workpaper",
-        for_routing: "A",
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy("single-1098-prior-year-recovery", {
+          lender_name: "Home Lender",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference: "Synthetic 2025 Form 1098 recovery copy",
+          box1_mortgage_interest: 18_000,
+          box1_current_year_deductible_interest: 18_000,
+          box1_deduction_workpaper_reference:
+            "2025 Pub. 936 interest workpaper",
+          box4_refund_overpaid: 2_000,
+          box4_prior_year_refund: true,
+          box4_taxable_recovery_verified_amount: 1_200,
+          box4_recovery_workpaper_reference:
+            "2025 Pub. 525 tax-benefit workpaper",
+          for_routing: "A",
+        }),
+      ],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040", "schedule1", "schedule_a"],
@@ -6621,23 +6648,33 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-form4952-interest-and-dividends",
     inputs: {
       general: singleGeneral,
-      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        lender_name: "Home Lender",
-        recipient_tin: "111223333",
-        source_document_reference: "Synthetic 2025 Form 1098 copy",
-        box1_mortgage_interest: 18_000,
-        box1_current_year_deductible_interest: 18_000,
-        box1_deduction_workpaper_reference: "2025 interest workpaper",
-        for_routing: "A",
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy(
+          "single-form4952-interest-and-dividends",
+          {
+            lender_name: "Home Lender",
+            recipient_tin: "111223333",
+            source_document_reference: "Synthetic 2025 Form 1098 copy",
+            box1_mortgage_interest: 18_000,
+            box1_current_year_deductible_interest: 18_000,
+            box1_deduction_workpaper_reference: "2025 interest workpaper",
+            for_routing: "A",
+          },
+        ),
+      ],
       f1099int: [{
         payer_name: "Investment Bank",
+        recipient_tin: singleFiler.primarySSN,
         box1: 500,
         investment_property_for_form4952: true,
       }],
       f1099div: [{
         payerName: "Investment Fund",
+        recipient_tin: singleFiler.primarySSN,
         isNominee: false,
         box11: false,
         box1a: 400,
@@ -7530,16 +7567,25 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-form8396-certified-loan-interest-credit",
     inputs: {
       general: singleGeneral,
-      w2: [wage(60_000, 5_000, "Example Employer", "12-3456789")],
-      f1098: [{
-        recipient_tin: singleGeneral.taxpayer_ssn,
-        source_document_reference: "Synthetic 2025 Form 1098 loan B",
-        box1_mortgage_interest: 7_500,
-        box1_current_year_deductible_interest: 7_500,
-        box1_deduction_workpaper_reference:
-          "Synthetic 2025 Pub. 936 loan B workpaper before Form 8396 reduction",
-        for_routing: "A",
+      w2: [{
+        ...wage(60_000, 5_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
       }],
+      f1098: [
+        await withSyntheticForm1098Copy(
+          "single-form8396-certified-loan-interest-credit",
+          {
+            lender_name: "Certified Loan Lender",
+            recipient_tin: singleGeneral.taxpayer_ssn,
+            source_document_reference: "Synthetic 2025 Form 1098 loan B",
+            box1_mortgage_interest: 7_500,
+            box1_current_year_deductible_interest: 7_500,
+            box1_deduction_workpaper_reference:
+              "Synthetic 2025 Pub. 936 loan B workpaper before Form 8396 reduction",
+            for_routing: "A",
+          },
+        ),
+      ],
       form8396: {
         certificate_issuer_name: "Austin Housing Finance Corporation",
         certificate_number: "MCC-2025-101",
