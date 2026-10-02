@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
@@ -6,6 +11,7 @@ import { buildMefXml } from "../builder.ts";
 import { buildPending } from "../pending.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import { buildPdfBytes } from "../../pdf/builder.ts";
 import { fecRecord, wagesNotShownSchedule } from "./foreign_employer_wages.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
@@ -85,6 +91,74 @@ Deno.test("two complete FEC employer sources create two records and one linked w
     xml,
     'referenceDocumentName="NonW2DisabilityPaymentStatement WagesNotShownSchedule"',
   );
+});
+
+Deno.test("two FEC employer sources keep owner and document identity through native and PDF export", async () => {
+  const pending = filing();
+  const xml = buildMefXml(pending, base.filer);
+  assertEquals((xml.match(/<FECRecord documentId=/g) ?? []).length, 2);
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  let hasXsd = true;
+  try {
+    await Deno.stat(xsd);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    hasXsd = false;
+  }
+  if (hasXsd) {
+    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(path, xml);
+      const validation = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, path],
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validation.code,
+        0,
+        new TextDecoder().decode(validation.stderr),
+      );
+    } finally {
+      await Deno.remove(path);
+    }
+  }
+  const pdf = await buildPdfBytes(pending, base.filer);
+  assertEquals(pdf.byteLength > 0, true);
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, pdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+    }).output();
+    assertEquals(extracted.code, 0);
+    const printed = new TextDecoder().decode(extracted.stdout);
+    assertStringIncludes(printed, "FEC");
+    assertEquals(/3,?000/.test(printed), true);
+  } finally {
+    await Deno.remove(pdfPath);
+  }
+
+  const sources = pending.fec!.fecs;
+  for (const [field, value] of [
+    ["compensation_owner_ssn", "999887777"],
+    ["compensation_source_document_reference", sources[0].compensation_source_document_reference],
+  ] as const) {
+    const altered = structuredClone(pending);
+    altered.fec!.fecs[1] = { ...altered.fec!.fecs[1], [field]: value };
+    assertThrows(
+      () => buildMefXml(altered, base.filer),
+      Error,
+      "distinct employer sources owned by the filer or joint spouse",
+    );
+    await assertRejects(
+      () => buildPdfBytes(altered, base.filer),
+      Error,
+      "distinct employer sources owned by the filer or joint spouse",
+    );
+  }
 });
 
 Deno.test("an identified joint spouse can own a separate FEC record", () => {

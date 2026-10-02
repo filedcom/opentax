@@ -19,8 +19,30 @@ export function assertLine1hSupportedSource(
   const sources: number[] = [];
   const owners = new Set<string>();
   if (pending?.fec !== undefined) {
+    const employerRows = nativeFecInputSchema.parse(pending.fec).fecs;
+    const allowed = filer
+      ? new Set([
+        filer.primarySSN.replace(/\D/g, ""),
+        ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+            filer.spouse
+          ? [filer.spouse.ssn.replace(/\D/g, "")]
+          : []),
+      ])
+      : undefined;
+    if (
+      new Set(employerRows.map((row) =>
+        row.compensation_source_document_reference
+      )).size !== employerRows.length ||
+      (allowed !== undefined && employerRows.some((row) =>
+        !allowed.has(row.compensation_owner_ssn.replace(/\D/g, ""))
+      ))
+    ) {
+      throw new Error(
+        "Standalone FEC needs distinct employer sources owned by the filer or joint spouse",
+      );
+    }
     sources.push(
-      nativeFecInputSchema.parse(pending.fec).fecs.reduce(
+      employerRows.reduce(
         (sum, item) => sum + item.compensation_usd,
         0,
       ),
