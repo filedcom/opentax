@@ -323,3 +323,29 @@ Deno.test("schedule_se: elected line 4c below $400 stops without a form", () => 
     "",
   );
 });
+
+Deno.test("schedule_se: sole spouse farm uses spouse SSN in native XML", () => {
+  const joint = {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "Jane",
+      lastName: "Farmer",
+      nameControl: "FARM",
+    },
+  };
+  const result = rawScheduleSE.build({ net_profit_schedule_f: 50_000 }, {
+    filer: joint,
+    pending: {
+      schedule_f: { schedule_fs: [{ proprietor_recipient: "S" }] },
+      general: { spouse_ssn: "111223333" },
+      f1040: { spouse_ssn: "111223333" },
+    },
+  });
+  assertStringIncludes(result, "<SSN>111223333</SSN>");
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>50000</NetFarmProfitLossAmt>",
+  );
+});

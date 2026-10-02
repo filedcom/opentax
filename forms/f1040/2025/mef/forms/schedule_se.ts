@@ -2,8 +2,8 @@ import { element, elements } from "../../../mef/xml.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { TS } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
+import { scheduleSeSpouseProprietor } from "../../schedule-se-proprietor.ts";
 
 export interface Fields {
   net_profit_schedule_c?: number | null;
@@ -56,11 +56,7 @@ function buildIRS1040ScheduleSE(
   if (optional && !lines) return "";
 
   const pending = context?.pending;
-  const scheduleCBusinesses = (pending?.schedule_c as {
-    schedule_cs?: Array<{ proprietor_recipient?: TS }>;
-  } | undefined)?.schedule_cs;
-  const spouseOwned = scheduleCBusinesses?.length === 1 &&
-    scheduleCBusinesses[0].proprietor_recipient === TS.S;
+  const spouseOwned = scheduleSeSpouseProprietor(pending, fields);
   const ssn =
     (spouseOwned ? context?.filer?.spouse?.ssn : context?.filer?.primarySSN)
       ?.replaceAll("-", "");
@@ -73,9 +69,7 @@ function buildIRS1040ScheduleSE(
       (pending?.general as { spouse_ssn?: string } | undefined)?.spouse_ssn
           ?.replaceAll("-", "") !== ssn ||
       (pending?.f1040 as { spouse_ssn?: string } | undefined)?.spouse_ssn
-          ?.replaceAll("-", "") !== ssn ||
-      fields.net_profit_schedule_f !== undefined &&
-        fields.net_profit_schedule_f !== 0
+          ?.replaceAll("-", "") !== ssn
     )
   ) {
     throw new Error(

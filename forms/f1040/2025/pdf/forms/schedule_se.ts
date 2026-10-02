@@ -1,7 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
-import { FilingStatus, TS } from "../../../nodes/types.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
+import { scheduleSeSpouseProprietor } from "../../schedule-se-proprietor.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
@@ -57,11 +58,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
-    const businesses = (allPending?.schedule_c as {
-      schedule_cs?: Array<{ proprietor_recipient?: TS }>;
-    } | undefined)?.schedule_cs;
-    const spouseOwned = businesses?.length === 1 &&
-      businesses[0].proprietor_recipient === TS.S;
+    const spouseOwned = scheduleSeSpouseProprietor(allPending, fields);
     const general = allPending?.general;
     const return1040 = allPending?.f1040;
     const prefix = spouseOwned ? "spouse" : "taxpayer";
@@ -80,9 +77,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
         sourceSsn.replaceAll("-", "") ||
       (spouseOwned && (
         general?.filing_status !== FilingStatus.MFJ ||
-        return1040.filing_status !== FilingStatus.MFJ ||
-        fields.net_profit_schedule_f !== undefined &&
-          fields.net_profit_schedule_f !== 0
+        return1040.filing_status !== FilingStatus.MFJ
       ))
     ) {
       throw new Error("Schedule SE PDF proprietor must match the return");
