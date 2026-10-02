@@ -250,7 +250,7 @@ export async function buildMefSubmissionArchive(
   for (const attachment of bundle.attachments) {
     files[`attachment/${attachment.fileName}`] = attachment.bytes;
   }
-  return {
+  const archive: MefSubmissionArchive = {
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
     processingDate: options.processingDate,
@@ -260,6 +260,8 @@ export async function buildMefSubmissionArchive(
     filer: options.filer,
     residencyReview,
   };
+  assertPreparedArchiveContents(archive);
+  return archive;
 }
 
 /** Build the A2A SOAP body element and its uncompressed ZIP attachment. */

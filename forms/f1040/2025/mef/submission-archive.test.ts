@@ -4,6 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
 import { buildMefBundle } from "./builder.ts";
+import { sha256Hex } from "../prepared-source.ts";
 import type { MefPdfAttachment } from "./form-descriptor.ts";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
@@ -595,6 +596,34 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
       }, options),
     Error,
     "PDF bytes differ from digest",
+  );
+});
+
+Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that differs from its manifest", async () => {
+  const identity = filer();
+  const bundle = await buildMefBundle({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, { filer: identity, attachments: [] });
+  const alteredXml = bundle.xml.replace(
+    "<EFIN>123456</EFIN>",
+    "<EFIN>654321</EFIN>",
+  );
+  assertEquals(alteredXml === bundle.xml, false);
+  const xmlSha256 = await sha256Hex(new TextEncoder().encode(alteredXml));
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive({
+        ...bundle,
+        xml: alteredXml,
+        xmlSha256,
+      }, {
+        filer: identity,
+        submissionId,
+        processingDate,
+        residencyReview,
+      }),
+    Error,
+    "manifest differs from its ID or prepared return",
   );
 });
 
