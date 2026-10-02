@@ -117,7 +117,7 @@ Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", asyn
   await assertRejects(
     () =>
       buildPdfBytes({
-        general: { filing_status: FilingStatus.Single, digital_assets: true },
+        general: { filing_status: "single", digital_assets: true },
         f1040: { filing_status: "single", digital_assets: false },
       }, mockFiler),
     Error,
@@ -130,7 +130,7 @@ Deno.test("Form 1040 PDF rejects a dependent omitted after general source projec
     () =>
       buildPdfBytes({
         general: {
-          filing_status: FilingStatus.Single,
+          filing_status: "single",
           dependents: [{
             first_name: "Avery",
             last_name: "Child",

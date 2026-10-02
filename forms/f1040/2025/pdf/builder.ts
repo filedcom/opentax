@@ -146,6 +146,12 @@ function fillEntry(
       }
     }
   } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.startsWith(`[PDF] ${formKey}: failed to fill extra field`)
+    ) {
+      throw err;
+    }
     throw new Error(
       `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind})`,
       { cause: err },
