@@ -199,6 +199,11 @@ Publication 915 worksheets and line 6b/6c route can be verified.
 A strict frozen-deposit IRA rollover extension now retains qualifying source
 evidence and dates, checks the extended deposit deadline, and carries its
 explanation into native XML and the PDF statement.
+Every IRA-to-qualified-plan line 4c(1) route now requires a reviewed plan
+acceptance reference, including timely and direct rollovers. The single
+acceptance field applies to the rollover itself rather than each late-waiver
+method; IRA-to-IRA routes reject that field. Issued acceptance bytes and wider
+eligibility evidence remain open.
 The core PDF now prints a source-reconciled line 1h FEC type when standalone
 foreign employer wages or physical Form 2555 facts exactly explain that
 amount and its retained AGI counterpart. Source-complete standalone FEC wages

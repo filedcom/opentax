@@ -716,6 +716,7 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
         source_ira_type: "traditional",
         destination: "qualified_plan",
         destination_name: "Example 401(k)",
+        qualified_plan_acceptance_reference: "reviewed-plan-acceptance-1",
         distributed_on: "2025-06-01",
         completed_on: "2025-06-02",
         last_ira_to_ira_rollover_on: null,

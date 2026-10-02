@@ -312,6 +312,9 @@ export const itemSchema = z.object({
     ]).optional(),
     destination_name: z.string().min(1).max(120).regex(/^[!-~]+(?: [!-~]+)*$/)
       .optional(),
+    // A receiving plan may decline a traditional IRA rollover. Retain its
+    // reviewed acceptance for timely and late IRA-to-plan routes alike.
+    qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     distributed_on: z.string().date(),
     completed_on: z.string().date(),
     // Null means the owner's prior 12-month IRA-to-IRA history was reviewed
@@ -330,7 +333,6 @@ export const itemSchema = z.object({
       deposit_instructions_reference: z.string().trim().min(1),
       institution_error_reference: z.string().trim().min(1),
       deposit_confirmation_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
     // Revenue Procedure 2020-46 written certification to the receiving IRA
     // trustee or plan administrator. The 30-day safe harbor is checked below.
@@ -348,7 +350,6 @@ export const itemSchema = z.object({
       not_inherited_ira_confirmed: z.literal(true),
       not_required_minimum_distribution_confirmed: z.literal(true),
       rollover_eligibility_review_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
     // A favorable IRS private letter ruling grants only the 60-day waiver;
     // the distribution still has to qualify for rollover on other grounds.
@@ -363,7 +364,6 @@ export const itemSchema = z.object({
       not_inherited_ira_confirmed: z.literal(true),
       not_required_minimum_distribution_confirmed: z.literal(true),
       rollover_eligibility_review_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
     // Publication 590-A excludes days a qualifying deposit is frozen from
     // the 60-day period, with at least ten days after the funds are released.
@@ -383,7 +383,6 @@ export const itemSchema = z.object({
       not_inherited_ira_confirmed: z.literal(true),
       not_required_minimum_distribution_confirmed: z.literal(true),
       rollover_eligibility_review_reference: z.string().trim().min(1),
-      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
@@ -664,22 +663,6 @@ function validateLateWaiver(item: R1099Item): void {
         "IRA frozen-deposit rollover exceeds its extended deadline",
       );
     }
-    if (
-      rollover.destination === "qualified_plan" &&
-      !frozen.qualified_plan_acceptance_reference
-    ) {
-      throw new Error(
-        "IRA frozen-deposit rollover to a qualified plan needs plan acceptance evidence",
-      );
-    }
-    if (
-      rollover.destination === "ira" &&
-      frozen.qualified_plan_acceptance_reference
-    ) {
-      throw new Error(
-        "IRA frozen-deposit rollover cannot claim plan acceptance for an IRA destination",
-      );
-    }
     return;
   }
   if (ruling) {
@@ -704,22 +687,6 @@ function validateLateWaiver(item: R1099Item): void {
   if (!item.source_document_reference || !item.account_number) {
     throw new Error(
       "IRA automatic late waiver needs its issued Form 1099-R reference and account",
-    );
-  }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !waiver.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA automatic late waiver to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    waiver.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA automatic late waiver cannot claim plan acceptance for an IRA destination",
     );
   }
   for (
@@ -759,22 +726,6 @@ function validateSelfCertifiedLateWaiver(item: R1099Item): void {
   if (!item.source_document_reference || !item.account_number) {
     throw new Error(
       "IRA self-certification needs its issued Form 1099-R reference and account",
-    );
-  }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !certification.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA self-certification to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    certification.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA self-certification cannot claim plan acceptance for an IRA destination",
     );
   }
   if (
@@ -824,22 +775,6 @@ function validatePrivateLetterWaiver(item: R1099Item): void {
   ) {
     throw new Error(
       "IRA private letter waiver needs deposit within the ruling deadline",
-    );
-  }
-  if (
-    rollover.destination === "qualified_plan" &&
-    !ruling.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA private letter waiver to a qualified plan needs plan acceptance evidence",
-    );
-  }
-  if (
-    rollover.destination === "ira" &&
-    ruling.qualified_plan_acceptance_reference
-  ) {
-    throw new Error(
-      "IRA private letter waiver cannot claim plan acceptance for an IRA destination",
     );
   }
 }
@@ -914,8 +849,28 @@ function validateIraRolloverEvidence(item: R1099Item): void {
           "IRA-to-IRA rollover exceeds one rollover per owner in 12 months",
         );
       }
-    } else if (rollover.destination_ira_type !== undefined) {
-      throw new Error("Qualified-plan destination cannot be an IRA account");
+    } else {
+      if (rollover.destination_ira_type !== undefined) {
+        throw new Error("Qualified-plan destination cannot be an IRA account");
+      }
+      if (!rollover.destination_name) {
+        throw new Error(
+          "IRA rollover to a qualified plan needs its destination name",
+        );
+      }
+      if (!rollover.qualified_plan_acceptance_reference) {
+        throw new Error(
+          "IRA rollover to a qualified plan needs plan acceptance evidence",
+        );
+      }
+    }
+    if (
+      destination === "ira" &&
+      rollover.qualified_plan_acceptance_reference
+    ) {
+      throw new Error(
+        "IRA-to-IRA rollover cannot claim plan acceptance evidence",
+      );
     }
     const elapsedDays =
       (Date.parse(completed_on) - Date.parse(distributed_on)) /
@@ -926,14 +881,6 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       );
     }
     validateLateWaiver(item);
-    if (
-      destination === "qualified_plan" &&
-      !item.ira_rollover.destination_name
-    ) {
-      throw new Error(
-        "IRA rollover to a qualified plan needs its destination name",
-      );
-    }
     if (
       !completed_on.startsWith("2025-") &&
       !completed_on.startsWith("2026-")

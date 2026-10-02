@@ -1134,6 +1134,7 @@ Deno.test("f1099r.compute: code G IRA payment to plan reports gross and zero tax
       source_ira_type: "traditional",
       destination: "qualified_plan",
       destination_name: "Example 401(k)",
+      qualified_plan_acceptance_reference: "plan-acceptance-direct-1",
       distributed_on: "2025-06-01",
       completed_on: "2025-06-02",
       last_ira_to_ira_rollover_on: null,
@@ -1193,6 +1194,7 @@ Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension ro
       source_ira_type: "traditional",
       destination: "qualified_plan",
       destination_name: "Example 401(k)",
+      qualified_plan_acceptance_reference: "plan-acceptance-direct-2",
       distributed_on: "2025-06-01",
       completed_on: "2025-06-02",
       last_ira_to_ira_rollover_on: null,
@@ -1279,12 +1281,37 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
       source_ira_type: "traditional" as const,
       destination: "qualified_plan" as const,
       destination_name: "Example 401(k)",
+      qualified_plan_acceptance_reference: "plan-acceptance-timely-1",
       distributed_on: "2025-12-01",
       completed_on: "2025-12-15",
       last_ira_to_ira_rollover_on: null,
     },
   };
   assertEquals(f1040Input(compute([qualified])).line4c_ira_rollover, true);
+  assertThrows(
+    () =>
+      compute([{
+        ...qualified,
+        ira_rollover: {
+          ...qualified.ira_rollover,
+          qualified_plan_acceptance_reference: undefined,
+        },
+      }]),
+    Error,
+    "needs plan acceptance evidence",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...nextYear,
+        ira_rollover: {
+          ...nextYear.ira_rollover,
+          qualified_plan_acceptance_reference: "wrong-destination",
+        },
+      }]),
+    Error,
+    "cannot claim plan acceptance evidence",
+  );
   assertThrows(
     () =>
       compute([{
@@ -1353,10 +1380,7 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
       destination: "qualified_plan" as const,
       destination_ira_type: undefined,
       destination_name: "Example 401(k)",
-      automatic_late_waiver: {
-        ...item.ira_rollover!.automatic_late_waiver!,
-        qualified_plan_acceptance_reference: "plan-acceptance-1",
-      },
+      qualified_plan_acceptance_reference: "plan-acceptance-1",
     },
   };
   assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
@@ -1370,10 +1394,7 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
         ...planItem,
         ira_rollover: {
           ...planItem.ira_rollover,
-          automatic_late_waiver: {
-            ...planItem.ira_rollover.automatic_late_waiver,
-            qualified_plan_acceptance_reference: undefined,
-          },
+          qualified_plan_acceptance_reference: undefined,
         },
       }]),
     Error,
@@ -1502,10 +1523,7 @@ Deno.test("f1099r.compute: Pub. 590-A frozen deposit extends the IRA rollover de
       destination: "qualified_plan" as const,
       destination_ira_type: undefined,
       destination_name: "Example 401(k)",
-      frozen_deposit_extension: {
-        ...frozen,
-        qualified_plan_acceptance_reference: "plan-acceptance-1",
-      },
+      qualified_plan_acceptance_reference: "plan-acceptance-1",
     },
   };
   assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
@@ -1549,17 +1567,14 @@ Deno.test("f1099r.compute: Pub. 590-A frozen deposit extends the IRA rollover de
         ...planItem,
         ira_rollover: {
           ...planItem.ira_rollover,
-          frozen_deposit_extension: frozen,
+          qualified_plan_acceptance_reference: undefined,
         },
       },
       {
         ...item,
         ira_rollover: {
           ...rollover,
-          frozen_deposit_extension: {
-            ...frozen,
-            qualified_plan_acceptance_reference: "wrong-plan",
-          },
+          qualified_plan_acceptance_reference: "wrong-plan",
         },
       },
       {
@@ -1935,6 +1950,7 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
         destination: "qualified_plan",
         destination_ira_type: undefined,
         destination_name: "Example 401(k)",
+        qualified_plan_acceptance_reference: "plan-acceptance-mixed-1",
       },
     }])).line4c_ira_rollover,
     true,

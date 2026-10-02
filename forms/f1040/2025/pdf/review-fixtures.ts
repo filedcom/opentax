@@ -4505,6 +4505,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           source_ira_type: "traditional",
           destination: "qualified_plan",
           destination_name: "Example 401(k)",
+          qualified_plan_acceptance_reference:
+            "reviewed-plan-acceptance-2025-1",
           distributed_on: "2025-12-01",
           completed_on: "2025-12-15",
           last_ira_to_ira_rollover_on: null,
