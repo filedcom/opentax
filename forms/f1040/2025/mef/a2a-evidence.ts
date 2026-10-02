@@ -2,6 +2,7 @@ import { join } from "@std/path";
 import { unzipSync } from "fflate";
 import { z } from "zod";
 import type { MefTransmissionPackage } from "./submission-archive.ts";
+import { documentId } from "./document-identity.ts";
 
 const requestRecordSchema = z.object({
   messageId: z.string().min(1),
@@ -168,6 +169,9 @@ function assertArchivedDocumentInventory(
     Number(returnData[0][1]) !== documents.length ||
     documents[0]?.[1] !== "IRS1040" ||
     new Set(ids).size !== ids.length ||
+    documents.some((match, index) =>
+      match[2] !== documentId(match[1], index)
+    ) ||
     references.some((id) => !ids.includes(id)) ||
     binaries.length !==
       documents.filter((match) => match[1] === "BinaryAttachment").length ||
