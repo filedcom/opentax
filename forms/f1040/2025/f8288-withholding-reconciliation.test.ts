@@ -4,6 +4,9 @@ import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { fieldsOf } from "../../../core/test-utils/output.ts";
 import { irs1040 } from "./mef/forms/f1040.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
+import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import { execute } from "../../../core/runtime/executor.ts";
+import { registry } from "./registry.ts";
 
 const source = {
   f8288s: [{
@@ -55,4 +58,103 @@ Deno.test("Form 8288-A source must fit inside filed line 25c in native and PDF",
       "line 25c is less than sourced Form 8288-A",
     );
   }
+});
+
+Deno.test("Form 8288-A and W-2G withholding both fit in Form 1040 line 25c", () => {
+  const combined = {
+    ...pending,
+    w2g: {
+      w2gs: [{
+        payer_name: "Casino Inc",
+        payer_ein: "12-3456789",
+        source_document_reference: "issued-casino-w2g-2025",
+        box1_winnings: 1_000,
+        box4_federal_withheld: 250,
+      }],
+    },
+  };
+  const incomplete = {
+    line25c_total: 75_000,
+    line25d_total_withholding: 75_000,
+    line33_total_payments: 75_000,
+  };
+  for (
+    const exportOne of [
+      () => irs1040.build(incomplete, { pending: combined }),
+      () => irs1040Pdf.projectFields?.(incomplete, combined),
+    ]
+  ) {
+    assertThrows(
+      exportOne,
+      Error,
+      "less than combined sourced Form 8288-A and W-2G withholding",
+    );
+  }
+  const complete = {
+    line25c_total: 75_250,
+    line25d_total_withholding: 75_250,
+    line33_total_payments: 75_250,
+  };
+  assertStringIncludes(
+    irs1040.build(complete, { pending: combined }),
+    "<TaxWithheldOtherAmt>75250</TaxWithheldOtherAmt>",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(complete, combined)?.line25c_total,
+    75_250,
+  );
+});
+
+Deno.test("full return graph preserves the two-source line 25c sum at native and PDF projection", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general: {
+        filing_status: "single",
+        taxpayer_first_name: "Taxpayer",
+        taxpayer_last_name: "Test",
+        taxpayer_ssn: "123-45-6789",
+        digital_assets: false,
+      },
+      f8288: [source.f8288s[0]],
+      w2g: [{
+        payer_name: "Casino Inc",
+        payer_ein: "12-3456789",
+        source_document_reference: "issued-casino-w2g-2025",
+        box1_winnings: 1_000,
+        box4_federal_withheld: 250,
+      }],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  assertEquals(pending.f1040?.line25c_total, 75_250);
+  assertEquals(pending.f1040?.line25d_total_withholding, 75_250);
+  assertEquals(pending.f1040?.line33_total_payments, 75_250);
+  assertStringIncludes(
+    irs1040.build(pending.f1040, { pending }),
+    "<TaxWithheldOtherAmt>75250</TaxWithheldOtherAmt>",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(pending.f1040, pending)?.line25c_total,
+    75_250,
+  );
+  const changed = {
+    ...pending,
+    f8288: {
+      f8288s: [{ ...source.f8288s[0], amount_withheld: 75_250 }],
+    },
+  };
+  assertThrows(
+    () => irs1040.build(pending.f1040, { pending: changed }),
+    Error,
+    "less than combined sourced Form 8288-A and W-2G withholding",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(pending.f1040, changed),
+    Error,
+    "less than combined sourced Form 8288-A and W-2G withholding",
+  );
 });
