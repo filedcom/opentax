@@ -499,6 +499,52 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
     const pdf = await PDFDocument.create();
     pdf.addPage();
     const validPdfBytes = await pdf.save();
+    const duplicateName = "attachment/evidence.pdF";
+    const fileName = "attachment/evidence.pdf";
+    const duplicateZip = Uint8Array.from(zipSync({
+      "manifest/manifest.xml": manifest,
+      "xml/submission.xml": validXml,
+      [fileName]: validPdfBytes,
+      [duplicateName]: validPdfBytes,
+    }));
+    const oldName = encoder.encode(duplicateName);
+    const newName = encoder.encode(fileName);
+    let replacements = 0;
+    for (
+      let index = 0;
+      index <= duplicateZip.length - oldName.length;
+      index++
+    ) {
+      if (
+        oldName.every((byte, offset) => duplicateZip[index + offset] === byte)
+      ) {
+        duplicateZip.set(newName, index);
+        replacements++;
+      }
+    }
+    assertEquals(replacements, 2);
+    assertEquals(Object.keys(unzipSync(duplicateZip)), [
+      "manifest/manifest.xml",
+      "xml/submission.xml",
+      fileName,
+    ]);
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-duplicate-physical-pdf`,
+          submissionIds: [submissionId],
+          package: {
+            sendSubmissionsRequestXml:
+              `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+            containerZipBytes: zipSync({
+              [`${submissionId}.zip`]: duplicateZip,
+            }),
+          },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "physical ZIP entries",
+    );
     const validSendId = `${messageId}-valid`;
     const validRecord = await recordA2aSendPackage(root, {
       messageId: validSendId,

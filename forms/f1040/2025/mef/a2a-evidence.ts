@@ -2,7 +2,10 @@ import { join } from "@std/path";
 import { unzipSync } from "fflate";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { z } from "zod";
-import type { MefTransmissionPackage } from "./submission-archive.ts";
+import {
+  type MefTransmissionPackage,
+  zipDirectoryEntryCount,
+} from "./submission-archive.ts";
 import {
   documentId,
   hasMismatchedSingleReferenceName,
@@ -171,6 +174,11 @@ function assertSendSubmissionArchive(
     archive = unzipSync(bytes);
   } catch {
     throw new Error(`A2A Send submission ZIP is unreadable: ${submissionId}`);
+  }
+  if (zipDirectoryEntryCount(bytes) !== Object.keys(archive).length) {
+    throw new Error(
+      `A2A Send submission physical ZIP entries differ from decoded archive: ${submissionId}`,
+    );
   }
   const manifestBytes = archive["manifest/manifest.xml"];
   const xmlBytes = archive["xml/submission.xml"];

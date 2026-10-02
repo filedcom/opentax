@@ -64,7 +64,7 @@ function sha256HexSync(bytes: Uint8Array): string {
 }
 
 /** Check physical ZIP entries before unzipSync collapses or renames them. */
-function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
+export function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
   if (bytes.length < 22) return undefined;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const firstCandidate = Math.max(0, bytes.length - 22 - 0xffff);
