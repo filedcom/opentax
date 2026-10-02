@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -47,14 +50,17 @@ function itemCreditAmount(item: F8805Item): number {
   return item.total_tax_withheld ?? 0;
 }
 
-function totalCreditAmount(items: F8805Item[]): number {
+export function totalCreditAmount(items: F8805Item[]): number {
   return items.reduce((sum, item) => sum + itemCreditAmount(item), 0);
 }
 
 function f1040Output(items: F8805Item[]): NodeOutput[] {
   const total = totalCreditAmount(items);
   if (total === 0) return [];
-  return [{ nodeType: f1040.nodeType, fields: { line25c_other_withheld: total } }];
+  return [{
+    nodeType: f1040.nodeType,
+    fields: { line25c_other_withheld: total },
+  }];
 }
 
 class F8805Node extends TaxNode<typeof inputSchema> {

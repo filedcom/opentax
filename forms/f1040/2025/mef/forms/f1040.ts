@@ -35,7 +35,7 @@ import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
-import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
+import { assertOtherFormsWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import {
   assertReturnScheduleJoins,
@@ -466,7 +466,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     fields,
     context?.pending,
   );
-  assertF8288OtherWithholding(fields, context?.pending);
+  assertOtherFormsWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);
   assertSchedule2Line23(fields, context?.pending);
   if (context?.pending?.w2 !== undefined) {

@@ -130,10 +130,15 @@ The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--202
 put withholding shown on Form 8288-A in line 25c (other forms), not line 25b
 (Forms 1099). The existing `f8288` graph deposit now uses the line 25c input;
 final native/PDF export checks that its retained sum does not exceed filed line
-25c. This is a bucket and lower-bound reconciliation, not complete Form
+25c. The same lower-bound check now includes retained W-2G box 4, Form 8805's
+selected section 1446 or total withholding amount, and Form 8959 line 24.
+Their combined sum must fit in filed line 25c; this remains a bucket and
+lower-bound reconciliation, not complete Form
 8288-A filing support: the raw `f8288` source has no seller taxpayer identity,
 issued certificate byte binding, or filed Form 8288-A attachment. Those facts
 and cross-source duplicate/period checks remain before the credit is verified.
+Other line 25c source families, including Schedule K-1 and Form 1042-S, need
+their own reviewed source and duplicate checks before exact equality is safe.
 
 ## Remaining return-wide work
 

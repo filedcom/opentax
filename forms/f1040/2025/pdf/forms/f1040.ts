@@ -10,7 +10,7 @@ import { assertEicSource } from "../../eic-source.ts";
 import { residentElectionName } from "../../resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../estimated-payment-reconciliation.ts";
-import { assertF8288OtherWithholding } from "../../f8288-withholding-reconciliation.ts";
+import { assertOtherFormsWithholding } from "../../f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
@@ -776,7 +776,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       fields,
       allPending,
     );
-    assertF8288OtherWithholding(fields, allPending);
+    assertOtherFormsWithholding(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);
     assertSchedule2Line23(fields, allPending);
     const residentElection = residentElectionName(fields, allPending);

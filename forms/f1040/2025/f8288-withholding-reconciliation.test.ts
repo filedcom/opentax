@@ -7,6 +7,7 @@ import { irs1040Pdf } from "./pdf/forms/f1040.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "./registry.ts";
+import { assertOtherFormsWithholding } from "./f8288-withholding-reconciliation.ts";
 
 const source = {
   f8288s: [{
@@ -156,5 +157,44 @@ Deno.test("full return graph preserves the two-source line 25c sum at native and
     () => irs1040Pdf.projectFields?.(pending.f1040, changed),
     Error,
     "less than combined sourced Form 8288-A and W-2G withholding",
+  );
+});
+
+Deno.test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () => {
+  const allSources = {
+    ...pending,
+    w2g: {
+      w2gs: [{
+        payer_name: "Casino Inc",
+        payer_ein: "12-3456789",
+        source_document_reference: "issued-casino-w2g-2025",
+        box1_winnings: 1_000,
+        box4_federal_withheld: 250,
+      }],
+    },
+    f8805: {
+      f8805s: [{
+        partnership_name: "Partnership",
+        section_1446_tax_withheld: 100,
+        total_tax_withheld: 120,
+      }],
+    },
+    form8959: { line24_total_withheld: 50 },
+  };
+  assertThrows(
+    () => assertOtherFormsWithholding({ line25c_total: 75_399 }, allSources),
+    Error,
+    "less than combined sourced other-form withholding",
+  );
+  assertOtherFormsWithholding({ line25c_total: 75_400 }, allSources);
+  assertThrows(
+    () => irs1040.build({ line25c_total: 75_399 }, { pending: allSources }),
+    Error,
+    "less than combined sourced other-form withholding",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ line25c_total: 75_399 }, allSources),
+    Error,
+    "less than combined sourced other-form withholding",
   );
 });
