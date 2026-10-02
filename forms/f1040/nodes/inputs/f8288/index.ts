@@ -40,10 +40,26 @@ export const itemSchema = z.object({
   buyer_tin: z.string(),
   // Date of disposition (Form 8288-A line 7)
   disposition_date: z.string(),
+  // Seller identification and the IRS-stamped Copy B supporting the credit.
+  seller_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  stamped_copy_b_reference: z.string().trim().min(1).optional(),
 });
 
 export const inputSchema = z.object({
   f8288s: z.array(itemSchema).min(1),
+}).superRefine(({ f8288s }, ctx) => {
+  const references = new Set<string>();
+  f8288s.forEach((item, index) => {
+    const reference = item.stamped_copy_b_reference;
+    if (reference && references.has(reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f8288s", index, "stamped_copy_b_reference"],
+        message: "The same stamped Form 8288-A Copy B cannot be claimed twice",
+      });
+    }
+    if (reference) references.add(reference);
+  });
 });
 
 type F8288Item = z.infer<typeof itemSchema>;

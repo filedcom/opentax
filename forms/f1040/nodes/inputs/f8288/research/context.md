@@ -25,6 +25,8 @@ The withheld amount flows to Form 1040 as a payment/credit (similar to federal i
 | buyer_name | string | Yes | Name of buyer/transferee | Name of the buyer who withheld the tax | Form 8288-A line 2 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
 | buyer_tin | string | Yes | TIN of buyer | Buyer's TIN (EIN or SSN) | Form 8288-A line 3 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
 | disposition_date | string | Yes | Date of disposition | Date the property was transferred (YYYY-MM-DD) | Form 8288-A line 7; IRC §1445 | https://www.irs.gov/pub/irs-pdf/f8288.pdf |
+| seller_tin | string | For positive credit at final export | Transferor TIN on Copy B | Must match taxpayer or joint-filing spouse | [Form 8288 instructions](https://www.irs.gov/instructions/i8288) | https://www.irs.gov/instructions/i8288 |
+| stamped_copy_b_reference | string | For positive credit at final export | IRS-stamped Copy B | Distinct retained source reference for each credited copy | [Form 8288 instructions](https://www.irs.gov/instructions/i8288) | https://www.irs.gov/instructions/i8288 |
 
 ---
 
@@ -86,6 +88,7 @@ flowchart LR
 4. **15% rate**: Standard rate for all other dispositions.
 5. **FIRPTA is a withholding credit**: Functions like income tax withholding — fully creditable against the tax liability.
 6. **Negative amounts invalid**: `amount_withheld` and `gross_sales_price` must be non-negative.
+7. **Credited Copy B**: Final native and PDF export require a stamped Copy B reference and owner-matched seller TIN for every positive withholding amount. Duplicate copy references are rejected. A reference alone does not verify the PDF bytes or attach Copy B to a return; attachment and byte authentication remain open.
 
 ---
 
