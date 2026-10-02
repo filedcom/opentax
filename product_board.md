@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **757 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **759 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 757 bounded routes and
+**Implemented coverage.** The completed ledger records 759 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -287,10 +287,15 @@ The filer-owned line 36 overpayment election now reduces the refund by its
 source-checked amount and prints in native XML and PDF.
 The line 26 former-spouse SSN now prints for a reviewed agreed split of joint
 estimated payments after divorce, with exact quarterly source reconciliation.
+Positive direct capital-gain distributions on Form 1040 line 7a now replay
+retained Form 1099-DIV box 2a net of nominee pass-through and calculated Form
+8814 child gain in both native and PDF projection; Schedule D routes need a
+separate complete reconciliation.
 Form 8288-A withholding now deposits to Form 1040 line 25c; final native/PDF
 export checks the combined retained Form 8288-A, W-2G, Form 8805, and Form
-8959 withholding lower bound. Unmodeled families and exact source equality
-remain open.
+8959 withholding lower bound. Positive Form 8288-A credit also requires a
+seller-owned stamped Copy B reference. Unmodeled families, copy authentication,
+and exact source equality remain open.
 Final native/PDF export also reconciles Form 1040 refund line 35a, any line 36
 election, and line 38 penalty to line 34 overpayment.
 Schedule H positive unrelated-worker withholding now requires a distinct
