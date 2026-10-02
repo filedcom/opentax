@@ -11,6 +11,7 @@ import {
   inputSchema as generalInputSchema,
 } from "../nodes/inputs/general/index.ts";
 import { inputSchema as form1099gSchema } from "../nodes/inputs/f1099g/index.ts";
+import { inputSchema as form1099necSchema } from "../nodes/inputs/f1099nec/index.ts";
 import { inputSchema as form1099mSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as form1099kSchema } from "../nodes/inputs/f1099k/index.ts";
 import {
@@ -494,6 +495,19 @@ export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const expectedNec = pending.f1099nec === undefined
+    ? []
+    : form1099necSchema.parse(pending.f1099nec).f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_c" && (item.box1_nec ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference,
+          payer_name: item.payer_name,
+          payer_tin: tin(item.payer_tin, "1099-NEC payer"),
+          recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+          amount: item.box1_nec,
+        }]
+        : []
+    );
   const rawK =
     (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
       ?.f1099ks ?? [];
@@ -685,9 +699,9 @@ export function assertScheduleCReceiptSourceIdentity(
   }
   const scheduleC = pending.schedule_c;
   if (!scheduleC || typeof scheduleC !== "object") {
-    if (expectedK.length) {
+    if (expectedK.length || expectedNec.length) {
       throw new Error(
-        "1099-K Schedule C source differs from the filed business",
+        "1099 Schedule C source differs from the filed business",
       );
     }
     return;
@@ -713,6 +727,17 @@ export function assertScheduleCReceiptSourceIdentity(
         ),
       )
     ).sort();
+  if (
+    !Array.isArray(necSources) ||
+    JSON.stringify(sortRows(necSources)) !==
+      JSON.stringify(sortRows(expectedNec))
+  ) {
+    if (necSources !== undefined || expectedNec.length) {
+      throw new Error(
+        "1099-NEC Schedule C source differs from the retained payer copy",
+      );
+    }
+  }
   if (
     !Array.isArray(kSources) ||
     JSON.stringify(sortRows(kSources)) !== JSON.stringify(sortRows(expectedK))
