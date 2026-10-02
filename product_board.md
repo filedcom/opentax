@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **990 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **991 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -27,10 +27,10 @@ are diagnostic evidence, not release passes.
 | Reported CLI issues | 0 | Four issue #60 code slices passed 93 focused tests; advanced Form 8995-A cents loss remains in the named-form gap. Bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,662 passes and 221 failures under current guards. |
+| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,736 passes and 147 failures under current guards. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 990 bounded routes and
+**Implemented coverage.** The completed ledger records 991 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -192,7 +192,10 @@ deferred named-form cases. Shared fixture repairs are in progress; the full
 command remains red and no release pass is claimed.
 Focused W-2, Schedule C/F, digital-answer, reference-name, and employer-address
 repairs after that snapshot are recorded in the completed ledger. They require
-a fresh full run to establish the remaining count.
+a fresh full run to establish the remaining count. The full command at
+`f1820bca` then completed with **10,736 passed and 147 failed** in 35m38s,
+down 74 failures. Its residuals are being classified; no release pass is
+claimed.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph

@@ -326,6 +326,17 @@ digital-asset answers, and Schedule C/F and reference-name mismatches. The
 fixed in a focused test and 15 deferred named-form routes. This is not a
 release pass; subsequent focused repairs need another full run.
 
+The third full `deno task test` at `f1820bca` completed on 2026-10-02 in
+35m38s with **10,736 passed and 147 failed**; no ignored tests were reported.
+It used the same Deno 2.7.7, V8 14.6.202.9-rusty, TypeScript 5.9.2,
+`xmllint` libxml 2.9.13, and Poppler 26.03.0 tools. The complete local log is
+`.state/research/ty2025-pr59-nonnamed-phase-bulk-rerun2-2026-10-02.log`.
+Compared with the 221 failures above, 97 old cases cleared, 124 persisted,
+and 23 advanced to later checks and newly failed. The EIC PDF assertion and
+exact Form 965-A and Form 4136 statement names pass in this run. Residuals
+include source/fixture guards and deferred named-form routes; a full-suite or
+release pass is not claimed.
+
 A fresh local ARM64 CLI compiled from `d22ab027` with `deno compile` and SHA-256
 `f80caffb31d473b311e6134b3e57ae3853ec0d976d40892f64f8f0508aef751a`
 passed `scripts/smoke-release-binary.ts` as version `dev`: source-backed W-2,
