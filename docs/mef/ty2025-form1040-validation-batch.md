@@ -21,6 +21,7 @@ command -v deno
 command -v xmllint
 command -v pdftoppm
 command -v pdfinfo
+command -v pdftotext
 test -f .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
 test -f .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/ReturnData1040.xsd
 ```
@@ -44,7 +45,7 @@ deno task test
 
 This is the `deno.json` task,
 `deno test --allow-read --allow-write
---allow-run=xmllint,deno --allow-net=www.irs.gov`.
+--allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov`.
 It discovers all repository tests, including Form 1040 calculations,
 source-to-return/MeF/PDF cases, ATS fixture assertions, and local `xmllint`
 cases against `Return1040.xsd`. Record the commit, timestamp, Deno version,
