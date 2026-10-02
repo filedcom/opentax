@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
+import { PDFDocument } from "pdf-lib";
 import {
   readA2aArchivedSubmission,
   readA2aInboundPayload,
@@ -474,8 +475,32 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
     const validXml = encoder.encode(
       `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
     );
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-non-pdf`,
+          submissionIds: [submissionId],
+          package: {
+            sendSubmissionsRequestXml:
+              `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+            containerZipBytes: zipSync({
+              [`${submissionId}.zip`]: zipSync({
+                "manifest/manifest.xml": manifest,
+                "xml/submission.xml": validXml,
+                "attachment/evidence.pdf": encoder.encode("not a PDF"),
+              }),
+            }),
+          },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "not a complete PDF",
+    );
+    const pdf = await PDFDocument.create();
+    pdf.addPage();
+    const validPdfBytes = await pdf.save();
     const validSendId = `${messageId}-valid`;
-    await recordA2aSendPackage(root, {
+    const validRecord = await recordA2aSendPackage(root, {
       messageId: validSendId,
       submissionIds: [submissionId],
       package: {
@@ -485,7 +510,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
           [`${submissionId}.zip`]: zipSync({
             "manifest/manifest.xml": manifest,
             "xml/submission.xml": validXml,
-            "attachment/evidence.pdf": encoder.encode("%PDF-test"),
+            "attachment/evidence.pdf": validPdfBytes,
           }),
         }),
       },
@@ -497,6 +522,30 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       submissionXmlSha256: await digest(validXml),
     });
     assertEquals(valid.submissionId, submissionId);
+    const changedContainer = zipSync({
+      [`${submissionId}.zip`]: zipSync({
+        "manifest/manifest.xml": manifest,
+        "xml/submission.xml": validXml,
+        "attachment/evidence.pdf": encoder.encode("not a PDF"),
+      }),
+    });
+    const key = await digest(encoder.encode(validSendId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...validRecord,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, validSendId),
+      Error,
+      "not a complete PDF",
+    );
   } finally {
     await Deno.remove(root, { recursive: true });
   }

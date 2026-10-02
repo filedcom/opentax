@@ -8,6 +8,7 @@ import {
   hasMismatchedSingleReferenceName,
 } from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
+import { assertMefPdfEnvelope } from "./pdf-attachment-envelope.ts";
 import { escapeXml } from "../../mef/xml.ts";
 import { returnDataDocuments } from "./return-document-inventory.ts";
 
@@ -308,6 +309,13 @@ function assertArchivedDocumentInventory(
     throw new Error(
       "A2A outbound document inventory, references, or PDF attachments differ from its archived return",
     );
+  }
+  for (const [index, name] of fileNames.entries()) {
+    assertMefPdfEnvelope({
+      fileName: name!,
+      description: descriptions[index]!,
+      bytes: archive[`attachment/${name}`],
+    });
   }
 }
 
