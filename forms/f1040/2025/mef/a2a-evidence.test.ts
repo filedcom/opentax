@@ -145,6 +145,28 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
           "attachment/bad..pdf": encoder.encode("%PDF-invalid-name"),
         },
       },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="2"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment2"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>first.pdf</AttachmentLocationTxt></BinaryAttachment><BinaryAttachment documentId="BinaryAttachment2"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>second.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+        attachments: {
+          "attachment/first.pdf": encoder.encode("%PDF-first"),
+          "attachment/second.pdf": encoder.encode("%PDF-second"),
+        },
+      },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+        attachments: {
+          "attachment/evidence.pdf": encoder.encode("%PDF-duplicate-ref"),
+        },
+      },
+      {
+        xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><Extra>unprepared metadata</Extra><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+        attachments: {
+          "attachment/evidence.pdf": encoder.encode("%PDF-extra-metadata"),
+        },
+      },
     ];
     for (const [index, variant] of variants.entries()) {
       const xml = encoder.encode(variant.xml);
@@ -171,7 +193,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       );
     }
     const validXml = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
     );
     const validSendId = `${messageId}-valid`;
     await recordA2aSendPackage(root, {
@@ -257,6 +279,59 @@ Deno.test("A2A Send record and reopen reject reordered inner ZIP entries", async
           submissionId,
           taxpayerSsn: "111223333",
           submissionXmlSha256: originalXmlDigest,
+        }),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("A2A Send reopen rejects a duplicate attachment reference in stored XML", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const request = packageFor();
+    const send = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: request,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const inner = unzipSync(
+      unzipSync(request.containerZipBytes)[`${submissionId}.zip`],
+    );
+    inner["xml/submission.xml"] = encoder.encode(
+      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+    );
+    inner["attachment/evidence.pdf"] = encoder.encode("%PDF-test");
+    const changedContainer = zipSync({
+      [`${submissionId}.zip`]: zipSync(inner),
+    });
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...send,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+    const changedXmlDigest = await digest(inner["xml/submission.xml"]);
+    await assertRejects(
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          submissionId,
+          taxpayerSsn: "111223333",
+          submissionXmlSha256: changedXmlDigest,
         }),
       Error,
       "document inventory, references, or PDF attachments",

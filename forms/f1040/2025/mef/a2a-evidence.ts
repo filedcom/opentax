@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { MefTransmissionPackage } from "./submission-archive.ts";
 import { documentId } from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
+import { escapeXml } from "../../mef/xml.ts";
 
 const requestRecordSchema = z.object({
   messageId: z.string().min(1),
@@ -153,15 +154,19 @@ function assertArchivedDocumentInventory(
     )]
     : [];
   const ids = documents.map((match) => match[2]);
-  const references = [...xml.matchAll(/\breferenceDocumentId="([^"]+)"/g)]
-    .flatMap((match) => match[1].trim().split(/\s+/));
+  const referenceGroups = [...xml.matchAll(
+    /\breferenceDocumentId="([^"]+)"/g,
+  )].map((match) => match[1].trim().split(/\s+/));
+  const references = referenceGroups.flat();
   const binaries = [...xml.matchAll(
     /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
   )];
-  const fileNames = binaries.map((match) =>
-    /<AttachmentLocationTxt>([^<]+)<\/AttachmentLocationTxt>/
-      .exec(match[1])?.[1]
+  const binaryMetadata = binaries.map((match) =>
+    /^<DocumentTypeCd>PDF<\/DocumentTypeCd><Desc>([^<]*)<\/Desc><AttachmentLocationTxt>([^<]+)<\/AttachmentLocationTxt>$/
+      .exec(match[1])
   );
+  const descriptions = binaryMetadata.map((match) => match?.[1]);
+  const fileNames = binaryMetadata.map((match) => match?.[2]);
   const archivedAttachments = Object.keys(archive).filter((name) =>
     name.startsWith("attachment/")
   );
@@ -178,21 +183,36 @@ function assertArchivedDocumentInventory(
     documents.some((match, index) =>
       match[2] !== documentId(match[1], index)
     ) ||
+    referenceGroups.some((group) => new Set(group).size !== group.length) ||
     references.some((id) => !ids.includes(id)) ||
     binaries.length !==
       documents.filter((match) => match[1] === "BinaryAttachment").length ||
     Number(headerCounts[0][1]) !== binaries.length ||
+    binaryMetadata.some((match) => !match) ||
+    new Set(descriptions).size !== descriptions.length ||
+    descriptions.some((description) => {
+      if (!description) return true;
+      const decoded = description.replace(
+        /&(amp|lt|gt|quot|apos);/g,
+        (_, entity: string) =>
+          ({
+            amp: "&",
+            lt: "<",
+            gt: ">",
+            quot: '"',
+            apos: "'",
+          })[entity as "amp" | "lt" | "gt" | "quot" | "apos"],
+      );
+      return decoded.trim().length === 0 || decoded.length > 128 ||
+        escapeXml(decoded) !== description;
+    }) ||
     new Set(fileNames).size !== fileNames.length ||
     fileNames.some((name) =>
       !name || !isValidMefPdfFilename(name) ||
       !Object.hasOwn(archive, `attachment/${name}`)
     ) ||
     archivedAttachments.length !== fileNames.length ||
-    Object.keys(archive).join("\n") !== expectedArchiveOrder.join("\n") ||
-    binaries.some((match) =>
-      !/<DocumentTypeCd>PDF<\/DocumentTypeCd>/.test(match[1]) ||
-      !/<Desc>[^<]+<\/Desc>/.test(match[1])
-    )
+    Object.keys(archive).join("\n") !== expectedArchiveOrder.join("\n")
   ) {
     throw new Error(
       "A2A outbound document inventory, references, or PDF attachments differ from its archived return",
