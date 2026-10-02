@@ -2,17 +2,18 @@
 
 ## Full status summary (2026-10-03)
 
-Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
-TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **995 completed bounded items** and their exact limits live in the
+Merged [PR #59](https://github.com/filedcom/opentax/pull/59) provides the
+latest TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
+completed checkboxes**. The **996 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
 coverage decision, or release gate.
 
 **Current order of work.** The retained broad changes, including the board,
-passed the full local suite and compiled CLI/PDF smoke checks. Prepare the next
-patch release while keeping unsupported routes guarded. The 32 open TODOs
+passed the full local suite and compiled CLI/PDF smoke checks. CLI
+[v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is published;
+continue coverage and evidence work while keeping unsupported routes guarded. The 32 open TODOs
 outside **Named tax-form gaps** and 20 named-form parent gaps remain visible
 for subsequent coverage and evidence work; passing local tests will not by
 itself close a filing or IRS acceptance gate.
@@ -26,9 +27,9 @@ itself close a filing or IRS acceptance gate.
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | The full local suite passed 10,886/10,886, including all 178 filled-PDF/XML fixtures; manual page review and wider route evidence remain open. |
-| IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
+| IRS ATS and delivery | 5 | CLI v2.0.6 is published with five platform assets; the downloaded macOS ARM binary passed synthetic W-2 → MeF → PDF smoke. IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 995 bounded routes and
+**Implemented coverage.** The completed ledger records 996 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -123,7 +124,7 @@ suite, and a downloaded-binary smoke. It exports a return but does not transmit
 one. The [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence.
 
-**Current implementation batch.** [PR #59](https://github.com/filedcom/opentax/pull/59)
+**Current implementation batch.** Merged [PR #59](https://github.com/filedcom/opentax/pull/59)
 extends sourced routes and reconciliation, including the recent Forms 4562, 4797,
 8815, 7206, 8606, 8829, 6252, 4972, 8915-F, 461, 2210-F, and 7217 slices.
 Reviewed-source prerequisites cover Forms 172, 8801, and 2210 box E. Draft return
