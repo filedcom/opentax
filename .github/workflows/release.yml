@@ -79,6 +79,7 @@ jobs:
         with:
           name: ${{ matrix.asset }}
           path: ${{ matrix.asset }}
+          if-no-files-found: error
 
   release:
     if: startsWith(github.ref, 'refs/tags/v') && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true)
@@ -94,7 +95,27 @@ jobs:
 
       - name: Record artifact digests
         working-directory: artifacts
-        run: sha256sum opentax-* > SHA256SUMS
+        run: |
+          assets=(
+            opentax-linux-x64
+            opentax-linux-arm64
+            opentax-macos-x64
+            opentax-macos-arm64
+            opentax-windows-x64.exe
+          )
+          shopt -s nullglob dotglob
+          files=(*)
+          if [[ "${#files[@]}" -ne "${#assets[@]}" ]]; then
+            echo "Expected exactly five native release assets, found ${#files[@]}"
+            exit 1
+          fi
+          for asset in "${assets[@]}"; do
+            if [[ ! -f "$asset" || ! -s "$asset" ]]; then
+              echo "Missing or empty release asset: $asset"
+              exit 1
+            fi
+          done
+          sha256sum "${assets[@]}" > SHA256SUMS
 
       - name: Create release
         uses: softprops/action-gh-release@v2

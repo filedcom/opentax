@@ -74,8 +74,10 @@ gh release view v2.0.6 --json tagName,assets,publishedAt
 Expected release assets are `opentax-linux-x64`, `opentax-linux-arm64`,
 `opentax-macos-x64`, `opentax-macos-arm64`,
 `opentax-windows-x64.exe`, and `SHA256SUMS`. The release job depends on all five
-native build/smoke jobs. Verify each published digest against `SHA256SUMS`, then
-download the matching host binary and rerun the compiled-asset smoke with
+native build/smoke jobs, fails on a missing upload, and requires exactly five
+nonempty downloaded binaries before writing checksums. Verify each published
+digest against `SHA256SUMS`, then download the matching host binary and rerun
+the compiled-asset smoke with
 expected version `2.0.6`:
 
 ```sh
