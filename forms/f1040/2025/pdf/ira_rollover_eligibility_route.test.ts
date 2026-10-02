@@ -39,6 +39,29 @@ Deno.test("IRA rollover eligibility review is required again at native and PDF e
   assertEquals(projected?.line4b_ira_taxable, "0");
   const source = pending.f1099r!.f1099rs![0]!;
   for (
+    const unlinked of [
+      { ...source, source_document_reference: undefined },
+      { ...source, account_number: undefined },
+      { ...source, recipient_ssn: undefined },
+      { ...source, ts: undefined },
+    ]
+  ) {
+    const drift = {
+      ...pending,
+      f1099r: { f1099rs: [unlinked] },
+    } as unknown as ReturnType<typeof buildPending>;
+    assertThrows(
+      () => buildMefXml(drift, fixture.filer),
+      Error,
+      "identified payer copy, account, recipient, and filed owner",
+    );
+    await assertRejects(
+      () => buildPdfBytes(drift, fixture.filer),
+      Error,
+      "identified payer copy, account, recipient, and filed owner",
+    );
+  }
+  for (
     const ira_rollover of [
       { ...source.ira_rollover!, not_inherited_ira_confirmed: undefined },
       {

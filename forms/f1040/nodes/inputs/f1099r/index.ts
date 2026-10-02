@@ -792,6 +792,14 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       );
     }
     if (
+      !item.source_document_reference || !item.account_number?.trim() ||
+      !item.recipient_ssn || (item.ts !== "T" && item.ts !== "S")
+    ) {
+      throw new Error(
+        "IRA rollover needs one identified payer copy, account, recipient, and filed owner",
+      );
+    }
+    if (
       (item.prior_ira_basis ?? 0) > 0 || item.qcd_full === true ||
       (item.qcd_partial_amount ?? 0) > 0
     ) {

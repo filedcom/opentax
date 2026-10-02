@@ -14,13 +14,17 @@ prior-year account balance, applicable RMD divisor, or earlier distributions
 needed to calculate those rules independently. Every claimed rollover now
 requires the same reviewed non-inherited status, non-RMD status, and eligibility
 workpaper reference on the rollover source, whether it is timely, direct, or
-uses a late waiver. The four late-waiver objects no longer carry duplicate
-copies. A payer death code 4, whether primary or secondary in Box 7, rejects
+uses a late waiver. Every positive route also retains one identified payer
+Form 1099-R copy, account, recipient SSN, and filed taxpayer/spouse owner;
+native and PDF preflight reject omissions after graph calculation. These are
+structured source identifiers, not authentication of payer-issued bytes. The
+four late-waiver objects no longer carry duplicate copies. A payer death code
+4, whether primary or secondary in Box 7, rejects
 a claimed rollover; so do conflicting SIMPLE/Roth codes S, J, Q, and T in
 either code position. An ordinary death-coded distribution without a rollover
 claim still follows the income route. Native and PDF preflight recheck the
-source review and code guards. The 104-case Form 1099-R suite, focused
-native/PDF tamper and positive filled-PDF checks, and seven IRA full-return
+source review and code guards. The focused Form 1099-R suite, native/PDF
+source-tamper checks, positive filled-PDF checks, and seven IRA full-return
 TY2025 v5.4 XSD fixtures pass.
 
 This is a narrow guard, not a determination that every death-coded IRA

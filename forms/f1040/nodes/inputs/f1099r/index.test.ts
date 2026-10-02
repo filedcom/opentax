@@ -16,10 +16,16 @@ import {
 
 type Item = z.infer<typeof itemSchema>;
 
+let iraTestCopy = 0;
+
 function minimalIraItem(overrides: Partial<Item> = {}): Item {
+  const copy = ++iraTestCopy;
   return {
     payer_name: "Test Payer",
     payer_ein: "12-3456789",
+    source_document_reference: `issued-2025-ira-1099r-${copy}`,
+    account_number: `IRA-TEST-${copy}`,
+    recipient_ssn: "111223333",
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: true,
@@ -1291,6 +1297,21 @@ Deno.test("f1099r.compute: every timely and direct IRA rollover needs eligibilit
   for (const item of [timely, direct]) {
     assertEquals(f1040Input(compute([item])).line4c_ira_rollover, true);
     for (
+      const incomplete of [
+        { ...item, source_document_reference: undefined },
+        { ...item, account_number: undefined },
+        { ...item, account_number: " " },
+        { ...item, recipient_ssn: undefined },
+        { ...item, ts: undefined },
+      ]
+    ) {
+      assertThrows(
+        () => compute([incomplete]),
+        Error,
+        "identified payer copy, account, recipient, and filed owner",
+      );
+    }
+    for (
       const key of [
         "not_inherited_ira_confirmed",
         "not_required_minimum_distribution_confirmed",
@@ -2059,6 +2080,8 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
   );
   const second = {
     ...item,
+    source_document_reference: "issued-2025-ira-1099r-second",
+    account_number: "IRA-TEST-SECOND",
     ira_rollover: {
       ...item.ira_rollover!,
       distributed_on: "2025-11-01",
@@ -2072,7 +2095,11 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
     "one rollover per owner in 12 months",
   );
   assertEquals(
-    f1040Input(compute([item, { ...second, ts: TS.S }]))
+    f1040Input(compute([item, {
+      ...second,
+      ts: TS.S,
+      recipient_ssn: "444556666",
+    }]))
       .line4c_ira_rollover,
     true,
   );

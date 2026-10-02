@@ -621,6 +621,10 @@ Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () 
       f1099rs: [{
         payer_name: "IRA Custodian",
         payer_ein: "12-3456789",
+        source_document_reference: "2025 issued IRA rollover 1099-R",
+        account_number: "IRA-ROLLOVER-1",
+        recipient_ssn: "111223333",
+        ts: "T",
         box1_gross_distribution: 5000,
         box2a_taxable_amount: 0,
         box7_distribution_code: "7",
