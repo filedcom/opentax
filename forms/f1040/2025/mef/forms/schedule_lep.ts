@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
-import { inputSchema } from "../../../nodes/inputs/schedule_lep/index.ts";
+import {
+  inputSchema,
+  LanguagePreferenceCode,
+} from "../../../nodes/inputs/schedule_lep/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = z.input<typeof inputSchema> | readonly [];
@@ -58,6 +61,11 @@ export function buildScheduleLep(
     ) {
       throw new Error(
         "Schedule LEP prior election owner SSN must match the requesting person",
+      );
+    }
+    if (request.language_preference_code === LanguagePreferenceCode.Cancel) {
+      throw new Error(
+        "Schedule LEP cancellation export needs authenticated prior IRS election or account evidence",
       );
     }
     return elements("IRS1040ScheduleLEP", [

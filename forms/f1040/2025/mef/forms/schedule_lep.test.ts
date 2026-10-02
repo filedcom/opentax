@@ -38,30 +38,21 @@ Deno.test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 sc
       },
       {
         person: "spouse" as const,
-        language_preference_code: LanguagePreferenceCode.Cancel,
+        language_preference_code: LanguagePreferenceCode.French,
         request_confirmed_by_person: true as const,
-        request_record_reference: "Grace 2025 cancellation request",
-        prior_election_review: {
-          prior_tax_year: 2024,
-          person_ssn: "987654321",
-          language_preference_code: LanguagePreferenceCode.French,
-          record_kind: "filed_schedule_lep" as const,
-          record_reference: "Grace filed 2024 Schedule LEP",
-          reviewed_by: "preparer-1",
-          reviewed_on: "2026-01-15",
-        },
+        request_record_reference: "Grace 2025 language request",
       },
     ],
   };
   const xml = buildScheduleLep(source, { filer });
   assertEquals(xml, [
     "<IRS1040ScheduleLEP><PersonNm>Ada Lovelace</PersonNm><SSN>123456789</SSN><LanguagePreferenceCd>001</LanguagePreferenceCd></IRS1040ScheduleLEP>",
-    "<IRS1040ScheduleLEP><PersonNm>Grace Hopper</PersonNm><SSN>987654321</SSN><LanguagePreferenceCd>000</LanguagePreferenceCd></IRS1040ScheduleLEP>",
+    "<IRS1040ScheduleLEP><PersonNm>Grace Hopper</PersonNm><SSN>987654321</SSN><LanguagePreferenceCd>011</LanguagePreferenceCd></IRS1040ScheduleLEP>",
   ]);
   const pdf = scheduleLepPdf.instances?.(source, filer);
   assertEquals(pdf, [
     { name: "Ada Lovelace", ssn: "123456789", selected_code: "001" },
-    { name: "Grace Hopper", ssn: "987654321", selected_code: "000" },
+    { name: "Grace Hopper", ssn: "987654321", selected_code: "011" },
   ]);
   assertEquals(scheduleLepPdf.pageIndices?.({}), [0]);
   assertEquals(
@@ -177,6 +168,31 @@ Deno.test("Schedule LEP cancellation requires a confirmed request and prior elec
       }],
     }).success,
     true,
+  );
+  const reviewed = {
+    person: "taxpayer" as const,
+    language_preference_code: LanguagePreferenceCode.Cancel,
+    request_confirmed_by_person: true as const,
+    request_record_reference: "Ada cancellation request",
+    prior_election_review: {
+      prior_tax_year: 2024,
+      person_ssn: "123456789",
+      language_preference_code: LanguagePreferenceCode.Spanish,
+      record_kind: "filed_schedule_lep" as const,
+      record_reference: "Ada filed 2024 Schedule LEP",
+      reviewed_by: "preparer-1",
+      reviewed_on: "2026-01-15",
+    },
+  };
+  assertThrows(
+    () => buildScheduleLep({ requests: [reviewed] }, { filer }),
+    Error,
+    "authenticated prior IRS election",
+  );
+  assertThrows(
+    () => scheduleLepPdf.instances?.({ requests: [reviewed] }, filer),
+    Error,
+    "authenticated prior IRS election",
   );
   const mismatched = {
     person: "taxpayer" as const,

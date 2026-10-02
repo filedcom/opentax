@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { LanguagePreferenceCode } from "../../../nodes/inputs/schedule_lep/index.ts";
@@ -50,18 +50,9 @@ Deno.test({
         },
         {
           person: "spouse",
-          language_preference_code: LanguagePreferenceCode.Cancel,
+          language_preference_code: LanguagePreferenceCode.French,
           request_confirmed_by_person: true,
-          request_record_reference: "Grace 2025 cancellation request",
-          prior_election_review: {
-            prior_tax_year: 2024,
-            person_ssn: "987654321",
-            language_preference_code: LanguagePreferenceCode.French,
-            record_kind: "filed_schedule_lep",
-            record_reference: "Grace filed 2024 Schedule LEP",
-            reviewed_by: "preparer-1",
-            reviewed_on: "2026-01-15",
-          },
+          request_record_reference: "Grace 2025 language request",
         },
       ],
     },
@@ -80,7 +71,7 @@ Deno.test({
   }
 });
 
-Deno.test("Schedule LEP cancellation owner review gates the prepared full return", async () => {
+Deno.test("Schedule LEP cancellation needs authenticated election evidence before final export", async () => {
   const request = {
     person: "spouse" as const,
     language_preference_code: LanguagePreferenceCode.Cancel,
@@ -97,10 +88,10 @@ Deno.test("Schedule LEP cancellation owner review gates the prepared full return
     },
   };
   const pending = { schedule_lep: { requests: [request] } };
-  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
-  assertStringIncludes(
-    bundle.xml,
-    "<LanguagePreferenceCd>000</LanguagePreferenceCd>",
+  await assertRejects(
+    () => buildMefBundle(pending, { filer, attachments: [] }),
+    Error,
+    "authenticated prior IRS election",
   );
   await assertRejects(
     () =>
