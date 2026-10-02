@@ -20,6 +20,13 @@ Deno.test("agi_aggregator: wages only", () => {
   assertEquals(agi(result), 60_000);
 });
 
+Deno.test("agi_aggregator: household wages enter line 11 once", () => {
+  assertEquals(
+    agi(compute({ line1b_household_wages: 2_000, line7_unemployment: 1_000 })),
+    3_000,
+  );
+});
+
 Deno.test("agi_aggregator: S corporation tax-benefit recovery reaches Form 1040 line 8 once", () => {
   const result = compute({
     line1a_wages: 60_000,

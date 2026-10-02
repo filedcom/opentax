@@ -282,7 +282,7 @@ export function assertReturnScheduleJoins(
   if (schedule3) {
     match(
       amount(fields, "line31_additional_payments"),
-      amount(schedule3, "line15_total"),
+      Math.round(amount(schedule3, "line15_total")),
       "line 31",
     );
   }

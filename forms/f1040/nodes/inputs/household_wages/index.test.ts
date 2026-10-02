@@ -80,6 +80,10 @@ Deno.test("household_wages.compute: wages_received > 0 → routes to f1040 line1
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line1b_household_wages, 20000);
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line1b_household_wages,
+    20000,
+  );
 });
 
 Deno.test("household_wages.compute: wages_received = 0 → no f1040 output", () => {
@@ -153,8 +157,8 @@ Deno.test("household_wages.compute: ss_tax_withheld does not create separate out
   const result = compute([
     minimalItem({ wages_received: 20000, ss_tax_withheld: 1240 }),
   ]);
-  // Only one output to f1040
-  assertEquals(result.outputs.length, 1);
+  // Social Security withholding adds no output beyond wages and AGI.
+  assertEquals(result.outputs.length, 2);
 });
 
 Deno.test("household_wages.compute: medicare_tax_withheld routes to form8959", () => {
@@ -165,8 +169,8 @@ Deno.test("household_wages.compute: medicare_tax_withheld routes to form8959", (
       medicare_tax_withheld: 290,
     }),
   ]);
-  // f1040 output for wages + form8959 output for Medicare withholding
-  assertEquals(result.outputs.length, 2);
+  // Wages reach Form 1040 and AGI; Medicare withholding reaches Form 8959.
+  assertEquals(result.outputs.length, 3);
   const f8959 = findOutput(result, "form8959");
   assertEquals(f8959?.fields?.household_medicare_withheld, 290);
 });
@@ -199,7 +203,7 @@ Deno.test("household_wages.compute: wages + withholding → single f1040 output 
   const result = compute([
     minimalItem({ wages_received: 20000, federal_income_tax_withheld: 2500 }),
   ]);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "f1040");
   assertEquals(out!.fields.line1b_household_wages, 20000);
   assertEquals(out!.fields.line25a_w2_withheld, 2500);
@@ -258,6 +262,6 @@ Deno.test("household_wages.compute: smoke test — two employers with full detai
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line1b_household_wages, 25000);
   assertEquals(out!.fields.line25a_w2_withheld, 3400);
-  // f1040 + form8959 (Medicare wages 25000, withheld 362.50)
-  assertEquals(result.outputs.length, 2);
+  // f1040 + AGI + form8959 (Medicare wages 25000, withheld 362.50)
+  assertEquals(result.outputs.length, 3);
 });

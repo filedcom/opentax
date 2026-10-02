@@ -66,6 +66,8 @@ export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2 and f1099r can both route here)
   line1a_wages: accumulable(z.number()).optional(),
+  // Line 1b — Household employee wages also enter total income and AGI.
+  line1b_household_wages: accumulable(z.number().nonnegative()).optional(),
   // Line 1h — Other earned income from clergy, foreign employers, and Form 2555
   line1h_other_earned: accumulable(z.number()).optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
@@ -354,6 +356,7 @@ function computeSsaTaxable(
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     sumField(input.line1a_wages as number | number[] | undefined) +
+    sumField(input.line1b_household_wages) +
     sumField(input.line1h_other_earned) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +

@@ -411,7 +411,7 @@ Deno.test({
     result.diagnostics[0].message,
     "needs complete Credit Limit Worksheet A and B answers",
   );
-  const xml = buildXmlSlice(result, ["f1040", "w2"]);
+  const xml = buildXmlSlice(result, ["general", "f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
   assertEquals(
     (xml.match(/<DependentDetail>/g) ?? []).length,
@@ -724,6 +724,7 @@ Deno.test({
       digital_assets: facts.taxpayer.digitalAssets,
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,

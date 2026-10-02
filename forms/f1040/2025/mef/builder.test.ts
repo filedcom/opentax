@@ -23,6 +23,10 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import {
+  schedule2Part1Total,
+  schedule2Part2Total,
+} from "../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { buildIsoAmtBasisLedger } from "../../nodes/inputs/f3921/index.ts";
 import { DependentRelationship } from "../../nodes/inputs/general/index.ts";
 import {
@@ -188,6 +192,8 @@ function sampleFiler(): FilerIdentity {
   return {
     primarySSN: "123456789",
     fullName: "John A Smith",
+    firstNameWithInitial: "John A",
+    lastName: "Smith",
     nameLine1: "SMITH JOHN A",
     nameControl: "SMIT",
     address: {
@@ -256,8 +262,23 @@ const sampleForm8919 = {
 };
 
 function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
+  // Routing fixtures use sparse Form 1040 data. Supply the corresponding
+  // filed tax lines so the return-wide schedule joins still run on valid data.
+  const pending = args[0];
+  const schedule2 = pending.schedule2;
+  const part1 = schedule2 ? schedule2Part1Total(schedule2) : 0;
+  const part2 = schedule2 ? schedule2Part2Total(schedule2) : 0;
+  const f1040 = {
+    ...pending.f1040,
+    ...(part1 > 0 && pending.f1040?.line17_additional_taxes === undefined
+      ? { line17_additional_taxes: part1 }
+      : {}),
+    ...(part2 > 0 && pending.f1040?.line23_other_taxes === undefined
+      ? { line23_other_taxes: part2 }
+      : {}),
+  };
   return rawBuildMefXml(
-    args[0],
+    schedule2 ? { ...pending, f1040 } : pending,
     args[1] ?? sampleFiler(),
     args[2],
     args[3],
@@ -1632,7 +1653,7 @@ Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
   assertThrows(
     () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
     Error,
-    "REIT-only filing needs one reviewed issued 1099-DIV",
+    "REIT-only filing needs one to three reviewed issued 1099-DIV copies",
   );
 });
 
@@ -1850,7 +1871,11 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW21">');
   assertStringIncludes(xml, '<IRSW2 documentId="IRSW22">');
   const tampered = {
-    f1040: { line25a_w2_withheld: 5_999 },
+    f1040: {
+      filing_status: "single",
+      digital_assets: false,
+      line25a_w2_withheld: 5_999,
+    },
     w2: { w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }] },
   };
   assertThrows(
@@ -1868,7 +1893,11 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
 Deno.test("final MeF and PDF exports reject 1099 withholding changed after source calculation", async () => {
   const payer = {
     f1099int: { f1099ints: [{ payer_name: "Bank", box4: 80 }] },
-    f1040: { line25b_withheld_1099: 80 },
+    f1040: {
+      filing_status: "single",
+      digital_assets: false,
+      line25b_withheld_1099: 80,
+    },
   };
   const filerIdentity = sampleFiler();
   assertStringIncludes(
@@ -1877,7 +1906,7 @@ Deno.test("final MeF and PDF exports reject 1099 withholding changed after sourc
   );
   const tampered = {
     ...payer,
-    f1040: { line25b_withheld_1099: 79 },
+    f1040: { ...payer.f1040, line25b_withheld_1099: 79 },
   };
   assertThrows(
     () => buildMefXml(tampered, filerIdentity),

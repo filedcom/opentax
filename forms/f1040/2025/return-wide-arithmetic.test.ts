@@ -318,3 +318,18 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     "line 31",
   );
 });
+
+Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
+  const pending = { schedule3: { line15_total: 42.6 } };
+  const filed = { line31_additional_payments: 43 };
+  assertReturnScheduleJoins(filed, pending);
+  assertThrows(
+    () =>
+      assertReturnScheduleJoins(
+        { line31_additional_payments: 42 },
+        pending,
+      ),
+    Error,
+    "line 31",
+  );
+});

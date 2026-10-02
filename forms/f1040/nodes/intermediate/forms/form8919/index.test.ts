@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
@@ -35,6 +36,10 @@ function compute(overrides: Record<string, unknown> = {}) {
 Deno.test("Form 8919 sends lines 6, 10 and 13 to their distinct destinations", () => {
   const result = compute();
   assertEquals(fieldsOf(result.outputs, f1040)?.line1g_wages_8919, 50_000);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line1g_wages_8919,
+    50_000,
+  );
   assertEquals(fieldsOf(result.outputs, form8959)?.wages_8919, 50_000);
   assertEquals(fieldsOf(result.outputs, schedule_se)?.wages_8919, 50_000);
   assertEquals(
