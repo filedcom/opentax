@@ -132,7 +132,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("1099-DIV exact issued-copy repetition cannot double dividends or withholding", () => {
+Deno.test("1099-DIV changed issued copy cannot double dividends or withholding", () => {
   const issued = minimalItem({
     payerName: "Test Payer",
     payerTin: "123456789",
@@ -141,9 +141,9 @@ Deno.test("1099-DIV exact issued-copy repetition cannot double dividends or with
     box4: 15,
   });
   assertThrows(
-    () => compute([issued, { ...issued }]),
+    () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
     Error,
-    "repeats the same identified payer-issued copy",
+    "repeats the same identified payer and source reference",
   );
   assertThrows(
     () =>
@@ -153,7 +153,7 @@ Deno.test("1099-DIV exact issued-copy repetition cannot double dividends or with
         nominee_distribution: { box1a: 100, box4: 5 },
       }]),
     Error,
-    "repeats the same identified payer-issued copy",
+    "repeats the same identified payer and source reference",
   );
   const twoCopies = compute([
     issued,

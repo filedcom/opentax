@@ -1,18 +1,27 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { inputSchema as bSchema } from "../nodes/inputs/f1099b/index.ts";
-import { inputSchema as divSchema } from "../nodes/inputs/f1099div/index.ts";
+import {
+  assertDistinct1099DIVCopies,
+  inputSchema as divSchema,
+} from "../nodes/inputs/f1099div/index.ts";
 import {
   assertDistinct1099GCopies,
   inputSchema as gSchema,
 } from "../nodes/inputs/f1099g/index.ts";
-import { inputSchema as intSchema } from "../nodes/inputs/f1099int/index.ts";
+import {
+  assertDistinct1099INTCopies,
+  inputSchema as intSchema,
+} from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as kSchema } from "../nodes/inputs/f1099k/index.ts";
 import {
   assertDistinct1099MCopies,
   inputSchema as mSchema,
 } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as necSchema } from "../nodes/inputs/f1099nec/index.ts";
-import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
+import {
+  assertDistinct1099OIDCopies,
+  inputSchema as oidSchema,
+} from "../nodes/inputs/f1099oid/index.ts";
 import { inputSchema as patrSchema } from "../nodes/inputs/f1099patr/index.ts";
 import { inputSchema as rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
@@ -138,7 +147,13 @@ export function assert1099WithholdingSource(
     if (raw === undefined) continue;
     const parsed = source.schema.parse(raw) as Record<string, unknown>;
     const rows = parsed[source.rows] as Record<string, unknown>[];
-    if (source.key === "f1099g") {
+    if (source.key === "f1099div") {
+      assertDistinct1099DIVCopies(divSchema.parse(raw).f1099divs);
+    } else if (source.key === "f1099int") {
+      assertDistinct1099INTCopies(intSchema.parse(raw).f1099ints);
+    } else if (source.key === "f1099oid") {
+      assertDistinct1099OIDCopies(oidSchema.parse(raw).f1099oids);
+    } else if (source.key === "f1099g") {
       assertDistinct1099GCopies(gSchema.parse(raw).f1099gs);
     } else if (source.key === "f1099m") {
       assertDistinct1099MCopies(mSchema.parse(raw).f1099ms);

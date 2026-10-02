@@ -97,7 +97,7 @@ function interestNet(fields: unknown): number | undefined {
     ?.interest_detail?.net;
 }
 
-Deno.test("1099-INT rejects an exact repeated issued payer/account copy", () => {
+Deno.test("1099-INT rejects corrected references on one identified payer/account", () => {
   const issued = minimalItem({
     payer_name: "Test Bank",
     payer_tin: "123456789",
@@ -106,9 +106,14 @@ Deno.test("1099-INT rejects an exact repeated issued payer/account copy", () => 
     box1: 200,
   });
   assertThrows(
-    () => compute([issued, { ...issued, box1: 900 }]),
+    () =>
+      compute([issued, {
+        ...issued,
+        source_document_reference: "corrected-1099int-2025-2",
+        box1: 900,
+      }]),
     Error,
-    "repeats the same payer, account, and issued source copy",
+    "repeats the same payer and account",
   );
   const distinct = compute([issued, { ...issued, account_number: "SAV-2" }]);
   assertEquals(

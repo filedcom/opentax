@@ -23,7 +23,7 @@ function interestDetail(result: ReturnType<typeof compute>) {
   } | undefined;
 }
 
-Deno.test("1099-OID exact issued-copy repetition cannot double interest or withholding", () => {
+Deno.test("1099-OID changed issued copy cannot double interest or withholding", () => {
   const issued = {
     payer_name: "Bond Fund",
     payer_tin: "12-3456789",
@@ -33,9 +33,14 @@ Deno.test("1099-OID exact issued-copy repetition cannot double interest or withh
     box7_description: "Bond A",
   };
   assertThrows(
-    () => compute([issued, { ...issued, nominee_oid: 50 }]),
+    () =>
+      compute([issued, {
+        ...issued,
+        box1_oid: 250,
+        box4_federal_withheld: 20,
+      }]),
     Error,
-    "repeats the same identified payer-issued copy",
+    "repeats the same identified payer and source reference",
   );
   const separate = compute([
     issued,

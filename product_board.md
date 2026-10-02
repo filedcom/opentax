@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **710 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **712 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 156-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 710 bounded routes and
+**Implemented coverage.** The completed ledger records 712 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -154,8 +154,10 @@ and read time, before accepting linked inbound evidence.
 The native registry audit now identifies 115 bounded main/numbered rows,
 one blocked Form 8990 row, and the missing Form 8621 parent PDF; supporting
 statement packet decisions remain open.
-Identified 1099-DIV and 1099-OID payer copies now reject exact duplicate
-source records before their dividends, interest, and withholding accumulate;
+Identified 1099-DIV and 1099-OID payer copies now reject changed box amounts
+under the same payer/source reference before dividends, interest, or withholding
+accumulate. Identified 1099-INT payer/account copies reject changed source
+references. All three guards replay at final native/PDF export;
 identified 1099-G and 1099-MISC copies have equivalent bounded guards.
 Their identified payer/recipient/account copies now also reject changed
 references or box amounts on a second row before graph totals and final
