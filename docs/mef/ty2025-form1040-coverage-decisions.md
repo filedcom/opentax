@@ -26,7 +26,7 @@ schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
 
-Current static reconciliation (2026-10-02): `ALL_MEF_FORMS` has **145** entries
+Current static reconciliation (2026-10-02): `ALL_MEF_FORMS` has **148** entries
 and `ALL_PDF_FORMS` has **115**. The 211-root census has **122** exact MeF form
 source literals and **89** roots with no such literal. Of the 122, **116** have
 a literal in a registered descriptor file and **six** have literals only in
@@ -49,8 +49,9 @@ registry or taxpayer-claim count. Recheck those file classes whenever a staged
 builder is registered or a root token moves between files.
 
 The earlier registered-document matrix omitted Form 2106 and the six newly
-registered Forms 8844, 8864, 8881, 8882, 8941 and 8994; its seven new rows
-now account for 145/145 entries. The root census had ten stale `No` flags:
+registered Forms 8844, 8864, 8881, 8882, 8941 and 8994; those seven rows
+accounted for the earlier 145-entry registry. Three later Schedule A supporting
+statements bring the current audit to 148/148 entries. The root census had ten stale `No` flags:
 `IRS2210`, `IRS8828`, `IRS8844`, `IRS8864`, `IRS8881`, `IRS8882`,
 `IRS8908`, `IRS8938`, `IRS8941`, `IRS8994`. Updating a literal flag does not
 approve or activate an unregistered form. The conditional-schedule audit

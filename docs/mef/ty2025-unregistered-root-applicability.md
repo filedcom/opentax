@@ -21,8 +21,8 @@ absence of a public input is not a user-approved exclusion.
 
 ### Registry-to-root reconciliation
 
-The current native registry has **145 descriptor entries**: 19 return/schedule
-entries, 97 numbered-form entries and 29 wage/supporting entries. The filled
+The current native registry has **148 descriptor entries**: 19 return/schedule
+entries, 97 numbered-form entries and 32 wage/supporting entries. The filled
 PDF registry has **115 entries**. These counts are descriptor counts, not
 distinct schema-root counts and not a measure of accepted filing scenarios.
 The 211-root census divides by exact source token into 122 `Yes` and 89 `No`:
@@ -30,7 +30,7 @@ The 211-root census divides by exact source token into 122 `Yes` and 89 `No`:
 in unregistered files (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`,
 `IRS9465`), and the quoted `IRS1116ScheduleC` token is a separate staged,
 unregistered builder. A registered file can mention a root it does not emit.
-The [29-row supporting-descriptor review](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
+The [32-row supporting-descriptor review](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
 records each source/parent trigger, written case and packet role. A payer copy,
 native supporting statement, PDF BinaryAttachment and taxpayer-authored form
 are different artifacts; no root is supported just because its descriptor is

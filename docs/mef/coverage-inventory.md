@@ -43,8 +43,8 @@ unrun and unrendered, not validated filing results.
 ## Inventory disposition, not a release decision
 
 The [registered-document audit](ty2025-form1040-form-audit.md) enumerates all
-**145/145** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 97
-numbered forms or distinct schedules, and 29 wage/supporting documents. Each row
+**148/148** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 97
+numbered forms or distinct schedules, and 32 wage/supporting documents. Each row
 names its coded source/calculation boundary, native serializer, PDF status,
 written case status, and remaining branch. This completes the _registered_
 form-by-form inventory, not the set of Form 1040 situations the product can
@@ -172,7 +172,7 @@ validation gate remains unrun. The rows below do not add product exclusions.
 
 At this older overlay's checkpoint, `ALL_MEF_FORMS` had **124 entries** and the
 schema census had 114 roots without a MeF source literal. The current registries
-have **145 MeF** and **115 PDF** descriptors, and the 211-root census has **122**
+have **148 MeF** and **115 PDF** descriptors, and the 211-root census has **122**
 source-literal roots and **89** without one. These are descriptor and static
 literal counts, not supported filing situations. The 89 remain an
 applicability/implementation queue, including staged but unregistered Form
