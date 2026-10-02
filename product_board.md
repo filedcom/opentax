@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **915 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **918 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 915 bounded routes and
+**Implemented coverage.** The completed ledger records 918 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -39,6 +39,12 @@ contains only open parent work; a completed slice does not close its parent form
 The [32-row nonnamed dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 maps independent implementation and review work separately from user decisions,
 deferred named forms, validation, and IRS ATS prerequisites.
+The PDF builder now rejects populated fields on discarded template pages and
+invalid page selections; full descriptor/page review remains open.
+MeF document references now reject extra or duplicate declared document names
+after resolving the actual referenced instance types.
+The MeF builder's Schedule F presence fixture now supplies its required Form
+1099 answer; its 148 focused tests pass on the current worktree.
 
 **Merged checkpoint.** [PR #56](https://github.com/filedcom/opentax/pull/56)
 was merged as `48f69237` on 2026-10-01. Its full local suite at `c0d45cb0`
