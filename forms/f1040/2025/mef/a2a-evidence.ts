@@ -164,6 +164,11 @@ function assertArchivedDocumentInventory(
   const archivedAttachments = Object.keys(archive).filter((name) =>
     name.startsWith("attachment/")
   );
+  const expectedArchiveOrder = [
+    "manifest/manifest.xml",
+    "xml/submission.xml",
+    ...fileNames.map((name) => `attachment/${name}`),
+  ];
   if (
     returnData.length !== 1 || headerCounts.length !== 1 ||
     Number(returnData[0][1]) !== documents.length ||
@@ -181,6 +186,7 @@ function assertArchivedDocumentInventory(
       !name || !Object.hasOwn(archive, `attachment/${name}`)
     ) ||
     archivedAttachments.length !== fileNames.length ||
+    Object.keys(archive).join("\n") !== expectedArchiveOrder.join("\n") ||
     binaries.some((match) =>
       !/<DocumentTypeCd>PDF<\/DocumentTypeCd>/.test(match[1]) ||
       !/<Desc>[^<]+<\/Desc>/.test(match[1])

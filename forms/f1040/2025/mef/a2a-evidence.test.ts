@@ -194,6 +194,71 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
   }
 });
 
+Deno.test("A2A Send record and reopen reject reordered inner ZIP entries", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const packageData = packageFor();
+    const original = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: packageData,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const inner = unzipSync(
+      unzipSync(packageData.containerZipBytes)[`${submissionId}.zip`],
+    );
+    const reordered = zipSync({
+      "xml/submission.xml": inner["xml/submission.xml"],
+      "manifest/manifest.xml": inner["manifest/manifest.xml"],
+    });
+    const changedContainer = zipSync({ [`${submissionId}.zip`]: reordered });
+    await assertRejects(
+      () =>
+        recordA2aSendPackage(root, {
+          messageId: `${messageId}-reordered`,
+          submissionIds: [submissionId],
+          package: {
+            ...packageData,
+            containerZipBytes: changedContainer,
+          },
+          recordedAt: new Date("2026-09-26T10:00:00Z"),
+        }),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...original,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+    const originalXmlDigest = await digest(inner["xml/submission.xml"]);
+    await assertRejects(
+      () =>
+        readA2aArchivedSubmission(root, messageId, {
+          submissionId,
+          taxpayerSsn: "111223333",
+          submissionXmlSha256: originalXmlDigest,
+        }),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A Send read and inbound evidence reject a changed inner document inventory", async () => {
   const root = await Deno.makeTempDir();
   try {
