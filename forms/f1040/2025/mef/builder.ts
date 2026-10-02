@@ -106,7 +106,7 @@ async function validatePdfAttachments(
       throw new Error(`Invalid or duplicate MeF PDF filename: ${fileName}`);
     }
     if (
-      description.length === 0 || description.length > 128 ||
+      description.trim().length === 0 || description.length > 128 ||
       descriptions.has(description)
     ) {
       throw new Error(

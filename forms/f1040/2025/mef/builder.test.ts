@@ -413,6 +413,24 @@ Deno.test("prepared PDF and submission manifest reject changed attachment bytes 
     Error,
     "binary manifest differs",
   );
+  const blankDescriptionXml = bundle.xml.replace(
+    "<Desc>Reviewed source statement</Desc>",
+    "<Desc>   </Desc>",
+  );
+  const blankDescriptionXmlSha256 = await sha256Hex(
+    new TextEncoder().encode(blankDescriptionXml),
+  );
+  await assertRejects(
+    () =>
+      assertPreparedAttachmentManifest({
+        ...bundle,
+        xml: blankDescriptionXml,
+        xmlSha256: blankDescriptionXmlSha256,
+        attachments: [{ ...bundle.attachments[0], description: "   " }],
+      }),
+    Error,
+    "PDF attachment set differs",
+  );
   const changedBytes = Uint8Array.from(bundle.attachments[0].bytes);
   changedBytes[changedBytes.length - 1] ^= 1;
   await assertRejects(
@@ -652,6 +670,17 @@ Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => 
     () => buildMefBundle({}, { attachments: [valid, valid] }),
     Error,
     "Invalid or duplicate MeF PDF filename",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        f1040: { filing_status: "single", digital_assets: false },
+      }, {
+        filer: sampleFiler(),
+        attachments: [{ ...valid, description: "   " }],
+      }),
+    Error,
+    "Invalid or duplicate MeF PDF description",
   );
 });
 

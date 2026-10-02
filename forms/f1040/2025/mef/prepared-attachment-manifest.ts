@@ -59,7 +59,7 @@ export function assertPreparedAttachmentMetadata(
     names.some((name) => !isValidMefPdfFilename(name)) ||
     new Set(descriptions).size !== descriptions.length ||
     descriptions.some((description) =>
-      description.length === 0 || description.length > 128
+      description.trim().length === 0 || description.length > 128
     ) ||
     names.length !== digestNames.length ||
     names.some((name) =>
