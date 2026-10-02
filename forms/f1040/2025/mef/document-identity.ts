@@ -9,6 +9,24 @@ export function documentId(tag: string, index: number): string {
   return `${tag.slice(0, 30 - suffix.length)}${suffix}`;
 }
 
+/** Match a single declared document name to every referenced instance. */
+export function hasMismatchedSingleReferenceName(
+  xml: string,
+  tagsById: ReadonlyMap<string, string>,
+): boolean {
+  for (const tag of xml.matchAll(/<[A-Za-z0-9]+\b[^>]*>/g)) {
+    const ids = /\breferenceDocumentId="([^"]+)"/.exec(tag[0])?.[1]
+      ?.trim().split(/\s+/);
+    const names = /\breferenceDocumentName="([^"]+)"/.exec(tag[0])?.[1]
+      ?.trim().split(/\s+/);
+    if (
+      ids?.length && names?.length === 1 &&
+      ids.some((id) => tagsById.get(id) !== names[0])
+    ) return true;
+  }
+  return false;
+}
+
 /** Validate the exact IDs and references before serializing ReturnData. */
 export function validateDocumentReferences(
   fragments: ReadonlyArray<MefDocumentFragment>,
@@ -17,6 +35,9 @@ export function validateDocumentReferences(
     documentId(fragment.tag, index)
   );
   const knownIds = new Set(ids);
+  const tagsById = new Map(
+    ids.map((id, index) => [id, fragments[index].tag]),
+  );
   if (knownIds.size !== ids.length) {
     throw new Error("MeF document IDs collide after root-name truncation");
   }
@@ -28,6 +49,13 @@ export function validateDocumentReferences(
     if (!knownIds.has(id)) {
       throw new Error(`MeF referenceDocumentId ${id} has no document`);
     }
+  }
+  if (
+    fragments.some((fragment) =>
+      hasMismatchedSingleReferenceName(fragment.xml, tagsById)
+    )
+  ) {
+    throw new Error("MeF referenceDocumentName differs from its document IDs");
   }
   for (const [index, fragment] of fragments.entries()) {
     if (

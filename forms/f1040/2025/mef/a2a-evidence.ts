@@ -2,7 +2,10 @@ import { join } from "@std/path";
 import { unzipSync } from "fflate";
 import { z } from "zod";
 import type { MefTransmissionPackage } from "./submission-archive.ts";
-import { documentId } from "./document-identity.ts";
+import {
+  documentId,
+  hasMismatchedSingleReferenceName,
+} from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 import { escapeXml } from "../../mef/xml.ts";
 
@@ -161,6 +164,7 @@ function assertArchivedDocumentInventory(
     )]
     : [];
   const ids = documents.map((match) => match[2]);
+  const tagsById = new Map(documents.map((match) => [match[2], match[1]]));
   const referenceGroups = [...xml.matchAll(
     /\breferenceDocumentId="([^"]+)"/g,
   )].map((match) => match[1].trim().split(/\s+/));
@@ -192,6 +196,7 @@ function assertArchivedDocumentInventory(
     ) ||
     referenceGroups.some((group) => new Set(group).size !== group.length) ||
     references.some((id) => !ids.includes(id)) ||
+    hasMismatchedSingleReferenceName(xml, tagsById) ||
     binaries.length !==
       documents.filter((match) => match[1] === "BinaryAttachment").length ||
     Number(headerCounts[0][1]) !== binaries.length ||

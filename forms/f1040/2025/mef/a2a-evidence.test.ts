@@ -169,6 +169,11 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       },
       {
         xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
+        attachments: {},
+      },
+      {
+        xml:
           `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {},
       },

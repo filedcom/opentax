@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { documentId, validateDocumentReferences } from "./document-identity.ts";
+import { assertPreparedDocumentInventory } from "./prepared-attachment-manifest.ts";
+import type { MefBundle } from "./builder.ts";
 
 Deno.test("MeF document IDs stay unique for repeated form copies", () => {
   const fragments = Array.from({ length: 12 }, () => ({
@@ -29,5 +31,47 @@ Deno.test("MeF document identity rejects distinct roots whose truncated IDs coll
     () => validateDocumentReferences(fragments),
     Error,
     "document IDs collide",
+  );
+});
+
+Deno.test("repeated MeF form references keep their declared document name", () => {
+  const badReference =
+    '<Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/>';
+  const goodReference =
+    '<Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS2439"/>';
+  const fragments = (reference: string) => [{
+    pendingKey: "f1040",
+    tag: "IRS1040",
+    xml: `<IRS1040>${reference}</IRS1040>`,
+  }, {
+    pendingKey: "f2439",
+    tag: "IRS2439",
+    xml: "<IRS2439/>",
+  }, {
+    pendingKey: "f2439",
+    tag: "IRS2439",
+    xml: "<IRS2439/>",
+  }];
+  validateDocumentReferences(fragments(goodReference));
+  assertThrows(
+    () => validateDocumentReferences(fragments(badReference)),
+    Error,
+    "referenceDocumentName differs",
+  );
+
+  const bundle = (reference: string): MefBundle => ({
+    xml:
+      `<Return><ReturnHeader binaryAttachmentCnt="0"/><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400">${reference}</IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
+    attachments: [],
+    pending: {},
+    sourceSha256: "",
+    xmlSha256: "",
+    attachmentSha256ByFileName: {},
+  });
+  assertPreparedDocumentInventory(bundle(goodReference));
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle(badReference)),
+    Error,
+    "document count, order, IDs, references",
   );
 });

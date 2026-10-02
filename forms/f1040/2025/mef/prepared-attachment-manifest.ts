@@ -1,7 +1,10 @@
 import { element } from "../../mef/xml.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import type { MefBundle } from "./builder.ts";
-import { documentId } from "./document-identity.ts";
+import {
+  documentId,
+  hasMismatchedSingleReferenceName,
+} from "./document-identity.ts";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 
 /** Replay the prepared return's document and reference inventory. */
@@ -20,6 +23,7 @@ export function assertPreparedDocumentInventory(
     )]
     : [];
   const documentIds = documents.map((match) => match[2]);
+  const tagsById = new Map(documents.map((match) => [match[2], match[1]]));
   const referencedIds = [...bundle.xml.matchAll(
     /\breferenceDocumentId="([^"]+)"/g,
   )].flatMap((match) => match[1].trim().split(/\s+/));
@@ -29,6 +33,7 @@ export function assertPreparedDocumentInventory(
     documents[0]?.[1] !== "IRS1040" ||
     new Set(documentIds).size !== documentIds.length ||
     referencedIds.some((id) => !documentIds.includes(id)) ||
+    hasMismatchedSingleReferenceName(bundle.xml, tagsById) ||
     documents.filter((match) => match[1] === "BinaryAttachment").length !==
       bundle.attachments.length ||
     Number(headerCounts[0][1]) !== bundle.attachments.length
