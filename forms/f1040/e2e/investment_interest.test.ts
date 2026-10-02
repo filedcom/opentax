@@ -3,6 +3,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { buildMefXml } from "../2025/mef/builder.ts";
+import { form8960 as nativeForm8960 } from "../2025/mef/forms/f8960.ts";
 import {
   type FilerIdentity,
   FilingStatus as MefFilingStatus,
@@ -33,7 +34,11 @@ const amtRefigure = {
 
 function run(inputs: Record<string, unknown>) {
   return execute(plan, registry, {
-    general: { filing_status: "single", digital_assets: false },
+    general: {
+      filing_status: "single",
+      taxpayer_ssn: "123456789",
+      digital_assets: false,
+    },
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       foreign_trust_question: false,
@@ -41,6 +46,7 @@ function run(inputs: Record<string, unknown>) {
     w2: [{
       box1_wages: 300_000,
       box2_fed_withheld: 60_000,
+      employee_ssn: "123456789",
       employer_ein: "123456789",
       employer_name: "Example Employer",
       employer_address_line1: "10 Payroll Way",
@@ -56,6 +62,7 @@ Deno.test("Form 4952 limits the reported Schedule A deduction and carries excess
   const result = run({
     f1099int: [{
       payer_name: "Example Bank",
+      recipient_tin: "123456789",
       box1: 2_000,
       investment_property_for_form4952: true,
     }],
@@ -92,6 +99,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
     w2: [{
       box1_wages: 300_000,
       box2_fed_withheld: 60_000,
+      employee_ssn: "123456789",
       box15_state: "CA",
       box17_state_withheld: 25_000,
     }],
@@ -130,10 +138,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
   assertEquals(result.pending.form8960.line9b_state_local_tax, 3_000);
   assertEquals(result.pending.form8960.line12_net_investment_income, 43_000);
   assertEquals(result.pending.form8960.line17_niit, 1_634);
-  const xml = buildMefXml(
-    { form8960: result.pending.form8960 } as unknown as MefFormsPending,
-    filer,
-  );
+  const xml = nativeForm8960.build(result.pending.form8960);
   assertStringIncludes(
     xml,
     "<InvestmentInterestAmt>5000</InvestmentInterestAmt>",

@@ -10,6 +10,7 @@ import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { form4952 as nativeForm4952 } from "../2025/mef/forms/f4952.ts";
 import { form4952Pdf } from "../2025/pdf/forms/f4952.ts";
+import { withSyntheticForm1098Copy } from "../2025/pdf/review-1098-copy.fixture.ts";
 import { testFiler } from "../2025/mef/test-filer.ts";
 import { FilingStatus } from "../2025/mef/types.ts";
 import { buildPending } from "../2025/mef/pending.ts";
@@ -652,7 +653,22 @@ Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and 
     form4952Pdf.instances!(fields, jointFiler, result.pending).length,
     1,
   );
-  const pending = buildPending(result.pending);
+  const mortgageCopy = await withSyntheticForm1098Copy(
+    "form4952-spouse-direct-debt",
+    {
+      lender_name: "Home Lender",
+      recipient_tin: "123456789",
+      source_document_reference: "2025 spouse-loan fixture mortgage",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 mortgage workpaper",
+      for_routing: "A",
+    },
+  );
+  const pending = buildPending({
+    ...result.pending,
+    f1098: { f1098s: [mortgageCopy] },
+  });
   const bundle = await buildMefBundle(pending, {
     filer: jointFiler,
     attachments: [],
