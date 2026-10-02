@@ -17,6 +17,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Payer identification — optional because the payer is always Social Security Administration
   payer_name: z.string().optional(),
+  // Form SSA-1099 or RRB-1099 box 2 and the reviewed issued-copy identity.
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
 
   // Box 3 — Total social security benefits paid in 2025
   box3_gross_benefits: z.number().nonnegative(),
@@ -75,6 +78,23 @@ export const itemSchema = z.object({
 // Node inputSchema — receives all SSA-1099s and RRB-1099s for this return
 export const inputSchema = z.object({
   ssas: z.array(itemSchema).min(1),
+}).superRefine((input, ctx) => {
+  const seen = new Set<string>();
+  for (const [index, row] of input.ssas.entries()) {
+    if (!row.source_document_reference) continue;
+    const key = JSON.stringify([
+      row.is_rrb === true ? "RRB-1099" : "SSA-1099",
+      row.source_document_reference,
+    ]);
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["ssas", index],
+        message: "Benefit statement repeats an issued-copy reference",
+      });
+    }
+    seen.add(key);
+  }
 });
 
 type SsaItem = z.infer<typeof itemSchema>;

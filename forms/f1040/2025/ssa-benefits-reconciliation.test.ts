@@ -2,7 +2,10 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
-import { assertSocialSecurityBenefitSource } from "./ssa-benefits-reconciliation.ts";
+import {
+  assertBenefitStatementOwner,
+  assertSocialSecurityBenefitSource,
+} from "./ssa-benefits-reconciliation.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "./registry.ts";
@@ -30,10 +33,14 @@ const ssa1099 = {
       box3_gross_benefits: 1_000,
       box4_repaid: 2_000,
       box5_net_benefits: -1_000,
+      recipient_tin: filer.primarySSN,
+      source_document_reference: "ssa-2025-copy-a",
     },
     {
       box3_gross_benefits: 5_000,
       box5_net_benefits: 5_000,
+      recipient_tin: filer.primarySSN,
+      source_document_reference: "ssa-2025-copy-b",
     },
   ],
 };
@@ -52,6 +59,70 @@ Deno.test("SSA-1099 signed box 5 offsets another statement in final line 6a repl
     Error,
     "line 6a differs from retained Social Security benefit sources",
   );
+});
+
+Deno.test("benefit statement owner requires issued-copy identity for each positive SSA or RRB row", () => {
+  assertBenefitStatementOwner({ ssa1099 }, filer);
+  const wrong = {
+    ssas: [{
+      ...ssa1099.ssas[0],
+      recipient_tin: "999887777",
+    }],
+  };
+  assertThrows(
+    () => assertBenefitStatementOwner({ ssa1099: wrong }, filer),
+    Error,
+    "taxpayer or joint-spouse box 2 recipient",
+  );
+  const noCopy = {
+    ssas: [{
+      ...ssa1099.ssas[0],
+      source_document_reference: undefined,
+    }],
+  };
+  assertThrows(
+    () => assertBenefitStatementOwner({ ssa1099: noCopy }, filer),
+    Error,
+    "issued-copy reference",
+  );
+  assertBenefitStatementOwner({
+    ssa1099: {
+      ssas: [{
+        ...ssa1099.ssas[0],
+        is_rrb: true,
+        recipient_tin: "222334444",
+      }],
+    },
+  }, {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "222334444",
+      firstName: "Spouse",
+      lastName: "Test",
+      nameControl: "TEST",
+    },
+  });
+});
+
+Deno.test("native and PDF export reject a benefit statement owned by another person", async () => {
+  const pending = {
+    ssa1099: {
+      ssas: [{
+        box3_gross_benefits: 4_000,
+        recipient_tin: "999887777",
+        source_document_reference: "issued-ssa-2025",
+      }],
+    },
+    f1040: filed(4_000),
+  };
+  const message = "taxpayer or joint-spouse box 2 recipient";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
 Deno.test("native and PDF export reject inflated SSA line 6a", async () => {

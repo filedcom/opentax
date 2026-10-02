@@ -77,6 +77,27 @@ Deno.test("ssa1099.inputSchema: accepts item with box4_repaid omitted (treats as
   assertEquals(parsed.success, true);
 });
 
+Deno.test("SSA and RRB benefit statements reject a repeated issued-copy reference", () => {
+  const first = minimalItem({
+    box3_gross_benefits: 4_000,
+    recipient_tin: "111223333",
+    source_document_reference: "issued-copy-2025",
+  });
+  assertThrows(
+    () => compute([first, { ...first, box3_gross_benefits: 5_000 }]),
+    Error,
+    "repeats an issued-copy reference",
+  );
+  compute([
+    first,
+    minimalItem({
+      ...first,
+      is_rrb: true,
+      box3_gross_benefits: 5_000,
+    }),
+  ]);
+});
+
 Deno.test("ssa1099 rejects a box 5 that contradicts boxes 3 and 4", () => {
   assertThrows(
     () =>
