@@ -539,6 +539,24 @@ form8995a_schedule_a form8995a_schedule_b
 form8995a_schedule_d schedule_r
 ```
 
+The 2026-10-02 read-only planner rerun reports **178 fixtures, 84 of 112
+registered PDF keys covered, and 28 uncovered keys**. The 40-key list above is
+an earlier checkpoint. The current uncovered keys group as follows:
+
+| Deferred named-form family | Uncovered registry keys | Count | Positive-route boundary in this phase |
+| --- | --- | ---: | --- |
+| Form 5471/8992 and section 965 | `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `form8992`, `form8992_schedule_a`, `f965` | 12 | The single-CFC calculation is staged, but full required Form 5471 attachment/export and section 965 ownership remain open. Form 8992 positive filing waits for that packet. |
+| Business-credit forms | `f4255`, `f8611`, `f8864`, `f8941`, `f8978`, `form8978_schedule_a`, `f8994`, `form8582cr` | 8 | These form-specific parent/conditional branches remain in the deferred credit scope. Form 8994 additionally requires validated policy/payroll attachments; the review generator currently supplies no attachments. |
+| Form 8854 initial/annual | `f8854`, `f8854_annual` | 2 | Both descriptors explicitly guard positive print until prior filed-return/Form 8854 bytes and expatriation facts are authenticated. The native/PDF parity TODO retains this boundary. |
+| Adoption and medical accounts | `form8839`, `form8853` | 2 | Form 8839 has one bounded adoption route, with carryforward/exclusion and source authenticity open; Form 8853 remains a named-form route. |
+| Business interest and QBI | `form8990`, `form8995a_schedule_a`, `form8995a_schedule_b`, `form8995a_schedule_d` | 4 | Form 8990 blocks positive nonexcepted interest pending debt/prior-year evidence; Form 8995-A conditional schedules await their respective supported QBI source branches. |
+
+Thus the current planner has **zero uncovered nondeferred core/attachment PDF
+keys** for this implementation phase. Form 8854 and Form 8994 also appear in
+cross-cutting parity/status text, but their positive form-specific routes remain
+guarded or deferred. No unsupported source was turned into a positive fixture,
+and this classification does not close the 28-key coverage or full-review gate.
+
 ```sh
 deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
