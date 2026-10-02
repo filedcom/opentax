@@ -100,11 +100,13 @@ function filing(
       ? {
         f1099int: [{
           payer_name: "First taxable bond payer",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-first-bond-interest",
           box1: 30_000,
           investment_property_for_form4952: true,
         }, {
           payer_name: "Second taxable bond payer",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-second-bond-interest",
           box1: 30_000,
           investment_property_for_form4952: true,
@@ -115,6 +117,7 @@ function filing(
       ? {
         f1099int: [{
           payer_name: "Taxable bond payer",
+          recipient_tin: "123456789",
           ...(source === "interest_dividend" ||
               source === "interest_two_dividends"
             ? { source_document_reference: "issued-2025-bond-interest" }
@@ -130,12 +133,14 @@ function filing(
       ? {
         f1099int: [{
           payer_name: "Treasury interest broker",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-treasury-box3",
           box3: 60_000,
           investment_property_for_form4952: true,
         }],
         f1099oid: [{
           payer_name: "Taxable OID bond broker",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-taxable-oid-box1",
           box1_oid: 40_000,
           investment_property_for_form4952: true,
@@ -147,6 +152,7 @@ function filing(
         f1099div: source === "two_qualified_dividends"
           ? [{
             payerName: "First taxable stock payer",
+            recipient_tin: "123456789",
             source_document_reference: "issued-2025-first-stock-dividend",
             isNominee: false,
             box11: false,
@@ -155,6 +161,7 @@ function filing(
             investment_property_for_form4952: true,
           }, {
             payerName: "Second taxable stock payer",
+            recipient_tin: "123456789",
             source_document_reference: "issued-2025-second-stock-dividend",
             isNominee: false,
             box11: false,
@@ -163,6 +170,7 @@ function filing(
           }]
           : [{
             payerName: "Taxable stock payer",
+            recipient_tin: "123456789",
             source_document_reference: "issued-2025-stock-dividend",
             isNominee: false,
             box11: false,
@@ -175,11 +183,13 @@ function filing(
       ? {
         f1099oid: [{
           payer_name: "First taxable OID bond payer",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-first-taxable-oid",
           box1_oid: 60_000,
           investment_property_for_form4952: true,
         }, {
           payer_name: "Second taxable OID bond payer",
+          recipient_tin: "123456789",
           source_document_reference: "issued-2025-second-taxable-oid",
           box1_oid: 40_000,
           investment_property_for_form4952: true,
@@ -188,6 +198,7 @@ function filing(
       : {
         f1099oid: [{
           payer_name: "Taxable OID bond payer",
+          recipient_tin: "123456789",
           box1_oid: source === "oid_dividend" ? 60_000 : 100_000,
           investment_property_for_form4952: true,
         }],
@@ -201,6 +212,7 @@ function filing(
         f1099div: [
           {
             payerName: "Taxable stock payer",
+            recipient_tin: "123456789",
             source_document_reference: "issued-2025-stock-dividend",
             isNominee: false,
             box11: false,
@@ -217,6 +229,7 @@ function filing(
               source === "two_interest_two_dividends"
             ? [{
               payerName: "Second taxable stock payer",
+              recipient_tin: "123456789",
               source_document_reference: "issued-2025-second-stock-dividend",
               isNominee: false,
               box11: false,

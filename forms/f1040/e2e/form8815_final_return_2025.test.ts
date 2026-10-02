@@ -34,6 +34,7 @@ const sources = {
   }],
   f1099int: [{
     payer_name: "Treasury Savings Bonds",
+    recipient_tin: "111223333",
     source_document_reference: "2025 redeemed Series EE bond 1099-INT",
     box3: 2_000,
   }],

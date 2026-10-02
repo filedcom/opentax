@@ -123,7 +123,11 @@ const dependentScheduleRInputs = {
     taxpayer_can_be_claimed_as_dependent: true,
     dependent_earned_income: 0,
   },
-  f1099int: [{ payer_name: "Test Bank", box1: 9_500 }],
+  f1099int: [{
+    payer_name: "Test Bank",
+    recipient_tin: "111223333",
+    box1: 9_500,
+  }],
   schedule_b_part_iii: {
     foreign_accounts_question: false,
     foreign_trust_question: false,
