@@ -7,7 +7,12 @@
  * xmllint accepts with exit code 0.
  */
 
-import { assertEquals, assertRejects, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -149,6 +154,38 @@ Deno.test({
     Error,
     "digital-assets answer must be Yes",
   );
+});
+
+Deno.test({
+  name: "XSD/PDF: reviewed digital-assets No projects from retained general answer",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Example",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    digital_assets: false,
+    address_line1: "1 Example Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  const result = f1040_2025.executeReturn({ general });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(general);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+  );
+  await validateXsd(xml, "TY2025 reviewed digital-assets No");
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 2);
 });
 
 function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {

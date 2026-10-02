@@ -1071,6 +1071,17 @@ Deno.test("Form 1040 MeF replays retained general status and digital-assets sour
     Error,
     "digital-assets answer differs from the retained general source",
   );
+  for (const filedAnswer of [true, false]) {
+    assertThrows(
+      () =>
+        buildMefXml({
+          general: { filing_status: NodeFilingStatus.Single },
+          f1040: { filing_status: "single", digital_assets: filedAnswer },
+        }, sampleFiler()),
+      Error,
+      "digital-assets answer in the retained general source",
+    );
+  }
   assertThrows(
     () =>
       buildMefXml({
@@ -1109,6 +1120,7 @@ Deno.test("Form 1040 MeF rejects a dependent omitted after general source projec
       buildMefXml({
         general: {
           filing_status: NodeFilingStatus.Single,
+          digital_assets: false,
           dependents: [{
             first_name: "Avery",
             last_name: "Child",

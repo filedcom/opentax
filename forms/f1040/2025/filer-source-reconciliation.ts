@@ -1364,10 +1364,12 @@ export function assertGeneral1040HeaderSource(
       "Form 1040 filing status differs from the retained general source",
     );
   }
-  if (
-    typeof general.digital_assets === "boolean" &&
-    general.digital_assets !== f1040.digital_assets
-  ) {
+  if (typeof general.digital_assets !== "boolean") {
+    throw new Error(
+      "Form 1040 export needs the digital-assets answer in the retained general source",
+    );
+  }
+  if (general.digital_assets !== f1040.digital_assets) {
     throw new Error(
       "Form 1040 digital-assets answer differs from the retained general source",
     );
