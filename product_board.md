@@ -92,8 +92,11 @@ mostly deferred named-form routes; a small set of nonnamed fixture/assertion
 repairs were then made to the Form 8824 bundle/XSD harness and packet/Form
 8994 assertions. The full rerun at `d22ab027` completed with **10,432 passed
 and 99 failed** in 29m09s; all four repaired assertions pass in that run.
-The remaining failures are under final named-form classification, and the full
-command still has no passing result.
+The 99 remaining failures map to deferred named-form routes or their fixtures.
+This includes three generic attachment-export tests for Forms 8958, 2106, and
+8844, whose source or expected guard fails before the intended assertion; no
+independent nonnamed return, payment, PDF assembly, or A2A production failure
+was found in this run. The full command still has no passing result.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph

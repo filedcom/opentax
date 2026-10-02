@@ -292,8 +292,11 @@ A full rerun at `d22ab027` completed on 2026-10-02 in 29m09s with 10,432
 passed and 99 failed (none ignored reported). The local log is
 `.state/research/ty2025-pr59-bulk-test-retry5-2026-10-02.log`. The repaired
 packet/Form 8994 assertions and source-backed Form 8824 bundle/XSD case pass
-in that run. Residual failures are under named-form classification; this is
-not a release pass.
+in that run. All 99 residual failures map to deferred named-form routes or
+their fixtures. Three generic attachment-export cases concern Forms 8958,
+2106, and 8844 and fail on earlier source or guard assertions. The read-only
+failure audit found no independent nonnamed return, payment, PDF assembly, or
+A2A production failure in this run. This is not a release pass.
 
 A fresh local ARM64 CLI compiled from `d22ab027` with `deno compile` and SHA-256
 `f80caffb31d473b311e6134b3e57ae3853ec0d976d40892f64f8f0508aef751a`
