@@ -166,6 +166,7 @@ function hohGeneral() {
 function w2Item(wages: number, withheld: number) {
   const ssWages = Math.min(wages, SS_WAGE_BASE_2025);
   return {
+    employee_ssn: BASE_IDENTITY.taxpayer_ssn,
     box1_wages: wages,
     box2_fed_withheld: withheld,
     box3_ss_wages: ssWages,
@@ -333,7 +334,7 @@ Deno.test({
     result.diagnostics.filter((entry) => entry.severity === "error"),
     [],
   );
-  const xml = buildXmlSlice(result, ["f1040", "w2"]);
+  const xml = buildXmlSlice(result, ["general", "f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
@@ -388,6 +389,7 @@ Deno.test({
       })),
     },
     w2: [{
+      employee_ssn: facts.taxpayer.ssn,
       box1_wages: facts.w2.box1Wages,
       box2_fed_withheld: facts.w2.box2FederalWithholding,
       box3_ss_wages: facts.w2.box3SocialSecurityWages,
@@ -751,7 +753,12 @@ Deno.test({
   name: "XSD: ATS 1040 Scenario 8 1099-R statements conform to Return1040.xsd",
   ignore: !xsdAvailable,
 }, async () => {
-  const result = runReturn(scenario104008Input());
+  const input = scenario104008Input();
+  input.f1099r = (input.f1099r as Record<string, unknown>[]).map((form) => ({
+    ...form,
+    recipient_ssn: (input.general as Record<string, unknown>).taxpayer_ssn,
+  }));
+  const result = runReturn(input);
   assertEquals(
     result.diagnostics.filter((entry) => entry.severity === "error"),
     [],
