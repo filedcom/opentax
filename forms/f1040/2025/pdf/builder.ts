@@ -66,6 +66,7 @@ import {
   assertSchedule2W2Line17KSource,
 } from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
+import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
   assertBenefitStatementOwner,
@@ -468,6 +469,7 @@ export async function buildPdfBytes(
   assertSchedule3Form8912Credit(normalized);
   assertSchedule3Form8396Credit(normalized);
   assert1099WithholdingSource(normalized, filer);
+  assert1099GUnemploymentSource(normalized);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
   assertBenefitStatementOwner(normalized, filer);
