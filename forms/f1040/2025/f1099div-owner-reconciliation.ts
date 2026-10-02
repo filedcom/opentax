@@ -30,8 +30,13 @@ export function assertPositive1099DivOwner(
 ): void {
   if (pending?.f1099div === undefined) return;
   const rows = inputSchema.parse(pending.f1099div).f1099divs;
-  const primary = fields.taxpayer_ssn;
-  const spouse = fields.filing_status === "mfj" ? fields.spouse_ssn : undefined;
+  const primary = typeof fields.taxpayer_ssn === "string"
+    ? fields.taxpayer_ssn.replace(/\D/g, "")
+    : undefined;
+  const spouse = fields.filing_status === "mfj" &&
+      typeof fields.spouse_ssn === "string"
+    ? fields.spouse_ssn.replace(/\D/g, "")
+    : undefined;
   for (const row of rows) {
     if (!positiveAmountKeys.some((key) => (row[key] ?? 0) > 0)) continue;
     if (row.recipient_tin === undefined) {

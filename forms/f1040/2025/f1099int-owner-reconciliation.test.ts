@@ -26,6 +26,8 @@ Deno.test("positive 1099-INT owner is checked by native and PDF Form 1040", () =
   const source = retained("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
+  irs1040.build({ ...filed, taxpayer_ssn: "111-22-3333" }, { pending: source });
+  irs1040Pdf.projectFields?.({ ...filed, taxpayer_ssn: "111-22-3333" }, source);
   for (const pending of [retained(), retained("999887777")]) {
     assertThrows(
       () => irs1040.build(filed, { pending }),
@@ -53,6 +55,8 @@ Deno.test("joint spouse 1099-INT belongs on MFJ return only", () => {
   };
   irs1040.build(joint, { pending: source });
   irs1040Pdf.projectFields?.(joint, source);
+  irs1040.build({ ...joint, spouse_ssn: "444-55-6666" }, { pending: source });
+  irs1040Pdf.projectFields?.({ ...joint, spouse_ssn: "444-55-6666" }, source);
   assertThrows(
     () =>
       irs1040.build({ ...joint, filing_status: "mfs" }, { pending: source }),
