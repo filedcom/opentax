@@ -164,7 +164,7 @@ export const itemSchema = z.object({
   line31_vet: z.number().nonnegative().optional(),
   line32_other_expenses: z.array(
     z.object({
-      description: z.string().min(1),
+      description: z.string().trim().min(1),
       amount: z.number().nonnegative(),
     }).strict(),
   ).optional(),

@@ -67,6 +67,17 @@ Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
   );
 });
 
+Deno.test("Schedule F PDF needs a visible line 32 expense description", () => {
+  assertThrows(() =>
+    scheduleFPdf.instances!({
+      schedule_fs: [{
+        ...farm,
+        line32_other_expenses: [{ description: "  ", amount: 125 }],
+      }],
+    }, jointFiler)
+  );
+});
+
 Deno.test("Schedule F accrual PDF prints Part III income and inventory on page 2", async () => {
   const accrualFarm = {
     ...farm,

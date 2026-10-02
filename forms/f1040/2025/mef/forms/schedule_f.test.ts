@@ -45,6 +45,16 @@ Deno.test("Schedule F native header uses the named spouse proprietor", () => {
   );
 });
 
+Deno.test("Schedule F native export rejects a blank line 32 expense description", () => {
+  assertThrows(() =>
+    scheduleF.build({
+      schedule_fs: [farm({
+        line32_other_expenses: [{ description: "  ", amount: 125 }],
+      })],
+    }, { filer: testFiler() })
+  );
+});
+
 Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({
     schedule_f: {
