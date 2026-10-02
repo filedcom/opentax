@@ -48,6 +48,10 @@ function reviewedNonbusinessGrant(amount: number) {
   return minimalItem({
     box_6_taxable_grants: amount,
     box_6_schedule1_nonbusiness_reviewed: true,
+    payer_name: "State Grant Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-grant-1099g-1",
   });
 }
 

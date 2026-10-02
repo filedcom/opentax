@@ -17,6 +17,10 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { type RtaaSource, rtaaSourceSchema } from "./rtaa-source.ts";
+import {
+  type TaxableGrantSource,
+  taxableGrantSourceSchema,
+} from "./grant-source.ts";
 
 // Form 1099-G issuer reporting thresholds do not create recipient-side
 // taxable-income exclusions. Route any positive amount designated taxable.
@@ -62,6 +66,21 @@ export const itemSchema = z.object({
       message:
         "Form 1099-G box 6 needs a reviewed nonbusiness Schedule 1 classification; business and farm grants need their own route",
     });
+  }
+  if ((item.box_6_taxable_grants ?? 0) > 0) {
+    if (
+      !Number.isSafeInteger(item.box_6_taxable_grants) ||
+      !item.payer_name?.trim() ||
+      !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+      !item.recipient_tin || !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_6_taxable_grants"],
+        message:
+          "Form 1099-G box 6 needs a whole-dollar amount, payer, recipient, and issued-copy identity",
+      });
+    }
   }
   if ((item.box_5_rtaa ?? 0) > 0) {
     if (!Number.isSafeInteger(item.box_5_rtaa)) {
@@ -280,18 +299,48 @@ function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
 }
 
+function taxableGrantSources(g99s: G99Items): TaxableGrantSource[] {
+  return g99s.flatMap((item) =>
+    (item.box_6_taxable_grants ?? 0) > 0
+      ? [{
+        payer_name: item.payer_name!,
+        payer_tin: item.payer_tin!.replace(/\D/g, ""),
+        recipient_tin: item.recipient_tin!,
+        source_document_reference: item.source_document_reference!,
+        ...(item.account_number ? { account_number: item.account_number } : {}),
+        amount: item.box_6_taxable_grants!,
+      }]
+      : []
+  );
+}
+
 export function assertForm1099gTaxableGrantTotal(
   raw: unknown,
+  retainedRows: unknown,
   expectedAmount: number,
   recipientSsns: readonly string[],
 ): void {
   const issued = raw === undefined ? [] : inputSchema.parse(raw).f1099gs;
+  const sources = taxableGrantSources(issued);
+  const retained = z.array(taxableGrantSourceSchema).parse(retainedRows ?? []);
+  const identities = sources.map((row) =>
+    JSON.stringify([
+      row.source_document_reference,
+      row.payer_tin,
+      row.recipient_tin,
+      row.account_number ?? "",
+    ])
+  );
+  const sorted = (rows: readonly TaxableGrantSource[]) =>
+    rows.map((row) => JSON.stringify(row)).sort();
   if (
     !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
-    totalTaxableGrants(issued) !== expectedAmount
+    totalTaxableGrants(issued) !== expectedAmount ||
+    new Set(identities).size !== identities.length ||
+    JSON.stringify(sorted(sources)) !== JSON.stringify(sorted(retained))
   ) {
     throw new Error(
-      "Schedule 1 taxable-grant total differs from retained Form 1099-G box 6 copies",
+      "Schedule 1 taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
     );
   }
   const owners = new Set(recipientSsns.map((ssn) => ssn.replace(/\D/g, "")));
@@ -340,6 +389,7 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
   if (grants > 0) {
     fields.line8z_taxable_grants = grants;
+    fields.f1099g_taxable_grant_sources = taxableGrantSources(g99s);
   }
 
   if (Object.keys(fields).length === 0) return [];

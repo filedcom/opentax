@@ -1,5 +1,6 @@
 import { box11CodeJSourceSchema } from "../../../nodes/inputs/k1_partnership/box11_code_j.ts";
 import { rtaaSourceSchema } from "../../../nodes/inputs/f1099g/rtaa-source.ts";
+import { taxableGrantSourceSchema } from "../../../nodes/inputs/f1099g/grant-source.ts";
 import { box10CodeJSourceSchema } from "../../../nodes/inputs/k1_s_corp/box10_code_j.ts";
 
 export interface Schedule1OtherIncomeRow {
@@ -16,7 +17,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
-  ["line8z_taxable_grants", "Taxable grants"],
   ["biz_interest_disallowed_add_back", "Disallowed business interest"],
 ] as const;
 
@@ -188,6 +188,27 @@ export function schedule1OtherIncomeRows(
       );
     }
   }
+  const grantSources = source.f1099g_taxable_grant_sources;
+  if (grantSources !== undefined && !Array.isArray(grantSources)) {
+    throw new Error("Schedule 1 taxable-grant sources must be rows");
+  }
+  const grantRows: Schedule1OtherIncomeRow[] = (grantSources ?? []).map(
+    (value: unknown) => {
+      const row = taxableGrantSourceSchema.parse(value);
+      return {
+        label: `Taxable grant ${row.payer_tin}`,
+        amount: row.amount,
+      };
+    },
+  );
+  const grantTotal = grantRows.reduce((sum, row) => sum + row.amount, 0);
+  if (source.line8z_taxable_grants !== grantTotal) {
+    if (source.line8z_taxable_grants !== undefined || grantTotal > 0) {
+      throw new Error(
+        "Schedule 1 taxable-grant total differs from source rows",
+      );
+    }
+  }
   const rows = source.f1099m_box3_other_income_sources;
   if (rows === undefined) {
     return [
@@ -196,6 +217,7 @@ export function schedule1OtherIncomeRows(
       ...sCorpRows,
       ...substituteRows,
       ...rtaaRows,
+      ...grantRows,
     ];
   }
   if (!Array.isArray(rows)) {
@@ -226,6 +248,7 @@ export function schedule1OtherIncomeRows(
     ...sCorpRows,
     ...substituteRows,
     ...rtaaRows,
+    ...grantRows,
     ...box3Rows,
   ];
 }

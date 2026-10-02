@@ -279,7 +279,8 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
       context?.pending?.f1099g !== undefined ||
       (fields.line8z_rtaa ?? 0) > 0 ||
       fields.f1099g_rtaa_sources !== undefined ||
-      (fields.line8z_taxable_grants ?? 0) !== 0
+      (fields.line8z_taxable_grants ?? 0) !== 0 ||
+      fields.f1099g_taxable_grant_sources !== undefined
     ) {
       const filer = context?.filer;
       if (!filer) throw new Error("Schedule 1 RTAA needs filer identity");
@@ -296,6 +297,7 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
       );
       assertForm1099gTaxableGrantTotal(
         context?.pending?.f1099g,
+        fields.f1099g_taxable_grant_sources,
         fields.line8z_taxable_grants ?? 0,
         recipients,
       );

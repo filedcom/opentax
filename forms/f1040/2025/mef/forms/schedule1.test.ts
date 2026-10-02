@@ -219,6 +219,13 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     line8z_hsa_excess_earnings: 100,
     line8z_hsa_excess_employer: 700,
     line8z_taxable_grants: 1500,
+    f1099g_taxable_grant_sources: [{
+      payer_name: "State Grant Agency",
+      payer_tin: "123456789",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-grant-1",
+      amount: 1500,
+    }],
     line8z_substitute_payments: 750,
     f1099m_box8_substitute_sources: [{
       payer_name: "Broker Payer",
@@ -256,6 +263,9 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
           box_6_taxable_grants: 1_500,
           box_6_schedule1_nonbusiness_reviewed: true,
           recipient_tin: "111223333",
+          payer_name: "State Grant Agency",
+          payer_tin: "123456789",
+          source_document_reference: "issued-grant-1",
         }],
       },
     },
@@ -317,40 +327,57 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
       box_6_taxable_grants: 400,
       box_6_schedule1_nonbusiness_reviewed: true,
       recipient_tin: "111223333",
+      payer_name: "State Grant Agency A",
+      payer_tin: "123456789",
+      source_document_reference: "issued-grant-a",
     }, {
       box_6_taxable_grants: 600,
       box_6_schedule1_nonbusiness_reviewed: true,
       recipient_tin: "111223333",
+      payer_name: "State Grant Agency B",
+      payer_tin: "987654321",
+      source_document_reference: "issued-grant-b",
     }],
   };
-  const xml = schedule1.build({ line8z_taxable_grants: 1_000 }, {
+  const sourceRows = copies.f1099gs.map((copy) => ({
+    payer_name: copy.payer_name,
+    payer_tin: copy.payer_tin,
+    recipient_tin: copy.recipient_tin,
+    source_document_reference: copy.source_document_reference,
+    amount: copy.box_6_taxable_grants,
+  }));
+  const fields = {
+    line8z_taxable_grants: 1_000,
+    f1099g_taxable_grant_sources: sourceRows,
+  };
+  const xml = schedule1.build(fields, {
     filer,
     pending: { f1099g: copies },
   });
   assertStringIncludes(xml, "<OtherIncomeTotalAmt>1000</OtherIncomeTotalAmt>");
   assertThrows(
     () =>
-      schedule1.build({ line8z_taxable_grants: 999 }, {
+      schedule1.build({ ...fields, line8z_taxable_grants: 999 }, {
         filer,
         pending: { f1099g: copies },
       }),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   assertThrows(
-    () => schedule1.build({ line8z_taxable_grants: 1_000 }, { filer }),
+    () => schedule1.build(fields, { filer }),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   assertThrows(
-    () => schedule1.build({ line8z_taxable_grants: -1 }, { filer }),
+    () => schedule1.build({ ...fields, line8z_taxable_grants: -1 }, { filer }),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   for (const recipient of [undefined, "999887777"]) {
     assertThrows(
       () =>
-        schedule1.build({ line8z_taxable_grants: 1_000 }, {
+        schedule1.build(fields, {
           filer,
           pending: {
             f1099g: {
@@ -362,12 +389,12 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
           },
         }),
       Error,
-      "box 6 recipients matching the filer or joint spouse",
+      "box 6",
     );
   }
   assertThrows(
     () =>
-      schedule1.build({ line8z_taxable_grants: 1_000 }, {
+      schedule1.build(fields, {
         filer,
         pending: {
           f1099g: {

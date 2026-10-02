@@ -12,6 +12,13 @@ const source = {
   line8z_form8814: 200,
   line8z_hsa_excess_earnings: 100,
   line8z_taxable_grants: 300,
+  f1099g_taxable_grant_sources: [{
+    payer_name: "State Grant Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-grant-1",
+    amount: 300,
+  }],
 };
 
 Deno.test("Schedule 1 PDF appends a source-reconciled line 8z continuation", async () => {

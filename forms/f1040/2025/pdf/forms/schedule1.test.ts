@@ -261,6 +261,13 @@ Deno.test("Schedule 1 PDF maps W-2G winnings to line 8b, not line 8z", () => {
 Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
   const projected = schedule1Pdf.instances?.({
     line8z_taxable_grants: 300,
+    f1099g_taxable_grant_sources: [{
+      payer_name: "State Grant Agency",
+      payer_tin: "123456789",
+      recipient_tin: "111223333",
+      source_document_reference: "issued-grant-1",
+      amount: 300,
+    }],
     line8z_form8814: 200,
     line8z_hsa_excess_earnings: 100,
   }, {
@@ -272,6 +279,9 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
         box_6_taxable_grants: 300,
         box_6_schedule1_nonbusiness_reviewed: true,
         recipient_tin: "111223333",
+        payer_name: "State Grant Agency",
+        payer_tin: "123456789",
+        source_document_reference: "issued-grant-1",
       }],
     },
   })?.[0];
@@ -293,15 +303,32 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
         box_6_taxable_grants: 400,
         box_6_schedule1_nonbusiness_reviewed: true,
         recipient_tin: "111223333",
+        payer_name: "State Grant Agency A",
+        payer_tin: "123456789",
+        source_document_reference: "issued-grant-a",
       }, {
         box_6_taxable_grants: 600,
         box_6_schedule1_nonbusiness_reviewed: true,
         recipient_tin: "111223333",
+        payer_name: "State Grant Agency B",
+        payer_tin: "987654321",
+        source_document_reference: "issued-grant-b",
       }],
     },
   };
+  const grantRows = all.f1099g.f1099gs.map((copy) => ({
+    payer_name: copy.payer_name,
+    payer_tin: copy.payer_tin,
+    recipient_tin: copy.recipient_tin,
+    source_document_reference: copy.source_document_reference,
+    amount: copy.box_6_taxable_grants,
+  }));
+  const fields = {
+    line8z_taxable_grants: 1_000,
+    f1099g_taxable_grant_sources: grantRows,
+  };
   const projected = schedule1Pdf.instances?.(
-    { line8z_taxable_grants: 1_000 },
+    fields,
     filer,
     all,
   )?.[0];
@@ -310,33 +337,38 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
   assertThrows(
     () =>
       schedule1Pdf.instances?.(
-        { line8z_taxable_grants: 999 },
+        { ...fields, line8z_taxable_grants: 999 },
         filer,
         all,
       ),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   assertThrows(
     () =>
       schedule1Pdf.instances?.(
-        { line8z_taxable_grants: 1_000 },
+        fields,
         filer,
         {},
       ),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   assertThrows(
-    () => schedule1Pdf.instances?.({ line8z_taxable_grants: -1 }, filer, {}),
+    () =>
+      schedule1Pdf.instances?.(
+        { ...fields, line8z_taxable_grants: -1 },
+        filer,
+        {},
+      ),
     Error,
-    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+    "taxable-grant rows and total differ from distinct Form 1099-G box 6 copies",
   );
   for (const recipient of [undefined, "999887777"]) {
     assertThrows(
       () =>
         schedule1Pdf.instances?.(
-          { line8z_taxable_grants: 1_000 },
+          fields,
           filer,
           {
             f1099g: {
@@ -348,13 +380,13 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
           },
         ),
       Error,
-      "box 6 recipients matching the filer or joint spouse",
+      "box 6",
     );
   }
   assertThrows(
     () =>
       schedule1Pdf.instances?.(
-        { line8z_taxable_grants: 1_000 },
+        fields,
         filer,
         {
           f1099g: {
@@ -383,7 +415,13 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
   };
   assertEquals(
     schedule1Pdf.instances?.(
-      { line8z_taxable_grants: 1_000 },
+      {
+        ...fields,
+        f1099g_taxable_grant_sources: [grantRows[0], {
+          ...grantRows[1],
+          recipient_tin: "444556666",
+        }],
+      },
       joint,
       spouseSource,
     )?.[0].line8z_other,
