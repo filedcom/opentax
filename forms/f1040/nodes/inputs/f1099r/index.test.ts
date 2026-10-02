@@ -1157,6 +1157,19 @@ Deno.test("f1099r.compute: code G IRA payment to plan reports gross and zero tax
     iraDistributionExplanation([item]) ?? "",
     "IRA custodian paid 5000 directly to Example 401(k) qualified plan",
   );
+  for (
+    const conflicting of [
+      { box2a_taxable_amount: undefined },
+      { box2a_taxable_amount: 1000 },
+      { box2b_not_determined: true },
+    ]
+  ) {
+    assertThrows(
+      () => compute([{ ...item, ...conflicting }]),
+      Error,
+      "IRA code G direct plan payment needs payer box 2a zero and determined",
+    );
+  }
   assertEquals(
     f1040Input(compute([{
       ...item,
@@ -1196,6 +1209,7 @@ Deno.test("f1099r.compute: taxable pension code G checks line 5c without changin
 Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension rollover", () => {
   const ira = f1040Input(compute([minimalIraItem({
     box7_distribution_code: DistributionCode.CodeG,
+    box2a_taxable_amount: 0,
     direct_rollover_confirmed: true,
     rollover_code: RolloverCode.G,
     ira_rollover: {
@@ -1263,6 +1277,7 @@ Deno.test("f1099r.compute: every timely and direct IRA rollover needs eligibilit
   });
   const direct = minimalIraItem({
     box7_distribution_code: DistributionCode.CodeG,
+    box2a_taxable_amount: 0,
     rollover_code: RolloverCode.G,
     direct_rollover_confirmed: true,
     ira_rollover: {

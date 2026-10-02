@@ -3,7 +3,11 @@ import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
-import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import {
+  DistributionCode,
+  inputSchema as f1099rInputSchema,
+  RolloverCode,
+} from "../../nodes/inputs/f1099r/index.ts";
 import { buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { buildPdfBytes } from "./builder.ts";
@@ -75,4 +79,52 @@ Deno.test("IRA rollover eligibility review is required again at native and PDF e
     Error,
     "conflicts with the payer distribution code",
   );
+});
+
+Deno.test("IRA code G payer box 2a conflict is rejected before native and PDF export", async () => {
+  const direct = pdfReviewFixtures.find((item) =>
+    item.id === "single-ira-qualified-plan-rollover"
+  )!;
+  const source = f1099rInputSchema.parse({ f1099rs: direct.inputs.f1099r })
+    .f1099rs[0]!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      ...direct.inputs,
+      f1099r: [{
+        ...source,
+        box7_distribution_code: DistributionCode.CodeG,
+        rollover_code: RolloverCode.G,
+        direct_rollover_confirmed: true,
+      }],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const pdf = await PDFDocument.load(
+    await buildPdfBytes(pending, direct.filer),
+  );
+  assertEquals(pdf.getPageCount(), 3);
+  const xml = buildMefXml(pending, direct.filer);
+  assertEquals(xml.includes("<IRADistributionRolloverInd"), true);
+
+  const persisted = pending.f1099r!.f1099rs![0]!;
+  for (const box2a_taxable_amount of [undefined, 1000]) {
+    const drift = {
+      ...pending,
+      f1099r: { f1099rs: [{ ...persisted, box2a_taxable_amount }] },
+    } as unknown as ReturnType<typeof buildPending>;
+    assertThrows(
+      () => buildMefXml(drift, direct.filer),
+      Error,
+      "IRA code G direct plan payment needs payer box 2a zero and determined",
+    );
+    await assertRejects(
+      () => buildPdfBytes(drift, direct.filer),
+      Error,
+      "IRA code G direct plan payment needs payer box 2a zero and determined",
+    );
+  }
 });

@@ -850,6 +850,18 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         );
       }
     } else {
+      // The payer must report zero in box 2a for a direct traditional IRA
+      // payment to an accepting employer plan (2025 Form 1099-R instructions).
+      // Do not silently turn a contrary or undetermined issued amount into zero.
+      if (
+        item.box7_distribution_code === DistributionCode.CodeG &&
+        (item.box2a_taxable_amount !== 0 ||
+          item.box2b_not_determined === true)
+      ) {
+        throw new Error(
+          "IRA code G direct plan payment needs payer box 2a zero and determined",
+        );
+      }
       if (rollover.destination_ira_type !== undefined) {
         throw new Error("Qualified-plan destination cannot be an IRA account");
       }
