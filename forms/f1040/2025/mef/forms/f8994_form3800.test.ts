@@ -48,9 +48,14 @@ Deno.test("Form 8994 stages one sourced specified Form 3800 line 4j and Part V r
     'referenceDocumentId="IRS8994_1"',
   );
   assertThrows(
-    () => parts(1_249),
+    () => parts(1_249, 1_249),
     Error,
     "credit amounts do not reconcile",
+  );
+  assertThrows(
+    () => parts(1_249),
+    Error,
+    "invalid Form 8994 line 4j allocation",
   );
 });
 

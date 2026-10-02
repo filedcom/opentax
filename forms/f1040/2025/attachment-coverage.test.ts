@@ -295,7 +295,12 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     },
     "pdf",
   );
-  assertAttachmentCoverage({ f8874: { investments: [{}] } }, "pdf");
+  assertThrows(
+    () => assertAttachmentCoverage({ f8874: { investments: [{}] } }, "pdf"),
+    Error,
+    "authenticated CDE status and recapture history",
+  );
+  assertAttachmentCoverage({ f8874: { investments: [] } }, "pdf");
   assertAttachmentCoverage({ f8854: {} }, "pdf");
   assertAttachmentCoverage({ f8854_annual: {} }, "pdf");
 });
