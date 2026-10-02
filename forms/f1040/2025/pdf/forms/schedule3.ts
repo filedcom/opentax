@@ -3,6 +3,8 @@ import { scheduleR } from "../../mef/forms/schedule_r.ts";
 import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
 import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
+import { assertSchedule3PrintedTotals } from "../../schedule3_printed_totals.ts";
+import { assertSchedule3Line12Source } from "../../schedule3_line12_source.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -179,6 +181,16 @@ export const schedule3Pdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     assertSchedule3Line8Join(fields, allPending);
+    assertSchedule3Line12Source(
+      fields.line12_fuel_tax_credit,
+      allPending.f4136,
+    );
+    const worksheet = allPending.form8978_reporting_year;
+    const line6l = worksheet?.schedule3_line6l;
+    const projected = typeof line6l === "number" && line6l > 0
+      ? { ...fields, line6l_form8978_credit: line6l }
+      : fields;
+    assertSchedule3PrintedTotals(projected, allPending);
     assertSchedule3Line6jSource(
       fields.line6j_alt_fuel_vehicle_refueling,
       allPending.f8911,
@@ -194,11 +206,7 @@ export const schedule3Pdf: PdfFormDescriptor = {
         throw new Error("Schedule 3 PDF line 6d needs a filed Schedule R");
       }
     }
-    const worksheet = allPending.form8978_reporting_year;
-    const line6l = worksheet?.schedule3_line6l;
-    return typeof line6l === "number" && line6l > 0
-      ? { ...fields, line6l_form8978_credit: line6l }
-      : fields;
+    return projected;
   },
   filerFields: [
     {

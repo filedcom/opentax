@@ -1,6 +1,31 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule3Pdf } from "./schedule3.ts";
 
+const fuelSource = {
+  claimant_context: "business" as const,
+  business: {
+    qualifying_business_activity: true as const,
+    claimant_is_ultimate_purchaser: true as const,
+    business_name: "Example Farm",
+    principal_activity_code: "111000",
+    equipment_make: "Example",
+    equipment_model: "Tractor",
+    equipment_type: "farm tractor",
+    purchase_records_confirmed: true as const,
+    no_duplicate_excise_claim: true as const,
+  },
+  additional_activities: [],
+  primary_activity_has_most_credit: true as const,
+  claims: [{
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    not_highway_vehicle: true as const,
+    not_noncommercial_motorboat: true as const,
+  }],
+};
+
 Deno.test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines", () => {
   const fields = new Map(
     schedule3Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
@@ -20,6 +45,87 @@ Deno.test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines"
   assertEquals(
     fields.get("line14_total"),
     "topmostSubform[0].Page1[0].f1_36[0]",
+  );
+});
+
+Deno.test("finalized Schedule 3 PDF rejects omitted and changed subtotals", () => {
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { line1_foreign_tax_1099: [50, 25], line1_total: 74, line8_total: 74 },
+        { f1040: { line20_nonrefundable_credits: 74 } },
+      ),
+    Error,
+    "line 1 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        {
+          line6b_prior_year_min_tax_credit: 100,
+          line7_total: 99,
+          line8_total: 99,
+        },
+        { f1040: { line20_nonrefundable_credits: 99 } },
+      ),
+    Error,
+    "line 7 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { line2_childcare_credit: 100, line8_total: 99 },
+        { f1040: { line20_nonrefundable_credits: 99 } },
+      ),
+    Error,
+    "line 8 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { line10_amount_paid_extension: 100 },
+        { f1040: { line31_additional_payments: 100 } },
+      ),
+    Error,
+    "line 15 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.(
+        { line13a_total: 1_500, line14_total: 1_499, line15_total: 1_499 },
+        {
+          f1040: {},
+          f2439: { f2439s: [{ box1a: 10_000, box2: 1_500 }] },
+        },
+      ),
+    Error,
+    "line 14 must equal",
+  );
+});
+
+Deno.test("Schedule 3 PDF line 12 rejects a bare Form 4136 credit", () => {
+  assertThrows(
+    () => schedule3Pdf.projectFields?.({ line12_fuel_tax_credit: 125 }, {}),
+    Error,
+    "Form 4136",
+  );
+  const valid = { line12_fuel_tax_credit: 18.3 };
+  assertEquals(
+    schedule3Pdf.projectFields?.(valid, { f4136: fuelSource }),
+    valid,
+  );
+  assertThrows(
+    () =>
+      schedule3Pdf.projectFields?.({ line12_fuel_tax_credit: 18.2 }, {
+        f4136: fuelSource,
+      }),
+    Error,
+    "differs from sourced Form 4136",
+  );
+  assertThrows(
+    () => schedule3Pdf.projectFields?.({}, { f4136: fuelSource }),
+    Error,
+    "differs from sourced Form 4136",
   );
 });
 

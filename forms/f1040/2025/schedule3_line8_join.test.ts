@@ -3,6 +3,7 @@ import { schedule3 } from "./mef/forms/schedule3.ts";
 import { schedule3Pdf } from "./pdf/forms/schedule3.ts";
 
 const foreignTaxCredit = {
+  line1_foreign_tax_1099: 75,
   line1_total: 75,
   line8_total: 75,
   line9_premium_tax_credit: 100,

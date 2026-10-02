@@ -36,6 +36,63 @@ Deno.test("empty object returns empty string", () => {
   assertEquals(schedule3.build({}), "");
 });
 
+Deno.test("finalized Schedule 3 rejects changed credit and payment subtotals", () => {
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line1_foreign_tax_1099: [50, 25], line1_total: 74, line8_total: 74 },
+        { pending: { f1040: { line20_nonrefundable_credits: 74 } } },
+      ),
+    Error,
+    "line 1 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        {
+          line6b_prior_year_min_tax_credit: 100,
+          line7_total: 99,
+          line8_total: 99,
+        },
+        { pending: { f1040: { line20_nonrefundable_credits: 99 } } },
+      ),
+    Error,
+    "line 7 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line2_childcare_credit: 100, line8_total: 99 },
+        { pending: { f1040: { line20_nonrefundable_credits: 99 } } },
+      ),
+    Error,
+    "line 8 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line10_amount_paid_extension: 100, line15_total: 99 },
+        { pending: { f1040: { line31_additional_payments: 99 } } },
+      ),
+    Error,
+    "line 15 must equal",
+  );
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line13a_total: 1_500, line14_total: 1_499, line15_total: 1_499 },
+        {
+          pending: {
+            f1040: {},
+            f2439: { f2439s: [{ box1a: 10_000, box2: 1_500 }] },
+          },
+        },
+      ),
+    Error,
+    "line 14 must equal",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
@@ -209,11 +266,10 @@ Deno.test("Schedule 3 line 6j rejects a bare or changed Form 8911 credit", () =>
   );
 });
 
-Deno.test("Schedule 3 has distinct 2025 lines 6h, 6k, and 12", () => {
+Deno.test("Schedule 3 has distinct 2025 lines 6h and 6k", () => {
   const result = schedule3.build({
     line6h_dc_homebuyer_credit: 300,
     line6k_tax_credit_bonds: 450,
-    line12_fuel_tax_credit: 125,
   });
   assertStringIncludes(
     result,
@@ -223,9 +279,13 @@ Deno.test("Schedule 3 has distinct 2025 lines 6h, 6k, and 12", () => {
     result,
     "<CurrentYearAllowableCreditAmt>450</CurrentYearAllowableCreditAmt>",
   );
-  assertStringIncludes(
-    result,
-    "<TotalFuelTaxCreditAmt>125</TotalFuelTaxCreditAmt>",
+});
+
+Deno.test("Schedule 3 line 12 rejects a bare Form 4136 credit", () => {
+  assertThrows(
+    () => schedule3.build({ line12_fuel_tax_credit: 125 }),
+    Error,
+    "Form 4136",
   );
 });
 

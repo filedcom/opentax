@@ -3,11 +3,13 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertSchedule3Line8Join } from "../../schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../schedule3_line13a_source.ts";
 import { assertSchedule3Line6jSource } from "../../schedule3_line6j_source.ts";
+import { assertSchedule3PrintedTotals } from "../../schedule3_printed_totals.ts";
+import { assertSchedule3Line12Source } from "../../schedule3_line12_source.ts";
 
 export interface Fields {
   line1_total?: number | null;
   line1_foreign_tax_credit?: number | null;
-  line1_foreign_tax_1099?: number | null;
+  line1_foreign_tax_1099?: number | number[] | null;
   line2_childcare_credit?: number | null;
   line3_education_credit?: number | null;
   line4_retirement_savings_credit?: number | null;
@@ -81,6 +83,11 @@ function buildIRS1040Schedule3(
   context?: MefBuildContext,
 ): string {
   assertSchedule3Line8Join(fields, context?.pending);
+  assertSchedule3Line12Source(
+    fields.line12_fuel_tax_credit,
+    context?.pending?.f4136,
+  );
+  assertSchedule3PrintedTotals(fields, context?.pending);
   assertSchedule3Line6jSource(
     fields.line6j_alt_fuel_vehicle_refueling,
     context?.pending?.f8911,

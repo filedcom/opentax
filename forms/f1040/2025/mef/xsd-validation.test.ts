@@ -624,7 +624,11 @@ Deno.test({
       line20_nonrefundable_credits: 100,
       form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
     },
-    schedule3: { line6k_tax_credit_bonds: 100, line8_total: 100 },
+    schedule3: {
+      line6k_tax_credit_bonds: 100,
+      line7_total: 100,
+      line8_total: 100,
+    },
     form6251: { line11_amt: 0 },
     f8912: {
       f8912s: [{
