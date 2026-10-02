@@ -67,6 +67,7 @@ export type MefFormsPending =
     // Form 1040 line 1h reconciles retained earned-income sources to finalized AGI.
     agi_aggregator?: {
       line1b_household_wages?: number;
+      line1c_unreported_tips?: number;
       line1h_other_earned?: number | number[];
     };
     // Unreported household-employment wages support the line 1b source replay.

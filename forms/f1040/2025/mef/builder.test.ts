@@ -1697,6 +1697,8 @@ Deno.test("IRS4137 present when form4137 has data", () => {
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
     form4137: source,
+    f1040: { line1c_unreported_tips: 500 },
+    agi_aggregator: { line1c_unreported_tips: 500 },
     schedule2: { line5_unreported_tip_tax: tipTax },
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS4137 ");

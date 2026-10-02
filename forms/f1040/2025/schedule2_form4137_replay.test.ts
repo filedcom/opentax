@@ -88,6 +88,7 @@ Deno.test("Schedule 2 line 5 retains Form 4137 tax in native and PDF returns", a
       line1c_unreported_tips: 3_000,
       line23_other_taxes: 230,
     },
+    agi_aggregator: { line1c_unreported_tips: 3_000 },
     schedule2: { line5_unreported_tip_tax: 230 },
   };
   const native = await buildMefBundle(pending, { filer, attachments: [] });

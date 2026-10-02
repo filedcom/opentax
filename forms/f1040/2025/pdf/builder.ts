@@ -55,7 +55,10 @@ import {
 } from "../w2-withholding-reconciliation.ts";
 import { assertLine1hSupportedSource } from "../line1h-source.ts";
 import { assertLine1bHouseholdWageSource } from "../line1b-household-wages.ts";
-import { assertSchedule2Form4137Tax } from "../schedule2-form4137-reconciliation.ts";
+import {
+  assertLine1cForm4137Income,
+  assertSchedule2Form4137Tax,
+} from "../schedule2-form4137-reconciliation.ts";
 import { assertSchedule2Form8919Tax } from "../schedule2-form8919-reconciliation.ts";
 import { assertSchedule2ScheduleHTax } from "../schedule2-schedule-h-reconciliation.ts";
 import { assertSchedule2Form8960Tax } from "../schedule2-form8960-reconciliation.ts";
@@ -483,6 +486,7 @@ export async function buildPdfBytes(
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
   assertSchedule2Form4137Tax(normalized);
+  assertLine1cForm4137Income(normalized);
   assertSchedule2Form8919Tax(normalized);
   assertSchedule2ScheduleHTax(normalized);
   assertSchedule2Form8960Tax(normalized);
