@@ -1,6 +1,9 @@
 import { assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
-import { assertW2WithholdingSource } from "./w2-withholding-reconciliation.ts";
+import {
+  assertLine1aWageSource,
+  assertW2WithholdingSource,
+} from "./w2-withholding-reconciliation.ts";
 import {
   AllocationBasis,
   CommunityPropertyState,
@@ -291,6 +294,23 @@ Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 2
     filingStatus: FilingStatus.MarriedFilingSeparately,
   };
   assertW2WithholdingSource(pending, separate);
+  assertLine1aWageSource({
+    ...pending,
+    f1040: { ...pending.f1040, line1a_wages: 500 },
+    agi_aggregator: { line1a_wages: 500 },
+  });
+  assertThrows(
+    () => assertLine1aWageSource({
+      ...pending,
+      w2: {
+        ...pending.w2,
+        w2s: [{ ...pending.w2.w2s[0], box1_wages: 1_001 }],
+      },
+      f1040: { ...pending.f1040, line1a_wages: 500 },
+    }),
+    Error,
+    "wage allocation must match one ordinary issued W-2 box 1",
+  );
   assertThrows(
     () =>
       assertW2WithholdingSource({

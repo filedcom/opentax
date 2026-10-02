@@ -1,5 +1,9 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
+import {
+  FormType,
+  inputSchema as substituteInputSchema,
+} from "../nodes/inputs/f4852/index.ts";
 import { Form8958Line } from "../nodes/inputs/f8958/source.ts";
 
 const reportedAmountKeys = [
@@ -25,6 +29,62 @@ function hasReportedAmount(
   return reportedAmountKeys.some((key) => (row[key] ?? 0) > 0) ||
     (row.box12_entries ?? []).some((entry) => entry.amount > 0) ||
     (row.box14_entries ?? []).some((entry) => entry.amount > 0);
+}
+
+/** Replay ordinary W-2 and substitute W-2 wages into Form 1040 line 1a. */
+export function assertLine1aWageSource(
+  pending: Record<string, unknown>,
+): void {
+  const w2 = pending.w2 === undefined
+    ? undefined
+    : w2InputSchema.parse(pending.w2);
+  const substituteWages = pending.f4852 === undefined
+    ? []
+    : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
+      row.form_type === FormType.W2
+    );
+  if (!w2 && substituteWages.length === 0) return;
+
+  let issuedWages = w2?.w2s.filter((row) =>
+    row.box13_statutory_employee !== true
+  ).reduce((total, row) => total + row.box1_wages, 0) ?? 0;
+  if (w2?.f8958_allocation) {
+    const wages = w2.f8958_allocation.rows.filter((row) =>
+      row.form_line === Form8958Line.Wages
+    );
+    if (
+      w2.w2s.length !== 1 || wages.length !== 1 ||
+      w2.w2s[0].box13_statutory_employee === true ||
+      wages[0].total_amount !== w2.w2s[0].box1_wages
+    ) {
+      throw new Error(
+        "Form 8958 W-2 wage allocation must match one ordinary issued W-2 box 1",
+      );
+    }
+    issuedWages = wages[0].taxpayer_share;
+  }
+  const expected = issuedWages + substituteWages.reduce(
+    (total, row) => total + (row.wages ?? 0),
+    0,
+  );
+  const filed = (pending.f1040 as Record<string, unknown> | undefined)
+    ?.line1a_wages ?? 0;
+  const agiRaw = (pending.agi_aggregator as
+    | Record<string, unknown>
+    | undefined)?.line1a_wages;
+  const agi = typeof agiRaw === "number" ? agiRaw :
+    Array.isArray(agiRaw) &&
+      agiRaw.every((value) => typeof value === "number")
+    ? agiRaw.reduce((total, value) => total + value, 0)
+    : undefined;
+  if (
+    !Number.isFinite(expected) || filed !== expected ||
+    (agiRaw !== undefined && agi !== expected)
+  ) {
+    throw new Error(
+      "Form 1040 line 1a and AGI wages differ from retained W-2 and Form 4852 wage sources",
+    );
+  }
 }
 
 /** Replay retained W-2 box 2 withholding into the filed Form 1040 line 25a. */

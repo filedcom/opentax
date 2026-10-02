@@ -47,7 +47,10 @@ import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
-import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import {
+  assertLine1aWageSource,
+  assertW2WithholdingSource,
+} from "../w2-withholding-reconciliation.ts";
 import { assertLine1hSupportedSource } from "../line1h-source.ts";
 import { assertSchedule2Form4137Tax } from "../schedule2-form4137-reconciliation.ts";
 import { assertSchedule2Form8919Tax } from "../schedule2-form8919-reconciliation.ts";
@@ -345,8 +348,24 @@ export async function fillFormPdf(
   // Fill filer identity fields (domainKey supports dot-notation, e.g. "address.line1")
   if (filer !== undefined) {
     const filerObj = filer as unknown as Record<string, unknown>;
+    const needsShownName = descriptor.filerFields?.some((entry) =>
+      entry.domainKey === "nameShownOnForm1040"
+    );
+    let nameShownOnForm1040: string | undefined;
+    if (needsShownName) {
+      const first = filer.firstNameWithInitial?.trim();
+      const last = filer.lastName?.trim();
+      if (!first || !last) {
+        throw new Error(
+          `[PDF] ${descriptor.pendingKey}: name shown on Form 1040 needs the identified first-name field and last name`,
+        );
+      }
+      nameShownOnForm1040 = `${first} ${last}`;
+    }
     for (const entry of descriptor.filerFields ?? []) {
-      const value = resolvePath(filerObj, entry.domainKey);
+      const value = entry.domainKey === "nameShownOnForm1040"
+        ? nameShownOnForm1040
+        : resolvePath(filerObj, entry.domainKey);
       if (value === undefined || value === null) continue;
       fillEntry(form, entry, value, descriptor.pendingKey);
     }
@@ -454,6 +473,7 @@ export async function buildPdfBytes(
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
+  assertLine1aWageSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
