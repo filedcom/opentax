@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **957 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **958 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 957 bounded routes and
+**Implemented coverage.** The completed ledger records 958 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -98,6 +98,8 @@ entry metadata at both record and reopen, including inner and outer CRC drift.
 Form 4137 unreported-tip income now replays to Form 1040 line 1c and AGI at
 native/PDF export, catching changed tips even when the separate tip tax rounds
 to the same amount.
+ZIP validation now also verifies each decoded entry against its central CRC
+and uncompressed size, rejecting matching but false CRC headers.
 The Form 1040 PDF now marks and amounts a child Form 8814 capital gain when it
 flows through Schedule D. Foreign-employer line 1h PDF export now enforces the
 same filer ownership and distinct employer source references as native MeF.
