@@ -345,7 +345,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-w2-refund",
     inputs: {
       general: singleGeneral,
-      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040"],
@@ -377,7 +380,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         ...singleGeneral,
         apply_overpayment_to_2026_estimated_tax_amount: 500,
       },
-      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
     },
     filer: singleFiler,
     expectedPdfForms: ["f1040"],
@@ -420,7 +426,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-form8888-two-account-refund",
     inputs: {
       general: singleGeneral,
-      w2: [wage(10_000, 1_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(10_000, 1_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
       f8888: {
         account_1: {
           routing_number: "021000021",
@@ -795,7 +804,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-1098-purchase-points",
     inputs: {
       general: singleGeneral,
-      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
       f1098: [{
         lender_name: "Home Lender",
         recipient_tin: singleGeneral.taxpayer_ssn,

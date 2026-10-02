@@ -40,11 +40,6 @@ Deno.test("Form 1040 refund bank source reaches native return and filled PDF; or
   const result = f1040_2025.executeReturn({
     ...fixture.inputs,
     general,
-    w2: (fixture.inputs.w2 as Record<string, unknown>[]).map((wage) => ({
-      ...wage,
-      employee_ssn: (fixture.inputs.general as { taxpayer_ssn: string })
-        .taxpayer_ssn,
-    })),
   });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -104,14 +99,7 @@ Deno.test("Form 1040 Form 8888 attachment is linked in native XML and marked on 
   const allocation = pdfReviewFixtures.find((item) =>
     item.id === "single-form8888-two-account-refund"
   )!;
-  const result = f1040_2025.executeReturn({
-    ...allocation.inputs,
-    w2: (allocation.inputs.w2 as Record<string, unknown>[]).map((wage) => ({
-      ...wage,
-      employee_ssn: (allocation.inputs.general as { taxpayer_ssn: string })
-        .taxpayer_ssn,
-    })),
-  });
+  const result = f1040_2025.executeReturn({ ...allocation.inputs });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
   const filer = extractFilerIdentity(result.pending.f1040)!;
