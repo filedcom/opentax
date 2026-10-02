@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **937 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **939 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 937 bounded routes and
+**Implemented coverage.** The completed ledger records 939 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -64,6 +64,9 @@ Send evidence now parses the request XML before recording or reopening it, so
 commented submission IDs, unrelated roots, and malformed bodies reject.
 Archived A2A evidence also parses the manifest root and its direct identity
 fields before record and reopen checks.
+The Form 1040 PDF now marks and amounts a child Form 8814 capital gain when it
+flows through Schedule D. Foreign-employer line 1h PDF export now enforces the
+same filer ownership and distinct employer source references as native MeF.
 The general-dependent identity fixtures now pass all 74 focused tests.
 The MeF builder's Schedule F presence fixture now supplies its required Form
 1099 answer; its 148 focused tests pass on the current worktree.
