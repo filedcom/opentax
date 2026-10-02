@@ -11,6 +11,7 @@ import {
 } from "../nodes/inputs/general/index.ts";
 import { inputSchema as form1099gSchema } from "../nodes/inputs/f1099g/index.ts";
 import { inputSchema as form1099mSchema } from "../nodes/inputs/f1099m/index.ts";
+import { inputSchema as form1099kSchema } from "../nodes/inputs/f1099k/index.ts";
 import {
   distributionTotal,
   inputSchema as form1099patrSchema,
@@ -19,6 +20,9 @@ import {
 export function assertKIncomeClassification(
   pending: Record<string, unknown>,
 ): void {
+  if (pending.f1099k !== undefined) {
+    form1099kSchema.parse(pending.f1099k);
+  }
   const raw = (pending.f1099k as
     | { f1099ks?: Array<Record<string, unknown>> }
     | undefined)?.f1099ks ?? [];
