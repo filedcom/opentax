@@ -9976,14 +9976,16 @@ Deno.test(
 
 // ── returnVersion check ──────────────────────────────────────────────────────
 
-Deno.test("XSD: returnVersion matches 2025v5.4", () => {
+Deno.test("XSD: returnVersion matches 2025v5.4", async () => {
+  const general = singleGeneral();
   const result = runReturn({
-    general: singleGeneral(),
-    w2: [w2Item(50_000, 8_000)],
+    general,
+    w2: [{ ...w2Item(50_000, 8_000), employee_ssn: general.taxpayer_ssn }],
   });
   const xml = buildMefXml(
     result.pending as MefFormsPending,
-    extractFilerIdentity(singleGeneral()),
+    extractFilerIdentity(general),
   );
   assertStringIncludes(xml, 'returnVersion="2025v5.4"');
+  if (xsdAvailable) await validateXsd(xml, "TY2025 returnVersion");
 });
