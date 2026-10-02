@@ -4468,6 +4468,44 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-schedule-c-simplified-home-office",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      schedule_c: [{
+        business_reference: "synthetic-home-consulting-2025",
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541600",
+        line_c_business_name: "Example Home Consulting",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_i_made_1099_payments: false,
+        qbi_no_other_adjustments_confirmed: true,
+        line_1_gross_receipts: 20_000,
+        home_office_method: "simplified",
+        home_total_sq_ft: 1_200,
+        home_office_sq_ft: 200,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule_se",
+      "schedule1",
+      "schedule2",
+      "form8995",
+    ],
+    reviewFocus: [
+      "Schedule C line 30 prints 1,200 total home square feet and 200 business-use square feet in the two canonical widgets",
+      "The simplified $1,000 deduction reduces Schedule C line 31 from $20,000 to $19,000",
+      "Schedule 1, Schedule SE, Form 8995, and Form 1040 reconcile to the same $19,000 business profit",
+    ],
+  },
+  {
     id: "single-two-at-risk-business-losses",
     inputs: {
       general: singleGeneral,

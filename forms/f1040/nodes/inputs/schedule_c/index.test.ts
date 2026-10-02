@@ -1031,6 +1031,7 @@ Deno.test("threshold_home_office_max_300sqft: 350sqft × $5 capped at $1500", ()
   const result = compute([minimalItem({
     line_1_gross_receipts: 50000,
     home_office_sq_ft: 350,
+    home_total_sq_ft: 1_200,
     home_office_method: "simplified",
   })]);
   const s1 = findOutput(result, "schedule1");
@@ -1043,6 +1044,7 @@ Deno.test("threshold_home_office_below_max: 200sqft × $5 = $1000", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 50000,
     home_office_sq_ft: 200,
+    home_total_sq_ft: 1_200,
     home_office_method: "simplified",
   })]);
   const s1 = findOutput(result, "schedule1");

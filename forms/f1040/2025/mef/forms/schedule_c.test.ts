@@ -114,6 +114,26 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
   assertStringIncludes(xml, "<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>");
 });
 
+Deno.test("Schedule C MeF projects both simplified home-office areas before profit", () => {
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({
+      home_office_method: "simplified",
+      home_total_sq_ft: 1_200,
+      home_office_sq_ft: 200,
+    })],
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<HomeBusinessExpenseAmt>1000</HomeBusinessExpenseAmt>",
+  );
+  assertStringIncludes(xml, "<TotalAreaOfHomeCnt>1200</TotalAreaOfHomeCnt>");
+  assertStringIncludes(
+    xml,
+    "<HomeBusinessUseSquareFeetCnt>200</HomeBusinessUseSquareFeetCnt>",
+  );
+  assertStringIncludes(xml, "<NetProfitOrLossAmt>34235</NetProfitOrLossAmt>");
+});
+
 Deno.test("Schedule C uses the spouse proprietor identity on a joint return", () => {
   const jointFiler: FilerIdentity = {
     ...filer,

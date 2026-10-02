@@ -278,6 +278,12 @@ function buildScheduleC(
       "HomeBusinessExpenseAmt",
       homeOfficeDeduction(item, tentativeProfit),
     ),
+    item.home_office_method === "simplified"
+      ? element("TotalAreaOfHomeCnt", item.home_total_sq_ft)
+      : "",
+    item.home_office_method === "simplified"
+      ? element("HomeBusinessUseSquareFeetCnt", item.home_office_sq_ft)
+      : "",
     element("NetProfitOrLossAmt", netProfit),
     checkbox("AllInvestmentIsAtRiskInd", item.line_32_at_risk === "a"),
     checkbox("SomeInvestmentIsNotAtRiskInd", item.line_32_at_risk === "b"),

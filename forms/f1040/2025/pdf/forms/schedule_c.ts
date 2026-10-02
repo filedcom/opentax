@@ -98,6 +98,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("line27b", `${page1}Lines18-27[0].f1_39[0]`),
   text("line28", `${page1}f1_41[0]`),
   text("line29", `${page1}f1_42[0]`),
+  text("line30_total_home_sq_ft", `${page1}Line30_ReadOrder[0].f1_43[0]`),
+  text("line30_business_use_sq_ft", `${page1}Line30_ReadOrder[0].f1_44[0]`),
   text("line30", `${page1}f1_45[0]`),
   text("line31", `${page1}f1_46[0]`),
   choice("line_32_at_risk", `${page1}c1_7[0]`, "a"),
@@ -173,14 +175,6 @@ function requirePrintable(
   if (other.some((entry) => !entry.description.trim())) {
     throw new Error(
       "Schedule C PDF Part V requires described expenses",
-    );
-  }
-  if (
-    item.home_office_method === "simplified" ||
-    item.home_office_sq_ft !== undefined
-  ) {
-    throw new Error(
-      "Schedule C PDF simplified line 30 needs total home square footage",
     );
   }
   if (
@@ -309,6 +303,12 @@ function projectBusiness(
     line27b: line48,
     line28,
     line29,
+    line30_total_home_sq_ft: item.home_office_method === "simplified"
+      ? item.home_total_sq_ft
+      : undefined,
+    line30_business_use_sq_ft: item.home_office_method === "simplified"
+      ? item.home_office_sq_ft
+      : undefined,
     line30,
     line31,
     line35: item.line_35_cogs_beginning_inventory,
