@@ -59,6 +59,7 @@ Deno.test("Form 8994 rejects prepared-return and wage deduction tampering", () =
             }],
           },
         },
+        form8994MatchedPending.f3800.form8994_applied_credit,
       ),
     Error,
     "deduction reduction",
