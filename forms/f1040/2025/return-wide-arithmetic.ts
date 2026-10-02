@@ -277,6 +277,15 @@ export function assertReturnScheduleJoins(
     }
   }
 
+  const scheduleB = record("schedule_b");
+  if (scheduleB && typeof scheduleB.print_line4_total === "number") {
+    match(
+      amount(fields, "line2b_taxable_interest"),
+      scheduleB.print_line4_total,
+      "line 2b",
+    );
+  }
+
   const schedule1a = record("schedule1a");
   if (schedule1a && typeof schedule1a.line38_total === "number") {
     match(

@@ -287,8 +287,9 @@ Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => 
   }
 });
 
-Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
+Deno.test("final Form 1040 joins Schedules B, 1, 1-A, 2, and 3 totals", () => {
   const fields = {
+    line2b_taxable_interest: 120,
     line8_additional_income: 300,
     line10_adjustments: 50,
     line13b_additional_deductions: 75,
@@ -297,6 +298,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     line31_additional_payments: 40,
   };
   const pending = {
+    schedule_b: { print_line4_total: 120 },
     schedule1: {
       line10_total_additional_income: 300,
       line26_total_adjustments: 50,
@@ -308,6 +310,7 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
   assertReturnScheduleJoins(fields, pending);
   for (
     const [key, reason] of [
+      ["line2b_taxable_interest", "line 2b"],
       ["line8_additional_income", "line 8"],
       ["line10_adjustments", "line 10"],
       ["line13b_additional_deductions", "line 13b"],
@@ -324,11 +327,13 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
   }
 
   const attached = {
+    schedule_b: pending.schedule_b,
     schedule1: pending.schedule1,
     schedule2: pending.schedule2,
     schedule3: pending.schedule3,
   };
   const filedWithSchedules = {
+    line2b_taxable_interest: 120,
     line8_additional_income: 300,
     line10_adjustments: 50,
     line17_additional_taxes: 100,
@@ -340,6 +345,23 @@ Deno.test("final Form 1040 joins Schedule 1, 1-A, 2, and 3 totals", () => {
     "<TotalAdditionalIncomeAmt>300</TotalAdditionalIncomeAmt>",
   );
   irs1040Pdf.projectFields?.(filedWithSchedules, attached);
+  assertThrows(
+    () =>
+      irs1040.build({ ...filedWithSchedules, line2b_taxable_interest: 119 }, {
+        pending: attached,
+      }),
+    Error,
+    "line 2b",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { ...filedWithSchedules, line2b_taxable_interest: 119 },
+        attached,
+      ),
+    Error,
+    "line 2b",
+  );
   assertThrows(
     () =>
       irs1040.build({ ...filedWithSchedules, line8_additional_income: 301 }, {
