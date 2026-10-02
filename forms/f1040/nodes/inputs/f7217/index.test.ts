@@ -300,7 +300,7 @@ Deno.test("Form 7217 section 732(c) liquidating basis increase follows class, ap
         }],
       }),
     Error,
-    "basis-increase workpaper",
+    "basis-allocation workpaper",
   );
 });
 

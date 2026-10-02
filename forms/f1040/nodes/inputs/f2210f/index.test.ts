@@ -95,14 +95,16 @@ Deno.test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and bo
   });
   const filed = result.outputs[0].fields as Record<string, number>;
   const lines = calculateForm2210FBoxB(facts);
-  assertEquals(filed.line23_other_taxes, 1_500);
+  assertEquals(filed.line24_total_tax, 16_500);
   assertEquals(filed.line38_underpayment_penalty, lines.line16);
   const finalized = result.finalizations?.find((item) =>
     item.nodeType === "f2210f"
   );
   assertEquals(finalized?.fields, { source: facts, filed_lines: lines });
   const fields = { source: facts, filed_lines: lines };
-  const pending = { f1040: filed };
+  // The upstream Schedule 2 node deposits line 23; the Form 1040 sink
+  // includes it in line 24 without emitting a second merge deposit.
+  const pending = { f1040: { ...filed, line23_other_taxes: 1_500 } };
   const xml = form2210f.build(fields, { pending });
   assertStringIncludes(xml, "<OtherTaxesAmt>1500</OtherTaxesAmt>");
   assertStringIncludes(xml, `<PenaltyAmt>${lines.line16}</PenaltyAmt>`);
@@ -110,7 +112,7 @@ Deno.test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and bo
   assertEquals(pdf?.line2, 1_500);
   assertEquals(pdf?.line16, lines.line16);
   const changed = {
-    f1040: { ...filed, line23_other_taxes: 1_499 },
+    f1040: { ...pending.f1040, line23_other_taxes: 1_499 },
   };
   assertThrows(
     () => form2210f.build(fields, { pending: changed }),

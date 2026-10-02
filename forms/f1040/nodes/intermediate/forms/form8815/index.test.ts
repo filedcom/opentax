@@ -359,6 +359,7 @@ Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as
   assertThrows(
     () =>
       form8815Pdf.instances?.(projected ?? {}, filer, {
+        ...pending,
         schedule_b: { ...pending.schedule_b, ee_bond_exclusion: 1 },
       }),
     Error,

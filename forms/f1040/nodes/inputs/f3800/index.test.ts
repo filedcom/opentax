@@ -130,6 +130,7 @@ Deno.test("f3800: reconciled nonpassive vintages reach their separate tax limits
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 600,
     specifiedCarryforward: 300,
@@ -220,6 +221,7 @@ Deno.test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limi
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 1_250,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -311,6 +313,7 @@ Deno.test("f3800: passive source waits for the shared tax limit without depositi
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -347,6 +350,7 @@ Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of dep
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
+    empowermentCredit: 0,
     specifiedCredit: 4_000,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -372,6 +376,7 @@ Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => 
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
+    empowermentCredit: 0,
     specifiedCredit: 2_400,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -407,6 +412,7 @@ Deno.test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 19_750,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -442,6 +448,7 @@ Deno.test("f3800: New Markets Credit K-1 sources wait for the shared limit", () 
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 1_250,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -501,6 +508,7 @@ Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", 
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 1_875,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,
@@ -566,6 +574,7 @@ Deno.test("f3800: Form 8826 source credit reaches the final tax limit without a 
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 2_375,
+    empowermentCredit: 0,
     specifiedCredit: 0,
     standardCarryforward: 0,
     specifiedCarryforward: 0,

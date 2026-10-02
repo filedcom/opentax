@@ -329,10 +329,16 @@ Deno.test("Form 4972 partial death benefit rejects unsourced recipient allocatio
 
 Deno.test("Form 4972 shared estate tax rejects a missing administrator allocation", () => {
   for (
-    const additional of [
-      { capital_gain_amount: 4_000, elect_capital_gain: true },
-      { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
-    ]
+    const [additional, rejection] of [
+      [
+        { capital_gain_amount: 4_000, elect_capital_gain: true },
+        "partial box 9a share supports Part II or III",
+      ],
+      [
+        { annuity_actuarial_value: 2_000, annuity_share_pct: 25 },
+        "partial-share estate tax needs distinct administrator and estate-return sources",
+      ],
+    ] as const
   ) {
     assertThrows(
       () =>
@@ -347,7 +353,7 @@ Deno.test("Form 4972 shared estate tax rejects a missing administrator allocatio
           ...additional,
         }),
       Error,
-      "partial-share estate tax needs distinct administrator and estate-return sources",
+      rejection,
     );
   }
 });
