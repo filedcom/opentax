@@ -37,11 +37,19 @@ Deno.test("ZIP entry check accepts a valid data descriptor with placeholder loca
     archive.end();
   });
   assertEquals(new DataView(bytes.buffer).getUint16(6, true) & 0x0008, 0x0008);
-  assertEquals(zipDirectoryEntryCount(bytes), 1);
+  assertEquals(zipDirectoryEntryCount(bytes, unzipSync(bytes)), 1);
   assertEquals(
     new TextDecoder().decode(unzipSync(bytes)["fixture.txt"]),
     "descriptor payload",
   );
+  const changed = Uint8Array.from(bytes);
+  const view = new DataView(changed.buffer);
+  const central = changed.findIndex((_, index) =>
+    index <= changed.length - 4 && view.getUint32(index, true) === 0x02014b50
+  );
+  if (central < 0) throw new Error("fixture lacks ZIP directory");
+  view.setUint32(central + 16, 0xdeadbeef, true);
+  assertEquals(zipDirectoryEntryCount(changed, unzipSync(changed)), undefined);
 });
 
 const processingDate = new Date("2026-09-26T10:00:00Z");

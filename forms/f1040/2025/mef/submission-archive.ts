@@ -63,8 +63,27 @@ function sha256HexSync(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-/** Check physical ZIP entries before unzipSync collapses or renames them. */
-export function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
+const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit++) {
+    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  }
+  return value >>> 0;
+});
+
+function crc32(bytes: Uint8Array): number {
+  let value = 0xffffffff;
+  for (const byte of bytes) {
+    value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8);
+  }
+  return (value ^ 0xffffffff) >>> 0;
+}
+
+/** Check physical ZIP entries and decoded payloads before filing. */
+export function zipDirectoryEntryCount(
+  bytes: Uint8Array,
+  decoded: Readonly<Record<string, Uint8Array>>,
+): number | undefined {
   if (bytes.length < 22) return undefined;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const firstCandidate = Math.max(0, bytes.length - 22 - 0xffff);
@@ -102,8 +121,23 @@ export function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
         view.getUint16(localOffset + 8, true) !==
           view.getUint16(position + 10, true) ||
         view.getUint16(localOffset + 26, true) !== nameLength ||
+        position + 46 + nameLength > end ||
         localOffset + 30 + nameLength +
               view.getUint16(localOffset + 28, true) > offset
+      ) return undefined;
+      let name: string;
+      try {
+        name = new TextDecoder("utf-8", { fatal: true }).decode(
+          bytes.subarray(position + 46, position + 46 + nameLength),
+        );
+      } catch {
+        return undefined;
+      }
+      const payload = decoded[name];
+      if (
+        !Object.hasOwn(decoded, name) ||
+        payload.length !== view.getUint32(position + 24, true) ||
+        crc32(payload) !== view.getUint32(position + 16, true)
       ) return undefined;
       // When bit 3 is set, the local CRC and sizes are placeholders followed
       // by a data descriptor. Otherwise they must agree with the directory.
@@ -126,7 +160,9 @@ export function zipDirectoryEntryCount(bytes: Uint8Array): number | undefined {
       if (position > end) return undefined;
       seen++;
     }
-    return seen === count ? seen : undefined;
+    return seen === count && seen === Object.keys(decoded).length
+      ? seen
+      : undefined;
   }
   return undefined;
 }
@@ -176,7 +212,7 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
     ),
   ];
   if (
-    zipDirectoryEntryCount(archive.bytes) !== expectedFiles.length ||
+    zipDirectoryEntryCount(archive.bytes, entries) !== expectedFiles.length ||
     expectedFiles.length !== new Set(expectedFiles).size ||
     Object.keys(entries).join("\n") !== expectedFiles.join("\n") ||
     !sameBytes(

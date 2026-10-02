@@ -175,7 +175,7 @@ function assertSendSubmissionArchive(
   } catch {
     throw new Error(`A2A Send submission ZIP is unreadable: ${submissionId}`);
   }
-  if (zipDirectoryEntryCount(bytes) !== Object.keys(archive).length) {
+  if (zipDirectoryEntryCount(bytes, archive) !== Object.keys(archive).length) {
     throw new Error(
       `A2A Send submission physical ZIP entries differ from decoded archive: ${submissionId}`,
     );
@@ -222,7 +222,9 @@ function assertSendPackageIdentity(
 ): void {
   const bodyIds = requestSubmissionIds(requestBody);
   const archiveNames = Object.keys(container);
-  if (zipDirectoryEntryCount(containerBytes) !== archiveNames.length) {
+  if (
+    zipDirectoryEntryCount(containerBytes, container) !== archiveNames.length
+  ) {
     throw new Error(
       "A2A Send container physical ZIP entries differ from decoded archive",
     );
