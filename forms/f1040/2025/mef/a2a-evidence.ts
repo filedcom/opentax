@@ -135,6 +135,8 @@ function manifestValues(
     "TaxYr",
     "GovernmentCd",
     "FederalSubmissionTypeCd",
+    "TaxPeriodBeginDt",
+    "TaxPeriodEndDt",
     "TIN",
   ];
   if (names.some((name) => typeof fields[name] !== "string")) {
@@ -204,6 +206,8 @@ function assertSendSubmissionArchive(
     fields?.TaxYr !== "2025" ||
     fields?.GovernmentCd !== "IRS" ||
     fields?.FederalSubmissionTypeCd !== "1040" ||
+    fields?.TaxPeriodBeginDt !== "2025-01-01" ||
+    fields?.TaxPeriodEndDt !== "2025-12-31" ||
     !tin || !/^\d{9}$/.test(tin) ||
     returnPrimarySsn(xml) !== tin
   ) {
