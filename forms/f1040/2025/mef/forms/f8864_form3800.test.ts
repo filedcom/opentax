@@ -42,7 +42,7 @@ Deno.test("Form 8864 stages one sourced standard Form 3800 line 1l and Part V ro
     filed.currentRows[0].xml,
     'referenceDocumentId="IRS8864_1"',
   );
-  assertThrows(() => parts(499), Error, "credit amounts do not reconcile");
+  assertThrows(() => parts(499), Error, "invalid Form 8864 line 1l allocation");
 });
 
 Deno.test("IRS8864 native projection binds dated gallons to Form 3800 and AMT documents", () => {

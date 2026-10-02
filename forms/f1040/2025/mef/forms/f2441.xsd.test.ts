@@ -160,6 +160,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       employer_ein: "123456789",
       employer_name: "Employer",
       employer_address_line1: "1 Work St",
@@ -200,6 +201,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       employer_ein: "123456789",
       employer_name: "Employer",
       employer_address_line1: "1 Work St",

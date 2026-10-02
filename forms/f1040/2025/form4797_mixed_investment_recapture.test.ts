@@ -58,7 +58,10 @@ Deno.test("mixed full and partial investment recapture reaches Schedule 1, D, Fo
   assertStringIncludes(xml, "<NetGainAmt>3000</NetGainAmt>");
   const pdf = form4797Pdf.projectFields!(
     pending.form4797!,
-    normalizeAllPending(pending),
+    {
+      ...normalizeAllPending(pending),
+      form8949: { transaction: pending.form8949 },
+    },
   );
   assertEquals(pdf.pdf_investment_line31, 8_000);
   assertEquals(pdf.pdf_investment_line32, 3_000);
@@ -101,7 +104,10 @@ Deno.test("mixed investment recapture rejects property and final-return tamperin
       () =>
         form4797Pdf.projectFields!(
           altered.form4797!,
-          normalizeAllPending(altered),
+          {
+            ...normalizeAllPending(altered),
+            form8949: { transaction: altered.form8949 },
+          },
         ),
       Error,
     );

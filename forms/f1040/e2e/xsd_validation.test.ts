@@ -789,6 +789,29 @@ Deno.test({
     ...form,
     recipient_ssn: (input.general as Record<string, unknown>).taxpayer_ssn,
   }));
+  // This schema fixture supplies synthetic statement metadata for the
+  // amount-only SSA benefit in the calculation scenario.
+  input.ssa1099 = (input.ssa1099 as Record<string, unknown>[]).map((form) => ({
+    ...form,
+    recipient_tin: (input.general as Record<string, unknown>).taxpayer_ssn,
+    source_document_reference: "synthetic-ats-104008-ssa1099",
+  }));
+  input.f1099div = (input.f1099div as Record<string, unknown>[]).map((
+    form,
+  ) => ({
+    ...form,
+    recipient_tin: (input.general as Record<string, unknown>).taxpayer_ssn,
+  }));
+  input.schedule1a = {
+    senior_zero_exclusions_review: {
+      no_section933_puerto_rico_excluded_income: true,
+      section933_review_source_reference: "Synthetic ATS residency review",
+      no_form2555_filed: true,
+      form2555_review_source_reference: "Synthetic ATS foreign-income review",
+      no_form4563_filed: true,
+      form4563_review_source_reference: "Synthetic ATS Samoa-source review",
+    },
+  };
   const result = runReturn(input);
   assertEquals(
     result.diagnostics.filter((entry) => entry.severity === "error"),

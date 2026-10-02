@@ -146,7 +146,7 @@ Deno.test("Form 8582-CR self-earned New Markets source matches attached Form 887
         },
       }),
     Error,
-    "differs from filed Form 8874",
+    "Form 8874-A issuance facts and current credit must reconcile",
   );
   assertThrows(
     () =>

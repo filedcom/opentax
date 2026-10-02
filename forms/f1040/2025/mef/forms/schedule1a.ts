@@ -837,9 +837,13 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     );
   }
   if (
+    !part1 && total === 0 &&
+    (form1040.line13b_additional_deductions ?? 0) === 0
+  ) return "";
+  if (
     !part1 || form1040.filing_status !== input.filing_status ||
     Math.round(form1040.line11_agi ?? NaN) !== part1.line1_agi ||
-    form1040.line13b_additional_deductions !== total ||
+    (form1040.line13b_additional_deductions ?? 0) !== total ||
     (form1040.schedule1a_line37_senior_deduction ?? 0) !== senior
   ) {
     throw new Error(

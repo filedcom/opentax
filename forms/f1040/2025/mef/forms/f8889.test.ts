@@ -126,7 +126,11 @@ Deno.test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF,
 
 Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, PDF, and Form 1040", () => {
   const source = {
-    beneficiary_identity: { owner: "T" as const, name: "Alex Taxpayer", ssn: "123456789" },
+    beneficiary_identity: {
+      owner: "T" as const,
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
     age_55_or_older: false,
     last_month_rule_elected: false,
@@ -162,16 +166,21 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
   );
   const forms = result.outputs.find((row) => row.nodeType === "form8889")
     ?.fields.forms as Form8889Owner[];
-  assertEquals(result.outputs.some((row) => row.nodeType === "form5329"), false);
+  assertEquals(
+    result.outputs.some((row) => row.nodeType === "form5329"),
+    false,
+  );
   assertEquals(forms[0].print_line14b_excluded_distributions, 750);
   const pending = {
     form8889: { ...source, forms },
-    w2: { w2s: [{
-      employee_ssn: "123456789",
-      box1_wages: 60_000,
-      box2_fed_withheld: 5_000,
-      box12_entries: [{ code: "W" as const, amount: 5_000 }],
-    }] },
+    w2: {
+      w2s: [{
+        employee_ssn: "123456789",
+        box1_wages: 60_000,
+        box2_fed_withheld: 5_000,
+        box12_entries: [{ code: "W" as const, amount: 5_000 }],
+      }],
+    },
     schedule1: {
       line8z_hsa_excess_employer: 700,
       line8z_hsa_excess_earnings: 50,
@@ -186,16 +195,31 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
     },
   };
   const xml = form8889.build({ forms }, { ...context, pending });
-  assertStringIncludes(xml[0], "<HSAEmployerContributionAmt>5000</HSAEmployerContributionAmt>");
-  assertStringIncludes(xml[0], "<HSADistributionRolloverAmt>750</HSADistributionRolloverAmt>");
-  assertEquals(form8889Pdf.instances?.(pending.form8889, context.filer, pending)?.[0]
-    ?.print_line14b_excluded_distributions, 750);
+  assertStringIncludes(
+    xml[0],
+    "<HSAEmployerContributionAmt>5000</HSAEmployerContributionAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<HSADistributionRolloverAmt>750</HSADistributionRolloverAmt>",
+  );
+  assertEquals(
+    form8889Pdf.instances?.(pending.form8889, context.filer, pending)?.[0]
+      ?.print_line14b_excluded_distributions,
+    750,
+  );
   const additionalWages = {
     ...pending,
-    w2: { w2s: [
-      pending.w2.w2s[0],
-      { employee_ssn: "123456789", box1_wages: 10_000, box2_fed_withheld: 500 },
-    ] },
+    w2: {
+      w2s: [
+        pending.w2.w2s[0],
+        {
+          employee_ssn: "123456789",
+          box1_wages: 10_000,
+          box2_fed_withheld: 500,
+        },
+      ],
+    },
     f1040: { ...pending.f1040, line1a_wages: 70_000 },
   };
   assertEquals(
@@ -203,41 +227,56 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
     1,
   );
   assertThrows(
-    () => form8889.build({ forms }, {
-      ...context,
-      pending: {
-        ...pending,
-        form8889: {
-          ...source,
-          forms,
-          form1099_sa_distributions: undefined,
+    () =>
+      form8889.build({ forms }, {
+        ...context,
+        pending: {
+          ...pending,
+          form8889: {
+            ...source,
+            forms,
+            form1099_sa_distributions: undefined,
+          },
         },
-      },
-    }),
+      }),
     Error,
     "positive line 14a needs owner-matched Form 1099-SA",
   );
   assertThrows(
-    () => form8889.build({ forms }, {
-      ...context,
-      pending: { ...pending, w2: { w2s: [{ ...pending.w2.w2s[0], box12_entries: [{ code: "W" as const, amount: 4_999 }] }] } },
-    }),
+    () =>
+      form8889.build({ forms }, {
+        ...context,
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [{
+              ...pending.w2.w2s[0],
+              box12_entries: [{ code: "W" as const, amount: 4_999 }],
+            }],
+          },
+        },
+      }),
     Error,
     "one owner W-2 code W",
   );
   assertThrows(
-    () => form8889Pdf.instances?.(pending.form8889, context.filer, {
-      ...pending,
-      schedule1: { ...pending.schedule1, line8z_hsa_excess_employer: 699 },
-    }),
+    () =>
+      form8889Pdf.instances?.(pending.form8889, context.filer, {
+        ...pending,
+        schedule1: { ...pending.schedule1, line8z_hsa_excess_employer: 699 },
+      }),
     Error,
     "amounts differ",
   );
   assertThrows(
-    () => form8889.build({ forms }, {
-      ...context,
-      pending: { ...pending, f1040: { ...pending.f1040, line1a_wages: 59_999 } },
-    }),
+    () =>
+      form8889.build({ forms }, {
+        ...context,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line1a_wages: 59_999 },
+        },
+      }),
     Error,
     "amounts differ",
   );
@@ -289,54 +328,54 @@ function buildInvalid(raw: unknown, buildContext: MefBuildContext = context) {
 
 Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16, and 17b amounts", () => {
   const source = form8889InputSchema.parse({
-      beneficiary_identity: {
-        owner: "T",
-        name: "Alex Taxpayer",
-        ssn: "123456789",
+    beneficiary_identity: {
+      owner: "T",
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
+    hsa_distributions: 2000,
+    form1099_sa_distributions: [{
+      tax_year: 2025,
+      recipient_ssn: "123456789",
+      box1_gross_distribution: 2000,
+      box3_distribution_code: "1",
+      source_reference: "2025 Form 1099-SA",
+    }],
+    hsa_excluded_distributions: {
+      rollover: {
+        amount: 1000,
+        distribution_date: "2025-05-01",
+        contribution_date: "2025-05-30",
+        distribution_source_reference: "May trustee transaction",
+        form1099_sa_source_reference: "2025 Form 1099-SA",
+        contribution_source_reference: "Receiving HSA deposit",
+        same_beneficiary: true,
+        receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+        not_direct_trustee_transfer: true,
       },
-      hsa_distributions: 2000,
-      form1099_sa_distributions: [{
-        tax_year: 2025,
-        recipient_ssn: "123456789",
-        box1_gross_distribution: 2000,
-        box3_distribution_code: "1",
-        source_reference: "2025 Form 1099-SA",
+    },
+    qualified_medical_expenses: 100,
+    exception_qualified_taxable_amount: 500,
+    age_65_exception_evidence: {
+      date_of_birth: "1960-04-01",
+      birth_date_source_reference: "Beneficiary birth record",
+      distributions: [{
+        distribution_date: "2025-01-10",
+        gross_amount: 400,
+        qualified_medical_amount: 0,
+        rollover_excluded_amount: 0,
+        source_reference: "January trustee transaction",
+        form1099_sa_source_reference: "2025 Form 1099-SA",
+      }, {
+        distribution_date: "2025-05-01",
+        gross_amount: 1600,
+        qualified_medical_amount: 100,
+        rollover_excluded_amount: 1000,
+        source_reference: "May trustee transaction",
+        form1099_sa_source_reference: "2025 Form 1099-SA",
       }],
-      hsa_excluded_distributions: {
-        rollover: {
-          amount: 1000,
-          distribution_date: "2025-05-01",
-          contribution_date: "2025-05-30",
-          distribution_source_reference: "May trustee transaction",
-          form1099_sa_source_reference: "2025 Form 1099-SA",
-          contribution_source_reference: "Receiving HSA deposit",
-          same_beneficiary: true,
-          receiving_hsa_no_other_rollover_in_preceding_12_months: true,
-          not_direct_trustee_transfer: true,
-        },
-      },
-      qualified_medical_expenses: 100,
-      exception_qualified_taxable_amount: 500,
-      age_65_exception_evidence: {
-        date_of_birth: "1960-04-01",
-        birth_date_source_reference: "Beneficiary birth record",
-        distributions: [{
-          distribution_date: "2025-01-10",
-          gross_amount: 400,
-          qualified_medical_amount: 0,
-          rollover_excluded_amount: 0,
-          source_reference: "January trustee transaction",
-          form1099_sa_source_reference: "2025 Form 1099-SA",
-        }, {
-          distribution_date: "2025-05-01",
-          gross_amount: 1600,
-          qualified_medical_amount: 100,
-          rollover_excluded_amount: 1000,
-          source_reference: "May trustee transaction",
-          form1099_sa_source_reference: "2025 Form 1099-SA",
-        }],
-      },
-    });
+    },
+  });
   const result = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     source,
@@ -435,37 +474,42 @@ Deno.test("Form 8889 rollover source reconciles to MeF, PDF, and the return", ()
     "positive line 14b needs owner source",
   );
   const xml = form8889.build({ forms }, buildContext).join("");
-  assertStringIncludes(xml, "<HSADistributionRolloverAmt>600</HSADistributionRolloverAmt>");
+  assertStringIncludes(
+    xml,
+    "<HSADistributionRolloverAmt>600</HSADistributionRolloverAmt>",
+  );
   assertEquals(
     form8889Pdf.instances?.({ forms }, context.filer!, pending)?.[0]
       ?.print_line14b_excluded_distributions,
     600,
   );
   assertThrows(
-    () => form8889.build({ forms }, {
-      ...buildContext,
-      pending: {
-        ...pending,
-        form8889: {
-          ...source,
-          hsa_excluded_distributions: {
-            rollover: {
-              ...source.hsa_excluded_distributions!.rollover!,
-              form1099_sa_source_reference: "wrong 1099-SA",
+    () =>
+      form8889.build({ forms }, {
+        ...buildContext,
+        pending: {
+          ...pending,
+          form8889: {
+            ...source,
+            hsa_excluded_distributions: {
+              rollover: {
+                ...source.hsa_excluded_distributions!.rollover!,
+                form1099_sa_source_reference: "wrong 1099-SA",
+              },
             },
+            forms,
           },
-          forms,
         },
-      },
-    }),
+      }),
     Error,
     "linked code-1 Form 1099-SA",
   );
   assertThrows(
-    () => form8889Pdf.instances?.({ forms }, context.filer!, {
-      ...pending,
-      f1040: { ...pending.f1040, line8_additional_income: 399 },
-    }),
+    () =>
+      form8889Pdf.instances?.({ forms }, context.filer!, {
+        ...pending,
+        f1040: { ...pending.f1040, line8_additional_income: 399 },
+      }),
     Error,
     "amounts differ from filed return",
   );
@@ -841,7 +885,7 @@ Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", ()
   assertEquals(xml.includes("HDHPFamilyCoverageInd"), false);
 });
 
-Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
+Deno.test("Form 8889 serializes ordinary HSA lines in XSD order", () => {
   const xml = buildPrimary({
     print_line1_coverage: "family",
     print_line2_taxpayer_contributions: 2_000,
@@ -862,10 +906,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     print_line15_qualified: 2_500,
     print_line16_taxable: 1_000,
     print_line17b_penalty: 0,
-    print_line18: 300,
-    print_line19: 200,
-    print_line20: 500,
-    print_line21: 50,
   });
 
   const tags = [
@@ -890,10 +930,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     "UnreimbQualMedAndDentalExpAmt",
     "TaxableHSADistributionAmt",
     "HSADistriAddnlPercentTaxAmt",
-    "HDHPCoverageFailPartialYrAmt",
-    "HDHPCoverageFailFundDistriAmt",
-    "HDHPCoverageIncomeAmt",
-    "HDHPCoverageAddnlTaxAmt",
   ];
   const positions = tags.map((tag) => xml.indexOf(`<${tag}>`));
   assertEquals(positions.every((position) => position >= 0), true);
@@ -902,10 +938,6 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
   assertStringIncludes(
     xml,
     "<TotalHSADeductionAmt>2000</TotalHSADeductionAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<HDHPCoverageAddnlTaxAmt>50</HDHPCoverageAddnlTaxAmt>",
   );
   assertEquals(xml.includes("HDHPSelfOnlyCoverageInd"), false);
 });

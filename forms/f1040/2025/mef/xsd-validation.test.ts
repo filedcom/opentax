@@ -14,6 +14,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { withSyntheticForm1098Copy } from "../pdf/review-1098-copy.fixture.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
@@ -822,14 +823,17 @@ Deno.test({
     },
   });
   const lines = calculateForm8396(source, 1_100);
+  const mortgage = await withSyntheticForm1098Copy("form8396-xsd", {
+    lender_name: "Test Home Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: "2025 Form 1098 loan A",
+    box1_mortgage_interest: 15_000,
+    box1_current_year_deductible_interest: 15_000,
+    box1_deduction_workpaper_reference: "2025 Pub. 936 loan A review",
+  });
   const xml = buildMefXml({
     f1098: {
-      f1098s: [{
-        source_document_reference: "2025 Form 1098 loan A",
-        box1_mortgage_interest: 15_000,
-        box1_current_year_deductible_interest: 15_000,
-        box1_deduction_workpaper_reference: "2025 Pub. 936 loan A review",
-      }],
+      f1098s: [mortgage],
     },
     f1040: {
       line12e_itemized_deductions: 13_000,

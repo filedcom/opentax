@@ -2,7 +2,7 @@ import {
   form8882Fixture,
   form8882ScheduleCFixture,
 } from "../../../nodes/inputs/f8882/fixture.ts";
-import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 
 export function form8882PreparedFixture() {
   const source = form8882Fixture();

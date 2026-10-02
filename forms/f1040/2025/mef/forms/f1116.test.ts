@@ -485,7 +485,7 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   assertThrows(
     () =>
       form1116.build(formFields, {
-        pending: { fec: fecSource },
+        pending: { fec: fecSource, general: { taxpayer_ssn: "123456789" } },
         documentIdsByPendingKey: {
           form1116_alternative_compensation_statement: ["AltBasisStmt1"],
         },

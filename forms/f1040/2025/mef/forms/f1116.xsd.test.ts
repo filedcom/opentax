@@ -152,6 +152,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,
@@ -690,6 +691,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,
@@ -764,6 +766,7 @@ Deno.test({
       address_zip: "78701",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 100_000,
       box2_fed_withheld: 12_000,
       box3_ss_wages: 100_000,

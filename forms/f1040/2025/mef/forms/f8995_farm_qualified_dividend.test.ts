@@ -37,6 +37,7 @@ function filedFarm() {
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,

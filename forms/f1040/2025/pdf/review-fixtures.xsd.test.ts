@@ -99,9 +99,21 @@ async function section1231ExchangeXml(
   return bundle.xml;
 }
 
+const directNewMarketsReviewIds = new Set([
+  "single-new-markets-business-credit",
+  "single-long-name-new-markets-investment",
+  "single-two-new-markets-investments",
+  "single-six-new-markets-investments",
+  "single-seven-new-markets-investments",
+  "single-twenty-four-new-markets-investments",
+  "single-geothermal-and-new-markets-credits",
+]);
+
 for (const fixture of pdfReviewFixtures) {
   Deno.test({
-    name: `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
+    name: directNewMarketsReviewIds.has(fixture.id)
+      ? `filled-PDF source ${fixture.id} blocks unauthenticated direct Form 8874 export`
+      : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
     async fn() {
       const result = execute(plan, registry, { ...fixture.inputs }, {
@@ -119,6 +131,15 @@ for (const fixture of pdfReviewFixtures) {
         return;
       }
       const pending = buildPending(result.pending);
+      if (directNewMarketsReviewIds.has(fixture.id)) {
+        assertEquals((pending.f8874?.investments?.length ?? 0) > 0, true);
+        assertThrows(
+          () => buildMefXml(pending, fixture.filer),
+          Error,
+          "Form 8874 direct QEI needs authenticated CDE status",
+        );
+        return;
+      }
       if (
         fixture.id === "single-two-employers-excess-social-security" ||
         fixture.id === "single-excess-social-security-plus-fuel-credit"
@@ -680,7 +701,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "1099-K customer refunds differ from Schedule C line 2",
+          "Schedule 1 line 3 differs from filed Schedule C net profit or loss",
         );
       }
       if (fixture.id === "single-k-business-refund-and-fee") {
@@ -711,7 +732,7 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "1099-K processor fees differ from Schedule C line 10",
+          "Schedule 1 line 3 differs from filed Schedule C net profit or loss",
         );
       }
       if (fixture.id === "single-k-reported-error") {

@@ -471,6 +471,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,
@@ -599,6 +600,7 @@ Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and fu
         line_d_ein: "123456789",
         line_e_material_participation: true,
         accounting_method: "accrual",
+        line_f_made_1099_payments: false,
         part_iii: {
           line37_sales_products: 80_000,
           line45_beginning_inventory: 0,
@@ -648,6 +650,7 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
         line_c_farm_name: "North Farm",
         line_e_material_participation: true,
         accounting_method: "cash",
+        line_f_made_1099_payments: false,
         line1_sales_livestock_resale: 0,
         line2_sales_products_raised: 80_000,
         ccc_loan_election_in_effect: false,
