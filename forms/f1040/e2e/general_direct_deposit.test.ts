@@ -112,21 +112,30 @@ Deno.test("general direct deposit survives the full graph and CLI filer extracti
 });
 
 Deno.test("direct-deposit source syntax follows Form 1040 lines 35b and 35d", () => {
-  assertEquals(generalInputSchema.safeParse({
-    ...general,
-    bank_routing_number: "211000021",
-    bank_account_number: "AB12-3456",
-  }).success, true);
-  for (const bank_routing_number of ["001000021", "331000021", "02A000021"]) {
-    assertEquals(generalInputSchema.safeParse({
+  assertEquals(
+    generalInputSchema.safeParse({
       ...general,
-      bank_routing_number,
-    }).success, false);
+      bank_routing_number: "211000021",
+      bank_account_number: "AB12-3456",
+    }).success,
+    true,
+  );
+  for (const bank_routing_number of ["001000021", "331000021", "02A000021"]) {
+    assertEquals(
+      generalInputSchema.safeParse({
+        ...general,
+        bank_routing_number,
+      }).success,
+      false,
+    );
   }
   for (const bank_account_number of ["111 222333", "111/222333"]) {
-    assertEquals(generalInputSchema.safeParse({
-      ...general,
-      bank_account_number,
-    }).success, false);
+    assertEquals(
+      generalInputSchema.safeParse({
+        ...general,
+        bank_account_number,
+      }).success,
+      false,
+    );
   }
 });
