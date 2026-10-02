@@ -7548,4 +7548,130 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "The certificate, Form 1098 reference, and qualified home facts agree with the source",
     ],
   },
+  {
+    id: "single-schedule-j-farm-income-averaging",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      schedule_f: {
+        schedule_fs: [{
+          farm_id: "grain",
+          line_a_principal_crop_activity: "GRAIN FARMING",
+          line_b_agricultural_activity_code: "111100",
+          line_c_farm_name: "Example Grain Farm",
+          line_e_material_participation: true,
+          accounting_method: "cash",
+          line1_sales_livestock_resale: 0,
+          line2_sales_products_raised: 100_000,
+          qbi_no_other_adjustments_confirmed: true,
+        }],
+      },
+      schedule_j: {
+        elected_farm_income: 15_000,
+        elected_farm_income_net_capital_gain: 0,
+        base_year_source: {
+          latest_averaging_year: "none",
+          base_returns: Object.fromEntries(
+            [2022, 2023, 2024].map((year) => [
+              `year${year}`,
+              {
+                filing_status: SourceFilingStatus.Single,
+                taxable_income_line15: 10_000,
+                filed_line16_tax: 1_000,
+                section1_tax_from_line16: 1_000,
+                filed_return_reference: `Synthetic filed ${year} Form 1040`,
+                section1_tax_workpaper_reference:
+                  `Synthetic ${year} section 1 tax workpaper`,
+              },
+            ]),
+          ),
+        },
+        tax_treatment: Object.fromEntries(
+          [2022, 2023, 2024, 2025].map((year) => [
+            `year${year}`,
+            {
+              has_qualified_dividends: false,
+              has_net_capital_gain: false,
+              has_unrecaptured_section1250_gain: false,
+              has_28_percent_rate_gain: false,
+              filed_form2555: false,
+            },
+          ]),
+        ),
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_f",
+      "schedule1",
+      "schedule_se",
+      "schedule2",
+      "schedule_j",
+    ],
+    reviewFocus: [
+      "Schedule J elected farm income is 15,000 and its three base years agree with the filed-return references",
+      "Schedule F profit and attributable self-employment deduction reconcile to Schedule J elected income",
+      "Schedule J line 23 agrees with Form 1040 line 16 and the native XML",
+    ],
+  },
+  {
+    id: "single-form8881-startup-and-auto-enrollment",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      w2: [wage(120_000, 20_000, "Example Employer", "12-3456789")],
+      schedule_c: [{
+        business_reference: "PLAN-BUSINESS-1",
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541611",
+        line_c_business_name: "Example Consulting",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 10_000,
+        qbi_no_other_adjustments_confirmed: true,
+        line_i_made_1099_payments: false,
+        line_j_filed_1099s: false,
+      }],
+      f8881: {
+        schedule_c_business_reference: "PLAN-BUSINESS-1",
+        plan_type: "401k",
+        startup: {
+          plan_effective_on: "2025-01-01",
+          first_credit_year: 2025,
+          preceding_first_credit_year_qualified_employee_count: 20,
+          eligible_non_hce_count: 3,
+          startup_costs: 4_000,
+          cost_record_reference: "Synthetic plan invoice 1",
+          costs_paid_or_incurred_on: "2025-02-15",
+          eligible_plan_confirmed: true,
+          no_substantially_same_employee_plan_in_prior_three_years_confirmed:
+            true,
+          startup_cost_deduction_reduced_by_credit_confirmed: true,
+        },
+        auto_enrollment: {
+          first_credit_year: 2025,
+          preceding_first_credit_year_qualified_employee_count: 20,
+          arrangement_record_reference: "Synthetic plan amendment 1",
+          arrangement_first_included_on: "2025-01-01",
+          eligible_automatic_contribution_arrangement_confirmed: true,
+          qualified_employer_plan_confirmed: true,
+          maintained_in_2025_confirmed: true,
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_c", "schedule3", "f3800", "f8881"],
+    reviewFocus: [
+      "Form 8881 Part I shows a 750 startup credit and Part II shows a 500 enrollment credit",
+      "The separate Form 3800 source rows total 1,250",
+      "Schedule 3 and Form 1040 show the same 1,250 allowed credit",
+    ],
+  },
 ];

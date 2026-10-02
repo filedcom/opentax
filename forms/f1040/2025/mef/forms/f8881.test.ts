@@ -38,6 +38,32 @@ const form3800 = {
   },
 };
 
+Deno.test("Form 8881 discovers its document before stable Form 3800 IDs exist", () => {
+  const pending = {
+    f8881: source,
+    f3800: form3800,
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "PLAN-BUSINESS-1",
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541611",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 10_000,
+      }],
+    },
+  };
+  assertStringIncludes(
+    form8881.build(source, { phase: "discovery", pending }),
+    "<IRS8881>",
+  );
+  assertThrows(
+    () => form8881.build(source, { phase: "final", pending }),
+    Error,
+    "one attached sourced Form 3800",
+  );
+});
+
 Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts", () => {
   const xml = form8881.build(source, {
     pending: {

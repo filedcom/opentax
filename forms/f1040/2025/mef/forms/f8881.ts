@@ -66,7 +66,9 @@ export const form8881: MefFormDescriptor<"f8881", unknown> = {
     if (raw === undefined || raw === null) return "";
     const source = inputSchema.parse(raw);
     if (
-      !context?.pending || context.documentIdsByPendingKey?.f3800?.length !== 1
+      !context?.pending ||
+      (context.phase !== "discovery" &&
+        context.documentIdsByPendingKey?.f3800?.length !== 1)
     ) {
       throw new Error("Form 8881 needs one attached sourced Form 3800");
     }

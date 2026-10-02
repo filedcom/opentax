@@ -308,7 +308,7 @@ downloaded release assets have not been built or smoked.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-160 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+162 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -407,20 +407,39 @@ on Form 8396 linked to Schedule 3. Existing full-return graph tests establish
 the source shapes and cross-form joins; the held bulk run must still establish
 the new fixtures' XML validity and filled-page output.
 
-Uncovered registered PDF keys at this checkpoint (45):
+Two more source-backed review returns add Schedule J farm-income averaging and
+Form 8881 startup plus auto-enrollment credits. Both pass the focused local
+TY2025 v5.4 full-return XSD test. The Form 8881 case also rendered as a
+24-page prepared packet; its filled Form 8881 page was inspected with 750 on
+Part I line 8 and 500 on Part II line 11. The same amounts reach separate
+Form 3800 rows and total 1,250 on Schedule 3 and Form 1040. Source
+authentication and the all-cases visual pass remain open. The Form 8881 case
+also caught a document-discovery bug: its native builder now reconciles its
+source during discovery and requires the linked Form 3800 ID during the final
+pass.
+
+An attempted Form 5884 Work Opportunity Tax Credit review case exposed an
+unresolved combined route. Its correctly reduced Schedule C wage deduction
+leads to positive business QBI, but the positive Form 8995 filing validator
+currently rejects a Schedule C source with a WOTC wage reduction. Making the
+business loss-making instead triggers separate Form 461 and QBI-loss carryover
+requirements. No Form 5884 review fixture was added until that interaction is
+implemented and verified.
+
+Uncovered registered PDF keys at this checkpoint (43):
 
 ```text
 f2106 f2210f f4136 f4255 f4835
 f5471_parent f5471_schedule_e f5471_schedule_h f5471_schedule_i1
 f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
-f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
-f8859 f8864 f8881 f8882 f8911 f8911_schedule_a f8912
+f5471_schedule_r f8611 f8820 f8834 f8844 f8854 f8854_annual
+f8859 f8864 f8882 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
 form8582cr
 form8839 form8853
 form8978_schedule_a form8990 form8992 form8992_schedule_a
 form8995a_schedule_a form8995a_schedule_b
-form8995a_schedule_d schedule_j schedule_r
+form8995a_schedule_d schedule_r
 ```
 
 ```sh
