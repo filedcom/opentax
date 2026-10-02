@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **764 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **765 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 764 bounded routes and
+**Implemented coverage.** The completed ledger records 765 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -356,8 +356,12 @@ or 21–32 prefix, and the account number accepts only the supported printed
 letters, digits, and hyphens. The source and sink schemas and final native/PDF
 preflight share that boundary; the focused graph/export test passes. A live
 financial-institution lookup and issued bank-document proof remain open.
-The Schedule 2 lines 14/15 audit identifies missing installment-obligation
-history and interest inputs; those positive routes remain open.
+A bounded calendar-year Section 453A installment-interest workpaper now reaches
+Schedule 2 line 15, line 21, and Form 1040 line 23 in native XML and filled PDF.
+It checks origin-year obligation inventory, character rates, the 2025 year-end
+underpayment rate, and filer ownership. Schedule 2 line 14, authenticated sale
+and note records, Form 6252/prior-return joins, and complete inventory proof
+remain open.
 A bounded same-vehicle Schedule 1-A refinance now retains original and
 refinanced loan facts and reconciles the combined eligible interest to one VIN.
 Schedule 1-A Part III now also derives a 2025 FLSA premium as one-third of a
