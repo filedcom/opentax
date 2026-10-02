@@ -1,5 +1,8 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
-import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
+import {
+  assertDistinctW2IssuedCopies,
+  inputSchema as w2InputSchema,
+} from "../nodes/inputs/w2/index.ts";
 import {
   FormType,
   inputSchema as substituteInputSchema,
@@ -94,6 +97,7 @@ export function assertW2WithholdingSource(
 ): void {
   if (pending.w2 === undefined) return;
   const source = w2InputSchema.parse(pending.w2);
+  assertDistinctW2IssuedCopies(source.w2s);
   const hasWithholding = source.w2s.some((row) => row.box2_fed_withheld > 0);
   const hasPositiveW2 = source.w2s.some(hasReportedAmount);
   if (pending.f1040 === undefined && !hasPositiveW2) return;

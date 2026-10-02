@@ -20,12 +20,14 @@ const base = pdfReviewFixtures.find((fixture) =>
 
 Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, and PDF", async () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
+  const firstIssued = { ...first, source_document_reference: "issued-copy-A" };
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
-    w2: [first, {
+    w2: [firstIssued, {
       ...first,
       employer_name: "Second Employer",
       employer_ein: "98-7654321",
+      source_document_reference: "issued-copy-B",
       box1_wages: 5_000,
       box2_fed_withheld: 500,
       box3_ss_wages: 5_000,
@@ -94,6 +96,36 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
     Error,
     "line 1a and AGI wages differ from retained W-2",
   );
+
+  const repeatedIssuedCopy = structuredClone(pending);
+  const copies = (repeatedIssuedCopy.w2 as unknown as {
+    w2s: Record<string, unknown>[];
+  }).w2s;
+  copies[1]!.employer_ein = copies[0]!.employer_ein;
+  copies[1]!.source_document_reference = copies[0]!.source_document_reference;
+  assertThrows(
+    () => buildMefXml(repeatedIssuedCopy, base.filer),
+    Error,
+    "W-2 repeats the same identified employer, employee, and issued-copy reference",
+  );
+  await assertRejects(
+    () => buildPdfBytes(repeatedIssuedCopy, base.filer),
+    Error,
+    "W-2 repeats the same identified employer, employee, and issued-copy reference",
+  );
+});
+
+Deno.test("the graph rejects a repeated identified W-2 issued copy before totaling wages", () => {
+  const [first] = base.inputs.w2 as Record<string, unknown>[];
+  const issued = { ...first, source_document_reference: "issued-copy-A" };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    w2: [issued, { ...issued }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics.some((entry) =>
+    entry.nodeType === "w2" &&
+    entry.message.includes("same identified employer, employee")
+  ), true);
 });
 
 Deno.test("Form 4852 W-2 replacement wages retain their line 1a total", () => {

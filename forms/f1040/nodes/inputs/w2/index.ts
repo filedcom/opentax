@@ -244,6 +244,28 @@ export const inputSchema = z.object({
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
 export type W2Item = z.infer<typeof w2ItemSchema>;
+
+/** One identified issued W-2 copy may enter the return only once. */
+export function assertDistinctW2IssuedCopies(items: readonly W2Item[]): void {
+  const issued = new Set<string>();
+  for (const item of items) {
+    if (
+      !item.employer_ein || !item.employee_ssn ||
+      !item.source_document_reference
+    ) continue;
+    const key = JSON.stringify([
+      item.employer_ein.replace(/\D/g, ""),
+      item.employee_ssn.replace(/\D/g, ""),
+      item.source_document_reference.trim(),
+    ]);
+    if (issued.has(key)) {
+      throw new Error(
+        "W-2 repeats the same identified employer, employee, and issued-copy reference",
+      );
+    }
+    issued.add(key);
+  }
+}
 type W2Items = W2Item[];
 
 const ELECTIVE_DEFERRAL_CODES = new Set<Box12Code>([
@@ -1087,6 +1109,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    assertDistinctW2IssuedCopies(input.w2s);
     for (const item of input.w2s) {
       validateItem(
         item,
