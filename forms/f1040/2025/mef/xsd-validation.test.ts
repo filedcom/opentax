@@ -9153,6 +9153,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 100 },
     schedule2: { line9_household_employment: 100 },
     schedule_h: {
       employer_ein: "123456789",
@@ -9303,6 +9304,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 28_438 },
     schedule2: { line9_household_employment: 28_438 },
     schedule_h: {
       employer_ein: "123456789",
