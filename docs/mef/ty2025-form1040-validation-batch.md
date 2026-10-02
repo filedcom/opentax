@@ -580,7 +580,11 @@ against the checked-in fixture list and source records, recomputes
 PDF/XML/source hashes, checks PDF page counts, and
 replays each checked-in source through the current return graph and native MeF
 builder so saved pending data and XML must match that calculation. It then
-reruns the XML schema validation against the recorded XSD digest. It does not
+reruns the XML schema validation against the recorded XSD digest. It also
+requires exactly one PDF, XML, and source JSON file per checked-in case plus
+the manifest; the generator's IRS template cache directory is the only extra
+top-level entry. Missing files, unlisted files, and symlink artifacts fail.
+It does not
 inspect visual correctness or set any review flag itself. A successful command
 means the recorded human checklist is complete and the named artifacts have
 not changed; the visual observations remain the reviewer's responsibility.

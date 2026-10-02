@@ -12,6 +12,7 @@ import {
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,
 } from "./ty2025-pdf-review-source.ts";
+import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -118,6 +119,7 @@ const fixtures = new Map(
 if (fixtures.size !== pdfReviewFixtures.length) {
   throw new Error("Checked-in review fixture IDs are not unique");
 }
+await assertReviewArtifactInventory(directory, [...fixtures.keys()]);
 const seen = new Set<string>();
 const executionPlan = buildExecutionPlan(registry);
 let reviewedPages = 0;
