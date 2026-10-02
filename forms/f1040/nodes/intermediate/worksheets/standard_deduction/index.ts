@@ -39,6 +39,7 @@ export const inputSchema = z.object({
 
   // From schedule_a — total itemized deductions (Schedule A line 17)
   itemized_deductions: z.number().nonnegative().optional(),
+  force_itemized: z.boolean().optional(),
   // Schedule A line 7, used for Form 6251 line 2a only if itemizing wins.
   itemized_taxes: z.number().nonnegative().optional(),
   itemized_investment_interest: z.number().nonnegative().optional(),
@@ -107,6 +108,11 @@ function computeStandardAmount(
   return base + additionalFactorCount(input) * additionalPerFactor;
 }
 
+/** Match the deduction decision's TY2025 comparison for Schedule A line 18. */
+export function standardAmountFor2025(input: StandardDeductionInput): number {
+  return computeStandardAmount(inputSchema.parse(input), CONFIG_BY_YEAR[2025]);
+}
+
 // Determine the deduction to use and whether it is the standard deduction.
 // Returns { deduction, takingStandard }.
 function resolveDeduction(
@@ -121,6 +127,10 @@ function resolveDeduction(
 
   // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
   if (input.mfs_spouse_itemizing === true) {
+    return { deduction: itemized, takingStandard: false };
+  }
+
+  if (input.force_itemized === true) {
     return { deduction: itemized, takingStandard: false };
   }
 

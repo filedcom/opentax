@@ -251,6 +251,16 @@ Deno.test("scheduleA.inputSchema: non-boolean force_itemized rejected", () => {
   assertEquals(parsed.success, false);
 });
 
+Deno.test("Schedule A rejects contradictory deduction choices", () => {
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      force_itemized: true,
+      force_standard: true,
+    }).success,
+    false,
+  );
+});
+
 Deno.test("scheduleA.inputSchema: string where number expected is rejected", () => {
   const parsed = scheduleA.inputSchema.safeParse({ line_1_medical: "5000" });
   assertEquals(parsed.success, false);

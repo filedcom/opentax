@@ -103,6 +103,13 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  if (data.force_itemized === true && data.force_standard === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["force_itemized"],
+      message: "Schedule A cannot elect both itemized and standard deductions",
+    });
+  }
   const gifts = data.noncash_contribution_items ?? [];
   const election = data.capital_gain_50_percent_election_confirmed === true ||
     gifts.some((item) =>
@@ -512,6 +519,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
+        force_itemized: input.force_itemized,
         itemized_taxes: taxesTotal,
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,

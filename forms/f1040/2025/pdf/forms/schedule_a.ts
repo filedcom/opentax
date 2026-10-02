@@ -16,6 +16,7 @@ import {
   inputSchema as scheduleAInputSchema,
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
+import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -176,6 +177,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line_17_itemized",
     pdfField: "form1[0].Page1[0].f1_30[0]",
+    printZero: true,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_line_18_itemize_election",
+    pdfField: "form1[0].Page1[0].Line18_ReadOrder[0].c1_3[0]",
   },
 ];
 
@@ -184,7 +191,11 @@ export const scheduleAPdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
   fields,
   instances(input, filer, all) {
-    if (!(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0)) {
+    if (
+      !(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0) &&
+      !(input.force_itemized === true &&
+        all?.f1040?.line12e_itemized_deductions === 0)
+    ) {
       return [];
     }
     if (all?.f1098 !== undefined) {
@@ -307,6 +318,11 @@ export const scheduleAPdf: PdfFormDescriptor = {
     const charity = amount("line_11_cash_contributions") +
       amount("line_12_noncash_contributions") +
       amount("line_13_contribution_carryover");
+    const itemizeBelowStandard = itemizeBelowStandardElection(
+      input.force_itemized,
+      all?.standard_deduction,
+      standard.itemized_deductions,
+    );
     return [{
       ...input,
       line_8a_mortgage_interest_1098: line8a,
@@ -328,14 +344,17 @@ export const scheduleAPdf: PdfFormDescriptor = {
       line_10_interest: interest,
       line_14_charity: charity,
       line_17_itemized: standard.itemized_deductions,
+      print_line_18_itemize_election: itemizeBelowStandard,
     }];
   },
   // Schedule A is filed only when the return actually itemizes (1040 line 12
   // carries an itemized amount) — not merely because AGI was deposited here.
   includeWhen: (input, all) => {
-    const itemizes = (((all?.["f1040"]?.["line12e_itemized_deductions"]) as
+    const filed = (all?.["f1040"]?.["line12e_itemized_deductions"]) as
       | number
-      | undefined) ?? 0) > 0;
+      | undefined;
+    const itemizes = (filed ?? 0) > 0 ||
+      (input.force_itemized === true && filed === 0);
     if (!itemizes) return false;
     const hasPriorCarryover = [
       input["capital_gain_property_carryovers"],

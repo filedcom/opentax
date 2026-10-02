@@ -22,8 +22,10 @@ import {
   SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
+import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
 
 export interface Fields {
+  force_itemized?: boolean;
   line_1_medical?: number | null;
   agi?: number | null;
   // IRC §164(b)(5) election: either income tax or sales tax — mutually exclusive.
@@ -292,7 +294,13 @@ function buildIRS1040ScheduleA(
     FIELD_MAP.some(([key]) =>
       key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
     ) || line5a !== 0;
-  if (!hasDeduction) return "";
+  if (!hasDeduction && fields.force_itemized !== true) return "";
+  const itemizeBelowStandard = itemizeBelowStandardElection(
+    fields.force_itemized,
+    context?.pending?.standard_deduction,
+    returnFields?.line12e_itemized_deductions,
+  );
+  const filedItemized = returnFields?.line12e_itemized_deductions;
 
   // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
   //   MedicalAndDentalExpensesAmt → TaxReturnAGIAmt → ... → StateAndLocalTaxAmt → RealEstateTaxesAmt → ...
@@ -322,6 +330,10 @@ function buildIRS1040ScheduleA(
     mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
     mapField(["line_15_casualty_theft_loss", "CasualtyAndTheftLossesAmt"]),
     mapField(["line_16_other_deductions", "OtherMiscellaneousDedAmt"]),
+    fields.force_itemized === true && typeof filedItemized === "number"
+      ? element("TotalItemizedDeductionsAmt", filedItemized)
+      : "",
+    itemizeBelowStandard ? element("ItmzdDedLessThanStdDedInd", "X") : "",
   ];
   return elements("IRS1040ScheduleA", children);
 }

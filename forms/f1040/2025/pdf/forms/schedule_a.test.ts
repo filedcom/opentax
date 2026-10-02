@@ -9,6 +9,110 @@ import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purc
 import { PDFDocument } from "pdf-lib";
 import { fillFormPdf } from "../builder.ts";
 import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
+import { buildMefXml } from "../../mef/builder.ts";
+import type { MefFormsPending } from "../../mef/types.ts";
+
+Deno.test("Schedule A election below standard reaches line 12e, native form, and PDF line 18", async () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const run = (amount: number) =>
+    execute(
+      buildExecutionPlan(registry),
+      registry,
+      {
+        general: {
+          filing_status: "single",
+          taxpayer_first_name: "Test",
+          taxpayer_last_name: "Taxpayer",
+          taxpayer_ssn: "111223333",
+          digital_assets: false,
+        },
+        schedule_a: { line_5b_real_estate_tax: amount, force_itemized: true },
+      },
+      { taxYear: 2025, formType: "f1040" },
+    );
+  const result = run(1_000);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 1_000);
+  assertEquals(result.pending.f1040?.line12a_standard_deduction, undefined);
+  const xml = buildMefXml(result.pending as MefFormsPending, filer);
+  assertEquals(xml.includes("<IRS1040ScheduleA "), true);
+  assertEquals(
+    xml.includes("<RealEstateTaxesAmt>1000</RealEstateTaxesAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<ItmzdDedLessThanStdDedInd>X</ItmzdDedLessThanStdDedInd>"),
+    true,
+  );
+  const [instance] = scheduleAPdf.instances?.(
+    result.pending.schedule_a,
+    filer,
+    result.pending,
+  ) ?? [];
+  assertEquals(instance?.print_line_18_itemize_election, true);
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    result.pending,
+  );
+  assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+
+  const equal = run(15_750);
+  assertEquals(equal.diagnostics, []);
+  const [equalInstance] = scheduleAPdf.instances?.(
+    equal.pending.schedule_a,
+    filer,
+    equal.pending,
+  ) ?? [];
+  assertEquals(equal.pending.f1040?.line12e_itemized_deductions, 15_750);
+  assertEquals(equalInstance?.print_line_18_itemize_election, false);
+  assertEquals(
+    buildMefXml(equal.pending as MefFormsPending, filer).includes(
+      "ItmzdDedLessThanStdDedInd",
+    ),
+    false,
+  );
+  const zero = run(0);
+  assertEquals(zero.diagnostics, []);
+  assertEquals(zero.pending.f1040?.line12e_itemized_deductions, 0);
+  const zeroXml = buildMefXml(zero.pending as MefFormsPending, filer);
+  assertEquals(zeroXml.includes("<IRS1040ScheduleA "), true);
+  assertEquals(
+    zeroXml.includes(
+      "<TotalItemizedDeductionsAmt>0</TotalItemizedDeductionsAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    zeroXml.includes(
+      "<ItmzdDedLessThanStdDedInd>X</ItmzdDedLessThanStdDedInd>",
+    ),
+    true,
+  );
+  const [zeroInstance] = scheduleAPdf.instances?.(
+    zero.pending.schedule_a,
+    filer,
+    zero.pending,
+  ) ?? [];
+  assertEquals(zeroInstance?.line_17_itemized, 0);
+  assertEquals(zeroInstance?.print_line_18_itemize_election, true);
+  const zeroFilled = await fillFormPdf(
+    scheduleAPdf,
+    zeroInstance!,
+    filer,
+    ".pdf-cache",
+    zero.pending,
+  );
+  assertEquals((await PDFDocument.load(zeroFilled!)).getPageCount(), 1);
+});
 
 Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage interest", async () => {
   const filer = {
