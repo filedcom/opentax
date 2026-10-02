@@ -45,7 +45,9 @@ deno task test
 
 This is the `deno.json` task,
 `deno test --allow-read --allow-write
---allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov`.
+--allow-run=xmllint,deno,pdftotext,pdftoppm
+--allow-env=OPENTAX_SCHEDULE1A_FEIE_REVIEW_PDF,SCHEDULE1A_2555_REVIEW_PDF,SCHEDULE1A_2555_VEHICLE_REVIEW_PDF
+--allow-net=www.irs.gov`.
 It discovers all repository tests, including Form 1040 calculations,
 source-to-return/MeF/PDF cases, ATS fixture assertions, and local `xmllint`
 cases against `Return1040.xsd`. Record the commit, timestamp, Deno version,
