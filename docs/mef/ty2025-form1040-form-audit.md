@@ -20,7 +20,7 @@ Neither run proves each row's positive source route, filled PDF, IRS business
 rule, or ATS acceptance.
 A written case is not a passing case.
 
-The registered-descriptor evidence census is now **145/145 statically accounted
+The registered-descriptor evidence census is now **148/148 statically accounted
 for** in this matrix against the current MeF registry. The linked
 [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
@@ -143,7 +143,7 @@ bounded route and its remaining evidence.
 | --- | ---: | --- |
 | Main-return and schedule rows | 19 | Check each active trigger and all return-wide amount/owner joins. |
 | Numbered forms and distinct-schedule rows | 97 | Includes the seven supplemental rows below; confirm each bounded branch and explicit rejection of other branches. |
-| Wage and supporting rows | 29 | Each needs source-owner, parent-document reference, repetition and attachment/print disposition; this table has no per-row case-status column for them. |
+| Wage and supporting rows | 32 | Each needs source-owner, parent-document reference, repetition and attachment/print disposition; this table has no per-row case-status column for them. |
 | Main/numbered rows marked `P` (bounded calculation/source coded) | 115 of 116 | `P` is code evidence, not a complete or passing positive filing route. |
 | Main/numbered rows marked `U` | 1 of 116: Form 8990 | Nonexempt positive export remains blocked pending durable accepted-year carryforward history. |
 | Main/numbered rows with focused cases marked `W` | 116 of 116 | A written case may be a rejection or a narrow synthetic route; current full-suite, XSD, PDF, IRS-rule and ATS results are not established per row. |
@@ -346,9 +346,9 @@ evidence still govern positive export.
 | 8941 | One bounded direct Schedule C small employer; P | `f8941.ts` R | Y | W | Reviewed SHOP area/premium and employer contribution facts join Form 3800. Other rating areas, employers, external source authentication, and final validation remain open; see [gap](ty2025-form8941-gap.md). |
 | 8994 | One direct Schedule C paid-family-leave employer; P | `f8994.ts` R | Y | W | Positive export requires reviewed evidence bound to prepared bundle attachment bytes; wider sources and stand-alone export remain guarded. Final validation and ATS remain open; see [gap](ty2025-form8994-gap.md). |
 
-### Registered wage and supporting descriptors (29)
+### Registered wage and supporting descriptors (32)
 
-These are included in the 145 MeF registry entries, but are not 29 additional
+These are included in the 148 MeF registry entries, but are not 32 additional
 tax forms. `R` still means registered, not validated; `P` means a bounded
 parent-source route is coded. Every row's current-run XSD, source-to-document,
 attachment/reference, business-rule, and ATS status is **open**. The file named
@@ -362,6 +362,9 @@ in each row is under `forms/f1040/2025/mef/forms/`. Binary PDFs are separate.
 | `ira_distribution_statement` | Form 1040 line 4c rollover explanation | `ira_distribution_statement.ts` R | P: issued IRA distributions routed to qualifying plans or completed in 2026 attach an explanation reconciled with Form 1099-R and line 4c. Source-byte authentication, wider rollover combinations, IRS rules and ATS remain open. |
 | `any_other_taxes_statement`                   | Schedule 2 / Form 8978 adjustment                                   | `any_other_taxes_statement.ts` R                 | P: signed adjustment statement; reconcile the linked Schedule 2 line and rendered attachment.                                                                                                                                                                                            |
 | `schedule1_other_income_statement`            | Schedule 1 line 8z named source components                          | `schedule1_other_income_statement.ts` R          | P: one TY2025 `OtherIncomeTypeStatement` records named source amounts and links from Schedule 1 line 8z. Generic unnamed amounts reject; source character, XSD, full return and PDF appearance remain open.                                                                              |
+| `schedule_a_other_tax_statement` | Schedule A line 6 reviewed other-deductible-tax rows | `schedule_a_other_tax_statement.ts` R | P: one `OtherDeductibleTaxStmt` lists source descriptions and amounts and links from Schedule A. Itemization and matching source rows are required; wider tax classes and packet review remain open. |
+| `schedule_a_line8b_seller_statement` | Schedule A line 8b seller-financed home interest | `schedule_a_line8b_seller_statement.ts` R | P: one `F1098RecpntNmTINAddrStatement` records the reviewed seller name, TIN, and address and links from Schedule A. Other interest sources and packet review remain open. |
+| `schedule_a_line16_estate_statement` | Schedule A line 16 federal estate tax deduction | `schedule_a_line16_estate_statement.ts` R | P: one `OtherMiscDeductionsStmt` records the source-reconciled federal estate tax amount and links from Schedule A. Other line 16 deductions and packet review remain open. |
 | `wages_not_shown_schedule`                    | FEC wages absent from W-2                                           | `foreign_employer_wages.ts` R                    | P: FEC source and wage amount; check 1040 line 1h and linked record.                                                                                                                                                                                                                     |
 | `ccc_loan_accrual_statement`                  | Schedule F accrual CCC loans                                        | `ccc_loan_accrual_statement.ts` R                | P: identified loans; reconcile Farm Part III amounts and statement repetitions.                                                                                                                                                                                                          |
 | `ccc_loan_statement`                          | Schedule F cash CCC loans                                           | `ccc_loan_statement.ts` R                        | P: identified loans; reconcile loan election and Schedule F line 5.                                                                                                                                                                                                                      |
@@ -396,7 +399,7 @@ This is a static inventory, not a passing-test claim. A **native copy** below
 means a separate XML document in `ReturnData1040`; it does not mean that the
 underlying payer-issued paper/PDF was authenticated. A **native statement** is
 structured XML rather than a PDF attachment. The only dedicated PDF descriptor
-among these 29 is W-2G Copy B. “No direct case located” means an exact pending
+among these 32 is W-2G Copy B. “No direct case located” means an exact pending
 key or descriptor reference was not found in the Form 1040 test sources; it
 does not prove that no parent-level test reaches the route. Parent guards still
 apply to every row.
@@ -409,6 +412,9 @@ apply to every row.
 | `ira_distribution_statement` | Qualifying Form 1099-R rollover → 1040 line 4c explanation. | `f1040.test.ts`. | Native explanatory statement; no dedicated PDF. Issued 1099-R bytes and rollover evidence remain open. |
 | `any_other_taxes_statement` | Form 8978 adjustment → Schedule 2 line 17z. | No direct case located. | Native statement; Form 8978 separately generates a tax-computation PDF BinaryAttachment. Verify statement, Schedule 2 and attachment IDs together. |
 | `schedule1_other_income_statement` | Named other-income components → Schedule 1 line 8z. | `schedule1_other_income_statement.test.ts`. | Native statement; no dedicated PDF. Source character and rendered packet appearance remain open. |
+| `schedule_a_other_tax_statement` | Reviewed other deductible tax rows → Schedule A line 6 and linked native statement. | `pdf/forms/schedule_a.test.ts`. | Native statement; reviewed descriptions print on Schedule A PDF continuation. Complete packet appearance and wider tax classes remain open. |
+| `schedule_a_line8b_seller_statement` | Seller-financed interest → Schedule A line 8b and linked seller identity statement. | `pdf/forms/schedule_a.test.ts`. | Native statement; seller identity prints on Schedule A PDF continuation. Other interest and complete packet review remain open. |
+| `schedule_a_line16_estate_statement` | Source-reconciled federal estate tax → Schedule A line 16 and linked native statement. | `pdf/forms/schedule_a.test.ts`. | Native statement; estate-tax explanation prints on Schedule A PDF continuation. Other deductions and complete packet review remain open. |
 | `wages_not_shown_schedule` | FEC wages without W-2 → 1040 line 1h. | No direct case located. | Native supporting schedule; no dedicated PDF. Tie it to the same FEC employer and amount. |
 | `ccc_loan_accrual_statement` | Accrual CCC loan source → Schedule F Part III. | No direct case located. | Native statement; no dedicated PDF. Loan/election source and repetition remain open. |
 | `ccc_loan_statement` | Cash CCC loan source → Schedule F line 5. | No direct case located. | Native statement; no dedicated PDF. Loan/election source and parent amount remain open. |
@@ -524,7 +530,7 @@ builder rejects positive claims.
 
 | Static measure                               |                                      Count | What it means                                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        145 | Registration only: 116 main-return/numbered/schedule entries plus 29 wage/supporting entries.                                                 |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        148 | Registration only: 116 main-return/numbered/schedule entries plus 32 wage/supporting entries.                                                 |
 | Main-return/numbered/schedule descriptors    |                                        116 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
 | Registered PDF descriptors                   |                                        115 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |

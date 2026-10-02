@@ -4,9 +4,17 @@ Static comparison updated 2026-10-02 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **145 native descriptors and 115 PDF
+exclusion. The indexes currently hold **148 native descriptors and 115 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
+
+The three native additions since the preceding census are Schedule A
+supporting statements for line 6 other deductible taxes, line 8b
+seller-financed interest recipient identity, and line 16 federal estate tax.
+They are native statement roots linked from Schedule A, not three additional
+parent taxpayer forms. Their reviewed source rows print through the registered
+Schedule A PDF and its continuation where applicable; the wider filled-packet
+review remains open.
 
 The current registered-key comparison leaves one parent taxpayer-form PDF
 absence, `form8621`. Most other native-only keys are supporting statements or
