@@ -297,6 +297,11 @@ The Schedule 2 lines 14/15 audit identifies missing installment-obligation
 history and interest inputs; those positive routes remain open.
 A bounded same-vehicle Schedule 1-A refinance now retains original and
 refinanced loan facts and reconciles the combined eligible interest to one VIN.
+Schedule 1-A Part III now also derives a 2025 FLSA premium as one-third of a
+reviewed full-year employer time-and-a-half overtime pay statement. It binds
+the statement to the W-2 owner and employer, excludes simultaneous premium
+sources, and replays the $4,000 deduction at native/PDF export. Underlying
+payroll bytes and wider Notice 2025-69 calculation methods remain open.
 A nine-root workflow matrix states the remaining amendment, payment,
 recipient-copy, and optional preference decisions without assuming their outcome.
 The TY2025 v5.4 schema archive and extracted XSD have pinned local hashes and

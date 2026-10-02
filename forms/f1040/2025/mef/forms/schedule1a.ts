@@ -476,14 +476,16 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       input,
     );
     const statementEntries = input.qualified_w2_overtime!.filter((entry) =>
-      entry.employer_statement_reference !== undefined
+      entry.employer_statement_reference !== undefined ||
+      entry.aggregate_overtime_statement_reference !== undefined
     );
     if (statementEntries.length > 0) {
       const sourceW2s = context?.pending?.w2
         ? w2InputSchema.parse(context.pending.w2).w2s
         : [];
       const sourceStatementW2s = sourceW2s.filter((w2) =>
-        w2.flsa_overtime_review?.employer_statement !== undefined
+        w2.flsa_overtime_review?.employer_statement !== undefined ||
+        w2.flsa_overtime_review?.aggregate_overtime_statement !== undefined
       );
       const normalize = (value: string) => value.replaceAll("-", "");
       if (
@@ -492,20 +494,32 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           sourceStatementW2s.some((w2) => {
             const review = w2.flsa_overtime_review;
             const statement = review?.employer_statement;
-            return statement !== undefined &&
+            const aggregate = review?.aggregate_overtime_statement;
+            const methodMatches = statement !== undefined &&
+                aggregate === undefined &&
+                entry.aggregate_overtime_statement_reference === undefined &&
+                statement.tax_year === 2025 &&
+                statement.furnished_to_employee === true &&
+                statement.qualified_overtime_premium === entry.amount &&
+                statement.statement_reference ===
+                  entry.employer_statement_reference ||
+              aggregate !== undefined && statement === undefined &&
+                entry.employer_statement_reference === undefined &&
+                aggregate.tax_year === 2025 &&
+                aggregate.furnished_to_employee === true &&
+                aggregate.aggregate_time_and_half_overtime_pay / 3 ===
+                  entry.amount &&
+                aggregate.statement_reference ===
+                  entry.aggregate_overtime_statement_reference;
+            return methodMatches &&
               normalize(w2.employee_ssn ?? "") ===
                 normalize(entry.employee_ssn) &&
               normalize(w2.employer_ein ?? "") ===
                 normalize(entry.employer_ein) &&
-              normalize(statement.employee_ssn) ===
+              normalize((statement ?? aggregate)!.employee_ssn) ===
                 normalize(entry.employee_ssn) &&
-              normalize(statement.employer_ein) ===
+              normalize((statement ?? aggregate)!.employer_ein) ===
                 normalize(entry.employer_ein) &&
-              statement.tax_year === 2025 &&
-              statement.furnished_to_employee === true &&
-              statement.qualified_overtime_premium === entry.amount &&
-              statement.statement_reference ===
-                entry.employer_statement_reference &&
               w2.box1_wages === entry.box1_wages &&
               review?.source_reference === entry.source_reference &&
               review?.covered_nonexempt_employee === true &&

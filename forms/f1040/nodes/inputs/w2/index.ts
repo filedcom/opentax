@@ -186,6 +186,18 @@ export const w2ItemSchema = z.object({
       statement_reference: z.string().trim().min(1),
       furnished_to_employee: z.literal(true),
     }).strict().optional(),
+    aggregate_overtime_statement: z.object({
+      tax_year: z.literal(2025),
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      aggregate_time_and_half_overtime_pay: z.number().int().positive(),
+      time_and_half_rate_confirmed: z.literal(true),
+      all_hours_exceed_forty_per_workweek_confirmed: z.literal(true),
+      covers_full_tax_year: z.literal(true),
+      premium_not_separately_stated: z.literal(true),
+      statement_reference: z.string().trim().min(1),
+      furnished_to_employee: z.literal(true),
+    }).strict().optional(),
   }).strict().optional().describe(
     "Source review for an employer-identified FLSA overtime premium in box 14 or a 2025 employer statement",
   ),
@@ -380,20 +392,30 @@ function validateItem(
 ): void {
   if (item.flsa_overtime_review !== undefined) {
     const statement = item.flsa_overtime_review.employer_statement;
+    const aggregate = item.flsa_overtime_review.aggregate_overtime_statement;
     const premiums = (item.box14_entries ?? []).filter((entry) =>
       entry.description.trim().toLowerCase() === "flsa overtime premium"
     );
     if (
-      (statement === undefined
-        ? premiums.length !== 1 || premiums[0].amount <= 0 ||
-          premiums[0].amount > item.box1_wages ||
-          premiums[0].is_state_sdi_pfml
-        : premiums.length !== 0 ||
+      (statement && aggregate) ||
+      (aggregate
+        ? premiums.length !== 0 ||
+          aggregate.aggregate_time_and_half_overtime_pay > item.box1_wages ||
+          aggregate.aggregate_time_and_half_overtime_pay % 3 !== 0 ||
+          aggregate.employee_ssn.replaceAll("-", "") !==
+            item.employee_ssn?.replaceAll("-", "") ||
+          aggregate.employer_ein.replaceAll("-", "") !==
+            item.employer_ein?.replaceAll("-", "")
+        : statement
+        ? premiums.length !== 0 ||
           statement.qualified_overtime_premium > item.box1_wages ||
           statement.employee_ssn.replaceAll("-", "") !==
             item.employee_ssn?.replaceAll("-", "") ||
           statement.employer_ein.replaceAll("-", "") !==
-            item.employer_ein?.replaceAll("-", "")) ||
+            item.employer_ein?.replaceAll("-", "")
+        : premiums.length !== 1 || premiums[0].amount <= 0 ||
+          premiums[0].amount > item.box1_wages ||
+          premiums[0].is_state_sdi_pfml) ||
       item.box13_statutory_employee === true ||
       !/^\d{3}-?\d{2}-?\d{4}$/.test(item.employee_ssn ?? "") ||
       !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "")
@@ -833,6 +855,11 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
       employer_ein: item.employer_ein!,
       amount: item.flsa_overtime_review!.employer_statement
         ?.qualified_overtime_premium ??
+        (item.flsa_overtime_review!.aggregate_overtime_statement
+            ?.aggregate_time_and_half_overtime_pay !== undefined
+          ? item.flsa_overtime_review!.aggregate_overtime_statement!
+            .aggregate_time_and_half_overtime_pay / 3
+          : undefined) ??
         item.box14_entries!.find((entry) =>
           entry.description.trim().toLowerCase() === "flsa overtime premium"
         )!.amount,
@@ -840,7 +867,13 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
       covered_nonexempt_employee: true as const,
       premium_included_in_box1: true as const,
       source_reference: item.flsa_overtime_review!.source_reference,
-      ...(item.flsa_overtime_review!.employer_statement
+      ...(item.flsa_overtime_review!.aggregate_overtime_statement
+        ? {
+          aggregate_overtime_statement_reference:
+            item.flsa_overtime_review!.aggregate_overtime_statement!
+              .statement_reference,
+        }
+        : item.flsa_overtime_review!.employer_statement
         ? {
           employer_statement_reference:
             item.flsa_overtime_review!.employer_statement!.statement_reference,

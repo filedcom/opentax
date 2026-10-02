@@ -62,8 +62,13 @@ two-page PDF field map and inspected synthetic full-return packets.
   [Notice 2025-69, section II.B.2](https://www.irs.gov/pub/irs-drop/n-25-69.pdf)
   and the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
   permit a separately furnished employer accounting for 2025. Raw
-  taxpayer-entered overtime totals remain rejected. Payroll-method calculations
-  without an employer accounting, deferred W-2 amounts, Forms 1099-NEC/MISC,
+  taxpayer-entered overtime totals remain rejected. A bounded full-year
+  employer payroll summary may instead supply aggregate time-and-a-half pay
+  for hours over 40 per workweek; exactly one-third becomes the FLSA premium
+  under Notice 2025-69 method B. Its owner and employer must match the W-2,
+  the pay must be included in box 1, and a box 14 or separately stated premium
+  cannot also be claimed. Native/PDF export replays the source amount and
+  reference. Other payroll methods, deferred W-2 amounts, Forms 1099-NEC/MISC,
   full combined packets, and authenticated employer statement bytes remain open.
 - Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower

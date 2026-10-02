@@ -212,6 +212,96 @@ Deno.test("Schedule 1-A employer statement overtime reconciles to W-2 and finali
   );
 });
 
+Deno.test("Schedule 1-A replays aggregate overtime payroll source at native and PDF export", () => {
+  const aggregate = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    aggregate_time_and_half_overtime_pay: 12_000,
+    time_and_half_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    premium_not_separately_stated: true as const,
+    statement_reference: "Full-year employer overtime payroll summary",
+    furnished_to_employee: true as const,
+  };
+  const w2 = {
+    w2s: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true as const,
+        premium_included_in_box1: true as const,
+        source_reference: "FLSA coverage and box 1 review",
+        aggregate_overtime_statement: aggregate,
+      },
+    }],
+  };
+  const claim = {
+    ...singleOvertime,
+    qualified_w2_overtime: [{
+      ...overtimeEntry,
+      source_reference: "FLSA coverage and box 1 review",
+      aggregate_overtime_statement_reference: aggregate.statement_reference,
+    }],
+  };
+  const pending = { f1040: singleOvertime1040, w2 };
+  const xml = schedule1a.build(claim, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeWagesAmt>4000</QualifiedOvertimeWagesAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(claim, pending).line21_overtime,
+    4_000,
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(claim, {
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [{
+              ...w2.w2s[0],
+              flsa_overtime_review: {
+                ...w2.w2s[0].flsa_overtime_review,
+                aggregate_overtime_statement: {
+                  ...aggregate,
+                  aggregate_time_and_half_overtime_pay: 9_000,
+                },
+              },
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not match the filed W-2",
+  );
+  const changed = {
+    ...pending,
+    w2: {
+      w2s: [{
+        ...w2.w2s[0],
+        flsa_overtime_review: {
+          ...w2.w2s[0].flsa_overtime_review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            aggregate_time_and_half_overtime_pay: 9_000,
+          },
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(claim, changed),
+    Error,
+    "does not match the filed W-2",
+  );
+});
+
 const vehicleLoan = {
   vin: "1HGCM82633A004352",
   borrower_ssn: "111223333",

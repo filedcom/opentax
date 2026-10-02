@@ -538,6 +538,83 @@ Deno.test("employer statement overtime rejects a different employee or duplicate
   );
 });
 
+Deno.test("full-year time-and-a-half payroll total yields one-third FLSA premium", () => {
+  const aggregate = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    aggregate_time_and_half_overtime_pay: 12_000,
+    time_and_half_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    premium_not_separately_stated: true as const,
+    statement_reference: "Full-year employer overtime payroll summary",
+    furnished_to_employee: true as const,
+  };
+  const review = {
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and box 1 review",
+    aggregate_overtime_statement: aggregate,
+  };
+  const item = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: review,
+  });
+  assertEquals(
+    fieldsOf(compute([item]).outputs, schedule1a)?.qualified_w2_overtime?.[0]
+      .amount,
+    4_000,
+  );
+  for (
+    const bad of [
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            aggregate_time_and_half_overtime_pay: 12_001,
+          },
+        },
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            ...aggregate,
+            employee_ssn: "999887777",
+          },
+        },
+      },
+      {
+        ...item,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+        }],
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          employer_statement: {
+            tax_year: 2025 as const,
+            employee_ssn: "111223333",
+            employer_ein: "123456789",
+            qualified_overtime_premium: 4_000,
+            statement_reference: "Duplicate premium",
+            furnished_to_employee: true as const,
+          },
+        },
+      },
+    ]
+  ) assertThrows(() => compute([bad]), Error);
+});
+
 Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
   assertThrows(
     () =>

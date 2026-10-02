@@ -140,6 +140,8 @@ export const inputSchema = claimInputSchema.extend({
       premium_included_in_box1: z.literal(true),
       source_reference: z.string().trim().min(1),
       employer_statement_reference: z.string().trim().min(1).optional(),
+      aggregate_overtime_statement_reference: z.string().trim().min(1)
+        .optional(),
     }).strict(),
   ).optional(),
   qualified_employee_tips: z.array(z.object({
