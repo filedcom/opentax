@@ -46,6 +46,7 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import { assertSchedule2W2Line13Sources } from "../schedule2-w2-line13-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
@@ -63,6 +64,13 @@ import {
   assertPublicForm8839Attachments,
   hasForm8839Claim,
 } from "../../nodes/intermediate/forms/form8839/public_source.ts";
+
+/** Diagnostic origin of a page in a prepared filled-PDF review packet. */
+export interface PdfPageOrigin {
+  readonly pageNumber: number;
+  readonly formKey: string;
+  readonly formCopy: number;
+}
 
 async function fetchWithCache(
   url: string,
@@ -318,6 +326,7 @@ export async function buildPdfBytes(
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
+  pageOrigins?: PdfPageOrigin[],
 ): Promise<Uint8Array> {
   assertForm8858FilingSource(pending.f8858);
   await assertForm1098IssuerCopies(pending);
@@ -336,6 +345,7 @@ export async function buildPdfBytes(
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
+  assertSchedule2W2Line13Sources(normalized);
   assert1099WithholdingSource(normalized, filer);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
@@ -486,6 +496,7 @@ export async function buildPdfBytes(
   const merged = await PDFDocument.create({ updateMetadata: false });
 
   for (const descriptor of ALL_PDF_FORMS) {
+    let formCopy = 0;
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
       string,
       unknown
@@ -517,6 +528,8 @@ export async function buildPdfBytes(
         normalized,
       );
       if (!filledBytes) continue;
+      formCopy++;
+      const firstPageNumber = merged.getPageCount() + 1;
 
       const filledDoc = await PDFDocument.load(filledBytes, {
         updateMetadata: false,
@@ -537,6 +550,17 @@ export async function buildPdfBytes(
         normalized,
         preparedBundle?.form3800Parts,
       );
+      for (
+        let pageNumber = firstPageNumber;
+        pageNumber <= merged.getPageCount();
+        pageNumber++
+      ) {
+        pageOrigins?.push({
+          pageNumber,
+          formKey: descriptor.pendingKey,
+          formCopy,
+        });
+      }
     }
   }
 

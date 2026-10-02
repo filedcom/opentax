@@ -52,6 +52,7 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import { assertSchedule2W2Line13Sources } from "../schedule2-w2-line13-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
@@ -217,6 +218,7 @@ function buildReturnXml(
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertW2WithholdingSource(pending, filer);
+  assertSchedule2W2Line13Sources(pending);
   assert1099WithholdingSource(pending, filer);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
