@@ -1248,6 +1248,19 @@ export function assertScheduleFFarmSourceIdentity(
       source_document_reference: item.source_document_reference,
       deferred: item.box9_crop_insurance_deferred === true,
     }));
+  const expectedMBox3 = mRows.flatMap((item) =>
+    item.box3_other_income_routing === "schedule_f" &&
+      (item.box3_other_income ?? 0) > 0
+      ? [{
+        farm_id: item.farm_id,
+        kind: "1099m_box3_other_income",
+        amount: item.box3_other_income,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin,
+        recipient_tin: item.recipient_tin,
+      }]
+      : []
+  );
   const patrRows = pending.f1099patr === undefined
     ? []
     : form1099patrSchema.parse(pending.f1099patr).f1099patrs;
@@ -1271,6 +1284,7 @@ export function assertScheduleFFarmSourceIdentity(
   if (!scheduleF || typeof scheduleF !== "object") {
     if (
       expectedNec.length + expectedG.length + expectedM.length +
+          expectedMBox3.length +
           expectedPatr.length > 0
     ) {
       throw new Error("1099 farm payments need a Schedule F source");
@@ -1281,6 +1295,7 @@ export function assertScheduleFFarmSourceIdentity(
   if (sources === undefined) {
     if (
       expectedNec.length + expectedG.length + expectedM.length +
+          expectedMBox3.length +
           expectedPatr.length > 0
     ) {
       throw new Error("Schedule F 1099 farm sources are missing");
@@ -1336,6 +1351,18 @@ export function assertScheduleFFarmSourceIdentity(
   ) {
     throw new Error(
       "Schedule F 1099-MISC crop-insurance sources differ from retained payer copies",
+    );
+  }
+  const actualMBox3 = sources.filter((value) =>
+    value && typeof value === "object" &&
+    value.kind === "1099m_box3_other_income"
+  );
+  if (
+    JSON.stringify(actualMBox3.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedMBox3.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-MISC box 3 sources differ from retained payer copies",
     );
   }
   const actualPatr = sources.filter((value) =>
