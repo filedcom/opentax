@@ -25,6 +25,13 @@ Source:
 [official IRS Scenario 8 packet](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-8-10212025.pdf),
 pages 1, 2, 4, and 5.
 
+The current IRS download and the retained five-page local packet were compared
+byte for byte on 2026-10-02. Both have SHA-256
+`3016890611382ee3ae9876b7cd8c81260bcf8e1b611920aac82611fd52e02fae`.
+The source fixture explicitly records the printed blank line 4a and checked
+line 4c separately from the calculated $35,800 line 4a and unchecked QCD
+output. No version difference explains the mismatch.
+
 ## Unresolved QCD mark
 
 The packet does not identify a direct trustee payment to an eligible charity,
@@ -44,7 +51,11 @@ facts. Do not infer that all or part of $35,800 was donated, change code Q to Y,
 or discard the printed line 4c check. Obtain a corrected IRS scenario packet or
 explicit IRS ATS clarification identifying the intended QCD amount, source
 distribution, and direct charitable payment, or confirming the line 4c mark is
-an error.
+an error. If the mark is an error, the corrected Form 1040 should show $35,800
+on line 4a, zero on line 4b, and an unchecked line 4c QCD box for the supplied
+code-Q source. If the mark is intentional, the IRS must supply the missing QCD
+source facts and a nonblank line 4a value; the present packet cannot establish
+that amount.
 
 The current calculation fixture intentionally has no QCD fields. The 1099-R
 engine now routes the code-Q Roth distribution to Form 1040 line 4a even though

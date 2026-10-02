@@ -58,6 +58,7 @@ Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security 
 
 Deno.test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but code Q does not prove QCD", () => {
   const facts = SCENARIO_1040_08_FACTS;
+  assertEquals(facts.form1040.line4aBlank, true);
   assertEquals(facts.form1040.line4cQcdChecked, true);
   assertEquals(facts.form1040.line5cRolloverChecked, true);
   assertEquals(facts.form1099R.map((form) => form.distributionCode), [

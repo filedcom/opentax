@@ -1149,6 +1149,7 @@ export const SCENARIO_1040_08_FACTS = {
   form1040: {
     digitalAssets: false,
     presidentialCampaignFundTaxpayer: true,
+    line4aBlank: true,
     line4cQcdChecked: true,
     line5cRolloverChecked: true,
     line6dMfsLivedApartChecked: true,
