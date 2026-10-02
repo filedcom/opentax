@@ -482,6 +482,11 @@ export const scheduleEPdf: PdfFormDescriptor = {
       );
     }
     const payments = items.some((item) => item.form_1099_payments_made);
+    const forms1099Filed = payments
+      ? items.every((item) =>
+        !item.form_1099_payments_made || item.form_1099_filed
+      )
+      : undefined;
     const pageFields = (start: number) =>
       Object.fromEntries(
         rows.slice(start, start + 3).flatMap((row, localIndex) =>
@@ -545,6 +550,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
       (_, index) => ({
         ...pageFields(3 + index * 3),
         ...pageDescriptions(3 + index * 3),
+        payments_made: payments,
+        forms_1099_filed: forms1099Filed,
       }),
     );
     return {
@@ -554,11 +561,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       partIContinuationPages: continuationPages,
       partIStatementRows: statementRows,
       payments_made: payments,
-      forms_1099_filed: payments
-        ? items.every((item) =>
-          !item.form_1099_payments_made || item.form_1099_filed
-        )
-        : undefined,
+      forms_1099_filed: forms1099Filed,
       ...pageDescriptions(0),
       line23a: sumRows("rent"),
       line23b: sumRows("royalty"),
