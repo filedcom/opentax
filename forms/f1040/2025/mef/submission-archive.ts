@@ -10,6 +10,7 @@ import {
 } from "../prepared-source.ts";
 import {
   assertPreparedAttachmentManifest,
+  assertPreparedAttachmentMetadata,
   assertPreparedDocumentInventory,
 } from "./prepared-attachment-manifest.ts";
 import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
@@ -88,6 +89,7 @@ function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   assertPreparedBundleDigests(archive);
   assertPreparedDocumentInventory(archive.bundle);
+  assertPreparedAttachmentMetadata(archive.bundle);
   let entries: Record<string, Uint8Array>;
   try {
     entries = unzipSync(archive.bytes);

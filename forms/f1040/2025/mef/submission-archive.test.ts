@@ -438,6 +438,45 @@ Deno.test("A2A package replays source, XML, and PDF digests after joint archive 
   );
 });
 
+Deno.test("A2A package replays retained PDF descriptions against the native manifest", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  buildMefTransmissionPackage([{
+    archive: submission,
+    electronicPostmark: processingDate,
+  }]);
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bundle: {
+            ...submission.bundle,
+            attachments: [{
+              ...submission.bundle.attachments[0],
+              description: "Changed after preparation",
+            }],
+          },
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "binary manifest differs from PDF attachment",
+  );
+});
+
 Deno.test("MeF submission rejects changes after bundle preparation", async () => {
   const identity = filer();
   const pdf = await PDFDocument.create();

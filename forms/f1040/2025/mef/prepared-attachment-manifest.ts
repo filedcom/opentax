@@ -46,22 +46,21 @@ export function assertPreparedDocumentInventory(
   }
 }
 
-/** Bind the retained PDF bytes and metadata to the prepared XML manifest. */
-export async function assertPreparedAttachmentManifest(
+/** Replay retained PDF names, descriptions, and order against ReturnData. */
+export function assertPreparedAttachmentMetadata(
   bundle: MefBundle,
-): Promise<void> {
-  if (
-    await sha256Hex(new TextEncoder().encode(bundle.xml)) !==
-      bundle.xmlSha256
-  ) {
-    throw new Error("Prepared MeF XML differs from its digest");
-  }
+): void {
   assertPreparedDocumentInventory(bundle);
   const names = bundle.attachments.map((item) => item.fileName);
+  const descriptions = bundle.attachments.map((item) => item.description);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (
     new Set(names).size !== names.length ||
     names.some((name) => !isValidMefPdfFilename(name)) ||
+    new Set(descriptions).size !== descriptions.length ||
+    descriptions.some((description) =>
+      description.length === 0 || description.length > 128
+    ) ||
     names.length !== digestNames.length ||
     names.some((name) =>
       !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
@@ -91,6 +90,21 @@ export async function assertPreparedAttachmentManifest(
         `Prepared MeF binary manifest differs from PDF attachment ${attachment.fileName}`,
       );
     }
+  }
+}
+
+/** Bind the retained PDF bytes and metadata to the prepared XML manifest. */
+export async function assertPreparedAttachmentManifest(
+  bundle: MefBundle,
+): Promise<void> {
+  if (
+    await sha256Hex(new TextEncoder().encode(bundle.xml)) !==
+      bundle.xmlSha256
+  ) {
+    throw new Error("Prepared MeF XML differs from its digest");
+  }
+  assertPreparedAttachmentMetadata(bundle);
+  for (const attachment of bundle.attachments) {
     if (
       await sha256Hex(attachment.bytes) !==
         bundle.attachmentSha256ByFileName[attachment.fileName]

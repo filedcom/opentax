@@ -19,6 +19,14 @@ instances and retains the declared source pages per instance. These structural
 checks do not verify that every conditional native attachment is printable;
 that still needs a source-by-source packet review.
 
+Prepared PDF rendering and A2A transmission packaging now replay the same
+`BinaryAttachment` filename, description, and order against the retained PDF
+inventory. The packaging check closes a post-preparation gap where a changed
+description could survive unchanged source/XML/PDF digests and ZIP-byte checks.
+One focused archive regression passes for a valid prepared attachment and
+rejects its changed retained description; the full-batch and per-route
+printable review remain open.
+
 Canonical PDF revision audit: registered Forms 8881 and 8864 now use the
 immutable [IRS 2025 Form 8881](https://www.irs.gov/pub/irs-prior/f8881--2025.pdf)
 and [IRS 2025 Form 8864](https://www.irs.gov/pub/irs-prior/f8864--2025.pdf)
