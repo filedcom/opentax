@@ -493,21 +493,21 @@ export async function buildPdfBytes(
     const projectedFields = descriptor.projectFields?.(fields, normalized) ??
       fields;
 
-    const effectiveFields = descriptor.rows
-      ? {
-        ...projectedFields,
-        [descriptor.rows.domainKey]: pending[descriptor.rows.domainKey] ??
-          projectedFields[descriptor.rows.domainKey],
-      }
-      : projectedFields;
+    if (
+      descriptor.rows && pending[descriptor.rows.domainKey] !== undefined
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: top-level ${descriptor.rows.domainKey} rows are not bound to the prepared form source`,
+      );
+    }
 
     const instances = descriptor.instances?.(
-      effectiveFields,
+      projectedFields,
       filer,
       normalized,
       preparedBundle?.form3800Parts,
     ) ??
-      [effectiveFields];
+      [projectedFields];
     for (const instance of instances) {
       const filledBytes = await fillFormPdf(
         descriptor,
