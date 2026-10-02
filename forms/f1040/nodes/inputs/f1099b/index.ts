@@ -78,20 +78,19 @@ export const inputSchema = z.object({
   for (const [index, item] of f1099bs.entries()) {
     if (
       !item.payer_tin || !item.account_number ||
-      !item.source_document_reference || !item.transaction_id
+      !item.recipient_ssn || !item.transaction_id
     ) continue;
     const key = JSON.stringify([
       item.payer_tin,
       item.recipient_ssn,
       item.account_number,
-      item.source_document_reference,
       item.transaction_id,
     ]);
     if (seen.has(key)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["f1099bs", index],
-        message: "1099-B repeats the same identified issued transaction",
+        message: "1099-B repeats the same identified broker transaction; corrected copies need one reviewed current row",
       });
     }
     seen.add(key);

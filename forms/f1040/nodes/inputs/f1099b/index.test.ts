@@ -87,7 +87,20 @@ Deno.test("1099-B rejects an identified transaction repeated with altered tax ad
         minimalItem({ ...issued, adjustment_amount: 200 }),
       ]),
     Error,
-    "repeats the same identified issued transaction",
+    "repeats the same identified broker transaction",
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem(issued),
+        minimalItem({
+          ...issued,
+          source_document_reference: "broker-2025-corrected",
+          proceeds: 1_200,
+        }),
+      ]),
+    Error,
+    "repeats the same identified broker transaction",
   );
   assertEquals(
     findAllOutputs(

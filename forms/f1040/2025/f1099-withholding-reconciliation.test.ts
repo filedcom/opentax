@@ -4,6 +4,7 @@ import { assert1099WithholdingSource } from "./f1099-withholding-reconciliation.
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { FormType } from "../nodes/inputs/f4852/index.ts";
+import { inputSchema as brokerSchema } from "../nodes/inputs/f1099b/index.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -276,6 +277,59 @@ Deno.test("1099-B and Form 8949 cannot claim the same identified broker withhold
       }, filer),
     Error,
     "repeat withholding",
+  );
+});
+
+Deno.test("corrected 1099-B source references cannot repeat one identified broker transaction at native or PDF export", async () => {
+  const sale = {
+    recipient_ssn: filer.primarySSN,
+    payer_tin: "123456789",
+    account_number: "Brokerage 1",
+    transaction_id: "sale-42",
+    part: "A" as const,
+    description: "Stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-02-01",
+    proceeds: 1_000,
+    cost_basis: 500,
+    federal_withheld: 50,
+  };
+  const duplicate = {
+    f1099b: {
+      f1099bs: [
+        { ...sale, source_document_reference: "original" },
+        {
+          ...sale,
+          source_document_reference: "corrected",
+          proceeds: 1_200,
+        },
+      ],
+    },
+    f1040: {
+      filing_status: "mfj",
+      digital_assets: false,
+      line25b_withheld_1099: 100,
+    },
+  };
+  const exportFiler: FilerIdentity = {
+    ...filer,
+    firstNameWithInitial: "Taxpayer",
+    lastName: "Test",
+  };
+  assertThrows(
+    () => brokerSchema.parse(duplicate.f1099b),
+    Error,
+    "repeats the same identified broker transaction",
+  );
+  assertThrows(
+    () => buildMefXml(duplicate, exportFiler),
+    Error,
+    "1099-B needs valid issued transaction rows",
+  );
+  await assertRejects(
+    () => buildPdfBytes(duplicate, exportFiler),
+    Error,
+    "1099-B needs valid issued transaction rows",
   );
 });
 
