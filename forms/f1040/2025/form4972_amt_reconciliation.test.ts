@@ -6,6 +6,7 @@ import { FilingStatus } from "../nodes/types.ts";
 const filed = {
   f1040: { form4972_tax: 500, line16_income_tax: 4_500 },
   form6251: {
+    line11_amt: 0,
     form4972_tax: 500,
     regular_tax: 3_900,
     schedule2_line1z_tax: 100,
@@ -83,6 +84,7 @@ Deno.test("Form 4972 special tax remains exact with Schedule J refigured AMT tax
     },
     schedule_j: scheduleJ,
     form6251: {
+      line11_amt: 0,
       form4972_tax: 500,
       regular_tax: ordinaryTax2025(50_000, FilingStatus.Single),
     },
