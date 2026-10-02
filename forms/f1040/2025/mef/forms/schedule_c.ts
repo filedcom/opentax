@@ -312,9 +312,21 @@ export const scheduleC: MefFormDescriptor<
       ...fields,
       schedule_cs: fields?.schedule_cs ?? [],
     });
-    if ((input.line1_gross_receipts ?? 0) > 0) {
+    const unsupportedTopLevel = [
+      ["gross receipts", input.line1_gross_receipts],
+      ["home-office deduction", input.line_30_home_office],
+      ["statutory wages", input.statutory_wages],
+      ["car and truck expenses", input.line_9_car_truck_expenses],
+      ["depletion", input.line_12_depletion],
+    ] as const;
+    const unsupported = unsupportedTopLevel.find(([, value]) =>
+      (value ?? 0) > 0
+    );
+    if (unsupported) {
       throw new Error(
-        "Schedule C top-level gross receipts need business-linked source rows",
+        `Schedule C top-level ${
+          unsupported[0]
+        } need business-linked source rows`,
       );
     }
     if (

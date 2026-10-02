@@ -42,6 +42,22 @@ Deno.test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
   );
 });
 
+Deno.test("Schedule C MeF rejects top-level amounts that its business items do not carry", () => {
+  const cases = [
+    ["line_30_home_office", "home-office deduction"],
+    ["statutory_wages", "statutory wages"],
+    ["line_9_car_truck_expenses", "car and truck expenses"],
+    ["line_12_depletion", "depletion"],
+  ] as const;
+  for (const [key, label] of cases) {
+    assertThrows(
+      () => scheduleC.build({ schedule_cs: [item()], [key]: 100 }, { filer }),
+      Error,
+      `Schedule C top-level ${label} need business-linked source rows`,
+    );
+  }
+});
+
 Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [
