@@ -1209,7 +1209,16 @@ export function assertGeneral1040DepositSource(
     ? AccountType.Savings
     : undefined;
   if (
-    typeof routing !== "string" || typeof account !== "string" ||
+    typeof routing !== "string" ||
+    !/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/.test(routing) ||
+    typeof account !== "string" ||
+    !/^[A-Za-z0-9-]{4,17}$/.test(account)
+  ) {
+    throw new Error(
+      "Form 1040 direct deposit needs a valid U.S. routing and account number",
+    );
+  }
+  if (
     expectedType === undefined || !filer?.bankAccount ||
     routing !== filer.bankAccount.routingNumber ||
     account !== filer.bankAccount.accountNumber ||

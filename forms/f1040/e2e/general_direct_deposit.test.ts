@@ -86,4 +86,26 @@ Deno.test("general direct deposit survives the full graph and CLI filer extracti
     Error,
     "needs the retained general bank source",
   );
+  for (const routingNumber of ["001000021", "331000021", "02A000021"]) {
+    assertThrows(
+      () =>
+        assertGeneral1040DepositSource({
+          ...pending,
+          general: { ...general, bank_routing_number: routingNumber },
+        }, filer),
+      Error,
+      "needs a valid U.S. routing and account number",
+    );
+  }
+  for (const accountNumber of ["111 222333", "111/222333"]) {
+    assertThrows(
+      () =>
+        assertGeneral1040DepositSource({
+          ...pending,
+          general: { ...general, bank_account_number: accountNumber },
+        }, filer),
+      Error,
+      "needs a valid U.S. routing and account number",
+    );
+  }
 });

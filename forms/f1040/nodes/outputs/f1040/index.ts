@@ -59,8 +59,9 @@ const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
   presidential_campaign_fund_taxpayer: z.boolean().optional(),
   presidential_campaign_fund_spouse: z.boolean().optional(),
-  bank_routing_number: z.string().length(9).optional(),
-  bank_account_number: z.string().min(4).max(17).optional(),
+  bank_routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/)
+    .optional(),
+  bank_account_number: z.string().regex(/^[A-Za-z0-9-]{4,17}$/).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
   apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
     .optional(),
