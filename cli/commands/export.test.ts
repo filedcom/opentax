@@ -25,6 +25,7 @@ async function makeReturn(tmpDir: string): Promise<string> {
 
 function w2Data(box1Wages: number, box2FedWithheld: number) {
   return {
+    employee_ssn: "111-22-3333",
     employer_ein: "12-3456789",
     employer_name: "ACME CORP",
     employer_address_line1: "500 Market St",

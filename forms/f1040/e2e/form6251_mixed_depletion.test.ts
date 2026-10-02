@@ -53,6 +53,7 @@ function filing() {
       digital_assets: false,
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 300_000,
       box2_fed_withheld: 65_000,
       box3_ss_wages: 176_100,

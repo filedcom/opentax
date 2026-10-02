@@ -23,6 +23,7 @@ const general = {
   taxpayer_can_be_claimed_as_dependent: false,
 };
 const w2 = {
+  employee_ssn: "111-22-3333",
   box1_wages: 75_300,
   box2_fed_withheld: 10_000,
   box3_ss_wages: 75_300,

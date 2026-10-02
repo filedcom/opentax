@@ -68,6 +68,7 @@ const policy = {
 
 function w2(wages: number, withheld: number) {
   return {
+    employee_ssn: "111-22-3333",
     box1_wages: wages,
     box2_fed_withheld: withheld,
     box3_ss_wages: wages,

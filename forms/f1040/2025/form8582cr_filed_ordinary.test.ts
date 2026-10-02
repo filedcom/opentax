@@ -96,6 +96,7 @@ const general = {
   address_zip: "78701",
 };
 const wage = {
+  employee_ssn: "111-22-3333",
   box1_wages: 100_000,
   box2_fed_withheld: 16_000,
   employer_ein: "12-3456789",

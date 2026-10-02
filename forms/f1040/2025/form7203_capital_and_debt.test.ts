@@ -112,6 +112,7 @@ function filedReturn(k1: Record<string, unknown> = source) {
       employer_address_city: "Wilmington",
       employer_address_state: "DE",
       employer_address_zip: "19801",
+      employee_ssn: "123-45-6789",
       box1_wages: 50_000,
       box2_fed_withheld: 8_000,
     }],

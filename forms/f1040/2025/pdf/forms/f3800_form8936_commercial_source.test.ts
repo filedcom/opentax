@@ -71,6 +71,7 @@ function filedReturn() {
       digital_assets: false,
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       box1_wages: 120_000,
       box2_fed_withheld: 20_000,
       box3_ss_wages: 120_000,

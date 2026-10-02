@@ -77,6 +77,7 @@ function returnWithFirstYearLoss() {
       employer_address_city: "Austin",
       employer_address_state: "TX",
       employer_address_zip: "78701",
+      employee_ssn: "111-22-3333",
       box1_wages: 50_000,
       box2_fed_withheld: 8_000,
     }],
