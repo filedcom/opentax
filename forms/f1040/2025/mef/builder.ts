@@ -3,6 +3,7 @@ import { element, elements } from "../../mef/xml.ts";
 import { F1040_2025_CONFIG } from "../config.ts";
 import { PDFDocument } from "pdf-lib";
 import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
+import { assertMefPdfEnvelope } from "./pdf-attachment-envelope.ts";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
 import { documentId, validateDocumentReferences } from "./document-identity.ts";
 import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/schedule_e_type8_statement.ts";
@@ -71,7 +72,10 @@ import {
   assertSchedule2W2Line17KSource,
 } from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
-import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
+import {
+  assert1099GStateRefundSource,
+  assert1099GUnemploymentSource,
+} from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
   assertBenefitStatementOwner,
@@ -142,20 +146,8 @@ async function validatePdfAttachments(
         `Invalid or duplicate MeF PDF description: ${description}`,
       );
     }
-    if (
-      attachment.bytes.length === 0 ||
-      attachment.bytes.length > 60_000_000
-    ) {
-      throw new Error(`MeF PDF size is invalid: ${fileName}`);
-    }
+    assertMefPdfEnvelope(attachment);
     const bytes = new Uint8Array(attachment.bytes);
-    const start = new TextDecoder().decode(bytes.subarray(0, 5));
-    const end = new TextDecoder().decode(
-      bytes.subarray(Math.max(0, bytes.length - 32)),
-    );
-    if (start !== "%PDF-" || !/%%EOF\s*$/.test(end)) {
-      throw new Error(`MeF attachment is not a complete PDF: ${fileName}`);
-    }
     try {
       const pdf = await PDFDocument.load(bytes);
       if (pdf.getPageCount() === 0) throw new Error("PDF has no pages");
@@ -254,6 +246,7 @@ function buildReturnXml(
   assertSchedule3Form8396Credit(pending);
   assert1099WithholdingSource(pending, filer);
   assert1099GUnemploymentSource(pending);
+  assert1099GStateRefundSource(pending);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
   assertBenefitStatementOwner(pending, filer);

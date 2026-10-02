@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { assertPreparedBundleProjection, type MefBundle } from "./builder.ts";
+import { assertMefPdfEnvelope } from "./pdf-attachment-envelope.ts";
 import {
   preparedSourceBytes,
   preparedSourceSha256,
@@ -142,6 +143,7 @@ function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   validateSubmissionIdentity(archive);
   assertPreparedBundleDigests(archive);
+  archive.bundle.attachments.forEach(assertMefPdfEnvelope);
   assertPreparedDocumentInventory(archive.bundle);
   assertPreparedAttachmentMetadata(archive.bundle);
   assertPreparedBundleProjection(archive.bundle, archive.filer);

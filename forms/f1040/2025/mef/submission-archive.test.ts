@@ -589,6 +589,58 @@ Deno.test("A2A package replays source, XML, and PDF digests after joint archive 
   );
 });
 
+Deno.test("MeF archive and A2A package reject non-PDF attachment bytes even when rehashed", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const identity = filer();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: identity,
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const invalidBytes = new TextEncoder().encode("not a PDF");
+  const changedBundle = {
+    ...submission.bundle,
+    attachments: [{ ...submission.bundle.attachments[0], bytes: invalidBytes }],
+    attachmentSha256ByFileName: {
+      "Evidence.pdf": await sha256Hex(invalidBytes),
+    },
+  };
+  const entries = unzipSync(submission.bytes);
+  entries["attachment/Evidence.pdf"] = invalidBytes;
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(changedBundle, {
+        filer: identity,
+        submissionId,
+        processingDate,
+        residencyReview,
+      }),
+    Error,
+    "not a complete PDF",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submission,
+          bundle: changedBundle,
+          bytes: zipSync(entries),
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "not a complete PDF",
+  );
+});
+
 Deno.test("A2A package replays retained PDF descriptions against the native manifest", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
