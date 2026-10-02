@@ -69,6 +69,7 @@ Deno.test("Schedule 2 line 6 retains Form 8919 tax in native and PDF returns", a
       line1g_wages_8919: 50_000,
       line23_other_taxes: 3_825,
     },
+    agi_aggregator: { line1g_wages_8919: 50_000 },
     schedule2: { line6_uncollected_8919: 3_825 },
   };
   const native = await buildMefBundle(pending, { filer, attachments: [] });

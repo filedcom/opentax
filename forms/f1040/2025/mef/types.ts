@@ -68,6 +68,7 @@ export type MefFormsPending =
     agi_aggregator?: {
       line1b_household_wages?: number;
       line1c_unreported_tips?: number;
+      line1g_wages_8919?: number;
       line1h_other_earned?: number | number[];
     };
     // Unreported household-employment wages support the line 1b source replay.

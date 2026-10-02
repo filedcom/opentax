@@ -1710,12 +1710,16 @@ Deno.test("IRS4137 absent when form4137 missing from pending", () => {
 });
 
 Deno.test("IRS8919 present when form8919 has data", () => {
-  const tax = calculateForm8919(
+  const calculated = calculateForm8919(
     form8919InputSchema.parse(sampleForm8919),
     SS_WAGE_BASE_2025,
-  ).reduce((sum, form) => sum + form.line13, 0);
+  );
+  const tax = calculated.reduce((sum, form) => sum + form.line13, 0);
+  const wages = calculated.reduce((sum, form) => sum + form.line6, 0);
   const xml = buildMefXml({
     form8919: sampleForm8919,
+    f1040: { line1g_wages_8919: wages },
+    agi_aggregator: { line1g_wages_8919: wages },
     schedule2: { line6_uncollected_8919: tax },
   });
   assertStringIncludes(xml, "<IRS8919 ");

@@ -59,7 +59,10 @@ import {
   assertLine1cForm4137Income,
   assertSchedule2Form4137Tax,
 } from "../schedule2-form4137-reconciliation.ts";
-import { assertSchedule2Form8919Tax } from "../schedule2-form8919-reconciliation.ts";
+import {
+  assertLine1gForm8919Wages,
+  assertSchedule2Form8919Tax,
+} from "../schedule2-form8919-reconciliation.ts";
 import { assertSchedule2ScheduleHTax } from "../schedule2-schedule-h-reconciliation.ts";
 import { assertSchedule2Form8960Tax } from "../schedule2-form8960-reconciliation.ts";
 import { assertSchedule2ScheduleSETax } from "../schedule2-schedule-se-reconciliation.ts";
@@ -488,6 +491,7 @@ export async function buildPdfBytes(
   assertSchedule2Form4137Tax(normalized);
   assertLine1cForm4137Income(normalized);
   assertSchedule2Form8919Tax(normalized);
+  assertLine1gForm8919Wages(normalized);
   assertSchedule2ScheduleHTax(normalized);
   assertSchedule2Form8960Tax(normalized);
   assertSchedule2ScheduleSETax(normalized);

@@ -22,3 +22,29 @@ export function assertSchedule2Form8919Tax(
     );
   }
 }
+
+/** Replay Form 8919 line 6 wages into Form 1040 line 1g and AGI. */
+export function assertLine1gForm8919Wages(
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (pending.f1040 === undefined) return;
+  const source = pending.form8919;
+  const wages = source === undefined ? 0 : calculateForm8919(
+    form8919InputSchema.parse(source),
+    CONFIG_BY_YEAR[2025].ssWageBase,
+  ).reduce((sum, form) => sum + form.line6, 0);
+  const filed = (pending.f1040 as Readonly<Record<string, unknown>>)
+    .line1g_wages_8919 ?? 0;
+  const agi = (pending.agi_aggregator as
+    | Readonly<Record<string, unknown>>
+    | undefined)?.line1g_wages_8919;
+  if (
+    !Number.isFinite(wages) || filed !== wages ||
+    (wages > 0 && agi !== wages) ||
+    (wages === 0 && agi !== undefined && agi !== 0)
+  ) {
+    throw new Error(
+      "Form 1040 line 1g and AGI wages differ from retained Form 8919 line 6",
+    );
+  }
+}
