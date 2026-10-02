@@ -275,6 +275,10 @@ Identified Form 1099-G agricultural and CCC receipts now bind payer, recipient,
 issued-copy reference, reviewed purpose, and named farm to Schedule F and
 Form 1040. A reviewed current-year-taxable crop disaster payment reaches
 Schedule F lines 6a/6b; unclassified or incompatible deferral claims reject.
+An ordinary two-copy Form 1099-G state-tax-refund route remains closed because
+its source-only Form 6251 line 2b currently triggers unsupported final AMT
+serialization; the [nonnamed dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
+records this named-form dependency.
 The bounded Schedule SE native/PDF identity now follows same-owner Schedule C
 and F income to a joint spouse and rejects mixed or unnamed joint proprietors;
 separate-owner calculations remain open. Positive W-2 wages now need an
