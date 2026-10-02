@@ -29,6 +29,7 @@ import {
   assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
+  assertScheduleCStatutoryW2Sources,
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
@@ -259,6 +260,7 @@ function buildReturnXml(
   assertEitcChildSources(pending, filer);
   assertKReportedErrorSources(pending, filer);
   assertScheduleCReceiptSourceIdentity(pending, filer);
+  assertScheduleCStatutoryW2Sources(pending, filer);
   assertKWithholdingSourceIdentity(pending, filer);
   assertKPersonalSaleSources(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);

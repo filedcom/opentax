@@ -166,6 +166,27 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
     assertDistinctMiningSources(input.schedule_cs);
+    const statutoryTotals = new Map<string, number>();
+    for (const source of input.statutory_w2_sources ?? []) {
+      statutoryTotals.set(
+        source.business_reference,
+        (statutoryTotals.get(source.business_reference) ?? 0) + source.amount,
+      );
+    }
+    for (const [reference, wages] of statutoryTotals) {
+      const matches = input.schedule_cs.filter((item) =>
+        item.business_reference === reference
+      );
+      if (
+        matches.length !== 1 || matches[0].statutory_employee !== true ||
+        !matches[0].proprietor_recipient ||
+        matches[0].line_1_gross_receipts !== wages
+      ) {
+        throw new Error(
+          "Statutory W-2 wages need one matching Schedule C activity with exact box 1 receipts",
+        );
+      }
+    }
     if ((input.line1_gross_receipts ?? 0) > 0) {
       throw new Error(
         "Schedule C top-level gross receipts need business-linked source rows",

@@ -293,6 +293,15 @@ export const inputSchema = z.object({
   // Statutory employee wages (from W-2 Box 13)
   // IRC §3121(d)(3); W-2 box 13 statutory employee checkbox
   statutory_wages: z.number().nonnegative().optional(),
+  statutory_w2_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      employer_ein: z.string().regex(/^\d{9}$/),
+      employee_ssn: z.string().regex(/^\d{9}$/),
+      source_document_reference: z.string().trim().min(1),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
   // Federal withholding from statutory employee W-2 Box 2
   withholding: z.number().nonnegative().optional(),
   // Mortgage interest from 1098 Box 1 routed to Schedule C (business use)

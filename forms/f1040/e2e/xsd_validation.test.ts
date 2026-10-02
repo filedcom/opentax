@@ -498,11 +498,18 @@ Deno.test({
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.MFJ,
+      digital_assets: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: facts.w2.map((form) => ({
       employee_ssn: form.employeeSsn,
+      source_document_reference: form.statutoryEmployee
+        ? "ATS02-STATUTORY-W2"
+        : undefined,
+      schedule_c_business_reference: form.statutoryEmployee
+        ? "ATS02-STATUTORY-C"
+        : undefined,
       box1_wages: form.box1Wages,
       box2_fed_withheld: form.box2FederalWithholding,
       box3_ss_wages: form.box3SocialSecurityWages,

@@ -32,6 +32,17 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function statutoryItem(overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    employer_ein: "123456789",
+    employee_ssn: "111223333",
+    source_document_reference: "issued statutory W-2",
+    schedule_c_business_reference: "statutory-business",
+    box13_statutory_employee: true,
+    ...overrides,
+  });
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return w2.compute({ taxYear: 2025, formType: "f1040" }, { w2s: items });
 }
@@ -752,21 +763,26 @@ Deno.test("box13_retirement_plan_routes_ira_worksheet: covered_by_retirement_pla
 
 Deno.test("statutory_employee_wages_route_to_schedule_c: wages excluded from f1040 line1a", () => {
   const result = compute([
-    minimalItem({ box1_wages: 50000, box13_statutory_employee: true }),
+    statutoryItem({ box1_wages: 50000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    50000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, undefined);
 });
 
 Deno.test("statutory_employee_withholding_included_in_f1040_line25a: withholding still flows to f1040", () => {
   const result = compute([
-    minimalItem({
+    statutoryItem({
       box1_wages: 50000,
       box2_fed_withheld: 5000,
-      box13_statutory_employee: true,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    50000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
 });
 
@@ -1041,8 +1057,7 @@ Deno.test("box12_code_m_n_routes_to_schedule2_uncollected_fica_gtl: M = $200 + N
 });
 
 Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", () => {
-  const result = compute([minimalItem({
-    box13_statutory_employee: true,
+  const result = compute([statutoryItem({
     box1_wages: 50_000,
     box5_medicare_wages: 50_000,
     box12_entries: [
@@ -1052,7 +1067,10 @@ Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", 
       { code: Box12Code.N, amount: 10 },
     ],
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 50_000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    50_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica, 120);
   assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica_gtl, 50);
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 30);
@@ -1321,13 +1339,15 @@ Deno.test("Form 8959 gets W-2 box 5, not box 1, when the boxes differ", () => {
 });
 
 Deno.test("statutory employee W-2 box 5 enters Form 8959", () => {
-  const result = compute([minimalItem({
-    box13_statutory_employee: true,
+  const result = compute([statutoryItem({
     box1_wages: 220_000,
     box5_medicare_wages: 220_000,
     box6_medicare_withheld: 3_370,
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 220_000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    220_000,
+  );
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_wages, 220_000);
   assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 3_370);
   assertEquals(
@@ -1375,14 +1395,16 @@ Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 li
 
 Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regular go to line1a", () => {
   const result = compute([
-    minimalItem({
+    statutoryItem({
       box1_wages: 30000,
       box2_fed_withheld: 3000,
-      box13_statutory_employee: true,
     }),
     minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 30000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.statutory_w2_sources?.[0].amount,
+    30000,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 50000);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 8000);
 });

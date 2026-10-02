@@ -122,6 +122,9 @@ export const w2ItemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional().describe(
     "Issued W-2 copy reference for reviewed cross-form income inclusions",
   ),
+  schedule_c_business_reference: z.string().trim().min(1).optional().describe(
+    "Schedule C activity for statutory-employee box 1 wages",
+  ),
   box1_wages: z.number().nonnegative().describe(
     "Wages, tips, other compensation",
   ),
@@ -689,15 +692,27 @@ function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
 
 function statutoryOutput(w2s: W2Items): NodeOutput[] {
   const statutory = w2s.filter((item) =>
-    item.box13_statutory_employee === true
+    item.box13_statutory_employee === true && item.box1_wages > 0
   );
-  const wages = statutory.reduce((sum, item) => sum + item.box1_wages, 0);
-  if (wages === 0) return [];
-  const withholding = statutory.reduce(
-    (sum, item) => sum + item.box2_fed_withheld,
-    0,
-  );
-  return [output(schedule_c, { statutory_wages: wages, withholding })];
+  if (statutory.length === 0) return [];
+  const sources = statutory.map((item) => {
+    if (
+      !item.schedule_c_business_reference || !item.source_document_reference ||
+      !item.employer_ein || !item.employee_ssn
+    ) {
+      throw new Error(
+        "Statutory W-2 box 1 needs an identified issued copy and Schedule C business reference",
+      );
+    }
+    return {
+      business_reference: item.schedule_c_business_reference,
+      employer_ein: item.employer_ein.replace(/\D/g, ""),
+      employee_ssn: item.employee_ssn.replace(/\D/g, ""),
+      source_document_reference: item.source_document_reference,
+      amount: item.box1_wages,
+    };
+  });
+  return [output(schedule_c, { statutory_w2_sources: sources })];
 }
 
 function medicareOutput(w2s: W2Items): NodeOutput[] {

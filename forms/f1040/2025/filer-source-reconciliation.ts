@@ -14,6 +14,8 @@ import { inputSchema as form1099gSchema } from "../nodes/inputs/f1099g/index.ts"
 import { inputSchema as form1099necSchema } from "../nodes/inputs/f1099nec/index.ts";
 import { inputSchema as form1099mSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as form1099kSchema } from "../nodes/inputs/f1099k/index.ts";
+import { inputSchema as w2InputSchema } from "../nodes/inputs/w2/index.ts";
+import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/index.ts";
 import {
   distributionTotal,
   inputSchema as form1099patrSchema,
@@ -940,6 +942,92 @@ export function assertScheduleCReceiptSourceIdentity(
         "1099 recipient differs from the Schedule C proprietor",
       );
     }
+  }
+}
+
+/** Replay every statutory W-2 box 1 copy to its named Schedule C business. */
+export function assertScheduleCStatutoryW2Sources(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const w2s = pending.w2 === undefined
+    ? []
+    : w2InputSchema.parse(pending.w2).w2s;
+  const expected = w2s.flatMap((row) => {
+    if (row.box13_statutory_employee !== true || row.box1_wages <= 0) {
+      return [];
+    }
+    if (
+      !row.schedule_c_business_reference || !row.employer_ein ||
+      !row.employee_ssn || !row.source_document_reference
+    ) {
+      throw new Error(
+        "Statutory W-2 box 1 needs an identified issued copy and Schedule C business reference",
+      );
+    }
+    return [{
+      business_reference: row.schedule_c_business_reference,
+      employer_ein: row.employer_ein.replace(/\D/g, ""),
+      employee_ssn: row.employee_ssn.replace(/\D/g, ""),
+      source_document_reference: row.source_document_reference,
+      amount: row.box1_wages,
+    }];
+  });
+  const scheduleC = pending.schedule_c === undefined
+    ? undefined
+    : scheduleCInputSchema.parse(pending.schedule_c);
+  const actual = scheduleC?.statutory_w2_sources ?? [];
+  const sorted = (rows: typeof expected) =>
+    rows.map((row) => JSON.stringify(row)).sort();
+  if (JSON.stringify(sorted(actual)) !== JSON.stringify(sorted(expected))) {
+    throw new Error(
+      "Schedule C statutory W-2 sources differ from retained issued copies",
+    );
+  }
+  const businessTotals = new Map<string, number>();
+  for (const row of expected) {
+    businessTotals.set(
+      row.business_reference,
+      (businessTotals.get(row.business_reference) ?? 0) + row.amount,
+    );
+  }
+  for (const [reference, wages] of businessTotals) {
+    const matches = scheduleC?.schedule_cs.filter((item) =>
+      item.business_reference === reference
+    ) ?? [];
+    const item = matches[0];
+    if (
+      matches.length !== 1 || item?.statutory_employee !== true ||
+      !item.proprietor_recipient || item.line_1_gross_receipts !== wages
+    ) {
+      throw new Error(
+        "Statutory W-2 wages need one matching Schedule C activity with exact box 1 receipts",
+      );
+    }
+    const owner = item.proprietor_recipient === "T"
+      ? filer.primarySSN.replace(/\D/g, "")
+      : filer.filingStatus === FilingStatus.MarriedFilingJointly
+      ? filer.spouse?.ssn.replace(/\D/g, "")
+      : undefined;
+    if (
+      !owner || expected.some((row) =>
+        row.business_reference === reference && row.employee_ssn !== owner
+      )
+    ) {
+      throw new Error(
+        "Statutory W-2 employee differs from the Schedule C proprietor",
+      );
+    }
+  }
+  if (
+    scheduleC?.schedule_cs.some((item) =>
+      item.statutory_employee === true && item.line_1_gross_receipts > 0 &&
+      !businessTotals.has(item.business_reference ?? "")
+    )
+  ) {
+    throw new Error(
+      "Statutory Schedule C receipts need retained W-2 box 1 sources",
+    );
   }
 }
 

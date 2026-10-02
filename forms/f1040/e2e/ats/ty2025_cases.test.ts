@@ -317,6 +317,14 @@ Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", ()
     { taxYear: 2025, formType: "f1040" },
     {
       w2s: SCENARIO_1040_02_FACTS.w2.map((form) => ({
+        employer_ein: form.employerEin,
+        employee_ssn: form.employeeSsn,
+        source_document_reference: form.statutoryEmployee
+          ? "ATS02-STATUTORY-W2"
+          : undefined,
+        schedule_c_business_reference: form.statutoryEmployee
+          ? "ATS02-STATUTORY-C"
+          : undefined,
         box1_wages: form.box1Wages,
         box2_fed_withheld: form.box2FederalWithholding,
         box3_ss_wages: form.box3SocialSecurityWages,
@@ -328,7 +336,10 @@ Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", ()
       })),
     },
   );
-  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 29_513);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)?.statutory_w2_sources?.[0].amount,
+    29_513,
+  );
   assertEquals(fieldsOf(result.outputs, f1040)?.line1a_wages, 8_513);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 1_164);
 });

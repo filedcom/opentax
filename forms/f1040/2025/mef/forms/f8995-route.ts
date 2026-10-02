@@ -419,13 +419,17 @@ export function assertOneScheduleC8995(
   const sourceW2s = Array.isArray(pending.w2?.w2s) ? pending.w2.w2s : [];
   const statutoryW2s = sourceW2s.filter((w2) =>
     w2.box13_statutory_employee === true &&
-    w2.employee_ssn?.replace(/\D/g, "") === filerSsn &&
-    w2.box1_wages === sourceBusiness?.line_1_gross_receipts
+    w2.employee_ssn?.replace(/\D/g, "") === ownerSsn &&
+    w2.schedule_c_business_reference === sourceBusiness?.business_reference
   );
   const statutoryNoSeDeduction = sourceBusiness?.statutory_employee === true &&
-    sourceBusiness.proprietor_recipient === "T" &&
-    statutoryW2s.length === 1 &&
-    f1040?.line1a_wages === sourceW2s.reduce(
+    (sourceBusiness.proprietor_recipient === "T" ||
+      (sourceBusiness.proprietor_recipient === "S" &&
+        general?.filing_status === "mfj")) &&
+    statutoryW2s.length > 0 &&
+    statutoryW2s.reduce((sum, w2) => sum + w2.box1_wages, 0) ===
+      sourceBusiness.line_1_gross_receipts &&
+    (f1040?.line1a_wages ?? 0) === sourceW2s.reduce(
         (sum, w2) =>
           sum + (w2.box13_statutory_employee === true ? 0 : w2.box1_wages),
         0,

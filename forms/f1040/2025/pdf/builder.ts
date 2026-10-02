@@ -25,6 +25,7 @@ import {
   assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
+  assertScheduleCStatutoryW2Sources,
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
@@ -502,6 +503,7 @@ export async function buildPdfBytes(
     assertEitcChildSources(pending, filer);
     assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
+    assertScheduleCStatutoryW2Sources(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);
     assertKPersonalSaleSources(pending, filer);
     assertSchedule1Box3SourceIdentity(normalized, filer);
