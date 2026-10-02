@@ -57,7 +57,7 @@ Deno.test("W-2G PDF requires the native source facts and reconciled withholding"
         { f1040: { line25c_total: 2_400 } },
       ),
     Error,
-    "structured payer identity",
+    "issued-copy reference and identified payer name and EIN",
   );
 });
 
