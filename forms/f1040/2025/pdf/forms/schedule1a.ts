@@ -19,6 +19,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line1_agi", pdfField: `${page1}.f1_03[0]` },
   {
     kind: "text",
+    domainKey: "line2b_form2555_exclusion",
+    pdfField: `${page1}.f1_05[0]`,
+  },
+  {
+    kind: "text",
     domainKey: "line2e_zero_exclusions",
     pdfField: `${page1}.f1_08[0]`,
     printZero: true,
@@ -241,8 +246,10 @@ export const schedule1aPdf: PdfFormDescriptor = {
     if (!schedule1a.build(input, { pending: allPending })) return {};
     const projected: Record<string, unknown> = {
       line1_agi: input.magi,
-      line2e_zero_exclusions: 0,
-      line3_magi: input.magi,
+      line2b_form2555_exclusion: input.form2555_line45_exclusion,
+      line2e_zero_exclusions: input.form2555_line45_exclusion ?? 0,
+      line3_magi: (input.magi ?? 0) +
+        (input.form2555_line45_exclusion ?? 0),
     };
     let total = 0;
     if (

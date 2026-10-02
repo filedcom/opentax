@@ -17,6 +17,10 @@ import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/ind
 import { inputSchema as kInputSchema } from "../../../nodes/inputs/f1099k/index.ts";
 import { scheduleC } from "../../../nodes/inputs/schedule_c/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import {
+  calculatePhysicalPresence2555,
+  physicalPresenceFilingSchema,
+} from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 const form1040ReconciliationSchema = z.object({
@@ -41,7 +45,11 @@ type Input = z.infer<typeof inputSchema> | readonly [];
 function buildSchedule(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   const input = inputSchema.parse(raw);
-  if (!input.senior_zero_exclusions_review) {
+  const positive2555 = input.form2555_exclusion_review !== undefined;
+  if (positive2555 && input.senior_zero_exclusions_review) {
+    throw new Error("Schedule 1-A Part I reviews cannot conflict");
+  }
+  if (!input.senior_zero_exclusions_review && !positive2555) {
     const hasDeductionSource = input.taxpayer_age_65_or_older === true ||
       input.spouse_age_65_or_older === true ||
       (input.qualified_employee_tips?.length ?? 0) > 0 ||
@@ -53,7 +61,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       (input.vehicle_loans?.length ?? 0) > 0;
     if (hasDeductionSource) {
       throw new Error(
-        "Schedule 1-A positive source needs sourced Part I zero-exclusion review",
+        "Schedule 1-A positive source needs sourced Part I zero-exclusion review or a Form 2555 exclusion review",
       );
     }
     const claim = z.object({
@@ -61,18 +69,54 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     }).passthrough().parse(context?.pending?.f1040);
     if ((claim.line13b_additional_deductions ?? 0) === 0) return "";
     throw new Error(
-      "Schedule 1-A positive line 13b needs sourced Part I zero-exclusion review",
+      "Schedule 1-A positive line 13b needs sourced Part I zero-exclusion review or a Form 2555 exclusion review",
     );
   }
   const form1040 = form1040ReconciliationSchema.parse(
     context?.pending?.f1040,
   );
   if (
-    context?.pending &&
-    ("form2555" in context.pending || "form4563" in context.pending)
+    context?.pending && ("form4563" in context.pending ||
+      (!positive2555 && "form2555" in context.pending))
   ) {
     throw new Error(
       "Schedule 1-A zero-exclusion review conflicts with a Form 2555 or Form 4563 source",
+    );
+  }
+  let form2555Line45 = 0;
+  if (positive2555) {
+    const pending2555 = z.object({
+      filing_details: physicalPresenceFilingSchema,
+    })
+      .passthrough().parse(context?.pending?.form2555);
+    const lines = calculatePhysicalPresence2555(
+      pending2555.filing_details,
+      2025,
+    );
+    if (
+      lines.qualifyingDays !== 365 || lines.line45 <= 0 ||
+      lines.line50 !== 0 ||
+      input.form2555_line45_exclusion !== lines.line45 ||
+      input.form2555_line50_housing_deduction !== lines.line50 ||
+      (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0 ||
+      (input.qualified_w2_overtime?.length ?? 0) > 0 ||
+      (input.vehicle_loans?.length ?? 0) > 0
+    ) {
+      throw new Error(
+        "Schedule 1-A positive Form 2555 Part I needs a matching full-year senior-only source and zero housing deduction",
+      );
+    }
+    form2555Line45 = lines.line45;
+  } else if (
+    input.form2555_line45_exclusion !== undefined ||
+    input.form2555_line50_housing_deduction !== undefined
+  ) {
+    throw new Error(
+      "Schedule 1-A zero-exclusion review conflicts with Form 2555 amounts",
     );
   }
   const parts: string[] = [];
@@ -800,6 +844,12 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   return elements("IRS1040Schedule1A", [
     element("AdjustedGrossIncomeAmt", part1.line1_agi),
+    form2555Line45 > 0
+      ? element("TotalIncomeExclusionAmt", form2555Line45)
+      : "",
+    form2555Line45 > 0
+      ? element("TotalExclusionsDeductionAmt", form2555Line45)
+      : "",
     element("ModifiedAGIAmt", part1.line3_magi),
     ...parts,
     element("TotalAdditionalDeductionsAmt", total),

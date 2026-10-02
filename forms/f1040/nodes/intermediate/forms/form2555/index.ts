@@ -11,6 +11,7 @@ import { schedule_se } from "../schedule_se/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { eitc } from "../eitc/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 import {
   calculatePhysicalPresence2555,
   physicalPresenceFilingSchema,
@@ -105,6 +106,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     schedule_se,
     income_tax_calculation,
     eitc,
+    schedule1a,
   ]);
 
   compute(ctx: NodeContext, rawInput: Form2555Input): NodeResult {
@@ -139,6 +141,12 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
       return {
         outputs: [
           output(eitc, { form2555_filed: true }),
+          ...(lines.line45 > 0
+            ? [output(schedule1a, {
+              form2555_line45_exclusion: lines.line45,
+              form2555_line50_housing_deduction: lines.line50,
+            })]
+            : []),
           output(f1040, {
             line1h_other_earned: lines.line19,
             form8839_form2555_line45: lines.line45,

@@ -642,8 +642,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     if (
       !schedule || typeof schedule !== "object" ||
       Array.isArray(schedule) ||
-      !("senior_zero_exclusions_review" in schedule) ||
-      !schedule.senior_zero_exclusions_review ||
+      !(("senior_zero_exclusions_review" in schedule &&
+        schedule.senior_zero_exclusions_review) ||
+        ("form2555_exclusion_review" in schedule &&
+          schedule.form2555_exclusion_review)) ||
       (context?.documentIdsByPendingKey &&
         context.documentIdsByPendingKey.schedule1a?.length !== 1)
     ) {

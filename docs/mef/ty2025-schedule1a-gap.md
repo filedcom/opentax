@@ -27,9 +27,22 @@ the qualifying senior source, review, and final return must reconcile.
 
 - Part I lines 1–3 use Form 1040 line 11b plus Puerto Rico excluded income, Form
   2555 lines 45/50, and Form 4563 line 15. The node receives `magi` from the AGI
-  aggregator, and each positive route requires a source-referenced review that
-  all those adjustments are zero. Positive exclusions still need their own
-  source routes; `magi` cannot be assumed to be line 3 without this review.
+  aggregator as line 1 AGI. A bounded positive Form 2555 line 45 path now adds
+  the structured full-year physical-presence exclusion to line 2b/2e/3 for a
+  senior-only Schedule 1-A claim. It replays the pending Form 2555 calculation,
+  requires line 50 zero, and retains separate sourced zero reviews for Puerto
+  Rico and Form 4563. The deduction phaseout uses the increased MAGI, and
+  native/PDF export reconcile to Form 1040 line 13b. The focused joint return
+  has $160,000 AGI, $20,000 Form 2555 line 45, $180,000 line 3 MAGI, and
+  $8,400 on line 38/1040 line 13b; its full native return passed local TY2025
+  v5.4 XSD. A nine-page filled packet includes Form 1040, Schedule 1,
+  Schedule 1-A, and Form 2555; Schedule 1-A Part I and all Form 2555 pages were
+  rendered and visually reviewed (SHA-256
+  `b321afa905c708bfa40df3eaa8a45d8747ca9ce82962ece2e17b83201de99700`).
+  This route does not cover part-year Form 2555, a positive housing deduction,
+  Form 2555 with tips/overtime/vehicle interest, positive Puerto Rico or Form
+  4563 exclusions, issuer/source-document authentication, IRS business rules,
+  or ATS acceptance. Other positive routes still need their own sources.
 - Part II has source-backed W-2 box 7, reviewed W-2 box 14 or separate employer tip statements, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit
   tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
@@ -100,20 +113,21 @@ the qualifying senior source, review, and final return must reconcile.
   interest, document authentication, and cross-schedule deduction
   reconciliation remain open.
 - Part V's senior calculation computes per-person lines 36a/36b and
-  intermediate lines 32–35. Its zero-exclusion review does not establish the
-  positive Part I exclusion paths or authenticate the underlying documents.
+  intermediate lines 32–35. Its zero-exclusion review and the separate bounded
+  Form 2555 review do not authenticate the underlying documents.
 
 The v5.4 XSD has distinct elements for these source lines and Part VI line 38.
 The registered Schedule 1-A MeF descriptor
-requires an explicit source-referenced review that there was no section 933
-Puerto Rico exclusion and no Form 2555 or Form 4563 filing. It uses the AGI
+requires an explicit source-referenced Part I review. The zero route confirms
+no section 933 Puerto Rico exclusion and no Form 2555 or Form 4563 filing; the
+bounded positive route replays structured Form 2555 line 45. It uses the AGI
 calculated upstream, computes each positive deduction and emits Parts I–VI
 in native XSD order, including the Part V phaseout and each spouse's line 36
 amount. It checks
 the filing status, each claimed senior's SSN/age/timely employment-valid SSN
 facts, AGI, and the senior/total deduction against the pending Form 1040 lines
-11b and 13b, and rejects a conflicting Form 2555/4563 pending source. Positive Part I
-exclusions remain unsupported. These references are review evidence, not
+11b and 13b, and rejects a conflicting or unreviewed Form 2555/4563 source.
+Other positive Part I exclusions remain unsupported. These references are review evidence, not
 independent authentication of the underlying taxpayer documents.
 
 The source, document, return integration, and PDF field-map cases are written.

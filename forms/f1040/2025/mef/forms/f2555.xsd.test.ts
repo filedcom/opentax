@@ -383,6 +383,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: torontoHousing },
   }, { taxYear: 2025, formType: "f1040" });
@@ -454,6 +455,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: filingDetails },
   }, { taxYear: 2025, formType: "f1040" });
@@ -504,6 +506,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: partYear },
   }, { taxYear: 2025, formType: "f1040" });
@@ -538,6 +541,7 @@ Deno.test({
       address_city: "Austin",
       address_state: "TX",
       address_zip: "78701",
+      digital_assets: false,
     },
     form2555: { filing_details: employeeHousingDetails },
   }, { taxYear: 2025, formType: "f1040" });

@@ -93,9 +93,18 @@ export const seniorZeroExclusionsReviewSchema = z.object({
   form4563_review_source_reference: z.string().trim().min(1),
 }).strict();
 
+export const form2555ExclusionReviewSchema = z.object({
+  no_section933_puerto_rico_excluded_income: z.literal(true),
+  section933_review_source_reference: z.string().trim().min(1),
+  form2555_source_reference: z.string().trim().min(1),
+  no_form4563_filed: z.literal(true),
+  form4563_review_source_reference: z.string().trim().min(1),
+}).strict();
+
 export const claimInputSchema = z.object({
   vehicle_loans: z.array(vehicleLoanSchema).min(1).max(50).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
+  form2555_exclusion_review: form2555ExclusionReviewSchema.optional(),
   form4070_reports: z.array(
     z.object({
       employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -192,6 +201,8 @@ export const inputSchema = claimInputSchema.extend({
   qualified_tips_schedule_f_profit: z.number().optional(),
   qualified_tips_farm_optional_method: z.boolean().optional(),
   magi: z.number().optional(),
+  form2555_line45_exclusion: z.number().int().positive().optional(),
+  form2555_line50_housing_deduction: z.literal(0).optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_ssn: z.string().optional(),
   spouse_ssn: z.string().optional(),
@@ -285,6 +296,12 @@ const TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ = 300_000;
 const VEHICLE_INTEREST_CAP = 10_000;
 const VEHICLE_PHASEOUT_THRESHOLD = 100_000;
 const VEHICLE_PHASEOUT_THRESHOLD_MFJ = 200_000;
+
+function seniorPart1Magi(input: Schedule1AInput): number | undefined {
+  if (input.magi === undefined) return undefined;
+  return input.magi + (input.form2555_line45_exclusion ?? 0) +
+    (input.form2555_line50_housing_deduction ?? 0);
+}
 
 // IRS.gov/TippedOccupations, TY2025 list (the published codes are contiguous
 // within each of these occupation groups).
@@ -658,11 +675,12 @@ export function seniorDeduction(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
+  const part1Magi = seniorPart1Magi(input)!;
   const perPerson = Math.max(
     0,
     cfg.seniorDeductionMax -
       Math.round(
-        Math.max(0, input.magi - threshold) *
+        Math.max(0, part1Magi - threshold) *
           cfg.seniorDeductionPhaseoutRate,
       ),
   );
@@ -678,7 +696,10 @@ export function calculateSeniorOnlySchedule1A(
     throw new Error("Schedule 1-A senior-only filing needs tax year 2025");
   }
   const input = inputSchema.parse(rawInput);
-  if (!input.senior_zero_exclusions_review) {
+  if (
+    !input.senior_zero_exclusions_review &&
+    !input.form2555_exclusion_review
+  ) {
     throw new Error(
       "Schedule 1-A senior filing needs sourced zero-exclusion review for Part I",
     );
@@ -695,7 +716,8 @@ export function calculateSeniorOnlySchedule1A(
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
-  const excess = Math.max(0, input.magi - threshold);
+  const part1Magi = seniorPart1Magi(input)!;
+  const excess = Math.max(0, part1Magi - threshold);
   const reduction = Math.round(excess * cfg.seniorDeductionPhaseoutRate);
   const perPerson = Math.max(0, cfg.seniorDeductionMax - reduction);
   const taxpayer = input.taxpayer_age_65_or_older === true &&
@@ -714,7 +736,7 @@ export function calculateSeniorOnlySchedule1A(
   }
   return seniorOnlyLinesSchema.parse({
     line1_agi: input.magi,
-    line3_magi: input.magi,
+    line3_magi: part1Magi,
     line32_threshold: threshold,
     line33_excess_magi: excess,
     line34_reduction: reduction,
