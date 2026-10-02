@@ -280,6 +280,15 @@ Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse 
     () =>
       scheduleCPdf.instances!(projected, {
         ...filer,
+        spouse: { ...filer.spouse, firstName: "Jules" },
+      }),
+    Error,
+    "proprietor name differs from filer",
+  );
+  assertThrows(
+    () =>
+      scheduleCPdf.instances!(projected, {
+        ...filer,
         spouse: { ...filer.spouse, ssn: "999887777" },
       }),
     Error,
@@ -297,6 +306,29 @@ Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse 
       }),
     Error,
     "spouse proprietor needs a joint return",
+  );
+});
+
+Deno.test("Schedule C PDF proprietor name matches the native filer on a single return", () => {
+  const filer = {
+    ...testFiler(),
+    primarySSN: "400001107",
+    fullName: "Pat Example",
+    nameLine1: "PAT EXAMPLE",
+  };
+  const projected = scheduleCPdf.projectFields!({
+    schedule_cs: [business()],
+  }, pending);
+  assertEquals(scheduleCPdf.instances!(projected, filer).length, 1);
+  const changedGeneral = scheduleCPdf.projectFields!({
+    schedule_cs: [business()],
+  }, {
+    general: { ...pending.general, taxpayer_first_name: "Other" },
+  });
+  assertThrows(
+    () => scheduleCPdf.instances!(changedGeneral, filer),
+    Error,
+    "proprietor name differs from filer",
   );
 });
 

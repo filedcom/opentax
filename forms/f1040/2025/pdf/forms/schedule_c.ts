@@ -481,6 +481,22 @@ export const scheduleCPdf: PdfFormDescriptor = {
         ) {
           throw new Error("Schedule C PDF proprietor SSN differs from filer");
         }
+        const filedName = spouse
+          ? [
+            filer.spouse!.firstName,
+            filer.spouse!.middleInitial,
+            filer.spouse!.lastName,
+            filer.spouse!.suffix,
+          ].filter(Boolean).join(" ")
+          : filer.fullName ?? filer.nameLine1;
+        const normalizeName = (value: string) =>
+          value.trim().replace(/\s+/g, " ").toUpperCase();
+        if (
+          normalizeName(String(copy.proprietor_name)) !==
+            normalizeName(filedName)
+        ) {
+          throw new Error("Schedule C PDF proprietor name differs from filer");
+        }
       }
     }
     return copies;
