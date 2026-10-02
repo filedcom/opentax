@@ -171,8 +171,8 @@ export const inputSchema = z.object({
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
   // Line 8f — Form 8889 taxable distributions and testing-period income.
   line8f_hsa_income: z.number().nonnegative().optional(),
-  // Line 8z — Other income (1099-NEC line 8z, etc.)
-  line8z_other: z.number().optional(),
+  // Unlabeled line 8z amounts cannot bypass Schedule 1 source/description proof.
+  line8z_other: z.never().optional(),
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
@@ -389,7 +389,6 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     ) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
-    (input.line8z_other ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
@@ -628,7 +627,6 @@ function scheduleOnePartI(input: AgiInput): number {
     ) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
-    (input.line8z_other ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +

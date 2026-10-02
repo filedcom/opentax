@@ -44,6 +44,16 @@ Deno.test("schedule1: rejects the old unlinked 1099-NEC line 8z amount", () => {
   );
 });
 
+Deno.test("schedule1: generic line 8z scalars fail before totals are calculated", () => {
+  for (const key of ["line8z_other", "line8z_other_income"]) {
+    for (const value of [0, 25, -25]) {
+      assertThrows(() =>
+        compute({ [key]: value } as Parameters<typeof schedule1.compute>[1])
+      );
+    }
+  }
+});
+
 Deno.test("schedule1: empty input emits zero totals", () => {
   const f = fields({});
   assertEquals(f.line10_total_additional_income, 0);

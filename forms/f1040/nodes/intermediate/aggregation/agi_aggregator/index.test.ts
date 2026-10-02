@@ -20,6 +20,18 @@ Deno.test("agi_aggregator: wages only", () => {
   assertEquals(agi(result), 60_000);
 });
 
+Deno.test("agi_aggregator: generic line 8z scalar cannot enter AGI", () => {
+  for (const value of [0, 25, -25]) {
+    assertThrows(() =>
+      compute(
+        { line8z_other: value } as unknown as Parameters<
+          typeof agi_aggregator.compute
+        >[1],
+      )
+    );
+  }
+});
+
 Deno.test("agi_aggregator: household wages enter line 11 once", () => {
   assertEquals(
     agi(compute({ line1b_household_wages: 2_000, line7_unemployment: 1_000 })),

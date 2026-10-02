@@ -91,12 +91,13 @@ $1,200 recovery in a full return passes local TY2025 v5.4 XSD and its
 five-page filled PDF was inspected; see the
 [Form 1098 review](ty2025-filled-pdf-review-2026-09-29.md).
 
-Two generic scalar keys, `line8z_other` and `line8z_other_income`, remain in
-the sink schemas, but the known producer nodes no longer emit them. The sink
-cannot infer the IRS statement's required type from a merged number. MeF and
-PDF projections reject a nonzero generic amount instead of inventing a label.
-That is a fail-closed boundary, not an approved exclusion or completion of
-these filing paths.
+Two generic scalar keys, `line8z_other` and `line8z_other_income`, have no
+known current producers. Schedule 1 now rejects either key, including a zero
+deposit, before calculating its totals. The AGI sink likewise rejects
+`line8z_other`. The sink cannot infer the IRS statement's required type from
+a merged number. MeF and PDF projections continue to reject a nonzero generic
+amount in directly supplied pending data. This is a fail-closed boundary, not
+an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -194,15 +195,13 @@ and ATS remain open.
 Other box 11 codes have distinct destinations and remain open, as do issued
 source bytes, prior-return authentication, IRS business rules, and ATS.
 
-The executor accumulates colliding scalar output keys as an array. These two
-sink schemas currently expect numbers, so a return with multiple generic
-producers may fail to parse before it even reaches the new export guard. A
-direct typed source ledger should replace the generic scalar deposits in the
-producer nodes, feed the same signed rows to AGI and Schedule 1, and create one
-statement row per supported source. This is not a request for a second accepted
-API shape or a scalar fallback. Source-document authenticity, correct tax
-character, a populated statement, full-batch tests, XSD, filled-PDF review, IRS
-business rules and ATS acceptance all remain open.
+The executor accumulates colliding scalar output keys as an array. Any future
+generic producer now fails at the Schedule 1 or AGI sink, before its amount can
+enter a return total. A direct typed source ledger should replace generic
+scalar deposits for each supported source, feed the same signed rows to AGI and
+Schedule 1, and create one statement row per source. Source-document
+authenticity, correct tax character, a populated statement, full-batch tests,
+XSD, filled-PDF review, IRS business rules and ATS acceptance all remain open.
 
 The former Form 1099-K gross-payment line-8z route is removed for TY2025.
 An explicitly classified hobby payment now enters line 8j with the same
