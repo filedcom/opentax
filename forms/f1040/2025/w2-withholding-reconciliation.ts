@@ -10,12 +10,10 @@ export function assertW2WithholdingSource(
   if (pending.w2 === undefined) return;
   const source = w2InputSchema.parse(pending.w2);
   const hasWithholding = source.w2s.some((row) => row.box2_fed_withheld > 0);
-  if (pending.f1040 === undefined && !hasWithholding) return;
-  if (pending.f1040 === undefined) {
-    throw new Error(
-      "Retained W-2 box 2 withholding requires a filed Form 1040 line 25a",
-    );
-  }
+  const hasPositiveW2 = source.w2s.some((row) =>
+    row.box1_wages > 0 || row.box2_fed_withheld > 0
+  );
+  if (pending.f1040 === undefined && !hasPositiveW2) return;
   if (!filer) throw new Error("W-2 withholding needs Form 1040 filer identity");
   const recipients = new Set([filer.primarySSN.replace(/\D/g, "")]);
   if (
@@ -25,11 +23,11 @@ export function assertW2WithholdingSource(
   for (const [index, row] of source.w2s.entries()) {
     if (row.box1_wages <= 0 && row.box2_fed_withheld <= 0) continue;
     const ssn = row.employee_ssn?.replace(/\D/g, "");
-    if (row.box2_fed_withheld > 0 && !/^\d{9}$/.test(ssn ?? "")) {
+    if (!/^\d{9}$/.test(ssn ?? "")) {
       throw new Error(
         `W-2 ${
           index + 1
-        } positive box 2 withholding needs the issued employee SSN`,
+        } positive wages or withholding need the issued employee SSN`,
       );
     }
     if (
@@ -42,6 +40,12 @@ export function assertW2WithholdingSource(
         } box 1 wages or box 2 recipient must match the taxpayer or identified joint spouse`,
       );
     }
+  }
+  if (pending.f1040 === undefined && !hasWithholding) return;
+  if (pending.f1040 === undefined) {
+    throw new Error(
+      "Retained W-2 box 2 withholding requires a filed Form 1040 line 25a",
+    );
   }
   const allocation = source.f8958_allocation;
   const box2Total = source.w2s.reduce(

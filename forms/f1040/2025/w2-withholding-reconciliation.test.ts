@@ -80,7 +80,7 @@ Deno.test("W-2 withholding replays both identified joint owners into line 25a", 
         },
       }, filer),
     Error,
-    "positive box 2 withholding needs the issued employee SSN",
+    "positive wages or withholding need the issued employee SSN",
   );
 });
 
@@ -103,7 +103,7 @@ Deno.test("positive W-2 box 2 withholding needs an identified employee on a sing
   assertThrows(
     () => assertW2WithholdingSource(source, single),
     Error,
-    "positive box 2 withholding needs the issued employee SSN",
+    "positive wages or withholding need the issued employee SSN",
   );
   assertThrows(
     () =>
@@ -112,7 +112,7 @@ Deno.test("positive W-2 box 2 withholding needs an identified employee on a sing
         w2: { w2s: [{ ...source.w2.w2s[0], employee_ssn: "11122" }] },
       }, single),
     Error,
-    "positive box 2 withholding needs the issued employee SSN",
+    "positive wages or withholding need the issued employee SSN",
   );
   assertW2WithholdingSource({
     ...source,
@@ -134,7 +134,7 @@ Deno.test("joint W-2 wages without withholding still need an identified employee
   assertThrows(
     () => assertW2WithholdingSource(source, filer),
     Error,
-    "identified joint spouse",
+    "positive wages or withholding need the issued employee SSN",
   );
   assertThrows(
     () =>
@@ -156,6 +156,34 @@ Deno.test("joint W-2 wages without withholding still need an identified employee
       w2s: [{ ...source.w2.w2s[0], employee_ssn: "222334444" }],
     },
   }, filer);
+});
+
+Deno.test("positive wages without withholding need an issued employee SSN on a single return", () => {
+  const single = {
+    ...filer,
+    filingStatus: FilingStatus.Single,
+    spouse: undefined,
+  };
+  const row = {
+    employer_name: "Employer A",
+    box1_wages: 1_000,
+    box2_fed_withheld: 0,
+  };
+  const pending = { w2: { w2s: [row] }, f1040: { line25a_w2_withheld: 0 } };
+  assertThrows(
+    () => assertW2WithholdingSource(pending, single),
+    Error,
+    "positive wages or withholding need the issued employee SSN",
+  );
+  assertThrows(
+    () => assertW2WithholdingSource({ w2: { w2s: [row] } }, single),
+    Error,
+    "positive wages or withholding need the issued employee SSN",
+  );
+  assertW2WithholdingSource({
+    ...pending,
+    w2: { w2s: [{ ...row, employee_ssn: "111-22-3333" }] },
+  }, single);
 });
 
 Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 25a", () => {
