@@ -190,6 +190,7 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
   assertEquals(direct.print_form8814_line3a_included, true);
   assertEquals(direct.print_form8814_line3b_included, true);
   assertEquals(direct.print_form8814_line7a_included, true);
+  assertEquals(direct.print_form8814_line7b_amount, 200);
   assertEquals(direct.print_form8814_line7a_note, "Form 8814 $200");
   assertEquals(
     irs1040Pdf.fields.find((field) =>
@@ -208,6 +209,12 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
       field.domainKey === "print_form8814_line7a_included"
     )?.pdfField,
     "topmostSubform[0].Page1[0].c1_44[0]",
+  );
+  assertEquals(
+    irs1040Pdf.fields.find((field) =>
+      field.domainKey === "print_form8814_line7b_amount"
+    )?.pdfField,
+    "topmostSubform[0].Page1[0].f1_71[0]",
   );
   assertEquals(
     irs1040Pdf.fields.find((field) =>
@@ -231,7 +238,8 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
     { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
   ) ?? {};
   assertEquals(withScheduleD.print_form8814_line7a_note, undefined);
-  assertEquals(withScheduleD.print_form8814_line7a_included, false);
+  assertEquals(withScheduleD.print_form8814_line7a_included, true);
+  assertEquals(withScheduleD.print_form8814_line7b_amount, 200);
   assertThrows(
     () =>
       irs1040Pdf.projectFields?.({

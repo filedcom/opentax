@@ -1153,7 +1153,8 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.f1040,
           result.pending,
         );
-        assertEquals(projected?.print_form8814_line7a_included, false);
+        assertEquals(projected?.print_form8814_line7a_included, true);
+        assertEquals(projected?.print_form8814_line7b_amount, 179);
         assertStringIncludes(xml, "<IRS8814 ");
         assertStringIncludes(xml, "<IRS1040ScheduleD ");
       }

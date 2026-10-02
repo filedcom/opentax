@@ -1425,7 +1425,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
     reviewFocus: [
       "The child capital-gain portion prints as Form 8814 on Schedule D line 13",
-      "Form 1040 line 7a includes the finalized Schedule D result without a direct-child-gain line 7b mark",
+      "Form 1040 line 7a includes the finalized Schedule D result and line 7b marks the included child gain with its Form 8814 amount",
       "The parent sale and child capital-gain distribution each enter taxable income once",
     ],
   },

@@ -60,7 +60,7 @@ import {
 //                 f1_54 = line 1h description text; f1_55 = line 1h amount
 //   f1_58–f1_75:  income lines 2–11 (interest, dividends, IRA, pension, SS, capital gains, AGI)
 //                 f1_64 and f1_67 = line 4c/5c box 3 text spaces (skipped),
-//                 f1_71 = near line 7b check area (skipped)
+//                 f1_71 = child capital-gain amount beside line 7b
 //   Lines 12–15 appear on page 2 only in the 2025 form.
 //
 // Page 2 layout (f2_XX):
@@ -290,7 +290,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
   // ── Page 1: Income (Lines 2–11) ───────────────────────────────────────────
   // f1_64 and f1_67 are box 3 text spaces on lines 4c and 5c.
-  // f1_71 = near line 7b checkbox area — all three skipped.
+  // f1_71 = child capital-gain amount beside line 7b.
   {
     kind: "text",
     domainKey: "line2a_tax_exempt",
@@ -403,7 +403,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_form8814_line7a_included",
     pdfField: "topmostSubform[0].Page1[0].c1_44[0]",
   },
-  // f1_71 skipped (near line 7b check area)
+  {
+    kind: "text",
+    domainKey: "print_form8814_line7b_amount",
+    pdfField: "topmostSubform[0].Page1[0].f1_71[0]",
+  },
   {
     kind: "text",
     domainKey: "line8_additional_income",
@@ -1018,7 +1022,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_form8888_attached: hasForm8888,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
-      print_form8814_line7a_included: childGainDirect,
+      print_form8814_line7a_included: childGainDirect || childGainOnScheduleD,
+      print_form8814_line7b_amount: childGainDirect || childGainOnScheduleD
+        ? child.capitalGain
+        : undefined,
       print_form8814_line7a_note: childGainDirect
         ? `Form 8814 $${child.capitalGain}`
         : undefined,
