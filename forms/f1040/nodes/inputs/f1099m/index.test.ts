@@ -27,6 +27,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     payer_name: "Test Payer",
     payer_tin: "123456789",
     recipient_tin: "987654321",
+    source_document_reference: "issued-2025-1099misc-test-copy",
     farm_id: "farm-1",
     schedule_c_business_reference: "business-1",
     ...overrides,
@@ -614,8 +615,28 @@ Deno.test("f1099m.compute: box8_substitute_payments = 0 produces no schedule1 ou
 Deno.test("f1099m.compute: box9_crop_insurance retains its farm source", () => {
   const result = compute([minimalItem({ box9_crop_insurance: 7500 })]);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 7500 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 7500,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
+    },
   ]);
+});
+
+Deno.test("1099-MISC positive crop insurance needs an issued-copy reference", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box9_crop_insurance: 7500,
+        source_document_reference: undefined,
+      })]),
+    Error,
+    "1099-MISC crop insurance needs a named farm and issued-copy reference",
+  );
 });
 
 // Box 9 — zero value produces no Schedule F output
@@ -851,7 +872,15 @@ Deno.test("f1099m.compute: box5_fishing_boat at $600 threshold routes to schedul
 Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to schedule_f", () => {
   const result = compute([minimalItem({ box9_crop_insurance: 600 })]);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 600 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 600,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
+    },
   ]);
 });
 
@@ -1006,6 +1035,10 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election retains it
       farm_id: "farm-1",
       kind: "1099m_crop_insurance",
       amount: 7500,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-1099misc-test-copy",
       deferred: true,
     },
   ]);
@@ -1163,6 +1196,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       farm_id: "farm-1",
       schedule_c_business_reference: "business-1",
       account_number: "ACC-001",
+      source_document_reference: "issued-2025-mega-1099misc",
       box1_rents: 18000,
       box2_royalties: 3600,
       box3_other_income: 750,
@@ -1229,7 +1263,15 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
   const schedF = findOutput(result, "schedule_f");
   assertEquals(schedF !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 8000 },
+    {
+      farm_id: "farm-1",
+      kind: "1099m_crop_insurance",
+      amount: 8000,
+      payer_name: "Mega Payer Inc",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      source_document_reference: "issued-2025-mega-1099misc",
+    },
   ]);
 
   // Box 10's $2,000 fee is linked to a specific Schedule C business.

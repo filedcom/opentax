@@ -61,7 +61,8 @@ function sourceInputs(line4a: number) {
       farm_id: "north",
       payer_name: "Crop Insurer",
       payer_tin: "123456789",
-      recipient_tin: "987654321",
+      recipient_tin: "123456789",
+      source_document_reference: "issued-2025-crop-insurance-1099misc",
       box9_crop_insurance: 7_500,
     }],
     f1099nec: [{
@@ -183,6 +184,152 @@ Deno.test("issued 1099-G farm payments bind to the proprietor and retained sourc
   );
 });
 
+Deno.test("issued 1099-MISC crop insurance binds to the Schedule F proprietor in both exports", async () => {
+  const result = execute(plan, registry, sourceInputs(4_100), ctx);
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending as MefFormsPending;
+  const filer = {
+    ...testFiler(),
+    nameLine1: "SAM FARMER",
+    nameControl: "FARM",
+    firstName: "Sam",
+    firstNameWithInitial: "Sam",
+    lastName: "Farmer",
+    fullName: "Sam Farmer",
+  };
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CropInsProcAndDsstrPymtAmt>7500</CropInsProcAndDsstrPymtAmt>",
+  );
+  assertEquals(
+    (await buildPdfBytes(pending, filer)).subarray(0, 5),
+    new TextEncoder().encode("%PDF-"),
+  );
+  const raw = result.pending.f1099m as { f1099ms: Record<string, unknown>[] };
+  const farmPending = scheduleFInputSchema.parse(pending.schedule_f);
+  const changedCopy = {
+    ...pending,
+    f1099m: { f1099ms: [{ ...raw.f1099ms[0], recipient_tin: "999887777" }] },
+  };
+  assertThrows(
+    () => buildMefXml(changedCopy, filer),
+    Error,
+    "Schedule F 1099-MISC crop-insurance sources differ from retained payer copies",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedCopy, filer),
+    Error,
+    "Schedule F 1099-MISC crop-insurance sources differ from retained payer copies",
+  );
+  const coordinatedWrongOwner = {
+    ...changedCopy,
+    schedule_f: {
+      ...farmPending,
+      farm_sources: (farmPending.farm_sources ?? []).map((row) =>
+        row.kind === "1099m_crop_insurance"
+          ? { ...row, recipient_tin: "999887777" }
+          : row
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(coordinatedWrongOwner, filer),
+    Error,
+    "1099 farm recipient differs from the Schedule F proprietor",
+  );
+  await assertRejects(
+    () => buildPdfBytes(coordinatedWrongOwner, filer),
+    Error,
+    "1099 farm recipient differs from the Schedule F proprietor",
+  );
+});
+
+Deno.test("issued 1099-PATR farm distribution binds to its cooperative and proprietor", async () => {
+  const inputs = sourceInputs(4_100);
+  const result = execute(plan, registry, {
+    ...inputs,
+    schedule_f: {
+      schedule_fs: [{
+        ...farm(4_100),
+        line3a_cooperative_distributions: 500,
+        line3b_cooperative_distributions_taxable: 400,
+      }],
+    },
+    f1099patr: [{
+      payer_name: "Farm Cooperative",
+      payer_tin: "123456789",
+      recipient_tin: "123456789",
+      source_document_reference: "issued-2025-farm-1099patr",
+      box1_patronage_dividends: 500,
+      distribution_treatment: {
+        kind: "farm",
+        farm_id: "north",
+        verified_taxable_amount: 400,
+      },
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1?.line6_schedule_f, 16_500);
+  assertEquals(result.pending.f1040?.line8_additional_income, 16_500);
+  const pending = result.pending as MefFormsPending;
+  const filer = {
+    ...testFiler(),
+    nameLine1: "SAM FARMER",
+    nameControl: "FARM",
+    firstName: "Sam",
+    firstNameWithInitial: "Sam",
+    lastName: "Farmer",
+    fullName: "Sam Farmer",
+  };
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CooperativeDistriTxblAmt>400</CooperativeDistriTxblAmt>",
+  );
+  assertEquals(
+    (await buildPdfBytes(pending, filer)).subarray(0, 5),
+    new TextEncoder().encode("%PDF-"),
+  );
+  const raw = pending.f1099patr as { f1099patrs: Record<string, unknown>[] };
+  const changedCopy = {
+    ...pending,
+    f1099patr: {
+      f1099patrs: [{ ...raw.f1099patrs[0], recipient_tin: "999887777" }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedCopy, filer),
+    Error,
+    "Schedule F 1099-PATR sources differ from retained cooperative copies",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedCopy, filer),
+    Error,
+    "Schedule F 1099-PATR sources differ from retained cooperative copies",
+  );
+  const farmPending = scheduleFInputSchema.parse(pending.schedule_f);
+  const coordinatedWrongOwner = {
+    ...changedCopy,
+    schedule_f: {
+      ...farmPending,
+      farm_sources: (farmPending.farm_sources ?? []).map((row) =>
+        row.kind === "1099patr_cooperative"
+          ? { ...row, recipient_tin: "999887777" }
+          : row
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(coordinatedWrongOwner, filer),
+    Error,
+    "1099 farm recipient differs from the Schedule F proprietor",
+  );
+  await assertRejects(
+    () => buildPdfBytes(coordinatedWrongOwner, filer),
+    Error,
+    "1099 farm recipient differs from the Schedule F proprietor",
+  );
+});
+
 Deno.test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F line 6a/6b and Form 1040", async () => {
   const inputs = sourceInputs(600);
   const result = execute(plan, registry, {
@@ -232,6 +379,23 @@ Deno.test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F
     xml,
     "<TotalAdditionalIncomeAmt>16100</TotalAdditionalIncomeAmt>",
   );
+  const xsdPath = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  await Deno.stat(xsdPath);
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(xmlPath);
+  }
   const pdf = await buildPdfBytes(result.pending as MefFormsPending, filer);
   assertEquals(pdf.subarray(0, 5), new TextEncoder().encode("%PDF-"));
 
@@ -423,7 +587,8 @@ Deno.test("deferred 1099-MISC crop insurance reaches Schedule F line 6a and its 
       farm_id: "north",
       payer_name: "Crop Insurer",
       payer_tin: "123456789",
-      recipient_tin: "987654321",
+      recipient_tin: "123456789",
+      source_document_reference: "issued-2025-deferred-crop-insurance-1099misc",
       box9_crop_insurance: 5_000,
       box9_crop_insurance_deferred: true,
     }],

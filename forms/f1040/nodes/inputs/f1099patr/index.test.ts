@@ -25,6 +25,15 @@ function farm(farmId: string, taxable: number) {
   };
 }
 
+function issued(reference: string) {
+  return {
+    payer_name: "Farm Cooperative",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: reference,
+  };
+}
+
 function personal(amount: number) {
   return {
     kind: "personal_basis_adjustment",
@@ -51,6 +60,7 @@ Deno.test("1099-PATR requires explicit treatment for a positive distribution", (
 
 Deno.test("1099-PATR farm source carries gross and verified taxable amounts to Schedule F", () => {
   const result = compute([{
+    ...issued("issued-patr-1"),
     box1_patronage_dividends: 500,
     box2_nonpatronage_distributions: 100,
     box3_per_unit_retain: 50,
@@ -62,6 +72,10 @@ Deno.test("1099-PATR farm source carries gross and verified taxable amounts to S
     kind: "1099patr_cooperative",
     amount: 900,
     taxable_amount: 700,
+    payer_name: "Farm Cooperative",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-patr-1",
   }]);
   assertEquals(
     result.outputs.some((item) => item.nodeType === "schedule1"),
@@ -69,11 +83,37 @@ Deno.test("1099-PATR farm source carries gross and verified taxable amounts to S
   );
 });
 
+Deno.test("1099-PATR positive farm distribution needs issued payer and recipient", () => {
+  const source = {
+    ...issued("issued-patr-farm"),
+    box1_patronage_dividends: 300,
+    distribution_treatment: farm("FARM-1", 300),
+  };
+  for (
+    const field of [
+      "payer_name",
+      "payer_tin",
+      "recipient_tin",
+      "source_document_reference",
+    ]
+  ) {
+    const changed = { ...source } as Record<string, unknown>;
+    delete changed[field];
+    assertThrows(
+      () => compute([changed]),
+      Error,
+      "1099-PATR farm distribution needs payer, recipient, and issued-copy identity",
+    );
+  }
+});
+
 Deno.test("1099-PATR preserves separate farm identities and taxable shares", () => {
   const result = compute([{
+    ...issued("issued-patr-A"),
     box1_patronage_dividends: 300,
     distribution_treatment: farm("FARM-A", 200),
   }, {
+    ...issued("issued-patr-B"),
     box3_per_unit_retain: 100,
     distribution_treatment: farm("FARM-B", 100),
   }]);
@@ -82,11 +122,19 @@ Deno.test("1099-PATR preserves separate farm identities and taxable shares", () 
     kind: "1099patr_cooperative",
     amount: 300,
     taxable_amount: 200,
+    payer_name: "Farm Cooperative",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-patr-A",
   }, {
     farm_id: "FARM-B",
     kind: "1099patr_cooperative",
     amount: 100,
     taxable_amount: 100,
+    payer_name: "Farm Cooperative",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    source_document_reference: "issued-patr-B",
   }]);
 });
 
@@ -150,6 +198,7 @@ Deno.test("1099-PATR personal treatment rejects unreferenced or unmatched basis 
 
 Deno.test("1099-PATR withholding aggregates independently of distribution treatment", () => {
   const result = compute([{
+    ...issued("issued-patr-withheld"),
     box1_patronage_dividends: 300,
     box4_federal_withheld: 40,
     distribution_treatment: farm("FARM-1", 300),
@@ -167,6 +216,7 @@ Deno.test("1099-PATR rejects repeated identified payer accounts before income or
     payer_tin: "12-3456789",
     recipient_tin: "111223333",
     account_number: "P-1",
+    source_document_reference: "issued-patr-duplicate",
     box1_patronage_dividends: 300,
     box4_federal_withheld: 20,
     distribution_treatment: farm("FARM-1", 300),

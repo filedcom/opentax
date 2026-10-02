@@ -272,5 +272,17 @@ focused graph/export tests. Deferral of a source explicitly reviewed as
 current-year taxable also rejects. The reviewed classification does not
 authenticate the USDA award or issued payer bytes. Other disaster-payment
 purposes, a valid crop-disaster deferral, prior-year crop-income timing and
-election history, source copies, local XSD, filled-PDF visual review, IRS
+election history, source copies, filled-PDF visual review, IRS
 business rules, and ATS remain open.
+
+Positive Form 1099-MISC box 9 crop insurance and Form 1099-PATR farm
+distributions now carry the issued payer, recipient, source reference, and
+named farm into Schedule F. Final native and PDF preflight compares each farm
+row to the retained payer copy and the recipient to the farm proprietor. A
+changed source copy and coordinated wrong-owner row reject for each form in
+focused full-return cases; a $500 cooperative distribution with $400 verified
+taxable reaches Schedule F, Schedule 1 line 6, and Form 1040 line 8. The
+current-year-taxable 1099-G crop-disaster full return also passes the local
+TY2025 v5.4 XSD in its focused e2e fixture. These synthetic tests do not
+authenticate issued copies, taxability workpapers, filled-PDF appearance, IRS
+business rules, or ATS acceptance.

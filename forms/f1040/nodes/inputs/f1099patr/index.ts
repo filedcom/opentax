@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
@@ -28,6 +28,10 @@ function farmOutputs(items: PATRItems): NodeOutput[] {
       kind: "1099patr_cooperative" as const,
       amount: distributionTotal(item),
       taxable_amount: treatment.verified_taxable_amount,
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin?.replace(/\D/g, ""),
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
     }];
   });
   return farmSources.length > 0

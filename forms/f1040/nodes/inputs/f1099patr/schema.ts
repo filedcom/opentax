@@ -21,6 +21,7 @@ export const itemSchema = z.object({
   payer_tin: z.string().optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   // Retained for the specified-cooperative QBI source cross-check.
   trade_or_business: z.boolean().optional(),
   distribution_treatment: z.discriminatedUnion("kind", [
@@ -54,6 +55,18 @@ export const itemSchema = z.object({
         code: "custom",
         message:
           "1099-PATR farm taxable amount must not exceed gross distributions or contradict business classification",
+      });
+    }
+    if (
+      gross > 0 &&
+      (!item.payer_name?.trim() ||
+        !/^\d{9}$/.test(item.payer_tin?.replace(/\D/g, "") ?? "") ||
+        !item.recipient_tin || !item.source_document_reference)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "1099-PATR farm distribution needs payer, recipient, and issued-copy identity",
       });
     }
   }

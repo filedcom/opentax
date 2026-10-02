@@ -59,6 +59,7 @@ export const itemSchema = z.object({
   recipient_tin: tinSchema,
   // Optional identifiers
   account_number: z.string().max(20).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   multi_form_code: z.number().int().min(1).optional(),
   // Box 1 — Rents
   box1_rents: z.number().nonnegative().optional(),
@@ -219,6 +220,17 @@ export const itemSchema = z.object({
       path: ["schedule_c_business_reference"],
       message:
         "1099-MISC business receipts need a Schedule C business reference",
+    });
+  }
+  if (
+    (item.box9_crop_insurance ?? 0) > 0 &&
+    (!item.farm_id || !item.source_document_reference)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box9_crop_insurance"],
+      message:
+        "1099-MISC crop insurance needs a named farm and issued-copy reference",
     });
   }
 });
@@ -587,6 +599,10 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
         farm_id: item.farm_id,
         kind: "1099m_crop_insurance" as const,
         amount,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin,
+        recipient_tin: item.recipient_tin,
+        source_document_reference: item.source_document_reference,
         ...(item.box9_crop_insurance_deferred === true
           ? { deferred: true }
           : {}),

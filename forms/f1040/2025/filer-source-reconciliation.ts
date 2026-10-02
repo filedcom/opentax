@@ -10,6 +10,11 @@ import {
   inputSchema as generalInputSchema,
 } from "../nodes/inputs/general/index.ts";
 import { inputSchema as form1099gSchema } from "../nodes/inputs/f1099g/index.ts";
+import { inputSchema as form1099mSchema } from "../nodes/inputs/f1099m/index.ts";
+import {
+  distributionTotal,
+  inputSchema as form1099patrSchema,
+} from "../nodes/inputs/f1099patr/schema.ts";
 
 export function assertKIncomeClassification(
   pending: Record<string, unknown>,
@@ -1044,17 +1049,50 @@ export function assertScheduleFFarmSourceIdentity(
       source_document_reference: item.source_document_reference,
     }));
   });
+  const mRows = pending.f1099m === undefined
+    ? []
+    : form1099mSchema.parse(pending.f1099m).f1099ms;
+  const expectedM = mRows.filter((item) => (item.box9_crop_insurance ?? 0) > 0)
+    .map((item) => ({
+      farm_id: item.farm_id,
+      kind: "1099m_crop_insurance",
+      amount: item.box9_crop_insurance,
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin,
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+      deferred: item.box9_crop_insurance_deferred === true,
+    }));
+  const patrRows = pending.f1099patr === undefined
+    ? []
+    : form1099patrSchema.parse(pending.f1099patr).f1099patrs;
+  const expectedPatr = patrRows.flatMap((item) => {
+    const treatment = item.distribution_treatment;
+    if (treatment?.kind !== "farm" || distributionTotal(item) === 0) {
+      return [];
+    }
+    return [{
+      farm_id: treatment.farm_id,
+      kind: "1099patr_cooperative",
+      amount: distributionTotal(item),
+      taxable_amount: treatment.verified_taxable_amount,
+      payer_name: item.payer_name,
+      payer_tin: item.payer_tin?.replace(/\D/g, ""),
+      recipient_tin: item.recipient_tin,
+      source_document_reference: item.source_document_reference,
+    }];
+  });
   const scheduleF = pending.schedule_f;
   if (!scheduleF || typeof scheduleF !== "object") {
-    if (expectedG.length > 0) {
-      throw new Error("1099-G farm payments need a Schedule F source");
+    if (expectedG.length + expectedM.length + expectedPatr.length > 0) {
+      throw new Error("1099 farm payments need a Schedule F source");
     }
     return;
   }
   const sources = (scheduleF as Record<string, unknown>).farm_sources;
   if (sources === undefined) {
-    if (expectedG.length > 0) {
-      throw new Error("Schedule F 1099-G farm sources are missing");
+    if (expectedG.length + expectedM.length + expectedPatr.length > 0) {
+      throw new Error("Schedule F 1099 farm sources are missing");
     }
     return;
   }
@@ -1076,6 +1114,8 @@ export function assertScheduleFFarmSourceIdentity(
       value.payer_tin,
       value.recipient_tin,
       value.source_document_reference,
+      value.taxable_amount,
+      value.deferred === true,
     ]);
   if (
     JSON.stringify(actualG.map((value) => sourceKey(value)).sort()) !==
@@ -1083,6 +1123,28 @@ export function assertScheduleFFarmSourceIdentity(
   ) {
     throw new Error(
       "Schedule F 1099-G farm sources differ from retained payer copies",
+    );
+  }
+  const actualM = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099m_crop_insurance"
+  );
+  if (
+    JSON.stringify(actualM.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedM.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-MISC crop-insurance sources differ from retained payer copies",
+    );
+  }
+  const actualPatr = sources.filter((value) =>
+    value && typeof value === "object" && value.kind === "1099patr_cooperative"
+  );
+  if (
+    JSON.stringify(actualPatr.map((value) => sourceKey(value)).sort()) !==
+      JSON.stringify(expectedPatr.map((value) => sourceKey(value)).sort())
+  ) {
+    throw new Error(
+      "Schedule F 1099-PATR sources differ from retained cooperative copies",
     );
   }
   const farms = (scheduleF as Record<string, unknown>).schedule_fs;
@@ -1099,7 +1161,9 @@ export function assertScheduleFFarmSourceIdentity(
       row.kind !== "1099nec_farm_income" &&
       row.kind !== "1099g_agriculture" &&
       row.kind !== "1099g_crop_disaster_current_taxable" &&
-      row.kind !== "1099g_ccc_market_gain"
+      row.kind !== "1099g_ccc_market_gain" &&
+      row.kind !== "1099m_crop_insurance" &&
+      row.kind !== "1099patr_cooperative"
     ) continue;
     const matches = farms.filter((farm) =>
       farm && typeof farm === "object" &&

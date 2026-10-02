@@ -68,6 +68,7 @@ Deno.test("1099-PATR repeated issued account rejects direct native and PDF expor
     ...row,
     account_number: "P-1",
     box1_patronage_dividends: 300,
+    source_document_reference: "issued-patr-farm-copy",
     distribution_treatment: {
       kind: "farm" as const,
       farm_id: "FARM-1",
