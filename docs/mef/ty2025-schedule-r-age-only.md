@@ -34,6 +34,11 @@ spouse before capping by the $7,500 line 10 base. The PDF projects the Part II
 prior-year checkbox when applicable. These source references record reviewed
 facts; they do not authenticate document bytes.
 
+The remaining evidence gate must be authoritative for every positive
+Schedule R claim at graph input and native/PDF export. A separate optional
+document-review helper would leave the free-text-reference route open, so it
+does not close the physician, income, or benefit source gap.
+
 Focused calculation, native, and PDF cases for the age and disability statuses
 are written but unrun under the implementation-first workflow. A complete
 source-backed full-return XSD/filled-PDF case for each new status, verified
