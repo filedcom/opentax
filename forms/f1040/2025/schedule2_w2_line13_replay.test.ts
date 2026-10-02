@@ -45,7 +45,7 @@ Deno.test("Schedule 2 line 13 rejects unsourced W-2 FICA amount at final export"
   );
 });
 
-Deno.test("Schedule 2 line 13 retains both W-2 code groups in native and PDF export", async () => {
+Deno.test("Schedule 2 retains W-2 line 13 and 17k taxes in native and PDF export", async () => {
   const pending = {
     w2: {
       w2s: [{
@@ -61,23 +61,29 @@ Deno.test("Schedule 2 line 13 retains both W-2 code groups in native and PDF exp
         box12_entries: [
           { code: Box12Code.A, amount: 120 },
           { code: Box12Code.M, amount: 80 },
+          { code: Box12Code.K, amount: 200 },
         ],
       }],
     },
     f1040: {
       filing_status: "single" as const,
       digital_assets: false,
-      line23_other_taxes: 200,
+      line23_other_taxes: 400,
     },
     schedule2: {
       uncollected_fica: 120,
       uncollected_fica_gtl: 80,
+      golden_parachute_excise: 200,
     },
   };
   const native = await buildMefBundle(pending, { filer, attachments: [] });
   assertStringIncludes(
     native.xml,
     "<UncollSSMedcrRRTAGrpInsTxAmt>200</UncollSSMedcrRRTAGrpInsTxAmt>",
+  );
+  assertStringIncludes(
+    native.xml,
+    "<ExcessParachutePaymentAmt>200</ExcessParachutePaymentAmt>",
   );
   const xsd = new URL(
     "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -105,7 +111,11 @@ Deno.test("Schedule 2 line 13 retains both W-2 code groups in native and PDF exp
     () =>
       buildMefBundle({
         ...pending,
-        schedule2: { uncollected_fica: 119, uncollected_fica_gtl: 81 },
+        schedule2: {
+          uncollected_fica: 119,
+          uncollected_fica_gtl: 81,
+          golden_parachute_excise: 200,
+        },
       }, { filer, attachments: [] }),
     Error,
     "Schedule 2 line 13 differs from retained W-2 box 12 codes",
@@ -120,11 +130,67 @@ Deno.test("Schedule 2 line 13 retains both W-2 code groups in native and PDF exp
             box12_entries: [{ code: Box12Code.A, amount: 121 }, {
               code: Box12Code.M,
               amount: 80,
-            }],
+            }, { code: Box12Code.K, amount: 200 }],
           }],
         },
       }, filer),
     Error,
     "Schedule 2 line 13 differs from retained W-2 box 12 codes",
+  );
+});
+
+Deno.test("Schedule 2 line 17k rejects a bare W-2 code K tax", async () => {
+  const pending = {
+    f1040: {
+      filing_status: "single" as const,
+      digital_assets: false,
+      line23_other_taxes: 200,
+    },
+    schedule2: { golden_parachute_excise: 200 },
+  };
+  await assertRejects(
+    () => buildMefBundle(pending, { filer, attachments: [] }),
+    Error,
+    "Schedule 2 line 17k differs from retained W-2 box 12 code K",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "Schedule 2 line 17k differs from retained W-2 box 12 code K",
+  );
+});
+
+Deno.test("Schedule 2 line 17k rejects a changed W-2 code K amount", async () => {
+  const pending = {
+    w2: {
+      w2s: [{
+        employer_ein: "123456789",
+        employer_name: "Example Employer",
+        employer_address_line1: "2 Employer Way",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78702",
+        employee_ssn: "111223333",
+        box1_wages: 0,
+        box2_fed_withheld: 0,
+        box12_entries: [{ code: Box12Code.K, amount: 201 }],
+      }],
+    },
+    f1040: {
+      filing_status: "single" as const,
+      digital_assets: false,
+      line23_other_taxes: 200,
+    },
+    schedule2: { golden_parachute_excise: 200 },
+  };
+  await assertRejects(
+    () => buildMefBundle(pending, { filer, attachments: [] }),
+    Error,
+    "Schedule 2 line 17k differs from retained W-2 box 12 code K",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "Schedule 2 line 17k differs from retained W-2 box 12 code K",
   );
 });

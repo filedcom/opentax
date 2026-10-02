@@ -46,7 +46,10 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
-import { assertSchedule2W2Line13Sources } from "../schedule2-w2-line13-reconciliation.ts";
+import {
+  assertSchedule2W2Line13Sources,
+  assertSchedule2W2Line17KSource,
+} from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import {
@@ -346,6 +349,7 @@ export async function buildPdfBytes(
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
   assertSchedule2W2Line13Sources(normalized);
+  assertSchedule2W2Line17KSource(normalized);
   assert1099WithholdingSource(normalized, filer);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
