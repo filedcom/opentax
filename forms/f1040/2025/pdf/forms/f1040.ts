@@ -27,6 +27,7 @@ import {
 import {
   DependentCreditCategory,
   dependentFilingSchema,
+  dependentLivedWithFilerOverHalfYear,
 } from "../../../nodes/inputs/general/index.ts";
 import {
   assertDistinct1099RCopies,
@@ -814,7 +815,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
       printedDependents[`dependent_${i}_tin`] =
         (dep.ssn ?? dep.itin ?? dep.atin)?.replaceAll("-", "");
       printedDependents[`dependent_${i}_relationship`] = dep.relationship;
-      printedDependents[`dependent_${i}_home`] = dep.months_in_home > 6;
+      printedDependents[`dependent_${i}_home`] =
+        dependentLivedWithFilerOverHalfYear(dep);
       printedDependents[`dependent_${i}_home_us`] =
         dep.lived_in_us_over_half_year;
       printedDependents[`dependent_${i}_full_time_student`] =

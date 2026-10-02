@@ -7,23 +7,33 @@ line 6 asks for the number of months a qualifying child lived with the filer
 require more than half-year U.S. residence for the qualifying-child EIC, subject
 to their stated exceptions.
 
-`general.dependents` now records `months_lived_with_you_in_us` separately from
-`months_in_home` and the U.S. residency Boolean. A child enters the EIC
-calculation only with an explicit 7–12 U.S.-month answer that does not exceed
-home months. The calculated EIC child detail retains that answer. Native MeF and
-filled PDF Schedule EIC line 6 print it directly, while the shared export
-preflight matches it and the residency Boolean to exactly one general child
-source alongside SSN, name, relationship, date of birth, and home months. There
-is no inference from home months or the Boolean. If all other EIC child
-conditions hold, a missing or inconsistent U.S.-month answer fails the
-calculation instead of silently treating the return as childless.
+`general.dependents` records actual calendar `months_lived_with_you_in_us`
+separately from `months_in_home` and the U.S. residency Boolean. An ordinary
+qualifying child needs an explicit 7–12 U.S.-month answer no greater than home
+months. For a child born during 2025, a reviewed birth record, U.S. home record,
+verified residence with the filer from birth through December 31, and verified
+survival through December 31 support the narrower full-life birth route. The
+actual months must equal the calendar months from the birth month through
+December; the native MeF and filled PDF then print **12** on line 6 as the
+Schedule EIC instructions require. Form 1040 dependent residency uses the same
+reviewed birth fact. An absent or inconsistent review cannot manufacture
+residence months beyond the birth date.
 
-The bounded integer-month route does not yet model the printed **7** when actual
-U.S. residence exceeded half the year but was under seven calendar months, or
-the printed **12** for a child born or deceased in 2025 who met the special home
-test. Kidnapping and other special residence rules also need their own reviewed
-facts. An asserted month count is not proof of school, medical, or custody
-records; source-document authentication remains open. The official
+The calculated EIC child detail retains the actual months and review. The
+shared export preflight matches them and the residency Boolean to exactly one
+general child source alongside SSN, name, relationship, date of birth, and home
+months. Repeated EIC child SSNs fail calculation and both exporters. A
+source-backed three-child fixture exercises ordinary 12 and 8 months plus a
+December-born child with one actual month and printed 12, including TY2025
+schema validation and a rendered filled PDF review.
+
+The route does not yet model the printed **7** when actual U.S. residence
+exceeded half the year but was under seven calendar months, a birth-year child
+whose home was the filer's for more than half their life but less than the
+entire remaining year, or the printed **12** for a child deceased in 2025 who
+met the special home test. Kidnapping and other special residence rules also
+need their own reviewed facts. A record reference is not authentication of
+the source document; source-document authentication remains open. The official
 [TY2025 IRS ATS Scenario 5](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-5-10202025.pdf)
 shows 12 U.S. months for both qualifying children used by the corresponding
 source fixture. Other synthetic fixtures explicitly state their own U.S. month

@@ -4,6 +4,7 @@ import {
   qualifyingChildDetailSchema,
 } from "../../../nodes/intermediate/forms/eitc/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { scheduleEicLine6Months } from "../../eic-birth-residency.ts";
 
 export interface Fields {
   credit_amount?: number;
@@ -84,15 +85,7 @@ function childXml(
   ) {
     throw new Error(`${label} needs a qualifying IRS child relationship code`);
   }
-  if (
-    child.months_lived_with_you_in_us < 7 ||
-    child.months_lived_with_you_in_us > 12 ||
-    child.months_lived_with_you_in_us > child.months_in_home
-  ) {
-    throw new Error(
-      `${label} needs seven through twelve U.S. residence months`,
-    );
-  }
+  const line6Months = scheduleEicLine6Months(child);
   if (child.ip_pin !== undefined && !/^\d{6}$/.test(child.ip_pin)) {
     throw new Error(`${label} needs a six-digit IP PIN`);
   }
@@ -115,7 +108,7 @@ function childXml(
     element("ChildRelationshipCd", child.irs_relationship_code),
     element(
       "MonthsChildLivedWithYouCnt",
-      String(child.months_lived_with_you_in_us).padStart(2, "0"),
+      String(line6Months).padStart(2, "0"),
     ),
   ]);
 }

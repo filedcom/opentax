@@ -47,6 +47,11 @@ import { scheduleA } from "../schedule_a/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  eicBirthResidencyReviewSchema,
+  reviewedEicBirthResidence,
+  scheduleEicLine6Months,
+} from "../../../2025/eic-birth-residency.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -116,8 +121,9 @@ export const dependentSchema = z.object({
   irs_relationship_code: z.nativeEnum(IRSDependentRelationshipCode).optional(),
   months_in_home: z.number().int().min(0).max(12),
   lived_in_us_over_half_year: z.boolean().optional(),
-  // Exact 2025 Schedule EIC line 6 months, distinct from total home months.
-  months_lived_with_you_in_us: z.number().int().min(7).max(12).optional(),
+  // Actual calendar months; Schedule EIC line 6 prints 12 for reviewed births.
+  months_lived_with_you_in_us: z.number().int().min(0).max(12).optional(),
+  eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
   us_citizen_national_or_resident: z.boolean().optional(),
   provided_over_half_own_support: z.boolean().optional(),
   filed_joint_return_except_refund_only: z.boolean().optional(),
@@ -745,7 +751,14 @@ function passesAgeTest(dep: DependentItem): boolean {
 
 // IRS CTC residency test: lived with taxpayer MORE than 6 months.
 function passesResidencyTest(dep: DependentItem): boolean {
-  return dep.months_in_home > 6;
+  return dependentLivedWithFilerOverHalfYear(dep);
+}
+
+export function dependentLivedWithFilerOverHalfYear(
+  dep: DependentItem,
+): boolean {
+  const reviewedBirth = reviewedEicBirthResidence(dep);
+  return dep.months_in_home > 6 || reviewedBirth;
 }
 
 function passesJointReturnTest(dep: DependentItem): boolean {
@@ -910,13 +923,13 @@ function isEitcQualifyingChild(
     passesEitcAgeTest(dep);
   if (
     otherwiseQualified &&
-    (dep.months_lived_with_you_in_us === undefined ||
-      dep.months_lived_with_you_in_us > dep.months_in_home)
+    dep.months_lived_with_you_in_us === undefined
   ) {
     throw new Error(
       "EIC qualifying child needs exact U.S. months no greater than home months",
     );
   }
+  if (otherwiseQualified) scheduleEicLine6Months(dep);
   return otherwiseQualified;
 }
 
@@ -928,11 +941,20 @@ function eitcQualifyingChildren(
     months_lived_with_you_in_us: number;
   }
 > {
-  return deps.filter((dep) =>
+  const children = deps.filter((dep) =>
     dep.dependent_on_another_return !== true ||
     dep.custodial_eitc_release_review !== undefined
   )
     .filter(isEitcQualifyingChild);
+  const seenSsns = new Set<string>();
+  for (const child of children) {
+    const ssn = child.ssn.replaceAll("-", "");
+    if (seenSsns.has(ssn)) {
+      throw new Error("Schedule EIC qualifying children need unique SSNs");
+    }
+    seenSsns.add(ssn);
+  }
+  return children;
 }
 
 // Optional field helper — adds key/value to obj only if value is not undefined.
@@ -1343,6 +1365,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           irs_relationship_code: dep.irs_relationship_code,
           months_in_home: dep.months_in_home,
           months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
+          eic_birth_residency_review: dep.eic_birth_residency_review,
           full_time_student: dep.full_time_student,
           disabled: dep.disabled,
           ip_pin: dep.ip_pin,

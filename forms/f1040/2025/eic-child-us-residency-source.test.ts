@@ -12,12 +12,19 @@ import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { eitcPdf } from "./pdf/forms/eitc.ts";
+import { irs1040Pdf } from "./pdf/forms/f1040.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-w2-custodial-eic-release"
 );
 if (!fixture) throw new Error("Missing Schedule EIC source fixture");
 const plan = buildExecutionPlan(registry);
+const threeChildFixture = pdfReviewFixtures.find((item) =>
+  item.id === "single-w2-three-eic-children-with-reviewed-birth"
+);
+if (!threeChildFixture) {
+  throw new Error("Missing three-child EIC source fixture");
+}
 
 Deno.test("Schedule EIC US residency survives calculation and both export preflights", async () => {
   const result = execute(plan, registry, { ...fixture.inputs }, {
@@ -101,6 +108,120 @@ Deno.test("Schedule EIC line 6 uses exact U.S. months through calculation, nativ
   );
   await assertRejects(
     () => buildPdfBytes(tampered, fixture.filer),
+    Error,
+    "Schedule EIC child differs from reviewed general source",
+  );
+});
+
+Deno.test("reviewed December birth survives three-child source, native XML, and filled PDF", async () => {
+  const result = execute(plan, registry, { ...threeChildFixture.inputs }, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.eitc?.qualifying_children, 3);
+  assertEquals(
+    pending.eitc?.qualifying_child_details?.map((child) =>
+      child.months_lived_with_you_in_us
+    ),
+    [12, 8, 1],
+  );
+  const projected = eitcPdf.projectFields?.(
+    pending.eitc!,
+    pending as unknown as Record<string, Record<string, unknown>>,
+  );
+  assertEquals([
+    projected?.child1_us_months,
+    projected?.child2_us_months,
+    projected?.child3_us_months,
+  ], [12, 8, 12]);
+  const xml = buildMefXml(pending, threeChildFixture.filer);
+  assertEquals((xml.match(/<QualifyingChildInformation>/g) ?? []).length, 3);
+  assertEquals(
+    [...xml.matchAll(
+      /<MonthsChildLivedWithYouCnt>(\d+)<\/MonthsChildLivedWithYouCnt>/g,
+    )]
+      .map((match) => match[1]),
+    ["12", "08", "12"],
+  );
+  assertStringIncludes(
+    xml,
+    "<ChldWhoLivedWithYouCnt>3</ChldWhoLivedWithYouCnt>",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(
+      pending.f1040!,
+      pending as unknown as Record<string, Record<string, unknown>>,
+    )?.dependent_2_home,
+    true,
+  );
+  const pdf = await buildPdfBytes(pending, threeChildFixture.filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+});
+
+Deno.test("Schedule EIC rejects repeated identity and unsupported birth residence", () => {
+  const input = threeChildFixture.inputs;
+  const general = input.general as Record<string, unknown>;
+  const deps = general.dependents as Array<Record<string, unknown>>;
+  const run = (dependents: Array<Record<string, unknown>>) =>
+    execute(
+      plan,
+      registry,
+      { ...input, general: { ...general, dependents } },
+      { taxYear: 2025, formType: "f1040" },
+    );
+  const duplicated = run([deps[0], { ...deps[1], ssn: deps[0].ssn }, deps[2]]);
+  assertStringIncludes(
+    JSON.stringify(duplicated.diagnostics),
+    "Schedule EIC qualifying children need unique SSNs",
+  );
+  const fabricated = run([deps[0], deps[1], {
+    ...deps[2],
+    eic_birth_residency_review: undefined,
+    months_in_home: 12,
+    months_lived_with_you_in_us: 12,
+  }]);
+  assertStringIncludes(
+    JSON.stringify(fabricated.diagnostics),
+    "2025 birth months exceed possible calendar residence",
+  );
+  const inconsistent = run([deps[0], deps[1], {
+    ...deps[2],
+    months_lived_with_you_in_us: 0,
+  }]);
+  assertStringIncludes(
+    JSON.stringify(inconsistent.diagnostics),
+    "needs U.S. home for every 2025 birth month",
+  );
+});
+
+Deno.test("Schedule EIC export rejects a changed birth review after calculation", async () => {
+  const result = execute(plan, registry, { ...threeChildFixture.inputs }, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const children = pending.eitc?.qualifying_child_details ?? [];
+  const changed = {
+    ...pending,
+    eitc: {
+      ...pending.eitc,
+      qualifying_child_details: children.map((child, index) =>
+        index === 2
+          ? { ...child, eic_birth_residency_review: undefined }
+          : child
+      ),
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(changed), threeChildFixture.filer),
+    Error,
+    "Schedule EIC child differs from reviewed general source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, threeChildFixture.filer),
     Error,
     "Schedule EIC child differs from reviewed general source",
   );

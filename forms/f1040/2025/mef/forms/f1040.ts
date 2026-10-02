@@ -10,6 +10,7 @@ import {
   dependentCreditCategory,
   type DependentFiling,
   dependentFilingSchema,
+  dependentLivedWithFilerOverHalfYear,
   DependentRelationship,
   filerCreditEligibility,
   IRSDependentRelationshipCode,
@@ -423,7 +424,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
       element("IdentityProtectionPIN", dep.ip_pin),
       element("DependentSSN", normalizedTin),
       element("DependentRelationshipCd", dep.irs_relationship_code),
-      dep.months_in_home > 6
+      dependentLivedWithFilerOverHalfYear(dep)
         ? element("YesLiveWithChildOverHalfYrInd", "X")
         : "",
       dep.lived_in_us_over_half_year === true
@@ -440,7 +441,8 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
         : "",
     ]);
   });
-  const livedWithYou = details.filter((dep) => dep.months_in_home > 6).length;
+  const livedWithYou =
+    details.filter(dependentLivedWithFilerOverHalfYear).length;
   return [
     ...rows,
     separatedSpouseMark,
