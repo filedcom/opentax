@@ -110,6 +110,22 @@ rows do not preserve the election, classification, guarantee/improvement facts,
 payment dates, sale-date AFR, or payment-specific tax calculation. These are
 needed before a positive line 14 can be computed.
 
+A positive line 14 cannot yet be made source-backed merely by supplying a
+payment-level amount. Section 453(l)(3) uses the **tax attributable to each
+2025 payment**, excluding the line 14 interest itself, rather than a maximum
+tax rate or a tax on the year-end obligation balance. The current Form 6252
+input has one annual payment total and routes income as capital gain or section
+1231 gain; it has no dealer-inventory election or Schedule C income join. Thus
+there is no filed dealer gain from which to replay the payment-specific tax
+counterfactual. The note's payment schedule is also needed to select the
+sale-date AFR term; [Treasury Regulation §1.1273-1(e)(3)](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol13/pdf/CFR-2025-title26-vol13-sec1-1273-1.pdf)
+defines weighted-average maturity, and [§1.1274-4(c)(1)](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol13/pdf/CFR-2025-title26-vol13-sec1-1274-4.pdf)
+uses it to select the AFR term for an installment obligation. A bounded
+positive route needs a qualifying dealer-sale source, dated note payment
+schedule and 2025 receipts, the published sale-month AFR for the resulting
+term, and a replayable with/without-payment chapter 1 tax calculation. Until
+those joins exist, line 14 remains closed at graph, native, and PDF export.
+
 Remaining gates include authenticated obligation and balance records, the
 Form 6252 sale-key and accepted prior-year workpaper join, pass-through
 allocations, and a section 453(l)(3) line 14 source and calculation. The bounded
