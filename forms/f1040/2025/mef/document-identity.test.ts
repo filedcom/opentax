@@ -76,6 +76,49 @@ Deno.test("repeated MeF form references keep their declared document name", () =
   );
 });
 
+Deno.test("MeF multi-name references identify every referenced document root", () => {
+  const fragments = (referenceName: string) => [{
+    pendingKey: "f1040",
+    tag: "IRS1040",
+    xml:
+      `<IRS1040><Amount referenceDocumentId="IRS24391 BinaryAttachment2" referenceDocumentName="${referenceName}">10</Amount></IRS1040>`,
+  }, {
+    pendingKey: "f2439",
+    tag: "IRS2439",
+    xml: "<IRS2439/>",
+  }, {
+    pendingKey: "binaryAttachment",
+    tag: "BinaryAttachment",
+    xml: "<BinaryAttachment/>",
+  }];
+  validateDocumentReferences(fragments("IRS2439 BinaryAttachment"));
+  assertThrows(
+    () => validateDocumentReferences(fragments("IRS2439 IRS1099G")),
+    Error,
+    "referenceDocumentName differs",
+  );
+
+  const bundle = (referenceName: string): MefBundle => ({
+    xml:
+      `<Return><ReturnHeader binaryAttachmentCnt="1"/><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><Amount referenceDocumentId="IRS24391 BinaryAttachment2" referenceDocumentName="${referenceName}">10</Amount></IRS1040><IRS2439 documentId="IRS24391"/><BinaryAttachment documentId="BinaryAttachment2"/></ReturnData></Return>`,
+    attachments: [{
+      fileName: "Statement.pdf",
+      description: "Statement",
+      bytes: new Uint8Array(),
+    }],
+    pending: {},
+    sourceSha256: "",
+    xmlSha256: "",
+    attachmentSha256ByFileName: {},
+  });
+  assertPreparedDocumentInventory(bundle("IRS2439 BinaryAttachment"));
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle("IRS2439 IRS1099G")),
+    Error,
+    "document count, order, IDs, references",
+  );
+});
+
 Deno.test("Form 8814 child-interest reference uses its exact IRS schema name", () => {
   const childId = documentId("ChildTaxableInterestStmt", 1);
   const fragments = (name: string) => [{
