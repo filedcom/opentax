@@ -17,7 +17,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
   ["line8z_taxable_grants", "Taxable grants"],
-  ["line8z_golden_parachute", "Excess golden parachute"],
   ["at_risk_disallowed_add_back", "At-risk loss add-back"],
   ["at_risk_recapture", "At-risk recapture"],
   ["biz_interest_disallowed_add_back", "Disallowed business interest"],
@@ -48,6 +47,15 @@ export function schedule1OtherIncomeRows(
   ) {
     throw new Error(
       "Schedule 1 line 8z generic income needs identified source types before filing",
+    );
+  }
+  if (
+    source.line8z_golden_parachute !== undefined &&
+    source.line8z_golden_parachute !== null &&
+    source.line8z_golden_parachute !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 excess golden parachute income needs a retained source",
     );
   }
   const componentRows: Schedule1OtherIncomeRow[] = SOURCED_COMPONENTS.flatMap(

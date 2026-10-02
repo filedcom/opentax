@@ -226,7 +226,6 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
       recipient_tin: "987654321",
       amount: 750,
     }],
-    line8z_golden_parachute: 500,
     line8z_form8621_qef: 200,
     line8z_form8621_mtm: -100,
     line8z_form8621_section1291: 25,
@@ -266,7 +265,7 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3725</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3225</OtherIncomeTotalAmt>',
   );
   assertStringIncludes(
     xml,

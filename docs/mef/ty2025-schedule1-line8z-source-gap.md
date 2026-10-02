@@ -1,5 +1,16 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 excess golden parachute source boundary
+
+`line8z_golden_parachute` had a fixed type label but no producer, payer record,
+or retained workpaper. A directly supplied $500 scalar was accepted by native
+return assembly before this audit. The shared line 8z row builder now rejects
+any nonzero amount in that slot, so both native and PDF final export refuse an
+unsourced type statement. A positive route needs a reviewed payment source,
+recipient and tax-character facts, and a calculation connected to Schedule 1
+and AGI. Neither an issued payment record nor an independent source-document
+authentication path exists for this slot yet.
+
 ## 2026-10-02 Form 8814 child-election statement replay
 
 The shared native/PDF final check recalculates each retained Form 8814 line 12
