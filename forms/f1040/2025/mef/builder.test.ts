@@ -423,6 +423,33 @@ Deno.test("prepared PDF and submission manifest reject changed attachment bytes 
   );
 });
 
+Deno.test("prepared manifest rejects unsafe PDF names even if XML and digests are recomputed", async () => {
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "SafeStatement.pdf",
+      description: "Reviewed statement",
+      bytes: await sampleAttachmentBytes(),
+    }],
+  });
+  const unsafeName = "../escaped.pdf";
+  const xml = bundle.xml.replaceAll("SafeStatement.pdf", unsafeName);
+  const forged = {
+    ...bundle,
+    xml,
+    xmlSha256: await sha256Hex(new TextEncoder().encode(xml)),
+    attachments: [{ ...bundle.attachments[0], fileName: unsafeName }],
+    attachmentSha256ByFileName: {
+      [unsafeName]: bundle.attachmentSha256ByFileName["SafeStatement.pdf"],
+    },
+  };
+  await assertRejects(
+    () => assertPreparedAttachmentManifest(forged),
+    Error,
+    "PDF attachment set differs",
+  );
+});
+
 Deno.test("prepared manifest replays document inventory and references after XML digest changes", async () => {
   const bundle = await buildMefBundle({}, {
     filer: sampleFiler(),

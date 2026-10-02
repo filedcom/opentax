@@ -1,6 +1,7 @@
 import { element } from "../../mef/xml.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import type { MefBundle } from "./builder.ts";
+import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 
 /** Replay the prepared return's document and reference inventory. */
 export function assertPreparedDocumentInventory(
@@ -52,6 +53,7 @@ export async function assertPreparedAttachmentManifest(
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (
     new Set(names).size !== names.length ||
+    names.some((name) => !isValidMefPdfFilename(name)) ||
     names.length !== digestNames.length ||
     names.some((name) =>
       !Object.hasOwn(bundle.attachmentSha256ByFileName, name)

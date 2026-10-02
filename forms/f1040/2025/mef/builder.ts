@@ -1,6 +1,7 @@
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { PDFDocument } from "pdf-lib";
+import { isValidMefPdfFilename } from "./pdf-attachment-filename.ts";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
 import { documentId, validateDocumentReferences } from "./document-identity.ts";
 import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/schedule_e_type8_statement.ts";
@@ -98,32 +99,8 @@ async function validatePdfAttachments(
   const validated: MefPdfAttachment[] = [];
   for (const attachment of attachments) {
     const { fileName, description } = attachment;
-    const forbiddenNameCharacters = [
-      "/",
-      "\\",
-      ";",
-      "|",
-      "[",
-      "]",
-      "<",
-      ">",
-      "^",
-      "`",
-      "&",
-      '"',
-      "'",
-      ":",
-      "?",
-      "*",
-    ];
     if (
-      fileName.length > 64 ||
-      fileName !== fileName.trim() ||
-      !/^[\x20-\x7E]+\.pdf$/.test(fileName) ||
-      forbiddenNameCharacters.some((character) =>
-        fileName.includes(character)
-      ) ||
-      fileName.includes("..") ||
+      !isValidMefPdfFilename(fileName) ||
       names.has(fileName)
     ) {
       throw new Error(`Invalid or duplicate MeF PDF filename: ${fileName}`);
