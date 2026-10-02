@@ -4336,6 +4336,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example Pension Plan",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 0,
         box7_distribution_code: DistributionCode.CodeG,
@@ -4357,6 +4358,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 5_000,
         box2a_taxable_amount: 0,
         box7_distribution_code: DistributionCode.Code7,
@@ -4387,6 +4389,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 7_000,
         box2a_taxable_amount: 0,
         box7_distribution_code: DistributionCode.Code7,
@@ -4416,6 +4419,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 8_000,
         box2a_taxable_amount: 0,
         box7_distribution_code: DistributionCode.Code7,
@@ -4445,6 +4449,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         account_number: "IRA-2025-LATE",
         source_document_reference: "issued-1099r-late-2025",
         box1_gross_distribution: 9_000,
@@ -4489,6 +4494,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         account_number: "IRA-2025-CERT",
         source_document_reference: "issued-1099r-cert-2025",
         box1_gross_distribution: 6_000,
@@ -4537,6 +4543,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example IRA Custodian",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         account_number: "IRA-2025-PLR",
         source_document_reference: "issued-1099r-plr-2025",
         box1_gross_distribution: 7_000,
@@ -5590,6 +5597,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example Qualified Plan",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         source_document_reference: "review-4972-qualified-plan-1099r",
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
@@ -6390,6 +6398,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "IRA Custodian",
         payer_ein: "123456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         source_document_reference: "2025 issued Form 1099-R",
         box1_gross_distribution: 20_000,
         box2a_taxable_amount: 20_000,
@@ -6608,6 +6617,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Payer A",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 4_000,
         box2a_taxable_amount: 4_000,
         box7_distribution_code: DistributionCode.Code1,
@@ -6616,6 +6626,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }, {
         payer_name: "Payer B",
         payer_ein: "98-7654321",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         box1_gross_distribution: 6_000,
         box2a_taxable_amount: 6_000,
         box7_distribution_code: DistributionCode.Code1,
@@ -6638,6 +6649,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       f1099r: [{
         payer_name: "Example Plan",
         payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         account_number: "123",
         source_document_reference: "issued 2025 1099-R account 123",
         ts: TS.T,
@@ -6650,6 +6662,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }, {
         payer_name: "Other Plan",
         payer_ein: "98-7654321",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
         account_number: "456",
         source_document_reference: "issued ordinary 2025 1099-R account 456",
         ts: TS.T,
