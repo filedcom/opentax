@@ -24,24 +24,26 @@ const general = {
   bank_account_type: "checking" as const,
 };
 
+const wageSource = [{
+  box1_wages: 1_000,
+  box2_fed_withheld: 100,
+  box3_ss_wages: 1_000,
+  box4_ss_withheld: 62,
+  box5_medicare_wages: 1_000,
+  box6_medicare_withheld: 14.5,
+  employer_ein: "12-3456789",
+  employer_name: "ACME Corp",
+  employee_ssn: "111-22-3333",
+  box12_entries: [],
+}];
+
 Deno.test("general direct deposit survives the full graph and CLI filer extraction", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
     {
       general,
-      w2: [{
-        box1_wages: 1_000,
-        box2_fed_withheld: 100,
-        box3_ss_wages: 1_000,
-        box4_ss_withheld: 62,
-        box5_medicare_wages: 1_000,
-        box6_medicare_withheld: 14.5,
-        employer_ein: "12-3456789",
-        employer_name: "ACME Corp",
-        employee_ssn: "111-22-3333",
-        box12_entries: [],
-      }],
+      w2: wageSource,
     },
     { taxYear: 2025, formType: "f1040" },
   );
@@ -116,10 +118,25 @@ Deno.test("direct-deposit source syntax follows Form 1040 lines 35b and 35d", ()
     generalInputSchema.safeParse({
       ...general,
       bank_routing_number: "211000021",
-      bank_account_number: "AB12-3456",
+      bank_account_number: "A",
     }).success,
     true,
   );
+  const shortAccountSource = { ...general, bank_account_number: "A" };
+  const shortAccountReturn = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { general: shortAccountSource, w2: wageSource },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  const shortAccountFiler = extractFilerIdentity(
+    shortAccountReturn.pending.f1040 as Record<string, unknown>,
+  );
+  assertEquals(shortAccountFiler?.bankAccount?.accountNumber, "A");
+  assertGeneral1040DepositSource({
+    ...shortAccountReturn.pending,
+    general: shortAccountSource,
+  }, shortAccountFiler);
   for (const bank_routing_number of ["001000021", "331000021", "02A000021"]) {
     assertEquals(
       generalInputSchema.safeParse({
