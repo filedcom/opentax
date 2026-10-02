@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -48,7 +49,7 @@ Deno.test({
       : {}),
   }));
   const xml = buildMefXml({
-    general: { filing_status: "single", digital_assets: true },
+    general: { filing_status: NodeFilingStatus.Single, digital_assets: true },
     f1040: { filing_status: "single", digital_assets: true },
     schedule_d: { transaction: transactions },
     form8949: transactions,
