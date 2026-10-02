@@ -62,6 +62,7 @@ import { assertSchedule2Form8828Tax } from "../schedule2-form8828-reconciliation
 import { assertSchedule2Form8936Repayment } from "../schedule2-form8936-reconciliation.ts";
 import { assertSchedule3Form8859Credit } from "../schedule3-form8859-reconciliation.ts";
 import { assertSchedule3Form8834Credit } from "../schedule3-form8834-reconciliation.ts";
+import { assertSchedule3Form8912Credit } from "../schedule3-form8912-reconciliation.ts";
 import {
   assertSchedule2Line17HSources,
   assertSchedule2W2Line13Sources,
@@ -245,6 +246,7 @@ function buildReturnXml(
   assertSchedule2Form8936Repayment(pending);
   assertSchedule3Form8859Credit(pending);
   assertSchedule3Form8834Credit(pending);
+  assertSchedule3Form8912Credit(pending);
   assert1099WithholdingSource(pending, filer);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
