@@ -70,6 +70,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "form1[0].Page1[0].f1_7[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_line_5a_sales_tax_election",
+    pdfField: "form1[0].Page1[0].c1_1[0]",
+  },
+  {
     kind: "text",
     domainKey: "line_5b_real_estate_tax",
     pdfField: "form1[0].Page1[0].f1_8[0]",
@@ -293,6 +298,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         amount("line_1_medical") - Math.max(0, amount("agi")) * 0.075,
       ),
       line_5d_salt_before_cap: saltBeforeCap,
+      print_line_5a_sales_tax_election: amount("line_5a_sales_tax") > 0,
       line_5e_salt_deduction: salt,
       line_7_taxes: taxes,
       line_10_interest: interest,

@@ -6,6 +6,8 @@ import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
+import { PDFDocument } from "pdf-lib";
+import { fillFormPdf } from "../builder.ts";
 
 Deno.test("Schedule A PDF replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
@@ -170,4 +172,70 @@ Deno.test("Schedule A PDF prints the ordinary gift on the official line 12 widge
     )?.pdfField,
     "form1[0].Page1[0].f1_24[0]",
   );
+});
+
+Deno.test("Schedule A PDF marks the canonical line 5a election for sourced sales tax", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-ordinary-noncash-gift"
+  )!;
+  const inputs = {
+    ...fixture.inputs,
+    schedule_a: {
+      ...(fixture.inputs.schedule_a as Record<string, unknown>),
+      line_5a_state_income_tax: undefined,
+    },
+    sales_tax_deduction: {
+      method: "actual",
+      actual_sales_tax_paid: 24_000,
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_5a_sales_tax, 24_000);
+  const [salesTax] = scheduleAPdf.instances?.(
+    result.pending.schedule_a,
+    fixture.filer,
+    result.pending,
+  ) ?? [];
+  assertEquals(salesTax?.print_line_5a_sales_tax_election, true);
+  assertEquals(
+    scheduleAPdf.fields.find((field) =>
+      field.domainKey === "print_line_5a_sales_tax_election"
+    )?.pdfField,
+    "form1[0].Page1[0].c1_1[0]",
+  );
+  const source = await PDFDocument.load(
+    await Deno.readFile(
+      ".pdf-cache/https_www_irs_gov_pub_irs_prior_f1040sa_2025_pdf.pdf",
+    ),
+    { ignoreEncryption: true },
+  );
+  source.getForm().getCheckBox("form1[0].Page1[0].c1_1[0]");
+  const filled = await fillFormPdf(
+    scheduleAPdf,
+    salesTax!,
+    fixture.filer,
+    ".pdf-cache",
+    result.pending,
+  );
+  assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
+
+  const incomeResult = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(incomeResult.diagnostics, []);
+  const [incomeTax] = scheduleAPdf.instances?.(
+    incomeResult.pending.schedule_a,
+    fixture.filer,
+    incomeResult.pending,
+  ) ?? [];
+  assertEquals(incomeTax?.print_line_5a_sales_tax_election, false);
 });
