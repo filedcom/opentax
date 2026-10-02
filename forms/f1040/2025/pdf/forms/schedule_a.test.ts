@@ -15,6 +15,29 @@ import { buildPending } from "../../mef/pending.ts";
 import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
 import { scheduleALine16EstateStatement } from "../../mef/forms/schedule_a_line16_estate_statement.ts";
 
+async function assertScheduleAXsd(xml: string): Promise<void> {
+  const xsdPath = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+}
+
 Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and PDF", async () => {
   const filer = {
     primarySSN: "123456789",
@@ -87,26 +110,13 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
     fullXml.includes("<OtherMiscellaneousDedAmt referenceDocumentId="),
     true,
   );
-  const xsdPath = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(xmlPath, fullXml);
-    const validation = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsdPath, xmlPath],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(
-      validation.code,
-      0,
-      new TextDecoder().decode(validation.stderr),
-    );
-  } finally {
-    await Deno.remove(xmlPath);
-  }
+  assertEquals(
+    fullXml.includes(
+      'referenceDocumentName="OtherMiscellaneousDeductionsStatement"',
+    ),
+    true,
+  );
+  await assertScheduleAXsd(fullXml);
   assertEquals(
     scheduleAMef.build(pending.schedule_a, { pending }).includes(
       "<OtherMiscellaneousDedAmt>800</OtherMiscellaneousDedAmt>",
@@ -233,6 +243,13 @@ Deno.test("Schedule A line 8b seller details reach native statement and PDF", as
     true,
   );
   assertEquals(xml.includes("<F1098RecpntNmTINAddrStatement "), true);
+  assertEquals(
+    xml.includes(
+      'referenceDocumentName="Form1098RecipientNameAndAddressStatement Form1098RecipientNameTINAndAddressStatement"',
+    ),
+    true,
+  );
+  await assertScheduleAXsd(xml);
   assertEquals(xml.includes("<PersonNm>Seller Example</PersonNm>"), true);
   assertEquals(xml.includes("<SSN>222334444</SSN>"), true);
   const [instance] = scheduleAPdf.instances?.(
@@ -320,6 +337,11 @@ Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement an
   const xml = buildMefXml(result.pending as MefFormsPending, filer);
   assertEquals(xml.includes("<OtherTaxesAmt referenceDocumentId="), true);
   assertEquals(xml.includes("<OtherDeductibleTaxStmt "), true);
+  assertEquals(
+    xml.includes('referenceDocumentName="OtherDeductibleTaxStatement"'),
+    true,
+  );
+  await assertScheduleAXsd(xml);
   assertEquals(
     xml.includes("<Desc>Foreign income tax</Desc><Amt>2000</Amt>"),
     true,

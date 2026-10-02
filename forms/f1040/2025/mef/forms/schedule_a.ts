@@ -359,6 +359,7 @@ function buildIRS1040ScheduleA(
         otherTaxStatementIds.length === 1
           ? {
             referenceDocumentId: otherTaxStatementIds[0],
+            referenceDocumentName: "OtherDeductibleTaxStatement",
           }
           : undefined,
       )
@@ -374,7 +375,11 @@ function buildIRS1040ScheduleA(
         "Form1098HomeMortgIntNotRptAmt",
         net8b,
         line8bStatementIds.length === 1
-          ? { referenceDocumentId: line8bStatementIds[0] }
+          ? {
+            referenceDocumentId: line8bStatementIds[0],
+            referenceDocumentName:
+              "Form1098RecipientNameAndAddressStatement Form1098RecipientNameTINAndAddressStatement",
+          }
           : undefined,
       )
       : "",
@@ -389,7 +394,10 @@ function buildIRS1040ScheduleA(
         "OtherMiscellaneousDedAmt",
         fields.line_16_other_deductions,
         line16StatementIds.length === 1
-          ? { referenceDocumentId: line16StatementIds[0] }
+          ? {
+            referenceDocumentId: line16StatementIds[0],
+            referenceDocumentName: "OtherMiscellaneousDeductionsStatement",
+          }
           : undefined,
       )
       : "",

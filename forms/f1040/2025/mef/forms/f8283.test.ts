@@ -579,6 +579,11 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over 
   );
   assertStringIncludes(xml, "<Desc>Form1098C First vehicle</Desc>");
   assertStringIncludes(xml, "<Desc>Form1098C Second vehicle</Desc>");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="ContributionsOfMotorVehiclesBoatsAndAirplanesStatement ContemporaneousWrittenAcknowledgmentStatement"',
+  );
+  await assertVehicleBundleXsd(xml);
 });
 
 Deno.test("Form 8283 accepts a donee-issued written acknowledgment PDF instead of Form 1098-C", async () => {

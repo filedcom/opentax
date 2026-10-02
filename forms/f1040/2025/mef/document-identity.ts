@@ -11,11 +11,30 @@ export function documentId(tag: string, index: number): string {
 
 // TY2025 MeF statement reference names can differ from shortened XML roots.
 const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
+  AltBasisCompSourceStmt: "AltBasisCompensationSourceStatement",
   ChildTaxableInterestStmt: "ChildTaxableInterestStatement",
   CCCLoanDetailCashMethodStmt: "CCCLoanDetailCashMethodStatement",
   CCCLoanDetailAccrualMethodStmt: "CCCLoanDetailAccrualMethodStatement",
+  ChangePrePostExptrtDateStmt: "ChangePreOrPostExpatriationDateStatement",
+  ContriVehicleBoatAirplaneStmt:
+    "ContributionsOfMotorVehiclesBoatsAndAirplanesStatement",
+  ControlledGroupMembersStmt: "ControlledGroupMembersStatement",
+  DeferredPropertyTaxElectStmt: "DeferredPropertyTaxElectionStatement",
+  DslWaterFuelEmulsionBlndgStmt: "DieselWaterFuelEmulsionBlendingStatement",
+  EligDeferredCompItemStmt: "EligibleDeferredCompensationItemStatement",
+  F1098RecpntNmTINAddrStatement: "Form1098RecipientNameTINAndAddressStatement",
+  InlgblDeferredCompItemStmt: "IneligibleDeferredCompensationItemStatement",
+  NongrantorTrBeneficialIntStmt: "NongrantorTrustsBeneficialInterestStatement",
+  NontxUseFuelsCrCardUsersStmt: "NontaxableUseFuelsCreditCardUsersStatement",
+  OtherAssetsNotIncludedStmt: "OtherAssetsNotIncludedStatement",
+  OtherDeductibleTaxStmt: "OtherDeductibleTaxStatement",
+  OtherDeductionsNotRelatedStmt: "OtherDeductionsNotRelatedStatement",
+  OtherIncomeTypeStmt: "OtherIncomeTypeStatement",
+  OtherMiscDeductionsStmt: "OtherMiscellaneousDeductionsStatement",
   PostponementCropInsDsstrStmt:
     "PostponementOfCropInsuranceAndDisasterPaymentsStatement",
+  SpecifiedTaxDeferredAcctStmt: "SpecifiedTaxDeferredAccountsStatement",
+  TaxationOfExcessDistriStmt: "TaxationOfExcessDistributionStmt",
 };
 
 /** Match each referenced document to a declared schema document name. */
