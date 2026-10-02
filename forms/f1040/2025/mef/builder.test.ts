@@ -2040,6 +2040,48 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   );
 });
 
+Deno.test("joint zero-withholding W-2 wages need an identified employee in both exports", async () => {
+  const filerIdentity: FilerIdentity = {
+    ...sampleFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "222334444",
+      firstName: "Joint",
+      lastName: "Smith",
+      nameControl: "SMIT",
+    },
+  };
+  const pending = {
+    f1040: {
+      filing_status: "mfj",
+      digital_assets: false,
+      line25a_w2_withheld: 0,
+    },
+    w2: {
+      w2s: [{
+        employer_ein: "12-3456789",
+        employer_name: "ACME CORP",
+        employer_address_line1: "500 MARKET ST",
+        employer_address_city: "SPRINGFIELD",
+        employer_address_state: "IL",
+        employer_address_zip: "62701",
+        box1_wages: 30_000,
+        box2_fed_withheld: 0,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filerIdentity),
+    Error,
+    "identified joint spouse",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filerIdentity),
+    Error,
+    "identified joint spouse",
+  );
+});
+
 Deno.test("final MeF and PDF exports reject 1099 withholding changed after source calculation", async () => {
   const payer = {
     f1099int: { f1099ints: [{ payer_name: "Bank", box4: 80 }] },

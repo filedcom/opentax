@@ -84,6 +84,44 @@ Deno.test("W-2 withholding replays both identified joint owners into line 25a", 
   );
 });
 
+Deno.test("joint W-2 wages without withholding still need an identified employee", () => {
+  const source = {
+    w2: {
+      w2s: [{
+        employer_name: "Employer A",
+        box1_wages: 1_000,
+        box2_fed_withheld: 0,
+      }],
+    },
+    f1040: { line25a_w2_withheld: 0 },
+  };
+  assertThrows(
+    () => assertW2WithholdingSource(source, filer),
+    Error,
+    "identified joint spouse",
+  );
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        ...source,
+        w2: {
+          w2s: [{
+            ...source.w2.w2s[0],
+            employee_ssn: "999887777",
+          }],
+        },
+      }, filer),
+    Error,
+    "recipient must match",
+  );
+  assertW2WithholdingSource({
+    ...source,
+    w2: {
+      w2s: [{ ...source.w2.w2s[0], employee_ssn: "222334444" }],
+    },
+  }, filer);
+});
+
 Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 25a", () => {
   const allocation = {
     domicile_state: CommunityPropertyState.CA,

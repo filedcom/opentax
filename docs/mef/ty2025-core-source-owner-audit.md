@@ -97,6 +97,14 @@ recipient TIN, account or transaction identity, correction status, and source
 bytes where the return uses those facts. Until then, the unsupported or
 ambiguous combinations above remain open.
 
+For joint 2025 exports, retained W-2 box 1 wages now need an identified
+employee SSN even if box 2 withholding is zero. The shared final MeF/PDF
+preflight rejects an absent or non-filer recipient rather than letting the
+native W-2 serializer assign an owner from the header. The focused source
+guard and both-export rejection cases pass. Single-filer optional W-2 SSNs,
+issued W-2 bytes, corrected copies, and broader duplicate handling remain
+open.
+
 ## Existing 1099-B source fixture inventory
 
 The unit-test `minimalItem` and full-return owner fixtures use the explicitly

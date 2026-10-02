@@ -23,7 +23,7 @@ export function assertW2WithholdingSource(
     filer.spouse?.ssn
   ) recipients.add(filer.spouse.ssn.replace(/\D/g, ""));
   for (const [index, row] of source.w2s.entries()) {
-    if (row.box2_fed_withheld <= 0) continue;
+    if (row.box1_wages <= 0 && row.box2_fed_withheld <= 0) continue;
     const ssn = row.employee_ssn?.replace(/\D/g, "");
     if (
       (filer.filingStatus === FilingStatus.MarriedFilingJointly && !ssn) ||
@@ -32,7 +32,7 @@ export function assertW2WithholdingSource(
       throw new Error(
         `W-2 ${
           index + 1
-        } box 2 recipient must match the taxpayer or identified joint spouse`,
+        } box 1 wages or box 2 recipient must match the taxpayer or identified joint spouse`,
       );
     }
   }
