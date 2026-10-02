@@ -285,6 +285,11 @@ export function assertRefinancePointsSource(
         "Schedule A refinance points need one matching Form 1098 source with no box 6 points",
       );
     }
+    if (!matches[0].issuer_copy) {
+      throw new Error(
+        "Schedule A refinance points need the reviewed Form 1098 issuer Copy B",
+      );
+    }
   }
   const calculated = items.reduce(
     (sum, item) => sum + deductiblePoints(item),

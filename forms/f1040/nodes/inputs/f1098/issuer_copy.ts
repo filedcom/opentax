@@ -1,5 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
+import { inputSchema as refinancePointsInputSchema } from "../mortgage_refinance_points/index.ts";
 import { inputSchema, itemSchema } from "./index.ts";
 
 export const form1098IssuerCopyReviewSchema = z.object({
@@ -148,17 +149,24 @@ export async function assertForm1098IssuerCopies(
   const usesStandardDeduction =
     filed1040?.line12a_standard_deduction !== undefined &&
     filed1040.line12e_itemized_deductions === undefined;
+  const refinanceReferences = new Set(
+    !usesStandardDeduction && pending.mortgage_refinance_points !== undefined
+      ? refinancePointsInputSchema.parse(pending.mortgage_refinance_points)
+        .refinances.map((item) => item.form1098_source_document_reference)
+      : [],
+  );
   for (const item of f1098s) {
     if (
       (usesStandardDeduction ||
         (item.box1_current_year_deductible_interest ?? 0) <= 0) &&
       (item.box4_taxable_recovery_verified_amount ?? 0) <= 0 &&
       (item.box6_points_paid ?? 0) <= 0 &&
+      !refinanceReferences.has(item.source_document_reference ?? "") &&
       !reviewedLoans.has(item.source_document_reference ?? "")
     ) continue;
     if (!item.issuer_copy) {
       throw new Error(
-        "Form 1098 positive Schedule A interest, taxable box 4 recovery, box 6, or whole-return mortgage review needs the reviewed issuer Copy B bytes for each lender",
+        "Form 1098 positive Schedule A interest, taxable box 4 recovery, refinance points, box 6, or whole-return mortgage review needs the reviewed issuer Copy B bytes for each lender",
       );
     }
     await verifyForm1098IssuerCopy(

@@ -36,6 +36,12 @@ const form1098 = {
     recipient_tin: refinance.recipient_tin,
     source_document_reference: refinance.form1098_source_document_reference,
     box1_mortgage_interest: 0,
+    // Source join tests check presence; final builders verify exact PDF bytes.
+    issuer_copy: {
+      file_name: "Refinance1098.pdf",
+      pdf_sha256: "0".repeat(64),
+      bytes: new Uint8Array(),
+    },
   }],
 };
 
@@ -47,6 +53,19 @@ Deno.test("ordinary refinance points amortize once and reconcile to line 8c", ()
   );
   assertEquals(result.outputs[0].fields.line_8c_points_no_1098, 67);
   assertRefinancePointsSource(source, form1098, ["111-22-3333"], 67);
+  assertThrows(
+    () =>
+      assertRefinancePointsSource(
+        source,
+        {
+          f1098s: [{ ...form1098.f1098s[0], issuer_copy: undefined }],
+        },
+        ["111-22-3333"],
+        67,
+      ),
+    Error,
+    "reviewed Form 1098 issuer Copy B",
+  );
 });
 
 Deno.test("ordinary refinance points paid off in 2025 deduct remaining balance on line 8c", () => {
