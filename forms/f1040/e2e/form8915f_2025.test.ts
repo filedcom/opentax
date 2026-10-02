@@ -146,12 +146,12 @@ for (
     assertThrows(
       () => buildMefXml(buildPending(tampered), filer),
       Error,
-      "must match Form 1040",
+      "Form 1040 line 9 differs from its income lines",
     );
     await assertRejects(
       () => buildPdfBytes(tampered, filer),
       Error,
-      "must match Form 1040",
+      "Form 1040 line 9 differs from its income lines",
     );
   });
 }
@@ -521,12 +521,12 @@ for (
       assertThrows(
         () => buildMefXml(buildPending(changed), filer),
         Error,
-        "must match Form 1040 lines 4a and 4b",
+        "Form 1040 line 9 differs from its income lines",
       );
       await assertRejects(
         () => buildPdfBytes(changed, filer),
         Error,
-        "must match Form 1040 lines 4a and 4b",
+        "Form 1040 line 9 differs from its income lines",
       );
     }
   });
