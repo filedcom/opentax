@@ -5297,6 +5297,15 @@ Deno.test({
     spouse_ssn: "222-33-4444",
   };
   const xml = buildMefXml({
+    f1040: {
+      filing_status: "mfj",
+      line1a_wages: 206_100,
+      line1c_unreported_tips: 4_000,
+      line1z_total_wages: 210_100,
+      line23_other_taxes: 245,
+    },
+    agi_aggregator: { line1c_unreported_tips: 4_000 },
+    schedule2: { line5_unreported_tip_tax: 245 },
     w2: {
       w2s: [
         {
@@ -8802,7 +8811,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Home Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued Form 1098 copy 1",
@@ -8814,7 +8823,9 @@ Deno.test({
       box6_deduction_workpaper_reference:
         "2025 Pub. 936 purchase-points workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -8843,7 +8854,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Construction Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued construction Form 1098",
@@ -8868,7 +8879,9 @@ Deno.test({
       },
       refinance: true,
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -8897,7 +8910,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 issued refinance Form 1098",
@@ -8905,7 +8918,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2025-1",
@@ -8960,7 +8975,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 paid-off refinance Form 1098",
@@ -8968,7 +8983,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "paid-off-refinance-2025",
@@ -9025,7 +9042,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 improved-home refinance Form 1098",
@@ -9033,7 +9050,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "improved-home-refinance-2025",
@@ -9092,7 +9111,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 continuing-loan Form 1098",
@@ -9100,7 +9119,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2024-ledger",
@@ -9160,7 +9181,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [{
+    f1098: await Promise.all([{
       lender_name: "Refinance Lender",
       recipient_tin: general.taxpayer_ssn,
       source_document_reference: "2025 continuing-loan Form 1098",
@@ -9168,7 +9189,9 @@ Deno.test({
       box1_current_year_deductible_interest: 18_000,
       box1_deduction_workpaper_reference: "2025 interest workpaper",
       for_routing: "A",
-    }],
+    }].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     mortgage_refinance_points: {
       refinances: [{
         mortgage_id: "refinance-2023-ledger",
@@ -9236,7 +9259,12 @@ Deno.test({
 }, async () => {
   const general = singleGeneral();
   const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
-  const result = runReturn({ general, ...fixture });
+  const issuedCopies = await Promise.all(
+    fixture.f1098.map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-purchase-loan-${index}`, source)
+    ),
+  );
+  const result = runReturn({ general, ...fixture, f1098: issuedCopies });
   assertEquals(result.diagnostics, []);
   assertEquals(
     result.pending.schedule_a?.line_8a_mortgage_interest_1098,
@@ -9263,7 +9291,7 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f1098: [
+    f1098: await Promise.all([
       {
         lender_name: "First Lender",
         recipient_tin: general.taxpayer_ssn,
@@ -9284,7 +9312,9 @@ Deno.test({
         box1_deduction_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
         for_routing: "A",
       },
-    ],
+    ].map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-1098-${index}`, source)
+    )),
     f1098_mortgage_limit_review: {
       mortgage_limit_review: {
         table1_workpaper_reference: "2025 two-loan Pub. 936 Table 1",

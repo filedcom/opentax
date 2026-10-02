@@ -127,7 +127,11 @@ Deno.test("Schedule A zero reduction rejects changed source and settled return a
     () => parent.build(changedSource, { filer, pending }),
     Error,
   );
-  for (const graph of [changedReturn, missingCompanion]) {
+  assertThrows(
+    () => parent.build(claim, { filer, pending: missingCompanion }),
+    Error,
+  );
+  for (const graph of [changedReturn]) {
     assertThrows(() => parent.build(claim, { filer, pending: graph }), Error);
     assertThrows(
       () => form8995aScheduleA.build(claim, { filer, pending: graph }),
