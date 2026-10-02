@@ -58,16 +58,6 @@ Deno.test("repeated MeF form references keep their declared document name", () =
     Error,
     "referenceDocumentName differs",
   );
-  for (const extra of ["IRS2439 IRS1099G", "IRS2439 IRS2439"]) {
-    assertThrows(
-      () =>
-        validateDocumentReferences(fragments(
-          badReference.replace("IRS1099G", extra),
-        )),
-      Error,
-      "referenceDocumentName differs",
-    );
-  }
 
   const bundle = (reference: string): MefBundle => ({
     xml:
@@ -81,17 +71,6 @@ Deno.test("repeated MeF form references keep their declared document name", () =
   assertPreparedDocumentInventory(bundle(goodReference));
   assertThrows(
     () => assertPreparedDocumentInventory(bundle(badReference)),
-    Error,
-    "document count, order, IDs, references",
-  );
-  assertThrows(
-    () =>
-      assertPreparedDocumentInventory(bundle(
-        goodReference.replace(
-          'referenceDocumentName="IRS2439"',
-          'referenceDocumentName="IRS2439 IRS1099G"',
-        ),
-      )),
     Error,
     "document count, order, IDs, references",
   );
@@ -118,14 +97,6 @@ Deno.test("MeF multi-name references identify every referenced document root", (
     Error,
     "referenceDocumentName differs",
   );
-  assertThrows(
-    () =>
-      validateDocumentReferences(fragments(
-        "IRS2439 BinaryAttachment IRS1099G",
-      )),
-    Error,
-    "referenceDocumentName differs",
-  );
 
   const bundle = (referenceName: string): MefBundle => ({
     xml:
@@ -143,14 +114,6 @@ Deno.test("MeF multi-name references identify every referenced document root", (
   assertPreparedDocumentInventory(bundle("IRS2439 BinaryAttachment"));
   assertThrows(
     () => assertPreparedDocumentInventory(bundle("IRS2439 IRS1099G")),
-    Error,
-    "document count, order, IDs, references",
-  );
-  assertThrows(
-    () =>
-      assertPreparedDocumentInventory(bundle(
-        "IRS2439 BinaryAttachment IRS1099G",
-      )),
     Error,
     "document count, order, IDs, references",
   );

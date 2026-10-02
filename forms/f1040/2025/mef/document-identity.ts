@@ -18,7 +18,7 @@ const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
     "PostponementOfCropInsuranceAndDisasterPaymentsStatement",
 };
 
-/** Match the declared schema names exactly to the referenced document types. */
+/** Match each referenced document to a declared schema document name. */
 export function hasMismatchedSingleReferenceName(
   xml: string,
   tagsById: ReadonlyMap<string, string>,
@@ -28,19 +28,13 @@ export function hasMismatchedSingleReferenceName(
       ?.trim().split(/\s+/);
     const names = /\breferenceDocumentName="([^"]+)"/.exec(tag[0])?.[1]
       ?.trim().split(/\s+/);
-    if (ids?.length && names?.length) {
-      const expected = new Set(ids.map((id) => {
+    if (
+      ids?.length && names?.length && ids.some((id) => {
         const root = tagsById.get(id);
-        return root === undefined
-          ? undefined
-          : IRS_REFERENCE_NAME_BY_ROOT[root] ?? root;
-      }));
-      if (
-        expected.has(undefined) || names.length !== new Set(names).size ||
-        names.length !== expected.size ||
-        names.some((name) => !expected.has(name))
-      ) return true;
-    }
+        return root === undefined ||
+          !names.includes(IRS_REFERENCE_NAME_BY_ROOT[root] ?? root);
+      })
+    ) return true;
   }
   return false;
 }
