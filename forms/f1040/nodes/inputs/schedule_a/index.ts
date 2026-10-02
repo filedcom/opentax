@@ -52,6 +52,33 @@ const capitalGainCarryoverSchema = z.object({
   ordinary_carryover_rules_confirmed: z.literal(true),
 });
 
+export const homeMortgageNonqualifyingUseReviewSchema = z.object({
+  loan_document_reference: z.string().trim().min(1),
+  outstanding_balance_2025: z.number().positive(),
+  nonqualifying_proceeds_amount: z.number().positive(),
+  interest_allocation_workpaper_reference: z.string().trim().min(1),
+  deductible_home_interest_reviewed: z.literal(true),
+});
+
+/** Source-backed Schedule A line 8 warning; the amount is the filed interest. */
+export function reviewedHomeMortgageNonqualifyingUse(
+  source: Record<string, unknown>,
+): boolean {
+  if (source.home_mortgage_nonqualifying_use_review === undefined) return false;
+  homeMortgageNonqualifyingUseReviewSchema.parse(
+    source.home_mortgage_nonqualifying_use_review,
+  );
+  if (
+    Number(source.line_8a_mortgage_interest_1098 ?? 0) +
+        Number(source.line_8b_mortgage_interest_no_1098 ?? 0) <= 0
+  ) {
+    throw new Error(
+      "Schedule A line 8 mortgage-use review needs positive filed home interest",
+    );
+  }
+  return true;
+}
+
 // 7.5% AGI floor for medical deductions
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
 
@@ -73,6 +100,8 @@ export const inputSchema = z.object({
   line_6_other_taxes: z.number().nonnegative().optional(),
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
+  home_mortgage_nonqualifying_use_review:
+    homeMortgageNonqualifyingUseReviewSchema.optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
   form8396_interest_credit_reduction: z.number().int().nonnegative()
     .optional(),
@@ -103,6 +132,18 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  if (
+    data.home_mortgage_nonqualifying_use_review !== undefined &&
+    (data.line_8a_mortgage_interest_1098 ?? 0) +
+          (data.line_8b_mortgage_interest_no_1098 ?? 0) <= 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["home_mortgage_nonqualifying_use_review"],
+      message:
+        "Schedule A line 8 mortgage-use review needs positive filed home interest",
+    });
+  }
   if (data.force_itemized === true && data.force_standard === true) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

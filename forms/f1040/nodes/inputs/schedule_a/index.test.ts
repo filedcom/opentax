@@ -1,8 +1,5 @@
-// UNRESOLVED ITEMS:
-//   - line_18_itemize_checkbox: not in schema
-
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleA } from "./index.ts";
+import { inputSchema, scheduleA } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 type ScheduleAInput = Parameters<typeof scheduleA.compute>[1];
@@ -256,6 +253,39 @@ Deno.test("Schedule A rejects contradictory deduction choices", () => {
     scheduleA.inputSchema.safeParse({
       force_itemized: true,
       force_standard: true,
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Schedule A mortgage-use warning requires reviewed loan and interest facts", () => {
+  const review = {
+    loan_document_reference: "2025 home equity loan statement",
+    outstanding_balance_2025: 100_000,
+    nonqualifying_proceeds_amount: 10_000,
+    interest_allocation_workpaper_reference: "Pub 936 tracing workpaper",
+    deductible_home_interest_reviewed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      line_8a_mortgage_interest_1098: 2_000,
+      home_mortgage_nonqualifying_use_review: review,
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      home_mortgage_nonqualifying_use_review: review,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      line_8a_mortgage_interest_1098: 2_000,
+      home_mortgage_nonqualifying_use_review: {
+        ...review,
+        interest_allocation_workpaper_reference: "",
+      },
     }).success,
     false,
   );

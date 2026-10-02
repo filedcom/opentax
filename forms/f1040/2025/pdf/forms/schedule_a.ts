@@ -14,6 +14,7 @@ import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
 import {
   inputSchema as scheduleAInputSchema,
+  reviewedHomeMortgageNonqualifyingUse,
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
 import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
@@ -107,6 +108,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 
   // ── Interest You Paid ────────────────────────────────────────────────────────
+  {
+    kind: "checkbox",
+    domainKey: "print_line_8_mortgage_use_warning",
+    pdfField: "form1[0].Page1[0].Line8_ReadOrder[0].c1_2[0]",
+  },
   {
     kind: "text",
     domainKey: "line_8a_mortgage_interest_1098",
@@ -328,6 +334,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
       line_8a_mortgage_interest_1098: line8a,
       line_8b_mortgage_interest_no_1098: line8b,
       line_8e_mortgage_interest: mortgageInterest,
+      print_line_8_mortgage_use_warning: reviewedHomeMortgageNonqualifyingUse(
+        input,
+      ),
       filer_name: filer?.nameLine1,
       filer_ssn: filer?.primarySSN?.replace(/\D/g, ""),
       line_3_medical_floor: amount("line_1_medical") > 0

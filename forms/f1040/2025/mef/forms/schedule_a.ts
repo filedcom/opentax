@@ -23,6 +23,7 @@ import {
 } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 import { itemizeBelowStandardElection } from "../../schedule_a_line18_election.ts";
+import { reviewedHomeMortgageNonqualifyingUse } from "../../../nodes/inputs/schedule_a/index.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -317,6 +318,9 @@ function buildIRS1040ScheduleA(
     mapField(["line_5b_real_estate_tax", "RealEstateTaxesAmt"]),
     mapField(["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"]),
     mapField(["line_6_other_taxes", "OtherTaxesAmt"]),
+    reviewedHomeMortgageNonqualifyingUse(fields)
+      ? element("HomeMortgNotUsedInd", "X")
+      : "",
     fields.line_8a_mortgage_interest_1098 !== undefined
       ? element("RptHomeMortgIntAndPointsAmt", net8a)
       : "",

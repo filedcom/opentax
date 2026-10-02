@@ -12,6 +12,62 @@ import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { buildMefXml } from "../../mef/builder.ts";
 import type { MefFormsPending } from "../../mef/types.ts";
 
+Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF line 8", async () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general: {
+        filing_status: "single",
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+        digital_assets: false,
+      },
+      schedule_a: {
+        line_8a_mortgage_interest_1098: 20_000,
+        home_mortgage_nonqualifying_use_review: {
+          loan_document_reference: "2025 home equity loan statement",
+          outstanding_balance_2025: 100_000,
+          nonqualifying_proceeds_amount: 10_000,
+          interest_allocation_workpaper_reference:
+            "2025 Pub 936 tracing workpaper",
+          deductible_home_interest_reviewed: true,
+        },
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 20_000);
+  const xml = buildMefXml(result.pending as MefFormsPending, filer);
+  assertEquals(
+    xml.includes("<HomeMortgNotUsedInd>X</HomeMortgNotUsedInd>"),
+    true,
+  );
+  const [instance] = scheduleAPdf.instances?.(
+    result.pending.schedule_a,
+    filer,
+    result.pending,
+  ) ?? [];
+  assertEquals(instance?.print_line_8_mortgage_use_warning, true);
+  const pdf = await fillFormPdf(
+    scheduleAPdf,
+    instance!,
+    filer,
+    ".pdf-cache",
+    result.pending,
+  );
+  assertEquals((await PDFDocument.load(pdf!)).getPageCount(), 1);
+});
+
 Deno.test("Schedule A election below standard reaches line 12e, native form, and PDF line 18", async () => {
   const filer = {
     primarySSN: "111223333",
