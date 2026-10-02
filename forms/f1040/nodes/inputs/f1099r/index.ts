@@ -365,6 +365,26 @@ export const itemSchema = z.object({
       rollover_eligibility_review_reference: z.string().trim().min(1),
       qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
+    // Publication 590-A excludes days a qualifying deposit is frozen from
+    // the 60-day period, with at least ten days after the funds are released.
+    frozen_deposit_extension: z.object({
+      frozen_on: z.string().date(),
+      // First calendar day on which the distributed funds were accessible.
+      unfrozen_on: z.string().date(),
+      cause: z.enum([
+        "institution_bankrupt_or_insolvent",
+        "state_insolvency_withdrawal_restriction",
+      ]),
+      funds_inaccessible_confirmed: z.literal(true),
+      qualifying_insolvency_evidence_reference: z.string().trim().min(1),
+      frozen_funds_record_reference: z.string().trim().min(1),
+      release_record_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
+      not_inherited_ira_confirmed: z.literal(true),
+      not_required_minimum_distribution_confirmed: z.literal(true),
+      rollover_eligibility_review_reference: z.string().trim().min(1),
+      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
+    }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
@@ -484,7 +504,8 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
       rollover.completed_on.startsWith("2026-") ||
       rollover.automatic_late_waiver !== undefined ||
       rollover.self_certified_late_waiver !== undefined ||
-      rollover.irs_private_letter_waiver !== undefined);
+      rollover.irs_private_letter_waiver !== undefined ||
+      rollover.frozen_deposit_extension !== undefined);
 }
 
 export function iraDistributionExplanation(
@@ -531,10 +552,20 @@ export function iraDistributionExplanation(
     const rulingText = ruling
       ? ` IRS private letter ruling ${ruling.ruling_number}, issued ${ruling.issued_on}, grants a 60-day waiver for this owner and distribution with a deposit deadline of ${ruling.ruling_rollover_deadline_on}.`
       : "";
+    const frozen = rollover.frozen_deposit_extension;
+    const frozenText = frozen
+      ? ` Publication 590-A frozen-deposit extension: the funds were inaccessible from ${frozen.frozen_on} until ${frozen.unfrozen_on} because of ${
+        frozen.cause === "institution_bankrupt_or_insolvent"
+          ? "financial institution bankruptcy or insolvency"
+          : "a state withdrawal restriction due to financial institution insolvency"
+      }; the extended rollover deadline was ${
+        new Date(frozenDepositDeadline(rollover)).toISOString().slice(0, 10)
+      }. The source was reviewed as neither inherited nor an RMD.`
+      : "";
     return [
       `Distribution ${
         index + 1
-      }: ${opening}${waiverText}${certificationText}${rulingText}`,
+      }: ${opening}${waiverText}${certificationText}${rulingText}${frozenText}`,
     ];
   });
   if (rows.length === 0) return undefined;
@@ -576,18 +607,77 @@ function automaticWaiverDeadline(distributedOn: string): number {
   return deadline.getTime();
 }
 
+function frozenDepositDeadline(
+  rollover: NonNullable<R1099Item["ira_rollover"]>,
+): number {
+  const frozen = rollover.frozen_deposit_extension!;
+  const day = 86_400_000;
+  const originalDeadline = Date.parse(rollover.distributed_on) + 60 * day;
+  const released = Date.parse(frozen.unfrozen_on);
+  const frozenDays = (released - Date.parse(frozen.frozen_on)) / day;
+  return Math.max(originalDeadline + frozenDays * day, released + 10 * day);
+}
+
 function validateLateWaiver(item: R1099Item): void {
   const rollover = item.ira_rollover!;
   const waiver = rollover.automatic_late_waiver;
   const certification = rollover.self_certified_late_waiver;
   const ruling = rollover.irs_private_letter_waiver;
+  const frozen = rollover.frozen_deposit_extension;
   const distributed = Date.parse(rollover.distributed_on);
   const completed = Date.parse(rollover.completed_on);
   const elapsedDays = (completed - distributed) / 86_400_000;
   const directPlanRollover = rollover.destination === "qualified_plan" &&
     item.box7_distribution_code === DistributionCode.CodeG;
-  if ([waiver, certification, ruling].filter(Boolean).length > 1) {
-    throw new Error("IRA late rollover cannot claim two waiver methods");
+  if ([waiver, certification, ruling, frozen].filter(Boolean).length > 1) {
+    throw new Error(
+      "IRA late rollover cannot claim multiple extension or waiver methods",
+    );
+  }
+  if (frozen) {
+    const freezeStart = Date.parse(frozen.frozen_on);
+    const released = Date.parse(frozen.unfrozen_on);
+    if (elapsedDays <= 60 || directPlanRollover) {
+      throw new Error(
+        "IRA frozen-deposit extension needs an actual late 60-day rollover",
+      );
+    }
+    if (!item.source_document_reference || !item.account_number) {
+      throw new Error(
+        "IRA frozen-deposit extension needs its issued Form 1099-R reference and account",
+      );
+    }
+    if (
+      freezeStart < distributed ||
+      freezeStart > distributed + 60 * 86_400_000 ||
+      released <= freezeStart || completed < released
+    ) {
+      throw new Error(
+        "IRA frozen-deposit extension needs a qualifying frozen interval and deposit after release",
+      );
+    }
+    if (completed > frozenDepositDeadline(rollover)) {
+      throw new Error(
+        "IRA frozen-deposit rollover exceeds its extended deadline",
+      );
+    }
+    if (
+      rollover.destination === "qualified_plan" &&
+      !frozen.qualified_plan_acceptance_reference
+    ) {
+      throw new Error(
+        "IRA frozen-deposit rollover to a qualified plan needs plan acceptance evidence",
+      );
+    }
+    if (
+      rollover.destination === "ira" &&
+      frozen.qualified_plan_acceptance_reference
+    ) {
+      throw new Error(
+        "IRA frozen-deposit rollover cannot claim plan acceptance for an IRA destination",
+      );
+    }
+    return;
   }
   if (ruling) {
     validatePrivateLetterWaiver(item);

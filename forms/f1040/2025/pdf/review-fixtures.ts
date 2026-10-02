@@ -4601,6 +4601,53 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-ira-late-frozen-deposit",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        recipient_ssn: singleGeneral.taxpayer_ssn,
+        account_number: "IRA-2025-FROZEN",
+        source_document_reference: "issued-1099r-frozen-2025",
+        box1_gross_distribution: 8_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          source_ira_type: "traditional",
+          destination: "ira",
+          destination_ira_type: "traditional",
+          distributed_on: "2025-06-01",
+          completed_on: "2025-09-30",
+          last_ira_to_ira_rollover_on: null,
+          frozen_deposit_extension: {
+            frozen_on: "2025-06-20",
+            unfrozen_on: "2025-08-20",
+            cause: "institution_bankrupt_or_insolvent",
+            funds_inaccessible_confirmed: true,
+            qualifying_insolvency_evidence_reference:
+              "synthetic-insolvency-order",
+            frozen_funds_record_reference: "synthetic-freeze-record",
+            release_record_reference: "synthetic-release-record",
+            deposit_confirmation_reference: "synthetic-deposit-confirmation",
+            not_inherited_ira_confirmed: true,
+            not_required_minimum_distribution_confirmed: true,
+            rollover_eligibility_review_reference:
+              "synthetic-eligibility-review",
+          },
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4a prints $8,000, line 4b prints zero, and line 4c(1) shows an IRA rollover",
+      "The attached explanation gives the insolvency freeze dates and September 30 extended deadline without internal evidence references",
+    ],
+  },
+  {
     id: "single-hsa-code2-excess",
     inputs: {
       general: singleGeneral,

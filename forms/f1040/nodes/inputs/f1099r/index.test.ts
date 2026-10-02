@@ -1440,6 +1440,194 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
   }
 });
 
+Deno.test("f1099r.compute: Pub. 590-A frozen deposit extends the IRA rollover deadline", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-FROZEN-2025",
+    source_document_reference: "issued-1099r-frozen",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-09-30",
+      last_ira_to_ira_rollover_on: null,
+      frozen_deposit_extension: {
+        frozen_on: "2025-06-20",
+        unfrozen_on: "2025-08-20",
+        cause: "institution_bankrupt_or_insolvent",
+        funds_inaccessible_confirmed: true,
+        qualifying_insolvency_evidence_reference: "insolvency-order-1",
+        frozen_funds_record_reference: "freeze-record-1",
+        release_record_reference: "release-record-1",
+        deposit_confirmation_reference: "deposit-record-1",
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-1",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  const statement = iraDistributionExplanation([item]) ?? "";
+  assertStringIncludes(statement, "frozen-deposit extension");
+  assertStringIncludes(statement, "extended rollover deadline was 2025-09-30");
+  assertEquals(statement.includes("insolvency-order-1"), false);
+
+  const rollover = item.ira_rollover!;
+  const frozen = rollover.frozen_deposit_extension!;
+  const tenDayFloor = {
+    ...item,
+    ira_rollover: {
+      ...rollover,
+      completed_on: "2025-08-11",
+      frozen_deposit_extension: {
+        ...frozen,
+        frozen_on: "2025-07-30",
+        unfrozen_on: "2025-08-01",
+        cause: "state_insolvency_withdrawal_restriction" as const,
+      },
+    },
+  };
+  assertStringIncludes(
+    iraDistributionExplanation([tenDayFloor]) ?? "",
+    "extended rollover deadline was 2025-08-11",
+  );
+  const planItem = {
+    ...item,
+    ira_rollover: {
+      ...rollover,
+      destination: "qualified_plan" as const,
+      destination_ira_type: undefined,
+      destination_name: "Example 401(k)",
+      frozen_deposit_extension: {
+        ...frozen,
+        qualified_plan_acceptance_reference: "plan-acceptance-1",
+      },
+    },
+  };
+  assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
+
+  for (
+    const bad of [
+      { ...item, source_document_reference: undefined },
+      { ...item, account_number: undefined },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-10-01" } },
+      {
+        ...tenDayFloor,
+        ira_rollover: {
+          ...tenDayFloor.ira_rollover,
+          completed_on: "2025-08-12",
+        },
+      },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-06-25" } },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-08-10" } },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          frozen_deposit_extension: { ...frozen, frozen_on: "2025-08-01" },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          frozen_deposit_extension: { ...frozen, frozen_on: "2025-05-31" },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          frozen_deposit_extension: { ...frozen, unfrozen_on: "2025-06-20" },
+        },
+      },
+      {
+        ...planItem,
+        ira_rollover: {
+          ...planItem.ira_rollover,
+          frozen_deposit_extension: frozen,
+        },
+      },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          frozen_deposit_extension: {
+            ...frozen,
+            qualified_plan_acceptance_reference: "wrong-plan",
+          },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: { ...rollover, frozen_deposit_extension: undefined },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  for (
+    const key of [
+      "funds_inaccessible_confirmed",
+      "not_inherited_ira_confirmed",
+      "not_required_minimum_distribution_confirmed",
+      "qualifying_insolvency_evidence_reference",
+    ] as const
+  ) {
+    assertEquals(
+      f1099r.inputSchema.safeParse({
+        f1099rs: [{
+          ...item,
+          ira_rollover: {
+            ...rollover,
+            frozen_deposit_extension: { ...frozen, [key]: undefined },
+          },
+        }],
+      }).success,
+      false,
+    );
+  }
+  assertEquals(
+    f1099r.inputSchema.safeParse({
+      f1099rs: [{
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          frozen_deposit_extension: { ...frozen, cause: "temporary-bank-hold" },
+        },
+      }],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          automatic_late_waiver: {
+            institution_received_on: "2025-06-20",
+            deposit_instructions_on: "2025-06-20",
+            institution_error_only: true,
+            not_inherited_ira_confirmed: true,
+            not_required_minimum_distribution_confirmed: true,
+            rollover_eligibility_review_reference: "eligibility-review-2",
+            institution_receipt_reference: "receipt-2",
+            deposit_instructions_reference: "instructions-2",
+            institution_error_reference: "error-2",
+            deposit_confirmation_reference: "deposit-2",
+          },
+        },
+      }]),
+    Error,
+    "multiple extension or waiver methods",
+  );
+});
+
 Deno.test("f1099r.compute: signed self-certification keeps a late rollover within the 30-day safe harbor", () => {
   const item = minimalIraItem({
     account_number: "IRA-2025-2",

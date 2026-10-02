@@ -1366,7 +1366,8 @@ for (const fixture of pdfReviewFixtures) {
         fixture.id === "single-ira-2026-rollover" ||
         fixture.id === "single-ira-late-automatic-waiver" ||
         fixture.id === "single-ira-late-self-certification" ||
-        fixture.id === "single-ira-late-irs-ruling"
+        fixture.id === "single-ira-late-irs-ruling" ||
+        fixture.id === "single-ira-late-frozen-deposit"
       ) {
         assertEquals(result.pending.f1040.line4c_ira_rollover, true);
         assertStringIncludes(
@@ -1384,6 +1385,8 @@ for (const fixture of pdfReviewFixtures) {
             ? "Rev. Proc. 2020-46 self-certification"
             : fixture.id === "single-ira-late-irs-ruling"
             ? "private letter ruling PLR-2025-SYNTHETIC"
+            : fixture.id === "single-ira-late-frozen-deposit"
+            ? "frozen-deposit extension"
             : "2026-01-15",
         );
       }
