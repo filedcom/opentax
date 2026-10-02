@@ -96,11 +96,45 @@ const inputs = {
   },
 };
 
+function withIssuedForeignEmployerFacts<
+  T extends { fec: Record<string, unknown>[] },
+>(
+  source: T,
+) {
+  return {
+    ...source,
+    fec: source.fec.map((row, index) => ({
+      ...row,
+      service_residence: {
+        kind: "us" as const,
+        line1: "1 Example Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      employer_foreign_address: {
+        line1: `${index + 1} Payroll Way`,
+        city: "Payroll City",
+        country_code: row.country_code === "DE"
+          ? "GM"
+          : row.country_code as string,
+      },
+      employer_has_us_ein: false as const,
+      employer_issued_w2: false as const,
+    })),
+  };
+}
+
 Deno.test("one foreign employer alternative allocation reaches full return, MeF attachment and PDF", async () => {
-  const result = execute(buildExecutionPlan(registry), registry, inputs, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    withIssuedForeignEmployerFacts(inputs),
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.f1040?.line12a_standard_deduction, 15_750);
@@ -215,7 +249,7 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
         attachments: [],
       }),
     Error,
-    "needs the foreign-employer compensation source",
+    "ordinary U.S./foreign salary comparison must match the documented service-day allocation",
   );
 });
 
@@ -257,7 +291,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
   const result = execute(
     buildExecutionPlan(registry),
     registry,
-    twoEmployerInputs,
+    withIssuedForeignEmployerFacts(twoEmployerInputs),
     {
       taxYear: 2025,
       formType: "f1040",
@@ -293,7 +327,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
   await assertRejects(
     () => buildMefBundle(buildPending(altered), { filer, attachments: [] }),
     Error,
-    "employee's $250,000 threshold",
+    "Standalone FEC needs distinct employer sources owned by the filer or joint spouse",
   );
 });
 
@@ -342,7 +376,7 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
   const result = execute(
     buildExecutionPlan(registry),
     registry,
-    threeEmployerInputs,
+    withIssuedForeignEmployerFacts(threeEmployerInputs),
     {
       taxYear: 2025,
       formType: "f1040",
@@ -458,7 +492,7 @@ for (
     const result = execute(
       buildExecutionPlan(registry),
       registry,
-      employerInputs,
+      withIssuedForeignEmployerFacts(employerInputs),
       { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(result.diagnostics, []);
