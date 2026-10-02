@@ -108,6 +108,7 @@ function assertSendSubmissionArchive(
       `A2A Send submission manifest or taxpayer differs: ${submissionId}`,
     );
   }
+  assertArchivedDocumentInventory(xml, archive);
 }
 
 function assertSendPackageIdentity(
@@ -289,11 +290,15 @@ export async function readA2aSendRecord(
   ) {
     throw new Error("A2A Send evidence integrity or MessageID mismatch");
   }
+  const container = unzipSync(containerBytes);
   assertSendPackageIdentity(
     record.submissionIds,
     new TextDecoder("utf-8", { fatal: true }).decode(requestBytes),
-    unzipSync(containerBytes),
+    container,
   );
+  for (const id of record.submissionIds) {
+    assertSendSubmissionArchive(id, container[`${id}.zip`]);
+  }
   return record;
 }
 

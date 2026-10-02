@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { zipSync } from "fflate";
+import { unzipSync, zipSync } from "fflate";
 import {
   readA2aArchivedSubmission,
   readA2aInboundPayload,
@@ -142,23 +142,17 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
         ...variant.attachments,
       });
       const sendId = `${messageId}-${index}`;
-      await recordA2aSendPackage(root, {
-        messageId: sendId,
-        submissionIds: [submissionId],
-        package: {
-          sendSubmissionsRequestXml:
-            `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
-          containerZipBytes: zipSync({ [`${submissionId}.zip`]: archived }),
-        },
-        recordedAt: new Date("2026-09-26T10:00:00Z"),
-      });
-      const xmlDigest = await digest(xml);
       await assertRejects(
         () =>
-          readA2aArchivedSubmission(root, sendId, {
-            submissionId,
-            taxpayerSsn: "111223333",
-            submissionXmlSha256: xmlDigest,
+          recordA2aSendPackage(root, {
+            messageId: sendId,
+            submissionIds: [submissionId],
+            package: {
+              sendSubmissionsRequestXml:
+                `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+              containerZipBytes: zipSync({ [`${submissionId}.zip`]: archived }),
+            },
+            recordedAt: new Date("2026-09-26T10:00:00Z"),
           }),
         Error,
         "document inventory, references, or PDF attachments",
@@ -190,6 +184,59 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       submissionXmlSha256: await digest(validXml),
     });
     assertEquals(valid.submissionId, submissionId);
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("A2A Send read and inbound evidence reject a changed inner document inventory", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const request = packageFor();
+    const send = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: request,
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const originalContainer = unzipSync(request.containerZipBytes);
+    const inner = unzipSync(originalContainer[`${submissionId}.zip`]);
+    inner["xml/submission.xml"] = encoder.encode(
+      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
+    );
+    const changedContainer = zipSync({
+      [`${submissionId}.zip`]: zipSync(inner),
+    });
+    const key = await digest(encoder.encode(messageId));
+    await Deno.writeFile(
+      `${root}/requests/${key}/container.zip`,
+      changedContainer,
+    );
+    await Deno.writeTextFile(
+      `${root}/requests/${key}/record.json`,
+      JSON.stringify({
+        ...send,
+        containerSha256: await digest(changedContainer),
+      }),
+    );
+
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
+    await assertRejects(
+      () =>
+        recordA2aInboundPayload(root, {
+          kind: "acknowledgment_payload",
+          sendMessageId: messageId,
+          submissionIds: [submissionId],
+          receivedAt: new Date("2026-09-26T11:00:00Z"),
+          rawPayload: encoder.encode("acknowledgment"),
+        }),
+      Error,
+      "document inventory, references, or PDF attachments",
+    );
   } finally {
     await Deno.remove(root, { recursive: true });
   }
