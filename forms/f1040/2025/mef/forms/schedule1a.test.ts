@@ -142,6 +142,27 @@ const singleOvertime = {
   ],
 };
 
+const overtimeW2 = (entry: typeof overtimeEntry) => ({
+  employee_ssn: entry.employee_ssn,
+  employer_ein: entry.employer_ein,
+  employer_name: "Test Employer",
+  box1_wages: entry.box1_wages,
+  box2_fed_withheld: 8_000,
+  box14_entries: [{
+    description: "FLSA Overtime Premium",
+    amount: entry.amount,
+    is_state_sdi_pfml: false,
+  }],
+  flsa_overtime_review: {
+    covered_nonexempt_employee: true as const,
+    premium_included_in_box1: true as const,
+    source_reference: entry.source_reference,
+  },
+});
+const singleOvertimeW2 = {
+  w2s: singleOvertime.qualified_w2_overtime.map(overtimeW2),
+};
+
 const singleOvertime1040 = {
   filing_status: FilingStatus.Single,
   line11_agi: 80_000,
@@ -560,7 +581,7 @@ Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles"
   assertEquals(lines.line14a_w2_overtime, 4_000);
   assertEquals(lines.line21_overtime, 4_000);
   const xml = schedule1a.build(singleOvertime, {
-    pending: { f1040: singleOvertime1040 },
+    pending: { f1040: singleOvertime1040, w2: singleOvertimeW2 },
   });
   assertStringIncludes(
     xml,
@@ -573,6 +594,49 @@ Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles"
   assertStringIncludes(
     xml,
     "<QualifiedOvertimeCompDedAmt>4000</QualifiedOvertimeCompDedAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(singleOvertime, {
+        pending: {
+          f1040: singleOvertime1040,
+          w2: {
+            w2s: [
+              {
+                ...singleOvertimeW2.w2s[0],
+                box14_entries: [{
+                  description: "FLSA Overtime Premium",
+                  amount: 2_000,
+                  is_state_sdi_pfml: false,
+                }],
+              },
+              singleOvertimeW2.w2s[1],
+            ],
+          },
+        },
+      }),
+    Error,
+    "box 14 overtime does not match",
+  );
+  assertThrows(
+    () =>
+      schedule1aPdf.projectFields!(singleOvertime, {
+        f1040: singleOvertime1040,
+        w2: {
+          w2s: [
+            {
+              ...singleOvertimeW2.w2s[0],
+              flsa_overtime_review: {
+                ...singleOvertimeW2.w2s[0].flsa_overtime_review,
+                source_reference: "different review",
+              },
+            },
+            singleOvertimeW2.w2s[1],
+          ],
+        },
+      }),
+    Error,
+    "box 14 overtime does not match",
   );
 });
 
@@ -615,6 +679,7 @@ Deno.test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-th
         spouse_ssn_issued_before_due_date: true,
         spouse_tin_issued_by_due_date: true,
       },
+      w2: { w2s: jointOvertime.qualified_w2_overtime.map(overtimeW2) },
     },
   });
   assertStringIncludes(
@@ -636,7 +701,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
           overtimeEntry,
           { ...overtimeEntry, amount: 500 },
         ],
-      }, { pending: { f1040: singleOvertime1040 } }),
+      }, { pending: { f1040: singleOvertime1040, w2: singleOvertimeW2 } }),
     Error,
     "one W-2 premium per employee and employer",
   );
@@ -648,6 +713,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
             ...singleOvertime1040,
             taxpayer_ssn_issued_before_due_date: false,
           },
+          w2: singleOvertimeW2,
         },
       }),
     Error,
@@ -1423,10 +1489,18 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
     qualified_w2_overtime: [overtimeEntry],
     vehicle_loans: [vehicleLoan],
   };
+  const mixedW2 = {
+    w2s: [{
+      ...singleTipsW2.w2s[0],
+      box1_wages: overtimeEntry.box1_wages,
+      box14_entries: overtimeW2(overtimeEntry).box14_entries,
+      flsa_overtime_review: overtimeW2(overtimeEntry).flsa_overtime_review,
+    }],
+  };
   const xml = schedule1a.build(mixed, {
     pending: {
       f1040: { ...joint1040, line13b_additional_deductions: 23_800 },
-      w2: singleTipsW2,
+      w2: mixedW2,
     },
   });
   const tags = [
@@ -1476,7 +1550,7 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
   assertThrows(
     () =>
       schedule1a.build(mixed, {
-        pending: { f1040: joint1040, w2: singleTipsW2 },
+        pending: { f1040: joint1040, w2: mixedW2 },
       }),
     Error,
     "do not reconcile",
@@ -1491,10 +1565,15 @@ Deno.test("Schedule 1-A integration rejects incomplete and mismatched line 13b",
   );
   assertThrows(
     () =>
-      buildMefXml({
-        f1040: joint1040,
-        schedule1a: { ...joint, qualified_w2_overtime: [overtimeEntry] },
-      }, filer),
+      schedule1a.build({
+        ...joint,
+        qualified_w2_overtime: [overtimeEntry],
+      }, {
+        pending: {
+          f1040: joint1040,
+          w2: { w2s: [overtimeW2(overtimeEntry)] },
+        },
+      }),
     Error,
     "do not reconcile",
   );
@@ -1538,7 +1617,10 @@ Deno.test("Schedule 1-A senior MeF rejects missing review and mismatched return"
         ...joint,
         qualified_w2_overtime: [overtimeEntry],
       }, {
-        pending: { f1040: joint1040 },
+        pending: {
+          f1040: joint1040,
+          w2: { w2s: [overtimeW2(overtimeEntry)] },
+        },
       }),
     Error,
     "do not reconcile",

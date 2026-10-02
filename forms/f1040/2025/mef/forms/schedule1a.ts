@@ -494,6 +494,50 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       entry.aggregate_overtime_statement_reference !== undefined ||
       entry.double_time_excess_statement_reference !== undefined
     );
+    const box14Entries = input.qualified_w2_overtime!.filter((entry) =>
+      entry.employer_statement_reference === undefined &&
+      entry.aggregate_overtime_statement_reference === undefined &&
+      entry.double_time_excess_statement_reference === undefined
+    );
+    if (box14Entries.length > 0) {
+      const sourceW2s = context?.pending?.w2
+        ? w2InputSchema.parse(context.pending.w2).w2s
+        : [];
+      const sourceBox14W2s = sourceW2s.filter((w2) =>
+        w2.flsa_overtime_review !== undefined &&
+        w2.flsa_overtime_review.employer_statement === undefined &&
+        w2.flsa_overtime_review.aggregate_overtime_statement === undefined &&
+        w2.flsa_overtime_review.double_time_excess_statement === undefined
+      );
+      const normalize = (value: string) => value.replaceAll("-", "");
+      if (
+        sourceBox14W2s.length !== box14Entries.length ||
+        !box14Entries.every((entry) =>
+          sourceBox14W2s.filter((w2) => {
+            const premiums = (w2.box14_entries ?? []).filter((box14) =>
+              box14.description.trim().toLowerCase() ===
+                "flsa overtime premium"
+            );
+            return normalize(w2.employee_ssn ?? "") ===
+                normalize(entry.employee_ssn) &&
+              normalize(w2.employer_ein ?? "") ===
+                normalize(entry.employer_ein) &&
+              w2.box13_statutory_employee !== true &&
+              w2.box1_wages === entry.box1_wages &&
+              premiums.length === 1 && premiums[0].amount === entry.amount &&
+              premiums[0].is_state_sdi_pfml !== true &&
+              w2.flsa_overtime_review?.source_reference ===
+                entry.source_reference &&
+              w2.flsa_overtime_review?.covered_nonexempt_employee === true &&
+              w2.flsa_overtime_review?.premium_included_in_box1 === true;
+          }).length === 1
+        )
+      ) {
+        throw new Error(
+          "Schedule 1-A box 14 overtime does not match the filed W-2 premium and review",
+        );
+      }
+    }
     if (statementEntries.length > 0) {
       const sourceW2s = context?.pending?.w2
         ? w2InputSchema.parse(context.pending.w2).w2s

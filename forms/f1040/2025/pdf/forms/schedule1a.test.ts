@@ -12,6 +12,26 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
 
+const overtimeW2 = (amount: number, box1Wages: number) => ({
+  w2s: [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Employer",
+    box1_wages: box1Wages,
+    box2_fed_withheld: 0,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount,
+      is_state_sdi_pfml: false,
+    }],
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: "Employer box 14 FLSA premium review",
+    },
+  }],
+});
+
 Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero employee line", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-1099nec-trade-business-tips-schedule1a"
@@ -275,6 +295,7 @@ Deno.test("2025 Schedule 1-A PDF fills senior and overtime parts together", () =
   const projected = schedule1aPdf.projectFields?.(mixed, {
     schedule1a: mixed,
     f1040: mixedReturn,
+    w2: overtimeW2(4_000, 160_000),
   });
   assertEquals(projected?.line21_overtime, 4_000);
   assertEquals(projected?.line37_senior, 10_800);
@@ -464,7 +485,11 @@ Deno.test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
           premium_included_in_box1: true,
           source_reference: "Employer box 14 FLSA premium review",
         }],
-      }, { schedule1a: source, f1040: return1040 }),
+      }, {
+        schedule1a: source,
+        f1040: return1040,
+        w2: overtimeW2(100, 100_000),
+      }),
     Error,
     "do not reconcile",
   );
@@ -582,6 +607,7 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed W-2 overtime to Part III", () => 
   const projected = schedule1aPdf.projectFields?.(overtimeSource, {
     schedule1a: overtimeSource,
     f1040: overtimeReturn,
+    w2: overtimeW2(4_000, 80_000),
   });
   assertEquals(projected?.line14a_w2_overtime, 4_000);
   assertEquals(projected?.line14b_zero_1099, 0);
