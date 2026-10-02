@@ -68,7 +68,11 @@ const property = {
 function filedReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
+    w2: [{
+      employee_ssn: general.taxpayer_ssn,
+      box1_wages: 50_000,
+      box2_fed_withheld: 8_000,
+    }],
     schedule_e: [property],
   });
   assertEquals(result.diagnostics, []);
