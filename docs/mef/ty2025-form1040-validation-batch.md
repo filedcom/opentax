@@ -273,7 +273,11 @@ A second type-clean full `deno task test` at `c7b3be71` completed in 30m15s
 with 10,393 passed and 112 failed. Its local log is
 `.state/research/ty2025-pr59-bulk-test-retry2-2026-10-02.log`. The two
 1099-K review assertions failing in that run were subsequently repaired and
-passed a nine-case focused rerun; other failures remain under classification.
+passed a nine-case focused rerun. Subsequent focused repairs also corrected
+three HSA/Form 2555 fixtures (7/7 passing) and two Form 5329 tax joins plus
+the Schedule E retained-sale allocation (33/33 passing). Most remaining
+failures concern the deferred named-form parents; a fresh full run is required
+to establish the exact residual count.
 The full gate still has no passing result.
 
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
