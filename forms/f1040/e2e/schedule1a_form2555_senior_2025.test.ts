@@ -115,7 +115,7 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
         form2555_line45_exclusion: 20_001,
       }, result.pending),
     Error,
-    "matching full-year senior or vehicle-interest source",
+    "matching full-year exclusion",
   );
   const changedSource = structuredClone(result.pending);
   (changedSource.form2555!.filing_details as { foreign_wages: number })
@@ -129,7 +129,7 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
     () =>
       schedule1aPdf.projectFields!(changedSource.schedule1a!, changedSource),
     Error,
-    "matching full-year senior or vehicle-interest source",
+    "matching full-year exclusion",
   );
   const unsupportedTips = structuredClone(result.pending);
   unsupportedTips.schedule1a!.qualified_employee_tips = [{
@@ -148,7 +148,7 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
         extractFilerIdentity(unsupportedTips.f1040),
       ),
     Error,
-    "matching full-year senior or vehicle-interest source",
+    "one supported deduction route",
   );
 });
 
@@ -257,6 +257,6 @@ Deno.test("structured Form 2555 exclusion joins vehicle interest, senior deducti
     () =>
       schedule1aPdf.projectFields!(changedSource.schedule1a!, changedSource),
     Error,
-    "matching full-year senior or vehicle-interest source",
+    "matching full-year exclusion",
   );
 });

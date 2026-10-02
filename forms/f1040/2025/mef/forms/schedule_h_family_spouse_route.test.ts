@@ -24,6 +24,7 @@ const general = {
   taxpayer_last_name: "Black",
   taxpayer_ssn: "400-00-1032",
   taxpayer_dob: "1980-04-10",
+  digital_assets: false,
   spouse_first_name: "Sam",
   spouse_last_name: "Black",
   spouse_ssn: "400-00-1041",

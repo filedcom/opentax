@@ -6094,7 +6094,23 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-elected-lump-sum-part-ii",
     inputs: {
-      general: { ...singleGeneral, taxpayer_dob: "1930-01-01" },
+      general: {
+        ...singleGeneral,
+        taxpayer_dob: "1930-01-01",
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference: "2025 foreign-income return review",
+          no_form4563_filed: true,
+          form4563_review_source_reference: "2025 Samoa-source income review",
+        },
+      },
       f1099r: [{
         payer_name: "Example Qualified Plan",
         payer_ein: "12-3456789",
@@ -6122,11 +6138,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "form4972"],
+    expectedPdfForms: ["f1040", "form4972", "schedule1a"],
     reviewFocus: [
       "Form 4972 Part II line 6 prints 30,000 and line 7 prints the 6,000 special tax",
       "Form 4972 Part III remains blank for the Part-II-only election",
       "The 70,000 ordinary share appears once on Form 1040 lines 5a and 5b; the elected capital-gain share is not repeated as ordinary pension income",
+      "Schedule 1-A prints the eligible senior deduction with its reviewed zero exclusions and agrees with Form 1040 line 13b",
       "Form 1040 line 16 includes the Form 4972 tax without duplicate Form 4972 pages or clipped taxpayer identity",
     ],
   },
@@ -6901,7 +6918,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-form8606-post-year-contribution-and-distribution",
     inputs: {
-      general: { ...singleGeneral, taxpayer_dob: "1960-06-15" },
+      general: { ...singleGeneral, taxpayer_dob: "1961-06-15" },
       w2: [{
         ...wage(100_000, 15_000, "Austin Employer", "987654321"),
         employee_ssn: "111-22-3333",

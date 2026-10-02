@@ -61,6 +61,9 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123456789",
       taxpayer_dob: "1930-01-01",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
       digital_assets: false,
       address_line1: "1 Main St",
       address_city: "Austin",
@@ -68,6 +71,16 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
       address_zip: "78701",
     },
     f1099r: copies,
+    schedule1a: {
+      senior_zero_exclusions_review: {
+        no_section933_puerto_rico_excluded_income: true,
+        section933_review_source_reference: "2025 residency and income review",
+        no_form2555_filed: true,
+        form2555_review_source_reference: "2025 foreign-income return review",
+        no_form4563_filed: true,
+        form4563_review_source_reference: "2025 Samoa-source income review",
+      },
+    },
     form4972: { elections: [election] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
@@ -85,6 +98,7 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
   assertEquals(form.line8, 54_000);
   assertEquals(returnFields.form4972_tax, form.line30);
   assertEquals(returnFields.line16_income_tax, form.line30);
+  assertEquals(returnFields.line13b_additional_deductions, 6_000);
   const filer = extractFilerIdentity(returnFields);
   const [xml] = native.build(forms, { filer, pending });
   assert(xml.includes(">6000</CapitalGainElectionAmt>"));

@@ -9454,6 +9454,8 @@ Deno.test({
     () =>
       buildMefXml(
         {
+          f1040: { line23_other_taxes: 474 },
+          schedule2: { line9_household_employment: 474 },
           schedule_h: {
             employer_ein: source.employerEin,
             cash_wages_over_2025_limit: source.cashWagesOver2025Limit,
@@ -9482,6 +9484,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 1_572 },
+    schedule2: { line9_household_employment: 1_572 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: true,
@@ -9583,6 +9587,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 126 },
+    schedule2: { line9_household_employment: 126 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: false,
@@ -9634,6 +9640,8 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    f1040: { line23_other_taxes: 42 },
+    schedule2: { line9_household_employment: 42 },
     schedule_h: {
       employer_ein: "123456789",
       cash_wages_over_2025_limit: false,
