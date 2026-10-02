@@ -557,7 +557,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           },
         ],
       },
-      w2: [wage(15_000, 1_500, "Example Employer", "12-3456789")],
+      w2: [{
+        ...wage(15_000, 1_500, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
       f8812: [{
         qualifying_children_count: 3,
         other_dependents_count: 0,

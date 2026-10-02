@@ -40,6 +40,15 @@ joint-spouse collisions at final export. The native Schedule EIC serializer
 already rejected filer/spouse collisions; the added shared check closes the
 PDF/final-bundle gap.
 
+Final export also replays the ordered, capped three-child Schedule EIC roster
+from the parsed general source. It rejects an EIC attachment that drops an
+eligible child or changes child order while leaving the EIC amount intact.
+Both native and PDF builders use this check. A focused three-child case with
+Ada at 12 actual U.S. months, Ben at 8, and December-born Cora at 1 rejects
+a forged Ada/Cora-only attachment. The positive review fixture now includes
+the W-2 employee SSN matching its filer, so its withholding evidence can
+reach final-bundle and local XSD validation.
+
 The route does not yet model the printed **7** when actual U.S. residence
 exceeded half the year but was under seven calendar months, a birth-year child
 whose home was the filer's for more than half their life but less than the

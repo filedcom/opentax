@@ -972,6 +972,36 @@ function eitcQualifyingChildren(
   return children;
 }
 
+/** The exact child rows projected by the general source into Schedule EIC. */
+export function eicChildSourceProjection(parsed: GeneralInput) {
+  const ownerSsns = new Set(
+    [parsed.taxpayer_ssn, parsed.spouse_ssn]
+      .filter((ssn): ssn is string => ssn !== undefined)
+      .map((ssn) => ssn.replaceAll("-", "")),
+  );
+  const children = eitcQualifyingChildren(parsed.dependents ?? [], ownerSsns);
+  return {
+    children,
+    count: Math.min(children.length, 3),
+    details: children.slice(0, 3).map((dep) => ({
+      first_name: dep.first_name,
+      last_name: dep.last_name,
+      name_control: dep.name_control,
+      ssn: dep.ssn,
+      ssn_valid_for_employment: dep.ssn_valid_for_employment,
+      tin_issued_by_due_date: dep.tin_issued_by_due_date,
+      dob: dep.dob,
+      irs_relationship_code: dep.irs_relationship_code,
+      months_in_home: dep.months_in_home,
+      months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
+      eic_birth_residency_review: dep.eic_birth_residency_review,
+      full_time_student: dep.full_time_student,
+      disabled: dep.disabled,
+      ip_pin: dep.ip_pin,
+    })),
+  };
+}
+
 // Optional field helper — adds key/value to obj only if value is not undefined.
 function addIfDefined(
   obj: Record<string, unknown>,
@@ -1317,12 +1347,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       dep.ptc_tax_return !== undefined
     );
     const dependentsModifiedAgi = ptcDependentsModifiedAgi(claimedDeps);
-    const ownerSsns = new Set(
-      [parsed.taxpayer_ssn, parsed.spouse_ssn]
-        .filter((ssn): ssn is string => ssn !== undefined)
-        .map((ssn) => ssn.replaceAll("-", "")),
-    );
-    const eitcChildren = eitcQualifyingChildren(deps, ownerSsns);
+    const eicChildProjection = eicChildSourceProjection(parsed);
+    const eitcChildren = eicChildProjection.children;
     if (parsed.mfs_eitc_separation_review) {
       if (parsed.filing_status !== FilingStatus.MFS) {
         throw new Error(
@@ -1373,23 +1399,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,
-        qualifying_children: Math.min(eitcChildren.length, 3),
-        qualifying_child_details: eitcChildren.slice(0, 3).map((dep) => ({
-          first_name: dep.first_name,
-          last_name: dep.last_name,
-          name_control: dep.name_control,
-          ssn: dep.ssn,
-          ssn_valid_for_employment: dep.ssn_valid_for_employment,
-          tin_issued_by_due_date: dep.tin_issued_by_due_date,
-          dob: dep.dob,
-          irs_relationship_code: dep.irs_relationship_code,
-          months_in_home: dep.months_in_home,
-          months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
-          eic_birth_residency_review: dep.eic_birth_residency_review,
-          full_time_student: dep.full_time_student,
-          disabled: dep.disabled,
-          ip_pin: dep.ip_pin,
-        })),
+        qualifying_children: eicChildProjection.count,
+        qualifying_child_details: eicChildProjection.details,
       }),
       // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
       this.outputNodes.output(agi_aggregator, {

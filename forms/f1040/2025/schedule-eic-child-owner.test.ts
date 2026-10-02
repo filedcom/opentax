@@ -1,10 +1,16 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { FilingStatus } from "../mef/header.ts";
 import { assertEitcChildSources } from "./filer-source-reconciliation.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { eitcPdf } from "./pdf/forms/eitc.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
 import { registry } from "./registry.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildMefXml } from "./mef/builder.ts";
@@ -31,13 +37,15 @@ Deno.test({
     "Schedule EIC three distinct children survive graph, PDF projection, and local XSD",
   ignore: !xsdAvailable,
   async fn() {
-    const wages = (fixture.inputs.w2 as Array<Record<string, unknown>>).map(
-      (row) => ({ ...row, employee_ssn: fixture.filer.primarySSN }),
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      fixture.inputs,
+      {
+        taxYear: 2025,
+        formType: "f1040",
+      },
     );
-    const result = execute(buildExecutionPlan(registry), registry, {
-      ...fixture.inputs,
-      w2: wages,
-    }, { taxYear: 2025, formType: "f1040" });
     assertEquals(result.diagnostics, []);
     assertEitcChildSources(result.pending, fixture.filer);
     const children = result.pending.eitc.qualifying_child_details as Array<
@@ -74,6 +82,40 @@ Deno.test({
   },
 });
 
+Deno.test("Schedule EIC final exports reject a dropped reviewed child with unchanged EIC", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const eitc = pending.eitc!;
+  const details = eitc.qualifying_child_details!;
+  const altered = {
+    ...pending,
+    eitc: {
+      ...eitc,
+      qualifying_children: 2,
+      qualifying_child_details: [details[0], details[2]],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(altered, fixture.filer),
+    Error,
+    "Schedule EIC child roster differs from reviewed general source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(altered, fixture.filer),
+    Error,
+    "Schedule EIC child roster differs from reviewed general source",
+  );
+});
+
 Deno.test("Schedule EIC graph cannot use taxpayer SSN as one of three child identities", () => {
   const general = fixture.inputs.general as Record<string, unknown> & {
     dependents: Array<Record<string, unknown>>;
@@ -95,6 +137,16 @@ Deno.test("Schedule EIC graph cannot use taxpayer SSN as one of three child iden
 });
 
 Deno.test("Schedule EIC final child source cannot reuse taxpayer or joint-spouse SSN", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
   const filer = {
     ...fixture.filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -105,47 +157,19 @@ Deno.test("Schedule EIC final child source cannot reuse taxpayer or joint-spouse
       nameControl: "EXAM",
     },
   };
-  const children = [
-    {
-      first_name: "Ada",
-      last_name: "Example",
-      name_control: "EXAM",
-      ssn: "111-22-3334",
-      dob: "2017-06-15",
-      irs_relationship_code: "DAUGHTER",
-      months_in_home: 12,
-      months_lived_with_you_in_us: 12,
-      ssn_valid_for_employment: true,
-      tin_issued_by_due_date: true,
-    },
-    {
-      first_name: "Ben",
-      last_name: "Example",
-      name_control: "EXAM",
-      ssn: "111-22-3335",
-      dob: "2020-03-10",
-      irs_relationship_code: "SON",
-      months_in_home: 8,
-      months_lived_with_you_in_us: 8,
-      ssn_valid_for_employment: true,
-      tin_issued_by_due_date: true,
-    },
-  ];
+  const source = result.pending.general as Record<string, unknown>;
+  const sourceDependents = source.dependents as Array<Record<string, unknown>>;
+  const eitc = result.pending.eitc as Record<string, unknown>;
+  const children = eitc.qualifying_child_details as Array<
+    Record<string, unknown>
+  >;
   const pending = {
     general: {
-      taxpayer_ssn: "111-22-3333",
+      ...source,
       spouse_ssn: "444-55-6666",
-      dependents: children.map((child) => ({
-        ...child,
-        lived_in_us_over_half_year: true,
-      })),
     },
-    eitc: {
-      credit_amount: 2_000,
-      qualifying_children: 2,
-      qualifying_child_details: children,
-    },
-    f1040: { line27_eitc: 2_000 },
+    eitc,
+    f1040: result.pending.f1040,
   };
   assertEitcChildSources(pending, filer);
   for (const ownerSsn of ["111-22-3333", "444-55-6666"]) {
@@ -154,15 +178,15 @@ Deno.test("Schedule EIC final child source cannot reuse taxpayer or joint-spouse
       general: {
         ...pending.general,
         dependents: [
-          { ...pending.general.dependents[0], ssn: ownerSsn },
-          pending.general.dependents[1],
+          { ...sourceDependents[0], ssn: ownerSsn },
+          ...sourceDependents.slice(1),
         ],
       },
       eitc: {
         ...pending.eitc,
         qualifying_child_details: [
           { ...children[0], ssn: ownerSsn },
-          children[1],
+          ...children.slice(1),
         ],
       },
     };

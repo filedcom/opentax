@@ -6,6 +6,7 @@ import {
 import {
   DependentCreditCategory,
   dependentFilingSchema,
+  eicChildSourceProjection,
   filedDependentsFromGeneral,
   inputSchema as generalInputSchema,
 } from "../nodes/inputs/general/index.ts";
@@ -414,6 +415,18 @@ export function assertEitcChildSources(
       tin(filer.primarySSN, "filer")
   ) {
     throw new Error("Schedule EIC child source differs from the filed credit");
+  }
+  const projected = eicChildSourceProjection(generalInputSchema.parse(general));
+  if (
+    count !== projected.count ||
+    rows.some((value, index) =>
+      tin((value as Record<string, unknown>)?.ssn, "Schedule EIC child") !==
+        tin(projected.details[index]?.ssn, "reviewed EIC child")
+    )
+  ) {
+    throw new Error(
+      "Schedule EIC child roster differs from reviewed general source",
+    );
   }
   const seen = new Set<string>();
   for (const value of rows) {
