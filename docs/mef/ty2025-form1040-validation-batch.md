@@ -314,6 +314,18 @@ or the complete failure classification. Nonnamed fixtures and shared
 references require repair before another full run; deferred named-form tests
 also remain. No release pass is claimed.
 
+The next full `deno task test` at `d59366ab` completed on 2026-10-02 in
+32m54s with **10,662 passed and 221 failed**; no ignored tests were reported.
+It used Deno 2.7.7 (V8 14.6.202.9-rusty, TypeScript 5.9.2), `xmllint`
+libxml 2.9.13, and Poppler 26.03.0. The complete local log is
+`.state/research/ty2025-pr59-nonnamed-phase-bulk-rerun-2026-10-02.log`.
+The 221 failing test names were all present in the prior 429; shared fixture
+groups include 44 missing issued W-2 employee SSNs, 32 retained-general
+digital-asset answers, and Schedule C/F and reference-name mismatches. The
+178-case PDF/XSD batch had 16 failures: one stale EIC error assertion now
+fixed in a focused test and 15 deferred named-form routes. This is not a
+release pass; subsequent focused repairs need another full run.
+
 A fresh local ARM64 CLI compiled from `d22ab027` with `deno compile` and SHA-256
 `f80caffb31d473b311e6134b3e57ae3853ec0d976d40892f64f8f0508aef751a`
 passed `scripts/smoke-release-binary.ts` as version `dev`: source-backed W-2,

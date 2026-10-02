@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **982 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **986 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -16,8 +16,8 @@ native/PDF parity, validation preparation, and delivery prerequisites. The 20
 named-form parent gaps remain on this board for the following implementation
 phase. Cross-cutting scope, inventory, and release parents that require named
 forms or external decisions remain open through that phase. Finish this
-non-named implementation phase before the next agreed bulk test run; the prior
-failed run is diagnostic evidence, not a release pass.
+non-named implementation phase before another bulk test run; the failed runs
+are diagnostic evidence, not release passes.
 
 | Workstream | Open TODOs | Current state |
 | --- | ---: | --- |
@@ -27,10 +27,10 @@ failed run is diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | Four issue #60 code slices passed 93 focused tests; advanced Form 8995-A cents loss remains in the named-form gap. Bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,454 passes and 429 failures under current guards. |
+| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,662 passes and 221 failures under current guards. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 982 bounded routes and
+**Implemented coverage.** The completed ledger records 986 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -183,6 +183,13 @@ digital-assets answers, missing issued W-2 recipient SSNs, and strict MeF
 reference-name mismatches; nonnamed fixture and reference repairs are in
 progress. The complete batch is not a release pass. Its exact log and tool
 versions are recorded in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+A second full `deno task test` at `d59366ab` completed with **10,662 passed
+and 221 failed** in 32m54s. No newly failing test names appeared, but strict
+source checks still exposed missing W-2 employee SSNs, retained digital-asset
+answers, and other incomplete fixtures. The 178-case PDF/XSD group had 16
+failures: one stale EIC error assertion subsequently repaired, plus 15
+deferred named-form cases. Shared fixture repairs are in progress; the full
+command remains red and no release pass is claimed.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
