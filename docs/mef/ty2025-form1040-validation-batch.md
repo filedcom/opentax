@@ -556,7 +556,8 @@ identity, expected forms, review focus and raw computed pending data. On a fully
 successful run, the generator also writes `review-manifest.json` with exact PDF
 and native XML hashes, the retained IRS template cache filenames, descriptor
 source URLs and SHA-256 digests, the rendered page count, expected owner and form-copy
-lists, and one unreviewed checklist slot for **every actual page**. Reviewers
+lists, the builder's registry form/copy origin for each page, and one unreviewed
+checklist slot for **every actual page**. Reviewers
 must identify each page's observed form and owner, compare amounts and
 checkboxes with source/XML, and inspect continuation order and clipping before
 marking the slots complete. Any guarded or otherwise failing fixture stops the
@@ -591,8 +592,11 @@ The checker rebuilds each filled PDF from the replayed prepared bundle using
 that retained IRS template cache and rejects a different PDF even if its
 manifest digest was updated. It also rejects a cache entry whose name, registered
 IRS URL, or bytes differ from the generation manifest. Earlier review manifests
-without template-cache evidence need regeneration; no old-format acceptance is
-provided. The recorded URL and digest prove only that the retained bytes match
+without template-cache or page-origin evidence need regeneration; no old-format
+acceptance is provided. The checker compares replayed page origins with the
+manifest and every reviewer-entered form/copy label; emitted copies must match
+the fixture's expected registry keys. The recorded URL and digest prove only
+that the retained bytes match
 the generator's cache. They do not independently authenticate the original IRS
 download, because the repository has no trusted template digests or signed IRS
 template archive against which an edited cache and manifest can be checked.
@@ -626,6 +630,15 @@ payment/refund; the second shows $15,000 wages and the EIC opt-out mark. The
 completed read-only checker reported `Review checklist complete: 2 cases, 4
 pages; artifact hashes and TY2025 XSD validation confirmed.` Its PDF replay,
 source/XML hashes, page count, and template-cache evidence also passed.
+
+After page-origin evidence was added, the same two case PDFs regenerated with
+byte-identical hashes and recorded all four pages as Form 1040 copy 1. The
+completed checker passed again on
+`.state/research/ty2025-page-origin-smoke-2026-10-02/`. In a disposable copy of
+that packet, changing one recorded origin to `schedule3` while keeping page
+count and PDF bytes fixed made the checker reject the manifest with `recorded
+PDF page origins differ from replay`. This exercises the new manifest format
+on two cases; it does not expand the full-review count.
 
 An initial focused attempt stopped at `single-w2-refund`: its positive W-2
 source lacks `employee_ssn`, which the current W-2 source guard requires.

@@ -8,7 +8,10 @@ import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
-import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
+import {
+  buildPdfBytes,
+  type PdfPageOrigin,
+} from "../forms/f1040/2025/pdf/builder.ts";
 import { sha256Hex } from "../forms/f1040/2025/prepared-source.ts";
 import {
   REVIEW_RETURN_TIMESTAMP,
@@ -17,6 +20,10 @@ import {
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
 import { assertReviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
+import {
+  assertReviewedPageOrigin,
+  assertReviewPageOrigins,
+} from "./ty2025-pdf-review-page-origins.ts";
 import {
   assertReviewSchemaDigest,
   assertReviewSchemaTree,
@@ -230,11 +237,13 @@ for (const [index, rawCase] of cases.entries()) {
   if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {
     throw new Error(`${id}: saved XML differs from current source calculation`);
   }
+  const replayedPageOrigins: PdfPageOrigin[] = [];
   const replayedPdf = await buildPdfBytes(
     rebuilt.pending,
     filer,
     templateCache,
     rebuilt,
+    replayedPageOrigins,
   );
   await assertReviewPdfReplay(id, replayedPdf, entry.pdfSha256);
 
@@ -258,6 +267,15 @@ for (const [index, rawCase] of cases.entries()) {
   ) {
     throw new Error(`${id}: PDF page count differs from the manifest`);
   }
+  if (replayedPageOrigins.length !== pageCount) {
+    throw new Error(`${id}: replayed PDF page origin count differs from pages`);
+  }
+  assertReviewPageOrigins(
+    id,
+    replayedPageOrigins,
+    fixture.expectedPdfForms,
+    entry.pageOrigins,
+  );
   const pages = items(entry.pages, `${id} pages`);
   if (pages.length !== pageCount) {
     throw new Error(`${id}: one review slot is required for every PDF page`);
@@ -284,6 +302,7 @@ for (const [index, rawCase] of cases.entries()) {
     }
     const form = string(page.observedForm, `${label} observed form`);
     const copy = integer(page.observedFormCopy, `${label} observed form copy`);
+    assertReviewedPageOrigin(id, form, copy, replayedPageOrigins[pageIndex]);
     const maxCopies = expectedCopies.get(form);
     if (maxCopies === undefined || copy < 1 || copy > maxCopies) {
       throw new Error(`${label}: observed form/copy is not expected`);

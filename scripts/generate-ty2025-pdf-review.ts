@@ -4,7 +4,10 @@ import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../core/runtime/planner.ts";
 import { execute } from "../core/runtime/executor.ts";
 import { registry } from "../forms/f1040/2025/registry.ts";
-import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
+import {
+  buildPdfBytes,
+  type PdfPageOrigin,
+} from "../forms/f1040/2025/pdf/builder.ts";
 import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
@@ -15,6 +18,7 @@ import {
   reviewFiler,
 } from "./ty2025-pdf-review-source.ts";
 import { reviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
+import { assertReviewPageOrigins } from "./ty2025-pdf-review-page-origins.ts";
 import {
   assertReviewSchemaDigest,
   assertReviewSchemaTree,
@@ -97,16 +101,29 @@ for (const fixture of pdfReviewFixtures) {
     attachments: [],
   });
   await validateXmlAgainstXsd(bundle.xml, fixture.id);
+  const pageOrigins: PdfPageOrigin[] = [];
   const pdf = await buildPdfBytes(
     bundle.pending,
     filer,
     cacheDir,
     bundle,
+    pageOrigins,
   );
   const xml = bundle.xml;
   const xmlFileContents = xml + "\n";
   const rendered = await PDFDocument.load(pdf);
   const pageCount = rendered.getPageCount();
+  if (pageOrigins.length !== pageCount) {
+    throw new Error(
+      `${fixture.id}: PDF page origin count differs from PDF pages`,
+    );
+  }
+  assertReviewPageOrigins(
+    fixture.id,
+    pageOrigins,
+    fixture.expectedPdfForms,
+    pageOrigins,
+  );
   const sourceFileContents = JSON.stringify(
     {
       id: fixture.id,
@@ -147,6 +164,7 @@ for (const fixture of pdfReviewFixtures) {
     ],
     reviewFocus: fixture.reviewFocus,
     pageCount,
+    pageOrigins,
     pages: Array.from({ length: pageCount }, (_, index) => ({
       pageNumber: index + 1,
       observedForm: null,
