@@ -1,6 +1,13 @@
 /** Exercise a compiled release asset with a synthetic TY2025 W-2 return. */
 import { join, resolve } from "@std/path";
-import { PDFDocument } from "pdf-lib";
+import {
+  decodePDFRawStream,
+  PDFArray,
+  PDFDict,
+  PDFDocument,
+  PDFName,
+  PDFRawStream,
+} from "pdf-lib";
 
 const [asset, expectedVersion] = Deno.args;
 if (!asset || !expectedVersion || Deno.args.length !== 2) {
@@ -14,6 +21,94 @@ const decoder = new TextDecoder();
 const workingDir = await Deno.makeTempDir({ prefix: "opentax-release-smoke-" });
 const wages = 40_000;
 const withholding = 5_000;
+
+function decodedStream(stream: PDFRawStream): string {
+  return decoder.decode(decodePDFRawStream(stream).decode());
+}
+
+function assertFlattenedPdfValues(pdf: PDFDocument): void {
+  if (pdf.getForm().getFields().length !== 0) {
+    throw new Error("Built asset PDF still contains form fields");
+  }
+
+  // The TY2025 IRS 1040 template places these flattened widgets at fixed
+  // coordinates. Read the painted appearance XObjects at those coordinates,
+  // rather than finding values elsewhere in the PDF or in a live AcroForm.
+  const expected = [
+    { page: 0, x: 36, y: 684, value: "Alex", label: "filer first name" },
+    { page: 0, x: 253, y: 684, value: "Example", label: "filer last name" },
+    {
+      page: 0,
+      x: 504,
+      y: 330.001,
+      value: String(wages),
+      label: "line 1a wages",
+    },
+    {
+      page: 1,
+      x: 410.4,
+      y: 504,
+      value: String(withholding),
+      label: "line 25a W-2 withholding",
+    },
+  ];
+
+  for (const { page: pageIndex, x, y, value, label } of expected) {
+    const page = pdf.getPage(pageIndex);
+    const contents = page.node.Contents();
+    if (!(contents instanceof PDFArray)) {
+      throw new Error(
+        `Built asset PDF page ${pageIndex + 1} has unexpected content`,
+      );
+    }
+    const pageText = contents.asArray().map((ref) => {
+      const stream = pdf.context.lookup(ref);
+      if (!(stream instanceof PDFRawStream)) {
+        throw new Error(
+          `Built asset PDF page ${pageIndex + 1} has unexpected content`,
+        );
+      }
+      return decodedStream(stream);
+    }).join("\n");
+    const xObjects = page.node.Resources()?.lookup(
+      PDFName.of("XObject"),
+      PDFDict,
+    );
+    if (!xObjects) {
+      throw new Error(
+        `Built asset PDF page ${pageIndex + 1} has no flattened widgets`,
+      );
+    }
+
+    let found = false;
+    // pdf-lib flatten() draws each field appearance through a page XObject.
+    for (
+      const match of pageText.matchAll(
+        /q\s*1 0 0 1 ([\d.-]+) ([\d.-]+) cm\s*1 0 0 1 0 0 cm\s*1 0 0 1 0 0 cm\s*\/(FlatWidget-[\d]+) Do\s*Q/g,
+      )
+    ) {
+      if (
+        Math.abs(Number(match[1]) - x) > 0.01 ||
+        Math.abs(Number(match[2]) - y) > 0.01
+      ) continue;
+      const stream = pdf.context.lookup(xObjects.get(PDFName.of(match[3])));
+      if (!(stream instanceof PDFRawStream)) continue;
+      const paintedText = [
+        ...decodedStream(stream).matchAll(/<([0-9A-Fa-f]+)>\s*Tj/g),
+      ]
+        .map((part) =>
+          decoder.decode(Uint8Array.from(
+            part[1].match(/../g)!.map((byte) => parseInt(byte, 16)),
+          ))
+        )
+        .join("");
+      if (paintedText === value) found = true;
+    }
+    if (!found) {
+      throw new Error(`Built asset PDF ${label} differs from synthetic source`);
+    }
+  }
+}
 
 function oneDocument(xml: string, tag: string): string {
   const matches = [
@@ -191,6 +286,7 @@ try {
   if (pdf.getPageCount() < 2) {
     throw new Error("Built asset PDF omitted a Form 1040 page");
   }
+  assertFlattenedPdfValues(pdf);
 
   console.log(
     `Release smoke passed: ${expectedVersion}, synthetic W-2, finalized MeF, ${pdf.getPageCount()} PDF pages`,

@@ -20,9 +20,13 @@ source facts, checks computed wages and withholding, requires CLI validation to
 find no applicable rule failures, and exports finalized MeF XML with exactly one
 `IRS1040` and one `IRSW2` document. It checks filer identity, filing status,
 employer identity, wages, and withholding against the synthetic source in those
-documents, then loads the exported PDF to require at least two pages. It never
-passes `--force` or `--draft`. The temporary return, XML output, PDF, and
-downloaded IRS template cache are deleted after the run. The compiled CLI may
+documents, then loads the exported PDF to require at least two pages, no live
+form fields, and the actual flattened Form 1040 appearance text for the filer
+name, line 1a wages, and line 25a W-2 withholding at their TY2025 template
+positions. This uses the existing `pdf-lib` dependency and needs no PDF system
+tool on the five runners. It never passes `--force` or `--draft`. The temporary
+return, XML output, PDF, and downloaded IRS template cache are deleted after
+the run. The compiled CLI may
 also read or write its update-check cache in the runner's home directory at
 `.opentax/update-check.json`; that cache is outside the temporary directory.
 
@@ -89,6 +93,7 @@ deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov \
 
 Use the binary name for the actual host architecture. The smoke exercises a
 synthetic Form 1040/W-2 calculation, validation, finalized MeF XML, and a
-loadable filled PDF. It does not establish TY2025 IRS ATS acceptance. The ATS
-certificate, enrollment, endpoint/WSDL/trust package, and authorized test
-transmission remain separate prerequisites in [the ATS plan](ats/ty2025.md).
+loadable PDF with those filled Form 1040 values. It does not establish TY2025
+IRS ATS acceptance. The ATS certificate, enrollment, endpoint/WSDL/trust
+package, and authorized test transmission remain separate prerequisites in
+[the ATS plan](ats/ty2025.md).
