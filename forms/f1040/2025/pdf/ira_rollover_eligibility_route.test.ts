@@ -62,14 +62,20 @@ Deno.test("IRA rollover eligibility review is required again at native and PDF e
     );
   }
   for (
-    const ira_rollover of [
-      { ...source.ira_rollover!, not_inherited_ira_confirmed: undefined },
-      {
+    const [field, ira_rollover] of [
+      ["not_inherited_ira_confirmed", {
+        ...source.ira_rollover!,
+        not_inherited_ira_confirmed: undefined,
+      }],
+      ["not_required_minimum_distribution_confirmed", {
         ...source.ira_rollover!,
         not_required_minimum_distribution_confirmed: undefined,
-      },
-      { ...source.ira_rollover!, rollover_eligibility_review_reference: "" },
-    ]
+      }],
+      ["rollover_eligibility_review_reference", {
+        ...source.ira_rollover!,
+        rollover_eligibility_review_reference: "",
+      }],
+    ] as const
   ) {
     const drift = {
       ...pending,
@@ -83,7 +89,36 @@ Deno.test("IRA rollover eligibility review is required again at native and PDF e
     await assertRejects(
       () => buildPdfBytes(drift, fixture.filer),
       Error,
-      "1099-R owner review needs valid payer source rows",
+      field,
+    );
+  }
+  for (
+    const registration of [
+      { registered_owner_ssn: "999887777" },
+      { registered_account_number: "different-account" },
+      {
+        account_registration_source_reference: source.source_document_reference,
+      },
+    ]
+  ) {
+    const drift = {
+      ...pending,
+      f1099r: {
+        f1099rs: [{
+          ...source,
+          ira_rollover: { ...source.ira_rollover!, ...registration },
+        }],
+      },
+    } as unknown as ReturnType<typeof buildPending>;
+    assertThrows(
+      () => buildMefXml(drift, fixture.filer),
+      Error,
+      "distinct account registration identifying the payer account and recipient as owner",
+    );
+    await assertRejects(
+      () => buildPdfBytes(drift, fixture.filer),
+      Error,
+      "distinct account registration identifying the payer account and recipient as owner",
     );
   }
   const coded = {

@@ -668,6 +668,10 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
       rollover_code: "S",
       ira_rollover: {
         not_inherited_ira_confirmed: true,
+        account_registration_source_reference:
+          "2025-issued-ira-account-registration",
+        registered_account_number: "IRA-ROLLOVER-1",
+        registered_owner_ssn: "111223333",
         not_required_minimum_distribution_confirmed: true,
         rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",
@@ -721,6 +725,10 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
       ...source.f1099rs[0],
       ira_rollover: {
         not_inherited_ira_confirmed: true,
+        account_registration_source_reference:
+          "2025-issued-ira-account-registration",
+        registered_account_number: "IRA-ROLLOVER-1",
+        registered_owner_ssn: "111223333",
         not_required_minimum_distribution_confirmed: true,
         rollover_eligibility_review_reference: "reviewed-ira-eligibility-1",
         source_ira_type: "traditional",

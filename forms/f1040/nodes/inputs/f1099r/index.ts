@@ -328,6 +328,11 @@ export const itemSchema = z.object({
     // Every rollover, including timely and direct transfers, needs an
     // eligibility review. A deadline waiver cannot waive these requirements.
     not_inherited_ira_confirmed: z.literal(true),
+    // A separate IRA registration record must identify this payer account as
+    // the recipient's own account. A 1099-R recipient alone may be a beneficiary.
+    account_registration_source_reference: z.string().trim().min(1),
+    registered_account_number: z.string().trim().min(1),
+    registered_owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     not_required_minimum_distribution_confirmed: z.literal(true),
     rollover_eligibility_review_reference: z.string().trim().min(1),
     // Publication 590-A automatic waiver: the institution timely received
@@ -797,6 +802,18 @@ function validateIraRolloverEvidence(item: R1099Item): void {
     ) {
       throw new Error(
         "IRA rollover needs one identified payer copy, account, recipient, and filed owner",
+      );
+    }
+    const registration = item.ira_rollover;
+    if (
+      registration.account_registration_source_reference ===
+        item.source_document_reference ||
+      registration.registered_account_number !== item.account_number ||
+      registration.registered_owner_ssn.replaceAll("-", "") !==
+        item.recipient_ssn.replaceAll("-", "")
+    ) {
+      throw new Error(
+        "IRA rollover needs a distinct account registration identifying the payer account and recipient as owner",
       );
     }
     if (

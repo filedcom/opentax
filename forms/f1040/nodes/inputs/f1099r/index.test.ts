@@ -18,20 +18,37 @@ type Item = z.infer<typeof itemSchema>;
 
 let iraTestCopy = 0;
 
-function minimalIraItem(overrides: Partial<Item> = {}): Item {
+function minimalIraItem(
+  overrides: Omit<Partial<Item>, "ira_rollover"> & {
+    ira_rollover?: Partial<NonNullable<Item["ira_rollover"]>>;
+  } = {},
+): Item {
   const copy = ++iraTestCopy;
+  const accountNumber = overrides.account_number ?? `IRA-TEST-${copy}`;
+  const recipientSsn = overrides.recipient_ssn ?? "111223333";
   return {
     payer_name: "Test Payer",
     payer_ein: "12-3456789",
     source_document_reference: `issued-2025-ira-1099r-${copy}`,
-    account_number: `IRA-TEST-${copy}`,
-    recipient_ssn: "111223333",
+    account_number: accountNumber,
+    recipient_ssn: recipientSsn,
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: true,
     ts: TS.T,
     ...overrides,
-  };
+    ...(overrides.ira_rollover
+      ? {
+        ira_rollover: {
+          account_registration_source_reference:
+            `issued-2025-ira-account-registration-${copy}`,
+          ...overrides.ira_rollover,
+          registered_account_number: accountNumber,
+          registered_owner_ssn: recipientSsn,
+        },
+      }
+      : {}),
+  } as Item;
 }
 
 function priorBasisDistributionEvidence(yearEndValue: number) {
@@ -1314,6 +1331,9 @@ Deno.test("f1099r.compute: every timely and direct IRA rollover needs eligibilit
     for (
       const key of [
         "not_inherited_ira_confirmed",
+        "account_registration_source_reference",
+        "registered_account_number",
+        "registered_owner_ssn",
         "not_required_minimum_distribution_confirmed",
         "rollover_eligibility_review_reference",
       ] as const
@@ -1328,6 +1348,43 @@ Deno.test("f1099r.compute: every timely and direct IRA rollover needs eligibilit
         false,
       );
     }
+  }
+});
+
+Deno.test("f1099r.compute: IRA rollover rejects account registration for another owner or account", () => {
+  const item = minimalIraItem({
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      not_inherited_ira_confirmed: true,
+      not_required_minimum_distribution_confirmed: true,
+      rollover_eligibility_review_reference: "eligibility-review",
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+      last_ira_to_ira_rollover_on: null,
+    },
+  });
+  for (
+    const registration of [
+      { registered_owner_ssn: "999887777" },
+      { registered_account_number: "another-ira" },
+      { account_registration_source_reference: item.source_document_reference },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute([{
+          ...item,
+          ira_rollover: {
+            ...item.ira_rollover!,
+            ...registration,
+          } as NonNullable<Item["ira_rollover"]>,
+        }]),
+      Error,
+      "distinct account registration identifying the payer account and recipient as owner",
+    );
   }
 });
 
@@ -1370,6 +1427,11 @@ Deno.test("f1099r.compute: death-coded IRA distribution cannot claim an unreview
 
 Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
   const item = minimalIraItem({ rollover_code: RolloverCode.S });
+  const registration = {
+    account_registration_source_reference: "issued-account-registration",
+    registered_account_number: item.account_number!,
+    registered_owner_ssn: item.recipient_ssn!,
+  };
   assertThrows(() => compute([item]), Error, "needs destination");
   assertThrows(
     () =>
@@ -1385,6 +1447,7 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
       compute([{
         ...item,
         ira_rollover: {
+          ...registration,
           not_inherited_ira_confirmed: true as const,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
@@ -1401,6 +1464,7 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
   const nextYear = {
     ...item,
     ira_rollover: {
+      ...registration,
       not_inherited_ira_confirmed: true as const,
       not_required_minimum_distribution_confirmed: true as const,
       rollover_eligibility_review_reference: "rollover-eligibility-review",
@@ -1420,6 +1484,7 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
   const qualified = {
     ...item,
     ira_rollover: {
+      ...registration,
       not_inherited_ira_confirmed: true as const,
       not_required_minimum_distribution_confirmed: true as const,
       rollover_eligibility_review_reference: "rollover-eligibility-review",
@@ -2084,6 +2149,7 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
     account_number: "IRA-TEST-SECOND",
     ira_rollover: {
       ...item.ira_rollover!,
+      registered_account_number: "IRA-TEST-SECOND",
       distributed_on: "2025-11-01",
       completed_on: "2025-11-02",
       last_ira_to_ira_rollover_on: null,
@@ -2099,6 +2165,10 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
       ...second,
       ts: TS.S,
       recipient_ssn: "444556666",
+      ira_rollover: {
+        ...second.ira_rollover,
+        registered_owner_ssn: "444556666",
+      },
     }]))
       .line4c_ira_rollover,
     true,

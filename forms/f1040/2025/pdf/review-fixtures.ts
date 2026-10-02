@@ -4772,6 +4772,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-ROLLOVER",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -4809,6 +4813,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-PLAN",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -4847,6 +4855,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-2026-ROLLOVER",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -4883,6 +4895,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-LATE",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -4928,6 +4944,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-CERT",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -4977,6 +4997,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-PLR",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
@@ -5023,6 +5047,10 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         rollover_code: RolloverCode.S,
         ira_rollover: {
           not_inherited_ira_confirmed: true as const,
+          account_registration_source_reference:
+            "2025-issued-ira-account-registration",
+          registered_account_number: "IRA-2025-FROZEN",
+          registered_owner_ssn: singleGeneral.taxpayer_ssn,
           not_required_minimum_distribution_confirmed: true as const,
           rollover_eligibility_review_reference: "rollover-eligibility-review",
           source_ira_type: "traditional",
