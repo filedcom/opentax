@@ -498,7 +498,7 @@ The TY2025 v5.4 schema archive and extracted XSD have pinned local hashes and
 an authorized SOR verification procedure; the local copy's IRS origin remains
 unverified.
 
-**Coverage and release gates.** The current static audit counts 145 registered native MeF
+**Coverage and release gates.** The current static audit counts 148 registered native MeF
 descriptors, 115 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
 applicability, source and owner evidence, conditional attachments, and
 unsupported-path decisions before calling the filing family complete. Every
