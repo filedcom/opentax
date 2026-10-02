@@ -26,6 +26,21 @@ Deno.test("Schedule 1-A omits context-only input before validating fractional re
   );
 });
 
+Deno.test("Schedule 1-A does not silently omit a positive senior source without Part I review", () => {
+  const claim = {
+    filing_status: FilingStatus.Single,
+    magi: 60_000,
+    taxpayer_age_65_or_older: true,
+    taxpayer_has_valid_ssn: true,
+    taxpayer_ssn: "111223333",
+  };
+  assertThrows(
+    () => schedule1a.build(claim, { pending: { f1040: {} } }),
+    Error,
+    "sourced Part I zero-exclusion review",
+  );
+});
+
 const review = {
   no_section933_puerto_rico_excluded_income: true as const,
   section933_review_source_reference: "2025 residency and income review",

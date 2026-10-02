@@ -176,6 +176,19 @@ Deno.test("schedule1a: unsupported direct overtime totals are rejected at public
   );
 });
 
+Deno.test("schedule1a: senior source creates a graph claim before filing review", () => {
+  assertEquals(
+    deduction({
+      taxpayer_age_65_or_older: true,
+      taxpayer_has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      filing_status: FilingStatus.Single,
+      magi: 60_000,
+    }),
+    6_000,
+  );
+});
+
 Deno.test("schedule1a: deducts qualified employee tips", () => {
   assertEquals(
     deduction({

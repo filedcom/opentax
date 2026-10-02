@@ -42,6 +42,20 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   const input = inputSchema.parse(raw);
   if (!input.senior_zero_exclusions_review) {
+    const hasDeductionSource = input.taxpayer_age_65_or_older === true ||
+      input.spouse_age_65_or_older === true ||
+      (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0 ||
+      (input.qualified_w2_overtime?.length ?? 0) > 0 ||
+      (input.vehicle_loans?.length ?? 0) > 0;
+    if (hasDeductionSource) {
+      throw new Error(
+        "Schedule 1-A positive source needs sourced Part I zero-exclusion review",
+      );
+    }
     const claim = z.object({
       line13b_additional_deductions: z.number().optional(),
     }).passthrough().parse(context?.pending?.f1040);

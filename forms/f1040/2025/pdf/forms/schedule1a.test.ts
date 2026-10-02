@@ -213,6 +213,18 @@ const return1040 = {
   spouse_tin_issued_by_due_date: true,
 };
 
+Deno.test("Schedule 1-A PDF does not silently omit a positive senior source without Part I review", () => {
+  assertThrows(
+    () =>
+      schedule1aPdf.projectFields?.(
+        { ...source, senior_zero_exclusions_review: undefined },
+        { f1040: {} },
+      ),
+    Error,
+    "sourced Part I zero-exclusion review",
+  );
+});
+
 Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", () => {
   const map = new Map(schedule1aPdf.fields.map((entry) => [
     entry.domainKey,

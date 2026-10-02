@@ -16,6 +16,12 @@ only when that source review is present and the second pass has exactly one
 attached Schedule 1-A. The descriptor independently rejects unsupported
 components and reconciles their combined line 38 to line 13b. All four routes have a
 two-page PDF field map and inspected synthetic full-return packets.
+An age-eligible senior source can create a provisional graph deduction before
+filing review. Native and PDF Schedule 1-A export now reject that source when
+the Part I zero-exclusion review is missing, even if Form 1040 line 13b was
+also omitted. Context-only MAGI/status input can still omit the form. This
+prevents a provisional deduction source from disappearing silently at export;
+the qualifying senior source, review, and final return must reconcile.
 
 ## Source and line blockers
 
