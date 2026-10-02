@@ -200,7 +200,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
         }],
       }),
     Error,
-    "readable PDF",
+    "Prepared MeF PDF bytes differ from digest",
   );
 });
 
