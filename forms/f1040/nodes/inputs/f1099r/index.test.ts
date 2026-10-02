@@ -2092,26 +2092,39 @@ Deno.test("f1099r.compute: IRA-to-IRA rollovers obey each owner's 12-month limit
 });
 
 Deno.test("f1099r.compute: partial IRA rollover marks line 4c and taxes the remainder", () => {
-  const input = f1040Input(compute([minimalIraItem({
+  const rollover = {
+    not_inherited_ira_confirmed: true as const,
+    not_required_minimum_distribution_confirmed: true as const,
+    rollover_eligibility_review_reference: "rollover-eligibility-review",
+    source_ira_type: "traditional" as const,
+    destination: "ira" as const,
+    destination_ira_type: "traditional" as const,
+    distributed_on: "2025-09-01",
+    completed_on: "2025-09-30",
+    last_ira_to_ira_rollover_on: null,
+  };
+  const source = minimalIraItem({
     box1_gross_distribution: 10_000,
     box2a_taxable_amount: 10_000,
     rollover_code: RolloverCode.X,
     partial_rollover_amount: 6_000,
-    ira_rollover: {
-      not_inherited_ira_confirmed: true as const,
-      not_required_minimum_distribution_confirmed: true as const,
-      rollover_eligibility_review_reference: "rollover-eligibility-review",
-      source_ira_type: "traditional",
-      destination: "ira",
-      destination_ira_type: "traditional",
-      distributed_on: "2025-09-01",
-      completed_on: "2025-09-30",
-      last_ira_to_ira_rollover_on: null,
-    },
-  })]));
+    ira_rollover: rollover,
+  });
+  const input = f1040Input(compute([source]));
   assertEquals(input.line4a_ira_gross, 10_000);
   assertEquals(input.line4b_ira_taxable, 4_000);
   assertEquals(input.line4c_ira_rollover, true);
+  const { box2a_taxable_amount: _, ...blankBox2a } = source;
+  const undetermined = compute([{
+    ...blankBox2a,
+    box2b_not_determined: true,
+  }]);
+  assertEquals(f1040Input(undetermined).line4b_ira_taxable, 4_000);
+  assertThrows(
+    () => compute([{ ...source, box2a_taxable_amount: 2_000 }]),
+    Error,
+    "box 2a equal to gross or undetermined",
+  );
 });
 
 Deno.test("f1099r.compute: early IRA rollover sends only unrolled income to Form 5329", () => {

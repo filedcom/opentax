@@ -10,6 +10,8 @@ import { registry } from "./registry.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { irs1040Pdf } from "./pdf/forms/f1040.ts";
+import { form5329Pdf } from "./pdf/forms/f5329.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
@@ -54,6 +56,24 @@ Deno.test("partial early IRA rollover reconciles Form 1040, Form 5329, native XM
   assertEquals(result.pending.f1040.line23_other_taxes, 400);
 
   const pending = buildPending(result.pending);
+  const pdfSource = pending as unknown as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const form1040Print = irs1040Pdf.projectFields?.(
+    pending.f1040!,
+    pdfSource,
+  );
+  assertEquals(form1040Print?.line4a_ira_gross, 10_000);
+  assertEquals(form1040Print?.line4b_ira_taxable, 4_000);
+  assertEquals(form1040Print?.line4c_ira_rollover, true);
+  assertEquals(form1040Print?.line23_other_taxes, 400);
+  const form5329Print = form5329Pdf.instances?.(
+    pending.form5329!,
+    base.filer,
+    pdfSource,
+  );
+  assertEquals(form5329Print?.[0]?.early_distribution, 4_000);
   const xml = buildMefXml(pending, base.filer);
   assertStringIncludes(xml, "<IRADistributionsAmt>10000</IRADistributionsAmt>");
   assertStringIncludes(xml, "<TaxableIRAAmt>4000</TaxableIRAAmt>");

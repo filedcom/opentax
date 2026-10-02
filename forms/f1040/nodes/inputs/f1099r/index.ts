@@ -112,6 +112,11 @@ function effectiveTaxableAmount(
   // Rollover_code X: partial rollover — only the non-rolled portion is taxable
   if (item.rollover_code === "X") {
     const rolled = item.partial_rollover_amount ?? 0;
+    // Supported traditional/SEP IRA rollovers have no Form 8606 basis. The
+    // payer's blank or undetermined box 2a does not make the unrolled part free.
+    if (isIraRollover(item)) {
+      return Math.max(0, item.box1_gross_distribution - rolled);
+    }
     return Math.max(0, rawTaxable - rolled);
   }
 
@@ -906,6 +911,15 @@ function validateIraRolloverEvidence(item: R1099Item): void {
     ) {
       throw new Error(
         "Partial IRA rollover needs an amount between zero and gross distribution",
+      );
+    }
+    if (
+      item.rollover_code === RolloverCode.X &&
+      item.box2a_taxable_amount !== undefined &&
+      item.box2a_taxable_amount !== item.box1_gross_distribution
+    ) {
+      throw new Error(
+        "Partial pretax IRA rollover needs payer box 2a equal to gross or undetermined",
       );
     }
   }
