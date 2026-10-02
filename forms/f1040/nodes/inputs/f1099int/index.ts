@@ -29,6 +29,7 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().trim().min(1).max(40).optional(),
   box1_copy_review: z.object({
     source_document_reference: z.string().trim().min(1),

@@ -15,6 +15,7 @@ import { assertPresidentialCampaignSource } from "../../presidential-campaign-so
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
 import { assertLine1hSupportedSource } from "../../line1h-source.ts";
+import { assertIdentified1099IntOwner } from "../../f1099int-owner-reconciliation.ts";
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
@@ -748,6 +749,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertIdentified1099IntOwner(fields, allPending);
     assertJointDependentRefundSource(fields, allPending);
     assertNoUnsupportedDeceasedReturn(
       fields,
