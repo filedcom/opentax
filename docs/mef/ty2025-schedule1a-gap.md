@@ -68,7 +68,11 @@ two-page PDF field map and inspected synthetic full-return packets.
   under Notice 2025-69 method B. Its owner and employer must match the W-2,
   the pay must be included in box 1, and a box 14 or separately stated premium
   cannot also be claimed. Native/PDF export replays the source amount and
-  reference. Other payroll methods, deferred W-2 amounts, Forms 1099-NEC/MISC,
+  reference. A second bounded Notice 2025-69 method C uses an employer's
+  full-year statement of double-time pay above regular wages for hours over
+  40; one-half is the deductible FLSA premium, subject to the same W-2 owner,
+  employer, box 1, and single-method checks. Other payroll methods, deferred
+  W-2 amounts, Forms 1099-NEC/MISC,
   full combined packets, and authenticated employer statement bytes remain open.
 - Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower

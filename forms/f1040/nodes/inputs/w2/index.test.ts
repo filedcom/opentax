@@ -615,6 +615,94 @@ Deno.test("full-year time-and-a-half payroll total yields one-third FLSA premium
   ) assertThrows(() => compute([bad]), Error);
 });
 
+Deno.test("full-year double-time excess statement yields half-rate FLSA premium", () => {
+  const doubleTime = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    excess_over_regular_pay: 10_000,
+    double_time_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    statement_reference: "Full-year double-time excess pay statement",
+    furnished_to_employee: true as const,
+  };
+  const review = {
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "FLSA coverage and box 1 review",
+    double_time_excess_statement: doubleTime,
+  };
+  const item = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    flsa_overtime_review: review,
+  });
+  assertEquals(
+    fieldsOf(compute([item]).outputs, schedule1a)?.qualified_w2_overtime,
+    [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      amount: 5_000,
+      box1_wages: 80_000,
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: review.source_reference,
+      double_time_excess_statement_reference: doubleTime.statement_reference,
+    }],
+  );
+  for (
+    const bad of [
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            excess_over_regular_pay: 10_001,
+          },
+        },
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            employer_ein: "999999999",
+          },
+        },
+      },
+      {
+        ...item,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 5_000,
+        }],
+      },
+      {
+        ...item,
+        flsa_overtime_review: {
+          ...review,
+          aggregate_overtime_statement: {
+            tax_year: 2025 as const,
+            employee_ssn: "111223333",
+            employer_ein: "123456789",
+            aggregate_time_and_half_overtime_pay: 15_000,
+            time_and_half_rate_confirmed: true as const,
+            all_hours_exceed_forty_per_workweek_confirmed: true as const,
+            covers_full_tax_year: true as const,
+            premium_not_separately_stated: true as const,
+            statement_reference: "Competing method",
+            furnished_to_employee: true as const,
+          },
+        },
+      },
+    ]
+  ) assertThrows(() => compute([bad]), Error);
+});
+
 Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
   assertThrows(
     () =>

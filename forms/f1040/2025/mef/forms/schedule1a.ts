@@ -477,7 +477,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     );
     const statementEntries = input.qualified_w2_overtime!.filter((entry) =>
       entry.employer_statement_reference !== undefined ||
-      entry.aggregate_overtime_statement_reference !== undefined
+      entry.aggregate_overtime_statement_reference !== undefined ||
+      entry.double_time_excess_statement_reference !== undefined
     );
     if (statementEntries.length > 0) {
       const sourceW2s = context?.pending?.w2
@@ -485,7 +486,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         : [];
       const sourceStatementW2s = sourceW2s.filter((w2) =>
         w2.flsa_overtime_review?.employer_statement !== undefined ||
-        w2.flsa_overtime_review?.aggregate_overtime_statement !== undefined
+        w2.flsa_overtime_review?.aggregate_overtime_statement !== undefined ||
+        w2.flsa_overtime_review?.double_time_excess_statement !== undefined
       );
       const normalize = (value: string) => value.replaceAll("-", "");
       if (
@@ -495,30 +497,48 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
             const review = w2.flsa_overtime_review;
             const statement = review?.employer_statement;
             const aggregate = review?.aggregate_overtime_statement;
+            const doubleTime = review?.double_time_excess_statement;
             const methodMatches = statement !== undefined &&
                 aggregate === undefined &&
+                doubleTime === undefined &&
                 entry.aggregate_overtime_statement_reference === undefined &&
+                entry.double_time_excess_statement_reference === undefined &&
                 statement.tax_year === 2025 &&
                 statement.furnished_to_employee === true &&
                 statement.qualified_overtime_premium === entry.amount &&
                 statement.statement_reference ===
                   entry.employer_statement_reference ||
               aggregate !== undefined && statement === undefined &&
+                doubleTime === undefined &&
                 entry.employer_statement_reference === undefined &&
+                entry.double_time_excess_statement_reference === undefined &&
                 aggregate.tax_year === 2025 &&
                 aggregate.furnished_to_employee === true &&
                 aggregate.aggregate_time_and_half_overtime_pay / 3 ===
                   entry.amount &&
                 aggregate.statement_reference ===
-                  entry.aggregate_overtime_statement_reference;
+                  entry.aggregate_overtime_statement_reference ||
+              doubleTime !== undefined && statement === undefined &&
+                aggregate === undefined &&
+                entry.employer_statement_reference === undefined &&
+                entry.aggregate_overtime_statement_reference === undefined &&
+                doubleTime.tax_year === 2025 &&
+                doubleTime.furnished_to_employee === true &&
+                doubleTime.excess_over_regular_pay / 2 === entry.amount &&
+                doubleTime.statement_reference ===
+                  entry.double_time_excess_statement_reference;
             return methodMatches &&
               normalize(w2.employee_ssn ?? "") ===
                 normalize(entry.employee_ssn) &&
               normalize(w2.employer_ein ?? "") ===
                 normalize(entry.employer_ein) &&
-              normalize((statement ?? aggregate)!.employee_ssn) ===
+              normalize(
+                  (statement ?? aggregate ?? doubleTime)!.employee_ssn,
+                ) ===
                 normalize(entry.employee_ssn) &&
-              normalize((statement ?? aggregate)!.employer_ein) ===
+              normalize(
+                  (statement ?? aggregate ?? doubleTime)!.employer_ein,
+                ) ===
                 normalize(entry.employer_ein) &&
               w2.box1_wages === entry.box1_wages &&
               review?.source_reference === entry.source_reference &&

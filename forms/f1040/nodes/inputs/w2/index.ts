@@ -198,6 +198,17 @@ export const w2ItemSchema = z.object({
       statement_reference: z.string().trim().min(1),
       furnished_to_employee: z.literal(true),
     }).strict().optional(),
+    double_time_excess_statement: z.object({
+      tax_year: z.literal(2025),
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      excess_over_regular_pay: z.number().int().positive(),
+      double_time_rate_confirmed: z.literal(true),
+      all_hours_exceed_forty_per_workweek_confirmed: z.literal(true),
+      covers_full_tax_year: z.literal(true),
+      statement_reference: z.string().trim().min(1),
+      furnished_to_employee: z.literal(true),
+    }).strict().optional(),
   }).strict().optional().describe(
     "Source review for an employer-identified FLSA overtime premium in box 14 or a 2025 employer statement",
   ),
@@ -393,12 +404,21 @@ function validateItem(
   if (item.flsa_overtime_review !== undefined) {
     const statement = item.flsa_overtime_review.employer_statement;
     const aggregate = item.flsa_overtime_review.aggregate_overtime_statement;
+    const doubleTime = item.flsa_overtime_review.double_time_excess_statement;
     const premiums = (item.box14_entries ?? []).filter((entry) =>
       entry.description.trim().toLowerCase() === "flsa overtime premium"
     );
     if (
-      (statement && aggregate) ||
-      (aggregate
+      [statement, aggregate, doubleTime].filter(Boolean).length > 1 ||
+      (doubleTime
+        ? premiums.length !== 0 ||
+          doubleTime.excess_over_regular_pay > item.box1_wages ||
+          doubleTime.excess_over_regular_pay % 2 !== 0 ||
+          doubleTime.employee_ssn.replaceAll("-", "") !==
+            item.employee_ssn?.replaceAll("-", "") ||
+          doubleTime.employer_ein.replaceAll("-", "") !==
+            item.employer_ein?.replaceAll("-", "")
+        : aggregate
         ? premiums.length !== 0 ||
           aggregate.aggregate_time_and_half_overtime_pay > item.box1_wages ||
           aggregate.aggregate_time_and_half_overtime_pay % 3 !== 0 ||
@@ -855,6 +875,11 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
       employer_ein: item.employer_ein!,
       amount: item.flsa_overtime_review!.employer_statement
         ?.qualified_overtime_premium ??
+        (item.flsa_overtime_review!.double_time_excess_statement
+            ?.excess_over_regular_pay !== undefined
+          ? item.flsa_overtime_review!.double_time_excess_statement!
+            .excess_over_regular_pay / 2
+          : undefined) ??
         (item.flsa_overtime_review!.aggregate_overtime_statement
             ?.aggregate_time_and_half_overtime_pay !== undefined
           ? item.flsa_overtime_review!.aggregate_overtime_statement!
@@ -867,7 +892,13 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
       covered_nonexempt_employee: true as const,
       premium_included_in_box1: true as const,
       source_reference: item.flsa_overtime_review!.source_reference,
-      ...(item.flsa_overtime_review!.aggregate_overtime_statement
+      ...(item.flsa_overtime_review!.double_time_excess_statement
+        ? {
+          double_time_excess_statement_reference:
+            item.flsa_overtime_review!.double_time_excess_statement!
+              .statement_reference,
+        }
+        : item.flsa_overtime_review!.aggregate_overtime_statement
         ? {
           aggregate_overtime_statement_reference:
             item.flsa_overtime_review!.aggregate_overtime_statement!

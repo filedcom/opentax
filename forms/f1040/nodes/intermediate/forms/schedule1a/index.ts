@@ -142,6 +142,8 @@ export const inputSchema = claimInputSchema.extend({
       employer_statement_reference: z.string().trim().min(1).optional(),
       aggregate_overtime_statement_reference: z.string().trim().min(1)
         .optional(),
+      double_time_excess_statement_reference: z.string().trim().min(1)
+        .optional(),
     }).strict(),
   ).optional(),
   qualified_employee_tips: z.array(z.object({

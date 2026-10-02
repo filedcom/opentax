@@ -2930,6 +2930,54 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-double-time-flsa-overtime-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(80_000, 8_000, "Double Time Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        flsa_overtime_review: {
+          covered_nonexempt_employee: true,
+          premium_included_in_box1: true,
+          source_reference: "Synthetic 2025 FLSA coverage and box 1 review",
+          double_time_excess_statement: {
+            tax_year: 2025,
+            employee_ssn: "111-22-3333",
+            employer_ein: "12-3456789",
+            excess_over_regular_pay: 10_000,
+            double_time_rate_confirmed: true,
+            all_hours_exceed_forty_per_workweek_confirmed: true,
+            covers_full_tax_year: true,
+            statement_reference: "Synthetic full-year double-time pay summary",
+            furnished_to_employee: true,
+          },
+        },
+      }],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference: "Synthetic foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference: "Synthetic Samoa-income review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "The full-year employer statement reports $10,000 of double-time excess over regular wages, included in W-2 box 1",
+      "Notice 2025-69 one-half method puts $5,000 on Schedule 1-A lines 14a, 14c, 15, 21, and 38",
+      "Form 1040 line 13b prints $5,000 without claiming the full double-time premium",
+    ],
+  },
+  {
     id: "single-w2-qualified-tips-schedule1a",
     inputs: {
       general: {

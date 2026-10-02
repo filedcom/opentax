@@ -302,6 +302,79 @@ Deno.test("Schedule 1-A replays aggregate overtime payroll source at native and 
   );
 });
 
+Deno.test("Schedule 1-A replays double-time excess pay at native and PDF export", () => {
+  const doubleTime = {
+    tax_year: 2025 as const,
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    excess_over_regular_pay: 10_000,
+    double_time_rate_confirmed: true as const,
+    all_hours_exceed_forty_per_workweek_confirmed: true as const,
+    covers_full_tax_year: true as const,
+    statement_reference: "Full-year double-time excess statement",
+    furnished_to_employee: true as const,
+  };
+  const w2 = {
+    w2s: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Employer",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true as const,
+        premium_included_in_box1: true as const,
+        source_reference: "FLSA coverage and box 1 review",
+        double_time_excess_statement: doubleTime,
+      },
+    }],
+  };
+  const claim = {
+    ...singleOvertime,
+    qualified_w2_overtime: [{
+      ...overtimeEntry,
+      amount: 5_000,
+      source_reference: "FLSA coverage and box 1 review",
+      double_time_excess_statement_reference: doubleTime.statement_reference,
+    }],
+  };
+  const form = { ...singleOvertime1040, line13b_additional_deductions: 5_000 };
+  const pending = { f1040: form, w2 };
+  assertStringIncludes(
+    schedule1a.build(claim, { pending }),
+    "<QualifiedOvertimeWagesAmt>5000</QualifiedOvertimeWagesAmt>",
+  );
+  assertEquals(
+    schedule1aPdf.projectFields?.(claim, pending).line21_overtime,
+    5_000,
+  );
+  const changed = {
+    ...pending,
+    w2: {
+      w2s: [{
+        ...w2.w2s[0],
+        flsa_overtime_review: {
+          ...w2.w2s[0].flsa_overtime_review,
+          double_time_excess_statement: {
+            ...doubleTime,
+            excess_over_regular_pay: 8_000,
+          },
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => schedule1a.build(claim, { pending: changed }),
+    Error,
+    "does not match the filed W-2",
+  );
+  assertThrows(
+    () => schedule1aPdf.projectFields?.(claim, changed),
+    Error,
+    "does not match the filed W-2",
+  );
+});
+
 const vehicleLoan = {
   vin: "1HGCM82633A004352",
   borrower_ssn: "111223333",

@@ -302,6 +302,10 @@ reviewed full-year employer time-and-a-half overtime pay statement. It binds
 the statement to the W-2 owner and employer, excludes simultaneous premium
 sources, and replays the $4,000 deduction at native/PDF export. Underlying
 payroll bytes and wider Notice 2025-69 calculation methods remain open.
+Part III also supports a reviewed full-year double-time employer statement
+that separately reports pay above the regular rate: half of the $10,000 excess
+is the $5,000 FLSA premium. The source and native/PDF export bind it to one
+W-2 and reject competing overtime methods; issued payroll bytes remain open.
 A nine-root workflow matrix states the remaining amendment, payment,
 recipient-copy, and optional preference decisions without assuming their outcome.
 The TY2025 v5.4 schema archive and extracted XSD have pinned local hashes and
