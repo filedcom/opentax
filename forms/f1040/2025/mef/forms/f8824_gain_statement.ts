@@ -33,7 +33,7 @@ export async function buildForm8824GainStatement(
     );
   }
   const lines = calculateLikeKindExchange(input);
-  const pdf = await PDFDocument.create();
+  const pdf = await PDFDocument.create({ updateMetadata: false });
   const page = pdf.addPage([612, 792]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);

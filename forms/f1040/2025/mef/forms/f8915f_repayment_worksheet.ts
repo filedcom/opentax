@@ -32,7 +32,7 @@ export async function buildForm8915FRepaymentWorksheet(
   const priorRepaymentLine = worksheetNumber === 3 ? 14 : 25;
   const priorIncomeLine = worksheetNumber === 3 ? 13 : 24;
   const amount = item.repayment.amount;
-  const pdf = await PDFDocument.create();
+  const pdf = await PDFDocument.create({ updateMetadata: false });
   const page = pdf.addPage([612, 792]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);

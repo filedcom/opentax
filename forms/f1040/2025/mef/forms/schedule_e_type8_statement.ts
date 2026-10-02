@@ -21,7 +21,7 @@ export async function buildScheduleEType8Statement(
       (item.property_type_other_desc?.length ?? 0) > 20
     )
   ) return undefined;
-  const document = await PDFDocument.create();
+  const document = await PDFDocument.create({ updateMetadata: false });
   const rows = items.flatMap((item, index) =>
     item.property_type === 8 && item.property_type_other_desc
       ? [{
