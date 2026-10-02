@@ -59,7 +59,8 @@ Deno.test("1099-MISC repeated identified copy cannot double income or withholdin
     () =>
       compute([issued, {
         ...issued,
-        box3_other_income_description: "Changed review description",
+        box3_other_income: 350,
+        box4_federal_withheld: 25,
       }]),
     Error,
     "repeats the same payer, recipient, account",

@@ -118,39 +118,20 @@ export const inputSchema = z.object({
 
 type G99Items = z.infer<typeof itemSchema>[];
 
-const issuedCopyFields = [
-  "box_1_unemployment",
-  "box_1_railroad",
-  "box_2_state_refund",
-  "box_3_tax_year",
-  "box_4_federal_withheld",
-  "box_5_rtaa",
-  "box_6_taxable_grants",
-  "box_7_agriculture",
-  "box_8_trade_or_business",
-  "box_9_market_gain",
-  "box_10a_state",
-  "box_10b_state_id",
-  "box_11_state_withheld",
-] as const satisfies readonly (keyof G99Items[number])[];
-
-function assertDistinctIssuedCopies(items: G99Items): void {
+export function assertDistinct1099GCopies(items: G99Items): void {
   const seen = new Set<string>();
   for (const item of items) {
     if (
-      !item.source_document_reference || !item.payer_tin ||
-      !item.recipient_tin || !item.account_number
+      !item.payer_tin || !item.recipient_tin || !item.account_number
     ) continue;
     const key = JSON.stringify([
-      item.source_document_reference,
       item.payer_tin.replace(/\D/g, ""),
       item.recipient_tin,
-      item.account_number,
-      ...issuedCopyFields.map((field) => item[field] ?? null),
+      item.account_number.trim(),
     ]);
     if (seen.has(key)) {
       throw new Error(
-        "1099-G repeats the same identified payer-issued copy and box amounts",
+        "1099-G repeats the same identified payer, recipient, and account; corrected copies need a reviewed single current row",
       );
     }
     seen.add(key);
@@ -368,7 +349,7 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     const { f1099gs: g99s } = parsed;
 
-    assertDistinctIssuedCopies(g99s);
+    assertDistinct1099GCopies(g99s);
 
     if (g99s.length === 0) return { outputs: [] };
 

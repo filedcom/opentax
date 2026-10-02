@@ -52,7 +52,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("1099-G exact issued-copy repetition cannot double income or withholding", () => {
+Deno.test("1099-G repeated identified account cannot double income or withholding after a changed copy", () => {
   const issued = minimalItem({
     payer_name: "State Agency",
     payer_tin: "123456789",
@@ -63,9 +63,14 @@ Deno.test("1099-G exact issued-copy repetition cannot double income or withholdi
     box_4_federal_withheld: 20,
   });
   assertThrows(
-    () => compute([issued, { ...issued, box_1_repaid: 100 }]),
+    () =>
+      compute([issued, {
+        ...issued,
+        source_document_reference: "corrected-1099g-copy-2",
+        box_1_unemployment: 600,
+      }]),
     Error,
-    "repeats the same identified payer-issued copy",
+    "repeats the same identified payer, recipient, and account",
   );
   const distinct = compute([
     issued,

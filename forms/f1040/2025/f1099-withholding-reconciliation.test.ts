@@ -1,6 +1,8 @@
-import { assertThrows } from "@std/assert";
+import { assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { assert1099WithholdingSource } from "./f1099-withholding-reconciliation.ts";
+import { buildMefXml } from "./mef/builder.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
 import { FormType } from "../nodes/inputs/f4852/index.ts";
 
 const filer: FilerIdentity = {
@@ -16,6 +18,69 @@ const filer: FilerIdentity = {
     nameControl: "SPOU",
   },
 };
+
+Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {
+  const cases = [
+    {
+      f1099g: {
+        f1099gs: [
+          {
+            payer_tin: "123456789",
+            recipient_tin: "111223333",
+            account_number: "BEN-1",
+            source_document_reference: "original",
+            box_1_unemployment: 500,
+          },
+          {
+            payer_tin: "123456789",
+            recipient_tin: "111223333",
+            account_number: "BEN-1",
+            source_document_reference: "corrected",
+            box_1_unemployment: 600,
+          },
+        ],
+      },
+    },
+    {
+      f1099m: {
+        f1099ms: [
+          {
+            payer_name: "Payer",
+            payer_tin: "123456789",
+            recipient_tin: "111223333",
+            account_number: "M-1",
+            box3_other_income: 300,
+            box3_other_income_routing: "prizes_awards" as const,
+          },
+          {
+            payer_name: "Payer",
+            payer_tin: "123456789",
+            recipient_tin: "111223333",
+            account_number: "M-1",
+            box3_other_income: 350,
+            box3_other_income_routing: "prizes_awards" as const,
+          },
+        ],
+      },
+    },
+  ];
+  for (const pending of cases) {
+    const message = "f1099g" in pending
+      ? "1099-G repeats the same identified payer, recipient, and account"
+      : "1099-MISC repeats the same payer, recipient, account";
+    assertThrows(
+      () => assert1099WithholdingSource(pending, filer),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+      Error,
+      message,
+    );
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+});
 
 Deno.test("1099-family box withholding replays once across distinct taxpayer and joint-spouse copies", () => {
   const pending = {
