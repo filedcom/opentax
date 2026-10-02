@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **786 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **787 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -30,7 +30,7 @@ failed run is diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 162-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 786 bounded routes and
+**Implemented coverage.** The completed ledger records 787 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -168,6 +168,9 @@ Schedule A now prints its line 5a election checkbox, and bounded two-loan
 Form 1098 reviews require byte-verified lender copies for both loans.
 Prepared MeF/A2A validation now also checks Form 1040 first, document IDs and
 references, and XML/header attachment counts against the retained inventory.
+For repeated references with one declared document name, builder, prepared
+bundle, and archived Send checks now require that name to match every targeted
+document tag.
 Native MeF assembly now also rejects colliding document IDs before serialization
 and derives binary-attachment references through the same ID function.
 Reopening an archived outbound A2A submission now also replays document order,
