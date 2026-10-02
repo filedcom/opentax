@@ -28,6 +28,7 @@ export function hasMismatchedSingleReferenceName(
       ?.trim().split(/\s+/);
     const names = /\breferenceDocumentName="([^"]+)"/.exec(tag[0])?.[1]
       ?.trim().split(/\s+/);
+    if (ids?.length && !names?.length) return true;
     if (
       ids?.length && names?.length && ids.some((id) => {
         const root = tagsById.get(id);

@@ -570,6 +570,11 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       },
       {
         xml:
+          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="IRS24391 IRS24392"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
+        attachments: {},
+      },
+      {
+        xml:
           `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {},
       },
@@ -582,14 +587,14 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>bad..pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>bad..pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/bad..pdf": encoder.encode("%PDF-invalid-name"),
         },
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="2"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment2"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>first.pdf</AttachmentLocationTxt></BinaryAttachment><BinaryAttachment documentId="BinaryAttachment2"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>second.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="2"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment2" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>first.pdf</AttachmentLocationTxt></BinaryAttachment><BinaryAttachment documentId="BinaryAttachment2"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>second.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/first.pdf": encoder.encode("%PDF-first"),
           "attachment/second.pdf": encoder.encode("%PDF-second"),
@@ -604,7 +609,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><Extra>unprepared metadata</Extra><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><Extra>unprepared metadata</Extra><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/evidence.pdf": encoder.encode("%PDF-extra-metadata"),
         },
@@ -635,7 +640,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       );
     }
     const validXml = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
     );
     await assertRejects(
       () =>
