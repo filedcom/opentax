@@ -206,6 +206,24 @@ bounded route. The bulk test, XSD, filled-PDF, and IRS acceptance gates remain.
 
 ## Build-first Schedule C current-loss route (written, unrun)
 
+### Deferred cents boundary (2026-10-02)
+
+The issue #60 fix accepts cents in a single Schedule C business on the
+simplified Form 8995 route. It does not yet cover the advanced Form 8995-A
+Schedule C loss route. A direct node probe with taxable income of $250,000,
+one identified business at $1,000.25 QBI, and a second at −$100.10 QBI
+produces a $900.15 aggregate from Form 8995, then Form 8995-A rejects both
+business rows with `Expected integer, received float` at
+`schedule_c_qbi_businesses[*].qbi`. This is a rejected return, not an accepted
+wrong deduction. The bounded Form 8995-A Schedule C source schema requires
+whole-dollar QBI for each business, and its native/PDF route compares those
+rows with retained Schedule C net profit and final-return amounts. Resolve
+the per-business whole-dollar filing and source-reconciliation rule before
+admitting cents on this route; do not round the aggregate or each row without
+that review. The four focused issue #60 suites for CLI entry, node inspection,
+Form 7206, and simplified Form 8995 passed 93/93 tests separately; they do
+not exercise this advanced loss case.
+
 One identified Schedule C business with a current qualified loss now also
 files the bounded parent Form 8995-A and Schedule C companion without a
 positive offsetting business. Its single source row must match the retained
