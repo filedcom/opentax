@@ -76,6 +76,28 @@ Deno.test("repeated MeF form references keep their declared document name", () =
   );
 });
 
+Deno.test("Form 8814 child-interest reference uses its exact IRS schema name", () => {
+  const childId = documentId("ChildTaxableInterestStmt", 1);
+  const fragments = (name: string) => [{
+    pendingKey: "form8814",
+    tag: "IRS8814",
+    xml:
+      `<IRS8814><ChildTaxableInterestAmt referenceDocumentId="${childId}" referenceDocumentName="${name}">100</ChildTaxableInterestAmt></IRS8814>`,
+  }, {
+    pendingKey: "child_taxable_interest_statement",
+    tag: "ChildTaxableInterestStmt",
+    xml: "<ChildTaxableInterestStmt/>",
+  }];
+  validateDocumentReferences(fragments("ChildTaxableInterestStatement"));
+  for (const wrong of ["ChildTaxableInterestStmt", "ArbitraryStatement"]) {
+    assertThrows(
+      () => validateDocumentReferences(fragments(wrong)),
+      Error,
+      "referenceDocumentName differs",
+    );
+  }
+});
+
 Deno.test("prepared MeF inventory counts only direct ReturnData documents", () => {
   const bundle: MefBundle = {
     xml:

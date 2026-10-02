@@ -9,6 +9,11 @@ export function documentId(tag: string, index: number): string {
   return `${tag.slice(0, 30 - suffix.length)}${suffix}`;
 }
 
+// TY2025 Form 8814's schema names this reference differently from its root.
+const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
+  ChildTaxableInterestStmt: "ChildTaxableInterestStatement",
+};
+
 /** Match a single declared document name to every referenced instance. */
 export function hasMismatchedSingleReferenceName(
   xml: string,
@@ -21,7 +26,11 @@ export function hasMismatchedSingleReferenceName(
       ?.trim().split(/\s+/);
     if (
       ids?.length && names?.length === 1 &&
-      ids.some((id) => tagsById.get(id) !== names[0])
+      ids.some((id) => {
+        const root = tagsById.get(id);
+        return root === undefined ||
+          (IRS_REFERENCE_NAME_BY_ROOT[root] ?? root) !== names[0];
+      })
     ) return true;
   }
   return false;

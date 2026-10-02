@@ -23,6 +23,7 @@ import {
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
   assertSchedule1Box8SourceIdentity,
+  assertSchedule1Form8814Source,
   assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
@@ -231,6 +232,7 @@ function buildReturnXml(
   assertKPersonalSaleSources(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1Box8SourceIdentity(pending, filer);
+  assertSchedule1Form8814Source(pending);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);

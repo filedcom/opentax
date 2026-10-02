@@ -1,5 +1,22 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 Form 8814 child-election statement replay
+
+The shared native/PDF final check recalculates each retained Form 8814 line 12
+from its reviewed child-election facts, sums the child amounts, and requires
+Schedule 1 line 8z's `FORM 8814` amount to equal that sum. A changed Schedule 1
+amount was previously accepted by PDF export while the Form 8814 attachment
+remained unchanged. A synthetic positive child-election return now prints
+`FORM 8814` in the filled PDF, carries that type in the native statement, and
+validates against the local TY2025 v5.4 XSD. Altering either the Schedule 1
+amount alone or both it and the retained line 12 result rejects in both
+exporters. The child-interest continuation also requires the exact IRS
+`ChildTaxableInterestStatement` reference name for the
+`ChildTaxableInterestStmt` document root; the document validator permits only
+that verified pair and still rejects arbitrary names. The entered child income
+record and election review are still not
+authenticated against original issued income documents or the parent signature.
+
 ## 2026-10-02 Form 1099-MISC box 3 final source replay
 
 Native and PDF final export now match every Schedule 1 box 3 other-income

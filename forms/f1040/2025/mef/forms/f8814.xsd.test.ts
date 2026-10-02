@@ -1,7 +1,11 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { calculateForm8814 } from "../../../nodes/inputs/f8814/index.ts";
 import { buildMefXml } from "../builder.ts";
-import { type FilerIdentity, FilingStatus } from "../types.ts";
+import {
+  type FilerIdentity,
+  FilingStatus,
+  type MefFormsPending,
+} from "../types.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -32,7 +36,7 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
 }, async () => {
-  const xml = buildMefXml({
+  const pending: MefFormsPending = {
     f1040: {
       filing_status: "single",
       line16_income_tax: 135,
@@ -61,6 +65,15 @@ Deno.test({
         },
       })],
     },
+  };
+  const line8z = pending.form8814!.items!.reduce(
+    (sum, item) => sum + item.line12,
+    0,
+  );
+  const xml = buildMefXml({
+    ...pending,
+    schedule1: { line8z_form8814: line8z },
+    f1040: { ...pending.f1040!, line8_additional_income: line8z },
   }, filer);
   assertStringIncludes(xml, "<IRS8814");
   assertStringIncludes(xml, "<Form8814Ind");
@@ -105,7 +118,7 @@ Deno.test({
       income: { interest_income: 3000 },
     },
   } as const;
-  const xml = buildMefXml({
+  const pending: MefFormsPending = {
     f1040: {
       filing_status: "single",
       form8814_tax: 270,
@@ -160,6 +173,15 @@ Deno.test({
       form8814_foreign_trust: true,
       foreign_trust_question: true,
     },
+  };
+  const line8z = pending.form8814!.items!.reduce(
+    (sum, item) => sum + item.line12,
+    0,
+  );
+  const xml = buildMefXml({
+    ...pending,
+    schedule1: { line8z_form8814: line8z },
+    f1040: { ...pending.f1040!, line8_additional_income: line8z },
   }, filer);
   assertStringIncludes(xml, "<ChildTaxableInterestStmt documentId=");
   assertStringIncludes(

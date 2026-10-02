@@ -17,6 +17,10 @@ import {
   distributionTotal,
   inputSchema as form1099patrSchema,
 } from "../nodes/inputs/f1099patr/schema.ts";
+import {
+  calculateForm8814,
+  type Form8814Lines,
+} from "../nodes/inputs/f8814/index.ts";
 
 export function assertKIncomeClassification(
   pending: Record<string, unknown>,
@@ -924,6 +928,40 @@ export function assertSchedule1Box3SourceIdentity(
   if (unmatched.length !== 0) {
     throw new Error(
       "Schedule 1 1099-MISC box 3 row differs from its issued source",
+    );
+  }
+}
+
+export function assertSchedule1Form8814Source(
+  pending: Record<string, unknown>,
+): void {
+  const form8814 = pending.form8814 as
+    | { items?: readonly Form8814Lines[] }
+    | undefined;
+  const items = form8814?.items ?? [];
+  if (!Array.isArray(items)) {
+    throw new Error("Form 8814 retained child elections must be rows");
+  }
+  const sourceTotal = items.reduce((sum, line) => {
+    if (
+      !line || typeof line !== "object" || !line.item ||
+      typeof line.line12 !== "number" ||
+      !Number.isSafeInteger(line.line12) ||
+      line.line12 !== calculateForm8814(line.item).line12
+    ) {
+      throw new Error("Form 8814 line 12 differs from reviewed child election");
+    }
+    return sum + line.line12;
+  }, 0);
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const filed = schedule1?.line8z_form8814;
+  if (
+    (sourceTotal > 0 || filed !== undefined) &&
+    (typeof filed !== "number" || !Number.isSafeInteger(filed) ||
+      filed !== sourceTotal)
+  ) {
+    throw new Error(
+      "Schedule 1 Form 8814 line 8z differs from retained child elections",
     );
   }
 }
