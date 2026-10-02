@@ -767,6 +767,11 @@ Deno.test({
   const xml = buildXml(result);
   assertEquals((xml.match(/<IRS1099R documentId=/g) ?? []).length, 2);
   assertEquals(xml.includes("<IRS1040ScheduleD"), false);
+  assertEquals(
+    xml.includes("<IRADistributionsAmt>35800</IRADistributionsAmt>"),
+    true,
+  );
+  assertEquals(xml.includes("<TaxableIRAAmt>0</TaxableIRAAmt>"), true);
   assertEquals(xml.includes("<SocSecBnftAmt>1000</SocSecBnftAmt>"), true);
   assertEquals(xml.includes("<TaxableSocSecAmt>"), false);
   assertEquals(

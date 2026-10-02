@@ -5,6 +5,7 @@ import { registry } from "../../2025/registry.ts";
 import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
 import { scenario104008Input } from "./scenario_1040_08_input.ts";
 import { scheduleD } from "../../2025/mef/forms/schedule_d.ts";
+import { irs1040Pdf } from "../../2025/pdf/forms/f1040.ts";
 
 const plan = buildExecutionPlan(registry);
 
@@ -15,6 +16,12 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   });
   assertEquals(result.diagnostics, []);
   const form = result.pending.f1040;
+  assertEquals(form?.line4a_ira_gross, 35_800);
+  assertEquals(form?.line4b_ira_taxable, 0);
+  const projected = irs1040Pdf.projectFields?.(form ?? {}, result.pending);
+  assertEquals(projected?.line4a_ira_gross, "35,800");
+  assertEquals(projected?.line4b_ira_taxable, "0");
+  assertEquals(projected?.print_ira_qcd, undefined);
   assertEquals(form?.line5a_pension_gross, 20_300);
   assertEquals(form?.line5b_pension_taxable, 10_300);
   assertEquals(form?.line5c_pension_rollover, true);

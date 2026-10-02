@@ -2194,6 +2194,20 @@ Deno.test("f1099r.compute: code B designated Roth routes to pension lines not IR
   assertEquals(input.line4a_ira_gross, undefined);
 });
 
+Deno.test("f1099r.compute: code Q Roth IRA with unchecked IRA box reports gross on line 4a", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 35_800,
+    box2a_taxable_amount: 0,
+    box7_distribution_code: DistributionCode.CodeQ,
+  })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 35_800);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line5a_pension_gross, undefined);
+  assertEquals(input.line5b_pension_taxable, undefined);
+  assertEquals(input.line4c_ira_rollover, undefined);
+});
+
 Deno.test("f1099r.compute: qcd_full with IRA item reduces line4b not line5b", () => {
   const result = compute([
     minimalIraItem({

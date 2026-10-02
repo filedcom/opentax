@@ -1025,15 +1025,20 @@ function activeItems(items: R1099Items): R1099Items {
   return items.filter((item) => item.no_distribution_received !== true);
 }
 
-// IRA items: box7_ira_simple_indicator = true
+// A code-Q qualified Roth IRA distribution is an IRA distribution even when
+// its payer leaves the IRA/SEP/SIMPLE box unchecked, as the IRS permits.
 function iraItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_simple_indicator === true);
+  return items.filter((item) =>
+    item.box7_ira_simple_indicator === true ||
+    item.box7_distribution_code === DistributionCode.CodeQ
+  );
 }
 
-// Pension/annuity items: box7_ira_simple_indicator !== true
+// Pension/annuity items exclude code-Q Roth IRA distributions.
 function pensionItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator !== true &&
+    item.box7_distribution_code !== DistributionCode.CodeQ &&
     item.box7_distribution_code !== DistributionCode.Code8
   );
 }
@@ -1060,7 +1065,12 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
   if (item.exclude_8606_roth === true) return true;
-  if (ZERO_TAXABLE_CODES.has(item.box7_distribution_code)) return true;
+  // Code Q is zero taxable, but its gross Roth IRA distribution belongs on
+  // Form 1040 line 4a under the 2025 line 4a/4b Exception 2 instructions.
+  if (
+    item.box7_distribution_code !== DistributionCode.CodeQ &&
+    ZERO_TAXABLE_CODES.has(item.box7_distribution_code)
+  ) return true;
   return false;
 }
 
