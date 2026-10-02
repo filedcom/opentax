@@ -116,7 +116,17 @@ const stockLossInputs = {
   }],
 };
 
+const seniorZeroExclusionsReview = {
+  no_section933_puerto_rico_excluded_income: true,
+  section933_review_source_reference: "2025 residency and income review",
+  no_form2555_filed: true,
+  form2555_review_source_reference: "2025 foreign-income review",
+  no_form4563_filed: true,
+  form4563_review_source_reference: "2025 Samoa-source income review",
+};
+
 const dependentScheduleRInputs = {
+  schedule1a: { senior_zero_exclusions_review: seniorZeroExclusionsReview },
   general: {
     ...stockLossInputs.general,
     taxpayer_dob: "1960-06-15",
@@ -267,6 +277,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
 
 Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    schedule1a: { senior_zero_exclusions_review: seniorZeroExclusionsReview },
     general: {
       ...stockLossInputs.general,
       taxpayer_dob: "1950-06-15",

@@ -126,7 +126,7 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
     },
     { taxYear: 2025, formType: "f1040" },
   );
-  const pending = buildPending(result.pending);
+  const pending = buildPending({ f8958: result.pending.f8958 });
   assertEquals(Object.hasOwn(pending, "f8958"), true);
   assertThrows(
     () =>
@@ -147,7 +147,7 @@ Deno.test("positive employee-business deduction cannot file without Form 2106", 
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 2106 employee expenses require a native attachment",
+    "Form 2106 needs the sourced one-job fee-basis filing route",
   );
 });
 
@@ -264,7 +264,7 @@ Deno.test("direct credit and disclosure sources require their missing native doc
   }
 });
 
-Deno.test("recapture and employer-credit sources cannot export without native forms", () => {
+Deno.test("incomplete recapture and employer-credit sources cannot export", () => {
   for (
     const [key, fields, reason] of [
       [
@@ -279,7 +279,7 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
             repayment_income_limit: 100_000,
           }],
         },
-        "Form 8828 mortgage-credit recapture needs a native attachment",
+        "source_transaction_id",
       ],
       [
         "f8844",
@@ -290,7 +290,7 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
             employee_works_in_zone: true,
           }],
         },
-        "Form 8844 direct employer wage credit needs a native attachment",
+        "Form 8844 needs a sourced direct Schedule C employer route",
       ],
       [
         "f8881",
@@ -310,12 +310,12 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
             startup_cost_deduction_reduced_by_credit_confirmed: true,
           },
         },
-        "Form 8881 pension-plan credit needs native attachment and Form 3800 source reconciliation",
+        "Form 8881 needs a positive linked direct Schedule C employer source",
       ],
       [
         "f8882",
         { qualified_childcare_expenses: 1_000 },
-        "Form 8882 employer child-care credit needs a native attachment",
+        "Form 8882 needs a sourced direct Schedule C employer route",
       ],
       [
         "f8908",
@@ -330,7 +330,7 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
       [
         "f8994",
         { employees: [{ fmla_wages: 1_000, wage_replacement_pct: 0.6 }] },
-        "Form 8994 paid-leave credit needs a native attachment",
+        "MeF Form 8994 requires validated policy and payroll attachment bytes",
       ],
     ] as const
   ) {
