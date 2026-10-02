@@ -309,7 +309,10 @@ Deno.test({
   assertThrows(
     () =>
       buildMefXml({
-        f1040: { line1h_other_earned: 300_000 },
+        f1040: {
+          line1h_other_earned: 300_000,
+          line20_nonrefundable_credits: 2_000,
+        },
         agi_aggregator: { line1h_other_earned: 300_000 },
         fec: {
           fecs: [{
@@ -369,6 +372,7 @@ Deno.test({
         schedule3: {
           line1_foreign_tax_credit: 2_000,
           line1_total: 2_000,
+          line8_total: 2_000,
         },
       }, filer),
     Error,

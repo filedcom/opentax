@@ -130,7 +130,7 @@ Deno.test("two sequential no-APTC policies reduce one protected partial premium 
         attachments: [],
       }),
     Error,
-    "two-policy monthly credit differs from finalized return",
+    "Schedule 3 line 15 must equal lines 9 through 14",
   );
 });
 
@@ -322,7 +322,7 @@ for (
             attachments: [],
           }),
         Error,
-        "four-policy monthly PTC needs distinct same-state nonshared policies",
+        "four-policy monthly PTC needs a determination and payment for every policy-covered month",
       );
     }
     await assertRejects(
@@ -338,7 +338,7 @@ for (
           attachments: [],
         }),
       Error,
-      "four-policy monthly credit differs from finalized return",
+      "Schedule 3 line 15 must equal lines 9 through 14",
     );
   });
 }
@@ -472,7 +472,7 @@ for (
           attachments: [],
         }),
       Error,
-      `${variant.policyCount}-policy monthly credit differs from finalized return`,
+      `Schedule 3 line 15 must equal lines 9 through 14`,
     );
   });
 }
@@ -606,7 +606,9 @@ for (
           attachments: [],
         }),
       Error,
-      "monthly PTC needs distinct same-state nonshared policies",
+      variant.policyCount === 2
+        ? "monthly PTC needs distinct same-state nonshared policies"
+        : "monthly PTC needs a determination and payment for every policy-covered month",
     );
     await assertRejects(
       async () => {
@@ -616,7 +618,9 @@ for (
         });
       },
       Error,
-      "monthly PTC needs distinct same-state nonshared policies",
+      variant.policyCount === 2
+        ? "monthly PTC needs distinct same-state nonshared policies"
+        : "monthly PTC needs a determination and payment for every policy-covered month",
     );
     await assertRejects(
       () =>
@@ -631,7 +635,7 @@ for (
           attachments: [],
         }),
       Error,
-      "monthly credit differs from finalized return",
+      "Schedule 3 line 15 must equal lines 9 through 14",
     );
   });
 }
@@ -744,7 +748,7 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
         attachments: [],
       }),
     Error,
-    "monthly credit differs from finalized return",
+    "Schedule 3 line 15 must equal lines 9 through 14",
   );
 });
 
@@ -868,7 +872,7 @@ Deno.test("three sequential no-APTC policies leave three sourced months uncovere
         attachments: [],
       }),
     Error,
-    "monthly credit differs from finalized return",
+    "Schedule 3 line 15 must equal lines 9 through 14",
   );
 });
 
