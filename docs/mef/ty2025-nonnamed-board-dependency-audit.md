@@ -11,8 +11,8 @@ filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 descriptors, and 178 source fixtures covering 84 of 112 unique PDF keys; the
 other 28 keys map to deferred named
 families. Those are inventory and preparation counts, not end-to-end passes.
-The latest recorded full command reached 10,432 passes and 99 failures at
-`d22ab027`; newer work has no full-suite pass.
+The latest recorded full command reached 10,454 passes and 429 failures at
+`298e083a`; this is a diagnostic failure, not a full-suite pass.
 
 **Key.** `I` = work that can advance without a new product decision or IRS ATS
 credentials; `D` = the user's workflow/evidence/scope decision is needed before
@@ -48,7 +48,7 @@ close during the nonnamed phase.
 | P2 · Every registered PDF descriptor | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) plans 178 fixtures, covers 84/112 PDF keys, and classifies the other 28 as deferred named families. The current two-case review is insufficient: render and inspect each nondeferred key/copy/overflow branch and compare canonical fields, owners, and page origins. Named-key coverage follows its implementation phase. |
 | P3 · One finalized graph/instance set | I, N, V | Shared native/PDF preflight and prepared manifest replay exist. Add repeated-owner/form/source-attachment cases and compare exact instance and reference sets through XML, PDF and package; signed Form 8283 and other named source-issued attachments remain deferred. |
 | V1 · Implementation and decisions before bulk gate | I, D, N | Continue nonnamed implementation and obtain workflow/evidence dispositions; do not infer a phase pass from historical tests. The 20 named parents are deferred, so record their explicit boundary in the phase result instead of silently treating them as supported. |
-| V2 · Full `deno task test` gate | V, I, N | Run once the agreed implementation phase is frozen; record commit, versions, time, totals, failures and ignored reasons, fix actual failures, then rerun. The `d22ab027` 10,432/99 result is diagnostic and cannot prove the current worktree or deferred named forms. |
+| V2 · Full `deno task test` gate | V, I, N | The `298e083a` full command reached 10,454/429. Fix nonnamed fixture and shared reference regressions, then rerun the same command; deferred named-form failures and incomplete product decisions still prevent a phase pass. Record commit, versions, time, totals, failures, and ignored reasons for each run. |
 | V3 · Source-backed full returns and XSD | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) provides a fixture/manifest path and locally cached TY2025 schema but no exhaustive positive-route result. Generate a complete return and conflicting negatives for every retained nonnamed route; separately verify source totals, references and business rules. Repeat for named routes when implemented. |
 | V4 · 178 filled-PDF cases | I, N, V | The planner has 178 sources and 84/112 keys; full generation, per-page render, and human checklist are still open. Run the batch after implementation freeze, inspect every generated page, and expand fixtures as nondeferred branches demand; 28 named-family keys are a later phase dependency. |
 | V5 · PDF/source/XML comparison | I, N, V | The manifest checker can replay source JSON, graph, native XML, artifact hashes, page origins and exact review focus, but cannot make a human visual judgment. Complete the per-page source/pending/XML/Form-1040 comparison and retain discrepancy/fix records; named forms extend the required packet set. |

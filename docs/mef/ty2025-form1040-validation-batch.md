@@ -299,6 +299,19 @@ their fixtures. Three generic attachment-export cases concern Forms 8958,
 failure audit found no independent nonnamed return, payment, PDF assembly, or
 A2A production failure in this run. This is not a release pass.
 
+The later implementation-first phase command `deno task test` at `298e083a`
+completed on 2026-10-02 in 25m11s with **10,454 passed and 429 failed**; no
+ignored tests were reported. Deno was 2.7.7 (V8 14.6.202.9-rusty, TypeScript
+5.9.2), `xmllint` was libxml 2.9.13, and Poppler `pdftotext` was 26.03.0.
+The complete local log is
+`.state/research/ty2025-pr59-nonnamed-phase-bulk-2026-10-02.log`. The first
+triage found 134 missing retained digital-assets answers, 67 missing issued
+W-2 employee SSNs, and 30 strict MeF reference-name mismatches among the
+failure messages. These counts describe error groups, not unique root causes
+or the complete failure classification. Nonnamed fixtures and shared
+references require repair before another full run; deferred named-form tests
+also remain. No release pass is claimed.
+
 A fresh local ARM64 CLI compiled from `d22ab027` with `deno compile` and SHA-256
 `f80caffb31d473b311e6134b3e57ae3853ec0d976d40892f64f8f0508aef751a`
 passed `scripts/smoke-release-binary.ts` as version `dev`: source-backed W-2,

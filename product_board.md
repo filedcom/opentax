@@ -27,7 +27,7 @@ failed run is diagnostic evidence, not a release pass.
 | Reported CLI issues | 0 | Four issue #60 code slices passed 93 focused tests; advanced Form 8995-A cents loss remains in the named-form gap. Bulk validation is pending. |
 | Named tax-form gaps | 20 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest completed full command reached 10,432 passes and 99 failures. |
+| Automated and artifact validation | 5 | A 178-case filled-PDF plan with an XSD gate is prepared; the latest full command reached 10,454 passes and 429 failures under current guards. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
 **Implemented coverage.** The completed ledger records 970 bounded routes and
@@ -176,8 +176,13 @@ This includes three generic attachment-export tests for Forms 8958, 2106, and
 independent nonnamed return, payment, PDF assembly, or A2A production failure
 was found in this run. The full command still has no passing result.
 Six subsequently reported focused failures were resolved as stale assertions
-or incomplete source fixtures; their selected reruns now pass 108 cases. The
-agreed next full command remains deferred until non-named implementation ends.
+or incomplete source fixtures; their selected reruns passed 108 cases. A new
+full `deno task test` on `298e083a` completed with **10,454 passed and 429
+failed** in 25m11s. Its largest failure groups are missing retained
+digital-assets answers, missing issued W-2 recipient SSNs, and strict MeF
+reference-name mismatches; nonnamed fixture and reference repairs are in
+progress. The complete batch is not a release pass. Its exact log and tool
+versions are recorded in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
