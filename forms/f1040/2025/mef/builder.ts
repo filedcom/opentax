@@ -56,6 +56,7 @@ import {
 } from "../f1099patr-withholding-owner.ts";
 import {
   assertLine1aWageSource,
+  assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
 } from "../w2-withholding-reconciliation.ts";
 import { assertSchedule2Form4137Tax } from "../schedule2-form4137-reconciliation.ts";
@@ -231,6 +232,7 @@ function buildReturnXml(
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertW2WithholdingSource(pending, filer);
   assertLine1aWageSource(pending);
+  assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
   assertSchedule2Line17HSources(pending, filer);

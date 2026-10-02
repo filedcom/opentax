@@ -1,6 +1,7 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
   assertDistinctW2IssuedCopies,
+  Box12Code,
   inputSchema as w2InputSchema,
 } from "../nodes/inputs/w2/index.ts";
 import {
@@ -86,6 +87,32 @@ export function assertLine1aWageSource(
   ) {
     throw new Error(
       "Form 1040 line 1a and AGI wages differ from retained W-2 and Form 4852 wage sources",
+    );
+  }
+}
+
+/** An elected line 1i must match the retained W-2 code-Q combat pay. */
+export function assertLine1iCombatPayElectionSource(
+  pending: Record<string, unknown>,
+): void {
+  const filed = (pending.f1040 as Record<string, unknown> | undefined)
+    ?.line1i_combat_pay;
+  if (filed === undefined || filed === null || filed === 0) return;
+  const source = pending.w2 === undefined
+    ? undefined
+    : w2InputSchema.parse(pending.w2);
+  const expected = source?.w2s.reduce(
+    (total, row) => total + (row.box12_entries ?? [])
+      .filter((entry) => entry.code === Box12Code.Q)
+      .reduce((subtotal, entry) => subtotal + entry.amount, 0),
+    0,
+  ) ?? 0;
+  if (
+    typeof filed !== "number" || !Number.isFinite(filed) ||
+    !Number.isFinite(expected) || filed !== expected
+  ) {
+    throw new Error(
+      "Form 1040 line 1i combat-pay election differs from retained W-2 box 12 code Q",
     );
   }
 }

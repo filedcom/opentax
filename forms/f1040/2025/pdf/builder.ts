@@ -49,6 +49,7 @@ import {
 } from "../f1099patr-withholding-owner.ts";
 import {
   assertLine1aWageSource,
+  assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
 } from "../w2-withholding-reconciliation.ts";
 import { assertLine1hSupportedSource } from "../line1h-source.ts";
@@ -474,6 +475,7 @@ export async function buildPdfBytes(
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
   assertLine1aWageSource(normalized);
+  assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
