@@ -115,6 +115,16 @@ distinct issued references to represent distinct payer copies; no assertion
 or production route was dropped. The repository-wide command and source-byte
 verification remain open.
 
+After the 1099-DIV payer-scoped copy guard on 2026-10-03, the input and
+direct-export files passed **101/101**. The selected dividend source, owner,
+qualified-dividend subset, Schedule B, and native/PDF builder files passed
+**199/199** with Poppler and the cached TY2025 schema available. The graph
+now accepts distinct unreferenced payers, while mixed unidentified and
+identified copies from one payer/recipient reject. The repository-wide
+command and issued-copy authentication remain open.
+The same 101/101 and 199/199 selections passed again after enforcing the
+account number on a checked 1099-DIV FATCA copy.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

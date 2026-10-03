@@ -252,7 +252,7 @@ Deno.test("multiple positive 1099-DIV copies without references reject native an
     f1099div: { f1099divs: [first, { ...first, box1a: 250 }] },
   };
   const message =
-    "1099-DIV has multiple positive issued copies without source_document_reference";
+    "1099-DIV has multiple positive issued copies without account or source_document_reference";
   assertThrows(
     () => assert1099WithholdingSource(pending, filer),
     Error,
@@ -264,6 +264,21 @@ Deno.test("multiple positive 1099-DIV copies without references reject native an
     message,
   );
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  const mixed = {
+    f1099div: {
+      f1099divs: [first, {
+        ...first,
+        source_document_reference: "issued-copy-2",
+        box1a: 250,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(mixed as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(mixed, filer), Error, message);
 });
 
 Deno.test("unidentified repeated 1099-G copies reject native and PDF export", async () => {

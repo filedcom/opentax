@@ -18,6 +18,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 type ItemOverrides = Partial<{
   payerName: string;
   payerTin: string;
+  account_number: string;
   source_document_reference: string;
   isNominee: boolean;
   nominee_distribution: {
@@ -183,12 +184,33 @@ Deno.test("1099-DIV rejects multiple positive copies without source references",
   assertThrows(
     () => compute([unnamed, { ...unnamed, box1a: 250, box4: 20 }]),
     Error,
-    "multiple positive issued copies without source_document_reference",
+    "multiple positive issued copies without account or source_document_reference",
   );
   assertThrows(
     () => compute([minimalItem({ box1a: 0, box4: 15 }), unnamed]),
     Error,
-    "multiple positive issued copies without source_document_reference",
+    "multiple positive issued copies without account or source_document_reference",
+  );
+  assertThrows(
+    () =>
+      compute([
+        unnamed,
+        minimalItem({
+          source_document_reference: "issued-copy-2",
+          box1a: 300,
+        }),
+      ]),
+    Error,
+    "multiple positive issued copies without account or source_document_reference",
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ source_document_reference: "issued-copy-2", box1a: 300 }),
+        unnamed,
+      ]),
+    Error,
+    "multiple positive issued copies without account or source_document_reference",
   );
 });
 
@@ -201,6 +223,7 @@ Deno.test("1099-DIV permits one positive unreferenced copy and zero rows", () =>
   const mixed = compute([
     unnamed,
     minimalItem({
+      payerName: "Another Payer",
       source_document_reference: "issued-copy-2",
       box1a: 300,
       box4: 10,
@@ -208,6 +231,35 @@ Deno.test("1099-DIV permits one positive unreferenced copy and zero rows", () =>
   ]);
   assertEquals(fieldsOf(mixed.outputs, f1040)?.line3b_ordinary_dividends, 500);
   assertEquals(fieldsOf(mixed.outputs, f1040)?.line25b_withheld_1099, 25);
+  const distinctPayers = compute([
+    unnamed,
+    minimalItem({ payerName: "Another Payer", box1a: 300 }),
+  ]);
+  assertEquals(
+    fieldsOf(distinctPayers.outputs, f1040)?.line3b_ordinary_dividends,
+    500,
+  );
+  const distinctAccounts = compute([
+    minimalItem({ account_number: "FUND-1", box1a: 200 }),
+    minimalItem({ account_number: "FUND-2", box1a: 300 }),
+  ]);
+  assertEquals(
+    fieldsOf(distinctAccounts.outputs, f1040)?.line3b_ordinary_dividends,
+    500,
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ account_number: "FUND-1", box1a: 200 }),
+        minimalItem({
+          account_number: "FUND-1",
+          source_document_reference: "issued-correction",
+          box1a: 300,
+        }),
+      ]),
+    Error,
+    "repeats the same payer, recipient, and account",
+  );
 });
 
 Deno.test("f1099div: sourced foreign qualified dividends contradict a zero-preference review", () => {
@@ -608,7 +660,15 @@ Deno.test("box10 does not route to schedule_b (noncash liquidating distribution)
 
 Deno.test("box11=true produces no tax calculation impact (FATCA checkbox informational)", () => {
   const baseline = compute([minimalItem()]);
-  const withBox11 = compute([minimalItem({ box11: true })]);
+  assertThrows(
+    () => compute([minimalItem({ box11: true })]),
+    Error,
+    "1099-DIV FATCA copy needs its issued account number",
+  );
+  const withBox11 = compute([minimalItem({
+    box11: true,
+    account_number: "FATCA-1",
+  })]);
   assertEquals(withBox11.outputs.length, baseline.outputs.length);
 });
 

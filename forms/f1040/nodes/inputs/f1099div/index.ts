@@ -56,6 +56,7 @@ const nomineeDistributionSchema = z.object({
 export const itemSchema = z.object({
   payerName: z.string().optional(),
   payerTin: z.string().regex(/^\d{9}$/).optional(),
+  account_number: z.string().trim().min(1).max(40).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   isNominee: z.boolean(),
@@ -115,6 +116,14 @@ export const itemSchema = z.object({
     review_reference: z.string().trim().min(1),
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }).strict().optional(),
+}).superRefine((item, ctx) => {
+  if (item.box11 && !item.account_number) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["account_number"],
+      message: "1099-DIV FATCA copy needs its issued account number",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -150,27 +159,45 @@ const nomineeFields = [
 ] as const;
 
 export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
-  const seen = new Set<string>();
-  let unreferencedPositiveCopies = 0;
+  const seenReferences = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (!item.source_document_reference) {
-      if (nomineeFields.some((key) => (item[key] ?? 0) > 0)) {
-        unreferencedPositiveCopies++;
-        if (unreferencedPositiveCopies > 1) {
-          throw new Error(
-            "1099-DIV has multiple positive issued copies without source_document_reference; identify each distinct copy",
-          );
-        }
+    const payer = item.payerTin ?? item.payerName?.trim() ?? null;
+    const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
+    const identifiedAccount = !!(item.account_number && payer);
+    if (item.source_document_reference) {
+      if (seenReferences.has(item.source_document_reference)) {
+        throw new Error(
+          "1099-DIV repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        );
       }
-      continue;
+      seenReferences.add(item.source_document_reference);
     }
-    const key = item.source_document_reference;
-    if (seen.has(key)) {
+    if (identifiedAccount) {
+      const key = JSON.stringify([owner, item.account_number]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-DIV repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
+    }
+    if (!nomineeFields.some((key) => (item[key] ?? 0) > 0)) continue;
+    if (!identifiedAccount && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
       throw new Error(
-        "1099-DIV repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
       );
     }
-    seen.add(key);
+    seenOwners.add(owner);
   }
 }
 
