@@ -7,6 +7,13 @@ import { inputSchema as intSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
 import { inputSchema as brokerSchema } from "../nodes/inputs/f1099b/index.ts";
 import { inputSchema as transactionSchema } from "../nodes/inputs/f8949/index.ts";
+import { inputSchema as partnershipSchema } from "../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpSchema } from "../nodes/inputs/k1_s_corp/index.ts";
+import { inputSchema as trustSchema } from "../nodes/inputs/k1_trust/index.ts";
+import {
+  inputSchema as form8912Schema,
+  interestRowsFromItem,
+} from "../nodes/inputs/f8912/index.ts";
 
 type InterestDetail = {
   payer_name: string;
@@ -161,6 +168,98 @@ function assertMarketDiscountSources(
   }
 }
 
+function assertGenericInterestSources(
+  pending: Readonly<Record<string, unknown>>,
+  scheduleB: ReturnType<typeof scheduleBSchema.parse> | undefined,
+): void {
+  const expected: { payer: string; amount: number }[] = [];
+  const add = (payer: string, amount: number) => {
+    if (amount > 0) expected.push({ payer, amount });
+  };
+  if (pending.f1099b !== undefined) {
+    for (const row of brokerSchema.parse(pending.f1099b).f1099bs) {
+      add(
+        row.market_discount_payer_name ?? "",
+        Math.min(
+          Math.max(0, row.proceeds - row.cost_basis),
+          row.box1f_accrued_market_discount ?? 0,
+        ),
+      );
+    }
+  }
+  if (pending.f8949 !== undefined) {
+    for (const row of transactionSchema.parse(pending.f8949).f8949s) {
+      add(
+        row.market_discount_payer_name ?? "",
+        row.accrued_market_discount ?? 0,
+      );
+    }
+  }
+  if (pending.k1_partnership !== undefined) {
+    for (
+      const row of partnershipSchema.parse(pending.k1_partnership)
+        .k1_partnerships
+    ) {
+      add(row.partnership_name, row.box5_interest ?? 0);
+    }
+  }
+  if (pending.k1_s_corp !== undefined) {
+    for (const row of sCorpSchema.parse(pending.k1_s_corp).k1_s_corps) {
+      add(row.corporation_name, row.box4_interest ?? 0);
+    }
+  }
+  if (pending.k1_trust !== undefined) {
+    for (const row of trustSchema.parse(pending.k1_trust).k1_trusts) {
+      add(row.estate_trust_name, row.box1_interest ?? 0);
+    }
+  }
+  if (pending.f8912 !== undefined) {
+    for (const item of form8912Schema.parse(pending.f8912).f8912s) {
+      for (const row of interestRowsFromItem(item)) {
+        add(
+          row.payerName,
+          row.interest.taxableInterest - row.taxableInterestReportedElsewhere,
+        );
+      }
+    }
+  }
+  const amounts = scheduleB?.taxable_interest_net === undefined
+    ? []
+    : Array.isArray(scheduleB.taxable_interest_net)
+    ? scheduleB.taxable_interest_net
+    : [scheduleB.taxable_interest_net];
+  const names = scheduleB?.payer_name === undefined
+    ? []
+    : Array.isArray(scheduleB.payer_name)
+    ? scheduleB.payer_name
+    : [scheduleB.payer_name];
+  if (names.length !== amounts.length || names.some((name) => !name.trim())) {
+    throw new Error(
+      "Schedule B generic interest payer names and amounts must pair",
+    );
+  }
+  const remaining = amounts.map((amount, index) => ({
+    payer: names[index],
+    amount,
+  }));
+  for (const row of expected) {
+    const index = remaining.findIndex((actual) =>
+      actual.payer === row.payer && Math.abs(actual.amount - row.amount) < 0.01
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule B generic interest differs from retained source records",
+      );
+    }
+    remaining.splice(index, 1);
+  }
+  if (remaining.length > 0) {
+    throw new Error(
+      "Schedule B generic interest lacks a retained source record",
+    );
+  }
+}
+
 /** Reconcile finalized Schedule B taxable interest to Form 1040 and AGI. */
 export function assertScheduleBInterestJoin(
   pending: Readonly<Record<string, unknown>>,
@@ -174,6 +273,7 @@ export function assertScheduleBInterestJoin(
     details === undefined ? [] : Array.isArray(details) ? details : [details],
   );
   assertMarketDiscountSources(pending, scheduleB);
+  assertGenericInterestSources(pending, scheduleB);
   const form1040 = pending.f1040 as Record<string, unknown> | undefined;
   const agi = pending.agi_aggregator as Record<string, unknown> | undefined;
   const line2b = form1040?.line2b_taxable_interest ?? 0;
