@@ -124,9 +124,12 @@ Deno.test("Form 1040 export rejects malformed income components before line 9 re
     );
     assertThrows(
       () =>
-        irs1040.build(fields as Parameters<typeof irs1040.build>[0], {
-          pending: {},
-        }),
+        irs1040.build(
+          fields as unknown as Parameters<typeof irs1040.build>[0],
+          {
+            pending: {},
+          },
+        ),
       Error,
       "line2b_taxable_interest needs a finite amount",
     );
@@ -134,6 +137,41 @@ Deno.test("Form 1040 export rejects malformed income components before line 9 re
       () => irs1040Pdf.projectFields?.(fields, {}),
       Error,
       "line2b_taxable_interest needs a finite amount",
+    );
+  }
+});
+
+Deno.test("Form 1040 export rejects malformed filed subtotals before arithmetic replay", () => {
+  for (
+    const [fields, key] of [
+      [
+        { line16_income_tax: 100, line18_total_tax_before_credits: "0" },
+        "line18_total_tax_before_credits",
+      ],
+      [{
+        line25a_w2_withheld: 100,
+        line25d_total_withholding: "100",
+        line33_total_payments: 100,
+      }, "line25d_total_withholding"],
+    ] as const
+  ) {
+    const reason = `${key} needs a finite amount`;
+    assertThrows(() => assertReturnWideArithmetic(fields), Error, reason);
+    assertThrows(
+      () =>
+        irs1040.build(
+          fields as unknown as Parameters<typeof irs1040.build>[0],
+          {
+            pending: {},
+          },
+        ),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      reason,
     );
   }
 });

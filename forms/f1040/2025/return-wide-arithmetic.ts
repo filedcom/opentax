@@ -65,9 +65,9 @@ export function assertReturnWideArithmetic(
 ): void {
   const amount = (key: string): number | undefined => {
     const value = fields[key];
-    return typeof value === "number" && Number.isFinite(value)
-      ? value
-      : undefined;
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    throw new Error(`Form 1040 ${key} needs a finite amount`);
   };
   const matches = (filed: number, expected: number): boolean =>
     Math.abs(filed - expected) < 0.01;
