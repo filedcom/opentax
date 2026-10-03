@@ -160,9 +160,12 @@ now carries two $300/$450 issued-copy records through Schedule 1 line 8z and
 Form 1040 line 8, emits two native statement rows, validates against the local
 TY2025 v5.4 XSD, and finds both payer TINs in the filled PDF text. Native and
 PDF packet builders reject an altered statement amount or source recipient.
-The three focused tests pass. Issued payer-copy bytes, payment character beyond
-the reported box, raster appearance, IRS business rules, and ATS acceptance
-remain open. The
+The three focused tests pass. A mixed-family replay also combines two box 8 copies with separate RTAA and
+taxable-grant 1099-G copies: all four native and filled-PDF statement rows
+appear, $1,750 reaches Form 1040 once, and the XML passes local TY2025 v5.4
+XSD validation. The four focused cases pass. Issued payer-copy bytes, payment
+character beyond the reported box, raster appearance, IRS business rules, and
+ATS acceptance remain open. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
 substitute payments to Schedule 1 line 8z whether they replace dividends or

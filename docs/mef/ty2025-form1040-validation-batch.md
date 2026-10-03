@@ -1743,3 +1743,10 @@ native other-income statement rows, validate against the cached TY2025 v5.4
 XSD, and print both payer identifiers in the filled PDF text. Altering a filed
 row or retained source recipient rejects at both native and PDF packet export.
 The frozen full-suite result at `f92a09e4` has not been rerun on this head.
+
+The later mixed-family replay passed 4/4 tests in the same focused file. Two
+1099-MISC box 8 copies, one RTAA copy, and one taxable grant copy sum to
+$1,750 on Schedule 1 line 8z and Form 1040 line 8. Native XML and extracted
+filled-PDF text retain all four distinct payer rows; the local TY2025 v5.4 XSD
+validates the complete return. The full suite remains due at implementation
+freeze.
