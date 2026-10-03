@@ -1564,3 +1564,23 @@ zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
 The code head remained frozen during the run. This is a passing local automated
 batch for its tested routes; unresolved coverage decisions, all-page visual
 review, IRS business-rule validation, and ATS acceptance remain open.
+
+## Direct pension rollover filled-PDF review (2026-10-03)
+
+At documentation head `61db04f2` (the tested code from `f92a09e4`), the real
+review generator selected `single-direct-pension-rollover` and wrote a fresh
+synthetic source, local TY2025 v5.4 XSD-valid XML, and two-page filled Form
+1040 PDF to the ignored directory
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-direct-pension-61db04f2/`.
+The PDF, XML, and source SHA-256 values exactly match the prior 167-case export.
+Both pages were rendered at 150 dpi and visually checked against the source
+and XML: Alex's 1099-R code G reports $20,000 gross, $0 taxable, the Form 1040
+line 5c rollover box is selected, QCD is clear, and page 2 prints the $15,750
+standard deduction with no positive tax or payment. Form/year, owner, page
+order, checkboxes, amounts, and clipping flags are complete. The read-only
+review checker passed **one selected case and two pages**, including source
+replay, artifact hashes, page origins, and local XSD. The reviewed manifest
+SHA-256 is
+`af724d3e5414b91b2178612aafd71bc1c737abd7ef8c76d335e4ad408ae62353`.
+This selected review leaves the rest of the 179-case plan, business rules, and
+IRS ATS open.

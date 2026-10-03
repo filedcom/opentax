@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1101 bounded completed slices are recorded in the
+inside** that section. The 1102 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -30,6 +30,8 @@ attachment/archive/A2A integrity checks. Selected 21-case/70-page and
 55-case/185-page synthetic packets passed their completed visual checklists
 and read-only replay checks. These bounded selections do not cover all 179
 current fixtures.
+A separate current-head two-page direct pension rollover packet passed a
+completed source/XML/visual checklist; the all-page review gate remains open.
 The live inventory has 149 native MeF descriptors, 116 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
