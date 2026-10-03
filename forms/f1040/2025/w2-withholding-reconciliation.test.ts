@@ -10,6 +10,7 @@ import {
   Form8958Line,
 } from "../nodes/inputs/f8958/source.ts";
 import { FilingStatus as NodeFilingStatus } from "../nodes/types.ts";
+import { FormType } from "../nodes/inputs/f4852/index.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -24,6 +25,80 @@ const filer: FilerIdentity = {
     nameControl: "SPOU",
   },
 };
+
+Deno.test("line 25a replays substitute W-2 withholding and rejects an unsupported amount", () => {
+  const substitute = {
+    f4852s: [{
+      form_type: FormType.W2,
+      payer_name: "Replacement Employer",
+      wages: 1_200,
+      federal_withheld: 120,
+    }],
+  };
+  assertW2WithholdingSource({
+    f4852: substitute,
+    f1040: { line25a_w2_withheld: 120 },
+  }, filer);
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        f4852: substitute,
+        f1040: { line25a_w2_withheld: 121 },
+      }, filer),
+    Error,
+    "line 25a differs",
+  );
+  assertThrows(
+    () => assertW2WithholdingSource({ f4852: substitute }, filer),
+    Error,
+    "requires a filed Form 1040 line 25a",
+  );
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        f1040: { line25a_w2_withheld: 120 },
+      }, filer),
+    Error,
+    "line 25a differs",
+  );
+});
+
+Deno.test("line 25a totals distinct issued and substitute W-2 withholding", () => {
+  const pending = {
+    w2: {
+      w2s: [{
+        employer_name: "Issued Employer",
+        employee_ssn: "111223333",
+        box1_wages: 1_000,
+        box2_fed_withheld: 100,
+      }],
+    },
+    f4852: {
+      f4852s: [{
+        form_type: FormType.W2,
+        payer_name: "Replacement Employer",
+        wages: 2_000,
+        federal_withheld: 200,
+      }, {
+        form_type: FormType.R_1099,
+        payer_name: "Pension Payer",
+        gross_distribution: 500,
+        federal_withheld: 50,
+      }],
+    },
+    f1040: { line25a_w2_withheld: 300 },
+  };
+  assertW2WithholdingSource(pending, filer);
+  assertThrows(
+    () =>
+      assertW2WithholdingSource({
+        ...pending,
+        f1040: { line25a_w2_withheld: 100 },
+      }, filer),
+    Error,
+    "line 25a differs",
+  );
+});
 
 Deno.test("W-2 withholding replays both identified joint owners into line 25a", () => {
   const source = {
@@ -300,14 +375,15 @@ Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 2
     agi_aggregator: { line1a_wages: 500 },
   });
   assertThrows(
-    () => assertLine1aWageSource({
-      ...pending,
-      w2: {
-        ...pending.w2,
-        w2s: [{ ...pending.w2.w2s[0], box1_wages: 1_001 }],
-      },
-      f1040: { ...pending.f1040, line1a_wages: 500 },
-    }),
+    () =>
+      assertLine1aWageSource({
+        ...pending,
+        w2: {
+          ...pending.w2,
+          w2s: [{ ...pending.w2.w2s[0], box1_wages: 1_001 }],
+        },
+        f1040: { ...pending.f1040, line1a_wages: 500 },
+      }),
     Error,
     "wage allocation must match one ordinary issued W-2 box 1",
   );

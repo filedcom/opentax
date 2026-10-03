@@ -239,9 +239,9 @@ function buildReturnXml(
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
+  assertLine1bHouseholdWageSource(pending);
   assertW2WithholdingSource(pending, filer);
   assertLine1aWageSource(pending);
-  assertLine1bHouseholdWageSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);

@@ -49,9 +49,11 @@ export function assertLine1aWageSource(
     );
   if (!w2 && substituteWages.length === 0) return;
 
-  let issuedWages = w2?.w2s.filter((row) =>
-    row.box13_statutory_employee !== true
-  ).reduce((total, row) => total + row.box1_wages, 0) ?? 0;
+  let issuedWages =
+    w2?.w2s.filter((row) => row.box13_statutory_employee !== true).reduce(
+      (total, row) => total + row.box1_wages,
+      0,
+    ) ?? 0;
   if (w2?.f8958_allocation) {
     const wages = w2.f8958_allocation.rows.filter((row) =>
       row.form_line === Form8958Line.Wages
@@ -76,8 +78,7 @@ export function assertLine1aWageSource(
   const agiRaw = (pending.agi_aggregator as
     | Record<string, unknown>
     | undefined)?.line1a_wages;
-  const agi = typeof agiRaw === "number" ? agiRaw :
-    Array.isArray(agiRaw) &&
+  const agi = typeof agiRaw === "number" ? agiRaw : Array.isArray(agiRaw) &&
       agiRaw.every((value) => typeof value === "number")
     ? agiRaw.reduce((total, value) => total + value, 0)
     : undefined;
@@ -102,9 +103,10 @@ export function assertLine1iCombatPayElectionSource(
     ? undefined
     : w2InputSchema.parse(pending.w2);
   const expected = source?.w2s.reduce(
-    (total, row) => total + (row.box12_entries ?? [])
-      .filter((entry) => entry.code === Box12Code.Q)
-      .reduce((subtotal, entry) => subtotal + entry.amount, 0),
+    (total, row) =>
+      total + (row.box12_entries ?? [])
+        .filter((entry) => entry.code === Box12Code.Q)
+        .reduce((subtotal, entry) => subtotal + entry.amount, 0),
     0,
   ) ?? 0;
   if (
@@ -117,24 +119,40 @@ export function assertLine1iCombatPayElectionSource(
   }
 }
 
-/** Replay retained W-2 box 2 withholding into the filed Form 1040 line 25a. */
+/** Replay issued and substitute W-2 withholding into Form 1040 line 25a. */
 export function assertW2WithholdingSource(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): void {
-  if (pending.w2 === undefined) return;
-  const source = w2InputSchema.parse(pending.w2);
-  assertDistinctW2IssuedCopies(source.w2s);
-  const hasWithholding = source.w2s.some((row) => row.box2_fed_withheld > 0);
-  const hasPositiveW2 = source.w2s.some(hasReportedAmount);
-  if (pending.f1040 === undefined && !hasPositiveW2) return;
+  const source = pending.w2 === undefined
+    ? undefined
+    : w2InputSchema.parse(pending.w2);
+  const substitutes = pending.f4852 === undefined
+    ? []
+    : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
+      row.form_type === FormType.W2
+    );
+  if (source) assertDistinctW2IssuedCopies(source.w2s);
+  const substituteWithholding = substitutes.reduce(
+    (sum, row) => sum + (row.federal_withheld ?? 0),
+    0,
+  );
+  const hasWithholding = source?.w2s.some((row) => row.box2_fed_withheld > 0) ||
+    substituteWithholding > 0;
+  const hasPositiveW2 = source?.w2s.some(hasReportedAmount) ?? false;
+  const filed = pending.f1040 as Record<string, unknown> | undefined;
+  if (
+    !source && substitutes.length === 0 &&
+    (filed?.line25a_w2_withheld ?? 0) === 0
+  ) return;
+  if (pending.f1040 === undefined && !hasPositiveW2 && !hasWithholding) return;
   if (!filer) throw new Error("W-2 withholding needs Form 1040 filer identity");
   const recipients = new Set([filer.primarySSN.replace(/\D/g, "")]);
   if (
     filer.filingStatus === FilingStatus.MarriedFilingJointly &&
     filer.spouse?.ssn
   ) recipients.add(filer.spouse.ssn.replace(/\D/g, ""));
-  for (const [index, row] of source.w2s.entries()) {
+  for (const [index, row] of (source?.w2s ?? []).entries()) {
     if (!hasReportedAmount(row)) continue;
     const ssn = row.employee_ssn?.replace(/\D/g, "");
     if (!/^\d{9}$/.test(ssn ?? "")) {
@@ -158,14 +176,14 @@ export function assertW2WithholdingSource(
   if (pending.f1040 === undefined && !hasWithholding) return;
   if (pending.f1040 === undefined) {
     throw new Error(
-      "Retained W-2 box 2 withholding requires a filed Form 1040 line 25a",
+      "Retained W-2 or Form 4852 withholding requires a filed Form 1040 line 25a",
     );
   }
-  const allocation = source.f8958_allocation;
-  const box2Total = source.w2s.reduce(
+  const allocation = source?.f8958_allocation;
+  const box2Total = source?.w2s.reduce(
     (sum, row) => sum + row.box2_fed_withheld,
     0,
-  );
+  ) ?? 0;
   const withholdingRows = allocation?.rows.filter((row) =>
     row.form_line === Form8958Line.Withholding
   );
@@ -173,19 +191,20 @@ export function assertW2WithholdingSource(
     allocation &&
     (filer.filingStatus !== FilingStatus.MarriedFilingSeparately ||
       allocation.taxpayer.ssn !== filer.primarySSN.replace(/\D/g, "") ||
-      source.w2s.length !== 1 || withholdingRows?.length !== 1 ||
+      source?.w2s.length !== 1 || withholdingRows?.length !== 1 ||
       withholdingRows[0].total_amount !== box2Total)
   ) {
     throw new Error(
       "Form 8958 W-2 withholding allocation must identify one matching taxpayer W-2 box 2 total",
     );
   }
-  const expected = allocation ? withholdingRows![0].taxpayer_share : box2Total;
-  const filed = pending.f1040 as Record<string, unknown>;
-  const actual = filed.line25a_w2_withheld ?? 0;
+  const expected =
+    (allocation ? withholdingRows![0].taxpayer_share : box2Total) +
+    substituteWithholding;
+  const actual = filed!.line25a_w2_withheld ?? 0;
   if (!Number.isFinite(expected) || actual !== expected) {
     throw new Error(
-      "Form 1040 line 25a differs from retained W-2 box 2 withholding",
+      "Form 1040 line 25a differs from retained W-2 and Form 4852 withholding",
     );
   }
 }

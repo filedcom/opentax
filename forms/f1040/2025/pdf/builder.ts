@@ -535,9 +535,9 @@ export async function buildPdfBytes(
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
+  assertLine1bHouseholdWageSource(normalized);
   assertW2WithholdingSource(normalized, filer);
   assertLine1aWageSource(normalized);
-  assertLine1bHouseholdWageSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
