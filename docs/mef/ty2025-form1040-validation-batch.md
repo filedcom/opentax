@@ -717,9 +717,9 @@ A second declared selection contains **55 fixtures whose expected printed
 forms use only Form 1040, Schedules 1/1-A/2/3/A/B/D, and Schedule EIC**. It
 generated 55 source JSON/native XML/PDF trios and 185 PDF pages in
 `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-core-pdf55/`;
-each native XML passed the supplied TY2025 XSD before PDF output. Its
-partially marked manifest SHA-256 is
-`5c50fa2832665959c94307c80bc7947f4af58e56f3f01696bed0480c54f60b2f`.
+each native XML passed the supplied TY2025 XSD before PDF output. The
+completed private review manifest SHA-256 is
+`554a5d6f8f63d285d2a416a8bdf36f208d292f9fb573ae5fc694cf0873c64f7a`.
 This is a PDF-form projection selection, not a claim that every fixture's
 underlying source route is outside the named-form gaps. It declares 123
 excluded fixtures. Sixteen cases and 46 pages overlap the completed 21-case
@@ -740,15 +740,25 @@ direct broker basis sales. Three final-trust cases and 12 pages cover separate
 short-term and long-term capital losses plus a section 67(e) deduction. The
 printed lines and totals in these eight cases matched retained pending data
 and native XML, with no visible page-order, owner, or clipping discrepancy.
-Thus **30 of 55 cases and 99 of 185 pages** in this packet have visual
-observations; the remaining 25 cases and 86 pages still need review.
-The read-only checker is intentionally not a pass for this packet until those
-remaining page slots are completed.
+The remaining 25 cases and 86 pages were rendered at 120 dpi and reviewed:
+five vehicle/overtime Schedule 1-A cases; five qualified-tip cases, including
+the two-employer worksheet and high-income phaseout; two joint senior/mixed
+Schedule 1-A cases; two 1099-NEC/K classification cases; eight pension/IRA
+rollover and attached-statement cases; and three Form 1040 line 1h wage-source
+cases. Their printed amounts, source ownership, checkboxes, continuation
+pages, and packet order matched retained pending data and native XML. No
+clipping or legibility discrepancy was found. Thus **all 55 cases and 185
+pages** in this selected packet have visual observations. The read-only replay
+checker reported `Review checklist complete (selected scope): 55 cases, 185
+pages; artifact hashes and TY2025 XSD validation confirmed.` This selected
+result does not declare the nonnamed phase or the 178-case visual gate
+complete.
 
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
-authenticity, and visual parity still require separate review.
+authenticity, and visual parity outside the two selected packets still require
+separate review.
 The generator records one fixed synthetic `ReturnTs` in its source record and
 manifest so later source replay yields byte-identical native XML. This timestamp
 is only for the review batch; ordinary exports keep their actual build time.
