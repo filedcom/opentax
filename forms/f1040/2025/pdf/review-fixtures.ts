@@ -6703,12 +6703,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "form2441", "schedule3", "f8812", "eitc"],
+    expectedPdfForms: ["f1040", "schedule3", "form2441"],
     reviewFocus: [
       "Form 2441 provider and Ada Example's identity agree with the dependent source",
       "The 3,000 paid care expense yields a 500 credit on Form 2441 and Schedule 3",
-      "Schedule 8812 and Form 1040 retain the separate child credit and both native joins",
-      "Any resulting EIC and Schedule EIC page reconcile to Ada's reviewed residence and valid SSN",
+      "Form 1040 line 20 carries the sourced Schedule 3 credit once",
+      "No unclaimed child tax credit or EIC page is inserted into this packet",
     ],
   },
   {
