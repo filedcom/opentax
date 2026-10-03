@@ -133,7 +133,7 @@ Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", a
       }],
     },
   };
-  const message = "differs from issued Form 1098-E box 1";
+  const message = "differs from issued copies and payment ledgers";
   assertThrows(() => buildMefXml(changed, single.filer), Error, message);
   await assertRejects(
     () => buildPdfBytes(changed, single.filer),
@@ -452,4 +452,44 @@ Deno.test("separate 1098-E and sub-threshold lender ledgers combine once", async
     "<StudentLoanInterestDedAmt>1000</StudentLoanInterestDedAmt>",
   );
   assert((await buildPdfBytes(pending, single.filer)).length > 100_000);
+});
+
+Deno.test("reviewed corrected 1098-E uses only the replacement amount", async () => {
+  const corrected = {
+    box1_student_loan_interest: 900,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    source_document_reference: "corrected-2025-1098e",
+    corrected: true,
+    corrects_source_document_reference: "original-2025-1098e",
+    correction_review_reference: "reviewed-2025-lender-correction",
+  };
+  const pending = withStudentInterest(single, [90_000], [corrected]);
+  assertEquals(pending.schedule1?.line21_student_loan_interest, 600);
+  assertStringIncludes(
+    buildMefXml(pending, single.filer),
+    "<StudentLoanInterestDedAmt>600</StudentLoanInterestDedAmt>",
+  );
+  assert((await buildPdfBytes(pending, single.filer)).length > 100_000);
+
+  const superseded = {
+    ...corrected,
+    box1_student_loan_interest: 800,
+    source_document_reference: "original-2025-1098e",
+    corrected: false,
+    corrects_source_document_reference: undefined,
+    correction_review_reference: undefined,
+  };
+  const doubleCounted = {
+    ...pending,
+    f1098e: { f1098es: [superseded, corrected] },
+  };
+  const message = "cannot include its superseded original";
+  assertThrows(() => buildMefXml(doubleCounted, single.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(doubleCounted, single.filer),
+    Error,
+    message,
+  );
 });

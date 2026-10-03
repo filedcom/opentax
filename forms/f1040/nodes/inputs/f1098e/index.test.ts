@@ -236,3 +236,32 @@ Deno.test("sub-threshold student-loan ledger needs dated, reconciled payments an
     );
   }
 });
+
+Deno.test("corrected 1098-E replaces rather than adds its original", () => {
+  const original = {
+    box1_student_loan_interest: 800,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    source_document_reference: "original-1098e",
+  };
+  const corrected = {
+    ...original,
+    box1_student_loan_interest: 900,
+    source_document_reference: "corrected-1098e",
+    corrected: true,
+    corrects_source_document_reference: "original-1098e",
+    correction_review_reference: "reviewed-lender-correction",
+  };
+  assertEquals(inputSchema.safeParse({ f1098es: [corrected] }).success, true);
+  assertEquals(
+    inputSchema.safeParse({ f1098es: [original, corrected] }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [{ ...corrected, correction_review_reference: undefined }],
+    }).success,
+    false,
+  );
+});

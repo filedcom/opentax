@@ -40,6 +40,9 @@ export const itemSchema = z.object({
   borrower_owner_review_reference: z.string().trim().min(1).optional(),
   account_number: z.string().trim().min(1).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  corrected: z.boolean().optional(),
+  corrects_source_document_reference: z.string().trim().min(1).optional(),
+  correction_review_reference: z.string().trim().min(1).optional(),
 });
 
 export const unreportedInterestRecordSchema = z.object({
@@ -114,6 +117,45 @@ export const inputSchema = z.object({
     });
   }
   for (const [index, item] of f1098es.entries()) {
+    if (item.corrected === true) {
+      if (
+        !item.source_document_reference ||
+        !item.corrects_source_document_reference ||
+        !item.correction_review_reference ||
+        item.source_document_reference ===
+          item.corrects_source_document_reference
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "Corrected 1098-E needs distinct current/original references and review",
+        });
+      }
+      if (
+        f1098es.some((other) =>
+          other.source_document_reference ===
+            item.corrects_source_document_reference
+        )
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "Corrected 1098-E cannot include its superseded original as current interest",
+        });
+      }
+    } else if (
+      item.corrects_source_document_reference ||
+      item.correction_review_reference
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f1098es", index],
+        message:
+          "1098-E correction references need the corrected-copy indicator",
+      });
+    }
     if (item.box1_student_loan_interest <= 0) continue;
     for (const prior of f1098es.slice(0, index)) {
       if (prior.box1_student_loan_interest <= 0) continue;

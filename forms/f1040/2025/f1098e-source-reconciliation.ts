@@ -150,12 +150,12 @@ export function assert1098EInterestSource(
   );
   if (retained !== capped) {
     throw new Error(
-      "Retained student loan interest differs from issued Form 1098-E box 1",
+      "Retained student loan interest differs from issued copies and payment ledgers",
     );
   }
   if (printed > capped) {
     throw new Error(
-      "Schedule 1 student loan interest exceeds issued Form 1098-E interest",
+      "Schedule 1 student loan interest exceeds retained source interest",
     );
   }
   if (printed !== expectedTy2025StudentLoanDeduction(pending.agi_aggregator)) {

@@ -119,6 +119,16 @@ and no employer-plan or double-benefit review facts. Lint passed. Actual loan,
 school, payment, and no-double-benefit source authentication; spouse/dependent
 student loans; and the full batch remain open.
 
+The Form 1098-E corrected-copy pass on 2026-10-03 passed **215/215** selected
+source, full-return, native, and PDF builder cases. A marked corrected copy
+with original and review references contributes its replacement amount once;
+the original plus corrected copy rejects in input and both final exporters.
+At $90,000 single wages, a $900 corrected box 1 produces a $600 phased
+Schedule 1 deduction in native XML and filled PDF. The
+[2025 Copy B](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf) includes
+the corrected marker. Lint passed. Issuer-byte lineage, full source review,
+and the repository-wide batch remain open.
+
 The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder
 cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21
