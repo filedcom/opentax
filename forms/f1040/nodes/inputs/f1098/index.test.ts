@@ -163,6 +163,46 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
   assertEquals(
     inputSchema.safeParse({
       f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_property_reference: review.purchase_property_reference,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_second_home_review: {
+          ...review.existing_second_home_review,
+          held_out_for_rent_or_resale: true,
+          fair_rental_days: 100,
+          personal_use_days: 14,
+        },
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_second_home_review: {
+          ...review.existing_second_home_review,
+          held_out_for_rent_or_resale: true,
+          fair_rental_days: 100,
+          personal_use_days: 15,
+        },
+      },
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
       purchase_points_cross_loan_review: review,
       mortgage_limit_review: { loans: [] },
     }).success,
@@ -380,6 +420,7 @@ Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidenc
       single_filing_status_verified: true,
       loans: [{
         source_document_reference: "2025 purchase Form 1098",
+        property_reference: "new-principal-residence",
         purchase_closing_disclosure_reference:
           "2025 purchase closing disclosure",
         principal_residence_purchase_verified: true,
@@ -473,6 +514,138 @@ Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidenc
         ...source.f1098s[0],
         box1_current_year_deductible_interest: 1_000,
       }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("2025 purchase plus existing mortgage needs one qualified second home", () => {
+  const purchaseRef = "2025 principal residence Form 1098";
+  const secondRef = "2025 prior home Form 1098";
+  const balances = (reference: string, firstMonth: number) =>
+    Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      closing_balance: index + 1 < firstMonth ? 0 : 500_000,
+      lender_statement_reference: `${reference} month ${index + 1}`,
+    }));
+  const secondHomeReview = {
+    occupancy_record_reference: "2025 second-home occupancy ledger",
+    qualified_second_home_election_verified: true,
+    held_out_for_rent_or_resale: true,
+    fair_rental_days: 100,
+    personal_use_days: 15,
+  };
+  const source = {
+    f1098s: [
+      reviewedInterest(1_000, 750, {
+        lender_name: "Purchase Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: purchaseRef,
+        box2_outstanding_principal: 500_000,
+        box3_origination_date: "07/15/2025",
+      }),
+      reviewedInterest(1_000, 750, {
+        lender_name: "Prior Home Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: secondRef,
+        box2_outstanding_principal: 500_000,
+        box3_origination_date: "01/15/2020",
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 both homes Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: [{
+        source_document_reference: purchaseRef,
+        property_reference: "new-principal-residence",
+        purchase_closing_disclosure_reference: "2025 purchase closing",
+        principal_residence_purchase_verified: true,
+        no_additional_advances_verified: true,
+        monthly_balance_records: balances(purchaseRef, 7),
+      }, {
+        source_document_reference: secondRef,
+        property_reference: "former-main-home",
+        second_home_review: secondHomeReview,
+        monthly_balance_records: balances(secondRef, 1),
+      }],
+    },
+  };
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: source.f1098s.map((item) => ({
+            ...item,
+            box2_outstanding_principal: 300_000,
+          })),
+        },
+        ["111223333"],
+        FilingStatus.Single,
+        1_500,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "purchase plus existing mortgage needs one qualified-home",
+  );
+  assertEquals(inputSchema.safeParse(source).success, true);
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.Single,
+    1_500,
+    0,
+    0,
+    false,
+    false,
+  );
+  const [purchase, second] = source.mortgage_limit_review.loans;
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          second_home_review: {
+            ...secondHomeReview,
+            personal_use_days: 14,
+          },
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          second_home_review: {
+            ...secondHomeReview,
+            personal_use_days: 300,
+          },
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          property_reference: purchase.property_reference,
+        }],
+      },
     }).success,
     false,
   );

@@ -38,6 +38,23 @@ const constructionRefinanceReviewSchema = z.object({
   reportable_points_within_acquisition_limit_verified: z.literal(true),
 });
 
+const secondHomeReviewSchema = z.object({
+  occupancy_record_reference: z.string().trim().min(1),
+  qualified_second_home_election_verified: z.literal(true),
+  held_out_for_rent_or_resale: z.boolean(),
+  fair_rental_days: z.number().int().min(0).max(365),
+  personal_use_days: z.number().int().min(0).max(365),
+}).strict();
+
+function qualifiesSecondHome(review: z.infer<typeof secondHomeReviewSchema>) {
+  return review.personal_use_days + review.fair_rental_days <= 365 &&
+    (review.held_out_for_rent_or_resale
+      ? review.fair_rental_days > 0 &&
+        review.personal_use_days >
+          Math.max(14, review.fair_rental_days * 0.1)
+      : review.fair_rental_days === 0);
+}
+
 export const mortgageLimitReviewSchema = z.object({
   table1_workpaper_reference: z.string().trim().min(1),
   all_qualified_home_mortgages_included_verified: z.literal(true),
@@ -47,6 +64,8 @@ export const mortgageLimitReviewSchema = z.object({
   loans: z.array(
     z.object({
       source_document_reference: z.string().trim().min(1),
+      property_reference: z.string().trim().min(1).optional(),
+      second_home_review: secondHomeReviewSchema.optional(),
       purchase_closing_disclosure_reference: z.string().trim().min(1)
         .optional(),
       principal_residence_purchase_verified: z.literal(true).optional(),
@@ -85,6 +104,9 @@ const crossLoanBalanceSchema = z.object({
 export const purchasePointsCrossLoanReviewSchema = z.object({
   purchase_loan: crossLoanBalanceSchema,
   existing_loan: crossLoanBalanceSchema,
+  purchase_property_reference: z.string().trim().min(1),
+  existing_property_reference: z.string().trim().min(1),
+  existing_second_home_review: secondHomeReviewSchema,
   purchase_closing_disclosure_reference: z.string().trim().min(1),
   pub936_points_workpaper_reference: z.string().trim().min(1),
   all_qualified_home_mortgages_included_verified: z.literal(true),
@@ -447,6 +469,9 @@ export const inputSchema = z.object({
       if (
         f1098s.length !== 2 || !purchase || !existing ||
         purchase === existing ||
+        review.purchase_property_reference ===
+          review.existing_property_reference ||
+        !qualifiesSecondHome(review.existing_second_home_review) ||
         !dateValid(purchaseDate) || !dateValid(existingDate) ||
         Number(existingDate?.[3]) < 2017 ||
         (Number(existingDate?.[3]) === 2017 &&
@@ -519,6 +544,33 @@ export const inputSchema = z.object({
         item.dedm_override !== true && !!item.lender_name?.trim() &&
         !!item.recipient_tin && !!item.source_document_reference;
     });
+    const purchaseLoans = loans.filter((loan) => {
+      const item = f1098s.find((source) =>
+        source.source_document_reference === loan.source_document_reference
+      );
+      return item?.box3_origination_date?.endsWith("2025") ?? false;
+    });
+    const existingLoans = loans.filter((loan) => !purchaseLoans.includes(loan));
+    const purchaseProperty = purchaseLoans[0]?.property_reference;
+    const secondHomeProperty = existingLoans[0]?.property_reference;
+    const purchasePropertiesValid = purchaseLoans.length === 0 ||
+      (!!purchaseProperty &&
+        purchaseLoans.every((loan) =>
+          loan.property_reference === purchaseProperty &&
+          loan.second_home_review === undefined
+        ));
+    const secondHomePropertiesValid = purchaseLoans.length === 0 ||
+      existingLoans.length === 0 ||
+      (!!secondHomeProperty &&
+        secondHomeProperty !== purchaseProperty &&
+        existingLoans.every((loan) => {
+          const review = loan.second_home_review;
+          if (!review) return false;
+          return loan.property_reference === secondHomeProperty &&
+            qualifiesSecondHome(review);
+        }));
+    const propertiesValid = purchasePropertiesValid &&
+      secondHomePropertiesValid;
     const recordsValid = loans.every((loan) => {
       const item = f1098s.find((source) =>
         source.source_document_reference === loan.source_document_reference
@@ -539,7 +591,8 @@ export const inputSchema = z.object({
             ),
           ).size === 12 &&
         (purchase2025
-          ? !!loan.purchase_closing_disclosure_reference &&
+          ? !!loan.property_reference &&
+            !!loan.purchase_closing_disclosure_reference &&
             loan.principal_residence_purchase_verified === true &&
             loan.no_additional_advances_verified === true &&
             (item.box2_outstanding_principal ?? 0) > 0 &&
@@ -586,14 +639,14 @@ export const inputSchema = z.object({
       0,
     );
     if (
-      !sameSources || !sourceEligible || !recordsValid ||
+      !sameSources || !sourceEligible || !propertiesValid || !recordsValid ||
       claimedInterest !== expectedInterest
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["mortgage_limit_review"],
         message:
-          "Post-2017 acquisition mortgages need 12 distinct monthly lender balances, verified 2025 purchase facts when applicable, and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
+          "Post-2017 acquisition mortgages need distinct monthly lender balances, verified purchase and second-home facts when applicable, and one Pub. 936 Table 1 allocation matching sourced Schedule A interest",
       });
     }
   },
@@ -691,9 +744,25 @@ export function assertForm1098MortgageLimitSources(
       (item.for_routing ?? ForRouting.A) === ForRouting.A &&
       item.refinance !== true &&
       item.binding_contract_exception !== true &&
-      (item.box2_outstanding_principal ?? 0) > 0 &&
       item.box1_mortgage_interest > 0;
   });
+  const has2025Purchase = post2017MortgageSnapshots.some((item) =>
+    item.box3_origination_date?.endsWith("2025") &&
+    ((item.box1_current_year_deductible_interest ?? 0) > 0 ||
+      deductibleBox6Points(item) > 0)
+  );
+  const hasPre2025Mortgage = post2017MortgageSnapshots.some((item) =>
+    !item.box3_origination_date?.endsWith("2025")
+  );
+  if (
+    filedLine8a > 0 && has2025Purchase && hasPre2025Mortgage &&
+    !parsed.mortgage_limit_review &&
+    !parsed.purchase_points_cross_loan_review
+  ) {
+    throw new Error(
+      "Schedule A 2025 purchase plus existing mortgage needs one qualified-home Pub. 936 review",
+    );
+  }
   const debtLimit = filingStatus === FilingStatus.MarriedFilingSeparately
     ? 375_000
     : 750_000;

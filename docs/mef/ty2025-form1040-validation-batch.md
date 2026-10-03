@@ -1657,3 +1657,27 @@ Source validation rejects missing closing reference, positive balances
 before purchase, changed deduction, and missing issued box 2. These focused
 checks do not establish other part-year or points paths, closing/statement
 byte authenticity, the final bulk suite, or IRS ATS acceptance.
+
+## 2025 purchase and qualified second-home source (2026-10-04)
+
+The combined July purchase and preexisting Form 1098 review now requires
+distinct property references and the former home's second-home occupancy
+record. The source check accepts a rented home with 100 fair-rental and 15
+personal-use days. It rejects 14 personal days, a 400-day total, and reuse of
+the purchase property reference. The prior positive $1,500 combined-loan MeF
+bundle and three-page filled-PDF case passed again with an unrented former
+main home. A second $300,000 plus $300,000 pair with $2,000 claimed interest
+rejects without the shared review and builds MeF/PDF with it; this also checks
+the under-limit qualified-home path. Occupancy-document bytes, other property-use combinations, the
+full bulk suite, and IRS acceptance remain outside this focused result.
+
+## Purchase-points prior-home qualification (2026-10-04)
+
+The separate $21,000 Form 1098 purchase-points plus existing-mortgage
+fixture now retains distinct property references and a former-home
+second-home occupancy review. Focused source parsing keeps the unrented
+positive case and accepts 100 fair-rental plus 15 personal-use days; 14
+personal-use days and duplicate property identity reject. The earlier
+purchase-points native and PDF Schedule A source-replay tests passed on this
+head, as did the full-return local TY2025 XSD case. Occupancy bytes, full
+batch, and ATS remain open.

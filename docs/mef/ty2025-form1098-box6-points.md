@@ -233,6 +233,24 @@ describes lender monthly balances and Table 1, and the
 [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
 define box 2 for a current-year origination.
 
+For a 2025 purchase combined with a preexisting mortgage, the retained review
+now identifies two different properties and the prior home's second-home
+election and occupancy record. A nonrented second home must not have been
+held out for rent or resale. If rented, documented personal-use days must
+exceed both 14 and 10% of fair-rental days; the two day counts cannot total
+more than 365. A synthetic rented-home case with 100 rental and 15 personal
+days passes source validation; 14 personal days, an impossible 400-day total,
+or a repeated property reference rejects. The native/PDF combined-loan
+fixture uses an unrented former main home. This review is also required for a
+positive 2025 purchase plus preexisting mortgage when box 2 snapshots total
+below $750,000; that case cannot bypass the second-home classification merely
+because debt is under the limit. A reviewed $300,000 plus $300,000 pair carries
+the full $2,000 interest to native MeF and filled PDF, while the unreviewed
+pair rejects. Ownership, property-use, and
+occupancy documents remain reviewed references rather than authenticated
+bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
+provides the second-home rules.
+
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 
 The public `f1098_purchase_points_cross_loan_review` joins one 2025
@@ -261,6 +279,16 @@ The [2025 Publication 936](https://www.irs.gov/publications/p936) combines
 mortgages under the acquisition-debt limit, and the
 [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca)
 place deductible Form 1098 interest and points on line 8a.
+
+The purchase-points cross-loan review now also identifies distinct purchase
+and prior-home properties and applies the same qualified second-home
+occupancy test as the no-points combined review. Its former-home occupancy
+record is required even while the two lender-certified maxima stay below
+$750,000. A rented second home with 100 fair-rental and 15 personal-use days
+passes source validation; 14 personal days or the same property reference
+rejects. The structured occupancy record is not yet authenticated to source
+bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
+provides the second-home criteria.
 
 ## Lender Copy B proof for bounded cross-loan reviews
 

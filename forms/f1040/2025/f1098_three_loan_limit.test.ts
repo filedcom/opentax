@@ -120,10 +120,23 @@ async function resultFor(
             source_document_reference: `2025 Example Lender ${number} Copy B`,
             ...(purchase2025 && number === 1
               ? {
+                property_reference: "new-principal-residence",
                 purchase_closing_disclosure_reference:
                   "2025 principal residence closing disclosure",
                 principal_residence_purchase_verified: true,
                 no_additional_advances_verified: true,
+              }
+              : purchase2025
+              ? {
+                property_reference: "former-main-home-second-home",
+                second_home_review: {
+                  occupancy_record_reference:
+                    "2025 prior-home occupancy and rental ledger",
+                  qualified_second_home_election_verified: true,
+                  held_out_for_rent_or_resale: false,
+                  fair_rental_days: 0,
+                  personal_use_days: 0,
+                },
               }
               : {}),
             monthly_balance_records: Array.from(
@@ -436,6 +449,49 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     (await PDFDocument.load(purchaseWithExistingPdf)).getPageCount(),
     3,
   );
+
+  const underLimitPurchaseUnreviewed = await resultFor(
+    300_000,
+    1_000,
+    undefined,
+    false,
+    2,
+    true,
+  );
+  assertThrows(
+    () =>
+      buildMefXml(
+        underLimitPurchaseUnreviewed.pending,
+        underLimitPurchaseUnreviewed.filer,
+      ),
+    Error,
+    "purchase plus existing mortgage needs one qualified-home",
+  );
+  const underLimitPurchaseReviewed = await resultFor(
+    300_000,
+    1_000,
+    300_000,
+    false,
+    2,
+    true,
+  );
+  const underLimitBundle = await buildMefBundle(
+    underLimitPurchaseReviewed.pending,
+    { filer: underLimitPurchaseReviewed.filer, attachments: [] },
+  );
+  assertEquals(
+    underLimitBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>2000</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const underLimitPdf = await buildPdfBytes(
+    underLimitBundle.pending,
+    underLimitPurchaseReviewed.filer,
+    ".pdf-cache",
+    underLimitBundle,
+  );
+  assertEquals((await PDFDocument.load(underLimitPdf)).getPageCount(), 3);
 
   const jointUnreviewed = await resultFor(300_000, 1_000, undefined, true);
   assertThrows(
