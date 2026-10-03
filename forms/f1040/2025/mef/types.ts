@@ -26,6 +26,7 @@ import type { inputSchema as f1099divInputSchema } from "../../nodes/inputs/f109
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
 import type { inputSchema as f1099bInputSchema } from "../../nodes/inputs/f1099b/index.ts";
 import type { inputSchema as f1099kInputSchema } from "../../nodes/inputs/f1099k/index.ts";
+import type { inputSchema as f1098eInputSchema } from "../../nodes/inputs/f1098e/index.ts";
 import type { inputSchema as f1099necInputSchema } from "../../nodes/inputs/f1099nec/index.ts";
 import type { inputSchema as f8288InputSchema } from "../../nodes/inputs/f8288/index.ts";
 import type { inputSchema as extInputSchema } from "../../nodes/inputs/ext/index.ts";
@@ -74,6 +75,7 @@ export type MefFormsPending =
       line1h_other_earned?: number | number[];
       line2b_taxable_interest?: number;
       line3b_ordinary_dividends?: number;
+      line21_student_loan_interest?: number;
     };
     // Unreported household-employment wages support the line 1b source replay.
     household_wages?: z.infer<typeof householdWagesInputSchema>;
@@ -87,6 +89,7 @@ export type MefFormsPending =
     // Issued broker and contractor copies survive for owner checks at export.
     f1099b?: z.infer<typeof f1099bInputSchema>;
     f1099k?: z.infer<typeof f1099kInputSchema>;
+    f1098e?: z.infer<typeof f1098eInputSchema>;
     f1099nec?: z.infer<typeof f1099necInputSchema>;
     // FIRPTA seller copies support the Form 1040 line 25c owner check.
     f8288?: z.infer<typeof f8288InputSchema>;

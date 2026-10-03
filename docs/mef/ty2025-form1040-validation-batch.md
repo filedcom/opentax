@@ -61,7 +61,20 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
-The subsequent Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
+The Form 1098-E issued-source pass on 2026-10-03 passed **22/22** focused
+input/full-return/native/PDF cases and **184/184** selected builder cases.
+Positive retained copies now require lender name/TIN, full borrower TIN matched
+to the taxpayer or joint spouse, and an issued-document reference before either
+export. Repeated references and same-lender/borrower ambiguous copies reject;
+the retained AGI interest input must match capped box 1 source totals. The
+zero-deduction upper-phaseout joint case still builds native XML. The
+[2025 recipient form](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf)
+contains these identity fields; its
+[instructions](https://www.irs.gov/pub/irs-prior/i1098et--2025.pdf) allow a
+truncated borrower TIN on Copy B, so that reviewed-owner route, loan
+qualification, issuer bytes, and broader MAGI combinations remain open.
+
+The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder
 cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21
 and line 26, Form 1040 line 10, native XML, and filled PDF now all use the

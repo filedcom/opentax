@@ -27,6 +27,9 @@ function withStudentInterest(
     f1098e: [{
       box1_student_loan_interest: 2_500,
       lender_name: "Example Loan Servicer",
+      lender_tin: "12-3456789",
+      borrower_tin: "111-22-3333",
+      source_document_reference: "issued-1098e-2025",
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -84,5 +87,58 @@ Deno.test("joint 1098-E uses the TY2025 $170,000 to $200,000 phaseout", () => {
       expected,
     );
     assertEquals(pending.f1040?.line10_adjustments ?? 0, expected);
+    if (expected === 0) buildMefXml(pending, joint.filer);
   }
+});
+
+Deno.test("positive 1098-E needs an issued lender and the filed borrower in both exports", async () => {
+  const pending = withStudentInterest(single, [90_000]);
+  const issued = pending.f1098e!.f1098es[0];
+  for (
+    const [changed, message] of [
+      [{ ...issued, lender_tin: undefined }, "identified lender"],
+      [{ ...issued, borrower_tin: undefined }, "identified lender"],
+      [
+        { ...issued, source_document_reference: undefined },
+        "issued-copy reference",
+      ],
+      [{ ...issued, borrower_tin: "999-88-7777" }, "borrower must match"],
+    ] as const
+  ) {
+    const altered = {
+      ...pending,
+      f1098e: { f1098es: [changed] },
+    };
+    assertThrows(() => buildMefXml(altered, single.filer), Error, message);
+    await assertRejects(
+      () => buildPdfBytes(altered, single.filer),
+      Error,
+      message,
+    );
+  }
+});
+
+Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", async () => {
+  const pending = withStudentInterest(single, [90_000]);
+  const changed = {
+    ...pending,
+    f1098e: {
+      f1098es: [{
+        ...pending.f1098e!.f1098es[0],
+        box1_student_loan_interest: 2_400,
+      }],
+    },
+  };
+  const message = "differs from issued Form 1098-E box 1";
+  assertThrows(() => buildMefXml(changed, single.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(changed, single.filer),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml({ ...pending, f1098e: undefined }, single.filer),
+    Error,
+    "needs a retained source",
+  );
 });

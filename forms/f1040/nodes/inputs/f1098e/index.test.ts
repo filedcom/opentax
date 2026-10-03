@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { f1098e } from "./index.ts";
+import { f1098e, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -157,4 +157,33 @@ Deno.test("f1098e.compute: smoke test — two lenders, total capped", () => {
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
   const agiFields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(agiFields.line21_student_loan_interest, 2500);
+});
+
+Deno.test("1098-E identified lender statements reject repeated issued copies", () => {
+  const issued = {
+    box1_student_loan_interest: 800,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    source_document_reference: "issued-1098e-1",
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued, {
+        ...issued,
+        box1_student_loan_interest: 900,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued, {
+        ...issued,
+        source_document_reference: "issued-1098e-2",
+        account_number: "loan-2",
+      }],
+    }).success,
+    true,
+  );
 });

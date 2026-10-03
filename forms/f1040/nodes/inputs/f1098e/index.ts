@@ -29,12 +29,57 @@ export const itemSchema = z.object({
   box2_origination_fees_excluded: z.boolean().optional().describe(
     "If checked, box 1 does not include loan origination fees paid before September 1, 2004",
   ),
-  // Optional lender name for identification
-  lender_name: z.string().optional(),
+  // Copy B identifies the lender and borrower; the account box is optional
+  // for one account but required by the issuer for multiple accounts.
+  lender_name: z.string().trim().min(1).optional(),
+  lender_tin: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
+  borrower_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  account_number: z.string().trim().min(1).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
 });
 
 export const inputSchema = z.object({
   f1098es: z.array(itemSchema).min(1),
+}).superRefine(({ f1098es }, ctx) => {
+  for (const [index, item] of f1098es.entries()) {
+    if (item.box1_student_loan_interest <= 0) continue;
+    for (const prior of f1098es.slice(0, index)) {
+      if (prior.box1_student_loan_interest <= 0) continue;
+      const lender = item.lender_tin?.replace(/\D/g, "");
+      const priorLender = prior.lender_tin?.replace(/\D/g, "");
+      const lenderName = item.lender_name?.trim().toLowerCase();
+      const priorLenderName = prior.lender_name?.trim().toLowerCase();
+      const borrower = item.borrower_tin?.replace(/\D/g, "");
+      const priorBorrower = prior.borrower_tin?.replace(/\D/g, "");
+      if (
+        !borrower || borrower !== priorBorrower ||
+        (lender && priorLender
+          ? lender !== priorLender
+          : !lenderName || lenderName !== priorLenderName)
+      ) continue;
+      if (
+        item.source_document_reference &&
+        item.source_document_reference === prior.source_document_reference
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message: "1098-E repeats the same issued lender statement",
+        });
+      }
+      if (
+        (!item.account_number && !item.source_document_reference) ||
+        (!prior.account_number && !prior.source_document_reference)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "1098-E copies from one lender and borrower need distinct accounts or issued references",
+        });
+      }
+    }
+  }
 });
 
 type F1098EItem = z.infer<typeof itemSchema>;
