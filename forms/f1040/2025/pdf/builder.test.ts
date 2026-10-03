@@ -850,6 +850,80 @@ Deno.test("fillFormPdf rejects objects, arrays, and booleans in text widgets", a
   }
 });
 
+Deno.test("fillFormPdf requires boolean checkbox values", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const document = await PDFDocument.create();
+  const page = document.addPage([612, 792]);
+  const form = document.getForm();
+  form.createTextField("total").addToPage(page, {
+    x: 10,
+    y: 700,
+    width: 100,
+    height: 20,
+  });
+  for (const [name, y] of [["flag", 660], ["row_flag", 620]] as const) {
+    form.createCheckBox(name).addToPage(page, {
+      x: 10,
+      y,
+      width: 20,
+      height: 20,
+    });
+  }
+  const descriptor = {
+    pendingKey: "sample_rows",
+    pdfUrl: F1040_PDF_URL,
+    fields: [
+      { kind: "text" as const, domainKey: "total", pdfField: "total" },
+      { kind: "checkbox" as const, domainKey: "flag", pdfField: "flag" },
+    ],
+    rows: {
+      domainKey: "items",
+      maxRows: 1,
+      rowFields: [{
+        kind: "checkbox" as const,
+        domainKey: "flag",
+        pdfFieldPattern: "row_flag",
+      }],
+    },
+  };
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    for (const invalid of ["false", 1, []]) {
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: 100, flag: invalid },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill field "flag"',
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: 100, flag: false, items: [{ flag: invalid }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill row 1 field "row_flag"',
+      );
+    }
+    const valid = await fillFormPdf(
+      descriptor,
+      { total: 100, flag: false, items: [{ flag: true }] },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(valid instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {

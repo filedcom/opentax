@@ -460,6 +460,7 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Native MeF and PDF parity
 
+- [x] Require boolean values for mapped PDF checkboxes, including row and extra widgets. A string such as `"false"`, a number, or an array now rejects instead of silently checking the box; the synthetic form's valid true/false case and all 32 PDF builder tests pass. Wider descriptor and visual review remains open.
 - [x] Reject a filled IRS PDF when page selection discards a populated filer identity field or row field, including an explicit zero-valued row amount. The builder now checks those widgets on retained pages alongside ordinary mapped fields; a two-page synthetic fixture passes its rejection and retained-page cases. The full batch and broader descriptor/page visual review remain open.
 
 - [x] Reconcile the staged Form 8621 section 1291 packet against each bounded excess-distribution event: source-derived Part V income, tax, and interest must match Schedule 1, Schedule 2, and Form 1040, and the line-16a PDF statement now prints a distinct source-checked page with holding allocation and FX quote for each event. Positive two-event and packet/source tamper fixtures are authored for deferred validation. The parent Form 8621 PDF remains unregistered pending authenticated issuer, prior-year, and section 1294 history; see the [PDF gap](ty2025-form8621-pdf-gap.md).

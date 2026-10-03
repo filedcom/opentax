@@ -163,6 +163,9 @@ function fillEntry(
         field.setText(text);
       }
     } else if (entry.kind === "checkbox") {
+      if (typeof value !== "boolean") {
+        throw new Error("checkbox field needs a boolean");
+      }
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
     } else if (entry.kind === "checkboxWhen") {
@@ -195,6 +198,9 @@ function fillEntry(
               field.setText(text);
             }
           } else if (entry.kind === "checkbox") {
+            if (typeof value !== "boolean") {
+              throw new Error("checkbox field needs a boolean");
+            }
             const box = form.getCheckBox(extraField);
             value ? box.check() : box.uncheck();
           }
@@ -442,6 +448,9 @@ export async function fillFormPdf(
               throw new Error(`nonfinite projected value ${String(value)}`);
             }
             if (rf.kind === "checkbox") {
+              if (typeof value !== "boolean") {
+                throw new Error("row checkbox field needs a boolean");
+              }
               const box = form.getCheckBox(pdfField);
               value ? box.check() : box.uncheck();
             } else {
