@@ -26,7 +26,9 @@ until their full routes or approved rejection boundaries are established.
 **Implemented coverage.** Retained routes include source and owner checks for
 W-2, 1099, payment, and Form 1040 component totals; shared native/PDF preflight;
 PDF field, checkbox, retained-page, and filer-name checks; and prepared
-attachment/archive/A2A integrity checks.
+attachment/archive/A2A integrity checks. A selected 21-case, 70-page synthetic
+packet passed the replay checker; 157 fixtures remain outside that bounded
+visual review.
 The live inventory has 148 native MeF descriptors, 115 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 

@@ -624,15 +624,22 @@ and this classification does not close the 28-key coverage or full-review gate.
 deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
 
+For a bounded batch, pass a third argument naming a JSON file with an
+`includedFixtureIds` array of checked-in fixture IDs. The generated manifest
+labels the scope `selected` and lists every omitted fixture explicitly; the
+checker validates that partition and its exact artifact inventory. Omitting
+the selection file retains the full 178-case requirement. A selected batch
+cannot close the full visual-review gate.
+
 An initial complete-scope generator attempt on 2026-10-02 wrote 21
 source-backed PDF/XML/source trios, then stopped at a Form 8862 CTC/ODC and
 AOTC fixture requiring executor-owned authentication of prior IRS notice
 issuance and contents. Its partial directory is
 `.state/research/ty2025-filled-pdf-review/2026-10-02-pr59-nonnamed-attempt1`
 and the local log is `.state/research/ty2025-filled-pdf-review-attempt1.log`.
-It has no completed manifest and is not a visual-review pass. A declared
-nonnamed review scope is being prepared so deferred named cases are recorded
-as exclusions while included cases retain all source, schema, and PDF checks.
+It has no completed manifest and is not a visual-review pass. The declared
+selection option now permits bounded manifests with omitted cases recorded as
+exclusions while included cases retain all source, schema, and PDF checks.
 
 The 2026-10-03 full generator attempt at `e3b0a165` reached the same
 authenticated-prior-notice guard after writing 21 synthetic PDF/XML/source
@@ -694,6 +701,17 @@ residence) likewise showed the expected identities, amounts, boxes, and page
 order. No discrepancy or clipping was found in this partial set. These pages
 remain synthetic review evidence only; the generator stopped before the next
 Form 8862 case, and the full 178-case manifest and visual signoff remain open.
+
+The explicit selection workflow regenerated those same 21 PDFs into
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-selected21/` with
+byte-identical PDF contents and a completed selected-scope manifest. Its
+scope lists 21 included and 157 excluded fixtures. After the page observations
+above were entered, the read-only replay checker reported `Review checklist
+complete (selected scope): 21 cases, 70 pages; artifact hashes and TY2025 XSD
+validation confirmed.` The private manifest SHA-256 is
+`28cd598497f44e3cb14fb139d9b163800030b5819bc01ece1ca4efcd9ca97257`.
+This selected result verifies only those 21 generated cases; it does not
+declare the nonnamed phase or the 178-case visual gate complete.
 
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
