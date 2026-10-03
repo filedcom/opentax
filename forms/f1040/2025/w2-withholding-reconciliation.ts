@@ -47,8 +47,6 @@ export function assertLine1aWageSource(
     : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
       row.form_type === FormType.W2
     );
-  if (!w2 && substituteWages.length === 0) return;
-
   let issuedWages =
     w2?.w2s.filter((row) => row.box13_statutory_employee !== true).reduce(
       (total, row) => total + row.box1_wages,

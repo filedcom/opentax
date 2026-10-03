@@ -26,6 +26,24 @@ const filer: FilerIdentity = {
   },
 };
 
+Deno.test("line 1a rejects wages without an issued or substitute W-2", () => {
+  assertLine1aWageSource({ f1040: { line1a_wages: 0 } });
+  assertThrows(
+    () => assertLine1aWageSource({ f1040: { line1a_wages: 1_200 } }),
+    Error,
+    "line 1a and AGI wages differ from retained W-2",
+  );
+  assertThrows(
+    () =>
+      assertLine1aWageSource({
+        f1040: { line1a_wages: 0 },
+        agi_aggregator: { line1a_wages: 1_200 },
+      }),
+    Error,
+    "line 1a and AGI wages differ from retained W-2",
+  );
+});
+
 Deno.test("line 25a replays substitute W-2 withholding and rejects an unsupported amount", () => {
   const substitute = {
     f4852s: [{
