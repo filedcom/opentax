@@ -13,7 +13,7 @@ import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { returnDataDocuments } from "../mef/return-document-inventory.ts";
 import { buildMefSubmissionArchive } from "../mef/submission-archive.ts";
 import { buildPending } from "../mef/pending.ts";
-import { buildPdfBytes } from "./builder.ts";
+import { buildPdfBytes, type PdfPageOrigin } from "./builder.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
@@ -166,5 +166,101 @@ Deno.test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and
     () => buildPdfBytes(changedInterest, filer),
     Error,
     "line 2b",
+  );
+});
+
+Deno.test("1099-K personal and 1099-B broker sales retain three sale instances through PDF and submission ZIP", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-k-personal-gain-loss"
+  )!;
+  const filer = {
+    ...fixture.filer,
+    softwareId: "12345678",
+    originator: { efin: "123456", originatorType: "ERO" as const },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099b: [{
+      recipient_ssn: filer.primarySSN.replaceAll("-", ""),
+      payer_tin: "987654321",
+      account_number: "broker-1",
+      source_document_reference: "synthetic-broker-copy-1",
+      transaction_id: "broker-sale-1",
+      part: "B",
+      description: "Broker shares",
+      date_acquired: "2025-01-15",
+      date_sold: "2025-06-15",
+      proceeds: 1_200,
+      cost_basis: 1_000,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line7_capital_gain, 750);
+  const sales = pending.schedule_d?.transaction;
+  const rows = Array.isArray(sales) ? sales : sales ? [sales] : [];
+  assertEquals(rows.length, 3);
+  assertEquals(
+    new Set(rows.map((row) => row.source_transaction_id)).size,
+    3,
+  );
+
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertStringIncludes(
+    bundle.xml,
+    "<CapitalGainLossAmt>750</CapitalGainLossAmt>",
+  );
+  const documents = returnDataDocuments(bundle.xml)!;
+  assertEquals(documents[0].tag, "IRS1040");
+  assertEquals(
+    documents.filter((item) => item.tag === "IRS1040ScheduleD").length,
+    1,
+  );
+  assertEquals(
+    documents.filter((item) => item.tag === "IRS8949").length > 0,
+    true,
+  );
+  assertEquals(
+    new Set(documents.map((item) => item.id)).size,
+    documents.length,
+  );
+  const pageOrigins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    filer,
+    ".pdf-cache",
+    bundle,
+    pageOrigins,
+  );
+  assertEquals(
+    pageOrigins.length,
+    (await PDFDocument.load(pdf)).getPageCount(),
+  );
+  assertEquals(pageOrigins[0]?.formKey, "f1040");
+  assertEquals(pageOrigins.some((page) => page.formKey === "schedule_d"), true);
+  assertEquals(pageOrigins.some((page) => page.formKey === "form8949"), true);
+  assertEquals(
+    pageOrigins.map((page) => page.pageNumber),
+    Array.from({ length: pageOrigins.length }, (_, index) => index + 1),
+  );
+
+  const archive = await buildMefSubmissionArchive(bundle, {
+    filer,
+    submissionId: "1234562026276sales01",
+    processingDate: new Date("2026-10-03T10:00:00Z"),
+    residencyReview: {
+      tax_year: 2025,
+      taxpayer: {
+        tin: filer.primarySSN.replaceAll("-", ""),
+        tax_status: "full_year_us_citizen",
+        status_source_reference: "reviewed-sale-taxpayer-citizenship",
+        reviewer_reference: "reviewer-2026-10-03",
+        reviewed_on: "2026-10-03",
+      },
+    },
+  });
+  assertEquals(
+    new TextDecoder().decode(unzipSync(archive.bytes)["xml/submission.xml"]),
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + bundle.xml,
   );
 });
