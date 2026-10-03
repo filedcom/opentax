@@ -2,7 +2,6 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1099b, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
@@ -108,6 +107,25 @@ Deno.test("1099-B rejects an identified transaction repeated with altered tax ad
         minimalItem(issued),
         minimalItem({ ...issued, transaction_id: "sale-43" }),
       ]),
+      "form8949",
+    ).length,
+    2,
+  );
+});
+
+Deno.test("1099-B rejects a repeated source transaction without payer or account", () => {
+  const issued = minimalItem({
+    source_document_reference: "broker-2025-statement",
+    transaction_id: "sale-42",
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, proceeds: 1_200 }]),
+    Error,
+    "repeats the same identified broker transaction",
+  );
+  assertEquals(
+    findAllOutputs(
+      compute([issued, minimalItem({ ...issued, transaction_id: "sale-43" })]),
       "form8949",
     ).length,
     2,

@@ -61,6 +61,15 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
+The next 1099-B/1099-K source-identity pass on 2026-10-03 passed **151/151**
+input-node cases, **13/13** direct withholding and 1099-K export cases, and
+**184/184** native/PDF builder cases. A repeated broker statement/transaction
+pair now rejects without payer/account data; a repeated processor copy with
+changed gross and no account rejects after an optional issued reference is
+entered. Distinct source transactions and references remain accepted. Format
+and lint passed on the changed files; the full command and complete source-byte
+review remain deferred.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

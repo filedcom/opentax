@@ -76,7 +76,24 @@ export const inputSchema = z.object({
   f1099bs: z.array(itemSchema).min(1),
 }).superRefine(({ f1099bs }, ctx) => {
   const seen = new Set<string>();
+  const seenSourceTransactions = new Set<string>();
   for (const [index, item] of f1099bs.entries()) {
+    if (item.source_document_reference && item.transaction_id) {
+      const sourceKey = JSON.stringify([
+        item.source_document_reference,
+        item.transaction_id,
+      ]);
+      if (seenSourceTransactions.has(sourceKey)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["f1099bs", index],
+          message:
+            "1099-B repeats the same identified broker transaction; corrected copies need one reviewed current row",
+        });
+        continue;
+      }
+      seenSourceTransactions.add(sourceKey);
+    }
     if (
       !item.payer_tin || !item.account_number ||
       !item.recipient_ssn || !item.transaction_id

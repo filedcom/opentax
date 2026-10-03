@@ -762,6 +762,24 @@ Deno.test("1099-K identified payer copy cannot replay changed boxes or classific
   );
 });
 
+Deno.test("1099-K issued reference rejects changed boxes without an account", () => {
+  const issued = hobbyItem(100, {
+    source_document_reference: "processor-issued-copy",
+  });
+  const changed = hobbyItem(150, {
+    source_document_reference: "processor-issued-copy",
+  });
+  assertThrows(
+    () => compute([issued, changed]),
+    Error,
+    "repeats the same issued source reference and account",
+  );
+  compute([
+    issued,
+    hobbyItem(150, { source_document_reference: "second-processor-copy" }),
+  ]);
+});
+
 Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
   const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");

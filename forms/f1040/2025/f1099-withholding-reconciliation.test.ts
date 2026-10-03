@@ -498,6 +498,42 @@ Deno.test("corrected 1099-B source references cannot repeat one identified broke
     Error,
     "1099-B needs valid issued transaction rows",
   );
+
+  const withoutAccount = {
+    ...duplicate,
+    f1099b: {
+      f1099bs: [
+        {
+          ...sale,
+          payer_tin: undefined,
+          account_number: undefined,
+          source_document_reference: "one-broker-statement",
+        },
+        {
+          ...sale,
+          payer_tin: undefined,
+          account_number: undefined,
+          source_document_reference: "one-broker-statement",
+          proceeds: 1_200,
+        },
+      ],
+    },
+  };
+  assertThrows(
+    () => brokerSchema.parse(withoutAccount.f1099b),
+    Error,
+    "repeats the same identified broker transaction",
+  );
+  assertThrows(
+    () => buildMefXml(withoutAccount, exportFiler),
+    Error,
+    "1099-B needs valid issued transaction rows",
+  );
+  await assertRejects(
+    () => buildPdfBytes(withoutAccount, exportFiler),
+    Error,
+    "1099-B needs valid issued transaction rows",
+  );
 });
 
 Deno.test("positive 1099-R withholding needs an identified recipient on a joint return", () => {

@@ -48,6 +48,7 @@ export const itemSchema = z.object({
 
   // Administrative fields
   account_number: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   second_tin_notice: z.boolean().optional(),
 
   // Box 1a — Gross amount of reportable payment transactions (required field in IRS sense)
@@ -385,6 +386,26 @@ function repeatedIssuedCopyIndex(items: readonly K99Item[]): number {
   return -1;
 }
 
+function repeatedSourceReferenceIndex(items: readonly K99Item[]): number {
+  const seen = new Set<string>();
+  for (const [index, item] of items.entries()) {
+    if (
+      !item.source_document_reference ||
+      ((item.box1a_gross_payments ?? 0) <= 0 &&
+        (item.box4_federal_withheld ?? 0) <= 0)
+    ) continue;
+    const key = JSON.stringify([
+      item.source_document_reference,
+      item.pse_tin?.replace(/\D/g, "") || item.pse_name.trim(),
+      item.recipient_tin?.replace(/\D/g, "") ?? null,
+      item.account_number?.trim() || null,
+    ]);
+    if (seen.has(key)) return index;
+    seen.add(key);
+  }
+  return -1;
+}
+
 export const inputSchema = z.object({
   f1099ks: z.array(itemSchema).min(1),
 }).superRefine(({ f1099ks }, ctx) => {
@@ -417,6 +438,17 @@ export const inputSchema = z.object({
       path: ["f1099ks", repeatedIndex],
       message:
         "1099-K repeats the same identified payer, recipient, and account; corrected copies need one reviewed current row",
+    });
+  }
+  const repeatedReferenceIndex = repeatedIndex === -1
+    ? repeatedSourceReferenceIndex(f1099ks)
+    : -1;
+  if (repeatedReferenceIndex !== -1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["f1099ks", repeatedReferenceIndex],
+      message:
+        "1099-K repeats the same issued source reference and account; corrected copies need one reviewed current row",
     });
   }
 });
