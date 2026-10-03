@@ -571,10 +571,10 @@ export const SLI_PHASE_OUT_START_SINGLE_2025 = 85_000;
 export const SLI_PHASE_OUT_END_SINGLE_2025 = 100_000;
 
 /** SLI phase-out start — MFJ (TY2025). */
-export const SLI_PHASE_OUT_START_MFJ_2025 = 175_000;
+export const SLI_PHASE_OUT_START_MFJ_2025 = 170_000;
 
 /** SLI phase-out end — MFJ (TY2025). */
-export const SLI_PHASE_OUT_END_MFJ_2025 = 205_000;
+export const SLI_PHASE_OUT_END_MFJ_2025 = 200_000;
 
 // ─── Form 2106 — Employee Business Expenses ───────────────────────────────────
 // IRC §62(a)(2)(B)(ii); not indexed for inflation

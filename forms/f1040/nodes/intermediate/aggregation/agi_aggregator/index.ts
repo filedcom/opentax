@@ -10,6 +10,7 @@ import {
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { eitc } from "../../forms/eitc/index.ts";
@@ -441,7 +442,7 @@ function resolveSsaTaxable(
     return 0.85 * ssaGross;
   }
 
-  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const isMfj = input.filing_status === "mfj";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
   // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
@@ -505,7 +506,7 @@ function computeAdjustedSli(
   // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
   if (input.filing_status === "mfs") return 0;
 
-  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const isMfj = input.filing_status === "mfj";
   const phaseOutStart = isMfj
     ? cfg.sliPhaseOutStartMfj
     : cfg.sliPhaseOutStartSingle;
@@ -670,6 +671,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   get outputNodes() {
     return new OutputNodes([
       f1040,
+      schedule1,
       standard_deduction,
       scheduleA,
       eitc,
@@ -843,6 +845,13 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         foreign_agi_addback: exclusions(input),
       }),
     ];
+
+    const studentLoanDeduction = computeAdjustedSli(input, cfg);
+    if (studentLoanDeduction > 0) {
+      outputs.push(this.outputNodes.output(schedule1, {
+        line21_student_loan_interest: studentLoanDeduction,
+      }));
+    }
 
     const gross = grossIncome(input, cfg);
     if (gross > 0) {

@@ -5,14 +5,14 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Form 1098-E: Student Loan Interest Statement
-// Deduction flows to Schedule 1 Part II Line 19 and AGI Aggregator.
+// Deduction flows to Schedule 1 Part II line 21 through the AGI aggregator.
 // IRC §221: student loan interest deduction, capped at $2,500.
-// MAGI phaseout is handled separately (phaseout node not yet implemented).
+// The AGI aggregator applies the MAGI phaseout and sends the final amount to
+// Schedule 1 and Form 1040.
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -56,12 +56,6 @@ function allowedDeduction(items: F1098EItems): number {
   return Math.min(totalInterest(items), STUDENT_LOAN_INTEREST_CAP);
 }
 
-function schedule1Output(items: F1098EItems): NodeOutput[] {
-  const deduction = allowedDeduction(items);
-  if (deduction === 0) return [];
-  return [output(schedule1, { line21_student_loan_interest: deduction })];
-}
-
 function agiOutput(items: F1098EItems): NodeOutput[] {
   const deduction = allowedDeduction(items);
   if (deduction === 0) return [];
@@ -73,12 +67,11 @@ function agiOutput(items: F1098EItems): NodeOutput[] {
 class F1098ENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1098e";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const outputs: NodeOutput[] = [
-      ...schedule1Output(parsed.f1098es),
       ...agiOutput(parsed.f1098es),
     ];
     return { outputs };

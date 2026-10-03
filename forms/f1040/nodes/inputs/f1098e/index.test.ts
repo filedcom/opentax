@@ -9,7 +9,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1098e.compute({ taxYear: 2025, formType: "f1040" }, { f1098es: items });
+  return f1098e.compute({ taxYear: 2025, formType: "f1040" }, {
+    f1098es: items,
+  });
 }
 
 // =============================================================================
@@ -53,22 +55,20 @@ Deno.test("f1098e.inputSchema: zero interest passes", () => {
 // 2. Routing — Schedule 1 and AGI Aggregator
 // =============================================================================
 
-Deno.test("f1098e.compute: interest below cap routes to schedule1 line19", () => {
+Deno.test("f1098e.compute: raw interest waits for finalized Schedule 1 phaseout", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 1500 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line21_student_loan_interest, 1500);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("f1098e.compute: interest below cap routes to agi_aggregator line19", () => {
+Deno.test("f1098e.compute: interest below cap routes to AGI before line 21", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 1500 })]);
   const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 1500);
 });
 
-Deno.test("f1098e.compute: interest above $2,500 cap — capped at 2500 on schedule1", () => {
+Deno.test("f1098e.compute: interest above $2,500 cap awaits MAGI phaseout", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 3000 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line21_student_loan_interest, 2500);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
 Deno.test("f1098e.compute: interest above $2,500 cap — capped at 2500 on agi_aggregator", () => {
@@ -79,7 +79,7 @@ Deno.test("f1098e.compute: interest above $2,500 cap — capped at 2500 on agi_a
 
 Deno.test("f1098e.compute: exactly at $2,500 cap passes through unchanged", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 2500 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
+  const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 2500);
 });
 
@@ -104,12 +104,12 @@ Deno.test("f1098e.compute: all zero items — no outputs", () => {
 // 4. Multiple 1098-E Forms
 // =============================================================================
 
-Deno.test("f1098e.compute: multiple forms — interest summed", () => {
+Deno.test("f1098e.compute: multiple forms — interest summed before phaseout", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 800 }),
     minimalItem({ box1_student_loan_interest: 700 }),
   ]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
+  const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 1500);
 });
 
@@ -118,17 +118,19 @@ Deno.test("f1098e.compute: multiple forms — sum capped at $2,500", () => {
     minimalItem({ box1_student_loan_interest: 1500 }),
     minimalItem({ box1_student_loan_interest: 1500 }),
   ]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
+  const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 2500);
 });
 
-Deno.test("f1098e.compute: multiple forms — only one schedule1 output", () => {
+Deno.test("f1098e.compute: multiple forms — no premature schedule1 output", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 600 }),
     minimalItem({ box1_student_loan_interest: 800 }),
   ]);
-  const s1Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1");
-  assertEquals(s1Outputs.length, 1);
+  const s1Outputs = result.outputs.filter((o: { nodeType: string }) =>
+    o.nodeType === "schedule1"
+  );
+  assertEquals(s1Outputs.length, 0);
 });
 
 Deno.test("f1098e.compute: multiple forms — only one agi_aggregator output", () => {
@@ -136,7 +138,9 @@ Deno.test("f1098e.compute: multiple forms — only one agi_aggregator output", (
     minimalItem({ box1_student_loan_interest: 600 }),
     minimalItem({ box1_student_loan_interest: 800 }),
   ]);
-  const agiOutputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "agi_aggregator");
+  const agiOutputs = result.outputs.filter((o: { nodeType: string }) =>
+    o.nodeType === "agi_aggregator"
+  );
   assertEquals(agiOutputs.length, 1);
 });
 
@@ -150,8 +154,7 @@ Deno.test("f1098e.compute: smoke test — two lenders, total capped", () => {
     minimalItem({ box1_student_loan_interest: 1200, lender_name: "FedLoan" }),
   ]);
   // total 3000, capped at 2500
-  const s1Fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(s1Fields.line21_student_loan_interest, 2500);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
   const agiFields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(agiFields.line21_student_loan_interest, 2500);
 });

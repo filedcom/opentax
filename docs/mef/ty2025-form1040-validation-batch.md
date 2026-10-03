@@ -61,6 +61,17 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
+The subsequent Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
+and AGI unit cases and **186/186** selected full-return/native/PDF builder
+cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21
+and line 26, Form 1040 line 10, native XML, and filled PDF now all use the
+$1,667 phased deduction; a changed Schedule 1 rejects in both exports.
+Joint boundaries use the [2025 Publication 970](https://www.irs.gov/publications/p970)
+$170,000–$200,000 range, while qualifying surviving spouse uses the single
+range. The same status now uses the [Publication 915](https://www.irs.gov/publications/p915)
+$25,000 Social Security base. Positive 1098-E lender/borrower source identity,
+wider MAGI addbacks, page review, and the full phase batch remain open.
+
 The subsequent 1099-PATR copy-identity pass on 2026-10-03 passed **20/20**
 focused input/owner/export cases and **204/204** selected Schedule F and
 native/PDF builder cases. Multiple positive copies from one cooperative and

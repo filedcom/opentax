@@ -254,10 +254,13 @@ Deno.test("agi_aggregator: foreign earned income exclusion reduces AGI", () => {
 Deno.test("agi_aggregator: unsupported housing deduction input is rejected before changing AGI", () => {
   for (const amount of [0, 5_000]) {
     assertThrows(
-      () => compute({
-        line1a_wages: 50_000,
-        line8d_foreign_housing_deduction: amount,
-      } as unknown as Parameters<typeof agi_aggregator.compute>[1]),
+      () =>
+        compute(
+          {
+            line1a_wages: 50_000,
+            line8d_foreign_housing_deduction: amount,
+          } as unknown as Parameters<typeof agi_aggregator.compute>[1],
+        ),
       Error,
       "Form 2555 line 50 housing deduction is unsupported",
     );
@@ -478,6 +481,32 @@ Deno.test("agi_aggregator: student loan interest deduction reduces AGI", () => {
   assertEquals(agi(result), 57_500);
 });
 
+Deno.test("student loan phaseout uses single limits for surviving spouse and excludes MFS", () => {
+  for (const filing_status of ["single", "hoh", "qss"] as const) {
+    const result = compute({
+      filing_status,
+      line1a_wages: 90_000,
+      line21_student_loan_interest: 2_500,
+    });
+    assertEquals(agi(result), 88_333);
+    assertEquals(
+      result.outputs.find((row) => row.nodeType === "schedule1")?.fields
+        .line21_student_loan_interest,
+      1_667,
+    );
+  }
+  const mfs = compute({
+    filing_status: "mfs",
+    line1a_wages: 90_000,
+    line21_student_loan_interest: 2_500,
+  });
+  assertEquals(agi(mfs), 90_000);
+  assertEquals(
+    mfs.outputs.find((row) => row.nodeType === "schedule1"),
+    undefined,
+  );
+});
+
 Deno.test("agi_aggregator: SEP/SIMPLE/qualified plan deduction reduces AGI", () => {
   const result = compute({
     line3_schedule_c: 100_000,
@@ -522,6 +551,15 @@ Deno.test("agi_aggregator: SSA worksheet — provisional income below base thres
   });
   // SSA taxable = 0; AGI = wages only = 10_000
   assertEquals(agi(result), 10_000);
+});
+
+Deno.test("qualifying surviving spouse uses the $25,000 Social Security base", () => {
+  const result = compute({
+    line1a_wages: 20_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "qss",
+  });
+  assertEquals(agi(result), 22_500);
 });
 
 Deno.test("agi_aggregator: SSA worksheet — provisional income above upper threshold → 85% taxable", () => {
