@@ -719,7 +719,7 @@ generated 55 source JSON/native XML/PDF trios and 185 PDF pages in
 `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-core-pdf55/`;
 each native XML passed the supplied TY2025 XSD before PDF output. Its
 partially marked manifest SHA-256 is
-`f3a754148a233819c275b7b1f72da9463acac46ab7421da96183f32d143c1c12`.
+`5c50fa2832665959c94307c80bc7947f4af58e56f3f01696bed0480c54f60b2f`.
 This is a PDF-form projection selection, not a claim that every fixture's
 underlying source route is outside the named-form gaps. It declares 123
 excluded fixtures. Sixteen cases and 46 pages overlap the completed 21-case
@@ -734,8 +734,14 @@ campaign boxes; $127,000 two-W-2 wages; Schedule 1-A $4,000 deduction and
 three-VIN continuation; $5,000 Form 1099-K income and $480 withholding; and
 $1,482 excess Social Security payment visibly matched retained pending data
 and native XML. No page-order, clipping, or owner discrepancy was found in
-those pages. Thus **22 of 55 cases and 66 of 185 pages** in this packet have
-visual observations; the remaining 33 cases and 119 pages still need review.
+those pages. Five additional cases and 21 pages cover final-trust/partnership
+capital amounts, two partnership debt-cancellation and recovery paths, and
+direct broker basis sales. Three final-trust cases and 12 pages cover separate
+short-term and long-term capital losses plus a section 67(e) deduction. The
+printed lines and totals in these eight cases matched retained pending data
+and native XML, with no visible page-order, owner, or clipping discrepancy.
+Thus **30 of 55 cases and 99 of 185 pages** in this packet have visual
+observations; the remaining 25 cases and 86 pages still need review.
 The read-only checker is intentionally not a pass for this packet until those
 remaining page slots are completed.
 
