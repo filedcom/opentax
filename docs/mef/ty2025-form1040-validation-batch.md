@@ -1551,3 +1551,16 @@ before continuing the bulk gate. The partial ignored local log is
 `8ec6e20040c58cd4ecefab9583db91920e0ec263eb37732300b3d4eaa82cdefb`.
 This is **not** a passing full batch. The focused issue cases passed 56/56 with
 no failures; rerun the full command at the next frozen implementation head.
+
+## Frozen-head full batch after issue #60 regression (2026-10-03)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command at
+`f92a09e4` completed by 2026-10-03 21:30 UTC in 52m14s: **11,050 passed,
+zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
+15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
+`pdftotext` 26.09.0 through the local launcher. The ignored local log is
+`.state/research/ty2025-full-test-f92a09e4.log` (SHA-256
+`9e4ed2887a433e5378f4ee2f0a979ff3ecece3f4e464900330164f68451a7cd0`).
+The code head remained frozen during the run. This is a passing local automated
+batch for its tested routes; unresolved coverage decisions, all-page visual
+review, IRS business-rule validation, and ATS acceptance remain open.

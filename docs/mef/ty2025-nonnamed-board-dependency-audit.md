@@ -3,7 +3,7 @@
 Status: 2026-10-03. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 1100
+the other 20 are deferred named-form parents. Its completed ledger records 1101
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-02 (the same inputs used by
@@ -11,7 +11,7 @@ filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 descriptors, and 179 source fixtures covering 85 of 113 unique PDF keys; the
 other 28 keys map to deferred named
 families. Those are inventory and preparation counts, not end-to-end passes.
-The latest recorded full `deno task test` passed 11,034/11,034 at `59911414`
+The latest recorded full `deno task test` passed 11,050/11,050 at `f92a09e4`
 on 2026-10-03. It establishes local stability for retained routes, while
 scope decisions, visual review, complete route evidence, and ATS remain open.
 
@@ -49,7 +49,7 @@ close during the nonnamed phase.
 | P2 · Every registered PDF descriptor | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) plans 179 fixtures, covers 85/113 PDF keys, and classifies the other 28 as deferred named families. Selected 21-case/70-page and 55-case/185-page packets passed their completed visual checklists and read-only replay checks. Render and inspect each remaining nondeferred key/copy/overflow branch and compare canonical fields, owners, and page origins. Named-key coverage follows its implementation phase. |
 | P3 · One finalized graph/instance set | I, N, V | Shared native/PDF preflight and prepared manifest replay exist. A single-owner mixed 1099-K/1099-B sale fixture now checks three source IDs, native Schedule D/Form 8949 documents, filled-PDF page origins, unique document IDs, and archived XML bytes. A targeted instance audit removed zero-only native Schedule 1 documents from wage-only, zero-net Schedule C, and fully passive Schedule E returns while retaining the source Schedule C/E documents and an explicit zero unemployment source line with its filled PDF. Add wider repeated-owner/form/source-attachment cases and compare exact instance and reference sets; signed Form 8283 and other named source-issued attachments remain deferred. |
 | V1 · Implementation and decisions before bulk gate | I, D, N | Continue nonnamed implementation and obtain workflow/evidence dispositions; do not infer a phase pass from historical tests. The 20 named parents are deferred, so record their explicit boundary in the phase result instead of silently treating them as supported. |
-| V2 · Full `deno task test` gate | V, I, N | The frozen-head `59911414` full command passed 11,034/11,034 on 2026-10-03, with no ignored tests reported; tool versions and the log digest are in the validation batch. Rerun after further implementation. A local pass does not settle named-form coverage or product decisions. |
+| V2 · Full `deno task test` gate | V, I, N | The frozen-head `f92a09e4` full command passed 11,050/11,050 on 2026-10-03, with no ignored tests reported; tool versions and the log digest are in the validation batch. Rerun after further implementation. A local pass does not settle named-form coverage or product decisions. |
 | V3 · Source-backed full returns and XSD | I, N, V | The [validation batch](ty2025-form1040-validation-batch.md) provides a fixture/manifest path and locally cached TY2025 schema but no exhaustive positive-route result. Generate a complete return and conflicting negatives for every retained nonnamed route; separately verify source totals, references and business rules. Repeat for named routes when implemented. |
 | V4 · 179 filled-PDF cases | I, N, V | The planner has 179 sources and 85/113 keys. A declared 167-case exportable selection generated 1,052 pages with local XSD checks and artifact hashes; 12 guarded source/attachment cases remain excluded. Per-page render and human checklist are still open. Inspect every generated page and expand fixtures as nondeferred branches demand; 28 named-family keys are a later phase dependency. |
 | V5 · PDF/source/XML comparison | I, N, V | The manifest checker can replay source JSON, graph, native XML, artifact hashes, page origins and exact review focus, but cannot make a human visual judgment. Complete the per-page source/pending/XML/Form-1040 comparison and retain discrepancy/fix records; named forms extend the required packet set. |
