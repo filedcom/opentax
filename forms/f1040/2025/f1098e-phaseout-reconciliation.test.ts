@@ -17,6 +17,13 @@ const joint = pdfReviewFixtures.find((row) => row.id === "joint-two-w2s")!;
 function withStudentInterest(
   fixture: typeof single,
   wages: readonly number[],
+  copies: Array<Record<string, unknown>> = [{
+    box1_student_loan_interest: 2_500,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    source_document_reference: "issued-1098e-2025",
+  }],
 ) {
   const w2 = (fixture.inputs.w2 as Array<Record<string, unknown>>).map(
     (row, index) => ({ ...row, box1_wages: wages[index] }),
@@ -24,13 +31,7 @@ function withStudentInterest(
   const result = f1040_2025.executeReturn({
     ...fixture.inputs,
     w2,
-    f1098e: [{
-      box1_student_loan_interest: 2_500,
-      lender_name: "Example Loan Servicer",
-      lender_tin: "12-3456789",
-      borrower_tin: "111-22-3333",
-      source_document_reference: "issued-1098e-2025",
-    }],
+    f1098e: copies,
   });
   assertEquals(result.diagnostics, []);
   return buildPending(result.pending);
@@ -158,5 +159,67 @@ Deno.test("1098-E final export replays the phaseout from retained AGI inputs", a
     () => buildPdfBytes(altered, single.filer),
     Error,
     message,
+  );
+});
+
+Deno.test("joint 1098-E accepts a reviewed masked spouse copy and rejects ambiguous ownership", async () => {
+  const masked = {
+    box1_student_loan_interest: 2_500,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "***-**-6666",
+    borrower_name: "Sam Example",
+    borrower_owner_review_reference: "reviewed-2025-loan-account",
+    source_document_reference: "issued-spouse-1098e-2025",
+  };
+  const pending = withStudentInterest(joint, [128_000, 42_000], [masked]);
+  assertStringIncludes(
+    buildMefXml(pending, joint.filer),
+    "<StudentLoanInterestDedAmt>2500</StudentLoanInterestDedAmt>",
+  );
+  assert((await buildPdfBytes(pending, joint.filer)).length > 100_000);
+
+  for (
+    const changed of [
+      { ...masked, borrower_name: "Other Example" },
+      { ...masked, borrower_owner_review_reference: undefined },
+      { ...masked, borrower_tin: "***-**-3333" },
+    ]
+  ) {
+    const altered = { ...pending, f1098e: { f1098es: [changed] } };
+    assertThrows(
+      () => buildMefXml(altered, joint.filer),
+      Error,
+      "reviewed masked-TIN ownership",
+    );
+    await assertRejects(
+      () => buildPdfBytes(altered, joint.filer),
+      Error,
+      "reviewed masked-TIN ownership",
+    );
+  }
+});
+
+Deno.test("1098-E rejects one issued copy entered with both masked and full borrower TIN", async () => {
+  const masked = {
+    box1_student_loan_interest: 1_250,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "XXX-XX-3333",
+    borrower_name: "Alex Example",
+    borrower_owner_review_reference: "reviewed-2025-loan-account",
+    source_document_reference: "issued-1098e-2025",
+  };
+  const full = { ...masked, borrower_tin: "111-22-3333" };
+  const pending = withStudentInterest(single, [90_000], [masked, full]);
+  assertThrows(
+    () => buildMefXml(pending, single.filer),
+    Error,
+    "repeats the same issued lender statement",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, single.filer),
+    Error,
+    "repeats the same issued lender statement",
   );
 });

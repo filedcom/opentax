@@ -71,8 +71,8 @@ zero-deduction upper-phaseout joint case still builds native XML. The
 [2025 recipient form](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf)
 contains these identity fields; its
 [instructions](https://www.irs.gov/pub/irs-prior/i1098et--2025.pdf) allow a
-truncated borrower TIN on Copy B, so that reviewed-owner route, loan
-qualification, issuer bytes, and broader MAGI combinations remain open.
+truncated borrower TIN on Copy B; the reviewed-owner route was still open at
+that pass, as were loan qualification, issuer bytes, and broader MAGI cases.
 
 The next final-export phaseout replay pass on 2026-10-03 passed **189/189**
 selected phaseout/native/PDF builder cases. Both exporters now require the
@@ -81,6 +81,16 @@ retained AGI inputs, including the zero-deduction upper-phaseout case. A
 changed line 21 rejects even before Form 1040 line 10 comparison. Lint passed
 for the changed TypeScript files; the wider MAGI and full-batch gates remain
 open.
+
+The masked-borrower Form 1098-E pass on 2026-10-03 passed **25/25** focused
+cases and **191/191** selected phaseout/native/PDF builder cases. The 2025
+recipient [Copy B](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf) permits
+only the last four borrower TIN digits. A masked copy now requires a borrower
+name and reviewed owner reference, and must uniquely identify the taxpayer or
+joint spouse by name and last four digits. Both exports reject missing or
+wrong owner evidence and a duplicate issued reference entered once masked and
+once in full. Lint passed; issuer-byte proof, additional name variants, loan
+eligibility, and the full batch remain open.
 
 The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder

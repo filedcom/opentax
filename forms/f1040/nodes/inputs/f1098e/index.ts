@@ -33,7 +33,11 @@ export const itemSchema = z.object({
   // for one account but required by the issuer for multiple accounts.
   lender_name: z.string().trim().min(1).optional(),
   lender_tin: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
-  borrower_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  borrower_tin: z.string().regex(
+    /^(?:\d{3}-?\d{2}-?\d{4}|[Xx*]{3}-?[Xx*]{2}-?\d{4})$/,
+  ).optional(),
+  borrower_name: z.string().trim().min(1).optional(),
+  borrower_owner_review_reference: z.string().trim().min(1).optional(),
   account_number: z.string().trim().min(1).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
 });
