@@ -1584,3 +1584,25 @@ SHA-256 is
 `af724d3e5414b91b2178612aafd71bc1c737abd7ef8c76d335e4ad408ae62353`.
 This selected review leaves the rest of the 179-case plan, business rules, and
 IRS ATS open.
+
+## Form 1098 points filled-PDF review (2026-10-03)
+
+At head `804cb13c` (unchanged implementation from the `f92a09e4` full pass),
+the real review generator selected `single-1098-purchase-points` and
+`single-1098-construction-refinance-points`. Its ignored directory is
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-1098-points-804cb13c/`.
+Both source-backed native returns passed the locally cached TY2025 v5.4 XSD.
+All six generated pages were rendered at 150 dpi and inspected. The purchase
+case prints $18,000 of issued mortgage interest plus $2,400 of reviewed
+purchase points on Schedule A lines 8a/8e/10/17 and Form 1040 line 12e,
+for $20,400 total; its $80,000 wages, $8,032 tax, $12,000 withholding, and
+$3,968 refund agree with source and XML. The construction-refinance case
+prints $18,000 interest plus $67 of six-month amortization of $2,000 paid
+points, for $18,067 on those same lines; its $8,538 tax and $3,462 refund
+also agree. Form/year, owner, boxes, row placement, page order, and clipping
+checks are complete. The read-only review checker passed **two selected cases
+and six pages**, including source replay, hashes, page origins, and XSD. The
+reviewed manifest SHA-256 is
+`3b0f027f0646ea5bfccaea1d9e19558412740edf8cceed5cfe41bc4aa81d1261`.
+The Form 1098 source-byte boundary, cross-loan limits, other points variants,
+remaining 179-case page review, business rules, and ATS remain open.
