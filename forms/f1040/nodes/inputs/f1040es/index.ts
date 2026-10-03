@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
@@ -43,6 +44,7 @@ const divorcedJointAllocationSchema = z.object({
   agreement_signed_by_both_verified: z.literal(true),
   signed_agreement_reference: reference,
   signed_agreement_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  signed_agreement_pdf_base64: z.string().trim().min(1),
   payments: z.array(jointPaymentRowSchema).min(1).max(4),
 }).strict();
 const mfsJointAllocationSchema = z.object({
@@ -53,6 +55,7 @@ const mfsJointAllocationSchema = z.object({
   agreement_signed_by_both_verified: z.literal(true),
   signed_agreement_reference: reference,
   signed_agreement_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  signed_agreement_pdf_base64: z.string().trim().min(1),
   payments: z.array(mfsJointPaymentRowSchema).min(1).max(4),
 }).strict();
 const jointAllocationSchema = z.union([
@@ -104,6 +107,28 @@ export function reviewedJointAllocation(
 ): z.infer<typeof jointAllocationSchema> | undefined {
   const review = input.joint_estimated_payment_allocation;
   if (!review) return undefined;
+  let agreementBytes: Uint8Array;
+  try {
+    agreementBytes = Uint8Array.from(
+      atob(review.signed_agreement_pdf_base64),
+      (character) => character.charCodeAt(0),
+    );
+  } catch {
+    throw new Error(
+      "Form 1040 line 26 signed allocation needs retained PDF bytes",
+    );
+  }
+  if (
+    agreementBytes.length < 20 ||
+    new TextDecoder().decode(agreementBytes.subarray(0, 5)) !== "%PDF-" ||
+    !new TextDecoder().decode(agreementBytes.subarray(-8)).includes("%%EOF") ||
+    createHash("sha256").update(agreementBytes).digest("hex") !==
+      review.signed_agreement_pdf_sha256
+  ) {
+    throw new Error(
+      "Form 1040 line 26 signed allocation PDF differs from its retained digest",
+    );
+  }
   if ((input.quarter_payment_records?.length ?? 0) > 0) {
     throw new Error(
       "Form 1040 line 26 joint allocation cannot also use separate quarter payment records",
