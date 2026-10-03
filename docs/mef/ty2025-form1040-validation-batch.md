@@ -92,6 +92,18 @@ wrong owner evidence and a duplicate issued reference entered once masked and
 once in full. Lint passed; issuer-byte proof, additional name variants, loan
 eligibility, and the full batch remain open.
 
+The Form 1098-E foreign-earned-income MAGI correction on 2026-10-03 passed
+**82/82** selected AGI and full-return cases. Publication 970's
+[TY2025 Worksheet 4-1](https://www.irs.gov/publications/p970) adds the
+Schedule 1 line 8d exclusion back before phaseout; the AGI node now keeps
+that amount in MAGI. A combined Form 2555/W-2/1098-E full return with
+$90,000 gross wages and $5,000 exclusion yields a $1,667 deduction in
+Schedule 1, Form 1040, native XML, and filled PDF; the $101,000 wage and
+$10,000 exclusion upper-phaseout calculation yields zero in the AGI unit
+case. Lint passed. Foreign housing and territorial addbacks, authenticated
+foreign employer records and Form 2555 review, and the repository-wide batch
+remain open.
+
 The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder
 cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21

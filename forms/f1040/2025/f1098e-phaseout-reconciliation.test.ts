@@ -13,6 +13,9 @@ import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const single = pdfReviewFixtures.find((row) => row.id === "single-w2-refund")!;
 const joint = pdfReviewFixtures.find((row) => row.id === "joint-two-w2s")!;
+const foreign = pdfReviewFixtures.find((row) =>
+  row.id === "single-form2555-full-year-physical-presence"
+)!;
 
 function withStudentInterest(
   fixture: typeof single,
@@ -222,4 +225,35 @@ Deno.test("1098-E rejects one issued copy entered with both masked and full borr
     Error,
     "repeats the same issued lender statement",
   );
+});
+
+Deno.test("Form 2555 excluded wages stay in student-loan MAGI through both exports", async () => {
+  const domesticW2 = (single.inputs.w2 as Array<Record<string, unknown>>)[0];
+  const foreign2555 = foreign.inputs.form2555 as Record<string, unknown>;
+  const details = foreign2555.filing_details as Record<string, unknown>;
+  const result = f1040_2025.executeReturn({
+    ...foreign.inputs,
+    w2: [{ ...domesticW2, box1_wages: 85_000 }],
+    form2555: {
+      ...foreign2555,
+      filing_details: { ...details, foreign_wages: 5_000 },
+    },
+    f1098e: [{
+      box1_student_loan_interest: 2_500,
+      lender_name: "Example Loan Servicer",
+      lender_tin: "12-3456789",
+      borrower_tin: "111-22-3333",
+      source_document_reference: "issued-1098e-foreign-2025",
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule1?.line21_student_loan_interest, 1_667);
+  assertEquals(pending.f1040?.line11_agi, 83_333);
+  const xml = buildMefXml(pending, foreign.filer);
+  assertStringIncludes(
+    xml,
+    "<StudentLoanInterestDedAmt>1667</StudentLoanInterestDedAmt>",
+  );
+  assert((await buildPdfBytes(pending, foreign.filer)).length > 100_000);
 });

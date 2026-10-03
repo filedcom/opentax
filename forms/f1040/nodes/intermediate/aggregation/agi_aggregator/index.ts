@@ -495,7 +495,9 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 }
 
 // Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
-// MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
+// MAGI adds foreign earned income excluded on Schedule 1 line 8d back to
+// provisional AGI without SLI. Other foreign housing/territory exclusions
+// need separate retained source paths before a positive claim can use them.
 // Phase-out: single/HOH/QSS $85k–$100k; MFJ $170k–$200k; MFS not eligible.
 function computeAdjustedSli(
   input: AgiInput,
@@ -516,7 +518,7 @@ function computeAdjustedSli(
   // Use SSA gross from input (line6b_ss_taxable if pre-computed, else 0 for MAGI purposes)
   // to avoid circular dependency with resolveSsaTaxable.
   const ssaTaxable = input.line6b_ss_taxable ?? 0;
-  const magi = nonSsaIncome(input) + ssaTaxable - exclusions(input) -
+  const magi = nonSsaIncome(input) + ssaTaxable -
     aboveLineDeductionsExceptSli(input);
 
   if (magi <= phaseOutStart) return raw;
