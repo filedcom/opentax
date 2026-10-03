@@ -88,7 +88,10 @@ import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation
 import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
-import { assertQualifiedDividendSubset } from "../return-wide-arithmetic.ts";
+import {
+  assertFinalBalanceProjection,
+  assertQualifiedDividendSubset,
+} from "../return-wide-arithmetic.ts";
 import { assert1099DivIncomeSource } from "../f1099div-income-reconciliation.ts";
 import { assertScheduleBInterestJoin } from "../schedule-b-interest-reconciliation.ts";
 import {
@@ -248,6 +251,7 @@ function buildReturnXml(
   assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
   assertLine1aWageSource(pending);
   assertQualifiedDividendSubset(pending.f1040 ?? {});
+  assertFinalBalanceProjection(pending.f1040 ?? {});
   assert1099DivIncomeSource(pending.f1040 ?? {}, pending);
   assertScheduleBInterestJoin(pending);
   assertBusinessSchedule1Amounts(pending);

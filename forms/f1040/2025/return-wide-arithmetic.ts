@@ -17,6 +17,46 @@ export function assertQualifiedDividendSubset(
   }
 }
 
+/** Require final balance lines when the tax and payment totals determine them. */
+export function assertFinalBalanceProjection(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const tax = fields.line24_total_tax;
+  const payments = fields.line33_total_payments;
+  if (typeof tax !== "number" || typeof payments !== "number") return;
+  if (!Number.isFinite(tax) || !Number.isFinite(payments)) {
+    throw new Error("Form 1040 final tax and payment totals must be finite");
+  }
+  const balance = Math.round(payments) - Math.round(tax);
+  const penalty = fields.line38_underpayment_penalty ?? 0;
+  if (typeof penalty !== "number" || !Number.isFinite(penalty) || penalty < 0) {
+    throw new Error("Form 1040 line 38 penalty must be nonnegative");
+  }
+  const overpayment = Math.max(0, balance);
+  const owed = Math.max(0, -balance + penalty);
+  if (
+    overpayment > 0 &&
+    fields.line34_overpayment !== overpayment
+  ) {
+    throw new Error("Form 1040 line 34 must report the full overpayment");
+  }
+  if (owed > 0 && fields.line37_amount_owed !== owed) {
+    throw new Error("Form 1040 line 37 must report the amount owed");
+  }
+  const refund = fields.line35a_refund ?? 0;
+  const applied = fields.line36_applied_to_2026_estimated_tax ?? 0;
+  if (
+    typeof refund !== "number" || !Number.isFinite(refund) || refund < 0 ||
+    typeof applied !== "number" || !Number.isFinite(applied) || applied < 0 ||
+    Math.abs(refund + applied + Math.min(overpayment, penalty) - overpayment) >=
+      0.01
+  ) {
+    throw new Error(
+      "Form 1040 lines 35a and 36 must allocate the overpayment after penalty",
+    );
+  }
+}
+
 /** Replay final Form 1040 tax and payment subtotals before native/PDF export. */
 export function assertReturnWideArithmetic(
   fields: Record<string, unknown>,
