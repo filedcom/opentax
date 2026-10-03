@@ -650,6 +650,29 @@ Deno.test("repeated 1099-R issued copy without account rejects native and PDF ex
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("unidentified repeated 1099-R copies reject native and PDF export", async () => {
+  const issued = {
+    payer_name: "Plan",
+    payer_ein: "123456789",
+    recipient_ssn: filer.primarySSN,
+    box1_gross_distribution: 1_000,
+    box7_distribution_code: "7",
+  };
+  const pending = {
+    f1099r: {
+      f1099rs: [issued, { ...issued, box1_gross_distribution: 1_200 }],
+    },
+  };
+  const message =
+    "Form 1099-R has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
   assertThrows(
     () =>

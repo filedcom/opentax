@@ -492,27 +492,70 @@ type R1099Items = R1099Item[];
 export function assertDistinct1099RCopies(
   items: readonly R1099Item[],
 ): void {
-  const seen = new Set<string>();
+  const seenReferences = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedOwners = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const unreferencedAccounts = new Set<string>();
   for (const item of items) {
     const reference = item.source_document_reference?.trim();
     const payer = item.payer_ein.replace(/\D/g, "") || item.payer_ein.trim();
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
-    const account = item.account_number?.trim();
-    if (!reference) continue;
+    const account = item.account_number?.trim() || null;
+    const owner = JSON.stringify([
+      payer,
+      item.payer_name.trim().toUpperCase(),
+      recipient ?? null,
+    ]);
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
-    const key = JSON.stringify([
-      reference,
-      payer,
-      recipient ?? null,
-      account || null,
-    ]);
-    if (seen.has(key)) {
+    if (reference) {
+      const key = JSON.stringify([
+        reference,
+        payer,
+        recipient ?? null,
+        account,
+      ]);
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+        );
+      }
+      seenReferences.add(key);
+    }
+    const positive = item.box1_gross_distribution > 0 ||
+      (item.box2a_taxable_amount ?? 0) > 0 ||
+      (item.box4_federal_withheld ?? 0) > 0;
+    if (!positive) continue;
+    if (!account && !reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "Form 1099-R has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedOwners.add(owner);
+    } else if (unidentifiedOwners.has(owner)) {
       throw new Error(
-        "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+        "Form 1099-R has multiple positive payer copies without account or issued source reference",
       );
     }
-    seen.add(key);
+    if (account) {
+      const accountKey = JSON.stringify([owner, account]);
+      if (!reference) {
+        if (seenAccounts.has(accountKey)) {
+          throw new Error(
+            "Form 1099-R has multiple positive payer copies for one account without issued source references",
+          );
+        }
+        unreferencedAccounts.add(accountKey);
+      } else if (unreferencedAccounts.has(accountKey)) {
+        throw new Error(
+          "Form 1099-R has multiple positive payer copies for one account without issued source references",
+        );
+      }
+      seenAccounts.add(accountKey);
+    }
+    seenOwners.add(owner);
   }
 }
 

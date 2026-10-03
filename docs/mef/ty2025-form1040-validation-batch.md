@@ -98,6 +98,15 @@ separate worktree. These checks cover unidentified repeats, same-account OID
 obligations, and final export rejection. The complete repository-wide command
 and issued-copy verification remain open.
 
+After the 1099-R ambiguous-copy guard on 2026-10-03, the selected input,
+withholding, IRA and railroad pension, payer-document, and native/PDF builder
+files passed **335/335** with Poppler on PATH and the cached TY2025 schema
+available. The first wider run exposed an ATS fixture with two distinct payer
+names sharing one synthetic EIN; the payer identity check was refined and the
+complete selection passed. A final 109-case input rerun also passed after
+adding the reverse-order account-only assertion. The repository-wide command
+and issuer-copy verification remain open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

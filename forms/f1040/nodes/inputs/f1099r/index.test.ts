@@ -212,6 +212,49 @@ Deno.test("f1099r.compute: repeated issued copy without account number cannot do
   assertEquals(f1040Input(separate).line5b_pension_taxable, 2_000);
 });
 
+Deno.test("f1099r.compute: positive pension copies need account or issued-copy identity", () => {
+  const unidentified = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: undefined,
+    source_document_reference: undefined,
+  });
+  const identified = {
+    ...unidentified,
+    account_number: "PENSION-1",
+    source_document_reference: "issued-copy-1",
+  };
+  const message =
+    "multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  const accountOnly = { ...unidentified, account_number: "PENSION-1" };
+  assertThrows(
+    () => compute([accountOnly, identified]),
+    Error,
+    "one account without issued source references",
+  );
+  assertThrows(
+    () => compute([identified, accountOnly]),
+    Error,
+    "one account without issued source references",
+  );
+  const distinct = compute([
+    accountOnly,
+    { ...accountOnly, account_number: "PENSION-2" },
+  ]);
+  assertEquals(f1040Input(distinct).line5b_pension_taxable, 20_000);
+  const differentPayers = compute([
+    unidentified,
+    { ...unidentified, payer_name: "Another Pension" },
+  ]);
+  assertEquals(f1040Input(differentPayers).line5b_pension_taxable, 20_000);
+});
+
 Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amounts", () => {
   const first = minimalPensionItem({
     recipient_ssn: "111223333",
