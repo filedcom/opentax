@@ -1061,6 +1061,16 @@ documents with codes 01 and 05. The completed checklist and artifact replay
 passed `scripts/check-ty2025-pdf-review.ts` at
 `.state/research/ty2025-filled-pdf-review/2026-10-03-joint-form9000-reviewed`.
 
+The three-page `single-w2-three-eic-children-with-reviewed-birth` packet was
+rendered and checked page by page. Schedule EIC prints separate identities,
+relationships, birth years, and U.S. months 12, 8, and 12 for Ada, Ben, and
+Cora. Cora's source records one actual December month plus the reviewed
+from-birth U.S. residency that warrants 12 on the form. Form 1040 lists all
+three children and prints $6,761 EIC, $1,500 W-2 withholding, the sourced ACTC
+opt-out, and an $8,261 refund; the native XML agrees. The completed checklist
+and artifact replay passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-three-eic-children-reviewed`.
+
 After the overtime review-focus correction, the declared 167-case selection
 was regenerated from source content committed as `8e28daa7` in
 `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-reviewfocus`.
@@ -1069,7 +1079,7 @@ Its manifest SHA-256 is
 All 167 XML files passed the local TY2025 v5.4 XSD, and all 1,052 pages have
 matching source/XML/PDF digests and page counts. Compared with the earlier
 corrected export, no PDF or XML digest changed; exactly one source JSON
-digest changed for the corrected review label. Eleven pages have separately
+digest changed for the corrected review label. Fourteen pages have separately
 completed human checklists; the remaining pages have not.
 
 A full `PATH=/tmp/opentax-tools:$PATH deno task test` process launched before
