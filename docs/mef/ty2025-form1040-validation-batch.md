@@ -57,6 +57,12 @@ The completed overtime/EIC and joint Form 9000 page reviews and refreshed 167-ca
 are separate evidence; this full automated pass does not complete the remaining
 visual, business-rule, or IRS ATS gates.
 
+After the Form 4852 export guard, a focused seven-file run using the same
+`deno test` permissions and local Poppler launcher passed **91/91 tests**,
+including both native/PDF substitute rejection cases. This code change is
+newer than the frozen-head full run above; the bulk gate must be rerun after
+the remaining nonnamed implementation reaches its phase boundary.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax

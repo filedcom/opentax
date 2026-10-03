@@ -155,16 +155,18 @@ Deno.test("RRB with issued and substitute pensions replays both filed amounts ex
     ]
   ) {
     assertThrows(
-      () => buildMefXml(wrong as Parameters<typeof buildMefXml>[0], filer),
-      Error,
-      "lines 5a and 5b or AGI differ",
-    );
-    await assertRejects(
-      () => buildPdfBytes(wrong, filer),
+      () => assertRrb1099rPensionSource(wrong, filer),
       Error,
       "lines 5a and 5b or AGI differ",
     );
   }
+  const guard = "Form 4852 requires a completed substitute-form filing and packet route";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    guard,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, guard);
 });
 
 Deno.test("a substitute W-2 cannot justify inflated RRB pension lines", () => {

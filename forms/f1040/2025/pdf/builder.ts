@@ -57,6 +57,7 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import {
+  assertForm4852FilingRoute,
   assertLine1aWageSource,
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
@@ -555,6 +556,7 @@ export async function buildPdfBytes(
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
+  assertForm4852FilingRoute(normalized);
   assertW2WithholdingSource(normalized, filer);
   assert1099WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);

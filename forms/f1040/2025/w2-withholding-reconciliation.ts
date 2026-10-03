@@ -35,6 +35,19 @@ function hasReportedAmount(
     (row.box14_entries ?? []).some((entry) => entry.amount > 0);
 }
 
+/** Form 4852 amounts cannot be filed until its completed substitute-form route exists. */
+export function assertForm4852FilingRoute(
+  pending: Record<string, unknown>,
+): void {
+  if (pending.f4852 === undefined) return;
+  const substitutes = substituteInputSchema.parse(pending.f4852).f4852s;
+  if (substitutes.length > 0) {
+    throw new Error(
+      "Form 4852 requires a completed substitute-form filing and packet route before export",
+    );
+  }
+}
+
 /** Replay ordinary W-2 and substitute W-2 wages into Form 1040 line 1a. */
 export function assertLine1aWageSource(
   pending: Record<string, unknown>,

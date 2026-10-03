@@ -62,6 +62,7 @@ import {
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import {
+  assertForm4852FilingRoute,
   assertLine1aWageSource,
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
@@ -259,6 +260,7 @@ function buildReturnXml(
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
+  assertForm4852FilingRoute(pending);
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);
   assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);

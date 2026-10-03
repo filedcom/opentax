@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1091 bounded completed slices are recorded in the
+inside** that section. The 1092 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -83,7 +83,7 @@ records earlier evidence.
 
 - [ ] Audit Form 1040 identity, filing status, dependents, digital assets, wages, pensions/rollovers/QCD, taxable Social Security, interest/dividends, capital gains, business/farm/rental income, adjustments, deduction choice, credits, taxes, withholding, payments, refund, and amount owed against source records and 2025 instructions.
   - [ ] Finish Form 1040 line 4c(1) for other valid late-rollover exceptions and wider IRA rollover eligibility evidence, including authenticated source and prior-return records, spouse-beneficiary status, and RMD allocations. Payer death code 4 is now guarded in both Box 7 positions. Keep the IRA mark distinct from pension line 5c. See the [eligibility gap](docs/mef/ty2025-ira-rollover-eligibility-gap.md), [late-waiver](docs/mef/ty2025-ira-rollover-automatic-waiver.md), [self-certification](docs/mef/ty2025-ira-rollover-self-certification.md), and [IRS-ruling](docs/mef/ty2025-ira-rollover-irs-ruling.md) notes.
-- [ ] Audit source classifications and ownership for Forms W-2, W-2G, 1099-INT/DIV/OID/B/R/G/NEC/K/MISC/PATR/SA, 1098, 1095-A, 3921, K-1s, foreign employer records, and reviewed prior returns. Require joins to the correct recipient and destination, and reject duplicates or ambiguous matches.
+- [ ] Audit source classifications and ownership for Forms W-2, W-2G, 1099-INT/DIV/OID/B/R/G/NEC/K/MISC/PATR/SA, 1098, 1095-A, 3921, K-1s, foreign employer records, and reviewed prior returns. Require joins to the correct recipient and destination, and reject duplicates or ambiguous matches. Complete the guarded [Form 4852 substitute-source route](docs/mef/ty2025-form4852-filing-gap.md) with recipient, original/correction, workpaper, and packet evidence.
 - [ ] Complete Schedule 1 line 8z source/description handling, Schedule 1-A deduction variants and filled PDF, Schedule 2's 2025 line structure, Schedule 3 joins, and Schedule EIC child identity/residency projection. See the [Schedule 1-A gap](docs/mef/ty2025-schedule1a-gap.md) and [line 8z source gap](docs/mef/ty2025-schedule1-line8z-source-gap.md).
   - [ ] Complete Form 5471 section 951(a) income on Schedule 1 line 8n and an individual's section 951A inclusion on Form 8992 for line 8o, including all required Form 5471/8992 native and PDF documents and export evidence. Resolve legacy Forms 8873 and 8915-D in the [coverage queue](docs/mef/ty2025-form1040-coverage-decisions.md).
   - [ ] Finish Worksheet 1 passive-activity lines 11–13, reconcile the complete investment-income limit to finalized Schedule E, Form 8582, K-1, other Form 4797 ordinary gains and losses, and other passive sources, and verify the full $11,950 threshold across combined categories and allowed losses.
