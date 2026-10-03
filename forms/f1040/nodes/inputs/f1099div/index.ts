@@ -243,7 +243,6 @@ function normalizeDivItem(item: DIVItem): DIVItem {
 
 function validateDivItem(item: DIVItem): void {
   const box1a = item.box1a;
-  const box1b = item.box1b ?? 0;
   const box2a = item.box2a ?? 0;
   const box2b = item.box2b ?? 0;
   const box2c = item.box2c ?? 0;
@@ -354,11 +353,6 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       validateDivItem(item);
     }
 
-    const anySubAmounts = div1099s.some(
-      (item) =>
-        (item.box2b ?? 0) > 0 || (item.box2c ?? 0) > 0 || (item.box2d ?? 0) > 0,
-    );
-
     const shouldRouteScheduleB = needsScheduleB(
       parsed.f1099divs,
       cfg.scheduleBDividendThreshold,
@@ -438,6 +432,11 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
+    if (totalTaxExempt > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        tax_exempt_interest: totalTaxExempt,
+      }));
+    }
     const totalBox2a = div1099s.reduce(
       (sum, item) => sum + (item.box2a ?? 0),
       0,

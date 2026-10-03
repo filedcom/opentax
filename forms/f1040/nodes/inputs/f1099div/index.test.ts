@@ -7,7 +7,6 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
-import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -552,6 +551,10 @@ Deno.test("foreign qualified dividends cannot skip the Form 1116 rate adjustment
 Deno.test("box12 routes to f1040 line2a (tax-exempt dividends)", () => {
   const result = compute([minimalItem({ box12: 600 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 600);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.tax_exempt_interest,
+    600,
+  );
 });
 
 Deno.test("box13 routes to form6251 (AMT private activity bond preference)", () => {

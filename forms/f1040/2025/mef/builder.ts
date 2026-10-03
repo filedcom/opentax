@@ -94,6 +94,7 @@ import {
 } from "../return-wide-arithmetic.ts";
 import { assert1099DivIncomeSource } from "../f1099div-income-reconciliation.ts";
 import { assertScheduleBInterestJoin } from "../schedule-b-interest-reconciliation.ts";
+import { assertTaxExemptInterestSource } from "../tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
@@ -254,6 +255,7 @@ function buildReturnXml(
   assertFinalBalanceProjection(pending.f1040 ?? {});
   assert1099DivIncomeSource(pending.f1040 ?? {}, pending);
   assertScheduleBInterestJoin(pending);
+  assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
