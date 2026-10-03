@@ -639,7 +639,7 @@ authenticated-prior-notice guard after writing 21 synthetic PDF/XML/source
 trios to `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-attempt2/`.
 Its local log is `.state/research/ty2025-filled-pdf-review-attempt2-2026-10-03.log`
 (SHA-256 `1bb7f326f263e723e5126545ea07349bc0eee98e29a9f637d77c5ffa73db5517`).
-There is no completed manifest or page review. The guard belongs to the
+There is no completed manifest or full-batch page review. The guard belongs to the
 deferred Form 8862 source-authentication gap; it was not bypassed to inflate
 the review count. The 178 automated filled-PDF/XML tests above do not replace
 this held visual-review workflow.
@@ -652,9 +652,48 @@ The page sequence, year, filer/parent identity, visible boxes, amounts, and
 legibility were inspected. The child's $5,000 interest and $412 tax, the
 divorced taxpayer's $300 payment/refund and former-spouse SSN attribute, and
 the $300/$700 refund allocation were checked against retained pending fields
-and native XML. No discrepancy was found on those nine pages. This is three
-cases of 178; the unreviewed pages and incomplete manifest keep the visual
-gate open.
+and native XML. No discrepancy was found on those nine pages.
+
+The same partial set's joint spouse-dependent refund and three MFS residence/
+separation cases add 12 inspected pages, bringing this bounded review to
+**seven cases and 21 pages**. The joint $800 wage/$100 refund and spouse
+dependency mark, the MFS $10,000 wage/$1,000 refund and line 6d mark, and the
+two $15,000 wage/EIC cases were compared with retained pending fields and
+native XML. Form 1040, Schedule EIC, and Schedule 8812 page order, dependent
+identity, checkboxes, amounts, and legibility showed no discrepancy. A 300-dpi
+crop confirmed Schedule 8812 line 1 prints **15,000**, matching Form 1040
+AGI and line 3; the leading digit was hard to read at 120 dpi. The other 14
+generated cases and the full 178-case manifest/review remain open.
+
+Four Form 1098 points cases add 12 inspected pages, bringing the partial review
+to **11 cases and 33 pages**. Schedule A and Form 1040 visibly agree on
+$20,400 purchase interest/points, $18,067 construction-refinance amortization,
+$18,000 reported interest plus $67 unreported points, and $18,000 reported
+interest plus $133 from the 2023 points ledger. Their retained pending amounts
+and native XML amounts match the printed deductions and resulting return
+totals; no clipping, page-order, or owner-identity discrepancy was observed.
+The other ten generated cases and the complete 178-case review remain open.
+
+The prior-year Form 1098 recovery case adds six inspected pages, bringing this
+bounded review to **12 cases and 39 pages**. Form 1040, Schedule 1 and its
+line 8z statement, and Schedule A visibly carry the $1,200 taxable recovery,
+$81,200 AGI, and $18,000 mortgage interest deduction recorded in retained
+pending data and native XML. The $3,176 refund, page order, and identity also
+match; no clipping or legibility issue was observed. Nine generated cases and
+the complete 178-case review remain open.
+
+The remaining nine synthetic cases add 31 inspected pages, completing a
+**bounded visual review of all 21 generated cases and 70 pages** in this
+partial directory. The ACTC and EIC opt-out boxes, $5,000 fully repaid
+unemployment annotation, $10,000 Form 2439 gain and $1,500 payment, and
+$220,000 high-wage Form 8959/Schedule 2 tax with zero Form 8960 NIIT were
+checked on rendered pages against retained pending data and native XML. The
+custodial EIC release, $500 overpayment application to 2026, ordinary W-2
+refund, and three Schedule EIC child columns (including reviewed birth-year
+residence) likewise showed the expected identities, amounts, boxes, and page
+order. No discrepancy or clipping was found in this partial set. These pages
+remain synthetic review evidence only; the generator stopped before the next
+Form 8862 case, and the full 178-case manifest and visual signoff remain open.
 
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
