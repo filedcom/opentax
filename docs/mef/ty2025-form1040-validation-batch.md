@@ -999,6 +999,16 @@ Its scope explicitly excludes 12 guarded source or attachment cases from the
 179-case plan. None of the 1,052 page checkboxes is a completed
 human visual review, and this selection does not establish IRS business-rule
 or ATS acceptance.
+
+A follow-up visual inspection of the seven-page personal clean-vehicle case
+found that Schedule A (Form 8936) Part II line 10 printed only the template's
+percent sign, while a business-use value would have duplicated that sign.
+The projector now prints the numeric `0.00` or business-use percentage without
+its own percent glyph and explicitly prints zero on line 11 when the vehicle
+is wholly personal use. The corrected page was rendered and checked against
+the retained source, Form 8936 parent, Schedule 3, and Form 1040; seven focused
+Form 8936 tests passed. The 167-case selection above predates this correction
+and needs a fresh full export before it can serve as current-head evidence.
 The same scan found that the Form 2441 PDF descriptor had no printable
 credit/provider/person route. A later bounded fix now generates its
 no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,

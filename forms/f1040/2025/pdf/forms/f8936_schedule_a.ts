@@ -51,7 +51,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   ...yesNo("new_acquired_for_use", p2, "c2_1"),
   text("new_tentative_credit", `${p2}f2_1[0]`),
   text("new_business_use_pct", `${p2}f2_2[0]`),
-  text("new_business_credit", `${p2}f2_3[0]`),
+  {
+    kind: "text",
+    domainKey: "new_business_credit",
+    pdfField: `${p2}f2_3[0]`,
+    printZero: true,
+  },
   text("new_personal_credit", `${p2}f2_4[0]`),
   ...yesNo("used_resold_within_30_days", p2, "c2_3"),
   ...yesNo("used_current_magi_over_limit", p2, "c2_4"),
@@ -191,10 +196,10 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
                 item.acquired_for_use_not_resale
               ? Math.min(item.credit_amount ?? 0, 7_500)
               : undefined,
-            new_business_use_pct: businessCredit > 0
-              ? `${(businessUsePercentage(item) * 100).toFixed(2)}%`
+            new_business_use_pct: personalCredit > 0 || businessCredit > 0
+              ? (businessUsePercentage(item) * 100).toFixed(2)
               : undefined,
-            new_business_credit: businessCredit > 0
+            new_business_credit: personalCredit > 0 || businessCredit > 0
               ? businessCredit
               : undefined,
             new_personal_credit: personalCredit > 0
