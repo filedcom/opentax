@@ -69,6 +69,41 @@ export function assertReturnWideArithmetic(
     if (typeof value === "number" && Number.isFinite(value)) return value;
     throw new Error(`Form 1040 ${key} needs a finite amount`);
   };
+  for (
+    const key of [
+      "line16_income_tax",
+      "line17_additional_taxes",
+      "line18_total_tax_before_credits",
+      "line19_child_tax_credit",
+      "line20_nonrefundable_credits",
+      "line21_credits_total",
+      "line22_tax_after_credits",
+      "line23_other_taxes",
+      "line24_total_tax",
+      "line25a_w2_withheld",
+      "line25b_withheld_1099",
+      "line25c_total",
+      "line25d_total_withholding",
+      "line26_estimated_tax",
+      "line27_eitc",
+      "line28_actc",
+      "line29_refundable_aoc",
+      "line30_refundable_adoption",
+      "line31_additional_payments",
+      "line32_refundable_credits_total",
+      "line33_total_payments",
+      "line34_overpayment",
+      "line35a_refund",
+      "line36_applied_to_2026_estimated_tax",
+      "line37_amount_owed",
+      "line38_underpayment_penalty",
+    ]
+  ) {
+    const value = amount(key);
+    if (value !== undefined && value < 0) {
+      throw new Error(`Form 1040 ${key} must be nonnegative`);
+    }
+  }
   const matches = (filed: number, expected: number): boolean =>
     Math.abs(filed - expected) < 0.01;
 

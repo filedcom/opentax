@@ -176,6 +176,33 @@ Deno.test("Form 1040 export rejects malformed filed subtotals before arithmetic 
   }
 });
 
+Deno.test("Form 1040 export rejects negative filed tax and payment amounts", () => {
+  for (
+    const [fields, key] of [
+      [{
+        line25a_w2_withheld: -100,
+        line25d_total_withholding: -100,
+        line33_total_payments: -100,
+      }, "line25a_w2_withheld"],
+      [{ line33_total_payments: -1 }, "line33_total_payments"],
+      [{ line24_total_tax: -1 }, "line24_total_tax"],
+    ] as const
+  ) {
+    const reason = `${key} must be nonnegative`;
+    assertThrows(() => assertReturnWideArithmetic(fields), Error, reason);
+    assertThrows(
+      () => irs1040.build(fields, { pending: {} }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
   const income = {
     line9_total_income: 70_000,
