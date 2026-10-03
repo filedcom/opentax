@@ -394,14 +394,18 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
         "Schedule 1 source needs its TY2025 line identity and required supporting facts before MeF export",
       );
     }
-    // The graph calculates both totals as zero on an ordinary wage-only
-    // return. They do not create a Schedule 1 filing instance by themselves.
-    // Keep any explicit source key, including a zero unemployment source line.
-    const onlyComputedZeroTotals = Object.entries(fields).every(
-      ([key, value]) =>
-        (key === "line10_total_additional_income" ||
-          key === "line26_total_adjustments") && value === 0,
+    // A wage-only return and a zero-net Schedule C or fully passive Schedule E
+    // activity retain their source schedules, but have no Schedule 1 PDF page.
+    // Preserve every other explicit zero line, including repaid unemployment.
+    const zeroOnlyActivityLines = new Set([
+      "line3_schedule_c",
+      "line5_schedule_e",
+      "line10_total_additional_income",
+      "line26_total_adjustments",
+    ]);
+    const onlyZeroActivityTotals = Object.entries(fields).every(
+      ([key, value]) => zeroOnlyActivityLines.has(key) && value === 0,
     );
-    return onlyComputedZeroTotals ? "" : buildIRS1040Schedule1(fields, context);
+    return onlyZeroActivityTotals ? "" : buildIRS1040Schedule1(fields, context);
   },
 };

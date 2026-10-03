@@ -38,3 +38,34 @@ Deno.test("fully repaid unemployment keeps its zero source line and PDF page", a
     2,
   );
 });
+
+Deno.test("zero-net Schedule C and passive Schedule E do not add a blank Schedule 1", async () => {
+  for (
+    const id of [
+      "single-form4562-section179-w2-income-limit",
+      "single-nonparticipating-rental-loss",
+    ]
+  ) {
+    const fixture = pdfReviewFixtures.find((item) => item.id === id)!;
+    const result = f1040_2025.executeReturn(fixture.inputs);
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    const xml = f1040_2025.buildMefXml(pending, fixture.filer);
+    assertEquals(xml.includes("<IRS1040Schedule1 "), false);
+    const origins: PdfPageOrigin[] = [];
+    await buildPdfBytes(
+      pending,
+      fixture.filer,
+      ".pdf-cache",
+      undefined,
+      origins,
+    );
+    assertEquals(origins.some((page) => page.formKey === "schedule1"), false);
+    assertEquals(
+      origins.some((page) =>
+        page.formKey === (id.includes("rental") ? "schedule_e" : "schedule_c")
+      ),
+      true,
+    );
+  }
+});
