@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1009 bounded completed slices are recorded in the
+inside** that section. The 1010 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -36,6 +36,8 @@ TY2025 schema roots. These counts are inventories, not positive filing claims.
 **Validation and release.** `deno task test` passed 10,891/10,891 at
 `637dace9` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke also passed.
+The attachment-aware TY2025 fixture/XML/XSD file passed 178/178 again at
+`8149198a` after the newer source guards.
 [CLI v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is
 published. Manual page review, complete route/XSD/business-rule evidence, IRS
 ATS acceptance, and a filing-ready release remain open.

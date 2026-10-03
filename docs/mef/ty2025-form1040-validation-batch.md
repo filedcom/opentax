@@ -25,6 +25,19 @@ so their tests executed. This result establishes local automated stability
 for tested routes; it does not close complete route coverage, human filled-PDF
 review, IRS business rules, ATS acceptance, or the filing-ready release.
 
+At `8149198a` on 2026-10-03, the attachment-aware fixture command
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`
+passed **178/178** in 11m9s. Deno was 2.9.4 (V8 15.0.245.2-rusty,
+TypeScript 6.0.3), and `xmllint` used libxml 2.9.13. The checked-in harness
+validated the 169 positive source returns against the cached TY2025 v5.4 XSD
+and asserted nine expected fail-closed cases. Its W-2G and Form 8824 paths
+built the required PDF attachments before native export. The separate
+household-wage (3/3) and partial-early-IRA (1/1) XML/PDF cases also passed with
+`PATH=/tmp/opentax-poppler-env/bin:$PATH` and their required test permissions.
+This is a fixture/XSD regression after the newer source guards, not a rerun of
+the full `deno task test`, visual review of all 178 filled PDFs, IRS business
+rules, or accepted ATS transmission.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form
