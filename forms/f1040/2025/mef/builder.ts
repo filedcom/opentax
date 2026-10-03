@@ -87,6 +87,7 @@ import {
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
+import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
@@ -241,6 +242,7 @@ function buildReturnXml(
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
   assertW2WithholdingSource(pending, filer);
+  assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
   assertLine1aWageSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertLine1iCombatPayElectionSource(pending);
