@@ -187,3 +187,52 @@ Deno.test("1098-E identified lender statements reject repeated issued copies", (
     true,
   );
 });
+
+Deno.test("sub-threshold student-loan ledger needs dated, reconciled payments and loan review", () => {
+  const record = {
+    lender_name: "Example Loan Servicer",
+    loan_account_number: "loan-1",
+    borrower_tin: "111-22-3333",
+    student_tin: "111-22-3333",
+    interest_paid: 450,
+    payment_rows: [{
+      paid_date: "2025-06-01",
+      interest_amount: 450,
+      source_reference: "2025-payment-1",
+    }],
+    loan_agreement_reference: "reviewed-loan-agreement",
+    qualified_education_review_reference: "reviewed-education-costs",
+    expense_timing_review_reference: "reviewed-expense-timing",
+    eligible_institution_review_reference: "reviewed-eligible-school",
+    no_double_benefit_review_reference: "reviewed-no-double-benefit",
+    lender_no_form_review_reference: "reviewed-no-form",
+    legal_obligation_reviewed: true,
+    half_time_enrollment_at_loan_reviewed: true,
+    unrelated_lender_reviewed: true,
+    not_employer_plan_reviewed: true,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      unreported_interest_records: [record],
+    }).success,
+    true,
+  );
+  for (
+    const changed of [
+      { ...record, interest_paid: 451 },
+      { ...record, legal_obligation_reviewed: false },
+      { ...record, student_tin: "999-88-7777" },
+      {
+        ...record,
+        payment_rows: [{ ...record.payment_rows[0], paid_date: "2025-02-30" }],
+      },
+    ]
+  ) {
+    assertEquals(
+      inputSchema.safeParse({
+        unreported_interest_records: [changed],
+      }).success,
+      false,
+    );
+  }
+});

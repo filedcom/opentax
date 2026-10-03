@@ -45,6 +45,7 @@ import {
 import {
   f1098e,
   itemSchema as f1098eItemSchema,
+  unreportedInterestRecordSchema,
 } from "../nodes/inputs/f1098e/index.ts";
 import {
   f1099b,
@@ -709,6 +710,16 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
+  {
+    node: f1098e,
+    inputKey: "student_loan_interest_records",
+    inputSchema: z.object({
+      unreported_interest_records: z.array(unreportedInterestRecordSchema).min(
+        1,
+      ),
+    }),
+    isArray: false,
+  },
   { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },

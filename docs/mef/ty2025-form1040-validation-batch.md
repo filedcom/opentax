@@ -104,6 +104,21 @@ case. Lint passed. Foreign housing and territorial addbacks, authenticated
 foreign employer records and Form 2555 review, and the repository-wide batch
 remain open.
 
+The below-$600 student-loan payment-ledger pass on 2026-10-03 passed
+**213/213** selected input, full-return, native, and PDF builder cases.
+One lender's $450 interest ledger reaches Schedule 1, Form 1040, native XML,
+and filled PDF without Form 1098-E; a separate $600 issued copy plus a $400
+second-lender ledger combines once. Changed payment sums, repeated payment
+source references, wrong borrower, issued-copy overlap, and a same-lender
+$600-or-more ledger reject. The
+[2025 Publication 970](https://www.irs.gov/publications/p970)
+describes the lender's $600 furnishing threshold and qualified-loan conditions.
+This bounded path requires the borrower's own education, expense timing,
+eligible school and half-time enrollment, legal obligation, unrelated lender,
+and no employer-plan or double-benefit review facts. Lint passed. Actual loan,
+school, payment, and no-double-benefit source authentication; spouse/dependent
+student loans; and the full batch remain open.
+
 The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder
 cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21

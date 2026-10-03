@@ -54,7 +54,9 @@ export function assert1098EInterestSource(
     }
     return;
   }
-  const rows = inputSchema.parse(pending.f1098e).f1098es;
+  const source = inputSchema.parse(pending.f1098e);
+  const rows = source.f1098es ?? [];
+  const records = source.unreported_interest_records ?? [];
   const owners = [{
     tin: filer.primarySSN.replace(/\D/g, ""),
     names: [
@@ -82,6 +84,7 @@ export function assert1098EInterestSource(
   }
   let total = 0;
   const issuedCopies = new Set<string>();
+  const copyLenders = new Set<string>();
   for (const row of rows) {
     if (row.box1_student_loan_interest <= 0) continue;
     total += row.box1_student_loan_interest;
@@ -106,6 +109,39 @@ export function assert1098EInterestSource(
       throw new Error("Form 1098-E repeats the same issued lender statement");
     }
     issuedCopies.add(copyIdentity);
+    copyLenders.add(`${normalizedName(row.lender_name)}|${ownerTin}`);
+  }
+  const paymentReferences = new Set<string>();
+  const unreportedByLender = new Map<string, number>();
+  for (const record of records) {
+    const ownerTin = borrowerOwner(
+      record.borrower_tin,
+      undefined,
+      undefined,
+      owners,
+    );
+    const lenderOwner = `${normalizedName(record.lender_name)}|${ownerTin}`;
+    if (copyLenders.has(lenderOwner)) {
+      throw new Error(
+        "Student-loan payment ledger overlaps an issued Form 1098-E lender copy",
+      );
+    }
+    unreportedByLender.set(
+      lenderOwner,
+      (unreportedByLender.get(lenderOwner) ?? 0) + record.interest_paid,
+    );
+    total += record.interest_paid;
+    for (const payment of record.payment_rows) {
+      if (paymentReferences.has(payment.source_reference)) {
+        throw new Error("Student-loan payment ledger repeats a payment source");
+      }
+      paymentReferences.add(payment.source_reference);
+    }
+  }
+  if ([...unreportedByLender.values()].some((interest) => interest >= 600)) {
+    throw new Error(
+      "Student-loan payment ledger reaches the Form 1098-E reporting threshold",
+    );
   }
   const capped = Math.min(total, 2_500);
   const retained = amount(
