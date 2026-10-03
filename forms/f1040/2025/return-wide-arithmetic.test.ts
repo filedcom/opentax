@@ -111,6 +111,33 @@ Deno.test("Form 1040 export replays retained wage and total-income components", 
   );
 });
 
+Deno.test("Form 1040 export rejects malformed income components before line 9 replay", () => {
+  for (const invalid of ["500", [250, "250"], Number.NaN]) {
+    const fields = {
+      line2b_taxable_interest: invalid,
+      line9_total_income: 0,
+    };
+    assertThrows(
+      () => assertReturnWideArithmetic(fields),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+    assertThrows(
+      () =>
+        irs1040.build(fields as Parameters<typeof irs1040.build>[0], {
+          pending: {},
+        }),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+  }
+});
+
 Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
   const income = {
     line9_total_income: 70_000,

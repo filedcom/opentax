@@ -88,7 +88,7 @@ export function assertReturnWideArithmetic(
       ) {
         total += value.reduce((sum: number, item: number) => sum + item, 0);
       } else {
-        return undefined;
+        throw new Error(`Form 1040 ${key} needs a finite amount`);
       }
       present = true;
     }
