@@ -48,6 +48,7 @@ const transactionSchema = z.object({
   adjustment_amount: z.number().optional(),
   gain_loss: z.number(),
   is_long_term: z.boolean(),
+  collectibles: z.boolean().optional(),
   qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
   qsbs_amount: z.number().nonnegative().optional(),
   from_form4797_investment_1245: z.literal(true).optional(),

@@ -10,6 +10,7 @@ import { FilingStatus } from "../nodes/types.ts";
 import { Form8949Part } from "../nodes/intermediate/forms/form8949/index.ts";
 import { f8949, QsbsCode } from "../nodes/inputs/f8949/index.ts";
 import { assertCapitalSaleSourceRows } from "./broker-sale-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "./mef/forms/schedule_d.ts";
 import { f1040_2025 } from "./index.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
@@ -265,6 +266,7 @@ Deno.test("broker transaction IDs survive into Schedule D and both final exporte
   });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
   const changed = structuredClone(pending);
   const schedule = changed.schedule_d as unknown as {
     transaction:
@@ -366,6 +368,59 @@ Deno.test("final exports retain the broker collectible character of a sale", asy
     "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
   assertThrows(() => buildMefXml(changed, filer), Error, message);
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("prepared Form 8949 cannot discard broker collectible character", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[1],
+      part: Form8949Part.E,
+      box3_transaction_type: "collectibles" as const,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>1000</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+  const changed = structuredClone(pending);
+  const prepared = pending.form8949 as unknown as { collectibles?: boolean }[];
+  assertEquals(prepared[0]?.collectibles, true);
+  (changed as unknown as { form8949: { collectibles?: boolean }[] })
+    .form8949 = prepared.map((row) => ({ ...row, collectibles: false }));
+  const message =
+    "Schedule D prepared Form 8949 rows differ from calculated sales";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("prepared Form 8949 cannot discard a QSBS exclusion identity", () => {
+  const calculated = {
+    part: Form8949Part.F,
+    description: "Qualified shares",
+    source_transaction_id: "direct-qsbs-1",
+    date_acquired: "2015-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 10_000,
+    cost_basis: 2_000,
+    gain_loss: 8_000,
+    is_long_term: true,
+    qsbs_code: "Q3" as const,
+    qsbs_amount: 8_000,
+  };
+  assertScheduleDSalesMatchPrepared(calculated, [calculated]);
+  for (const field of ["qsbs_code", "qsbs_amount"] as const) {
+    const prepared = { ...calculated, [field]: undefined };
+    assertThrows(
+      () => assertScheduleDSalesMatchPrepared(calculated, [prepared]),
+      Error,
+      "Schedule D prepared Form 8949 rows differ from calculated sales",
+    );
+  }
 });
 
 Deno.test("direct sale replay retains the qualified small business stock fields", () => {
