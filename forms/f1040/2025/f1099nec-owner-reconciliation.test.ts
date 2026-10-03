@@ -1,6 +1,9 @@
-import { assertThrows } from "@std/assert";
+import { assertRejects, assertThrows } from "@std/assert";
 import { irs1040 } from "./mef/forms/f1040.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
+import { buildMefXml } from "./mef/builder.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
+import { testFiler } from "./mef/test-filer.ts";
 
 const filed = {
   filing_status: "single",
@@ -107,5 +110,26 @@ Deno.test("one identified 1099-NEC issued copy cannot replay changed income at n
     () => irs1040Pdf.projectFields?.(filed, pending),
     Error,
     "1099-NEC repeats the same payer, recipient, and issued source reference",
+  );
+});
+
+Deno.test("ambiguous repeated 1099-NEC copies reject full native and PDF export", async () => {
+  const issued = {
+    payer_name: "Payer",
+    payer_tin: "123456789",
+    recipient_ssn: testFiler().primarySSN,
+    box1_nec: 100,
+    for_routing: "form_8919" as const,
+  };
+  const pending = {
+    f1099nec: { f1099necs: [issued, { ...issued, box1_nec: 150 }] },
+  };
+  const message =
+    "multiple positive payer copies without account or issued source reference";
+  assertThrows(() => buildMefXml(pending, testFiler()), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(pending, testFiler()),
+    Error,
+    message,
   );
 });

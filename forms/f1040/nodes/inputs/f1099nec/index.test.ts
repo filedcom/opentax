@@ -35,6 +35,55 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("1099-NEC graph rejects ambiguous repeats and corrected accounts", () => {
+  const issued = minimalItem({ box1_nec: 100 });
+  assertThrows(
+    () => compute([issued, minimalItem({ box1_nec: 150 })]),
+    Error,
+    "multiple positive payer copies without account or issued source reference",
+  );
+  const identified = minimalItem({
+    box1_nec: 150,
+    account_number: "CLIENT-1",
+  });
+  for (const copies of [[issued, identified], [identified, issued]]) {
+    assertThrows(
+      () => compute(copies),
+      Error,
+      "multiple positive payer copies without account or issued source reference",
+    );
+  }
+  const account = minimalItem({
+    box1_nec: 100,
+    account_number: "CLIENT-1",
+    source_document_reference: "issued-copy-1",
+  });
+  assertThrows(
+    () =>
+      compute([
+        account,
+        minimalItem({
+          box1_nec: 150,
+          account_number: "CLIENT-1",
+          source_document_reference: "corrected-copy-2",
+        }),
+      ]),
+    Error,
+    "repeats the same payer, recipient, and account",
+  );
+  assertEquals(
+    schedCGrossReceipts(compute([
+      account,
+      minimalItem({
+        box1_nec: 150,
+        account_number: "CLIENT-2",
+        source_document_reference: "issued-copy-2",
+      }),
+    ])),
+    250,
+  );
+});
+
 // Extract the total linked NEC receipts emitted for Schedule C.
 function schedCGrossReceipts(
   result: ReturnType<typeof compute>,
@@ -437,6 +486,7 @@ Deno.test("aggregation: multiple schedule_c items retain payer source rows", () 
       box1_nec: 3000,
       for_routing: "schedule_c",
       payer_name: "Second Payer",
+      payer_tin: "23-4567890",
     }),
   ]);
   const schedCOutputs = result.outputs.filter((o) =>
@@ -458,6 +508,7 @@ Deno.test("aggregation: multiple schedule_f items produce separate outputs", () 
       box1_nec: 4000,
       for_routing: "schedule_f",
       payer_name: "Second Farm",
+      payer_tin: "23-4567890",
     }),
   ]);
   const schedFOutputs = result.outputs.filter((o) =>
@@ -469,7 +520,11 @@ Deno.test("aggregation: multiple schedule_f items produce separate outputs", () 
 Deno.test("aggregation: multiple box4_federal_withheld items produce separate f1040 outputs", () => {
   const result = compute([
     minimalItem({ box4_federal_withheld: 500 }),
-    minimalItem({ box4_federal_withheld: 250, payer_name: "Payer Two" }),
+    minimalItem({
+      box4_federal_withheld: 250,
+      payer_name: "Payer Two",
+      payer_tin: "23-4567890",
+    }),
   ]);
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 2);
@@ -489,6 +544,7 @@ Deno.test("aggregation: multiple box3_golden_parachute items produce separate ou
       box1_nec: 40000,
       box3_golden_parachute: 30000,
       payer_name: "Payer Two",
+      payer_tin: "23-4567890",
     }),
   ]);
   const sch2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
@@ -510,17 +566,20 @@ Deno.test("aggregation: mixed routing routes each item independently", () => {
       box1_nec: 2000,
       for_routing: "schedule_f",
       payer_name: "Farm Co",
+      payer_tin: "23-4567890",
     }),
     minimalItem({
       box1_nec: 3000,
       for_routing: "form_8919",
       recipient_ssn: "123-45-6789",
       payer_name: "Employer Inc",
+      payer_tin: "34-5678901",
     }),
     minimalItem({
       box1_nec: 4000,
       for_routing: "schedule_1_line_8j",
       payer_name: "Other",
+      payer_tin: "45-6789012",
     }),
   ]);
   assertEquals(
@@ -801,11 +860,13 @@ Deno.test("edge: multiple 1099-NECs for same schedule_c produce linked source ro
       box1_nec: 5000,
       for_routing: "schedule_c",
       payer_name: "Client 2",
+      payer_tin: "23-4567890",
     }),
     minimalItem({
       box1_nec: 3000,
       for_routing: "schedule_c",
       payer_name: "Client 3",
+      payer_tin: "34-5678901",
     }),
   ]);
   const schedCOutputs = result.outputs.filter((o) =>

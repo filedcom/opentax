@@ -70,6 +70,15 @@ entered. Distinct source transactions and references remain accepted. Format
 and lint passed on the changed files; the full command and complete source-byte
 review remain deferred.
 
+After the 1099-NEC graph identity guard on 2026-10-03, the input, owner, and
+withholding files passed **75/75**. One selected command covering Schedule C,
+Form 8919, Schedule 2, native/PDF builders, and related 1099-MISC source joins
+passed **256/256** with `PATH=/tmp/opentax-poppler-env/bin:$PATH`. The first
+attempt without that PATH reached five PDF text-extraction cases but could not
+spawn `pdftotext`; the complete selected rerun passed. The source fixtures for
+different named payers now use distinct payer TINs. This is focused regression
+evidence; the repository-wide command and issued-copy review remain open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their
