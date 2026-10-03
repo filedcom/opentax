@@ -61,6 +61,15 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
+The subsequent 1099-K transaction-class and copy-identity pass on 2026-10-03
+passed **84/84** focused graph/direct-export cases and **184/184** selected
+native/PDF builder cases. Same-processor, same-recipient positive copies now
+reject if any lacks account and issued-copy identity, unless explicit card vs.
+third-party-network type or distinct card merchant category identifies separate
+reports. The same account can carry separate card/network or card category
+reports, as the IRS instructions permit. A row checking both transaction types
+rejects. The full command and issuer-byte review remain open.
+
 The next 1099-B/1099-K source-identity pass on 2026-10-03 passed **151/151**
 input-node cases, **13/13** direct withholding and 1099-K export cases, and
 **184/184** native/PDF builder cases. A repeated broker statement/transaction

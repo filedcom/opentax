@@ -192,6 +192,14 @@ export const itemSchema = z.object({
   box8_state_withheld: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
   const gross = item.box1a_gross_payments ?? 0;
+  if (item.transaction_type_payment_card && item.transaction_type_tpso) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["transaction_type_tpso"],
+      message:
+        "1099-K card and third-party network payments need separate forms",
+    });
+  }
   if (
     (item.schedule_c_receipts_review &&
       !["schedule_c", "mixed_schedule_c_personal_item_sales"].includes(
@@ -368,20 +376,74 @@ export const itemSchema = z.object({
 type K99Item = z.infer<typeof itemSchema>;
 type K99Items = K99Item[];
 
+function transactionType(item: K99Item): "card" | "tpso" | "unspecified" {
+  if (item.transaction_type_payment_card) return "card";
+  if (item.transaction_type_tpso) return "tpso";
+  return "unspecified";
+}
+
+function processorIdentity(item: K99Item): string {
+  const tin = item.pse_tin?.replace(/\D/g, "");
+  return /^\d{9}$/.test(tin ?? "")
+    ? `tin:${tin}`
+    : `name:${item.pse_name.trim().toLowerCase()}`;
+}
+
+function recipientIdentity(item: K99Item): string {
+  return item.recipient_tin?.replace(/\D/g, "") ||
+    item.recipient_identity_review?.recipient_name.trim().toLowerCase() || "";
+}
+
+function positiveCopy(item: K99Item): boolean {
+  return (item.box1a_gross_payments ?? 0) > 0 ||
+    (item.box4_federal_withheld ?? 0) > 0;
+}
+
+function distinctTransactionClass(a: K99Item, b: K99Item): boolean {
+  const aType = transactionType(a);
+  const bType = transactionType(b);
+  if (aType !== "unspecified" && bType !== "unspecified" && aType !== bType) {
+    return true;
+  }
+  const aMcc = a.box2_merchant_category_code?.trim();
+  const bMcc = b.box2_merchant_category_code?.trim();
+  return aType !== "tpso" && bType !== "tpso" && !!aMcc && !!bMcc &&
+    aMcc !== bMcc;
+}
+
 function repeatedIssuedCopyIndex(items: readonly K99Item[]): number {
-  const seen = new Set<string>();
   for (const [index, item] of items.entries()) {
-    if (
-      (item.box1a_gross_payments ?? 0) <= 0 &&
-      (item.box4_federal_withheld ?? 0) <= 0
-    ) continue;
-    const payer = item.pse_tin?.replace(/\D/g, "");
-    const recipient = item.recipient_tin?.replace(/\D/g, "");
+    if (!positiveCopy(item)) continue;
     const account = item.account_number?.trim();
-    if (!/^\d{9}$/.test(payer ?? "") || !recipient || !account) continue;
-    const key = JSON.stringify([payer, recipient, account]);
-    if (seen.has(key)) return index;
-    seen.add(key);
+    if (!account) continue;
+    if (
+      items.slice(0, index).some((prior) =>
+        positiveCopy(prior) && prior.account_number?.trim() === account &&
+        processorIdentity(prior) === processorIdentity(item) &&
+        recipientIdentity(prior) === recipientIdentity(item) &&
+        !distinctTransactionClass(prior, item)
+      )
+    ) return index;
+  }
+  return -1;
+}
+
+function ambiguousUnidentifiedCopyIndex(items: readonly K99Item[]): number {
+  for (const [index, item] of items.entries()) {
+    if (!positiveCopy(item)) continue;
+    const unidentified = !item.account_number?.trim() &&
+      !item.source_document_reference;
+    if (
+      items.slice(0, index).some((prior) =>
+        positiveCopy(prior) &&
+        (unidentified ||
+          (!prior.account_number?.trim() &&
+            !prior.source_document_reference)) &&
+        processorIdentity(prior) === processorIdentity(item) &&
+        recipientIdentity(prior) === recipientIdentity(item) &&
+        !distinctTransactionClass(prior, item)
+      )
+    ) return index;
   }
   return -1;
 }
@@ -449,6 +511,15 @@ export const inputSchema = z.object({
       path: ["f1099ks", repeatedReferenceIndex],
       message:
         "1099-K repeats the same issued source reference and account; corrected copies need one reviewed current row",
+    });
+  }
+  const ambiguousIndex = ambiguousUnidentifiedCopyIndex(f1099ks);
+  if (ambiguousIndex !== -1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["f1099ks", ambiguousIndex],
+      message:
+        "1099-K copies from the same processor and recipient need distinct account, issued reference, transaction type, or merchant category identity",
     });
   }
 });
