@@ -713,6 +713,32 @@ validation confirmed.` The private manifest SHA-256 is
 This selected result verifies only those 21 generated cases; it does not
 declare the nonnamed phase or the 178-case visual gate complete.
 
+A second declared selection contains **55 fixtures whose expected printed
+forms use only Form 1040, Schedules 1/1-A/2/3/A/B/D, and Schedule EIC**. It
+generated 55 source JSON/native XML/PDF trios and 185 PDF pages in
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-core-pdf55/`;
+each native XML passed the supplied TY2025 XSD before PDF output. Its
+partially marked manifest SHA-256 is
+`f3a754148a233819c275b7b1f72da9463acac46ab7421da96183f32d143c1c12`.
+This is a PDF-form projection selection, not a claim that every fixture's
+underlying source route is outside the named-form gaps. It declares 123
+excluded fixtures. Sixteen cases and 46 pages overlap the completed 21-case
+review above; their regenerated PDF bytes are identical.
+
+Six new cases and 20 pages in this 55-case packet were rendered at 120 dpi
+and visually checked: `joint-presidential-campaign-both`, `joint-two-w2s`,
+`single-reviewed-car-loan-schedule1a`,
+`single-three-car-loan-schedule1a`, `single-k-blank-tin-withholding`, and
+`single-two-employers-excess-social-security`. The joint names, SSNs, and
+campaign boxes; $127,000 two-W-2 wages; Schedule 1-A $4,000 deduction and
+three-VIN continuation; $5,000 Form 1099-K income and $480 withholding; and
+$1,482 excess Social Security payment visibly matched retained pending data
+and native XML. No page-order, clipping, or owner discrepancy was found in
+those pages. Thus **22 of 55 cases and 66 of 185 pages** in this packet have
+visual observations; the remaining 33 cases and 119 pages still need review.
+The read-only checker is intentionally not a pass for this packet until those
+remaining page slots are completed.
+
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
