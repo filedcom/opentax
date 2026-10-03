@@ -1028,8 +1028,17 @@ and $175 owed. The native XML reports the same amounts. All four page
 checklists were completed, and `scripts/check-ty2025-pdf-review.ts` passed on
 `.state/research/ty2025-filled-pdf-review/2026-10-03-single-two-w2-overtime-reviewed`.
 This review found that the fixture's review focus incorrectly called the
-$175 balance a refund; that label was corrected. The other generated pages
-remain unreviewed.
+$175 balance a refund; that label was corrected. Other generated pages need
+their own review.
+
+A separate three-page `single-w2-custodial-eic-release` packet was rendered
+and checked page by page. Form 1040 lists no dependent or child tax credit
+after the release, but prints the $4,328 EIC and $5,828 refund; Schedule EIC
+prints Ada's identity, daughter relationship, 2017 birth year, and 12 U.S.
+months. Its source records $15,000 W-2 wages and $1,500 withholding, which
+match the PDF and native XML. The completed checklist and artifact replay
+passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-custodial-eic-reviewed`.
 The same scan found that the Form 2441 PDF descriptor had no printable
 credit/provider/person route. A later bounded fix now generates its
 no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,
