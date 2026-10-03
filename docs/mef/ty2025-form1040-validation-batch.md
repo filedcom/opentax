@@ -1734,3 +1734,12 @@ The code J PDF text preserved both corporation EINs; the box 8 check covered
 the row-reconciliation helper only. The RTAA positive case now checks its
 filled statement text and XSD explicitly. Original source bytes, broader
 character and prior-year evidence, the full bulk suite, and ATS remain open.
+
+## Form 1099-MISC box 8 full-return replay (2026-10-04)
+
+The focused box 8 file passed 3/3 tests. Two separately referenced $300/$450
+copies flow through Schedule 1 line 8z and Form 1040 line 8, generate two
+native other-income statement rows, validate against the cached TY2025 v5.4
+XSD, and print both payer identifiers in the filled PDF text. Altering a filed
+row or retained source recipient rejects at both native and PDF packet export.
+The frozen full-suite result at `f92a09e4` has not been rerun on this head.

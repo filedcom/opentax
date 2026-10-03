@@ -155,10 +155,14 @@ original source copies and require each recipient to be the taxpayer or an MFJ
 spouse. Positive two-payer and missing, changed-payer, changed-total, and
 wrong-recipient fixtures are authored for the deferred implementation batch.
 The two-payer source-row helper and its changed-total/payer/recipient/missing-
-row cases passed one focused test on 2026-10-04. This is not a full-return
-packet check. Issued payer-copy bytes, payment character beyond the reported
-box, filled-PDF appearance, IRS business rules, and ATS acceptance remain
-open. The
+row cases passed one focused test on 2026-10-04. A separate full-return case
+now carries two $300/$450 issued-copy records through Schedule 1 line 8z and
+Form 1040 line 8, emits two native statement rows, validates against the local
+TY2025 v5.4 XSD, and finds both payer TINs in the filled PDF text. Native and
+PDF packet builders reject an altered statement amount or source recipient.
+The three focused tests pass. Issued payer-copy bytes, payment character beyond
+the reported box, raster appearance, IRS business rules, and ATS acceptance
+remain open. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
 substitute payments to Schedule 1 line 8z whether they replace dividends or
