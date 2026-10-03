@@ -86,7 +86,21 @@ type INTInput = z.infer<typeof inputSchema>;
 
 export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
   const issuedAccounts = new Set<string>();
+  const issuedReferences = new Set<string>();
   for (const item of items) {
+    if (item.source_document_reference) {
+      const reference = JSON.stringify([
+        item.source_document_reference,
+        item.payer_tin?.replace(/\D/g, "") || item.payer_name.trim(),
+        item.account_number?.trim() ?? null,
+      ]);
+      if (issuedReferences.has(reference)) {
+        throw new Error(
+          "1099-INT repeats the same issued-copy source reference and account; corrected copies need a reviewed single current row",
+        );
+      }
+      issuedReferences.add(reference);
+    }
     if (!item.payer_tin || !item.account_number) continue;
     const key = JSON.stringify([
       item.payer_tin.replace(/\D/g, ""),

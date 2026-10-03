@@ -46,6 +46,25 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
       message: "1099-INT repeats the same payer and account",
     },
     {
+      f1099int: {
+        f1099ints: [
+          {
+            payer_name: "Bank",
+            source_document_reference: "issued-copy",
+            box1: 200,
+            box4: 15,
+          },
+          {
+            payer_name: "Bank",
+            source_document_reference: "issued-copy",
+            box1: 250,
+            box4: 20,
+          },
+        ],
+      },
+      message: "1099-INT repeats the same issued-copy source reference",
+    },
+    {
       f1099div: {
         f1099divs: [
           {
@@ -83,6 +102,26 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
           {
             payer_name: "Bond Fund",
             payer_tin: "123456789",
+            source_document_reference: "issued-copy",
+            box1_oid: 250,
+            box4_federal_withheld: 20,
+          },
+        ],
+      },
+      message:
+        "1099-OID repeats the same identified payer and source reference",
+    },
+    {
+      f1099oid: {
+        f1099oids: [
+          {
+            payer_name: "Bond Fund",
+            source_document_reference: "issued-copy",
+            box1_oid: 200,
+            box4_federal_withheld: 15,
+          },
+          {
+            payer_name: "Bond Fund",
             source_document_reference: "issued-copy",
             box1_oid: 250,
             box4_federal_withheld: 20,

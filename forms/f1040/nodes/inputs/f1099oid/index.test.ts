@@ -56,6 +56,27 @@ Deno.test("1099-OID changed issued copy cannot double interest or withholding", 
   );
 });
 
+Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
+  const issued = {
+    payer_name: "Bond Fund",
+    source_document_reference: "issued-oid-copy-1",
+    box1_oid: 200,
+  };
+  assertThrows(
+    () => compute([issued, { ...issued, box1_oid: 250 }]),
+    Error,
+    "repeats the same identified payer and source reference",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-oid-copy-2" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
 Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
   const item = {
     payer_name: "Bond Fund",

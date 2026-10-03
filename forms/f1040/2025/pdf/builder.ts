@@ -554,6 +554,7 @@ export async function buildPdfBytes(
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
   assertW2WithholdingSource(normalized, filer);
+  assert1099WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);
   assertLine1aWageSource(normalized);
   assertQualifiedDividendSubset(normalized.f1040 ?? {});
@@ -580,7 +581,6 @@ export async function buildPdfBytes(
   assertSchedule3Form8834Credit(normalized);
   assertSchedule3Form8912Credit(normalized);
   assertSchedule3Form8396Credit(normalized);
-  assert1099WithholdingSource(normalized, filer);
   assert1099GUnemploymentSource(normalized);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);

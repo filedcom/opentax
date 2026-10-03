@@ -123,6 +123,28 @@ Deno.test("1099-INT rejects corrected references on one identified payer/account
   );
 });
 
+Deno.test("1099-INT rejects a repeated source when payer TIN and account are absent", () => {
+  const issued = minimalItem({
+    payer_name: "Test Bank",
+    source_document_reference: "issued-1099int-2025-1",
+    box1: 200,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box1: 900 }]),
+    Error,
+    "repeats the same issued-copy source reference and account",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-1099int-2025-2" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
+      .length,
+    2,
+  );
+});
+
 Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
   assertEquals(findOutput(ordinary, "form4952"), undefined);

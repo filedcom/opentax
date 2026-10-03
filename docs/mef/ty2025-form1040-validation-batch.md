@@ -38,6 +38,14 @@ This is a fixture/XSD regression after the newer source guards, not a rerun of
 the full `deno task test`, visual review of all 178 filled PDFs, IRS business
 rules, or accepted ATS transmission.
 
+At the 2026-10-03 implementation checkpoint after the 1099-copy identity
+guard, the two 1099-INT/OID input-node files passed **92/92** and the
+withholding/export file passed **9/9**. The native and PDF builder files passed
+**184/184**; format and lint passed for the changed files. This selected run
+confirmed that repeated identified copies reject at native and PDF preflight
+even when payer TIN or account is absent. The repository-wide batch remains
+deferred until implementation and scope decisions are settled.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

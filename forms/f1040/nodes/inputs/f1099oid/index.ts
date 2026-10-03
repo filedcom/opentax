@@ -93,10 +93,10 @@ type OIDItems = OIDItem[];
 export function assertDistinct1099OIDCopies(items: OIDItems): void {
   const seen = new Set<string>();
   for (const item of items) {
-    if (!item.source_document_reference || !item.payer_tin) continue;
+    if (!item.source_document_reference) continue;
     const key = JSON.stringify([
       item.source_document_reference,
-      item.payer_tin.replace(/\D/g, ""),
+      item.payer_tin?.replace(/\D/g, "") || item.payer_name.trim(),
     ]);
     if (seen.has(key)) {
       throw new Error(

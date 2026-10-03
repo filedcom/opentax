@@ -258,6 +258,7 @@ function buildReturnXml(
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
   assertW2WithholdingSource(pending, filer);
+  assert1099WithholdingSource(pending, filer);
   assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
   assertLine1aWageSource(pending);
   assertQualifiedDividendSubset(pending.f1040 ?? {});
@@ -284,7 +285,6 @@ function buildReturnXml(
   assertSchedule3Form8834Credit(pending);
   assertSchedule3Form8912Credit(pending);
   assertSchedule3Form8396Credit(pending);
-  assert1099WithholdingSource(pending, filer);
   assert1099GUnemploymentSource(pending);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
