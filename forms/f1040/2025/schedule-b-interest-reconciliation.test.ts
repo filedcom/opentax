@@ -43,6 +43,26 @@ Deno.test("Schedule B interest joins Form 1040 and AGI in both exporters", async
     Error,
     "line 2b must equal Schedule B line 4",
   );
+  const changedSource = {
+    ...pending,
+    f1099int: {
+      ...pending.f1099int,
+      f1099ints: [{
+        ...pending.f1099int!.f1099ints[0],
+        box1: 501,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedSource, fixture.filer),
+    Error,
+    "Schedule B interest payer detail differs from issued Forms",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedSource, fixture.filer),
+    Error,
+    "Schedule B interest payer detail differs from issued Forms",
+  );
   assertThrows(
     () =>
       assertScheduleBInterestJoin({
@@ -63,6 +83,77 @@ Deno.test("Schedule B interest joins Form 1040 and AGI in both exporters", async
       }),
     Error,
     "Retained AGI taxable interest",
+  );
+});
+
+Deno.test("issued 1099-INT and 1099-OID adjustments match separate Schedule B payer rows", () => {
+  const rowInt = {
+    payer_name: "Bond Bank",
+    gross: 120,
+    net: 105,
+    nominee: 5,
+    accrued: 0,
+    oid_adjustment: 0,
+    bond_premium: 10,
+  };
+  const rowOid = {
+    payer_name: "OID Broker",
+    gross: 60,
+    net: 51,
+    nominee: 3,
+    accrued: 0,
+    oid_adjustment: 4,
+    bond_premium: 2,
+  };
+  const pending = {
+    f1099int: {
+      f1099ints: [{
+        payer_name: "Bond Bank",
+        box1: 100,
+        box3: 20,
+        box11: 10,
+        elect_bond_premium_amortization: true,
+        nominee_interest: 5,
+      }],
+    },
+    f1099oid: {
+      f1099oids: [{
+        payer_name: "OID Broker",
+        box1_oid: 50,
+        box2_other_interest: 10,
+        box6_acquisition_premium: 4,
+        box6_applies_to: "taxable_oid",
+        box10_bond_premium: 2,
+        box10_applies_to: "taxable_stated_interest",
+        nominee_oid: 3,
+      }],
+    },
+    schedule_b: { interest_detail: [rowOid, rowInt] },
+    f1040: { line2b_taxable_interest: 156 },
+    agi_aggregator: { line2b_taxable_interest: 156 },
+  };
+  assertScheduleBInterestJoin(pending);
+  assertThrows(
+    () =>
+      assertScheduleBInterestJoin({
+        ...pending,
+        schedule_b: {
+          interest_detail: [rowOid, { ...rowInt, bond_premium: 9 }],
+        },
+      }),
+    Error,
+    "Schedule B interest payer detail differs from issued Forms",
+  );
+  assertThrows(
+    () =>
+      assertScheduleBInterestJoin({
+        ...pending,
+        schedule_b: {
+          interest_detail: [rowOid, rowInt, { ...rowInt, payer_name: "Extra" }],
+        },
+      }),
+    Error,
+    "Schedule B interest payer detail lacks an issued Form",
   );
 });
 
