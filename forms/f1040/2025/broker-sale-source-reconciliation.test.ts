@@ -257,6 +257,30 @@ Deno.test("final exports replay retained broker proceeds and basis into Schedule
   }
 });
 
+Deno.test("broker transaction IDs survive into Schedule D and both final exporters", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [brokerRows[0]],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction:
+      | { source_transaction_id?: string }
+      | { source_transaction_id?: string }[];
+  };
+  const sale = Array.isArray(schedule.transaction)
+    ? schedule.transaction[0]!
+    : schedule.transaction;
+  assertEquals(sale.source_transaction_id, "sale1");
+  sale.source_transaction_id = "other-sale";
+  const message =
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
 Deno.test("final exports reject a second zero-gain copy of one broker sale", async () => {
   const result = f1040_2025.executeReturn({
     general,

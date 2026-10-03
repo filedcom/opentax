@@ -208,6 +208,7 @@ function processItem(item: B99Item): NodeOutput[] {
       transaction: {
         part,
         description: item.description,
+        source_transaction_id: item.transaction_id,
         date_acquired: item.date_acquired,
         date_sold: item.date_sold,
         proceeds: item.proceeds,
