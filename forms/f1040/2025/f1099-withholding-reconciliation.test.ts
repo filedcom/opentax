@@ -266,6 +266,28 @@ Deno.test("multiple positive 1099-DIV copies without references reject native an
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("unidentified repeated 1099-G copies reject native and PDF export", async () => {
+  const issued = {
+    payer_name: "State Agency",
+    payer_tin: "123456789",
+    recipient_tin: filer.primarySSN,
+    box_1_unemployment: 500,
+  };
+  const pending = {
+    f1099g: {
+      f1099gs: [issued, { ...issued, box_1_unemployment: 600 }],
+    },
+  };
+  const message =
+    "1099-G has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {
   const cases = [
     {

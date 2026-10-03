@@ -107,6 +107,14 @@ complete selection passed. A final 109-case input rerun also passed after
 adding the reverse-order account-only assertion. The repository-wide command
 and issuer-copy verification remain open.
 
+After the 1099-G ambiguous-copy guard on 2026-10-03, the graph and direct
+export files passed **71/71**. The selected grant, RTAA, unemployment, refund,
+owner, and native/PDF builder files passed **198/198** with Poppler on PATH
+and the cached TY2025 schema available. Six aggregation fixtures needed
+distinct issued references to represent distinct payer copies; no assertion
+or production route was dropped. The repository-wide command and source-byte
+verification remain open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

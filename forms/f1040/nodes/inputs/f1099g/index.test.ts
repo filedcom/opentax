@@ -152,6 +152,34 @@ Deno.test("1099-G repeated issued reference rejects with no payer TIN or account
   assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1000);
 });
 
+Deno.test("1099-G positive copies need account or issued-copy identity", () => {
+  const unidentified = minimalItem({
+    payer_name: "State Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    box_1_unemployment: 500,
+  });
+  const identified = {
+    ...unidentified,
+    account_number: "BEN-1",
+    box_1_unemployment: 600,
+  };
+  const message =
+    "1099-G has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  const distinct = compute([
+    identified,
+    { ...identified, account_number: "BEN-2" },
+  ]);
+  assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1200);
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -390,8 +418,14 @@ Deno.test("f1099g.compute: empty item produces no outputs", () => {
 
 Deno.test("f1099g.compute: multiple items — box_1_unemployment summed across all items", () => {
   const result = compute([
-    minimalItem({ box_1_unemployment: 5000 }),
-    minimalItem({ box_1_unemployment: 3000 }),
+    minimalItem({
+      box_1_unemployment: 5000,
+      source_document_reference: "issued-unemployment-copy-1",
+    }),
+    minimalItem({
+      box_1_unemployment: 3000,
+      source_document_reference: "issued-unemployment-copy-2",
+    }),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8000);
@@ -399,8 +433,16 @@ Deno.test("f1099g.compute: multiple items — box_1_unemployment summed across a
 
 Deno.test("f1099g.compute: multiple items — box_1_repaid subtracted from total across all items", () => {
   const result = compute([
-    minimalItem({ box_1_unemployment: 6000, box_1_repaid: 1000 }),
-    minimalItem({ box_1_unemployment: 4000, box_1_repaid: 500 }),
+    minimalItem({
+      box_1_unemployment: 6000,
+      box_1_repaid: 1000,
+      source_document_reference: "issued-unemployment-copy-1",
+    }),
+    minimalItem({
+      box_1_unemployment: 4000,
+      box_1_repaid: 500,
+      source_document_reference: "issued-unemployment-copy-2",
+    }),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8500); // 10000 - 1500
@@ -408,8 +450,14 @@ Deno.test("f1099g.compute: multiple items — box_1_repaid subtracted from total
 
 Deno.test("f1099g.compute: multiple items — box_4_federal_withheld summed to f1040 line25b", () => {
   const result = compute([
-    minimalItem({ box_4_federal_withheld: 300 }),
-    minimalItem({ box_4_federal_withheld: 200 }),
+    minimalItem({
+      box_4_federal_withheld: 300,
+      source_document_reference: "issued-withholding-copy-1",
+    }),
+    minimalItem({
+      box_4_federal_withheld: 200,
+      source_document_reference: "issued-withholding-copy-2",
+    }),
   ]);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 500);
@@ -426,8 +474,12 @@ Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 lin
 
 Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when both itemized", () => {
   const result = compute([
-    reviewedRefund(100, 100),
-    reviewedRefund(200, 200),
+    reviewedRefund(100, 100, {
+      source_document_reference: "issued-refund-copy-1",
+    }),
+    reviewedRefund(200, 200, {
+      source_document_reference: "issued-refund-copy-2",
+    }),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 300);
@@ -450,8 +502,13 @@ Deno.test("f1099g.compute: multiple agricultural payments retain separate source
 
 Deno.test("f1099g.compute: mixed items — unemployment and state refund both routed correctly", () => {
   const result = compute([
-    minimalItem({ box_1_unemployment: 6000 }),
-    reviewedRefund(400, 400),
+    minimalItem({
+      box_1_unemployment: 6000,
+      source_document_reference: "issued-unemployment-copy",
+    }),
+    reviewedRefund(400, 400, {
+      source_document_reference: "issued-refund-copy",
+    }),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 6000);
@@ -640,8 +697,12 @@ Deno.test("f1099g.compute: positive state refund without tax-benefit workpaper f
 
 Deno.test("f1099g.compute: mixed reviewed taxable and nontaxable refunds — only taxable recovery included", () => {
   const result = compute([
-    reviewedRefund(200, 200),
-    reviewedRefund(500, 0),
+    reviewedRefund(200, 200, {
+      source_document_reference: "issued-refund-copy-1",
+    }),
+    reviewedRefund(500, 0, {
+      source_document_reference: "issued-refund-copy-2",
+    }),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 200);
