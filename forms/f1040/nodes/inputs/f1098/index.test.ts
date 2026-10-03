@@ -240,7 +240,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "multiple post-2017 mortgages over $750,000",
+    "post-2017 mortgage debt over $750,000",
   );
   assertThrows(
     () =>
@@ -255,7 +255,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "multiple post-2017 mortgages over $750,000",
+    "post-2017 mortgage debt over $750,000",
   );
   assertThrows(
     () =>
@@ -270,7 +270,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "multiple post-2017 mortgages over $375,000",
+    "post-2017 mortgage debt over $375,000",
   );
   assertThrows(
     () =>
@@ -290,7 +290,22 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "multiple post-2017 mortgages over $750,000",
+    "post-2017 mortgage debt over $750,000",
+  );
+  assertForm1098MortgageLimitSources(
+    {
+      f1098s: source.f1098s.map((item) => ({
+        ...item,
+        box1_current_year_deductible_interest: 0,
+      })),
+    },
+    ["111223333"],
+    FilingStatus.Single,
+    0,
+    0,
+    0,
+    false,
+    false,
   );
   assertEquals(
     inputSchema.safeParse({

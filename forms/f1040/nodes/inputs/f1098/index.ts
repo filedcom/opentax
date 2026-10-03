@@ -55,7 +55,7 @@ export const mortgageLimitReviewSchema = z.object({
         }).strict(),
       ).length(12),
     }).strict(),
-  ).min(2),
+  ).min(1),
 }).strict().refine(
   (review) =>
     review.single_filing_status_verified === true
@@ -552,7 +552,7 @@ export const inputSchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ["mortgage_limit_review"],
         message:
-          "Multiple full-year post-2017 acquisition loans need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
+          "Full-year post-2017 acquisition mortgages need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
       });
     }
   },
@@ -641,7 +641,8 @@ export function assertForm1098MortgageLimitSources(
     ? 375_000
     : 750_000;
   if (
-    fullYearPost2017.length >= 2 &&
+    filedLine8a > 0 &&
+    fullYearPost2017.length >= 1 &&
     fullYearPost2017.reduce(
         (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
         0,
@@ -649,7 +650,7 @@ export function assertForm1098MortgageLimitSources(
     !parsed.mortgage_limit_review
   ) {
     throw new Error(
-      `Schedule A multiple post-2017 mortgages over $${
+      `Schedule A post-2017 mortgage debt over $${
         debtLimit.toLocaleString("en-US")
       } need a supported whole-return Pub. 936 limit review`,
     );
@@ -682,7 +683,7 @@ export function assertForm1098MortgageLimitSources(
     hasMortgageInterestCredit
   ) {
     throw new Error(
-      "Schedule A multiple-loan mortgage-limit allocation needs the verified filing status, filer-owned sourced line 8a interest, and no other mortgage-interest or points routes",
+      "Schedule A mortgage-limit allocation needs the verified filing status, filer-owned sourced line 8a interest, and no other mortgage-interest or points routes",
     );
   }
 }

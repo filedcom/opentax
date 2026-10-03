@@ -1632,3 +1632,14 @@ reconciles $3,000 reported interest to $2,499 in native XML and filled PDF.
 The local TY2025 XSD and focused tests passed. These checks do not establish
 complete MFS allocation, lender-statement authenticity, IRS business-rule
 acceptance, or the final full-suite gate.
+
+## One Form 1098 loan over the acquisition debt limit (2026-10-04)
+
+The existing whole-return Pub. 936 Table 1 source now accepts one full-year
+post-2017 loan. An unreviewed $900,000 box 2 snapshot with positive Schedule A
+line 8a rejects in both exporters. Twelve documented $900,000 monthly balances
+apply the .833 ratio to $1,000 reported interest, yielding $833 in local
+TY2025 XSD-valid native XML and text-extracted filled PDF. A $600,000 reviewed
+average permits the full $1,000 despite the box 2 snapshot; a zero line 8a
+claim does not require a deduction review. This is focused source/export
+evidence, not the later complete bulk test or IRS ATS acceptance.

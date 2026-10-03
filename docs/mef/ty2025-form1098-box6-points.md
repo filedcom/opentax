@@ -197,6 +197,16 @@ positive review remains full-year acquisition debt; MFS above its limit stays
 guarded until its separate allocation is modeled. Status and recipient
 identity must match the final return in both exporters.
 
+The 2026-10-04 single-loan audit found that a full-year post-2017 loan with
+box 2 principal above the applicable limit could otherwise claim all box 1
+interest using only an individual workpaper reference. The same Table 1
+review now accepts one lender source and its twelve monthly statements.
+One $900,000 loan with $1,000 reported interest yields $833 at the .833
+ratio in local XSD-valid native XML and filled PDF; a documented $600,000
+monthly average permits the full $1,000 despite the box 2 snapshot. Native
+and PDF export reject the $900,000 unreviewed claim. An entry with zero
+Schedule A line 8a claim does not trigger that filing review.
+
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 
 The public `f1098_purchase_points_cross_loan_review` joins one 2025
