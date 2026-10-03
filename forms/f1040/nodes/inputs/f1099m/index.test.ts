@@ -85,9 +85,18 @@ Deno.test("1099-MISC repeated identified copy cannot double income or withholdin
     Error,
     "repeats the same payer, recipient, account",
   );
+  assertThrows(
+    () => compute([issued, { ...issued, account_number: "ACCT-2" }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
   const distinct = compute([
     issued,
-    { ...issued, account_number: "ACCT-2" },
+    {
+      ...issued,
+      account_number: "ACCT-2",
+      source_document_reference: "separate-issued-2025-1099misc-copy",
+    },
   ]);
   assertEquals(
     fieldsOf(distinct.outputs, schedule1)?.line8i_prizes_awards,
@@ -106,7 +115,7 @@ Deno.test("1099-MISC repeated issued reference rejects without an account", () =
   assertThrows(
     () => compute([issued, { ...issued, box3_other_income: 350 }]),
     Error,
-    "repeats the same payer, recipient, issued source reference",
+    "repeats the same issued-copy source reference",
   );
   const distinct = compute([
     issued,
@@ -668,6 +677,7 @@ Deno.test("f1099m.compute: two box 8 payers retain separate source rows", () => 
     minimalItem({
       payer_name: "Second Broker",
       payer_tin: "234567890",
+      source_document_reference: "issued-second-broker-copy",
       box8_substitute_payments: 450,
     }),
   ]);
@@ -882,11 +892,13 @@ Deno.test("f1099m.compute: box4_federal_withheld summed across multiple items", 
       box4_federal_withheld: 800,
       payer_name: "Payer B",
       payer_tin: "222222222",
+      source_document_reference: "issued-payer-b-copy",
     }),
     minimalItem({
       box4_federal_withheld: 500,
       payer_name: "Payer C",
       payer_tin: "333333333",
+      source_document_reference: "issued-payer-c-copy",
     }),
   ]);
   const out = findOutput(result, "f1040");
@@ -905,6 +917,7 @@ Deno.test("f1099m.compute: box1_rents summed across multiple schedule_e items", 
       box1_rents: 4000,
       payer_name: "Tenant B",
       payer_tin: "222222222",
+      source_document_reference: "issued-tenant-b-copy",
     }),
   ]);
   const out = findOutput(result, "schedule_e");
@@ -921,6 +934,7 @@ Deno.test("f1099m.compute: box15_nqdc 20% excise computed correctly for aggregat
     reviewed409aItem(30000, 0, {
       payer_name: "CorpB",
       payer_tin: "222222222",
+      source_document_reference: "issued-corp-b-copy",
     }),
   ]);
   const out = findOutput(result, "schedule2");
@@ -942,6 +956,7 @@ Deno.test("f1099m.compute: box3_other_income summed across multiple items to pri
       box3_other_income_routing: "prizes_awards",
       payer_name: "Contest B",
       payer_tin: "222222222",
+      source_document_reference: "issued-contest-b-copy",
     }),
   ]);
   const out = findOutput(result, "schedule1");
@@ -1234,12 +1249,14 @@ Deno.test("f1099m.compute: box4_federal_withheld aggregated across all instances
       box4_federal_withheld: 1200,
       payer_name: "B",
       payer_tin: "222222222",
+      source_document_reference: "issued-b-copy",
       multi_form_code: 2,
     }),
     minimalItem({
       box4_federal_withheld: 600,
       payer_name: "C",
       payer_tin: "333333333",
+      source_document_reference: "issued-c-copy",
       multi_form_code: 3,
     }),
   ]);

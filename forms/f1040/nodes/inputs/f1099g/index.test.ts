@@ -126,9 +126,29 @@ Deno.test("1099-G repeated issued reference without an account cannot double RTA
   assertThrows(
     () => compute([issued, { ...issued, box_5_rtaa: 600 }]),
     Error,
-    "repeats the same identified payer, recipient, and issued source reference",
+    "repeats the same issued-copy source reference",
   );
   compute([issued, rtaaItem(600, "separate-issued-rtaa-copy")]);
+});
+
+Deno.test("1099-G cannot reuse one issued-copy reference across payers", () => {
+  const issued = rtaaItem(500);
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        payer_name: "Second State Agency",
+        payer_tin: "987654321",
+      }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  compute([issued, {
+    ...issued,
+    payer_name: "Second State Agency",
+    payer_tin: "987654321",
+    source_document_reference: "separate-issued-rtaa-copy",
+  }]);
 });
 
 Deno.test("1099-G repeated issued reference rejects with no payer TIN or account", () => {
@@ -143,7 +163,7 @@ Deno.test("1099-G repeated issued reference rejects with no payer TIN or account
   assertThrows(
     () => compute([issued, { ...issued, box_1_unemployment: 600 }]),
     Error,
-    "repeats the same identified payer, recipient, and issued source reference",
+    "repeats the same issued-copy source reference",
   );
   const distinct = compute([
     issued,

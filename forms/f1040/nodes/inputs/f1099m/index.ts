@@ -312,16 +312,10 @@ export function assertDistinct1099MCopies(items: readonly M99Item[]): void {
       seenAccounts.add(key);
     }
     if (item.source_document_reference) {
-      const key = JSON.stringify([
-        item.payer_tin,
-        item.recipient_tin,
-        item.source_document_reference,
-        account,
-        item.multi_form_code ?? null,
-      ]);
+      const key = item.source_document_reference;
       if (seenReferences.has(key)) {
         throw new Error(
-          "1099-MISC repeats the same payer, recipient, issued source reference, and form code; corrected copies need a reviewed single current row",
+          "1099-MISC repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
         );
       }
       seenReferences.add(key);

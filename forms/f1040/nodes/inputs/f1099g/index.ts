@@ -201,14 +201,10 @@ export function assertDistinct1099GCopies(items: G99Items): void {
       seenAccounts.add(key);
     }
     if (item.source_document_reference) {
-      const key = JSON.stringify([
-        payer,
-        item.recipient_tin ?? null,
-        item.source_document_reference,
-      ]);
+      const key = item.source_document_reference;
       if (seenReferences.has(key)) {
         throw new Error(
-          "1099-G repeats the same identified payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+          "1099-G repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
         );
       }
       seenReferences.add(key);

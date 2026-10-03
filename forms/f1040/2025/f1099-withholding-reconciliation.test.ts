@@ -408,7 +408,7 @@ Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native a
   }
 });
 
-Deno.test("repeated 1099-G and MISC references reject without optional identifiers", async () => {
+Deno.test("reused 1099-G and MISC issued-copy references reject across changed payers and accounts", async () => {
   const cases = [
     {
       pending: {
@@ -421,7 +421,7 @@ Deno.test("repeated 1099-G and MISC references reject without optional identifie
               box_1_unemployment: 500,
             },
             {
-              payer_name: "State Agency",
+              payer_name: "Second State Agency",
               recipient_tin: filer.primarySSN,
               source_document_reference: "issued-unemployment-copy",
               box_1_unemployment: 600,
@@ -429,8 +429,7 @@ Deno.test("repeated 1099-G and MISC references reject without optional identifie
           ],
         },
       },
-      message:
-        "1099-G repeats the same identified payer, recipient, and issued source reference",
+      message: "1099-G repeats the same issued-copy source reference",
     },
     {
       pending: {
@@ -446,8 +445,9 @@ Deno.test("repeated 1099-G and MISC references reject without optional identifie
             },
             {
               payer_name: "Payer",
-              payer_tin: "123456789",
+              payer_tin: "987654321",
               recipient_tin: filer.primarySSN,
+              account_number: "M-2",
               source_document_reference: "issued-misc-copy",
               box3_other_income: 350,
               box3_other_income_routing: "prizes_awards" as const,
@@ -455,8 +455,7 @@ Deno.test("repeated 1099-G and MISC references reject without optional identifie
           ],
         },
       },
-      message:
-        "1099-MISC repeats the same payer, recipient, issued source reference",
+      message: "1099-MISC repeats the same issued-copy source reference",
     },
   ];
   for (const { pending, message } of cases) {
