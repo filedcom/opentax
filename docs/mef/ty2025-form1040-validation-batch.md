@@ -986,6 +986,19 @@ Part V description and print gate, and the Schedule E page identity attached
 to Form 7203. A two-case manifest for the Form 8826 and Form 7203 routes
 contains **31 generated pages** with XML/XSD checks; its per-page visual
 checklist remains blank. Other selected runs remain partial diagnostics.
+
+After the source-backed packet fixes, the declared **167-case exportable
+selection** completed on 2026-10-03 at `bd9387a4`. The manifest at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-full/review-manifest.json`
+records **1,052 filled PDF pages**, all 167 local TY2025 XSD checks, and
+per-case source/XML/PDF SHA-256 digests. A separate read-only digest and
+inventory check found zero missing or mismatched files and zero page-origin
+count mismatches; the manifest SHA-256 is
+`a0dd2cc274a4c767281f7a0d0b9336741566a5dc98b2bfe570aa0e3cfc645075`.
+Its scope explicitly excludes 12 guarded source or attachment cases from the
+179-case plan. None of the 1,052 page checkboxes is a completed
+human visual review, and this selection does not establish IRS business-rule
+or ATS acceptance.
 The same scan found that the Form 2441 PDF descriptor had no printable
 credit/provider/person route. A later bounded fix now generates its
 no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,
@@ -1006,8 +1019,8 @@ payment fixtures generated its XML/XSD/PDF packets after the Form 8834,
 Form 8912, and other expected-copy inventories were corrected. Other Form
 5695 branches and broader Form 4797 paths remain
 open parity limits, not approved exclusions or a
-full visual-review pass. The nine guarded source routes, three attachment
-cases, and 28 uncovered named PDF keys remain outside the selected run as
+full visual-review pass. The 12 guarded source or attachment cases and 28
+uncovered named PDF keys remain outside the selected run as
 previously recorded.
 
 A bounded visual check of that partial directory rendered all nine pages of

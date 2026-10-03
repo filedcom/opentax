@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1083 bounded completed slices are recorded in the
+inside** that section. The 1084 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -50,6 +50,9 @@ complete PDF parity. The sourced Form 5695 door/AC and Form 4684-to-4797 loss
 packets now generate with XML/XSD checks, and Form 8936 emits its parent and
 vehicle Schedule A as separate copies.
 The generated pages still need the full per-page visual review.
+A declared 167-case exportable selection now generated 1,052 filled PDF pages
+with matching source/XML/PDF hashes and local TY2025 XSD validation. Twelve
+guarded source or attachment cases remain outside that selection.
 
 **Phase order.** Finish independently actionable non-named source, graph,
 packet, and PDF work; settle the workflow and evidence decisions; retain the
