@@ -1694,6 +1694,9 @@ wider Schedule D route, full bulk suite, or IRS ATS acceptance.
 The follow-up Schedule D check now requires a finalized line-16 print amount
 before using Schedule D as the reporting destination, and compares its retained
 1099-DIV and Form 8814 line-13 components with their sources. The 104 affected
-Form 1040 source/native/PDF tests passed after that change. A physical Form
-8814/Schedule D PDF test reached text extraction but could not finish because
-the local `pdftotext` executable was unavailable; it is not counted as a pass.
+Form 1040 source/native/PDF tests passed after that change. The local Poppler
+binary initially could not load its cached dependent libraries. With their
+package directories on `DYLD_LIBRARY_PATH` and the Poppler binary directory
+on `PATH`, both physical Form 8814/Schedule D and Schedule 1/Form 8814 PDF
+source/print tests passed. These two tests do not replace the full bulk or
+all-page visual review gates.
