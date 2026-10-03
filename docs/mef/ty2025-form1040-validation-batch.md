@@ -61,6 +61,16 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
+The subsequent 1099-B wash-sale source pass on 2026-10-03 passed **84/84**
+focused broker graph/full-return/export cases and **191/191** selected native,
+PDF, and Schedule B builder cases. Box 1g now adds its positive disallowed loss
+to a separately coded Form 8949 adjustment instead of disappearing when that
+adjustment is present. A manually entered W amount must agree with the issued
+box 1g; incomplete or conflicting combinations reject. A source-backed $120
+net loss reached Form 1040, native XML, and filled PDF; a changed box 1g
+rejected in both exports. Wider corrected-box statement routes and the full
+phase batch remain open.
+
 The subsequent 1099-K transaction-class and copy-identity pass on 2026-10-03
 passed **84/84** focused graph/direct-export cases and **184/184** selected
 native/PDF builder cases. Same-processor, same-recipient positive copies now

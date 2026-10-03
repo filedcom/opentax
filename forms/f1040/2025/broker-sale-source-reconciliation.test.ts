@@ -112,6 +112,45 @@ Deno.test("joint return joins two broker copies through gains, withholding, nati
   assert(pdf.length > 100_000);
 });
 
+Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
+  const sale = {
+    ...brokerRows[0],
+    proceeds: 500,
+    cost_basis: 700,
+    box1g_wash_sale_loss_disallowed: 100,
+    adjustment_codes: "E",
+    adjustment_amount: -20,
+  };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line7_capital_gain, -120);
+  const pending = buildPending(result.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>-120</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+
+  const changed = {
+    ...pending,
+    f1099b: { f1099bs: [{ ...sale, box1g_wash_sale_loss_disallowed: 90 }] },
+  };
+  assertThrows(
+    () =>
+      buildMefXml(
+        changed as unknown as Parameters<typeof buildMefXml>[0],
+        filer,
+      ),
+    Error,
+    "Schedule D sale differs from retained 1099-B",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B",
+  );
+});
+
 Deno.test("final exports reject a changed Form 1040 capital gain after Schedule D", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);

@@ -118,19 +118,33 @@ export const inputSchema = z.object({
 
 type B99Item = z.infer<typeof itemSchema>;
 
-// box1g_wash_sale_loss_disallowed: convenience field that auto-populates
-// adjustment_codes "W" and adjustment_amount when not already set by the caller.
+// Box 1g remains part of column (g) even when another adjustment is entered.
 function resolveWashSale(
   item: B99Item,
 ): { codes: string | undefined; amount: number | undefined } {
   const washAmount = item.box1g_wash_sale_loss_disallowed ?? 0;
-  if (
-    washAmount <= 0 || item.adjustment_codes !== undefined ||
-    item.adjustment_amount !== undefined
-  ) {
+  if (washAmount <= 0) {
     return { codes: item.adjustment_codes, amount: item.adjustment_amount };
   }
-  return { codes: "W", amount: washAmount };
+  const codes = item.adjustment_codes;
+  const amount = item.adjustment_amount;
+  if (codes?.includes("W")) {
+    if (codes !== "W" || amount !== washAmount) {
+      throw new Error(
+        "1099-B box 1g conflicts with the manual wash-sale adjustment",
+      );
+    }
+    return { codes, amount };
+  }
+  if ((codes === undefined) !== (amount === undefined)) {
+    throw new Error(
+      "1099-B box 1g needs a code and amount for other manual adjustments",
+    );
+  }
+  return {
+    codes: `${codes ?? ""}W`,
+    amount: (amount ?? 0) + washAmount,
+  };
 }
 
 // noncovered_security: shifts Part A→B and Part D→E so the transaction lands
