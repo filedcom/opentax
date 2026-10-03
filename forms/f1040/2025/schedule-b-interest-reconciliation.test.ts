@@ -157,6 +157,75 @@ Deno.test("issued 1099-INT and 1099-OID adjustments match separate Schedule B pa
   );
 });
 
+Deno.test("broker market discount reaches Schedule B before native and PDF export", async () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-direct-broker-basis-sales"
+  )!;
+  const sales = fixture.inputs.f8949 as Record<string, unknown>[];
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      ...fixture.inputs,
+      f8949: [{
+        ...sales[0],
+        accrued_market_discount: 200,
+        market_discount_payer_name: "Bond Broker",
+      }, sales[1]],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertScheduleBInterestJoin(pending);
+  const omitted = {
+    ...pending,
+    schedule_b: { ...pending.schedule_b, taxable_interest_net: 199 },
+  };
+  assertThrows(
+    () => buildMefXml(omitted, fixture.filer),
+    Error,
+    "Schedule B market discount differs from retained broker",
+  );
+  await assertRejects(
+    () => buildPdfBytes(omitted, fixture.filer),
+    Error,
+    "Schedule B market discount differs from retained broker",
+  );
+});
+
+Deno.test("issued 1099-B market discount uses the lesser of gain and box 1f", () => {
+  const pending = {
+    f1099b: {
+      f1099bs: [{
+        part: "A",
+        description: "Market discount bond",
+        date_acquired: "2025-01-01",
+        date_sold: "2025-07-01",
+        proceeds: 1_000,
+        cost_basis: 800,
+        box1f_accrued_market_discount: 300,
+        market_discount_payer_name: "Bond Broker",
+      }],
+    },
+    schedule_b: { taxable_interest_net: 200, payer_name: "Bond Broker" },
+    f1040: { line2b_taxable_interest: 200 },
+    agi_aggregator: { line2b_taxable_interest: 200 },
+  };
+  assertScheduleBInterestJoin(pending);
+  assertThrows(
+    () =>
+      assertScheduleBInterestJoin({
+        ...pending,
+        schedule_b: { taxable_interest_net: 300, payer_name: "Bond Broker" },
+        f1040: { line2b_taxable_interest: 300 },
+        agi_aggregator: { line2b_taxable_interest: 300 },
+      }),
+    Error,
+    "Schedule B market discount differs from retained broker",
+  );
+});
+
 Deno.test("excluded savings-bond interest remains zero on Form 1040", () => {
   assertScheduleBInterestJoin({
     schedule_b: { taxable_interest_net: 800, ee_bond_exclusion: 800 },

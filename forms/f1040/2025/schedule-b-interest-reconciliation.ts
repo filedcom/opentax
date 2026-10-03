@@ -5,6 +5,8 @@ import {
 } from "../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { inputSchema as intSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
+import { inputSchema as brokerSchema } from "../nodes/inputs/f1099b/index.ts";
+import { inputSchema as transactionSchema } from "../nodes/inputs/f8949/index.ts";
 
 type InterestDetail = {
   payer_name: string;
@@ -101,6 +103,64 @@ function assertIssuedInterestDetails(
   }
 }
 
+function assertMarketDiscountSources(
+  pending: Readonly<Record<string, unknown>>,
+  scheduleB: ReturnType<typeof scheduleBSchema.parse> | undefined,
+): void {
+  const expected: { payer: string; amount: number }[] = [];
+  if (pending.f1099b !== undefined) {
+    for (const row of brokerSchema.parse(pending.f1099b).f1099bs) {
+      const amount = Math.min(
+        Math.max(0, row.proceeds - row.cost_basis),
+        row.box1f_accrued_market_discount ?? 0,
+      );
+      if (amount > 0) {
+        expected.push({ payer: row.market_discount_payer_name ?? "", amount });
+      }
+    }
+  }
+  if (pending.f8949 !== undefined) {
+    for (const row of transactionSchema.parse(pending.f8949).f8949s) {
+      const amount = row.accrued_market_discount ?? 0;
+      if (amount > 0) {
+        expected.push({ payer: row.market_discount_payer_name ?? "", amount });
+      }
+    }
+  }
+  if (expected.length === 0) return;
+  const amounts = scheduleB?.taxable_interest_net === undefined
+    ? []
+    : Array.isArray(scheduleB.taxable_interest_net)
+    ? scheduleB.taxable_interest_net
+    : [scheduleB.taxable_interest_net];
+  const names = scheduleB?.payer_name === undefined
+    ? []
+    : Array.isArray(scheduleB.payer_name)
+    ? scheduleB.payer_name
+    : [scheduleB.payer_name];
+  if (names.length !== amounts.length) {
+    throw new Error(
+      "Schedule B market-discount payer names and amounts must pair",
+    );
+  }
+  const remaining = amounts.map((amount, index) => ({
+    payer: names[index],
+    amount,
+  }));
+  for (const row of expected) {
+    const index = remaining.findIndex((actual) =>
+      actual.payer === row.payer &&
+      Math.abs(actual.amount - row.amount) < 0.01
+    );
+    if (index < 0) {
+      throw new Error(
+        "Schedule B market discount differs from retained broker and Form 8949 sources",
+      );
+    }
+    remaining.splice(index, 1);
+  }
+}
+
 /** Reconcile finalized Schedule B taxable interest to Form 1040 and AGI. */
 export function assertScheduleBInterestJoin(
   pending: Readonly<Record<string, unknown>>,
@@ -113,6 +173,7 @@ export function assertScheduleBInterestJoin(
     pending,
     details === undefined ? [] : Array.isArray(details) ? details : [details],
   );
+  assertMarketDiscountSources(pending, scheduleB);
   const form1040 = pending.f1040 as Record<string, unknown> | undefined;
   const agi = pending.agi_aggregator as Record<string, unknown> | undefined;
   const line2b = form1040?.line2b_taxable_interest ?? 0;
