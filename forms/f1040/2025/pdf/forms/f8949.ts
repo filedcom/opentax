@@ -347,21 +347,25 @@ export const form8949Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "fullName",
       pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+      includeWhen: (fields) => fields.pdf_page_index === 0,
     },
     {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+      includeWhen: (fields) => fields.pdf_page_index === 0,
     },
     {
       kind: "text",
       domainKey: "fullName",
       pdfField: "topmostSubform[0].Page2[0].f2_01[0]",
+      includeWhen: (fields) => fields.pdf_page_index === 1,
     },
     {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
+      includeWhen: (fields) => fields.pdf_page_index === 1,
     },
   ],
 };

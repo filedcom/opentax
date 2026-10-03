@@ -460,6 +460,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Native MeF and PDF parity
 
+- [x] Fill filer identity only on each retained Form 8949, Schedule E, and Form 8912 PDF page. The shared builder still rejects an unsafely discarded populated identity field, while per-instance page selection now omits the other page's widgets. The 36-case Form 8949/builder group and focused Schedule E/Form 8912 official-PDF cases pass; wider visual packet review remains open.
+
 - [x] Recompute prepared Form 3800 PDF parts from the retained source and native return before PDF export. A changed credit amount now rejects even if its separate parts digest is recomputed; the focused valid and tampered packet case passes. Wider credit-source coverage, visual review, and the full batch remain open.
 
 - [x] Recheck an identified withheld W-2G payer-issued Copy B's readable form fields when a prepared MeF bundle is reused for PDF export. A source-backed return now rejects a changed withholding box even when the changed PDF bytes, source copy digest, prepared source digest, and attachment manifest digest are updated together. The focused prepared-PDF case passes; wider W-2G issuer authenticity and packet review remain open.

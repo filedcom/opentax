@@ -622,6 +622,7 @@ Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", asy
   for (
     const [name, page] of [
       ["amount", first],
+      ["filer_primary", first],
       ["filer_name", second],
       ["row_1", second],
     ] as const
@@ -663,6 +664,26 @@ Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", asy
       Error,
       'populated field "filer_name" is not on a retained PDF page',
     );
+    const selectedPage = await fillFormPdf(
+      {
+        ...base,
+        filerFields: [{
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_primary",
+          includeWhen: () => true,
+        }, {
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_name",
+          includeWhen: () => false,
+        }],
+      },
+      { amount: 25 },
+      mockFiler,
+      tmpDir,
+    );
+    assertEquals(selectedPage instanceof Uint8Array, true);
     await assertRejects(
       () =>
         fillFormPdf(

@@ -87,7 +87,12 @@ export interface PdfFormDescriptor {
   /** Zero-based source PDF pages to retain for a particular instance. */
   readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];
   readonly fields: ReadonlyArray<PdfFieldEntry>;
-  readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
+  readonly filerFields?: ReadonlyArray<
+    PdfFieldEntry & {
+      /** Fill identity on this instance only when its page is retained. */
+      readonly includeWhen?: (fields: Record<string, unknown>) => boolean;
+    }
+  >;
   readonly rows?: PdfRowDescriptor;
   /** Draw form-specific text on copied form pages before they are merged. */
   readonly decoratePages?: (

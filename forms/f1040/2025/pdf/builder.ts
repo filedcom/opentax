@@ -397,7 +397,10 @@ export async function fillFormPdf(
   // Fill filer identity fields (domainKey supports dot-notation, e.g. "address.line1")
   if (filer !== undefined) {
     const filerObj = filer as unknown as Record<string, unknown>;
-    const needsShownName = descriptor.filerFields?.some((entry) =>
+    const activeFilerFields = (descriptor.filerFields ?? []).filter((entry) =>
+      entry.includeWhen?.(fields) !== false
+    );
+    const needsShownName = activeFilerFields.some((entry) =>
       entry.domainKey === "nameShownOnForm1040"
     );
     let nameShownOnForm1040: string | undefined;
@@ -411,7 +414,7 @@ export async function fillFormPdf(
       }
       nameShownOnForm1040 = `${first} ${last}`;
     }
-    for (const entry of descriptor.filerFields ?? []) {
+    for (const entry of activeFilerFields) {
       const value = entry.domainKey === "nameShownOnForm1040"
         ? nameShownOnForm1040
         : resolvePath(filerObj, entry.domainKey);
