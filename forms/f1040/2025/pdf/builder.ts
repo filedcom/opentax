@@ -48,7 +48,10 @@ import { assertExtensionPaymentSource } from "../extension-payment-reconciliatio
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
-import { assertNoRepeatedBrokerSaleSources } from "../broker-sale-source-reconciliation.ts";
+import {
+  assertCapitalSaleSourceRows,
+  assertNoRepeatedBrokerSaleSources,
+} from "../broker-sale-source-reconciliation.ts";
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
@@ -546,6 +549,7 @@ export async function buildPdfBytes(
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
+  assertCapitalSaleSourceRows(normalized);
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);

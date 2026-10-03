@@ -85,6 +85,15 @@ graphs found 177 clean graphs, of which 18 had finalized Schedule D totals;
 all 18 agreed with the new print-total calculation. This is focused evidence,
 not a repository-wide batch or filled-page review.
 
+The next source-row replay passed **192/192** selected broker-sale and
+native/PDF builder cases, including a joint-owner broker positive and both
+exporters' rejection of changed broker proceeds, broker basis, and direct
+Form 8949 basis. A read-only graph audit found 177 clean review fixtures;
+five carried retained 1099-B or direct Form 8949 source rows and all five
+matched their Schedule D transactions. `deno check`, format, and lint passed
+for the changed code. This does not establish issued-copy authenticity or
+complete capital-disposition route coverage.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

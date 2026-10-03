@@ -157,6 +157,69 @@ Deno.test("final exports reject a changed Schedule D total even with a matching 
   );
 });
 
+Deno.test("final exports replay retained broker proceeds and basis into Schedule D", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  for (const changedField of ["proceeds", "cost_basis"] as const) {
+    const changed = {
+      ...pending,
+      f1099b: {
+        f1099bs: brokerRows.map((row, index) =>
+          index === 0 ? { ...row, [changedField]: row[changedField] + 1 } : row
+        ),
+      },
+    };
+    assertThrows(
+      () =>
+        buildMefXml(
+          changed as unknown as Parameters<typeof buildMefXml>[0],
+          filer,
+        ),
+      Error,
+      "Schedule D sale differs from retained 1099-B",
+    );
+    await assertRejects(
+      () => buildPdfBytes(changed, filer),
+      Error,
+      "Schedule D sale differs from retained 1099-B",
+    );
+  }
+});
+
+Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async () => {
+  const sale = {
+    part: Form8949Part.C,
+    description: "Unreported shares",
+    source_transaction_id: "direct-sale-1",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 1_000,
+    cost_basis: 700,
+  };
+  const result = f1040_2025.executeReturn({ general, f8949: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>300</CapitalGainLossAmt>",
+  );
+  const changed = {
+    ...pending,
+    f8949: { f8949s: [{ ...sale, cost_basis: 701 }] },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+  );
+});
+
 Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
   const direct = {
     part: Form8949Part.A,
