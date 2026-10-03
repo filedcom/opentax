@@ -53,7 +53,7 @@ zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
 26.09.0 through the local launcher. The retained log is
 `.state/research/ty2025-pr62-full-test-59911414.log` (SHA-256
 `07abcfbaf6f361e915c5ba861e27d1d9e5a7beaf982ea75c580028230eedc3cb`).
-The seven completed overtime/EIC page reviews and refreshed 167-case export
+The completed overtime/EIC and joint Form 9000 page reviews and refreshed 167-case export
 are separate evidence; this full automated pass does not complete the remaining
 visual, business-rule, or IRS ATS gates.
 
@@ -1051,6 +1051,16 @@ match the PDF and native XML. The completed checklist and artifact replay
 passed `scripts/check-ty2025-pdf-review.ts` at
 `.state/research/ty2025-filled-pdf-review/2026-10-03-custodial-eic-reviewed`.
 
+The four-page `joint-two-w2s-form9000` packet was also rendered and checked
+page by page. Its two W-2s provide $70,000 wages and $6,500 withholding;
+Form 1040 prints a $2,354 refund. The two attached Form 9000 copies print
+Alex's code 01 large-print request and Sam's code 05 Braille-ready-file
+request under their own names and SSNs, leaving standalone address/signature
+fields blank. The native XML contains two separately identified IRS9000
+documents with codes 01 and 05. The completed checklist and artifact replay
+passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-joint-form9000-reviewed`.
+
 After the overtime review-focus correction, the declared 167-case selection
 was regenerated from source content committed as `8e28daa7` in
 `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-reviewfocus`.
@@ -1059,7 +1069,7 @@ Its manifest SHA-256 is
 All 167 XML files passed the local TY2025 v5.4 XSD, and all 1,052 pages have
 matching source/XML/PDF digests and page counts. Compared with the earlier
 corrected export, no PDF or XML digest changed; exactly one source JSON
-digest changed for the corrected review label. Seven pages have separately
+digest changed for the corrected review label. Eleven pages have separately
 completed human checklists; the remaining pages have not.
 
 A full `PATH=/tmp/opentax-tools:$PATH deno task test` process launched before
