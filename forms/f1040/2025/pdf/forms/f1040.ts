@@ -506,12 +506,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkbox",
-    domainKey: "form8814_tax",
+    domainKey: "print_form8814_tax_box",
     pdfField: "topmostSubform[0].Page2[0].c2_9[0]",
   },
   {
     kind: "checkbox",
-    domainKey: "form4972_tax",
+    domainKey: "print_form4972_tax_box",
     // 2025 line 16 box 2: c2_10 at x370.2, y626.002.
     pdfField: "topmostSubform[0].Page2[0].c2_10[0]",
   },
@@ -1020,6 +1020,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
         ? { line5b_pension_taxable: "0" }
         : {}),
       print_form8888_attached: hasForm8888,
+      print_form8814_tax_box: typeof fields.form8814_tax === "number" &&
+        fields.form8814_tax > 0,
+      print_form4972_tax_box: typeof fields.form4972_tax === "number" &&
+        fields.form4972_tax > 0,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
       print_form8814_line7a_included: childGainDirect || childGainOnScheduleD,

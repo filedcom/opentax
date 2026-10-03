@@ -585,29 +585,35 @@ Deno.test("2025 Form 1040 PDF line 12e prints the selected deduction once", () =
 
 Deno.test("2025 Form 1040 PDF line 16 identifies Form 4972 in box 2", () => {
   const line16Checks = irs1040Pdf.fields.filter((field) =>
-    field.domainKey === "form8814_tax" || field.domainKey === "form4972_tax"
+    field.domainKey === "print_form8814_tax_box" ||
+    field.domainKey === "print_form4972_tax_box"
   );
   assertEquals(
     line16Checks.map((field) => [field.domainKey, field.kind, field.pdfField]),
     [
       [
-        "form8814_tax",
+        "print_form8814_tax_box",
         "checkbox",
         "topmostSubform[0].Page2[0].c2_9[0]",
       ],
       [
-        "form4972_tax",
+        "print_form4972_tax_box",
         "checkbox",
         "topmostSubform[0].Page2[0].c2_10[0]",
       ],
     ],
   );
+  const projected = irs1040Pdf.projectFields?.({
+    line16_income_tax: 500,
+    form4972_tax: 500,
+  }, {});
+  assertEquals(projected?.form4972_tax, 500);
+  assertEquals(projected?.print_form4972_tax_box, true);
+  assertEquals(projected?.print_form8814_tax_box, false);
   assertEquals(
-    irs1040Pdf.projectFields?.({
-      line16_income_tax: 500,
-      form4972_tax: 500,
-    }, {})?.form4972_tax,
-    500,
+    irs1040Pdf.projectFields?.({ form8814_tax: 135 }, {})
+      ?.print_form8814_tax_box,
+    true,
   );
 });
 
