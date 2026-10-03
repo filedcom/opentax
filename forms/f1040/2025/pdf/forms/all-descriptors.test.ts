@@ -69,6 +69,8 @@ for (const descriptor of ALL_PDF_FORMS) {
       f8844: "f8844",
       f8882: "f8882",
       f8994: "f8994",
+      // Form 9000's November 2021 revision remains the IRS current PDF.
+      f9000: "f9000",
     };
     const currentOnlyFilename = currentOnly[label];
     if (currentOnlyFilename) {

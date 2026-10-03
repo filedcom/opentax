@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { calculateForm8814 } from "../../../nodes/inputs/f8814/index.ts";
+import { schedule_b as scheduleBNode } from "../../../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { buildMefXml } from "../builder.ts";
 import {
   type FilerIdentity,
@@ -178,8 +179,14 @@ Deno.test({
     (sum, item) => sum + item.line12,
     0,
   );
+  const scheduleBSource = pending.schedule_b!;
+  const scheduleBProjection = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleBNode.inputSchema.parse(scheduleBSource),
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
   const xml = buildMefXml({
     ...pending,
+    schedule_b: { ...scheduleBSource, ...scheduleBProjection },
     schedule1: { line8z_form8814: line8z },
     f1040: { ...pending.f1040!, line8_additional_income: line8z },
   }, filer);

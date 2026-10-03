@@ -375,7 +375,7 @@ Deno.test("Form 1040 PDF line 1h labels only an identified code-8 corrective pla
         },
       ),
     Error,
-    "repeats the same payer",
+    "repeats the same issued-copy source reference",
   );
   assertThrows(
     () =>

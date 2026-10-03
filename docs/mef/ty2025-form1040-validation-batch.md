@@ -6,6 +6,33 @@ remains open until scope, route, filled-page, and IRS acceptance work is done.
 The historical 2026-09-26 result (6,596 passed, 0 failed, 48 ignored)
 predates the current worktree.
 
+The 2026-10-03 diagnostic `deno task test` at `a5f4229c` reported **10,415
+passed, 152 failed, 459 ignored** in 12m2s. The isolated worktree could not
+see the locally cached TY2025 v5.4 XSD (114 schema failures and one `stat`
+failure), and 25 PDF extraction cases could not spawn `pdftotext`. The
+remaining 12 failures exposed two additive AGI-source normalization errors,
+an outdated Form 9000 PDF-URL expectation, and rejection tests that expected a
+later guard than the one reached by their tampered source. The worktree now
+uses the cached schema through an ignored local link and a local Poppler
+launcher on `PATH`; neither is committed. Focused PAB, Form 8814, Form 8288-A,
+Form 8828, and Form 8915-F cases passed after the corrections. This diagnostic
+is a failed gate, with the full corrected rerun recorded separately below.
+
+The first schema-enabled rerun on 2026-10-03 was stopped after five failures:
+three direct-XSD fixtures omitted retained source/print fields (Form 4972,
+Form 8615 twice, and Form 8814), and one Form 8962 negative expected a later
+MAGI guard after the earlier 1099-INT/1040 source guard rejected the change.
+The four XSD fixtures and the Form 8962 case passed focused reruns after their
+fixture/assertion corrections. That interrupted run is diagnostic only.
+
+The subsequent complete `deno task test` on 2026-10-03 reported **11,027
+passed, one failed** in 51m24s, with no ignored tests reported. All 179
+source-fixture XML/XSD cases passed. The sole failure was an EIC negative test
+that changed Form 1040 line 2a but expected a later investment-income guard;
+the earlier 1099-INT/1040 source guard rejected it. The corrected assertion
+passed a focused rerun. This complete diagnostic is still a failed gate;
+the final full rerun must pass before claiming local batch stability.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
