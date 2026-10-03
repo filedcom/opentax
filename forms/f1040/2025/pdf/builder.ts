@@ -225,6 +225,10 @@ function assertRetainedPdfFields(
   doc: PDFDocument,
   descriptor: PdfFormDescriptor,
   fields: Record<string, unknown>,
+  filerFields: ReadonlyArray<{ entry: PdfFieldEntry; value: unknown }>,
+  rowFields: ReadonlyArray<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  >,
 ): void {
   const indices = descriptor.pageIndices?.(fields);
   if (indices === undefined) return;
@@ -241,8 +245,29 @@ function assertRetainedPdfFields(
   }
   const retained = new Set(indices.map((index) => String(pages[index].ref)));
   const form = doc.getForm();
-  for (const entry of descriptor.fields) {
-    const value = fields[entry.domainKey];
+  const assertOnRetainedPage = (name: string): void => {
+    const widgets = form.getField(name).acroField.getWidgets();
+    if (
+      widgets.length === 0 ||
+      !widgets.some((widget) => {
+        const page = widget.P();
+        return page !== undefined && retained.has(String(page));
+      })
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
+      );
+    }
+  };
+  for (
+    const { entry, value } of [
+      ...descriptor.fields.map((entry) => ({
+        entry,
+        value: fields[entry.domainKey],
+      })),
+      ...filerFields,
+    ]
+  ) {
     const printable = entry.kind === "checkboxWhen"
       ? value !== undefined && String(value) === entry.whenValue
       : entry.kind === "checkbox"
@@ -258,18 +283,18 @@ function assertRetainedPdfFields(
         ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
       ]
     ) {
-      const widgets = form.getField(name).acroField.getWidgets();
-      if (
-        widgets.length === 0 ||
-        !widgets.some((widget) => {
-          const page = widget.P();
-          return page !== undefined && retained.has(String(page));
-        })
-      ) {
-        throw new Error(
-          `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
-        );
-      }
+      assertOnRetainedPage(name);
+    }
+  }
+  for (const { name, value, kind } of rowFields) {
+    if (
+      kind === "checkbox"
+        ? value === true
+        : typeof value === "number"
+        ? Number.isFinite(value)
+        : typeof value === "string" && value.length > 0
+    ) {
+      assertOnRetainedPage(name);
     }
   }
 }
@@ -350,6 +375,10 @@ export async function fillFormPdf(
     updateMetadata: false,
   });
   const form = doc.getForm();
+  const filledFilerFields: Array<{ entry: PdfFieldEntry; value: unknown }> = [];
+  const filledRowFields: Array<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  > = [];
 
   // Fill computed fields
   for (const entry of descriptor.fields) {
@@ -381,6 +410,7 @@ export async function fillFormPdf(
         : resolvePath(filerObj, entry.domainKey);
       if (value === undefined || value === null) continue;
       fillEntry(form, entry, value, descriptor.pendingKey);
+      filledFilerFields.push({ entry, value });
     }
 
     // pdf-lib strips the IRS XFA layer, but the 2025 filing-status checkboxes
@@ -426,6 +456,7 @@ export async function fillFormPdf(
                   : String(value),
               );
             }
+            filledRowFields.push({ name: pdfField, value, kind: rf.kind });
           } catch (err) {
             throw new Error(
               `[PDF] ${descriptor.pendingKey}: failed to fill row ${
@@ -439,7 +470,13 @@ export async function fillFormPdf(
     }
   }
 
-  assertRetainedPdfFields(doc, descriptor, fields);
+  assertRetainedPdfFields(
+    doc,
+    descriptor,
+    fields,
+    filledFilerFields,
+    filledRowFields,
+  );
 
   // IRS PDFs reference non-embedded fonts (e.g. HelveticaLTStd-Bold) in their
   // field DA strings. pdf-lib cannot synthesize these, so form.flatten() would

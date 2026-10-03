@@ -613,6 +613,107 @@ Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async (
   }
 });
 
+Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const document = await PDFDocument.create();
+  const first = document.addPage([612, 792]);
+  const second = document.addPage([612, 792]);
+  const form = document.getForm();
+  for (
+    const [name, page] of [
+      ["amount", first],
+      ["filer_name", second],
+      ["row_1", second],
+    ] as const
+  ) {
+    form.createTextField(name).addToPage(page, {
+      x: 10,
+      y: 700,
+      width: 200,
+      height: 20,
+    });
+  }
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    const base = {
+      pendingKey: "f1040",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: "amount",
+      }],
+      pageIndices: () => [0],
+    };
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          {
+            ...base,
+            filerFields: [{
+              kind: "text",
+              domainKey: "nameShownOnForm1040",
+              pdfField: "filer_name",
+            }],
+          },
+          { amount: 25 },
+          mockFiler,
+          tmpDir,
+        ),
+      Error,
+      'populated field "filer_name" is not on a retained PDF page',
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          {
+            ...base,
+            rows: {
+              domainKey: "items",
+              maxRows: 1,
+              rowFields: [{
+                kind: "text",
+                domainKey: "value",
+                pdfFieldPattern: "row_{row}",
+              }],
+            },
+          },
+          { amount: 25, items: [{ value: 0 }] },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'populated field "row_1" is not on a retained PDF page',
+    );
+    const retained = await fillFormPdf(
+      {
+        ...base,
+        filerFields: [{
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_name",
+        }],
+        rows: {
+          domainKey: "items",
+          maxRows: 1,
+          rowFields: [{
+            kind: "text",
+            domainKey: "value",
+            pdfFieldPattern: "row_{row}",
+          }],
+        },
+        pageIndices: () => [0, 1],
+      },
+      { amount: 25, items: [{ value: 0 }] },
+      mockFiler,
+      tmpDir,
+    );
+    assertEquals(retained instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
   const tmpDir = await Deno.makeTempDir();
   const wageField = "topmostSubform[0].Page1[0].f1_47[0]";
