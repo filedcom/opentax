@@ -88,7 +88,7 @@ type ScheduleBInput = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Part I — Line 2: sum all per-payer taxable interest amounts
-function totalTaxableInterest(input: ScheduleBInput): number {
+export function totalTaxableInterest(input: ScheduleBInput): number {
   return normalizeArray(input.taxable_interest_net)
     .reduce((sum, n) => sum + n, 0) +
     normalizeArray(input.interest_detail).reduce(
@@ -98,7 +98,7 @@ function totalTaxableInterest(input: ScheduleBInput): number {
 }
 
 // Part I — Line 4: total interest minus EE/I bond exclusion (clamped to >= 0)
-function line4TaxableInterest(input: ScheduleBInput): number {
+export function line4TaxableInterest(input: ScheduleBInput): number {
   const line2 = totalTaxableInterest(input);
   const exclusion = input.ee_bond_exclusion ?? 0;
   return Math.max(0, line2 - exclusion);

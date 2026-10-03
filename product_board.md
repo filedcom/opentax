@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1011 bounded completed slices are recorded in the
+inside** that section. The 1012 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -24,7 +24,7 @@ until their full routes or approved rejection boundaries are established.
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
-W-2, 1099, payment, and Form 1040 component totals; shared native/PDF preflight;
+W-2, 1099, payment, Schedule B interest, and Form 1040 component totals; shared native/PDF preflight;
 PDF field, checkbox, retained-page, and filer-name checks; and prepared
 attachment/archive/A2A integrity checks. Selected 21-case/70-page and
 55-case/185-page synthetic packets passed their completed visual checklists

@@ -88,6 +88,7 @@ import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
 import { assertQualifiedDividendSubset } from "../return-wide-arithmetic.ts";
 import { assert1099DivIncomeSource } from "../f1099div-income-reconciliation.ts";
+import { assertScheduleBInterestJoin } from "../schedule-b-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
@@ -544,6 +545,7 @@ export async function buildPdfBytes(
   assertLine1aWageSource(normalized);
   assertQualifiedDividendSubset(normalized.f1040 ?? {});
   assert1099DivIncomeSource(normalized.f1040 ?? {}, normalized);
+  assertScheduleBInterestJoin(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
