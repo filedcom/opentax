@@ -91,7 +91,10 @@ import {
   assertQualifiedDividendSubset,
 } from "../return-wide-arithmetic.ts";
 import { assertDividendIncomeSources } from "../f1099div-income-reconciliation.ts";
-import { assertScheduleBInterestJoin } from "../schedule-b-interest-reconciliation.ts";
+import {
+  assertScheduleBInterestJoin,
+  assertScheduleBPreparedProjection,
+} from "../schedule-b-interest-reconciliation.ts";
 import { assertTaxExemptInterestSource } from "../tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
@@ -551,6 +554,7 @@ export async function buildPdfBytes(
   assertFinalBalanceProjection(normalized.f1040 ?? {});
   assertDividendIncomeSources(normalized.f1040 ?? {}, normalized);
   assertScheduleBInterestJoin(normalized);
+  assertScheduleBPreparedProjection(normalized);
   assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertLine1iCombatPayElectionSource(normalized);

@@ -46,6 +46,14 @@ unemployment, dividend, and Schedule B source and owner facts. The production
 source guards were unchanged. These selected files are diagnostic preparation,
 not the deferred repository-wide batch.
 
+After the Schedule B projection guard, the selected native builder, interest
+reconciliation, and Part III end-to-end files passed **165/165** on 2026-10-03.
+The $1,501 sourced-interest case now rejects missing or changed prepared payer
+rows in both exporters. The source-backed `single-child-unearned-income`
+review fixture also passed its TY2025 v5.4 XML/XSD case with $5,000 interest
+after the guard. This is a focused regression; the complete artifact batch and
+all-page inspection remain open.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

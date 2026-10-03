@@ -13,6 +13,7 @@ import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
 import { assertPreparedAttachmentManifest } from "./prepared-attachment-manifest.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import { buildPdfBytes } from "../pdf/builder.ts";
+import { schedule_b as scheduleBNode } from "../../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
 import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
@@ -1950,8 +1951,25 @@ Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => 
   assertNotIncludes(xml, "<IRS1040ScheduleF>");
 });
 
-Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
-  const xml = buildMefXml({
+Deno.test("IRS1040ScheduleB present when schedule_b has data", async () => {
+  const source = {
+    interest_detail: [{
+      payer_name: "Fixture Bank",
+      gross: 1501,
+      net: 1501,
+      nominee: 0,
+      accrued: 0,
+      oid_adjustment: 0,
+      bond_premium: 0,
+    }],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  };
+  const projection = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
+  const pending = {
     f1099int: {
       f1099ints: [{
         payer_name: "Fixture Bank",
@@ -1959,7 +1977,48 @@ Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
         box1: 1501,
       }],
     },
-    f1040: { taxpayer_ssn: "123456789", line2b_taxable_interest: 1501 },
+    f1040: {
+      taxpayer_ssn: "123456789",
+      filing_status: "single" as const,
+      digital_assets: false,
+      line2b_taxable_interest: 1501,
+    },
+    agi_aggregator: { line2b_taxable_interest: 1501 },
+    schedule_b: { ...source, ...projection },
+  };
+  const xml = buildMefXml(pending);
+  assertStringIncludes(xml, "<IRS1040ScheduleB ");
+  const changed = {
+    ...pending,
+    schedule_b: { ...pending.schedule_b, print_int_payer_1: "Another Bank" },
+  };
+  assertThrows(
+    () => buildMefXml(changed),
+    Error,
+    "Schedule B prepared projection differs at print_int_payer_1",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, sampleFiler()),
+    Error,
+    "Schedule B prepared projection differs at print_int_payer_1",
+  );
+});
+
+Deno.test("both exports reject a missing prepared Schedule B interest projection", async () => {
+  const pending = {
+    f1099int: {
+      f1099ints: [{
+        payer_name: "Fixture Bank",
+        recipient_tin: "123456789",
+        box1: 1501,
+      }],
+    },
+    f1040: {
+      taxpayer_ssn: "123456789",
+      filing_status: "single" as const,
+      digital_assets: false,
+      line2b_taxable_interest: 1501,
+    },
     agi_aggregator: { line2b_taxable_interest: 1501 },
     schedule_b: {
       interest_detail: [{
@@ -1971,13 +2030,20 @@ Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
         oid_adjustment: 0,
         bond_premium: 0,
       }],
-      interest_rows: [{ payerName: "Fixture Bank", amount: 1501 }],
-      print_line2_total: 1501,
       foreign_accounts_question: false,
       foreign_trust_question: false,
     },
-  });
-  assertStringIncludes(xml, "<IRS1040ScheduleB ");
+  };
+  assertThrows(
+    () => buildMefXml(pending),
+    Error,
+    "Schedule B prepared projection differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, sampleFiler()),
+    Error,
+    "Schedule B prepared projection differs",
+  );
 });
 
 Deno.test("IRS1040ScheduleB absent at the $1,500 threshold", () => {

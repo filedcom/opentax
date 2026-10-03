@@ -93,7 +93,10 @@ import {
   assertQualifiedDividendSubset,
 } from "../return-wide-arithmetic.ts";
 import { assertDividendIncomeSources } from "../f1099div-income-reconciliation.ts";
-import { assertScheduleBInterestJoin } from "../schedule-b-interest-reconciliation.ts";
+import {
+  assertScheduleBInterestJoin,
+  assertScheduleBPreparedProjection,
+} from "../schedule-b-interest-reconciliation.ts";
 import { assertTaxExemptInterestSource } from "../tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
@@ -255,6 +258,7 @@ function buildReturnXml(
   assertFinalBalanceProjection(pending.f1040 ?? {});
   assertDividendIncomeSources(pending.f1040 ?? {}, pending);
   assertScheduleBInterestJoin(pending);
+  assertScheduleBPreparedProjection(pending);
   assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertLine1iCombatPayElectionSource(pending);
