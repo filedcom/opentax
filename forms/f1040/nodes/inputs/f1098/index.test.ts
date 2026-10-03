@@ -11,6 +11,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -219,7 +220,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   assertForm1098MortgageLimitSources(
     source,
     ["111223333"],
-    true,
+    FilingStatus.Single,
     29_988,
     0,
     0,
@@ -231,7 +232,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       assertForm1098MortgageLimitSources(
         { f1098s: source.f1098s },
         ["111223333"],
-        true,
+        FilingStatus.Single,
         29_988,
         0,
         0,
@@ -244,6 +245,36 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   assertThrows(
     () =>
       assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        FilingStatus.MarriedFilingJointly,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "multiple post-2017 mortgages over $750,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        FilingStatus.MarriedFilingSeparately,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "multiple post-2017 mortgages over $375,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
         {
           f1098s: [
             source.f1098s[0],
@@ -251,7 +282,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
           ],
         },
         ["111223333"],
-        true,
+        FilingStatus.Single,
         16_660,
         0,
         0,
@@ -276,7 +307,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        false,
+        FilingStatus.MarriedFilingJointly,
         29_988,
         0,
         0,
@@ -284,14 +315,14 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "same single filer",
+    "verified filing status",
   );
   assertThrows(
     () =>
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        true,
+        FilingStatus.Single,
         29_988,
         0,
         1,
@@ -306,7 +337,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        true,
+        FilingStatus.Single,
         29_988,
         0,
         0,

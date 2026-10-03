@@ -1620,3 +1620,15 @@ snapshots, plus full/partial unreviewed over-limit rejection in native and PDF
 exports. All **56 focused input/final-export tests** and the existing
 two-loan TY2025 XSD case passed. This focused check does not replace the earlier 11,050-test full
 suite at frozen head `f92a09e4`; the implementation has changed since then.
+
+## Multiple mortgage filing-status regression (2026-10-04)
+
+The Form 1098 limit preflight now receives the final filing status in both
+exporters. A source-level case rejects unreviewed MFJ interest over $750,000
+in combined box 2 snapshots and MFS over $375,000. The three-loan final-export
+fixture adds a joint return with the third lender copy owned by the spouse:
+unreviewed native/PDF exports reject, while a verified MFJ Table 1 workpaper
+reconciles $3,000 reported interest to $2,499 in native XML and filled PDF.
+The local TY2025 XSD and focused tests passed. These checks do not establish
+complete MFS allocation, lender-statement authenticity, IRS business-rule
+acceptance, or the final full-suite gate.

@@ -10,6 +10,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 // FOR dropdown: destination schedule/form
 // A = Schedule A, C = Schedule C, E = Schedule E. Positive C/E box 1 and
@@ -41,7 +42,8 @@ export const mortgageLimitReviewSchema = z.object({
   table1_workpaper_reference: z.string().trim().min(1),
   all_qualified_home_mortgages_included_verified: z.literal(true),
   all_post_2017_acquisition_debt_verified: z.literal(true),
-  single_filing_status_verified: z.literal(true),
+  single_filing_status_verified: z.literal(true).optional(),
+  filing_status_verified: z.enum(["single", "mfj", "hoh", "qss"]).optional(),
   loans: z.array(
     z.object({
       source_document_reference: z.string().trim().min(1),
@@ -54,7 +56,14 @@ export const mortgageLimitReviewSchema = z.object({
       ).length(12),
     }).strict(),
   ).min(2),
-}).strict();
+}).strict().refine(
+  (review) =>
+    review.single_filing_status_verified === true
+      ? review.filing_status_verified === undefined ||
+        review.filing_status_verified === "single"
+      : review.filing_status_verified !== undefined,
+  { message: "Mortgage limit review needs one verified filing status" },
+);
 
 const crossLoanBalanceSchema = z.object({
   source_document_reference: z.string().trim().min(1),
@@ -600,7 +609,7 @@ export function assertPurchasePointsCrossLoanSources(
 export function assertForm1098MortgageLimitSources(
   source: unknown,
   recipientTins: readonly string[],
-  singleFiler: boolean,
+  filingStatus: FilingStatus,
   filedLine8a: number,
   filedLine8b: number,
   filedLine8c: number,
@@ -628,26 +637,42 @@ export function assertForm1098MortgageLimitSources(
       (item.box2_outstanding_principal ?? 0) > 0 &&
       item.box1_mortgage_interest > 0;
   });
+  const debtLimit = filingStatus === FilingStatus.MarriedFilingSeparately
+    ? 375_000
+    : 750_000;
   if (
-    singleFiler && fullYearPost2017.length >= 2 &&
+    fullYearPost2017.length >= 2 &&
     fullYearPost2017.reduce(
         (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
         0,
-      ) > 750_000 &&
+      ) > debtLimit &&
     !parsed.mortgage_limit_review
   ) {
     throw new Error(
-      "Schedule A multiple post-2017 mortgages over $750,000 need a supported whole-return Pub. 936 limit review",
+      `Schedule A multiple post-2017 mortgages over $${
+        debtLimit.toLocaleString("en-US")
+      } need a supported whole-return Pub. 936 limit review`,
     );
   }
   if (!parsed.mortgage_limit_review) return;
+  const verifiedStatus = parsed.mortgage_limit_review.filing_status_verified ??
+    (parsed.mortgage_limit_review.single_filing_status_verified
+      ? "single"
+      : undefined);
+  const expectedStatus = {
+    [FilingStatus.Single]: "single",
+    [FilingStatus.MarriedFilingJointly]: "mfj",
+    [FilingStatus.MarriedFilingSeparately]: "mfs",
+    [FilingStatus.HeadOfHousehold]: "hoh",
+    [FilingStatus.QualifyingSurvivingSpouse]: "qss",
+  }[filingStatus];
   const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
   const expectedLine8a = parsed.f1098s.reduce(
     (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
     0,
   );
   if (
-    !singleFiler ||
+    verifiedStatus !== expectedStatus ||
     parsed.f1098s.some((item) =>
       !item.recipient_tin ||
       !allowed.has(item.recipient_tin.replaceAll("-", ""))
@@ -657,7 +682,7 @@ export function assertForm1098MortgageLimitSources(
     hasMortgageInterestCredit
   ) {
     throw new Error(
-      "Schedule A multiple-loan mortgage-limit allocation needs the same single filer, sourced line 8a interest, and no other mortgage-interest or points routes",
+      "Schedule A multiple-loan mortgage-limit allocation needs the verified filing status, filer-owned sourced line 8a interest, and no other mortgage-interest or points routes",
     );
   }
 }

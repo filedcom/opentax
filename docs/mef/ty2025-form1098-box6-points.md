@@ -166,7 +166,7 @@ Form 8396 interaction, or other mortgage sources.
 
 ## Multiple full-year post-2017 mortgages (2026-10-03)
 
-The same single-filer Table 1 review now accepts two or more full-year
+The original single-filer Table 1 review accepts two or more full-year
 post-2017 acquisition loans. Its source list must match every Form 1098, with
 twelve distinct monthly lender balances for each loan; one whole-return
 average-balance ratio determines the exact sum of deductible box 1 interest.
@@ -182,9 +182,20 @@ $2,499 at the three-decimal Table 1 ratio, including local TY2025 XSD-valid
 XML and filled PDF. A second case verifies three $300,000 box 2 snapshots
 with $200,000 monthly average balances permit the full $3,000; unreviewed
 over-limit full and partial claims reject in both exporters. This remains a
-bounded full-year/single-filer route. Mixed debt ages, part-year balances,
+bounded full-year route. Mixed debt ages, part-year balances,
 points, other mortgage sources, authentic workpaper bytes, and IRS acceptance
 remain open. [Publication 936 (2025)](https://www.irs.gov/publications/p936)
+
+On 2026-10-04, the whole-return review also gained a verified filing-status
+field for MFJ, HOH, and qualifying surviving spouse while retaining the
+original Single field. A joint fixture places the third lender copy with the
+spouse and checks $2,499 across native XML, locally validated TY2025 XSD, and
+filled PDF. Two or more full-year post-2017 lender copies above the box 2
+snapshot sum now trigger a review for every filing status: $750,000 for Single,
+MFJ, HOH, and qualifying surviving spouse, and $375,000 for MFS. The supported
+positive review remains full-year acquisition debt; MFS above its limit stays
+guarded until its separate allocation is modeled. Status and recipient
+identity must match the final return in both exporters.
 
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 

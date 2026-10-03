@@ -8,6 +8,9 @@ import { buildPdfBytes } from "./pdf/builder.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
+const jointBase = pdfReviewFixtures.find((item) =>
+  item.id === "joint-two-w2s"
+)!;
 const xsdPath = new URL(
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
@@ -16,6 +19,7 @@ const xsdPath = new URL(
 async function lenderCopy(
   lender: string,
   principal: number,
+  recipientLastFour = "3333",
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.addPage([612, 792]);
@@ -25,7 +29,7 @@ async function lenderCopy(
     const [field, value] of Object.entries({
       [`${copy}.CopyHeader[0].CalendarYear[0].f2_1[0]`]: "25",
       [`${copy}.LeftCol[0].f2_2[0]`]: lender,
-      [`${copy}.LeftCol[0].f2_4[0]`]: "***-**-3333",
+      [`${copy}.LeftCol[0].f2_4[0]`]: `***-**-${recipientLastFour}`,
       [`${copy}.RightCol[0].f2_11[0]`]: "1000",
       [`${copy}.RightCol[0].f2_12[0]`]: String(principal),
       [`${copy}.RightCol[0].f2_13[0]`]: "01/15/2020",
@@ -37,10 +41,19 @@ async function lenderCopy(
   return doc.save();
 }
 
-function threeLoans(principal: number, deductible = 1_000) {
+function threeLoans(
+  principal: number,
+  deductible = 1_000,
+  joint = false,
+) {
   return Promise.all([1, 2, 3].map(async (number) => {
     const lender = `Example Lender ${number}`;
-    const bytes = await lenderCopy(lender, principal);
+    const recipientTin = joint && number === 3 ? "444-55-6666" : "111-22-3333";
+    const bytes = await lenderCopy(
+      lender,
+      principal,
+      recipientTin.slice(-4),
+    );
     const hash = Array.from(
       new Uint8Array(
         await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
@@ -49,7 +62,7 @@ function threeLoans(principal: number, deductible = 1_000) {
     ).join("");
     return {
       lender_name: lender,
-      recipient_tin: "111-22-3333",
+      recipient_tin: recipientTin,
       source_document_reference: `2025 ${lender} Copy B`,
       box1_mortgage_interest: 1_000,
       box1_current_year_deductible_interest: deductible,
@@ -69,18 +82,21 @@ async function resultFor(
   principal: number,
   deductible = 1_000,
   reviewedBalance?: number,
+  joint = false,
 ) {
   const result = f1040_2025.executeReturn({
-    ...base.inputs,
+    ...(joint ? jointBase.inputs : base.inputs),
     schedule_a: { force_itemized: true },
-    f1098: await threeLoans(principal, deductible),
+    f1098: await threeLoans(principal, deductible, joint),
     ...(reviewedBalance === undefined ? {} : {
       f1098_mortgage_limit_review: {
         mortgage_limit_review: {
           table1_workpaper_reference: "2025 three-loan Pub. 936 Table 1",
           all_qualified_home_mortgages_included_verified: true,
           all_post_2017_acquisition_debt_verified: true,
-          single_filing_status_verified: true,
+          ...(joint ? { filing_status_verified: "mfj" } : {
+            single_filing_status_verified: true,
+          }),
           loans: [1, 2, 3].map((number) => ({
             source_document_reference: `2025 Example Lender ${number} Copy B`,
             monthly_balance_records: Array.from(
@@ -210,6 +226,69 @@ Deno.test("three sourced mortgages apply one reviewed Pub. 936 limit in native a
     reviewedBundle,
   );
   assertEquals((await PDFDocument.load(reviewedPdf)).getPageCount(), 3);
+
+  const jointUnreviewed = await resultFor(300_000, 1_000, undefined, true);
+  assertThrows(
+    () => buildMefXml(jointUnreviewed.pending, jointUnreviewed.filer),
+    Error,
+    message,
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        jointUnreviewed.pending,
+        jointUnreviewed.filer,
+        ".pdf-cache",
+      ),
+    Error,
+    message,
+  );
+  const jointReviewed = await resultFor(300_000, 833, 300_000, true);
+  const jointBundle = await buildMefBundle(jointReviewed.pending, {
+    filer: jointReviewed.filer,
+    attachments: [],
+  });
+  assertEquals(
+    jointBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>2499</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const jointXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(jointXmlPath, jointBundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, jointXmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(jointXmlPath);
+  }
+  const jointPdf = await buildPdfBytes(
+    jointBundle.pending,
+    jointReviewed.filer,
+    ".pdf-cache",
+    jointBundle,
+  );
+  assertEquals((await PDFDocument.load(jointPdf)).getPageCount(), 3);
+  const jointPdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(jointPdfPath, jointPdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", jointPdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extracted.code, 0, new TextDecoder().decode(extracted.stderr));
+    assertEquals(
+      new TextDecoder().decode(extracted.stdout).includes("2499"),
+      true,
+    );
+  } finally {
+    await Deno.remove(jointPdfPath);
+  }
 
   const belowAverageLimit = await resultFor(300_000, 1_000, 200_000);
   assertEquals(
