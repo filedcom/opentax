@@ -35,6 +35,13 @@ const positive = (value: unknown): boolean =>
 
 const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
+    pendingKey: "f4547",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 4547 child-account election needs verified responsible-party authority, child eligibility, and a separately authorized electronic signature before attachment",
+    isActive: (fields) => Object.keys(fields).length > 0,
+  },
+  {
     pendingKey: "clergy",
     exportKinds: ["mef", "pdf"],
     reason:
