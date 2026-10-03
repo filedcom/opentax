@@ -90,6 +90,14 @@ passed **12/12** after exposing the cached TY2025 XSD and `pdftotext` to the
 separate worktree. Their first attempt failed on missing local tools and
 schema files, not on a source assertion.
 
+After the 1099-INT/OID ambiguous-copy guard on 2026-10-03, the two input
+files and direct export reconciliation passed **107/107**. A selected owner,
+Schedule B, tax-exempt interest, and native/PDF builder run passed **199/199**
+with the locally cached TY2025 schema and Poppler tools available in the
+separate worktree. These checks cover unidentified repeats, same-account OID
+obligations, and final export rejection. The complete repository-wide command
+and issued-copy verification remain open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

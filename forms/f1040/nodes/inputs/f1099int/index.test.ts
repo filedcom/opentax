@@ -145,6 +145,34 @@ Deno.test("1099-INT rejects a repeated source when payer TIN and account are abs
   );
 });
 
+Deno.test("1099-INT rejects positive same-payer copies when one lacks copy identity", () => {
+  const unidentified = minimalItem({ box1: 200 });
+  const identified = minimalItem({ box1: 300, account_number: "SAV-1" });
+  const message =
+    "1099-INT has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  assertThrows(
+    () => compute([identified, { ...identified, box1: 350 }]),
+    Error,
+    "repeats the same payer and account",
+  );
+  const distinct = compute([
+    identified,
+    minimalItem({ box1: 400, account_number: "SAV-2" }),
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
+      .length,
+    2,
+  );
+});
+
 Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
   assertEquals(findOutput(ordinary, "form4952"), undefined);

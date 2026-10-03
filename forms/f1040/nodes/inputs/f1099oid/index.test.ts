@@ -77,6 +77,37 @@ Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
   );
 });
 
+Deno.test("1099-OID distinguishes obligations and rejects unidentified repeated copies", () => {
+  const unidentified = { payer_name: "Bond Fund", box1_oid: 200 };
+  const identified = {
+    ...unidentified,
+    account_number: "BROKER-1",
+    box7_description: "Bond A",
+  };
+  const message =
+    "1099-OID has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified, box1_oid: 250 }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  assertThrows(
+    () => compute([identified, { ...identified, box1_oid: 250 }]),
+    Error,
+    "repeats the same payer, recipient, account, and obligation",
+  );
+  const distinct = compute([
+    identified,
+    { ...identified, box7_description: "Bond B" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
 Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
   const item = {
     payer_name: "Bond Fund",
