@@ -177,12 +177,14 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         recipient_tin: "111-22-3333",
         source_document_reference: "2025 first Form 1098",
         box3_origination_date: "01/15/2020",
+        box2_outstanding_principal: 500_000,
       }),
       reviewedInterest(16_000, 13_328, {
         lender_name: "Second Lender",
         recipient_tin: "111-22-3333",
         source_document_reference: "2025 second Form 1098",
         box3_origination_date: "02/15/2021",
+        box2_outstanding_principal: 400_000,
       }),
     ],
     mortgage_limit_review: {
@@ -223,6 +225,41 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
     0,
     false,
     false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        true,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "multiple post-2017 mortgages over $750,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: [
+            source.f1098s[0],
+            { ...source.f1098s[1], box1_current_year_deductible_interest: 0 },
+          ],
+        },
+        ["111223333"],
+        true,
+        16_660,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "multiple post-2017 mortgages over $750,000",
   );
   assertEquals(
     inputSchema.safeParse({

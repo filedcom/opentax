@@ -1606,3 +1606,17 @@ reviewed manifest SHA-256 is
 `3b0f027f0646ea5bfccaea1d9e19558412740edf8cceed5cfe41bc4aa81d1261`.
 The Form 1098 source-byte boundary, cross-loan limits, other points variants,
 remaining 179-case page review, business rules, and ATS remain open.
+
+## Multiple Form 1098 mortgage-limit regression (2026-10-03)
+
+The shared Pub. 936 Table 1 review now covers two or more full-year post-2017
+acquisition loans for one single filer. Focused source tests include the
+formerly accepted two-loan $900,000 box 2 sum without a whole-return review;
+it now rejects. The three-loan final-export test retains locally XSD-valid
+native XML and filled PDF for a reviewed $900,000 monthly-average balance:
+$3,000 issued interest × .833 = $2,499 Schedule A line 8a. It also verifies
+full $3,000 interest at $600,000 reviewed average despite $900,000 in box 2
+snapshots, plus full/partial unreviewed over-limit rejection in native and PDF
+exports. All **56 focused input/final-export tests** and the existing
+two-loan TY2025 XSD case passed. This focused check does not replace the earlier 11,050-test full
+suite at frozen head `f92a09e4`; the implementation has changed since then.

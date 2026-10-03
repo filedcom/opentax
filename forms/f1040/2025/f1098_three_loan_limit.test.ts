@@ -37,7 +37,7 @@ async function lenderCopy(
   return doc.save();
 }
 
-async function threeLoans(principal: number, deductible = 1_000) {
+function threeLoans(principal: number, deductible = 1_000) {
   return Promise.all([1, 2, 3].map(async (number) => {
     const lender = `Example Lender ${number}`;
     const bytes = await lenderCopy(lender, principal);
@@ -65,11 +65,38 @@ async function threeLoans(principal: number, deductible = 1_000) {
   }));
 }
 
-async function resultFor(principal: number, deductible = 1_000) {
+async function resultFor(
+  principal: number,
+  deductible = 1_000,
+  reviewedBalance?: number,
+) {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     schedule_a: { force_itemized: true },
     f1098: await threeLoans(principal, deductible),
+    ...(reviewedBalance === undefined ? {} : {
+      f1098_mortgage_limit_review: {
+        mortgage_limit_review: {
+          table1_workpaper_reference: "2025 three-loan Pub. 936 Table 1",
+          all_qualified_home_mortgages_included_verified: true,
+          all_post_2017_acquisition_debt_verified: true,
+          single_filing_status_verified: true,
+          loans: [1, 2, 3].map((number) => ({
+            source_document_reference: `2025 Example Lender ${number} Copy B`,
+            monthly_balance_records: Array.from(
+              { length: 12 },
+              (_, index) => ({
+                month: index + 1,
+                closing_balance: reviewedBalance,
+                lender_statement_reference: `Example Lender ${number} month ${
+                  index + 1
+                }`,
+              }),
+            ),
+          })),
+        },
+      },
+    }),
   });
   assertEquals(result.diagnostics, []);
   return {
@@ -78,7 +105,7 @@ async function resultFor(principal: number, deductible = 1_000) {
   };
 }
 
-Deno.test("three sourced mortgages under the debt limit print, while over-limit full or partial interest fails closed", async () => {
+Deno.test("three sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports", async () => {
   const { pending, filer } = await resultFor(200_000);
   assertEquals(pending.schedule_a?.line_8a_mortgage_interest_1098, 3_000);
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
@@ -133,7 +160,7 @@ Deno.test("three sourced mortgages under the debt limit print, while over-limit 
   );
 
   const overLimit = await resultFor(300_000);
-  const message = "three or more post-2017 mortgages over $750,000";
+  const message = "multiple post-2017 mortgages over $750,000";
   assertThrows(
     () => buildMefXml(overLimit.pending, overLimit.filer),
     Error,
@@ -147,6 +174,49 @@ Deno.test("three sourced mortgages under the debt limit print, while over-limit 
       }),
     Error,
     message,
+  );
+
+  const reviewed = await resultFor(300_000, 833, 300_000);
+  assertEquals(
+    reviewed.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    2_499,
+  );
+  const reviewedBundle = await buildMefBundle(reviewed.pending, {
+    filer: reviewed.filer,
+    attachments: [],
+  });
+  assertEquals(
+    reviewedBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>2499</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const reviewedXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(reviewedXmlPath, reviewedBundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, reviewedXmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(reviewedXmlPath);
+  }
+  const reviewedPdf = await buildPdfBytes(
+    reviewedBundle.pending,
+    reviewed.filer,
+    ".pdf-cache",
+    reviewedBundle,
+  );
+  assertEquals((await PDFDocument.load(reviewedPdf)).getPageCount(), 3);
+
+  const belowAverageLimit = await resultFor(300_000, 1_000, 200_000);
+  assertEquals(
+    buildMefXml(belowAverageLimit.pending, belowAverageLimit.filer).includes(
+      "<RptHomeMortgIntAndPointsAmt>3000</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
   );
   await assertRejects(
     () => buildPdfBytes(overLimit.pending, overLimit.filer, ".pdf-cache"),

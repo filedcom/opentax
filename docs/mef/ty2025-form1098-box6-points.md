@@ -141,7 +141,7 @@ $3,000 charged less $1,000 of service fees. The fixture remains unrun until
 the combined batch. This route does not prove the payoff statement's bytes,
 historical amortization, or multiple-debt limit allocation.
 
-## Bounded two-loan mortgage limit (implementation written; untested)
+## Original bounded two-loan mortgage limit
 
 For a single filer with exactly two full-year Form 1098 acquisition loans
 originated after December 15, 2017, the public
@@ -159,11 +159,32 @@ An active Form 8396 mortgage-interest credit also rejects in both exporters.
 
 A synthetic pair of $500,000 and $400,000 monthly balances with $20,000 and
 $16,000 of reported interest yields a .833 ratio and $29,988 on Schedule A
-line 8a. Source and full-return XSD fixtures are written but unrun under the
-implementation-first workflow. These structured records do not authenticate
+line 8a. Source and full-return XSD fixtures passed locally. These structured records do not authenticate
 the lender statements, and this slice does not cover grandfathered debt,
 mixed-use debt, second homes, part-year loans, joint/MFS limits, points,
 Form 8396 interaction, or other mortgage sources.
+
+## Multiple full-year post-2017 mortgages (2026-10-03)
+
+The same single-filer Table 1 review now accepts two or more full-year
+post-2017 acquisition loans. Its source list must match every Form 1098, with
+twelve distinct monthly lender balances for each loan; one whole-return
+average-balance ratio determines the exact sum of deductible box 1 interest.
+When the combined monthly average is at or below $750,000, the ratio is one
+and full reported interest may be claimed. Two or more eligible lender copies
+whose box 2 principal snapshots total above $750,000 cannot reach native or
+PDF Schedule A without that review, including when one copy's current
+deduction is zero. The box 2 sum only triggers review; it is
+not substituted for the Publication 936 average-balance calculation.
+
+The focused case verifies three $300,000 loans with $3,000 interest produce
+$2,499 at the three-decimal Table 1 ratio, including local TY2025 XSD-valid
+XML and filled PDF. A second case verifies three $300,000 box 2 snapshots
+with $200,000 monthly average balances permit the full $3,000; unreviewed
+over-limit full and partial claims reject in both exporters. This remains a
+bounded full-year/single-filer route. Mixed debt ages, part-year balances,
+points, other mortgage sources, authentic workpaper bytes, and IRS acceptance
+remain open. [Publication 936 (2025)](https://www.irs.gov/publications/p936)
 
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 

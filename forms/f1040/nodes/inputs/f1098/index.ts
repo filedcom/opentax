@@ -53,7 +53,7 @@ export const mortgageLimitReviewSchema = z.object({
         }).strict(),
       ).length(12),
     }).strict(),
-  ).length(2),
+  ).min(2),
 }).strict();
 
 const crossLoanBalanceSchema = z.object({
@@ -478,13 +478,14 @@ export const inputSchema = z.object({
     }
     if (!mortgage_limit_review) return;
     const loans = mortgage_limit_review.loans;
-    const sameSources = f1098s.length === 2 &&
+    const sameSources = f1098s.length === loans.length &&
       loans.every((loan) =>
         f1098s.some((item) =>
           item.source_document_reference === loan.source_document_reference
         )
       ) &&
-      new Set(loans.map((loan) => loan.source_document_reference)).size === 2;
+      new Set(loans.map((loan) => loan.source_document_reference)).size ===
+        loans.length;
     const sourceEligible = f1098s.every((item) => {
       const date = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
         item.box3_origination_date ?? "",
@@ -523,7 +524,9 @@ export const inputSchema = z.object({
           ) / 12,
       0,
     );
-    const ratio = Math.round(750_000 / averageTotal * 1_000) / 1_000;
+    const ratio = averageTotal <= 750_000
+      ? 1
+      : Math.round(750_000 / averageTotal * 1_000) / 1_000;
     const expectedInterest = Math.round(
       f1098s.reduce((sum, item) => sum + item.box1_mortgage_interest, 0) *
         ratio,
@@ -534,13 +537,13 @@ export const inputSchema = z.object({
     );
     if (
       !sameSources || !sourceEligible || !recordsValid ||
-      averageTotal <= 750_000 || claimedInterest !== expectedInterest
+      claimedInterest !== expectedInterest
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["mortgage_limit_review"],
         message:
-          "Two full-year post-2017 acquisition loans need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
+          "Multiple full-year post-2017 acquisition loans need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
       });
     }
   },
@@ -623,18 +626,18 @@ export function assertForm1098MortgageLimitSources(
       item.refinance !== true &&
       item.binding_contract_exception !== true &&
       (item.box2_outstanding_principal ?? 0) > 0 &&
-      item.box1_mortgage_interest > 0 &&
-      (item.box1_current_year_deductible_interest ?? 0) > 0;
+      item.box1_mortgage_interest > 0;
   });
   if (
-    singleFiler && fullYearPost2017.length >= 3 &&
+    singleFiler && fullYearPost2017.length >= 2 &&
     fullYearPost2017.reduce(
         (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
         0,
-      ) > 750_000
+      ) > 750_000 &&
+    !parsed.mortgage_limit_review
   ) {
     throw new Error(
-      "Schedule A three or more post-2017 mortgages over $750,000 need a supported whole-return Pub. 936 limit review",
+      "Schedule A multiple post-2017 mortgages over $750,000 need a supported whole-return Pub. 936 limit review",
     );
   }
   if (!parsed.mortgage_limit_review) return;
@@ -654,7 +657,7 @@ export function assertForm1098MortgageLimitSources(
     hasMortgageInterestCredit
   ) {
     throw new Error(
-      "Schedule A two-loan mortgage-limit allocation needs the same single filer, sourced line 8a interest, and no other mortgage-interest or points routes",
+      "Schedule A multiple-loan mortgage-limit allocation needs the same single filer, sourced line 8a interest, and no other mortgage-interest or points routes",
     );
   }
 }
