@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1072 bounded completed slices are recorded in the
+inside** that section. The 1073 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -28,9 +28,9 @@ W-2, 1099, payment, Schedule B interest (including generic broker, K-1, and Form
 PDF field, checkbox, retained-page, and filer-name checks; and prepared
 attachment/archive/A2A integrity checks. Selected 21-case/70-page and
 55-case/185-page synthetic packets passed their completed visual checklists
-and read-only replay checks. These bounded selections do not cover all 178
-fixtures.
-The live inventory has 148 native MeF descriptors, 115 PDF descriptors, and 211
+and read-only replay checks. These bounded selections do not cover all 179
+current fixtures.
+The live inventory has 149 native MeF descriptors, 116 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
 **Validation and release.** `deno task test` passed 10,891/10,891 at
@@ -112,7 +112,7 @@ records earlier evidence.
 - [ ] Complete the remaining non-named implementation and coverage decisions for the filing-ready gate. The 20 named-form parent gaps remain open; passing tests on the retained routes do not close those decisions.
 - [ ] Run `deno task test` as the full batch for this phase after its retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until this phase passes.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the locally cached TY2025 IRS schema, recording its provenance and digest. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the 178 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the 179 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery

@@ -17,6 +17,7 @@ import { scheduleFPdf } from "./schedule_f.ts";
 import { scheduleHPdf } from "./schedule_h.ts";
 import { scheduleJPdf } from "./schedule_j.ts";
 import { scheduleLepPdf } from "./schedule_lep.ts";
+import { form9000Pdf } from "./f9000.ts";
 import { scheduleRPdf } from "./schedule_r.ts";
 import { scheduleSePdf } from "./schedule_se.ts";
 import { form461Pdf } from "./f461.ts";
@@ -134,6 +135,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   scheduleHPdf,
   scheduleJPdf,
   scheduleLepPdf,
+  form9000Pdf,
   scheduleRPdf,
   scheduleSePdf,
   form7203StockLossPdf,

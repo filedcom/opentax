@@ -2182,6 +2182,46 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-two-w2s-form9000",
+    inputs: {
+      general: jointGeneral,
+      w2: [
+        {
+          ...wage(42_000, 4_000, "First Example Employer", "12-3456789"),
+          employee_ssn: "111223333",
+        },
+        {
+          ...wage(28_000, 2_500, "Second Example Employer", "98-7654321"),
+          employee_ssn: "444556666",
+        },
+      ],
+      f9000: {
+        requests: [
+          {
+            person: "taxpayer",
+            alternative_media_code: "01",
+            request_confirmed_by_person: true,
+            request_record_reference: "Alex accessible notice request",
+          },
+          {
+            person: "spouse",
+            alternative_media_code: "05",
+            request_confirmed_by_person: true,
+            request_record_reference: "Sam accessible notice request",
+          },
+        ],
+      },
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040", "f9000", "f9000"],
+    reviewFocus: [
+      "Two W-2s give $70,000 wages and $6,500 withholding on the joint return",
+      "The taxpayer's Form 9000 page checks large print and matches Alex Example/111223333",
+      "The spouse's Form 9000 page checks Braille ready file and matches Sam Example/444556666",
+      "Standalone-only address and signature fields remain blank on both attached copies",
+    ],
+  },
+  {
     id: "single-mixed-final-trust-and-partnership-capital",
     inputs: {
       general: singleGeneral,
@@ -6104,7 +6144,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       schedule1a: {
         senior_zero_exclusions_review: {
           no_section933_puerto_rico_excluded_income: true,
-          section933_review_source_reference: "2025 residency and income review",
+          section933_review_source_reference:
+            "2025 residency and income review",
           no_form2555_filed: true,
           form2555_review_source_reference: "2025 foreign-income return review",
           no_form4563_filed: true,

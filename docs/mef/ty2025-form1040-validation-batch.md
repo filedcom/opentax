@@ -1318,3 +1318,7 @@ every active PDF route has an actual filled-file visual review. IRS
 business-rule review and accepted ATS acknowledgments remain separate gates;
 neither is established by local tests or rendering. Only after those and the
 scope/coverage decisions are complete should PR, merge and release review begin.
+
+## Form 9000 current fixture addition (2026-10-03)
+
+The optional return-attached alternative-media preference now has a confirmed taxpayer/joint-spouse input, native `IRS9000` documents, and one filled PDF form page per person. Three focused cases passed, including a two-owner full return with two native and two printable copies; the single-owner full-return XML validated with `xmllint` against the locally cached TY2025 v5.4 `Return1040.xsd`. Its page was rendered and visually checked for name, SSN, large-print selection, and blank standalone-only address/signature. The read-only planner now reports **179 fixtures, 85 of 113 unique PDF keys covered, 28 uncovered named-family keys, and 116 PDF descriptors**. The earlier 178-fixture bulk pass and selected visual batches are historical checkpoints; the expanded full batch, business-rule and IRS ATS evidence remain open. [IRS accessible-products guidance](https://www.irs.gov/forms-pubs/accessible-irs-tax-products) permits attaching Form 9000 or sending it separately.

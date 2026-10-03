@@ -189,8 +189,9 @@ cache, so reproducible provenance remains open.
 4. Decide whether the optional current-return attachments `IRS4547` (child
    account election) and `IRS9000` (alternative-media preference) are offered
    through this product or assigned to their documented separate submission
-   channels. These are two named workflow choices, not a waiver of an entered
-   election or preference; neither currently has a public input.
+   channels. Form 9000 now has a bounded return-attached taxpayer/joint-spouse
+   route with explicit requests; Form 4547 still lacks intake. Neither choice
+   waives an entered election or preference.
 5. For entity-associated roots, decide ownership per filing situation rather
    than as a family-wide exclusion. In particular, an individual can have a
    direct `IRS8858`/`IRS8858ScheduleM` or section 962 `IRS1118` obligation; an
