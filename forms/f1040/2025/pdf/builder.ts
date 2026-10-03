@@ -615,6 +615,20 @@ export async function buildPdfBytes(
       filer,
       preparedBundle.attachments,
     );
+    if (
+      (preparedBundle.form3800Parts === undefined) !==
+        (preparedBundle.form3800PartsSha256 === undefined) ||
+      (preparedBundle.form3800Parts !== undefined &&
+        await sha256Hex(
+            new TextEncoder().encode(
+              JSON.stringify(preparedBundle.form3800Parts),
+            ),
+          ) !== preparedBundle.form3800PartsSha256)
+    ) {
+      throw new Error(
+        "Form 3800 PDF parts differ from the prepared MeF return",
+      );
+    }
     assertPreparedBundleProjection(preparedBundle, filer);
   }
   const form8283Source = normalized.f8283
@@ -701,14 +715,6 @@ export async function buildPdfBytes(
       normalized.schedule_d.transaction,
       form8949Rows ?? [],
     );
-  }
-  if (
-    preparedBundle?.form3800Parts &&
-    await sha256Hex(
-        new TextEncoder().encode(JSON.stringify(preparedBundle.form3800Parts)),
-      ) !== preparedBundle.form3800PartsSha256
-  ) {
-    throw new Error("Form 3800 PDF parts differ from the prepared MeF return");
   }
   assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create({ updateMetadata: false });

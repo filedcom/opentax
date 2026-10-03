@@ -432,6 +432,14 @@ export function assertPreparedBundleProjection(
       "Prepared MeF XML differs from its retained source projection",
     );
   }
+  if (
+    JSON.stringify(projected.form3800Parts) !==
+      JSON.stringify(bundle.form3800Parts)
+  ) {
+    throw new Error(
+      "Prepared Form 3800 PDF parts differ from the retained source projection",
+    );
+  }
 }
 
 export function buildMefXml(
