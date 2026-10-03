@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { agi_aggregator } from "./index.ts";
+import { agi_aggregator, expectedTy2025StudentLoanDeduction } from "./index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
@@ -73,6 +73,30 @@ Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", (
   const form8880 = result.outputs.find((item) => item.nodeType === "form8880");
   assertEquals(form8880?.fields.agi, 31_000);
   assertEquals(form8880?.fields.foreign_agi_addback, 1_000);
+});
+
+Deno.test("student-loan MAGI adds back foreign earned income exclusion before phaseout", () => {
+  const input = {
+    filing_status: "single" as const,
+    line1a_wages: 90_000,
+    line8d_foreign_earned_income_exclusion: 5_000,
+    line21_student_loan_interest: 2_500,
+  };
+  assertEquals(expectedTy2025StudentLoanDeduction(input), 1_667);
+  const result = compute(input);
+  const schedule1 = result.outputs.find((item) =>
+    item.nodeType === "schedule1"
+  );
+  assertEquals(schedule1?.fields.line21_student_loan_interest, 1_667);
+  assertEquals(agi(result), 83_333);
+  assertEquals(
+    expectedTy2025StudentLoanDeduction({
+      ...input,
+      line1a_wages: 101_000,
+      line8d_foreign_earned_income_exclusion: 10_000,
+    }),
+    0,
+  );
 });
 
 Deno.test("agi_aggregator: Pub 974 audit keeps income and adjustments separate", () => {
@@ -254,10 +278,13 @@ Deno.test("agi_aggregator: foreign earned income exclusion reduces AGI", () => {
 Deno.test("agi_aggregator: unsupported housing deduction input is rejected before changing AGI", () => {
   for (const amount of [0, 5_000]) {
     assertThrows(
-      () => compute({
-        line1a_wages: 50_000,
-        line8d_foreign_housing_deduction: amount,
-      } as unknown as Parameters<typeof agi_aggregator.compute>[1]),
+      () =>
+        compute(
+          {
+            line1a_wages: 50_000,
+            line8d_foreign_housing_deduction: amount,
+          } as unknown as Parameters<typeof agi_aggregator.compute>[1],
+        ),
       Error,
       "Form 2555 line 50 housing deduction is unsupported",
     );
@@ -478,6 +505,32 @@ Deno.test("agi_aggregator: student loan interest deduction reduces AGI", () => {
   assertEquals(agi(result), 57_500);
 });
 
+Deno.test("student loan phaseout uses single limits for surviving spouse and excludes MFS", () => {
+  for (const filing_status of ["single", "hoh", "qss"] as const) {
+    const result = compute({
+      filing_status,
+      line1a_wages: 90_000,
+      line21_student_loan_interest: 2_500,
+    });
+    assertEquals(agi(result), 88_333);
+    assertEquals(
+      result.outputs.find((row) => row.nodeType === "schedule1")?.fields
+        .line21_student_loan_interest,
+      1_667,
+    );
+  }
+  const mfs = compute({
+    filing_status: "mfs",
+    line1a_wages: 90_000,
+    line21_student_loan_interest: 2_500,
+  });
+  assertEquals(agi(mfs), 90_000);
+  assertEquals(
+    mfs.outputs.find((row) => row.nodeType === "schedule1"),
+    undefined,
+  );
+});
+
 Deno.test("agi_aggregator: SEP/SIMPLE/qualified plan deduction reduces AGI", () => {
   const result = compute({
     line3_schedule_c: 100_000,
@@ -522,6 +575,15 @@ Deno.test("agi_aggregator: SSA worksheet — provisional income below base thres
   });
   // SSA taxable = 0; AGI = wages only = 10_000
   assertEquals(agi(result), 10_000);
+});
+
+Deno.test("qualifying surviving spouse uses the $25,000 Social Security base", () => {
+  const result = compute({
+    line1a_wages: 20_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "qss",
+  });
+  assertEquals(agi(result), 22_500);
 });
 
 Deno.test("agi_aggregator: SSA worksheet — provisional income above upper threshold → 85% taxable", () => {

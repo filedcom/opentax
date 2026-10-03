@@ -12,6 +12,7 @@ import { registry } from "./registry.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { assert1099GUnemploymentSource } from "./f1099g-unemployment-reconciliation.ts";
 
 const general = {
@@ -25,6 +26,41 @@ const general = {
   address_state: "TX",
   address_zip: "78701",
 };
+
+Deno.test("unemployment line 7 needs a retained payer source at final export", async () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-w2-refund"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const forged = {
+    ...pending,
+    schedule1: { ...pending.schedule1, line7_unemployment: 100 },
+  };
+  const message = "1099-G unemployment must reconcile to Schedule 1 line 7";
+  assertThrows(() => assert1099GUnemploymentSource(forged), Error, message);
+  assertThrows(() => buildMefXml(forged, fixture.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(forged, fixture.filer),
+    Error,
+    message,
+  );
+  assertThrows(
+    () =>
+      assert1099GUnemploymentSource({
+        ...pending,
+        agi_aggregator: { ...pending.agi_aggregator, line7_unemployment: 100 },
+      }),
+    Error,
+    "retained AGI",
+  );
+});
 
 Deno.test("1099-G unemployment replay retains cents allowed by its source schema", () => {
   const pending = {

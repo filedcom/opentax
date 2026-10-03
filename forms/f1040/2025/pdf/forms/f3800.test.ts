@@ -16,6 +16,7 @@ import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../pending.ts";
+import { sha256Hex } from "../../prepared-source.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 import {
   form3800PartIAndIIFields,
@@ -184,6 +185,23 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
         }),
       Error,
       "Form 3800 PDF parts differ from the prepared MeF return",
+    );
+    const changedParts = {
+      ...bundle.form3800Parts!,
+      lines: { ...bundle.form3800Parts!.lines, line38: 601 },
+    };
+    const changedPartsHash = await sha256Hex(
+      new TextEncoder().encode(JSON.stringify(changedParts)),
+    );
+    await assertRejects(
+      () =>
+        buildPdfBytes(source, filer, cacheDir, {
+          ...bundle,
+          form3800Parts: changedParts,
+          form3800PartsSha256: changedPartsHash,
+        }),
+      Error,
+      "Prepared Form 3800 PDF parts differ from the retained source projection",
     );
     await assertRejects(
       () =>

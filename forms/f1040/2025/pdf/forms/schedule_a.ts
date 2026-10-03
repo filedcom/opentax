@@ -247,7 +247,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
       assertForm1098MortgageLimitSources(
         all.f1098,
         recipients,
-        filer.filingStatus === FilingStatus.Single,
+        filer.filingStatus,
         Number(input.line_8a_mortgage_interest_1098 ?? 0),
         Number(input.line_8b_mortgage_interest_no_1098 ?? 0),
         Number(input.line_8c_points_no_1098 ?? 0),

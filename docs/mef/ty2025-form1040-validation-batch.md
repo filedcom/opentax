@@ -1,9 +1,385 @@
 # TY2025 Form 1040 validation batch
 
-This is the execution checklist for the agreed build-first gate. It is a plan,
-not a record of a current pass. Do not run it until the in-scope implementation
-and unsupported-path decisions are settled. The historical 2026-09-26 result
-(6,596 passed, 0 failed, 48 ignored) predates the current worktree.
+This is the execution checklist for the agreed build-first gate. The local
+automated batch has passed on the retained routes, but the filing-ready gate
+remains open until scope, route, filled-page, and IRS acceptance work is done.
+The historical 2026-09-26 result (6,596 passed, 0 failed, 48 ignored)
+predates the current worktree.
+
+The 2026-10-03 diagnostic `deno task test` at `a5f4229c` reported **10,415
+passed, 152 failed, 459 ignored** in 12m2s. The isolated worktree could not
+see the locally cached TY2025 v5.4 XSD (114 schema failures and one `stat`
+failure), and 25 PDF extraction cases could not spawn `pdftotext`. The
+remaining 12 failures exposed two additive AGI-source normalization errors,
+an outdated Form 9000 PDF-URL expectation, and rejection tests that expected a
+later guard than the one reached by their tampered source. The worktree now
+uses the cached schema through an ignored local link and a local Poppler
+launcher on `PATH`; neither is committed. Focused PAB, Form 8814, Form 8288-A,
+Form 8828, and Form 8915-F cases passed after the corrections. This diagnostic
+is a failed gate, with the full corrected rerun recorded separately below.
+
+The first schema-enabled rerun on 2026-10-03 was stopped after five failures:
+three direct-XSD fixtures omitted retained source/print fields (Form 4972,
+Form 8615 twice, and Form 8814), and one Form 8962 negative expected a later
+MAGI guard after the earlier 1099-INT/1040 source guard rejected the change.
+The four XSD fixtures and the Form 8962 case passed focused reruns after their
+fixture/assertion corrections. That interrupted run is diagnostic only.
+
+The subsequent complete `deno task test` on 2026-10-03 reported **11,027
+passed, one failed** in 51m24s, with no ignored tests reported. All 179
+source-fixture XML/XSD cases passed. The sole failure was an EIC negative test
+that changed Form 1040 line 2a but expected a later investment-income guard;
+the earlier 1099-INT/1040 source guard rejected it. The corrected assertion
+passed a focused rerun. This complete diagnostic is still a failed gate;
+the final full rerun must pass before claiming local batch stability.
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` rerun at `a942dee4`
+completed on 2026-10-03 14:52 UTC in 50m44s: **11,028 passed, zero failed**,
+with no ignored tests reported. All 179 source-fixture XML/XSD cases passed.
+It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3), `xmllint`
+libxml 2.9.13, and Poppler 26.09.0. The isolated worktree accessed the
+locally cached TY2025 v5.4 schema through an ignored link and ran Poppler
+through a local launcher on `PATH`. The local log is
+`.state/research/ty2025-full-test-a942dee4.log` (SHA-256
+`28ac90f14f15ab02ec080f61a88c0cac663d52c1de04eebd7ce92011049dd626`).
+This is a passing local automated gate for tested routes. Complete source and
+form coverage, human page review, IRS business rules, ATS acceptance, and a
+filing-ready release remain open.
+
+The frozen-head `PATH=/tmp/opentax-tools:$PATH deno task test` run at
+`59911414` completed on 2026-10-03 by 18:35 UTC in 51m19s: **11,034 passed,
+zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
+15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
+26.09.0 through the local launcher. The retained log is
+`.state/research/ty2025-pr62-full-test-59911414.log` (SHA-256
+`07abcfbaf6f361e915c5ba861e27d1d9e5a7beaf982ea75c580028230eedc3cb`).
+The completed overtime/EIC and joint Form 9000 page reviews and refreshed 167-case export
+are separate evidence; this full automated pass does not complete the remaining
+visual, business-rule, or IRS ATS gates.
+
+After the Form 4852 export guard, a focused seven-file run using the same
+`deno test` permissions and local Poppler launcher passed **91/91 tests**,
+including both native/PDF substitute rejection cases. This code change is
+newer than the frozen-head full run above; the bulk gate must be rerun after
+the remaining nonnamed implementation reaches its phase boundary.
+
+A later issued-W-2 nonstandard-code slice passed nine focused tests and a
+complete synthetic Form 1040 return against the local TY2025 v5.4 XSD. The
+reviewed handwritten W-2 emitted `StandardOrNonStandardCd` `N`; the filled PDF
+printed its $75,000 wages. Native and PDF export rejected a changed retained
+copy reference. This is newer than the frozen-head full run and does not
+unblock the separate Form 4852 substitute route.
+
+A following altered-1099-R slice passed **123/123 focused tests**. Its complete
+synthetic Form 1040 XML emitted a nonstandard IRS1099R code `N`, passed the local
+TY2025 v5.4 XSD, and generated a filled PDF with $20,000 gross pension.
+Removing the payer-copy reference rejected in both exporters. The full suite
+predates this change, and the Form 4852 source remains guarded.
+
+The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
+with 10,889 passed, two failed, and no ignored tests reported. Both failures
+tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
+amount. Commit `637dace9` derives boolean print fields for the Form 8814 and
+Form 4972 boxes while retaining the numeric tax amounts. Both failed cases
+passed in focused reruns and in the full rerun.
+
+The fixed-source `deno task test` at `637dace9` completed on 2026-10-03
+02:19 UTC in 49m18s: **10,891 passed, zero failed**, with no ignored tests
+reported. It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
+`xmllint` libxml 2.9.13, and Poppler 26.09.0. The exact command was
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`; the local log is
+`.state/research/ty2025-full-test-637dace9.log` (SHA-256
+`6faee3fbc0e980f5d335d1450d347fc56d0d372722783786262bafa9c3f0fd48`).
+The locally cached TY2025 v5.4 XSDs and live IRS PDF templates were present,
+so their tests executed. This result establishes local automated stability
+for tested routes; it does not close complete route coverage, human filled-PDF
+review, IRS business rules, ATS acceptance, or the filing-ready release.
+
+At `8149198a` on 2026-10-03, the attachment-aware fixture command
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`
+passed **178/178** in 11m9s. Deno was 2.9.4 (V8 15.0.245.2-rusty,
+TypeScript 6.0.3), and `xmllint` used libxml 2.9.13. The checked-in harness
+validated the 169 positive source returns against the cached TY2025 v5.4 XSD
+and asserted nine expected fail-closed cases. Its W-2G and Form 8824 paths
+built the required PDF attachments before native export. The separate
+household-wage (3/3) and partial-early-IRA (1/1) XML/PDF cases also passed with
+`PATH=/tmp/opentax-poppler-env/bin:$PATH` and their required test permissions.
+This is a fixture/XSD regression after the newer source guards, not a rerun of
+the full `deno task test`, visual review of all 178 filled PDFs, IRS business
+rules, or accepted ATS transmission.
+
+At the 2026-10-03 implementation checkpoint after the 1099-copy identity
+guard, the two 1099-INT/OID input-node files passed **92/92** and the
+withholding/export file passed **9/9**. The native and PDF builder files passed
+**184/184**; format and lint passed for the changed files. This selected run
+confirmed that repeated identified copies reject at native and PDF preflight
+even when payer TIN or account is absent. The repository-wide batch remains
+deferred until implementation and scope decisions are settled.
+
+After the 1099-R copy-identity guard on 2026-10-03, its input-node and shared
+withholding/export files passed **118/118**, including graph and native/PDF
+rejection of a repeated issued copy without an account number. The native and
+PDF builder files passed **184/184**. Separate pension-copy fixtures now carry
+distinct references; broader issued-copy authentication and the full batch
+remain open.
+
+The subsequent 1099-G and 1099-MISC source-reference replay passed **149/149**
+input-node cases, **11/11** shared withholding/export cases, and **184/184**
+native/PDF builder cases on 2026-10-03. A repeated G source with no payer TIN
+and a repeated MISC source with no account now reject in the graph and both
+exports; distinct references remain accepted. Format and lint passed for the
+changed files. The repository-wide batch and issued-copy byte review remain
+open.
+
+The Form 1098-E issued-source pass on 2026-10-03 passed **22/22** focused
+input/full-return/native/PDF cases and **184/184** selected builder cases.
+Positive retained copies now require lender name/TIN, full borrower TIN matched
+to the taxpayer or joint spouse, and an issued-document reference before either
+export. Repeated references and same-lender/borrower ambiguous copies reject;
+the retained AGI interest input must match capped box 1 source totals. The
+zero-deduction upper-phaseout joint case still builds native XML. The
+[2025 recipient form](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf)
+contains these identity fields; its
+[instructions](https://www.irs.gov/pub/irs-prior/i1098et--2025.pdf) allow a
+truncated borrower TIN on Copy B; the reviewed-owner route was still open at
+that pass, as were loan qualification, issuer bytes, and broader MAGI cases.
+
+The next final-export phaseout replay pass on 2026-10-03 passed **189/189**
+selected phaseout/native/PDF builder cases. Both exporters now require the
+printed Schedule 1 line 21 deduction to equal the result recalculated from
+retained AGI inputs, including the zero-deduction upper-phaseout case. A
+changed line 21 rejects even before Form 1040 line 10 comparison. Lint passed
+for the changed TypeScript files; the wider MAGI and full-batch gates remain
+open.
+
+The masked-borrower Form 1098-E pass on 2026-10-03 passed **25/25** focused
+cases and **191/191** selected phaseout/native/PDF builder cases. The 2025
+recipient [Copy B](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf) permits
+only the last four borrower TIN digits. A masked copy now requires a borrower
+name and reviewed owner reference, and must uniquely identify the taxpayer or
+joint spouse by name and last four digits. Both exports reject missing or
+wrong owner evidence and a duplicate issued reference entered once masked and
+once in full. Lint passed; issuer-byte proof, additional name variants, loan
+eligibility, and the full batch remain open.
+
+The Form 1098-E foreign-earned-income MAGI correction on 2026-10-03 passed
+**82/82** selected AGI and full-return cases. Publication 970's
+[TY2025 Worksheet 4-1](https://www.irs.gov/publications/p970) adds the
+Schedule 1 line 8d exclusion back before phaseout; the AGI node now keeps
+that amount in MAGI. A combined Form 2555/W-2/1098-E full return with
+$90,000 gross wages and $5,000 exclusion yields a $1,667 deduction in
+Schedule 1, Form 1040, native XML, and filled PDF; the $101,000 wage and
+$10,000 exclusion upper-phaseout calculation yields zero in the AGI unit
+case. Lint passed. Foreign housing and territorial addbacks, authenticated
+foreign employer records and Form 2555 review, and the repository-wide batch
+remain open.
+
+The below-$600 student-loan payment-ledger pass on 2026-10-03 passed
+**213/213** selected input, full-return, native, and PDF builder cases.
+One lender's $450 interest ledger reaches Schedule 1, Form 1040, native XML,
+and filled PDF without Form 1098-E; a separate $600 issued copy plus a $400
+second-lender ledger combines once. Changed payment sums, repeated payment
+source references, wrong borrower, issued-copy overlap, and a same-lender
+$600-or-more ledger reject. The
+[2025 Publication 970](https://www.irs.gov/publications/p970)
+describes the lender's $600 furnishing threshold and qualified-loan conditions.
+This bounded path requires the borrower's own education, expense timing,
+eligible school and half-time enrollment, legal obligation, unrelated lender,
+and no employer-plan or double-benefit review facts. Lint passed. Actual loan,
+school, payment, and no-double-benefit source authentication; spouse/dependent
+student loans; and the full batch remain open.
+
+The Form 1098-E corrected-copy pass on 2026-10-03 passed **215/215** selected
+source, full-return, native, and PDF builder cases. A marked corrected copy
+with original and review references contributes its replacement amount once;
+the original plus corrected copy rejects in input and both final exporters.
+At $90,000 single wages, a $900 corrected box 1 produces a $600 phased
+Schedule 1 deduction in native XML and filled PDF. The
+[2025 Copy B](https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf) includes
+the corrected marker. Lint passed. Issuer-byte lineage, full source review,
+and the repository-wide batch remain open.
+
+The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
+and AGI unit cases and **186/186** selected full-return/native/PDF builder
+cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21
+and line 26, Form 1040 line 10, native XML, and filled PDF now all use the
+$1,667 phased deduction; a changed Schedule 1 rejects in both exports.
+Joint boundaries use the [2025 Publication 970](https://www.irs.gov/publications/p970)
+$170,000–$200,000 range, while qualifying surviving spouse uses the single
+range. The same status now uses the [Publication 915](https://www.irs.gov/publications/p915)
+$25,000 Social Security base. Positive 1098-E lender/borrower source identity,
+wider MAGI addbacks, page review, and the full phase batch remain open.
+
+The subsequent 1099-PATR copy-identity pass on 2026-10-03 passed **20/20**
+focused input/owner/export cases and **204/204** selected Schedule F and
+native/PDF builder cases. Multiple positive copies from one cooperative and
+recipient now reject when any lacks both an account and issued-copy reference,
+including a box 4-only pair and a mixed TIN/name payer entry. Distinct issued
+references remain accepted. Issuer-byte proof and corrected-copy lineage
+remain open, along with the full phase batch.
+
+The subsequent 1099-B wash-sale source pass on 2026-10-03 passed **84/84**
+focused broker graph/full-return/export cases and **191/191** selected native,
+PDF, and Schedule B builder cases. Box 1g now adds its positive disallowed loss
+to a separately coded Form 8949 adjustment instead of disappearing when that
+adjustment is present. A manually entered W amount must agree with the issued
+box 1g; incomplete or conflicting combinations reject. A source-backed $120
+net loss reached Form 1040, native XML, and filled PDF; a changed box 1g
+rejected in both exports. Wider corrected-box statement routes and the full
+phase batch remain open.
+
+The subsequent 1099-K transaction-class and copy-identity pass on 2026-10-03
+passed **84/84** focused graph/direct-export cases and **184/184** selected
+native/PDF builder cases. Same-processor, same-recipient positive copies now
+reject if any lacks account and issued-copy identity, unless explicit card vs.
+third-party-network type or distinct card merchant category identifies separate
+reports. The same account can carry separate card/network or card category
+reports, as the IRS instructions permit. A row checking both transaction types
+rejects. The full command and issuer-byte review remain open.
+
+The next 1099-B/1099-K source-identity pass on 2026-10-03 passed **151/151**
+input-node cases, **13/13** direct withholding and 1099-K export cases, and
+**184/184** native/PDF builder cases. A repeated broker statement/transaction
+pair now rejects without payer/account data; a repeated processor copy with
+changed gross and no account rejects after an optional issued reference is
+entered. Distinct source transactions and references remain accepted. Format
+and lint passed on the changed files; the full command and complete source-byte
+review remain deferred.
+
+After the 1099-NEC graph identity guard on 2026-10-03, the input, owner, and
+withholding files passed **75/75**. One selected command covering Schedule C,
+Form 8919, Schedule 2, native/PDF builders, and related 1099-MISC source joins
+passed **256/256** with `PATH=/tmp/opentax-poppler-env/bin:$PATH`. The first
+attempt without that PATH reached five PDF text-extraction cases but could not
+spawn `pdftotext`; the complete selected rerun passed. The source fixtures for
+different named payers now use distinct payer TINs. This is focused regression
+evidence; the repository-wide command and issued-copy review remain open.
+
+After the 1099-MISC ambiguity guard on 2026-10-03, the selected input,
+withholding, and native/PDF builder files passed **291/291** with
+`deno test -A` on commit `0758d35d` plus the working change. It covers two
+unidentified positive copies, an unidentified copy mixed with an identified
+one in either order, and separate identified accounts. The repository-wide
+command and issuer-copy verification remain open.
+The adjacent 1099-MISC owner, box 8, and section 409A source replay files
+passed **12/12** after exposing the cached TY2025 XSD and `pdftotext` to the
+separate worktree. Their first attempt failed on missing local tools and
+schema files, not on a source assertion.
+
+After the 1099-INT/OID ambiguous-copy guard on 2026-10-03, the two input
+files and direct export reconciliation passed **107/107**. A selected owner,
+Schedule B, tax-exempt interest, and native/PDF builder run passed **199/199**
+with the locally cached TY2025 schema and Poppler tools available in the
+separate worktree. These checks cover unidentified repeats, same-account OID
+obligations, and final export rejection. The complete repository-wide command
+and issued-copy verification remain open.
+
+After the 1099-R ambiguous-copy guard on 2026-10-03, the selected input,
+withholding, IRA and railroad pension, payer-document, and native/PDF builder
+files passed **335/335** with Poppler on PATH and the cached TY2025 schema
+available. The first wider run exposed an ATS fixture with two distinct payer
+names sharing one synthetic EIN; the payer identity check was refined and the
+complete selection passed. A final 109-case input rerun also passed after
+adding the reverse-order account-only assertion. The repository-wide command
+and issuer-copy verification remain open.
+
+After the 1099-G ambiguous-copy guard on 2026-10-03, the graph and direct
+export files passed **71/71**. The selected grant, RTAA, unemployment, refund,
+owner, and native/PDF builder files passed **198/198** with Poppler on PATH
+and the cached TY2025 schema available. Six aggregation fixtures needed
+distinct issued references to represent distinct payer copies; no assertion
+or production route was dropped. The repository-wide command and source-byte
+verification remain open.
+
+After the 1099-DIV payer-scoped copy guard on 2026-10-03, the input and
+direct-export files passed **101/101**. The selected dividend source, owner,
+qualified-dividend subset, Schedule B, and native/PDF builder files passed
+**199/199** with Poppler and the cached TY2025 schema available. The graph
+now accepts distinct unreferenced payers, while mixed unidentified and
+identified copies from one payer/recipient reject. The repository-wide
+command and issued-copy authentication remain open.
+The same 101/101 and 199/199 selections passed again after enforcing the
+account number on a checked 1099-DIV FATCA copy.
+
+At the current implementation checkpoint on 2026-10-03, the focused
+`deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
+`deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their
+positive routing and serialization fixtures now retain matching W-2,
+unemployment, dividend, and Schedule B source and owner facts. The production
+source guards were unchanged. These selected files are diagnostic preparation,
+not the deferred repository-wide batch.
+
+After the Schedule B projection guard, the selected native builder, interest
+reconciliation, and Part III end-to-end files passed **168/168** on 2026-10-03.
+The $1,501 sourced-interest case now rejects missing or changed prepared payer
+rows; changed dividend payer and foreign-country projections and an invented
+nonfiling projection also reject in both exporters. An extra unsourced payer
+print cell now rejects as well. The source-backed
+`single-child-unearned-income` and
+`single-form8815-series-ee-bond-exclusion` review fixtures each passed their
+TY2025 v5.4 XML/XSD cases after the guard. This is a focused regression; the
+complete artifact batch and all-page inspection remain open.
+
+The five direct Schedule B native-descriptor XSD cases passed **5/5** after
+their structural inputs were wrapped in a valid Form 1040 return envelope.
+They cover Part III countries, more than 15 dividend payers, seller-financed
+addresses/interest adjustments, and nominee dividends; the separate
+source-backed cases above cover full-export preflight.
+
+The subsequent IRA final-export replay passed two new sourced/tamper cases and
+seven existing IRA, disaster, and Form 8606 cases with
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test -A` on their selected files.
+Seven `single-ira-*` and two other early/disaster review fixtures passed their
+TY2025 v5.4 XML/XSD cases after the guard. A prior selected run without that
+Poppler path reached PDF text extraction and failed to spawn `pdftotext`; the
+same cases passed when the recorded tool path was supplied. This is focused
+evidence, not the deferred full test task or all-route validation.
+The native and PDF builder files also passed **152/152** and **32/32** after
+the IRA replay was added.
+
+The subsequent finalized Schedule D to Form 1040 line 7 comparison and
+Schedule D print-total replay passed six broker-sale source cases, including
+changed-line and paired-print tampering in both exports. The native and PDF
+builder files passed **184/184** together. Selected Form 4797, Form 6252,
+Form 8814, and capital-loss routes passed after `pdftotext` was supplied on
+the Poppler path; the first run of two text-extraction cases stopped only at
+the missing executable. A read-only replay over all 178 review-fixture
+graphs found 177 clean graphs, of which 18 had finalized Schedule D totals;
+all 18 agreed with the new print-total calculation. This is focused evidence,
+not a repository-wide batch or filled-page review.
+
+The next source-row replay passed **192/192** selected broker-sale and
+native/PDF builder cases, including a joint-owner broker positive and both
+exporters' rejection of changed broker proceeds, broker basis, and direct
+Form 8949 basis. A read-only graph audit found 177 clean review fixtures;
+five carried retained 1099-B or direct Form 8949 source rows and all five
+matched their Schedule D transactions. `deno check`, format, and lint passed
+for the changed code. This does not establish issued-copy authenticity or
+complete capital-disposition route coverage.
+
+The Schedule D direct-aggregate follow-up rejects a changed full-return line
+1a proceeds amount even when its print gain, Schedule D totals, and Form 1040
+line 7 are changed together. The nine broker-sale cases and 184 native/PDF
+builder cases passed; all 18 clean review fixtures with finalized Schedule D
+totals matched the direct-row replay. Format and lint passed. The complete
+repository batch is still deferred until implementation work is complete.
+
+The full-return Schedule 1 subtotal check passed nine arithmetic cases and
+184 native/PDF builder cases. All 177 clean review-fixture graphs matched
+lines 10, 25, and 26 to their retained printed components. A source-backed
+Schedule C fixture then built native XML (5,205 characters) and a filled PDF
+(371,854 bytes) with Schedule 1 line 10 of $80,000 and line 26 of $5,651.82.
+This is a focused route check; all-page visual review and the full command
+remain open.
+
+The Schedule 1 line 9 follow-up passed one source-backed mixed 1099-NEC/K
+native/PDF positive and both-export coordinated-tamper rejection, plus nine
+arithmetic and 184 builder cases. All 177 clean review graphs passed the
+expanded Schedule 1 replay; 13 had a nonzero printed line 9. The mixed
+fixture's raw 1099-K line 8j component was $5,000, while the existing
+nonbusiness projector combined it with the $3,000 NEC source for the $8,000
+printed line 8j and line 9. This remains selected route evidence rather than
+the full batch or visual page review.
 
 ## Scope and preflight
 
@@ -281,7 +657,7 @@ three HSA/Form 2555 fixtures (7/7 passing) and two Form 5329 tax joins plus
 the Schedule E retained-sale allocation (33/33 passing). Most remaining
 failures concern the deferred named-form parents; a fresh full run is required
 to establish the exact residual count.
-The full gate still has no passing result.
+At that checkpoint, the full gate still had no passing result.
 A later full `deno task test` at `b4e01e51` completed on 2026-10-02 in
 30m09s with 10,428 passed and 103 failed. It used Deno 2.7.7 (V8
 14.6.202.9-rusty, TypeScript 5.9.2), `xmllint` libxml 2.9.13, and Poppler
@@ -604,20 +980,276 @@ and this classification does not close the 28-key coverage or full-review gate.
 deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
 
+For a bounded batch, pass a third argument naming a JSON file with an
+`includedFixtureIds` array of checked-in fixture IDs. The generated manifest
+labels the scope `selected` and lists every omitted fixture explicitly; the
+checker validates that partition and its exact artifact inventory. Omitting
+the selection file retains the full 178-case requirement. A selected batch
+cannot close the full visual-review gate.
+
 An initial complete-scope generator attempt on 2026-10-02 wrote 21
 source-backed PDF/XML/source trios, then stopped at a Form 8862 CTC/ODC and
 AOTC fixture requiring executor-owned authentication of prior IRS notice
 issuance and contents. Its partial directory is
 `.state/research/ty2025-filled-pdf-review/2026-10-02-pr59-nonnamed-attempt1`
 and the local log is `.state/research/ty2025-filled-pdf-review-attempt1.log`.
-It has no completed manifest and is not a visual-review pass. A declared
-nonnamed review scope is being prepared so deferred named cases are recorded
-as exclusions while included cases retain all source, schema, and PDF checks.
+It has no completed manifest and is not a visual-review pass. The declared
+selection option now permits bounded manifests with omitted cases recorded as
+exclusions while included cases retain all source, schema, and PDF checks.
+
+The 2026-10-03 full generator attempt at `e3b0a165` reached the same
+authenticated-prior-notice guard after writing 21 synthetic PDF/XML/source
+trios to `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-attempt2/`.
+Its local log is `.state/research/ty2025-filled-pdf-review-attempt2-2026-10-03.log`
+(SHA-256 `1bb7f326f263e723e5126545ea07349bc0eee98e29a9f637d77c5ffa73db5517`).
+There is no completed manifest or full-batch page review. The guard belongs to the
+deferred Form 8862 source-authentication gap; it was not bypassed to inflate
+the review count. The 178 automated filled-PDF/XML tests above do not replace
+this held visual-review workflow.
+
+A later 2026-10-03 selected export run covered the first **84** of 167
+exportable fixtures before its stale expectation for three Schedule C copies
+stopped it. Smaller source-backed XML/XSD/PDF runs then exposed and corrected
+several fixture copy counts, a one-character Form 8880 rate field, the
+Form 8995-A source-versus-print projection, a sourced Form 8826 Schedule C
+Part V description and print gate, and the Schedule E page identity attached
+to Form 7203. A two-case manifest for the Form 8826 and Form 7203 routes
+contains **31 generated pages** with XML/XSD checks; its per-page visual
+checklist remains blank. Other selected runs remain partial diagnostics.
+
+After the source-backed packet fixes, the declared **167-case exportable
+selection** completed on 2026-10-03 at `bd9387a4`. The manifest at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-full/review-manifest.json`
+records **1,052 filled PDF pages**, all 167 local TY2025 XSD checks, and
+per-case source/XML/PDF SHA-256 digests. A separate read-only digest and
+inventory check found zero missing or mismatched files and zero page-origin
+count mismatches; the manifest SHA-256 is
+`a0dd2cc274a4c767281f7a0d0b9336741566a5dc98b2bfe570aa0e3cfc645075`.
+Its scope explicitly excludes 12 guarded source or attachment cases from the
+179-case plan. None of the 1,052 page checkboxes is a completed
+human visual review, and this selection does not establish IRS business-rule
+or ATS acceptance.
+
+A follow-up visual inspection of the seven-page personal clean-vehicle case
+found that Schedule A (Form 8936) Part II line 10 printed only the template's
+percent sign, while a business-use value would have duplicated that sign.
+The projector now prints the numeric `0.00` or business-use percentage without
+its own percent glyph and explicitly prints zero on line 11 when the vehicle
+is wholly personal use. The corrected page was rendered and checked against
+the retained source, Form 8936 parent, Schedule 3, and Form 1040; seven focused
+Form 8936 tests passed. The 167-case selection above predates this correction.
+A fresh full export completed at `68d5416d` with the same declared 167-case
+selection and **1,052 filled pages**. Its manifest is
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-68d5416d/review-manifest.json`
+with SHA-256
+`2b2b077c61f112167f61cf5e5cce971cfccdf6578d52d1a7e3412a54e87ee346`.
+All 167 XML files passed the local TY2025 v5.4 XSD check; a separate
+inventory check found zero missing or mismatched source/XML/PDF digests and
+zero page-count mismatches. The generated pages still require human visual
+review and do not establish IRS business-rule or ATS acceptance.
+
+A later four-page review of `single-two-w2-flsa-overtime-schedule1a` rendered
+both Form 1040 pages and both Schedule 1-A pages from the same saved PDF. Its
+two W-2 sources report $50,000 and $30,000 wages, $5,000 and $3,000 federal
+withholding, and $3,000 and $1,000 reviewed FLSA overtime premiums. The
+Schedule 1-A pages print $4,000 on lines 14a, 14c, 15, 21, and 38; Form 1040
+prints $80,000 wages, $4,000 on line 13b, $8,175 tax, $8,000 withholding,
+and $175 owed. The native XML reports the same amounts. All four page
+checklists were completed, and `scripts/check-ty2025-pdf-review.ts` passed on
+`.state/research/ty2025-filled-pdf-review/2026-10-03-single-two-w2-overtime-reviewed`.
+This review found that the fixture's review focus incorrectly called the
+$175 balance a refund; that label was corrected. Other generated pages need
+their own review.
+
+A separate three-page `single-w2-custodial-eic-release` packet was rendered
+and checked page by page. Form 1040 lists no dependent or child tax credit
+after the release, but prints the $4,328 EIC and $5,828 refund; Schedule EIC
+prints Ada's identity, daughter relationship, 2017 birth year, and 12 U.S.
+months. Its source records $15,000 W-2 wages and $1,500 withholding, which
+match the PDF and native XML. The completed checklist and artifact replay
+passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-custodial-eic-reviewed`.
+
+The four-page `joint-two-w2s-form9000` packet was also rendered and checked
+page by page. Its two W-2s provide $70,000 wages and $6,500 withholding;
+Form 1040 prints a $2,354 refund. The two attached Form 9000 copies print
+Alex's code 01 large-print request and Sam's code 05 Braille-ready-file
+request under their own names and SSNs, leaving standalone address/signature
+fields blank. The native XML contains two separately identified IRS9000
+documents with codes 01 and 05. The completed checklist and artifact replay
+passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-joint-form9000-reviewed`.
+
+The three-page `single-w2-three-eic-children-with-reviewed-birth` packet was
+rendered and checked page by page. Schedule EIC prints separate identities,
+relationships, birth years, and U.S. months 12, 8, and 12 for Ada, Ben, and
+Cora. Cora's source records one actual December month plus the reviewed
+from-birth U.S. residency that warrants 12 on the form. Form 1040 lists all
+three children and prints $6,761 EIC, $1,500 W-2 withholding, the sourced ACTC
+opt-out, and an $8,261 refund; the native XML agrees. The completed checklist
+and artifact replay passed `scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-three-eic-children-reviewed`.
+
+The two-page `mfj-spouse-dependent-refund-only` packet was rendered and
+checked page by page. Sam's retained W-2 reports $800 wages and $100
+withholding; Form 1040 prints joint ownership, the spouse-dependent line 12a
+checkbox, $1,350 dependent standard deduction, zero taxable income and EIC,
+and a $100 refund. The native XML carries the same wages, deduction,
+withholding, and refund. The completed checklist, source/PDF/XML replay,
+artifact hashes, page origins, and local TY2025 v5.4 XSD passed
+`scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-mfjspouse-dependent-reviewed`.
+
+After the overtime review-focus correction, the declared 167-case selection
+was regenerated from source content committed as `8e28daa7` in
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-reviewfocus`.
+Its manifest SHA-256 is
+`87fdaff50de3a57bf9641c9449fba1dfcfc54c82bb1842dfd74226ae1e1ffe42`.
+All 167 XML files passed the local TY2025 v5.4 XSD, and all 1,052 pages have
+matching source/XML/PDF digests and page counts. Compared with the earlier
+corrected export, no PDF or XML digest changed; exactly one source JSON
+digest changed for the corrected review label. Sixteen pages have separately
+completed human checklists; the remaining pages have not.
+
+A full `PATH=/tmp/opentax-tools:$PATH deno task test` process launched before
+the review-focus edit ended with **11,034 passed, 0 failed** in 53m07s.
+Its log is `/tmp/opentax-pr62-full-test-68d5416d.log` with SHA-256
+`c21b122bf55b93a1caa44386e749f1055bbcdbacac6d1ae1d27098cd814d5628`.
+Because that source label changed while the process was live, this is a
+diagnostic pass rather than a frozen-commit full gate; a new full command must
+run after the documentation and review evidence are committed.
+The same scan found that the Form 2441 PDF descriptor had no printable
+credit/provider/person route. A later bounded fix now generates its
+no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,
+and Form 2441 packet with source-backed XML/XSD validation. The filled Form
+2441 page was rendered and inspected for the filer, care provider, qualifying
+person, rate, expense, and limited credit. Benefit claims and provider/person
+overflow remain guarded because Part III and continuation pages are not yet
+printable. A later bounded Form 5695 Section A door and Section B central-air
+case generated a six-page Form 1040/Schedule 3/Form 5695 packet with XML/XSD
+checks. Its three Form 5695 pages were rendered and visually inspected for
+eligibility answers, addresses, QMID, costs, and the $750 limited credit. A
+Form 4684 casualty case generated a nine-page packet with a one-page Form
+4797 Part II loss of $30,000; the Form 4797 page was rendered and inspected
+against Form 4684 and Schedule 1. The new Form 8936 personal clean-vehicle
+case generated seven pages with distinct parent and Schedule A copies and
+XML/XSD checks. A separate seven-case selection from the remaining credit and
+payment fixtures generated its XML/XSD/PDF packets after the Form 8834,
+Form 8912, and other expected-copy inventories were corrected. Other Form
+5695 branches and broader Form 4797 paths remain
+open parity limits, not approved exclusions or a
+full visual-review pass. The 12 guarded source or attachment cases and 28
+uncovered named PDF keys remain outside the selected run as
+previously recorded.
+
+A bounded visual check of that partial directory rendered all nine pages of
+three synthetic cases at 120 dpi: `single-child-unearned-income` (Form 1040,
+Schedule B, Form 8615), `single-divorced-agreed-joint-estimated-payment`
+(Form 1040), and `single-form8888-two-account-refund` (Form 1040, Form 8888).
+The page sequence, year, filer/parent identity, visible boxes, amounts, and
+legibility were inspected. The child's $5,000 interest and $412 tax, the
+divorced taxpayer's $300 payment/refund and former-spouse SSN attribute, and
+the $300/$700 refund allocation were checked against retained pending fields
+and native XML. No discrepancy was found on those nine pages.
+
+The same partial set's joint spouse-dependent refund and three MFS residence/
+separation cases add 12 inspected pages, bringing this bounded review to
+**seven cases and 21 pages**. The joint $800 wage/$100 refund and spouse
+dependency mark, the MFS $10,000 wage/$1,000 refund and line 6d mark, and the
+two $15,000 wage/EIC cases were compared with retained pending fields and
+native XML. Form 1040, Schedule EIC, and Schedule 8812 page order, dependent
+identity, checkboxes, amounts, and legibility showed no discrepancy. A 300-dpi
+crop confirmed Schedule 8812 line 1 prints **15,000**, matching Form 1040
+AGI and line 3; the leading digit was hard to read at 120 dpi. The other 14
+generated cases and the full 178-case manifest/review remain open.
+
+Four Form 1098 points cases add 12 inspected pages, bringing the partial review
+to **11 cases and 33 pages**. Schedule A and Form 1040 visibly agree on
+$20,400 purchase interest/points, $18,067 construction-refinance amortization,
+$18,000 reported interest plus $67 unreported points, and $18,000 reported
+interest plus $133 from the 2023 points ledger. Their retained pending amounts
+and native XML amounts match the printed deductions and resulting return
+totals; no clipping, page-order, or owner-identity discrepancy was observed.
+The other ten generated cases and the complete 178-case review remain open.
+
+The prior-year Form 1098 recovery case adds six inspected pages, bringing this
+bounded review to **12 cases and 39 pages**. Form 1040, Schedule 1 and its
+line 8z statement, and Schedule A visibly carry the $1,200 taxable recovery,
+$81,200 AGI, and $18,000 mortgage interest deduction recorded in retained
+pending data and native XML. The $3,176 refund, page order, and identity also
+match; no clipping or legibility issue was observed. Nine generated cases and
+the complete 178-case review remain open.
+
+The remaining nine synthetic cases add 31 inspected pages, completing a
+**bounded visual review of all 21 generated cases and 70 pages** in this
+partial directory. The ACTC and EIC opt-out boxes, $5,000 fully repaid
+unemployment annotation, $10,000 Form 2439 gain and $1,500 payment, and
+$220,000 high-wage Form 8959/Schedule 2 tax with zero Form 8960 NIIT were
+checked on rendered pages against retained pending data and native XML. The
+custodial EIC release, $500 overpayment application to 2026, ordinary W-2
+refund, and three Schedule EIC child columns (including reviewed birth-year
+residence) likewise showed the expected identities, amounts, boxes, and page
+order. No discrepancy or clipping was found in this partial set. These pages
+remain synthetic review evidence only; the generator stopped before the next
+Form 8862 case, and the full 178-case manifest and visual signoff remain open.
+
+The explicit selection workflow regenerated those same 21 PDFs into
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-selected21/` with
+byte-identical PDF contents and a completed selected-scope manifest. Its
+scope lists 21 included and 157 excluded fixtures. After the page observations
+above were entered, the read-only replay checker reported `Review checklist
+complete (selected scope): 21 cases, 70 pages; artifact hashes and TY2025 XSD
+validation confirmed.` The private manifest SHA-256 is
+`28cd598497f44e3cb14fb139d9b163800030b5819bc01ece1ca4efcd9ca97257`.
+This selected result verifies only those 21 generated cases; it does not
+declare the nonnamed phase or the 178-case visual gate complete.
+
+A second declared selection contains **55 fixtures whose expected printed
+forms use only Form 1040, Schedules 1/1-A/2/3/A/B/D, and Schedule EIC**. It
+generated 55 source JSON/native XML/PDF trios and 185 PDF pages in
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-core-pdf55/`;
+each native XML passed the supplied TY2025 XSD before PDF output. The
+completed private review manifest SHA-256 is
+`554a5d6f8f63d285d2a416a8bdf36f208d292f9fb573ae5fc694cf0873c64f7a`.
+This is a PDF-form projection selection, not a claim that every fixture's
+underlying source route is outside the named-form gaps. It declares 123
+excluded fixtures. Sixteen cases and 46 pages overlap the completed 21-case
+review above; their regenerated PDF bytes are identical.
+
+Six new cases and 20 pages in this 55-case packet were rendered at 120 dpi
+and visually checked: `joint-presidential-campaign-both`, `joint-two-w2s`,
+`single-reviewed-car-loan-schedule1a`,
+`single-three-car-loan-schedule1a`, `single-k-blank-tin-withholding`, and
+`single-two-employers-excess-social-security`. The joint names, SSNs, and
+campaign boxes; $127,000 two-W-2 wages; Schedule 1-A $4,000 deduction and
+three-VIN continuation; $5,000 Form 1099-K income and $480 withholding; and
+$1,482 excess Social Security payment visibly matched retained pending data
+and native XML. No page-order, clipping, or owner discrepancy was found in
+those pages. Five additional cases and 21 pages cover final-trust/partnership
+capital amounts, two partnership debt-cancellation and recovery paths, and
+direct broker basis sales. Three final-trust cases and 12 pages cover separate
+short-term and long-term capital losses plus a section 67(e) deduction. The
+printed lines and totals in these eight cases matched retained pending data
+and native XML, with no visible page-order, owner, or clipping discrepancy.
+The remaining 25 cases and 86 pages were rendered at 120 dpi and reviewed:
+five vehicle/overtime Schedule 1-A cases; five qualified-tip cases, including
+the two-employer worksheet and high-income phaseout; two joint senior/mixed
+Schedule 1-A cases; two 1099-NEC/K classification cases; eight pension/IRA
+rollover and attached-statement cases; and three Form 1040 line 1h wage-source
+cases. Their printed amounts, source ownership, checkboxes, continuation
+pages, and packet order matched retained pending data and native XML. No
+clipping or legibility discrepancy was found. Thus **all 55 cases and 185
+pages** in this selected packet have visual observations. The read-only replay
+checker reported `Review checklist complete (selected scope): 55 cases, 185
+pages; artifact hashes and TY2025 XSD validation confirmed.` This selected
+result does not declare the nonnamed phase or the 178-case visual gate
+complete.
 
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
-authenticity, and visual parity still require separate review.
+authenticity, and visual parity outside the two selected packets still require
+separate review.
 The generator records one fixed synthetic `ReturnTs` in its source record and
 manifest so later source replay yields byte-identical native XML. This timestamp
 is only for the review batch; ordinary exports keep their actual build time.
@@ -891,3 +1523,170 @@ every active PDF route has an actual filled-file visual review. IRS
 business-rule review and accepted ATS acknowledgments remain separate gates;
 neither is established by local tests or rendering. Only after those and the
 scope/coverage decisions are complete should PR, merge and release review begin.
+
+## Form 9000 current fixture addition (2026-10-03)
+
+The optional return-attached alternative-media preference now has a confirmed taxpayer/joint-spouse input, native `IRS9000` documents, and one filled PDF form page per person. Three focused cases passed, including a two-owner full return with two native and two printable copies; the single-owner full-return XML validated with `xmllint` against the locally cached TY2025 v5.4 `Return1040.xsd`. Its page was rendered and visually checked for name, SSN, large-print selection, and blank standalone-only address/signature. The read-only planner now reports **179 fixtures, 85 of 113 unique PDF keys covered, 28 uncovered named-family keys, and 116 PDF descriptors**. The earlier 178-fixture bulk pass and selected visual batches are historical checkpoints; the expanded full batch, business-rule and IRS ATS evidence remain open. [IRS accessible-products guidance](https://www.irs.gov/forms-pubs/accessible-irs-tax-products) permits attaching Form 9000 or sending it separately.
+
+## Interrupted implementation-checkpoint batch (2026-10-03)
+
+At `4a366f85`, `PATH=/tmp/opentax-tools:$PATH deno task test` was started with
+Deno 2.9.4 and Poppler `pdftotext` 26.09.0. It reached Form 1116 XSD tests
+without a reported failure, then was deliberately interrupted with SIGINT
+(exit 130) after a separate calculated-output replay probe found that changing
+Form 1040's Form 8814 tax amount could change XML without changing the retained
+child forms. The partial log is the ignored local file
+`.state/research/ty2025-full-test-4a366f85.log`, SHA-256
+`28b6c062b5b03bdc1df15fbfee7d989277572b9be6da9d51d8a308e4bb0f4536`.
+This is **not** a passing full batch. The source replay gap was repaired, and
+focused Form 8814 and 167-exportable-fixture calculated-field mutation checks
+passed. Rerun the full command after implementation freezes on the new head.
+
+At `a935ec37`, the same full command was started with Deno 2.9.4 and Poppler
+`pdftotext` 26.09.0. It reached the Schedule H XSD cases without a reported
+failure, then was deliberately interrupted with SIGINT (exit 130) to add the
+new [issue #60](https://github.com/filedcom/opentax/issues/60) CLI regression
+before continuing the bulk gate. The partial ignored local log is
+`.state/research/ty2025-full-test-a935ec37.log`, SHA-256
+`8ec6e20040c58cd4ecefab9583db91920e0ec263eb37732300b3d4eaa82cdefb`.
+This is **not** a passing full batch. The focused issue cases passed 56/56 with
+no failures; rerun the full command at the next frozen implementation head.
+
+## Frozen-head full batch after issue #60 regression (2026-10-03)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command at
+`f92a09e4` completed by 2026-10-03 21:30 UTC in 52m14s: **11,050 passed,
+zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
+15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
+`pdftotext` 26.09.0 through the local launcher. The ignored local log is
+`.state/research/ty2025-full-test-f92a09e4.log` (SHA-256
+`9e4ed2887a433e5378f4ee2f0a979ff3ecece3f4e464900330164f68451a7cd0`).
+The code head remained frozen during the run. This is a passing local automated
+batch for its tested routes; unresolved coverage decisions, all-page visual
+review, IRS business-rule validation, and ATS acceptance remain open.
+
+## Direct pension rollover filled-PDF review (2026-10-03)
+
+At documentation head `61db04f2` (the tested code from `f92a09e4`), the real
+review generator selected `single-direct-pension-rollover` and wrote a fresh
+synthetic source, local TY2025 v5.4 XSD-valid XML, and two-page filled Form
+1040 PDF to the ignored directory
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-direct-pension-61db04f2/`.
+The PDF, XML, and source SHA-256 values exactly match the prior 167-case export.
+Both pages were rendered at 150 dpi and visually checked against the source
+and XML: Alex's 1099-R code G reports $20,000 gross, $0 taxable, the Form 1040
+line 5c rollover box is selected, QCD is clear, and page 2 prints the $15,750
+standard deduction with no positive tax or payment. Form/year, owner, page
+order, checkboxes, amounts, and clipping flags are complete. The read-only
+review checker passed **one selected case and two pages**, including source
+replay, artifact hashes, page origins, and local XSD. The reviewed manifest
+SHA-256 is
+`af724d3e5414b91b2178612aafd71bc1c737abd7ef8c76d335e4ad408ae62353`.
+This selected review leaves the rest of the 179-case plan, business rules, and
+IRS ATS open.
+
+## Form 1098 points filled-PDF review (2026-10-03)
+
+At head `804cb13c` (unchanged implementation from the `f92a09e4` full pass),
+the real review generator selected `single-1098-purchase-points` and
+`single-1098-construction-refinance-points`. Its ignored directory is
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-1098-points-804cb13c/`.
+Both source-backed native returns passed the locally cached TY2025 v5.4 XSD.
+All six generated pages were rendered at 150 dpi and inspected. The purchase
+case prints $18,000 of issued mortgage interest plus $2,400 of reviewed
+purchase points on Schedule A lines 8a/8e/10/17 and Form 1040 line 12e,
+for $20,400 total; its $80,000 wages, $8,032 tax, $12,000 withholding, and
+$3,968 refund agree with source and XML. The construction-refinance case
+prints $18,000 interest plus $67 of six-month amortization of $2,000 paid
+points, for $18,067 on those same lines; its $8,538 tax and $3,462 refund
+also agree. Form/year, owner, boxes, row placement, page order, and clipping
+checks are complete. The read-only review checker passed **two selected cases
+and six pages**, including source replay, hashes, page origins, and XSD. The
+reviewed manifest SHA-256 is
+`3b0f027f0646ea5bfccaea1d9e19558412740edf8cceed5cfe41bc4aa81d1261`.
+The Form 1098 source-byte boundary, cross-loan limits, other points variants,
+remaining 179-case page review, business rules, and ATS remain open.
+
+## Multiple Form 1098 mortgage-limit regression (2026-10-03)
+
+The shared Pub. 936 Table 1 review now covers two or more full-year post-2017
+acquisition loans for one single filer. Focused source tests include the
+formerly accepted two-loan $900,000 box 2 sum without a whole-return review;
+it now rejects. The three-loan final-export test retains locally XSD-valid
+native XML and filled PDF for a reviewed $900,000 monthly-average balance:
+$3,000 issued interest × .833 = $2,499 Schedule A line 8a. It also verifies
+full $3,000 interest at $600,000 reviewed average despite $900,000 in box 2
+snapshots, plus full/partial unreviewed over-limit rejection in native and PDF
+exports. All **56 focused input/final-export tests** and the existing
+two-loan TY2025 XSD case passed. This focused check does not replace the earlier 11,050-test full
+suite at frozen head `f92a09e4`; the implementation has changed since then.
+
+## Multiple mortgage filing-status regression (2026-10-04)
+
+The Form 1098 limit preflight now receives the final filing status in both
+exporters. A source-level case rejects unreviewed MFJ interest over $750,000
+in combined box 2 snapshots and MFS over $375,000. The three-loan final-export
+fixture adds a joint return with the third lender copy owned by the spouse:
+unreviewed native/PDF exports reject, while a verified MFJ Table 1 workpaper
+reconciles $3,000 reported interest to $2,499 in native XML and filled PDF.
+The local TY2025 XSD and focused tests passed. These checks do not establish
+complete MFS allocation, lender-statement authenticity, IRS business-rule
+acceptance, or the final full-suite gate.
+
+## One Form 1098 loan over the acquisition debt limit (2026-10-04)
+
+The existing whole-return Pub. 936 Table 1 source now accepts one full-year
+post-2017 loan. An unreviewed $900,000 box 2 snapshot with positive Schedule A
+line 8a rejects in both exporters. Twelve documented $900,000 monthly balances
+apply the .833 ratio to $1,000 reported interest, yielding $833 in local
+TY2025 XSD-valid native XML and text-extracted filled PDF. A $600,000 reviewed
+average permits the full $1,000 despite the box 2 snapshot; a zero line 8a
+claim does not require a deduction review. This is focused source/export
+evidence, not the later complete bulk test or IRS ATS acceptance.
+
+## 2025 purchase mortgage without points (2026-10-04)
+
+One July 2025 $900,000 principal-residence acquisition loan with issued Form
+1098 box 2 and a reviewed closing/monthly-balance workpaper computes $833 of
+deductible interest from $1,000 reported. Its source-to-native XML passed the
+locally cached TY2025 XSD, and its three-page filled PDF text contains $833.
+Native and PDF export reject the unreviewed claim. A second two-source case
+combines a $500,000 July purchase and $500,000 full-year mortgage, computes
+$1,500 from $2,000 reported interest, and builds the MeF bundle and PDF.
+Source validation rejects missing closing reference, positive balances
+before purchase, changed deduction, and missing issued box 2. These focused
+checks do not establish other part-year or points paths, closing/statement
+byte authenticity, the final bulk suite, or IRS ATS acceptance.
+
+## 2025 purchase and qualified second-home source (2026-10-04)
+
+The combined July purchase and preexisting Form 1098 review now requires
+distinct property references and the former home's second-home occupancy
+record. The source check accepts a rented home with 100 fair-rental and 15
+personal-use days. It rejects 14 personal days, a 400-day total, and reuse of
+the purchase property reference. The prior positive $1,500 combined-loan MeF
+bundle and three-page filled-PDF case passed again with an unrented former
+main home. A second $300,000 plus $300,000 pair with $2,000 claimed interest
+rejects without the shared review and builds MeF/PDF with it; this also checks
+the under-limit qualified-home path. Occupancy-document bytes, other property-use combinations, the
+full bulk suite, and IRS acceptance remain outside this focused result.
+
+## Purchase-points prior-home qualification (2026-10-04)
+
+The separate $21,000 Form 1098 purchase-points plus existing-mortgage
+fixture now retains distinct property references and a former-home
+second-home occupancy review. Focused source parsing keeps the unrented
+positive case and accepts 100 fair-rental plus 15 personal-use days; 14
+personal-use days and duplicate property identity reject. The earlier
+purchase-points native and PDF Schedule A source-replay tests passed on this
+head, as did the full-return local TY2025 XSD case. Occupancy bytes, full
+batch, and ATS remain open.
+
+## Direct capital-gain source omission (2026-10-04)
+
+A retained positive Form 1099-DIV box 2a or calculated Form 8814 child gain
+must reach Schedule D or the direct Form 1040 line 7a route. Native and PDF
+Form 1040 now reject a missing or zero direct line when there is no Schedule D
+source. The focused source, native Form 1040, and PDF Form 1040 suites passed
+104/104 after the change. This does not authenticate payer copies or prove the
+wider Schedule D route, full bulk suite, or IRS ATS acceptance.

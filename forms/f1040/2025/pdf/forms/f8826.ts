@@ -46,10 +46,7 @@ export const form8826Pdf: PdfFormDescriptor = {
     text("nameLine1", 1),
     text("primarySSN", 2),
   ],
-  includeWhen(raw) {
-    if (raw.eligible_expenditures === undefined) return false;
-    return calculateForm8826(inputSchema.parse(raw)).line6 > 0;
-  },
+  includeWhen: (fields) => fields.line6_dollars !== undefined,
   projectFields(raw, allPending) {
     if (raw.eligible_expenditures === undefined) return {};
     const source = inputSchema.parse(raw);

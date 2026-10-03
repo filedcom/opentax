@@ -68,4 +68,18 @@ export function assertSocialSecurityBenefitSource(
       "Form 1040 line 6a differs from retained Social Security benefit sources",
     );
   }
+  const taxable = (pending.f1040 as Record<string, unknown> | undefined)
+    ?.line6b_ss_taxable ?? 0;
+  const agiTaxable = (pending.agi_aggregator as
+    | Record<string, unknown>
+    | undefined)?.line6b_ss_taxable;
+  if (
+    typeof taxable !== "number" || !Number.isFinite(taxable) ||
+    taxable < 0 || taxable > expected ||
+    (agiTaxable !== undefined && agiTaxable !== taxable)
+  ) {
+    throw new Error(
+      "Form 1040 line 6b and AGI taxable benefits must fit retained line 6a benefit sources",
+    );
+  }
 }

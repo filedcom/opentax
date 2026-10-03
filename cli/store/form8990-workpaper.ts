@@ -11,6 +11,7 @@ import {
   loadReturn,
   saveForm8990CalculatedWorkpaper,
 } from "./store.ts";
+import { singletonPublicInputKeys } from "./public-input-keys.ts";
 import type { Form8990CalculatedWorkpaperRecord } from "./types.ts";
 
 const recordSchema = z.object({
@@ -51,12 +52,10 @@ async function calculateRecord(
   if (meta.year !== 2025 || (meta.formType ?? "f1040") !== "f1040") {
     throw new Error("Form 8990 calculated workpaper needs a TY2025 Form 1040");
   }
-  const singletonNodeTypes = new Set(
-    f1040_2025.inputNodes.filter((entry) => !entry.isArray).map((entry) =>
-      entry.node.nodeType
-    ),
+  const engineInputs = buildEngineInputs(
+    inputs,
+    singletonPublicInputKeys(f1040_2025),
   );
-  const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
   if (engineInputs.form8990 === undefined) {
     throw new Error("Form 8990 calculated workpaper needs source records");
   }

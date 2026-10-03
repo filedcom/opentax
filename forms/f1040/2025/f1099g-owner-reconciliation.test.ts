@@ -57,7 +57,7 @@ Deno.test("one issued 1099-G reference without an account cannot replay changed 
     assertThrows(
       build,
       Error,
-      "repeats the same identified payer, recipient, and issued source reference",
+      "repeats the same issued-copy source reference",
     );
   }
 });

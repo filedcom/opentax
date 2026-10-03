@@ -1,12 +1,13 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
-Static comparison updated 2026-10-02 of the descriptors actually registered in
+Static comparison updated 2026-10-03 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **148 native descriptors and 115 PDF
-descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
-inventory update.
+exclusion. The indexes currently hold **149 native descriptors and 116 PDF
+descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
+evidence; that does not establish the remaining route, business-rule, or ATS
+coverage.
 
 The three native additions since the preceding census are Schedule A
 supporting statements for line 6 other deductible taxes, line 8b

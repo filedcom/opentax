@@ -2,6 +2,25 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { scheduleEPdf } from "./schedule_e.ts";
 import { scheduleE } from "../../mef/forms/schedule_e.ts";
 import { inputSchema as scheduleEInputSchema } from "../../../nodes/inputs/schedule_e/index.ts";
+import { fillFormPdf } from "../builder.ts";
+import { testFiler } from "../../mef/test-filer.ts";
+
+Deno.test("Schedule E fills filer identity on the retained Part I or Part II page", async () => {
+  const filer = {
+    ...testFiler(),
+    firstNameWithInitial: "Taxpayer",
+    lastName: "Test",
+  };
+  for (const fields of [{ line26: 100 }, { trust_line37: 100 }]) {
+    const bytes = await fillFormPdf(
+      scheduleEPdf,
+      fields,
+      filer,
+      ".pdf-cache",
+    );
+    assertEquals(bytes instanceof Uint8Array, true);
+  }
+});
 
 Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
   const source = {

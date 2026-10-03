@@ -48,6 +48,15 @@ export function purchasePointsCrossLoanFixture(recipientTin = "111-22-3333") {
       purchase_points_cross_loan_review: {
         purchase_loan: loan(purchaseRef, 300_000, 7),
         existing_loan: loan(existingRef, 400_000, 1),
+        purchase_property_reference: "2025 new principal residence",
+        existing_property_reference: "2025 former main home",
+        existing_second_home_review: {
+          occupancy_record_reference: "2025 former-home occupancy ledger",
+          qualified_second_home_election_verified: true,
+          held_out_for_rent_or_resale: false,
+          fair_rental_days: 0,
+          personal_use_days: 0,
+        },
         purchase_closing_disclosure_reference:
           "2025 purchase closing disclosure",
         pub936_points_workpaper_reference: "2025 purchase points Pub. 936",

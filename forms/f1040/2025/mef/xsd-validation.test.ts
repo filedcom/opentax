@@ -4761,7 +4761,7 @@ Deno.test({
         },
       } as MefFormsPending, extractFilerIdentity(general)),
     Error,
-    "tax-exempt MAGI needs matching Form 1099-INT source",
+    "Form 1040 line 2a and retained tax-exempt interest must match issued Forms 1099",
   );
   await validateXsd(xml, "1099-INT tax-exempt interest and Form 8962 MAGI");
 });

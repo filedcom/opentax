@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f8288, WithholdingRate } from "../nodes/inputs/f8288/index.ts";
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { fieldsOf } from "../../../core/test-utils/output.ts";
@@ -8,6 +13,10 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "./registry.ts";
 import { assertOtherFormsWithholding } from "./f8288-withholding-reconciliation.ts";
+import { buildMefXml } from "./mef/builder.ts";
+import { buildPending } from "./mef/pending.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const source = {
   f8288s: [{
@@ -21,6 +30,49 @@ const source = {
   }],
 };
 const pending = { f8288: source };
+
+Deno.test("final line 25c rejects unsupported excess and accepts the sourced total", () => {
+  assertOtherFormsWithholding({ line25c_total: 75_000 }, pending, true);
+  assertOtherFormsWithholding({}, {}, true);
+  assertThrows(
+    () => assertOtherFormsWithholding({ line25c_total: 75_001 }, pending, true),
+    Error,
+    "line 25c differs from retained other-form withholding",
+  );
+  assertThrows(
+    () => assertOtherFormsWithholding({ line25c_total: 1 }, {}, true),
+    Error,
+    "line 25c differs from retained other-form withholding",
+  );
+});
+
+Deno.test("native and PDF final export reject unsourced line 25c withholding", async () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-w2-refund"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const forged = {
+    ...pending,
+    f1040: { ...pending.f1040, line25c_total: 1 },
+  };
+  assertThrows(
+    () => buildMefXml(forged, fixture.filer),
+    Error,
+    "line 25c differs from retained other-form withholding",
+  );
+  await assertRejects(
+    () => buildPdfBytes(forged, fixture.filer),
+    Error,
+    "line 25c differs from retained other-form withholding",
+  );
+});
 
 Deno.test("Form 8288-A withholding is other-forms line 25c, not 1099 line 25b", () => {
   const result = f8288.compute(
@@ -187,6 +239,13 @@ Deno.test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () =
     "less than combined sourced other-form withholding",
   );
   assertOtherFormsWithholding({ line25c_total: 75_400 }, allSources);
+  assertOtherFormsWithholding({ line25c_total: 75_400 }, allSources, true);
+  assertThrows(
+    () =>
+      assertOtherFormsWithholding({ line25c_total: 75_401 }, allSources, true),
+    Error,
+    "line 25c differs from retained other-form withholding",
+  );
   assertThrows(
     () => irs1040.build({ line25c_total: 75_399 }, { pending: allSources }),
     Error,

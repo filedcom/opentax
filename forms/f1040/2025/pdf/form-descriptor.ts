@@ -62,6 +62,8 @@ export interface PdfRowDescriptor {
 
 export interface PdfFormDescriptor {
   readonly pendingKey: string;
+  /** Form identity for page provenance when a descriptor uses another form's source slot. */
+  readonly printedFormKey?: string;
   readonly pdfUrl: string;
   /** Project finalized cross-document worksheet values onto this form's fields. */
   readonly projectFields?: (
@@ -87,7 +89,12 @@ export interface PdfFormDescriptor {
   /** Zero-based source PDF pages to retain for a particular instance. */
   readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];
   readonly fields: ReadonlyArray<PdfFieldEntry>;
-  readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
+  readonly filerFields?: ReadonlyArray<
+    PdfFieldEntry & {
+      /** Fill identity on this instance only when its page is retained. */
+      readonly includeWhen?: (fields: Record<string, unknown>) => boolean;
+    }
+  >;
   readonly rows?: PdfRowDescriptor;
   /** Draw form-specific text on copied form pages before they are merged. */
   readonly decoratePages?: (

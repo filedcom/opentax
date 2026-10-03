@@ -113,6 +113,58 @@ Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
   );
 });
 
+Deno.test("nonstandard W-2G code N requires a reviewed matching payer copy", () => {
+  const review = {
+    kind: "typed" as const,
+    source_document_reference: issued.source_document_reference,
+    reviewer_confirmed_nonstandard: true as const,
+  };
+  const xml = w2g.build({
+    w2gs: [{
+      ...issued,
+      standard_or_nonstandard_code: "N",
+      nonstandard_document_review: review,
+    }],
+  }, context);
+  assertStringIncludes(
+    xml[0],
+    "<StandardOrNonStandardCd>N</StandardOrNonStandardCd>",
+  );
+  assertThrows(
+    () =>
+      w2g.build(
+        { w2gs: [{ ...issued, standard_or_nonstandard_code: "N" }] },
+        context,
+      ),
+    Error,
+    "reviewed matching payer-issued copy",
+  );
+  assertThrows(
+    () =>
+      w2g.build({
+        w2gs: [{
+          ...issued,
+          standard_or_nonstandard_code: "N",
+          nonstandard_document_review: {
+            ...review,
+            source_document_reference: "different",
+          },
+        }],
+      }, context),
+    Error,
+    "reviewed matching payer-issued copy",
+  );
+  assertThrows(
+    () =>
+      w2g.build(
+        { w2gs: [{ ...issued, nonstandard_document_review: review }] },
+        context,
+      ),
+    Error,
+    "must use code N",
+  );
+});
+
 Deno.test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
   assertThrows(
     () => w2g.build({ w2gs: [issued, { ...issued }] }, context),

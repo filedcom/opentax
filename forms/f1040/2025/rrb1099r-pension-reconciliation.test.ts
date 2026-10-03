@@ -4,6 +4,7 @@ import { execute } from "../../../core/runtime/executor.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { registry } from "./registry.ts";
 import { assertRrb1099rPensionSource } from "./rrb1099r-pension-reconciliation.ts";
 
@@ -45,7 +46,7 @@ Deno.test("RRB-1099-R pension source replays filed lines 5a and 5b", () => {
   assertThrows(
     () => assertRrb1099rPensionSource({ rrb1099r, f1040: filed(6_000) }, filer),
     Error,
-    "lines 5a and 5b differ from retained RRB-1099-R pension sources",
+    "lines 5a and 5b or AGI differ from retained pension sources",
   );
 });
 
@@ -72,6 +73,70 @@ const substitutePension = {
   }],
 };
 
+Deno.test("issued and substitute pensions replay without a railroad statement", () => {
+  assertRrb1099rPensionSource({
+    f1099r: issuedPension,
+    f4852: substitutePension,
+    f1040: { ...filed(5_000, 3_500), line25b_withheld_1099: 0 },
+    agi_aggregator: { line5b_pension_taxable: 3_500 },
+  }, filer);
+  assertRrb1099rPensionSource({
+    f1099r: {
+      f1099rs: [{
+        ...issuedPension.f1099rs[0],
+        box2a_taxable_amount: 3_000,
+      }],
+    },
+    f1040: { ...filed(0, 3_000), line25b_withheld_1099: 0 },
+  }, filer);
+  assertThrows(
+    () =>
+      assertRrb1099rPensionSource({
+        f1099r: issuedPension,
+        f1040: { ...filed(3_001, 2_000), line25b_withheld_1099: 0 },
+      }, filer),
+    Error,
+    "lines 5a and 5b or AGI differ",
+  );
+  assertThrows(
+    () =>
+      assertRrb1099rPensionSource({
+        f1099r: issuedPension,
+        f1040: { ...filed(3_000, 2_000), line25b_withheld_1099: 0 },
+        agi_aggregator: { line5b_pension_taxable: 2_001 },
+      }, filer),
+    Error,
+    "lines 5a and 5b or AGI differ",
+  );
+});
+
+Deno.test("native and PDF reject unsourced positive pension amounts", async () => {
+  const pending = {
+    f1040: { ...filed(1_000), line25b_withheld_1099: 0 },
+  };
+  const message = "lines 5a and 5b or AGI differ from retained pension sources";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
+Deno.test("existing Form 4972 Part II pension deposit keeps its separate AGI review", () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-elected-lump-sum-part-ii"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertRrb1099rPensionSource(result.pending, fixture.filer);
+});
+
 Deno.test("RRB with issued and substitute pensions replays both filed amounts exactly", async () => {
   const pending = {
     rrb1099r,
@@ -90,16 +155,18 @@ Deno.test("RRB with issued and substitute pensions replays both filed amounts ex
     ]
   ) {
     assertThrows(
-      () => buildMefXml(wrong as Parameters<typeof buildMefXml>[0], filer),
+      () => assertRrb1099rPensionSource(wrong, filer),
       Error,
-      "lines 5a and 5b differ",
-    );
-    await assertRejects(
-      () => buildPdfBytes(wrong, filer),
-      Error,
-      "lines 5a and 5b differ",
+      "lines 5a and 5b or AGI differ",
     );
   }
+  const guard = "Form 4852 requires a completed substitute-form filing and packet route";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    guard,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, guard);
 });
 
 Deno.test("a substitute W-2 cannot justify inflated RRB pension lines", () => {
@@ -113,7 +180,7 @@ Deno.test("a substitute W-2 cannot justify inflated RRB pension lines", () => {
   assertThrows(
     () => assertRrb1099rPensionSource(pending, filer),
     Error,
-    "lines 5a and 5b differ",
+    "lines 5a and 5b or AGI differ",
   );
 });
 
@@ -131,7 +198,7 @@ Deno.test("an issued IRA cannot justify inflated RRB pension lines", () => {
   assertThrows(
     () => assertRrb1099rPensionSource(pending, filer),
     Error,
-    "lines 5a and 5b differ",
+    "lines 5a and 5b or AGI differ",
   );
 });
 
@@ -214,8 +281,7 @@ Deno.test("mixed RRB and substitute pensions reach full-graph pension and AGI to
 
 Deno.test("native and PDF exports reject an inflated RRB-1099-R pension", async () => {
   const pending = { rrb1099r, f1040: filed(6_000) };
-  const message =
-    "lines 5a and 5b differ from retained RRB-1099-R pension sources";
+  const message = "lines 5a and 5b or AGI differ from retained pension sources";
   assertThrows(
     () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
     Error,

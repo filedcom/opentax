@@ -10,6 +10,7 @@ import {
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { eitc } from "../../forms/eitc/index.ts";
@@ -441,7 +442,7 @@ function resolveSsaTaxable(
     return 0.85 * ssaGross;
   }
 
-  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const isMfj = input.filing_status === "mfj";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
   // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
@@ -494,8 +495,10 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 }
 
 // Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
-// MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
-// Phase-out: single/HOH $85k–$100k; MFJ $175k–$205k; MFS not eligible.
+// MAGI adds foreign earned income excluded on Schedule 1 line 8d back to
+// provisional AGI without SLI. Other foreign housing/territory exclusions
+// need separate retained source paths before a positive claim can use them.
+// Phase-out: single/HOH/QSS $85k–$100k; MFJ $170k–$200k; MFS not eligible.
 function computeAdjustedSli(
   input: AgiInput,
   cfg: import("../../../config/index.ts").F1040Config,
@@ -505,7 +508,7 @@ function computeAdjustedSli(
   // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
   if (input.filing_status === "mfs") return 0;
 
-  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const isMfj = input.filing_status === "mfj";
   const phaseOutStart = isMfj
     ? cfg.sliPhaseOutStartMfj
     : cfg.sliPhaseOutStartSingle;
@@ -515,7 +518,7 @@ function computeAdjustedSli(
   // Use SSA gross from input (line6b_ss_taxable if pre-computed, else 0 for MAGI purposes)
   // to avoid circular dependency with resolveSsaTaxable.
   const ssaTaxable = input.line6b_ss_taxable ?? 0;
-  const magi = nonSsaIncome(input) + ssaTaxable - exclusions(input) -
+  const magi = nonSsaIncome(input) + ssaTaxable -
     aboveLineDeductionsExceptSli(input);
 
   if (magi <= phaseOutStart) return raw;
@@ -524,6 +527,11 @@ function computeAdjustedSli(
   // Linear phase-out; IRS rounds to nearest dollar
   const phaseOutRatio = (magi - phaseOutStart) / (phaseOutEnd - phaseOutStart);
   return Math.round(raw * (1 - phaseOutRatio));
+}
+
+/** Replay the TY2025 Schedule 1 line 21 result from retained AGI inputs. */
+export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
+  return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);
 }
 
 // Sum above-the-line deductions (Schedule 1 Part II).
@@ -670,6 +678,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   get outputNodes() {
     return new OutputNodes([
       f1040,
+      schedule1,
       standard_deduction,
       scheduleA,
       eitc,
@@ -843,6 +852,13 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         foreign_agi_addback: exclusions(input),
       }),
     ];
+
+    const studentLoanDeduction = computeAdjustedSli(input, cfg);
+    if (studentLoanDeduction > 0) {
+      outputs.push(this.outputNodes.output(schedule1, {
+        line21_student_loan_interest: studentLoanDeduction,
+      }));
+    }
 
     const gross = grossIncome(input, cfg);
     if (gross > 0) {

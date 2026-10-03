@@ -53,7 +53,11 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
-    assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
   } finally {
     await Deno.remove(xmlPath);
   }
@@ -65,7 +69,10 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
-    assertEquals(/80,?000/.test(new TextDecoder().decode(extracted.stdout)), true);
+    assertEquals(
+      /80,?000/.test(new TextDecoder().decode(extracted.stdout)),
+      true,
+    );
   } finally {
     await Deno.remove(pdfPath);
   }
@@ -84,8 +91,7 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
     "line 1a and AGI wages differ from retained W-2",
   );
   const changedAgi = structuredClone(pending);
-  (changedAgi.agi_aggregator as { line1a_wages: number }).line1a_wages =
-    79_999;
+  (changedAgi.agi_aggregator as { line1a_wages: number }).line1a_wages = 79_999;
   assertThrows(
     () => buildMefXml(changedAgi, base.filer),
     Error,
@@ -106,12 +112,12 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
   assertThrows(
     () => buildMefXml(repeatedIssuedCopy, base.filer),
     Error,
-    "W-2 repeats the same identified employer, employee, and issued-copy reference",
+    "W-2 repeats the same issued-copy source reference",
   );
   await assertRejects(
     () => buildPdfBytes(repeatedIssuedCopy, base.filer),
     Error,
-    "W-2 repeats the same identified employer, employee, and issued-copy reference",
+    "W-2 repeats the same issued-copy source reference",
   );
 });
 
@@ -122,31 +128,85 @@ Deno.test("the graph rejects a repeated identified W-2 issued copy before totali
     ...base.inputs,
     w2: [issued, { ...issued }],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.diagnostics.some((entry) =>
-    entry.nodeType === "w2" &&
-    entry.message.includes("same identified employer, employee")
-  ), true);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "w2" &&
+      entry.message.includes("same issued-copy source reference")
+    ),
+    true,
+  );
+});
+
+Deno.test("one W-2 issued reference cannot replay under a changed employer", async () => {
+  const [first] = base.inputs.w2 as Record<string, unknown>[];
+  const firstIssued = { ...first, source_document_reference: "issued-copy-A" };
+  const secondIssued = {
+    ...first,
+    employer_name: "Second Employer",
+    employer_ein: "98-7654321",
+    source_document_reference: "issued-copy-B",
+    box1_wages: 5_000,
+    box2_fed_withheld: 500,
+    box3_ss_wages: 5_000,
+    box4_ss_withheld: 310,
+    box5_medicare_wages: 5_000,
+    box6_medicare_withheld: 72.5,
+  };
+  const inputs = { ...base.inputs, w2: [firstIssued, secondIssued] };
+  const result = execute(buildExecutionPlan(registry), registry, inputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const replay = structuredClone(pending);
+  (replay.w2 as unknown as {
+    w2s: { source_document_reference: string }[];
+  })
+    .w2s[1]!.source_document_reference = "issued-copy-A";
+  const message = "W-2 repeats the same issued-copy source reference";
+  assertThrows(() => buildMefXml(replay, base.filer), Error, message);
+  await assertRejects(() => buildPdfBytes(replay, base.filer), Error, message);
+
+  const graphReplay = execute(buildExecutionPlan(registry), registry, {
+    ...inputs,
+    w2: [firstIssued, {
+      ...secondIssued,
+      source_document_reference: "issued-copy-A",
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    graphReplay.diagnostics.some((entry) =>
+      entry.nodeType === "w2" && entry.message.includes(message)
+    ),
+    true,
+  );
 });
 
 Deno.test("Form 4852 W-2 replacement wages retain their line 1a total", () => {
   assertLine1aWageSource({
-    f4852: { f4852s: [{
-      form_type: FormType.W2,
-      payer_name: "Replacement Employer",
-      wages: 1_200,
-    }] },
+    f4852: {
+      f4852s: [{
+        form_type: FormType.W2,
+        payer_name: "Replacement Employer",
+        wages: 1_200,
+      }],
+    },
     f1040: { line1a_wages: 1_200 },
     agi_aggregator: { line1a_wages: 1_200 },
   });
   assertThrows(
-    () => assertLine1aWageSource({
-      f4852: { f4852s: [{
-        form_type: FormType.W2,
-        payer_name: "Replacement Employer",
-        wages: 1_201,
-      }] },
-      f1040: { line1a_wages: 1_200 },
-    }),
+    () =>
+      assertLine1aWageSource({
+        f4852: {
+          f4852s: [{
+            form_type: FormType.W2,
+            payer_name: "Replacement Employer",
+            wages: 1_201,
+          }],
+        },
+        f1040: { line1a_wages: 1_200 },
+      }),
     Error,
     "line 1a and AGI wages differ from retained W-2",
   );

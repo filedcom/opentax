@@ -165,7 +165,10 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
     "<TotalGeneralBusCreditsAppTxAmt>2375</TotalGeneralBusCreditsAppTxAmt>",
   );
 
-  assertEquals(form8826Pdf.includeWhen!(source), true);
+  assertEquals(
+    form8826Pdf.includeWhen!(form8826Pdf.projectFields!(source, pending)),
+    true,
+  );
   assertEquals(form8826Pdf.pageIndices!(source), [0]);
   assertEquals(form8826Pdf.projectFields!(source, pending), {
     line1_dollars: "5000",

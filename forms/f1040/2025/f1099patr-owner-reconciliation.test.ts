@@ -71,17 +71,24 @@ Deno.test("joint spouse 1099-PATR belongs on MFJ return only", () => {
 Deno.test("one 1099-PATR issued reference without an account cannot be counted twice", () => {
   const issued = personalDistribution("111223333").f1099patr.f1099patrs[0];
   const duplicate = {
-    f1099patr: { f1099patrs: [issued, { ...issued }] },
+    f1099patr: {
+      f1099patrs: [issued, {
+        ...issued,
+        payer_name: "Second Cooperative",
+        payer_tin: "987654321",
+        account_number: "SECOND-ACCOUNT",
+      }],
+    },
   };
   assertThrows(
     () => irs1040.build(filed, { pending: duplicate }),
     Error,
-    "1099-PATR repeats the same payer, recipient, and issued source reference",
+    "1099-PATR repeats the same issued-copy source reference",
   );
   assertThrows(
     () => irs1040Pdf.projectFields?.(filed, duplicate),
     Error,
-    "1099-PATR repeats the same payer, recipient, and issued source reference",
+    "1099-PATR repeats the same issued-copy source reference",
   );
   const distinct = {
     f1099patr: {

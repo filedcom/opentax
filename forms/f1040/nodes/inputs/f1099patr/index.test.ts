@@ -239,6 +239,60 @@ Deno.test("1099-PATR rejects repeated identified payer accounts before income or
   assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 40);
 });
 
+Deno.test("1099-PATR rejects ambiguous positive cooperative copies", () => {
+  const issued = {
+    payer_name: "Farm Cooperative",
+    payer_tin: "12-3456789",
+    recipient_tin: "111223333",
+    box4_federal_withheld: 20,
+  };
+  for (
+    const changed of [
+      { ...issued, box4_federal_withheld: 30 },
+      { ...issued, payer_tin: undefined, box4_federal_withheld: 30 },
+      { ...issued, box4_federal_withheld: 30, account_number: "P-2" },
+      {
+        ...issued,
+        box4_federal_withheld: 30,
+        source_document_reference: "issued-copy-2",
+      },
+    ]
+  ) {
+    assertThrows(
+      () => compute([issued, changed]),
+      Error,
+      "need distinct accounts or issued source references",
+    );
+  }
+  const distinct = compute([
+    { ...issued, source_document_reference: "issued-copy-1" },
+    {
+      ...issued,
+      box4_federal_withheld: 30,
+      source_document_reference: "issued-copy-2",
+    },
+  ]);
+  assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 50);
+});
+
+Deno.test("1099-PATR cannot reuse one issued-copy reference across cooperatives", () => {
+  const first = {
+    ...issued("one-patr-copy"),
+    box4_federal_withheld: 20,
+  };
+  assertThrows(
+    () =>
+      compute([first, {
+        ...first,
+        payer_name: "Second Cooperative",
+        payer_tin: "987654321",
+        account_number: "SECOND-ACCOUNT",
+      }]),
+    Error,
+    "1099-PATR repeats the same issued-copy source reference",
+  );
+});
+
 Deno.test("1099-PATR retains specified-cooperative QBI source only for business facts", () => {
   const business = {
     box7_qualified_payments: 100,

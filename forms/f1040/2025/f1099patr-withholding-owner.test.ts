@@ -91,3 +91,14 @@ Deno.test("1099-PATR repeated issued account rejects direct native and PDF expor
     "1099-PATR repeats the same payer, recipient, and account",
   );
 });
+
+Deno.test("ambiguous cooperative withholding copies reject in native and PDF export", async () => {
+  const pending = {
+    f1099patr: {
+      f1099patrs: [row, { ...row, box4_federal_withheld: 30 }],
+    },
+  };
+  const message = "need distinct accounts or issued source references";
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});

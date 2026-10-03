@@ -51,7 +51,7 @@ Deno.test("Form 8288-A credit owner may be taxpayer or joint spouse", () => {
   }, filer);
 });
 
-Deno.test("positive Form 8288-A without seller or stamped Copy B rejects native and PDF", async () => {
+Deno.test("positive Form 8288-A needs seller and stamped Copy B before export", async () => {
   for (
     const changed of [
       { seller_tin: undefined },
@@ -63,8 +63,21 @@ Deno.test("positive Form 8288-A without seller or stamped Copy B rejects native 
     const message = "stamped_copy_b_reference" in changed
       ? "needs an IRS-stamped Copy B reference"
       : "seller TIN must match";
-    assertThrows(() => buildMefXml(source, filer), Error, message);
-    await assertRejects(() => buildPdfBytes(source, filer), Error, message);
+    assertThrows(
+      () => assertF8288WithholdingOwner(source.f8288, filer),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => buildMefXml(source, filer),
+      Error,
+      "line 25c is less than sourced Form 8288-A withholding",
+    );
+    await assertRejects(
+      () => buildPdfBytes(source, filer),
+      Error,
+      "line 25c is less than sourced Form 8288-A withholding",
+    );
   }
 });
 

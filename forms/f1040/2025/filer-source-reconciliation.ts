@@ -1101,15 +1101,27 @@ export function assertSchedule1Form8814Source(
   if (!Array.isArray(items)) {
     throw new Error("Form 8814 retained child elections must be rows");
   }
+  let sourceTax = 0;
   const sourceTotal = items.reduce((sum, line) => {
+    const calculated = line?.item ? calculateForm8814(line.item) : undefined;
     if (
       !line || typeof line !== "object" || !line.item ||
       typeof line.line12 !== "number" ||
       !Number.isSafeInteger(line.line12) ||
-      line.line12 !== calculateForm8814(line.item).line12
+      line.line12 !== calculated?.line12
     ) {
       throw new Error("Form 8814 line 12 differs from reviewed child election");
     }
+    if (
+      typeof line.line15 !== "number" ||
+      !Number.isSafeInteger(line.line15) ||
+      line.line15 !== calculated?.line15
+    ) {
+      throw new Error(
+        "Form 8814 line 15 tax differs from reviewed child election",
+      );
+    }
+    sourceTax += line.line15;
     return sum + line.line12;
   }, 0);
   const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
@@ -1121,6 +1133,17 @@ export function assertSchedule1Form8814Source(
   ) {
     throw new Error(
       "Schedule 1 Form 8814 line 8z differs from retained child elections",
+    );
+  }
+  const filedTax = (pending.f1040 as Record<string, unknown> | undefined)
+    ?.form8814_tax;
+  if (
+    (sourceTax > 0 || filedTax !== undefined) &&
+    (typeof filedTax !== "number" || !Number.isSafeInteger(filedTax) ||
+      filedTax !== sourceTax)
+  ) {
+    throw new Error(
+      "Form 1040 child-election tax differs from retained Form 8814 lines 15",
     );
   }
 }

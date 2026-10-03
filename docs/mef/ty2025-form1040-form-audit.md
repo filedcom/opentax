@@ -1,6 +1,6 @@
 # TY2025 Form 1040 registered-document audit
 
-Updated inventory: 2026-10-01. This is an implementation inventory, not a
+Updated inventory: 2026-10-03. This is an implementation inventory, not a
 filing-readiness claim. The authoritative registration order is
 [`forms/f1040/2025/mef/forms/index.ts`](../../forms/f1040/2025/mef/forms/index.ts);
 PDF registration is
@@ -13,14 +13,13 @@ which proposed workflow boundaries still need the user's approval. The
 IRS document roots permitted by the locally cached Form 1040 return schema,
 including unregistered roots awaiting applicability review. The current worktree
 had an earlier fixed-source repository-wide `deno task test` pass on the
-`11d5047d` source snapshot (8,897/8,897). The latest completed PR #59 bulk
-rerun at `d22ab027` recorded 10,432 passed and 99 failed cases. Newer
-implementation has no full-suite result, so there is no current full-suite pass.
-Neither run proves each row's positive source route, filled PDF, IRS business
-rule, or ATS acceptance.
+`11d5047d` source snapshot (8,897/8,897). A later full `deno task test` pass at `637dace9` recorded 10,891/10,891
+passed on 2026-10-03. Newer implementation has only focused checks. Neither
+run proves each row's positive source route, filled PDF, IRS business rule,
+or ATS acceptance.
 A written case is not a passing case.
 
-The registered-descriptor evidence census is now **148/148 statically accounted
+The registered-descriptor evidence census is now **149/149 statically accounted
 for** in this matrix against the current MeF registry. The linked
 [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
@@ -142,13 +141,13 @@ bounded route and its remaining evidence.
 | Static row state | Count | Next evidence required |
 | --- | ---: | --- |
 | Main-return and schedule rows | 19 | Check each active trigger and all return-wide amount/owner joins. |
-| Numbered forms and distinct-schedule rows | 97 | Includes the seven supplemental rows below; confirm each bounded branch and explicit rejection of other branches. |
+| Numbered forms and distinct-schedule rows | 98 | Includes the seven supplemental rows below; confirm each bounded branch and explicit rejection of other branches. |
 | Wage and supporting rows | 32 | Each needs source-owner, parent-document reference, repetition and attachment/print disposition; this table has no per-row case-status column for them. |
-| Main/numbered rows marked `P` (bounded calculation/source coded) | 115 of 116 | `P` is code evidence, not a complete or passing positive filing route. |
-| Main/numbered rows marked `U` | 1 of 116: Form 8990 | Nonexempt positive export remains blocked pending durable accepted-year carryforward history. |
-| Main/numbered rows with focused cases marked `W` | 116 of 116 | A written case may be a rejection or a narrow synthetic route; current full-suite, XSD, PDF, IRS-rule and ATS results are not established per row. |
-| Main/numbered rows with registered PDF descriptor `Y` | 113 of 116 | Verify each emitted field, copy count, continuation and required statement against the retained positive source. |
-| Main/numbered rows without separate PDF descriptor `N` | 3 of 116 | Form 1099-R is an issuer source; Form 4835 at-risk uses the registered Form 6198 PDF; Form 8621 remains the true missing printable parent. Confirm issuer-copy and shared-root packet requirements individually. |
+| Main/numbered rows marked `P` (bounded calculation/source coded) | 116 of 117 | `P` is code evidence, not a complete or passing positive filing route. |
+| Main/numbered rows marked `U` | 1 of 117: Form 8990 | Nonexempt positive export remains blocked pending durable accepted-year carryforward history. |
+| Main/numbered rows with focused cases marked `W` | 117 of 117 | A written case may be a rejection or a narrow synthetic route; current full-suite, XSD, PDF, IRS-rule and ATS results are not established per row. |
+| Main/numbered rows with registered PDF descriptor `Y` | 114 of 117 | Verify each emitted field, copy count, continuation and required statement against the retained positive source. |
+| Main/numbered rows without separate PDF descriptor `N` | 3 of 117 | Form 1099-R is an issuer source; Form 4835 at-risk uses the registered Form 6198 PDF; Form 8621 remains the true missing printable parent. Confirm issuer-copy and shared-root packet requirements individually. |
 
 The five former `?` case rows (Forms 1099-R, 4684, 5695, 8396 and 8995)
 have focused files; their rows now say `W` without claiming a pass. Schedule E
@@ -230,7 +229,7 @@ its seven-page packet shows two states on line 17 plus a legible continuation
 for the third. Per-employee payroll sourcing, W-2/W-3 duties, wider state/rate
 combinations, and IRS acceptance remain open.
 
-### Numbered forms and distinct registered schedules (97 descriptors)
+### Numbered forms and distinct registered schedules (98 descriptors)
 
 | Document              | S/C                                                                                                                                                                                                                                | MeF                      | PDF | Tests | Disposition / known gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -324,6 +323,7 @@ combinations, and IRS acceptance remain open.
 | 8995-A Schedule B     | One common-owner group of two sourced Schedule C businesses, reviewed QBI allocations, no RPE or other QBI paths; P                                                                                                                | `f8995a_schedule_b.ts` R | Y   | W     | Native and PDF companion reconcile members, Schedule 1 adjustments, grouped parent, and Form 1040. Workpaper truth, full batch, XSD, filled render, and ATS remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 8995-A Schedule C     | Two distinct Schedule C businesses with positive/negative current QBI and positive net QBI, no prior loss; P                                                                                                                       | `f8995a_schedule_c.ts` R | Y   | W     | Native loss-netting and bounded PDF companion reconcile with the parent deduction and Form 1040. Current net-zero/negative, prior carryforward, other businesses, filled render and ATS remain open.                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 8995-A Schedule D     | One specified-cooperative 1099-PATR plus reviewed QBI/W-2 allocation; P                                                                                                                                                            | `f8995a_schedule_d.ts` R | Y   | W     | Positive native patron reduction reconciles to parent and Form 1040; bounded PDF column-A projection is written but unrendered. Nonzero box 6, multiple cooperatives, independent worksheet review, and ATS remain open.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 9000 | Confirmed taxpayer or joint-spouse alternative-media request; P | `f9000.ts` R | Y | W | One native document and one-page filled PDF per person, with name/SSN from the final Form 1040 filer; a single-owner full return passed local TY2025 XSD and visual page review. Joint two-copy graph/XML/PDF and invalid-owner/code cases passed. Wider IRS business-rule and ATS acceptance remain open. |
 
 Form 8889 paired normal-distribution addendum (written, unrun): each owner now
 needs 2025 code-1 Form 1099-SA box 1 records matching line 14a, and positive
@@ -348,7 +348,7 @@ evidence still govern positive export.
 
 ### Registered wage and supporting descriptors (32)
 
-These are included in the 148 MeF registry entries, but are not 32 additional
+These are included in the 149 MeF registry entries, but are not 32 additional
 tax forms. `R` still means registered, not validated; `P` means a bounded
 parent-source route is coded. Every row's current-run XSD, source-to-document,
 attachment/reference, business-rule, and ATS status is **open**. The file named
@@ -530,9 +530,9 @@ builder rejects positive claims.
 
 | Static measure                               |                                      Count | What it means                                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        148 | Registration only: 116 main-return/numbered/schedule entries plus 32 wage/supporting entries.                                                 |
-| Main-return/numbered/schedule descriptors    |                                        116 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
-| Registered PDF descriptors                   |                                        115 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        149 | Registration only: 117 main-return/numbered/schedule entries plus 32 wage/supporting entries.                                                 |
+| Main-return/numbered/schedule descriptors    |                                        117 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
+| Registered PDF descriptors                   |                                        116 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |
 | Whole-form verified on the current worktree  |                0 established by this audit | No deferred full batch, complete instruction matrix, IRS business rules or ATS acceptance is recorded.                                        |
 

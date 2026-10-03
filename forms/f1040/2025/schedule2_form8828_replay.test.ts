@@ -125,7 +125,6 @@ Deno.test("Schedule 2 line 17b replays reviewed Form 8828 gift recapture before 
       filing_status: "single" as const,
       digital_assets: false,
       line11_agi: 105_000,
-      line2a_tax_exempt: 1_000,
       line23_other_taxes: 12_500,
     },
     schedule2: { line17b_mortgage_subsidy_recapture: 12_500 },

@@ -8,12 +8,16 @@ import {
 import { FilingStatus as HeaderStatus } from "../mef/header.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { Form8949Part } from "../nodes/intermediate/forms/form8949/index.ts";
+import { f8949, QsbsCode } from "../nodes/inputs/f8949/index.ts";
+import { assertCapitalSaleSourceRows } from "./broker-sale-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "./mef/forms/schedule_d.ts";
 import { f1040_2025 } from "./index.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
 import { scheduleDPdf } from "./pdf/forms/schedule_d.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const general = {
   filing_status: FilingStatus.MFJ,
@@ -110,6 +114,380 @@ Deno.test("joint return joins two broker copies through gains, withholding, nati
   assertEquals(scheduleDPrint.print_line8a_gain, 1_000);
   const pdf = await buildPdfBytes(pending, filer);
   assert(pdf.length > 100_000);
+});
+
+Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
+  const sale = {
+    ...brokerRows[0],
+    proceeds: 500,
+    cost_basis: 700,
+    box1g_wash_sale_loss_disallowed: 100,
+    adjustment_codes: "E",
+    adjustment_amount: -20,
+  };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line7_capital_gain, -120);
+  const pending = buildPending(result.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>-120</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+
+  const changed = {
+    ...pending,
+    f1099b: { f1099bs: [{ ...sale, box1g_wash_sale_loss_disallowed: 90 }] },
+  };
+  assertThrows(
+    () =>
+      buildMefXml(
+        changed as unknown as Parameters<typeof buildMefXml>[0],
+        filer,
+      ),
+    Error,
+    "Schedule D sale differs from retained 1099-B",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B",
+  );
+});
+
+Deno.test("final exports reject a changed Form 1040 capital gain after Schedule D", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = {
+    ...pending,
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Form 1040 line 7 must match finalized Schedule D",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Form 1040 line 7 must match finalized Schedule D",
+  );
+});
+
+Deno.test("final exports reject a changed Schedule D total even with a matching Form 1040 gain", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = {
+    ...pending,
+    schedule_d: {
+      ...pending.schedule_d,
+      print_line15_lt_total: 1_001,
+      print_line16_combined: 1_301,
+    },
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D print lines 7, 15, and 16 differ",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D print lines 7, 15, and 16 differ",
+  );
+});
+
+Deno.test("full-return exports reject a changed direct-sale aggregate with matching totals", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const schedule = pending.schedule_d!;
+  const changed = {
+    ...pending,
+    schedule_d: {
+      ...schedule,
+      line_1a_proceeds: schedule.line_1a_proceeds! + 1,
+      print_line1a_proceeds: (schedule.print_line1a_proceeds as number) + 1,
+      print_line1a_gain: (schedule.print_line1a_gain as number) + 1,
+      print_line7_st_total: (schedule.print_line7_st_total as number) + 1,
+      print_line16_combined: (schedule.print_line16_combined as number) + 1,
+    },
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D lines 1a and 8a must match retained direct-sale proceeds and basis",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D lines 1a and 8a must match retained direct-sale proceeds and basis",
+  );
+});
+
+Deno.test("final exports replay retained broker proceeds and basis into Schedule D", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  for (const changedField of ["proceeds", "cost_basis"] as const) {
+    const changed = {
+      ...pending,
+      f1099b: {
+        f1099bs: brokerRows.map((row, index) =>
+          index === 0 ? { ...row, [changedField]: row[changedField] + 1 } : row
+        ),
+      },
+    };
+    assertThrows(
+      () =>
+        buildMefXml(
+          changed as unknown as Parameters<typeof buildMefXml>[0],
+          filer,
+        ),
+      Error,
+      "Schedule D sale differs from retained 1099-B",
+    );
+    await assertRejects(
+      () => buildPdfBytes(changed, filer),
+      Error,
+      "Schedule D sale differs from retained 1099-B",
+    );
+  }
+});
+
+Deno.test("broker transaction IDs survive into Schedule D and both final exporters", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [brokerRows[0]],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction:
+      | { source_transaction_id?: string }
+      | { source_transaction_id?: string }[];
+  };
+  const sale = Array.isArray(schedule.transaction)
+    ? schedule.transaction[0]!
+    : schedule.transaction;
+  assertEquals(sale.source_transaction_id, "sale1");
+  sale.source_transaction_id = "other-sale";
+  const message =
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("1099-K personal sales keep zero-gain source rows in Schedule D", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-k-personal-gain-loss"
+  )!;
+  const result = f1040_2025.executeReturn(fixture.inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: { source_transaction_id?: string }[];
+  };
+  const before = schedule.transaction.length;
+  schedule.transaction = schedule.transaction.filter((row) =>
+    !row.source_transaction_id?.includes("chair-loss-2025")
+  );
+  assertEquals(schedule.transaction.length, before - 1);
+  const message =
+    "Schedule D sale differs from retained 1099-B, 1099-K, or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, fixture.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(changed, fixture.filer),
+    Error,
+    message,
+  );
+});
+
+Deno.test("1099-K nonbusiness receipts do not require Schedule D", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-k-blank-tin-withholding"
+  )!;
+  const result = f1040_2025.executeReturn(fixture.inputs);
+  assertEquals(result.diagnostics, []);
+  assertCapitalSaleSourceRows(buildPending(result.pending));
+});
+
+Deno.test("final exports reject a second zero-gain copy of one broker sale", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[0],
+      part: Form8949Part.B,
+      cost_basis: 1_000,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: Record<string, unknown> | Record<string, unknown>[];
+  };
+  const transactions = Array.isArray(schedule.transaction)
+    ? schedule.transaction
+    : [schedule.transaction];
+  schedule.transaction = [...transactions, structuredClone(transactions[0])];
+  const message =
+    "Schedule D repeats a retained 1099-B or direct Form 8949 sale";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("final exports retain the broker collectible character of a sale", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[1],
+      box3_transaction_type: "collectibles" as const,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: { collectibles?: boolean } | { collectibles?: boolean }[];
+  };
+  const sale = Array.isArray(schedule.transaction)
+    ? schedule.transaction[0]!
+    : schedule.transaction;
+  assertEquals(sale.collectibles, true);
+  sale.collectibles = false;
+  const message =
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("prepared Form 8949 cannot discard broker collectible character", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[1],
+      part: Form8949Part.E,
+      box3_transaction_type: "collectibles" as const,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>1000</CapitalGainLossAmt>",
+  );
+  assert((await buildPdfBytes(pending, filer)).length > 100_000);
+  const changed = structuredClone(pending);
+  const prepared = pending.form8949 as unknown as { collectibles?: boolean }[];
+  assertEquals(prepared[0]?.collectibles, true);
+  (changed as unknown as { form8949: { collectibles?: boolean }[] })
+    .form8949 = prepared.map((row) => ({ ...row, collectibles: false }));
+  const message =
+    "Schedule D prepared Form 8949 rows differ from calculated sales";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("prepared Form 8949 cannot discard a QSBS exclusion identity", () => {
+  const calculated = {
+    part: Form8949Part.F,
+    description: "Qualified shares",
+    source_transaction_id: "direct-qsbs-1",
+    date_acquired: "2015-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 10_000,
+    cost_basis: 2_000,
+    gain_loss: 8_000,
+    is_long_term: true,
+    qsbs_code: "Q3" as const,
+    qsbs_amount: 8_000,
+  };
+  assertScheduleDSalesMatchPrepared(calculated, [calculated]);
+  for (const field of ["qsbs_code", "qsbs_amount"] as const) {
+    const prepared = { ...calculated, [field]: undefined };
+    assertThrows(
+      () => assertScheduleDSalesMatchPrepared(calculated, [prepared]),
+      Error,
+      "Schedule D prepared Form 8949 rows differ from calculated sales",
+    );
+  }
+});
+
+Deno.test("direct sale replay retains the qualified small business stock fields", () => {
+  const sale = {
+    part: Form8949Part.F,
+    description: "Qualified shares",
+    source_transaction_id: "direct-qsbs-1",
+    date_acquired: "2015-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 10_000,
+    cost_basis: 2_000,
+    qsbs_code: QsbsCode.Q3,
+    qsbs_amount: 8_000,
+  };
+  const source = { f8949s: [sale] };
+  const transaction = f8949.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "form8949")!.fields.transaction;
+  const pending = {
+    f8949: source,
+    schedule_d: { transaction },
+  };
+  assertCapitalSaleSourceRows(pending);
+  for (const changedField of ["qsbs_code", "qsbs_amount"] as const) {
+    const changed = structuredClone(pending);
+    (changed.schedule_d.transaction as Record<string, unknown>)[changedField] =
+      changedField === "qsbs_code" ? "Q1" : 7_999;
+    assertThrows(
+      () => assertCapitalSaleSourceRows(changed),
+      Error,
+      "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+    );
+  }
+});
+
+Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async () => {
+  const sale = {
+    part: Form8949Part.C,
+    description: "Unreported shares",
+    source_transaction_id: "direct-sale-1",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 1_000,
+    cost_basis: 700,
+  };
+  const result = f1040_2025.executeReturn({ general, f8949: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertStringIncludes(
+    buildMefXml(pending, filer),
+    "<CapitalGainLossAmt>300</CapitalGainLossAmt>",
+  );
+  const changed = {
+    ...pending,
+    f8949: { f8949s: [{ ...sale, cost_basis: 701 }] },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+  );
 });
 
 Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {

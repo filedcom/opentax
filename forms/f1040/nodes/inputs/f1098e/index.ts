@@ -5,14 +5,14 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 — Form 1098-E: Student Loan Interest Statement
-// Deduction flows to Schedule 1 Part II Line 19 and AGI Aggregator.
+// TY2025 — Form 1098-E copies and reviewed sub-threshold payment ledgers.
+// Deduction flows to Schedule 1 Part II line 21 through the AGI aggregator.
 // IRC §221: student loan interest deduction, capped at $2,500.
-// MAGI phaseout is handled separately (phaseout node not yet implemented).
+// The AGI aggregator applies the MAGI phaseout and sends the final amount to
+// Schedule 1 and Form 1040.
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -29,12 +29,187 @@ export const itemSchema = z.object({
   box2_origination_fees_excluded: z.boolean().optional().describe(
     "If checked, box 1 does not include loan origination fees paid before September 1, 2004",
   ),
-  // Optional lender name for identification
-  lender_name: z.string().optional(),
+  // Copy B identifies the lender and borrower; the account box is optional
+  // for one account but required by the issuer for multiple accounts.
+  lender_name: z.string().trim().min(1).optional(),
+  lender_tin: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
+  borrower_tin: z.string().regex(
+    /^(?:\d{3}-?\d{2}-?\d{4}|[Xx*]{3}-?[Xx*]{2}-?\d{4})$/,
+  ).optional(),
+  borrower_name: z.string().trim().min(1).optional(),
+  borrower_owner_review_reference: z.string().trim().min(1).optional(),
+  account_number: z.string().trim().min(1).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  corrected: z.boolean().optional(),
+  corrects_source_document_reference: z.string().trim().min(1).optional(),
+  correction_review_reference: z.string().trim().min(1).optional(),
+});
+
+export const unreportedInterestRecordSchema = z.object({
+  lender_name: z.string().trim().min(1),
+  loan_account_number: z.string().trim().min(1),
+  borrower_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  student_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  interest_paid: z.number().positive().lt(600),
+  payment_rows: z.array(z.object({
+    paid_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
+      !Number.isNaN(Date.parse(value)) &&
+      new Date(value).toISOString().slice(0, 10) === value
+    ),
+    interest_amount: z.number().positive(),
+    source_reference: z.string().trim().min(1),
+  })).min(1),
+  loan_agreement_reference: z.string().trim().min(1),
+  qualified_education_review_reference: z.string().trim().min(1),
+  expense_timing_review_reference: z.string().trim().min(1),
+  eligible_institution_review_reference: z.string().trim().min(1),
+  no_double_benefit_review_reference: z.string().trim().min(1),
+  lender_no_form_review_reference: z.string().trim().min(1),
+  legal_obligation_reviewed: z.literal(true),
+  half_time_enrollment_at_loan_reviewed: z.literal(true),
+  unrelated_lender_reviewed: z.literal(true),
+  not_employer_plan_reviewed: z.literal(true),
+}).superRefine((record, ctx) => {
+  if (
+    record.student_tin.replace(/\D/g, "") !==
+      record.borrower_tin.replace(/\D/g, "")
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["student_tin"],
+      message:
+        "This student-loan ledger route covers the borrower's own education",
+    });
+  }
+  const paid = record.payment_rows.reduce(
+    (sum, row) => sum + row.interest_amount,
+    0,
+  );
+  if (Math.abs(paid - record.interest_paid) > 0.005) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payment_rows"],
+      message: "Student-loan payment rows differ from retained interest paid",
+    });
+  }
+  if (
+    new Set(record.payment_rows.map((row) => row.source_reference)).size !==
+      record.payment_rows.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payment_rows"],
+      message: "Student-loan payment rows repeat a source reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
-  f1098es: z.array(itemSchema).min(1),
+  f1098es: z.array(itemSchema).optional(),
+  unreported_interest_records: z.array(unreportedInterestRecordSchema)
+    .optional(),
+}).superRefine(({ f1098es = [], unreported_interest_records = [] }, ctx) => {
+  if (f1098es.length + unreported_interest_records.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["f1098es"],
+      message: "Student-loan interest needs a source copy or payment ledger",
+    });
+  }
+  for (const [index, item] of f1098es.entries()) {
+    if (item.corrected === true) {
+      if (
+        !item.source_document_reference ||
+        !item.corrects_source_document_reference ||
+        !item.correction_review_reference ||
+        item.source_document_reference ===
+          item.corrects_source_document_reference
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "Corrected 1098-E needs distinct current/original references and review",
+        });
+      }
+      if (
+        f1098es.some((other) =>
+          other.source_document_reference ===
+            item.corrects_source_document_reference
+        )
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "Corrected 1098-E cannot include its superseded original as current interest",
+        });
+      }
+    } else if (
+      item.corrects_source_document_reference ||
+      item.correction_review_reference
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f1098es", index],
+        message:
+          "1098-E correction references need the corrected-copy indicator",
+      });
+    }
+    if (item.box1_student_loan_interest <= 0) continue;
+    for (const prior of f1098es.slice(0, index)) {
+      if (prior.box1_student_loan_interest <= 0) continue;
+      const lender = item.lender_tin?.replace(/\D/g, "");
+      const priorLender = prior.lender_tin?.replace(/\D/g, "");
+      const lenderName = item.lender_name?.trim().toLowerCase();
+      const priorLenderName = prior.lender_name?.trim().toLowerCase();
+      const borrower = item.borrower_tin?.replace(/\D/g, "");
+      const priorBorrower = prior.borrower_tin?.replace(/\D/g, "");
+      if (
+        !borrower || borrower !== priorBorrower ||
+        (lender && priorLender
+          ? lender !== priorLender
+          : !lenderName || lenderName !== priorLenderName)
+      ) continue;
+      if (
+        item.source_document_reference &&
+        item.source_document_reference === prior.source_document_reference
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message: "1098-E repeats the same issued lender statement",
+        });
+      }
+      if (
+        (!item.account_number && !item.source_document_reference) ||
+        (!prior.account_number && !prior.source_document_reference)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index],
+          message:
+            "1098-E copies from one lender and borrower need distinct accounts or issued references",
+        });
+      }
+    }
+  }
+  for (const [index, record] of unreported_interest_records.entries()) {
+    for (const prior of unreported_interest_records.slice(0, index)) {
+      if (
+        prior.loan_account_number === record.loan_account_number &&
+        prior.lender_name.toLowerCase() === record.lender_name.toLowerCase() &&
+        prior.borrower_tin.replace(/\D/g, "") ===
+          record.borrower_tin.replace(/\D/g, "")
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["unreported_interest_records", index],
+          message: "Student-loan payment ledger repeats one loan account",
+        });
+      }
+    }
+  }
 });
 
 type F1098EItem = z.infer<typeof itemSchema>;
@@ -56,14 +231,17 @@ function allowedDeduction(items: F1098EItems): number {
   return Math.min(totalInterest(items), STUDENT_LOAN_INTEREST_CAP);
 }
 
-function schedule1Output(items: F1098EItems): NodeOutput[] {
-  const deduction = allowedDeduction(items);
-  if (deduction === 0) return [];
-  return [output(schedule1, { line21_student_loan_interest: deduction })];
-}
-
-function agiOutput(items: F1098EItems): NodeOutput[] {
-  const deduction = allowedDeduction(items);
+function agiOutput(
+  items: F1098EItems,
+  records: z.infer<typeof unreportedInterestRecordSchema>[],
+): NodeOutput[] {
+  const deduction = Math.min(
+    allowedDeduction(items) + records.reduce(
+      (sum, record) => sum + record.interest_paid,
+      0,
+    ),
+    STUDENT_LOAN_INTEREST_CAP,
+  );
   if (deduction === 0) return [];
   return [output(agi_aggregator, { line21_student_loan_interest: deduction })];
 }
@@ -73,13 +251,15 @@ function agiOutput(items: F1098EItems): NodeOutput[] {
 class F1098ENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1098e";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const outputs: NodeOutput[] = [
-      ...schedule1Output(parsed.f1098es),
-      ...agiOutput(parsed.f1098es),
+      ...agiOutput(
+        parsed.f1098es ?? [],
+        parsed.unreported_interest_records ?? [],
+      ),
     ];
     return { outputs };
   }

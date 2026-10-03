@@ -30,13 +30,34 @@ import {
   writePrivateReviewFile,
   writePrivateReviewTextFile,
 } from "./ty2025-pdf-review-private-files.ts";
+import { reviewScope } from "./ty2025-pdf-review-scope.ts";
 
-const [outputDir, xsdArg] = Deno.args;
-if (!outputDir || !xsdArg || Deno.args.length !== 2) {
+const [outputDir, xsdArg, selectionFile] = Deno.args;
+if (!outputDir || !xsdArg || Deno.args.length < 2 || Deno.args.length > 3) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd",
+    "Usage: deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd [/absolute/path/selection.json]",
   );
 }
+let selectedIds: string[] | undefined;
+if (selectionFile) {
+  const selection: unknown = JSON.parse(await Deno.readTextFile(selectionFile));
+  const ids = selection !== null && typeof selection === "object" &&
+      !Array.isArray(selection)
+    ? (selection as Record<string, unknown>).includedFixtureIds
+    : undefined;
+  if (
+    !Array.isArray(ids) ||
+    !ids.every((id: unknown) => typeof id === "string")
+  ) {
+    throw new Error("Selection file needs an includedFixtureIds string array");
+  }
+  selectedIds = ids;
+}
+const scope = reviewScope(
+  pdfReviewFixtures.map((fixture) => fixture.id),
+  selectedIds,
+);
+const includedIds = new Set(scope.includedFixtureIds);
 const xsdPath = resolve(xsdArg);
 if (!(await Deno.stat(xsdPath)).isFile) {
   throw new Error(`TY2025 XSD is not a file: ${xsdPath}`);
@@ -76,6 +97,7 @@ const fixtureIds = new Set<string>();
 const reviewManifest: Record<string, unknown>[] = [];
 
 for (const fixture of pdfReviewFixtures) {
+  if (!includedIds.has(fixture.id)) continue;
   const filer = reviewFiler(fixture.filer);
   if (fixtureIds.has(fixture.id)) {
     throw new Error(`Duplicate filled-PDF review fixture: ${fixture.id}`);
@@ -199,6 +221,7 @@ await writePrivateReviewTextFile(
   JSON.stringify(
     {
       taxYear: 2025,
+      scope,
       reviewReturnTimestamp: REVIEW_RETURN_TIMESTAMP,
       xsdSha256,
       templateCache: await reviewTemplateCacheEvidence(

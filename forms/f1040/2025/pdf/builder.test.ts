@@ -302,6 +302,18 @@ const printable1040 = (fields: Record<string, unknown>) => ({
   digital_assets: false,
   ...fields,
 });
+const sourcedWagePending = (wages: number) => ({
+  w2: {
+    w2s: [{
+      employer_name: "Fixture Employer",
+      employer_ein: "123456789",
+      employee_ssn: mockFiler.primarySSN,
+      box1_wages: wages,
+      box2_fed_withheld: 0,
+    }],
+  },
+  f1040: printable1040({ line1a_wages: wages }),
+});
 
 /**
  * Create a minimal AcroForm PDF that contains the subset of f1040 AcroForm
@@ -360,9 +372,7 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     ]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
-    const pending = {
-      f1040: printable1040({ line1a_wages: 75000 }),
-    };
+    const pending = sourcedWagePending(75000);
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
 
     // Valid PDF starts with %PDF-
@@ -420,7 +430,7 @@ Deno.test("buildPdfBytes: the same filled IRS form has stable bytes across build
         "topmostSubform[0].Page1[0].f1_47[0]",
       ]),
     );
-    const pending = { f1040: printable1040({ line1a_wages: 75_000 }) };
+    const pending = sourcedWagePending(75_000);
     const first = await buildPdfBytes(pending, mockFiler, tmpDir);
     await new Promise((resolve) => setTimeout(resolve, 1_200));
     const second = await buildPdfBytes(pending, mockFiler, tmpDir);
@@ -442,7 +452,7 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
     await assertRejects(
       () =>
         buildPdfBytes(
-          { f1040: printable1040({ line1a_wages: 75_000 }) },
+          sourcedWagePending(75_000),
           mockFiler,
           tmpDir,
         ),
@@ -613,6 +623,128 @@ Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async (
   }
 });
 
+Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const document = await PDFDocument.create();
+  const first = document.addPage([612, 792]);
+  const second = document.addPage([612, 792]);
+  const form = document.getForm();
+  for (
+    const [name, page] of [
+      ["amount", first],
+      ["filer_primary", first],
+      ["filer_name", second],
+      ["row_1", second],
+    ] as const
+  ) {
+    form.createTextField(name).addToPage(page, {
+      x: 10,
+      y: 700,
+      width: 200,
+      height: 20,
+    });
+  }
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    const base = {
+      pendingKey: "f1040",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: "amount",
+      }],
+      pageIndices: () => [0],
+    };
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          {
+            ...base,
+            filerFields: [{
+              kind: "text",
+              domainKey: "nameShownOnForm1040",
+              pdfField: "filer_name",
+            }],
+          },
+          { amount: 25 },
+          mockFiler,
+          tmpDir,
+        ),
+      Error,
+      'populated field "filer_name" is not on a retained PDF page',
+    );
+    const selectedPage = await fillFormPdf(
+      {
+        ...base,
+        filerFields: [{
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_primary",
+          includeWhen: () => true,
+        }, {
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_name",
+          includeWhen: () => false,
+        }],
+      },
+      { amount: 25 },
+      mockFiler,
+      tmpDir,
+    );
+    assertEquals(selectedPage instanceof Uint8Array, true);
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          {
+            ...base,
+            rows: {
+              domainKey: "items",
+              maxRows: 1,
+              rowFields: [{
+                kind: "text",
+                domainKey: "value",
+                pdfFieldPattern: "row_{row}",
+              }],
+            },
+          },
+          { amount: 25, items: [{ value: 0 }] },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'populated field "row_1" is not on a retained PDF page',
+    );
+    const retained = await fillFormPdf(
+      {
+        ...base,
+        filerFields: [{
+          kind: "text",
+          domainKey: "nameShownOnForm1040",
+          pdfField: "filer_name",
+        }],
+        rows: {
+          domainKey: "items",
+          maxRows: 1,
+          rowFields: [{
+            kind: "text",
+            domainKey: "value",
+            pdfFieldPattern: "row_{row}",
+          }],
+        },
+        pageIndices: () => [0, 1],
+      },
+      { amount: 25, items: [{ value: 0 }] },
+      mockFiler,
+      tmpDir,
+    );
+    assertEquals(retained instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
   const tmpDir = await Deno.makeTempDir();
   const wageField = "topmostSubform[0].Page1[0].f1_47[0]";
@@ -749,6 +881,80 @@ Deno.test("fillFormPdf rejects objects, arrays, and booleans in text widgets", a
   }
 });
 
+Deno.test("fillFormPdf requires boolean checkbox values", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const document = await PDFDocument.create();
+  const page = document.addPage([612, 792]);
+  const form = document.getForm();
+  form.createTextField("total").addToPage(page, {
+    x: 10,
+    y: 700,
+    width: 100,
+    height: 20,
+  });
+  for (const [name, y] of [["flag", 660], ["row_flag", 620]] as const) {
+    form.createCheckBox(name).addToPage(page, {
+      x: 10,
+      y,
+      width: 20,
+      height: 20,
+    });
+  }
+  const descriptor = {
+    pendingKey: "sample_rows",
+    pdfUrl: F1040_PDF_URL,
+    fields: [
+      { kind: "text" as const, domainKey: "total", pdfField: "total" },
+      { kind: "checkbox" as const, domainKey: "flag", pdfField: "flag" },
+    ],
+    rows: {
+      domainKey: "items",
+      maxRows: 1,
+      rowFields: [{
+        kind: "checkbox" as const,
+        domainKey: "flag",
+        pdfFieldPattern: "row_flag",
+      }],
+    },
+  };
+  try {
+    await seedCache(tmpDir, F1040_PDF_URL, await document.save());
+    for (const invalid of ["false", 1, []]) {
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: 100, flag: invalid },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill field "flag"',
+      );
+      await assertRejects(
+        () =>
+          fillFormPdf(
+            descriptor,
+            { total: 100, flag: false, items: [{ flag: invalid }] },
+            undefined,
+            tmpDir,
+          ),
+        Error,
+        'failed to fill row 1 field "row_flag"',
+      );
+    }
+    const valid = await fillFormPdf(
+      descriptor,
+      { total: 100, flag: false, items: [{ flag: true }] },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(valid instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -851,7 +1057,7 @@ Deno.test("buildPdfBytes: filled wage value is readable from output PDF", async 
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
-    const pending = { f1040: printable1040({ line1a_wages: 75000 }) };
+    const pending = sourcedWagePending(75000);
 
     // Use non-flattened path: create a stub builder that skips flatten so we
     // can read the field back. Since builder.ts always flattens, verify via
@@ -874,10 +1080,7 @@ Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
     // f1040 has data; hypothetical other form has none — builder should still succeed
-    const pending = {
-      f1040: printable1040({ line1a_wages: 50000 }),
-      schedule_b: undefined,
-    };
+    const pending = { ...sourcedWagePending(50000), schedule_b: undefined };
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     const header = new TextDecoder().decode(result.slice(0, 5));
     assertEquals(header, "%PDF-");
@@ -893,7 +1096,7 @@ Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
     // The builder flattens, so we verify the output PDF is valid and non-empty
-    const pending = { f1040: printable1040({ line1a_wages: 75000.75 }) };
+    const pending = sourcedWagePending(75000.75);
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 100);
   } finally {
@@ -922,7 +1125,7 @@ Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
-    const pending = { f1040: printable1040({ line1a_wages: 75000 }) };
+    const pending = sourcedWagePending(75000);
 
     // First call
     await buildPdfBytes(pending, mockFiler, tmpDir);

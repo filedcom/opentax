@@ -1805,7 +1805,7 @@ Deno.test("EIC investment limit follows filed interest and dividends through the
   assertThrows(
     () => buildMefXml(buildPending(changedReturn), filer),
     Error,
-    "investment income differs",
+    "Form 1040 line 2a and retained tax-exempt interest must match issued Forms 1099",
   );
 });
 

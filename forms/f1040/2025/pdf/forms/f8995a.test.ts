@@ -67,6 +67,10 @@ Deno.test("Form 8995-A PDF projects column A, patron reduction, and Form 1040 de
   assertEquals(projected?.line27, 15_500);
   assertEquals(projected?.line39, 15_500);
   assertEquals(
+    form8995aPdf.instances?.(projected!, undefined, pending),
+    [projected!],
+  );
+  assertEquals(
     mapped(form8995aPdf, "patron"),
     "topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].c1_3[0]",
   );

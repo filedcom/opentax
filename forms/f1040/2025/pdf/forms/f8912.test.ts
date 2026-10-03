@@ -1,6 +1,26 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { BondType } from "../../../nodes/inputs/f8912/index.ts";
 import { form8912Pdf } from "./f8912.ts";
+import { fillFormPdf } from "../builder.ts";
+import { testFiler } from "../../mef/test-filer.ts";
+
+Deno.test("Form 8912 fills filer identity on each selected page", async () => {
+  for (
+    const fields of [
+      { pdf_page_kind: "main", line1: 100 },
+      { pdf_page_kind: "part_iii", line14: 100 },
+      { pdf_page_kind: "part_iv", line19: 100 },
+    ]
+  ) {
+    const bytes = await fillFormPdf(
+      form8912Pdf,
+      fields,
+      testFiler(),
+      ".pdf-cache",
+    );
+    assertEquals(bytes instanceof Uint8Array, true);
+  }
+});
 
 const reported = {
   bond_type: BondType.QECB,

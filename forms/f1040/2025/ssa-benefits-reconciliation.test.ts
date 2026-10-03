@@ -61,6 +61,45 @@ Deno.test("SSA-1099 signed box 5 offsets another statement in final line 6a repl
   );
 });
 
+Deno.test("line 6b taxable benefits need retained line 6a and matching AGI", async () => {
+  const unsupported = { f1040: { ...filed(0), line6b_ss_taxable: 1 } };
+  const message = "line 6b and AGI taxable benefits must fit retained line 6a";
+  assertThrows(
+    () => assertSocialSecurityBenefitSource(unsupported),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml(unsupported as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(
+    () => buildPdfBytes(unsupported, filer),
+    Error,
+    message,
+  );
+  assertSocialSecurityBenefitSource({
+    ssa1099,
+    f1040: { ...filed(4_000), line6b_ss_taxable: 2_000 },
+    agi_aggregator: { line6b_ss_taxable: 2_000 },
+  });
+  for (
+    const changed of [{
+      f1040: { ...filed(4_000), line6b_ss_taxable: 4_001 },
+    }, {
+      f1040: { ...filed(4_000), line6b_ss_taxable: 2_000 },
+      agi_aggregator: { line6b_ss_taxable: 2_001 },
+    }]
+  ) {
+    assertThrows(
+      () => assertSocialSecurityBenefitSource({ ssa1099, ...changed }),
+      Error,
+      message,
+    );
+  }
+});
+
 Deno.test("benefit statement owner requires issued-copy identity for each positive SSA or RRB row", () => {
   assertBenefitStatementOwner({ ssa1099 }, filer);
   const wrong = {

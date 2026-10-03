@@ -224,7 +224,9 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
     "topmostSubform[0].Page1[0].c1_43[0]",
   );
   assertEquals(
-    irs1040Pdf.fields.find((field) => field.domainKey === "form8814_tax")
+    irs1040Pdf.fields.find((field) =>
+      field.domainKey === "print_form8814_tax_box"
+    )
       ?.pdfField,
     "topmostSubform[0].Page2[0].c2_9[0]",
   );

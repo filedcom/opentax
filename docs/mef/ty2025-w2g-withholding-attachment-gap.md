@@ -71,3 +71,12 @@ named payer PDFs remain closed pending a separate evidence extraction design.
 Field agreement cannot establish that the payer issued the document, that its
 rendered appearance matches the AcroForm values, or that a signature is
 authentic; those checks remain open.
+
+The native W-2G nonstandard indicator now requires a reviewed altered,
+handwritten, or typed payer copy when code `N` is entered. Its review must name
+the same issued-copy reference; a review paired with code `S` also rejects.
+The exact attachment hash and readable Copy B comparison still apply to a
+withheld W-2G. This prevents an unsupported free-form `N` claim but does not
+authenticate the payer or open scanned/flattened copies. Forty-two focused
+W-2G source, native, and payer-copy tests passed; the current full suite and
+ATS remain open.

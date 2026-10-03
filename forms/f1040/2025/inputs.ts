@@ -45,6 +45,7 @@ import {
 import {
   f1098e,
   itemSchema as f1098eItemSchema,
+  unreportedInterestRecordSchema,
 } from "../nodes/inputs/f1098e/index.ts";
 import {
   f1099b,
@@ -178,6 +179,14 @@ import {
   inputSchema as scheduleLepInputSchema,
   schedule_lep,
 } from "../nodes/inputs/schedule_lep/index.ts";
+import {
+  f9000,
+  inputSchema as f9000InputSchema,
+} from "../nodes/inputs/f9000/index.ts";
+import {
+  f4547,
+  inputSchema as f4547InputSchema,
+} from "../nodes/inputs/f4547/index.ts";
 import {
   f2210,
   inputSchema as f2210InputSchema,
@@ -709,6 +718,16 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
+  {
+    node: f1098e,
+    inputKey: "student_loan_interest_records",
+    inputSchema: z.object({
+      unreported_interest_records: z.array(unreportedInterestRecordSchema).min(
+        1,
+      ),
+    }),
+    isArray: false,
+  },
   { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
@@ -820,6 +839,8 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8888, inputSchema: f8888InputSchema, isArray: false },
   { node: schedule_r, inputSchema: scheduleRInputSchema, isArray: false },
   { node: schedule_lep, inputSchema: scheduleLepInputSchema, isArray: false },
+  { node: f9000, inputSchema: f9000InputSchema, isArray: false },
+  { node: f4547, inputSchema: f4547InputSchema, isArray: false },
   { node: f2210, inputSchema: f2210InputSchema, isArray: false },
   { node: f2210f, inputSchema: f2210fInputSchema, isArray: false },
   { node: f5695, inputSchema: f5695InputSchema, isArray: false },

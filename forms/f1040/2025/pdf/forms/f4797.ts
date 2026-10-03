@@ -33,6 +33,10 @@ import { inputSchema as form8824InputSchema } from "../../../nodes/intermediate/
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 import { appendForm4797Line2Statement } from "./f4797_line2_statement.ts";
+import {
+  casualtyLossLines,
+  inputSchema as form4684InputSchema,
+} from "../../../nodes/intermediate/forms/form4684/index.ts";
 import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
 import { assertSingleFilerActiveEntireLoss } from "../../form8582_active_entire_loss.ts";
 
@@ -152,6 +156,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "pdf_line14",
+    pdfField: "topmostSubform[0].Page1[0].f1_72[0]",
+  },
+  {
+    kind: "text",
     domainKey: "pdf_line17",
     pdfField: "topmostSubform[0].Page1[0].f1_75[0]",
   },
@@ -204,6 +213,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form4797Pdf: PdfFormDescriptor = {
   pendingKey: "form4797",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4797--2025.pdf",
+  pageIndices: (fields) => fields.pdf_line14 !== undefined ? [0] : [0, 1],
   filerFields: [
     {
       kind: "text",
@@ -217,6 +227,32 @@ export const form4797Pdf: PdfFormDescriptor = {
     },
   ],
   projectFields(fields, allPending) {
+    if (
+      typeof fields.ordinary_gain_form4684 === "number" &&
+      fields.ordinary_gain_form4684 !== 0
+    ) {
+      if (Object.keys(fields).some((key) => key !== "ordinary_gain_form4684")) {
+        throw new Error(
+          "Form 4797 PDF Form 4684 loss cannot overlap another source",
+        );
+      }
+      const casualty = form4684InputSchema.parse(allPending.form4684);
+      const loss = casualtyLossLines(
+        casualty.business_fmv_before ?? 0,
+        casualty.business_fmv_after ?? 0,
+        casualty.business_basis ?? 0,
+        casualty.business_insurance ?? 0,
+      ).loss;
+      const amount = fields.ordinary_gain_form4684;
+      if (
+        amount !== -loss || allPending.schedule1?.line4_other_gains !== amount
+      ) {
+        throw new Error(
+          "Form 4797 PDF line 14 differs from Form 4684 and Schedule 1",
+        );
+      }
+      return { pdf_line14: amount, pdf_line17: amount, ordinary_gain: amount };
+    }
     if (fields.k1_box11_line10_rows !== undefined) {
       const rows = z.array(box11Line10SourceSchema).min(1)
         .parse(fields.k1_box11_line10_rows);

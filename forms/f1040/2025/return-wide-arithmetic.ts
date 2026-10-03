@@ -1,4 +1,63 @@
 import { schedule2Part1Total } from "../nodes/intermediate/aggregation/schedule2/index.ts";
+import { schedule1ActivityNotForProfitTotal } from "./mef/forms/schedule1_nonbusiness_sources.ts";
+import { schedule1OtherIncomeTotal } from "./mef/forms/schedule1_other_income_rows.ts";
+
+/** Line 3a is the qualified portion of ordinary dividends on line 3b. */
+export function assertQualifiedDividendSubset(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const qualified = fields.line3a_qualified_dividends ?? 0;
+  const ordinary = fields.line3b_ordinary_dividends ?? 0;
+  if (
+    typeof qualified !== "number" || !Number.isFinite(qualified) ||
+    typeof ordinary !== "number" || !Number.isFinite(ordinary) ||
+    qualified < 0 || ordinary < 0 || qualified > ordinary
+  ) {
+    throw new Error(
+      "Form 1040 line 3a qualified dividends must be included in line 3b ordinary dividends",
+    );
+  }
+}
+
+/** Require final balance lines when the tax and payment totals determine them. */
+export function assertFinalBalanceProjection(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const tax = fields.line24_total_tax;
+  const payments = fields.line33_total_payments;
+  if (typeof tax !== "number" || typeof payments !== "number") return;
+  if (!Number.isFinite(tax) || !Number.isFinite(payments)) {
+    throw new Error("Form 1040 final tax and payment totals must be finite");
+  }
+  const balance = Math.round(payments) - Math.round(tax);
+  const penalty = fields.line38_underpayment_penalty ?? 0;
+  if (typeof penalty !== "number" || !Number.isFinite(penalty) || penalty < 0) {
+    throw new Error("Form 1040 line 38 penalty must be nonnegative");
+  }
+  const overpayment = Math.max(0, balance);
+  const owed = Math.max(0, -balance + penalty);
+  if (
+    overpayment > 0 &&
+    fields.line34_overpayment !== overpayment
+  ) {
+    throw new Error("Form 1040 line 34 must report the full overpayment");
+  }
+  if (owed > 0 && fields.line37_amount_owed !== owed) {
+    throw new Error("Form 1040 line 37 must report the amount owed");
+  }
+  const refund = fields.line35a_refund ?? 0;
+  const applied = fields.line36_applied_to_2026_estimated_tax ?? 0;
+  if (
+    typeof refund !== "number" || !Number.isFinite(refund) || refund < 0 ||
+    typeof applied !== "number" || !Number.isFinite(applied) || applied < 0 ||
+    Math.abs(refund + applied + Math.min(overpayment, penalty) - overpayment) >=
+      0.01
+  ) {
+    throw new Error(
+      "Form 1040 lines 35a and 36 must allocate the overpayment after penalty",
+    );
+  }
+}
 
 /** Replay final Form 1040 tax and payment subtotals before native/PDF export. */
 export function assertReturnWideArithmetic(
@@ -6,10 +65,45 @@ export function assertReturnWideArithmetic(
 ): void {
   const amount = (key: string): number | undefined => {
     const value = fields[key];
-    return typeof value === "number" && Number.isFinite(value)
-      ? value
-      : undefined;
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    throw new Error(`Form 1040 ${key} needs a finite amount`);
   };
+  for (
+    const key of [
+      "line16_income_tax",
+      "line17_additional_taxes",
+      "line18_total_tax_before_credits",
+      "line19_child_tax_credit",
+      "line20_nonrefundable_credits",
+      "line21_credits_total",
+      "line22_tax_after_credits",
+      "line23_other_taxes",
+      "line24_total_tax",
+      "line25a_w2_withheld",
+      "line25b_withheld_1099",
+      "line25c_total",
+      "line25d_total_withholding",
+      "line26_estimated_tax",
+      "line27_eitc",
+      "line28_actc",
+      "line29_refundable_aoc",
+      "line30_refundable_adoption",
+      "line31_additional_payments",
+      "line32_refundable_credits_total",
+      "line33_total_payments",
+      "line34_overpayment",
+      "line35a_refund",
+      "line36_applied_to_2026_estimated_tax",
+      "line37_amount_owed",
+      "line38_underpayment_penalty",
+    ]
+  ) {
+    const value = amount(key);
+    if (value !== undefined && value < 0) {
+      throw new Error(`Form 1040 ${key} must be nonnegative`);
+    }
+  }
   const matches = (filed: number, expected: number): boolean =>
     Math.abs(filed - expected) < 0.01;
 
@@ -29,7 +123,7 @@ export function assertReturnWideArithmetic(
       ) {
         total += value.reduce((sum: number, item: number) => sum + item, 0);
       } else {
-        return undefined;
+        throw new Error(`Form 1040 ${key} needs a finite amount`);
       }
       present = true;
     }
@@ -259,6 +353,96 @@ export function assertReturnScheduleJoins(
 
   const schedule1 = record("schedule1");
   if (schedule1) {
+    if (pending.general !== undefined) {
+      const line = (key: string): number => {
+        const value = schedule1[key];
+        if (value === undefined || value === null) return 0;
+        if (
+          Array.isArray(value) &&
+          value.every((item) =>
+            typeof item === "number" && Number.isFinite(item)
+          )
+        ) return value.reduce((total: number, item: number) => total + item, 0);
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+        throw new Error(`Schedule 1 ${key} needs a finite amount`);
+      };
+      const sum = (...keys: string[]): number =>
+        keys.reduce((total, key) => total + line(key), 0);
+      const otherIncomeFromLines = -line("line8a_nol_deduction") +
+        sum(
+          "line8b_gambling_winnings",
+          "line8c_cod_income",
+          "line8e_archer_msa_dist",
+          "line8f_hsa_income",
+          "line8i_prizes_awards",
+          "line8l_personal_property_rent",
+          "line8n_section951a_inclusion",
+          "line8o_section951aa_inclusion",
+          "line8p_excess_business_loss",
+        ) - line("line8d_foreign_earned_income_exclusion") +
+        schedule1ActivityNotForProfitTotal(schedule1) +
+        schedule1OtherIncomeTotal(schedule1);
+      if (
+        Math.abs(line("line9_total_other_income") - otherIncomeFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 9 must equal its printed other-income lines and 8z statement",
+        );
+      }
+      const incomeFromLines = sum(
+        "line1_state_refund",
+        "line2a_alimony_received",
+        "line3_schedule_c",
+        "line4_other_gains",
+        "line5_schedule_e",
+        "line6_schedule_f",
+        "line7_unemployment",
+        "line9_total_other_income",
+      );
+      if (
+        Math.abs(line("line10_total_additional_income") - incomeFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 10 must equal its printed income lines",
+        );
+      }
+      const otherAdjustments = sum(
+        "line24b_personal_property_expenses",
+        "line24f_501c18d",
+        "line24k_section67e_excess_deduction",
+      );
+      if (
+        Math.abs(line("line25_total_other_adjustments") - otherAdjustments) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 25 must equal supported line 24 adjustments",
+        );
+      }
+      const adjustmentsFromLines = sum(
+        "line11_educator_expenses",
+        "line12_business_expenses",
+        "line13_hsa_deduction",
+        "line14_moving_expenses",
+        "line15_se_deduction",
+        "line16_sep_simple",
+        "line17_se_health_insurance",
+        "line18_early_withdrawal",
+        "line20_ira_deduction",
+        "line21_student_loan_interest",
+        "line23_archer_msa_deduction",
+      ) + otherAdjustments;
+      if (
+        Math.abs(line("line26_total_adjustments") - adjustmentsFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 26 must equal its printed adjustment lines",
+        );
+      }
+    }
     const income = schedule1.line10_total_additional_income;
     if (typeof income === "number") {
       match(amount(fields, "line8_additional_income"), income, "line 8");

@@ -127,6 +127,15 @@ function buildW2(
   context: MefBuildContext,
   index: number,
 ): string {
+  if (
+    item.nonstandard_document_review &&
+    item.source_document_reference !==
+      item.nonstandard_document_review.source_document_reference
+  ) {
+    throw new Error(
+      "Nonstandard W-2 review must match the retained issued-copy reference",
+    );
+  }
   const enteredEmployerEin = requiredEmployerValue(item, "employer_ein", index);
   if (!/^\d{2}-?\d{7}$/.test(enteredEmployerEin)) {
     throw new Error(`W-2 ${index + 1} MeF employer EIN must be nine digits`);
@@ -174,7 +183,10 @@ function buildW2(
         element("Amt", amount),
       ])
     ),
-    element("StandardOrNonStandardCd", "S"),
+    element(
+      "StandardOrNonStandardCd",
+      item.nonstandard_document_review ? "N" : "S",
+    ),
   ]);
 }
 

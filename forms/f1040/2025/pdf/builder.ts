@@ -10,6 +10,7 @@ import {
   type MefBundle,
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/prepared-attachment-manifest.ts";
+import { assertW2GPayerCopyContents } from "../mef/w2g-payer-copy.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
@@ -39,6 +40,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
+import { assertScheduleD1040Join } from "../schedule-d-1040-join.ts";
 import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
@@ -46,12 +48,16 @@ import { assertExtensionPaymentSource } from "../extension-payment-reconciliatio
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
-import { assertNoRepeatedBrokerSaleSources } from "../broker-sale-source-reconciliation.ts";
+import {
+  assertCapitalSaleSourceRows,
+  assertNoRepeatedBrokerSaleSources,
+} from "../broker-sale-source-reconciliation.ts";
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import {
+  assertForm4852FilingRoute,
   assertLine1aWageSource,
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
@@ -83,12 +89,25 @@ import {
 } from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
+import { assert1098EInterestSource } from "../f1098e-source-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
+import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
+import {
+  assertFinalBalanceProjection,
+  assertQualifiedDividendSubset,
+} from "../return-wide-arithmetic.ts";
+import { assertDividendIncomeSources } from "../f1099div-income-reconciliation.ts";
+import {
+  assertScheduleBInterestJoin,
+  assertScheduleBPreparedProjection,
+} from "../schedule-b-interest-reconciliation.ts";
+import { assertTaxExemptInterestSource } from "../tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
 } from "../ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../ira1099r-income-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "../mef/forms/w2g.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
@@ -163,6 +182,9 @@ function fillEntry(
         field.setText(text);
       }
     } else if (entry.kind === "checkbox") {
+      if (typeof value !== "boolean") {
+        throw new Error("checkbox field needs a boolean");
+      }
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
     } else if (entry.kind === "checkboxWhen") {
@@ -195,6 +217,9 @@ function fillEntry(
               field.setText(text);
             }
           } else if (entry.kind === "checkbox") {
+            if (typeof value !== "boolean") {
+              throw new Error("checkbox field needs a boolean");
+            }
             const box = form.getCheckBox(extraField);
             value ? box.check() : box.uncheck();
           }
@@ -225,6 +250,10 @@ function assertRetainedPdfFields(
   doc: PDFDocument,
   descriptor: PdfFormDescriptor,
   fields: Record<string, unknown>,
+  filerFields: ReadonlyArray<{ entry: PdfFieldEntry; value: unknown }>,
+  rowFields: ReadonlyArray<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  >,
 ): void {
   const indices = descriptor.pageIndices?.(fields);
   if (indices === undefined) return;
@@ -241,8 +270,29 @@ function assertRetainedPdfFields(
   }
   const retained = new Set(indices.map((index) => String(pages[index].ref)));
   const form = doc.getForm();
-  for (const entry of descriptor.fields) {
-    const value = fields[entry.domainKey];
+  const assertOnRetainedPage = (name: string): void => {
+    const widgets = form.getField(name).acroField.getWidgets();
+    if (
+      widgets.length === 0 ||
+      !widgets.some((widget) => {
+        const page = widget.P();
+        return page !== undefined && retained.has(String(page));
+      })
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
+      );
+    }
+  };
+  for (
+    const { entry, value } of [
+      ...descriptor.fields.map((entry) => ({
+        entry,
+        value: fields[entry.domainKey],
+      })),
+      ...filerFields,
+    ]
+  ) {
     const printable = entry.kind === "checkboxWhen"
       ? value !== undefined && String(value) === entry.whenValue
       : entry.kind === "checkbox"
@@ -258,18 +308,18 @@ function assertRetainedPdfFields(
         ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
       ]
     ) {
-      const widgets = form.getField(name).acroField.getWidgets();
-      if (
-        widgets.length === 0 ||
-        !widgets.some((widget) => {
-          const page = widget.P();
-          return page !== undefined && retained.has(String(page));
-        })
-      ) {
-        throw new Error(
-          `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
-        );
-      }
+      assertOnRetainedPage(name);
+    }
+  }
+  for (const { name, value, kind } of rowFields) {
+    if (
+      kind === "checkbox"
+        ? value === true
+        : typeof value === "number"
+        ? Number.isFinite(value)
+        : typeof value === "string" && value.length > 0
+    ) {
+      assertOnRetainedPage(name);
     }
   }
 }
@@ -350,6 +400,10 @@ export async function fillFormPdf(
     updateMetadata: false,
   });
   const form = doc.getForm();
+  const filledFilerFields: Array<{ entry: PdfFieldEntry; value: unknown }> = [];
+  const filledRowFields: Array<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  > = [];
 
   // Fill computed fields
   for (const entry of descriptor.fields) {
@@ -361,7 +415,10 @@ export async function fillFormPdf(
   // Fill filer identity fields (domainKey supports dot-notation, e.g. "address.line1")
   if (filer !== undefined) {
     const filerObj = filer as unknown as Record<string, unknown>;
-    const needsShownName = descriptor.filerFields?.some((entry) =>
+    const activeFilerFields = (descriptor.filerFields ?? []).filter((entry) =>
+      entry.includeWhen?.(fields) !== false
+    );
+    const needsShownName = activeFilerFields.some((entry) =>
       entry.domainKey === "nameShownOnForm1040"
     );
     let nameShownOnForm1040: string | undefined;
@@ -375,12 +432,13 @@ export async function fillFormPdf(
       }
       nameShownOnForm1040 = `${first} ${last}`;
     }
-    for (const entry of descriptor.filerFields ?? []) {
+    for (const entry of activeFilerFields) {
       const value = entry.domainKey === "nameShownOnForm1040"
         ? nameShownOnForm1040
         : resolvePath(filerObj, entry.domainKey);
       if (value === undefined || value === null) continue;
       fillEntry(form, entry, value, descriptor.pendingKey);
+      filledFilerFields.push({ entry, value });
     }
 
     // pdf-lib strips the IRS XFA layer, but the 2025 filing-status checkboxes
@@ -412,6 +470,9 @@ export async function fillFormPdf(
               throw new Error(`nonfinite projected value ${String(value)}`);
             }
             if (rf.kind === "checkbox") {
+              if (typeof value !== "boolean") {
+                throw new Error("row checkbox field needs a boolean");
+              }
               const box = form.getCheckBox(pdfField);
               value ? box.check() : box.uncheck();
             } else {
@@ -426,6 +487,7 @@ export async function fillFormPdf(
                   : String(value),
               );
             }
+            filledRowFields.push({ name: pdfField, value, kind: rf.kind });
           } catch (err) {
             throw new Error(
               `[PDF] ${descriptor.pendingKey}: failed to fill row ${
@@ -439,7 +501,13 @@ export async function fillFormPdf(
     }
   }
 
-  assertRetainedPdfFields(doc, descriptor, fields);
+  assertRetainedPdfFields(
+    doc,
+    descriptor,
+    fields,
+    filledFilerFields,
+    filledRowFields,
+  );
 
   // IRS PDFs reference non-embedded fonts (e.g. HelveticaLTStd-Bold) in their
   // field DA strings. pdf-lib cannot synthesize these, so form.flatten() would
@@ -477,17 +545,28 @@ export async function buildPdfBytes(
   assertGeneral1040HeaderSource(normalized);
   assertGeneral1040DependentSource(normalized);
   assertGeneral1040DepositSource(normalized, filer);
+  if (filer) assert1098EInterestSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
   assert1099RRecipientOwner(normalized.f1099r, filer);
   assertPositiveW2GRecipient(normalized.w2g, filer);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
+  assertCapitalSaleSourceRows(normalized);
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
-  assertW2WithholdingSource(normalized, filer);
-  assertLine1aWageSource(normalized);
   assertLine1bHouseholdWageSource(normalized);
+  assertForm4852FilingRoute(normalized);
+  assertW2WithholdingSource(normalized, filer);
+  assert1099WithholdingSource(normalized, filer);
+  assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);
+  assertLine1aWageSource(normalized);
+  assertQualifiedDividendSubset(normalized.f1040 ?? {});
+  assertFinalBalanceProjection(normalized.f1040 ?? {});
+  assertDividendIncomeSources(normalized.f1040 ?? {}, normalized);
+  assertScheduleBInterestJoin(normalized);
+  assertScheduleBPreparedProjection(normalized);
+  assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
@@ -506,12 +585,12 @@ export async function buildPdfBytes(
   assertSchedule3Form8834Credit(normalized);
   assertSchedule3Form8912Credit(normalized);
   assertSchedule3Form8396Credit(normalized);
-  assert1099WithholdingSource(normalized, filer);
   assert1099GUnemploymentSource(normalized);
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
   assertBenefitStatementOwner(normalized, filer);
   assertRrb1099rPensionSource(normalized, filer);
+  assertIra1099rIncomeSource(normalized);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
@@ -542,6 +621,7 @@ export async function buildPdfBytes(
   assertBox11CodeKSources(normalized, k1Recipients);
   assertBox11CodeSSources(normalized, k1Recipients);
   assertScheduleDK1Source(normalized.schedule_d ?? {}, normalized);
+  assertScheduleD1040Join(normalized);
   assertBox11Line10Sources(normalized, k1Recipients);
   if (
     preparedBundle &&
@@ -562,6 +642,25 @@ export async function buildPdfBytes(
     await assertPreparedAttachmentManifest(preparedBundle);
     if (!filer) {
       throw new Error("Prepared MeF PDF needs its filer identity");
+    }
+    await assertW2GPayerCopyContents(
+      preparedBundle.pending,
+      filer,
+      preparedBundle.attachments,
+    );
+    if (
+      (preparedBundle.form3800Parts === undefined) !==
+        (preparedBundle.form3800PartsSha256 === undefined) ||
+      (preparedBundle.form3800Parts !== undefined &&
+        await sha256Hex(
+            new TextEncoder().encode(
+              JSON.stringify(preparedBundle.form3800Parts),
+            ),
+          ) !== preparedBundle.form3800PartsSha256)
+    ) {
+      throw new Error(
+        "Form 3800 PDF parts differ from the prepared MeF return",
+      );
     }
     assertPreparedBundleProjection(preparedBundle, filer);
   }
@@ -650,19 +749,11 @@ export async function buildPdfBytes(
       form8949Rows ?? [],
     );
   }
-  if (
-    preparedBundle?.form3800Parts &&
-    await sha256Hex(
-        new TextEncoder().encode(JSON.stringify(preparedBundle.form3800Parts)),
-      ) !== preparedBundle.form3800PartsSha256
-  ) {
-    throw new Error("Form 3800 PDF parts differ from the prepared MeF return");
-  }
   assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create({ updateMetadata: false });
+  const copyCounts = new Map<string, number>();
 
   for (const descriptor of ALL_PDF_FORMS) {
-    let formCopy = 0;
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
       string,
       unknown
@@ -694,7 +785,9 @@ export async function buildPdfBytes(
         normalized,
       );
       if (!filledBytes) continue;
-      formCopy++;
+      const formKey = descriptor.printedFormKey ?? descriptor.pendingKey;
+      const formCopy = (copyCounts.get(formKey) ?? 0) + 1;
+      copyCounts.set(formKey, formCopy);
       const firstPageNumber = merged.getPageCount() + 1;
 
       const filledDoc = await PDFDocument.load(filledBytes, {
@@ -723,7 +816,7 @@ export async function buildPdfBytes(
       ) {
         pageOrigins?.push({
           pageNumber,
-          formKey: descriptor.pendingKey,
+          formKey,
           formCopy,
         });
       }

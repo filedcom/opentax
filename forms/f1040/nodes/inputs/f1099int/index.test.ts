@@ -115,7 +115,66 @@ Deno.test("1099-INT rejects corrected references on one identified payer/account
     Error,
     "repeats the same payer and account",
   );
-  const distinct = compute([issued, { ...issued, account_number: "SAV-2" }]);
+  assertThrows(
+    () => compute([issued, { ...issued, account_number: "SAV-2" }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([issued, {
+    ...issued,
+    account_number: "SAV-2",
+    source_document_reference: "issued-1099int-2025-2",
+  }]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
+      .length,
+    2,
+  );
+});
+
+Deno.test("1099-INT rejects a repeated source when payer TIN and account are absent", () => {
+  const issued = minimalItem({
+    payer_name: "Test Bank",
+    source_document_reference: "issued-1099int-2025-1",
+    box1: 200,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box1: 900 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-1099int-2025-2" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
+      .length,
+    2,
+  );
+});
+
+Deno.test("1099-INT rejects positive same-payer copies when one lacks copy identity", () => {
+  const unidentified = minimalItem({ box1: 200 });
+  const identified = minimalItem({ box1: 300, account_number: "SAV-1" });
+  const message =
+    "1099-INT has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  assertThrows(
+    () => compute([identified, { ...identified, box1: 350 }]),
+    Error,
+    "repeats the same payer and account",
+  );
+  const distinct = compute([
+    identified,
+    minimalItem({ box1: 400, account_number: "SAV-2" }),
+  ]);
   assertEquals(
     distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
       .length,

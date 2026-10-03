@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { calculateForm8615 } from "../../../nodes/intermediate/forms/form8615/calculation.ts";
+import { schedule_b as scheduleBNode } from "../../../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { buildMefXml } from "../builder.ts";
 import { form8615 } from "./f8615.ts";
 import {
@@ -32,6 +33,38 @@ const filer: FilerIdentity = {
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
 };
+
+function retainedChildInterest(amount: number) {
+  const detail = {
+    payer_name: "Child Savings Bank",
+    gross: amount,
+    net: amount,
+    nominee: 0,
+    accrued: 0,
+    oid_adjustment: 0,
+    bond_premium: 0,
+  };
+  const source = {
+    interest_detail: [detail],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  };
+  const projection = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
+  return {
+    f1099int: {
+      f1099ints: [{
+        payer_name: detail.payer_name,
+        recipient_tin: filer.primarySSN,
+        box1: amount,
+      }],
+    },
+    agi_aggregator: { line2b_taxable_interest: amount },
+    schedule_b: { ...source, ...projection },
+  };
+}
 
 Deno.test("Form 8615 MeF keeps preferential worksheet indicators before their tax amounts", () => {
   const xml = form8615.build({
@@ -93,7 +126,9 @@ Deno.test({
     },
   };
   const xml = buildMefXml({
+    ...retainedChildInterest(5_000),
     f1040: {
+      taxpayer_ssn: filer.primarySSN,
       filing_status: "single",
       taxpayer_can_be_claimed_as_dependent: true,
       line2b_taxable_interest: 5_000,
@@ -162,7 +197,9 @@ Deno.test({
     brackets: CONFIG_BY_YEAR[2025]!,
   });
   const xml = buildMefXml({
+    ...retainedChildInterest(2_000),
     f1040: {
+      taxpayer_ssn: filer.primarySSN,
       filing_status: "single",
       taxpayer_can_be_claimed_as_dependent: true,
       line2b_taxable_interest: 2_000,

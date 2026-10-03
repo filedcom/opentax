@@ -111,6 +111,98 @@ Deno.test("Form 1040 export replays retained wage and total-income components", 
   );
 });
 
+Deno.test("Form 1040 export rejects malformed income components before line 9 replay", () => {
+  for (const invalid of ["500", [250, "250"], Number.NaN]) {
+    const fields = {
+      line2b_taxable_interest: invalid,
+      line9_total_income: 0,
+    };
+    assertThrows(
+      () => assertReturnWideArithmetic(fields),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+    assertThrows(
+      () =>
+        irs1040.build(
+          fields as unknown as Parameters<typeof irs1040.build>[0],
+          {
+            pending: {},
+          },
+        ),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      "line2b_taxable_interest needs a finite amount",
+    );
+  }
+});
+
+Deno.test("Form 1040 export rejects malformed filed subtotals before arithmetic replay", () => {
+  for (
+    const [fields, key] of [
+      [
+        { line16_income_tax: 100, line18_total_tax_before_credits: "0" },
+        "line18_total_tax_before_credits",
+      ],
+      [{
+        line25a_w2_withheld: 100,
+        line25d_total_withholding: "100",
+        line33_total_payments: 100,
+      }, "line25d_total_withholding"],
+    ] as const
+  ) {
+    const reason = `${key} needs a finite amount`;
+    assertThrows(() => assertReturnWideArithmetic(fields), Error, reason);
+    assertThrows(
+      () =>
+        irs1040.build(
+          fields as unknown as Parameters<typeof irs1040.build>[0],
+          {
+            pending: {},
+          },
+        ),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      reason,
+    );
+  }
+});
+
+Deno.test("Form 1040 export rejects negative filed tax and payment amounts", () => {
+  for (
+    const [fields, key] of [
+      [{
+        line25a_w2_withheld: -100,
+        line25d_total_withholding: -100,
+        line33_total_payments: -100,
+      }, "line25a_w2_withheld"],
+      [{ line33_total_payments: -1 }, "line33_total_payments"],
+      [{ line24_total_tax: -1 }, "line24_total_tax"],
+    ] as const
+  ) {
+    const reason = `${key} must be nonnegative`;
+    assertThrows(() => assertReturnWideArithmetic(fields), Error, reason);
+    assertThrows(
+      () => irs1040.build(fields, { pending: {} }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, {}),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
   const income = {
     line9_total_income: 70_000,
@@ -293,6 +385,7 @@ const filed = {
   line23_other_taxes: 50,
   line24_total_tax: 1_000,
   line25a_w2_withheld: 1_500,
+  taxpayer_ssn: "111223333",
   line25b_withheld_1099: 200,
   line25c_total: 20,
   line25d_total_withholding: 1_720,
@@ -305,7 +398,18 @@ const filed = {
 };
 
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
-  const pending = { f1040es: { payment_q1: 100 } };
+  const pending = {
+    f1040es: {
+      payment_q1: 100,
+      quarter_payment_records: [{
+        quarter: "q1",
+        amount: 100,
+        payer_tin: "111223333",
+        payment_date: "2025-04-15",
+        payment_record_reference: "2025 Q1 payment",
+      }],
+    },
+  };
   assertStringIncludes(
     irs1040.build(filed, { pending }),
     "<TotalPaymentsAmt>1890</TotalPaymentsAmt>",
@@ -458,4 +562,41 @@ Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
     Error,
     "line 31",
   );
+});
+
+Deno.test("full-return Schedule 1 totals replay printed income and adjustments", () => {
+  const schedule1 = {
+    line3_schedule_c: 100,
+    line8a_nol_deduction: 20,
+    line9_total_other_income: -20,
+    line10_total_additional_income: 80,
+    line11_educator_expenses: 10,
+    line24b_personal_property_expenses: 5,
+    line25_total_other_adjustments: 5,
+    line26_total_adjustments: 15,
+  };
+  const pending = { general: {}, schedule1 };
+  const filed = { line8_additional_income: 80, line10_adjustments: 15 };
+  assertReturnScheduleJoins(filed, pending);
+  for (
+    const [key, filedKey, reason] of [
+      ["line9_total_other_income", "line8_additional_income", "line 9"],
+      ["line10_total_additional_income", "line8_additional_income", "line 10"],
+      ["line25_total_other_adjustments", "line10_adjustments", "line 25"],
+      ["line26_total_adjustments", "line10_adjustments", "line 26"],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        assertReturnScheduleJoins(
+          { ...filed, [filedKey]: filed[filedKey] + 1 },
+          {
+            general: {},
+            schedule1: { ...schedule1, [key]: schedule1[key] + 1 },
+          },
+        ),
+      Error,
+      reason,
+    );
+  }
 });

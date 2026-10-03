@@ -106,6 +106,9 @@ function saleKey(sale: PreparedSale): string {
     sale.adjustment_amount ?? null,
     sale.gain_loss,
     sale.is_long_term,
+    sale.collectibles ?? false,
+    sale.qsbs_code ?? null,
+    sale.qsbs_amount ?? null,
     sale.from_form4797_investment_1245 ?? false,
     sale.form4797_property_id ?? null,
   ]);
