@@ -96,6 +96,28 @@ Deno.test("1099-MISC repeated identified copy cannot double income or withholdin
   assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
 });
 
+Deno.test("1099-MISC repeated issued reference rejects without an account", () => {
+  const issued = minimalItem({
+    account_number: undefined,
+    source_document_reference: "issued-misc-copy",
+    box3_other_income: 300,
+    box3_other_income_routing: "prizes_awards",
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box3_other_income: 350 }]),
+    Error,
+    "repeats the same payer, recipient, issued source reference",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "second-misc-copy" },
+  ]);
+  assertEquals(
+    fieldsOf(distinct.outputs, schedule1)?.line8i_prizes_awards,
+    600,
+  );
+});
+
 Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
   const review = {
     amount: 4_000,
@@ -374,7 +396,10 @@ Deno.test("f1099m.compute: Form 4952 receives only affirmed portfolio royalties"
       box2_royalties: 1_200,
       box2_nonpassive_portfolio_investment_for_form4952_verified: true,
     }),
-    minimalItem({ box2_royalties: 600 }),
+    minimalItem({
+      box2_royalties: 600,
+      source_document_reference: "separate-royalty-copy",
+    }),
   ]);
   assertEquals(findOutput(result, "schedule_e")?.fields.royalty_income, 1_800);
   assertEquals(

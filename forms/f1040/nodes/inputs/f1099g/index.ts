@@ -180,9 +180,9 @@ export function assertDistinct1099GCopies(items: G99Items): void {
   const seenAccounts = new Set<string>();
   const seenReferences = new Set<string>();
   for (const item of items) {
-    if (!item.payer_tin || !item.recipient_tin) continue;
-    const payer = item.payer_tin.replace(/\D/g, "");
-    if (item.account_number) {
+    const payer = item.payer_tin?.replace(/\D/g, "") ||
+      item.payer_name?.trim() || null;
+    if (item.account_number && payer && item.recipient_tin) {
       const key = JSON.stringify([
         payer,
         item.recipient_tin,
@@ -198,7 +198,7 @@ export function assertDistinct1099GCopies(items: G99Items): void {
     if (item.source_document_reference) {
       const key = JSON.stringify([
         payer,
-        item.recipient_tin,
+        item.recipient_tin ?? null,
         item.source_document_reference,
       ]);
       if (seenReferences.has(key)) {

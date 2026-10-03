@@ -131,6 +131,27 @@ Deno.test("1099-G repeated issued reference without an account cannot double RTA
   compute([issued, rtaaItem(600, "separate-issued-rtaa-copy")]);
 });
 
+Deno.test("1099-G repeated issued reference rejects with no payer TIN or account", () => {
+  const issued = minimalItem({
+    payer_name: "State Agency",
+    payer_tin: undefined,
+    recipient_tin: "111223333",
+    account_number: undefined,
+    source_document_reference: "issued-unemployment-copy",
+    box_1_unemployment: 500,
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, box_1_unemployment: 600 }]),
+    Error,
+    "repeats the same identified payer, recipient, and issued source reference",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "second-unemployment-copy" },
+  ]);
+  assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1000);
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================

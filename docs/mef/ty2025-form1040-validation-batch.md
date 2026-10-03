@@ -53,6 +53,14 @@ PDF builder files passed **184/184**. Separate pension-copy fixtures now carry
 distinct references; broader issued-copy authentication and the full batch
 remain open.
 
+The subsequent 1099-G and 1099-MISC source-reference replay passed **149/149**
+input-node cases, **11/11** shared withholding/export cases, and **184/184**
+native/PDF builder cases on 2026-10-03. A repeated G source with no payer TIN
+and a repeated MISC source with no account now reject in the graph and both
+exports; distinct references remain accepted. Format and lint passed for the
+changed files. The repository-wide batch and issued-copy byte review remain
+open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

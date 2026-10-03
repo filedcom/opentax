@@ -286,21 +286,38 @@ type M99Item = z.infer<typeof itemSchema>;
 type M99Input = z.infer<typeof inputSchema>;
 
 export function assertDistinct1099MCopies(items: readonly M99Item[]): void {
-  const seen = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenReferences = new Set<string>();
   for (const item of items) {
-    if (!item.account_number) continue;
-    const key = JSON.stringify([
-      item.payer_tin,
-      item.recipient_tin,
-      item.account_number.trim(),
-      item.multi_form_code ?? null,
-    ]);
-    if (seen.has(key)) {
-      throw new Error(
-        "1099-MISC repeats the same payer, recipient, account, and form code; corrected copies need a reviewed single current row",
-      );
+    if (item.account_number) {
+      const key = JSON.stringify([
+        item.payer_tin,
+        item.recipient_tin,
+        item.account_number.trim(),
+        item.multi_form_code ?? null,
+      ]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-MISC repeats the same payer, recipient, account, and form code; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
     }
-    seen.add(key);
+    if (item.source_document_reference) {
+      const key = JSON.stringify([
+        item.payer_tin,
+        item.recipient_tin,
+        item.source_document_reference,
+        item.account_number?.trim() ?? null,
+        item.multi_form_code ?? null,
+      ]);
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "1099-MISC repeats the same payer, recipient, issued source reference, and form code; corrected copies need a reviewed single current row",
+        );
+      }
+      seenReferences.add(key);
+    }
   }
 }
 
