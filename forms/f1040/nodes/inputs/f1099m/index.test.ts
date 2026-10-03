@@ -118,6 +118,37 @@ Deno.test("1099-MISC repeated issued reference rejects without an account", () =
   );
 });
 
+Deno.test("1099-MISC positive copies need distinct account or issued-copy identities", () => {
+  const unidentified = minimalItem({
+    account_number: undefined,
+    source_document_reference: undefined,
+    box3_other_income: 300,
+    box3_other_income_routing: "prizes_awards",
+  });
+  const identified = {
+    ...unidentified,
+    account_number: "ACCT-1",
+    box3_other_income: 350,
+  };
+  const message =
+    "multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  const distinct = compute([
+    identified,
+    { ...identified, account_number: "ACCT-2" },
+  ]);
+  assertEquals(
+    fieldsOf(distinct.outputs, schedule1)?.line8i_prizes_awards,
+    700,
+  );
+});
+
 Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
   const review = {
     amount: 4_000,

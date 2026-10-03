@@ -79,6 +79,17 @@ spawn `pdftotext`; the complete selected rerun passed. The source fixtures for
 different named payers now use distinct payer TINs. This is focused regression
 evidence; the repository-wide command and issued-copy review remain open.
 
+After the 1099-MISC ambiguity guard on 2026-10-03, the selected input,
+withholding, and native/PDF builder files passed **291/291** with
+`deno test -A` on commit `0758d35d` plus the working change. It covers two
+unidentified positive copies, an unidentified copy mixed with an identified
+one in either order, and separate identified accounts. The repository-wide
+command and issuer-copy verification remain open.
+The adjacent 1099-MISC owner, box 8, and section 409A source replay files
+passed **12/12** after exposing the cached TY2025 XSD and `pdftotext` to the
+separate worktree. Their first attempt failed on missing local tools and
+schema files, not on a source assertion.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

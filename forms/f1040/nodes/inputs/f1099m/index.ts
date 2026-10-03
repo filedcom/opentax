@@ -288,12 +288,20 @@ type M99Input = z.infer<typeof inputSchema>;
 export function assertDistinct1099MCopies(items: readonly M99Item[]): void {
   const seenAccounts = new Set<string>();
   const seenReferences = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (item.account_number) {
+    const account = item.account_number?.trim() || null;
+    const owner = JSON.stringify([
+      item.payer_tin,
+      item.recipient_tin,
+      item.multi_form_code ?? null,
+    ]);
+    if (account) {
       const key = JSON.stringify([
         item.payer_tin,
         item.recipient_tin,
-        item.account_number.trim(),
+        account,
         item.multi_form_code ?? null,
       ]);
       if (seenAccounts.has(key)) {
@@ -308,7 +316,7 @@ export function assertDistinct1099MCopies(items: readonly M99Item[]): void {
         item.payer_tin,
         item.recipient_tin,
         item.source_document_reference,
-        item.account_number?.trim() ?? null,
+        account,
         item.multi_form_code ?? null,
       ]);
       if (seenReferences.has(key)) {
@@ -318,6 +326,33 @@ export function assertDistinct1099MCopies(items: readonly M99Item[]): void {
       }
       seenReferences.add(key);
     }
+    const positive = [
+      item.box1_rents,
+      item.box2_royalties,
+      item.box3_other_income,
+      item.box4_federal_withheld,
+      item.box5_fishing_boat,
+      item.box6_medical_payments,
+      item.box8_substitute_payments,
+      item.box9_crop_insurance,
+      item.box10_attorney_proceeds,
+      item.box11_fish_purchased,
+      item.box15_nqdc,
+    ].some((amount) => (amount ?? 0) > 0);
+    if (!positive) continue;
+    if (!account && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-MISC has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
+      throw new Error(
+        "1099-MISC has multiple positive payer copies without account or issued source reference",
+      );
+    }
+    seenOwners.add(owner);
   }
 }
 

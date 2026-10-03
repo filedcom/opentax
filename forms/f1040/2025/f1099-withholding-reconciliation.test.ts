@@ -147,6 +147,27 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
   }
 });
 
+Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
+  const issued = {
+    payer_name: "Payer",
+    payer_tin: "123456789",
+    recipient_tin: filer.primarySSN,
+    box3_other_income: 300,
+    box3_other_income_routing: "prizes_awards",
+  };
+  const pending = {
+    f1099m: { f1099ms: [issued, { ...issued, box3_other_income: 350 }] },
+  };
+  const message =
+    "1099-MISC has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("1099-DIV repeated issued copy without payer TIN rejects native and PDF export", async () => {
   const pending = {
     f1099div: {
