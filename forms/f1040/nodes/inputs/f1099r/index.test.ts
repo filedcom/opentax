@@ -194,6 +194,24 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
   );
 });
 
+Deno.test("f1099r.compute: repeated issued copy without account number cannot double income", () => {
+  const copy = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: undefined,
+    box2a_taxable_amount: 1_000,
+  });
+  assertThrows(
+    () => compute([copy, { ...copy, box2a_taxable_amount: 1_200 }]),
+    Error,
+    "repeats the same payer, recipient, account, and issued source copy",
+  );
+  const separate = compute([
+    copy,
+    { ...copy, source_document_reference: "another-issued-copy" },
+  ]);
+  assertEquals(f1040Input(separate).line5b_pension_taxable, 2_000);
+});
+
 Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amounts", () => {
   const first = minimalPensionItem({
     recipient_ssn: "111223333",
@@ -413,7 +431,6 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   const fields = firstForm4972Source(result)!;
   assertEquals(fields.lump_sum_amount, 80_000);
   assertEquals(fields.capital_gain_amount, 10_000);
@@ -429,7 +446,6 @@ Deno.test("f1099r.compute: Form 4972 retains a partial box 9a share", () => {
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(firstForm4972Source(result)?.recipient_share_pct, 50);
 });
 
@@ -457,7 +473,6 @@ Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(firstForm4972Source(result)?.lump_sum_amount, 80_000);
 });
 
@@ -534,7 +549,7 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
     () =>
       compute([first, { ...second, source_document_reference: "1099-R-A" }]),
     Error,
-    "distinct full-share source copies",
+    "repeats the same payer, recipient, account, and issued source copy",
   );
 });
 
@@ -701,6 +716,7 @@ Deno.test("f1099r.compute: multiple pension items aggregate line5a correctly", (
     minimalPensionItem({
       box1_gross_distribution: 9000,
       box2a_taxable_amount: 8000,
+      source_document_reference: "second-pension-copy",
     }),
   ]);
   const input = f1040Input(result);
@@ -716,6 +732,7 @@ Deno.test("f1099r.compute: multiple pension items aggregate line5b correctly", (
     minimalPensionItem({
       box1_gross_distribution: 9000,
       box2a_taxable_amount: 6000,
+      source_document_reference: "second-pension-copy",
     }),
   ]);
   const input = f1040Input(result);

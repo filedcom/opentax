@@ -495,13 +495,18 @@ export function assertDistinct1099RCopies(
   const seen = new Set<string>();
   for (const item of items) {
     const reference = item.source_document_reference?.trim();
-    const payer = item.payer_ein.replace(/\D/g, "");
+    const payer = item.payer_ein.replace(/\D/g, "") || item.payer_ein.trim();
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
     const account = item.account_number?.trim();
-    if (!reference || !payer || !recipient || !account) continue;
+    if (!reference) continue;
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
-    const key = JSON.stringify([reference, payer, recipient, account]);
+    const key = JSON.stringify([
+      reference,
+      payer,
+      recipient ?? null,
+      account || null,
+    ]);
     if (seen.has(key)) {
       throw new Error(
         "Form 1099-R repeats the same payer, recipient, account, and issued source copy",

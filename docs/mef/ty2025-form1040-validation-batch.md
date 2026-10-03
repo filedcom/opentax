@@ -46,6 +46,13 @@ confirmed that repeated identified copies reject at native and PDF preflight
 even when payer TIN or account is absent. The repository-wide batch remains
 deferred until implementation and scope decisions are settled.
 
+After the 1099-R copy-identity guard on 2026-10-03, its input-node and shared
+withholding/export files passed **118/118**, including graph and native/PDF
+rejection of a repeated issued copy without an account number. The native and
+PDF builder files passed **184/184**. Separate pension-copy fixtures now carry
+distinct references; broader issued-copy authentication and the full batch
+remain open.
+
 At the current implementation checkpoint on 2026-10-03, the focused
 `deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their

@@ -465,6 +465,31 @@ Deno.test("positive 1099-R withholding needs an identified recipient on a joint 
   );
 });
 
+Deno.test("repeated 1099-R issued copy without account rejects native and PDF export", async () => {
+  const issued = {
+    payer_name: "Plan",
+    payer_ein: "123456789",
+    recipient_ssn: filer.primarySSN,
+    source_document_reference: "issued-1099-r-copy",
+    box1_gross_distribution: 1_000,
+    box4_federal_withheld: 100,
+    box7_distribution_code: "7",
+  };
+  const pending = {
+    f1099r: {
+      f1099rs: [issued, { ...issued, box1_gross_distribution: 1_200 }],
+    },
+  };
+  const message =
+    "Form 1099-R repeats the same payer, recipient, account, and issued source copy";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
   assertThrows(
     () =>
