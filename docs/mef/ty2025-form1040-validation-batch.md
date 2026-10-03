@@ -1690,3 +1690,10 @@ Form 1040 now reject a missing or zero direct line when there is no Schedule D
 source. The focused source, native Form 1040, and PDF Form 1040 suites passed
 104/104 after the change. This does not authenticate payer copies or prove the
 wider Schedule D route, full bulk suite, or IRS ATS acceptance.
+
+The follow-up Schedule D check now requires a finalized line-16 print amount
+before using Schedule D as the reporting destination, and compares its retained
+1099-DIV and Form 8814 line-13 components with their sources. The 104 affected
+Form 1040 source/native/PDF tests passed after that change. A physical Form
+8814/Schedule D PDF test reached text extraction but could not finish because
+the local `pdftotext` executable was unavailable; it is not counted as a pass.

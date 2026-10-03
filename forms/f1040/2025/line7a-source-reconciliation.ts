@@ -45,9 +45,36 @@ export function assertDirectCapitalGainDistributionSource(
 
   const sourced = dividends + childGain;
   if (typeof filed !== "number" || filed <= 0) {
-    if (sourced > 0 && pending.schedule_d === undefined) {
+    if (sourced <= 0) return;
+    const schedule = pending.schedule_d;
+    const finalized = schedule !== null && typeof schedule === "object" &&
+      typeof (schedule as Record<string, unknown>).print_line16_combined ===
+        "number" &&
+      Number.isFinite(
+        (schedule as Record<string, unknown>).print_line16_combined,
+      ) &&
+      (schedule as Record<string, unknown>)
+          .active_4797_final_no_schedule_d !== true;
+    if (!finalized) {
       throw new Error(
         "Form 1040 omits sourced capital-gain distributions from both Schedule D and direct line 7a",
+      );
+    }
+    const rows = schedule as Record<string, unknown>;
+    const reportedDividend = rows.line13_cap_gain_distrib ?? 0;
+    const reportedChild = rows.line13_form8814 ?? 0;
+    if (
+      (dividends > 0 &&
+        (typeof reportedDividend !== "number" ||
+          !Number.isFinite(reportedDividend) ||
+          Math.abs(reportedDividend - dividends) >= 0.01)) ||
+      (childGain > 0 &&
+        (typeof reportedChild !== "number" ||
+          !Number.isFinite(reportedChild) ||
+          Math.abs(reportedChild - childGain) >= 0.01))
+    ) {
+      throw new Error(
+        "Schedule D line 13 omits retained 1099-DIV or Form 8814 capital-gain distributions",
       );
     }
     return;

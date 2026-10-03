@@ -129,8 +129,55 @@ Deno.test("native and PDF Form 1040 reject an omitted sourced capital-gain distr
     Error,
     message,
   );
-  assertDirectCapitalGainDistributionSource(
-    fields,
-    { ...pending, schedule_d: { line13_cap_gain_distrib: 100 } },
+  assertThrows(
+    () =>
+      assertDirectCapitalGainDistributionSource(
+        fields,
+        { ...pending, schedule_d: { line13_cap_gain_distrib: 100 } },
+      ),
+    Error,
+    message,
+  );
+  const finalized = {
+    ...pending,
+    schedule_d: {
+      line13_cap_gain_distrib: 100,
+      print_line16_combined: 100,
+    },
+  };
+  assertDirectCapitalGainDistributionSource(fields, finalized);
+  const scheduleDFields = { ...fields, line7_capital_gain: 100 };
+  irs1040.build(scheduleDFields, { pending: finalized });
+  irs1040Pdf.projectFields?.(scheduleDFields, finalized);
+  const omittedFromScheduleD = {
+    ...finalized,
+    schedule_d: { ...finalized.schedule_d, line13_cap_gain_distrib: 0 },
+  };
+  assertThrows(
+    () => irs1040.build(scheduleDFields, { pending: omittedFromScheduleD }),
+    Error,
+    "Schedule D line 13 omits retained",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(scheduleDFields, omittedFromScheduleD),
+    Error,
+    "Schedule D line 13 omits retained",
+  );
+  assertThrows(
+    () =>
+      assertDirectCapitalGainDistributionSource(fields, {
+        ...omittedFromScheduleD,
+      }),
+    Error,
+    "Schedule D line 13 omits retained",
+  );
+  assertThrows(
+    () =>
+      assertDirectCapitalGainDistributionSource({}, {
+        form8814: { items: [{ line10: 80 }] },
+        schedule_d: { line13_form8814: 0, print_line16_combined: 0 },
+      }),
+    Error,
+    "Schedule D line 13 omits retained",
   );
 });
