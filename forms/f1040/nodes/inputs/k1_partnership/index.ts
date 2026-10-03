@@ -121,7 +121,8 @@ export const itemSchema = z.object({
   // Box 6b — Qualified dividends → Form 1040 line 3a
   box6b_qualified_dividends: z.number().nonnegative().optional(),
 
-  // Box 6c — Dividend equivalents → Schedule B (§871(m) substitute dividends)
+  // Box 6c is informational for a Form 1040 partner; it is not included in
+  // ordinary dividends on line 3b or Schedule B.
   box6c_dividend_equivalents: z.number().nonnegative().optional().describe(
     "Box 6c — Dividend equivalents",
   ),
@@ -535,7 +536,8 @@ export const inputSchema = z.object({
         ctx.addIssue({
           code: "custom",
           path: [index, "box20_code_b_investment_expenses"],
-          message: "K-1 code B issuer expense item ID must be unique within its partnership",
+          message:
+            "K-1 code B issuer expense item ID must be unique within its partnership",
         });
       }
       seen.add(key);
@@ -631,21 +633,6 @@ function scheduleBDividendOutputs(items: K1PartnershipItems): NodeOutput[] {
       output(schedule_b, {
         payerName: item.partnership_name,
         ordinaryDividends: item.box6a_ordinary_dividends!,
-      })
-    );
-}
-
-// Box 6c — Dividend equivalents (§871(m) substitute dividends) → Schedule B
-// Treated as ordinary dividends; routed per-payer same as box6a.
-function scheduleBDividendEquivalentOutputs(
-  items: K1PartnershipItems,
-): NodeOutput[] {
-  return items
-    .filter((item) => (item.box6c_dividend_equivalents ?? 0) > 0)
-    .map((item) =>
-      output(schedule_b, {
-        payerName: item.partnership_name,
-        ordinaryDividends: item.box6c_dividend_equivalents!,
       })
     );
 }
@@ -1009,8 +996,6 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...royaltyScheduleEOutputs(k1_partnerships),
       ...scheduleBInterestOutputs(k1_partnerships),
       ...scheduleBDividendOutputs(k1_partnerships),
-      // Box 6c — dividend equivalents treated as ordinary dividends on Schedule B
-      ...scheduleBDividendEquivalentOutputs(k1_partnerships),
       ...f1040QualDivOutput(k1_partnerships),
       ...scheduleDOutput(k1_partnerships),
       ...box9bCollectiblesOutputs(k1_partnerships),

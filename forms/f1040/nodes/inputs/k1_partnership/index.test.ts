@@ -441,13 +441,17 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
     "same issuer-identified",
   );
   assertThrows(
-    () => compute([{ ...item, box20_code_b_investment_expenses: {
-      ...codeB,
-      issuer_crosswalk: {
-        ...codeB.issuer_crosswalk,
-        issuer_expense_item_id: "another-depreciation-item",
-      },
-    } }]),
+    () =>
+      compute([{
+        ...item,
+        box20_code_b_investment_expenses: {
+          ...codeB,
+          issuer_crosswalk: {
+            ...codeB.issuer_crosswalk,
+            issuer_expense_item_id: "another-depreciation-item",
+          },
+        },
+      }]),
     Error,
     "same issuer-identified",
   );
@@ -457,10 +461,11 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
     "issuer expense item ID must be unique",
   );
   assertThrows(
-    () => compute([item, {
-      ...item,
-      source_document_reference: "amended 2025 K-1",
-    }]),
+    () =>
+      compute([item, {
+        ...item,
+        source_document_reference: "amended 2025 K-1",
+      }]),
     Error,
     "issuer expense item ID must be unique",
   );
@@ -883,6 +888,24 @@ Deno.test("box6a_ordinary_dividends routes to schedule_b ordinaryDividends", () 
   const result = compute([minimalItem({ box6a_ordinary_dividends: 500 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.ordinaryDividends, 500);
+});
+
+Deno.test("box 6c dividend equivalents remain informational beside box 6a", () => {
+  const onlyEquivalent = compute([minimalItem({
+    box6c_dividend_equivalents: 500,
+  })]);
+  assertEquals(findOutput(onlyEquivalent, "schedule_b"), undefined);
+  assertEquals(findOutput(onlyEquivalent, "f1040"), undefined);
+
+  const mixed = compute([minimalItem({
+    box6a_ordinary_dividends: 100,
+    box6c_dividend_equivalents: 500,
+  })]);
+  const dividendRows = mixed.outputs.filter((row) =>
+    row.nodeType === "schedule_b"
+  );
+  assertEquals(dividendRows.length, 1);
+  assertEquals(dividendRows[0].fields.ordinaryDividends, 100);
 });
 
 Deno.test("box6b_qualified_dividends routes to f1040 line3a", () => {
