@@ -1,4 +1,6 @@
 import { schedule2Part1Total } from "../nodes/intermediate/aggregation/schedule2/index.ts";
+import { schedule1ActivityNotForProfitTotal } from "./mef/forms/schedule1_nonbusiness_sources.ts";
+import { schedule1OtherIncomeTotal } from "./mef/forms/schedule1_other_income_rows.ts";
 
 /** Line 3a is the qualified portion of ordinary dividends on line 3b. */
 export function assertQualifiedDividendSubset(
@@ -331,6 +333,28 @@ export function assertReturnScheduleJoins(
       };
       const sum = (...keys: string[]): number =>
         keys.reduce((total, key) => total + line(key), 0);
+      const otherIncomeFromLines = -line("line8a_nol_deduction") +
+        sum(
+          "line8b_gambling_winnings",
+          "line8c_cod_income",
+          "line8e_archer_msa_dist",
+          "line8f_hsa_income",
+          "line8i_prizes_awards",
+          "line8l_personal_property_rent",
+          "line8n_section951a_inclusion",
+          "line8o_section951aa_inclusion",
+          "line8p_excess_business_loss",
+        ) - line("line8d_foreign_earned_income_exclusion") +
+        schedule1ActivityNotForProfitTotal(schedule1) +
+        schedule1OtherIncomeTotal(schedule1);
+      if (
+        Math.abs(line("line9_total_other_income") - otherIncomeFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 9 must equal its printed other-income lines and 8z statement",
+        );
+      }
       const incomeFromLines = sum(
         "line1_state_refund",
         "line2a_alimony_received",

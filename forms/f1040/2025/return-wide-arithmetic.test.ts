@@ -463,6 +463,7 @@ Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
 Deno.test("full-return Schedule 1 totals replay printed income and adjustments", () => {
   const schedule1 = {
     line3_schedule_c: 100,
+    line8a_nol_deduction: 20,
     line9_total_other_income: -20,
     line10_total_additional_income: 80,
     line11_educator_expenses: 10,
@@ -475,6 +476,7 @@ Deno.test("full-return Schedule 1 totals replay printed income and adjustments",
   assertReturnScheduleJoins(filed, pending);
   for (
     const [key, filedKey, reason] of [
+      ["line9_total_other_income", "line8_additional_income", "line 9"],
       ["line10_total_additional_income", "line8_additional_income", "line 10"],
       ["line25_total_other_adjustments", "line10_adjustments", "line 25"],
       ["line26_total_adjustments", "line10_adjustments", "line 26"],

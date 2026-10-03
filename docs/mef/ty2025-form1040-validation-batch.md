@@ -109,6 +109,15 @@ Schedule C fixture then built native XML (5,205 characters) and a filled PDF
 This is a focused route check; all-page visual review and the full command
 remain open.
 
+The Schedule 1 line 9 follow-up passed one source-backed mixed 1099-NEC/K
+native/PDF positive and both-export coordinated-tamper rejection, plus nine
+arithmetic and 184 builder cases. All 177 clean review graphs passed the
+expanded Schedule 1 replay; 13 had a nonzero printed line 9. The mixed
+fixture's raw 1099-K line 8j component was $5,000, while the existing
+nonbusiness projector combined it with the $3,000 NEC source for the $8,000
+printed line 8j and line 9. This remains selected route evidence rather than
+the full batch or visual page review.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form
