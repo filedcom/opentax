@@ -50,7 +50,8 @@ After the Schedule B projection guard, the selected native builder, interest
 reconciliation, and Part III end-to-end files passed **168/168** on 2026-10-03.
 The $1,501 sourced-interest case now rejects missing or changed prepared payer
 rows; changed dividend payer and foreign-country projections and an invented
-nonfiling projection also reject in both exporters. The source-backed
+nonfiling projection also reject in both exporters. An extra unsourced payer
+print cell now rejects as well. The source-backed
 `single-child-unearned-income` and
 `single-form8815-series-ee-bond-exclusion` review fixtures each passed their
 TY2025 v5.4 XML/XSD cases after the guard. This is a focused regression; the

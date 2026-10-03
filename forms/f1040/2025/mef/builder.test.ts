@@ -2002,6 +2002,20 @@ Deno.test("IRS1040ScheduleB present when schedule_b has data", async () => {
     Error,
     "Schedule B prepared projection differs at print_int_payer_1",
   );
+  const extra = {
+    ...pending,
+    schedule_b: { ...pending.schedule_b, print_int_payer_2: "Other Bank" },
+  };
+  assertThrows(
+    () => buildMefXml(extra),
+    Error,
+    "Schedule B has an unsourced prepared field at print_int_payer_2",
+  );
+  await assertRejects(
+    () => buildPdfBytes(extra, sampleFiler()),
+    Error,
+    "Schedule B has an unsourced prepared field at print_int_payer_2",
+  );
 });
 
 Deno.test("both exports reject a missing prepared Schedule B interest projection", async () => {

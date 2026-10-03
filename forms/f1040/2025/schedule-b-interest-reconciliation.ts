@@ -310,6 +310,25 @@ export function assertScheduleBInterestJoin(
   }
 }
 
+const scheduleBPreparedKeys = new Set([
+  "interest_rows",
+  "seller_financed_rows",
+  "dividend_rows",
+  "dividend_line5_subtotal",
+  "dividend_nominee",
+  "interest_line1_subtotal",
+  "interest_nominee",
+  "interest_accrued",
+  "interest_oid_adjustment",
+  "interest_bond_premium",
+  "foreign_country_codes",
+  "foreign_country_names",
+]);
+
+function isScheduleBPreparedKey(key: string): boolean {
+  return key.startsWith("print_") || scheduleBPreparedKeys.has(key);
+}
+
 /** Replay every retained Schedule B print/native field from its source inputs. */
 export function assertScheduleBPreparedProjection(
   pending: Readonly<Record<string, unknown>>,
@@ -322,28 +341,15 @@ export function assertScheduleBPreparedProjection(
   ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
   const actual = pending.schedule_b as Record<string, unknown>;
   if (expected === undefined) {
-    const preparedKeys = new Set([
-      "interest_rows",
-      "seller_financed_rows",
-      "dividend_rows",
-      "dividend_line5_subtotal",
-      "dividend_nominee",
-      "interest_line1_subtotal",
-      "interest_nominee",
-      "interest_accrued",
-      "interest_oid_adjustment",
-      "interest_bond_premium",
-      "foreign_country_codes",
-      "foreign_country_names",
-    ]);
-    if (
-      Object.keys(actual).some((key) =>
-        key.startsWith("print_") || preparedKeys.has(key)
-      )
-    ) {
+    if (Object.keys(actual).some(isScheduleBPreparedKey)) {
       throw new Error("Schedule B has prepared fields without a filing route");
     }
     return;
+  }
+  for (const key of Object.keys(actual)) {
+    if (isScheduleBPreparedKey(key) && !(key in expected)) {
+      throw new Error(`Schedule B has an unsourced prepared field at ${key}`);
+    }
   }
   for (const [key, value] of Object.entries(expected)) {
     if (JSON.stringify(actual[key]) !== JSON.stringify(value)) {
