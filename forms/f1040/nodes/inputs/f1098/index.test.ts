@@ -364,6 +364,120 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   );
 });
 
+Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidence", () => {
+  const source = {
+    f1098s: [reviewedInterest(1_000, 833, {
+      lender_name: "Purchase Lender",
+      recipient_tin: "111-22-3333",
+      source_document_reference: "2025 purchase Form 1098",
+      box2_outstanding_principal: 900_000,
+      box3_origination_date: "07/15/2025",
+    })],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 Pub. 936 purchase Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: [{
+        source_document_reference: "2025 purchase Form 1098",
+        purchase_closing_disclosure_reference:
+          "2025 purchase closing disclosure",
+        principal_residence_purchase_verified: true,
+        no_additional_advances_verified: true,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: index < 6 ? 0 : 900_000,
+          lender_statement_reference: `purchase month ${index + 1}`,
+        })),
+      }],
+    },
+  };
+  assertEquals(inputSchema.safeParse(source).success, true);
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.Single,
+    833,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: [{
+            ...source.f1098s[0],
+            box2_outstanding_principal: undefined,
+          }],
+        },
+        ["111223333"],
+        FilingStatus.Single,
+        833,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "needs its issued box 2 principal",
+  );
+  assertForm1098MortgageLimitSources(
+    {
+      f1098s: [{
+        ...source.f1098s[0],
+        box2_outstanding_principal: undefined,
+        box1_current_year_deductible_interest: 0,
+      }, reviewedInterest(500, 500)],
+    },
+    ["111223333"],
+    FilingStatus.Single,
+    500,
+    0,
+    0,
+    false,
+    false,
+  );
+  const loan = source.mortgage_limit_review.loans[0];
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [{ ...loan, purchase_closing_disclosure_reference: undefined }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [{
+          ...loan,
+          monthly_balance_records: [
+            { ...loan.monthly_balance_records[0], closing_balance: 900_000 },
+            ...loan.monthly_balance_records.slice(1),
+          ],
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [{
+        ...source.f1098s[0],
+        box1_current_year_deductible_interest: 1_000,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("f1098.schema: missing box1_mortgage_interest throws", () => {
   assertThrows(() => compute([{ for_routing: ForRouting.A }]), Error);
 });

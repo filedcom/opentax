@@ -207,6 +207,32 @@ monthly average permits the full $1,000 despite the box 2 snapshot. Native
 and PDF export reject the $900,000 unreviewed claim. An entry with zero
 Schedule A line 8a claim does not trigger that filing review.
 
+## 2025 purchase mortgage without points (2026-10-04)
+
+A new post-2017 acquisition loan originated in 2025 can now use the same
+whole-return Table 1 review when no reported points need allocation. A
+principal-residence purchase needs a closing-disclosure reference, verified
+acquisition and no additional advances, its issued Form 1098 box 2 principal,
+and twelve distinct monthly lender statement references. Months before the
+July purchase carry zero; each subsequent month carries a positive balance
+no greater than the origination principal. Its average divides those closing
+balances by the six months the home was secured as a qualified home; a
+preexisting full-year mortgage in the same review continues to divide by
+twelve. Missing issued box 2 on a positive current-year claim rejects before
+the debt-limit check.
+
+A July $900,000 purchase with $1,000 interest yields a .833 Table 1 ratio and
+$833 Schedule A line 8a interest. The source-backed case passed native XML,
+local TY2025 XSD, and filled-PDF text inspection; the unreviewed version
+rejects in both exporters. A $500,000 July purchase plus a $500,000 existing
+loan yields $1,500 deductible from $2,000 reported, and its MeF bundle and
+three-page PDF build. Positive points, mixed-use or refinance debt, part-year
+ownership beyond this purchase pattern, authentic closing/statement bytes,
+and ATS remain open. [2025 Publication 936](https://www.irs.gov/publications/p936)
+describes lender monthly balances and Table 1, and the
+[2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
+define box 2 for a current-year origination.
+
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 
 The public `f1098_purchase_points_cross_loan_review` joins one 2025

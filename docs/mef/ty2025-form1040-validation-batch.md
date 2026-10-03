@@ -1643,3 +1643,17 @@ TY2025 XSD-valid native XML and text-extracted filled PDF. A $600,000 reviewed
 average permits the full $1,000 despite the box 2 snapshot; a zero line 8a
 claim does not require a deduction review. This is focused source/export
 evidence, not the later complete bulk test or IRS ATS acceptance.
+
+## 2025 purchase mortgage without points (2026-10-04)
+
+One July 2025 $900,000 principal-residence acquisition loan with issued Form
+1098 box 2 and a reviewed closing/monthly-balance workpaper computes $833 of
+deductible interest from $1,000 reported. Its source-to-native XML passed the
+locally cached TY2025 XSD, and its three-page filled PDF text contains $833.
+Native and PDF export reject the unreviewed claim. A second two-source case
+combines a $500,000 July purchase and $500,000 full-year mortgage, computes
+$1,500 from $2,000 reported interest, and builds the MeF bundle and PDF.
+Source validation rejects missing closing reference, positive balances
+before purchase, changed deduction, and missing issued box 2. These focused
+checks do not establish other part-year or points paths, closing/statement
+byte authenticity, the final bulk suite, or IRS ATS acceptance.

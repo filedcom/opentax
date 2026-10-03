@@ -20,6 +20,7 @@ async function lenderCopy(
   lender: string,
   principal: number,
   recipientLastFour = "3333",
+  originationDate = "01/15/2020",
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.addPage([612, 792]);
@@ -32,7 +33,7 @@ async function lenderCopy(
       [`${copy}.LeftCol[0].f2_4[0]`]: `***-**-${recipientLastFour}`,
       [`${copy}.RightCol[0].f2_11[0]`]: "1000",
       [`${copy}.RightCol[0].f2_12[0]`]: String(principal),
-      [`${copy}.RightCol[0].f2_13[0]`]: "01/15/2020",
+      [`${copy}.RightCol[0].f2_13[0]`]: originationDate,
       [`${copy}.RightCol[0].f2_14[0]`]: "",
       [`${copy}.RightCol[0].f2_15[0]`]: "",
       [`${copy}.RightCol[0].f2_16[0]`]: "",
@@ -46,10 +47,14 @@ function threeLoans(
   deductible = 1_000,
   joint = false,
   loanCount = 3,
+  purchase2025 = false,
 ) {
   return Promise.all(
     [1, 2, 3].slice(0, loanCount).map(async (number) => {
       const lender = `Example Lender ${number}`;
+      const originationDate = purchase2025 && number === 1
+        ? "07/15/2025"
+        : "01/15/2020";
       const recipientTin = joint && number === 3
         ? "444-55-6666"
         : "111-22-3333";
@@ -57,6 +62,7 @@ function threeLoans(
         lender,
         principal,
         recipientTin.slice(-4),
+        originationDate,
       );
       const hash = Array.from(
         new Uint8Array(
@@ -72,7 +78,7 @@ function threeLoans(
         box1_current_year_deductible_interest: deductible,
         box1_deduction_workpaper_reference: `${lender} Pub. 936 review`,
         box2_outstanding_principal: principal,
-        box3_origination_date: "01/15/2020",
+        box3_origination_date: originationDate,
         issuer_copy: {
           file_name: `Lender${number}1098.pdf`,
           pdf_sha256: hash,
@@ -89,11 +95,18 @@ async function resultFor(
   reviewedBalance?: number,
   joint = false,
   loanCount = 3,
+  purchase2025 = false,
 ) {
   const result = f1040_2025.executeReturn({
     ...(joint ? jointBase.inputs : base.inputs),
     schedule_a: { force_itemized: true },
-    f1098: await threeLoans(principal, deductible, joint, loanCount),
+    f1098: await threeLoans(
+      principal,
+      deductible,
+      joint,
+      loanCount,
+      purchase2025,
+    ),
     ...(reviewedBalance === undefined ? {} : {
       f1098_mortgage_limit_review: {
         mortgage_limit_review: {
@@ -105,11 +118,21 @@ async function resultFor(
           }),
           loans: [1, 2, 3].slice(0, loanCount).map((number) => ({
             source_document_reference: `2025 Example Lender ${number} Copy B`,
+            ...(purchase2025 && number === 1
+              ? {
+                purchase_closing_disclosure_reference:
+                  "2025 principal residence closing disclosure",
+                principal_residence_purchase_verified: true,
+                no_additional_advances_verified: true,
+              }
+              : {}),
             monthly_balance_records: Array.from(
               { length: 12 },
               (_, index) => ({
                 month: index + 1,
-                closing_balance: reviewedBalance,
+                closing_balance: purchase2025 && number === 1 && index < 6
+                  ? 0
+                  : reviewedBalance,
                 lender_statement_reference: `Example Lender ${number} month ${
                   index + 1
                 }`,
@@ -306,6 +329,112 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       "<RptHomeMortgIntAndPointsAmt>1000</RptHomeMortgIntAndPointsAmt>",
     ),
     true,
+  );
+
+  const purchaseUnreviewed = await resultFor(
+    900_000,
+    1_000,
+    undefined,
+    false,
+    1,
+    true,
+  );
+  assertThrows(
+    () => buildMefXml(purchaseUnreviewed.pending, purchaseUnreviewed.filer),
+    Error,
+    message,
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        purchaseUnreviewed.pending,
+        purchaseUnreviewed.filer,
+        ".pdf-cache",
+      ),
+    Error,
+    message,
+  );
+  const purchaseReviewed = await resultFor(
+    900_000,
+    833,
+    900_000,
+    false,
+    1,
+    true,
+  );
+  const purchaseBundle = await buildMefBundle(purchaseReviewed.pending, {
+    filer: purchaseReviewed.filer,
+    attachments: [],
+  });
+  assertEquals(
+    purchaseBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>833</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const purchaseXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(purchaseXmlPath, purchaseBundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, purchaseXmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(purchaseXmlPath);
+  }
+  const purchasePdf = await buildPdfBytes(
+    purchaseBundle.pending,
+    purchaseReviewed.filer,
+    ".pdf-cache",
+    purchaseBundle,
+  );
+  assertEquals((await PDFDocument.load(purchasePdf)).getPageCount(), 3);
+  const purchasePdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(purchasePdfPath, purchasePdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", purchasePdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extracted.code, 0, new TextDecoder().decode(extracted.stderr));
+    assertEquals(
+      new TextDecoder().decode(extracted.stdout).includes("833"),
+      true,
+    );
+  } finally {
+    await Deno.remove(purchasePdfPath);
+  }
+
+  const purchaseWithExisting = await resultFor(
+    500_000,
+    750,
+    500_000,
+    false,
+    2,
+    true,
+  );
+  const purchaseWithExistingBundle = await buildMefBundle(
+    purchaseWithExisting.pending,
+    { filer: purchaseWithExisting.filer, attachments: [] },
+  );
+  assertEquals(
+    purchaseWithExistingBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>1500</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const purchaseWithExistingPdf = await buildPdfBytes(
+    purchaseWithExistingBundle.pending,
+    purchaseWithExisting.filer,
+    ".pdf-cache",
+    purchaseWithExistingBundle,
+  );
+  assertEquals(
+    (await PDFDocument.load(purchaseWithExistingPdf)).getPageCount(),
+    3,
   );
 
   const jointUnreviewed = await resultFor(300_000, 1_000, undefined, true);

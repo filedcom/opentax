@@ -47,10 +47,14 @@ export const mortgageLimitReviewSchema = z.object({
   loans: z.array(
     z.object({
       source_document_reference: z.string().trim().min(1),
+      purchase_closing_disclosure_reference: z.string().trim().min(1)
+        .optional(),
+      principal_residence_purchase_verified: z.literal(true).optional(),
+      no_additional_advances_verified: z.literal(true).optional(),
       monthly_balance_records: z.array(
         z.object({
           month: z.number().int().min(1).max(12),
-          closing_balance: z.number().finite().positive(),
+          closing_balance: z.number().finite().nonnegative(),
           lender_statement_reference: z.string().trim().min(1),
         }).strict(),
       ).length(12),
@@ -507,7 +511,7 @@ export const inputSchema = z.object({
       const validDate = parsed.getUTCFullYear() === year &&
         parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
       return validDate && parsed >= new Date("2017-12-16T00:00:00Z") &&
-        parsed < new Date("2025-01-01T00:00:00Z") &&
+        parsed < new Date("2026-01-01T00:00:00Z") &&
         (item.for_routing ?? ForRouting.A) === ForRouting.A &&
         (item.box1_mortgage_interest ?? 0) > 0 &&
         (item.box6_points_paid ?? 0) === 0 &&
@@ -516,6 +520,16 @@ export const inputSchema = z.object({
         !!item.recipient_tin && !!item.source_document_reference;
     });
     const recordsValid = loans.every((loan) => {
+      const item = f1098s.find((source) =>
+        source.source_document_reference === loan.source_document_reference
+      );
+      if (!item) return false;
+      const originated = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
+        item.box3_origination_date ?? "",
+      );
+      if (!originated) return false;
+      const purchase2025 = Number(originated[3]) === 2025;
+      const purchaseMonth = Number(originated[1]);
       const months = loan.monthly_balance_records.map((row) => row.month)
         .sort((a, b) => a - b);
       return months.every((month, index) => month === index + 1) &&
@@ -523,14 +537,41 @@ export const inputSchema = z.object({
             loan.monthly_balance_records.map((row) =>
               row.lender_statement_reference
             ),
-          ).size === 12;
+          ).size === 12 &&
+        (purchase2025
+          ? !!loan.purchase_closing_disclosure_reference &&
+            loan.principal_residence_purchase_verified === true &&
+            loan.no_additional_advances_verified === true &&
+            (item.box2_outstanding_principal ?? 0) > 0 &&
+            loan.monthly_balance_records.every((row) =>
+              row.month < purchaseMonth
+                ? row.closing_balance === 0
+                : row.closing_balance > 0 &&
+                  row.closing_balance <=
+                    (item.box2_outstanding_principal ?? 0)
+            )
+          : loan.purchase_closing_disclosure_reference === undefined &&
+            loan.principal_residence_purchase_verified === undefined &&
+            loan.no_additional_advances_verified === undefined &&
+            loan.monthly_balance_records.every((row) =>
+              row.closing_balance > 0
+            ));
     });
     const averageTotal = loans.reduce(
-      (sum, loan) =>
-        sum + loan.monthly_balance_records.reduce(
-            (loanSum, row) => loanSum + row.closing_balance,
-            0,
-          ) / 12,
+      (sum, loan) => {
+        const item = f1098s.find((source) =>
+          source.source_document_reference === loan.source_document_reference
+        );
+        const purchase2025 = item?.box3_origination_date?.endsWith("2025") ??
+          false;
+        const month = purchase2025
+          ? Number(item?.box3_origination_date?.slice(0, 2))
+          : 1;
+        return sum + loan.monthly_balance_records.reduce(
+              (loanSum, row) => loanSum + row.closing_balance,
+              0,
+            ) / (13 - month);
+      },
       0,
     );
     const ratio = averageTotal <= 750_000
@@ -552,7 +593,7 @@ export const inputSchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ["mortgage_limit_review"],
         message:
-          "Full-year post-2017 acquisition mortgages need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
+          "Post-2017 acquisition mortgages need 12 distinct monthly lender balances, verified 2025 purchase facts when applicable, and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
       });
     }
   },
@@ -618,7 +659,23 @@ export function assertForm1098MortgageLimitSources(
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
-  const fullYearPost2017 = parsed.f1098s.filter((item) => {
+  if (
+    filedLine8a > 0 &&
+    parsed.f1098s.some((item) =>
+      /^([0-9]{2})\/([0-9]{2})\/2025$/.test(
+        item.box3_origination_date ?? "",
+      ) &&
+      (item.for_routing ?? ForRouting.A) === ForRouting.A &&
+      ((item.box1_current_year_deductible_interest ?? 0) > 0 ||
+        deductibleBox6Points(item) > 0) &&
+      (item.box2_outstanding_principal ?? 0) <= 0
+    )
+  ) {
+    throw new Error(
+      "Schedule A 2025-originated Form 1098 needs its issued box 2 principal before a positive interest or points claim",
+    );
+  }
+  const post2017MortgageSnapshots = parsed.f1098s.filter((item) => {
     const date = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
       item.box3_origination_date ?? "",
     );
@@ -630,7 +687,7 @@ export function assertForm1098MortgageLimitSources(
       originated.getUTCMonth() + 1 === Number(date[1]) &&
       originated.getUTCDate() === Number(date[2]) &&
       originated >= new Date("2017-12-16T00:00:00Z") &&
-      originated < new Date("2025-01-01T00:00:00Z") &&
+      originated < new Date("2026-01-01T00:00:00Z") &&
       (item.for_routing ?? ForRouting.A) === ForRouting.A &&
       item.refinance !== true &&
       item.binding_contract_exception !== true &&
@@ -642,8 +699,8 @@ export function assertForm1098MortgageLimitSources(
     : 750_000;
   if (
     filedLine8a > 0 &&
-    fullYearPost2017.length >= 1 &&
-    fullYearPost2017.reduce(
+    post2017MortgageSnapshots.length >= 1 &&
+    post2017MortgageSnapshots.reduce(
         (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
         0,
       ) > debtLimit &&
