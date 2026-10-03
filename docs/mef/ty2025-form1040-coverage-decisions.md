@@ -190,8 +190,8 @@ cache, so reproducible provenance remains open.
    account election) and `IRS9000` (alternative-media preference) are offered
    through this product or assigned to their documented separate submission
    channels. Form 9000 now has a bounded return-attached taxpayer/joint-spouse
-   route with explicit requests; Form 4547 still lacks public intake. A raw
-   pending Form 4547 claim fails native and PDF export until responsible-party
+   route with explicit requests; Form 4547 now retains a typed per-child
+   election intent. An entered claim fails native and PDF export until responsible-party
    authority, child eligibility, and separate electronic-signature evidence
    support a positive attachment route. Neither choice
    waives an entered election or preference.

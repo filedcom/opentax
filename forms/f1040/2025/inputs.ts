@@ -184,6 +184,10 @@ import {
   inputSchema as f9000InputSchema,
 } from "../nodes/inputs/f9000/index.ts";
 import {
+  f4547,
+  inputSchema as f4547InputSchema,
+} from "../nodes/inputs/f4547/index.ts";
+import {
   f2210,
   inputSchema as f2210InputSchema,
 } from "../nodes/inputs/f2210/index.ts";
@@ -836,6 +840,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: schedule_r, inputSchema: scheduleRInputSchema, isArray: false },
   { node: schedule_lep, inputSchema: scheduleLepInputSchema, isArray: false },
   { node: f9000, inputSchema: f9000InputSchema, isArray: false },
+  { node: f4547, inputSchema: f4547InputSchema, isArray: false },
   { node: f2210, inputSchema: f2210InputSchema, isArray: false },
   { node: f2210f, inputSchema: f2210fInputSchema, isArray: false },
   { node: f5695, inputSchema: f5695InputSchema, isArray: false },
