@@ -101,6 +101,14 @@ builder cases passed; all 18 clean review fixtures with finalized Schedule D
 totals matched the direct-row replay. Format and lint passed. The complete
 repository batch is still deferred until implementation work is complete.
 
+The full-return Schedule 1 subtotal check passed nine arithmetic cases and
+184 native/PDF builder cases. All 177 clean review-fixture graphs matched
+lines 10, 25, and 26 to their retained printed components. A source-backed
+Schedule C fixture then built native XML (5,205 characters) and a filled PDF
+(371,854 bytes) with Schedule 1 line 10 of $80,000 and line 26 of $5,651.82.
+This is a focused route check; all-page visual review and the full command
+remain open.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

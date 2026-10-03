@@ -316,6 +316,74 @@ export function assertReturnScheduleJoins(
 
   const schedule1 = record("schedule1");
   if (schedule1) {
+    if (pending.general !== undefined) {
+      const line = (key: string): number => {
+        const value = schedule1[key];
+        if (value === undefined || value === null) return 0;
+        if (
+          Array.isArray(value) &&
+          value.every((item) =>
+            typeof item === "number" && Number.isFinite(item)
+          )
+        ) return value.reduce((total: number, item: number) => total + item, 0);
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+        throw new Error(`Schedule 1 ${key} needs a finite amount`);
+      };
+      const sum = (...keys: string[]): number =>
+        keys.reduce((total, key) => total + line(key), 0);
+      const incomeFromLines = sum(
+        "line1_state_refund",
+        "line2a_alimony_received",
+        "line3_schedule_c",
+        "line4_other_gains",
+        "line5_schedule_e",
+        "line6_schedule_f",
+        "line7_unemployment",
+        "line9_total_other_income",
+      );
+      if (
+        Math.abs(line("line10_total_additional_income") - incomeFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 10 must equal its printed income lines",
+        );
+      }
+      const otherAdjustments = sum(
+        "line24b_personal_property_expenses",
+        "line24f_501c18d",
+        "line24k_section67e_excess_deduction",
+      );
+      if (
+        Math.abs(line("line25_total_other_adjustments") - otherAdjustments) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 25 must equal supported line 24 adjustments",
+        );
+      }
+      const adjustmentsFromLines = sum(
+        "line11_educator_expenses",
+        "line12_business_expenses",
+        "line13_hsa_deduction",
+        "line14_moving_expenses",
+        "line15_se_deduction",
+        "line16_sep_simple",
+        "line17_se_health_insurance",
+        "line18_early_withdrawal",
+        "line20_ira_deduction",
+        "line21_student_loan_interest",
+        "line23_archer_msa_deduction",
+      ) + otherAdjustments;
+      if (
+        Math.abs(line("line26_total_adjustments") - adjustmentsFromLines) >=
+          0.01
+      ) {
+        throw new Error(
+          "Schedule 1 line 26 must equal its printed adjustment lines",
+        );
+      }
+    }
     const income = schedule1.line10_total_additional_income;
     if (typeof income === "number") {
       match(amount(fields, "line8_additional_income"), income, "line 8");

@@ -459,3 +459,38 @@ Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
     "line 31",
   );
 });
+
+Deno.test("full-return Schedule 1 totals replay printed income and adjustments", () => {
+  const schedule1 = {
+    line3_schedule_c: 100,
+    line9_total_other_income: -20,
+    line10_total_additional_income: 80,
+    line11_educator_expenses: 10,
+    line24b_personal_property_expenses: 5,
+    line25_total_other_adjustments: 5,
+    line26_total_adjustments: 15,
+  };
+  const pending = { general: {}, schedule1 };
+  const filed = { line8_additional_income: 80, line10_adjustments: 15 };
+  assertReturnScheduleJoins(filed, pending);
+  for (
+    const [key, filedKey, reason] of [
+      ["line10_total_additional_income", "line8_additional_income", "line 10"],
+      ["line25_total_other_adjustments", "line10_adjustments", "line 25"],
+      ["line26_total_adjustments", "line10_adjustments", "line 26"],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        assertReturnScheduleJoins(
+          { ...filed, [filedKey]: filed[filedKey] + 1 },
+          {
+            general: {},
+            schedule1: { ...schedule1, [key]: schedule1[key] + 1 },
+          },
+        ),
+      Error,
+      reason,
+    );
+  }
+});
