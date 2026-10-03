@@ -1007,8 +1007,16 @@ The projector now prints the numeric `0.00` or business-use percentage without
 its own percent glyph and explicitly prints zero on line 11 when the vehicle
 is wholly personal use. The corrected page was rendered and checked against
 the retained source, Form 8936 parent, Schedule 3, and Form 1040; seven focused
-Form 8936 tests passed. The 167-case selection above predates this correction
-and needs a fresh full export before it can serve as current-head evidence.
+Form 8936 tests passed. The 167-case selection above predates this correction.
+A fresh full export completed at `68d5416d` with the same declared 167-case
+selection and **1,052 filled pages**. Its manifest is
+`.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-68d5416d/review-manifest.json`
+with SHA-256
+`2b2b077c61f112167f61cf5e5cce971cfccdf6578d52d1a7e3412a54e87ee346`.
+All 167 XML files passed the local TY2025 v5.4 XSD check; a separate
+inventory check found zero missing or mismatched source/XML/PDF digests and
+zero page-count mismatches. The generated pages still require human visual
+review and do not establish IRS business-rule or ATS acceptance.
 The same scan found that the Form 2441 PDF descriptor had no printable
 credit/provider/person route. A later bounded fix now generates its
 no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,
