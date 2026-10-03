@@ -644,6 +644,18 @@ deferred Form 8862 source-authentication gap; it was not bypassed to inflate
 the review count. The 178 automated filled-PDF/XML tests above do not replace
 this held visual-review workflow.
 
+A bounded visual check of that partial directory rendered all nine pages of
+three synthetic cases at 120 dpi: `single-child-unearned-income` (Form 1040,
+Schedule B, Form 8615), `single-divorced-agreed-joint-estimated-payment`
+(Form 1040), and `single-form8888-two-account-refund` (Form 1040, Form 8888).
+The page sequence, year, filer/parent identity, visible boxes, amounts, and
+legibility were inspected. The child's $5,000 interest and $412 tax, the
+divorced taxpayer's $300 payment/refund and former-spouse SSN attribute, and
+the $300/$700 refund allocation were checked against retained pending fields
+and native XML. No discrepancy was found on those nine pages. This is three
+cases of 178; the unreviewed pages and incomplete manifest keep the visual
+gate open.
+
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
