@@ -157,6 +157,35 @@ Deno.test("final exports reject a changed Schedule D total even with a matching 
   );
 });
 
+Deno.test("full-return exports reject a changed direct-sale aggregate with matching totals", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const schedule = pending.schedule_d!;
+  const changed = {
+    ...pending,
+    schedule_d: {
+      ...schedule,
+      line_1a_proceeds: schedule.line_1a_proceeds! + 1,
+      print_line1a_proceeds: (schedule.print_line1a_proceeds as number) + 1,
+      print_line1a_gain: (schedule.print_line1a_gain as number) + 1,
+      print_line7_st_total: (schedule.print_line7_st_total as number) + 1,
+      print_line16_combined: (schedule.print_line16_combined as number) + 1,
+    },
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D lines 1a and 8a must match retained direct-sale proceeds and basis",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D lines 1a and 8a must match retained direct-sale proceeds and basis",
+  );
+});
+
 Deno.test("final exports replay retained broker proceeds and basis into Schedule D", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);

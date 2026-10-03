@@ -44,6 +44,25 @@ export function assertScheduleD1040Join(pending: Pending): void {
     (part === "A" || part === "D") && !(codes ?? "").length &&
     adjustment === undefined;
   const shortParts = new Set(["A", "B", "C", "G", "H", "I"]);
+  const directAmounts = {
+    shortProceeds: 0,
+    shortCost: 0,
+    longProceeds: 0,
+    longCost: 0,
+  };
+  const addDirect = (
+    isLongTerm: boolean,
+    proceeds: number,
+    costBasis: number,
+  ): void => {
+    if (isLongTerm) {
+      directAmounts.longProceeds += proceeds;
+      directAmounts.longCost += costBasis;
+    } else {
+      directAmounts.shortProceeds += proceeds;
+      directAmounts.shortCost += costBasis;
+    }
+  };
   let shortGain = (input.line_1a_proceeds ?? 0) -
     (input.line_1a_cost ?? 0) + sum(input.line_4_other_st) +
     sum(input.line_5_k1_st) - (input.line_6_carryover ?? 0);
@@ -59,15 +78,35 @@ export function assertScheduleD1040Join(pending: Pending): void {
     ? input.transaction
     : [input.transaction];
   for (const tx of transactions) {
-    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) continue;
+    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+      addDirect(tx.is_long_term, tx.proceeds, tx.cost_basis);
+      continue;
+    }
     if (tx.is_long_term) longGain += tx.gain_loss;
     else shortGain += tx.gain_loss;
   }
   for (const tx of input.transactions ?? []) {
-    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) continue;
+    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+      addDirect(tx.part === "D", tx.proceeds, tx.cost_basis);
+      continue;
+    }
     const gain = tx.proceeds - tx.cost_basis + (tx.adjustment_amount ?? 0);
     if (shortParts.has(tx.part)) shortGain += gain;
     else longGain += gain;
+  }
+  if (
+    pending.general !== undefined && (
+      Math.abs((input.line_1a_proceeds ?? 0) - directAmounts.shortProceeds) >=
+        0.01 ||
+      Math.abs((input.line_1a_cost ?? 0) - directAmounts.shortCost) >= 0.01 ||
+      Math.abs((input.line_8a_proceeds ?? 0) - directAmounts.longProceeds) >=
+        0.01 ||
+      Math.abs((input.line_8a_cost ?? 0) - directAmounts.longCost) >= 0.01
+    )
+  ) {
+    throw new Error(
+      "Schedule D lines 1a and 8a must match retained direct-sale proceeds and basis",
+    );
   }
   const printedShort = schedule.print_line7_st_total;
   const printedLong = schedule.print_line15_lt_total;

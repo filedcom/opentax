@@ -94,6 +94,13 @@ matched their Schedule D transactions. `deno check`, format, and lint passed
 for the changed code. This does not establish issued-copy authenticity or
 complete capital-disposition route coverage.
 
+The Schedule D direct-aggregate follow-up rejects a changed full-return line
+1a proceeds amount even when its print gain, Schedule D totals, and Form 1040
+line 7 are changed together. The nine broker-sale cases and 184 native/PDF
+builder cases passed; all 18 clean review fixtures with finalized Schedule D
+totals matched the direct-row replay. Format and lint passed. The complete
+repository batch is still deferred until implementation work is complete.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form
