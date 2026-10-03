@@ -25,6 +25,11 @@ export function assertEstimatedPaymentLine26(
     );
   }
   const input = inputSchema.parse(raw);
+  if ((input.applied_from_prior_year ?? 0) > 0) {
+    throw new Error(
+      "Form 1040 line 26 prior-year applied credit needs the accepted 2024 return and IRS-account credit evidence",
+    );
+  }
   const review = reviewedJointAllocation(input);
   if (!review) {
     const hasQuarterPayment = (["q1", "q2", "q3", "q4"] as const).some(

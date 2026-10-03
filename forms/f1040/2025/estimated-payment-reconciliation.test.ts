@@ -39,10 +39,9 @@ const source = {
       payment_record_reference: "2025 Q4 payment",
     },
   ],
-  applied_from_prior_year: 250,
 };
 const pending = { f1040es: source };
-const filed = { taxpayer_ssn: "111223333", line26_estimated_tax: 1_250 };
+const filed = { taxpayer_ssn: "111223333", line26_estimated_tax: 1_000 };
 
 Deno.test("2025 agreed joint estimated payment prints former spouse SSN on native and PDF line 26", () => {
   const jointFiled = {
@@ -85,24 +84,44 @@ Deno.test("2025 agreed joint estimated payment prints former spouse SSN on nativ
   }
 });
 
-Deno.test("2025 estimated payments and prior-year applied credit reach filed line 26", () => {
-  assertEquals(estimatedPaymentTotal(source), 1_250);
+Deno.test("2025 sourced quarterly payments reach filed line 26", () => {
+  assertEquals(estimatedPaymentTotal(source), 1_000);
   assertStringIncludes(
     irs1040.build(filed, { pending }),
-    "<EstimatedTaxPaymentsAmt>1250</EstimatedTaxPaymentsAmt>",
+    "<EstimatedTaxPaymentsAmt>1000</EstimatedTaxPaymentsAmt>",
   );
   assertEquals(
     irs1040Pdf.projectFields?.(filed, pending)?.line26_estimated_tax,
-    1_250,
+    1_000,
   );
+});
+
+Deno.test("prior-year applied credit stays guarded without accepted filing and account evidence", () => {
+  const attached = {
+    f1040es: { ...source, applied_from_prior_year: 250 },
+  };
+  assertEquals(estimatedPaymentTotal(attached.f1040es), 1_250);
+  const claim = { ...filed, line26_estimated_tax: 1_250 };
+  for (
+    const exportReturn of [
+      () => irs1040.build(claim, { pending: attached }),
+      () => irs1040Pdf.projectFields?.(claim, attached),
+    ]
+  ) {
+    assertThrows(
+      exportReturn,
+      Error,
+      "prior-year applied credit needs the accepted 2024 return and IRS-account credit evidence",
+    );
+  }
 });
 
 Deno.test("both Form 1040 exports reject unsourced or changed estimated payments", () => {
   for (
     const [changed, attached, reason] of [
       [filed, {}, "needs its 1040-ES payment source"],
-      [{ line26_estimated_tax: 1_249 }, pending, "differs from its 1040-ES"],
-      [{ line26_estimated_tax: 1_250 }, {
+      [{ line26_estimated_tax: 999 }, pending, "differs from its 1040-ES"],
+      [{ line26_estimated_tax: 1_000 }, {
         f1040es: { ...source, payment_q2: 299 },
       }, "q2 differs from payment records"],
       [{}, pending, "differs from its 1040-ES"],
