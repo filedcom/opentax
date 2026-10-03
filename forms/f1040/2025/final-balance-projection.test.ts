@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { buildMefXml } from "./mef/builder.ts";
@@ -70,4 +75,31 @@ Deno.test("final amount owed includes a reported estimated-tax penalty", () => {
     line38_underpayment_penalty: 250,
     line37_amount_owed: 50,
   });
+});
+
+Deno.test("calculated refund and line 38 penalty stay reconciled through native and PDF export", async () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-w2-refund"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs, f2210: { underpayment_penalty: 250 } },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filed = pending.f1040!;
+  assertEquals(filed.line38_underpayment_penalty, 250);
+  assertEquals(filed.line35a_refund, filed.line34_overpayment! - 250);
+  const xml = buildMefXml(pending, fixture.filer);
+  assertStringIncludes(xml, "<EsPenaltyAmt>250</EsPenaltyAmt>");
+  assertStringIncludes(xml, `<RefundAmt>${filed.line35a_refund}</RefundAmt>`);
+  assertEquals((await buildPdfBytes(pending, fixture.filer)).length > 0, true);
+  const changed = {
+    ...pending,
+    f1040: { ...filed, line35a_refund: filed.line35a_refund! + 1 },
+  };
+  assertThrows(() => buildMefXml(changed, fixture.filer), Error);
+  await assertRejects(() => buildPdfBytes(changed, fixture.filer), Error);
 });
