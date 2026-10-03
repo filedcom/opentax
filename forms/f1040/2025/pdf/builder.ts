@@ -40,6 +40,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
+import { assertScheduleD1040Join } from "../schedule-d-1040-join.ts";
 import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
@@ -612,6 +613,7 @@ export async function buildPdfBytes(
   assertBox11CodeKSources(normalized, k1Recipients);
   assertBox11CodeSSources(normalized, k1Recipients);
   assertScheduleDK1Source(normalized.schedule_d ?? {}, normalized);
+  assertScheduleD1040Join(normalized);
   assertBox11Line10Sources(normalized, k1Recipients);
   if (
     preparedBundle &&

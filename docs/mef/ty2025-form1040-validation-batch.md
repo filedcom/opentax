@@ -74,6 +74,14 @@ evidence, not the deferred full test task or all-route validation.
 The native and PDF builder files also passed **152/152** and **32/32** after
 the IRA replay was added.
 
+The subsequent finalized Schedule D to Form 1040 line 7 comparison passed
+the five broker-sale source cases, including a changed-line rejection in both
+exports. The native and PDF builder files passed **184/184** together, and
+the selected mixed/full Form 4797 recapture files passed **3/3**. `deno check`
+on the changed production modules and `deno fmt --check` passed. This checks
+the calculated Schedule D print-total join; source-to-Schedule-D replay,
+the repository-wide batch, and filled-page review remain open.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

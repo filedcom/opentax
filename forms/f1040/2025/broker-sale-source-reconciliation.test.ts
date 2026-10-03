@@ -112,6 +112,26 @@ Deno.test("joint return joins two broker copies through gains, withholding, nati
   assert(pdf.length > 100_000);
 });
 
+Deno.test("final exports reject a changed Form 1040 capital gain after Schedule D", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = {
+    ...pending,
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Form 1040 line 7 must match finalized Schedule D",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Form 1040 line 7 must match finalized Schedule D",
+  );
+});
+
 Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
   const direct = {
     part: Form8949Part.A,
