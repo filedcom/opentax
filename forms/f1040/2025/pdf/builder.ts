@@ -10,6 +10,7 @@ import {
   type MefBundle,
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/prepared-attachment-manifest.ts";
+import { assertW2GPayerCopyContents } from "../mef/w2g-payer-copy.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
@@ -609,6 +610,11 @@ export async function buildPdfBytes(
     if (!filer) {
       throw new Error("Prepared MeF PDF needs its filer identity");
     }
+    await assertW2GPayerCopyContents(
+      preparedBundle.pending,
+      filer,
+      preparedBundle.attachments,
+    );
     assertPreparedBundleProjection(preparedBundle, filer);
   }
   const form8283Source = normalized.f8283

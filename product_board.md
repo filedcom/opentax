@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 998 bounded completed slices are recorded in the
+inside** that section. The 999 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -26,7 +26,7 @@ until their full routes or approved rejection boundaries are established.
 **Implemented coverage.** Retained routes include source and owner checks for
 W-2, 1099, payment, and Form 1040 component totals; shared native/PDF preflight;
 PDF field, checkbox, retained-page, and filer-name checks; and prepared
-archive/A2A integrity checks.
+attachment/archive/A2A integrity checks.
 The live inventory has 148 native MeF descriptors, 115 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
