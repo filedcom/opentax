@@ -277,7 +277,39 @@ const sampleForm8919 = {
 function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
   // Routing fixtures use sparse Form 1040 data. Supply the corresponding
   // filed tax lines so the return-wide schedule joins still run on valid data.
-  const pending = args[0];
+  const rawPending = args[0] as Record<string, unknown>;
+  const schedule1Fields = rawPending.schedule1 as
+    | Record<string, unknown>
+    | undefined;
+  const f1040Fields = rawPending.f1040 as Record<string, unknown> | undefined;
+  const unemployment = schedule1Fields?.line7_unemployment;
+  const pending = (typeof unemployment === "number" && unemployment > 0 &&
+      rawPending.f1099g === undefined
+    ? {
+      ...rawPending,
+      f1099g: {
+        f1099gs: [{
+          box_1_unemployment: unemployment,
+          recipient_tin: sampleFiler().primarySSN,
+          payer_name: "Fixture State Agency",
+        }],
+      },
+      schedule1: {
+        ...schedule1Fields,
+        line10_total_additional_income: unemployment,
+      },
+      f1040: {
+        ...f1040Fields,
+        taxpayer_ssn: sampleFiler().primarySSN,
+        filing_status: "single",
+        line8_additional_income: unemployment,
+        line9_total_income: unemployment,
+        line10_adjustments: 0,
+        line11_agi: unemployment,
+      },
+      agi_aggregator: { line7_unemployment: unemployment },
+    }
+    : rawPending) as Parameters<typeof rawBuildMefXml>[0];
   const schedule2 = pending.schedule2;
   const part1 = schedule2 ? schedule2Part1Total(schedule2) : 0;
   const part2 = schedule2 ? schedule2Part2Total(schedule2) : 0;
@@ -983,13 +1015,13 @@ Deno.test("ReturnData present when pending is empty", () => {
 });
 
 Deno.test("ReturnData present when only f1040 has data", () => {
-  const xml = buildMefXml({ f1040: { line1a_wages: 50000 } });
+  const xml = buildMefXml({ f1040: { digital_assets: false } });
   assertStringIncludes(xml, "<ReturnData");
 });
 
 Deno.test("ReturnData present when both forms have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
   });
   assertStringIncludes(xml, "<ReturnData");
@@ -1021,7 +1053,7 @@ Deno.test("documentCnt=1 when schedule1 has only unknown keys", () => {
 // ─── 5. documentCnt — only f1040 ─────────────────────────────────────────────
 
 Deno.test("documentCnt=1 when only f1040 has data", () => {
-  const xml = buildMefXml({ f1040: { line1a_wages: 50000 } });
+  const xml = buildMefXml({ f1040: { digital_assets: false } });
   assertStringIncludes(xml, 'documentCnt="1"');
 });
 
@@ -1037,7 +1069,7 @@ Deno.test("documentCnt=2 when only schedule1 has data", () => {
 
 Deno.test("documentCnt=2 when both f1040 and schedule1 have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
   });
   assertStringIncludes(xml, 'documentCnt="2"');
@@ -1046,7 +1078,7 @@ Deno.test("documentCnt=2 when both f1040 and schedule1 have data", () => {
 // ─── 8. f1040 routing ─────────────────────────────────────────────────────────
 
 Deno.test("IRS1040 present when f1040 has data", () => {
-  const xml = buildMefXml({ f1040: { line1a_wages: 50000 } });
+  const xml = buildMefXml({ f1040: { digital_assets: false } });
   assertStringIncludes(xml, "<IRS1040 ");
 });
 
@@ -1194,7 +1226,7 @@ Deno.test("IRS1040Schedule1 absent when schedule1 has only unknown keys", () => 
 
 Deno.test("IRS1040 appears before IRS1040Schedule1 when both present", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
   });
   const f1040Idx = xml.indexOf("<IRS1040 ");
@@ -1271,12 +1303,45 @@ Deno.test("output starts with Return element not XML declaration", () => {
 // ─── 14. f1040 field pass-through ─────────────────────────────────────────────
 
 Deno.test("f1040 WagesAmt value appears in output", () => {
-  const xml = buildMefXml({ f1040: { line1a_wages: 72500 } });
+  const xml = buildMefXml({
+    w2: {
+      w2s: [{
+        employer_name: "Fixture Employer",
+        employer_ein: "123456789",
+        employer_address_line1: "1 Main Street",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        employee_ssn: "123456789",
+        box1_wages: 72500,
+        box2_fed_withheld: 0,
+      }],
+    },
+    f1040: { line1a_wages: 72500 },
+    agi_aggregator: { line1a_wages: 72500 },
+  });
   assertStringIncludes(xml, "<WagesAmt>72500</WagesAmt>");
 });
 
 Deno.test("f1040 QualifiedDividendsAmt value appears in output", () => {
-  const xml = buildMefXml({ f1040: { line3a_qualified_dividends: 1500 } });
+  const xml = buildMefXml({
+    f1099div: {
+      f1099divs: [{
+        payerName: "Fixture Fund",
+        recipient_tin: "123456789",
+        isNominee: false,
+        box11: false,
+        box1a: 1500,
+        box1b: 1500,
+      }],
+    },
+    f1040: {
+      taxpayer_ssn: "123456789",
+      line3a_qualified_dividends: 1500,
+      line3b_ordinary_dividends: 1500,
+    },
+    agi_aggregator: { line3b_ordinary_dividends: 1500 },
+  });
   assertStringIncludes(
     xml,
     "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>",
@@ -1348,7 +1413,7 @@ Deno.test("documentCnt=2 when only schedule3 has data", () => {
 
 Deno.test("documentCnt=2 when f1040 + schedule2 have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule2: { line2_amt: 5000 },
   });
   assertStringIncludes(xml, 'documentCnt="2"');
@@ -1356,7 +1421,7 @@ Deno.test("documentCnt=2 when f1040 + schedule2 have data", () => {
 
 Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
   });
@@ -1365,7 +1430,7 @@ Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
 
 Deno.test("documentCnt=4 when all four forms have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000, line20_nonrefundable_credits: 1200 },
+    f1040: { digital_assets: false, line20_nonrefundable_credits: 1200 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
     schedule3: { line2_childcare_credit: 1200, line8_total: 1200 },
@@ -1377,7 +1442,7 @@ Deno.test("documentCnt=4 when all four forms have data", () => {
 
 Deno.test("IRS1040 appears before IRS1040Schedule2 when both present", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule2: { line2_amt: 5000 },
   });
   const f1040Idx = xml.indexOf("<IRS1040 ");
@@ -1565,13 +1630,13 @@ Deno.test("IRS8960 absent when form8960 missing from pending", () => {
 
 Deno.test("documentCnt=10 when all 10 forms have data", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
-    form2441: sampleForm2441,
+    form2441: { ...sampleForm2441, agi: 4800 },
     form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
@@ -1581,13 +1646,13 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
 
 Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
-    form2441: sampleForm2441,
+    form2441: { ...sampleForm2441, agi: 4800 },
     form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
@@ -1606,7 +1671,7 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
 
 Deno.test("only f1040 and form8889 populated: documentCnt=2", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     form8889: sampleForm8889,
   });
   assertStringIncludes(xml, 'documentCnt="2"');
@@ -1614,7 +1679,7 @@ Deno.test("only f1040 and form8889 populated: documentCnt=2", () => {
 
 Deno.test("only f1040 and form8889 populated: only IRS1040 and IRS8889 present", () => {
   const xml = buildMefXml({
-    f1040: { line1a_wages: 50000 },
+    f1040: { digital_assets: false },
     form8889: sampleForm8889,
   });
   assertStringIncludes(xml, "<IRS1040 ");
@@ -1887,8 +1952,27 @@ Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => 
 
 Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
   const xml = buildMefXml({
+    f1099int: {
+      f1099ints: [{
+        payer_name: "Fixture Bank",
+        recipient_tin: "123456789",
+        box1: 1501,
+      }],
+    },
+    f1040: { taxpayer_ssn: "123456789", line2b_taxable_interest: 1501 },
+    agi_aggregator: { line2b_taxable_interest: 1501 },
     schedule_b: {
-      taxable_interest_net: 1501,
+      interest_detail: [{
+        payer_name: "Fixture Bank",
+        gross: 1501,
+        net: 1501,
+        nominee: 0,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      }],
+      interest_rows: [{ payerName: "Fixture Bank", amount: 1501 }],
+      print_line2_total: 1501,
       foreign_accounts_question: false,
       foreign_trust_question: false,
     },
@@ -1897,7 +1981,28 @@ Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
 });
 
 Deno.test("IRS1040ScheduleB absent at the $1,500 threshold", () => {
-  const xml = buildMefXml({ schedule_b: { taxable_interest_net: 1500 } });
+  const xml = buildMefXml({
+    f1099int: {
+      f1099ints: [{
+        payer_name: "Fixture Bank",
+        recipient_tin: "123456789",
+        box1: 1500,
+      }],
+    },
+    f1040: { taxpayer_ssn: "123456789", line2b_taxable_interest: 1500 },
+    agi_aggregator: { line2b_taxable_interest: 1500 },
+    schedule_b: {
+      interest_detail: [{
+        payer_name: "Fixture Bank",
+        gross: 1500,
+        net: 1500,
+        nominee: 0,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      }],
+    },
+  });
   assertNotIncludes(xml, "<IRS1040ScheduleB ");
 });
 
@@ -2256,6 +2361,17 @@ Deno.test("final MeF and PDF exports reject 1099 withholding changed after sourc
   const payer = {
     f1099int: {
       f1099ints: [{ payer_name: "Bank", recipient_tin: "123456789", box4: 80 }],
+    },
+    schedule_b: {
+      interest_detail: [{
+        payer_name: "Bank",
+        gross: 0,
+        net: 0,
+        nominee: 0,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      }],
     },
     f1040: {
       filing_status: "single",

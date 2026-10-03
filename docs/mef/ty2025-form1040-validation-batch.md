@@ -38,6 +38,14 @@ This is a fixture/XSD regression after the newer source guards, not a rerun of
 the full `deno task test`, visual review of all 178 filled PDFs, IRS business
 rules, or accepted ATS transmission.
 
+At the current implementation checkpoint on 2026-10-03, the focused
+`deno test -A forms/f1040/2025/pdf/builder.test.ts` passed **32/32** and
+`deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their
+positive routing and serialization fixtures now retain matching W-2,
+unemployment, dividend, and Schedule B source and owner facts. The production
+source guards were unchanged. These selected files are diagnostic preparation,
+not the deferred repository-wide batch.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

@@ -22,6 +22,7 @@ import type { z } from "zod";
 import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index.ts";
 import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a/index.ts";
 import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
+import type { inputSchema as f1099divInputSchema } from "../../nodes/inputs/f1099div/index.ts";
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
 import type { inputSchema as f1099bInputSchema } from "../../nodes/inputs/f1099b/index.ts";
 import type { inputSchema as f1099kInputSchema } from "../../nodes/inputs/f1099k/index.ts";
@@ -66,10 +67,13 @@ export type MefFormsPending =
     fec?: z.infer<typeof fecInputSchema>;
     // Form 1040 line 1h reconciles retained earned-income sources to finalized AGI.
     agi_aggregator?: {
+      line1a_wages?: number;
       line1b_household_wages?: number;
       line1c_unreported_tips?: number;
       line1g_wages_8919?: number;
       line1h_other_earned?: number | number[];
+      line2b_taxable_interest?: number;
+      line3b_ordinary_dividends?: number;
     };
     // Unreported household-employment wages support the line 1b source replay.
     household_wages?: z.infer<typeof householdWagesInputSchema>;
@@ -78,6 +82,7 @@ export type MefFormsPending =
     f1095a?: z.infer<typeof f1095aInputSchema>;
     // Payer statements remain available for Form 6251 AMT interest replay.
     f1099int?: z.infer<typeof f1099intInputSchema>;
+    f1099div?: z.infer<typeof f1099divInputSchema>;
     f1099oid?: z.infer<typeof f1099oidInputSchema>;
     // Issued broker and contractor copies survive for owner checks at export.
     f1099b?: z.infer<typeof f1099bInputSchema>;
