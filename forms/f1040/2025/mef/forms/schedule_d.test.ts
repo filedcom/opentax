@@ -546,6 +546,20 @@ Deno.test(
   },
 );
 
+Deno.test("Form 8814 child gain joins the native Schedule D line 13", () => {
+  const result = scheduleD.build({
+    line13_cap_gain_distrib: 400,
+    line13_form8814: 179,
+    line_12_cap_gain_dist: 200,
+    print_line16_combined: 779,
+  });
+  assertStringIncludes(
+    result,
+    "<CapitalGainDistributionsAmt>779</CapitalGainDistributionsAmt>",
+  );
+  assertEquals(scheduleD.build({ line13_form8814: 179 }), "");
+});
+
 Deno.test("distribution-only return does not emit Schedule D", () => {
   assertEquals(scheduleD.build({ line13_cap_gain_distrib: 400 }), "");
 });

@@ -1196,6 +1196,10 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(projected?.print_form8814_line7b_amount, 179);
         assertStringIncludes(xml, "<IRS8814 ");
         assertStringIncludes(xml, "<IRS1040ScheduleD ");
+        assertStringIncludes(
+          xml,
+          "<CapitalGainDistributionsAmt>179</CapitalGainDistributionsAmt>",
+        );
       }
       if (fixture.id === "single-1098-prior-year-recovery") {
         assertEquals(

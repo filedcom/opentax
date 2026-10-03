@@ -1700,3 +1700,13 @@ package directories on `DYLD_LIBRARY_PATH` and the Poppler binary directory
 on `PATH`, both physical Form 8814/Schedule D and Schedule 1/Form 8814 PDF
 source/print tests passed. These two tests do not replace the full bulk or
 all-page visual review gates.
+
+## Form 8814 child gain in native Schedule D (2026-10-04)
+
+The source-backed Form 8814 fixture calculates $179 of child capital gain,
+prints it on Schedule D line 13, and joins $1,179 of net capital gain to Form
+1040. Native MeF now includes the same $179 in Schedule D
+`CapitalGainDistributionsAmt`; previously it omitted the child component.
+The 34 focused native Schedule D cases, one physical Form 8814/Schedule D/Form
+1040 PDF source/print case, and the selected full-return TY2025 v5.4 XSD case
+passed on this head. The full bulk and all-page visual review remain open.

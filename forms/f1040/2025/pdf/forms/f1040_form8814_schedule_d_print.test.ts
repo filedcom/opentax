@@ -32,6 +32,10 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
   const nativeXml = buildMefXml(pending, fixture.filer);
   assertStringIncludes(nativeXml, "<IRS1040ScheduleD ");
   assertStringIncludes(nativeXml, "<IRS8814 ");
+  assertStringIncludes(
+    nativeXml,
+    "<CapitalGainDistributionsAmt>179</CapitalGainDistributionsAmt>",
+  );
   const normalized = normalizeAllPending(result.pending);
   const projected = irs1040Pdf.projectFields?.(
     normalized.f1040,
