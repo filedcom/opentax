@@ -1723,3 +1723,14 @@ two-child pages now pass a physical page-count, origin, and extracted-text
 check: each child is on its own Form 8814 page, and the Schedule D page prints
 the $358 line-13 amount and Form 8814 note. Raster layout review and
 issuer-source bytes remain outside this test.
+
+## Selected Schedule 1 line 8z multi-source rerun (2026-10-04)
+
+The existing two-payer 1099-G grant, two-payer RTAA, two-corporation S
+corporation K-1 code J, and 1099-MISC box 8 source-row suites passed 7/7
+focused tests. Grant and RTAA full native returns passed the local TY2025
+v5.4 XSD, and filled-PDF text preserved both source identifiers for each.
+The code J PDF text preserved both corporation EINs; the box 8 check covered
+the row-reconciliation helper only. The RTAA positive case now checks its
+filled statement text and XSD explicitly. Original source bytes, broader
+character and prior-year evidence, the full bulk suite, and ATS remain open.
