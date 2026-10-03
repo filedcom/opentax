@@ -113,7 +113,11 @@ export function zipDirectoryEntryCount(
       const extraLength = view.getUint16(position + 30, true);
       const commentLength = view.getUint16(position + 32, true);
       const localOffset = view.getUint32(position + 42, true);
+      const compressedSize = view.getUint32(position + 20, true);
+      const uncompressedSize = view.getUint32(position + 24, true);
       if (
+        compressedSize === 0xffffffff || uncompressedSize === 0xffffffff ||
+        localOffset === 0xffffffff ||
         localOffset + 30 > offset ||
         view.getUint32(localOffset, true) !== 0x04034b50 ||
         view.getUint16(localOffset + 6, true) !==
@@ -136,19 +140,40 @@ export function zipDirectoryEntryCount(
       const payload = decoded[name];
       if (
         !Object.hasOwn(decoded, name) ||
-        payload.length !== view.getUint32(position + 24, true) ||
+        payload.length !== uncompressedSize ||
         crc32(payload) !== view.getUint32(position + 16, true)
       ) return undefined;
       // When bit 3 is set, the local CRC and sizes are placeholders followed
-      // by a data descriptor. Otherwise they must agree with the directory.
-      if (
-        (view.getUint16(position + 8, true) & 0x0008) === 0 &&
-        (view.getUint32(localOffset + 14, true) !==
-            view.getUint32(position + 16, true) ||
-          view.getUint32(localOffset + 18, true) !==
-            view.getUint32(position + 20, true) ||
-          view.getUint32(localOffset + 22, true) !==
-            view.getUint32(position + 24, true))
+      // by a data descriptor. Validate that descriptor as well as any
+      // nonzero local values so the three ZIP records cannot disagree.
+      const localCrc = view.getUint32(localOffset + 14, true);
+      const localCompressed = view.getUint32(localOffset + 18, true);
+      const localUncompressed = view.getUint32(localOffset + 22, true);
+      const centralCrc = view.getUint32(position + 16, true);
+      if ((view.getUint16(position + 8, true) & 0x0008) !== 0) {
+        if (
+          (localCrc !== 0 && localCrc !== centralCrc) ||
+          (localCompressed !== 0 && localCompressed !== compressedSize) ||
+          (localUncompressed !== 0 && localUncompressed !== uncompressedSize)
+        ) return undefined;
+        const dataStart = localOffset + 30 + nameLength +
+          view.getUint16(localOffset + 28, true);
+        const descriptorStart = dataStart + compressedSize;
+        if (descriptorStart + 12 > offset) return undefined;
+        const descriptorMatches = (start: number): boolean =>
+          start + 12 <= offset &&
+          view.getUint32(start, true) === centralCrc &&
+          view.getUint32(start + 4, true) === compressedSize &&
+          view.getUint32(start + 8, true) === uncompressedSize;
+        if (
+          !descriptorMatches(descriptorStart) &&
+          !(view.getUint32(descriptorStart, true) === 0x08074b50 &&
+            descriptorMatches(descriptorStart + 4))
+        ) return undefined;
+      } else if (
+        localCrc !== centralCrc ||
+        localCompressed !== compressedSize ||
+        localUncompressed !== uncompressedSize
       ) return undefined;
       for (let index = 0; index < nameLength; index++) {
         if (

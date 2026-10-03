@@ -50,6 +50,34 @@ Deno.test("ZIP entry check accepts a valid data descriptor with placeholder loca
   if (central < 0) throw new Error("fixture lacks ZIP directory");
   view.setUint32(central + 16, 0xdeadbeef, true);
   assertEquals(zipDirectoryEntryCount(changed, unzipSync(changed)), undefined);
+  const descriptor = bytes.findIndex((_, index) =>
+    index <= bytes.length - 4 &&
+    new DataView(bytes.buffer).getUint32(index, true) === 0x08074b50
+  );
+  if (descriptor < 0) throw new Error("fixture lacks ZIP data descriptor");
+  const unsigned = new Uint8Array(bytes.length - 4);
+  unsigned.set(bytes.subarray(0, descriptor));
+  unsigned.set(bytes.subarray(descriptor + 4), descriptor);
+  const unsignedView = new DataView(unsigned.buffer);
+  const unsignedEnd = unsigned.findIndex((_, index) =>
+    index <= unsigned.length - 4 &&
+    unsignedView.getUint32(index, true) === 0x06054b50
+  );
+  if (unsignedEnd < 0) throw new Error("fixture lacks ZIP end record");
+  unsignedView.setUint32(unsignedEnd + 16, central - 4, true);
+  assertEquals(zipDirectoryEntryCount(unsigned, unzipSync(unsigned)), 1);
+  for (const offset of [4, 8, 12]) {
+    const altered = Uint8Array.from(bytes);
+    new DataView(altered.buffer).setUint32(
+      descriptor + offset,
+      0xdeadbeef,
+      true,
+    );
+    assertEquals(
+      zipDirectoryEntryCount(altered, unzipSync(altered)),
+      undefined,
+    );
+  }
 });
 
 const processingDate = new Date("2026-09-26T10:00:00Z");
