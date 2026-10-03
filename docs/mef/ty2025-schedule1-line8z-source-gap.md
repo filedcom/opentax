@@ -54,6 +54,16 @@ that verified pair and still rejects arbitrary names. The entered child income
 record and election review are still not
 authenticated against original issued income documents or the parent signature.
 
+The same retained child election now also replays each calculated Form 8814
+line 15 and their sum against the Form 1040 `Form8814Ind` tax amount. A
+read-only mutation of that amount previously changed native XML while the
+retained child forms stayed fixed; both native and PDF final export now reject
+it. Tampering a retained line 15 also rejects. A 167-exportable-fixture replay
+test probes numeric Form 1040 and Schedules 1–3 fields, excluding 12 declared
+guarded fixtures; it normalizes only the assembly timestamp and passed after
+this repair. These tests verify source replay, not child income authenticity
+or IRS ATS acceptance.
+
 ## 2026-10-02 Form 1099-MISC box 3 final source replay
 
 Native and PDF final export now match every Schedule 1 box 3 other-income

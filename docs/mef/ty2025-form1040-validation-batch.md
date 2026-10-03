@@ -1527,3 +1527,17 @@ scope/coverage decisions are complete should PR, merge and release review begin.
 ## Form 9000 current fixture addition (2026-10-03)
 
 The optional return-attached alternative-media preference now has a confirmed taxpayer/joint-spouse input, native `IRS9000` documents, and one filled PDF form page per person. Three focused cases passed, including a two-owner full return with two native and two printable copies; the single-owner full-return XML validated with `xmllint` against the locally cached TY2025 v5.4 `Return1040.xsd`. Its page was rendered and visually checked for name, SSN, large-print selection, and blank standalone-only address/signature. The read-only planner now reports **179 fixtures, 85 of 113 unique PDF keys covered, 28 uncovered named-family keys, and 116 PDF descriptors**. The earlier 178-fixture bulk pass and selected visual batches are historical checkpoints; the expanded full batch, business-rule and IRS ATS evidence remain open. [IRS accessible-products guidance](https://www.irs.gov/forms-pubs/accessible-irs-tax-products) permits attaching Form 9000 or sending it separately.
+
+## Interrupted implementation-checkpoint batch (2026-10-03)
+
+At `4a366f85`, `PATH=/tmp/opentax-tools:$PATH deno task test` was started with
+Deno 2.9.4 and Poppler `pdftotext` 26.09.0. It reached Form 1116 XSD tests
+without a reported failure, then was deliberately interrupted with SIGINT
+(exit 130) after a separate calculated-output replay probe found that changing
+Form 1040's Form 8814 tax amount could change XML without changing the retained
+child forms. The partial log is the ignored local file
+`.state/research/ty2025-full-test-4a366f85.log`, SHA-256
+`28b6c062b5b03bdc1df15fbfee7d989277572b9be6da9d51d8a308e4bb0f4536`.
+This is **not** a passing full batch. The source replay gap was repaired, and
+focused Form 8814 and 167-exportable-fixture calculated-field mutation checks
+passed. Rerun the full command after implementation freezes on the new head.
