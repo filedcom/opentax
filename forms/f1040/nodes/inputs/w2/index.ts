@@ -252,18 +252,11 @@ export type W2Item = z.infer<typeof w2ItemSchema>;
 export function assertDistinctW2IssuedCopies(items: readonly W2Item[]): void {
   const issued = new Set<string>();
   for (const item of items) {
-    if (
-      !item.employer_ein || !item.employee_ssn ||
-      !item.source_document_reference
-    ) continue;
-    const key = JSON.stringify([
-      item.employer_ein.replace(/\D/g, ""),
-      item.employee_ssn.replace(/\D/g, ""),
-      item.source_document_reference.trim(),
-    ]);
+    if (!item.source_document_reference) continue;
+    const key = item.source_document_reference.trim();
     if (issued.has(key)) {
       throw new Error(
-        "W-2 repeats the same identified employer, employee, and issued-copy reference",
+        "W-2 repeats the same issued-copy source reference",
       );
     }
     issued.add(key);
