@@ -47,12 +47,20 @@ source guards were unchanged. These selected files are diagnostic preparation,
 not the deferred repository-wide batch.
 
 After the Schedule B projection guard, the selected native builder, interest
-reconciliation, and Part III end-to-end files passed **165/165** on 2026-10-03.
+reconciliation, and Part III end-to-end files passed **168/168** on 2026-10-03.
 The $1,501 sourced-interest case now rejects missing or changed prepared payer
-rows in both exporters. The source-backed `single-child-unearned-income`
-review fixture also passed its TY2025 v5.4 XML/XSD case with $5,000 interest
-after the guard. This is a focused regression; the complete artifact batch and
-all-page inspection remain open.
+rows; changed dividend payer and foreign-country projections and an invented
+nonfiling projection also reject in both exporters. The source-backed
+`single-child-unearned-income` and
+`single-form8815-series-ee-bond-exclusion` review fixtures each passed their
+TY2025 v5.4 XML/XSD cases after the guard. This is a focused regression; the
+complete artifact batch and all-page inspection remain open.
+
+The five direct Schedule B native-descriptor XSD cases passed **5/5** after
+their structural inputs were wrapped in a valid Form 1040 return envelope.
+They cover Part III countries, more than 15 dividend payers, seller-financed
+addresses/interest adjustments, and nominee dividends; the separate
+source-backed cases above cover full-export preflight.
 
 ## Scope and preflight
 

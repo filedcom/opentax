@@ -2046,6 +2046,92 @@ Deno.test("both exports reject a missing prepared Schedule B interest projection
   );
 });
 
+Deno.test("both exports reject a changed Schedule B dividend payer projection", async () => {
+  const source = {
+    dividend_detail: [{
+      payer_name: "Fixture Fund",
+      gross: 1_600,
+      net: 1_600,
+      nominee: 0,
+    }],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  };
+  const projection = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
+  const pending = {
+    f1099div: {
+      f1099divs: [{
+        payerName: "Fixture Fund",
+        recipient_tin: "123456789",
+        isNominee: false,
+        box11: false,
+        box1a: 1_600,
+      }],
+    },
+    f1040: {
+      taxpayer_ssn: "123456789",
+      filing_status: "single" as const,
+      digital_assets: false,
+      line3b_ordinary_dividends: 1_600,
+    },
+    agi_aggregator: { line3b_ordinary_dividends: 1_600 },
+    schedule_b: { ...source, ...projection },
+  };
+  assertStringIncludes(buildMefXml(pending), "<IRS1040ScheduleB ");
+  const changed = {
+    ...pending,
+    schedule_b: { ...pending.schedule_b, print_div_payer_1: "Other Fund" },
+  };
+  assertThrows(
+    () => buildMefXml(changed),
+    Error,
+    "Schedule B prepared projection differs at print_div_payer_1",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, sampleFiler()),
+    Error,
+    "Schedule B prepared projection differs at print_div_payer_1",
+  );
+});
+
+Deno.test("both exports reject a changed Schedule B foreign-country projection", async () => {
+  const source = {
+    foreign_accounts_question: true,
+    fincen_form114_required: true,
+    foreign_countries: [{ irs_code: "CA", name: "Canada" }],
+    foreign_trust_question: false,
+  };
+  const projection = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
+  const pending = {
+    f1040: { filing_status: "single" as const, digital_assets: false },
+    schedule_b: { ...source, ...projection },
+  };
+  assertStringIncludes(
+    buildMefXml(pending),
+    "<ForeignCountryCd>CA</ForeignCountryCd>",
+  );
+  const changed = {
+    ...pending,
+    schedule_b: { ...pending.schedule_b, foreign_country_codes: ["FR"] },
+  };
+  assertThrows(
+    () => buildMefXml(changed),
+    Error,
+    "Schedule B prepared projection differs at foreign_country_codes",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, sampleFiler()),
+    Error,
+    "Schedule B prepared projection differs at foreign_country_codes",
+  );
+});
+
 Deno.test("IRS1040ScheduleB absent at the $1,500 threshold", () => {
   const xml = buildMefXml({
     f1099int: {
@@ -2070,6 +2156,27 @@ Deno.test("IRS1040ScheduleB absent at the $1,500 threshold", () => {
     },
   });
   assertNotIncludes(xml, "<IRS1040ScheduleB ");
+});
+
+Deno.test("both exports reject a fabricated Schedule B projection below the filing threshold", async () => {
+  const pending = {
+    f1040: { filing_status: "single" as const, digital_assets: false },
+    schedule_b: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+      print_line4_total: 1_501,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending),
+    Error,
+    "Schedule B has prepared fields without a filing route",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, sampleFiler()),
+    Error,
+    "Schedule B has prepared fields without a filing route",
+  );
 });
 
 Deno.test("IRS1040ScheduleB absent when schedule_b missing from pending", () => {

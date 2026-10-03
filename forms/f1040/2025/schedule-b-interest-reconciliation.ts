@@ -1,6 +1,7 @@
 import {
   inputSchema as scheduleBSchema,
   line4TaxableInterest,
+  schedule_b as scheduleBNode,
   totalTaxableInterest,
 } from "../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { inputSchema as intSchema } from "../nodes/inputs/f1099int/index.ts";
@@ -309,72 +310,40 @@ export function assertScheduleBInterestJoin(
   }
 }
 
-/** Replay the retained interest print/native projection above the filing threshold. */
+/** Replay every retained Schedule B print/native field from its source inputs. */
 export function assertScheduleBPreparedProjection(
   pending: Readonly<Record<string, unknown>>,
 ): void {
   if (pending.schedule_b === undefined) return;
   const input = scheduleBSchema.parse(pending.schedule_b);
-  const line4 = line4TaxableInterest(input);
-  if (line4 <= 1_500) return;
+  const expected = scheduleBNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input,
+  ).outputs.find((row) => row.nodeType === "schedule_b")?.fields;
   const actual = pending.schedule_b as Record<string, unknown>;
-  const details = input.interest_detail === undefined
-    ? []
-    : Array.isArray(input.interest_detail)
-    ? input.interest_detail
-    : [input.interest_detail];
-  const genericAmounts = input.taxable_interest_net === undefined
-    ? []
-    : Array.isArray(input.taxable_interest_net)
-    ? input.taxable_interest_net
-    : [input.taxable_interest_net];
-  const genericNames = input.payer_name === undefined
-    ? []
-    : Array.isArray(input.payer_name)
-    ? input.payer_name
-    : [input.payer_name];
-  const ordinaryRows = [
-    ...details.filter((row) => !row.seller_financed_buyer).map((row) => ({
-      payerName: row.payer_name,
-      amount: row.gross,
-    })),
-    ...genericAmounts.map((amount, index) => ({
-      payerName: genericNames[index],
-      amount,
-    })),
-  ];
-  const allRows = [
-    ...details.filter((row) => row.seller_financed_buyer).map((row) => ({
-      payerName: row.seller_financed_buyer!.name,
-      amount: row.gross,
-    })),
-    ...ordinaryRows,
-  ];
-  const expected: Record<string, unknown> = {
-    print_line2_total: totalTaxableInterest(input),
-    print_line4_total: line4,
-    interest_nominee: details.reduce((sum, row) => sum + row.nominee, 0),
-    interest_accrued: details.reduce((sum, row) => sum + row.accrued, 0),
-    interest_oid_adjustment: details.reduce(
-      (sum, row) => sum + row.oid_adjustment,
-      0,
-    ),
-    interest_bond_premium: details.reduce(
-      (sum, row) => sum + row.bond_premium,
-      0,
-    ),
-  };
-  if (ordinaryRows.length > 0) expected.interest_rows = ordinaryRows;
-  if (allRows.length > 0) {
-    expected.print_interest_rows = allRows;
-    expected.interest_line1_subtotal = allRows.reduce(
-      (sum, row) => sum + row.amount,
-      0,
-    );
-  }
-  for (let i = 0; i < Math.min(allRows.length, 14); i++) {
-    expected[`print_int_payer_${i + 1}`] = allRows[i].payerName;
-    expected[`print_int_amount_${i + 1}`] = allRows[i].amount;
+  if (expected === undefined) {
+    const preparedKeys = new Set([
+      "interest_rows",
+      "seller_financed_rows",
+      "dividend_rows",
+      "dividend_line5_subtotal",
+      "dividend_nominee",
+      "interest_line1_subtotal",
+      "interest_nominee",
+      "interest_accrued",
+      "interest_oid_adjustment",
+      "interest_bond_premium",
+      "foreign_country_codes",
+      "foreign_country_names",
+    ]);
+    if (
+      Object.keys(actual).some((key) =>
+        key.startsWith("print_") || preparedKeys.has(key)
+      )
+    ) {
+      throw new Error("Schedule B has prepared fields without a filing route");
+    }
+    return;
   }
   for (const [key, value] of Object.entries(expected)) {
     if (JSON.stringify(actual[key]) !== JSON.stringify(value)) {
