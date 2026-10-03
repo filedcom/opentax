@@ -103,6 +103,7 @@ import {
   assertSocialSecurityBenefitSource,
 } from "../ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../ira1099r-income-reconciliation.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -284,6 +285,7 @@ function buildReturnXml(
   assertSocialSecurityBenefitSource(pending);
   assertBenefitStatementOwner(pending, filer);
   assertRrb1099rPensionSource(pending, filer);
+  assertIra1099rIncomeSource(pending);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);

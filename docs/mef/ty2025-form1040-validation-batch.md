@@ -63,6 +63,17 @@ They cover Part III countries, more than 15 dividend payers, seller-financed
 addresses/interest adjustments, and nominee dividends; the separate
 source-backed cases above cover full-export preflight.
 
+The subsequent IRA final-export replay passed two new sourced/tamper cases and
+seven existing IRA, disaster, and Form 8606 cases with
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test -A` on their selected files.
+Seven `single-ira-*` and two other early/disaster review fixtures passed their
+TY2025 v5.4 XML/XSD cases after the guard. A prior selected run without that
+Poppler path reached PDF text extraction and failed to spawn `pdftotext`; the
+same cases passed when the recorded tool path was supplied. This is focused
+evidence, not the deferred full test task or all-route validation.
+The native and PDF builder files also passed **152/152** and **32/32** after
+the IRA replay was added.
+
 ## Scope and preflight
 
 The release scope is the Form 1040 family described in `product_board.md`. Form

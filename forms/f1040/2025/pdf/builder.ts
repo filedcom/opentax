@@ -101,6 +101,7 @@ import {
   assertSocialSecurityBenefitSource,
 } from "../ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../ira1099r-income-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "../mef/forms/w2g.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
@@ -580,6 +581,7 @@ export async function buildPdfBytes(
   assertSocialSecurityBenefitSource(normalized);
   assertBenefitStatementOwner(normalized, filer);
   assertRrb1099rPensionSource(normalized, filer);
+  assertIra1099rIncomeSource(normalized);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
