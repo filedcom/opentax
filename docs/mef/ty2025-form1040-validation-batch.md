@@ -1071,6 +1071,16 @@ opt-out, and an $8,261 refund; the native XML agrees. The completed checklist
 and artifact replay passed `scripts/check-ty2025-pdf-review.ts` at
 `.state/research/ty2025-filled-pdf-review/2026-10-03-three-eic-children-reviewed`.
 
+The two-page `mfj-spouse-dependent-refund-only` packet was rendered and
+checked page by page. Sam's retained W-2 reports $800 wages and $100
+withholding; Form 1040 prints joint ownership, the spouse-dependent line 12a
+checkbox, $1,350 dependent standard deduction, zero taxable income and EIC,
+and a $100 refund. The native XML carries the same wages, deduction,
+withholding, and refund. The completed checklist, source/PDF/XML replay,
+artifact hashes, page origins, and local TY2025 v5.4 XSD passed
+`scripts/check-ty2025-pdf-review.ts` at
+`.state/research/ty2025-filled-pdf-review/2026-10-03-mfjspouse-dependent-reviewed`.
+
 After the overtime review-focus correction, the declared 167-case selection
 was regenerated from source content committed as `8e28daa7` in
 `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-exportable-167-reviewfocus`.
@@ -1079,7 +1089,7 @@ Its manifest SHA-256 is
 All 167 XML files passed the local TY2025 v5.4 XSD, and all 1,052 pages have
 matching source/XML/PDF digests and page counts. Compared with the earlier
 corrected export, no PDF or XML digest changed; exactly one source JSON
-digest changed for the corrected review label. Fourteen pages have separately
+digest changed for the corrected review label. Sixteen pages have separately
 completed human checklists; the remaining pages have not.
 
 A full `PATH=/tmp/opentax-tools:$PATH deno task test` process launched before
