@@ -48,10 +48,38 @@ export const itemSchema = z.object({
     zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
   }).optional(),
   standard_or_nonstandard_code: z.enum(["S", "N"]).optional(),
+  nonstandard_document_review: z.object({
+    kind: z.enum(["altered", "handwritten", "typed"]),
+    source_document_reference: z.string().trim().min(1),
+    reviewer_confirmed_nonstandard: z.literal(true),
+  }).strict().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   issued_copy_attachment_file_name: z.string().trim().min(1).optional(),
   issued_copy_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 }).strict().superRefine((item, ctx) => {
+  if (
+    item.standard_or_nonstandard_code === "N" &&
+    (!item.nonstandard_document_review ||
+      item.nonstandard_document_review.source_document_reference !==
+        item.source_document_reference)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["nonstandard_document_review"],
+      message:
+        "Nonstandard W-2G code N needs a reviewed matching payer-issued copy",
+    });
+  }
+  if (
+    item.nonstandard_document_review &&
+    item.standard_or_nonstandard_code !== "N"
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["standard_or_nonstandard_code"],
+      message: "Reviewed nonstandard W-2G must use code N",
+    });
+  }
   if (
     (item.box1_winnings ?? 0) <= 0 && (item.box4_federal_withheld ?? 0) <= 0
   ) {
