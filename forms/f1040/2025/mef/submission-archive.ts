@@ -104,6 +104,7 @@ export function zipDirectoryEntryCount(
     ) return undefined;
     let position = offset;
     let seen = 0;
+    const localRanges: Array<readonly [number, number]> = [];
     while (position < end) {
       if (
         position + 46 > end ||
@@ -150,31 +151,35 @@ export function zipDirectoryEntryCount(
       const localCompressed = view.getUint32(localOffset + 18, true);
       const localUncompressed = view.getUint32(localOffset + 22, true);
       const centralCrc = view.getUint32(position + 16, true);
+      const dataStart = localOffset + 30 + nameLength +
+        view.getUint16(localOffset + 28, true);
+      const dataEnd = dataStart + compressedSize;
+      if (dataEnd > offset) return undefined;
+      let localEnd = dataEnd;
       if ((view.getUint16(position + 8, true) & 0x0008) !== 0) {
         if (
           (localCrc !== 0 && localCrc !== centralCrc) ||
           (localCompressed !== 0 && localCompressed !== compressedSize) ||
           (localUncompressed !== 0 && localUncompressed !== uncompressedSize)
         ) return undefined;
-        const dataStart = localOffset + 30 + nameLength +
-          view.getUint16(localOffset + 28, true);
-        const descriptorStart = dataStart + compressedSize;
+        const descriptorStart = dataEnd;
         if (descriptorStart + 12 > offset) return undefined;
         const descriptorMatches = (start: number): boolean =>
           start + 12 <= offset &&
           view.getUint32(start, true) === centralCrc &&
           view.getUint32(start + 4, true) === compressedSize &&
           view.getUint32(start + 8, true) === uncompressedSize;
-        if (
-          !descriptorMatches(descriptorStart) &&
-          !(view.getUint32(descriptorStart, true) === 0x08074b50 &&
-            descriptorMatches(descriptorStart + 4))
-        ) return undefined;
+        const signed = view.getUint32(descriptorStart, true) === 0x08074b50 &&
+          descriptorMatches(descriptorStart + 4);
+        const unsigned = descriptorMatches(descriptorStart);
+        if (!signed && !unsigned) return undefined;
+        localEnd = descriptorStart + (signed ? 16 : 12);
       } else if (
         localCrc !== centralCrc ||
         localCompressed !== compressedSize ||
         localUncompressed !== uncompressedSize
       ) return undefined;
+      localRanges.push([localOffset, localEnd]);
       for (let index = 0; index < nameLength; index++) {
         if (
           bytes[position + 46 + index] !==
@@ -185,7 +190,14 @@ export function zipDirectoryEntryCount(
       if (position > end) return undefined;
       seen++;
     }
-    return seen === count && seen === Object.keys(decoded).length
+    localRanges.sort((left, right) => left[0] - right[0]);
+    let coveredThrough = 0;
+    for (const [start, finish] of localRanges) {
+      if (start !== coveredThrough || finish <= start) return undefined;
+      coveredThrough = finish;
+    }
+    return coveredThrough === offset && seen === count &&
+        seen === Object.keys(decoded).length
       ? seen
       : undefined;
   }

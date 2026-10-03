@@ -80,6 +80,30 @@ Deno.test("ZIP entry check accepts a valid data descriptor with placeholder loca
   }
 });
 
+Deno.test("ZIP entry check rejects unindexed bytes between local entries and directory", () => {
+  const original = zipSync({
+    "fixture.txt": new TextEncoder().encode("declared payload"),
+  });
+  const originalView = new DataView(original.buffer);
+  const end = original.findIndex((_, index) =>
+    index <= original.length - 4 &&
+    originalView.getUint32(index, true) === 0x06054b50
+  );
+  if (end < 0) throw new Error("fixture lacks ZIP end record");
+  const central = originalView.getUint32(end + 16, true);
+  const changed = new Uint8Array(original.length + 4);
+  changed.set(original.subarray(0, central));
+  changed.set([0x50, 0x4b, 0x03, 0x04], central);
+  changed.set(original.subarray(central), central + 4);
+  new DataView(changed.buffer).setUint32(end + 20, central + 4, true);
+  assertEquals(
+    new TextDecoder().decode(unzipSync(changed)["fixture.txt"]),
+    "declared payload",
+  );
+  assertEquals(zipDirectoryEntryCount(original, unzipSync(original)), 1);
+  assertEquals(zipDirectoryEntryCount(changed, unzipSync(changed)), undefined);
+});
+
 const processingDate = new Date("2026-09-26T10:00:00Z");
 const submissionId = "1234562026269abcdefg";
 const residencyReview = {
