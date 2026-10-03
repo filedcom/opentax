@@ -1,5 +1,6 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { inputSchema } from "../nodes/inputs/f1098e/index.ts";
+import { expectedTy2025StudentLoanDeduction } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 
 type StudentLoanPending = {
   f1098e?: unknown;
@@ -64,6 +65,11 @@ export function assert1098EInterestSource(
   if (printed > capped) {
     throw new Error(
       "Schedule 1 student loan interest exceeds issued Form 1098-E interest",
+    );
+  }
+  if (printed !== expectedTy2025StudentLoanDeduction(pending.agi_aggregator)) {
+    throw new Error(
+      "Schedule 1 student loan interest differs from its retained phaseout calculation",
     );
   }
 }

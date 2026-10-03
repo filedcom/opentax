@@ -74,6 +74,14 @@ contains these identity fields; its
 truncated borrower TIN on Copy B, so that reviewed-owner route, loan
 qualification, issuer bytes, and broader MAGI combinations remain open.
 
+The next final-export phaseout replay pass on 2026-10-03 passed **189/189**
+selected phaseout/native/PDF builder cases. Both exporters now require the
+printed Schedule 1 line 21 deduction to equal the result recalculated from
+retained AGI inputs, including the zero-deduction upper-phaseout case. A
+changed line 21 rejects even before Form 1040 line 10 comparison. Lint passed
+for the changed TypeScript files; the wider MAGI and full-batch gates remain
+open.
+
 The preceding Form 1098-E phaseout pass on 2026-10-03 passed **90/90** input
 and AGI unit cases and **186/186** selected full-return/native/PDF builder
 cases. At $90,000 single wages and $2,500 entered interest, Schedule 1 line 21

@@ -64,12 +64,12 @@ Deno.test("single 1098-E phaseout reaches one Schedule 1 and Form 1040 amount in
   assertThrows(
     () => buildMefXml(changed, single.filer),
     Error,
-    "Form 1040 line 10 differs from its attached Schedule",
+    "differs from its retained phaseout calculation",
   );
   await assertRejects(
     () => buildPdfBytes(changed, single.filer),
     Error,
-    "Form 1040 line 10 differs from its attached Schedule",
+    "differs from its retained phaseout calculation",
   );
 });
 
@@ -140,5 +140,23 @@ Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", a
     () => buildMefXml({ ...pending, f1098e: undefined }, single.filer),
     Error,
     "needs a retained source",
+  );
+});
+
+Deno.test("1098-E final export replays the phaseout from retained AGI inputs", async () => {
+  const pending = withStudentInterest(single, [90_000]);
+  const altered = {
+    ...pending,
+    schedule1: {
+      ...pending.schedule1,
+      line21_student_loan_interest: 1_600,
+    },
+  };
+  const message = "differs from its retained phaseout calculation";
+  assertThrows(() => buildMefXml(altered, single.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(altered, single.filer),
+    Error,
+    message,
   );
 });

@@ -496,7 +496,7 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 
 // Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
 // MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
-// Phase-out: single/HOH $85k–$100k; MFJ $175k–$205k; MFS not eligible.
+// Phase-out: single/HOH/QSS $85k–$100k; MFJ $170k–$200k; MFS not eligible.
 function computeAdjustedSli(
   input: AgiInput,
   cfg: import("../../../config/index.ts").F1040Config,
@@ -525,6 +525,11 @@ function computeAdjustedSli(
   // Linear phase-out; IRS rounds to nearest dollar
   const phaseOutRatio = (magi - phaseOutStart) / (phaseOutEnd - phaseOutStart);
   return Math.round(raw * (1 - phaseOutRatio));
+}
+
+/** Replay the TY2025 Schedule 1 line 21 result from retained AGI inputs. */
+export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
+  return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);
 }
 
 // Sum above-the-line deductions (Schedule 1 Part II).
