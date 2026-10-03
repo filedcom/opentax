@@ -1,8 +1,9 @@
 # TY2025 current-return and separate-workflow decision matrix
 
-Static review, 2026-10-02. This records what the current Form 1040 code can
-observe and what an optional `ReturnData1040` root would mean. It makes **no**
-product-scope decision or new exclusion. The TY2025 v5.4 `ReturnData1040.xsd`
+Static review, updated 2026-10-03. This records what the current Form 1040 code
+can observe and what an optional `ReturnData1040` root would mean. The user's
+direction is to follow the existing per-claim workflow pattern; this matrix
+makes **no** new root exclusion. The TY2025 v5.4 `ReturnData1040.xsd`
 and root schemas inspected here live in ignored `.state/research/docs/...`;
 `git ls-files` does not list them. The schema observations need a reproducible
 official artifact before release and do not establish MeF business-rule
@@ -29,6 +30,7 @@ recipient's current-return facts. The optional 4547/9000 rows are **tax-neutral
 elections/preferences**, not absent tax calculations. For every separate-
 workflow choice, the product still needs a way to surface an entered or known
 current-return trigger and preserve the appropriate source-to-1040 join. The
-[coverage decision queue](ty2025-form1040-coverage-decisions.md#exact-proposed-decisions-for-user-review-not-applied)
-awaits that explicit choice; no blanket root exclusion follows from this
-matrix.
+[coverage decision queue](ty2025-form1040-coverage-decisions.md#workflow-boundaries-and-still-open-implementation)
+records the working boundary. Per-root intake, handoff, current-return effects,
+and attachment conditions remain to be implemented and verified; no blanket
+root exclusion follows from this matrix.
