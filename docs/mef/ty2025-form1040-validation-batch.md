@@ -46,6 +46,17 @@ This is a passing local automated gate for tested routes. Complete source and
 form coverage, human page review, IRS business rules, ATS acceptance, and a
 filing-ready release remain open.
 
+The frozen-head `PATH=/tmp/opentax-tools:$PATH deno task test` run at
+`59911414` completed on 2026-10-03 by 18:35 UTC in 51m19s: **11,034 passed,
+zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
+15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
+26.09.0 through the local launcher. The retained log is
+`.state/research/ty2025-pr62-full-test-59911414.log` (SHA-256
+`07abcfbaf6f361e915c5ba861e27d1d9e5a7beaf982ea75c580028230eedc3cb`).
+The seven completed overtime/EIC page reviews and refreshed 167-case export
+are separate evidence; this full automated pass does not complete the remaining
+visual, business-rule, or IRS ATS gates.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
