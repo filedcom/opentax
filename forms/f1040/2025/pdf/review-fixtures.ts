@@ -3030,7 +3030,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Two reviewed FLSA premiums in W-2 box 14 add to Schedule 1-A Part III line 14a",
       "Schedule 1-A Part III lines 14a/14c/15/21 and line 38 print 4,000",
-      "Form 1040 line 13b prints the same 4,000 with correct tax and refund",
+      "Form 1040 line 13b prints the same 4,000 with correct tax and amount owed",
     ],
   },
   {

@@ -1017,6 +1017,19 @@ All 167 XML files passed the local TY2025 v5.4 XSD check; a separate
 inventory check found zero missing or mismatched source/XML/PDF digests and
 zero page-count mismatches. The generated pages still require human visual
 review and do not establish IRS business-rule or ATS acceptance.
+
+A later four-page review of `single-two-w2-flsa-overtime-schedule1a` rendered
+both Form 1040 pages and both Schedule 1-A pages from the same saved PDF. Its
+two W-2 sources report $50,000 and $30,000 wages, $5,000 and $3,000 federal
+withholding, and $3,000 and $1,000 reviewed FLSA overtime premiums. The
+Schedule 1-A pages print $4,000 on lines 14a, 14c, 15, 21, and 38; Form 1040
+prints $80,000 wages, $4,000 on line 13b, $8,175 tax, $8,000 withholding,
+and $175 owed. The native XML reports the same amounts. All four page
+checklists were completed, and `scripts/check-ty2025-pdf-review.ts` passed on
+`.state/research/ty2025-filled-pdf-review/2026-10-03-single-two-w2-overtime-reviewed`.
+This review found that the fixture's review focus incorrectly called the
+$175 balance a refund; that label was corrected. The other generated pages
+remain unreviewed.
 The same scan found that the Form 2441 PDF descriptor had no printable
 credit/provider/person route. A later bounded fix now generates its
 no-benefit child-care-credit case as a **four-page** Form 1040, Schedule 3,
