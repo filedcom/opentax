@@ -70,6 +70,12 @@ printed its $75,000 wages. Native and PDF export rejected a changed retained
 copy reference. This is newer than the frozen-head full run and does not
 unblock the separate Form 4852 substitute route.
 
+A following altered-1099-R slice passed **123/123 focused tests**. Its complete
+synthetic Form 1040 XML emitted a nonstandard IRS1099R code `N`, passed the local
+TY2025 v5.4 XSD, and generated a filled PDF with $20,000 gross pension.
+Removing the payer-copy reference rejected in both exporters. The full suite
+predates this change, and the Form 4852 source remains guarded.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax

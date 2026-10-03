@@ -1112,6 +1112,7 @@ Deno.test("f1099r.compute: altered_or_handwritten does not affect income routing
     minimalIraItem({
       box1_gross_distribution: 10000,
       altered_or_handwritten: true,
+      source_document_reference: "2025 altered payer copy",
     }),
   ]);
   const input = f1040Input(result);

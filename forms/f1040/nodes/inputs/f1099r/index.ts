@@ -478,6 +478,14 @@ export const itemSchema = z.object({
   // Miscellaneous flags
   altered_or_handwritten: z.boolean().optional(),
   no_distribution_received: z.boolean().optional(),
+}).superRefine((item, ctx) => {
+  if (item.altered_or_handwritten === true && !item.source_document_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_document_reference"],
+      message: "Nonstandard 1099-R needs a retained payer-copy reference",
+    });
+  }
 });
 
 // Node inputSchema — receives all 1099-Rs for this return as a single array

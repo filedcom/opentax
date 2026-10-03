@@ -55,6 +55,9 @@ function build1099R(
   context: MefBuildContext,
   index: number,
 ): string {
+  if (item.altered_or_handwritten === true && !item.source_document_reference) {
+    throw new Error("Nonstandard 1099-R needs a retained payer-copy reference");
+  }
   const filer = context.filer;
   if (!filer) {
     throw new Error(
@@ -155,7 +158,10 @@ function build1099R(
         ]),
       ])
       : "",
-    element("StandardOrNonStandardCd", "S"),
+    element(
+      "StandardOrNonStandardCd",
+      item.altered_or_handwritten === true ? "N" : "S",
+    ),
   ]);
 }
 
