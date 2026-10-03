@@ -7,6 +7,7 @@ import {
   deleteInput,
   getInput,
   listInputs,
+  loadInputs,
   loadMeta,
   updateInput,
 } from "../store/store.ts";
@@ -96,6 +97,16 @@ export async function formAddCommand(
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
+  }
+
+  const publicEntry = def.inputNodes.find((entry) =>
+    (entry.inputKey ?? entry.node.nodeType) === args.nodeType
+  );
+  if (
+    publicEntry && !publicEntry.isArray &&
+    (await loadInputs(returnPath))[args.nodeType]?.length
+  ) {
+    throw new Error(`Singleton input ${args.nodeType} already exists`);
   }
 
   const { id } = await appendInput(returnPath, args.nodeType, parsed.data);

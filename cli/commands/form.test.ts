@@ -125,6 +125,17 @@ Deno.test("CLI retains a registered alias as a singleton start input", async () 
       baseDir: tmpDir,
     });
     assertEquals(added.id, "form4797_investment_1245_01");
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "form4797_investment_1245",
+          dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Singleton input form4797_investment_1245 already exists",
+    );
     await formUpdateCommand({
       returnId,
       entryId: added.id,
