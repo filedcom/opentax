@@ -1681,3 +1681,12 @@ personal-use days and duplicate property identity reject. The earlier
 purchase-points native and PDF Schedule A source-replay tests passed on this
 head, as did the full-return local TY2025 XSD case. Occupancy bytes, full
 batch, and ATS remain open.
+
+## Direct capital-gain source omission (2026-10-04)
+
+A retained positive Form 1099-DIV box 2a or calculated Form 8814 child gain
+must reach Schedule D or the direct Form 1040 line 7a route. Native and PDF
+Form 1040 now reject a missing or zero direct line when there is no Schedule D
+source. The focused source, native Form 1040, and PDF Form 1040 suites passed
+104/104 after the change. This does not authenticate payer copies or prove the
+wider Schedule D route, full bulk suite, or IRS ATS acceptance.

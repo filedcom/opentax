@@ -8,7 +8,7 @@ export function assertDirectCapitalGainDistributionSource(
   pending: Pending | undefined,
 ): void {
   const filed = fields.line7a_cap_gain_distrib;
-  if (typeof filed !== "number" || filed <= 0 || pending === undefined) return;
+  if (pending === undefined) return;
 
   let dividends = 0;
   if (pending.f1099div !== undefined) {
@@ -43,7 +43,17 @@ export function assertDirectCapitalGainDistributionSource(
     }
   }
 
-  if (Math.abs(filed - dividends - childGain) > 0.000001) {
+  const sourced = dividends + childGain;
+  if (typeof filed !== "number" || filed <= 0) {
+    if (sourced > 0 && pending.schedule_d === undefined) {
+      throw new Error(
+        "Form 1040 omits sourced capital-gain distributions from both Schedule D and direct line 7a",
+      );
+    }
+    return;
+  }
+
+  if (Math.abs(filed - sourced) > 0.000001) {
     throw new Error(
       "Form 1040 line 7a differs from retained 1099-DIV and Form 8814 capital-gain distributions",
     );
