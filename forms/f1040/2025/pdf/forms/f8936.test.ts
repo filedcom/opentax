@@ -58,6 +58,7 @@ Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II 
   assertEquals(instances[0].new_tentative_credit, 7_500);
   assertEquals(instances[0].new_personal_credit, 7_500);
   assertEquals(instances[0].new_current_magi_over_limit, false);
+  assertEquals(form8936ScheduleAPdf.includeWhen?.(instances[0], {}), true);
 });
 
 Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II fields", () => {

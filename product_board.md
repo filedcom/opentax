@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1080 bounded completed slices are recorded in the
+inside** that section. The 1083 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -45,7 +45,10 @@ ATS acceptance, and a filing-ready release remain open.
 The selected PDF generator now has a 31-page Form 8826/Form 7203 artifact
 manifest after correcting printable packet defects. A bounded Form 2441
 no-benefit credit route now has a four-page generated packet; Form 2441
-benefit/overflow branches and Form 5695 still block complete PDF parity.
+benefit/overflow branches and unimplemented Form 5695 branches still block
+complete PDF parity. The sourced Form 5695 door/AC and Form 4684-to-4797 loss
+packets now generate with XML/XSD checks, and Form 8936 emits its parent and
+vehicle Schedule A as separate copies.
 The generated pages still need the full per-page visual review.
 
 **Phase order.** Finish independently actionable non-named source, graph,

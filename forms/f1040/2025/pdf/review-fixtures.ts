@@ -7826,6 +7826,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule2",
       "schedule_j",
+      "form8995",
     ],
     reviewFocus: [
       "Schedule J elected farm income is 15,000 and its three base years agree with the filed-return references",
@@ -7882,7 +7883,18 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule3", "f3800", "f8881"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_se",
+      "f3800",
+      "form6251",
+      "f8881",
+      "form8995",
+    ],
     reviewFocus: [
       "Form 8881 Part I shows a 750 startup credit and Part II shows a 500 enrollment credit",
       "The separate Form 3800 source rows total 1,250",
@@ -8035,7 +8047,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8911", "f8911_schedule_a", "schedule3"],
+    expectedPdfForms: [
+      "f1040",
+      "f8911",
+      "f8911_schedule_a",
+      "schedule3",
+      "form6251",
+    ],
     reviewFocus: [
       "Form 8911 and its Schedule A identify one 2025 main-home electric charger and census tract",
       "The 1,000 cost produces a 300 personal credit on Schedule 3 line 6j and Form 1040 line 20",
@@ -8165,7 +8183,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8834", "schedule3"],
+    expectedPdfForms: ["f1040", "f8834", "schedule3", "form6251"],
     reviewFocus: [
       "Form 8834 reports 450 allowed prior-year passive activity credit from an identified activity",
       "The 3,875 W-2-backed tax limit permits all 450 on Schedule 3 line 6i and Form 1040 line 20",
@@ -8266,7 +8284,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8912", "schedule3", "form6251"],
+    expectedPdfForms: ["f1040", "f8912", "f8912", "schedule3", "form6251"],
     reviewFocus: [
       "Form 8912 reports one identified 2017 qualified energy conservation bond and its 100 December credit",
       "The allowed 100 joins Schedule 3 line 6k and Form 1040 line 20 against the W-2-backed tax limit",

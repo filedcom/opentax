@@ -993,8 +993,19 @@ and Form 2441 packet with source-backed XML/XSD validation. The filled Form
 2441 page was rendered and inspected for the filer, care provider, qualifying
 person, rate, expense, and limited credit. Benefit claims and provider/person
 overflow remain guarded because Part III and continuation pages are not yet
-printable. The Form 5695 home-improvement case is still not emitted by its
-PDF descriptor. These remain open parity limits, not approved exclusions or a
+printable. A later bounded Form 5695 Section A door and Section B central-air
+case generated a six-page Form 1040/Schedule 3/Form 5695 packet with XML/XSD
+checks. Its three Form 5695 pages were rendered and visually inspected for
+eligibility answers, addresses, QMID, costs, and the $750 limited credit. A
+Form 4684 casualty case generated a nine-page packet with a one-page Form
+4797 Part II loss of $30,000; the Form 4797 page was rendered and inspected
+against Form 4684 and Schedule 1. The new Form 8936 personal clean-vehicle
+case generated seven pages with distinct parent and Schedule A copies and
+XML/XSD checks. A separate seven-case selection from the remaining credit and
+payment fixtures generated its XML/XSD/PDF packets after the Form 8834,
+Form 8912, and other expected-copy inventories were corrected. Other Form
+5695 branches and broader Form 4797 paths remain
+open parity limits, not approved exclusions or a
 full visual-review pass. The nine guarded source routes, three attachment
 cases, and 28 uncovered named PDF keys remain outside the selected run as
 previously recorded.

@@ -749,9 +749,9 @@ export async function buildPdfBytes(
   }
   assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create({ updateMetadata: false });
+  const copyCounts = new Map<string, number>();
 
   for (const descriptor of ALL_PDF_FORMS) {
-    let formCopy = 0;
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
       string,
       unknown
@@ -783,7 +783,9 @@ export async function buildPdfBytes(
         normalized,
       );
       if (!filledBytes) continue;
-      formCopy++;
+      const formKey = descriptor.printedFormKey ?? descriptor.pendingKey;
+      const formCopy = (copyCounts.get(formKey) ?? 0) + 1;
+      copyCounts.set(formKey, formCopy);
       const firstPageNumber = merged.getPageCount() + 1;
 
       const filledDoc = await PDFDocument.load(filledBytes, {
@@ -812,7 +814,7 @@ export async function buildPdfBytes(
       ) {
         pageOrigins?.push({
           pageNumber,
-          formKey: descriptor.printedFormKey ?? descriptor.pendingKey,
+          formKey,
           formCopy,
         });
       }

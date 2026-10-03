@@ -86,6 +86,9 @@ function formatServiceDate(date: string): string {
 export const form8936ScheduleAPdf: PdfFormDescriptor = {
   pendingKey: "f8936",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf",
+  includeWhenNoMappedData: true,
+  includeWhen: (fields) =>
+    typeof fields.vin === "string" && fields.vin.length > 0,
   fields,
   filerFields: [
     text("nameLine1", `${p1}f1_1[0]`),
