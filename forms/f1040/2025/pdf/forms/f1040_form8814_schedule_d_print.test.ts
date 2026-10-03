@@ -4,13 +4,14 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import { join } from "@std/path";
+import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../registry.ts";
 import { buildMefXml } from "../../mef/builder.ts";
 import { buildPending } from "../../mef/pending.ts";
 import { normalizeAllPending } from "../../pending.ts";
-import { fillFormPdf } from "../builder.ts";
+import { buildPdfBytes, fillFormPdf, type PdfPageOrigin } from "../builder.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { form8814Pdf } from "./f8814.ts";
@@ -104,7 +105,7 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
   }
 });
 
-Deno.test("two elected children retain two Form 8814 copies and one Schedule D gain total", () => {
+Deno.test("two elected children retain two Form 8814 copies and one Schedule D gain total", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-form8814-child-gain-with-schedule-d"
   );
@@ -163,4 +164,55 @@ Deno.test("two elected children retain two Form 8814 copies and one Schedule D g
   );
   assertEquals(scheduleD?.print_line13_cap_gain_distrib, 358);
   assertEquals(scheduleD?.print_form8814_line13_note, "Form 8814 $358");
+
+  const temp = await Deno.makeTempDir();
+  try {
+    const pageOrigins: PdfPageOrigin[] = [];
+    const pdf = await buildPdfBytes(
+      pending,
+      fixture.filer,
+      join(temp, "cache"),
+      undefined,
+      pageOrigins,
+    );
+    const pageCount = (await PDFDocument.load(pdf)).getPageCount();
+    assertEquals(pageOrigins.length, pageCount);
+    assertEquals(
+      pageOrigins.filter((page) => page.formKey === "form8814")
+        .map((page) => page.formCopy),
+      [1, 2],
+    );
+    assertEquals(
+      pageOrigins.some((page) => page.formKey === "schedule_d"),
+      true,
+    );
+    const path = join(temp, "two-children.pdf");
+    await Deno.writeFile(path, pdf);
+    const printed = await new Deno.Command("pdftotext", {
+      args: ["-layout", path, "-"],
+    }).output();
+    assertEquals(printed.code, 0, new TextDecoder().decode(printed.stderr));
+    const pages = new TextDecoder().decode(printed.stdout).split("\f");
+    const childPages = pageOrigins.filter((page) =>
+      page.formKey === "form8814"
+    );
+    assertStringIncludes(
+      pages[childPages[0].pageNumber - 1],
+      "Jamie Example",
+    );
+    assertStringIncludes(
+      pages[childPages[1].pageNumber - 1],
+      "Morgan Example",
+    );
+    const scheduleDPage = pageOrigins.find((page) =>
+      page.formKey === "schedule_d"
+    );
+    if (!scheduleDPage) throw new Error("Missing printed Schedule D page");
+    const scheduleDText = pages[scheduleDPage.pageNumber - 1];
+    assertStringIncludes(scheduleDText, "Form. 8814");
+    assertStringIncludes(scheduleDText, "$358");
+    assertEquals(/\b13\s+358\b/.test(scheduleDText), true);
+  } finally {
+    await Deno.remove(temp, { recursive: true });
+  }
 });

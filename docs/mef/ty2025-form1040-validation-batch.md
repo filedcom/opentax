@@ -1719,4 +1719,7 @@ separate child identities and Form 8814 documents, combines $179 from each on
 Schedule D line 13, adds the existing $1,000 share sale to Form 1040 line 7a,
 and projects two child PDF copies plus the $358 Schedule D amount and dotted
 note. The full native return passes the local TY2025 v5.4 XSD. The physical
-two-child pages and issuer-source bytes remain outside this test.
+two-child pages now pass a physical page-count, origin, and extracted-text
+check: each child is on its own Form 8814 page, and the Schedule D page prints
+the $358 line-13 amount and Form 8814 note. Raster layout review and
+issuer-source bytes remain outside this test.
