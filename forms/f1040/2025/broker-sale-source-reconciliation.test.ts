@@ -255,6 +255,31 @@ Deno.test("final exports replay retained broker proceeds and basis into Schedule
   }
 });
 
+Deno.test("final exports reject a second zero-gain copy of one broker sale", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[0],
+      part: Form8949Part.B,
+      cost_basis: 1_000,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: Record<string, unknown> | Record<string, unknown>[];
+  };
+  const transactions = Array.isArray(schedule.transaction)
+    ? schedule.transaction
+    : [schedule.transaction];
+  schedule.transaction = [...transactions, structuredClone(transactions[0])];
+  const message =
+    "Schedule D repeats a retained 1099-B or direct Form 8949 sale";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
 Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async () => {
   const sale = {
     part: Form8949Part.C,

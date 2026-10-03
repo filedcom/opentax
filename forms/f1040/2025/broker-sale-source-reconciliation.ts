@@ -112,4 +112,9 @@ export function assertCapitalSaleSourceRows(
     }
     counts.set(id, count - 1);
   }
+  if (expected.some((row) => (counts.get(key(row)) ?? 0) !== 0)) {
+    throw new Error(
+      "Schedule D repeats a retained 1099-B or direct Form 8949 sale",
+    );
+  }
 }
