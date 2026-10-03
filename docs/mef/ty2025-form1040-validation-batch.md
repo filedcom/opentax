@@ -61,6 +61,14 @@ exports; distinct references remain accepted. Format and lint passed for the
 changed files. The repository-wide batch and issued-copy byte review remain
 open.
 
+The subsequent 1099-PATR copy-identity pass on 2026-10-03 passed **20/20**
+focused input/owner/export cases and **204/204** selected Schedule F and
+native/PDF builder cases. Multiple positive copies from one cooperative and
+recipient now reject when any lacks both an account and issued-copy reference,
+including a box 4-only pair and a mixed TIN/name payer entry. Distinct issued
+references remain accepted. Issuer-byte proof and corrected-copy lineage
+remain open, along with the full phase batch.
+
 The subsequent 1099-B wash-sale source pass on 2026-10-03 passed **84/84**
 focused broker graph/full-return/export cases and **191/191** selected native,
 PDF, and Schedule B builder cases. Box 1g now adds its positive disallowed loss
