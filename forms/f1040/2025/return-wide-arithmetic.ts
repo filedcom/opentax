@@ -1,5 +1,22 @@
 import { schedule2Part1Total } from "../nodes/intermediate/aggregation/schedule2/index.ts";
 
+/** Line 3a is the qualified portion of ordinary dividends on line 3b. */
+export function assertQualifiedDividendSubset(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const qualified = fields.line3a_qualified_dividends ?? 0;
+  const ordinary = fields.line3b_ordinary_dividends ?? 0;
+  if (
+    typeof qualified !== "number" || !Number.isFinite(qualified) ||
+    typeof ordinary !== "number" || !Number.isFinite(ordinary) ||
+    qualified < 0 || ordinary < 0 || qualified > ordinary
+  ) {
+    throw new Error(
+      "Form 1040 line 3a qualified dividends must be included in line 3b ordinary dividends",
+    );
+  }
+}
+
 /** Replay final Form 1040 tax and payment subtotals before native/PDF export. */
 export function assertReturnWideArithmetic(
   fields: Record<string, unknown>,

@@ -86,6 +86,7 @@ import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation
 import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
 import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
+import { assertQualifiedDividendSubset } from "../return-wide-arithmetic.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
@@ -540,6 +541,7 @@ export async function buildPdfBytes(
   assertW2WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);
   assertLine1aWageSource(normalized);
+  assertQualifiedDividendSubset(normalized.f1040 ?? {});
   assertBusinessSchedule1Amounts(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
