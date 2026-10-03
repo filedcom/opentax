@@ -35,7 +35,10 @@ Deno.test("Form 8880 PDF line 11 agrees with finalized credit-limit worksheet", 
       line4_retirement_savings_credit: 800,
     },
   };
-  assertEquals(form8880Pdf.projectFields!(fields, pending), fields);
+  assertEquals(form8880Pdf.projectFields!(fields, pending), {
+    ...fields,
+    print_line9_rate: "5",
+  });
   assertThrows(
     () =>
       form8880Pdf.projectFields!(fields, {

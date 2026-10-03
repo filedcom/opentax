@@ -977,6 +977,23 @@ deferred Form 8862 source-authentication gap; it was not bypassed to inflate
 the review count. The 178 automated filled-PDF/XML tests above do not replace
 this held visual-review workflow.
 
+A later 2026-10-03 selected export run covered the first **84** of 167
+exportable fixtures before its stale expectation for three Schedule C copies
+stopped it. Smaller source-backed XML/XSD/PDF runs then exposed and corrected
+several fixture copy counts, a one-character Form 8880 rate field, the
+Form 8995-A source-versus-print projection, a sourced Form 8826 Schedule C
+Part V description and print gate, and the Schedule E page identity attached
+to Form 7203. A two-case manifest for the Form 8826 and Form 7203 routes
+contains **31 generated pages** with XML/XSD checks; its per-page visual
+checklist remains blank. Other selected runs remain partial diagnostics.
+The current generator still cannot complete the 167-case selection: the
+Form 2441 PDF descriptor has no printable credit/provider/person route, and
+the Form 5695 source-backed home-improvement case is not emitted by its PDF
+descriptor. These are open PDF parity gaps, not approved exclusions or visual
+review passes. The nine guarded source routes, three attachment cases, and
+28 uncovered named PDF keys remain outside this selected run as previously
+recorded.
+
 A bounded visual check of that partial directory rendered all nine pages of
 three synthetic cases at 120 dpi: `single-child-unearned-income` (Form 1040,
 Schedule B, Form 8615), `single-divorced-agreed-joint-estimated-payment`

@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1078 bounded completed slices are recorded in the
+inside** that section. The 1079 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -42,6 +42,10 @@ The attachment-aware TY2025 fixture/XML/XSD file passed 178/178 again at
 [CLI v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is
 published. Manual page review, complete route/XSD/business-rule evidence, IRS
 ATS acceptance, and a filing-ready release remain open.
+The selected PDF generator now has a 31-page Form 8826/Form 7203 artifact
+manifest after correcting printable packet defects. Form 2441 and Form 5695
+positive PDF routes still block a complete selected artifact run, and the
+generated pages still need per-page visual review.
 
 **Phase order.** Finish independently actionable non-named source, graph,
 packet, and PDF work; settle the workflow and evidence decisions; retain the

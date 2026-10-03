@@ -62,6 +62,8 @@ export interface PdfRowDescriptor {
 
 export interface PdfFormDescriptor {
   readonly pendingKey: string;
+  /** Form identity for page provenance when a descriptor uses another form's source slot. */
+  readonly printedFormKey?: string;
   readonly pdfUrl: string;
   /** Project finalized cross-document worksheet values onto this form's fields. */
   readonly projectFields?: (

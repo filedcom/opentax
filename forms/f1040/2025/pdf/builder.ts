@@ -812,7 +812,7 @@ export async function buildPdfBytes(
       ) {
         pageOrigins?.push({
           pageNumber,
-          formKey: descriptor.pendingKey,
+          formKey: descriptor.printedFormKey ?? descriptor.pendingKey,
           formCopy,
         });
       }

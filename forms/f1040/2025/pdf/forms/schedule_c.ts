@@ -18,6 +18,8 @@ import {
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import { assertCurrentYearSection481aMatches } from "../../../nodes/inputs/f3115/index.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
+import { inputSchema as form8826InputSchema } from "../../../nodes/inputs/f8826/index.ts";
+import { reconcileForm8826SelfSource } from "../../mef/forms/f8826_source.ts";
 import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
@@ -331,6 +333,29 @@ function projectBusiness(
   };
 }
 
+function printableBusiness(
+  item: ScheduleCItem,
+  allPending: Record<string, Record<string, unknown>>,
+): ScheduleCItem {
+  const amount = item.line_27b_other_expenses ?? 0;
+  if (amount === 0) return item;
+  const source = form8826InputSchema.safeParse(allPending.f8826);
+  if (
+    !source.success ||
+    source.data.self_source_evidence?.business_reference !==
+      item.business_reference
+  ) return item;
+  reconcileForm8826SelfSource(source.data, allPending);
+  return {
+    ...item,
+    line_27b_other_expenses: undefined,
+    part_v_other_expenses: [{
+      description: "Interpreter services (net of Form 8826 credit)",
+      amount,
+    }],
+  };
+}
+
 function proprietorIdentity(
   allPending: Record<string, Record<string, unknown>>,
   recipient: ScheduleCItem["proprietor_recipient"],
@@ -451,7 +476,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
     return {
       schedule_c_instances: items.map((item, index) => ({
         ...projectBusiness(
-          item,
+          printableBusiness(item, allPending),
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
         ),
