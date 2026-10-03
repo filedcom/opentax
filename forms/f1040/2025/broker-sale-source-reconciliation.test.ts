@@ -8,6 +8,8 @@ import {
 import { FilingStatus as HeaderStatus } from "../mef/header.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { Form8949Part } from "../nodes/intermediate/forms/form8949/index.ts";
+import { f8949, QsbsCode } from "../nodes/inputs/f8949/index.ts";
+import { assertCapitalSaleSourceRows } from "./broker-sale-source-reconciliation.ts";
 import { f1040_2025 } from "./index.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
@@ -278,6 +280,65 @@ Deno.test("final exports reject a second zero-gain copy of one broker sale", asy
     "Schedule D repeats a retained 1099-B or direct Form 8949 sale";
   assertThrows(() => buildMefXml(changed, filer), Error, message);
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("final exports retain the broker collectible character of a sale", async () => {
+  const result = f1040_2025.executeReturn({
+    general,
+    f1099b: [{
+      ...brokerRows[1],
+      box3_transaction_type: "collectibles" as const,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: { collectibles?: boolean } | { collectibles?: boolean }[];
+  };
+  const sale = Array.isArray(schedule.transaction)
+    ? schedule.transaction[0]!
+    : schedule.transaction;
+  assertEquals(sale.collectibles, true);
+  sale.collectibles = false;
+  const message =
+    "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("direct sale replay retains the qualified small business stock fields", () => {
+  const sale = {
+    part: Form8949Part.F,
+    description: "Qualified shares",
+    source_transaction_id: "direct-qsbs-1",
+    date_acquired: "2015-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 10_000,
+    cost_basis: 2_000,
+    qsbs_code: QsbsCode.Q3,
+    qsbs_amount: 8_000,
+  };
+  const source = { f8949s: [sale] };
+  const transaction = f8949.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs.find((row) => row.nodeType === "form8949")!.fields.transaction;
+  const pending = {
+    f8949: source,
+    schedule_d: { transaction },
+  };
+  assertCapitalSaleSourceRows(pending);
+  for (const changedField of ["qsbs_code", "qsbs_amount"] as const) {
+    const changed = structuredClone(pending);
+    (changed.schedule_d.transaction as Record<string, unknown>)[changedField] =
+      changedField === "qsbs_code" ? "Q1" : 7_999;
+    assertThrows(
+      () => assertCapitalSaleSourceRows(changed),
+      Error,
+      "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+    );
+  }
 });
 
 Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async () => {

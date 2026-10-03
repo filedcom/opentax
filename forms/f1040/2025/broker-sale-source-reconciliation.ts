@@ -83,6 +83,11 @@ export function assertCapitalSaleSourceRows(
     adjustment_amount?: number;
     gain_loss: number;
     is_long_term: boolean;
+    collectibles?: boolean;
+    qsbs_code?: string;
+    qsbs_amount?: number;
+    from_form4797_investment_1245?: true;
+    form4797_property_id?: string;
   }): string =>
     JSON.stringify([
       row.part,
@@ -96,6 +101,11 @@ export function assertCapitalSaleSourceRows(
       row.adjustment_amount ?? null,
       row.gain_loss,
       row.is_long_term,
+      row.collectibles ?? false,
+      row.qsbs_code ?? null,
+      row.qsbs_amount ?? null,
+      row.from_form4797_investment_1245 ?? false,
+      row.form4797_property_id ?? null,
     ]);
   const counts = new Map<string, number>();
   for (const row of actual) {
