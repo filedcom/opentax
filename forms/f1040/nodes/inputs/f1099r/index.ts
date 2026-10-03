@@ -510,18 +510,12 @@ export function assertDistinct1099RCopies(
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
     if (reference) {
-      const key = JSON.stringify([
-        reference,
-        payer,
-        recipient ?? null,
-        account,
-      ]);
-      if (seenReferences.has(key)) {
+      if (seenReferences.has(reference)) {
         throw new Error(
-          "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+          "Form 1099-R repeats the same issued-copy source reference",
         );
       }
-      seenReferences.add(key);
+      seenReferences.add(reference);
     }
     const positive = item.box1_gross_distribution > 0 ||
       (item.box2a_taxable_amount ?? 0) > 0 ||

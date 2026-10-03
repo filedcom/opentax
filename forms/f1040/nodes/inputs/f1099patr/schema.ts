@@ -90,6 +90,7 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({
   f1099patrs: z.array(itemSchema).min(1),
 }).superRefine(({ f1099patrs }, ctx) => {
+  const seenReferences = new Set<string>();
   const positive = (item: PATRItem) =>
     distributionTotal(item) > 0 || (item.box4_federal_withheld ?? 0) > 0 ||
     (item.box6_section199ag_deduction ?? 0) > 0 ||
@@ -102,6 +103,17 @@ export const inputSchema = z.object({
       (right.payer_name?.trim().toLowerCase() || "");
   };
   for (const [index, item] of f1099patrs.entries()) {
+    if (item.source_document_reference) {
+      if (seenReferences.has(item.source_document_reference)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1099patrs", index],
+          message:
+            "1099-PATR repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        });
+      }
+      seenReferences.add(item.source_document_reference);
+    }
     if (!positive(item)) continue;
     for (const prior of f1099patrs.slice(0, index)) {
       if (
@@ -116,17 +128,6 @@ export const inputSchema = z.object({
           path: ["f1099patrs", index],
           message:
             "1099-PATR repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
-        });
-      }
-      if (
-        item.source_document_reference &&
-        prior.source_document_reference === item.source_document_reference
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["f1099patrs", index],
-          message:
-            "1099-PATR repeats the same payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
         });
       }
       if (

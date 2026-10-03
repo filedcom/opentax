@@ -115,11 +115,15 @@ Deno.test("1099-R native export rejects an exact repeated identified source copy
   assertThrows(
     () => f1099r.build({ f1099rs: [copy, { ...copy }] }, { filer }),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertEquals(
     f1099r.build({
-      f1099rs: [copy, { ...copy, account_number: "PENSION-2" }],
+      f1099rs: [copy, {
+        ...copy,
+        account_number: "PENSION-2",
+        source_document_reference: "2025 issued second pension 1099-R",
+      }],
     }, { filer }).length,
     2,
   );
@@ -140,12 +144,12 @@ Deno.test("one identified 1099-R copy cannot replay changed withholding in eithe
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   await assertRejects(
     () => buildPdfBytes(pending, filer),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertEquals(
     f1099r.build({

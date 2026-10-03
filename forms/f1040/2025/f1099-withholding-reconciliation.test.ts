@@ -715,11 +715,16 @@ Deno.test("repeated 1099-R issued copy without account rejects native and PDF ex
   };
   const pending = {
     f1099r: {
-      f1099rs: [issued, { ...issued, box1_gross_distribution: 1_200 }],
+      f1099rs: [issued, {
+        ...issued,
+        payer_name: "Second Plan",
+        payer_ein: "987654321",
+        account_number: "SECOND-PLAN",
+        box1_gross_distribution: 1_200,
+      }],
     },
   };
-  const message =
-    "Form 1099-R repeats the same payer, recipient, account, and issued source copy";
+  const message = "Form 1099-R repeats the same issued-copy source reference";
   assertThrows(
     () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
     Error,

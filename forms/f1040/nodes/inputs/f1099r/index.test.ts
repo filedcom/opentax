@@ -174,12 +174,12 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
   assertThrows(
     () => compute([copy, { ...copy, simplified_method_flag: true }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertThrows(
     () => compute([copy, { ...copy, box4_federal_withheld: 600 }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   const iraCopy = minimalIraItem({
     recipient_ssn: "111223333",
@@ -190,7 +190,7 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
   assertThrows(
     () => compute([iraCopy, iraCopy]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
 });
 
@@ -203,13 +203,36 @@ Deno.test("f1099r.compute: repeated issued copy without account number cannot do
   assertThrows(
     () => compute([copy, { ...copy, box2a_taxable_amount: 1_200 }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   const separate = compute([
     copy,
     { ...copy, source_document_reference: "another-issued-copy" },
   ]);
   assertEquals(f1040Input(separate).line5b_pension_taxable, 2_000);
+});
+
+Deno.test("f1099r.compute: one issued-copy reference cannot move to another payer or account", () => {
+  const copy = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: "PENSION-1",
+  });
+  const changed = {
+    ...copy,
+    payer_name: "Second Plan",
+    payer_ein: "987654321",
+    account_number: "PENSION-2",
+  };
+  assertThrows(
+    () => compute([copy, changed]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([copy, {
+    ...changed,
+    source_document_reference: "second-plan-issued-copy",
+  }]);
+  assertEquals(f1040Input(distinct).line5b_pension_taxable, 20_000);
 });
 
 Deno.test("f1099r.compute: positive pension copies need account or issued-copy identity", () => {
@@ -265,6 +288,7 @@ Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amoun
   const result = compute([first, {
     ...first,
     account_number: "PENSION-2",
+    source_document_reference: "second-pension-issued-copy",
   }]);
   const fields = f1040Input(result);
   assertEquals(fields.line5b_pension_taxable, 2_000);
@@ -533,6 +557,7 @@ Deno.test("f1099r.compute: multiple elected Form 4972 distributions need partici
           ...elected,
           payer_name: "Second Plan",
           payer_ein: "11-2233445",
+          source_document_reference: "second-plan-issued-copy",
           ts: secondRecipient,
         }]),
       Error,
@@ -592,7 +617,7 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
     () =>
       compute([first, { ...second, source_document_reference: "1099-R-A" }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
 });
 

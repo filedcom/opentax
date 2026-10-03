@@ -275,6 +275,24 @@ Deno.test("1099-PATR rejects ambiguous positive cooperative copies", () => {
   assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 50);
 });
 
+Deno.test("1099-PATR cannot reuse one issued-copy reference across cooperatives", () => {
+  const first = {
+    ...issued("one-patr-copy"),
+    box4_federal_withheld: 20,
+  };
+  assertThrows(
+    () =>
+      compute([first, {
+        ...first,
+        payer_name: "Second Cooperative",
+        payer_tin: "987654321",
+        account_number: "SECOND-ACCOUNT",
+      }]),
+    Error,
+    "1099-PATR repeats the same issued-copy source reference",
+  );
+});
+
 Deno.test("1099-PATR retains specified-cooperative QBI source only for business facts", () => {
   const business = {
     box7_qualified_payments: 100,
