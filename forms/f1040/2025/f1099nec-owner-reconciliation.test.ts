@@ -104,12 +104,32 @@ Deno.test("one identified 1099-NEC issued copy cannot replay changed income at n
   assertThrows(
     () => irs1040.build(filed, { pending }),
     Error,
-    "1099-NEC repeats the same payer, recipient, and issued source reference",
+    "1099-NEC repeats the same issued-copy source reference",
   );
   assertThrows(
     () => irs1040Pdf.projectFields?.(filed, pending),
     Error,
-    "1099-NEC repeats the same payer, recipient, and issued source reference",
+    "1099-NEC repeats the same issued-copy source reference",
+  );
+  const secondPayer = {
+    f1099nec: {
+      f1099necs: [issued, {
+        ...issued,
+        payer_name: "Second Payer",
+        payer_tin: "987654321",
+        account_number: "SECOND-ACCOUNT",
+      }],
+    },
+  };
+  assertThrows(
+    () => irs1040.build(filed, { pending: secondPayer }),
+    Error,
+    "1099-NEC repeats the same issued-copy source reference",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, secondPayer),
+    Error,
+    "1099-NEC repeats the same issued-copy source reference",
   );
 });
 

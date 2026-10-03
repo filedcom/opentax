@@ -138,11 +138,6 @@ export function assertDistinct1099NecCopies(items: readonly NECItem[]): void {
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (
-      (item.box1_nec ?? 0) <= 0 &&
-      (item.box3_golden_parachute ?? 0) <= 0 &&
-      (item.box4_federal_withheld ?? 0) <= 0
-    ) continue;
     const payer = item.payer_tin.replace(/\D/g, "");
     const recipient = item.recipient_ssn?.replace(/\D/g, "") ?? null;
     const account = item.account_number?.trim() ?? null;
@@ -157,18 +152,19 @@ export function assertDistinct1099NecCopies(items: readonly NECItem[]): void {
       seenAccounts.add(key);
     }
     if (item.source_document_reference) {
-      const key = JSON.stringify([
-        owner,
-        account,
-        item.source_document_reference,
-      ]);
+      const key = item.source_document_reference;
       if (seenReferences.has(key)) {
         throw new Error(
-          "1099-NEC repeats the same payer, recipient, and issued source reference; corrected copies need one reviewed current row",
+          "1099-NEC repeats the same issued-copy source reference; corrected copies need one reviewed current row",
         );
       }
       seenReferences.add(key);
     }
+    if (
+      (item.box1_nec ?? 0) <= 0 &&
+      (item.box3_golden_parachute ?? 0) <= 0 &&
+      (item.box4_federal_withheld ?? 0) <= 0
+    ) continue;
     if (!account && !item.source_document_reference) {
       if (seenOwners.has(owner)) {
         throw new Error(

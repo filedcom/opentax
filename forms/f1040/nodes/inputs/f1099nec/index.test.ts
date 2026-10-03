@@ -71,6 +71,19 @@ Deno.test("1099-NEC graph rejects ambiguous repeats and corrected accounts", () 
     Error,
     "repeats the same payer, recipient, and account",
   );
+  assertThrows(
+    () =>
+      compute([
+        account,
+        minimalItem({
+          box1_nec: 150,
+          account_number: "CLIENT-2",
+          source_document_reference: "issued-copy-1",
+        }),
+      ]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
   assertEquals(
     schedCGrossReceipts(compute([
       account,
@@ -81,6 +94,19 @@ Deno.test("1099-NEC graph rejects ambiguous repeats and corrected accounts", () 
       }),
     ])),
     250,
+  );
+});
+
+Deno.test("1099-NEC informational copies cannot reuse one issued reference", () => {
+  const source = minimalItem({
+    box1_nec: 0,
+    box2_direct_sales: true,
+    source_document_reference: "informational-issued-copy",
+  });
+  assertThrows(
+    () => compute([source, { ...source, payer_tin: "98-7654321" }]),
+    Error,
+    "repeats the same issued-copy source reference",
   );
 });
 
