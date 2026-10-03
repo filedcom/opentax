@@ -29,6 +29,29 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
             payer_name: "Bank",
             payer_tin: "123456789",
             account_number: "SAV-1",
+            source_document_reference: "same-issued-copy",
+            box1: 200,
+            box4: 15,
+          },
+          {
+            payer_name: "Bank",
+            payer_tin: "123456789",
+            account_number: "SAV-2",
+            source_document_reference: "same-issued-copy",
+            box1: 250,
+            box4: 20,
+          },
+        ],
+      },
+      message: "1099-INT repeats the same issued-copy source reference",
+    },
+    {
+      f1099int: {
+        f1099ints: [
+          {
+            payer_name: "Bank",
+            payer_tin: "123456789",
+            account_number: "SAV-1",
             source_document_reference: "original",
             box1: 200,
             box4: 15,

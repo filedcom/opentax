@@ -93,14 +93,10 @@ export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
     const payer = item.payer_tin?.replace(/\D/g, "") || item.payer_name.trim();
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
     if (item.source_document_reference) {
-      const reference = JSON.stringify([
-        item.source_document_reference,
-        payer,
-        item.account_number?.trim() ?? null,
-      ]);
+      const reference = item.source_document_reference;
       if (issuedReferences.has(reference)) {
         throw new Error(
-          "1099-INT repeats the same issued-copy source reference and account; corrected copies need a reviewed single current row",
+          "1099-INT repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
         );
       }
       issuedReferences.add(reference);

@@ -115,7 +115,16 @@ Deno.test("1099-INT rejects corrected references on one identified payer/account
     Error,
     "repeats the same payer and account",
   );
-  const distinct = compute([issued, { ...issued, account_number: "SAV-2" }]);
+  assertThrows(
+    () => compute([issued, { ...issued, account_number: "SAV-2" }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([issued, {
+    ...issued,
+    account_number: "SAV-2",
+    source_document_reference: "issued-1099int-2025-2",
+  }]);
   assertEquals(
     distinct.outputs.filter((row) => row.nodeType === schedule_b.nodeType)
       .length,
@@ -132,7 +141,7 @@ Deno.test("1099-INT rejects a repeated source when payer TIN and account are abs
   assertThrows(
     () => compute([issued, { ...issued, box1: 900 }]),
     Error,
-    "repeats the same issued-copy source reference and account",
+    "repeats the same issued-copy source reference",
   );
   const distinct = compute([
     issued,
