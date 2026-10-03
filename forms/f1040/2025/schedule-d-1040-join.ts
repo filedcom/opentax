@@ -1,4 +1,7 @@
 import { FilingStatus } from "../nodes/types.ts";
+import {
+  inputSchema as scheduleDInputSchema,
+} from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
 
@@ -22,6 +25,62 @@ export function assertScheduleD1040Join(pending: Pending): void {
   const form1040 = raw1040 as Record<string, unknown>;
   if (typeof line16 !== "number" || !Number.isFinite(line16)) {
     throw new Error("Schedule D needs finalized line 16 before export");
+  }
+  // The graph folds direct box A/D transactions into lines 1a/8a for print.
+  // Replay the retained aggregates and only the non-direct transaction rows
+  // so that a changed print total cannot be carried through to Form 1040.
+  const input = scheduleDInputSchema.parse(schedule);
+  const sum = (value: number | number[] | undefined): number =>
+    value === undefined
+      ? 0
+      : Array.isArray(value)
+      ? value.reduce((total, amount) => total + amount, 0)
+      : value;
+  const direct = (
+    part: string,
+    codes: string | undefined,
+    adjustment: number | undefined,
+  ): boolean =>
+    (part === "A" || part === "D") && !(codes ?? "").length &&
+    adjustment === undefined;
+  const shortParts = new Set(["A", "B", "C", "G", "H", "I"]);
+  let shortGain = (input.line_1a_proceeds ?? 0) -
+    (input.line_1a_cost ?? 0) + sum(input.line_4_other_st) +
+    sum(input.line_5_k1_st) - (input.line_6_carryover ?? 0);
+  let longGain = (input.line_8a_proceeds ?? 0) -
+    (input.line_8a_cost ?? 0) + sum(input.line_11_form2439) +
+    (input.line_11_qef_lt ?? 0) + (input.line_12_cap_gain_dist ?? 0) +
+    sum(input.line_12_k1_lt) - (input.line_14_carryover ?? 0) +
+    (input.line13_cap_gain_distrib ?? 0) +
+    (input.line13_form8814 ?? 0);
+  const transactions = input.transaction === undefined
+    ? []
+    : Array.isArray(input.transaction)
+    ? input.transaction
+    : [input.transaction];
+  for (const tx of transactions) {
+    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) continue;
+    if (tx.is_long_term) longGain += tx.gain_loss;
+    else shortGain += tx.gain_loss;
+  }
+  for (const tx of input.transactions ?? []) {
+    if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) continue;
+    const gain = tx.proceeds - tx.cost_basis + (tx.adjustment_amount ?? 0);
+    if (shortParts.has(tx.part)) shortGain += gain;
+    else longGain += gain;
+  }
+  const printedShort = schedule.print_line7_st_total;
+  const printedLong = schedule.print_line15_lt_total;
+  if (
+    typeof printedShort !== "number" || !Number.isFinite(printedShort) ||
+    typeof printedLong !== "number" || !Number.isFinite(printedLong) ||
+    Math.abs(printedShort - shortGain) >= 0.01 ||
+    Math.abs(printedLong - longGain) >= 0.01 ||
+    Math.abs(line16 - shortGain - longGain) >= 0.01
+  ) {
+    throw new Error(
+      "Schedule D print lines 7, 15, and 16 differ from retained capital activity",
+    );
   }
   const limit = form1040.filing_status === FilingStatus.MFS ? -1_500 : -3_000;
   const expected = line16 < 0 ? Math.max(line16, limit) : line16;

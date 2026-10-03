@@ -74,13 +74,16 @@ evidence, not the deferred full test task or all-route validation.
 The native and PDF builder files also passed **152/152** and **32/32** after
 the IRA replay was added.
 
-The subsequent finalized Schedule D to Form 1040 line 7 comparison passed
-the five broker-sale source cases, including a changed-line rejection in both
-exports. The native and PDF builder files passed **184/184** together, and
-the selected mixed/full Form 4797 recapture files passed **3/3**. `deno check`
-on the changed production modules and `deno fmt --check` passed. This checks
-the calculated Schedule D print-total join; source-to-Schedule-D replay,
-the repository-wide batch, and filled-page review remain open.
+The subsequent finalized Schedule D to Form 1040 line 7 comparison and
+Schedule D print-total replay passed six broker-sale source cases, including
+changed-line and paired-print tampering in both exports. The native and PDF
+builder files passed **184/184** together. Selected Form 4797, Form 6252,
+Form 8814, and capital-loss routes passed after `pdftotext` was supplied on
+the Poppler path; the first run of two text-extraction cases stopped only at
+the missing executable. A read-only replay over all 178 review-fixture
+graphs found 177 clean graphs, of which 18 had finalized Schedule D totals;
+all 18 agreed with the new print-total calculation. This is focused evidence,
+not a repository-wide batch or filled-page review.
 
 ## Scope and preflight
 

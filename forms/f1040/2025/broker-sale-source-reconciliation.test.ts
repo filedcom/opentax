@@ -132,6 +132,31 @@ Deno.test("final exports reject a changed Form 1040 capital gain after Schedule 
   );
 });
 
+Deno.test("final exports reject a changed Schedule D total even with a matching Form 1040 gain", async () => {
+  const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = {
+    ...pending,
+    schedule_d: {
+      ...pending.schedule_d,
+      print_line15_lt_total: 1_001,
+      print_line16_combined: 1_301,
+    },
+    f1040: { ...pending.f1040, line7_capital_gain: 1_301 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, filer),
+    Error,
+    "Schedule D print lines 7, 15, and 16 differ",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, filer),
+    Error,
+    "Schedule D print lines 7, 15, and 16 differ",
+  );
+});
+
 Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
   const direct = {
     part: Form8949Part.A,
