@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1001 bounded completed slices are recorded in the
+inside** that section. The 1002 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -30,16 +30,16 @@ attachment/archive/A2A integrity checks.
 The live inventory has 148 native MeF descriptors, 115 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 10,886/10,886 at
-`3506a188` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type
+**Validation and release.** `deno task test` passed 10,891/10,891 at
+`637dace9` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke also passed.
 [CLI v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is
 published. Manual page review, complete route/XSD/business-rule evidence, IRS
 ATS acceptance, and a filing-ready release remain open.
 
 **Phase order.** Finish independently actionable non-named source, graph,
-packet, and PDF work; settle the workflow and evidence decisions; then run one
-full test batch and record its exact result. Named-form completion, complete
+packet, and PDF work; settle the workflow and evidence decisions; retain the
+passing local batch as automated evidence. Named-form completion, complete
 visual/XSD/business-rule evidence, and IRS ATS acceptance have their own open
 rows below. The [validation batch](docs/mef/ty2025-form1040-validation-batch.md)
 records test and artifact detail; the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)

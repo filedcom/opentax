@@ -1,9 +1,29 @@
 # TY2025 Form 1040 validation batch
 
-This is the execution checklist for the agreed build-first gate. It is a plan,
-not a record of a current pass. Do not run it until the in-scope implementation
-and unsupported-path decisions are settled. The historical 2026-09-26 result
-(6,596 passed, 0 failed, 48 ignored) predates the current worktree.
+This is the execution checklist for the agreed build-first gate. The local
+automated batch has passed on the retained routes, but the filing-ready gate
+remains open until scope, route, filled-page, and IRS acceptance work is done.
+The historical 2026-09-26 result (6,596 passed, 0 failed, 48 ignored)
+predates the current worktree.
+
+The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
+with 10,889 passed, two failed, and no ignored tests reported. Both failures
+tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
+amount. Commit `637dace9` derives boolean print fields for the Form 8814 and
+Form 4972 boxes while retaining the numeric tax amounts. Both failed cases
+passed in focused reruns and in the full rerun.
+
+The fixed-source `deno task test` at `637dace9` completed on 2026-10-03
+02:19 UTC in 49m18s: **10,891 passed, zero failed**, with no ignored tests
+reported. It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
+`xmllint` libxml 2.9.13, and Poppler 26.09.0. The exact command was
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`; the local log is
+`.state/research/ty2025-full-test-637dace9.log` (SHA-256
+`6faee3fbc0e980f5d335d1450d347fc56d0d372722783786262bafa9c3f0fd48`).
+The locally cached TY2025 v5.4 XSDs and live IRS PDF templates were present,
+so their tests executed. This result establishes local automated stability
+for tested routes; it does not close complete route coverage, human filled-PDF
+review, IRS business rules, ATS acceptance, or the filing-ready release.
 
 ## Scope and preflight
 
@@ -281,7 +301,7 @@ three HSA/Form 2555 fixtures (7/7 passing) and two Form 5329 tax joins plus
 the Schedule E retained-sale allocation (33/33 passing). Most remaining
 failures concern the deferred named-form parents; a fresh full run is required
 to establish the exact residual count.
-The full gate still has no passing result.
+At that checkpoint, the full gate still had no passing result.
 A later full `deno task test` at `b4e01e51` completed on 2026-10-02 in
 30m09s with 10,428 passed and 103 failed. It used Deno 2.7.7 (V8
 14.6.202.9-rusty, TypeScript 5.9.2), `xmllint` libxml 2.9.13, and Poppler
