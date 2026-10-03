@@ -456,12 +456,7 @@ function repeatedSourceReferenceIndex(items: readonly K99Item[]): number {
       ((item.box1a_gross_payments ?? 0) <= 0 &&
         (item.box4_federal_withheld ?? 0) <= 0)
     ) continue;
-    const key = JSON.stringify([
-      item.source_document_reference,
-      item.pse_tin?.replace(/\D/g, "") || item.pse_name.trim(),
-      item.recipient_tin?.replace(/\D/g, "") ?? null,
-      item.account_number?.trim() || null,
-    ]);
+    const key = item.source_document_reference;
     if (seen.has(key)) return index;
     seen.add(key);
   }
@@ -510,7 +505,7 @@ export const inputSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["f1099ks", repeatedReferenceIndex],
       message:
-        "1099-K repeats the same issued source reference and account; corrected copies need one reviewed current row",
+        "1099-K repeats the same issued source reference; corrected copies need one reviewed current row",
     });
   }
   const ambiguousIndex = ambiguousUnidentifiedCopyIndex(f1099ks);

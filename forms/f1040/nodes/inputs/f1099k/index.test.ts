@@ -774,7 +774,21 @@ Deno.test("1099-K issued reference rejects changed boxes without an account", ()
   assertThrows(
     () => compute([issued, changed]),
     Error,
-    "repeats the same issued source reference and account",
+    "repeats the same issued source reference",
+  );
+  assertThrows(
+    () =>
+      compute([
+        issued,
+        hobbyItem(150, {
+          pse_name: "Other processor",
+          pse_tin: "234567890",
+          account_number: "merchant-2",
+          source_document_reference: "processor-issued-copy",
+        }),
+      ]),
+    Error,
+    "repeats the same issued source reference",
   );
   compute([
     issued,
