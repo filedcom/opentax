@@ -1710,3 +1710,13 @@ prints it on Schedule D line 13, and joins $1,179 of net capital gain to Form
 The 34 focused native Schedule D cases, one physical Form 8814/Schedule D/Form
 1040 PDF source/print case, and the selected full-return TY2025 v5.4 XSD case
 passed on this head. The full bulk and all-page visual review remain open.
+
+## Two elected children with Schedule D (2026-10-04)
+
+A second reviewed Form 8814 child record was added to the single-child
+Schedule D source fixture in a focused return test. The graph retains two
+separate child identities and Form 8814 documents, combines $179 from each on
+Schedule D line 13, adds the existing $1,000 share sale to Form 1040 line 7a,
+and projects two child PDF copies plus the $358 Schedule D amount and dotted
+note. The full native return passes the local TY2025 v5.4 XSD. The physical
+two-child pages and issuer-source bytes remain outside this test.

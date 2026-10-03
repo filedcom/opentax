@@ -13,6 +13,8 @@ import { normalizeAllPending } from "../../pending.ts";
 import { fillFormPdf } from "../builder.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { irs1040Pdf } from "./f1040.ts";
+import { form8814Pdf } from "./f8814.ts";
+import { scheduleDPdf } from "./schedule_d.ts";
 
 Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
@@ -100,4 +102,65 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
   } finally {
     await Deno.remove(temp, { recursive: true });
   }
+});
+
+Deno.test("two elected children retain two Form 8814 copies and one Schedule D gain total", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-form8814-child-gain-with-schedule-d"
+  );
+  if (!fixture) throw new Error("Missing Form 8814 Schedule D fixture");
+  const [first] = (fixture.inputs as Record<string, unknown>).f8814 as Record<
+    string,
+    unknown
+  >[];
+  const second = {
+    ...first,
+    child_name: "Morgan Example",
+    child_ssn: "333-44-5555",
+    source_review: {
+      ...(first.source_review as Record<string, unknown>),
+      child_ssn: "333-44-5555",
+      source_document_reference: "reviewed-morgan-interest-gain-packet",
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs, f8814: [first, second] },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule_d?.line13_form8814, 358);
+  assertEquals(pending.schedule_d?.print_line13_cap_gain_distrib, 358);
+  assertEquals(pending.f1040?.line7_capital_gain, 1_358);
+  const xml = buildMefXml(pending, fixture.filer);
+  assertStringIncludes(
+    xml,
+    "<CapitalGainDistributionsAmt>358</CapitalGainDistributionsAmt>",
+  );
+  assertEquals((xml.match(/<IRS8814 /g) ?? []).length, 2);
+  const normalized = normalizeAllPending(result.pending);
+  const projected = irs1040Pdf.projectFields?.(
+    normalized.f1040,
+    normalized,
+  );
+  assertEquals(projected?.print_form8814_line7a_included, true);
+  assertEquals(projected?.print_form8814_line7b_amount, 358);
+  assertEquals(projected?.line7a_cap_gain_distrib, undefined);
+  const childCopies = form8814Pdf.instances?.(
+    normalized.form8814,
+    fixture.filer,
+  ) ?? [];
+  assertEquals(childCopies.length, 2);
+  assertEquals(
+    childCopies.map((copy) => copy.child_ssn),
+    ["222-33-4444", "333-44-5555"],
+  );
+  const scheduleD = scheduleDPdf.projectFields?.(
+    normalized.schedule_d,
+    normalized,
+  );
+  assertEquals(scheduleD?.print_line13_cap_gain_distrib, 358);
+  assertEquals(scheduleD?.print_form8814_line13_note, "Form 8814 $358");
 });
