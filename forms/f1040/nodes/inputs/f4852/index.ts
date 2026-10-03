@@ -30,6 +30,17 @@ export const itemSchema = z.object({
   // Payer/employer identification
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
+  payer_address_line1: z.string().trim().min(1).optional(),
+  payer_address_city: z.string().trim().min(1).optional(),
+  payer_address_state: z.string().trim().min(1).optional(),
+  payer_address_zip: z.string().trim().min(1).optional(),
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  form_year: z.literal(2025).optional(),
+  missing_or_incorrect: z.enum(["missing", "incorrect"]).optional(),
+  amount_determination_explanation: z.string().trim().min(1).optional(),
+  payer_form_efforts_explanation: z.string().trim().min(1).optional(),
+  source_workpaper_reference: z.string().trim().min(1).optional(),
+  completed_form_review_reference: z.string().trim().min(1).optional(),
 
   // Part I fields — substitute for W-2 (used when form_type === W2)
   // Line 7a: wages, tips, other compensation (W-2 box 1)
@@ -42,18 +53,25 @@ export const itemSchema = z.object({
   // W-2 box 4: social security tax withheld — flows to Schedule 3 excess FICA credit
   social_security_withheld: z.number().nonnegative().optional()
     .describe("Social security tax withheld (W-2 box 4)"),
+  social_security_tips: z.number().nonnegative().optional(),
   // W-2 box 5: Medicare wages and tips — subject to Medicare/FICA tax (no wage base cap)
   medicare_wages: z.number().nonnegative().optional()
     .describe("Medicare wages and tips (W-2 box 5)"),
   // W-2 box 6: Medicare tax withheld — flows to SE/FICA credit; also used for RRTA
   medicare_withheld: z.number().nonnegative().optional()
     .describe("Medicare tax withheld (W-2 box 6)"),
+  state_tax_withheld: z.number().nonnegative().optional(),
+  state_name: z.string().trim().min(1).optional(),
+  local_tax_withheld: z.number().nonnegative().optional(),
+  locality_name: z.string().trim().min(1).optional(),
 
   // Part II fields — substitute for 1099-R (used when form_type === R_1099)
   // Line 8a: gross distribution (1099-R box 1)
   gross_distribution: z.number().nonnegative().optional(),
   // Line 8b: taxable amount (1099-R box 2a); if omitted, treated as equal to gross_distribution
   taxable_amount: z.number().nonnegative().optional(),
+  taxable_amount_not_determined: z.boolean().optional(),
+  total_distribution: z.boolean().optional(),
   // Line 8c: federal income tax withheld (1099-R box 4) — shared field name with Part I
   // (only one part is active per item, so reusing federal_withheld above is intentional)
   // Line 8e: IRA/SEP/SIMPLE checkbox (1099-R box 7 IRA flag)
@@ -105,6 +123,14 @@ export const itemSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: "Code-1 substitute 1099-R needs the Form 5329 recipient",
         path: ["subject_ts"],
+      });
+    }
+    if (val.taxable_amount_not_determined && val.taxable_amount !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Form 4852 line 8 cannot specify a taxable amount and mark it undetermined",
+        path: ["taxable_amount_not_determined"],
       });
     }
   }

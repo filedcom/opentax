@@ -52,3 +52,18 @@ substitute Form 4852 route. A separate altered 1099-R case emitted `N`,
 validated against the local TY2025 v5.4 XSD, printed its $20,000 gross
 pension on Form 1040, and rejected an unidentified copy in both exporters.
 It likewise does not authenticate payer-issued bytes or open Form 4852.
+
+A separate, unregistered retained-copy projector now fills page 1 of the
+official Form 4852 from a reviewed item. The item can carry the recipient SSN,
+tax year, missing/incorrect status, payer address, amount-determination and
+contact explanations, source-workpaper reference, and completed-form review
+reference. The projector requires an identified taxpayer or joint spouse,
+checks the recipient SSN against the filed identity, and prints the distinct
+W-2 or 1099-R amounts and withholding in their actual AcroForm fields. It
+rejects missing review facts, a 1099-R without a distribution code, and a
+contribution-basis case whose current calculation does not establish the
+printed taxable amount. A focused test fills the IRS PDF and extracts the
+printed owner, payer, wages, withholding, and explanations. These references
+are typed identifiers, not authenticated retained bytes. The projector is not
+registered in final packet export; the existing Form 4852 native/PDF guards
+remain in force pending the source record, retention, basis, and MeF route.
