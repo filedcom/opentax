@@ -65,10 +65,13 @@ contact explanations, source-workpaper reference, and completed-form review
 reference. The projector requires an identified taxpayer or joint spouse,
 checks the recipient SSN against the filed identity, and prints the distinct
 W-2 or 1099-R amounts and withholding in their actual AcroForm fields. It
-rejects missing review facts, a 1099-R without a distribution code, and a
-contribution-basis case whose current calculation does not establish the
-printed taxable amount. A focused test fills the IRS PDF and extracts the
-printed owner, payer, wages, withholding, and explanations. These references
+rejects missing review facts and a 1099-R without a distribution code. An
+explicit line 8b taxable amount is already net of basis and is no longer
+reduced again by line 8i employee contributions; when line 8b is absent, the
+bounded estimate subtracts those contributions once from gross. The same
+calculation prints on the retained PDF. Official PDF tests extract the W-2
+owner, payer, wages, withholding, and explanations and the 1099-R gross,
+taxable, and contribution amounts. These references
 are typed identifiers, not authenticated retained bytes. The projector is not
 registered in final packet export; the existing Form 4852 native/PDF guards
 remain in force pending the source record, retention, basis, and MeF route.

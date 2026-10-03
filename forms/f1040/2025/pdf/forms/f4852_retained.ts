@@ -1,4 +1,8 @@
-import { FormType, itemSchema } from "../../../nodes/inputs/f4852/index.ts";
+import {
+  effectiveTaxable,
+  FormType,
+  itemSchema,
+} from "../../../nodes/inputs/f4852/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
@@ -135,14 +139,6 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
           "Form 4852 retained 1099-R PDF needs a distribution code",
         );
       }
-      if (
-        item.form_type === FormType.R_1099 &&
-        (item.employee_contributions ?? 0) > 0
-      ) {
-        throw new Error(
-          "Form 4852 retained 1099-R PDF needs taxable-basis reconciliation",
-        );
-      }
       const recipientSsn = item.subject_ts === "S"
         ? filer.filingStatus === FilingStatus.MarriedFilingJointly
           ? filer.spouse?.ssn
@@ -193,7 +189,7 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
           gross_distribution: item.gross_distribution,
           taxable_amount: item.taxable_amount_not_determined
             ? undefined
-            : item.taxable_amount ?? item.gross_distribution,
+            : effectiveTaxable(item),
           taxable_amount_not_determined: item.taxable_amount_not_determined,
           total_distribution: item.total_distribution,
           capital_gain: item.capital_gain,

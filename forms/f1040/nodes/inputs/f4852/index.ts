@@ -133,6 +133,30 @@ export const itemSchema = z.object({
         path: ["taxable_amount_not_determined"],
       });
     }
+    if (
+      val.taxable_amount !== undefined &&
+      val.gross_distribution !== undefined &&
+      val.taxable_amount > val.gross_distribution
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Form 4852 taxable distribution cannot exceed its gross distribution",
+        path: ["taxable_amount"],
+      });
+    }
+    if (
+      val.employee_contributions !== undefined &&
+      val.gross_distribution !== undefined &&
+      val.employee_contributions > val.gross_distribution
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Form 4852 employee contributions cannot exceed gross distribution",
+        path: ["employee_contributions"],
+      });
+    }
   }
 });
 
@@ -164,13 +188,15 @@ function pensionItems(items: F4852Items): F4852Items {
   return r1099Items(items).filter((item) => item.is_ira !== true);
 }
 
-// Effective taxable amount for a single 1099-R substitute item.
-// Reduces by employee_contributions (already-taxed basis returned to taxpayer).
-// Defaults to gross_distribution if taxable_amount not specified.
-function effectiveTaxable(item: F4852Item): number {
-  const raw = item.taxable_amount ?? item.gross_distribution ?? 0;
-  const basis = item.employee_contributions ?? 0;
-  return Math.max(0, raw - basis);
+// Line 8b is already the taxable amount when supplied. When the filer must
+// estimate it from gross, subtract previously taxed employee contributions
+// once. Both the calculation and retained copy use this projection.
+export function effectiveTaxable(item: F4852Item): number {
+  if (item.taxable_amount !== undefined) return item.taxable_amount;
+  return Math.max(
+    0,
+    (item.gross_distribution ?? 0) - (item.employee_contributions ?? 0),
+  );
 }
 
 // Build f1040 fields for W-2 substitutes → line1a and line25a

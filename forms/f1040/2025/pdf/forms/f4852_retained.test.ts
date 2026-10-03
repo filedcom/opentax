@@ -103,17 +103,32 @@ Deno.test("retained Form 4852 refuses mismatched owner and incomplete evidence",
     Error,
     "distribution code",
   );
+  const basis = {
+    ...source,
+    form_type: "R_1099",
+    gross_distribution: 1000,
+    distribution_code: "7",
+    employee_contributions: 100,
+  };
+  assertEquals(project(basis)?.[0]?.taxable_amount, 900);
+  assertEquals(
+    project({ ...basis, taxable_amount: 900 })?.[0]?.taxable_amount,
+    900,
+  );
+  assertEquals(
+    project({ ...basis, taxable_amount_not_determined: true })?.[0]
+      ?.taxable_amount,
+    undefined,
+  );
   assertThrows(
     () =>
       project({
-        ...source,
-        form_type: "R_1099",
-        gross_distribution: 1000,
-        distribution_code: "7",
-        employee_contributions: 100,
+        ...basis,
+        taxable_amount: 900,
+        taxable_amount_not_determined: true,
       }),
     Error,
-    "taxable-basis reconciliation",
+    "Form 4852 line 8",
   );
 });
 
@@ -147,6 +162,47 @@ Deno.test("retained Form 4852 fills the official PDF's owner, wages, payer, and 
         "Requested original and called payer",
       ]
     ) {
+      if (!printed.includes(expected)) {
+        throw new Error(`Form 4852 PDF did not print ${expected}`);
+      }
+    }
+  } finally {
+    await Deno.remove(cacheDir, { recursive: true });
+  }
+});
+
+Deno.test("retained Form 4852 prints the 1099-R taxable amount without a second basis reduction", async () => {
+  const cacheDir = await Deno.makeTempDir();
+  try {
+    const [fields] = form4852RetainedPdf.instances?.({
+      f4852s: [{
+        ...source,
+        form_type: "R_1099",
+        subject_ts: "T",
+        recipient_ssn: "123456789",
+        payer_name: "Example Pension",
+        gross_distribution: 20_000,
+        taxable_amount: 18_000,
+        employee_contributions: 2_000,
+        distribution_code: "7",
+      }],
+    }, filer) ?? [];
+    assertEquals(fields.taxable_amount, 18_000);
+    const bytes = await fillFormPdf(
+      form4852RetainedPdf,
+      fields,
+      filer,
+      cacheDir,
+    );
+    if (!bytes) throw new Error("Expected filled Form 4852 PDF");
+    const path = `${cacheDir}/form4852-pension.pdf`;
+    await Deno.writeFile(path, bytes);
+    const output = await new Deno.Command("pdftotext", {
+      args: ["-f", "1", "-l", "1", "-layout", path, "-"],
+    }).output();
+    assertEquals(output.code, 0);
+    const printed = new TextDecoder().decode(output.stdout);
+    for (const expected of ["Example Pension", "20000", "18000", "2000"]) {
       if (!printed.includes(expected)) {
         throw new Error(`Form 4852 PDF did not print ${expected}`);
       }
