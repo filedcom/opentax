@@ -303,6 +303,26 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
     source,
     filer,
   );
+  const typedReview = {
+    kind: "typed" as const,
+    source_document_reference: source.f1099rs[0].source_document_reference,
+    reviewer_confirmed_nonstandard: true as const,
+  };
+  assertThrows(
+    () =>
+      verifyCurrentYearDistributionSource(
+        itemSchema.parse(reviewed2025Plan),
+        {
+          f1099rs: [{
+            ...source.f1099rs[0],
+            nonstandard_document_review: typedReview,
+          }],
+        },
+        filer,
+      ),
+    Error,
+    "matching fully taxable Form 1099-R",
+  );
   const ira = itemSchema.parse({
     ...reviewed2025Plan,
     retirement_source_kind: "traditional_ira",
@@ -373,6 +393,24 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
       filer,
     ),
     { planGross: 1_000, iraGross: 0 },
+  );
+  assertThrows(
+    () =>
+      verifyCurrentYearDistributionSource(
+        withOrdinary,
+        {
+          f1099rs: [source.f1099rs[0], {
+            ...ordinary,
+            nonstandard_document_review: {
+              ...typedReview,
+              source_document_reference: ordinary.source_document_reference,
+            },
+          }],
+        },
+        filer,
+      ),
+    Error,
+    "one reviewed ordinary nonqualified distribution",
   );
   assertThrows(
     () =>

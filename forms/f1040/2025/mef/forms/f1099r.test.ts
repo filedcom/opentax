@@ -112,6 +112,41 @@ Deno.test("altered 1099-R uses nonstandard code N with a retained payer copy", (
   );
 });
 
+Deno.test("reviewed typed 1099-R emits code N only for its matching payer copy", () => {
+  const source = {
+    ...items()[0],
+    source_document_reference: "2025 typed pension copy",
+    nonstandard_document_review: {
+      kind: "typed" as const,
+      source_document_reference: "2025 typed pension copy",
+      reviewer_confirmed_nonstandard: true as const,
+    },
+  };
+  const [xml] = f1099r.build({ f1099rs: [source] }, { filer });
+  assertStringIncludes(
+    xml,
+    "<StandardOrNonStandardCd>N</StandardOrNonStandardCd>",
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      nonstandard_document_review: {
+        ...source.nonstandard_document_review,
+        source_document_reference: "different copy",
+      },
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f1099r.build({
+        f1099rs: [{ ...source, source_document_reference: "different copy" }],
+      }, { filer }),
+    Error,
+    "1099-R owner review needs valid payer source rows",
+  );
+});
+
 Deno.test("1099-R MeF export rejects incomplete source addresses", () => {
   const [first] = items();
   assertThrows(

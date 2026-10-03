@@ -58,6 +58,16 @@ function build1099R(
   if (item.altered_or_handwritten === true && !item.source_document_reference) {
     throw new Error("Nonstandard 1099-R needs a retained payer-copy reference");
   }
+  if (
+    item.nonstandard_document_review &&
+    (!item.source_document_reference ||
+      item.nonstandard_document_review.source_document_reference !==
+        item.source_document_reference)
+  ) {
+    throw new Error(
+      "Nonstandard 1099-R review must match the retained payer-copy reference",
+    );
+  }
   const filer = context.filer;
   if (!filer) {
     throw new Error(
@@ -160,7 +170,9 @@ function build1099R(
       : "",
     element(
       "StandardOrNonStandardCd",
-      item.altered_or_handwritten === true ? "N" : "S",
+      item.altered_or_handwritten === true || item.nonstandard_document_review
+        ? "N"
+        : "S",
     ),
   ]);
 }

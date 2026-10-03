@@ -24,7 +24,7 @@ locally cached TY2025 v5.4 W-2 and 1099-R schemas have an `N`/`S`
 `StandardOrNonStandardCd`. An ordinary issued W-2 now emits `N` when its
 altered, handwritten, or typed status has a matching reviewed source-copy
 reference. An ordinary issued 1099-R now also emits `N` for an identified
-altered or handwritten payer copy; the Form 4852 input still produces neither
+altered, handwritten, or typed payer copy; the Form 4852 input still produces neither
 source document. The [IRS TY2025
 accepted-form and attachment listings](https://www.irs.gov/tax-professionals/tax-year-2025-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions)
 do not list a separate Form 4852 MeF root or recommended PDF name. That
@@ -52,6 +52,11 @@ substitute Form 4852 route. A separate altered 1099-R case emitted `N`,
 validated against the local TY2025 v5.4 XSD, printed its $20,000 gross
 pension on Form 1040, and rejected an unidentified copy in both exporters.
 It likewise does not authenticate payer-issued bytes or open Form 4852.
+A reviewed typed 1099-R also emits `N` only when its review names the same
+retained payer-copy reference. A $20,000 typed direct pension rollover reached
+Form 1040, TY2025 v5.4 XSD-valid XML, and a filled PDF; changed references
+reject. Form 8915-F's ordinary-source matcher excludes this nonstandard copy
+until that source route is separately reviewed.
 
 A separate, unregistered retained-copy projector now fills page 1 of the
 official Form 4852 from a reviewed item. The item can carry the recipient SSN,

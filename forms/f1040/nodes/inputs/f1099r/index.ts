@@ -477,6 +477,11 @@ export const itemSchema = z.object({
 
   // Miscellaneous flags
   altered_or_handwritten: z.boolean().optional(),
+  nonstandard_document_review: z.object({
+    kind: z.enum(["altered", "handwritten", "typed"]),
+    source_document_reference: z.string().trim().min(1),
+    reviewer_confirmed_nonstandard: z.literal(true),
+  }).strict().optional(),
   no_distribution_received: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   if (item.altered_or_handwritten === true && !item.source_document_reference) {
@@ -484,6 +489,18 @@ export const itemSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["source_document_reference"],
       message: "Nonstandard 1099-R needs a retained payer-copy reference",
+    });
+  }
+  if (
+    item.nonstandard_document_review &&
+    item.nonstandard_document_review.source_document_reference !==
+      item.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["nonstandard_document_review", "source_document_reference"],
+      message:
+        "Nonstandard 1099-R review must match the retained payer-copy reference",
     });
   }
 });
