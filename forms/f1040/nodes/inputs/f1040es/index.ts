@@ -27,8 +27,11 @@ const jointPaymentRowSchema = z.object({
   payment_date: z.string().date(),
   payment_record_reference: reference,
 }).strict();
+const mfsJointPaymentRowSchema = jointPaymentRowSchema.omit({
+  former_spouse_allocated_amount: true,
+}).extend({ spouse_allocated_amount: z.number().int().nonnegative() }).strict();
 
-const jointAllocationSchema = z.object({
+const divorcedJointAllocationSchema = z.object({
   allocation_method: z.literal("signed_mutual_agreement"),
   divorce_date_2025: z.string().date().refine((value) =>
     value.startsWith("2025-")
@@ -42,6 +45,20 @@ const jointAllocationSchema = z.object({
   signed_agreement_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   payments: z.array(jointPaymentRowSchema).min(1).max(4),
 }).strict();
+const mfsJointAllocationSchema = z.object({
+  allocation_method: z.literal("signed_mutual_agreement"),
+  filing_context: z.literal("married_filing_separately"),
+  taxpayer_ssn: ssn,
+  spouse_ssn: ssn,
+  agreement_signed_by_both_verified: z.literal(true),
+  signed_agreement_reference: reference,
+  signed_agreement_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  payments: z.array(mfsJointPaymentRowSchema).min(1).max(4),
+}).strict();
+const jointAllocationSchema = z.union([
+  divorcedJointAllocationSchema,
+  mfsJointAllocationSchema,
+]);
 
 export const inputSchema = z.object({
   // Q1 payment (due ~April 15 for current year)
@@ -81,7 +98,7 @@ export const inputSchema = z.object({
   joint_estimated_payment_allocation: jointAllocationSchema.optional(),
 });
 
-/** Strict signed-agreement route for divorced filers' joint 2025 payments. */
+/** Reconcile signed allocations of joint 2025 payments for separate filers. */
 export function reviewedJointAllocation(
   input: z.infer<typeof inputSchema>,
 ): z.infer<typeof jointAllocationSchema> | undefined {
@@ -93,8 +110,11 @@ export function reviewedJointAllocation(
     );
   }
   const taxpayerSsn = review.taxpayer_ssn.replaceAll("-", "");
-  const formerSsn = review.former_spouse_ssn.replaceAll("-", "");
-  if (taxpayerSsn === formerSsn) {
+  const otherSsn =
+    ("former_spouse_ssn" in review
+      ? review.former_spouse_ssn
+      : review.spouse_ssn).replaceAll("-", "");
+  if (taxpayerSsn === otherSsn) {
     throw new Error(
       "Form 1040 line 26 joint payments need distinct spouse SSNs",
     );
@@ -117,18 +137,22 @@ export function reviewedJointAllocation(
     const row = byQuarter.get(quarter);
     if (
       row !== undefined &&
-      (row.payment_date > review.divorce_date_2025 ||
+      (("divorce_date_2025" in review &&
+        row.payment_date > review.divorce_date_2025) ||
         (input[`payment_${quarter}_date`] !== undefined &&
           input[`payment_${quarter}_date`] !== row.payment_date))
     ) {
       throw new Error(
-        "Form 1040 line 26 joint payment date must precede the 2025 divorce and match its quarter record",
+        "Form 1040 line 26 joint payment date must match its quarter record and precede divorce when applicable",
       );
     }
     if (
       (row?.taxpayer_allocated_amount ?? 0) !== amount ||
       (row !== undefined &&
-        row.taxpayer_allocated_amount + row.former_spouse_allocated_amount !==
+        row.taxpayer_allocated_amount +
+              ("former_spouse_allocated_amount" in row
+                ? row.former_spouse_allocated_amount
+                : row.spouse_allocated_amount) !==
           row.joint_payment_amount)
     ) {
       throw new Error(

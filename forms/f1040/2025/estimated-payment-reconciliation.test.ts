@@ -2,7 +2,10 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "./mef/forms/f1040.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
 import { estimatedPaymentTotal } from "../nodes/inputs/f1040es/index.ts";
-import { agreedJointPayment } from "../nodes/inputs/f1040es/agreed-payment.fixture.ts";
+import {
+  agreedJointPayment,
+  agreedMfsJointPayment,
+} from "../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 
 const source = {
   payment_q1: 400,
@@ -80,6 +83,50 @@ Deno.test("2025 agreed joint estimated payment prints former spouse SSN on nativ
     assertThrows(
       () => irs1040Pdf.projectFields?.(exportFields, jointPending),
       Error,
+    );
+  }
+});
+
+Deno.test("signed MFS joint payment uses current spouse identity without former-spouse line 26 mark", () => {
+  const mfsFiled = {
+    filing_status: "mfs",
+    taxpayer_ssn: "111223333",
+    spouse_ssn: "222334444",
+    line26_estimated_tax: 300,
+  };
+  const mfsPending = {
+    general: {
+      filing_status: "mfs",
+      taxpayer_ssn: "111-22-3333",
+      spouse_ssn: "222-33-4444",
+    },
+    f1040es: agreedMfsJointPayment,
+  };
+  assertEquals(estimatedPaymentTotal(agreedMfsJointPayment), 300);
+  const xml = irs1040.build(mfsFiled, { pending: mfsPending });
+  assertStringIncludes(
+    xml,
+    "<EstimatedTaxPaymentsAmt>300</EstimatedTaxPaymentsAmt>",
+  );
+  assertEquals(xml.includes("divorcedSpouseSSN"), false);
+  const printed = irs1040Pdf.projectFields?.(mfsFiled, mfsPending);
+  assertEquals(printed?.print_former_spouse_estimated_tax_ssn, undefined);
+  for (
+    const changed of [
+      { ...mfsFiled, filing_status: "single" },
+      { ...mfsFiled, spouse_ssn: "999887777" },
+      { ...mfsFiled, taxpayer_ssn: "999887777" },
+    ]
+  ) {
+    assertThrows(
+      () => irs1040.build(changed, { pending: mfsPending }),
+      Error,
+      "joint MFS allocation needs both current spouse identities",
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(changed, mfsPending),
+      Error,
+      "joint MFS allocation needs both current spouse identities",
     );
   }
 });

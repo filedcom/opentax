@@ -23,3 +23,25 @@ export const agreedJointPayment = {
     }],
   },
 };
+
+/** Two current spouses filing separately agree to divide one 2025 payment. */
+export const agreedMfsJointPayment = {
+  payment_q1: 300,
+  joint_estimated_payment_allocation: {
+    allocation_method: "signed_mutual_agreement" as const,
+    filing_context: "married_filing_separately" as const,
+    taxpayer_ssn: "111-22-3333",
+    spouse_ssn: "222-33-4444",
+    agreement_signed_by_both_verified: true as const,
+    signed_agreement_reference: "Synthetic signed 2025 MFS payment allocation",
+    signed_agreement_pdf_sha256: "b".repeat(64),
+    payments: [{
+      quarter: "q1" as const,
+      joint_payment_amount: 500,
+      taxpayer_allocated_amount: 300,
+      spouse_allocated_amount: 200,
+      payment_date: "2025-04-15",
+      payment_record_reference: "Synthetic IRS 2025 joint Q1 payment",
+    }],
+  },
+};

@@ -61,6 +61,22 @@ export function assertEstimatedPaymentLine26(
   }
   const general = pending?.general as Record<string, unknown> | undefined;
   const taxpayerSsn = String(general?.taxpayer_ssn ?? "").replaceAll("-", "");
+  if ("filing_context" in review) {
+    const spouseSsn = review.spouse_ssn.replaceAll("-", "");
+    if (
+      fields.filing_status !== "mfs" ||
+      general?.filing_status !== "mfs" ||
+      taxpayerSsn !== review.taxpayer_ssn.replaceAll("-", "") ||
+      String(fields.taxpayer_ssn ?? "").replaceAll("-", "") !== taxpayerSsn ||
+      String(fields.spouse_ssn ?? "").replaceAll("-", "") !== spouseSsn ||
+      String(general?.spouse_ssn ?? "").replaceAll("-", "") !== spouseSsn
+    ) {
+      throw new Error(
+        "Form 1040 line 26 joint MFS allocation needs both current spouse identities",
+      );
+    }
+    return;
+  }
   const formerSsn = review.former_spouse_ssn.replaceAll("-", "");
   if (
     !["single", "hoh"].includes(String(fields.filing_status)) ||
