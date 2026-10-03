@@ -394,6 +394,14 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
         "Schedule 1 source needs its TY2025 line identity and required supporting facts before MeF export",
       );
     }
-    return buildIRS1040Schedule1(fields, context);
+    // The graph calculates both totals as zero on an ordinary wage-only
+    // return. They do not create a Schedule 1 filing instance by themselves.
+    // Keep any explicit source key, including a zero unemployment source line.
+    const onlyComputedZeroTotals = Object.entries(fields).every(
+      ([key, value]) =>
+        (key === "line10_total_additional_income" ||
+          key === "line26_total_adjustments") && value === 0,
+    );
+    return onlyComputedZeroTotals ? "" : buildIRS1040Schedule1(fields, context);
   },
 };
