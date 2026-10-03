@@ -16,6 +16,7 @@ import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { irs1040Pdf } from "./pdf/forms/f1040.ts";
 import { scheduleDPdf } from "./pdf/forms/schedule_d.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
 const general = {
   filing_status: FilingStatus.MFJ,
@@ -279,6 +280,42 @@ Deno.test("broker transaction IDs survive into Schedule D and both final exporte
     "Schedule D sale differs from retained 1099-B or direct Form 8949 source";
   assertThrows(() => buildMefXml(changed, filer), Error, message);
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("1099-K personal sales keep zero-gain source rows in Schedule D", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-k-personal-gain-loss"
+  )!;
+  const result = f1040_2025.executeReturn(fixture.inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertCapitalSaleSourceRows(pending);
+  const changed = structuredClone(pending);
+  const schedule = changed.schedule_d as unknown as {
+    transaction: { source_transaction_id?: string }[];
+  };
+  const before = schedule.transaction.length;
+  schedule.transaction = schedule.transaction.filter((row) =>
+    !row.source_transaction_id?.includes("chair-loss-2025")
+  );
+  assertEquals(schedule.transaction.length, before - 1);
+  const message =
+    "Schedule D sale differs from retained 1099-B, 1099-K, or direct Form 8949 source";
+  assertThrows(() => buildMefXml(changed, fixture.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(changed, fixture.filer),
+    Error,
+    message,
+  );
+});
+
+Deno.test("1099-K nonbusiness receipts do not require Schedule D", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-k-blank-tin-withholding"
+  )!;
+  const result = f1040_2025.executeReturn(fixture.inputs);
+  assertEquals(result.diagnostics, []);
+  assertCapitalSaleSourceRows(buildPending(result.pending));
 });
 
 Deno.test("final exports reject a second zero-gain copy of one broker sale", async () => {

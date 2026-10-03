@@ -7,6 +7,10 @@ import {
   inputSchema as saleSchema,
 } from "../nodes/inputs/f8949/index.ts";
 import {
+  f1099k,
+  inputSchema as paymentSettlementSchema,
+} from "../nodes/inputs/f1099k/index.ts";
+import {
   inputSchema as scheduleDSchema,
 } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 import {
@@ -49,10 +53,10 @@ export function assertNoRepeatedBrokerSaleSources(
 export function assertCapitalSaleSourceRows(
   pending: Readonly<Record<string, unknown>>,
 ): void {
-  if (pending.f1099b === undefined && pending.f8949 === undefined) return;
-  if (pending.schedule_d === undefined) {
-    throw new Error("Broker and direct Form 8949 sales need Schedule D");
-  }
+  if (
+    pending.f1099b === undefined && pending.f8949 === undefined &&
+    pending.f1099k === undefined
+  ) return;
   const context = { taxYear: 2025, formType: "f1040" };
   const expected = [
     ...(pending.f1099b === undefined ? [] : f1099b.compute(
@@ -63,14 +67,25 @@ export function assertCapitalSaleSourceRows(
       context,
       saleSchema.parse(pending.f8949),
     ).outputs),
+    ...(pending.f1099k === undefined ? [] : f1099k.compute(
+      context,
+      paymentSettlementSchema.parse(pending.f1099k),
+    ).outputs),
   ].filter((row) => row.nodeType === "form8949")
     .map((row) => transactionSchema.parse(row.fields.transaction));
+  if (expected.length === 0) return;
+  if (pending.schedule_d === undefined) {
+    throw new Error("Retained capital sales need Schedule D");
+  }
   const schedule = scheduleDSchema.parse(pending.schedule_d);
   const actual = schedule.transaction === undefined
     ? []
     : Array.isArray(schedule.transaction)
     ? schedule.transaction
     : [schedule.transaction];
+  const sourceLabel = pending.f1099k === undefined
+    ? "1099-B or direct Form 8949"
+    : "1099-B, 1099-K, or direct Form 8949";
   const key = (row: {
     part: string;
     description: string;
@@ -117,14 +132,14 @@ export function assertCapitalSaleSourceRows(
     const count = counts.get(id) ?? 0;
     if (count === 0) {
       throw new Error(
-        "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
+        `Schedule D sale differs from retained ${sourceLabel} source`,
       );
     }
     counts.set(id, count - 1);
   }
   if (expected.some((row) => (counts.get(key(row)) ?? 0) !== 0)) {
     throw new Error(
-      "Schedule D repeats a retained 1099-B or direct Form 8949 sale",
+      `Schedule D repeats a retained ${sourceLabel} sale`,
     );
   }
 }
