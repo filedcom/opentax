@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-03)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1077 bounded completed slices are recorded in the
+inside** that section. The 1078 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The local suite passed; wider route evidence and human page review remain open. |
+| Automated and artifact validation | 5 | The 11,028-test local suite passed; wider route evidence and human page review remain open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -33,9 +33,10 @@ current fixtures.
 The live inventory has 149 native MeF descriptors, 116 PDF descriptors, and 211
 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 10,891/10,891 at
-`637dace9` on 2026-10-03, including 178 filled-PDF/XML fixtures. CLI type
-check, native compilation, and a synthetic W-2 → MeF → PDF smoke also passed.
+**Validation and release.** `deno task test` passed 11,028/11,028 at
+`a942dee4` on 2026-10-03, including 179 source-fixture XML/XSD cases. CLI type
+check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
+earlier checkpoints.
 The attachment-aware TY2025 fixture/XML/XSD file passed 178/178 again at
 `8149198a` after the newer source guards.
 [CLI v2.0.6](https://github.com/filedcom/opentax/releases/tag/v2.0.6) is

@@ -33,6 +33,19 @@ the earlier 1099-INT/1040 source guard rejected it. The corrected assertion
 passed a focused rerun. This complete diagnostic is still a failed gate;
 the final full rerun must pass before claiming local batch stability.
 
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` rerun at `a942dee4`
+completed on 2026-10-03 14:52 UTC in 50m44s: **11,028 passed, zero failed**,
+with no ignored tests reported. All 179 source-fixture XML/XSD cases passed.
+It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3), `xmllint`
+libxml 2.9.13, and Poppler 26.09.0. The isolated worktree accessed the
+locally cached TY2025 v5.4 schema through an ignored link and ran Poppler
+through a local launcher on `PATH`. The local log is
+`.state/research/ty2025-full-test-a942dee4.log` (SHA-256
+`28ac90f14f15ab02ec080f61a88c0cac663d52c1de04eebd7ce92011049dd626`).
+This is a passing local automated gate for tested routes. Complete source and
+form coverage, human page review, IRS business rules, ATS acceptance, and a
+filing-ready release remain open.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
