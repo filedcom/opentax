@@ -12,7 +12,7 @@ import type {
  * Builds the engine input map from stored inputs.
  *
  * @param inputs - The stored inputs from return.json
- * @param singletonNodeTypes - Set of node types that are singletons (isArray: false).
+ * @param singletonNodeTypes - Set of public input keys that are singletons (isArray: false).
  *   Singleton nodes are passed as a single object to the start node, not as an array.
  *   Array nodes are passed as an array of objects.
  */

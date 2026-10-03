@@ -20,7 +20,7 @@ function getCatalogEntry(formType: string, year: number) {
 
 function getUserInputSchema(def: FormDefinition, nodeType: string) {
   const entry = def.inputNodes.find((candidate) =>
-    candidate.node.nodeType === nodeType
+    (candidate.inputKey ?? candidate.node.nodeType) === nodeType
   );
   if (entry) return entry.isArray ? entry.itemSchema : entry.inputSchema;
 
@@ -82,8 +82,12 @@ export async function formAddCommand(
   const meta = await loadMeta(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
 
-  const node = def.registry[args.nodeType];
-  if (!node) {
+  if (
+    args.nodeType !== "start" &&
+    !def.inputNodes.some((entry) =>
+      (entry.inputKey ?? entry.node.nodeType) === args.nodeType
+    )
+  ) {
     throw new Error(`Unknown node type: ${args.nodeType}`);
   }
 
@@ -132,7 +136,7 @@ export type FormGetArgs = {
   readonly baseDir: string;
 };
 
-export async function formGetCommand(
+export function formGetCommand(
   args: FormGetArgs,
 ): Promise<FormListEntry> {
   const returnPath = join(args.baseDir, args.returnId);
@@ -170,8 +174,12 @@ export async function formUpdateCommand(
   // Find the existing entry to determine its nodeType for validation
   const existing = await getInput(returnPath, args.entryId);
 
-  const node = def.registry[existing.nodeType];
-  if (!node) {
+  if (
+    existing.nodeType !== "start" &&
+    !def.inputNodes.some((entry) =>
+      (entry.inputKey ?? entry.node.nodeType) === existing.nodeType
+    )
+  ) {
     throw new Error(`Unknown node type: ${existing.nodeType}`);
   }
 
@@ -198,7 +206,7 @@ export type FormDeleteResult = {
   readonly nodeType: string;
 };
 
-export async function formDeleteCommand(
+export function formDeleteCommand(
   args: FormDeleteArgs,
 ): Promise<FormDeleteResult> {
   const returnPath = join(args.baseDir, args.returnId);
