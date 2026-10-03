@@ -40,7 +40,7 @@ Deno.test("1099-OID changed issued copy cannot double interest or withholding", 
         box4_federal_withheld: 20,
       }]),
     Error,
-    "repeats the same identified payer and source reference",
+    "repeats the same issued-copy source reference",
   );
   const separate = compute([
     issued,
@@ -65,12 +65,41 @@ Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
   assertThrows(
     () => compute([issued, { ...issued, box1_oid: 250 }]),
     Error,
-    "repeats the same identified payer and source reference",
+    "repeats the same issued-copy source reference",
   );
   const distinct = compute([
     issued,
     { ...issued, source_document_reference: "issued-oid-copy-2" },
   ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
+Deno.test("1099-OID cannot reuse one issued-copy reference across payers", () => {
+  const issued = {
+    payer_name: "Bond Fund A",
+    payer_tin: "123456789",
+    source_document_reference: "one-issued-oid-copy",
+    box1_oid: 200,
+  };
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        payer_name: "Bond Fund B",
+        payer_tin: "987654321",
+      }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([issued, {
+    ...issued,
+    payer_name: "Bond Fund B",
+    payer_tin: "987654321",
+    source_document_reference: "second-issued-oid-copy",
+  }]);
   assertEquals(
     distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
     2,
