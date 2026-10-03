@@ -24,8 +24,36 @@ export function assertEstimatedPaymentLine26(
       "Form 1040 line 26 differs from its 1040-ES payment source",
     );
   }
-  const review = reviewedJointAllocation(inputSchema.parse(raw));
-  if (!review) return;
+  const input = inputSchema.parse(raw);
+  const review = reviewedJointAllocation(input);
+  if (!review) {
+    const hasQuarterPayment = (["q1", "q2", "q3", "q4"] as const).some(
+      (quarter) => (input[`payment_${quarter}`] ?? 0) > 0,
+    );
+    if (hasQuarterPayment && !input.quarter_payment_records?.length) {
+      throw new Error(
+        "Form 1040 line 26 needs retained quarter payment records",
+      );
+    }
+    const general = pending?.general as Record<string, unknown> | undefined;
+    const taxpayer = String(fields.taxpayer_ssn ?? general?.taxpayer_ssn ?? "")
+      .replaceAll("-", "");
+    const spouse = String(fields.spouse_ssn ?? general?.spouse_ssn ?? "")
+      .replaceAll("-", "");
+    const joint = String(fields.filing_status ?? general?.filing_status) ===
+      "mfj";
+    if (
+      input.quarter_payment_records?.some((row) => {
+        const payer = row.payer_tin.replaceAll("-", "");
+        return payer !== taxpayer && (!joint || payer !== spouse);
+      })
+    ) {
+      throw new Error(
+        "Form 1040 line 26 payment record payer must be the taxpayer or joint spouse",
+      );
+    }
+    return;
+  }
   const general = pending?.general as Record<string, unknown> | undefined;
   const taxpayerSsn = String(general?.taxpayer_ssn ?? "").replaceAll("-", "");
   const formerSsn = review.former_spouse_ssn.replaceAll("-", "");

@@ -12,6 +12,13 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const reference = z.string().trim().min(1);
+const quarterPaymentSchema = z.object({
+  quarter: z.enum(["q1", "q2", "q3", "q4"]),
+  amount: z.number().positive(),
+  payer_tin: ssn,
+  payment_date: z.string().date(),
+  payment_record_reference: reference,
+}).strict();
 const jointPaymentRowSchema = z.object({
   quarter: z.enum(["q1", "q2", "q3", "q4"]),
   joint_payment_amount: z.number().int().positive(),
@@ -45,6 +52,7 @@ export const inputSchema = z.object({
   payment_q3: z.number().nonnegative().optional(),
   // Q4 payment (due ~January 15 of following year)
   payment_q4: z.number().nonnegative().optional(),
+  quarter_payment_records: z.array(quarterPaymentSchema).optional(),
   // Actual payment dates — used to determine whether each quarterly payment was
   // timely for underpayment penalty purposes (IRC §6654); ISO 8601 date strings
   payment_q1_date: z.string().optional()
@@ -79,6 +87,11 @@ export function reviewedJointAllocation(
 ): z.infer<typeof jointAllocationSchema> | undefined {
   const review = input.joint_estimated_payment_allocation;
   if (!review) return undefined;
+  if ((input.quarter_payment_records?.length ?? 0) > 0) {
+    throw new Error(
+      "Form 1040 line 26 joint allocation cannot also use separate quarter payment records",
+    );
+  }
   const taxpayerSsn = review.taxpayer_ssn.replaceAll("-", "");
   const formerSsn = review.former_spouse_ssn.replaceAll("-", "");
   if (taxpayerSsn === formerSsn) {
@@ -130,6 +143,38 @@ export function reviewedJointAllocation(
 export function estimatedPaymentTotal(raw: unknown): number {
   const input = inputSchema.parse(raw);
   reviewedJointAllocation(input);
+  const records = input.quarter_payment_records;
+  if (records !== undefined) {
+    if (
+      new Set(records.map((row) => row.payment_record_reference)).size !==
+        records.length
+    ) {
+      throw new Error("Form 1040 line 26 payment records must be distinct");
+    }
+    for (const quarter of ["q1", "q2", "q3", "q4"] as const) {
+      const entered = input[`payment_${quarter}`] ?? 0;
+      const quarterRecords = records.filter((row) => row.quarter === quarter);
+      const sourced = quarterRecords.reduce(
+        (total, row) => total + row.amount,
+        0,
+      );
+      if (Math.abs(entered - sourced) >= 0.01) {
+        throw new Error(
+          `Form 1040 line 26 ${quarter} differs from payment records`,
+        );
+      }
+      const enteredDate = input[`payment_${quarter}_date`];
+      if (
+        enteredDate !== undefined &&
+        (quarterRecords.length !== 1 ||
+          quarterRecords[0].payment_date !== enteredDate)
+      ) {
+        throw new Error(
+          `Form 1040 line 26 ${quarter} date differs from its payment record`,
+        );
+      }
+    }
+  }
   return (input.payment_q1 ?? 0) +
     (input.payment_q2 ?? 0) +
     (input.payment_q3 ?? 0) +

@@ -55,7 +55,16 @@ Deno.test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and
         box1a: 700,
         box1b: 300,
       }],
-      f1040es: { payment_q1: 1_000 },
+      f1040es: {
+        payment_q1: 1_000,
+        quarter_payment_records: [{
+          quarter: "q1",
+          amount: 1_000,
+          payer_tin: "444556666",
+          payment_date: "2025-04-15",
+          payment_record_reference: "Synthetic 2025 spouse Q1 payment",
+        }],
+      },
       schedule_b_part_iii: {
         foreign_accounts_question: false,
         foreign_trust_question: false,

@@ -9,10 +9,40 @@ const source = {
   payment_q2: 300,
   payment_q3: 200,
   payment_q4: 100,
+  quarter_payment_records: [
+    {
+      quarter: "q1",
+      amount: 400,
+      payer_tin: "111223333",
+      payment_date: "2025-04-15",
+      payment_record_reference: "2025 Q1 payment",
+    },
+    {
+      quarter: "q2",
+      amount: 300,
+      payer_tin: "111223333",
+      payment_date: "2025-06-16",
+      payment_record_reference: "2025 Q2 payment",
+    },
+    {
+      quarter: "q3",
+      amount: 200,
+      payer_tin: "111223333",
+      payment_date: "2025-09-15",
+      payment_record_reference: "2025 Q3 payment",
+    },
+    {
+      quarter: "q4",
+      amount: 100,
+      payer_tin: "111223333",
+      payment_date: "2026-01-15",
+      payment_record_reference: "2025 Q4 payment",
+    },
+  ],
   applied_from_prior_year: 250,
 };
 const pending = { f1040es: source };
-const filed = { line26_estimated_tax: 1_250 };
+const filed = { taxpayer_ssn: "111223333", line26_estimated_tax: 1_250 };
 
 Deno.test("2025 agreed joint estimated payment prints former spouse SSN on native and PDF line 26", () => {
   const jointFiled = {
@@ -74,7 +104,7 @@ Deno.test("both Form 1040 exports reject unsourced or changed estimated payments
       [{ line26_estimated_tax: 1_249 }, pending, "differs from its 1040-ES"],
       [{ line26_estimated_tax: 1_250 }, {
         f1040es: { ...source, payment_q2: 299 },
-      }, "differs from its 1040-ES"],
+      }, "q2 differs from payment records"],
       [{}, pending, "differs from its 1040-ES"],
     ] as const
   ) {
@@ -85,6 +115,72 @@ Deno.test("both Form 1040 exports reject unsourced or changed estimated payments
     );
     assertThrows(
       () => irs1040Pdf.projectFields?.(changed, attached),
+      Error,
+      reason,
+    );
+  }
+});
+
+Deno.test("line 26 requires distinct filer-owned quarter payment records", () => {
+  const owned = {
+    filing_status: "single",
+    taxpayer_ssn: "111223333",
+    line26_estimated_tax: 400,
+  };
+  const one = {
+    f1040es: {
+      payment_q1: 400,
+      quarter_payment_records: [source.quarter_payment_records[0]],
+    },
+  };
+  irs1040.build(owned, { pending: one });
+  irs1040Pdf.projectFields?.(owned, one);
+  for (
+    const [attached, reason] of [
+      [
+        { f1040es: { payment_q1: 400 } },
+        "needs retained quarter payment records",
+      ],
+      [{
+        f1040es: {
+          payment_q1: 401,
+          quarter_payment_records: one.f1040es.quarter_payment_records,
+        },
+      }, "q1 differs from payment records"],
+      [{
+        f1040es: {
+          payment_q1: 400,
+          quarter_payment_records: [{
+            ...source.quarter_payment_records[0],
+            payer_tin: "999887777",
+          }],
+        },
+      }, "payer must be the taxpayer or joint spouse"],
+      [{
+        f1040es: {
+          payment_q1: 800,
+          quarter_payment_records: [
+            source.quarter_payment_records[0],
+            source.quarter_payment_records[0],
+          ],
+        },
+      }, "payment records must be distinct"],
+      [{
+        f1040es: {
+          payment_q1: 400,
+          payment_q1_date: "2025-04-16",
+          quarter_payment_records: one.f1040es.quarter_payment_records,
+        },
+      }, "q1 date differs from its payment record"],
+    ] as const
+  ) {
+    assertThrows(
+      () => irs1040.build(owned, { pending: attached }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(owned, attached),
       Error,
       reason,
     );

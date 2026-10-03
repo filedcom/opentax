@@ -385,6 +385,7 @@ const filed = {
   line23_other_taxes: 50,
   line24_total_tax: 1_000,
   line25a_w2_withheld: 1_500,
+  taxpayer_ssn: "111223333",
   line25b_withheld_1099: 200,
   line25c_total: 20,
   line25d_total_withholding: 1_720,
@@ -397,7 +398,18 @@ const filed = {
 };
 
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
-  const pending = { f1040es: { payment_q1: 100 } };
+  const pending = {
+    f1040es: {
+      payment_q1: 100,
+      quarter_payment_records: [{
+        quarter: "q1",
+        amount: 100,
+        payer_tin: "111223333",
+        payment_date: "2025-04-15",
+        payment_record_reference: "2025 Q1 payment",
+      }],
+    },
+  };
   assertStringIncludes(
     irs1040.build(filed, { pending }),
     "<TotalPaymentsAmt>1890</TotalPaymentsAmt>",
