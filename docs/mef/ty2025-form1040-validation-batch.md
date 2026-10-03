@@ -634,6 +634,16 @@ It has no completed manifest and is not a visual-review pass. A declared
 nonnamed review scope is being prepared so deferred named cases are recorded
 as exclusions while included cases retain all source, schema, and PDF checks.
 
+The 2026-10-03 full generator attempt at `e3b0a165` reached the same
+authenticated-prior-notice guard after writing 21 synthetic PDF/XML/source
+trios to `.state/research/ty2025-filled-pdf-review/2026-10-03-pr62-attempt2/`.
+Its local log is `.state/research/ty2025-filled-pdf-review-attempt2-2026-10-03.log`
+(SHA-256 `1bb7f326f263e723e5126545ea07349bc0eee98e29a9f637d77c5ffa73db5517`).
+There is no completed manifest or page review. The guard belongs to the
+deferred Form 8862 source-authentication gap; it was not bypassed to inflate
+the review count. The 178 automated filled-PDF/XML tests above do not replace
+this held visual-review workflow.
+
 Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
 before its PDF artifact is written. The manifest records the schema file digest
 and each case's structural validation result; IRS business rules, source
